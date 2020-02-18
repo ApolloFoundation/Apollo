@@ -202,7 +202,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
-    public CreateTransactionResponse setAlias(Wallet wallet, String aliasURL, String aliasName, Integer feeATM, Integer deadline) {
+    public CreateTransactionResponse setAlias(Wallet wallet, String aliasURL, String aliasName) {
         throw new NotImplementedException("Not implemented");
     }
 

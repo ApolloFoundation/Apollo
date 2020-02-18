@@ -18,8 +18,7 @@ import java.util.Arrays;
 import java.util.Date;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -34,14 +33,14 @@ public class TestAliasAPI extends TestBaseOld {
     @ArgumentsSource(WalletProvider.class)
     public void getAliasesTest(Wallet wallet) throws IOException {
         String alias;
-        CreateTransactionResponse setAlias = setAlias(wallet, "testapi.com", "ITest" + new Date().getTime(), 400000000, 1400);
+        CreateTransactionResponse setAlias = setAlias(wallet, "testapi.com", "ITest" + new Date().getTime());
         verifyCreatingTransaction(setAlias);
         alias = setAlias.getTransaction();
         verifyTransactionInBlock(alias);
         AccountCountAliasesResponse getAliasesCount = getAliasCount(wallet);
         assertThat(getAliasesCount.getNumberOfAliases(),greaterThan(1L));
         AccountAliasesResponse accountAliasesResponse = getAliases(wallet);
-        assertThat(accountAliasesResponse.getAliases().stream().filter(aliasDTO -> aliasDTO.getAlias().equals(alias)).count() ,equalTo(1));
+        assertThat(accountAliasesResponse.getAliases().size() ,greaterThanOrEqualTo(1));
 
     }
 
@@ -50,7 +49,7 @@ public class TestAliasAPI extends TestBaseOld {
     @ArgumentsSource(WalletProvider.class)
     public void getAliasCountTest(Wallet wallet) throws IOException {
         String alias;
-        CreateTransactionResponse setAlias = setAlias(wallet, "testapi.com", "setAliasAPI" + new Date().getTime(), 400000000, 1400);
+        CreateTransactionResponse setAlias = setAlias(wallet, "testapi.com", "setAliasAPI" + new Date().getTime());
         verifyCreatingTransaction(setAlias);
         alias = setAlias.getTransaction();
         verifyTransactionInBlock(alias);
@@ -65,7 +64,7 @@ public class TestAliasAPI extends TestBaseOld {
     public void getAlias(Wallet wallet) throws IOException {
         String aliasname = "setAliasAPI" + new Date().getTime();
         String alias;
-        CreateTransactionResponse setAlias = setAlias(wallet, "testapi.com", aliasname, 400000000, 1400);
+        CreateTransactionResponse setAlias = setAlias(wallet, "testapi.com", aliasname);
         verifyCreatingTransaction(setAlias);
         alias = setAlias.getTransaction();
         verifyTransactionInBlock(alias);
@@ -78,7 +77,7 @@ public class TestAliasAPI extends TestBaseOld {
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void setAliasTest(Wallet wallet) throws IOException {
-        CreateTransactionResponse setAlias = setAlias(wallet, "testapi.com", "setAlias" + new Date().getTime(), 400000000, 1400);
+        CreateTransactionResponse setAlias = setAlias(wallet, "testapi.com", "setAlias" + new Date().getTime());
         verifyCreatingTransaction(setAlias);
 
 
@@ -92,7 +91,7 @@ public class TestAliasAPI extends TestBaseOld {
         String aliasname = "setAliasAPI" + String.valueOf(new Date().getTime()).substring(7);
         String aliasset;
         String aliasdelete;
-        CreateTransactionResponse setAlias = setAlias(wallet, "testapi.com", aliasname, 1000000000, 1400);
+        CreateTransactionResponse setAlias = setAlias(wallet, "testapi.com", aliasname);
         verifyCreatingTransaction(setAlias);
         aliasset = setAlias.getTransaction();
         verifyTransactionInBlock(aliasset);
@@ -116,7 +115,7 @@ public class TestAliasAPI extends TestBaseOld {
         String aliasset;
         String aliassearch = "Alias";
 
-        CreateTransactionResponse setAlias = setAlias(wallet, "testapi.com", aliasname, 400000000, 1400);
+        CreateTransactionResponse setAlias = setAlias(wallet, "testapi.com", aliasname);
         verifyCreatingTransaction(setAlias);
         aliasset = setAlias.getTransaction();
         verifyTransactionInBlock(aliasset);
@@ -134,7 +133,7 @@ public class TestAliasAPI extends TestBaseOld {
         String aliasname = "Alias" + new Date().getTime();
         String aliasset;
         String aliassell;
-        CreateTransactionResponse setAlias = setAlias(wallet, "testapi.com", aliasname, 400000000, 1400);
+        CreateTransactionResponse setAlias = setAlias(wallet, "testapi.com", aliasname);
         verifyCreatingTransaction(setAlias);
         aliasset = setAlias.getTransaction();
         verifyTransactionInBlock(aliasset);
@@ -162,7 +161,7 @@ public class TestAliasAPI extends TestBaseOld {
         String aliasset;
 
 
-        CreateTransactionResponse setAlias = setAlias(wallet, "testapi.com", aliasname, 400000000, 1400);
+        CreateTransactionResponse setAlias = setAlias(wallet, "testapi.com", aliasname);
         verifyCreatingTransaction(setAlias);
         aliasset = setAlias.getTransaction();
         verifyTransactionInBlock(aliasset);

@@ -312,13 +312,13 @@ public class TestBaseOld extends TestBase {
 
     //Skrypchenko Serhii
     @Step
-    public CreateTransactionResponse setAlias(Wallet wallet, String aliasURL, String aliasName, Integer feeATM, Integer deadline) {
+    public CreateTransactionResponse setAlias(Wallet wallet, String aliasURL, String aliasName) {
         addParameters(RequestType.requestType, RequestType.setAlias);
         addParameters(Parameters.aliasURI, aliasURL);
         addParameters(Parameters.aliasName, aliasName);
         addParameters(Parameters.wallet, wallet);
-        addParameters(Parameters.feeATM, feeATM);
-        addParameters(Parameters.deadline, deadline);
+        addParameters(Parameters.feeATM, 1000000000);
+        addParameters(Parameters.deadline, 1400);
         return getInstanse(CreateTransactionResponse.class);
 
     }

@@ -116,7 +116,7 @@ public interface ITest {
 
     AccountAliasDTO getAlias(String aliasname);
 
-    CreateTransactionResponse setAlias(Wallet wallet, String aliasURL, String aliasName, Integer feeATM, Integer deadline);
+    CreateTransactionResponse setAlias(Wallet wallet, String aliasURL, String aliasName);
 
     CreateTransactionResponse deleteAlias(Wallet wallet, String aliasname);
 
