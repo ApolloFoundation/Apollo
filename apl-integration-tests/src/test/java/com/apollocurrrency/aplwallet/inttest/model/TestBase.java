@@ -89,14 +89,14 @@ public abstract class TestBase implements ITest {
     @Step("Before test")
     public void setUp(TestInfo testInfo) {
         this.testInfo = testInfo;
-        log.info("Test started: ",testInfo.getDisplayName());
+        log.info("Test started: "+ testInfo.getDisplayName());
     }
 
 
     @AfterEach
     @Step("AfterEach")
     public void tearDown() {
-        log.info("Test finished: ",testInfo.getDisplayName());
+        log.info("Test finished: "+testInfo.getDisplayName());
         this.testInfo = null;
     }
 
