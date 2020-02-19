@@ -21,13 +21,11 @@
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
-import com.apollocurrency.aplwallet.apl.core.account.dao.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
@@ -54,7 +52,7 @@ public final class GetAccountAssets extends AbstractAPIRequestHandler {
 
         if (assetId == 0) {
             JSONObject response = new JSONObject();
-            List<AccountAsset> accountAssets = lookupAccountAssetService().getAssetAccounts(accountId, height, 0, -1);
+            List<AccountAsset> accountAssets = lookupAccountAssetService().getAssetsByAccount(accountId, height, 0, -1);
             JSONArray assetJSON = new JSONArray();
             accountAssets.forEach(accountAsset -> assetJSON.add(JSONData.accountAsset(accountAsset, false, includeAssetInfo)));
             response.put("accountAssets", assetJSON);

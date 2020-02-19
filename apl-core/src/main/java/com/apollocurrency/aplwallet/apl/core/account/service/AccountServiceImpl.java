@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventType;
@@ -96,7 +97,7 @@ public class AccountServiceImpl implements AccountService {
         if (account == null) {
             PublicKey publicKey = accountPublicKeyService.getPublicKey(dbKey);
             if (publicKey != null) {
-                account = accountTable.newEntity(dbKey);
+                account = new Account(id, dbKey);
                 account.setPublicKey(publicKey);
             }
         }
@@ -108,7 +109,7 @@ public class AccountServiceImpl implements AccountService {
         DbKey dbKey = AccountTable.newKey(id);
         Account account = accountTable.get(dbKey, height);
         if (account == null) {
-            PublicKey publicKey = accountPublicKeyService.loadPublicKey(dbKey, height);
+            PublicKey publicKey = accountPublicKeyService.loadPublicKeyFromDb(dbKey, height);
             if (publicKey != null) {
                 account = new Account(id, height);
                 account.setPublicKey(publicKey);
@@ -118,7 +119,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public Account reloadAccount(Account account) {
+    public Account getAccount(Account account) {
         return accountTable.get(account.getDbKey());
     }
 
@@ -162,7 +163,7 @@ public class AccountServiceImpl implements AccountService {
         DbKey dbKey = AccountTable.newKey(id);
         Account account = accountTable.get(dbKey);
         if (account == null) {
-            account = accountTable.newEntity(dbKey);
+            account = new Account(id, dbKey);
             PublicKey publicKey = accountPublicKeyService.getPublicKey(dbKey);
             if (publicKey == null) {
                 if(isGenesis){
@@ -288,12 +289,14 @@ public class AccountServiceImpl implements AccountService {
         return total;
     }
 
+    @Deprecated
     @Override
     public DbIterator<Account> getLessorsIterator(Account account) {
         DbIterator<Account> iterator = accountTable.getManyBy(new DbClause.LongClause("active_lessee_id", account.getId()), 0, -1, " ORDER BY id ASC ");
         return iterator;
     }
 
+    @Deprecated
     @Override
     public DbIterator<Account> getLessorsIterator(Account account, int height) {
         DbIterator<Account> iterator = accountTable.getManyBy(new DbClause.LongClause("active_lessee_id", account.getId()), height, 0, -1, " ORDER BY id ASC ");
@@ -470,7 +473,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public long getTotalSupply() {
-        return accountTable.getTotalSupply();
+        return accountTable.getTotalSupply(GenesisImporter.CREATOR_ID);
     }
 
     @Override

@@ -16,9 +16,6 @@ import java.util.List;
  */
 public interface AccountPublicKeyService {
 
-    @Deprecated
-    PublicKey newEntity(DbKey dbKey);
-
     int getCount();
 
     int getPublicKeysCount();
@@ -39,7 +36,7 @@ public interface AccountPublicKeyService {
      * @param dbKey the primary key to load entity from the data base
      * @return public key or null
      */
-    PublicKey loadPublicKey(DbKey dbKey);
+    PublicKey loadPublicKeyFromDb(DbKey dbKey);
 
     /**
      * Load public key for specified height from the data base
@@ -47,7 +44,7 @@ public interface AccountPublicKeyService {
      * @param height block height
      * @return public key or null
      */
-    PublicKey loadPublicKey(DbKey dbKey, int height);
+    PublicKey loadPublicKeyFromDb(DbKey dbKey, int height);
 
     boolean setOrVerifyPublicKey(long accountId, byte[] key);
 

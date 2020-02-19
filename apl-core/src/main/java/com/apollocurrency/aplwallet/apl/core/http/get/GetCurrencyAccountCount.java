@@ -44,7 +44,7 @@ public final class GetCurrencyAccountCount extends AbstractAPIRequestHandler {
         int height = ParameterParser.getHeight(req);
 
         JSONObject response = new JSONObject();
-        response.put("numberOfAccounts", lookupAccountCurrencyService().getCurrencyAccountCount(currencyId, height));
+        response.put("numberOfAccounts", lookupAccountCurrencyService().getCountByCurrency(currencyId, height));
         return response;
 
     }

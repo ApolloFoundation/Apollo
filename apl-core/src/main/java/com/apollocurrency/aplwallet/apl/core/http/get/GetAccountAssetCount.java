@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.account.dao.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
@@ -43,7 +42,7 @@ public final class GetAccountAssetCount extends AbstractAPIRequestHandler {
         int height = ParameterParser.getHeight(req);
 
         JSONObject response = new JSONObject();
-        response.put("numberOfAssets", lookupAccountAssetService().getAccountAssetCount(accountId, height));
+        response.put("numberOfAssets", lookupAccountAssetService().getCountByAccount(accountId, height));
         return response;
     }
 

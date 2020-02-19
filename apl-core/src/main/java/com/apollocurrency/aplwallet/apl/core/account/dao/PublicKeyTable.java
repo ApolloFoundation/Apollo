@@ -14,8 +14,6 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTableInterface;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -30,11 +28,9 @@ public class PublicKeyTable extends EntityDbTable<PublicKey> implements EntityDb
     private final Blockchain blockchain;
 
     private static class PublicKeyDbFactory extends LongKeyFactory<PublicKey> {
-        private final Blockchain blockchain;
 
-        public PublicKeyDbFactory(String idColumn, Blockchain blockchain) {
+        public PublicKeyDbFactory(String idColumn) {
             super(idColumn);
-            this.blockchain = blockchain;
         }
 
         @Override
@@ -44,15 +40,10 @@ public class PublicKeyTable extends EntityDbTable<PublicKey> implements EntityDb
             }
             return publicKey.getDbKey();
         }
-
-        @Override
-        public PublicKey newEntity(DbKey dbKey) {
-            return new PublicKey(((LongKey) dbKey).getId(), null, blockchain.getHeight());
-        }
     }
 
     public PublicKeyTable(Blockchain blockchain) {
-        super("public_key", new PublicKeyDbFactory("account_id", blockchain), true, null, true);
+        super("public_key", new PublicKeyDbFactory("account_id"), true, null, true);
         this.blockchain = Objects.requireNonNull(blockchain, "Blockchain cannot be null");
     }
 

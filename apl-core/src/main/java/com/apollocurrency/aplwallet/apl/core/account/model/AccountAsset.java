@@ -20,10 +20,10 @@ import java.sql.SQLException;
 @Getter @Setter
 public final class AccountAsset extends VersionedDerivedEntity {
 
-    final long accountId;
-    final long assetId;
-    long quantityATU;
-    long unconfirmedQuantityATU;
+    private final long accountId;
+    private final long assetId;
+    private long quantityATU;
+    private long unconfirmedQuantityATU;
 
 
     public AccountAsset(long accountId, long assetId, long quantityATU, long unconfirmedQuantityATU, int height) {

@@ -178,7 +178,7 @@ public abstract class CurrencyExchangeOffer {
                     offer.getAccountId(), curUnits, blockchain.getLastBlock());
         }
         long transactionId = transaction.getId();
-        account = accountService.reloadAccount(account);
+        account = accountService.getAccount(account);
         log.trace("account === 3 exchangeCurrencyForAPL account={}", account);
         accountService.addToBalanceAndUnconfirmedBalanceATM(account, LedgerEvent.CURRENCY_EXCHANGE, transactionId, totalAmountATM);
         accountCurrencyService.addToCurrencyUnits(account, LedgerEvent.CURRENCY_EXCHANGE, transactionId, currencyId, -(units - remainingUnits));
@@ -238,7 +238,7 @@ public abstract class CurrencyExchangeOffer {
                     account.getId(), curUnits, blockchain.getLastBlock());
         }
         long transactionId = transaction.getId();
-        account = accountService.reloadAccount(account);
+        account = accountService.getAccount(account);
         log.trace("account === 3 exchangeAPLForCurrency account={}", account);
         accountCurrencyService.addToCurrencyAndUnconfirmedCurrencyUnits(account, LedgerEvent.CURRENCY_EXCHANGE, transactionId,
                 currencyId, Math.subtractExact(units, remainingUnits));

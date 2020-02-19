@@ -6,8 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.account.dao;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerHolding;
 import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
@@ -32,8 +30,6 @@ import java.util.List;
 @Singleton
 public class AccountLedgerTable extends DerivedDbTable<LedgerEntry> {
 
-    private final GlobalSync globalSync;
-    private final Blockchain blockchain;
     private final PropertiesHolder propertiesHolder;
 
     /** Number of blocks to keep when trimming */
@@ -43,10 +39,8 @@ public class AccountLedgerTable extends DerivedDbTable<LedgerEntry> {
      * Create the account ledger table
      */
     @Inject
-    public AccountLedgerTable(Blockchain blockchain, PropertiesHolder propertiesHolder, GlobalSync globalSync){
+    public AccountLedgerTable(PropertiesHolder propertiesHolder){
         super("account_ledger");
-        this.globalSync = globalSync;
-        this.blockchain = blockchain;
         this.propertiesHolder = propertiesHolder;
         trimKeep = propertiesHolder.getIntProperty("apl.ledgerTrimKeep", 30000);
     }
@@ -87,7 +81,7 @@ public class AccountLedgerTable extends DerivedDbTable<LedgerEntry> {
         try (Connection con = dataSource.getConnection();
              @DatabaseSpecificDml(DmlMarker.DELETE_WITH_LIMIT)
              PreparedStatement pstmt = con.prepareStatement("DELETE FROM account_ledger WHERE height <= ? LIMIT " + propertiesHolder.BATCH_COMMIT_SIZE())) {
-            pstmt.setInt(1, Math.max(blockchain.getHeight() - trimKeep, 0));
+            pstmt.setInt(1, Math.max(height - trimKeep, 0));
             int trimmed;
             do {
                 trimmed = pstmt.executeUpdate();
@@ -234,7 +228,6 @@ public class AccountLedgerTable extends DerivedDbTable<LedgerEntry> {
         // Get the ledger entries
         //
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        globalSync.readLock();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(sb.toString())) {
             int i = 0;
@@ -267,8 +260,6 @@ public class AccountLedgerTable extends DerivedDbTable<LedgerEntry> {
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
-        } finally {
-            globalSync.readUnlock();
         }
         return entryList;
     }

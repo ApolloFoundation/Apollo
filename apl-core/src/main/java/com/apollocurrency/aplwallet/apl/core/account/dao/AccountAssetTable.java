@@ -88,35 +88,35 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
         return " ORDER BY quantity DESC, account_id, asset_id ";
     }
 
-    public int getAssetCount(long assetId) {
+    public int getCountByAssetId(long assetId) {
         return getCount(new DbClause.LongClause("asset_id", assetId));
     }
 
-    public int getAssetCount(long assetId, int height) {
+    public int getCountByAssetId(long assetId, int height) {
         return getCount(new DbClause.LongClause("asset_id", assetId), height);
     }
 
-    public int getAccountAssetCount(long accountId) {
+    public int getCountByAccountId(long accountId) {
         return getCount(new DbClause.LongClause("account_id", accountId));
     }
 
-    public int getAccountAssetCount(long accountId, int height) {
+    public int getCountByAccountId(long accountId, int height) {
         return getCount(new DbClause.LongClause("account_id", accountId), height);
     }
 
-    public List<AccountAsset> getAccountAssets(long accountId, int from, int to) {
+    public List<AccountAsset> getByAccountId(long accountId, int from, int to) {
         return toList(getManyBy(new DbClause.LongClause("account_id", accountId), from, to));
     }
 
-    public List<AccountAsset> getAccountAssets(long accountId, int height, int from, int to) {
+    public List<AccountAsset> getByAccountId(long accountId, int height, int from, int to) {
         return toList(getManyBy(new DbClause.LongClause("account_id", accountId), height, from, to));
     }
 
-    public List<AccountAsset> getAssetAccounts(long assetId, int from, int to) {
+    public List<AccountAsset> getByAssetId(long assetId, int from, int to) {
         return toList(getManyBy(new DbClause.LongClause("asset_id", assetId), from, to, " ORDER BY quantity DESC, account_id "));
     }
 
-    public List<AccountAsset> getAssetAccounts(long assetId, int height, int from, int to) {
+    public List<AccountAsset> getByAssetId(long assetId, int height, int from, int to) {
         return toList(getManyBy(new DbClause.LongClause("asset_id", assetId), height, from, to, " ORDER BY quantity DESC, account_id "));
     }
 

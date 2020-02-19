@@ -69,35 +69,35 @@ public class AccountCurrencyTable extends VersionedDeletableEntityDbTable<Accoun
         return " ORDER BY units DESC, account_id, currency_id ";
     }
 
-    public DbIterator<AccountCurrency> getAccountCurrencies(long accountId, int from, int to) {
+    public DbIterator<AccountCurrency> getByAccount(long accountId, int from, int to) {
         return getManyBy(new DbClause.LongClause("account_id", accountId), from, to);
     }
 
-    public DbIterator<AccountCurrency> getAccountCurrencies(long accountId, int height, int from, int to) {
+    public DbIterator<AccountCurrency> getByAccount(long accountId, int height, int from, int to) {
         return getManyBy(new DbClause.LongClause("account_id", accountId), height, from, to);
     }
 
-    public DbIterator<AccountCurrency> getCurrencyAccounts(long currencyId, int from, int to) {
+    public DbIterator<AccountCurrency> getByCurrency(long currencyId, int from, int to) {
         return getManyBy(new DbClause.LongClause("currency_id", currencyId), from, to);
     }
 
-    public DbIterator<AccountCurrency> getCurrencyAccounts(long currencyId, int height, int from, int to) {
+    public DbIterator<AccountCurrency> getByCurrency(long currencyId, int height, int from, int to) {
         return getManyBy(new DbClause.LongClause("currency_id", currencyId), height, from, to);
     }
 
-    public int getCurrencyAccountCount(long currencyId) {
+    public int getCountByCurrency(long currencyId) {
         return getCount(new DbClause.LongClause("currency_id", currencyId));
     }
 
-    public int getCurrencyAccountCount(long currencyId, int height) {
+    public int getCountByCurrency(long currencyId, int height) {
         return getCount(new DbClause.LongClause("currency_id", currencyId), height);
     }
 
-    public int getAccountCurrencyCount(long accountId) {
+    public int getCountByAccount(long accountId) {
         return getCount(new DbClause.LongClause("account_id", accountId));
     }
 
-    public int getAccountCurrencyCount(long accountId, int height) {
+    public int getCountByAccount(long accountId, int height) {
         return getCount(new DbClause.LongClause("account_id", accountId), height);
     }
 }

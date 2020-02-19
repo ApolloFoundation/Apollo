@@ -16,23 +16,23 @@ import java.util.List;
  */
 public interface AccountAssetService {
 
-    List<AccountAsset> getAssetAccounts(Account account, int from, int to);
+    List<AccountAsset> getAssetsByAccount(Account account, int from, int to);
 
-    List<AccountAsset> getAssetAccounts(Account account, int height, int from, int to);
+    List<AccountAsset> getAssetsByAccount(Account account, int height, int from, int to);
 
-    List<AccountAsset> getAssetAccounts(long accountId, int height, int from, int to);
+    List<AccountAsset> getAssetsByAccount(long accountId, int height, int from, int to);
 
-    int getAssetCount(long assetId);
+    int getCountByAsset(long assetId);
 
-    int getAssetCount(long assetId, int height);
+    int getCountByAsset(long assetId, int height);
 
-    List<AccountAsset> getAssets(long assetId, int height, int from, int to);
+    List<AccountAsset> getAssetsByAssetId(long assetId, int height, int from, int to);
 
-    List<AccountAsset> getAssets(long assetId, int height);
+    List<AccountAsset> getAssetsByAssetId(long assetId, int height);
 
-    int getAccountAssetCount(long accountId);
+    int getCountByAccount(long accountId);
 
-    int getAccountAssetCount(long accountId, int height);
+    int getCountByAccount(long accountId, int height);
 
     AccountAsset getAsset(Account account, long assetId);
 

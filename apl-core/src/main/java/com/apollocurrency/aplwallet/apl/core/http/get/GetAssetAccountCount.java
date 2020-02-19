@@ -44,7 +44,7 @@ public final class GetAssetAccountCount extends AbstractAPIRequestHandler {
         int height = ParameterParser.getHeight(req);
 
         JSONObject response = new JSONObject();
-        response.put("numberOfAccounts", lookupAccountAssetService().getAssetCount(assetId, height));
+        response.put("numberOfAccounts", lookupAccountAssetService().getCountByAsset(assetId, height));
         return response;
 
     }

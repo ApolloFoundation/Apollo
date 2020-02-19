@@ -283,7 +283,7 @@ class AccountAssetServiceTest {
                         accountAsset -> Math.multiplyExact(accountAsset.getQuantityATU(), amountATMPerATU)));
 
         doReturn(testData.ACC_0).when(accountService).getAccount(any(long.class));
-        doReturn(expected).when(accountAssetTable).getAssetAccounts(testData.ACC_ASS_6.getAssetId(), height, 0, -1);
+        doReturn(expected).when(accountAssetTable).getByAssetId(testData.ACC_ASS_6.getAssetId(), height, 0, -1);
 
         accountAssetService.payDividends(testData.ACC_6, transactionId, attachment);
         verify(accountService, times(4)).addToBalanceAndUnconfirmedBalanceATM(any(Account.class), eq(LedgerEvent.ASSET_DIVIDEND_PAYMENT), eq(transactionId), any(long.class));

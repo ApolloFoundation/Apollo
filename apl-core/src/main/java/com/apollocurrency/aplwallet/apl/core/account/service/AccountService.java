@@ -32,7 +32,7 @@ public interface AccountService {
 
     Account getAccount(byte[] publicKey);
 
-    Account reloadAccount(Account account);
+    Account getAccount(Account account);
 
     Account addGenesisAccount(long id);
 
