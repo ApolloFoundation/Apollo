@@ -1,7 +1,7 @@
 /*
  * Copyright © 2018-2020 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.api.dto.utils;
+package com.apollocurrency.aplwallet.api.request;
 
 import javax.validation.constraints.NotBlank;
 import javax.ws.rs.FormParam;
@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @Data
 @EqualsAndHashCode
 @NoArgsConstructor
-public class DecodeQRCodeRequestDto {
+public class DecodeQRCodeRequestForm {
 //    @Parameter(name = "qrCodeBase64", description = "A base64 string encoded from an image of a QR code", required = true)
     @FormParam("qrCodeBase64")
     @NotBlank

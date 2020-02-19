@@ -19,7 +19,7 @@ public class DetectMimeTypeUploadForm {
 
     @FormParam("file")
     @PartType("charset=utf-8")
-    @Schema(type = "string", format = "binary", description = "Uploaded file name, optional, limited by Max Upload Size (42 Kb by default)")
+    @Schema(type = "string", format = "binary", description = "Uploaded file (content), optional, limited by Max Upload Size (42 Kb by default)")
     public String file;
 
     @FormParam("data")

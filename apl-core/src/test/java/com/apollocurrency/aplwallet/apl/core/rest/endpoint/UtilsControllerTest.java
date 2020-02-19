@@ -38,8 +38,8 @@ class UtilsControllerTest {
 
     private static ObjectMapper mapper = new ObjectMapper();
     private Dispatcher dispatcher;
-    private static String encodeQrUri = "/utils/qrcode/encode";
-    private static String decodeQrUri = "/utils/qrcode/decode";
+    private static String encodeQrUri = "/utils/qrcode/encoding";
+    private static String decodeQrUri = "/utils/qrcode/decoding";
     private static String fullHashToIdUri = "/utils/fullhash/toid";
     private static String hexConvertUri = "/utils/convert/hex";
     private static String longConvertUri = "/utils/convert/long";
@@ -67,6 +67,20 @@ class UtilsControllerTest {
         QrEncodeDto qrCodeDto = mapper.readValue(respondJson, new TypeReference<>(){});
         assertNotNull(qrCodeDto.qrCodeBase64);
         assertTrue(qrCodeDto.qrCodeBase64.length() > 0);
+
+        request = MockHttpRequest.post(encodeQrUri)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED_TYPE)
+            .addFormHeader("qrCodeData", "1234")
+            .addFormHeader("width", null)
+            .addFormHeader("height", null);
+        response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+
+        assertEquals(200, response.getStatus());
+        respondJson = response.getContentAsString();
+        qrCodeDto = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(qrCodeDto.qrCodeBase64);
+        assertTrue(qrCodeDto.qrCodeBase64.length() > 0);
     }
 
     @Test
@@ -74,7 +88,8 @@ class UtilsControllerTest {
         MockHttpRequest request = MockHttpRequest.post(encodeQrUri)
             .contentType(MediaType.APPLICATION_FORM_URLENCODED_TYPE)
             .addFormHeader("qrCodeData", "")
-            .addFormHeader("width", "100").addFormHeader("height", "100");
+            .addFormHeader("width", "100")
+            .addFormHeader("height", "100");
         MockHttpResponse response = new MockHttpResponse();
         dispatcher.invoke(request, response);
 
@@ -88,24 +103,31 @@ class UtilsControllerTest {
         MockHttpRequest request = MockHttpRequest.post(encodeQrUri)
             .contentType(MediaType.APPLICATION_FORM_URLENCODED_TYPE)
             .addFormHeader("qrCodeData", "1234")
-            .addFormHeader("width", "S_DF_123").addFormHeader("height", "100");
+            .addFormHeader("width", "S_DF_123")
+            .addFormHeader("height", "100");
         MockHttpResponse response = new MockHttpResponse();
         dispatcher.invoke(request, response);
 
-        assertEquals(400, response.getStatus());
+        assertEquals(200, response.getStatus());
         String respondJson = response.getContentAsString();
         assertNotNull(respondJson);
+        Error error = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(error.getErrorDescription());
+        assertEquals(2011, error.getNewErrorCode());
 
         request = MockHttpRequest.post(encodeQrUri)
             .contentType(MediaType.APPLICATION_FORM_URLENCODED_TYPE)
             .addFormHeader("qrCodeData", "1234")
-            .addFormHeader("width", "-10").addFormHeader("height", "7000");
+            .addFormHeader("width", "-10").addFormHeader("height", "4000");
         response = new MockHttpResponse();
         dispatcher.invoke(request, response);
 
-        assertEquals(400, response.getStatus());
+        assertEquals(200, response.getStatus());
         respondJson = response.getContentAsString();
         assertNotNull(respondJson);
+        error = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(error.getErrorDescription());
+        assertEquals(2011, error.getNewErrorCode());
     }
 
     @Test
@@ -113,13 +135,17 @@ class UtilsControllerTest {
         MockHttpRequest request = MockHttpRequest.post(encodeQrUri)
             .contentType(MediaType.APPLICATION_FORM_URLENCODED_TYPE)
             .addFormHeader("qrCodeData", "1234")
-            .addFormHeader("width", "100").addFormHeader("height", "incorrect");
+            .addFormHeader("width", "100")
+            .addFormHeader("height", "7000"); // up to 5000
         MockHttpResponse response = new MockHttpResponse();
         dispatcher.invoke(request, response);
 
-        assertEquals(400, response.getStatus());
+        assertEquals(200, response.getStatus());
         String respondJson = response.getContentAsString();
         assertNotNull(respondJson);
+        Error error = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(error.getErrorDescription());
+        assertEquals(2011, error.getNewErrorCode());
     }
 
     @Test
@@ -131,9 +157,12 @@ class UtilsControllerTest {
         MockHttpResponse response = new MockHttpResponse();
         dispatcher.invoke(request, response);
 
-        assertEquals(400, response.getStatus());
+        assertEquals(200, response.getStatus());
         String respondJson = response.getContentAsString();
         assertNotNull(respondJson);
+        Error error = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(error.getErrorDescription());
+        assertEquals(2011, error.getNewErrorCode());
     }
 
     @Test
@@ -160,11 +189,9 @@ class UtilsControllerTest {
         MockHttpResponse response = new MockHttpResponse();
         dispatcher.invoke(request, response);
 
-        assertEquals(200, response.getStatus());
+        assertEquals(400, response.getStatus());
         String respondJson = response.getContentAsString();
-        Error error = mapper.readValue(respondJson, new TypeReference<>(){});
-        assertNotNull(error.getErrorDescription());
-        assertEquals(2003, error.getNewErrorCode());
+        assertNotNull(respondJson);
     }
 
     @Test
@@ -175,11 +202,9 @@ class UtilsControllerTest {
         MockHttpResponse response = new MockHttpResponse();
         dispatcher.invoke(request, response);
 
-        assertEquals(200, response.getStatus());
+        assertEquals(400, response.getStatus());
         String respondJson = response.getContentAsString();
-        Error error = mapper.readValue(respondJson, new TypeReference<>(){});
-        assertNotNull(error.getErrorDescription());
-        assertEquals(2003, error.getNewErrorCode());
+        assertNotNull(respondJson);
     }
 
     @Test

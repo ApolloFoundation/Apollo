@@ -38,8 +38,8 @@ public class NewApiRegistry {
         apis.put("setAPIProxyPeer", "/rest/networking/peer/setproxy"); //POST
 
 
-        apis.put("encodeQRCode", "/rest/utils/qrcode/encode"); //POST
-        apis.put("decodeQRCode", "/rest/utils/qrcode/decode"); //POST
+        apis.put("encodeQRCode", "/rest/utils/qrcode/encoding"); //POST
+        apis.put("decodeQRCode", "/rest/utils/qrcode/decoding"); //POST
 //        apis.put("detectMimeType", "/rest/utils/detect/mime-type"); //POST
         apis.put("fullHashToId", "/rest/utils/fullhash/toid"); //GET
         apis.put("hexConvert", "/rest/utils/convert/hex"); //GET

@@ -8,6 +8,7 @@ import javax.annotation.security.PermitAll;
 import javax.imageio.ImageIO;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.ws.rs.Consumes;
@@ -36,7 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import com.apollocurrency.aplwallet.api.dto.utils.DecodeQRCodeRequestDto;
+import com.apollocurrency.aplwallet.api.request.DecodeQRCodeRequestForm;
 import com.apollocurrency.aplwallet.api.dto.utils.DetectMimeTypeDto;
 import com.apollocurrency.aplwallet.api.dto.utils.FullHashToIdDto;
 import com.apollocurrency.aplwallet.api.dto.utils.HashDto;
@@ -80,7 +81,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.hibernate.validator.constraints.Range;
 import org.jboss.resteasy.annotations.Form;
 import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
 import org.jboss.resteasy.plugins.providers.multipart.InputPart;
@@ -94,6 +94,7 @@ import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataInput;
 @Path("/utils")
 @OpenAPIDefinition(info = @Info(description = "Provide several utility methods"))
 @Singleton
+@PermitAll
 public class UtilsController {
 
     private BlockchainConfig blockchainConfig;
@@ -103,7 +104,7 @@ public class UtilsController {
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig);
     }
 
-    @Path("/qrcode/encode")
+    @Path("/qrcode/encoding")
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
@@ -176,7 +177,7 @@ public class UtilsController {
         return response.bind(dto).build();
     }
 
-    @Path("/qrcode/decode")
+    @Path("/qrcode/decoding")
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
@@ -192,15 +193,12 @@ public class UtilsController {
     @PermitAll
     public Response decodeQRCode(
         @Parameter(name = "qrCodeBase64", description = "A base64 string encoded from an image of a QR code", required = true,
-            schema = @Schema(implementation = DecodeQRCodeRequestDto.class)
+            schema = @Schema(implementation = DecodeQRCodeRequestForm.class)
         )
-        @Form DecodeQRCodeRequestDto requestDto
+        @Form @Valid DecodeQRCodeRequestForm requestDto
     ) {
         log.debug("Started decodeQRCode: qrCodeBase64: \t{}", requestDto);
         ResponseBuilder response = ResponseBuilder.startTiming();
-        if (StringUtils.isEmpty(requestDto.qrCodeBase64)) {
-            return response.error(ApiErrors.MISSING_PARAM, "qrCodeBase64").build();
-        }
         QrDecodeDto dto = new QrDecodeDto();
         try {
             BinaryBitmap binaryBitmap = new BinaryBitmap(
@@ -493,8 +491,8 @@ public class UtilsController {
         tags = {"utility"},
         responses = {
             @ApiResponse(responseCode = "200", description = "Successful execution",
-                content = @Content(mediaType = "application/json",
-                    schema = @Schema(implementation = HashDto.class)))
+                content = @Content(mediaType = "application/json"/*,
+                    schema = @Schema(implementation = HashDto.class)*/))
         })
     public Response hashByAlgorithm(
         @Parameter(name = "hashAlgorithm", description = "Valid Algorithm from available list", required = true,
