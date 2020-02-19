@@ -413,6 +413,7 @@ public final class JSONData {
         return result;
     }
 
+    @Deprecated
     public static JSONObject getAccountsStatistic(int numberOfAccounts) {
         //using one connection for 4 queries
         Connection con = null;
@@ -434,6 +435,7 @@ public final class JSONData {
         }
     }
 
+    @Deprecated
     private static JSONObject accounts(DbIterator<Account> topAccountsIterator, long totalAmountOnTopAccounts, long totalSupply, long totalAccounts,
                                        int numberOfAccounts) {
         JSONObject result = new JSONObject();
@@ -1297,6 +1299,7 @@ public final class JSONData {
         json.put("errorDescription", error + e.getMessage());
     }
 
+    @Deprecated
     static void putAccount(JSONObject json, String name, long accountId, boolean isPrivate) {
         json.put(name, Long.toUnsignedString(accountId));
         if (isPrivate) {
@@ -1306,6 +1309,7 @@ public final class JSONData {
         json.put(name + "RS", Convert2.rsAccount(accountId));
     }
 
+    @Deprecated
     public static void putAccount(JSONObject json, String name, long accountId) {
         putAccount(json, name, accountId, false);
     }

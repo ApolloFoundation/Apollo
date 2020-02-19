@@ -318,6 +318,7 @@ public class Account {
         }
     }
 
+    @Deprecated
     public  static DbIterator<Account> getTopHolders(Connection con, int numberOfTopAccounts) {
         try {
             return accountTable.getTopHolders(con, numberOfTopAccounts);
