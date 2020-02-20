@@ -14,6 +14,7 @@ import javax.ws.rs.core.Response;
 import java.util.Objects;
 
 import com.apollocurrency.aplwallet.api.dto.info.AccountsCountDto;
+import com.apollocurrency.aplwallet.api.dto.info.BlockchainStatusDto;
 import com.apollocurrency.aplwallet.apl.core.rest.RestParameters;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
@@ -26,7 +27,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Path("/server/info")
+@Path("/server")
 public class ServerInfoController {
     private ServerInfoService serverInfoService;
 
@@ -38,7 +39,7 @@ public class ServerInfoController {
     public ServerInfoController() {
     }
 
-    @Path("/count")
+    @Path("/info/count")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
@@ -62,6 +63,26 @@ public class ServerInfoController {
         int numberOfAccountsMax = Math.max(numberOfAccounts, Constants.MIN_TOP_ACCOUNTS_NUMBER);
 
         AccountsCountDto dto = serverInfoService.getAccountsStatistic(numberOfAccountsMax);
+        log.debug("counts result : {}", dto);
+        return response.bind(dto).build();
+    }
+
+    @Path("/blockchain/status")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+        summary = "Returns statistics Account information",
+        description = "Returns statistics information about specified count of account",
+        tags = {"info"},
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Successful execution",
+                content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = BlockchainStatusDto.class)))
+        }
+    )
+    public Response blockchainStatus() {
+        ResponseBuilder response = ResponseBuilder.startTiming();
+        BlockchainStatusDto dto = serverInfoService.getBlockchainStatus();
         log.debug("counts result : {}", dto);
         return response.bind(dto).build();
     }

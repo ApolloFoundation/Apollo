@@ -13,7 +13,9 @@ import java.net.URISyntaxException;
 
 import com.apollocurrency.aplwallet.api.dto.info.AccountEffectiveBalanceDto;
 import com.apollocurrency.aplwallet.api.dto.info.AccountsCountDto;
+import com.apollocurrency.aplwallet.api.dto.info.BlockchainStatusDto;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.peer.BlockchainState;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -39,6 +41,7 @@ class ServerInfoControllerTest {
     private static Dispatcher dispatcher;
 
     private static String accountCountUri = "/server/info/count";
+    private static String blockchainStatusUri = "/server/blockchain/status";
 
     @BeforeEach
     void setup(){
@@ -84,5 +87,25 @@ class ServerInfoControllerTest {
         assertEquals(1, dtoResult.topHolders.size());
     }
 
+    @Test
+    void blockchainStatus_SUCCESS() throws URISyntaxException, IOException {
+        // prepare data
+        BlockchainStatusDto dto = new BlockchainStatusDto("1.48.1", "1.2", 123, BlockchainState.UP_TO_DATE.toString());
+        doReturn(dto).when(serverInfoService).getBlockchainStatus();
+        // init mocks
+        ServerInfoController controller = new ServerInfoController(serverInfoService);
+        dispatcher.getRegistry().addSingletonResource(controller);
+        // call
+        String uri = blockchainStatusUri;
+        MockHttpRequest request = MockHttpRequest.get(uri);
+        MockHttpResponse response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+        // check
+        assertEquals(200, response.getStatus());
+        String respondJson = response.getContentAsString();
+        BlockchainStatusDto dtoResult = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(dtoResult.application);
+        assertNotNull(dtoResult.version);
+    }
 
 }
