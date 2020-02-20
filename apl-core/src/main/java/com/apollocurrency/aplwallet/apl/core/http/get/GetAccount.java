@@ -37,7 +37,6 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.model.Balances;
-import com.apollocurrency.aplwallet.apl.core.rest.service.AccountBalanceService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONArray;
@@ -56,7 +55,6 @@ public final class GetAccount extends AbstractAPIRequestHandler {
         super(new APITag[] {APITag.ACCOUNTS}, "account", "includeLessors", "includeAssets", "includeCurrencies", "includeEffectiveBalance");
     }
 
-    private AccountBalanceService accountBalanceService = CDI.current().select(AccountBalanceService.class).get();
     private AccountInfoService accountInfoService = CDI.current().select(AccountInfoService.class).get();
     private AccountLeaseService accountLeaseService = CDI.current().select(AccountLeaseService.class).get();
     private AccountAssetService accountAssetService = CDI.current().select(AccountAssetService.class).get();
@@ -71,7 +69,7 @@ public final class GetAccount extends AbstractAPIRequestHandler {
         boolean includeCurrencies = "true".equalsIgnoreCase(req.getParameter("includeCurrencies"));
         boolean includeEffectiveBalance = "true".equalsIgnoreCase(req.getParameter("includeEffectiveBalance"));
 
-        Balances balances = accountBalanceService.getAccountBalances(account, includeEffectiveBalance);
+        Balances balances = lookupAccountService().getAccountBalances(account, includeEffectiveBalance);
 
         JSONObject response = balances.balanceToJson();
         JSONData.putAccount(response, "account", account.getId());

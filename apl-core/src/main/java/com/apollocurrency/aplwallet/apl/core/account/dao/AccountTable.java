@@ -35,12 +35,13 @@ import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
 @Singleton
 public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
     private static final LongKeyFactory<Account> accountDbKeyFactory = new LongKeyFactory<Account>("id") {
-
         @Override
         public DbKey newKey(Account account) {
-            return account.getDbKey() == null ? newKey(account.getId()) : account.getDbKey();
+            if(account.getDbKey() == null){
+                account.setDbKey(super.newKey(account.getId()));
+            }
+            return  account.getDbKey();
         }
-
     };
 
     public static DbKey newKey(long id){

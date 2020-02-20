@@ -104,7 +104,6 @@ class AccountServiceTest {
         Account account = accountService.getAccount(accountId);
         assertNull(account);
 
-        doReturn(newAccount).when(accountTable).newEntity(dbKey);
         doReturn(testData.PUBLIC_KEY1).when(accountPublicKeyService).getPublicKey(dbKey);
         account = accountService.getAccount(accountId);
         assertEquals(testData.PUBLIC_KEY1, account.getPublicKey());
@@ -131,7 +130,6 @@ class AccountServiceTest {
         long accountId = testData.PUBLIC_KEY1.getAccountId();
         DbKey dbKey = AccountTable.newKey(accountId);
         Account newAccount = new Account(((LongKey) dbKey).getId(), dbKey);
-        doReturn(newAccount).when(accountTable).newEntity(dbKey);
         Account account = accountService.addOrGetAccount(accountId);
         assertEquals(newAccount, account);
         verify(accountPublicKeyService).insertNewPublicKey(dbKey);

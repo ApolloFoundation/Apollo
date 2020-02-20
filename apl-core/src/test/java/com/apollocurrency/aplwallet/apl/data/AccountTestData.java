@@ -52,27 +52,27 @@ public class AccountTestData {
     public Account newAccount = new Account(999L, ACC_14.getHeight()+1);
 
     /* AccountAsset */
-    public final AccountAsset ACC_ASS_0 = createAsset(2, 100, 10, 8, 8, 42716, true);
-    public final AccountAsset ACC_ASS_1 = createAsset(3, 110, 10, 2, 2, 42716 , true);
-    public final AccountAsset ACC_ASS_2 = createAsset(4, 120, 20, 1, 1, 74579 , true);
-    public final AccountAsset ACC_ASS_3 = createAsset(7, 130, 30, 10000000000000L, 10000000000000L, 103547, true);
-    public final AccountAsset ACC_ASS_4 = createAsset(9, 140, 30, 200000000000000L, 199690000000000L, 104313, true);
-    public final AccountAsset ACC_ASS_5 = createAsset(11, 150, 40, 100000000, 0, 106009, true);
-    public final AccountAsset ACC_ASS_6 = createAsset(15, 160, 50, 1000000000, 1000000000, 115621, true);
-    public final AccountAsset ACC_ASS_7 = createAsset(16, 170, 50, 1000000000, 1000000000, 115621, true);
-    public final AccountAsset ACC_ASS_8 = createAsset(17, 180, 50, 1000000000, 1000000000, 115621, true);
-    public final AccountAsset ACC_ASS_9 = createAsset(18, 190, 50, 997000000000L, 997000000000L, 115625, true);
-    public final AccountAsset ACC_ASS_10= createAsset(21, 200, 60, 50000, 1000, 135786, true);
-    public final AccountAsset ACC_ASS_11= createAsset(24, 210, 70, 1, 1, 141149, true);
-    public final AccountAsset ACC_ASS_12= createAsset(26, 220, 80, 1, 1, 157464, true);
-    public final AccountAsset ACC_ASS_13= createAsset(27, 220, 90, 1, 1, 161462, true);
-    public final AccountAsset ACC_ASS_14= createAsset(28, 230, 100, 1, 1, 163942, true);
+    public final AccountAsset ACC_ASSET_0 = createAsset(2, 100, 10, 8, 8, 42716, true);
+    public final AccountAsset ACC_ASSET_1 = createAsset(3, 110, 10, 2, 2, 42716 , true);
+    public final AccountAsset ACC_ASSET_2 = createAsset(4, 120, 20, 1, 1, 74579 , true);
+    public final AccountAsset ACC_ASSET_3 = createAsset(7, 130, 30, 10000000000000L, 10000000000000L, 103547, true);
+    public final AccountAsset ACC_ASSET_4 = createAsset(9, 140, 30, 200000000000000L, 199690000000000L, 104313, true);
+    public final AccountAsset ACC_ASSET_5 = createAsset(11, 150, 40, 100000000, 0, 106009, true);
+    public final AccountAsset ACC_ASSET_6 = createAsset(15, 160, 50, 1000000000, 1000000000, 115621, true);
+    public final AccountAsset ACC_ASSET_7 = createAsset(16, 170, 50, 1000000000, 1000000000, 115621, true);
+    public final AccountAsset ACC_ASSET_8 = createAsset(17, 180, 50, 1000000000, 1000000000, 115621, true);
+    public final AccountAsset ACC_ASSET_9 = createAsset(18, 190, 50, 997000000000L, 997000000000L, 115625, true);
+    public final AccountAsset ACC_ASSET_10 = createAsset(21, 200, 60, 50000, 1000, 135786, true);
+    public final AccountAsset ACC_ASSET_11 = createAsset(24, 210, 70, 1, 1, 141149, true);
+    public final AccountAsset ACC_ASSET_12 = createAsset(26, 220, 80, 1, 1, 157464, true);
+    public final AccountAsset ACC_ASSET_13 = createAsset(27, 220, 90, 1, 1, 161462, true);
+    public final AccountAsset ACC_ASSET_14 = createAsset(28, 230, 100, 1, 1, 163942, true);
 
-    public final int ASS_BLOCKCHAIN_HEIGHT = ACC_ASS_14.getHeight();
-    public final int ASS_BLOCKCHAIN_WRONG_HEIGHT = ACC_ASS_14.getHeight()+1;
+    public final int ASS_BLOCKCHAIN_HEIGHT = ACC_ASSET_14.getHeight();
+    public final int ASS_BLOCKCHAIN_WRONG_HEIGHT = ACC_ASSET_14.getHeight()+1;
 
-    public List<AccountAsset> ALL_ASSETS = List.of(ACC_ASS_0, ACC_ASS_1, ACC_ASS_2, ACC_ASS_3, ACC_ASS_4, ACC_ASS_5, ACC_ASS_6, ACC_ASS_7, ACC_ASS_8, ACC_ASS_9, ACC_ASS_10, ACC_ASS_11, ACC_ASS_12, ACC_ASS_13, ACC_ASS_14);
-    public AccountAsset newAsset = new AccountAsset(ACC_1.getId(), ACC_ASS_14.getAssetId()+1, 0, 0, ACC_ASS_14.getHeight()+1);
+    public List<AccountAsset> ALL_ASSETS = List.of(ACC_ASSET_0, ACC_ASSET_1, ACC_ASSET_2, ACC_ASSET_3, ACC_ASSET_4, ACC_ASSET_5, ACC_ASSET_6, ACC_ASSET_7, ACC_ASSET_8, ACC_ASSET_9, ACC_ASSET_10, ACC_ASSET_11, ACC_ASSET_12, ACC_ASSET_13, ACC_ASSET_14);
+    public AccountAsset newAsset = new AccountAsset(ACC_1.getId(), ACC_ASSET_14.getAssetId()+1, 0, 0, ACC_ASSET_14.getHeight()+1);
 
     /* AccountCurrency */
     public final AccountCurrency ACC_CUR_0 = createCurrency(4, 100, 10, 2000000, 2000000, 9800, true);
@@ -130,7 +130,7 @@ public class AccountTestData {
     public final LedgerEntry ACC_LEDGER_ADD = createLedger(10055, 120, 1, -6084261423926609231L, 1, null, 100000000, 2692000001000000000L, -6084261423926609231L, 837, 1054648);
     public List<LedgerEntry> SAME_ACC_LEDGERS = List.of(ACC_LEDGER_5, ACC_LEDGER_6);
     public List<LedgerEntry> PENDING_LEDGERS = List.of(ACC_LEDGER_0, ACC_LEDGER_1, ACC_LEDGER_2, ACC_LEDGER_3, ACC_LEDGER_4, ACC_LEDGER_5, ACC_LEDGER_6, ACC_LEDGER_7, ACC_LEDGER_8);
-    public List<LedgerEntry> ALL_LEDGERS = List.of(ACC_LEDGER_0, ACC_LEDGER_1, ACC_LEDGER_3, ACC_LEDGER_4, ACC_LEDGER_5, ACC_LEDGER_6, ACC_LEDGER_7, ACC_LEDGER_8, ACC_LEDGER_9, ACC_LEDGER_10, ACC_LEDGER_11, ACC_LEDGER_12, ACC_LEDGER_13, ACC_LEDGER_14, ACC_LEDGER_15);
+    public List<LedgerEntry> ALL_LEDGERS = List.of(ACC_LEDGER_0, ACC_LEDGER_1, ACC_LEDGER_2, ACC_LEDGER_3, ACC_LEDGER_4, ACC_LEDGER_5, ACC_LEDGER_6, ACC_LEDGER_7, ACC_LEDGER_8, ACC_LEDGER_9, ACC_LEDGER_10, ACC_LEDGER_11, ACC_LEDGER_12, ACC_LEDGER_13, ACC_LEDGER_14, ACC_LEDGER_15);
     public LedgerEntry newLedger = new LedgerEntry(ACC_LEDGER_15.getEvent(), ACC_LEDGER_15.getEventId(), 9218185695807163289L, ACC_LEDGER_15.getHolding(), ACC_LEDGER_15.getHoldingId(), 10000L, 2691750001400000000L, ACC_LEDGER_15.getBlockId(), ACC_LEDGER_15.getTimestamp(), ACC_LEDGER_15.getHeight());
     public final int LEDGER_HEIGHT = 846;
 

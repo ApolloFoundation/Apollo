@@ -25,12 +25,8 @@ import java.util.Objects;
 //@Singleton
 public class GenesisPublicKeyTable extends EntityDbTable<PublicKey> {
     private static class PublicKeyDbFactory extends LongKeyFactory<PublicKey> {
-
-        private final Blockchain blockchain;
-
-        public PublicKeyDbFactory(String idColumn, Blockchain blockchain) {
+        public PublicKeyDbFactory(String idColumn) {
             super(idColumn);
-            this.blockchain = blockchain;
         }
 
         @Override
@@ -40,18 +36,13 @@ public class GenesisPublicKeyTable extends EntityDbTable<PublicKey> {
             }
             return publicKey.getDbKey();
         }
-
-        @Override
-        public PublicKey newEntity(DbKey dbKey) {
-            return new PublicKey(((LongKey) dbKey).getId(), null, blockchain.getHeight());
-        }
     }
 
     private final Blockchain blockchain;
 
     //@Inject
     public GenesisPublicKeyTable(Blockchain blockchain) {
-        super("genesis_public_key", new PublicKeyDbFactory("account_id", blockchain), false, null, true);
+        super("genesis_public_key", new PublicKeyDbFactory("account_id"), false, null, true);
         this.blockchain = Objects.requireNonNull(blockchain, "Blockchain cannot be null");
     }
 

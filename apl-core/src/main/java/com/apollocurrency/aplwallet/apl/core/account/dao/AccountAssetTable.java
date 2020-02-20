@@ -31,16 +31,19 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
 
     private static class AccountAssetDbKeyFactory extends LinkKeyFactory<AccountAsset> {
 
-        public AccountAssetDbKeyFactory(String idColumnA, String idColumnB) {
-            super(idColumnA, idColumnB);
+        public AccountAssetDbKeyFactory() {
+            super("account_id", "asset_id");
         }
 
         @Override
         public DbKey newKey(AccountAsset accountAsset) {
-            return accountAsset.getDbKey() == null ? newKey(accountAsset.getAccountId(), accountAsset.getAssetId()) : accountAsset.getDbKey();
+            if (accountAsset.getDbKey() == null){
+                accountAsset.setDbKey(super.newKey(accountAsset.getAccountId(), accountAsset.getAssetId()));
+            }
+            return accountAsset.getDbKey();
         }
     }
-    private static final LinkKeyFactory<AccountAsset> accountAssetDbKeyFactory = new AccountAssetDbKeyFactory("account_id", "asset_id");
+    private static final LinkKeyFactory<AccountAsset> accountAssetDbKeyFactory = new AccountAssetDbKeyFactory();
 
     public static DbKey newKey(long idA, long idB){
         return accountAssetDbKeyFactory.newKey(idA,idB);

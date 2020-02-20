@@ -26,13 +26,14 @@ import java.sql.SQLException;
 @Singleton
 public class AccountCurrencyTable extends VersionedDeletableEntityDbTable<AccountCurrency> {
 
-    private static final LinkKeyFactory<AccountCurrency> accountCurrencyDbKeyFactory = new LinkKeyFactory<AccountCurrency>("account_id", "currency_id") {
-
+    private static final LinkKeyFactory<AccountCurrency> accountCurrencyDbKeyFactory = new LinkKeyFactory<>("account_id", "currency_id") {
         @Override
         public DbKey newKey(AccountCurrency accountCurrency) {
-            return accountCurrency.getDbKey() == null ? newKey(accountCurrency.getAccountId(), accountCurrency.getCurrencyId()) : accountCurrency.getDbKey();
+            if (accountCurrency.getDbKey() == null) {
+                accountCurrency.setDbKey(super.newKey(accountCurrency.getAccountId(), accountCurrency.getCurrencyId()));
+            }
+            return accountCurrency.getDbKey();
         }
-
     };
 
     public static DbKey newKey(long idA, long idB){

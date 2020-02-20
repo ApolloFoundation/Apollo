@@ -26,12 +26,13 @@ import java.sql.SQLException;
 public class AccountPropertyTable extends VersionedDeletableEntityDbTable<AccountProperty> {
 
     private static final LongKeyFactory<AccountProperty> accountPropertyDbKeyFactory = new LongKeyFactory<AccountProperty>("id") {
-
         @Override
         public DbKey newKey(AccountProperty accountProperty) {
-            return accountProperty.getDbKey() == null ? newKey(accountProperty.getId()) : accountProperty.getDbKey();
+            if(accountProperty.getDbKey() == null){
+                accountProperty.setDbKey(super.newKey(accountProperty.getId()));
+            }
+            return accountProperty.getDbKey();
         }
-
     };
 
     public static DbKey newKey(long id){

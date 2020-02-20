@@ -27,12 +27,7 @@ public class PublicKeyTable extends EntityDbTable<PublicKey> implements EntityDb
 
     private final Blockchain blockchain;
 
-    private static class PublicKeyDbFactory extends LongKeyFactory<PublicKey> {
-
-        public PublicKeyDbFactory(String idColumn) {
-            super(idColumn);
-        }
-
+    private static final LongKeyFactory<PublicKey> KEY_FACTORY = new LongKeyFactory<>("account_id") {
         @Override
         public DbKey newKey(PublicKey publicKey) {
             if (publicKey.getDbKey() == null) {
@@ -40,15 +35,15 @@ public class PublicKeyTable extends EntityDbTable<PublicKey> implements EntityDb
             }
             return publicKey.getDbKey();
         }
-    }
+    };
 
     public PublicKeyTable(Blockchain blockchain) {
-        super("public_key", new PublicKeyDbFactory("account_id"), true, null, true);
+        super("public_key", KEY_FACTORY, true, null, true);
         this.blockchain = Objects.requireNonNull(blockchain, "Blockchain cannot be null");
     }
 
     public DbKey newKey(long id){
-        return ((LongKeyFactory<PublicKey>)keyFactory).newKey(id);
+        return KEY_FACTORY.newKey(id);
     }
 
     @Override
