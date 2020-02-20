@@ -74,18 +74,11 @@ public class ServerInfoService {
         AccountsCountDto dto = new AccountsCountDto();
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection()) {
-//            long totalSupply = AccountTable.getTotalSupply(con);
             long totalSupply = accountTable.getTotalSupply(con);
-//            long totalAccounts = AccountTable.getTotalNumberOfAccounts(con);
             long totalAccounts = accountTable.getTotalNumberOfAccounts(con);
-//            long totalAmountOnTopAccounts = AccountTable.getTotalAmountOnTopAccounts(con, numberOfAccounts);
             long totalAmountOnTopAccounts = accountTable.getTotalAmountOnTopAccounts(con, numberOfAccounts);
-//            DbIterator<Account> topHolders = accountTable.getTopHolders(con, numberOfAccounts);
-//            for (Account account : topHolders) {
-//                return accounts(topHolders, totalAmountOnTopAccounts, totalSupply, totalAccounts, numberOfAccounts);
-//            }
             try(DbIterator<Account> topHoldersIterator = accountTable.getTopHolders(con, numberOfAccounts)) {
-                accounts(dto, topHoldersIterator, totalAmountOnTopAccounts, totalSupply, totalAccounts, numberOfAccounts);
+                composeAccountCountDto(dto, topHoldersIterator, totalAmountOnTopAccounts, totalSupply, totalAccounts, numberOfAccounts);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -93,40 +86,24 @@ public class ServerInfoService {
         return dto;
     }
 
-    private AccountsCountDto accounts(AccountsCountDto dto, DbIterator<Account> topAccountsIterator,
-                              long totalAmountOnTopAccounts, long totalSupply,
-                              long totalAccounts, int numberOfAccounts) {
-//        JSONObject result = new JSONObject();
-//        result.put("totalSupply", totalSupply);
+    private AccountsCountDto composeAccountCountDto(AccountsCountDto dto, DbIterator<Account> topAccountsIterator,
+                                                    long totalAmountOnTopAccounts, long totalSupply,
+                                                    long totalAccounts, int numberOfAccounts) {
         dto.totalSupply = totalSupply;
         dto.totalNumberOfAccounts = totalAccounts;
         dto.numberOfTopAccounts = numberOfAccounts;
         dto.totalAmountOnTopAccounts = totalAmountOnTopAccounts;
-//        JSONArray holders = new JSONArray();
         while (topAccountsIterator.hasNext()) {
             Account account = topAccountsIterator.next();
-//            JSONObject accountJson = JSONData.accountBalance(account, false);
             AccountEffectiveBalanceDto accountJson = accountBalance(account, false, blockchain.getHeight());
-//            JSONData.putAccount(accountJson, "account", account.getId(), false);
             putAccountNameInfo(accountJson, account.getId(), false);
             dto.topHolders.add(accountJson);
         }
-//        result.put("topHolders", holders);
         return dto;
     }
     private AccountEffectiveBalanceDto accountBalance(Account account, boolean includeEffectiveBalance, int height) {
         AccountEffectiveBalanceDto json = new AccountEffectiveBalanceDto();
         if (account != null) {
-/*
-            json.balanceATM = 0;
-            json.put("unconfirmedBalanceATM", "0");
-            json.put("forgedBalanceATM", "0");
-            if (includeEffectiveBalance) {
-                json.put("effectiveBalanceAPL", "0");
-                json.put("guaranteedBalanceATM", "0");
-            }
-        } else {
-*/
             json.balanceATM = account.getBalanceATM();
             json.unconfirmedBalanceATM = account.getUnconfirmedBalanceATM();
             json.forgedBalanceATM = account.getForgedBalanceATM();
