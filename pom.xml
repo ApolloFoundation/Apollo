@@ -5,7 +5,7 @@
 
   <groupId>com.apollocurrency</groupId>
   <artifactId>apollo-wallet</artifactId>
-  <version>1.41.14</version>
+  <version>1.41.28</version>
   <packaging>pom</packaging>
   <name>Apollo wallet</name>
 
@@ -19,7 +19,7 @@
       <id>central</id>
       <name>Maven Repository Switchboard</name>
       <layout>default</layout>
-      <url>http://repo1.maven.org/maven2</url>
+      <url>https://repo1.maven.org/maven2</url>
       <snapshots>
         <enabled>false</enabled>
       </snapshots>
@@ -63,15 +63,15 @@
         <!-- cross-platform zip distribution -->
         <zipname>apollo-wallet</zipname>
         <!--Dependency Versions-->
-      <web-wallet.version>2.5.48</web-wallet.version>
+      <web-wallet.version>2.5.52</web-wallet.version>
         <!--Web-->
         <servlet-api.version>3.1.0</servlet-api.version>
         <!--  -->
-        <antifraud.version>1.0.6</antifraud.version>
+        <antifraud.version>1.0.7</antifraud.version>
 
     <!--Crypto-->
 
-    <fbcrypto.version>1.2.7</fbcrypto.version>
+    <fbcrypto.version>1.2.8</fbcrypto.version>
     <bcprov.version>1.61</bcprov.version>
 
 
@@ -190,6 +190,10 @@
           <exclusion>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.junit</groupId>
+            <artifactId>junit-bom</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
