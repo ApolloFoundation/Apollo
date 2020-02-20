@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("Forging")
-@Epic(value = "Dex")
+@Epic(value = "Forging")
 public class TestForging extends TestBaseOld {
 
 

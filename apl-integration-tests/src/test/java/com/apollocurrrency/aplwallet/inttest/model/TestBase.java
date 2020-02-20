@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.api.response.GetPeersIpResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.RestHelper;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableMap;
 import io.qameta.allure.Step;
 import io.restassured.RestAssured;
 import io.restassured.config.HttpClientConfig;
@@ -42,6 +43,7 @@ import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccount
 import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getBalance;
 import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getForging;
 import static com.apollocurrrency.aplwallet.inttest.model.RequestType.startForging;
+import static com.github.automatedowl.tools.AllureEnvironmentWriter.allureEnvironmentWriter;
 import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -62,8 +64,8 @@ public abstract class TestBase implements ITest {
             .httpClient(HttpClientConfig.httpClientConfig()
                 .setParam(CoreConnectionPNames.CONNECTION_TIMEOUT, 10000)
                 .setParam(CoreConnectionPNames.SO_TIMEOUT, 10000));
-
         TestConfiguration.getTestConfiguration();
+
         retryPolicy = new RetryPolicy()
                 .retryWhen(false)
                 .withMaxRetries(50)
@@ -71,6 +73,12 @@ public abstract class TestBase implements ITest {
         restHelper = new RestHelper();
         ClassLoader classLoader = TestBase.class.getClassLoader();
         String secretFilePath = Objects.requireNonNull(classLoader.getResource(TestConfiguration.getTestConfiguration().getVaultWallet().getUser())).getPath();
+
+        allureEnvironmentWriter(
+            ImmutableMap.<String, String>builder()
+                .put("URL", TestConfiguration.getTestConfiguration().getBaseURL())
+                .build());
+
         try {
             importSecretFileSetUp(secretFilePath, "1");
            // startForging();
