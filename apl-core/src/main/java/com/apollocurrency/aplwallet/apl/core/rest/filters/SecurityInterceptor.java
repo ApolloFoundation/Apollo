@@ -60,6 +60,15 @@ public class SecurityInterceptor implements ContainerRequestFilter {
         /*if (true){ return; }*/ // don't remove, use for debugging
 
         //Access allowed for all
+        if( info.getResourceClass().isAnnotationPresent(PermitAll.class)) {
+            return;
+        }
+        //Access denied for all
+        if( info.getResourceClass().isAnnotationPresent(PermitAll.class)) {
+            return;
+        }
+
+        //Access allowed for all
         if( method.isAnnotationPresent(PermitAll.class)) {
             return;
         }
