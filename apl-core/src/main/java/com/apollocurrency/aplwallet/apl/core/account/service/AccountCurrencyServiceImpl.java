@@ -20,9 +20,6 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEventBinding.literal;
 import static com.apollocurrency.aplwallet.apl.core.account.service.AccountService.checkBalance;
 import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
@@ -99,8 +96,8 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
     }
 
     @Override
-    public List<AccountCurrency> getCurrencies(Account account) {
-        return getCurrencies(account, 0, -1);
+    public List<AccountCurrency> getCurrenciesByAccount(Account account) {
+        return getCurrenciesByAccount(account, 0, -1);
     }
 
     @Override

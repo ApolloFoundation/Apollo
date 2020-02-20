@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountCurrencyConve
 import com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.WalletKeysConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.service.AccountBalanceService;
+import com.apollocurrency.aplwallet.apl.core.rest.service.OrderService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -140,7 +140,7 @@ class AccountControllerTest extends AbstractEndpointTest{
     private AccountAssetConverter accountAssetConverter = mock(AccountAssetConverter.class);
     private TransactionConverter transactionConverter = new TransactionConverter(blockchain, new UnconfirmedTransactionConverter());
     private AccountBlockConverter accountBlockConverter = new AccountBlockConverter(blockchain, transactionConverter, mock(PhasingPollService.class));
-    private AccountBalanceService accountBalanceService = mock(AccountBalanceService.class);
+    private OrderService orderService = mock(OrderService.class);
 
     private Account2FAHelper account2FAHelper = mock(Account2FAHelper.class);
 
@@ -165,7 +165,7 @@ class AccountControllerTest extends AbstractEndpointTest{
                 new WalletKeysConverter(),
                 new Account2FADetailsConverter(),
                 new Account2FAConverter(),
-                accountBalanceService,
+            orderService,
                 restParametersParser
                 );
 
@@ -406,7 +406,7 @@ class AccountControllerTest extends AbstractEndpointTest{
     void getAccountAssetCount() throws URISyntaxException, IOException {
         int count = 38;
 
-        doReturn(count).when(accountAssetService).getAccountAssetCount(ACCOUNT_ID, CURRENT_HEIGHT);
+        doReturn(count).when(accountAssetService).getCountByAccount(ACCOUNT_ID, CURRENT_HEIGHT);
         MockHttpResponse response = sendGetRequest("/accounts/account/assetCount?account="+ACCOUNT_ID+"&height="+CURRENT_HEIGHT);
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
@@ -445,7 +445,7 @@ class AccountControllerTest extends AbstractEndpointTest{
     @Test
     void getAccountAssets_getList() throws URISyntaxException, IOException {
         endpoint.setAccountAssetConverter(new AccountAssetConverter());
-        doReturn(List.of(accountAsset)).when(accountAssetService).getAssetAccounts(ACCOUNT_ID, CURRENT_HEIGHT, 0, -1);
+        doReturn(List.of(accountAsset)).when(accountAssetService).getAssetsByAccount(ACCOUNT_ID, CURRENT_HEIGHT, 0, -1);
 
         MockHttpResponse response = sendGetRequest("/accounts/account/assets?account="+ACCOUNT_ID+"&height="+CURRENT_HEIGHT);
 
@@ -498,7 +498,7 @@ class AccountControllerTest extends AbstractEndpointTest{
     void getAccountCurrencyCount() throws URISyntaxException, IOException {
         int count = 58;
 
-        doReturn(count).when(accountCurrencyService).getAccountCurrencyCount(ACCOUNT_ID, CURRENT_HEIGHT);
+        doReturn(count).when(accountCurrencyService).getCountByAccount(ACCOUNT_ID, CURRENT_HEIGHT);
         MockHttpResponse response = sendGetRequest("/accounts/account/currencyCount?account="+ACCOUNT_ID+"&height="+CURRENT_HEIGHT);
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
@@ -538,7 +538,7 @@ class AccountControllerTest extends AbstractEndpointTest{
     @Test
     void getAccountCurrencies_getList() throws URISyntaxException, IOException {
         endpoint.setAccountCurrencyConverter(new AccountCurrencyConverter());
-        doReturn(List.of(accountCurrency)).when(accountCurrencyService).getCurrencies(ACCOUNT_ID, CURRENT_HEIGHT, 0, -1);
+        doReturn(List.of(accountCurrency)).when(accountCurrencyService).getCurrenciesByAccount(ACCOUNT_ID, CURRENT_HEIGHT, 0, -1);
 
         MockHttpResponse response = sendGetRequest("/accounts/account/currencies?account="+ACCOUNT_ID+"&height="+CURRENT_HEIGHT);
 

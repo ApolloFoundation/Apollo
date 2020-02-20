@@ -46,7 +46,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountCurrencyConve
 import com.apollocurrency.aplwallet.apl.core.rest.converter.WalletKeysConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FA;
 import com.apollocurrency.aplwallet.apl.core.rest.parameter.AccountIdParameter;
-import com.apollocurrency.aplwallet.apl.core.rest.service.AccountBalanceService;
+import com.apollocurrency.aplwallet.apl.core.rest.service.OrderService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -112,7 +112,7 @@ public class AccountController {
     @Inject @Setter
     private Account2FAConverter faConverter;
     @Inject @Setter
-    private AccountBalanceService accountBalanceService;
+    private OrderService orderService;
     @Inject @Setter
     private RestParametersParser restParametersParser;
 
@@ -128,7 +128,7 @@ public class AccountController {
                              WalletKeysConverter walletKeysConverter,
                              Account2FADetailsConverter faDetailsConverter,
                              Account2FAConverter faConverter,
-                             AccountBalanceService accountBalanceService,
+                             OrderService orderService,
                              RestParametersParser restParametersParser) {
 
         this.blockchain = blockchain;
@@ -143,7 +143,7 @@ public class AccountController {
         this.walletKeysConverter = walletKeysConverter;
         this.faDetailsConverter = faDetailsConverter;
         this.faConverter = faConverter;
-        this.accountBalanceService = accountBalanceService;
+        this.orderService = orderService;
         this.restParametersParser = restParametersParser;
     }
 
@@ -186,11 +186,11 @@ public class AccountController {
             converter.addAccountLessors(dto, lessors, includeEffectiveBalance);
         }
         if(includeAssets){
-            List<AccountAsset> assets = accountAssetService.getAssetAccounts(account, 0, -1);
+            List<AccountAsset> assets = accountAssetService.getAssetsByAccount(account, 0, -1);
             converter.addAccountAssets(dto, assets);
         }
         if(includeCurrencies){
-            List<AccountCurrency> currencies = accountCurrencyService.getCurrencies(account);
+            List<AccountCurrency> currencies = accountCurrencyService.getCurrenciesByAccount(account);
             converter.addAccountCurrencies(dto, currencies);
         }
 
@@ -250,7 +250,7 @@ public class AccountController {
         int height = restParametersParser.validateHeight(heightParam);
 
         AccountAssetsCountResponse dto = new AccountAssetsCountResponse();
-        dto.setNumberOfAssets(accountAssetService.getAccountAssetCount(accountId, height));
+        dto.setNumberOfAssets(accountAssetService.getCountByAccount(accountId, height));
 
         return response.bind(dto).build();
     }
@@ -282,7 +282,7 @@ public class AccountController {
         long accountId  = accountIdParameter.get();
         int height = restParametersParser.validateHeight(heightParam);
         if (assetId == null || assetId == 0) {
-            List<AccountAsset> accountAssets = accountAssetService.getAssetAccounts(accountId, height, 0, -1);
+            List<AccountAsset> accountAssets = accountAssetService.getAssetsByAccount(accountId, height, 0, -1);
             List<AccountAssetDTO> accountAssetDTOList = accountAssetConverter.convert(accountAssets);
             if(includeAssetInfo){
                 accountAssetDTOList.forEach(dto -> accountAssetConverter.addAsset(dto, Asset.getAsset(dto.getAssetId())));
@@ -413,7 +413,7 @@ public class AccountController {
         long accountId  = accountIdParameter.get();
         int height = restParametersParser.validateHeight(heightParam);
 
-        Integer count = accountCurrencyService.getAccountCurrencyCount(accountId, height);
+        Integer count = accountCurrencyService.getCountByAccount(accountId, height);
 
         return response.bind(new AccountCurrencyCountResponse(count)).build();
     }
@@ -442,7 +442,7 @@ public class AccountController {
         long accountId  = accountIdParameter.get();
         int height = restParametersParser.validateHeight(heightParam);
         if (currencyId == null || currencyId == 0) {
-            List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrencies(accountId, height, 0, -1);
+            List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrenciesByAccount(accountId, height, 0, -1);
             List<AccountCurrencyDTO> accountCurrencyDTOList = accountCurrencyConverter.convert(accountCurrencies);
             if(includeCurrencyInfo){
                 accountCurrencyDTOList.forEach(dto -> accountCurrencyConverter
@@ -488,9 +488,9 @@ public class AccountController {
         long accountId  = accountIdParameter.get();
         List<Order.Ask> ordersByAccount;
         if ( assetIdParam == null || assetIdParam == 0 ) {
-            ordersByAccount = accountBalanceService.getAskOrdersByAccount(accountId, firstIndex, lastIndex);
+            ordersByAccount = orderService.getAskOrdersByAccount(accountId, firstIndex, lastIndex);
         }else{
-            ordersByAccount = accountBalanceService.getAskOrdersByAccountAsset(accountId, assetIdParam, firstIndex, lastIndex);
+            ordersByAccount = orderService.getAskOrdersByAccountAsset(accountId, assetIdParam, firstIndex, lastIndex);
         }
         List<String> ordersIdList = ordersByAccount.stream().map(ask -> Long.toUnsignedString(ask.getId())).collect(Collectors.toList());
 

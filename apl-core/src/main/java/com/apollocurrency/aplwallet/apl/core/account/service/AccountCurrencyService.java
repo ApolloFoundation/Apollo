@@ -10,8 +10,6 @@ import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 
 import java.util.List;
 
-import java.util.List;
-
 /**
  * @author andrew.zinchenko@gmail.com
  */
@@ -47,7 +45,7 @@ public interface AccountCurrencyService {
 
     List<AccountCurrency> getCurrenciesByCurrency(long currencyId, int height, int from, int to);
 
-    List<AccountCurrency> getCurrencies(Account account);
+    List<AccountCurrency> getCurrenciesByAccount(Account account);
 
     long getCurrencyUnits(Account account, long currencyId);
 

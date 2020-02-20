@@ -4,6 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.utils;
 
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.app.PassphraseGeneratorImpl;
@@ -16,7 +17,6 @@ import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
-import com.apollocurrency.aplwallet.apl.core.rest.service.AccountBalanceService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import lombok.extern.slf4j.Slf4j;
@@ -38,10 +38,10 @@ public class Account2FAHelper {
 
     private final ElGamalEncryptor elGamal;
     private final KeyStoreService keyStoreService;
-    private final AccountBalanceService accountService;
+    private final AccountService accountService;
 
     @Inject
-    public Account2FAHelper(TwoFactorAuthService service2FA,  KeyStoreService keyStoreService, ElGamalEncryptor elGamal, AccountBalanceService accountService) {
+    public Account2FAHelper(TwoFactorAuthService service2FA,  KeyStoreService keyStoreService, ElGamalEncryptor elGamal, AccountService accountService) {
         this.keyStoreService = keyStoreService;
         this.elGamal = elGamal;
         this.accountService = accountService;
