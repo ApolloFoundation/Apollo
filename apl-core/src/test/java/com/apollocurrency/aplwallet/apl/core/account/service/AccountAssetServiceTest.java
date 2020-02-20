@@ -17,7 +17,6 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventType;
 import com.apollocurrency.aplwallet.apl.core.monetary.service.AssetDividendService;
-import com.apollocurrency.aplwallet.apl.core.monetary.service.AssetDividendServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -28,6 +27,9 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.enterprise.event.Event;
 import java.util.Comparator;
@@ -47,15 +49,21 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @EnableWeld
+@ExtendWith(MockitoExtension.class)
 class AccountAssetServiceTest {
 
-    private Blockchain blockchain = mock(BlockchainImpl.class);
-    private AccountAssetTable accountAssetTable = mock(AccountAssetTable.class);
+    @Mock
+    private Blockchain blockchain;
+    @Mock
+    private AccountAssetTable accountAssetTable;
+    @Mock
+    private AccountService accountService;
+    @Mock
+    private AssetDividendService assetDividendService;
+
     private Event accountEvent = mock(Event.class);
     private Event accountAssetEvent = mock(Event.class);
     private Event ledgerEvent = mock(Event.class);
-    private AccountService accountService = mock(AccountService.class);
-    private AssetDividendService assetDividendService = mock(AssetDividendServiceImpl.class);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -96,7 +104,6 @@ class AccountAssetServiceTest {
         int height = 100_000;
         Event firedEventLedger = mock(Event.class);
         Block lastBlock = mock(Block.class);
-        doReturn(1L).when(lastBlock).getPreviousBlockId();
         doReturn(lastBlock).when(blockchain).getLastBlock();
         doReturn(height).when(lastBlock).getHeight();
         doReturn(height).when(blockchain).getHeight();
@@ -126,7 +133,6 @@ class AccountAssetServiceTest {
         int height = 100_000;
         Event firedEventLedger = mock(Event.class);
         Block lastBlock = mock(Block.class);
-        doReturn(1L).when(lastBlock).getPreviousBlockId();
         doReturn(lastBlock).when(blockchain).getLastBlock();
         doReturn(height).when(lastBlock).getHeight();
         doReturn(height).when(blockchain).getHeight();
@@ -169,7 +175,6 @@ class AccountAssetServiceTest {
         int height = 100_000;
         Event firedEventLedger = mock(Event.class);
         Block lastBlock = mock(Block.class);
-        doReturn(1L).when(lastBlock).getPreviousBlockId();
         doReturn(lastBlock).when(blockchain).getLastBlock();
         doReturn(height).when(lastBlock).getHeight();
         doReturn(height).when(blockchain).getHeight();
@@ -231,7 +236,7 @@ class AccountAssetServiceTest {
         int height = 100_000;
         Event firedEventLedger = mock(Event.class);
         Block lastBlock = mock(Block.class);
-        doReturn(1L).when(lastBlock).getPreviousBlockId();
+
         doReturn(lastBlock).when(blockchain).getLastBlock();
         doReturn(height).when(lastBlock).getHeight();
         doReturn(height).when(blockchain).getHeight();

@@ -75,27 +75,27 @@ public class AccountTestData {
     public AccountAsset newAsset = new AccountAsset(ACC_1.getId(), ACC_ASSET_14.getAssetId()+1, 0, 0, ACC_ASSET_14.getHeight()+1);
 
     /* AccountCurrency */
-    public final AccountCurrency ACC_CUR_0 = createCurrency(4, 100, 10, 2000000, 2000000, 9800, true);
-    public final AccountCurrency ACC_CUR_1 = createCurrency(5, 110, 10, 9899999998000000L, 9899999998000000L, 23208, true);
-    public final AccountCurrency ACC_CUR_2 = createCurrency(14, 120, 20, 100, 100, 99999, true);
-    public final AccountCurrency ACC_CUR_3 = createCurrency(18, 130, 20, 100, 100, 100237, true);
-    public final AccountCurrency ACC_CUR_4 = createCurrency(23, 140, 20, 100, 100, 101515, true);
-    public final AccountCurrency ACC_CUR_5 = createCurrency(25, 150, 20, 9800, 9800, 101976, true);
-    public final AccountCurrency ACC_CUR_6 = createCurrency(28, 160, 20, 10000, 10000, 103064, true);
-    public final AccountCurrency ACC_CUR_7 = createCurrency(33, 120, 30, 25000, 25000, 104087, true);
-    public final AccountCurrency ACC_CUR_8 = createCurrency(39, 170, 40, 10000000000L, 10000000000L, 107363, true);
-    public final AccountCurrency ACC_CUR_9 = createCurrency(41, 180, 50, 10000000000L, 10000000000L, 107380, true);
-    public final AccountCurrency ACC_CUR_10= createCurrency(42, 190, 60, 100000, 100000, 109087, true);
-    public final AccountCurrency ACC_CUR_11= createCurrency(47, 200, 20, 19979000, 19979000, 114982, true);
-    public final AccountCurrency ACC_CUR_12= createCurrency(48, 210, 20, 900, 900, 114982, true);
-    public final AccountCurrency ACC_CUR_13= createCurrency(56, 220, 70, 2000000000, 2000000000, 124550, true);
-    public final AccountCurrency ACC_CUR_14= createCurrency(57, 230, 80, 2000000000, 2000000000, 124607, true);
+    public final AccountCurrency CUR_0 = createCurrency(4, 100, 10, 2000000, 2000000, 9800, true);
+    public final AccountCurrency CUR_1 = createCurrency(5, 110, 10, 9899999998000000L, 9899999998000000L, 23208, true);
+    public final AccountCurrency CUR_2 = createCurrency(14, 120, 20, 100, 100, 99999, true);
+    public final AccountCurrency CUR_3 = createCurrency(18, 130, 20, 100, 100, 100237, true);
+    public final AccountCurrency CUR_4 = createCurrency(23, 140, 20, 100, 100, 101515, true);
+    public final AccountCurrency CUR_5 = createCurrency(25, 150, 20, 9800, 9800, 101976, true);
+    public final AccountCurrency CUR_6 = createCurrency(28, 160, 20, 10000, 10000, 103064, true);
+    public final AccountCurrency CUR_7 = createCurrency(33, 120, 30, 25000, 25000, 104087, true);
+    public final AccountCurrency CUR_8 = createCurrency(39, 170, 40, 10000000000L, 10000000000L, 107363, true);
+    public final AccountCurrency CUR_9 = createCurrency(41, 180, 50, 10000000000L, 10000000000L, 107380, true);
+    public final AccountCurrency CUR_10 = createCurrency(42, 190, 60, 100000, 100000, 109087, true);
+    public final AccountCurrency CUR_11 = createCurrency(47, 200, 20, 19979000, 19979000, 114982, true);
+    public final AccountCurrency CUR_12 = createCurrency(48, 210, 20, 900, 900, 114982, true);
+    public final AccountCurrency CUR_13 = createCurrency(56, 220, 70, 2000000000, 2000000000, 124550, true);
+    public final AccountCurrency CUR_14 = createCurrency(57, 230, 80, 2000000000, 2000000000, 124607, true);
 
-    public final int CUR_BLOCKCHAIN_HEIGHT = ACC_CUR_14.getHeight();
-    public final int CUR_BLOCKCHAIN_WRONG_HEIGHT = ACC_CUR_14.getHeight()+1;
+    public final int CUR_BLOCKCHAIN_HEIGHT = CUR_14.getHeight();
+    public final int CUR_BLOCKCHAIN_WRONG_HEIGHT = CUR_14.getHeight()+1;
 
-    public List<AccountCurrency> ALL_CURRENCY = List.of(ACC_CUR_0, ACC_CUR_1, ACC_CUR_2, ACC_CUR_3, ACC_CUR_4, ACC_CUR_5, ACC_CUR_6, ACC_CUR_7, ACC_CUR_8, ACC_CUR_9, ACC_CUR_10, ACC_CUR_11, ACC_CUR_12, ACC_CUR_13, ACC_CUR_14);
-    public AccountCurrency newCurrency = new AccountCurrency(ACC_1.getId(), ACC_CUR_14.getCurrencyId()+1, 0, 0, ACC_CUR_14.getHeight()+1);
+    public List<AccountCurrency> ALL_CURRENCY = List.of(CUR_0, CUR_1, CUR_2, CUR_3, CUR_4, CUR_5, CUR_6, CUR_7, CUR_8, CUR_9, CUR_10, CUR_11, CUR_12, CUR_13, CUR_14);
+    public AccountCurrency newCurrency = new AccountCurrency(ACC_1.getId(), CUR_14.getCurrencyId()+1, 0, 0, CUR_14.getHeight()+1);
 
     /* AccountInfo */
     public final AccountInfo ACC_INFO_0 = createInfo(5, 100, "ZT", null, 3073, true);
