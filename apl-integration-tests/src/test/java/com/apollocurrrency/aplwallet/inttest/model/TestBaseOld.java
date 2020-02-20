@@ -98,7 +98,7 @@ public class TestBaseOld extends TestBase {
         try {
             inBlock = Failsafe.with(retryPolicy).get(() -> getTransaction(transaction).getConfirmations() >= 0);
         } catch (Exception e) {
-            fail("Transaction does't add to block. Transaction " + transaction + " Exception: " + e.getMessage());
+            fail("Exception! Transaction does't add to block. Transaction " + transaction + " Exception MSG: " + e.getMessage());
         }
         assertTrue(inBlock, String.format("Transaction %s in block: ", transaction));
         return inBlock;
