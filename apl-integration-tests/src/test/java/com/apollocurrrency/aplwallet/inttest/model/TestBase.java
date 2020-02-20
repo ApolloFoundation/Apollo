@@ -66,15 +66,15 @@ public abstract class TestBase implements ITest {
         TestConfiguration.getTestConfiguration();
         retryPolicy = new RetryPolicy()
                 .retryWhen(false)
-                .withMaxRetries(30)
+                .withMaxRetries(50)
                 .withDelay(5, TimeUnit.SECONDS);
         restHelper = new RestHelper();
         ClassLoader classLoader = TestBase.class.getClassLoader();
         String secretFilePath = Objects.requireNonNull(classLoader.getResource(TestConfiguration.getTestConfiguration().getVaultWallet().getUser())).getPath();
         try {
             importSecretFileSetUp(secretFilePath, "1");
-            startForging();
-            //startForgingSetUp();
+           // startForging();
+            startForgingSetUp();
             setUpTestData();
         } catch (Exception ex) {
             if (TestConfiguration.getTestConfiguration().getEnv().equals("localhost")){
