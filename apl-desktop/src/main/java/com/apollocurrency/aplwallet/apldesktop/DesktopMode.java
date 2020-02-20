@@ -118,9 +118,8 @@ public class DesktopMode {
             //String url = properties.getStringProperty("apl.APIURL");
             //TODO: This code was written when I was very tired, resolvin CDI NPE...
 
-            String[] APIPorts = {"6876", "7876"};
-            //String url = properties.getStringProperty("apl.APIURL");
-            String url = "http://localhost:" + APIPorts[new Random().nextInt(2)] + "/";
+             //String url = properties.getStringProperty("apl.APIURL");
+            String url = "http://localhost:7876/";
             Request request = new Request.Builder().url(url).build();
 
             Response response;

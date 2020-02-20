@@ -503,7 +503,7 @@ public final class Currency {
             return false;
         }
 
-        List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrencies(this.currencyId, 0, -1);
+        List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrenciesByAccount(this.currencyId, 0, -1);
         return accountCurrencies.isEmpty() || accountCurrencies.size() == 1 && accountCurrencies.get(0).getAccountId() == senderAccountId;
     }
 

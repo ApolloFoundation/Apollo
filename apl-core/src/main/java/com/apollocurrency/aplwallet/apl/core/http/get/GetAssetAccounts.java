@@ -51,7 +51,7 @@ public final class GetAssetAccounts extends AbstractAPIRequestHandler {
 
         JSONArray accountAssets = new JSONArray();
 
-        List<AccountAsset> assets = lookupAccountAssetService().getAssets(assetId, height, firstIndex, lastIndex);
+        List<AccountAsset> assets = lookupAccountAssetService().getAssetsByAssetId(assetId, height, firstIndex, lastIndex);
         assets.forEach(aa -> accountAssets.add(JSONData.accountAsset(aa, true, false)));
 
         JSONObject response = new JSONObject();

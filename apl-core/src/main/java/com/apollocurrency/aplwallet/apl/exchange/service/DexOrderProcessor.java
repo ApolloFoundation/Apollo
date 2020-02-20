@@ -773,9 +773,13 @@ public class DexOrderProcessor {
 
             for (DexOrder order : orders) {
                 try {
-                    String ethAddress = DexCurrencyValidator.isEthOrPaxAddress(order.getFromAddress()) ? order.getFromAddress() : order.getToAddress();
-                    if(dexSmartContractService.isDepositForOrderExist(ethAddress, order.getId())) {
-                        dexService.refundEthPaxFrozenMoney(passphrase, order, false);
+                    if (order.getFromAddress() == null && order.getToAddress() == null) {
+                        log.debug("Old format order: {}, account {}, skip processing", order.getId(), order.getAccountId());
+                    } else {
+                        String ethAddress = DexCurrencyValidator.isEthOrPaxAddress(order.getFromAddress()) ? order.getFromAddress() : order.getToAddress();
+                        if (dexSmartContractService.isDepositForOrderExist(ethAddress, order.getId())) {
+                            dexService.refundEthPaxFrozenMoney(passphrase, order, false);
+                        }
                     }
                 } catch (AplException.ExecutiveProcessException e) {
                     wasException = true;

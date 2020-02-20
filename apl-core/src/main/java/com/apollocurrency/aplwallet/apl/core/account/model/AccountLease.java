@@ -20,14 +20,14 @@ import java.sql.SQLException;
 @Getter @Setter
 public final class AccountLease extends VersionedDerivedEntity {
 
-    final long lessorId;
+    private final long lessorId;
 
-    long currentLesseeId;
-    int currentLeasingHeightFrom;
-    int currentLeasingHeightTo;
-    long nextLesseeId;
-    int nextLeasingHeightFrom;
-    int nextLeasingHeightTo;
+    private long currentLesseeId;
+    private int currentLeasingHeightFrom;
+    private int currentLeasingHeightTo;
+    private long nextLesseeId;
+    private int nextLeasingHeightFrom;
+    private int nextLeasingHeightTo;
 
     public AccountLease(long lessorId, int currentLeasingHeightFrom, int currentLeasingHeightTo, long currentLesseeId, int height) {
         super(null, height);

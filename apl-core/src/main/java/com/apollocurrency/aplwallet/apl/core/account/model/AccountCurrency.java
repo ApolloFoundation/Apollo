@@ -21,10 +21,10 @@ import java.sql.SQLException;
 @Getter @Setter
 public final class AccountCurrency extends VersionedDerivedEntity {
 
-    final long accountId;
-    final long currencyId;
-    long units;
-    long unconfirmedUnits;
+    private long accountId;
+    private final long currencyId;
+    private long units;
+    private long unconfirmedUnits;
 
     public AccountCurrency(long accountId, long currencyId, long quantityATU, long unconfirmedQuantityATU, int height) {
         super(null, height);

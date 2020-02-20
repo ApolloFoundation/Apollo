@@ -110,18 +110,6 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> implements Entity
         return blockchain;
     }
 
-
-    /**
-     * Create new entity or return existing from cache in transaction
-     * Current use case: caching complex entity, incremental entity update from multiple methods in one transaction
-     * Should be removed asap
-     */
-    @Deprecated
-    @Override
-    public T newEntity(DbKey dbKey) {
-        return keyFactory.newEntity(dbKey);
-    }
-
     @Override
     public T get(DbKey dbKey) {
         return get(dbKey, true);

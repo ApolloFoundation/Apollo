@@ -50,7 +50,7 @@ public final class GetCurrencyAccounts extends AbstractAPIRequestHandler {
         int height = HttpParameterParser.getHeight(req);
 
         JSONArray accountCurrencies = new JSONArray();
-        List<AccountCurrency>  accounts = lookupAccountCurrencyService().getCurrencyAccounts(currencyId, height, firstIndex, lastIndex);
+        List<AccountCurrency>  accounts = lookupAccountCurrencyService().getCurrenciesByCurrency(currencyId, height, firstIndex, lastIndex);
         accounts.forEach(accountCurrency -> accountCurrencies.add(JSONData.accountCurrency(accountCurrency, true, false)));
 
         JSONObject response = new JSONObject();

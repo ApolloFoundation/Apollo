@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventType;
@@ -23,6 +24,10 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.model.AplWalletKey;
+import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
+import com.apollocurrency.aplwallet.apl.core.model.Balances;
+import com.apollocurrency.aplwallet.apl.core.utils.AccountGeneratorUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.google.common.base.Preconditions;
@@ -98,7 +103,7 @@ public class AccountServiceImpl implements AccountService {
         if (account == null) {
             PublicKey publicKey = accountPublicKeyService.getPublicKey(dbKey);
             if (publicKey != null) {
-                account = accountTable.newEntity(dbKey);
+                account = new Account(id, dbKey);
                 account.setPublicKey(publicKey);
             }
         }
@@ -110,7 +115,7 @@ public class AccountServiceImpl implements AccountService {
         DbKey dbKey = AccountTable.newKey(id);
         Account account = accountTable.get(dbKey, height);
         if (account == null) {
-            PublicKey publicKey = accountPublicKeyService.loadPublicKey(dbKey, height);
+            PublicKey publicKey = accountPublicKeyService.loadPublicKeyFromDb(dbKey, height);
             if (publicKey != null) {
                 account = new Account(id, height);
                 account.setPublicKey(publicKey);
@@ -120,7 +125,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public Account reloadAccount(Account account) {
+    public Account getAccount(Account account) {
         return accountTable.get(account.getDbKey());
     }
 
@@ -164,7 +169,7 @@ public class AccountServiceImpl implements AccountService {
         DbKey dbKey = AccountTable.newKey(id);
         Account account = accountTable.get(dbKey);
         if (account == null) {
-            account = accountTable.newEntity(dbKey);
+            account = new Account(id, dbKey);
             PublicKey publicKey = accountPublicKeyService.getPublicKey(dbKey);
             if (publicKey == null) {
                 if(isGenesis){
@@ -298,12 +303,14 @@ public class AccountServiceImpl implements AccountService {
         return total;
     }
 
+    @Deprecated
     @Override
     public DbIterator<Account> getLessorsIterator(Account account) {
         DbIterator<Account> iterator = accountTable.getManyBy(new DbClause.LongClause("active_lessee_id", account.getId()), 0, -1, " ORDER BY id ASC ");
         return iterator;
     }
 
+    @Deprecated
     @Override
     public DbIterator<Account> getLessorsIterator(Account account, int height) {
         DbIterator<Account> iterator = accountTable.getManyBy(new DbClause.LongClause("active_lessee_id", account.getId()), height, 0, -1, " ORDER BY id ASC ");
@@ -480,12 +487,46 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public long getTotalSupply() {
-        return accountTable.getTotalSupply();
+        return accountTable.getTotalSupply(GenesisImporter.CREATOR_ID);
     }
 
     @Override
     public int getBlockchainHeight() {
         return blockchain.getHeight();
+    }
+
+    @Override
+    public Balances getAccountBalances(Account account, boolean includeEffectiveBalance){
+        return getAccountBalances(account, includeEffectiveBalance, blockchain.getHeight());
+    }
+
+    @Override
+    public Balances getAccountBalances(Account account, boolean includeEffectiveBalance, int height) {
+        if(account == null){
+            return null;
+        }
+        Balances balances = new Balances();
+
+        balances.setBalanceATM(account.getBalanceATM());
+        balances.setUnconfirmedBalanceATM(account.getUnconfirmedBalanceATM());
+        balances.setForgedBalanceATM(account.getForgedBalanceATM());
+
+        if (includeEffectiveBalance) {
+            balances.setEffectiveBalanceAPL(getEffectiveBalanceAPL(account, blockchain.getHeight(), false));
+            balances.setGuaranteedBalanceATM(getGuaranteedBalanceATM(account, blockchainConfig.getGuaranteedBalanceConfirmations(), height));
+        }
+
+        return balances;
+    }
+
+    @Override
+    public ApolloFbWallet generateUserAccounts(byte[] secretApl) {
+        ApolloFbWallet apolloWallet = new ApolloFbWallet();
+        AplWalletKey aplAccount = secretApl == null ? AccountGeneratorUtil.generateApl() : new AplWalletKey(secretApl);
+
+        apolloWallet.addAplKey(aplAccount);
+        apolloWallet.addEthKey(AccountGeneratorUtil.generateEth());
+        return apolloWallet;
     }
 
     //Delegated from AccountPublicKeyService

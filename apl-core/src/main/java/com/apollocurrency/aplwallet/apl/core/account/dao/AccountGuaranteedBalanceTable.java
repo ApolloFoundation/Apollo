@@ -38,6 +38,9 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable {
             accountGuaranteedBalanceLongKeyFactory = new LongKeyFactory<>("account_id") {
         @Override
         public DbKey newKey(AccountGuaranteedBalance accountGuaranteedBalance) {
+            if(accountGuaranteedBalance.getDbKey() == null){
+                accountGuaranteedBalance.setDbKey(super.newKey(accountGuaranteedBalance.getAccountId()));
+            }
             return accountGuaranteedBalance.getDbKey();
         }
     };
@@ -73,7 +76,7 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable {
     public Long getSumOfAdditions(long accountId, int height, int currentHeight) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT SUM (additions) AS " + ADDITIONS_COLUMN_NAME + " "
+             PreparedStatement pstmt = con.prepareStatement("SELECT SUM ("+ADDITIONS_COLUMN_NAME+") AS " + ADDITIONS_COLUMN_NAME + " "
                  + "FROM account_guaranteed_balance WHERE account_id = ? AND height > ? AND height <= ?")) {
             pstmt.setLong(1, accountId);
             pstmt.setInt(2, height);

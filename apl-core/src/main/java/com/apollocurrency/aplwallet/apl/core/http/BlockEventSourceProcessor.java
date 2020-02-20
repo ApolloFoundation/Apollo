@@ -88,16 +88,16 @@ public class BlockEventSourceProcessor implements Runnable {
         int sellerPurchaseCount = service.getSellerPurchaseCount(accountId, false, false);
         int aliasCount = Alias.getAccountAliasCount(accountId);
         JSONArray assetJson = new JSONArray();
-        List<AccountAsset> accountAssets = accountAssetService.getAssetAccounts(accountId, -1, 0, 2);
+        List<AccountAsset> accountAssets = accountAssetService.getAssetsByAccount(accountId, -1, 0, 2);
         accountAssets.forEach(accountAsset -> assetJson.add(JSONData.accountAsset(accountAsset, false, true)));
 
         JSONArray currencyJSON = new JSONArray();
-        List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrencies(accountId, -1, 0, 2);
+        List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrenciesByAccount(accountId, -1, 0, 2);
         accountCurrencies.forEach(accountCurrency -> currencyJSON.add(JSONData.accountCurrency(accountCurrency, false, true)));
 
         int messageCount = blockchain.getTransactionCount(accountId, (byte) 1, (byte) 0);
-        int currencyCount = accountCurrencyService.getAccountCurrencyCount(accountId, -1);
-        int assetCount = accountAssetService.getAccountAssetCount(accountId, -1);
+        int currencyCount = accountCurrencyService.getCountByAccount(accountId, -1);
+        int assetCount = accountAssetService.getCountByAccount(accountId, -1);
         JSONObject accountJson = putAccount(accountId);
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("transactions", transactionsArray);
