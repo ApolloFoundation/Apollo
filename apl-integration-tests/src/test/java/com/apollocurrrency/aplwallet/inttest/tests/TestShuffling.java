@@ -144,7 +144,7 @@ public class TestShuffling extends TestBaseOld {
                     getRandomRecipientWallet(),
                     getRandomRecipientWallet(),
                     getRandomRecipientWallet());
-
+            waitForHeight(getBlock().getHeight()+1);
          /*   int iteration = 0;
             while (iteration != 3) {
                 waitForHeight(getBlock().getHeight()+1);

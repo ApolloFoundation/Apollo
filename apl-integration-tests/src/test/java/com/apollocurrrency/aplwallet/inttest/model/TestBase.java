@@ -73,7 +73,8 @@ public abstract class TestBase implements ITest {
         String secretFilePath = Objects.requireNonNull(classLoader.getResource(TestConfiguration.getTestConfiguration().getVaultWallet().getUser())).getPath();
         try {
             importSecretFileSetUp(secretFilePath, "1");
-            startForgingSetUp();
+            startForging();
+            //startForgingSetUp();
             setUpTestData();
         } catch (Exception ex) {
             if (TestConfiguration.getTestConfiguration().getEnv().equals("localhost")){
@@ -248,7 +249,7 @@ public abstract class TestBase implements ITest {
 
                     }
                 try {
-                    if (!isForgingEnableOnGen) {
+                   if (!isForgingEnableOnGen) {
                         log.info("Start forging on APL-NZKH-MZRE-2CTT-98NPZ account");
                         addParameters(RequestType.requestType, startForging);
                         addParameters(Parameters.wallet, TestConfiguration.getTestConfiguration().getGenesisWallet());
@@ -272,6 +273,71 @@ public abstract class TestBase implements ITest {
                 addParameters(Parameters.adminPassword, getTestConfiguration().getAdminPass());
                 getInstanse(ForgingDetails.class);
             }*/
+        }
+
+    }
+
+    private static void startForging(){
+        List<String> peersIp;
+        String path = "/rest/networking/peer/all";
+        List<String> peers = given().log().uri()
+            .spec(restHelper.getPreconditionSpec())
+            .when()
+            .get(path).as(GetPeersIpResponse.class).getPeers();
+
+        if (peers.size() > 0) {
+            HashMap<String, String> param = new HashMap();
+            param.put(RequestType.requestType.toString(), RequestType.getBlockchainStatus.toString());
+            path = "/apl";
+            BlockchainInfoDTO status = given().config(config).log().all()
+                .spec(restHelper.getPreconditionSpec())
+                .contentType(ContentType.URLENC)
+                .formParams(param)
+                .when()
+                .post(path)
+                .then()
+                .assertThat().statusCode(200)
+                .extract().body().jsonPath()
+                .getObject("", BlockchainInfoDTO.class);
+            peersIp = TestConfiguration.getTestConfiguration().getHostsByChainID(status.getChainId());
+
+        } else {
+            peersIp = TestConfiguration.getTestConfiguration().getPeers();
+        }
+
+        if (peersIp != null && peersIp.size() > 0) {
+            log.info("Check Forging on peers");
+            for (String ip : peersIp) {
+                log.info("Stop forging on: " + ip);
+                HashMap<String, String> param = new HashMap();
+                param.put(RequestType.requestType.toString(), RequestType.stopForging.toString());
+                param.put(Parameters.adminPassword.toString(), getTestConfiguration().getAdminPass());
+                path = "/apl";
+                try {
+                        given().config(config).log().all()
+                        .baseUri(String.format("http://%s:%s", ip, 7876))
+                        .contentType(ContentType.URLENC)
+                        .formParams(param)
+                        .when()
+                        .post(path)
+                        .then()
+                        .assertThat().statusCode(200);
+
+                }catch (Exception e){
+                    log.warn("FAILED: Stop Forging. " + ip);
+                }
+            }
+            try {
+                    log.info("Start forging on APL-NZKH-MZRE-2CTT-98NPZ account");
+                    addParameters(RequestType.requestType, startForging);
+                    addParameters(Parameters.wallet, TestConfiguration.getTestConfiguration().getGenesisWallet());
+                    addParameters(Parameters.adminPassword, getTestConfiguration().getAdminPass());
+                    getInstanse(ForgingDetails.class);
+            } catch (Exception ex) {
+                log.warn("FAILED: Start Forging. " + ex.getMessage());
+            }
+
+
         }
 
     }
