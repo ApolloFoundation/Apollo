@@ -109,16 +109,21 @@ class ZipTest {
     }
 
     @Test
-    void tryToCompressEmptyFolder(@TempDir Path dir) throws IOException {
-        Path folderNoCsvInside = dir.resolve("csvFolder");
-        Files.createDirectories(folderNoCsvInside);
-        String zipFileName = "test-archive-csv-1.zip";
-        String zipFileInPath = dir + File.separator + zipFileName;
+    void tryToCompressEmptyFolder() throws IOException {
+        Path folderNoCsvInside = Files.createTempDirectory("csvFolder");
+        Path zipDir = Files.createTempDirectory("tempZipDir");
+        try {
+            String zipFileName = "test-archive-csv-1.zip";
+            String zipFileInPath = zipDir + File.separator + zipFileName;
 
-        boolean compressed = zipComponent.compress(zipFileInPath, folderNoCsvInside.toAbsolutePath().toString(), null, null, false);
+            boolean compressed = zipComponent.compress(zipFileInPath, folderNoCsvInside.toAbsolutePath().toString(), null, null, false);
 
-        assertFalse(compressed);
-        assertFalse(Files.exists(Paths.get(zipFileInPath)));
+            assertFalse(compressed);
+            assertFalse(Files.exists(Paths.get(zipFileInPath)));
+        } finally {
+            Files.deleteIfExists(zipDir);
+            Files.deleteIfExists(folderNoCsvInside);
+        }
     }
 
     @Test
