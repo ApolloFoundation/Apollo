@@ -144,24 +144,6 @@ public class TestShuffling extends TestBaseOld {
                     getRandomRecipientWallet(),
                     getRandomRecipientWallet());
             waitForHeight(getBlock().getHeight()+1);
-         /*   int iteration = 0;
-            while (iteration != 3) {
-                waitForHeight(getBlock().getHeight()+1);
-                shufflingDTO = getShuffling(String.valueOf(shuffling.getTransaction()));
-                if (shufflingDTO.getAssigneeRS().equals(wallet.getUser())){
-                    shufflingProcess(wallet, shuffling.getTransaction(), recipients.get(2).getPass());
-                    log.info(String.format("Wallet: %s REGISTERED", wallet.getUser()));
-                    iteration++;
-                }else if (shufflingDTO.getAssigneeRS().equals(randomStandart.getUser())){
-                    shufflingProcess(randomStandart, shuffling.getTransaction(), recipients.get(1).getPass());
-                    log.info(String.format("Random Standart: %s REGISTERED", randomStandart.getUser()));
-                    iteration++;
-                }else {
-                    shufflingProcess(randomVault, shuffling.getTransaction(), recipients.get(0).getPass());
-                    log.info(String.format("Random Vault: %s REGISTERED", randomVault.getUser()));
-                    iteration++;
-                }
-            }*/
 
             int iteration = 0;
             while (iteration != PARTICIPANT_COUNT) {
