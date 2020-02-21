@@ -50,7 +50,6 @@ public class TestBlock extends TestBaseOld {
     public void getBlockchainStat() throws IOException {
         BlockchainInfoDTO blockchainStatus = getBlockchainStatus();
         assertNotNull(blockchainStatus.getChainId());
-        assertNotEquals(BlockchainState.FORK, blockchainStatus.getBlockchainState());
         assertEquals("Apollo", blockchainStatus.getCoinSymbol());
         assertEquals("APL", blockchainStatus.getAccountPrefix());
 
