@@ -90,6 +90,8 @@ public class DGSServiceTest {
     @RegisterExtension
     DbExtension extension = new DbExtension();
     Blockchain blockchain = mock(Blockchain.class);
+    Block lastBlock = mock(Block.class);
+    Block prevBlock = mock(Block.class);
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, BlockchainConfig.class,
@@ -655,9 +657,6 @@ public class DGSServiceTest {
 
     @Test
     void testGetExpiredPendingPurchasesByBlock() {
-
-        Block lastBlock = mock(Block.class);
-        Block prevBlock = mock(Block.class);
         doReturn(dtd.PURCHASE_2.getDeadline()).when(prevBlock).getTimestamp();
         doReturn(dtd.PURCHASE_2.getDeadline() + 60).when(lastBlock).getTimestamp();
         doReturn(1L).when(lastBlock).getPreviousBlockId();
@@ -671,9 +670,6 @@ public class DGSServiceTest {
 
     @Test
     void testGetExpiredPendingPurchasesByBlockBelowPurchaseDeadline() {
-
-        Block lastBlock = mock(Block.class);
-        Block prevBlock = mock(Block.class);
         doReturn(dtd.PURCHASE_2.getDeadline() - 60).when(prevBlock).getTimestamp();
         doReturn(dtd.PURCHASE_2.getDeadline()).when(lastBlock).getTimestamp();
         doReturn(1L).when(lastBlock).getPreviousBlockId();
@@ -685,9 +681,6 @@ public class DGSServiceTest {
     }
     @Test
     void testGetExpiredPendingPurchasesByBlockAbovePurcaseDeadline() {
-
-        Block lastBlock = mock(Block.class);
-        Block prevBlock = mock(Block.class);
         doReturn(dtd.PURCHASE_2.getDeadline() + 1).when(prevBlock).getTimestamp();
         doReturn(dtd.PURCHASE_2.getDeadline() + 61).when(lastBlock).getTimestamp();
         doReturn(1L).when(lastBlock).getPreviousBlockId();
@@ -1168,7 +1161,6 @@ public class DGSServiceTest {
     void testPurchaseForDelistedGoods() {
         Transaction purchaseTransaction = mock(Transaction.class);
         int height = 100_000;
-        Block lastBlock = mock(Block.class);
         doReturn(1L).when(lastBlock).getPreviousBlockId();
         doReturn(lastBlock).when(blockchain).getLastBlock();
         doReturn(height).when(lastBlock).getHeight();
@@ -1187,7 +1179,6 @@ public class DGSServiceTest {
     void testPurchaseWhenPriceNotMatch() {
         Transaction purchaseTransaction = mock(Transaction.class);
         int height = 100_000;
-        Block lastBlock = mock(Block.class);
         doReturn(1L).when(lastBlock).getPreviousBlockId();
         doReturn(lastBlock).when(blockchain).getLastBlock();
         doReturn(height).when(lastBlock).getHeight();
@@ -1204,7 +1195,6 @@ public class DGSServiceTest {
     void testPurchaseWhenPriceQuantityExceedGoodsQuantity() {
         Transaction purchaseTransaction = mock(Transaction.class);
         int height = 100_000;
-        Block lastBlock = mock(Block.class);
         doReturn(1L).when(lastBlock).getPreviousBlockId();
         doReturn(lastBlock).when(blockchain).getLastBlock();
         doReturn(height).when(lastBlock).getHeight();
@@ -1223,7 +1213,6 @@ public class DGSServiceTest {
         int height = 1_000_000;
         long txId = 100L;
         long senderId = 200;
-        Block lastBlock = mock(Block.class);
         doReturn(1L).when(lastBlock).getPreviousBlockId();
         doReturn(lastBlock).when(blockchain).getLastBlock();
         doReturn(height).when(lastBlock).getHeight();
@@ -1253,7 +1242,6 @@ public class DGSServiceTest {
     void testRefund() {
         EncryptedData refundNote = new EncryptedData("Refund node".getBytes(), new byte[32]);
         int height = 1_500_000;
-        Block lastBlock = mock(Block.class);
         doReturn(1L).when(lastBlock).getPreviousBlockId();
         doReturn(lastBlock).when(blockchain).getLastBlock();
         doReturn(height).when(lastBlock).getHeight();

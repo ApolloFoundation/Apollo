@@ -25,25 +25,25 @@ public interface AccountCurrencyService {
 
     AccountCurrency getAccountCurrency(Account account, long currencyId, int height);
 
-    int getCurrencyAccountCount(long currencyId);
+    int getCountByCurrency(long currencyId);
 
-    int getCurrencyAccountCount(long currencyId, int height);
+    int getCountByCurrency(long currencyId, int height);
 
-    int getAccountCurrencyCount(long accountId);
+    int getCountByAccount(long accountId);
 
-    int getAccountCurrencyCount(long accountId, int height);
+    int getCountByAccount(long accountId, int height);
 
-    List<AccountCurrency> getCurrencies(Account account, int from, int to);
+    List<AccountCurrency> getCurrenciesByAccount(Account account, int from, int to);
 
-    List<AccountCurrency> getCurrencies(long accountId, int from, int to);
+    List<AccountCurrency> getCurrenciesByAccount(long accountId, int from, int to);
 
-    List<AccountCurrency> getCurrencies(Account account, int height, int from, int to);
+    List<AccountCurrency> getCurrenciesByAccount(Account account, int height, int from, int to);
 
-    List<AccountCurrency> getCurrencies(long accountId, int height, int from, int to);
+    List<AccountCurrency> getCurrenciesByAccount(long accountId, int height, int from, int to);
 
-    List<AccountCurrency> getCurrencyAccounts(long currencyId, int from, int to);
+    List<AccountCurrency> getCurrenciesByCurrency(long currencyId, int from, int to);
 
-    List<AccountCurrency> getCurrencyAccounts(long currencyId, int height, int from, int to);
+    List<AccountCurrency> getCurrenciesByCurrency(long currencyId, int height, int from, int to);
 
     long getCurrencyUnits(Account account, long currencyId);
 

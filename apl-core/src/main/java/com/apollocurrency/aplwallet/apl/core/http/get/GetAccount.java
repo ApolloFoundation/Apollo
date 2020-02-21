@@ -20,24 +20,30 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.*;
-import com.apollocurrency.aplwallet.apl.core.account.service.*;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountInfo;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountLease;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountInfoService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountLeaseService;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.core.rest.service.AccountBalanceService;
 import com.apollocurrency.aplwallet.apl.core.model.Balances;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -49,7 +55,6 @@ public final class GetAccount extends AbstractAPIRequestHandler {
         super(new APITag[] {APITag.ACCOUNTS}, "account", "includeLessors", "includeAssets", "includeCurrencies", "includeEffectiveBalance");
     }
 
-    private AccountBalanceService accountBalanceService = CDI.current().select(AccountBalanceService.class).get();
     private AccountInfoService accountInfoService = CDI.current().select(AccountInfoService.class).get();
     private AccountLeaseService accountLeaseService = CDI.current().select(AccountLeaseService.class).get();
     private AccountAssetService accountAssetService = CDI.current().select(AccountAssetService.class).get();
@@ -64,7 +69,7 @@ public final class GetAccount extends AbstractAPIRequestHandler {
         boolean includeCurrencies = "true".equalsIgnoreCase(req.getParameter("includeCurrencies"));
         boolean includeEffectiveBalance = "true".equalsIgnoreCase(req.getParameter("includeEffectiveBalance"));
 
-        Balances balances = accountBalanceService.getAccountBalances(account, includeEffectiveBalance);
+        Balances balances = lookupAccountService().getAccountBalances(account, includeEffectiveBalance);
 
         JSONObject response = balances.balanceToJson();
         JSONData.putAccount(response, "account", account.getId());
@@ -116,7 +121,7 @@ public final class GetAccount extends AbstractAPIRequestHandler {
         }
 
         if (includeAssets) {
-            List<AccountAsset> assets = accountAssetService.getAssetAccounts(account, 0, -1);
+            List<AccountAsset> assets = accountAssetService.getAssetsByAccount(account, 0, -1);
 
             JSONArray assetBalances = new JSONArray();
             JSONArray unconfirmedAssetBalances = new JSONArray();
@@ -140,7 +145,7 @@ public final class GetAccount extends AbstractAPIRequestHandler {
         }
 
         if (includeCurrencies) {
-            List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrencies(account, 0, -1);
+            List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrenciesByAccount(account, 0, -1);
             JSONArray currencyJSON = new JSONArray();
             accountCurrencies.forEach(accountCurrency -> currencyJSON.add(JSONData.accountCurrency(accountCurrency, false, true)));
             if (currencyJSON.size() > 0) {

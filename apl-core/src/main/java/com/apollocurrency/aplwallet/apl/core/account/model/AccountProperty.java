@@ -20,11 +20,11 @@ import java.sql.SQLException;
 @Getter @Setter
 public final class AccountProperty extends VersionedDerivedEntity{
 
-    final long id;
-    final long recipientId;
-    final long setterId;
-    String property;
-    String value;
+    private final long id;
+    private final long recipientId;
+    private final long setterId;
+    private String property;
+    private String value;
 
     public AccountProperty(long id, long recipientId, long setterId, String property, String value, int height) {
         super(null, height);

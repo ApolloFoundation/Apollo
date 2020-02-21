@@ -179,7 +179,7 @@ class DerivedDbTableListingTest {
         genesisPublicKeyTable.init();
         PublicKeyTable publicKeyTable = new PublicKeyTable(blockchain);
         publicKeyTable.init();
-        AccountLedgerTable accountLedgerTable = new AccountLedgerTable(blockchain, propertiesHolder, globalSync);
+        AccountLedgerTable accountLedgerTable = new AccountLedgerTable(propertiesHolder);
         accountLedgerTable.init();
         AccountGuaranteedBalanceTable accountGuaranteedBalanceTable = new AccountGuaranteedBalanceTable(blockchainConfig, propertiesHolder);
         accountGuaranteedBalanceTable.init();

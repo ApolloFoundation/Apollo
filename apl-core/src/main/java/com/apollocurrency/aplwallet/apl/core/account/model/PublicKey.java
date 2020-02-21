@@ -20,8 +20,8 @@ import java.util.Objects;
 @Getter @Setter
 public final class PublicKey extends VersionedDerivedEntity {
 
-    final long accountId;
-    byte[] publicKey;
+    private final long accountId;
+    private byte[] publicKey;
 
     public PublicKey(long accountId, byte[] publicKey, int height) {
         super(null, height);

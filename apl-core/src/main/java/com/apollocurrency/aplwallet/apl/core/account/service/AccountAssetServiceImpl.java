@@ -60,57 +60,57 @@ public class AccountAssetServiceImpl implements AccountAssetService {
     }
 
     @Override
-    public List<AccountAsset> getAssets(long assetId, int height) {
-        return getAssets(assetId, height, 0, -1);
+    public List<AccountAsset> getAssetsByAssetId(long assetId, int height) {
+        return getAssetsByAssetId(assetId, height, 0, -1);
     }
 
     @Override
-    public List<AccountAsset> getAssets(long assetId, int height, int from, int to){
+    public List<AccountAsset> getAssetsByAssetId(long assetId, int height, int from, int to){
         if (height < 0 || blockChainInfoService.doesNotExceed(height)) {
-            return accountAssetTable.getAssetAccounts(assetId, from, to);
+            return accountAssetTable.getByAssetId(assetId, from, to);
         }
         checkAvailable(height);
 
-        return accountAssetTable.getAssetAccounts(assetId, height, from, to);
+        return accountAssetTable.getByAssetId(assetId, height, from, to);
     }
 
     @Override
-    public List<AccountAsset> getAssetAccounts(Account account, int from, int to) {
-        return accountAssetTable.getAccountAssets(account.getId(), from, to);
+    public List<AccountAsset> getAssetsByAccount(Account account, int from, int to) {
+        return accountAssetTable.getByAccountId(account.getId(), from, to);
     }
 
     @Override
-    public List<AccountAsset> getAssetAccounts(Account account, int height, int from, int to) {
-        return getAssetAccounts(account.getId(), height, from, to);
+    public List<AccountAsset> getAssetsByAccount(Account account, int height, int from, int to) {
+        return getAssetsByAccount(account.getId(), height, from, to);
     }
 
     @Override
-    public List<AccountAsset> getAssetAccounts(long accountId, int height, int from, int to) {
-        return accountAssetTable.getAccountAssets(accountId, height, from, to);
+    public List<AccountAsset> getAssetsByAccount(long accountId, int height, int from, int to) {
+        return accountAssetTable.getByAccountId(accountId, height, from, to);
     }
 
     @Override
-    public int getAssetCount(long assetId) {
-        return accountAssetTable.getAssetCount(assetId);
+    public int getCountByAsset(long assetId) {
+        return accountAssetTable.getCountByAssetId(assetId);
     }
 
     @Override
-    public int getAssetCount(long assetId, int height) {
+    public int getCountByAsset(long assetId, int height) {
         if (height < 0 || blockChainInfoService.doesNotExceed(height)) {
-            return accountAssetTable.getAssetCount(assetId);
+            return accountAssetTable.getCountByAssetId(assetId);
         }
         checkAvailable(height);
-        return accountAssetTable.getAssetCount(assetId, height);
+        return accountAssetTable.getCountByAssetId(assetId, height);
     }
 
     @Override
-    public int getAccountAssetCount(long accountId) {
-        return accountAssetTable.getAccountAssetCount(accountId);
+    public int getCountByAccount(long accountId) {
+        return accountAssetTable.getCountByAccountId(accountId);
     }
 
     @Override
-    public int getAccountAssetCount(long accountId, int height) {
-        return accountAssetTable.getAccountAssetCount(accountId, height);
+    public int getCountByAccount(long accountId, int height) {
+        return accountAssetTable.getCountByAccountId(accountId, height);
     }
 
     @Override
@@ -259,7 +259,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
     @Override
     public void payDividends(Account account, final long transactionId, ColoredCoinsDividendPayment attachment) {
         long totalDividend = 0;
-        List<AccountAsset> accountAssets = getAssets(attachment.getAssetId(), attachment.getHeight());
+        List<AccountAsset> accountAssets = getAssetsByAssetId(attachment.getAssetId(), attachment.getHeight());
         final long amountATMPerATU = attachment.getAmountATMPerATU();
         long numAccounts = 0;
         for (final AccountAsset accountAsset : accountAssets) {

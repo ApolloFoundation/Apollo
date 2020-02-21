@@ -75,9 +75,9 @@ class AccountCurrencyDaoTest {
 
     @Test
     void testLoad() {
-        AccountCurrency accountCurrency = table.get(table.getDbKeyFactory().newKey(testData.ACC_CUR_0));
+        AccountCurrency accountCurrency = table.get(table.getDbKeyFactory().newKey(testData.CUR_0));
         assertNotNull(accountCurrency);
-        assertEquals(testData.ACC_CUR_0, accountCurrency);
+        assertEquals(testData.CUR_0, accountCurrency);
     }
 
     @Test
@@ -102,7 +102,7 @@ class AccountCurrencyDaoTest {
 
     @Test
     void testSave_update_existing_entity() {//SQL MERGE -> UPDATE
-        AccountCurrency previous = table.get(table.getDbKeyFactory().newKey(testData.ACC_CUR_0));
+        AccountCurrency previous = table.get(table.getDbKeyFactory().newKey(testData.CUR_0));
         assertNotNull(previous);
         previous.setUnconfirmedUnits(previous.getUnconfirmedUnits()+50000);
 
@@ -110,7 +110,7 @@ class AccountCurrencyDaoTest {
         AccountCurrency actual = table.get(table.getDbKeyFactory().newKey(previous));
 
         assertNotNull(actual);
-        assertTrue(actual.getUnconfirmedUnits()-testData.ACC_CUR_0.getUnconfirmedUnits() == 50000);
+        assertTrue(actual.getUnconfirmedUnits()-testData.CUR_0.getUnconfirmedUnits() == 50000);
         assertEquals(previous.getUnits(), actual.getUnits());
         assertEquals(previous.getCurrencyId(), actual.getCurrencyId());
     }
@@ -128,10 +128,10 @@ class AccountCurrencyDaoTest {
 
     @Test
     void testGetAccountCurrencies() {
-        List<AccountCurrency> actual = toList(table.getAccountCurrencies(testData.ACC_CUR_2.getAccountId(), 0, Integer.MAX_VALUE));
+        List<AccountCurrency> actual = toList(table.getByAccount(testData.CUR_2.getAccountId(), 0, Integer.MAX_VALUE));
         assertEquals(2, actual.size());
         List<AccountCurrency> expected = testData.ALL_CURRENCY.stream()
-                .filter(cur -> cur.getAccountId()==testData.ACC_CUR_2.getAccountId())
+                .filter(cur -> cur.getAccountId()==testData.CUR_2.getAccountId())
                 .sorted(currencyComparator).collect(Collectors.toList());
         assertEquals(expected, actual);
     }
@@ -139,18 +139,18 @@ class AccountCurrencyDaoTest {
     @Test
     void testGetAccountCurrencies_on_Height() {
         doReturn(testData.CUR_BLOCKCHAIN_HEIGHT).when(blockchain).getHeight();
-        List<AccountCurrency> actual = toList(table.getAccountCurrencies(testData.ACC_CUR_2.getAccountId(), testData.ACC_CUR_2.getHeight(), 0, Integer.MAX_VALUE));
+        List<AccountCurrency> actual = toList(table.getByAccount(testData.CUR_2.getAccountId(), testData.CUR_2.getHeight(), 0, Integer.MAX_VALUE));
         assertEquals(1, actual.size());
-        assertEquals(testData.ACC_CUR_2.getAccountId(), actual.get(0).getAccountId());
-        assertEquals(testData.ACC_CUR_2, actual.get(0));
+        assertEquals(testData.CUR_2.getAccountId(), actual.get(0).getAccountId());
+        assertEquals(testData.CUR_2, actual.get(0));
     }
 
     @Test
     void testGetCurrencyAccounts() {
-        List<AccountCurrency> actual = toList(table.getCurrencyAccounts(testData.ACC_CUR_2.getCurrencyId(), 0, Integer.MAX_VALUE));
+        List<AccountCurrency> actual = toList(table.getByCurrency(testData.CUR_2.getCurrencyId(), 0, Integer.MAX_VALUE));
         assertEquals(7, actual.size());
         List<AccountCurrency> expected = testData.ALL_CURRENCY.stream()
-                .filter(cur -> cur.getCurrencyId()==testData.ACC_CUR_2.getCurrencyId())
+                .filter(cur -> cur.getCurrencyId()==testData.CUR_2.getCurrencyId())
                 .sorted(currencyComparator).collect(Collectors.toList());
         assertEquals(expected, actual);
     }
@@ -158,34 +158,34 @@ class AccountCurrencyDaoTest {
     @Test
     void testGetCurrencyAccounts_on_Height() {
         doReturn(testData.CUR_BLOCKCHAIN_HEIGHT).when(blockchain).getHeight();
-        List<AccountCurrency> actual = toList(table.getCurrencyAccounts(testData.ACC_CUR_2.getCurrencyId(), testData.ACC_CUR_2.getHeight(), 0, Integer.MAX_VALUE));
+        List<AccountCurrency> actual = toList(table.getByCurrency(testData.CUR_2.getCurrencyId(), testData.CUR_2.getHeight(), 0, Integer.MAX_VALUE));
         assertEquals(1, actual.size());
-        assertEquals(testData.ACC_CUR_2, actual.get(0));
+        assertEquals(testData.CUR_2, actual.get(0));
     }
 
     @Test
     void testGetCurrencyAccountCount() {
-        long actual = table.getCurrencyAccountCount(testData.ACC_CUR_2.getCurrencyId());
+        long actual = table.getCountByCurrency(testData.CUR_2.getCurrencyId());
         assertEquals(7, actual);
     }
 
     @Test
     void testGetCurrencyAccountCount_on_Height() {
         doReturn(testData.CUR_BLOCKCHAIN_HEIGHT).when(blockchain).getHeight();
-        long actual = table.getCurrencyAccountCount(testData.ACC_CUR_2.getCurrencyId(), testData.ACC_CUR_2.getHeight());
+        long actual = table.getCountByCurrency(testData.CUR_2.getCurrencyId(), testData.CUR_2.getHeight());
         assertEquals(1, actual);
     }
 
     @Test
     void testGetAccountCurrencyCount() {
-        long actual = table.getAccountCurrencyCount(testData.ACC_CUR_2.getAccountId());
+        long actual = table.getCountByAccount(testData.CUR_2.getAccountId());
         assertEquals(2, actual);
     }
 
     @Test
     void testGetAccountCurrencyCount_on_Height() {
         doReturn(testData.CUR_BLOCKCHAIN_HEIGHT).when(blockchain).getHeight();
-        long actual = table.getAccountCurrencyCount(testData.ACC_CUR_2.getAccountId(), testData.ACC_CUR_2.getHeight());
+        long actual = table.getCountByAccount(testData.CUR_2.getAccountId(), testData.CUR_2.getHeight());
         assertEquals(1, actual);
     }
 }

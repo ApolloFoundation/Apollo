@@ -9,7 +9,6 @@ import com.apollocurrency.aplwallet.apl.core.account.model.AccountInfo;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -34,10 +33,6 @@ class AccountInfoServiceTest {
     void setUp() {
         testData = new AccountTestData();
         accountInfoService = spy(new AccountInfoServiceImpl(blockchain, accountInfoTable));
-    }
-
-    @AfterEach
-    void tearDown() {
     }
 
     @Test

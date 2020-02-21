@@ -6,18 +6,15 @@ package com.apollocurrency.aplwallet.apl.core.account.dao;
 import com.apollocurrency.aplwallet.apl.core.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxValue;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
-import lombok.Setter;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -38,17 +35,13 @@ import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
 @Singleton
 public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
     private static final LongKeyFactory<Account> accountDbKeyFactory = new LongKeyFactory<Account>("id") {
-
         @Override
         public DbKey newKey(Account account) {
-            return account.getDbKey() == null ? newKey(account.getId()) : account.getDbKey();
+            if(account.getDbKey() == null){
+                account.setDbKey(super.newKey(account.getId()));
+            }
+            return  account.getDbKey();
         }
-
-        @Override
-        public Account newEntity(DbKey dbKey) {
-            return new Account(((LongKey) dbKey).getId(), dbKey);
-        }
-
     };
 
     public static DbKey newKey(long id){
@@ -59,9 +52,6 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
         return accountDbKeyFactory.newKey(a);
     }
 
-    @Setter //for tests only
-    private long creatorId;
-
     private final BlockchainConfig blockchainConfig;
 
     @Inject
@@ -69,7 +59,6 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
     public AccountTable(Blockchain blockchain, BlockchainConfig blockchainConfig/*, @Named("CREATOR_ID")long creatorId*/) {
         super("account", accountDbKeyFactory, false);
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL.");
-        this.creatorId = GenesisImporter.CREATOR_ID;
     }
 
     @Override
@@ -106,7 +95,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
         super.trim(height);
     }
 
-    public long getTotalSupply() {
+    public long getTotalSupply(long creatorId) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try(Connection con = dataSource.getConnection();
             PreparedStatement pstmt =con.prepareStatement("SELECT ABS(balance) AS total_supply FROM account WHERE id = ?")

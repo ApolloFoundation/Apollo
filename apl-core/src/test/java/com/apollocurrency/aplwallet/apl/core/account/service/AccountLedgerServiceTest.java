@@ -15,7 +15,6 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEv
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -62,10 +61,6 @@ class AccountLedgerServiceTest {
         doReturn(true).when(blockchainProcessor).isProcessingBlock();
         doReturn(List.of("*")).when(propertiesHolder).getStringListProperty("apl.ledgerAccounts");
         accountLedgerService = spy(createLedgerServiceInstance());
-    }
-
-    @AfterEach
-    void tearDown() {
     }
 
     @Test

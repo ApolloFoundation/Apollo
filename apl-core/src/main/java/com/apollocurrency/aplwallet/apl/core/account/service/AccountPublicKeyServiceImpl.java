@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.cache.PublicKeyCacheConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTableInterface;
 import com.apollocurrency.aplwallet.apl.core.db.service.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.shard.DbHotSwapConfig;
@@ -99,11 +100,6 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
     */
 
     @Override
-    public PublicKey newEntity(DbKey dbKey){
-        return publicKeyTable.newEntity(dbKey);
-    }
-
-    @Override
     public int getCount(){
         return getPublicKeysCount() + getGenesisPublicKeysCount();
     }
@@ -144,16 +140,7 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
     }
 
     @Override
-    public PublicKey loadPublicKey(DbKey dbKey) {
-        PublicKey publicKey = publicKeyTable.get(dbKey, false);
-        if (publicKey == null) {
-            publicKey = genesisPublicKeyTable.get(dbKey, false);
-        }
-        return publicKey;
-    }
-
-    @Override
-    public PublicKey loadPublicKey(DbKey dbKey, int height) {
+    public PublicKey loadPublicKeyFromDb(DbKey dbKey, int height) {
         PublicKey publicKey = getPublicKey(dbKey, height);
         if (publicKey == null) {
             publicKey = getGenesisPublicKey(dbKey, height);
@@ -228,7 +215,7 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
     public boolean setOrVerifyPublicKey(DbKey dbKey, byte[] key, int height) {
         PublicKey publicKey = getPublicKey(dbKey);
         if (publicKey == null) {
-            publicKey = publicKeyTable.newEntity(dbKey);
+            publicKey = new PublicKey(((LongKey) dbKey).getId(), null, blockChainInfoService.getHeight());
         }
         if (publicKey.getPublicKey() == null) {
             publicKey.setPublicKey(key);
@@ -248,7 +235,7 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
     public void apply(Account account, byte[] key, boolean isGenesis) {
         PublicKey publicKey = getPublicKey(account.getDbKey());
         if (publicKey == null) {
-            publicKey = publicKeyTable.newEntity(account.getDbKey());
+            publicKey = new PublicKey(account.getId(), null, blockChainInfoService.getHeight());
         }
         if (publicKey.getPublicKey() == null) {
             publicKey.setPublicKey(key);
@@ -256,7 +243,7 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
         } else if (!Arrays.equals(publicKey.getPublicKey(), key)) {
             throw new IllegalStateException("Public key mismatch");
         } else if (publicKey.getHeight() >= blockChainInfoService.getHeight() - 1) {
-            PublicKey dbPublicKey = loadPublicKey(account.getDbKey());
+            PublicKey dbPublicKey = loadPublicKeyFromDb(account.getDbKey());
             if (dbPublicKey == null || dbPublicKey.getPublicKey() == null) {
                 insertPublicKey(publicKey, isGenesis);
             }
@@ -266,14 +253,14 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
     @Override
     public PublicKey insertNewPublicKey(DbKey dbKey) {
-        PublicKey publicKey = publicKeyTable.newEntity(dbKey);
+        PublicKey publicKey = new PublicKey(((LongKey) dbKey).getId(), null, blockChainInfoService.getHeight());
         publicKeyTable.insert(publicKey);
         return publicKey;
     }
 
     @Override
     public PublicKey insertGenesisPublicKey(DbKey dbKey) {
-        PublicKey publicKey = genesisPublicKeyTable.newEntity(dbKey);
+        PublicKey publicKey = new PublicKey(((LongKey) dbKey).getId(), null, blockChainInfoService.getHeight());
         genesisPublicKeyTable.insert(publicKey);
         return publicKey;
     }
@@ -326,7 +313,7 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
     private void refreshInCache(DbKey dbKey) {
         if ( isCacheEnabled()) {
-            PublicKey publicKey = loadPublicKey(dbKey);
+            PublicKey publicKey = loadPublicKeyFromDb(dbKey);
             if (publicKey != null) {
                 log.trace("--cache-- refresh dbKey={} height={}", dbKey, publicKey.getHeight());
                 publicKeyCache.put(dbKey, publicKey);

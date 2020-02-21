@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
@@ -101,6 +102,7 @@ class AccountLedgerDaoTest {
 
         assertNotNull(actual);
         assertEquals(50000L, actual.getChange());
+        assertTrue(previous.getDbId() < actual.getDbId());
         assertEquals(previous.getHoldingId(), actual.getHoldingId());
         assertEquals(previous.getTimestamp(), actual.getTimestamp());
     }
@@ -109,7 +111,7 @@ class AccountLedgerDaoTest {
     void testTrim_on_MAX_height() {
         doReturn(Integer.MAX_VALUE).when(propertiesHolder).BATCH_COMMIT_SIZE();
         doReturn(testData.LEDGER_HEIGHT+TRIM_KEEP).when(blockchain).getHeight();
-        DbUtils.inTransaction(dbExtension, (con) -> table.trim(testData.LEDGER_HEIGHT));
+        DbUtils.inTransaction(dbExtension, (con) -> table.trim(testData.LEDGER_HEIGHT+TRIM_KEEP));
 
         List<LedgerEntry> expected = Collections.emptyList();
 
@@ -126,11 +128,10 @@ class AccountLedgerDaoTest {
         doReturn(testData.LEDGER_HEIGHT-1+TRIM_KEEP).when(blockchain).getHeight();
         DbUtils.inTransaction(dbExtension, (con) -> table.trim(testData.LEDGER_HEIGHT));
 
-        List<LedgerEntry> expected = testData.ALL_LEDGERS.stream().filter(e -> e.getHeight()>=testData.LEDGER_HEIGHT)
+        List<LedgerEntry> expected = testData.ALL_LEDGERS.stream().filter(e -> e.getHeight()>testData.LEDGER_HEIGHT-TRIM_KEEP)
                 .sorted(Comparator.comparing(LedgerEntry::getDbId, Comparator.reverseOrder()))
                 .collect(Collectors.toList());
-        List<LedgerEntry> all = table.getEntries(testData.ACC_LEDGER_9.getAccountId(),
-                null,0,null,0,
+        List<LedgerEntry> all = table.getEntries(0,null,0,null,0,
                 0, Integer.MAX_VALUE, true);
 
         assertEquals(expected, all);

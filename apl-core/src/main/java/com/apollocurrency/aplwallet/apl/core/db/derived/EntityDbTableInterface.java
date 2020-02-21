@@ -18,9 +18,6 @@ public interface EntityDbTableInterface<T> extends DerivedTableInterface<T> {
 
     String defaultSort();
 
-    @Deprecated
-    T newEntity(DbKey dbKey);
-
     T get(DbKey dbKey);
 
     T get(DbKey dbKey, boolean createDbKey);

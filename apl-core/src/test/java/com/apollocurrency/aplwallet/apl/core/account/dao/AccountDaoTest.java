@@ -76,7 +76,6 @@ class AccountDaoTest  {
     @BeforeEach
     void setUp() {
         testData = new AccountTestData();
-        table.setCreatorId(testData.CREATOR_ID);
     }
 
     @Test
@@ -126,7 +125,7 @@ class AccountDaoTest  {
 
     @Test
     void getTotalSupply() {
-        long total = table.getTotalSupply();
+        long total = table.getTotalSupply(testData.CREATOR_ID);
         assertEquals(999990000000000L, total);
     }
 
@@ -140,7 +139,7 @@ class AccountDaoTest  {
 
     @Test
     void getTotalAmountOnTopAccounts() {
-        long expected = testData.ALL_ACCOUNTS.stream().filter(VersionedDerivedEntity::isLatest).map(Account::getBalanceATM).reduce(0L, Long::sum);
+        long expected = testData.ALL_ACCOUNTS.stream().filter(VersionedDerivedEntity::isLatest).mapToLong(Account::getBalanceATM).sum();
         long result = table.getTotalAmountOnTopAccounts(100);
         assertEquals(expected, result);
     }

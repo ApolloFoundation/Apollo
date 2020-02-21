@@ -89,63 +89,63 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
     }
 
     @Override
-    public int getCurrencyAccountCount(long currencyId) {
-        return accountCurrencyTable.getCurrencyAccountCount(currencyId);
+    public int getCountByCurrency(long currencyId) {
+        return accountCurrencyTable.getCountByCurrency(currencyId);
     }
 
     @Override
-    public int getCurrencyAccountCount(long currencyId, int height) {
+    public int getCountByCurrency(long currencyId, int height) {
         if (height < 0 || blockChainInfoService.doesNotExceed(height)) {
-            return accountCurrencyTable.getCurrencyAccountCount(currencyId, height);
+            return accountCurrencyTable.getCountByCurrency(currencyId, height);
         }
         blockChainInfoService.checkAvailable(height, accountCurrencyTable.isMultiversion());
 
-        return accountCurrencyTable.getCurrencyAccountCount(currencyId, height);
+        return accountCurrencyTable.getCountByCurrency(currencyId, height);
     }
 
     @Override
-    public int getAccountCurrencyCount(long accountId) {
-        return accountCurrencyTable.getAccountCurrencyCount(accountId);
+    public int getCountByAccount(long accountId) {
+        return accountCurrencyTable.getCountByAccount(accountId);
     }
 
     @Override
-    public int getAccountCurrencyCount(long accountId, int height) {
+    public int getCountByAccount(long accountId, int height) {
         if (height < 0 || blockChainInfoService.doesNotExceed(height)) {
-            return accountCurrencyTable.getAccountCurrencyCount(accountId);
+            return accountCurrencyTable.getCountByAccount(accountId);
         }
         blockChainInfoService.checkAvailable(height, accountCurrencyTable.isMultiversion());
 
-        return accountCurrencyTable.getAccountCurrencyCount(accountId, height);
+        return accountCurrencyTable.getCountByAccount(accountId, height);
     }
 
     @Override
-    public List<AccountCurrency> getCurrencies(Account account, int from, int to) {
-        return getCurrencies(account.getId(), from, to);
+    public List<AccountCurrency> getCurrenciesByAccount(Account account, int from, int to) {
+        return getCurrenciesByAccount(account.getId(), from, to);
     }
 
     @Override
-    public List<AccountCurrency> getCurrencies(long accountId, int from, int to) {
-        return toList(accountCurrencyTable.getAccountCurrencies(accountId, from, to));
+    public List<AccountCurrency> getCurrenciesByAccount(long accountId, int from, int to) {
+        return toList(accountCurrencyTable.getByAccount(accountId, from, to));
     }
 
     @Override
-    public List<AccountCurrency> getCurrencies(Account account, int height, int from, int to) {
-        return getCurrencies(account.getId(), height, from, to);
+    public List<AccountCurrency> getCurrenciesByAccount(Account account, int height, int from, int to) {
+        return getCurrenciesByAccount(account.getId(), height, from, to);
     }
 
     @Override
-    public List<AccountCurrency> getCurrencies(long accountId, int height, int from, int to) {
-        return toList(accountCurrencyTable.getAccountCurrencies(accountId, height, from, to));
+    public List<AccountCurrency> getCurrenciesByAccount(long accountId, int height, int from, int to) {
+        return toList(accountCurrencyTable.getByAccount(accountId, height, from, to));
     }
 
     @Override
-    public List<AccountCurrency> getCurrencyAccounts(long currencyId, int from, int to) {
-        return toList(accountCurrencyTable.getCurrencyAccounts(currencyId, from, to));
+    public List<AccountCurrency> getCurrenciesByCurrency(long currencyId, int from, int to) {
+        return toList(accountCurrencyTable.getByCurrency(currencyId, from, to));
     }
 
     @Override
-    public List<AccountCurrency> getCurrencyAccounts(long currencyId, int height, int from, int to) {
-        return toList(accountCurrencyTable.getCurrencyAccounts(currencyId, height, from, to));
+    public List<AccountCurrency> getCurrenciesByCurrency(long currencyId, int height, int from, int to) {
+        return toList(accountCurrencyTable.getByCurrency(currencyId, height, from, to));
     }
 
     @Override

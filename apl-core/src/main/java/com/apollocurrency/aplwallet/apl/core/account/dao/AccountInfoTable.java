@@ -27,14 +27,15 @@ import java.sql.SQLException;
 public class AccountInfoTable extends VersionedDeletableEntityDbTable<AccountInfo> {
 
     private static final LongKeyFactory<AccountInfo> accountInfoDbKeyFactory = new LongKeyFactory<AccountInfo>("account_id") {
-
         @Override
         public DbKey newKey(AccountInfo accountInfo) {
-            return accountInfo.getDbKey() == null ? newKey(accountInfo.getAccountId()) : accountInfo.getDbKey();
+            if(accountInfo.getDbKey() == null){
+                accountInfo.setDbKey(super.newKey(accountInfo.getAccountId()));
+            }
+            return accountInfo.getDbKey();
         }
-
     };
-       
+
     public static DbKey newKey(long id){
         return accountInfoDbKeyFactory.newKey(id);
     }

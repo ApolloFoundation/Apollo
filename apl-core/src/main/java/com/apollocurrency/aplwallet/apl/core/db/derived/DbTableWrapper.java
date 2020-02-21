@@ -96,11 +96,6 @@ public class DbTableWrapper<T extends DerivedEntity> implements EntityDbTableInt
     }
 
     @Override
-    public T newEntity(DbKey dbKey) {
-        return table.newEntity(dbKey);
-    }
-
-    @Override
     public T get(DbKey dbKey) {
         return table.get(dbKey);
     }

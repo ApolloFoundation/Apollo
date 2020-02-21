@@ -20,9 +20,9 @@ import java.sql.SQLException;
 @Getter @Setter
 public final class AccountInfo extends VersionedDerivedEntity {
 
-    final long accountId;
-    String name;
-    String description;
+    private final long accountId;
+    private String name;
+    private String description;
 
     public AccountInfo(long accountId, String name, String description, int height) {
         super(null, height);

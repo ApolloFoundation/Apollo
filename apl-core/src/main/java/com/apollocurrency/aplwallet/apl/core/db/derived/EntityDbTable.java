@@ -20,10 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.derived;
 
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -77,17 +73,6 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> implements Entity
     @Override
     public String defaultSort() {
         return defaultSort;
-    }
-
-    /**
-     * Create new entity or return existing from cache in transaction
-     * Current use case: caching complex entity, incremental entity update from multiple methods in one transaction
-     * Should be removed asap
-     */
-    @Deprecated
-    @Override
-    public T newEntity(DbKey dbKey) {
-        return keyFactory.newEntity(dbKey);
     }
 
     @Override
