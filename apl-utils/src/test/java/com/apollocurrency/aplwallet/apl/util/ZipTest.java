@@ -111,7 +111,7 @@ class ZipTest {
     @Test
     void tryToCompressEmptyFolder(@TempDir Path dir) {
         /*
-        Causes Suppressed: java.nio.file.DirectoryNotEmptyException:
+        On Windows causes Suppressed: java.nio.file.DirectoryNotEmptyException:
         Path folderNoCsvInside = dir.resolve("csvFolder");
         Files.createDirectories(folderNoCsvInside);
          */
