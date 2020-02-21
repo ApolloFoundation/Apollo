@@ -3,6 +3,7 @@ package com.apollocurrrency.aplwallet.inttest.model;
 import com.apollocurrency.aplwallet.api.dto.AccountDTO;
 import com.apollocurrency.aplwallet.api.dto.BalanceDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockchainInfoDTO;
+import com.apollocurrency.aplwallet.api.dto.DexOrderDto;
 import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
@@ -81,8 +82,8 @@ public abstract class TestBase implements ITest {
                 .build());
         try {
             importSecretFileSetUp(secretFilePath, "1");
-            startForgingSetUp();
-            setUpTestData();
+            //startForgingSetUp();
+            //setUpTestData();
         } catch (Exception ex) {
             if (TestConfiguration.getTestConfiguration().getEnv().equals("localhost")){
                 log.warn("One of the peers doesn't respond");
@@ -285,4 +286,18 @@ public abstract class TestBase implements ITest {
             }
         }
     }
+
+    @Step
+    public boolean verifyTransactionInBlock(String transaction) {
+        boolean inBlock = false;
+        try {
+            inBlock = Failsafe.with(retryPolicy).get(() -> getTransaction(transaction).getConfirmations() >= 0);
+        } catch (Exception e) {
+            fail("Transaction does't add to block. Transaction " + transaction + " Exception: " + e.getMessage());
+        }
+        assertTrue(inBlock, String.format("Transaction %s in block: ", transaction));
+        return inBlock;
+    }
+
+
 }

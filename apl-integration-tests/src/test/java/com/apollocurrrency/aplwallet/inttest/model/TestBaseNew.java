@@ -19,6 +19,7 @@ import com.apollocurrency.aplwallet.api.dto.PollDTO;
 import com.apollocurrency.aplwallet.api.dto.ShardDTO;
 import com.apollocurrency.aplwallet.api.dto.TaggedDataDTO;
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
+import com.apollocurrency.aplwallet.api.dto.TradingDataOutputDTO;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.api.response.Account2FAResponse;
 import com.apollocurrency.aplwallet.api.response.AccountAliasesResponse;
@@ -43,6 +44,7 @@ import com.apollocurrency.aplwallet.api.response.AssetsAccountsCountResponse;
 import com.apollocurrency.aplwallet.api.response.AssetsResponse;
 import com.apollocurrency.aplwallet.api.response.BlockListInfoResponse;
 import com.apollocurrency.aplwallet.api.response.BlockchainTransactionsResponse;
+import com.apollocurrency.aplwallet.api.response.CreateDexOrderResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrency.aplwallet.api.response.CurrenciesResponse;
 import com.apollocurrency.aplwallet.api.response.CurrencyAccountsResponse;
@@ -60,6 +62,7 @@ import com.apollocurrency.aplwallet.api.response.SearchAccountsResponse;
 import com.apollocurrency.aplwallet.api.response.TransactionListResponse;
 import com.apollocurrency.aplwallet.api.response.VaultWalletResponse;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
+
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.qameta.allure.Step;
@@ -71,19 +74,35 @@ import org.junit.jupiter.api.DisplayName;
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
-
+import java.util.Date;
+import java.util.Calendar;
 import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class TestBaseNew extends TestBase {
-    @Override
+    /*@Override
     public boolean verifyTransactionInBlock(String transaction) {
         throw new NotImplementedException("Not implemented");
-    }
+    }*/
 
     @Override
+    @Step
+    @DisplayName("Get Transaction")
     public TransactionDTO getTransaction(String transaction) {
-        throw new NotImplementedException("Not implemented");
+        HashMap<String, String> param = new HashMap();
+        param.put(RequestType.requestType.toString(), RequestType.getTransaction.toString());
+        param.put(Parameters.transaction.toString(), transaction);
+        String path = "/apl";
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .get(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", TransactionDTO.class);
     }
 
     @Override
@@ -417,6 +436,22 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
+    @Step("Get Dex Orders with param: Order Status {status}, AccountId {accountId}")
+    public List<DexOrderDto> getDexOrders(String status, String accountId) {
+        HashMap<String, String> param = new HashMap();
+        param.put("status", status);
+        param.put("accountId", accountId);
+
+        String path = "/rest/dex/offers";
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .formParams(param)
+            .when()
+            .get(path)
+            .getBody().jsonPath().getList("", DexOrderDto.class);
+    }
+
+    @Override
     @Step
     public List<DexOrderDto> getDexOrders(String accountId) {
         HashMap<String, String> param = new HashMap();
@@ -444,14 +479,23 @@ public class TestBaseNew extends TestBase {
 
 
     @Override
-    @Step("Get Dex History with param: Account: {0}, Pair: {1} , Type: {2}")
-    public List<DexOrderDto> getDexHistory(String account, String pair, String type) {
+    @Step("Get Dex History (CLOSED ORDERS) with param: Account: {0}, Pair: {1} , Type: {2}")
+    public List<DexOrderDto> getDexHistory(String account, boolean isEth, boolean isSell) {
         HashMap<String, String> param = new HashMap();
-        param.put("pair", pair);
-        param.put("type", type);
         param.put("accountId", account);
+        param.put("status", "5");
+        if (isEth) {
+            param.put("pairCurrency", "1");
+        } else {
+            param.put("pairCurrency", "2");
+        }
+        if (isSell) {
+            param.put("orderType", "1");
+        } else {
+            param.put("orderType", "0");
+        }
 
-        String path = "/rest/dex/history";
+        String path = "/rest/dex/offers";
         return given().log().all()
                 .spec(restHelper.getSpec())
                 .formParams(param)
@@ -461,12 +505,13 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
-    @Step("Get Dex History")
+    @Step("Get Dex History (CLOSED ORDERS) for certain account")
     public List<DexOrderDto> getDexHistory(String account) {
         HashMap<String, String> param = new HashMap();
         param.put("accountId", account);
+        param.put("status", "5");
 
-        String path = "/rest/dex/history";
+        String path = "/rest/dex/offers";
         return given().log().all()
                 .spec(restHelper.getSpec())
                 .formParams(param)
@@ -486,20 +531,28 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
-    @Step("Get Dex Trade Info")
-    public List<DexTradeInfoDto> getDexTradeInfo(String pairCurrency, Integer startTime, Integer finishTime) {
+    @Step("Get history for certain Currency and period")
+    public TradingDataOutputDTO getDexTradeInfo(boolean isEth, String resolution) {
         HashMap<String, String> param = new HashMap();
-        param.put("pairCurrency", pairCurrency);
-        param.put("start", String.valueOf(startTime));
-        param.put("finish", String.valueOf(finishTime));
-
-        String path = "/rest/dex/tradeInfo";
+        Date today = Calendar.getInstance().getTime();
+        long epochTime = today.getTime();
+        param.put("resolution", resolution);
+        param.put("from", String.valueOf(epochTime/1000-864000));
+        param.put("to", String.valueOf(epochTime/1000));
+        log.info("start = " + (epochTime/1000-864000));
+        log.info("finish = " + (epochTime/1000));
+        if (isEth) {
+            param.put("symbol", "APL_ETH");
+        } else {
+            param.put("symbol", "APL_PAX");
+        }
+        String path = "/rest/dex/history";
         return given().log().all()
                 .spec(restHelper.getSpec())
                 .formParams(param)
                 .when()
                 .get(path)
-                .getBody().jsonPath().getList("", DexTradeInfoDto.class);
+                .getBody().as(TradingDataOutputDTO.class);
     }
 
     //TODO: edit to new RESPONSEDTO, not STRING
@@ -569,7 +622,7 @@ public class TestBaseNew extends TestBase {
     //TODO: edit when NEW DTO will be added
     @Override
     @Step
-    public String createDexOrder(String pairRate, String offerAmount, Wallet wallet, boolean isBuyOrder, boolean isEth) {
+    public CreateDexOrderResponse createDexOrder(String pairRate, String offerAmount, Wallet wallet, boolean isBuyOrder, boolean isEth) {
         HashMap<String, String> param = new HashMap();
         if (isBuyOrder) {
             param.put("offerType", "0");
@@ -591,11 +644,11 @@ public class TestBaseNew extends TestBase {
 
         String path = "/rest/dex/offer";
         return given().log().all()
-                .spec(restHelper.getSpec())
-                .contentType(ContentType.URLENC)
-                .formParams(param)
-                .when()
-                .post(path).body().asString();
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .post(path).as(CreateDexOrderResponse.class);
     }
 
     @Override
@@ -949,5 +1002,7 @@ public class TestBaseNew extends TestBase {
     public CreateTransactionResponse extendTaggedData(Wallet wallet, String transaction) {
         throw new NotImplementedException("Not implemented");
     }
+
+
 
 }
