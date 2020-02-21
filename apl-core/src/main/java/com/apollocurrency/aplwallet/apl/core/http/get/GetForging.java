@@ -23,10 +23,9 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_FORGING;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_ACCOUNT;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
-import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -60,7 +59,7 @@ public final class GetForging extends AbstractAPIRequestHandler {
         }
         int elapsedTime = timeService.getEpochTime() - lastBlock.getTimestamp();
         if (publicKey != null) {
-            Account account = Account.getAccount(publicKey);
+            Account account = lookupAccountService().getAccount(publicKey);
             if (account == null) {
                 return UNKNOWN_ACCOUNT;
             }

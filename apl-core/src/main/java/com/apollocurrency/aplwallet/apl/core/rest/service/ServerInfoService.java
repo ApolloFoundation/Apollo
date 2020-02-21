@@ -9,9 +9,10 @@ import com.apollocurrency.aplwallet.api.dto.info.AccountEffectiveBalanceDto;
 import com.apollocurrency.aplwallet.api.dto.info.AccountsCountDto;
 import com.apollocurrency.aplwallet.api.dto.info.BlockchainConstantsDto;
 import com.apollocurrency.aplwallet.api.dto.info.BlockchainStatusDto;
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
-import com.apollocurrency.aplwallet.apl.core.account.AccountTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
@@ -33,8 +34,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -47,29 +46,34 @@ import java.util.Random;
 @Slf4j
 @Singleton
 public class ServerInfoService {
-    private DatabaseManager databaseManager;
-    private AccountTable accountTable;
+//    private DatabaseManager databaseManager;
+//    private AccountTable accountTable;
     private BlockchainConfig blockchainConfig;
     private Blockchain blockchain;
     private PropertiesHolder propertiesHolder;
     private BlockchainProcessor blockchainProcessor;
     private PeersService peersService;
     private TimeService timeService;
+    private AccountService accountService;
+    private AccountLedgerService accountLedgerService;
 
     @Inject
-    public ServerInfoService(DatabaseManager databaseManager, AccountTable accTable,
+    public ServerInfoService(//DatabaseManager databaseManager, AccountTable accTable,
                              BlockchainConfig blockchainConfig, Blockchain blockchain,
                              PropertiesHolder propertiesHolder,
                              BlockchainProcessor blockchainProcessor,
-                             PeersService peersService, TimeService timeService) {
-        this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
-        this.accountTable = Objects.requireNonNull(accTable, "accTable is NULL");
+                             PeersService peersService, TimeService timeService,
+                             AccountService accountService, AccountLedgerService accountLedgerService) {
+//        this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
+//        this.accountTable = Objects.requireNonNull(accTable, "accTable is NULL");
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
         this.blockchain = Objects.requireNonNull(blockchain, "blockchain is NULL");
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder,"propertiesHolder is NULL");
         this.blockchainProcessor = Objects.requireNonNull(blockchainProcessor,"blockchainProcessor is NULL");
         this.peersService = Objects.requireNonNull(peersService,"peersService is NULL");
         this.timeService = Objects.requireNonNull(timeService,"timeService is NULL");
+        this.accountService = Objects.requireNonNull(accountService,"accountService is NULL");
+        this.accountLedgerService = Objects.requireNonNull(accountLedgerService,"accountLedgerService is NULL");
     }
 
     public ApolloX509Info getX509Info(){
@@ -95,29 +99,23 @@ public class ServerInfoService {
 
     public AccountsCountDto getAccountsStatistic(int numberOfAccounts) {
         AccountsCountDto dto = new AccountsCountDto();
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try (Connection con = dataSource.getConnection()) {
-            long totalSupply = accountTable.getTotalSupply(con);
-            long totalAccounts = accountTable.getTotalNumberOfAccounts(con);
-            long totalAmountOnTopAccounts = accountTable.getTotalAmountOnTopAccounts(con, numberOfAccounts);
-            try(DbIterator<Account> topHoldersIterator = accountTable.getTopHolders(con, numberOfAccounts)) {
-                composeAccountCountDto(dto, topHoldersIterator, totalAmountOnTopAccounts, totalSupply, totalAccounts, numberOfAccounts);
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
+        long totalSupply = accountService.getTotalSupply();
+        long totalAccounts = accountService.getTotalNumberOfAccounts();
+        long totalAmountOnTopAccounts = accountService.getTotalAmountOnTopAccounts(numberOfAccounts);
+        List<Account> topHoldersIterator = accountService.getTopHolders(numberOfAccounts);
+        composeAccountCountDto(dto, topHoldersIterator, totalAmountOnTopAccounts, totalSupply, totalAccounts, numberOfAccounts);
         return dto;
     }
 
-    private AccountsCountDto composeAccountCountDto(AccountsCountDto dto, DbIterator<Account> topAccountsIterator,
+    private AccountsCountDto composeAccountCountDto(AccountsCountDto dto, List<Account> topAccountsIterator,
                                                     long totalAmountOnTopAccounts, long totalSupply,
                                                     long totalAccounts, int numberOfAccounts) {
         dto.totalSupply = totalSupply;
         dto.totalNumberOfAccounts = totalAccounts;
         dto.numberOfTopAccounts = numberOfAccounts;
         dto.totalAmountOnTopAccounts = totalAmountOnTopAccounts;
-        while (topAccountsIterator.hasNext()) {
-            Account account = topAccountsIterator.next();
+        while (topAccountsIterator.iterator().hasNext()) {
+            Account account = topAccountsIterator.iterator().next();
             AccountEffectiveBalanceDto accountJson = accountBalance(account, false, blockchain.getHeight());
             putAccountNameInfo(accountJson, account.getId(), false);
             dto.topHolders.add(accountJson);
@@ -131,8 +129,8 @@ public class ServerInfoService {
             json.unconfirmedBalanceATM = account.getUnconfirmedBalanceATM();
             json.forgedBalanceATM = account.getForgedBalanceATM();
             if (includeEffectiveBalance) {
-                json.effectiveBalanceAPL = account.getEffectiveBalanceAPL(height, false);
-                json.guaranteedBalanceATM = account.getGuaranteedBalanceATM(
+                json.effectiveBalanceAPL = accountService.getEffectiveBalanceAPL(account , height, false);
+                json.guaranteedBalanceATM = accountService.getGuaranteedBalanceATM(account,
                     blockchainConfig.getGuaranteedBalanceConfirmations(), height);
             }
         }
@@ -175,7 +173,7 @@ public class ServerInfoService {
         dto.maxPrunableLifetime = blockchainConfig.getMaxPrunableLifetime();
         dto.includeExpiredPrunable = propertiesHolder.INCLUDE_EXPIRED_PRUNABLE();
         dto.correctInvalidFees = propertiesHolder.correctInvalidFees();
-        dto.ledgerTrimKeep = AccountLedger.trimKeep;
+        dto.ledgerTrimKeep = accountLedgerService.getTrimKeep();
         dto.chainId = blockchainConfig.getChain().getChainId();
         dto.chainName = blockchainConfig.getChain().getName();
         dto.chainDescription = blockchainConfig.getChain().getDescription();

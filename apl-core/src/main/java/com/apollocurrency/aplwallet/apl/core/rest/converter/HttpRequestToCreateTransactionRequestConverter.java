@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
@@ -12,7 +13,9 @@ import javax.servlet.http.HttpServletRequest;
 public class HttpRequestToCreateTransactionRequestConverter {
 
 
-    public static CreateTransactionRequest convert(HttpServletRequest req, Account senderAccount, long recipientId, long amountATM, Attachment attachment, boolean broadcast) throws ParameterException {
+    public static CreateTransactionRequest convert(HttpServletRequest req, Account senderAccount, long recipientId, long amountATM,
+                                                   Attachment attachment, boolean broadcast,
+                                                   AccountService accountService) throws ParameterException {
         String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, false));
         String secretPhrase = ParameterParser.getSecretPhrase(req, false);
         Boolean encryptedMessageIsPrunable = Boolean.valueOf(req.getParameter("encryptedMessageIsPrunable"));
@@ -21,7 +24,7 @@ public class HttpRequestToCreateTransactionRequestConverter {
         Account recipient = null;
 
         if (recipientId != 0) {
-            recipient = Account.getAccount(recipientId);
+            recipient = accountService.getAccount(recipientId);
         }
 
         CreateTransactionRequest createTransactionRequest = CreateTransactionRequest.builder()

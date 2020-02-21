@@ -20,22 +20,22 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_MESSAGE_TO_ENCRYPT;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_RECIPIENT;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_MESSAGE_TO_ENCRYPT;
-
-import javax.servlet.http.HttpServletRequest;
-
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.dgs.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONStreamAware;
+
+import javax.enterprise.inject.Vetoed;
+import javax.servlet.http.HttpServletRequest;
+
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_MESSAGE_TO_ENCRYPT;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_RECIPIENT;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_MESSAGE_TO_ENCRYPT;
 
 @Vetoed
 public final class EncryptTo extends AbstractAPIRequestHandler {
@@ -49,7 +49,7 @@ public final class EncryptTo extends AbstractAPIRequestHandler {
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         long senderAccountId = ParameterParser.getAccountId(req, "account", false);
         long recipientId = ParameterParser.getAccountId(req, "recipient", true);
-        byte[] recipientPublicKey = Account.getPublicKey(recipientId);
+        byte[] recipientPublicKey = lookupAccountService().getPublicKeyByteArray(recipientId);
         if (recipientPublicKey == null) {
             return INCORRECT_RECIPIENT;
         }
@@ -66,7 +66,7 @@ public final class EncryptTo extends AbstractAPIRequestHandler {
             return INCORRECT_MESSAGE_TO_ENCRYPT;
         }
         byte[] keySeed = ParameterParser.getKeySeed(req, senderAccountId, true);
-        EncryptedData encryptedData = Account.encryptTo(recipientPublicKey, plainMessageBytes, keySeed, compress);
+        EncryptedData encryptedData = EncryptedDataUtil.encryptTo(recipientPublicKey, plainMessageBytes, keySeed, compress);
         return JSONData.encryptedData(encryptedData);
 
     }

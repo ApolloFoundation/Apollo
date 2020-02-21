@@ -1,7 +1,14 @@
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountTable;
+import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountAssetTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountCurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountInfoTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountLeaseTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountLedgerTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountPropertyTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.app.Order;
 import com.apollocurrency.aplwallet.apl.core.app.Poll;
@@ -21,9 +28,11 @@ import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageTable;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetDelete;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
+import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyExchangeOffer;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyFounder;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
@@ -50,6 +59,8 @@ import javax.inject.Singleton;
  */
 @Singleton
 public class TableRegistryInitializer {
+    @Inject
+    private DatabaseManager databaseManager;
     @Inject
     private PhasingPollTable phasingPollTable;
     @Inject
@@ -94,6 +105,18 @@ public class TableRegistryInitializer {
     private PhasingPollResultTable phasingPollResultTable;
     @Inject
     private AccountTable accountTable;
+    @Inject
+    private AccountLedgerTable accountLedgerTable;
+    @Inject
+    private AccountCurrencyTable accountCurrencyTable;
+    @Inject
+    private AccountLeaseTable accountLeaseTable;
+    @Inject
+    private AccountAssetTable accountAssetTable;
+    @Inject
+    private AccountPropertyTable accountPropertyTable;
+    @Inject
+    private AccountInfoTable accountInfoTable;
 
     @PostConstruct
     public void init() {
@@ -108,6 +131,7 @@ public class TableRegistryInitializer {
         AssetDividend.init();
         Vote.init();
         Currency.init();
+        CurrencyFounder.init();
         CurrencyBuyOffer.init();
         CurrencySellOffer.init();
         CurrencyMint.init();
@@ -117,18 +141,7 @@ public class TableRegistryInitializer {
         Shuffling.init();
         ShufflingParticipant.init();
         CurrencyExchangeOffer.init();
-        /*
-        the following are initialized in AplCore:
-        AccountPropertyTable
-        AccountInfoTable
-        ShufflingParticipant
-        AssetTransfer
-        AccountRestrictions
-        AccountLedgerTable
-        AccountCurrencyTable
-        AccountLeaseTable
-        AccountAssetTable
-        TODO: refactor after merging Feature/apl 724 refactor account class
-        */
+        AccountRestrictions.init();
+        AssetTransfer.init(databaseManager);
     }
 }

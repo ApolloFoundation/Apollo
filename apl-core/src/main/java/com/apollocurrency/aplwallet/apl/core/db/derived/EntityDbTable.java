@@ -83,37 +83,40 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> implements Entity
 
     public void checkAvailable(int height) {
         if (multiversion) {
-            if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-            int minRollBackHeight = blockchainProcessor.getMinRollbackHeight();
+            int minRollBackHeight = lookupBlockchainProcessor().getMinRollbackHeight();
             if (height < minRollBackHeight) {
                 throw new IllegalArgumentException("Historical data as of height " + height + " not available.");
             }
         }
-        if (blockchain == null) blockchain = CDI.current().select(BlockchainImpl.class).get();
-        if (height > blockchain.getHeight()) {
+
+        if (height > lookupBlockchain().getHeight()) {
             throw new IllegalArgumentException("Height " + height + " exceeds blockchain height " + blockchain.getHeight());
         }
     }
 
+    //TODO: Fix injection and remove
+    protected BlockchainProcessor lookupBlockchainProcessor(){
+        if (blockchainProcessor == null){
+            blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+        }
+        return blockchainProcessor;
+    }
 
-    /**
-     * Create new entity or return existing from cache in transaction
-     * Current use case: caching complex entity, incremental entity update from multiple methods in one transaction
-     * Should be removed asap
-     */
-    @Deprecated
-    @Override
-    public final T newEntity(DbKey dbKey) {
-        return keyFactory.newEntity(dbKey);
+    //TODO: Fix injection and remove
+    protected Blockchain lookupBlockchain(){
+        if (blockchain == null){
+            blockchain = CDI.current().select(BlockchainImpl.class).get();
+        }
+        return blockchain;
     }
 
     @Override
-    public final T get(DbKey dbKey) {
+    public T get(DbKey dbKey) {
         return get(dbKey, true);
     }
 
     @Override
-    public final T get(DbKey dbKey, boolean createDbKey) {
+    public T get(DbKey dbKey, boolean createDbKey) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + keyFactory.getPKClause()
@@ -126,7 +129,7 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> implements Entity
     }
 
     @Override
-    public final T get(DbKey dbKey, int height) {
+    public T get(DbKey dbKey, int height) {
         if (height < 0 || doesNotExceed(height)) {
             return get(dbKey);
         }

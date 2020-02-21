@@ -4,10 +4,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.dgs;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -83,6 +89,8 @@ public class DGSServiceTest {
     @RegisterExtension
     DbExtension extension = new DbExtension();
     Blockchain blockchain = mock(Blockchain.class);
+    Block lastBlock = mock(Block.class);
+    Block prevBlock = mock(Block.class);
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, BlockchainConfig.class,
@@ -93,10 +101,11 @@ public class DGSServiceTest {
             DGSFeedbackTable.class,
             DGSGoodsTable.class,
             DGSTagTable.class,
-            AccountTable.class,
             DGSPurchaseTable.class,
             DGSServiceImpl.class,
-            DerivedDbTablesRegistryImpl.class)
+            DerivedDbTablesRegistryImpl.class,
+            BlockchainConfig.class,
+            AccountServiceImpl.class, AccountTable.class)
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(blockchain, Blockchain.class))
@@ -108,6 +117,8 @@ public class DGSServiceTest {
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
             .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
+            .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyServiceImpl.class, AccountPublicKeyService.class))
+            .addBeans(MockBean.of(mock(AccountLedgerService.class), AccountLedgerService.class, AccountLedgerServiceImpl.class))
             .build();
     @Inject
     DGSService service;
@@ -115,7 +126,7 @@ public class DGSServiceTest {
     DGSGoodsTable goodsTable;
 
     @Inject
-    AccountTable accountTable;
+    AccountService accountService;
     @Inject
     AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
 
@@ -645,9 +656,6 @@ public class DGSServiceTest {
 
     @Test
     void testGetExpiredPendingPurchasesByBlock() {
-
-        Block lastBlock = mock(Block.class);
-        Block prevBlock = mock(Block.class);
         doReturn(dtd.PURCHASE_2.getDeadline()).when(prevBlock).getTimestamp();
         doReturn(dtd.PURCHASE_2.getDeadline() + 60).when(lastBlock).getTimestamp();
         doReturn(1L).when(lastBlock).getPreviousBlockId();
@@ -661,9 +669,6 @@ public class DGSServiceTest {
 
     @Test
     void testGetExpiredPendingPurchasesByBlockBelowPurchaseDeadline() {
-
-        Block lastBlock = mock(Block.class);
-        Block prevBlock = mock(Block.class);
         doReturn(dtd.PURCHASE_2.getDeadline() - 60).when(prevBlock).getTimestamp();
         doReturn(dtd.PURCHASE_2.getDeadline()).when(lastBlock).getTimestamp();
         doReturn(1L).when(lastBlock).getPreviousBlockId();
@@ -675,9 +680,6 @@ public class DGSServiceTest {
     }
     @Test
     void testGetExpiredPendingPurchasesByBlockAbovePurcaseDeadline() {
-
-        Block lastBlock = mock(Block.class);
-        Block prevBlock = mock(Block.class);
         doReturn(dtd.PURCHASE_2.getDeadline() + 1).when(prevBlock).getTimestamp();
         doReturn(dtd.PURCHASE_2.getDeadline() + 61).when(lastBlock).getTimestamp();
         doReturn(1L).when(lastBlock).getPreviousBlockId();
@@ -1156,12 +1158,14 @@ public class DGSServiceTest {
 
     @Test
     void testPurchaseForDelistedGoods() {
-        Account.init(extension.getDatabaseManager(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, accountTable, accountGuaranteedBalanceTable,null);
         Transaction purchaseTransaction = mock(Transaction.class);
         int height = 100_000;
+        doReturn(1L).when(lastBlock).getPreviousBlockId();
+        doReturn(lastBlock).when(blockchain).getLastBlock();
+        doReturn(height).when(lastBlock).getHeight();
         doReturn(height).when(blockchain).getHeight();
         doReturn(50L).when(purchaseTransaction).getSenderId();
-        Account account = Account.getAccount(50);
+        Account account = accountService.getAccount(50);
         long initialUnconfirmedBalance = account.getUnconfirmedBalanceATM();
         DigitalGoodsPurchase digitalGoodsPurchase = new DigitalGoodsPurchase(dtd.GOODS_8.getId(), 4, dtd.GOODS_8.getPriceATM(), 1_000_000);
         DbUtils.inTransaction(extension, (con)-> {
@@ -1172,12 +1176,14 @@ public class DGSServiceTest {
 
     @Test
     void testPurchaseWhenPriceNotMatch() {
-        Account.init(extension.getDatabaseManager(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, accountTable, accountGuaranteedBalanceTable,null);
         Transaction purchaseTransaction = mock(Transaction.class);
         int height = 100_000;
+        doReturn(1L).when(lastBlock).getPreviousBlockId();
+        doReturn(lastBlock).when(blockchain).getLastBlock();
+        doReturn(height).when(lastBlock).getHeight();
         doReturn(height).when(blockchain).getHeight();
         doReturn(50L).when(purchaseTransaction).getSenderId();
-        Account account = Account.getAccount(50);
+        Account account = accountService.getAccount(50);
         long initialUnconfirmedBalance = account.getUnconfirmedBalanceATM();
         DigitalGoodsPurchase digitalGoodsPurchase = new DigitalGoodsPurchase(dtd.GOODS_12.getId(), 2, dtd.GOODS_12.getPriceATM() + 1, 1_000_000);
         DbUtils.inTransaction(extension, (con)-> service.purchase(purchaseTransaction, digitalGoodsPurchase));
@@ -1186,12 +1192,14 @@ public class DGSServiceTest {
 
     @Test
     void testPurchaseWhenPriceQuantityExceedGoodsQuantity() {
-        Account.init(extension.getDatabaseManager(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, accountTable, accountGuaranteedBalanceTable,null);
         Transaction purchaseTransaction = mock(Transaction.class);
         int height = 100_000;
+        doReturn(1L).when(lastBlock).getPreviousBlockId();
+        doReturn(lastBlock).when(blockchain).getLastBlock();
+        doReturn(height).when(lastBlock).getHeight();
         doReturn(height).when(blockchain).getHeight();
         doReturn(50L).when(purchaseTransaction).getSenderId();
-        Account account = Account.getAccount(50);
+        Account account = accountService.getAccount(50);
         long initialUnconfirmedBalance = account.getUnconfirmedBalanceATM();
         DigitalGoodsPurchase digitalGoodsPurchase = new DigitalGoodsPurchase(dtd.GOODS_9.getId(), 2, dtd.GOODS_9.getPriceATM(), 1_000_000);
         DbUtils.inTransaction(extension, (con)-> service.purchase(purchaseTransaction, digitalGoodsPurchase));
@@ -1200,12 +1208,13 @@ public class DGSServiceTest {
 
     @Test
     void testDeliver() {
-        Account.init(extension.getDatabaseManager(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, accountTable, accountGuaranteedBalanceTable,null);
         Transaction deliverTransaction = mock(Transaction.class);
         int height = 1_000_000;
         long txId = 100L;
         long senderId = 200;
-
+        doReturn(1L).when(lastBlock).getPreviousBlockId();
+        doReturn(lastBlock).when(blockchain).getLastBlock();
+        doReturn(height).when(lastBlock).getHeight();
         doReturn(height).when(blockchain).getHeight();
         EncryptedMessageAppendix note = new EncryptedMessageAppendix(new EncryptedData("Image".getBytes(), new byte[32]), false, true);
         doReturn(note).when(deliverTransaction).getEncryptedMessage();
@@ -1230,9 +1239,12 @@ public class DGSServiceTest {
 
     @Test
     void testRefund() {
-        Account.init(extension.getDatabaseManager(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, accountTable, accountGuaranteedBalanceTable,null);
         EncryptedData refundNote = new EncryptedData("Refund node".getBytes(), new byte[32]);
-        doReturn(1_500_000).when(blockchain).getHeight();
+        int height = 1_500_000;
+        doReturn(1L).when(lastBlock).getPreviousBlockId();
+        doReturn(lastBlock).when(blockchain).getLastBlock();
+        doReturn(height).when(lastBlock).getHeight();
+        doReturn(height).when(blockchain).getHeight();
         DbUtils.inTransaction(extension, (con)-> {
             service.refund(LedgerEvent.DIGITAL_GOODS_REFUND, 100, SELLER_0_ID, dtd.PURCHASE_14.getId(), 300_000_000L, new EncryptedMessageAppendix(refundNote, true, false));
         });
@@ -1328,7 +1340,7 @@ public class DGSServiceTest {
 
 
     private void verifyAccountBalance(long accountId, Long unconfirmedBalance, Long balance) {
-        Account account = Account.getAccount(accountId);
+        Account account = accountService.getAccount(accountId);
         if (balance != null) {
             assertEquals(balance, account.getBalanceATM());
         }

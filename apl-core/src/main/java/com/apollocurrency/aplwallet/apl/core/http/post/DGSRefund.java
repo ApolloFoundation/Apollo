@@ -25,7 +25,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.GOODS_NOT
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DGS_REFUND;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_PURCHASE;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
@@ -77,7 +77,7 @@ public final class DGSRefund extends CreateTransaction {
             return INCORRECT_DGS_REFUND;
         }
 
-        Account buyerAccount = Account.getAccount(purchase.getBuyerId());
+        Account buyerAccount = lookupAccountService().getAccount(purchase.getBuyerId());
 
         Attachment attachment = new DigitalGoodsRefund(purchase.getId(), refundATM);
         return createTransaction(req, sellerAccount, buyerAccount.getId(), 0, attachment);

@@ -3,22 +3,23 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EmptyAttachment;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import java.nio.ByteBuffer;
 import org.json.simple.JSONObject;
+
+import java.nio.ByteBuffer;
 
 /**
  *
  * @author al
  */
 public abstract class Payment extends TransactionType {
-    
+
     private Payment() {
     }
 
@@ -35,7 +36,7 @@ public abstract class Payment extends TransactionType {
     @Override
     public final void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         if (recipientAccount == null) {
-            Account.getAccount(GenesisImporter.CREATOR_ID).addToBalanceAndUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), transaction.getAmountATM());
+            lookupAccountService().addToBalanceAndUnconfirmedBalanceATM(lookupAccountService().getAccount(GenesisImporter.CREATOR_ID), getLedgerEvent(), transaction.getId(), transaction.getAmountATM());
         }
     }
 
@@ -52,6 +53,7 @@ public abstract class Payment extends TransactionType {
     public final boolean isPhasingSafe() {
         return true;
     }
+
     public static final TransactionType ORDINARY = new Payment() {
         @Override
         public final byte getSubtype() {

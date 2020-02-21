@@ -20,10 +20,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.monetary;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountCurrency;
-import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -64,6 +67,8 @@ public final class Currency {
 
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+    private static AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
+    private static AccountCurrencyService accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
     private static final LongKeyFactory<Currency> currencyDbKeyFactory = new LongKeyFactory<Currency>("id") {
 
         @Override
@@ -444,7 +449,7 @@ public final class Currency {
 
     static void increaseReserve(LedgerEvent event, long eventId, Account account, long currencyId, long amountPerUnitATM) {
         Currency currency = Currency.getCurrency(currencyId);
-        account.addToBalanceATM(event, eventId, -Math.multiplyExact(currency.getReserveSupply(), amountPerUnitATM));
+        accountService.addToBalanceATM(account, event, eventId, -Math.multiplyExact(currency.getReserveSupply(), amountPerUnitATM));
         CurrencySupply currencySupply = currency.getSupplyData();
         currencySupply.currentReservePerUnitATM += amountPerUnitATM;
         currencySupplyTable.insert(currencySupply);
@@ -452,17 +457,17 @@ public final class Currency {
     }
 
     static void claimReserve(LedgerEvent event, long eventId, Account account, long currencyId, long units) {
-        account.addToCurrencyUnits(event, eventId, currencyId, -units);
+        accountCurrencyService.addToCurrencyUnits(account, event, eventId, currencyId, -units);
         Currency currency = Currency.getCurrency(currencyId);
         currency.increaseSupply(- units);
-        account.addToBalanceAndUnconfirmedBalanceATM(event, eventId,
+        accountService.addToBalanceAndUnconfirmedBalanceATM(account, event, eventId,
                 Math.multiplyExact(units, currency.getCurrentReservePerUnitATM()));
     }
 
     static void transferCurrency(LedgerEvent event, long eventId, Account senderAccount, Account recipientAccount,
                                  long currencyId, long units) {
-        senderAccount.addToCurrencyUnits(event, eventId, currencyId, -units);
-        recipientAccount.addToCurrencyAndUnconfirmedCurrencyUnits(event, eventId, currencyId, units);
+        accountCurrencyService.addToCurrencyUnits(senderAccount, event, eventId, currencyId, -units);
+        accountCurrencyService.addToCurrencyAndUnconfirmedCurrencyUnits(recipientAccount, event, eventId, currencyId, units);
     }
 
     public void increaseSupply(long units) {
@@ -473,14 +478,6 @@ public final class Currency {
             throw new IllegalArgumentException("Cannot add " + units + " to current supply of " + currencySupply.currentSupply);
         }
         currencySupplyTable.insert(currencySupply);
-    }
-
-    public DbIterator<AccountCurrency> getAccounts(int from, int to) {
-        return AccountCurrencyTable.getCurrencyAccounts(this.currencyId, from, to);
-    }
-
-    public DbIterator<AccountCurrency> getAccounts(int height, int from, int to) {
-        return AccountCurrencyTable.getCurrencyAccounts(this.currencyId, height, from, to);
     }
 
     public DbIterator<Exchange> getExchanges(int from, int to) {
@@ -505,9 +502,9 @@ public final class Currency {
         if (is(CurrencyType.MINTABLE) && getCurrentSupply() < maxSupply && senderAccountId != accountId) {
             return false;
         }
-        try (DbIterator<AccountCurrency> accountCurrencies = AccountCurrencyTable.getCurrencyAccounts(this.currencyId, 0, -1)) {
-            return ! accountCurrencies.hasNext() || accountCurrencies.next().getAccountId() == senderAccountId && ! accountCurrencies.hasNext();
-        }
+
+        List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrenciesByAccount(this.currencyId, 0, -1);
+        return accountCurrencies.isEmpty() || accountCurrencies.size() == 1 && accountCurrencies.get(0).getAccountId() == senderAccountId;
     }
 
     void delete(LedgerEvent event, long eventId, Account senderAccount) {
@@ -518,16 +515,17 @@ public final class Currency {
         listeners.notify(this, Event.BEFORE_DELETE);
         if (is(CurrencyType.RESERVABLE)) {
             if (is(CurrencyType.CLAIMABLE) && isActive()) {
-                senderAccount.addToUnconfirmedCurrencyUnits(event, eventId, currencyId,
-                        -senderAccount.getCurrencyUnits(currencyId));
-                Currency.claimReserve(event, eventId, senderAccount, currencyId, senderAccount.getCurrencyUnits(currencyId));
+                accountCurrencyService.addToUnconfirmedCurrencyUnits(senderAccount, event, eventId, currencyId,
+                        -accountCurrencyService.getCurrencyUnits(senderAccount, currencyId));
+                Currency.claimReserve(event, eventId, senderAccount, currencyId,
+                        accountCurrencyService.getCurrencyUnits(senderAccount, currencyId));
             }
             if (!isActive()) {
                 try (DbIterator<CurrencyFounder> founders = CurrencyFounder.getCurrencyFounders(currencyId, 0, Integer.MAX_VALUE)) {
                     for (CurrencyFounder founder : founders) {
-                        Account.getAccount(founder.getAccountId())
-                                .addToBalanceAndUnconfirmedBalanceATM(event, eventId, Math.multiplyExact(reserveSupply,
-                                        founder.getAmountPerUnitATM()));
+                        accountService.addToBalanceAndUnconfirmedBalanceATM(
+                                accountService.getAccount(founder.getAccountId()),
+                                event, eventId, Math.multiplyExact(reserveSupply, founder.getAmountPerUnitATM()));
                     }
                 }
             }
@@ -545,9 +543,10 @@ public final class Currency {
         if (is(CurrencyType.MINTABLE)) {
             CurrencyMint.deleteCurrency(this);
         }
-        senderAccount.addToUnconfirmedCurrencyUnits(event, eventId, currencyId,
-                -senderAccount.getUnconfirmedCurrencyUnits(currencyId));
-        senderAccount.addToCurrencyUnits(event, eventId, currencyId, -senderAccount.getCurrencyUnits(currencyId));
+        accountCurrencyService.addToUnconfirmedCurrencyUnits(senderAccount, event, eventId, currencyId,
+                -accountCurrencyService.getUnconfirmedCurrencyUnits(senderAccount, currencyId));
+        accountCurrencyService.addToCurrencyUnits(senderAccount, event, eventId, currencyId,
+                -accountCurrencyService.getCurrencyUnits(senderAccount, currencyId));
         currencyTable.delete(this);
     }
 
@@ -572,14 +571,17 @@ public final class Currency {
         private void undoCrowdFunding(Currency currency) {
             try (DbIterator<CurrencyFounder> founders = CurrencyFounder.getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
                 for (CurrencyFounder founder : founders) {
-                    Account.getAccount(founder.getAccountId())
-                            .addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.CURRENCY_UNDO_CROWDFUNDING, currency.getId(),
-                                    Math.multiplyExact(currency.getReserveSupply(),
+                    accountService.addToBalanceAndUnconfirmedBalanceATM(
+                            accountService.getAccount(founder.getAccountId()),
+                            LedgerEvent.CURRENCY_UNDO_CROWDFUNDING,
+                            currency.getId(),
+                            Math.multiplyExact(currency.getReserveSupply(),
                                             founder.getAmountPerUnitATM()));
                 }
             }
-            Account.getAccount(currency.getAccountId())
-                    .addToCurrencyAndUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_UNDO_CROWDFUNDING, currency.getId(),
+            accountCurrencyService.addToCurrencyAndUnconfirmedCurrencyUnits(
+                    accountService.getAccount(currency.getAccountId()),
+                    LedgerEvent.CURRENCY_UNDO_CROWDFUNDING, currency.getId(),
                             currency.getId(), - currency.getInitialSupply());
             currencyTable.delete(currency);
             CurrencyFounder.remove(currency.getId());
@@ -599,15 +601,16 @@ public final class Currency {
             for (CurrencyFounder founder : currencyFounders) {
                 long units = Math.multiplyExact(remainingSupply, founder.getAmountPerUnitATM()) / totalAmountPerUnit;
                 currencySupply.currentSupply += units;
-                Account.getAccount(founder.getAccountId())
-                        .addToCurrencyAndUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_DISTRIBUTION, currency.getId(),
+                accountCurrencyService.addToCurrencyAndUnconfirmedCurrencyUnits(
+                        accountService.getAccount(founder.getAccountId()),
+                        LedgerEvent.CURRENCY_DISTRIBUTION, currency.getId(),
                                 currency.getId(), units);
             }
-            Account issuerAccount = Account.getAccount(currency.getAccountId());
-            issuerAccount.addToCurrencyAndUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_DISTRIBUTION, currency.getId(),
+            Account issuerAccount = accountService.getAccount(currency.getAccountId());
+            accountCurrencyService.addToCurrencyAndUnconfirmedCurrencyUnits(issuerAccount, LedgerEvent.CURRENCY_DISTRIBUTION, currency.getId(),
                     currency.getId(), currency.getReserveSupply() - currency.getCurrentSupply());
             if (!currency.is(CurrencyType.CLAIMABLE)) {
-                issuerAccount.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.CURRENCY_DISTRIBUTION, currency.getId(),
+                accountService.addToBalanceAndUnconfirmedBalanceATM(issuerAccount, LedgerEvent.CURRENCY_DISTRIBUTION, currency.getId(),
                         Math.multiplyExact(totalAmountPerUnit, currency.getReserveSupply()));
             }
             currencySupply.currentSupply = currency.getReserveSupply();

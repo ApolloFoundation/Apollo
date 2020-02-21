@@ -26,7 +26,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_DELIVERY_DEADLINE_TIMESTAMP;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_GOODS;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
@@ -83,7 +83,7 @@ public final class DGSPurchase extends CreateTransaction {
         }
 
         Account buyerAccount = ParameterParser.getSenderAccount(req);
-        Account sellerAccount = Account.getAccount(goods.getSellerId());
+        Account sellerAccount = lookupAccountService().getAccount(goods.getSellerId());
 
         Attachment attachment = new DigitalGoodsPurchase(goods.getId(), quantity, priceATM,
                 deliveryDeadline);

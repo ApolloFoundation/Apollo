@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
@@ -50,7 +50,7 @@ import javax.servlet.http.HttpServletRequest;
  * If the hash code is smaller than the target the currency units are generated into the sender account.<br>
  * It is recommended to calculate the hash value offline before submitting the transaction.<br>
  * Use the {@link GetMintingTarget} transaction to retrieve the current hash target and then calculate the hash offline
- * by following the procedure used in {@link com.apollocurrency.aplwallet.apl.CurrencyMint#mintCurrency}<br>
+ * by following the procedure used in {@link com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint#mintCurrency}<br>
  */
 @Vetoed
 public final class CurrencyMint extends CreateTransaction {

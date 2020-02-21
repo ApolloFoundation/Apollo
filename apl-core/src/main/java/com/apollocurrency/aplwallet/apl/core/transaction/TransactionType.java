@@ -20,8 +20,20 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountInfoService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountInfoServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountLeaseService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountLeaseServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPropertyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPropertyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
@@ -34,6 +46,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttach
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import lombok.Setter;
 import org.json.simple.JSONObject;
 
 import javax.enterprise.inject.spi.CDI;
@@ -41,7 +54,6 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-
 
 public abstract class TransactionType {
 
@@ -109,7 +121,56 @@ public abstract class TransactionType {
 
     public static final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     protected static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
-    public static volatile TimeService timeService = CDI.current().select(TimeService.class).get();
+    public static  TimeService timeService = CDI.current().select(TimeService.class).get();
+    @Setter
+    private static AccountService accountService;
+    private static AccountCurrencyService accountCurrencyService;
+    private static AccountLeaseService accountLeaseService;
+    private static AccountAssetService accountAssetService;
+    private static AccountPropertyService accountPropertyService;
+    private static AccountInfoService accountInfoService;
+
+    public static AccountService lookupAccountService(){
+        if ( accountService == null) {
+            accountService = CDI.current().select(AccountServiceImpl.class).get();
+        }
+        return accountService;
+    }
+
+    public static AccountCurrencyService lookupAccountCurrencyService(){
+        if ( accountCurrencyService == null) {
+            accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
+        }
+        return accountCurrencyService;
+    }
+
+    public static AccountLeaseService lookupAccountLeaseService(){
+        if ( accountLeaseService == null) {
+            accountLeaseService = CDI.current().select(AccountLeaseServiceImpl.class).get();
+        }
+        return accountLeaseService;
+    }
+
+    public static AccountAssetService lookupAccountAssetService(){
+        if ( accountAssetService == null) {
+            accountAssetService = CDI.current().select(AccountAssetServiceImpl.class).get();
+        }
+        return accountAssetService;
+    }
+
+    public static AccountPropertyService lookupAccountPropertyService(){
+        if ( accountPropertyService == null) {
+            accountPropertyService = CDI.current().select(AccountPropertyServiceImpl.class).get();
+        }
+        return accountPropertyService;
+    }
+
+    public static AccountInfoService lookupAccountInfoService(){
+        if ( accountInfoService == null) {
+            accountInfoService = CDI.current().select(AccountInfoServiceImpl.class).get();
+        }
+        return accountInfoService;
+    }
 
     public static TransactionType findTransactionType(byte type, byte subtype) {
         switch (type) {
@@ -273,9 +334,9 @@ public abstract class TransactionType {
         if (senderAccount.getUnconfirmedBalanceATM() < totalAmountATM) {
             return false;
         }
-        senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), -amountATM, -feeATM);
+        lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -amountATM, -feeATM);
         if (!applyAttachmentUnconfirmed(transaction, senderAccount)) {
-            senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), amountATM, feeATM);
+            accountService.addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), amountATM, feeATM);
             return false;
         }
         return true;
@@ -287,16 +348,16 @@ public abstract class TransactionType {
         long amount = transaction.getAmountATM();
         long transactionId = transaction.getId();
         if (!transaction.attachmentIsPhased()) {
-            senderAccount.addToBalanceATM(getLedgerEvent(), transactionId, -amount, -transaction.getFeeATM());
+            lookupAccountService().addToBalanceATM(senderAccount, getLedgerEvent(), transactionId, -amount, -transaction.getFeeATM());
         } else {
-            senderAccount.addToBalanceATM(getLedgerEvent(), transactionId, -amount);
+            lookupAccountService().addToBalanceATM(senderAccount, getLedgerEvent(), transactionId, -amount);
         }
         if (recipientAccount != null) {
             //refresh balance in case a debit account is equal to a credit one
             if (Objects.equals(senderAccount.getId(), recipientAccount.getId())){
                 recipientAccount.setBalanceATM(senderAccount.getBalanceATM());
             }
-            recipientAccount.addToBalanceAndUnconfirmedBalanceATM(getLedgerEvent(), transactionId, amount);
+            accountService.addToBalanceAndUnconfirmedBalanceATM(recipientAccount, getLedgerEvent(), transactionId, amount);
         }
         applyAttachment(transaction, senderAccount, recipientAccount);
     }
@@ -305,10 +366,10 @@ public abstract class TransactionType {
 
     public final void undoUnconfirmed(Transaction transaction, Account senderAccount) {
         undoAttachmentUnconfirmed(transaction, senderAccount);
-        senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(),
+        lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(),
                 transaction.getAmountATM(), transaction.getFeeATM());
         if (transaction.referencedTransactionFullHash() != null) {
-            senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), 0,
+            accountService.addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), 0,
                     blockchainConfig.getUnconfirmedPoolDepositAtm());
         }
     }
