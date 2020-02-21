@@ -114,6 +114,11 @@ public class AccountServiceImpl implements AccountService {
         return account;
     }
 
+    @Override
+    public Account getAccount(Account account) {
+        return accountTable.get(account.getDbKey());
+    }
+
     private Account getAccount(DbKey dbKey, int height) {
         if (height < 0 || blockChainInfoService.doesNotExceed(height)) {
             return accountTable.get(dbKey);
@@ -498,7 +503,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Balances getAccountBalances(Account account, boolean includeEffectiveBalance){
-        return getAccountBalances(account, includeEffectiveBalance, blockchain.getHeight());
+        return getAccountBalances(account, includeEffectiveBalance, blockChainInfoService.getHeight());
     }
 
     @Override
@@ -513,7 +518,7 @@ public class AccountServiceImpl implements AccountService {
         balances.setForgedBalanceATM(account.getForgedBalanceATM());
 
         if (includeEffectiveBalance) {
-            balances.setEffectiveBalanceAPL(getEffectiveBalanceAPL(account, blockchain.getHeight(), false));
+            balances.setEffectiveBalanceAPL(getEffectiveBalanceAPL(account, blockChainInfoService.getHeight(), false));
             balances.setGuaranteedBalanceATM(getGuaranteedBalanceATM(account, blockchainConfig.getGuaranteedBalanceConfirmations(), height));
         }
 

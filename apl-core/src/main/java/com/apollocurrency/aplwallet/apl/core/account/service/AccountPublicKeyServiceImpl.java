@@ -139,6 +139,14 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
         return publicKey;
     }
 
+    public PublicKey loadPublicKeyFromDb(DbKey dbKey) {
+        PublicKey publicKey = publicKeyTable.get(dbKey, false);
+        if (publicKey == null) {
+            publicKey = genesisPublicKeyTable.get(dbKey, false);
+        }
+        return publicKey;
+    }
+
     @Override
     public PublicKey loadPublicKeyFromDb(DbKey dbKey, int height) {
         PublicKey publicKey = getPublicKey(dbKey, height);
