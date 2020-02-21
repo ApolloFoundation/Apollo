@@ -157,11 +157,14 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
         return publicKey;
     }
 
+    /**
+     * Gets GenesisPublicKey without checking doesNotExceed and checkAvailable
+     * because GenesisPublicKeys are unchangeable.
+     * @param dbKey
+     * @param height
+     * @return
+     */
     private PublicKey getGenesisPublicKey(DbKey dbKey, int height) {
-        if (height < 0 || blockChainInfoService.doesNotExceed(height)) {
-            return genesisPublicKeyTable.get(dbKey);
-        }
-        blockChainInfoService.checkAvailable(height, genesisPublicKeyTable.isMultiversion());
         return genesisPublicKeyTable.get(dbKey, height);
     }
 
