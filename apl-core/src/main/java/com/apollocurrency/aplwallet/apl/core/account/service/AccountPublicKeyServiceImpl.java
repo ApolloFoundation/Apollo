@@ -15,8 +15,8 @@ import com.apollocurrency.aplwallet.apl.core.cache.PublicKeyCacheConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTableInterface;
+import com.apollocurrency.aplwallet.apl.core.dgs.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.core.shard.DbHotSwapConfig;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -169,7 +169,7 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
         if (key == null) {
             throw new IllegalArgumentException("Recipient account doesn't have a public key set");
         }
-        return encryptTo(key, data, keySeed, compress);
+        return EncryptedDataUtil.encryptTo(key, data, keySeed, compress);
     }
 
     @Override
@@ -178,24 +178,7 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
         if (key == null) {
             throw new IllegalArgumentException("Sender account doesn't have a public key set");
         }
-        return decryptFrom(key, encryptedData, recipientKeySeed, uncompress);
-    }
-
-    @Override
-    public EncryptedData encryptTo(byte[] publicKey, byte[] data, byte[] keySeed, boolean compress) {
-        if (compress && data.length > 0) {
-            data = Convert.compress(data);
-        }
-        return EncryptedData.encrypt(data, keySeed, publicKey);
-    }
-
-    @Override
-    public byte[] decryptFrom(byte[] publicKey, EncryptedData encryptedData, byte[] recipientKeySeed, boolean uncompress) {
-        byte[] decrypted = encryptedData.decrypt(recipientKeySeed, publicKey);
-        if (uncompress && decrypted.length > 0) {
-            decrypted = Convert.uncompress(decrypted);
-        }
-        return decrypted;
+        return EncryptedDataUtil.decryptFrom(key, encryptedData, recipientKeySeed, uncompress);
     }
 
     @Override

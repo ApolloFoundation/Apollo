@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.dgs.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -120,7 +121,7 @@ public final class ReadMessage extends AbstractAPIRequestHandler {
                         byte[] recipientPublicKey = lookupAccountService().getPublicKeyByteArray(transaction.getRecipientId());
                         byte[] publicKey = Arrays.equals(senderPublicKey, readerPublicKey) ? recipientPublicKey : senderPublicKey;
                         if (publicKey != null) {
-                            decrypted = lookupAccountPublickKeyService().decryptFrom(publicKey, encryptedData, keySeed, uncompress);
+                            decrypted = EncryptedDataUtil.decryptFrom(publicKey, encryptedData, keySeed, uncompress);
                         }
                     } else {
                         decrypted = Crypto.aesDecrypt(encryptedData.getData(), sharedKey);
@@ -137,7 +138,7 @@ public final class ReadMessage extends AbstractAPIRequestHandler {
             if (encryptToSelfMessage != null && keySeed != null) {
                 byte[] publicKey = Crypto.getPublicKey(keySeed);
                 try {
-                    byte[] decrypted = lookupAccountPublickKeyService().decryptFrom(publicKey, encryptToSelfMessage.getEncryptedData(), keySeed,
+                    byte[] decrypted = EncryptedDataUtil.decryptFrom(publicKey, encryptToSelfMessage.getEncryptedData(), keySeed,
                             encryptToSelfMessage.isCompressed());
                     response.put("decryptedMessageToSelf", Convert.toString(decrypted, encryptToSelfMessage.isText()));
                 } catch (RuntimeException e) {

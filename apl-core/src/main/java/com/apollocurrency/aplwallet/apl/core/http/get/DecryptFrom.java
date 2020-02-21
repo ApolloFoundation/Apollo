@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
+import com.apollocurrency.aplwallet.apl.core.dgs.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
@@ -61,7 +62,7 @@ public final class DecryptFrom extends AbstractAPIRequestHandler {
         boolean isText = !"false".equalsIgnoreCase(req.getParameter("decryptedMessageIsText"));
         boolean uncompress = !"false".equalsIgnoreCase(req.getParameter("uncompressDecryptedMessage"));
         try {
-            byte[] decrypted = lookupAccountPublickKeyService().decryptFrom(publicKey, encryptedData, keySeed, uncompress);
+            byte[] decrypted = EncryptedDataUtil.decryptFrom(publicKey, encryptedData, keySeed, uncompress);
             JSONObject response = new JSONObject();
             response.put("decryptedMessage", isText ? Convert.toString(decrypted) : Convert.toHexString(decrypted));
             return response;

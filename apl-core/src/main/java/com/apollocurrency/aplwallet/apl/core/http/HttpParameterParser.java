@@ -32,6 +32,7 @@ import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
+import com.apollocurrency.aplwallet.apl.core.dgs.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
@@ -481,7 +482,7 @@ public final class HttpParameterParser {
             byte[] keySeed = getKeySeed(req, senderId, false);
             if (keySeed != null) {
                 byte[] publicKey = Crypto.getPublicKey(keySeed);
-                encryptedData = accountPublicKeyService.encryptTo(publicKey, plainMessageBytes, keySeed, compress);
+                encryptedData = EncryptedDataUtil.encryptTo(publicKey, plainMessageBytes, keySeed, compress);
             }
         }
         if (encryptedData != null) {
@@ -911,7 +912,7 @@ public final class HttpParameterParser {
             }
             byte[] keySeed = getKeySeed(req, senderId, false);
             if (keySeed != null) {
-                encryptedData = accountPublicKeyService.encryptTo(recipientPublicKey, plainMessageBytes, keySeed, compress);
+                encryptedData = EncryptedDataUtil.encryptTo(recipientPublicKey, plainMessageBytes, keySeed, compress);
             }
         }
         if (encryptedData != null) {

@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
+import com.apollocurrency.aplwallet.apl.core.dgs.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
@@ -65,7 +66,7 @@ public final class EncryptTo extends AbstractAPIRequestHandler {
             return INCORRECT_MESSAGE_TO_ENCRYPT;
         }
         byte[] keySeed = HttpParameterParser.getKeySeed(req, senderAccountId, true);
-        EncryptedData encryptedData = lookupAccountPublickKeyService().encryptTo(recipientPublicKey, plainMessageBytes, keySeed, compress);
+        EncryptedData encryptedData = EncryptedDataUtil.encryptTo(recipientPublicKey, plainMessageBytes, keySeed, compress);
         return JSONData.encryptedData(encryptedData);
 
     }

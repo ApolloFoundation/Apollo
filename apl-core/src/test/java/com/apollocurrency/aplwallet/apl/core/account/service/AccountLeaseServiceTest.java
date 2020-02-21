@@ -12,7 +12,6 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -43,10 +42,6 @@ class AccountLeaseServiceTest {
         testData = new AccountTestData();
         accountLeaseService = spy(new AccountLeaseServiceImpl(
                 accountLeaseTable,blockchain, blockchainConfig, leaseEvent));
-    }
-
-    @AfterEach
-    void tearDown() {
     }
 
     @Test
