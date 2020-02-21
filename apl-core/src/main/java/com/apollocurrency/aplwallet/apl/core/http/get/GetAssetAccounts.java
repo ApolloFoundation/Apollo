@@ -20,20 +20,19 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountAsset;
-import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 @Vetoed
 public final class GetAssetAccounts extends AbstractAPIRequestHandler {
@@ -51,12 +50,9 @@ public final class GetAssetAccounts extends AbstractAPIRequestHandler {
         int height = ParameterParser.getHeight(req);
 
         JSONArray accountAssets = new JSONArray();
-        try (DbIterator<AccountAsset> iterator = AccountAssetTable.getAssetAccounts(assetId, height, firstIndex, lastIndex)) {
-            while (iterator.hasNext()) {
-                AccountAsset accountAsset = iterator.next();
-                accountAssets.add(JSONData.accountAsset(accountAsset, true, false));
-            }
-        }
+
+        List<AccountAsset> assets = lookupAccountAssetService().getAssetsByAssetId(assetId, height, firstIndex, lastIndex);
+        assets.forEach(aa -> accountAssets.add(JSONData.accountAsset(aa, true, false)));
 
         JSONObject response = new JSONObject();
         response.put("accountAssets", accountAssets);

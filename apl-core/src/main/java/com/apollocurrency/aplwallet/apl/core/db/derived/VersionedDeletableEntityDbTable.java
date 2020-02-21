@@ -5,8 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.db.derived;
 
 
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
@@ -17,7 +15,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import javax.enterprise.inject.spi.CDI;
 
 public abstract class VersionedDeletableEntityDbTable<T> extends EntityDbTable<T> {
     protected VersionedDeletableEntityDbTable(String table, KeyFactory<T> dbKeyFactory) {
@@ -39,11 +36,10 @@ public abstract class VersionedDeletableEntityDbTable<T> extends EntityDbTable<T
 
     @Override
     public boolean delete(T t) { //TODO remove blockchain
-        Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-        return delete(t, false, blockchain.getHeight());
+        return delete(t, false, lookupBlockchain().getHeight());
     }
 
-    public final boolean delete(T t, boolean keepInCache, int height) {
+    public boolean delete(T t, boolean keepInCache, int height) {
         if (t == null) {
             return false;
         }

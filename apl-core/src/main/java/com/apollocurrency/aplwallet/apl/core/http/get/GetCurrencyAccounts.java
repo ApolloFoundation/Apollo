@@ -20,20 +20,19 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountCurrency;
-import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 @Vetoed
 public final class GetCurrencyAccounts extends AbstractAPIRequestHandler {
@@ -51,12 +50,8 @@ public final class GetCurrencyAccounts extends AbstractAPIRequestHandler {
         int height = ParameterParser.getHeight(req);
 
         JSONArray accountCurrencies = new JSONArray();
-        try (DbIterator<AccountCurrency> iterator = AccountCurrencyTable.getCurrencyAccounts(currencyId, height, firstIndex, lastIndex)) {
-            while (iterator.hasNext()) {
-                AccountCurrency accountCurrency = iterator.next();
-                accountCurrencies.add(JSONData.accountCurrency(accountCurrency, true, false));
-            }
-        }
+        List<AccountCurrency>  accounts = lookupAccountCurrencyService().getCurrenciesByCurrency(currencyId, height, firstIndex, lastIndex);
+        accounts.forEach(accountCurrency -> accountCurrencies.add(JSONData.accountCurrency(accountCurrency, true, false)));
 
         JSONObject response = new JSONObject();
         response.put("accountCurrencies", accountCurrencies);

@@ -4,21 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TimeService;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TrimService;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.json.simple.JSONStreamAware;
-
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -29,6 +14,30 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.apollocurrency.aplwallet.apl.core.account.service.*;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TrimService;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import org.json.simple.JSONStreamAware;
+
 public abstract class AbstractAPIRequestHandler {
 
     private List<String> parameters;
@@ -36,12 +45,21 @@ public abstract class AbstractAPIRequestHandler {
     private Set<APITag> apiTags;
     private Blockchain blockchain;
     protected BlockchainProcessor blockchainProcessor;
+    private BlockchainConfig blockchainConfig;
     private TransactionProcessor transactionProcessor;
     protected TimeService timeService = CDI.current().select(TimeService.class).get();
     private DatabaseManager databaseManager;
     protected AdminPasswordVerifier apw =  CDI.current().select(AdminPasswordVerifier.class).get();
     protected ElGamalEncryptor elGamal = CDI.current().select(ElGamalEncryptor.class).get();
     protected PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private AccountService accountService;
+    private AccountPublicKeyService accountPublicKeyService;
+    private AccountLedgerService accountLedgerService;
+    private AccountAssetService accountAssetService;
+    private AccountCurrencyService accountCurrencyService;
+    private AccountInfoService accountInfoService;
+    private AccountLeaseService accountLeaseService;
+    private AccountPropertyService accountPropertyService;
     protected TrimService trimService;
     private PeersService peers;
 
@@ -50,9 +68,70 @@ public abstract class AbstractAPIRequestHandler {
         return peers;
     }
 
+    protected AccountPropertyService lookupAccountPropertyService(){
+        if (accountPropertyService == null){
+            accountPropertyService = CDI.current().select(AccountPropertyServiceImpl.class).get();
+        }
+        return accountPropertyService;
+    }
+
+    protected AccountLeaseService lookupAccountLeaseService(){
+        if (accountLeaseService == null){
+            accountLeaseService = CDI.current().select(AccountLeaseServiceImpl.class).get();
+        }
+        return accountLeaseService;
+    }
+
+    protected AccountInfoService lookupAccountInfoService(){
+        if (accountInfoService == null){
+            accountInfoService = CDI.current().select(AccountInfoServiceImpl.class).get();
+        }
+        return accountInfoService;
+    }
+
+    protected AccountCurrencyService lookupAccountCurrencyService(){
+        if (accountCurrencyService == null){
+            accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
+        }
+        return accountCurrencyService;
+    }
+
+    protected AccountAssetService lookupAccountAssetService(){
+        if ( accountAssetService == null){
+            accountAssetService = CDI.current().select(AccountAssetServiceImpl.class).get();
+        }
+        return accountAssetService;
+    }
+
+    protected AccountLedgerService lookupAccountLedgerService(){
+        if ( accountLedgerService == null){
+            accountLedgerService = CDI.current().select(AccountLedgerServiceImpl.class).get();
+        }
+        return accountLedgerService;
+    }
+
+    protected AccountService lookupAccountService(){
+        if ( accountService == null) {
+            accountService = CDI.current().select(AccountServiceImpl.class).get();
+        }
+        return accountService;
+    }
+
+    protected AccountPublicKeyService lookupAccountPublickKeyService(){
+        if ( accountPublicKeyService == null) {
+            accountPublicKeyService = CDI.current().select(AccountPublicKeyServiceImpl.class).get();
+        }
+        return accountPublicKeyService;
+    }
+
     protected Blockchain lookupBlockchain() {
         if (blockchain == null) blockchain = CDI.current().select(BlockchainImpl.class).get();
         return blockchain;
+    }
+
+    protected BlockchainConfig lookupBlockchainConfig(){
+        if (blockchainConfig == null) blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+        return blockchainConfig;
     }
 
     protected BlockchainProcessor lookupBlockchainProcessor() {

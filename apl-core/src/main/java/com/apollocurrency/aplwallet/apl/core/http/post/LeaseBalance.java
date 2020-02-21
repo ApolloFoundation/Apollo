@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AccountControlEffectiveBalanceLeasing;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -47,8 +47,8 @@ public final class LeaseBalance extends CreateTransaction {
         int period = ParameterParser.getInt(req, "period", blockchainConfig.getLeasingDelay(), 65535, true);
         Account account = ParameterParser.getSenderAccount(req);
         long recipient = ParameterParser.getAccountId(req, "recipient", true);
-        Account recipientAccount = Account.getAccount(recipient);
-        if (recipientAccount == null || Account.getPublicKey(recipientAccount.getId()) == null) {
+        Account recipientAccount = lookupAccountService().getAccount(recipient);
+        if (recipientAccount == null || lookupAccountService().getPublicKeyByteArray(recipientAccount.getId()) == null) {
             JSONObject response = new JSONObject();
             response.put("errorCode", 8);
             response.put("errorDescription", "recipient account does not have public key");

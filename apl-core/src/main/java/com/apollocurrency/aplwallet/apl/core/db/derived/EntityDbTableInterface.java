@@ -20,12 +20,9 @@ public interface EntityDbTableInterface<T> extends DerivedTableInterface<T> {
 
     void checkAvailable(int height);
 
-    @Deprecated
-    T newEntity(DbKey dbKey);
-
     T get(DbKey dbKey);
 
-    T get(DbKey dbKey, boolean cache);
+    T get(DbKey dbKey, boolean createDbKey);
 
     T get(DbKey dbKey, int height);
 

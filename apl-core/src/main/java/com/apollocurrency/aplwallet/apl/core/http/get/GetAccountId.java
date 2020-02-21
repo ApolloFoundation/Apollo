@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import javax.servlet.http.HttpServletRequest;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -44,7 +44,7 @@ public final class GetAccountId extends AbstractAPIRequestHandler {
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
         byte[] publicKey = ParameterParser.getPublicKey(req);
-        long accountId = Account.getId(publicKey);
+        long accountId = AccountService.getId(publicKey);
         JSONObject response = new JSONObject();
         JSONData.putAccount(response, "account", accountId);
         response.put("publicKey", Convert.toHexString(publicKey));

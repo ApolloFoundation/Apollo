@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;

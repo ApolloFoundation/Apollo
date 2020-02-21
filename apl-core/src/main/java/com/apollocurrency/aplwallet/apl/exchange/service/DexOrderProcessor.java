@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
@@ -107,6 +108,8 @@ public class DexOrderProcessor {
     private TimeService timeService;
     private ExecutorService backgroundExecutor;
     private DexOperationService operationService;
+    private AccountService accountService;
+
 
     private volatile boolean processorEnabled = true;
     private boolean startProcessor;
@@ -122,7 +125,9 @@ public class DexOrderProcessor {
     public DexOrderProcessor(SecureStorageService secureStorageService, TransactionValidator validator, DexService dexService,
                              DexOrderTransactionCreator dexOrderTransactionCreator, DexValidationServiceImpl dexValidationServiceImpl,
                              DexSmartContractService dexSmartContractService, EthereumWalletService ethereumWalletService,
-                             MandatoryTransactionDao mandatoryTransactionDao, TaskDispatchManager taskDispatchManager, TimeService timeService,
+                             MandatoryTransactionDao mandatoryTransactionDao, TaskDispatchManager taskDispatchManager,
+                             AccountService accountService,
+                             TimeService timeService,
                              Blockchain blockchain, PhasingPollService phasingPollService, DexOperationService operationService,
                              @Property(name = "apl.dex.orderProcessor.enabled", defaultValue = "true") boolean startProcessor,
                              @Property(name = "apl.dex.orderProcessor.delay", defaultValue = "" + DEFAULT_DEX_OFFER_PROCESSOR_DELAY) int processingDelay,
@@ -144,6 +149,7 @@ public class DexOrderProcessor {
         this.operationService = Objects.requireNonNull(operationService);
         this.startProcessor = startProcessor;
         this.processingDelay = Math.max(MIN_DEX_OFFER_PROCESSOR_DELAY, processingDelay);
+        this.accountService = accountService;
         this.dexConfig = dexConfig;
     }
 
@@ -718,7 +724,7 @@ public class DexOrderProcessor {
                 .passphrase(passphrase)
                 .deadlineValue("1440")
                 .publicKey(Crypto.getPublicKey(keySeed))
-                .senderAccount(Account.getAccount(accountId))
+                .senderAccount(accountService.getAccount(accountId))
                 .keySeed(keySeed)
                 .broadcast(true)
                 .recipientId(0L)
@@ -768,9 +774,13 @@ public class DexOrderProcessor {
 
             for (DexOrder order : orders) {
                 try {
-                    String ethAddress = DexCurrencyValidator.isEthOrPaxAddress(order.getFromAddress()) ? order.getFromAddress() : order.getToAddress();
-                    if(dexSmartContractService.isDepositForOrderExist(ethAddress, order.getId())) {
-                        dexService.refundEthPaxFrozenMoney(passphrase, order, false);
+                    if (order.getFromAddress() == null && order.getToAddress() == null) {
+                        log.debug("Old format order: {}, account {}, skip processing", order.getId(), order.getAccountId());
+                    } else {
+                        String ethAddress = DexCurrencyValidator.isEthOrPaxAddress(order.getFromAddress()) ? order.getFromAddress() : order.getToAddress();
+                        if (dexSmartContractService.isDepositForOrderExist(ethAddress, order.getId())) {
+                            dexService.refundEthPaxFrozenMoney(passphrase, order, false);
+                        }
                     }
                 } catch (AplException.ExecutiveProcessException e) {
                     wasException = true;

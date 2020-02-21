@@ -20,8 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
-import com.apollocurrency.aplwallet.apl.core.account.LedgerEntry;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerService;
+import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -204,7 +204,7 @@ public class GetAccountLedgerEntry extends AbstractAPIRequestHandler {
         //
         // Get the ledger entry
         //
-        LedgerEntry ledgerEntry = AccountLedger.getEntry(ledgerId, false);
+        LedgerEntry ledgerEntry = lookupAccountLedgerService().getEntry(ledgerId, false);
         if (ledgerEntry == null)
             return JSONResponses.UNKNOWN_ENTRY;
         //

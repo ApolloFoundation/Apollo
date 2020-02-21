@@ -20,22 +20,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
-import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
-import com.apollocurrency.aplwallet.apl.core.account.AccountTable;
-import com.apollocurrency.aplwallet.apl.core.account.PublicKeyService;
-import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
+
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.TableRegistryInitializer;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.migrator.ApplicationDataMigrationManager;
-import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.TransportInteractionService;
@@ -49,6 +45,7 @@ import com.apollocurrency.aplwallet.apl.exchange.service.DexOrderProcessor;
 import com.apollocurrency.aplwallet.apl.exchange.service.IDexMatcherInterface;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
+import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -92,7 +89,9 @@ public final class AplCore {
     private TaskDispatchManager taskDispatchManager;
     @Inject
     @Setter
-    private PublicKeyService publicKeyService;
+    private AccountPublicKeyService accountPublicKeyService;
+    @Inject @Setter
+    private InMemoryCacheManager cacheManager;
 
     @Inject @Setter
     private DexOrderProcessor dexOrderProcessor;
@@ -108,6 +107,9 @@ public final class AplCore {
     @Inject
     @Setter
     TableRegistryInitializer tableRegistryInitializer;
+    @Inject
+    @Setter
+    DerivedTablesRegistry dbRegistry;
 
     public AplCore() {
         time = CDI.current().select(TimeService.class).get();
@@ -118,14 +120,9 @@ public final class AplCore {
     }
 
     public void init() {
-
         log.debug("Application home folder '{}'", dirProvider.getAppBaseDir());
-//TODO: Do we really need this check?
-//        if (!Constants.VERSION.equals(Version.from(propertiesHolder.getStringProperty("apl.version")))) {
-//            LOG.warn("Versions don't match = {} and {}", Constants.VERSION, propertiesHolder.getStringProperty("apl.version"));
-//            throw new RuntimeException("Using an apl-default.properties file from a version other than " + Constants.VERSION + " is not supported!!!");
-//        }
-        initCoreTaskID=aplAppStatus.durableTaskStart("AplCore Init", "Apollo core initialization task",true);
+        initCoreTaskID=aplAppStatus.durableTaskStart("AplCore Init",
+            "Apollo core initialization task",true);
         startUp();
     }
 
@@ -192,20 +189,17 @@ public final class AplCore {
                 //try to start API as early as possible
                 apiServer = CDI.current().select(API.class).get();
                 apiServer.start();
-
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  5.0, "API initialization done");
 
 
-//                CDI.current().select(NtpTime.class).get().start();
-                aplAppStatus.durableTaskUpdate(initCoreTaskID,  5.5, "Transport control service initialization");
                 transportInteractionService = CDI.current().select(TransportInteractionService.class).get();
                 transportInteractionService.start();
+                aplAppStatus.durableTaskUpdate(initCoreTaskID,  5.5, "Transport control service initialization done");
 
                 AplCoreRuntime.logSystemProperties();
                 Thread secureRandomInitThread = initSecureRandom();
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  6.0, "Database initialization");
 
-//                DbProperties dbProperties = CDI.current().select(DbProperties.class).get();
                 databaseManager = CDI.current().select(DatabaseManager.class).get();
                 databaseManager.getDataSource();
                 CDI.current().select(BlockchainConfigUpdater.class).get().updateToLatestConfig();
@@ -234,19 +228,11 @@ public final class AplCore {
 
                 bcValidator = CDI.current().select(DefaultBlockValidator.class).get();
                 blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-                blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
                 blockchain = CDI.current().select(BlockchainImpl.class).get();
-                GlobalSync sync = CDI.current().select(GlobalSync.class).get();
                 peers.init();
-                //Account initialization
-                AccountTable accountTable = CDI.current().select(AccountTable.class).get();
-                AccountGuaranteedBalanceTable accountGuaranteedBalanceTable = CDI.current().select(AccountGuaranteedBalanceTable.class).get();
-                Account.init(databaseManager, blockchainProcessor, blockchainConfig, blockchain, sync, accountTable, accountGuaranteedBalanceTable, publicKeyService);
                 GenesisAccounts.init();
-                AccountRestrictions.init();
+
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  55.0, "Apollo Account ledger initialization");
-                AccountLedger.init(databaseManager);
-                AssetTransfer.init(databaseManager);
 
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  60.0, "Apollo Account ledger initialization done");
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  61.0, "Apollo Peer services initialization started");
@@ -270,6 +256,10 @@ public final class AplCore {
                     secureRandomInitThread.join(10000);
                 } catch (InterruptedException ignore) {}
                 testSecureRandom();
+
+                if (log.isDebugEnabled()){
+                    log.debug("AplCore setUp: {}", dbRegistry.toString());
+                }
 
                 long currentTime = System.currentTimeMillis();
                 log.info("Initialization took " + (currentTime - startTime) / 1000 + " seconds");
@@ -352,9 +342,6 @@ public final class AplCore {
             ports.add(peerServerPort);
             return ports;
         }
-
-
-
 
     private static Thread initSecureRandom() {
         Thread secureRandomInitThread = new Thread(() -> Crypto.getSecureRandom().nextBytes(new byte[1024]));

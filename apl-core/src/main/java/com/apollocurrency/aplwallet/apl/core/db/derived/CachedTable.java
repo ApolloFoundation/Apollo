@@ -30,8 +30,8 @@ public class CachedTable<T extends DerivedEntity> extends DbTableWrapper<T> {
     }
 
     @Override
-    public void rollback(final int height) {
-        super.rollback(height);
+    public int rollback(final int height) {
+        int rc = super.rollback(height);
         final Map<DbKey, T> map = cache.asMap();
         map.values().forEach(v -> {
             if(v.getHeight()>height) {
@@ -39,6 +39,7 @@ public class CachedTable<T extends DerivedEntity> extends DbTableWrapper<T> {
                 cache.invalidate(v.getDbKey());
             }
         });
+        return rc;
     }
 
     @Override
