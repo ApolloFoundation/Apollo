@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
@@ -51,7 +53,6 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 @EnableWeld
 class DexServiceIntegrationTest {
 
-
     @WeldSetup
     WeldInitiator weld = WeldUtils.from(List.of(DexService.class, CacheProducer.class), List.of(EthereumWalletService.class,
         DexOrderDao.class,
@@ -71,6 +72,7 @@ class DexServiceIntegrationTest {
         DexConfig.class,
         BlockchainImpl.class))
         .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
+        .addBeans(MockBean.of(mock(AccountService.class), AccountService.class, AccountServiceImpl.class))
         .build();
     @Inject
     DexService dexService;

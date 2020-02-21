@@ -7,7 +7,8 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 import com.apollocurrency.aplwallet.api.dto.ExchangeContractDTO;
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
@@ -96,6 +97,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class DexController {
     private static final Logger log = getLogger(DexController.class);
 
+    private AccountService accountService;
     private DexService service;
     private DexOrderTransactionCreator dexOrderTransactionCreator;
     private TimeService timeService;
@@ -110,12 +112,13 @@ public class DexController {
 
     @Inject
     public DexController(DexService service, DexOrderTransactionCreator dexOrderTransactionCreator, TimeService timeService, DexEthService dexEthService,
-                         EthereumWalletService ethereumWalletService, DexSmartContractService dexSmartContractService) {
+                         EthereumWalletService ethereumWalletService, DexSmartContractService dexSmartContractService, AccountService accountService) {
         this.service = Objects.requireNonNull(service, "DexService is null");
         this.dexOrderTransactionCreator = Objects.requireNonNull(dexOrderTransactionCreator, "DexOfferTransactionCreator is null");
         this.timeService = Objects.requireNonNull(timeService, "EpochTime is null");
         this.dexEthService = Objects.requireNonNull(dexEthService, "DexEthService is null");
         this.ethereumWalletService = Objects.requireNonNull(ethereumWalletService, "Ethereum Wallet Service");
+        this.accountService = Objects.requireNonNull( accountService, "accountService is null");
     }
 
     //For DI

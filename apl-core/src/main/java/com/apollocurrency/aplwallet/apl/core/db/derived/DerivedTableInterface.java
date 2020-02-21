@@ -16,7 +16,12 @@ import java.sql.SQLException;
  */
 public interface DerivedTableInterface<T> {
 
-    void rollback(int height);
+    /**
+     * Remove all records from the derived table above the height.
+     * @param height the height
+     * @return the number of removed records
+     */
+    int rollback(int height);
 
     /**
      * @return true, when this table is not a part of blockchain core data and can be reverted and re-populated

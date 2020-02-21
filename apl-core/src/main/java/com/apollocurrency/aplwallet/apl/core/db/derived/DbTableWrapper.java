@@ -31,8 +31,8 @@ public class DbTableWrapper<T extends DerivedEntity> implements EntityDbTableInt
     }
 
     @Override
-    public void rollback(final int height) {
-        table.rollback(height);
+    public int rollback(final int height) {
+        return table.rollback(height);
     }
 
     @Override
@@ -101,18 +101,13 @@ public class DbTableWrapper<T extends DerivedEntity> implements EntityDbTableInt
     }
 
     @Override
-    public T newEntity(DbKey dbKey) {
-        return table.newEntity(dbKey);
-    }
-
-    @Override
     public T get(DbKey dbKey) {
         return table.get(dbKey);
     }
 
     @Override
-    public T get(DbKey dbKey, boolean cache) {
-        return table.get(dbKey, cache);
+    public T get(DbKey dbKey, boolean createDbKey) {
+        return table.get(dbKey, createDbKey);
     }
 
     @Override

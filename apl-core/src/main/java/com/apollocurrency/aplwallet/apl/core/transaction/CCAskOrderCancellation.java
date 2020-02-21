@@ -3,22 +3,22 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Order;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderCancellation;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import java.nio.ByteBuffer;
 import org.json.simple.JSONObject;
+
+import java.nio.ByteBuffer;
 
 /**
  *
  * @author al
  */
 class CCAskOrderCancellation extends ColoredCoinsOrderCancellation {
-    
+
     public CCAskOrderCancellation() {
     }
 
@@ -53,7 +53,7 @@ class CCAskOrderCancellation extends ColoredCoinsOrderCancellation {
         Order order = Order.Ask.getAskOrder(attachment.getOrderId());
         Order.Ask.removeOrder(attachment.getOrderId());
         if (order != null) {
-            senderAccount.addToUnconfirmedAssetBalanceATU(getLedgerEvent(), transaction.getId(), order.getAssetId(), order.getQuantityATU());
+            lookupAccountAssetService().addToUnconfirmedAssetBalanceATU(senderAccount, getLedgerEvent(), transaction.getId(), order.getAssetId(), order.getQuantityATU());
         }
     }
 

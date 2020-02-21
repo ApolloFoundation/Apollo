@@ -23,10 +23,9 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.FundingMonitor;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
-import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -83,11 +82,11 @@ public class GetFundingMonitor extends AbstractAPIRequestHandler {
         if (keySeed != null || account != 0) {
             if (keySeed != null) {
                 if (account != 0) {
-                    if (Account.getId(Crypto.getPublicKey(keySeed)) != account) {
+                    if (AccountService.getId(Crypto.getPublicKey(keySeed)) != account) {
                         return JSONResponses.INCORRECT_ACCOUNT;
                     }
                 } else {
-                    account = Account.getId(Crypto.getPublicKey(keySeed));
+                    account = AccountService.getId(Crypto.getPublicKey(keySeed));
                 }
             }
             accountId = account;

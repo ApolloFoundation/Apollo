@@ -20,10 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.Poll;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
@@ -31,6 +32,7 @@ import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
+import com.apollocurrency.aplwallet.apl.core.dgs.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
@@ -117,10 +119,13 @@ import static org.slf4j.LoggerFactory.getLogger;
 public final class ParameterParser {
     private static final Logger LOG = getLogger(ParameterParser.class);
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
     protected  static AdminPasswordVerifier apw =  CDI.current().select(AdminPasswordVerifier.class).get();
     protected static ElGamalEncryptor elGamal = CDI.current().select(ElGamalEncryptor.class).get();
     protected static TimeService timeService = CDI.current().select(TimeService.class).get();
+
+    private static AccountService accountService = CDI.current().select(AccountService.class).get();
+    private static AccountPublicKeyService accountPublicKeyService = CDI.current().select(AccountPublicKeyService.class).get();
 
     private static final int DEFAULT_LAST_INDEX = 250;
 
@@ -252,7 +257,7 @@ public final class ParameterParser {
         }
         return Boolean.parseBoolean(paramValue);
     }
-    
+
     public static long getAccountId(HttpServletRequest req, boolean isMandatory) throws ParameterException {
         return getAccountId(req, "account", isMandatory);
     }
@@ -370,7 +375,7 @@ public final class ParameterParser {
         }
         return currency;
     }
-    
+
     public static CurrencyBuyOffer getBuyOffer(HttpServletRequest req) throws ParameterException {
         CurrencyBuyOffer offer = CurrencyBuyOffer.getOffer(getUnsignedLong(req, "offer", true));
         if (offer == null) {
@@ -471,7 +476,7 @@ public final class ParameterParser {
             byte[] keySeed = getKeySeed(req, senderId, false);
             if (keySeed != null) {
                 byte[] publicKey = Crypto.getPublicKey(keySeed);
-                encryptedData = Account.encryptTo(publicKey, plainMessageBytes, keySeed, compress);
+                encryptedData = EncryptedDataUtil.encryptTo(publicKey, plainMessageBytes, keySeed, compress);
             }
         }
         if (encryptedData != null) {
@@ -522,11 +527,11 @@ public final class ParameterParser {
             throw new ParameterException(MISSING_SECRET_PHRASE);
         }
         return elGamal.elGamalDecrypt(secretPhrase);
-       
+
     }
 
-    
-    
+
+
     public static byte[] getPublicKey(HttpServletRequest req) throws ParameterException {
         return getPublicKey(req, null);
     }
@@ -594,7 +599,7 @@ public final class ParameterParser {
         if (publicKey == null) {
             throw new ParameterException(UNKNOWN_PUBLIC_KEY);
         }
-        Account account = Account.getAccount(publicKey);
+        Account account = accountService.getAccount(publicKey);
         if (account == null) {
             throw new ParameterException(UNKNOWN_ACCOUNT);
         }
@@ -615,7 +620,7 @@ public final class ParameterParser {
         if (accountId == 0 && !isMandatory) {
             return null;
         }
-        Account account = Account.getAccount(accountId);
+        Account account = accountService.getAccount(accountId);
         if (account == null) {
             throw new ParameterException(JSONResponses.unknownAccount(accountId));
         }
@@ -674,7 +679,7 @@ public final class ParameterParser {
                 continue;
             }
             try {
-                Account account = Account.getAccount(Convert.parseAccountId(accountValue));
+                Account account = accountService.getAccount(Convert.parseAccountId(accountValue));
                 if (account == null) {
                     throw new ParameterException(UNKNOWN_ACCOUNT);
                 }
@@ -891,7 +896,7 @@ public final class ParameterParser {
                 }
             }
             if (recipient != null) {
-                recipientPublicKey = Account.getPublicKey(recipient.getId());
+                recipientPublicKey = accountService.getPublicKeyByteArray(recipient.getId());
             }
             if (recipientPublicKey == null) {
                 recipientPublicKey = Convert.parseHexString(Convert.emptyToNull(req.getParameter("recipientPublicKey")));
@@ -901,7 +906,7 @@ public final class ParameterParser {
             }
             byte[] keySeed = getKeySeed(req, senderId, false);
             if (keySeed != null) {
-                encryptedData = Account.encryptTo(recipientPublicKey, plainMessageBytes, keySeed, compress);
+                encryptedData = EncryptedDataUtil.encryptTo(recipientPublicKey, plainMessageBytes, keySeed, compress);
             }
         }
         if (encryptedData != null) {
@@ -1014,7 +1019,7 @@ public final class ParameterParser {
         if (!encrypt) {
             publicKey = Crypto.getPublicKey(keySeed);
         }
-        long accountId = Account.getId(publicKey);
+        long accountId = AccountService.getId(publicKey);
         byte[] sharedKey = Crypto.getSharedKey(elGamal.getServerPrivateKey(), publicKey);
         return new PrivateTransactionsAPIData(encrypt, publicKey, sharedKey, accountId);
     }
@@ -1130,7 +1135,7 @@ public final class ParameterParser {
         public boolean isEncrypt() {
             return encrypt;
         }
-      
+
         public void setEncrypt(boolean encrypt) {
             this.encrypt = encrypt;
         }

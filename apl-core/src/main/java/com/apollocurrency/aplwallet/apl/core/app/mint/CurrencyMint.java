@@ -20,8 +20,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.mint;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
@@ -54,7 +56,6 @@ import javax.enterprise.inject.spi.CDI;
  */
 public final class CurrencyMint {
     private static final Logger LOG = getLogger(CurrencyMint.class);
-
 
     public enum Event {
         CURRENCY_MINT
@@ -111,6 +112,14 @@ public final class CurrencyMint {
         }
 
     };
+
+    private static AccountCurrencyService accountCurrencyService;
+    private static AccountCurrencyService lookupAccountCurrencyService(){
+        if ( accountCurrencyService == null) {
+            accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
+        }
+        return accountCurrencyService;
+    }
 
     private static final Listeners<Mint,Event> listeners = new Listeners<>();
 
@@ -187,7 +196,7 @@ public final class CurrencyMint {
             }
             currencyMintTable.insert(currencyMint);
             long units = Math.min(attachment.getUnits(), currency.getMaxSupply() - currency.getCurrentSupply());
-            account.addToCurrencyAndUnconfirmedCurrencyUnits(event, eventId, currency.getId(), units);
+            lookupAccountCurrencyService().addToCurrencyAndUnconfirmedCurrencyUnits(account, event, eventId, currency.getId(), units);
             currency.increaseSupply(units);
             listeners.notify(new Mint(account.getId(), currency.getId(), units), Event.CURRENCY_MINT);
         } else {

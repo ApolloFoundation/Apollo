@@ -20,7 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -88,7 +89,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private NtpTime ntpTime = CDI.current().select(NtpTime.class).get();
     private Blockchain blockchain;
     private BlockchainProcessor blockchainProcessor;
-    private volatile TimeService timeService = CDI.current().select(TimeService.class).get();
+    private TimeService timeService = CDI.current().select(TimeService.class).get();
     private GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
     private javax.enterprise.event.Event<List<Transaction>> txsEvent;
     private DatabaseManager databaseManager;
@@ -96,6 +97,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private PeersService peers = CDI.current().select(PeersService.class).get();
     private final boolean enableTransactionRebroadcasting = propertiesHolder.getBooleanProperty("apl.enableTransactionRebroadcasting");
     private int maxUnconfirmedTransactions;
+    private AccountService accountService;
 
     private BlockchainProcessor lookupBlockchainProcessor() {
         if (blockchainProcessor == null) {
@@ -111,12 +113,20 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         return databaseManager.getDataSource();
     }
 
+    private AccountService lookupAccountService(){
+        if ( accountService == null) {
+            accountService = CDI.current().select(AccountServiceImpl.class).get();
+        }
+        return accountService;
+    }
+
     private final Map<DbKey, UnconfirmedTransaction> transactionCache = new HashMap<>();
     private volatile boolean cacheInitialized = false;
     private final LongKeyFactory<UnconfirmedTransaction> transactionKeyFactory;
     private final EntityDbTable<UnconfirmedTransaction> unconfirmedTransactionTable;
     private final TransactionValidator validator;
     private final TransactionApplier transactionApplier;
+
     @Inject
     public TransactionProcessorImpl(LongKeyFactory<UnconfirmedTransaction> transactionKeyFactory, TransactionValidator validator, TransactionApplier applier, javax.enterprise.event.Event<List<Transaction>> txEvent) {
         this.transactionKeyFactory = transactionKeyFactory;
@@ -145,7 +155,8 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                     }
 
                     @Override
-                    public void rollback(int height) {
+                    public int rollback(int height) {
+                        int rc;
                         try (Connection con = lookupDataSource().getConnection();
                              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM unconfirmed_transaction WHERE height > ?")) {
                             pstmt.setInt(1, height);
@@ -160,8 +171,9 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                         } catch (SQLException e) {
                             throw new RuntimeException(e.toString(), e);
                         }
-                        super.rollback(height);
+                        rc = super.rollback(height);
                         unconfirmedDuplicates.clear();
+                        return rc;
                     }
 
                     @Override
@@ -179,7 +191,6 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
     private final Map<Transaction, Transaction> txToBroadcastWhenConfirmed = new ConcurrentHashMap<>();
     private final Set<Transaction> broadcastedTransactions = Collections.newSetFromMap(new ConcurrentHashMap<>());
-//    private final Listeners<List<? extends Transaction>,Event> transactionListeners = new Listeners<>();
 
     private final PriorityQueue<UnconfirmedTransaction> waitingTransactions = new PriorityQueue<>(
             (o1, o2) -> {
@@ -481,16 +492,16 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         globalSync.writeLock();
         try {
             if (blockchain.hasTransaction(transaction.getId())) {
-                LOG.info("Transaction " + transaction.getStringId() + " already in blockchain, will not broadcast again");
+                LOG.info("Transaction {} already in blockchain, will not broadcast again", transaction.getStringId());
                 return;
             }
             DbKey dbKey = transactionKeyFactory.newKey(transaction.getId());
             if (getUnconfirmedTransaction(dbKey) != null) {
                 if (enableTransactionRebroadcasting) {
                     broadcastedTransactions.add(transaction);
-                    LOG.info("Transaction " + transaction.getStringId() + " already in unconfirmed pool, will re-broadcast");
+                    LOG.info("Transaction {} already in unconfirmed pool, will re-broadcast", transaction.getStringId());
                 } else {
-                    LOG.info("Transaction " + transaction.getStringId() + " already in unconfirmed pool, will not broadcast again");
+                    LOG.info("Transaction {} already in unconfirmed pool, will not broadcast again", transaction.getStringId());
                 }
                 return;
             }
@@ -500,10 +511,10 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             if (broadcastLater) {
                 waitingTransactions.add(unconfirmedTransaction);
                 broadcastedTransactions.add(transaction);
-                LOG.debug("Will broadcast new transaction later " + transaction.getStringId());
+                LOG.debug("Will broadcast new transaction later {}", transaction.getStringId());
             } else {
                 processTransaction(unconfirmedTransaction);
-                LOG.debug("Accepted new transaction " + transaction.getStringId());
+                LOG.debug("Accepted new transaction {}", transaction.getStringId());
                 List<Transaction> acceptedTransactions = Collections.singletonList(transaction);
                 peers.sendToSomePeers(acceptedTransactions);
                 txsEvent.select(TxEventType.literal(TxEventType.ADDED_UNCONFIRMED_TRANSACTIONS)).fire(acceptedTransactions);
@@ -765,7 +776,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 }
 
                 if (! transaction.verifySignature()) {
-                    if (Account.getAccount(transaction.getSenderId()) != null) {
+                    if (lookupAccountService().getAccount(transaction.getSenderId()) != null) {
                         throw new AplException.NotValidException("Transaction signature verification failed");
                     } else {
                         throw new AplException.NotCurrentlyValidException("Unknown transaction sender");
@@ -872,8 +883,10 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                                     if (myAppendage.getClass() == appendage.getClass()) {
                                         myAppendage.loadPrunable(myTransaction, true);
                                         if (((Prunable)myAppendage).hasPrunableData()) {
-                                            LOG.debug(String.format("Already have prunable data for transaction %s %s appendage",
+                                            if (LOG.isDebugEnabled()) {
+                                                LOG.debug(String.format("Already have prunable data for transaction %s %s appendage",
                                                     myTransaction.getStringId(), myAppendage.getAppendixName()));
+                                            }
                                             continue appendageLoop;
                                         }
                                         break;
@@ -883,8 +896,10 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                                 // Load the prunable data
                                 //
                                 if (((Prunable)appendage).hasPrunableData()) {
-                                    LOG.debug("Loading prunable data for transaction {} {} appendage",
+                                    if (LOG.isDebugEnabled()) {
+                                        LOG.debug("Loading prunable data for transaction {} {} appendage",
                                             Long.toUnsignedString(transaction.getId()), appendage.getAppendixName());
+                                    }
                                     ((Prunable)appendage).restorePrunableData(transaction, myTransaction.getBlockTimestamp(), myTransaction.getHeight());
                                 } else {
                                     foundAllData = false;
