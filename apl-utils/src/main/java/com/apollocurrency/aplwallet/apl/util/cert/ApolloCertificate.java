@@ -5,8 +5,8 @@ import io.firstbridge.cryptolib.KeyWriter;
 import io.firstbridge.cryptolib.impl.KeyReaderImpl;
 import io.firstbridge.cryptolib.impl.KeyWriterImpl;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -28,14 +28,17 @@ public class ApolloCertificate extends CertBase {
     private final X509Certificate certificate;
     private final CertAttributes va  = new CertAttributes();
 
-    public static ApolloCertificate loadPEMFromPath(String path) throws FileNotFoundException, ApolloCertificateException {
+    public static ApolloCertificate loadPEMFromPath(String path) throws  ApolloCertificateException, IOException {
+        return ApolloCertificate.loadPEMFromStream(new FileInputStream(path));
+    }
+    
+    public static ApolloCertificate loadPEMFromStream(InputStream is) throws IOException, ApolloCertificateException {
         KeyReader kr = new KeyReaderImpl();
-        X509Certificate cert = kr.readX509CertPEMorDER(new FileInputStream(path));
+        X509Certificate cert = kr.readX509CertPEMorDER(is);
         ApolloCertificate vc = new ApolloCertificate(cert);
         vc.parseAttributes();
         return vc;
     }
-
     public ApolloCertificate(X509Certificate certificate) throws ApolloCertificateException {
         if (certificate == null) {
             throw new ApolloCertificateException("Null certificate");
@@ -164,5 +167,10 @@ public class ApolloCertificate extends CertBase {
 
     public BigInteger getSerial() {
         return certificate.getSerialNumber();
+    }
+    public boolean verify(){
+        boolean res = true;
+        //TODO: implement
+        return res;
     }
 }

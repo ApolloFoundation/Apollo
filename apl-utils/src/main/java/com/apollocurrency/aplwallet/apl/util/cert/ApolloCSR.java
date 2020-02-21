@@ -6,12 +6,14 @@ import io.firstbridge.cryptolib.csr.CertificateRequestData;
 import io.firstbridge.cryptolib.csr.KeyGenerator;
 import io.firstbridge.cryptolib.CryptoNotValidException;
 import io.firstbridge.cryptolib.impl.KeyWriterImpl;
+import java.io.FileReader;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.KeyPair;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
+import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.bouncycastle.util.IPAddress;
@@ -26,7 +28,22 @@ import org.slf4j.LoggerFactory;
 public class ApolloCSR extends CertBase {
 
     private static final Logger log = LoggerFactory.getLogger(ApolloCSR.class);
-
+    
+    public static ApolloCSR loadCSR(String path){
+        PKCS10CertificationRequest cr;
+        ApolloCSR res = null;
+        FileReader fr;
+        try {
+            fr = new FileReader(path);
+            PEMParser parser = new PEMParser(fr);
+            cr = (PKCS10CertificationRequest)parser.readObject();
+            res = ApolloCSR.fromPKCS10(cr);            
+        } catch (IOException ex) {
+            log.error("Can not read PKCS#10 file: "+path,ex);
+        }
+        return res;
+    }
+    
     public static ApolloCSR fromPKCS10(PKCS10CertificationRequest cr) {
         ApolloCSR res = new ApolloCSR();
         try {

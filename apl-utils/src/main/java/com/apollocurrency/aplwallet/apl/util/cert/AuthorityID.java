@@ -10,7 +10,7 @@ import org.bouncycastle.util.encoders.Hex;
  * Apollo AUthority ID is set of bits that classifies Apollo crypto actors and
  * actor's capabilities.
  * Bytes meaning. Les's number each of 16 bytes as following: 
- * 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
+ * 15 14 13 12 11 10 09 08 07 06 05 04 03 02 01 00
  * So bytes assigned to:
  * 00 01 - actor type (00) and subtype (01), @see ActorType
  * 02 03 - region code, not used yet
