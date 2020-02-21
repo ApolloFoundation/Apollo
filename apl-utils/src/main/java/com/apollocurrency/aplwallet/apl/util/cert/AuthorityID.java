@@ -1,8 +1,5 @@
 package com.apollocurrency.aplwallet.apl.util.cert;
 
-import com.apollocurrency.aplwallet.apl.util.cls.BasicClassificator;
-import com.apollocurrency.aplwallet.apl.util.cls.ClsItem;
-import com.apollocurrency.aplwallet.apl.util.cls.AplClassificators;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -11,50 +8,29 @@ import org.bouncycastle.util.encoders.Hex;
 
 /**
  * Apollo AUthority ID is set of bits that classifies Apollo crypto actors and
- * actor's capabilities
- *
+ * actor's capabilities.
+ * Bytes meaning. Les's number each of 16 bytes as following: 
+ * 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
+ * So bytes assigned to:
+ * 00 01 - actor type (00) and subtype (01), @see ActorType
+ * 02 03 - region code, not used yet
+ * 04 05 - business code, not used yet
+ * 06 07 - authority code, planned for usage together with business code for delegation tree
+ * 08 09 10 11 - operation code, planned for usage as operations permission mask
+ * 12 13 14 15  - supplemental  code, reserved for future use
  * @author alukin@gmail.com
  */
 public class AuthorityID {
-
-    public static AuthorityID fromStrings(String actorType, String actorSubType, String businessCode, String regionCode, String opCode, String supCode) {
-        AuthorityID res = new AuthorityID();
-        BasicClassificator ac = AplClassificators.getCls(AplClassificators.ACTOR_CLS);
-        BasicClassificator bc = AplClassificators.getCls(AplClassificators.BUSINESS_CLS);
-        BasicClassificator oc = AplClassificators.getCls(AplClassificators.OPERATIONS_CLS);
-        BasicClassificator sc = AplClassificators.getCls(AplClassificators.SUPL_CLS);
-        ClsItem a = ac.getItem(actorType, actorSubType);
-        if (a == null) {
-            throw new IllegalArgumentException("actorTupe and sub type is not in classificator");
-        }
-        ClsItem b = bc.getItem(businessCode);
-        if (b == null) {
-            throw new IllegalArgumentException("bussinessCode type is not in classificator");
-        }
-        ClsItem o = bc.getItem(businessCode);
-        if (o == null) {
-            throw new IllegalArgumentException("operationsCode type is not in classificator");
-        }
-        ClsItem s = sc.getItem(businessCode);
-        if (s == null) {
-            throw new IllegalArgumentException("spuplementalCode type is not in classificator");
-        }
-        int at = ac.getItem(actorType).getIntegerValue();
-        int ast = ac.getItem(actorType, actorSubType).getIntegerValue();
-        ActorType vat = new ActorType();
-        vat.setType(at);
-        vat.setSubType(ast);
-        res.setActorType(vat.getValue());
-        res.setBusinessCode(b.getIntegerValue());
-        res.setOperationCode(o.getIntegerValue());
-        res.setSuplementalCode(s.getIntegerValue());
-        return res;
-    }
-
+    /**
+     * Length of AuthorityID in bytes
+     */
+    public static final int LENGHT=16; //16 bytes, 128 bit
+  
+    
     private byte[] authorityID;
 
     private void setup() {
-        authorityID = new byte[16];
+        authorityID = new byte[LENGHT];
         byte zero = 0;
         Arrays.fill(authorityID, zero);
     }
@@ -85,7 +61,11 @@ public class AuthorityID {
             idx_dst--;
         }
     }
-
+    
+    public byte[] get() {
+        return authorityID;
+    }
+    
     public BigInteger getAuthorityID() {
         return new BigInteger(authorityID);
     }

@@ -10,7 +10,29 @@ import java.util.Arrays;
  * @author alukin@gmail.com
  */
 public class ActorType {
-   
+    //actor types
+    public static final int NODE=1;
+    public static final int SERVICE=2;
+    public static final int PERSON=3;
+    //actor sub-types for NODE
+    public static final int NODE_REGULAR=0;
+    public static final int NODE_ARCHIVE=1;
+    public static final int NODE_CERTIFIED_STORAGE=2;
+    public static final int NODE_REGULAR_STORAGE=3;
+    //actor sub-types for services
+    public static final int SERVICE_NONE=0;
+    public static final int SERVICE_EXCHANE=1;
+    public static final int SERVICE_WEBSITE=2;
+    public static final int SERVICE_CDN=3;
+    //actor sub-types for PERSON
+    public static final int PERSON_UNKNOWN=0;
+    public static final int PERSON_DEVELOPER=16;
+    public static final int PERSON_RELESE_ENG=17;
+    public static final int PERSON_QUALITY_ASSURANCE=18;
+    public static final int PERSON_DEV_MANAGEMENT=19;
+    public static final int PERSON_DEVOPS=20;
+    public static final int PERSON_MARKETING=21;
+    
     private int[] at={0,0};
 
     public ActorType(int atype) {

@@ -1,8 +1,5 @@
 package com.apollocurrency.aplwallet.apl.util.cert;
 
-import com.apollocurrency.aplwallet.apl.util.cls.BasicClassificator;
-import com.apollocurrency.aplwallet.apl.util.cls.ClsItem;
-import com.apollocurrency.aplwallet.apl.util.cls.AplClassificators;
 import io.firstbridge.cryptolib.FBCryptoParams;
 import io.firstbridge.cryptolib.KeyWriter;
 import io.firstbridge.cryptolib.csr.CertificateRequestData;
