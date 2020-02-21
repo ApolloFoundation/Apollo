@@ -240,7 +240,7 @@ public interface ITest {
 
     EthGasInfoResponse getEthGasInfo();
 
-    TradingDataOutputDTO getDexTradeInfo(boolean isEth, String resolution, Integer startTime, Integer finishTime);
+    TradingDataOutputDTO getDexTradeInfo(boolean isEth, String resolution);
 
     CreateTransactionResponse dexCancelOrder(String orderId, Wallet wallet);
 

@@ -452,7 +452,7 @@ public class TestBaseOld extends TestBase {
 
     @Override
     @Step
-    public TradingDataOutputDTO getDexTradeInfo(boolean isEth, String resolution, Integer startTime, Integer finishTime) {
+    public TradingDataOutputDTO getDexTradeInfo(boolean isEth, String resolution) {
         throw new NotImplementedException("Already implemented in TestBaseNew");
     }
 

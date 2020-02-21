@@ -13,6 +13,8 @@ import io.qameta.allure.Epic;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
@@ -55,17 +57,19 @@ public class TestDex extends TestBaseNew {
         assertTrue(Float.valueOf(gasPrice.getSafeLow()) > 0);
     }
 
-    @DisplayName("Obtaining ETH trading information for the given period with certain resolution")
+    @DisplayName("Obtaining ETH trading information for the given period (10 days) with certain resolution")
     @Test
+    //@ParameterizedTest
+    //@ValueSource(strings = {"D", "15", "60", "240"})
     public void getDexTradeInfoETH() {
-        TradingDataOutputDTO dexTrades = getDexTradeInfo(true, "D", 999999999, 1817);
+        TradingDataOutputDTO dexTrades = getDexTradeInfo(true, "D");
         assertNotNull(dexTrades);
     }
 
-    @DisplayName("Obtaining PAX trading information for the given period with certain resolution")
+    @DisplayName("Obtaining PAX trading information for the given period (10 days) with certain resolution")
     @Test
     public void getDexTradeInfoPAX() {
-        TradingDataOutputDTO dexTrades = getDexTradeInfo(false, "15", 999999999, 1817);
+        TradingDataOutputDTO dexTrades = getDexTradeInfo(false, "15");
         assertNotNull(dexTrades);
     }
 

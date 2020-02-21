@@ -74,7 +74,8 @@ import org.junit.jupiter.api.DisplayName;
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
-
+import java.util.Date;
+import java.util.Calendar;
 import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -531,11 +532,15 @@ public class TestBaseNew extends TestBase {
 
     @Override
     @Step("Get history for certain Currency and period")
-    public TradingDataOutputDTO getDexTradeInfo(boolean isEth, String resolution, Integer startTime, Integer finishTime) {
+    public TradingDataOutputDTO getDexTradeInfo(boolean isEth, String resolution) {
         HashMap<String, String> param = new HashMap();
+        Date today = Calendar.getInstance().getTime();
+        long epochTime = today.getTime();
         param.put("resolution", resolution);
-        param.put("from", String.valueOf(startTime));
-        param.put("to", String.valueOf(finishTime));
+        param.put("from", String.valueOf(epochTime/1000-864000));
+        param.put("to", String.valueOf(epochTime/1000));
+        log.info("start = " + (epochTime/1000-864000));
+        log.info("finish = " + (epochTime/1000));
         if (isEth) {
             param.put("symbol", "APL_ETH");
         } else {
