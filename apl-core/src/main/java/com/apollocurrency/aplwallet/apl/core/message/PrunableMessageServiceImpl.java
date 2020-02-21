@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.dgs.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -79,7 +80,7 @@ public class PrunableMessageServiceImpl implements PrunableMessageService {
         }
         byte[] publicKey = message.getSenderId() == AccountService.getId(Crypto.getPublicKey(keySeed))
                 ? accountPublicKeyService.getPublicKeyByteArray(message.getRecipientId()) : accountPublicKeyService.getPublicKeyByteArray(message.getSenderId());
-        return accountPublicKeyService.decryptFrom(publicKey, message.getEncryptedData(), keySeed, message.isCompressed());
+        return EncryptedDataUtil.decryptFrom(publicKey, message.getEncryptedData(), keySeed, message.isCompressed());
     }
 
 

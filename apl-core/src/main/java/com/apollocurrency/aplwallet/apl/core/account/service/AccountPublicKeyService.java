@@ -60,10 +60,6 @@ public interface AccountPublicKeyService {
 
     byte[] decryptFrom(long id, EncryptedData encryptedData, byte[] recipientKeySeed, boolean uncompress);
 
-    EncryptedData encryptTo(byte[] publicKey, byte[] data, byte[] keySeed, boolean compress);
-
-    byte[] decryptFrom(byte[] publicKey, EncryptedData encryptedData, byte[] recipientKeySeed, boolean uncompress);
-
     void apply(Account account, byte[] key);
 
     void apply(Account account, byte[] key, boolean isGenesis);

@@ -24,7 +24,6 @@ import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -76,6 +75,11 @@ class AccountAssetServiceTest {
 
     AccountTestData testData;
 
+    long quantity;
+    long assetId;
+    LedgerEvent event;
+    long eventId;
+
     @BeforeEach
     void setUp() {
         testData = new AccountTestData();
@@ -88,18 +92,14 @@ class AccountAssetServiceTest {
                 ledgerEvent,
                 assetDividendService)
         );
-    }
-
-    @AfterEach
-    void tearDown() {
+        quantity = 50000L;
+        assetId = 50L;
+        event = LedgerEvent.ASSET_DIVIDEND_PAYMENT;
+        eventId = 10L;
     }
 
     @Test
     void addToAssetBalanceATU() {
-        long quantity = 50000L;
-        long assetId = 50L;
-        LedgerEvent event = LedgerEvent.ASSET_DIVIDEND_PAYMENT;
-        long eventId = 10L;
         long balance = Math.addExact(testData.ACC_ASSET_0.getQuantityATU(), quantity);
         int height = 100_000;
         Event firedEventLedger = mock(Event.class);
@@ -126,10 +126,6 @@ class AccountAssetServiceTest {
 
     @Test
     void addToAssetBalanceATU_newAsset() {
-        long quantity = 50000L;
-        long assetId = 50L;
-        LedgerEvent event = LedgerEvent.ASSET_DIVIDEND_PAYMENT;
-        long eventId = 10L;
         int height = 100_000;
         Event firedEventLedger = mock(Event.class);
         Block lastBlock = mock(Block.class);
@@ -155,11 +151,6 @@ class AccountAssetServiceTest {
 
     @Test
     void addToUnconfirmedAssetBalanceATU_expectedException() {
-        long quantity = 50000L;
-        long assetId = 50L;
-        LedgerEvent event = LedgerEvent.ASSET_DIVIDEND_PAYMENT;
-        long eventId = 10L;
-
         doReturn(testData.ACC_ASSET_0).when(accountAssetTable).get(any());
         assertThrows(DoubleSpendingException.class, () ->
                 accountAssetService.addToUnconfirmedAssetBalanceATU(testData.ACC_1, event, eventId, assetId, quantity));
@@ -167,10 +158,7 @@ class AccountAssetServiceTest {
 
     @Test
     void addToUnconfirmedAssetBalanceATU() {
-        long quantity = -50000L;
-        long assetId = 50L;
-        LedgerEvent event = LedgerEvent.ASSET_DIVIDEND_PAYMENT;
-        long eventId = 10L;
+        quantity = -50000L;
         long balance = Math.addExact(testData.ACC_ASSET_3.getUnconfirmedQuantityATU(), quantity);
         int height = 100_000;
         Event firedEventLedger = mock(Event.class);
@@ -197,11 +185,6 @@ class AccountAssetServiceTest {
 
     @Test
     void addToUnconfirmedAssetBalanceATU_newAssetWithException() {
-        long quantity = -50000L;
-        long assetId = 50L;
-        LedgerEvent event = LedgerEvent.ASSET_DIVIDEND_PAYMENT;
-        long eventId = 10L;
-
         doReturn(null).when(accountAssetTable).get(any());
 
         assertThrows(DoubleSpendingException.class,() ->
@@ -227,10 +210,6 @@ class AccountAssetServiceTest {
 
     @Test
     void addToAssetAndUnconfirmedAssetBalanceATU() {
-        long quantity = -50000L;
-        long assetId = 50L;
-        LedgerEvent event = LedgerEvent.ASSET_DIVIDEND_PAYMENT;
-        long eventId = 10L;
         long balance = Math.addExact(testData.ACC_ASSET_3.getQuantityATU(), quantity);
         long unconfirmedBalance = Math.addExact(testData.ACC_ASSET_3.getUnconfirmedQuantityATU(), quantity);
         int height = 100_000;
