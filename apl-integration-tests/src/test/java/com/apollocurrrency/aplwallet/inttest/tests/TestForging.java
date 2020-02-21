@@ -18,14 +18,14 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("Forging")
-@Epic(value = "Dex")
+@Epic(value = "Forging")
 public class TestForging extends TestBaseOld {
 
 
     @DisplayName("Start Get Stop Forging")
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
-    public void getAccountPropertyTest(Wallet wallet) throws IOException {
+    public void getAccountPropertyTest(Wallet wallet) {
         GetAccountResponse accountDTO = getAccount(wallet.getUser());
         if (accountDTO.getEffectiveBalanceAPL() > 100000000000L) {
             ForgingDetails forgingDetails = startForging(wallet);

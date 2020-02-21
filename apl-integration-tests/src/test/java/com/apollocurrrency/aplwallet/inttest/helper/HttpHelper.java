@@ -66,13 +66,6 @@ public class HttpHelper {
         if (reqestParam.containsKey(messageFile.toString()) || reqestParam.containsKey(file.toString())) {
             String param = reqestParam.containsKey(messageFile.toString()) ? messageFile.toString() : file.toString();
             body = uploadImage(param);
-          /*  File file = (File) reqestParam.get(messageFile.toString());
-            final MediaType MEDIA_TYPE = file.getName().endsWith("png") ?
-                    MediaType.parse("image/png") : MediaType.parse("image/jpeg");
-             body = new MultipartBody.Builder()
-                    .setType(MultipartBody.FORM)
-                    .addFormDataPart("messageFile", file.getName(), RequestBody.create(MEDIA_TYPE, file))
-                    .build();*/
         }
         Request request = new Request.Builder()
                 .url(buildGetReqestUrl())

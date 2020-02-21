@@ -26,7 +26,6 @@ import static org.junit.jupiter.api.parallel.ExecutionMode.SAME_THREAD;
 
 @DisplayName("Currencies")
 @Epic(value = "Currencies")
-@Execution(SAME_THREAD)
 public class TestCurrencies extends TestBaseOld {
     private final ArrayList<Wallet> wallets = new ArrayList<>();
 

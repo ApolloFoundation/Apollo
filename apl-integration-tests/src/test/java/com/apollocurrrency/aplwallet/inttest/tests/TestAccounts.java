@@ -3,6 +3,7 @@ package com.apollocurrrency.aplwallet.inttest.tests;
 import com.apollocurrency.aplwallet.api.dto.AccountDTO;
 import com.apollocurrency.aplwallet.api.dto.BalanceDTO;
 import com.apollocurrency.aplwallet.api.dto.EntryDTO;
+import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
 import com.apollocurrency.aplwallet.api.response.Account2FAResponse;
 import com.apollocurrency.aplwallet.api.response.AccountBlockIdsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountLedgerResponse;
@@ -22,6 +23,7 @@ import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
+import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -97,14 +99,14 @@ public class TestAccounts extends TestBaseOld {
     @ArgumentsSource(WalletProvider.class)
     public void testAccountLedger(Wallet wallet) throws IOException {
         AccountLedgerResponse accountLedger = getAccountLedger(wallet);
-        assertTrue(accountLedger.getEntries().size() > 0, "Ledger is NULL");
-        assertNotNull(accountLedger.getEntries().get(0).getAccount());
-        assertNotNull(accountLedger.getEntries().get(0).getAccountRS());
-        assertNotNull(accountLedger.getEntries().get(0).getBalance());
-        assertNotNull(accountLedger.getEntries().get(0).getBlock());
-        assertNotNull(accountLedger.getEntries().get(0).getChange());
-        assertNotNull(accountLedger.getEntries().get(0).getHeight());
-        assertNotNull(accountLedger.getEntries().get(0).getLedgerId());
+        assertThat("No any ledger:",accountLedger.getEntries().size(), greaterThan(0));
+        assertNotNull(accountLedger.getEntries().stream().findFirst().get().getAccount());
+        assertNotNull(accountLedger.getEntries().stream().findFirst().get().getAccountRS());
+        assertNotNull(accountLedger.getEntries().stream().findFirst().get().getBalance());
+        assertNotNull(accountLedger.getEntries().stream().findFirst().get().getBlock());
+        assertNotNull(accountLedger.getEntries().stream().findFirst().get().getChange());
+        assertNotNull(accountLedger.getEntries().stream().findFirst().get().getHeight());
+        assertNotNull(accountLedger.getEntries().stream().findFirst().get().getLedgerId());
     }
 
 
@@ -130,7 +132,7 @@ public class TestAccounts extends TestBaseOld {
         SearchAccountsResponse searchAccountsResponse = searchAccounts(accountName);
         assertNotNull(searchAccountsResponse, "Response - null");
         assertNotNull(searchAccountsResponse.getAccounts(), "Response accountDTOS - null");
-        assertTrue(searchAccountsResponse.getAccounts().size() > 0, "Account not found");
+        assertThat("Account not found",searchAccountsResponse.getAccounts().size(), greaterThan(0) );
     }
 
     @DisplayName("Verify Unconfirmed Transactions endpoint")
@@ -152,7 +154,7 @@ public class TestAccounts extends TestBaseOld {
                 .withDelay(5, TimeUnit.SECONDS);
         sendMoney(getTestConfiguration().getStandartWallet(), getTestConfiguration().getStandartWallet().getUser(), 2);
         AccountTransactionIdsResponse accountTransactionIdsResponse = Failsafe.with(retryPolicy).get(() -> getUnconfirmedTransactionIds(getTestConfiguration().getStandartWallet().getUser()));
-        assertTrue(accountTransactionIdsResponse.getUnconfirmedTransactionIds().size() > 0);
+        assertThat(accountTransactionIdsResponse.getUnconfirmedTransactionIds().size() , greaterThan(0));
     }
 
 
@@ -286,6 +288,23 @@ public class TestAccounts extends TestBaseOld {
         assertNotNull(accountDTO.getPassphrase());
         assertNotNull(accountDTO.getPublicKey());
         assertNotNull(accountDTO.getAccount());
+    }
+
+    @DisplayName("Lease Balance")
+    @ParameterizedTest(name = "{displayName} {arguments}")
+    @ArgumentsSource(WalletProvider.class)
+    public void leaseBalance(Wallet wallet){
+        String leaseWalletPass = "1";
+        Wallet leaseWallet = new Wallet(getAccountId(leaseWalletPass).getAccountRS(), leaseWalletPass);
+        GetAccountResponse accountDTO = getAccount(wallet.getUser());
+        if (accountDTO.getEffectiveBalanceAPL() > 100000000000L) {
+            startForging(wallet);
+        }
+       CreateTransactionResponse response =  leaseBalance(leaseWallet.getUser(),wallet);
+       verifyTransactionInBlock(response.getTransaction());
+       startForging(leaseWallet);
+       accountDTO = getAccount(wallet.getUser());
+       assertEquals(accountDTO.getEffectiveBalanceAPL(),0,"Effective Balance not valid");
     }
 
 

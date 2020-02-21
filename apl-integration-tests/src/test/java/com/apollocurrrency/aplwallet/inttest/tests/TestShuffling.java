@@ -39,7 +39,6 @@ import static org.junit.jupiter.api.parallel.ExecutionMode.SAME_THREAD;
 
 @DisplayName("Shuffling")
 @Epic(value = "Shuffling")
-@Execution(SAME_THREAD)
 public class TestShuffling extends TestBaseOld {
     public static final Logger log = LoggerFactory.getLogger(TestShuffling.class);
 
@@ -144,7 +143,7 @@ public class TestShuffling extends TestBaseOld {
                     getRandomRecipientWallet(),
                     getRandomRecipientWallet(),
                     getRandomRecipientWallet());
-
+            waitForHeight(getBlock().getHeight()+1);
          /*   int iteration = 0;
             while (iteration != 3) {
                 waitForHeight(getBlock().getHeight()+1);
@@ -440,9 +439,9 @@ public class TestShuffling extends TestBaseOld {
     @Override
     public void tearDown() {
         super.tearDown();
-        sendMoney(randomVault, TestConfiguration.getTestConfiguration().getGenesisWallet().getUser(), (int) ((getBalance(randomVault).getUnconfirmedBalanceATM() - 1000000000L) / 100000000));
+        sendMoney(randomVault, TestConfiguration.getTestConfiguration().getGenesisWallet().getUser(), (int) ((getBalance(randomVault).getBalanceATM() - 1000000000L) / 100000000));
             for (Wallet wallet : recipients) {
-                sendMoney(wallet, TestConfiguration.getTestConfiguration().getGenesisWallet().getUser(), (int) ((getBalance(wallet).getUnconfirmedBalanceATM() - 1000000000L) / 100000000));
+                sendMoney(wallet, TestConfiguration.getTestConfiguration().getGenesisWallet().getUser(), (int) ((getBalance(wallet).getBalanceATM() - 1000000000L) / 100000000));
             }
         }
 

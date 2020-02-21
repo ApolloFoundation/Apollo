@@ -95,6 +95,18 @@ public class TestBaseOld extends TestBase {
     public static final Logger log = LoggerFactory.getLogger(TestBaseOld.class);
 
     @Step
+    public boolean verifyTransactionInBlock(String transaction) {
+        boolean inBlock = false;
+        try {
+            inBlock = Failsafe.with(retryPolicy).get(() -> getTransaction(transaction).getConfirmations() >= 0);
+        } catch (Exception e) {
+            fail("Exception! Transaction does't add to block. Transaction " + transaction + " Exception MSG: " + e.getMessage());
+        }
+        assertTrue(inBlock, String.format("Transaction %s in block: ", transaction));
+        return inBlock;
+    }
+
+    @Step
     public boolean waitForHeight(int height) {
         log.info("Wait For Height: {}", height);
         RetryPolicy retry = new RetryPolicy()
@@ -1483,6 +1495,18 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.poll, poll);
         return getInstanse(PollResultResponse.class);
     }
+
+    @Step
+    public CreateTransactionResponse leaseBalance(String recipient, Wallet wallet){
+        addParameters(RequestType.requestType, leaseBalance);
+        addParameters(Parameters.recipient, recipient);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.period, 1440);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+    }
+
 
     @Step
     public void messagePrunable() {
