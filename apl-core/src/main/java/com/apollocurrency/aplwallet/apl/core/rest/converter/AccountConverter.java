@@ -24,7 +24,6 @@ import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthService;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import lombok.Setter;
 
 import javax.inject.Inject;
 import java.util.LinkedList;
@@ -37,23 +36,22 @@ import java.util.stream.Collectors;
  */
 public class AccountConverter implements Converter<Account, AccountDTO> {
 
-    @Inject @Setter
-    private AccountService accountService;
+    private final AccountService accountService;
+    private final AccountInfoService accountInfoService;
+    private final AccountLeaseService accountLeaseService;
+    private final TwoFactorAuthService twoFactorAuthService;
+    private final Blockchain blockchain;
+    private final AccountCurrencyConverter accountCurrencyConverter;
 
-    @Inject @Setter
-    private AccountInfoService accountInfoService;
-
-    @Inject @Setter
-    private AccountLeaseService accountLeaseService;
-
-    @Inject @Setter
-    private TwoFactorAuthService twoFactorAuthService;
-
-    @Inject @Setter
-    private Blockchain blockchain;
-
-    @Inject @Setter
-    private AccountCurrencyConverter accountCurrencyConverter;
+    @Inject
+    public AccountConverter(AccountService accountService, AccountInfoService accountInfoService, AccountLeaseService accountLeaseService, TwoFactorAuthService twoFactorAuthService, Blockchain blockchain, AccountCurrencyConverter accountCurrencyConverter) {
+        this.accountService = accountService;
+        this.accountInfoService = accountInfoService;
+        this.accountLeaseService = accountLeaseService;
+        this.twoFactorAuthService = twoFactorAuthService;
+        this.blockchain = blockchain;
+        this.accountCurrencyConverter = accountCurrencyConverter;
+    }
 
     @Override
     public AccountDTO apply(Account account) {

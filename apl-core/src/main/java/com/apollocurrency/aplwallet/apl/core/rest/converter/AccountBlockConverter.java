@@ -20,9 +20,9 @@ import java.util.List;
 
 public class AccountBlockConverter implements Converter<Block, BlockDTO> {
 
-    private Blockchain blockchain;
-    private TransactionConverter transactionConverter;
-    private PhasingPollService phasingPollService;
+    private final Blockchain blockchain;
+    private final TransactionConverter transactionConverter;
+    private final PhasingPollService phasingPollService;
 
     @Inject
     public AccountBlockConverter(Blockchain blockchain, TransactionConverter transactionConverter, PhasingPollService phasingPollService) {

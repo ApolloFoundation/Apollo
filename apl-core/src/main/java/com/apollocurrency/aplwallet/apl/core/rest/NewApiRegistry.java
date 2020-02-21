@@ -14,7 +14,7 @@ import java.util.Map;
 public class NewApiRegistry {
     private static Map<String,String> apis = new HashMap<>();
     static{
-        apis.put("getServerInfo", "/rest/serverinfo");
+        apis.put("getServerInfo", "/rest/server-info");
         apis.put("importKeyStore", "/rest/keyStore/upload");
         apis.put("exportKeyStore", "/rest/keyStore/download");
         apis.put("getAccountInfo", "/rest/keyStore/accountInfo");
@@ -39,19 +39,19 @@ public class NewApiRegistry {
 
         apis.put("getAccount", "/rest/accounts/account"); //GET
         apis.put("generateAccount", "/rest/accounts/account"); //POST
-        apis.put("enable2FA", "/rest/accounts/enable2FA"); //POST
-        apis.put("disable2FA", "/rest/accounts/disable2FA"); //POST
-        apis.put("confirm2FA", "/rest/accounts/confirm2FA"); //POST
-        apis.put("deleteKey", "/rest/accounts/deleteKey"); //POST
-        apis.put("exportKey", "/rest/accounts/exportKey"); //POST
-        apis.put("getAccountAssetCount", "/rest/accounts/account/assetCount"); //GET
-        apis.put("getAccountAssets", "/rest/accounts/account/assets"); //GET
-        apis.put("getAccountBlockCount", "/rest/accounts/account/blockCount"); //GET
-        apis.put("getAccountBlockIds", "/rest/accounts/account/blockIds"); //GET
-        apis.put("getAccountBlocks", "/rest/accounts/account/blocks"); //GET
-        apis.put("getAccountCurrencyCount", "/rest/accounts/account/currencyCount"); //GET
-        apis.put("getAccountCurrencies", "/rest/accounts/account/currencies"); //GET
-        apis.put("getAccountCurrentAskOrderIds", "/rest/accounts/account/currentAskOrderIds"); //GET
+        apis.put("enable2FA", "/rest/accounts/enable2fa"); //POST
+        apis.put("disable2FA", "/rest/accounts/disable2fa"); //POST
+        apis.put("confirm2FA", "/rest/accounts/confirm2fa"); //POST
+        apis.put("deleteKey", "/rest/accounts/delete-key"); //POST
+        apis.put("exportKey", "/rest/accounts/export-key"); //POST
+        apis.put("getAccountAssetCount", "/rest/accounts/asset-count"); //GET
+        apis.put("getAccountAssets", "/rest/accounts/assets"); //GET
+        apis.put("getAccountBlockCount", "/rest/accounts/block-count"); //GET
+        apis.put("getAccountBlockIds", "/rest/accounts/block-ids"); //GET
+        apis.put("getAccountBlocks", "/rest/accounts/blocks"); //GET
+        apis.put("getAccountCurrencyCount", "/rest/accounts/currency-count"); //GET
+        apis.put("getAccountCurrencies", "/rest/accounts/currencies"); //GET
+        apis.put("getAccountCurrentAskOrderIds", "/rest/accounts/current-ask-order-ids"); //GET
 
 
 

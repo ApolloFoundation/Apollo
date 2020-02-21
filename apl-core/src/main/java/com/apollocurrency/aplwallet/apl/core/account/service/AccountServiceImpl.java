@@ -37,7 +37,6 @@ import javax.enterprise.event.Event;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -199,11 +198,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public List<Block> getAccountBlocks(long accountId, int timestamp, int from, int to){
-        List<Block> result = new ArrayList<>();
-        try(DbIterator<Block> iterator = blockchain.getBlocks(accountId, timestamp, from, to)) {
-            iterator.forEachRemaining(result::add);
-        }
-        return result;
+        return toList(blockchain.getBlocks(accountId, timestamp, from, to));
     }
 
     /**

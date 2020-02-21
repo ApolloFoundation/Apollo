@@ -5,10 +5,11 @@ package com.apollocurrency.aplwallet.apl.core.rest.parameter;
 
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
-public class UnsignedLongParameter extends AbstractRestParameter<Long> {
+public class LongParameter extends AbstractRestParameter<Long> {
 
-    public UnsignedLongParameter(String rawData) {
+    public LongParameter(String rawData) {
         super(rawData);
     }
 
@@ -16,7 +17,7 @@ public class UnsignedLongParameter extends AbstractRestParameter<Long> {
     public Long parse() throws RestParameterException {
         Long value;
         try {
-            value = Long.parseUnsignedLong(getRawData());
+            value = Convert.parseLong(getRawData());
         }catch (NumberFormatException e){
             throw new RestParameterException(ApiErrors.INCORRECT_PARAM_VALUE, getRawData());
         }

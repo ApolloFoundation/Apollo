@@ -50,15 +50,20 @@ import com.apollocurrency.aplwallet.apl.core.rest.service.OrderService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeIn;
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
+import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -82,6 +87,8 @@ import java.util.stream.Collectors;
 /**
  * Apollo accounts endpoint
  */
+@OpenAPIDefinition(info = @Info(description = "Provide methods to operate with accounts"))
+@SecurityScheme(type = SecuritySchemeType.APIKEY, name = "admin_api_key", in = SecuritySchemeIn.QUERY, paramName = "adminPassword")
 @NoArgsConstructor
 @Slf4j
 @Path("/accounts")
@@ -202,8 +209,8 @@ public class AccountController {
     @Produces(MediaType.TEXT_HTML)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Operation(
-            summary = "Generate new account and return the detail information",
-            description = "Generate new account and return new account, publicKey, accountRS.",
+            summary = "Generate new vault account and return the detail information",
+            description = "Generate new vault account on current node and return new account, publicKey, accountRS.",
             tags = {"accounts"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
@@ -211,12 +218,10 @@ public class AccountController {
                                     schema = @Schema(implementation = WalletKeysInfoDTO.class)))
             })
     @PermitAll
-    public Response generateAccount( @Parameter(description = "The passphrase", required = true) @FormParam("passphrase") @NotNull String passphrase ) {
+    public Response generateAccount( @Parameter(description = "The passphrase") @FormParam("passphrase") String passphrase ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
-        if (StringUtils.isEmpty(passphrase)){
-            return response.error( ApiErrors.MISSING_PARAM, "passphrase").build();
-        }
+
         WalletKeysInfo walletKeysInfo = account2FAHelper.generateUserWallet(passphrase);
 
         if (walletKeysInfo == null){
@@ -228,7 +233,7 @@ public class AccountController {
         return response.bind(dto).build();
     }
 
-    @Path("/account/assetCount")
+    @Path("/asset-count")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
@@ -255,7 +260,7 @@ public class AccountController {
         return response.bind(dto).build();
     }
 
-    @Path("/account/assets")
+    @Path("/assets")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
@@ -268,7 +273,7 @@ public class AccountController {
                                     schema = @Schema(implementation = AccountAssetDTO.class)))
             })
     @PermitAll
-    //TODO: need to be adjusted to return one common response.
+    //TODO: need to be refactored to return one common response.
     // This GET returns two different responses (countAssetDTO or AccountAssetResponse)
     // it depends on the value of the asset parameter.
     public Response getAccountAssets(
@@ -300,7 +305,7 @@ public class AccountController {
         }
     }
 
-    @Path("/account/blockCount")
+    @Path("/block-count")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
@@ -326,12 +331,13 @@ public class AccountController {
         return response.bind(dto).build();
     }
 
-    @Path("/account/blockIds")
+    @Path("/block-ids")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Get the block IDs of all blocks forged by an account.",
             description = "Get the block IDs of all blocks forged (generated) by an account in reverse block height order.",
+            security = @SecurityRequirement(name = "admin_api_key"),
             tags = {"accounts"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
@@ -343,8 +349,7 @@ public class AccountController {
             @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
             @Parameter(description = "The earliest block (in seconds since the genesis block) to retrieve (optional)." ) @QueryParam("timestamp") @PositiveOrZero int timestamp,
             @Parameter(description = "A zero-based index to the first block ID to retrieve (optional)." ) @QueryParam("firstIndex") @PositiveOrZero int firstIndex,
-            @Parameter(description = "A zero-based index to the last block ID to retrieve (optional)." ) @QueryParam("lastIndex") @PositiveOrZero int lastIndex,
-            @Parameter(description = "The admin password." ) @QueryParam("adminPassword") String adminPassword
+            @Parameter(description = "A zero-based index to the last block ID to retrieve (optional)." ) @QueryParam("lastIndex") @PositiveOrZero int lastIndex
             ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
@@ -359,12 +364,13 @@ public class AccountController {
         return response.bind(dto).build();
     }
 
-    @Path("/account/blocks")
+    @Path("/blocks")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Get all blocks forged (generated) by an account.",
             description = "Return all blocks forged (generated) by an account in reverse block height order.",
+            security = @SecurityRequirement(name = "admin_api_key"),
             tags = {"accounts"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
@@ -377,8 +383,7 @@ public class AccountController {
             @Parameter(description = "The earliest block (in seconds since the genesis block) to retrieve (optional)." ) @QueryParam("timestamp") @PositiveOrZero int timestamp,
             @Parameter(description = "A zero-based index to the first block ID to retrieve (optional)." ) @QueryParam("firstIndex") @PositiveOrZero int firstIndex,
             @Parameter(description = "A zero-based index to the last block ID to retrieve (optional)." ) @QueryParam("lastIndex") @PositiveOrZero int lastIndex,
-            @Parameter(description = "Include transactions detail info" ) @QueryParam("includeTransaction") @DefaultValue("false") boolean includeTransaction,
-            @Parameter(description = "The admin password." ) @QueryParam("adminPassword") String adminPassword
+            @Parameter(description = "Include transactions detail info" ) @QueryParam("includeTransaction") @DefaultValue("false") boolean includeTransaction
     ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         long accountId  = accountIdParameter.get();
@@ -391,7 +396,7 @@ public class AccountController {
         return response.bind(dto).build();
     }
 
-    @Path("/account/currencyCount")
+    @Path("/currency-count")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
@@ -418,12 +423,13 @@ public class AccountController {
         return response.bind(new AccountCurrencyCountResponse(count)).build();
     }
 
-    @Path("/account/currencies")
+    @Path("/currencies")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Get the currencies issued by a given account.",
             description = "Return the currencies issued by a given account and height.",
+            security = @SecurityRequirement(name = "admin_api_key"),
             tags = {"accounts"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
@@ -463,12 +469,13 @@ public class AccountController {
         }
     }
 
-    @Path("/account/currentAskOrderIds")
+    @Path("/current-ask-order-ids")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Get current asset order IDs given an account ID.",
             description = "Get current asset order IDs given an account ID in reverse block height order. The admin password is required.",
+            security = @SecurityRequirement(name = "admin_api_key"),
             tags = {"accounts"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
@@ -480,8 +487,7 @@ public class AccountController {
             @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
             @Parameter(description = "The asset ID.") @QueryParam("asset") @PositiveOrZero Long assetIdParam,
             @Parameter(description = "A zero-based index to the first block ID to retrieve (optional)." ) @QueryParam("firstIndex") @PositiveOrZero int firstIndex,
-            @Parameter(description = "A zero-based index to the last block ID to retrieve (optional)." ) @QueryParam("lastIndex") @PositiveOrZero int lastIndex,
-            @Parameter(description = "The admin password." ) @QueryParam("adminPassword") String adminPassword //need for Swagger documentation
+            @Parameter(description = "A zero-based index to the last block ID to retrieve (optional)." ) @QueryParam("lastIndex") @PositiveOrZero int lastIndex
             ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
@@ -497,7 +503,7 @@ public class AccountController {
         return response.bind(new AccountCurrentAskOrderIdsResponse(ordersIdList)).build();
     }
 
-    @Path("/exportKey")
+    @Path("/export-key")
     @POST
     @Produces(MediaType.TEXT_HTML)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
@@ -528,7 +534,7 @@ public class AccountController {
         return response.bind(dto).build();
     }
 
-    @Path("/deleteKey")
+    @Path("/delete-key")
     @POST
     @Produces(MediaType.TEXT_HTML)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
@@ -561,7 +567,7 @@ public class AccountController {
         return response.bind(dto).build();
     }
 
-    @Path("/confirm2FA")
+    @Path("/confirm2fa")
     @POST
     @Produces(MediaType.TEXT_HTML)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
@@ -594,7 +600,7 @@ public class AccountController {
     }
 
 
-    @Path("/disable2FA")
+    @Path("/disable2fa")
     @POST
     @Produces(MediaType.TEXT_HTML)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
@@ -627,7 +633,7 @@ public class AccountController {
         return response.bind(dto).build();
     }
 
-    @Path("/enable2FA")
+    @Path("/enable2fa")
     @POST
     @Produces(MediaType.TEXT_HTML)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)

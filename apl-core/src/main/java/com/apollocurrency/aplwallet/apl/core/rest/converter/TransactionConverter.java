@@ -12,8 +12,8 @@ import javax.inject.Inject;
 
 public class TransactionConverter implements Converter<Transaction, TransactionDTO> {
 
-    private Blockchain blockchain;
-    private UnconfirmedTransactionConverter unconfirmedTransactionConverter;
+    private final Blockchain blockchain;
+    private final UnconfirmedTransactionConverter unconfirmedTransactionConverter;
 
     @Inject
     public TransactionConverter(Blockchain blockchain, UnconfirmedTransactionConverter unconfirmedTransactionConverter) {

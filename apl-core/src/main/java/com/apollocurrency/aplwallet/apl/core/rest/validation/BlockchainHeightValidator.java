@@ -5,27 +5,35 @@
 package com.apollocurrency.aplwallet.apl.core.rest.validation;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.inject.Inject;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
+@NoArgsConstructor
 public class BlockchainHeightValidator implements ConstraintValidator<ValidBlockchainHeight, Integer> {
 
     @Inject @Setter
     private Blockchain blockchain;
+
+    public BlockchainHeightValidator(Blockchain blockchain) {
+        this.blockchain = blockchain;
+    }
 
     @Override
     public void initialize(ValidBlockchainHeight constraintAnnotation) {
     }
 
     @Override
-    public boolean isValid(Integer integer, ConstraintValidatorContext constraintValidatorContext) {
-        boolean result = null == integer || 0 < integer && integer <= blockchain.getHeight();
+    public boolean isValid(Integer value, ConstraintValidatorContext constraintValidatorContext) {
+        boolean result = null == value || value == -1 || 0 < value;/* && value <= blockchain.getHeight();*/
         if (!result) {
             constraintValidatorContext.disableDefaultConstraintViolation();
-            constraintValidatorContext.buildConstraintViolationWithTemplate(String.format(constraintValidatorContext.getDefaultConstraintMessageTemplate(), blockchain.getHeight())).addConstraintViolation();
+            constraintValidatorContext.buildConstraintViolationWithTemplate(
+                String.format(constraintValidatorContext.getDefaultConstraintMessageTemplate(), blockchain.getHeight()))
+                .addConstraintViolation();
         }
         return result;
     }

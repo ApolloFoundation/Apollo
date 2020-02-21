@@ -5,28 +5,20 @@
 package com.apollocurrency.aplwallet.apl.core.rest.service;
 
 import com.apollocurrency.aplwallet.apl.core.app.Order;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 
 import javax.inject.Singleton;
-import java.util.ArrayList;
 import java.util.List;
+
+import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
 
 @Singleton
 public class OrderService {
 
     public List<Order.Ask> getAskOrdersByAccount(long accountId, int from, int to){
-        List<Order.Ask> orders = new ArrayList<>();
-        try(DbIterator<Order.Ask> askOrders = Order.Ask.getAskOrdersByAccount(accountId, from, to)){
-            askOrders.forEach(orders::add);
-        }
-        return orders;
+        return toList(Order.Ask.getAskOrdersByAccount(accountId, from, to));
     }
 
     public List<Order.Ask> getAskOrdersByAccountAsset(long accountId, long assetId, int from, int to){
-        List<Order.Ask> orders = new ArrayList<>();
-        try(DbIterator<Order.Ask> askOrders = Order.Ask.getAskOrdersByAccountAsset(accountId, assetId, from, to)){
-            askOrders.forEach(orders::add);
-        }
-        return orders;
+        return toList(Order.Ask.getAskOrdersByAccountAsset(accountId, assetId, from, to));
     }
 }

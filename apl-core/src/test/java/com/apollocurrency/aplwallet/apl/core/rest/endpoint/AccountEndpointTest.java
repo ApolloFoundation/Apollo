@@ -103,7 +103,7 @@ class AccountEndpointTest extends AbstractEndpointTest{
     }
 
     @ParameterizedTest(name = "{index} url={arguments}")
-    @ValueSource(strings = {"/accounts/disable2FA","/accounts/confirm2FA","/accounts/deleteKey"})
+    @ValueSource(strings = {"/accounts/disable2fa","/accounts/confirm2fa","/accounts/delete-key"})
     public void check2FA_withoutMandatoryParameters_thenGetError_2002(String uri) throws URISyntaxException, IOException {
         MockHttpRequest request = post(uri);
         MockHttpResponse response = sendPostRequest(request,"wrong=value");
@@ -112,7 +112,7 @@ class AccountEndpointTest extends AbstractEndpointTest{
     }
 
     @ParameterizedTest(name = "{index} url={arguments}")
-    @ValueSource(strings = {"/accounts/disable2FA","/accounts/confirm2FA"})
+    @ValueSource(strings = {"/accounts/disable2fa","/accounts/confirm2fa"})
     public void check2FA_withBothSecretPhraseAndPassPhrase_thenGetError_2011(String uri) throws URISyntaxException, IOException {
         MockHttpRequest request = post(uri);
         MockHttpResponse response = sendPostRequest(request,"passphrase="+PASSPHRASE+"&secretPhrase="+SECRET+"&code2FA="+CODE_2FA);
@@ -121,7 +121,7 @@ class AccountEndpointTest extends AbstractEndpointTest{
     }
 
     @ParameterizedTest(name = "{index} url={arguments}")
-    @ValueSource(strings = {"/accounts/disable2FA","/accounts/confirm2FA","/accounts/deleteKey"})
+    @ValueSource(strings = {"/accounts/disable2fa","/accounts/confirm2fa","/accounts/delete-key"})
     public void check2FA_withoutMandatoryParameter_Code2FA_thenGetError_2003(String uri) throws URISyntaxException, IOException {
         doReturn(true).when(twoFactorAuthService).isEnabled(ACCOUNT_ID_WITH_SECRET);
         MockHttpRequest request = post(uri);

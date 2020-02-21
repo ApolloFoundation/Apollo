@@ -64,7 +64,7 @@ public class AbstractEndpointTest {
         String content = response.getContentAsString();
         print(content);
         Map result = mapper.readValue(content, Map.class);
-        assertTrue(result.containsKey("newErrorCode"),"Missing param, it's an issue.");
+        assertTrue(result.containsKey("newErrorCode"),"Missing expected field [newErrorCode], it's an issue.");
         assertEquals(expectedErrorCode, result.get("newErrorCode"));
     }
 
