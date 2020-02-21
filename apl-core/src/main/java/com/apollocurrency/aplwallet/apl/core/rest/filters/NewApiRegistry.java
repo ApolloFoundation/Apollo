@@ -38,7 +38,9 @@ public class NewApiRegistry {
         apis.put("setAPIProxyPeer", "/rest/networking/peer/setproxy"); //POST
 
 
-//        apis.put("getAccounts", "/rest/server/info/count"); //GET
+        apis.put("getAccounts", "/rest/server/info/count"); //GET
+        apis.put("getBlockchainStatus", "/rest/server/blockchain/status"); //GET
+//        apis.put("getConstants", "/rest/server/blockchain/constants"); //GET
         //TODO: add new implemented endpoints
     }
     public static String getRestPath(String rqType) {

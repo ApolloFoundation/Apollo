@@ -36,6 +36,8 @@ import org.json.simple.JSONObject;
 import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
+
+@Deprecated
 @Vetoed
 public final class GetBlockchainStatus extends AbstractAPIRequestHandler {
 

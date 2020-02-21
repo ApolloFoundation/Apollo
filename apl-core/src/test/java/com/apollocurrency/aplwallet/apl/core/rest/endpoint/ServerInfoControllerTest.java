@@ -6,13 +6,12 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.doReturn;
 
-import javax.ws.rs.core.MediaType;
-
 import java.io.IOException;
 import java.net.URISyntaxException;
 
 import com.apollocurrency.aplwallet.api.dto.info.AccountEffectiveBalanceDto;
 import com.apollocurrency.aplwallet.api.dto.info.AccountsCountDto;
+import com.apollocurrency.aplwallet.api.dto.info.BlockchainConstantsDto;
 import com.apollocurrency.aplwallet.api.dto.info.BlockchainStatusDto;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.peer.BlockchainState;
@@ -42,6 +41,7 @@ class ServerInfoControllerTest {
 
     private static String accountCountUri = "/server/info/count";
     private static String blockchainStatusUri = "/server/blockchain/status";
+    private static String blockchainConstantsUri = "/server/blockchain/constants";
 
     @BeforeEach
     void setup(){
@@ -97,6 +97,27 @@ class ServerInfoControllerTest {
         dispatcher.getRegistry().addSingletonResource(controller);
         // call
         String uri = blockchainStatusUri;
+        MockHttpRequest request = MockHttpRequest.get(uri);
+        MockHttpResponse response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+        // check
+        assertEquals(200, response.getStatus());
+        String respondJson = response.getContentAsString();
+        BlockchainStatusDto dtoResult = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(dtoResult.application);
+        assertNotNull(dtoResult.version);
+    }
+
+    @Test
+    void blockchainConstants_SUCCESS() throws URISyntaxException, IOException {
+        // prepare data
+        BlockchainConstantsDto dto = new BlockchainConstantsDto();
+        doReturn(dto).when(serverInfoService).getBlockchainConstants();
+        // init mocks
+        ServerInfoController controller = new ServerInfoController(serverInfoService);
+        dispatcher.getRegistry().addSingletonResource(controller);
+        // call
+        String uri = blockchainConstantsUri;
         MockHttpRequest request = MockHttpRequest.get(uri);
         MockHttpResponse response = new MockHttpResponse();
         dispatcher.invoke(request, response);

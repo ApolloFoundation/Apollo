@@ -14,6 +14,7 @@ import javax.ws.rs.core.Response;
 import java.util.Objects;
 
 import com.apollocurrency.aplwallet.api.dto.info.AccountsCountDto;
+import com.apollocurrency.aplwallet.api.dto.info.BlockchainConstantsDto;
 import com.apollocurrency.aplwallet.api.dto.info.BlockchainStatusDto;
 import com.apollocurrency.aplwallet.apl.core.rest.RestParameters;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
@@ -81,9 +82,31 @@ public class ServerInfoController {
         }
     )
     public Response blockchainStatus() {
+        log.debug("Started blockchain Status");
         ResponseBuilder response = ResponseBuilder.startTiming();
         BlockchainStatusDto dto = serverInfoService.getBlockchainStatus();
-        log.debug("counts result : {}", dto);
+        log.debug("blockchain Status result : {}", dto);
+        return response.bind(dto).build();
+    }
+
+    @Path("/blockchain/constants")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+        summary = "Returns statistics Account information",
+        description = "Returns statistics information about specified count of account",
+        tags = {"info"},
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Successful execution",
+                content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = BlockchainConstantsDto.class)))
+        }
+    )
+    public Response blockchainConstants() {
+        log.debug("Started blockchain Constants");
+        ResponseBuilder response = ResponseBuilder.startTiming();
+        BlockchainConstantsDto dto = serverInfoService.getBlockchainConstants();
+        log.debug("blockchain Constants result : {}", dto);
         return response.bind(dto).build();
     }
 

@@ -7,6 +7,7 @@ import com.apollocurrency.aplwallet.api.dto.ApolloX509Info;
 import com.apollocurrency.aplwallet.api.dto.GeneratorInfo;
 import com.apollocurrency.aplwallet.api.dto.info.AccountEffectiveBalanceDto;
 import com.apollocurrency.aplwallet.api.dto.info.AccountsCountDto;
+import com.apollocurrency.aplwallet.api.dto.info.BlockchainConstantsDto;
 import com.apollocurrency.aplwallet.api.dto.info.BlockchainStatusDto;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
@@ -198,6 +199,12 @@ public class ServerInfoService {
         dto.maxAPIRecords = API.maxRecords;
         dto.blockchainState = peersService.getMyBlockchainState() != null ?
             peersService.getMyBlockchainState().toString() : "unknown";
+
+        return dto;
+    }
+
+    public BlockchainConstantsDto getBlockchainConstants() {
+        BlockchainConstantsDto dto = new BlockchainConstantsDto();
 
         return dto;
     }
