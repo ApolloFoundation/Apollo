@@ -20,22 +20,23 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.DECRYPTION_FAILED;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ACCOUNT;
-import static org.slf4j.LoggerFactory.getLogger;
-
-import javax.servlet.http.HttpServletRequest;
-
+import com.apollocurrency.aplwallet.apl.core.dgs.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
+
+import javax.enterprise.inject.Vetoed;
+import javax.servlet.http.HttpServletRequest;
+
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.DECRYPTION_FAILED;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ACCOUNT;
+import static org.slf4j.LoggerFactory.getLogger;
 
 @Vetoed
 public final class DecryptFrom extends AbstractAPIRequestHandler {
@@ -61,7 +62,7 @@ public final class DecryptFrom extends AbstractAPIRequestHandler {
         boolean isText = !"false".equalsIgnoreCase(req.getParameter("decryptedMessageIsText"));
         boolean uncompress = !"false".equalsIgnoreCase(req.getParameter("uncompressDecryptedMessage"));
         try {
-            byte[] decrypted = lookupAccountPublickKeyService().decryptFrom(publicKey, encryptedData, keySeed, uncompress);
+            byte[] decrypted = EncryptedDataUtil.decryptFrom(publicKey, encryptedData, keySeed, uncompress);
             JSONObject response = new JSONObject();
             response.put("decryptedMessage", isText ? Convert.toString(decrypted) : Convert.toHexString(decrypted));
             return response;

@@ -35,6 +35,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static com.apollocurrency.aplwallet.apl.testutil.DbUtils.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;

@@ -5,15 +5,11 @@
 package com.apollocurrency.aplwallet.apl.testutil;
 
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -49,14 +45,5 @@ public class DbUtils {
             dataSource.rollback();
             throw new RuntimeException(e);
         }
-    }
-
-    public static <T> List<T> toList(DbIterator<T> iterator){
-        Objects.requireNonNull(iterator, "iterator is NULL");
-        List<T> result = new ArrayList<>();
-        try(iterator){
-            iterator.forEachRemaining(result::add);
-        }
-        return result;
     }
 }

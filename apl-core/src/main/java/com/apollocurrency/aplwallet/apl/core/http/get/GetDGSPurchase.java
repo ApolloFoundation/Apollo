@@ -20,10 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.DECRYPTION_FAILED;
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
+import com.apollocurrency.aplwallet.apl.core.dgs.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
@@ -37,10 +35,13 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
-import java.util.Arrays;
 import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
+import java.util.Arrays;
+
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.DECRYPTION_FAILED;
+import static org.slf4j.LoggerFactory.getLogger;
 
 @Vetoed
 public final class GetDGSPurchase extends AbstractAPIRequestHandler {
@@ -78,7 +79,7 @@ public final class GetDGSPurchase extends AbstractAPIRequestHandler {
                         byte[] buyerPublicKey = lookupAccountService().getPublicKeyByteArray(purchase.getBuyerId());
                         byte[] publicKey = Arrays.equals(sellerPublicKey, readerPublicKey) ? buyerPublicKey : sellerPublicKey;
                         if (publicKey != null) {
-                            decrypted = lookupAccountPublickKeyService().decryptFrom(publicKey, purchase.getEncryptedGoods(), keySeed, true);
+                            decrypted = EncryptedDataUtil.decryptFrom(publicKey, purchase.getEncryptedGoods(), keySeed, true);
                         }
                     } else {
                         decrypted = Crypto.aesDecrypt(purchase.getEncryptedGoods().getData(), sharedKey);
