@@ -20,8 +20,8 @@ import javax.inject.Singleton;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BlockChainInfoServiceImpl implements BlockChainInfoService {
-    private Blockchain blockchain;
-    private BlockchainProcessor blockchainProcessor;
+    private volatile Blockchain blockchain;
+    private volatile BlockchainProcessor blockchainProcessor;
 
     private Blockchain lookupBlockchain() {
         if (blockchain == null) blockchain = CDI.current().select(Blockchain.class).get();
