@@ -109,13 +109,17 @@ class ZipTest {
     }
 
     @Test
-    void tryToCompressEmptyFolder(@TempDir Path dir) throws IOException {
+    void tryToCompressEmptyFolder(@TempDir Path dir) {
+        /*
+        Causes Suppressed: java.nio.file.DirectoryNotEmptyException:
         Path folderNoCsvInside = dir.resolve("csvFolder");
         Files.createDirectories(folderNoCsvInside);
+         */
         String zipFileName = "test-archive-csv-1.zip";
+
         String zipFileInPath = dir + File.separator + zipFileName;
 
-        boolean compressed = zipComponent.compress(zipFileInPath, folderNoCsvInside.toAbsolutePath().toString(), null, null, false);
+        boolean compressed = zipComponent.compress(zipFileInPath, dir.toAbsolutePath().toString(), null, null, false);
 
         assertFalse(compressed);
         assertFalse(Files.exists(Paths.get(zipFileInPath)));

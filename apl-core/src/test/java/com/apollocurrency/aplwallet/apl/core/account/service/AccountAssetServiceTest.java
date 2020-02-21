@@ -109,7 +109,6 @@ class AccountAssetServiceTest {
         int height = 100_000;
         Event firedEventLedger = mock(Event.class);
         Block lastBlock = mock(Block.class);
-        doReturn(1L).when(lastBlock).getPreviousBlockId();
         doReturn(lastBlock).when(blockChainInfoService).getLastBlock();
         doReturn(height).when(lastBlock).getHeight();
         doReturn(height).when(blockChainInfoService).getHeight();
@@ -135,7 +134,6 @@ class AccountAssetServiceTest {
         int height = 100_000;
         Event firedEventLedger = mock(Event.class);
         Block lastBlock = mock(Block.class);
-        doReturn(1L).when(lastBlock).getPreviousBlockId();
         doReturn(lastBlock).when(blockChainInfoService).getLastBlock();
         doReturn(height).when(lastBlock).getHeight();
         doReturn(height).when(blockChainInfoService).getHeight();
@@ -170,7 +168,6 @@ class AccountAssetServiceTest {
         int height = 100_000;
         Event firedEventLedger = mock(Event.class);
         Block lastBlock = mock(Block.class);
-        doReturn(1L).when(lastBlock).getPreviousBlockId();
         doReturn(lastBlock).when(blockChainInfoService).getLastBlock();
         doReturn(height).when(lastBlock).getHeight();
         doReturn(height).when(blockChainInfoService).getHeight();
@@ -223,7 +220,6 @@ class AccountAssetServiceTest {
         int height = 100_000;
         Event firedEventLedger = mock(Event.class);
         Block lastBlock = mock(Block.class);
-        doReturn(1L).when(lastBlock).getPreviousBlockId();
         doReturn(lastBlock).when(blockChainInfoService).getLastBlock();
         doReturn(height).when(lastBlock).getHeight();
         doReturn(height).when(blockChainInfoService).getHeight();
@@ -295,7 +291,6 @@ class AccountAssetServiceTest {
     void testCheckAvailable_on_wrong_height_LT_rollback() {
         doReturn(testData.ASS_BLOCKCHAIN_WRONG_HEIGHT + Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK + 720)
             .when(blockChainInfoService).getMinRollbackHeight();
-        doReturn(testData.ASS_BLOCKCHAIN_HEIGHT).when(blockChainInfoService).getHeight();
         assertThrows(IllegalArgumentException.class, () -> accountAssetService.checkAvailable(testData.ASS_BLOCKCHAIN_WRONG_HEIGHT));
     }
 
