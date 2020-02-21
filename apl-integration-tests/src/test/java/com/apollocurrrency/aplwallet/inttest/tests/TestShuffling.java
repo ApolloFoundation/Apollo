@@ -39,7 +39,6 @@ import static org.junit.jupiter.api.parallel.ExecutionMode.SAME_THREAD;
 
 @DisplayName("Shuffling")
 @Epic(value = "Shuffling")
-@Execution(SAME_THREAD)
 public class TestShuffling extends TestBaseOld {
     public static final Logger log = LoggerFactory.getLogger(TestShuffling.class);
 

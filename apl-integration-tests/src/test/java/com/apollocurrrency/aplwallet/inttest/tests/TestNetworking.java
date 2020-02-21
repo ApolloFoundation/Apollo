@@ -17,7 +17,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 @DisplayName("Networking")
 @Epic(value = "Networking")
 public class TestNetworking extends TestBaseNew {
-//public class TestNetworking extends TestBaseOld {
 
     @Test
     @DisplayName("Get Peers")

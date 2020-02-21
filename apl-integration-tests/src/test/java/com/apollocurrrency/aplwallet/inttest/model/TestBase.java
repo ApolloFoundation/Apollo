@@ -70,6 +70,7 @@ public abstract class TestBase implements ITest {
                 .retryWhen(false)
                 .withMaxRetries(50)
                 .withDelay(5, TimeUnit.SECONDS);
+
         restHelper = new RestHelper();
         ClassLoader classLoader = TestBase.class.getClassLoader();
         String secretFilePath = Objects.requireNonNull(classLoader.getResource(TestConfiguration.getTestConfiguration().getVaultWallet().getUser())).getPath();
