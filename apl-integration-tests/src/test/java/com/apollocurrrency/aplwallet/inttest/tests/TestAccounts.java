@@ -294,17 +294,36 @@ public class TestAccounts extends TestBaseOld {
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void leaseBalance(Wallet wallet){
-        String leaseWalletPass = "1";
-        Wallet leaseWallet = new Wallet(getAccountId(leaseWalletPass).getAccountRS(), leaseWalletPass);
+        String firstLeaseWalletPass = "1";
+        String secondtLeaseWalletPass = "2";
+        CreateTransactionResponse response;
+
+        Wallet firstleaseWallet = new Wallet(getAccountId(firstLeaseWalletPass).getAccountRS(), firstLeaseWalletPass);
+        Wallet secondtleaseWallet = new Wallet(getAccountId(secondtLeaseWalletPass).getAccountRS(), secondtLeaseWalletPass);
+        
         GetAccountResponse accountDTO = getAccount(wallet.getUser());
         if (accountDTO.getEffectiveBalanceAPL() > 100000000000L) {
             startForging(wallet);
+            response =  leaseBalance(firstleaseWallet.getUser(),wallet);
+            verifyTransactionInBlock(response.getTransaction());
         }
-       CreateTransactionResponse response =  leaseBalance(leaseWallet.getUser(),wallet);
-       verifyTransactionInBlock(response.getTransaction());
-       startForging(leaseWallet);
+
+
+        accountDTO = getAccount(firstleaseWallet.getUser());
+        if (accountDTO.getEffectiveBalanceAPL() > 100000000000L) {
+            startForging(firstleaseWallet);
+            response =  leaseBalance(secondtleaseWallet.getUser(),firstleaseWallet);
+            verifyTransactionInBlock(response.getTransaction());
+        }
+       startForging(secondtleaseWallet);
+
        accountDTO = getAccount(wallet.getUser());
        assertEquals(accountDTO.getEffectiveBalanceAPL(),0,"Effective Balance not valid");
+
+       accountDTO = getAccount(firstleaseWallet.getUser());
+       assertEquals(accountDTO.getEffectiveBalanceAPL(),0,"Effective Balance not valid");
+
+
     }
 
 

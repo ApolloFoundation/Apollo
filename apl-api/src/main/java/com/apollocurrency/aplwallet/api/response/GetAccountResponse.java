@@ -31,7 +31,7 @@ public class GetAccountResponse extends ResponseBase {
     private String description;
     private String nextLesseeRS;
     private Long nextLeasingHeightTo;
-    private Long nextLessee;
+    private String nextLessee;
     private Long nextLeasingHeightFrom;
 
 
