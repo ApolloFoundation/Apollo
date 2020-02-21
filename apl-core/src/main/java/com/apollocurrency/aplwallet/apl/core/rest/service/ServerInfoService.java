@@ -9,7 +9,7 @@ import com.apollocurrency.aplwallet.api.dto.info.AccountEffectiveBalanceDto;
 import com.apollocurrency.aplwallet.api.dto.info.AccountsCountDto;
 import com.apollocurrency.aplwallet.api.dto.info.BlockchainConstantsDto;
 import com.apollocurrency.aplwallet.api.dto.info.BlockchainStatusDto;
-import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
+import com.apollocurrency.aplwallet.api.dto.info.SubTypeDto;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
@@ -18,19 +18,19 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
+import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
+import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -203,6 +203,51 @@ public class ServerInfoService {
 
     public BlockchainConstantsDto getBlockchainConstants() {
         BlockchainConstantsDto dto = new BlockchainConstantsDto();
+        if (blockchain.isInitialized()) {
+            dto.genesisBlockId = Long.toUnsignedString(blockchain.getBlockIdAtHeight(0));
+        }
+        dto.genesisAccountId = Long.toUnsignedString(GenesisImporter.CREATOR_ID);
+        dto.epochBeginning = GenesisImporter.EPOCH_BEGINNING;
+        dto.maxArbitraryMessageLength = Constants.MAX_ARBITRARY_MESSAGE_LENGTH;
+        dto.maxPrunableMessageLength = Constants.MAX_PRUNABLE_MESSAGE_LENGTH;
+
+        dto.coinSymbol = blockchainConfig.getCoinSymbol();
+        dto.accountPrefix = blockchainConfig.getAccountPrefix();
+        dto.projectName = blockchainConfig.getProjectName();
+
+        dto.maxImportSecretFileLength = propertiesHolder.getIntProperty("apl.maxKeyStoreFileSize");
+        dto.gasLimitEth = Constants.GAS_LIMIT_ETHER_TX;
+        dto.gasLimitERC20 = Constants.GAS_LIMIT_FOR_ERC20;
+
+        outer:
+        for (int type = 0; ; type++) {
+            List<SubTypeDto> subtypeList = new ArrayList<>(10);
+            for (int subtype = 0; ; subtype++) {
+                TransactionType transactionType;
+                try {
+                    transactionType = TransactionType.findTransactionType((byte) type, (byte) subtype);
+                } catch (IllegalArgumentException ignore) {
+                    continue;
+                }
+                if (transactionType == null) {
+                    if (subtype == 0) {
+                        break outer;
+                    } else {
+                        break;
+                    }
+                }
+                SubTypeDto subtypeJSON = new SubTypeDto();
+                subtypeJSON.name = transactionType.getName();
+                subtypeJSON.canHaveRecipient = transactionType.canHaveRecipient();
+                subtypeJSON.mustHaveRecipient = transactionType.mustHaveRecipient();
+                subtypeJSON.isPhasingSafe = transactionType.isPhasingSafe();
+                subtypeJSON.isPhasable = transactionType.isPhasable();
+                subtypeJSON.type = type;
+                subtypeJSON.subtype = subtype;
+                subtypeList.add(subtypeJSON);
+            }
+            dto.transactionTypes.add(subtypeList);
+        }
 
         return dto;
     }
