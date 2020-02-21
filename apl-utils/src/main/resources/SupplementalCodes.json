@@ -1,0 +1,16 @@
+{
+    "name": "Supplpemantal Codes",
+    "value": "All",
+    "descr": "Supplpemantal Operations available for node/actor",
+    "chlds": [{
+            "name": "None",
+            "value": "0",
+            "descr": "No authorized Supplpemantal operations, assuming non-Vimana certificate",
+            "chlds": []
+        }, {
+            "name": "All",
+            "value": "0xFFFFFFFF",
+            "descr": "All Supplpemantal operations allowed",
+            "chlds": []
+        }]
+}

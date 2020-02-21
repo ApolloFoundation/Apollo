@@ -1,0 +1,16 @@
+{
+    "name": "Authority Codes",
+    "value": "All",
+    "descr": null,
+    "chlds": [{
+            "name": "None",
+            "value": "0",
+            "descr": "No authority",
+            "chlds": []
+        }, {
+            "name": "All",
+            "value": "0xFFFFFFFF",
+            "descr": "All operations allowed",
+            "chlds": []
+        }]
+}

@@ -1,0 +1,21 @@
+{
+    "name": "Business Codes",
+    "value": "All",
+    "descr": "Known business entities related to Apollo currency",
+    "chlds": [{
+            "name": "None",
+            "value": "0",
+            "descr": "No Business Code defined",
+            "chlds": []
+        }, {
+            "name": "FirstBridge",
+            "value": "0x1",
+            "descr": "FirstBridge LLC, developer of Apollo",
+            "chlds": []
+        }, {
+            "name": "Apollo Foundation",
+            "value": "0x2",
+            "descr": "Apollo Foundation, origin of Apollo currency",
+            "chlds": []
+        }]
+}

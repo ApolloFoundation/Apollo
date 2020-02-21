@@ -1,0 +1,16 @@
+{
+    "name": "Operations Codes",
+    "value": "All",
+    "descr": "Operations available for node/actor",
+    "chlds": [{
+            "name": "None",
+            "value": "OL",
+            "descr": "No authorized operations, assuming non-Vimana certificate",
+            "chlds": []
+        }, {
+            "name": "All",
+            "value": "0xFFFFFFFF",
+            "descr": "All operations allowed",
+            "chlds": []
+        }]
+}
