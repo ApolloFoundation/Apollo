@@ -20,6 +20,7 @@ import com.apollocurrency.aplwallet.api.dto.PollDTO;
 import com.apollocurrency.aplwallet.api.dto.ShardDTO;
 import com.apollocurrency.aplwallet.api.dto.TaggedDataDTO;
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
+import com.apollocurrency.aplwallet.api.dto.TradingDataOutputDTO;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.api.response.Account2FAResponse;
 import com.apollocurrency.aplwallet.api.response.AccountAliasesResponse;
@@ -45,6 +46,7 @@ import com.apollocurrency.aplwallet.api.response.AssetsAccountsCountResponse;
 import com.apollocurrency.aplwallet.api.response.AssetsResponse;
 import com.apollocurrency.aplwallet.api.response.BlockListInfoResponse;
 import com.apollocurrency.aplwallet.api.response.BlockchainTransactionsResponse;
+import com.apollocurrency.aplwallet.api.response.CreateDexOrderResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrency.aplwallet.api.response.CurrenciesResponse;
 import com.apollocurrency.aplwallet.api.response.CurrencyAccountsResponse;
@@ -93,18 +95,6 @@ public class TestBaseOld extends TestBase {
     public static final Logger log = LoggerFactory.getLogger(TestBaseOld.class);
 
     @Step
-    public boolean verifyTransactionInBlock(String transaction) {
-        boolean inBlock = false;
-        try {
-            inBlock = Failsafe.with(retryPolicy).get(() -> getTransaction(transaction).getConfirmations() >= 0);
-        } catch (Exception e) {
-            fail("Transaction does't add to block. Transaction " + transaction + " Exception: " + e.getMessage());
-        }
-        assertTrue(inBlock, String.format("Transaction %s in block: ", transaction));
-        return inBlock;
-    }
-
-    @Step
     public boolean waitForHeight(int height) {
         log.info("Wait For Height: {}", height);
         RetryPolicy retry = new RetryPolicy()
@@ -121,11 +111,10 @@ public class TestBaseOld extends TestBase {
         assertTrue(isHeight, String.format("Height %s not reached: %s", height, getBlock().getHeight()));
         return isHeight;
     }
+
     @Step
     public TransactionDTO getTransaction(String transaction) {
-        addParameters(RequestType.requestType, RequestType.getTransaction);
-        addParameters(Parameters.transaction, transaction);
-        return getInstanse(TransactionDTO.class);
+        throw new NotImplementedException("Already implemented in TestBaseNew");
     }
 
     @Step
@@ -433,13 +422,19 @@ public class TestBaseOld extends TestBase {
 
     @Override
     @Step
+    public List<DexOrderDto> getDexOrders(String status, String accountId) {
+        throw new NotImplementedException("Already implemented in TestBaseNew");
+    }
+
+    @Override
+    @Step
     public List<DexOrderDto> getDexOrders() {
         throw new NotImplementedException("Already implemented in TestBaseNew");
     }
 
     @Override
     @Step
-    public List<DexOrderDto> getDexHistory(String account, String pair, String type) {
+    public List<DexOrderDto> getDexHistory(String account, boolean isEth, boolean isSell) {
         throw new NotImplementedException("Already implemented in TestBaseNew");
     }
 
@@ -457,7 +452,7 @@ public class TestBaseOld extends TestBase {
 
     @Override
     @Step
-    public List<DexTradeInfoDto> getDexTradeInfo(String pairCurrency, Integer startTime, Integer finishTime) {
+    public TradingDataOutputDTO getDexTradeInfo(boolean isEth, String resolution, Integer startTime, Integer finishTime) {
         throw new NotImplementedException("Already implemented in TestBaseNew");
     }
 
@@ -469,7 +464,7 @@ public class TestBaseOld extends TestBase {
 
     @Override
     @Step
-    public String createDexOrder(String pairRate, String offerAmount, Wallet wallet, boolean isBuyOrder, boolean isEth) {
+    public CreateDexOrderResponse createDexOrder(String pairRate, String offerAmount, Wallet wallet, boolean isBuyOrder, boolean isEth) {
         throw new NotImplementedException("Already implemented in TestBaseNew");
     }
 

@@ -2,7 +2,9 @@ package com.apollocurrrency.aplwallet.inttest.tests;
 
 import com.apollocurrency.aplwallet.api.dto.DexOrderDto;
 import com.apollocurrency.aplwallet.api.dto.DexTradeInfoDto;
+import com.apollocurrency.aplwallet.api.dto.TradingDataOutputDTO;
 import com.apollocurrency.aplwallet.api.response.Account2FAResponse;
+import com.apollocurrency.aplwallet.api.response.CreateDexOrderResponse;
 import com.apollocurrency.aplwallet.api.response.EthGasInfoResponse;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
@@ -30,17 +32,17 @@ public class TestDex extends TestBaseNew {
         assertNotNull(orders);
     }
 
-    @DisplayName("Get trading history for certain account with param")
+    @DisplayName("Get trading history (closed orders) for certain account with param")
     @Test
     public void getTradeHistory() {
-        List<DexOrderDto> orders = getDexHistory(TestConfiguration.getTestConfiguration().getVaultWallet().getUser(), "1", "1");
+        List<DexOrderDto> orders = getDexHistory(TestConfiguration.getTestConfiguration().getVaultWallet().getAccountId(), true, true);
         assertNotNull(orders);
     }
 
-    @DisplayName("Get trading history for certain account")
+    @DisplayName("Get trading history (closed orders) for certain account")
     @Test
     public void getAllTradeHistoryByAccount() {
-        List<DexOrderDto> orders = getDexHistory(TestConfiguration.getTestConfiguration().getVaultWallet().getUser());
+        List<DexOrderDto> orders = getDexHistory(TestConfiguration.getTestConfiguration().getVaultWallet().getAccountId());
         assertNotNull(orders);
     }
 
@@ -53,17 +55,17 @@ public class TestDex extends TestBaseNew {
         assertTrue(Float.valueOf(gasPrice.getSafeLow()) > 0);
     }
 
-    @DisplayName("Obtaining trading information for the given period")
+    @DisplayName("Obtaining ETH trading information for the given period with certain resolution")
     @Test
     public void getDexTradeInfoETH() {
-        List<DexTradeInfoDto> dexTrades = getDexTradeInfo("1", 0, 999999999);
+        TradingDataOutputDTO dexTrades = getDexTradeInfo(true, "D", 999999999, 1817);
         assertNotNull(dexTrades);
     }
 
-    @DisplayName("Obtaining trading information for the given period")
+    @DisplayName("Obtaining PAX trading information for the given period with certain resolution")
     @Test
     public void getDexTradeInfoPAX() {
-        List<DexTradeInfoDto> dexTrades = getDexTradeInfo("2", 0, 999999999);
+        TradingDataOutputDTO dexTrades = getDexTradeInfo(false, "15", 999999999, 1817);
         assertNotNull(dexTrades);
     }
 
@@ -71,25 +73,32 @@ public class TestDex extends TestBaseNew {
     @Test
     public void dexOrders() {
         //Create Sell order ETH
-        String sellOrderEth = createDexOrder("40000", "1000", TestConfiguration.getTestConfiguration().getVaultWallet(), false, true);
-        assertEquals("{}", sellOrderEth, "dex offer wasn't created");
+        CreateDexOrderResponse sellOrderEth = createDexOrder("40000", "1000", TestConfiguration.getTestConfiguration().getVaultWallet(), false, true);
+        assertNotNull(sellOrderEth, "RESPONSE is not correct/dex offer wasn't created");
+        verifyTransactionInBlock(sellOrderEth.getOrder().getId());
         //Create Sell order PAX
-        String sellOrderPax = createDexOrder("40000", "1000", TestConfiguration.getTestConfiguration().getVaultWallet(), false, false);
-        assertEquals("{}", sellOrderPax, "dex offer wasn't created");
-
+        CreateDexOrderResponse sellOrderPax = createDexOrder("40000", "1000", TestConfiguration.getTestConfiguration().getVaultWallet(), false, false);
+        assertNotNull(sellOrderPax, "RESPONSE is not correct/dex offer wasn't created");
+        verifyTransactionInBlock(sellOrderPax.getOrder().getId());
         //Create Buy order PAX
-        String buyOrderPax = createDexOrder("15000", "1000", TestConfiguration.getTestConfiguration().getVaultWallet(), true, false);
-        assertNotNull(buyOrderPax);
+        CreateDexOrderResponse buyOrderPax = createDexOrder("15000", "1000", TestConfiguration.getTestConfiguration().getVaultWallet(), true, false);
+        assertNotNull(buyOrderPax,  "RESPONSE is not correct/dex offer wasn't created");
+        assertNotNull(buyOrderPax.getFrozenTx(), "FrozenTx isn't present");
+        verifyTransactionInBlock(buyOrderPax.getOrder().getId());
         //Create Buy order ETH
-        String buyOrderEth = createDexOrder("15000", "1000", TestConfiguration.getTestConfiguration().getVaultWallet(), true, true);
-        assertNotNull(buyOrderEth);
+        CreateDexOrderResponse buyOrderEth = createDexOrder("15000", "1000", TestConfiguration.getTestConfiguration().getVaultWallet(), true, true);
+        assertNotNull(buyOrderEth,  "RESPONSE is not correct/dex offer wasn't created");
+        assertNotNull(buyOrderEth.getFrozenTx(), "FrozenTx isn't present");
+        verifyTransactionInBlock(buyOrderEth.getOrder().getId());
 
-        List<DexOrderDto> orders = getDexOrders(TestConfiguration.getTestConfiguration().getVaultWallet().getAccountId());
+        List<DexOrderDto> orders = getDexOrders("0", TestConfiguration.getTestConfiguration().getVaultWallet().getAccountId());
         //TODO: add additional asserts for checking statuses after order was cancelled
         for (DexOrderDto order : orders) {
             if (order.status == 0) {
+                System.out.println("order ID = " + order.id + "    status = " + order.status);
                 verifyCreatingTransaction(dexCancelOrder(order.id, TestConfiguration.getTestConfiguration().getVaultWallet()));
             }
+            else log.info("orders with status OPEN are not present");
         }
     }
 

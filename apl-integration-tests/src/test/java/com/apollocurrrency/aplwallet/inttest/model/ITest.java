@@ -17,6 +17,7 @@ import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
 import com.apollocurrency.aplwallet.api.dto.PeerDTO;
 import com.apollocurrency.aplwallet.api.dto.PollDTO;
 import com.apollocurrency.aplwallet.api.dto.TaggedDataDTO;
+import com.apollocurrency.aplwallet.api.dto.TradingDataOutputDTO;
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.api.response.Account2FAResponse;
@@ -42,6 +43,7 @@ import com.apollocurrency.aplwallet.api.response.AssetsAccountsCountResponse;
 import com.apollocurrency.aplwallet.api.response.AssetsResponse;
 import com.apollocurrency.aplwallet.api.response.BlockListInfoResponse;
 import com.apollocurrency.aplwallet.api.response.BlockchainTransactionsResponse;
+import com.apollocurrency.aplwallet.api.response.CreateDexOrderResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrency.aplwallet.api.response.CurrenciesResponse;
 import com.apollocurrency.aplwallet.api.response.CurrencyAccountsResponse;
@@ -232,17 +234,17 @@ public interface ITest {
 
     List<DexOrderDto> getDexOrders();
 
-    List<DexOrderDto> getDexHistory(String account, String pair, String type);
+    List<DexOrderDto> getDexHistory(String account, boolean isEth, boolean isSell);
 
     List<DexOrderDto> getDexHistory(String account);
 
     EthGasInfoResponse getEthGasInfo();
 
-    List<DexTradeInfoDto> getDexTradeInfo(String pairCurrency, Integer startTime, Integer finishTime);
+    TradingDataOutputDTO getDexTradeInfo(boolean isEth, String resolution, Integer startTime, Integer finishTime);
 
     CreateTransactionResponse dexCancelOrder(String orderId, Wallet wallet);
 
-    String createDexOrder(String pairRate, String offerAmount, Wallet wallet, boolean isBuyOrder, boolean isEth);
+    CreateDexOrderResponse createDexOrder(String pairRate, String offerAmount, Wallet wallet, boolean isBuyOrder, boolean isEth);
     List<DexOrderDto> getDexOrders(String accountId);
 
     Account2FAResponse getDexBalances(String ethAddress);
@@ -300,5 +302,7 @@ public interface ITest {
     AllTaggedDataResponse searchTaggedDataByTag(String tag);
 
     CreateTransactionResponse extendTaggedData(Wallet wallet, String transaction);
+
+    List<DexOrderDto> getDexOrders(String status, String accountId);
 
 }
