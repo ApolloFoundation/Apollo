@@ -3,6 +3,7 @@ package com.apollocurrrency.aplwallet.inttest.tests;
 import com.apollocurrency.aplwallet.api.dto.AccountDTO;
 import com.apollocurrency.aplwallet.api.dto.BalanceDTO;
 import com.apollocurrency.aplwallet.api.dto.EntryDTO;
+import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
 import com.apollocurrency.aplwallet.api.response.Account2FAResponse;
 import com.apollocurrency.aplwallet.api.response.AccountBlockIdsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountLedgerResponse;
@@ -22,6 +23,7 @@ import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
+import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -286,6 +288,23 @@ public class TestAccounts extends TestBaseOld {
         assertNotNull(accountDTO.getPassphrase());
         assertNotNull(accountDTO.getPublicKey());
         assertNotNull(accountDTO.getAccount());
+    }
+
+    @DisplayName("Lease Balance")
+    @ParameterizedTest(name = "{displayName} {arguments}")
+    @ArgumentsSource(WalletProvider.class)
+    public void leaseBalance(Wallet wallet){
+        String leaseWalletPass = "1";
+        Wallet leaseWallet = new Wallet(getAccountId(leaseWalletPass).getAccountRS(), leaseWalletPass);
+        GetAccountResponse accountDTO = getAccount(wallet.getUser());
+        if (accountDTO.getEffectiveBalanceAPL() > 100000000000L) {
+            startForging(wallet);
+        }
+       CreateTransactionResponse response =  leaseBalance(leaseWallet.getUser(),wallet);
+       verifyTransactionInBlock(response.getTransaction());
+       startForging(leaseWallet);
+       accountDTO = getAccount(wallet.getUser());
+       assertEquals(accountDTO.getEffectiveBalanceAPL(),0,"Effective Balance not valid");
     }
 
 

@@ -1490,6 +1490,18 @@ public class TestBaseOld extends TestBase {
     }
 
     @Step
+    public CreateTransactionResponse leaseBalance(String recipient, Wallet wallet){
+        addParameters(RequestType.requestType, leaseBalance);
+        addParameters(Parameters.recipient, recipient);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.period, 1440);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+    }
+
+
+    @Step
     public void messagePrunable() {
         String message = RandomStringUtils.randomAlphabetic(3, 5);
         addParameters(Parameters.messageIsPrunable, true);

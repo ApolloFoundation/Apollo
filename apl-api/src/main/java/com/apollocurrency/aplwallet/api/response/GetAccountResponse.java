@@ -29,5 +29,10 @@ public class GetAccountResponse extends ResponseBase {
     private Long currentLeasingHeightTo;
     private Long currentLeasingHeightFrom;
     private String description;
+    private String nextLesseeRS;
+    private Long nextLeasingHeightTo;
+    private Long nextLessee;
+    private Long nextLeasingHeightFrom;
+
 
 }
