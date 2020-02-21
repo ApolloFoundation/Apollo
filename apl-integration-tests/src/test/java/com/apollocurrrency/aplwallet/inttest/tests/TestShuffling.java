@@ -440,9 +440,9 @@ public class TestShuffling extends TestBaseOld {
     @Override
     public void tearDown() {
         super.tearDown();
-        sendMoney(randomVault, TestConfiguration.getTestConfiguration().getGenesisWallet().getUser(), (int) ((getBalance(randomVault).getUnconfirmedBalanceATM() - 1000000000L) / 100000000));
+        sendMoney(randomVault, TestConfiguration.getTestConfiguration().getGenesisWallet().getUser(), (int) ((getBalance(randomVault).getBalanceATM() - 1000000000L) / 100000000));
             for (Wallet wallet : recipients) {
-                sendMoney(wallet, TestConfiguration.getTestConfiguration().getGenesisWallet().getUser(), (int) ((getBalance(wallet).getUnconfirmedBalanceATM() - 1000000000L) / 100000000));
+                sendMoney(wallet, TestConfiguration.getTestConfiguration().getGenesisWallet().getUser(), (int) ((getBalance(wallet).getBalanceATM() - 1000000000L) / 100000000));
             }
         }
 
