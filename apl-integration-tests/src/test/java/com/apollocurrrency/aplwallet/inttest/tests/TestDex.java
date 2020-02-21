@@ -10,17 +10,20 @@ import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
 import io.qameta.allure.Epic;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 @DisplayName("Dex")
 @Epic(value = "Dex")
-@Disabled
+@Execution(CONCURRENT)
 public class TestDex extends TestBaseNew {
 
     @DisplayName("Get dex orders")

@@ -97,14 +97,14 @@ public class TestAccounts extends TestBaseOld {
     @ArgumentsSource(WalletProvider.class)
     public void testAccountLedger(Wallet wallet) throws IOException {
         AccountLedgerResponse accountLedger = getAccountLedger(wallet);
-        assertTrue(accountLedger.getEntries().size() > 0, "Ledger is NULL");
-        assertNotNull(accountLedger.getEntries().get(0).getAccount());
-        assertNotNull(accountLedger.getEntries().get(0).getAccountRS());
-        assertNotNull(accountLedger.getEntries().get(0).getBalance());
-        assertNotNull(accountLedger.getEntries().get(0).getBlock());
-        assertNotNull(accountLedger.getEntries().get(0).getChange());
-        assertNotNull(accountLedger.getEntries().get(0).getHeight());
-        assertNotNull(accountLedger.getEntries().get(0).getLedgerId());
+        assertThat("No any ledger:",accountLedger.getEntries().size(), greaterThan(0));
+        assertNotNull(accountLedger.getEntries().stream().findFirst().get().getAccount());
+        assertNotNull(accountLedger.getEntries().stream().findFirst().get().getAccountRS());
+        assertNotNull(accountLedger.getEntries().stream().findFirst().get().getBalance());
+        assertNotNull(accountLedger.getEntries().stream().findFirst().get().getBlock());
+        assertNotNull(accountLedger.getEntries().stream().findFirst().get().getChange());
+        assertNotNull(accountLedger.getEntries().stream().findFirst().get().getHeight());
+        assertNotNull(accountLedger.getEntries().stream().findFirst().get().getLedgerId());
     }
 
 
@@ -130,7 +130,7 @@ public class TestAccounts extends TestBaseOld {
         SearchAccountsResponse searchAccountsResponse = searchAccounts(accountName);
         assertNotNull(searchAccountsResponse, "Response - null");
         assertNotNull(searchAccountsResponse.getAccounts(), "Response accountDTOS - null");
-        assertTrue(searchAccountsResponse.getAccounts().size() > 0, "Account not found");
+        assertThat("Account not found",searchAccountsResponse.getAccounts().size(), greaterThan(0) );
     }
 
     @DisplayName("Verify Unconfirmed Transactions endpoint")
@@ -152,7 +152,7 @@ public class TestAccounts extends TestBaseOld {
                 .withDelay(5, TimeUnit.SECONDS);
         sendMoney(getTestConfiguration().getStandartWallet(), getTestConfiguration().getStandartWallet().getUser(), 2);
         AccountTransactionIdsResponse accountTransactionIdsResponse = Failsafe.with(retryPolicy).get(() -> getUnconfirmedTransactionIds(getTestConfiguration().getStandartWallet().getUser()));
-        assertTrue(accountTransactionIdsResponse.getUnconfirmedTransactionIds().size() > 0);
+        assertThat(accountTransactionIdsResponse.getUnconfirmedTransactionIds().size() , greaterThan(0));
     }
 
 

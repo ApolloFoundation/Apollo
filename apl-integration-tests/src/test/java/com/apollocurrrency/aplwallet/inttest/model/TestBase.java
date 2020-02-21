@@ -70,6 +70,7 @@ public abstract class TestBase implements ITest {
                 .retryWhen(false)
                 .withMaxRetries(50)
                 .withDelay(5, TimeUnit.SECONDS);
+
         restHelper = new RestHelper();
         ClassLoader classLoader = TestBase.class.getClassLoader();
         String secretFilePath = Objects.requireNonNull(classLoader.getResource(TestConfiguration.getTestConfiguration().getVaultWallet().getUser())).getPath();
@@ -78,10 +79,8 @@ public abstract class TestBase implements ITest {
             ImmutableMap.<String, String>builder()
                 .put("URL", TestConfiguration.getTestConfiguration().getBaseURL())
                 .build());
-
         try {
             importSecretFileSetUp(secretFilePath, "1");
-           // startForging();
             startForgingSetUp();
             setUpTestData();
         } catch (Exception ex) {
@@ -268,87 +267,10 @@ public abstract class TestBase implements ITest {
                     log.warn("FAILED: Start Forging. " + ex.getMessage());
                 }
             }
-
-   /*     } else {
-            addParameters(RequestType.requestType, getForging);
-            addParameters(Parameters.adminPassword, getTestConfiguration().getAdminPass());
-            ForgingResponse forgingResponse = getInstanse(ForgingResponse.class);
-
-            if (forgingResponse.getGenerators() != null && forgingResponse.getGenerators().size() == 0) {
-                System.out.println("Start Forging on APL-NZKH-MZRE-2CTT-98NPZ");
-                addParameters(RequestType.requestType, startForging);
-                addParameters(Parameters.wallet, TestConfiguration.getTestConfiguration().getGenesisWallet());
-                addParameters(Parameters.adminPassword, getTestConfiguration().getAdminPass());
-                getInstanse(ForgingDetails.class);
-            }*/
         }
 
     }
 
-    private static void startForging(){
-        List<String> peersIp;
-        String path = "/rest/networking/peer/all";
-        List<String> peers = given().log().uri()
-            .spec(restHelper.getPreconditionSpec())
-            .when()
-            .get(path).as(GetPeersIpResponse.class).getPeers();
-
-        if (peers.size() > 0) {
-            HashMap<String, String> param = new HashMap();
-            param.put(RequestType.requestType.toString(), RequestType.getBlockchainStatus.toString());
-            path = "/apl";
-            BlockchainInfoDTO status = given().config(config).log().all()
-                .spec(restHelper.getPreconditionSpec())
-                .contentType(ContentType.URLENC)
-                .formParams(param)
-                .when()
-                .post(path)
-                .then()
-                .assertThat().statusCode(200)
-                .extract().body().jsonPath()
-                .getObject("", BlockchainInfoDTO.class);
-            peersIp = TestConfiguration.getTestConfiguration().getHostsByChainID(status.getChainId());
-
-        } else {
-            peersIp = TestConfiguration.getTestConfiguration().getPeers();
-        }
-
-        if (peersIp != null && peersIp.size() > 0) {
-            log.info("Check Forging on peers");
-            for (String ip : peersIp) {
-                log.info("Stop forging on: " + ip);
-                HashMap<String, String> param = new HashMap();
-                param.put(RequestType.requestType.toString(), RequestType.stopForging.toString());
-                param.put(Parameters.adminPassword.toString(), getTestConfiguration().getAdminPass());
-                path = "/apl";
-                try {
-                        given().config(config).log().all()
-                        .baseUri(String.format("http://%s:%s", ip, 7876))
-                        .contentType(ContentType.URLENC)
-                        .formParams(param)
-                        .when()
-                        .post(path)
-                        .then()
-                        .assertThat().statusCode(200);
-
-                }catch (Exception e){
-                    log.warn("FAILED: Stop Forging. " + ip);
-                }
-            }
-            try {
-                    log.info("Start forging on APL-NZKH-MZRE-2CTT-98NPZ account");
-                    addParameters(RequestType.requestType, startForging);
-                    addParameters(Parameters.wallet, TestConfiguration.getTestConfiguration().getGenesisWallet());
-                    addParameters(Parameters.adminPassword, getTestConfiguration().getAdminPass());
-                    getInstanse(ForgingDetails.class);
-            } catch (Exception ex) {
-                log.warn("FAILED: Start Forging. " + ex.getMessage());
-            }
-
-
-        }
-
-    }
 
     private static void checkForgingAccountsBalance() {
         for (int i = 1; i < 200; i++) {
