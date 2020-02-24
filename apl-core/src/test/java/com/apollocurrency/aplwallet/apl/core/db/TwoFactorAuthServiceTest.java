@@ -37,126 +37,144 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class TwoFactorAuthServiceTest {
     @Mock
     private TwoFactorAuthRepository repository;
+    @Mock
+    private TwoFactorAuthRepository targetFileRepository;
     private TwoFactorAuthService service;
 
     @BeforeEach
     public void setUp() throws Exception {
-        service = new TwoFactorAuthServiceImpl(repository, "test");
+        service = new TwoFactorAuthServiceImpl(repository, "test", targetFileRepository);
     }
 
     @Test
     public void testEnable() {
-        TwoFactorAuthTestData td = new TwoFactorAuthTestData();                
-        doReturn(true).when(repository).add(any(TwoFactorAuthEntity.class));
+        TwoFactorAuthTestData td = new TwoFactorAuthTestData();
+//        doReturn(true).when(repository).add(any(TwoFactorAuthEntity.class));
+        doReturn(true).when(targetFileRepository).add(any(TwoFactorAuthEntity.class));
         TwoFactorAuthDetails twoFactorAuthDetails = service.enable(td.ENTITY3.getAccount());
         TwoFactorAuthUtil.verifySecretCode(twoFactorAuthDetails, Convert.defaultRsAccount(td.ENTITY3.getAccount()));
         assertEquals(Status2FA.OK, twoFactorAuthDetails.getStatus2Fa());
-        verify(repository, times(1)).add(any(TwoFactorAuthEntity.class));
+//        verify(repository, times(1)).add(any(TwoFactorAuthEntity.class));
+        verify(targetFileRepository, times(1)).add(any(TwoFactorAuthEntity.class));
     }
 
     @Test
     public void testEnableAlreadyEnabled() {
-        TwoFactorAuthTestData td = new TwoFactorAuthTestData();        
-        doReturn(td.ENTITY1).when(repository).get(td.ACCOUNT1.getId());
+        TwoFactorAuthTestData td = new TwoFactorAuthTestData();
+//        doReturn(td.ENTITY1).when(repository).get(td.ACCOUNT1.getId());
+        doReturn(td.ENTITY1).when(targetFileRepository).get(td.ACCOUNT1.getId());
 
         TwoFactorAuthDetails details = service.enable(td.ACCOUNT1.getId());
 
         assertEquals(Status2FA.ALREADY_ENABLED, details.getStatus2Fa());
     }
+
     @Test
     public void testEnableNotConfirmed() {
-        TwoFactorAuthTestData td = new TwoFactorAuthTestData();        
-       
-        doReturn(td.ENTITY2).when(repository).get(td.ACCOUNT2.getId());
+        TwoFactorAuthTestData td = new TwoFactorAuthTestData();
+
+//        doReturn(td.ENTITY2).when(repository).get(td.ACCOUNT2.getId());
+        doReturn(td.ENTITY2).when(targetFileRepository).get(td.ACCOUNT2.getId());
 
         TwoFactorAuthDetails details = service.enable(td.ACCOUNT2.getId());
         TwoFactorAuthUtil.verifySecretCode(details, Convert.defaultRsAccount(td.ACCOUNT2.getId()));
         assertEquals(td.ACCOUNT2_2FA_SECRET_BASE32, details.getSecret());
     }
 
-
     @Test
     public void testDisable() throws GeneralSecurityException {
-        TwoFactorAuthTestData td = new TwoFactorAuthTestData();                
+        TwoFactorAuthTestData td = new TwoFactorAuthTestData();
         TwoFactorAuthService spy = spy(service);
         int code = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(td.ACCOUNT1_2FA_SECRET_BASE32);
-        doReturn(td.ENTITY1).when(repository).get(td.ACCOUNT1.getId());
+//        doReturn(td.ENTITY1).when(repository).get(td.ACCOUNT1.getId());
+        doReturn(td.ENTITY1).when(targetFileRepository).get(td.ACCOUNT1.getId());
 
         spy.disable(td.ACCOUNT1.getId(), code);
 
-        verify(repository, times(1)).get(td.ACCOUNT1.getId());
-        verify(repository, times(1)).delete(td.ACCOUNT1.getId());
+//        verify(repository, times(1)).get(td.ACCOUNT1.getId());
+//        verify(repository, times(1)).delete(td.ACCOUNT1.getId());
+        verify(targetFileRepository, times(1)).get(td.ACCOUNT1.getId());
+        verify(targetFileRepository, times(1)).delete(td.ACCOUNT1.getId());
     }
 
     @Test
     public void testDisableFailAuth() {
-        TwoFactorAuthTestData td = new TwoFactorAuthTestData();                
+        TwoFactorAuthTestData td = new TwoFactorAuthTestData();
         TwoFactorAuthService spy = spy(service);
-        doReturn(td.ENTITY1).when(repository).get(td.ACCOUNT1.getId());
+//        doReturn(td.ENTITY1).when(repository).get(td.ACCOUNT1.getId());
+        doReturn(td.ENTITY1).when(targetFileRepository).get(td.ACCOUNT1.getId());
 
         Status2FA status2FA = spy.disable(td.ACCOUNT1.getId(), INVALID_CODE);
         assertEquals(Status2FA.INCORRECT_CODE, status2FA);
     }
 
-
     @Test
     public void testIsEnabledTrue() {
-        TwoFactorAuthTestData td = new TwoFactorAuthTestData();        
-       
-        doReturn(td.ENTITY1).when(repository).get(td.ACCOUNT1.getId());
+        TwoFactorAuthTestData td = new TwoFactorAuthTestData();
+
+//        doReturn(td.ENTITY1).when(repository).get(td.ACCOUNT1.getId());
+        doReturn(td.ENTITY1).when(targetFileRepository).get(td.ACCOUNT1.getId());
 
         boolean enabled = service.isEnabled(td.ACCOUNT1.getId());
 
-        verify(repository, times(1)).get(td.ACCOUNT1.getId());
+//        verify(repository, times(1)).get(td.ACCOUNT1.getId());
+        verify(targetFileRepository, times(1)).get(td.ACCOUNT1.getId());
 
         assertTrue(enabled);
     }
 
     @Test
     public void testIsEnabledFalse() {
-        TwoFactorAuthTestData td = new TwoFactorAuthTestData();        
+        TwoFactorAuthTestData td = new TwoFactorAuthTestData();
 
         boolean enabled = service.isEnabled(td.ACCOUNT1.getId());
 
-        verify(repository, times(1)).get(td.ACCOUNT1.getId());
+//        verify(repository, times(1)).get(td.ACCOUNT1.getId());
+        verify(targetFileRepository, times(1)).get(td.ACCOUNT1.getId());
 
         assertFalse(enabled);
     }
+
     @Test
     public void testIsEnabledFalseWhen2faWasNotConfirmed() throws CloneNotSupportedException {
-        TwoFactorAuthTestData td = new TwoFactorAuthTestData();        
-        
-        doReturn(td.ENTITY2.clone()).when(repository).get(td.ACCOUNT2.getId());
+        TwoFactorAuthTestData td = new TwoFactorAuthTestData();
+
+//        doReturn(td.ENTITY2.clone()).when(repository).get(td.ACCOUNT2.getId());
+        doReturn(td.ENTITY2.clone()).when(targetFileRepository).get(td.ACCOUNT2.getId());
 
         boolean enabled = service.isEnabled(td.ACCOUNT2.getId());
 
-        verify(repository, times(1)).get(td.ACCOUNT2.getId());
+//        verify(repository, times(1)).get(td.ACCOUNT2.getId());
+        verify(targetFileRepository, times(1)).get(td.ACCOUNT2.getId());
 
         assertFalse(enabled);
     }
 
-
     @Test
     public void testTryAuth() throws GeneralSecurityException {
-        TwoFactorAuthTestData td = new TwoFactorAuthTestData();                
-        doReturn(td.ENTITY1).when(repository).get(td.ACCOUNT1.getId());
+        TwoFactorAuthTestData td = new TwoFactorAuthTestData();
+//        doReturn(td.ENTITY1).when(repository).get(td.ACCOUNT1.getId());
+        doReturn(td.ENTITY1).when(targetFileRepository).get(td.ACCOUNT1.getId());
 
         boolean authenticated = TwoFactorAuthUtil.tryAuth(service, td.ACCOUNT1.getId(), td.ACCOUNT1_2FA_SECRET_BASE32, MAX_2FA_ATTEMPTS);
-        verify(repository, atMost(MAX_2FA_ATTEMPTS)).get(td.ACCOUNT1.getId());
+//        verify(repository, atMost(MAX_2FA_ATTEMPTS)).get(td.ACCOUNT1.getId());
+        verify(targetFileRepository, atMost(MAX_2FA_ATTEMPTS)).get(td.ACCOUNT1.getId());
 
         assertTrue(authenticated);
     }
 
     @Test
     public void testTryAuthCodesNotEquals() throws GeneralSecurityException {
-        TwoFactorAuthTestData td = new TwoFactorAuthTestData();        
-        
-        doReturn(td.ENTITY1).when(repository).get(td.ACCOUNT1.getId());
+        TwoFactorAuthTestData td = new TwoFactorAuthTestData();
+
+//        doReturn(td.ENTITY1).when(repository).get(td.ACCOUNT1.getId());
+        doReturn(td.ENTITY1).when(targetFileRepository).get(td.ACCOUNT1.getId());
 
         int currentNumber = new Random().nextInt();
         Status2FA status2FA = service.tryAuth(td.ACCOUNT1.getId(), currentNumber);
 
-        verify(repository, times(1)).get(td.ACCOUNT1.getId());
+//        verify(repository, times(1)).get(td.ACCOUNT1.getId());
+        verify(targetFileRepository, times(1)).get(td.ACCOUNT1.getId());
 
         assertEquals(Status2FA.INCORRECT_CODE, status2FA);
     }
@@ -164,52 +182,63 @@ public class TwoFactorAuthServiceTest {
     @Test
     public void testTryAuthNotFoundSecretForAccount() throws GeneralSecurityException {
 //        just to make sure that 2fa code is correct
-        TwoFactorAuthTestData td = new TwoFactorAuthTestData();        
+        TwoFactorAuthTestData td = new TwoFactorAuthTestData();
 
         int currentNumber = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(td.ACCOUNT1_2FA_SECRET_BASE32);
         Status2FA status2FA = service.tryAuth(td.ACCOUNT1.getId(), currentNumber);
 
-        verify(repository, times(1)).get(td.ACCOUNT1.getId());
+//        verify(repository, times(1)).get(td.ACCOUNT1.getId());
+        verify(targetFileRepository, times(1)).get(td.ACCOUNT1.getId());
 
         assertEquals(Status2FA.NOT_ENABLED, status2FA);
     }
+
     @Test
     public void testTryAuthForNotConfirmedAccount() throws GeneralSecurityException, CloneNotSupportedException {
-        TwoFactorAuthTestData td = new TwoFactorAuthTestData();                
-        doReturn(td.ENTITY2.clone()).when(repository).get(td.ACCOUNT2.getId());
+        TwoFactorAuthTestData td = new TwoFactorAuthTestData();
+//        doReturn(td.ENTITY2.clone()).when(repository).get(td.ACCOUNT2.getId());
+        doReturn(td.ENTITY2.clone()).when(targetFileRepository).get(td.ACCOUNT2.getId());
         int currentNumber = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(td.ACCOUNT2_2FA_SECRET_BASE32);
         Status2FA status2FA = service.tryAuth(td.ACCOUNT2.getId(), currentNumber);
 
-        verify(repository, times(1)).get(td.ACCOUNT2.getId());
+//        verify(repository, times(1)).get(td.ACCOUNT2.getId());
+        verify(targetFileRepository, times(1)).get(td.ACCOUNT2.getId());
 
         assertEquals(Status2FA.NOT_CONFIRMED, status2FA);
     }
+
     @Test
     public void testConfirm() throws GeneralSecurityException, CloneNotSupportedException {
-        TwoFactorAuthTestData td = new TwoFactorAuthTestData();        
-        
+        TwoFactorAuthTestData td = new TwoFactorAuthTestData();
+
         TwoFactorAuthEntity clone = td.ENTITY2.clone();
-        doReturn(clone).when(repository).get(td.ACCOUNT2.getId());
-        doReturn(true).when(repository).update(clone);
+//        doReturn(clone).when(repository).get(td.ACCOUNT2.getId());
+//        doReturn(true).when(repository).update(clone);
+        doReturn(clone).when(targetFileRepository).get(td.ACCOUNT2.getId());
+        doReturn(true).when(targetFileRepository).update(clone);
 
         int currentNumber = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(td.ACCOUNT2_2FA_SECRET_BASE32);
         Status2FA status2FA = service.confirm(td.ACCOUNT2.getId(), currentNumber);
 
-        verify(repository, times(1)).get(td.ACCOUNT2.getId());
-        verify(repository, times(1)).update(clone);
+//        verify(repository, times(1)).get(td.ACCOUNT2.getId());
+//        verify(repository, times(1)).update(clone);
+        verify(targetFileRepository, times(1)).get(td.ACCOUNT2.getId());
+        verify(targetFileRepository, times(1)).update(clone);
 
         assertEquals(Status2FA.OK, status2FA);
     }
 
     @Test
     public void testConfirmForAlreadyEnabledAccount() throws GeneralSecurityException, CloneNotSupportedException {
-        TwoFactorAuthTestData td = new TwoFactorAuthTestData();        
-        
-        doReturn(td.ENTITY1.clone()).when(repository).get(td.ACCOUNT1.getId());
+        TwoFactorAuthTestData td = new TwoFactorAuthTestData();
+
+//        doReturn(td.ENTITY1.clone()).when(repository).get(td.ACCOUNT1.getId());
+        doReturn(td.ENTITY1.clone()).when(targetFileRepository).get(td.ACCOUNT1.getId());
         int currentNumber = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(td.ACCOUNT1_2FA_SECRET_BASE32);
         Status2FA status2FA = service.confirm(td.ACCOUNT1.getId(), currentNumber);
 
-        verify(repository, times(1)).get(td.ACCOUNT1.getId());
+//        verify(repository, times(1)).get(td.ACCOUNT1.getId());
+        verify(targetFileRepository, times(1)).get(td.ACCOUNT1.getId());
 
         assertEquals(Status2FA.ALREADY_CONFIRMED, status2FA);
     }
