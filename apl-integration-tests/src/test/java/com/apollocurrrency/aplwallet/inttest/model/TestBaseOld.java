@@ -11,7 +11,6 @@ import com.apollocurrency.aplwallet.api.dto.BlockchainInfoDTO;
 import com.apollocurrency.aplwallet.api.dto.Currency;
 import com.apollocurrency.aplwallet.api.dto.DGSGoodsDTO;
 import com.apollocurrency.aplwallet.api.dto.DexOrderDto;
-import com.apollocurrency.aplwallet.api.dto.DexTradeInfoDto;
 import com.apollocurrency.aplwallet.api.dto.ECBlockDTO;
 import com.apollocurrency.aplwallet.api.dto.EntryDTO;
 import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
@@ -126,7 +125,9 @@ public class TestBaseOld extends TestBase {
 
     @Step
     public TransactionDTO getTransaction(String transaction) {
-        throw new NotImplementedException("Already implemented in TestBaseNew");
+        addParameters(RequestType.requestType, RequestType.getTransaction);
+        addParameters(Parameters.transaction, transaction);
+        return getInstanse(TransactionDTO.class);
     }
 
     @Step
