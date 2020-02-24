@@ -297,6 +297,7 @@ public class ServerInfoService {
         }
         for (APITag apiTag : APITag.values()) {
             ApiTagDto tagJSON = new ApiTagDto();
+            tagJSON.tagName = apiTag.name();
             tagJSON.name = apiTag.getDisplayName();
             tagJSON.enabled = !API.disabledAPITags.contains(apiTag);
             dto.apiTags.add(tagJSON);
