@@ -7,8 +7,10 @@ import com.apollocurrency.aplwallet.api.dto.ApolloX509Info;
 import com.apollocurrency.aplwallet.api.dto.GeneratorInfo;
 import com.apollocurrency.aplwallet.api.dto.info.AccountEffectiveBalanceDto;
 import com.apollocurrency.aplwallet.api.dto.info.AccountsCountDto;
+import com.apollocurrency.aplwallet.api.dto.info.ApiTagDto;
 import com.apollocurrency.aplwallet.api.dto.info.BlockchainConstantsDto;
 import com.apollocurrency.aplwallet.api.dto.info.BlockchainStatusDto;
+import com.apollocurrency.aplwallet.api.dto.info.NameCodeTypeDto;
 import com.apollocurrency.aplwallet.api.dto.info.SubTypeDto;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerService;
@@ -19,14 +21,24 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
+import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
+import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
+import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
+import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMinting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
+import com.apollocurrency.aplwallet.apl.core.http.APITag;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
+import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
@@ -245,10 +257,50 @@ public class ServerInfoService {
                 subtypeJSON.type = type;
                 subtypeJSON.subtype = subtype;
                 subtypeList.add(subtypeJSON);
+                dto.transactionSubTypes.add(subtypeJSON);
             }
             dto.transactionTypes.add(subtypeList);
         }
+        // several types generated to JSON
+        for (CurrencyType currencyType : CurrencyType.values()) {
+            dto.currencyTypes.add(new NameCodeTypeDto(currencyType.toString(), currencyType.getCode() ));
+        }
+        for (VoteWeighting.VotingModel votingModel : VoteWeighting.VotingModel.values()) {
+            dto.votingModels.add(new NameCodeTypeDto(votingModel.toString(), votingModel.getCode()));
+        }
+        for (VoteWeighting.MinBalanceModel minBalanceModel : VoteWeighting.MinBalanceModel.values()) {
+            dto.minBalanceModels.add(new NameCodeTypeDto(minBalanceModel.toString(), minBalanceModel.getCode()));
+        }
+        for (HashFunction hashFunction : HashFunction.values()) {
+            dto.hashAlgorithms.add(new NameCodeTypeDto(hashFunction.toString(), hashFunction.getId()));
+        }
+        for (HashFunction hashFunction : PhasingPollService.HASH_FUNCTIONS) {
+            dto.phasingHashAlgorithms.add(new NameCodeTypeDto(hashFunction.toString(), hashFunction.getId()));
+        }
+        dto.maxPhasingDuration = Constants.MAX_PHASING_DURATION;
+        for (HashFunction hashFunction : CurrencyMinting.acceptedHashFunctions) {
+            dto.mintingHashAlgorithms.add(new NameCodeTypeDto(hashFunction.toString(), hashFunction.getId()));
+        }
+        for (PeerState peerState : PeerState.values()) {
+            dto.peerStates.add(new NameCodeTypeDto(peerState.toString(), peerState.ordinal()));
+        }
+        dto.maxTaggedDataDataLength = Constants.MAX_TAGGED_DATA_DATA_LENGTH;
 
+        for (HoldingType holdingType : HoldingType.values()) {
+            dto.holdingTypes.add(new NameCodeTypeDto(holdingType.toString(), holdingType.getCode()));
+        }
+        for (Shuffling.Stage stage : Shuffling.Stage.values()) {
+            dto.shufflingStages.add(new NameCodeTypeDto(stage.toString(), stage.getCode()));
+        }
+        for (ShufflingParticipant.State state : ShufflingParticipant.State.values()) {
+            dto.shufflingParticipantStates.add(new NameCodeTypeDto(state.toString(), state.getCode()));
+        }
+        for (APITag apiTag : APITag.values()) {
+            ApiTagDto tagJSON = new ApiTagDto();
+            tagJSON.name = apiTag.getDisplayName();
+            tagJSON.enabled = !API.disabledAPITags.contains(apiTag);
+            dto.apiTags.add(tagJSON);
+        }
         return dto;
     }
 }
