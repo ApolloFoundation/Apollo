@@ -155,18 +155,17 @@ public class TestAliasAPI extends TestBaseOld {
     @ArgumentsSource(WalletProvider.class)
     public void buyAlias(Wallet wallet) throws IOException {
         String aliasname = "AlS" + String.valueOf(new Date().getTime()).substring(7);
-        Date date = new Date();
         String aliasset;
-
 
         CreateTransactionResponse setAlias = setAlias(wallet, "testapi.com", aliasname);
         verifyCreatingTransaction(setAlias);
+
         aliasset = setAlias.getTransaction();
         verifyTransactionInBlock(aliasset);
 
-
         CreateTransactionResponse buyAlias = buyAlias(wallet, aliasname);
         assertTrue(buyAlias.errorDescription.contains("alias is not for sale at the moment"), buyAlias.errorDescription);
+
         assertTrue(buyAlias.errorCode.compareTo(new Long(4)) == 0);
 
         CreateTransactionResponse deleteAlias = deleteAlias(wallet, aliasname);

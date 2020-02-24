@@ -51,7 +51,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 
 public abstract class TestBase implements ITest {
-    public static TestInfo testInfo;
+    public TestInfo testInfo;
     protected static RetryPolicy retryPolicy;
     protected static RestHelper restHelper;
     protected static ObjectMapper mapper = new ObjectMapper();
@@ -82,8 +82,8 @@ public abstract class TestBase implements ITest {
                 .build());
         try {
             importSecretFileSetUp(secretFilePath, "1");
-            //startForgingSetUp();
-            //setUpTestData();
+            startForgingSetUp();
+            setUpTestData();
         } catch (Exception ex) {
             if (TestConfiguration.getTestConfiguration().getEnv().equals("localhost")){
                 log.warn("One of the peers doesn't respond");
@@ -106,7 +106,6 @@ public abstract class TestBase implements ITest {
     @Step("AfterEach")
     public void tearDown() {
         log.info("Test finished: "+testInfo.getDisplayName());
-        this.testInfo = null;
     }
 
     @AfterAll
