@@ -26,7 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -46,9 +46,9 @@ public final class GetDGSExpiredPurchases extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        long sellerId = HttpParameterParser.getAccountId(req, "seller", true);
-        int firstIndex = HttpParameterParser.getFirstIndex(req);
-        int lastIndex = HttpParameterParser.getLastIndex(req);
+        long sellerId = HttpParameterParserUtil.getAccountId(req, "seller", true);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
 
         JSONObject response = new JSONObject();
         JSONArray purchasesJSON = new JSONArray();

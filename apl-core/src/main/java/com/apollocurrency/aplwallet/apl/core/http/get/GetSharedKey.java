@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -42,11 +42,11 @@ public final class GetSharedKey extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        long accountId = HttpParameterParser.getAccountId(req, false);
-        byte[] keySeed = HttpParameterParser.getKeySeed(req, accountId, false);
+        long accountId = HttpParameterParserUtil.getAccountId(req, false);
+        byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, accountId, false);
 
-        long participantAccountId = HttpParameterParser.getAccountId(req,"participantAccount", true);
-        byte[] nonce = HttpParameterParser.getBytes(req, "nonce", true);
+        long participantAccountId = HttpParameterParserUtil.getAccountId(req,"participantAccount", true);
+        byte[] nonce = HttpParameterParserUtil.getBytes(req, "nonce", true);
         byte[] publicKey = lookupAccountService().getPublicKeyByteArray(participantAccountId);
         if (publicKey == null) {
             return JSONResponses.INCORRECT_ACCOUNT;

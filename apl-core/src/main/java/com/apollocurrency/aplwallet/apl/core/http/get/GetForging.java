@@ -25,7 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -48,8 +48,8 @@ public final class GetForging extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
-        long id = HttpParameterParser.getAccountId(req, vaultAccountName(), false);
-        byte[] publicKey = HttpParameterParser.getPublicKey(req, null, id, false);
+        long id = HttpParameterParserUtil.getAccountId(req, vaultAccountName(), false);
+        byte[] publicKey = HttpParameterParserUtil.getPublicKey(req, null, id, false);
         Block lastBlock = lookupBlockchain().getLastBlock();
         if (lastBlock == null) {
             JSONObject response = new JSONObject();

@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
@@ -40,7 +40,7 @@ public final class GetShuffling extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         boolean includeHoldingInfo = "true".equalsIgnoreCase(req.getParameter("includeHoldingInfo"));
-        return JSONData.shuffling(HttpParameterParser.getShuffling(req), includeHoldingInfo);
+        return JSONData.shuffling(HttpParameterParserUtil.getShuffling(req), includeHoldingInfo);
     }
 
 }

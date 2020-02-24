@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import javax.enterprise.inject.Vetoed;
@@ -44,11 +44,11 @@ public final class GetAccountExchangeRequests extends AbstractAPIRequestHandler 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        long accountId = HttpParameterParser.getAccountId(req, true);
-        long currencyId = HttpParameterParser.getUnsignedLong(req, "currency", true);
+        long accountId = HttpParameterParserUtil.getAccountId(req, true);
+        long currencyId = HttpParameterParserUtil.getUnsignedLong(req, "currency", true);
         boolean includeCurrencyInfo = "true".equalsIgnoreCase(req.getParameter("includeCurrencyInfo"));
-        int firstIndex = HttpParameterParser.getFirstIndex(req);
-        int lastIndex = HttpParameterParser.getLastIndex(req);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
 
         JSONArray jsonArray = new JSONArray();
         try (DbIterator<ExchangeRequest> exchangeRequests = ExchangeRequest.getAccountCurrencyExchangeRequests(accountId, currencyId,

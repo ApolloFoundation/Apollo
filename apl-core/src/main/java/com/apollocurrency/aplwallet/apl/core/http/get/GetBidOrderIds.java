@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Order;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -43,9 +43,9 @@ public final class GetBidOrderIds extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        long assetId = HttpParameterParser.getUnsignedLong(req, "asset", true);
-        int firstIndex = HttpParameterParser.getFirstIndex(req);
-        int lastIndex = HttpParameterParser.getLastIndex(req);
+        long assetId = HttpParameterParserUtil.getUnsignedLong(req, "asset", true);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
 
         JSONArray orderIds = new JSONArray();
         try (DbIterator<Order.Bid> bidOrders = Order.Bid.getSortedOrders(assetId, firstIndex, lastIndex)) {

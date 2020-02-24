@@ -25,7 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainM
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -68,14 +68,14 @@ public final class VerifyPrunableMessage extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        long transactionId = HttpParameterParser.getUnsignedLong(req, "transaction", true);
+        long transactionId = HttpParameterParserUtil.getUnsignedLong(req, "transaction", true);
         Transaction transaction = lookupBlockchain().getTransaction(transactionId);
         if (transaction == null) {
             return UNKNOWN_TRANSACTION;
         }
-        long account = HttpParameterParser.getAccountId(req, "account", false);
-        PrunablePlainMessageAppendix plainMessage = (PrunablePlainMessageAppendix) HttpParameterParser.getPlainMessage(req, true);
-        PrunableEncryptedMessageAppendix encryptedMessage = (PrunableEncryptedMessageAppendix) HttpParameterParser.getEncryptedMessage(req, null,
+        long account = HttpParameterParserUtil.getAccountId(req, "account", false);
+        PrunablePlainMessageAppendix plainMessage = (PrunablePlainMessageAppendix) HttpParameterParserUtil.getPlainMessage(req, true);
+        PrunableEncryptedMessageAppendix encryptedMessage = (PrunableEncryptedMessageAppendix) HttpParameterParserUtil.getEncryptedMessage(req, null,
                 account,true);
 
         if (plainMessage == null && encryptedMessage == null) {

@@ -31,7 +31,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystem
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import javax.enterprise.inject.Vetoed;
@@ -135,22 +135,22 @@ public final class IssueCurrency extends CreateTransaction {
                 }
             }
         } else {
-            type = HttpParameterParser.getInt(req, "type", 0, Integer.MAX_VALUE, false);
+            type = HttpParameterParserUtil.getInt(req, "type", 0, Integer.MAX_VALUE, false);
         }
 
-        long maxSupply = HttpParameterParser.getLong(req, "maxSupply", 1, Constants.MAX_CURRENCY_TOTAL_SUPPLY, false);
-        long reserveSupply = HttpParameterParser.getLong(req, "reserveSupply", 0, maxSupply, false);
-        long initialSupply = HttpParameterParser.getLong(req, "initialSupply", 0, maxSupply, false);
-        int issuanceHeight = HttpParameterParser.getInt(req, "issuanceHeight", 0, Integer.MAX_VALUE, false);
-        long minReservePerUnit = HttpParameterParser.getLong(req, "minReservePerUnitATM", 1,
+        long maxSupply = HttpParameterParserUtil.getLong(req, "maxSupply", 1, Constants.MAX_CURRENCY_TOTAL_SUPPLY, false);
+        long reserveSupply = HttpParameterParserUtil.getLong(req, "reserveSupply", 0, maxSupply, false);
+        long initialSupply = HttpParameterParserUtil.getLong(req, "initialSupply", 0, maxSupply, false);
+        int issuanceHeight = HttpParameterParserUtil.getInt(req, "issuanceHeight", 0, Integer.MAX_VALUE, false);
+        long minReservePerUnit = HttpParameterParserUtil.getLong(req, "minReservePerUnitATM", 1,
                 CDI.current().select(BlockchainConfig.class).get().getCurrentConfig().getMaxBalanceATM(),
                 false);
-        int minDifficulty = HttpParameterParser.getInt(req, "minDifficulty", 1, 255, false);
-        int maxDifficulty = HttpParameterParser.getInt(req, "maxDifficulty", 1, 255, false);
-        byte ruleset = HttpParameterParser.getByte(req, "ruleset", (byte)0, Byte.MAX_VALUE, false);
-        byte algorithm = HttpParameterParser.getByte(req, "algorithm", (byte)0, Byte.MAX_VALUE, false);
-        byte decimals = HttpParameterParser.getByte(req, "decimals", (byte)0, Byte.MAX_VALUE, false);
-        Account account = HttpParameterParser.getSenderAccount(req);
+        int minDifficulty = HttpParameterParserUtil.getInt(req, "minDifficulty", 1, 255, false);
+        int maxDifficulty = HttpParameterParserUtil.getInt(req, "maxDifficulty", 1, 255, false);
+        byte ruleset = HttpParameterParserUtil.getByte(req, "ruleset", (byte)0, Byte.MAX_VALUE, false);
+        byte algorithm = HttpParameterParserUtil.getByte(req, "algorithm", (byte)0, Byte.MAX_VALUE, false);
+        byte decimals = HttpParameterParserUtil.getByte(req, "decimals", (byte)0, Byte.MAX_VALUE, false);
+        Account account = HttpParameterParserUtil.getSenderAccount(req);
         Attachment attachment = new MonetarySystemCurrencyIssuance(name, code, description, (byte)type, initialSupply,
                 reserveSupply, maxSupply, issuanceHeight, minReservePerUnit, minDifficulty, maxDifficulty, ruleset, algorithm, decimals);
 

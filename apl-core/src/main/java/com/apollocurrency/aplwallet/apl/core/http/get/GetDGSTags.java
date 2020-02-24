@@ -26,7 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSTag;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -45,8 +45,8 @@ public final class GetDGSTags extends AbstractAPIRequestHandler {
     private DGSService service = CDI.current().select(DGSService.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        int firstIndex = HttpParameterParser.getFirstIndex(req);
-        int lastIndex = HttpParameterParser.getLastIndex(req);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
         final boolean inStockOnly = !"false".equalsIgnoreCase(req.getParameter("inStockOnly"));
 
         JSONObject response = new JSONObject();

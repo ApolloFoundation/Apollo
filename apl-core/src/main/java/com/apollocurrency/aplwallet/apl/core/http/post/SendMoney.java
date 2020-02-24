@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONStreamAware;
 
@@ -38,9 +38,9 @@ public final class SendMoney extends CreateTransaction {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        long recipient = HttpParameterParser.getAccountId(req, "recipient", true);
-        long amountATM = HttpParameterParser.getAmountATM(req);
-        Account account = HttpParameterParser.getSenderAccount(req);
+        long recipient = HttpParameterParserUtil.getAccountId(req, "recipient", true);
+        long amountATM = HttpParameterParserUtil.getAmountATM(req);
+        Account account = HttpParameterParserUtil.getSenderAccount(req);
         return createTransaction(req, account, recipient, amountATM);
     }
 

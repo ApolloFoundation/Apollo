@@ -27,7 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -47,9 +47,9 @@ public final class GetUnconfirmedTransactions extends AbstractAPIRequestHandler 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
-        Set<Long> accountIds = Convert.toSet(HttpParameterParser.getAccountIds(req, false));
-        int firstIndex = HttpParameterParser.getFirstIndex(req);
-        int lastIndex = HttpParameterParser.getLastIndex(req);
+        Set<Long> accountIds = Convert.toSet(HttpParameterParserUtil.getAccountIds(req, false));
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
 
         JSONArray transactions = new JSONArray();
         if (accountIds.isEmpty()) {

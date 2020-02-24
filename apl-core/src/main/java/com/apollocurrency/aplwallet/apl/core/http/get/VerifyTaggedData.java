@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttach
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import org.json.simple.JSONObject;
@@ -49,13 +49,13 @@ public final class VerifyTaggedData extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        long transactionId = HttpParameterParser.getUnsignedLong(req, "transaction", true);
+        long transactionId = HttpParameterParserUtil.getUnsignedLong(req, "transaction", true);
         Transaction transaction = lookupBlockchain().getTransaction(transactionId);
         if (transaction == null) {
             return UNKNOWN_TRANSACTION;
         }
 
-        TaggedDataUploadAttachment taggedData = HttpParameterParser.getTaggedData(req);
+        TaggedDataUploadAttachment taggedData = HttpParameterParserUtil.getTaggedData(req);
         Attachment attachment = transaction.getAttachment();
 
         if (!(attachment instanceof TaggedDataUploadAttachment)) {

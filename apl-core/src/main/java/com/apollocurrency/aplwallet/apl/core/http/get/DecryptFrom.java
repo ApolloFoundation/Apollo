@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.dgs.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -50,12 +50,12 @@ public final class DecryptFrom extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        byte[] publicKey = lookupAccountService().getPublicKeyByteArray(HttpParameterParser.getAccountId(req, "participantAccount",true));
+        byte[] publicKey = lookupAccountService().getPublicKeyByteArray(HttpParameterParserUtil.getAccountId(req, "participantAccount",true));
         if (publicKey == null) {
             return INCORRECT_ACCOUNT;
         }
-        long accountId = HttpParameterParser.getAccountId(req, false);
-        byte[] keySeed = HttpParameterParser.getKeySeed(req, accountId, true);
+        long accountId = HttpParameterParserUtil.getAccountId(req, false);
+        byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, accountId, true);
         byte[] data = Convert.parseHexString(Convert.nullToEmpty(req.getParameter("data")));
         byte[] nonce = Convert.parseHexString(Convert.nullToEmpty(req.getParameter("nonce")));
         EncryptedData encryptedData = new EncryptedData(data, nonce);

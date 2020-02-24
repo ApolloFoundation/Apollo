@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.FundingMonitor;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
@@ -71,9 +71,9 @@ public class GetFundingMonitor extends AbstractAPIRequestHandler {
      */
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
-        long accountId = HttpParameterParser.getAccountId(req, false);
-        byte[] keySeed = HttpParameterParser.getKeySeed(req, accountId, false);
-        long account = HttpParameterParser.getAccountId(req, false);
+        long accountId = HttpParameterParserUtil.getAccountId(req, false);
+        byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, accountId, false);
+        long account = HttpParameterParserUtil.getAccountId(req, false);
         boolean includeMonitoredAccounts = "true".equalsIgnoreCase(req.getParameter("includeMonitoredAccounts"));
         if (keySeed == null) {
             apw.verifyPassword(req);
@@ -90,9 +90,9 @@ public class GetFundingMonitor extends AbstractAPIRequestHandler {
                 }
             }
             accountId = account;
-            final HoldingType holdingType = HttpParameterParser.getHoldingType(req);
-            final long holdingId = HttpParameterParser.getHoldingId(req, holdingType);
-            final String property = HttpParameterParser.getAccountProperty(req, false);
+            final HoldingType holdingType = HttpParameterParserUtil.getHoldingType(req);
+            final long holdingId = HttpParameterParserUtil.getHoldingId(req, holdingType);
+            final String property = HttpParameterParserUtil.getAccountProperty(req, false);
             Filter<FundingMonitor> filter;
             long finalAccountId = accountId;
             if (property != null) {

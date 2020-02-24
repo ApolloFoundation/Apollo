@@ -25,7 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRegistration;
@@ -43,11 +43,11 @@ public final class ShufflingRegister extends CreateTransaction {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        byte[] shufflingFullHash = HttpParameterParser.getBytes(req, "shufflingFullHash", true);
+        byte[] shufflingFullHash = HttpParameterParserUtil.getBytes(req, "shufflingFullHash", true);
 
         Attachment attachment = new ShufflingRegistration(shufflingFullHash);
 
-        Account account = HttpParameterParser.getSenderAccount(req);
+        Account account = HttpParameterParserUtil.getSenderAccount(req);
         if (account.getControls().contains(AccountControlType.PHASING_ONLY)) {
             return JSONResponses.error("Accounts under phasing only control cannot join a shuffling");
         }

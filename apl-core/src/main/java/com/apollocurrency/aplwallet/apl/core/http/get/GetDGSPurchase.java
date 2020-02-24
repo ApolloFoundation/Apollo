@@ -27,7 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -56,12 +56,12 @@ public final class GetDGSPurchase extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        DGSPurchase purchase = HttpParameterParser.getPurchase(service, req);
+        DGSPurchase purchase = HttpParameterParserUtil.getPurchase(service, req);
         JSONObject response = JSONData.purchase(service, purchase);
 
-        byte[] sharedKey = HttpParameterParser.getBytes(req, "sharedKey", false);
-        long accountId = HttpParameterParser.getAccountId(req, false);
-        byte[] keySeed = HttpParameterParser.getKeySeed(req, accountId, false);
+        byte[] sharedKey = HttpParameterParserUtil.getBytes(req, "sharedKey", false);
+        long accountId = HttpParameterParserUtil.getAccountId(req, false);
+        byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, accountId, false);
         if (sharedKey.length != 0 && keySeed != null) {
             return JSONResponses.either("secretPhrase", "sharedKey", "passphrase & account");
         }

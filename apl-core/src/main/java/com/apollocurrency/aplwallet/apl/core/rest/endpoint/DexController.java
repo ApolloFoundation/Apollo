@@ -14,7 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.ExchangeContractToDTOConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.CustomRequestWrapper;
@@ -192,7 +192,7 @@ public class DexController {
 
         Integer currentTime = timeService.getEpochTime();
         try {
-            Account account = HttpParameterParser.getSenderAccount(req);
+            Account account = HttpParameterParserUtil.getSenderAccount(req);
             OrderType type = OrderType.getType(offerType);
             DexOrder order;
             try {
@@ -341,8 +341,8 @@ public class DexController {
             return Response.ok(JSON.toString(JSONResponses.ERROR_INCORRECT_REQUEST)).build();
         }
 
-        int firstIndex = HttpParameterParser.getFirstIndex(req);
-        int lastIndex = HttpParameterParser.getLastIndex(req);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
 
         int limit = DbUtils.calculateLimit(firstIndex, lastIndex);
 
@@ -401,7 +401,7 @@ public class DexController {
 
         try{
             Long transactionId;
-            Account account = HttpParameterParser.getSenderAccount(req);
+            Account account = HttpParameterParserUtil.getSenderAccount(req);
 
             if (StringUtils.isBlank(orderId)) {
                 return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("id", "Can't be null."))).build();
@@ -422,7 +422,7 @@ public class DexController {
                 return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("orderId", "Can cancel only Open orders."))).build();
             }
 
-            String passphrase = Convert.emptyToNull(HttpParameterParser.getPassphrase(req, true));
+            String passphrase = Convert.emptyToNull(HttpParameterParserUtil.getPassphrase(req, true));
             if(passphrase == null) {
                 return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("passphrase", "Can't be null."))).build();
             }
@@ -465,8 +465,8 @@ public class DexController {
         String passphrase;
         long sender;
         try{
-            passphrase = Convert.emptyToNull(HttpParameterParser.getPassphrase(req, true));
-            sender = HttpParameterParser.getAccountId(req, "sender", true);
+            passphrase = Convert.emptyToNull(HttpParameterParserUtil.getPassphrase(req, true));
+            sender = HttpParameterParserUtil.getAccountId(req, "sender", true);
 
             if (cryptocurrency != null) {
                 currencies = DexCurrency.getType(cryptocurrency);
@@ -553,7 +553,7 @@ public class DexController {
             if(!StringUtils.isBlank(accountIdStr)){
                 accountId = Long.parseUnsignedLong(accountIdStr);
             }
-            String xpassphrase = Convert.emptyToNull(HttpParameterParser.getPassphrase(req, true));
+            String xpassphrase = Convert.emptyToNull(HttpParameterParserUtil.getPassphrase(req, true));
             if(xpassphrase == null) {
                 log.error("null passphrase is unacceptable");
                 return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("passphrase", "Can't be null."))).build();

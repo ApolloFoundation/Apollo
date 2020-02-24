@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -43,7 +43,7 @@ public final class Hash extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
-        byte algorithm = HttpParameterParser.getByte(req, "hashAlgorithm", (byte) 0, Byte.MAX_VALUE, false);
+        byte algorithm = HttpParameterParserUtil.getByte(req, "hashAlgorithm", (byte) 0, Byte.MAX_VALUE, false);
         HashFunction hashFunction = null;
         try {
             hashFunction = HashFunction.getHashFunction(algorithm);

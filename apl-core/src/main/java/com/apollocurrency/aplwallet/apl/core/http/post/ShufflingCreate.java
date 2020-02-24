@@ -28,7 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -47,19 +47,19 @@ public final class ShufflingCreate extends CreateTransaction {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        HoldingType holdingType = HttpParameterParser.getHoldingType(req);
-        long holdingId = HttpParameterParser.getHoldingId(req, holdingType);
-        long amount = HttpParameterParser.getLong(req, "amount", 0L, Long.MAX_VALUE, true);
+        HoldingType holdingType = HttpParameterParserUtil.getHoldingType(req);
+        long holdingId = HttpParameterParserUtil.getHoldingId(req, holdingType);
+        long amount = HttpParameterParserUtil.getLong(req, "amount", 0L, Long.MAX_VALUE, true);
         BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
         if (holdingType == HoldingType.APL && amount < blockchainConfig.getShufflingDepositAtm()) {
             return JSONResponses.incorrect("amount",
                     "Minimum shuffling amount is " + blockchainConfig.getShufflingDepositAtm() / Constants.ONE_APL + " " + blockchainConfig.getCoinSymbol());
         }
-        byte participantCount = HttpParameterParser.getByte(req, "participantCount", Constants.MIN_NUMBER_OF_SHUFFLING_PARTICIPANTS,
+        byte participantCount = HttpParameterParserUtil.getByte(req, "participantCount", Constants.MIN_NUMBER_OF_SHUFFLING_PARTICIPANTS,
                 Constants.MAX_NUMBER_OF_SHUFFLING_PARTICIPANTS, true);
-        short registrationPeriod = (short) HttpParameterParser.getInt(req, "registrationPeriod", 0, Constants.MAX_SHUFFLING_REGISTRATION_PERIOD, true);
+        short registrationPeriod = (short) HttpParameterParserUtil.getInt(req, "registrationPeriod", 0, Constants.MAX_SHUFFLING_REGISTRATION_PERIOD, true);
         Attachment attachment = new ShufflingCreation(holdingId, holdingType, amount, participantCount, registrationPeriod);
-        Account account = HttpParameterParser.getSenderAccount(req);
+        Account account = HttpParameterParserUtil.getSenderAccount(req);
         if (account.getControls().contains(AccountControlType.PHASING_ONLY)) {
             return JSONResponses.error("Accounts under phasing only control cannot start a shuffling");
         }

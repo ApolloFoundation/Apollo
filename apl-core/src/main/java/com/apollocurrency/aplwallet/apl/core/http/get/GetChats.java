@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Chat;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONArray;
@@ -27,9 +27,9 @@ public class GetChats extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
-        long account = HttpParameterParser.getAccountId(request, true);
-        int firstIndex = HttpParameterParser.getFirstIndex(request);
-        int lastIndex = HttpParameterParser.getLastIndex(request);
+        long account = HttpParameterParserUtil.getAccountId(request, true);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(request);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(request);
         JSONObject response = new JSONObject();
         JSONArray chatJsonArray = new JSONArray();
         try (DbIterator<Chat.ChatInfo> iter = Chat.getChatAccounts(account, firstIndex, lastIndex)) {

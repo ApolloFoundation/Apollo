@@ -45,19 +45,5 @@ public class TwoFactorAuthRepositoryProducer {
     public TwoFactorAuthRepository getTwoFactorAuthRepository(){
         return repository;
     }
-/*
-
-    @Named("2FARepositoryOnFS")
-    @Produces
-    public TwoFactorAuthRepository get2FARepositoryOnFileSystem(){
-        return new TwoFactorAuthFileSystemRepository(path2FADir);
-    }
-
-    @Named("2FARepositoryOnDB")
-    @Produces
-    public TwoFactorAuthRepository get2FARepositoryOnDataBase(){
-        return new TwoFactorAuthRepositoryImpl(dataSource);
-    }
-*/
 
 }

@@ -27,7 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -52,10 +52,10 @@ public final class SignTransaction extends AbstractAPIRequestHandler {
         String transactionJSON = Convert.emptyToNull(req.getParameter("unsignedTransactionJSON"));
         String transactionBytes = Convert.emptyToNull(req.getParameter("unsignedTransactionBytes"));
         String prunableAttachmentJSON = Convert.emptyToNull(req.getParameter("prunableAttachmentJSON"));
-        long senderId = HttpParameterParser.getAccountId(req, "sender", false);
-        Transaction.Builder builder = HttpParameterParser.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON);
+        long senderId = HttpParameterParserUtil.getAccountId(req, "sender", false);
+        Transaction.Builder builder = HttpParameterParserUtil.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON);
 
-        byte[] keySeed = HttpParameterParser.getKeySeed(req, senderId, true);
+        byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, senderId, true);
         boolean validate = !"false".equalsIgnoreCase(req.getParameter("validate"));
 
         JSONObject response = new JSONObject();

@@ -26,7 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsLi
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -56,8 +56,8 @@ public final class DGSListing extends CreateTransaction {
         String name = Convert.emptyToNull(req.getParameter("name"));
         String description = Convert.nullToEmpty(req.getParameter("description"));
         String tags = Convert.nullToEmpty(req.getParameter("tags"));
-        long priceATM = HttpParameterParser.getPriceATM(req);
-        int quantity = HttpParameterParser.getGoodsQuantity(req);
+        long priceATM = HttpParameterParserUtil.getPriceATM(req);
+        int quantity = HttpParameterParserUtil.getGoodsQuantity(req);
 
         if (name == null) {
             return MISSING_NAME;
@@ -75,7 +75,7 @@ public final class DGSListing extends CreateTransaction {
             return INCORRECT_DGS_LISTING_TAGS;
         }
 
-        PrunablePlainMessageAppendix prunablePlainMessage = (PrunablePlainMessageAppendix) HttpParameterParser.getPlainMessage(req, true);
+        PrunablePlainMessageAppendix prunablePlainMessage = (PrunablePlainMessageAppendix) HttpParameterParserUtil.getPlainMessage(req, true);
         if (prunablePlainMessage != null) {
             if (prunablePlainMessage.isText()) {
                 return MESSAGE_NOT_BINARY;
@@ -87,7 +87,7 @@ public final class DGSListing extends CreateTransaction {
             }
         }
 
-        Account account = HttpParameterParser.getSenderAccount(req);
+        Account account = HttpParameterParserUtil.getSenderAccount(req);
         Attachment attachment = new DigitalGoodsListing(name, description, tags, quantity, priceATM);
         return createTransaction(req, account, attachment);
 

@@ -27,7 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONArray;
@@ -84,7 +84,7 @@ public final class GetNextBlockGeneratorsTemp extends AbstractAPIRequestHandler 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         JSONObject response = new JSONObject();
-        int limit = Math.max(1, HttpParameterParser.getInt(req, "limit", 1, Integer.MAX_VALUE, false));
+        int limit = Math.max(1, HttpParameterParserUtil.getInt(req, "limit", 1, Integer.MAX_VALUE, false));
         Blockchain blockchain = lookupBlockchain();
         globalSync.readLock();
         try {

@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Poll;
 import com.apollocurrency.aplwallet.apl.core.app.Vote;
@@ -43,8 +43,8 @@ public class GetPollVote extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        Poll poll = HttpParameterParser.getPoll(req);
-        long accountId = HttpParameterParser.getAccountId(req, true);
+        Poll poll = HttpParameterParserUtil.getPoll(req);
+        long accountId = HttpParameterParserUtil.getAccountId(req, true);
         boolean includeWeights = "true".equalsIgnoreCase(req.getParameter("includeWeights"));
         Vote vote = Vote.getVote(poll.getId(), accountId);
         if (vote != null) {

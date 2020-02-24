@@ -19,7 +19,7 @@ public class BlockEventSourceServlet extends org.eclipse.jetty.servlets.EventSou
     protected EventSource newEventSource(HttpServletRequest request) {
         long accountId;
         try {
-            accountId = HttpParameterParser.getAccountId(request, true);
+            accountId = HttpParameterParserUtil.getAccountId(request, true);
 
         } catch (ParameterException e) {
             return null;

@@ -30,7 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -50,9 +50,9 @@ public final class GetBlockchainTransactions extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        long accountId = HttpParameterParser.getAccountId(req, true);
-        int timestamp = HttpParameterParser.getTimestamp(req);
-        int numberOfConfirmations = HttpParameterParser.getNumberOfConfirmations(req);
+        long accountId = HttpParameterParserUtil.getAccountId(req, true);
+        int timestamp = HttpParameterParserUtil.getTimestamp(req);
+        int numberOfConfirmations = HttpParameterParserUtil.getNumberOfConfirmations(req);
         boolean withMessage = "true".equalsIgnoreCase(req.getParameter("withMessage"));
         boolean phasedOnly = "true".equalsIgnoreCase(req.getParameter("phasedOnly"));
         boolean nonPhasedOnly = "true".equalsIgnoreCase(req.getParameter("nonPhasedOnly"));
@@ -77,8 +77,8 @@ public final class GetBlockchainTransactions extends AbstractAPIRequestHandler {
         if (TransactionType.findTransactionType(type, subtype) == Payment.PRIVATE) {
             return PRIVATE_TRANSACTIONS_ACCESS_DENIED;
         }
-        int firstIndex = HttpParameterParser.getFirstIndex(req);
-        int lastIndex = HttpParameterParser.getLastIndex(req);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
 
         JSONArray transactions = new JSONArray();
         List<Transaction> transactionList = lookupBlockchain().getTransactions(accountId, numberOfConfirmations,

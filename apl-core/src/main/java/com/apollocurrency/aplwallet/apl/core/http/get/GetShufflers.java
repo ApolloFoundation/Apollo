@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffler;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
@@ -48,10 +48,10 @@ public final class GetShufflers extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
-        long accountId = HttpParameterParser.getAccountId(req, false);
-        byte[] keySeed = HttpParameterParser.getKeySeed(req, accountId, false);
+        long accountId = HttpParameterParserUtil.getAccountId(req, false);
+        byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, accountId, false);
 
-        byte[] shufflingFullHash = HttpParameterParser.getBytes(req, "shufflingFullHash", false);
+        byte[] shufflingFullHash = HttpParameterParserUtil.getBytes(req, "shufflingFullHash", false);
         boolean includeParticipantState = "true".equalsIgnoreCase(req.getParameter("includeParticipantState"));
         List<Shuffler> shufflers;
         if (keySeed != null) {

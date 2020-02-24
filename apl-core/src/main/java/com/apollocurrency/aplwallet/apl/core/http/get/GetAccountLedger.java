@@ -28,7 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONArray;
@@ -254,16 +254,16 @@ public class GetAccountLedger extends AbstractAPIRequestHandler {
         //
         // Process the request parameters
         //
-        long accountId = HttpParameterParser.getAccountId(req, "account", false);
-        int firstIndex = HttpParameterParser.getFirstIndex(req);
-        int lastIndex = HttpParameterParser.getLastIndex(req);
+        long accountId = HttpParameterParserUtil.getAccountId(req, "account", false);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
         String eventType = Convert.emptyToNull(req.getParameter("eventType"));
         LedgerEvent event = null;
         long eventId = 0;
         if (eventType != null) {
             try {
                 event = LedgerEvent.valueOf(eventType);
-                eventId = HttpParameterParser.getUnsignedLong(req, "event", false);
+                eventId = HttpParameterParserUtil.getUnsignedLong(req, "event", false);
             } catch (RuntimeException e) {
                 throw new ParameterException(JSONResponses.incorrect("eventType"));
             }
@@ -274,7 +274,7 @@ public class GetAccountLedger extends AbstractAPIRequestHandler {
         if (holdingType != null) {
             try {
                 holding = LedgerHolding.valueOf(holdingType);
-                holdingId = HttpParameterParser.getUnsignedLong(req, "holding", false);
+                holdingId = HttpParameterParserUtil.getUnsignedLong(req, "holding", false);
             } catch (RuntimeException e) {
                 throw new ParameterException(JSONResponses.incorrect("holdingType"));
             }

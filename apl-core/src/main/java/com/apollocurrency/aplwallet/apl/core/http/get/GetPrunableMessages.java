@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -46,12 +46,12 @@ public final class GetPrunableMessages extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        long accountId = HttpParameterParser.getAccountId(req, true);
-        byte[] keySeed = HttpParameterParser.getKeySeed(req, accountId, false);
-        int firstIndex = HttpParameterParser.getFirstIndex(req);
-        int lastIndex = HttpParameterParser.getLastIndex(req);
-        final int timestamp = HttpParameterParser.getTimestamp(req);
-        long otherAccountId = HttpParameterParser.getAccountId(req, "otherAccount", false);
+        long accountId = HttpParameterParserUtil.getAccountId(req, true);
+        byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, accountId, false);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
+        final int timestamp = HttpParameterParserUtil.getTimestamp(req);
+        long otherAccountId = HttpParameterParserUtil.getAccountId(req, "otherAccount", false);
 
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();

@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Order;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderCancellation;
@@ -44,8 +44,8 @@ public final class CancelAskOrder extends CreateTransaction {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        long orderId = HttpParameterParser.getUnsignedLong(req, "order", true);
-        Account account = HttpParameterParser.getSenderAccount(req);
+        long orderId = HttpParameterParserUtil.getUnsignedLong(req, "order", true);
+        Account account = HttpParameterParserUtil.getSenderAccount(req);
         Order.Ask orderData = Order.Ask.getAskOrder(orderId);
         if (orderData == null || orderData.getAccountId() != account.getId()) {
             return UNKNOWN_ORDER;

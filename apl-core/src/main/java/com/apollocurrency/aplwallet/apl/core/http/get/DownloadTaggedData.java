@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
@@ -51,7 +51,7 @@ public final class DownloadTaggedData extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest request, HttpServletResponse response) throws AplException {
-        long transactionId = HttpParameterParser.getUnsignedLong(request, "transaction", true);
+        long transactionId = HttpParameterParserUtil.getUnsignedLong(request, "transaction", true);
         boolean retrieve = "true".equalsIgnoreCase(request.getParameter("retrieve"));
         TaggedData taggedData = taggedDataService.getData(transactionId);
         if (taggedData == null && retrieve) {

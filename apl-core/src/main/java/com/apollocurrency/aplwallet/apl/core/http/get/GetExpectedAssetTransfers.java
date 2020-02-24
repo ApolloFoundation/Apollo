@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.transaction.ColoredCoins;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -46,8 +46,8 @@ public final class GetExpectedAssetTransfers extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        long assetId = HttpParameterParser.getUnsignedLong(req, "asset", false);
-        long accountId = HttpParameterParser.getAccountId(req, "account", false);
+        long assetId = HttpParameterParserUtil.getUnsignedLong(req, "asset", false);
+        long accountId = HttpParameterParserUtil.getAccountId(req, "account", false);
         boolean includeAssetInfo = "true".equalsIgnoreCase(req.getParameter("includeAssetInfo"));
 
         Filter<Transaction> filter = transaction -> {

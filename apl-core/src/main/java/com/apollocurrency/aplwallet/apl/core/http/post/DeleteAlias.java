@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasDelete;
@@ -43,8 +43,8 @@ public final class DeleteAlias extends CreateTransaction {
 
     @Override
     public JSONStreamAware processRequest(final HttpServletRequest req) throws AplException {
-        final Alias alias = HttpParameterParser.getAlias(req);
-        final Account owner = HttpParameterParser.getSenderAccount(req);
+        final Alias alias = HttpParameterParserUtil.getAlias(req);
+        final Account owner = HttpParameterParserUtil.getSenderAccount(req);
 
         if (alias.getAccountId() != owner.getId()) {
             return INCORRECT_ALIAS_OWNER;

@@ -26,7 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -40,8 +40,8 @@ public final class StopForging extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
-        long accountId = HttpParameterParser.getAccountId(req, vaultAccountName(), false);
-        byte[] keySeed = HttpParameterParser.getKeySeed(req, accountId, false);
+        long accountId = HttpParameterParserUtil.getAccountId(req, vaultAccountName(), false);
+        byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, accountId, false);
         JSONObject response = new JSONObject();
         if (keySeed != null) {
             Generator generator = Generator.stopForging(keySeed);

@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -27,8 +27,8 @@ public class Disable2FA extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
-        TwoFactorAuthParameters params2FA = HttpParameterParser.parse2FARequest(request);
-        int code = HttpParameterParser.getInt(request, "code2FA", Integer.MIN_VALUE, Integer.MAX_VALUE, true);
+        TwoFactorAuthParameters params2FA = HttpParameterParserUtil.parse2FARequest(request);
+        int code = HttpParameterParserUtil.getInt(request, "code2FA", Integer.MIN_VALUE, Integer.MAX_VALUE, true);
 
         Status2FA status2FA;
         if (params2FA.isPassphrasePresent()) {

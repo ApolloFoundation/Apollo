@@ -25,7 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -44,8 +44,8 @@ public final class GetAccountLessors extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        Account account = HttpParameterParser.getAccount(req);
-        int height = HttpParameterParser.getHeight(req);
+        Account account = HttpParameterParserUtil.getAccount(req);
+        int height = HttpParameterParserUtil.getHeight(req);
         if (height < 0) {
             height = lookupBlockchain().getHeight();
         }

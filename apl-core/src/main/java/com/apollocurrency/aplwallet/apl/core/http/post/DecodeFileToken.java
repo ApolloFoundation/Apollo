@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 import com.apollocurrency.aplwallet.apl.core.app.Token;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import org.json.simple.JSONStreamAware;
@@ -57,7 +57,7 @@ public final class DecodeFileToken extends AbstractAPIRequestHandler {
             if (part == null) {
                 throw new ParameterException(INCORRECT_FILE);
             }
-            HttpParameterParser.FileData fileData = new HttpParameterParser.FileData(part).invoke();
+            HttpParameterParserUtil.FileData fileData = new HttpParameterParserUtil.FileData(part).invoke();
             data = fileData.getData();
         } catch (IOException | ServletException e) {
             throw new ParameterException(INCORRECT_FILE);

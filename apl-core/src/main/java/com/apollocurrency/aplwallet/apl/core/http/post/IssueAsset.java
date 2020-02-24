@@ -25,7 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetIssuance;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONStreamAware;
@@ -84,8 +84,8 @@ public final class IssueAsset extends CreateTransaction {
             }
         }
 
-        long quantityATU = HttpParameterParser.getQuantityATU(req);
-        Account account = HttpParameterParser.getSenderAccount(req);
+        long quantityATU = HttpParameterParserUtil.getQuantityATU(req);
+        Account account = HttpParameterParserUtil.getSenderAccount(req);
         Attachment attachment = new ColoredCoinsAssetIssuance(name, description, quantityATU, decimals);
         return createTransaction(req, account, attachment);
 

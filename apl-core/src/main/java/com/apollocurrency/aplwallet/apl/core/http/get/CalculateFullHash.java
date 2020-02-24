@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -57,7 +57,7 @@ public final class CalculateFullHash extends AbstractAPIRequestHandler {
         }
         JSONObject response = new JSONObject();
         try {
-            Transaction transaction = HttpParameterParser.parseTransaction(unsignedTransactionJSONString, unsignedBytesString, null).build();
+            Transaction transaction = HttpParameterParserUtil.parseTransaction(unsignedTransactionJSONString, unsignedBytesString, null).build();
             MessageDigest digest = Crypto.sha256();
             digest.update(transaction.getUnsignedBytes());
             byte[] fullHash = digest.digest(Convert.parseHexString(signatureHashString));

@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingVerificationAttachment;
@@ -43,14 +43,14 @@ public final class ShufflingVerify extends CreateTransaction {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        Shuffling shuffling = HttpParameterParser.getShuffling(req);
-        byte[] shufflingStateHash = HttpParameterParser.getBytes(req, "shufflingStateHash", true);
+        Shuffling shuffling = HttpParameterParserUtil.getShuffling(req);
+        byte[] shufflingStateHash = HttpParameterParserUtil.getBytes(req, "shufflingStateHash", true);
         if (!Arrays.equals(shufflingStateHash, shuffling.getStateHash())) {
             return JSONResponses.incorrect("shufflingStateHash", "Shuffling is in a different state now");
         }
         Attachment attachment = new ShufflingVerificationAttachment(shuffling.getId(), shufflingStateHash);
 
-        Account account = HttpParameterParser.getSenderAccount(req);
+        Account account = HttpParameterParserUtil.getSenderAccount(req);
         return createTransaction(req, account, attachment);
     }
 }

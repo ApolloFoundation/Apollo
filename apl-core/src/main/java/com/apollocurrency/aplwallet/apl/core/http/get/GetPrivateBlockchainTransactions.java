@@ -16,7 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -35,14 +35,14 @@ public final class GetPrivateBlockchainTransactions extends AbstractAPIRequestHa
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        HttpParameterParser.PrivateTransactionsAPIData data = HttpParameterParser.parsePrivateTransactionRequest(req);
+        HttpParameterParserUtil.PrivateTransactionsAPIData data = HttpParameterParserUtil.parsePrivateTransactionRequest(req);
         if (data == null) {
             return MISSING_SECRET_PHRASE_AND_PUBLIC_KEY;
         }
 
-        int height = HttpParameterParser.getHeight(req);
-        int firstIndex = HttpParameterParser.getFirstIndex(req);
-        int lastIndex = HttpParameterParser.getLastIndex(req);
+        int height = HttpParameterParserUtil.getHeight(req);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
         byte type;
         byte subtype;
         try {

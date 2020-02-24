@@ -31,7 +31,7 @@ import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPurchase;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -53,17 +53,17 @@ public final class DGSPurchase extends CreateTransaction {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        DGSGoods goods = HttpParameterParser.getGoods(service, req);
+        DGSGoods goods = HttpParameterParserUtil.getGoods(service, req);
         if (goods.isDelisted()) {
             return UNKNOWN_GOODS;
         }
 
-        int quantity = HttpParameterParser.getGoodsQuantity(req);
+        int quantity = HttpParameterParserUtil.getGoodsQuantity(req);
         if (quantity > goods.getQuantity()) {
             return INCORRECT_PURCHASE_QUANTITY;
         }
 
-        long priceATM = HttpParameterParser.getPriceATM(req);
+        long priceATM = HttpParameterParserUtil.getPriceATM(req);
         if (priceATM != goods.getPriceATM()) {
             return INCORRECT_PURCHASE_PRICE;
         }
@@ -82,7 +82,7 @@ public final class DGSPurchase extends CreateTransaction {
             return INCORRECT_DELIVERY_DEADLINE_TIMESTAMP;
         }
 
-        Account buyerAccount = HttpParameterParser.getSenderAccount(req);
+        Account buyerAccount = HttpParameterParserUtil.getSenderAccount(req);
         Account sellerAccount = lookupAccountService().getAccount(goods.getSellerId());
 
         Attachment attachment = new DigitalGoodsPurchase(goods.getId(), quantity, priceATM,

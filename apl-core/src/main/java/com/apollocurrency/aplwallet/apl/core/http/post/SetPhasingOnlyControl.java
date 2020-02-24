@@ -26,7 +26,7 @@ import javax.servlet.http.HttpServletRequest;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
@@ -78,11 +78,11 @@ public final class SetPhasingOnlyControl extends CreateTransaction {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
-        Account account = HttpParameterParser.getSenderAccount(request);
-        PhasingParams phasingParams = HttpParameterParser.parsePhasingParams(request, "control");
-        long maxFees = HttpParameterParser.getLong(request, "controlMaxFees", 0, CDI.current().select(BlockchainConfig.class).get().getCurrentConfig().getMaxBalanceATM(), false);
-        short minDuration = (short) HttpParameterParser.getInt(request, "controlMinDuration", 0, Constants.MAX_PHASING_DURATION - 1, false);
-        short maxDuration = (short) HttpParameterParser.getInt(request, "controlMaxDuration", 0, Constants.MAX_PHASING_DURATION - 1, false);
+        Account account = HttpParameterParserUtil.getSenderAccount(request);
+        PhasingParams phasingParams = HttpParameterParserUtil.parsePhasingParams(request, "control");
+        long maxFees = HttpParameterParserUtil.getLong(request, "controlMaxFees", 0, CDI.current().select(BlockchainConfig.class).get().getCurrentConfig().getMaxBalanceATM(), false);
+        short minDuration = (short) HttpParameterParserUtil.getInt(request, "controlMinDuration", 0, Constants.MAX_PHASING_DURATION - 1, false);
+        short maxDuration = (short) HttpParameterParserUtil.getInt(request, "controlMaxDuration", 0, Constants.MAX_PHASING_DURATION - 1, false);
         return createTransaction(request, account, new SetPhasingOnly(phasingParams, maxFees, minDuration, maxDuration));
     }
 

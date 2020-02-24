@@ -28,7 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.AccountControl
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
@@ -44,9 +44,9 @@ public final class LeaseBalance extends CreateTransaction {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-        int period = HttpParameterParser.getInt(req, "period", blockchainConfig.getLeasingDelay(), 65535, true);
-        Account account = HttpParameterParser.getSenderAccount(req);
-        long recipient = HttpParameterParser.getAccountId(req, "recipient", true);
+        int period = HttpParameterParserUtil.getInt(req, "period", blockchainConfig.getLeasingDelay(), 65535, true);
+        Account account = HttpParameterParserUtil.getSenderAccount(req);
+        long recipient = HttpParameterParserUtil.getAccountId(req, "recipient", true);
         Account recipientAccount = lookupAccountService().getAccount(recipient);
         if (recipientAccount == null || lookupAccountService().getPublicKeyByteArray(recipientAccount.getId()) == null) {
             JSONObject response = new JSONObject();

@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionSchedulerService;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -45,7 +45,7 @@ public final class DeleteScheduledTransaction extends AbstractAPIRequestHandler 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
-        long transactionId = HttpParameterParser.getUnsignedLong(req, "transaction", true);
+        long transactionId = HttpParameterParserUtil.getUnsignedLong(req, "transaction", true);
         Transaction transaction = schedulerService.deleteScheduledTransaction(transactionId);
         return transaction == null ? JSON.emptyJSON : JSONData.unconfirmedTransaction(transaction);
     }

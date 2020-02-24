@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -70,7 +70,7 @@ public final class BroadcastTransaction extends AbstractAPIRequestHandler {
 
         JSONObject response = new JSONObject();
         try {
-            Transaction.Builder builder = HttpParameterParser.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON);
+            Transaction.Builder builder = HttpParameterParserUtil.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON);
             Transaction transaction = builder.build();
             lookupTransactionProcessor().broadcast(transaction);
             response.put("transaction", transaction.getStringId());

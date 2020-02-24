@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
@@ -53,9 +53,9 @@ public final class GetChannelTaggedData extends AbstractAPIRequestHandler {
         if (channel == null) {
             return JSONResponses.missing("channel");
         }
-        long accountId = HttpParameterParser.getAccountId(req, "account", false);
-        int firstIndex = HttpParameterParser.getFirstIndex(req);
-        int lastIndex = HttpParameterParser.getLastIndex(req);
+        long accountId = HttpParameterParserUtil.getAccountId(req, "account", false);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
         boolean includeData = "true".equalsIgnoreCase(req.getParameter("includeData"));
 
         JSONObject response = new JSONObject();

@@ -26,7 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
@@ -44,10 +44,10 @@ public class DividendPayment extends CreateTransaction {
     public JSONStreamAware processRequest(final HttpServletRequest request)
             throws AplException
     {
-        final int height = HttpParameterParser.getHeight(request);
-        final long amountATMPerATU = HttpParameterParser.getAmountATMPerATU(request);
-        final Account account = HttpParameterParser.getSenderAccount(request);
-        final Asset asset = HttpParameterParser.getAsset(request);
+        final int height = HttpParameterParserUtil.getHeight(request);
+        final long amountATMPerATU = HttpParameterParserUtil.getAmountATMPerATU(request);
+        final Account account = HttpParameterParserUtil.getSenderAccount(request);
+        final Asset asset = HttpParameterParserUtil.getAsset(request);
         if (Asset.getAsset(asset.getId(), height) == null) {
             return JSONResponses.ASSET_NOT_ISSUED_YET;
         }

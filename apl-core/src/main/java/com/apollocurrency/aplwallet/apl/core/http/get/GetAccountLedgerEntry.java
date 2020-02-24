@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -196,7 +196,7 @@ public class GetAccountLedgerEntry extends AbstractAPIRequestHandler {
         //
         // Process the request parameters
         //
-        long ledgerId = HttpParameterParser.getUnsignedLong(req, "ledgerId", true);
+        long ledgerId = HttpParameterParserUtil.getUnsignedLong(req, "ledgerId", true);
         boolean includeTransaction = "true".equalsIgnoreCase(req.getParameter("includeTransaction"));
         boolean includeHoldingInfo = "true".equalsIgnoreCase(req.getParameter("includeHoldingInfo"));
 

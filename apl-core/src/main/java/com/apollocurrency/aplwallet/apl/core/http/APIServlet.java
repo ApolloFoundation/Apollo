@@ -186,9 +186,9 @@ public final class APIServlet extends HttpServlet {
                 Helper2FA.verify2FA(req, accountName2FA);
             }
             final long requireBlockId = apiRequestHandler.allowRequiredBlockParameters() ?
-                    HttpParameterParser.getUnsignedLong(req, "requireBlock", false) : 0;
+                    HttpParameterParserUtil.getUnsignedLong(req, "requireBlock", false) : 0;
             final long requireLastBlockId = apiRequestHandler.allowRequiredBlockParameters() ?
-                    HttpParameterParser.getUnsignedLong(req, "requireLastBlock", false) : 0;
+                    HttpParameterParserUtil.getUnsignedLong(req, "requireLastBlock", false) : 0;
             if (requireBlockId != 0 || requireLastBlockId != 0) {
                 globalSync.readLock();
             }

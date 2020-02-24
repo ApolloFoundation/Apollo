@@ -6,7 +6,7 @@ import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
 import com.apollocurrency.aplwallet.apl.core.model.ExportKeyStore;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
@@ -77,8 +77,8 @@ public class KeyStoreController {
     @PermitAll
     public Response getAccountInfo(@FormParam("account") String account,
                                      @FormParam("passphrase") String passphraseReq) throws ParameterException {
-        String passphraseStr = HttpParameterParser.getPassphrase(passphraseReq, true);
-        long accountId = HttpParameterParser.getAccountId(account, "account", true);
+        String passphraseStr = HttpParameterParserUtil.getPassphrase(passphraseReq, true);
+        long accountId = HttpParameterParserUtil.getAccountId(account, "account", true);
 
         if(!keyStoreService.isKeyStoreForAccountExist(accountId)){
             return Response.status(Response.Status.OK)
@@ -201,8 +201,8 @@ public class KeyStoreController {
     public Response downloadKeyStore(@FormParam("account") String account,
                                      @FormParam("passPhrase") String passphraseReq, @Context HttpServletRequest request) throws ParameterException, IOException {
         try {
-            String passphraseStr = HttpParameterParser.getPassphrase(passphraseReq, true);
-            long accountId = HttpParameterParser.getAccountId(account, "account", true);
+            String passphraseStr = HttpParameterParserUtil.getPassphrase(passphraseReq, true);
+            long accountId = HttpParameterParserUtil.getAccountId(account, "account", true);
 
             if(!keyStoreService.isKeyStoreForAccountExist(accountId)){
                 return Response.status(Response.Status.OK)
@@ -212,7 +212,7 @@ public class KeyStoreController {
             }
 
             if(helper2FA.isEnabled2FA(accountId)){
-                int code2FA = HttpParameterParser.getInt(request, "code2FA", 0, Integer.MAX_VALUE, false);
+                int code2FA = HttpParameterParserUtil.getInt(request, "code2FA", 0, Integer.MAX_VALUE, false);
                 Status2FA status2FA = helper2FA.auth2FA(passphraseStr, accountId, code2FA);
                 if(!status2FA.OK.equals(status2FA)) {
                     return Response.status(Response.Status.OK).entity(JSON.toString(JSONResponses.error2FA(status2FA, accountId))).build();
@@ -245,8 +245,8 @@ public class KeyStoreController {
                                         @Parameter(description = "Passphrase for apl vault account", required = true) @FormParam("passphrase") String passphrase,
                                         @Parameter(description = "New password to encrypt eth key, if omitted apl passphrase will be used instead (not recommended)") @FormParam("ethKeystorePassword") String ethKeystorePassword,
                                         @Parameter(description = "2fa code for account if enabled") @FormParam("code2FA") @DefaultValue("0") int code) throws ParameterException {
-        String aplVaultPassphrase = HttpParameterParser.getPassphrase(passphrase, true);
-        long accountId = HttpParameterParser.getAccountId(account, "account", true);
+        String aplVaultPassphrase = HttpParameterParserUtil.getPassphrase(passphrase, true);
+        long accountId = HttpParameterParserUtil.getAccountId(account, "account", true);
 
         Helper2FA.verifyVault2FA(accountId, code);
         if (!keyStoreService.isKeyStoreForAccountExist(accountId)) {

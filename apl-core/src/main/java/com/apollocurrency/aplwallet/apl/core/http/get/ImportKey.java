@@ -9,7 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import javax.enterprise.inject.Vetoed;
@@ -30,8 +30,8 @@ public class ImportKey extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
-        String passphrase = Convert.emptyToNull(HttpParameterParser.getPassphrase(request, false));
-        byte[] secretBytes = HttpParameterParser.getBytes(request, "secretBytes", true);
+        String passphrase = Convert.emptyToNull(HttpParameterParserUtil.getPassphrase(request, false));
+        byte[] secretBytes = HttpParameterParserUtil.getBytes(request, "secretBytes", true);
 
         try {
             WalletKeysInfo walletKeysInfo = Helper2FA.importSecretBytes(passphrase, secretBytes);

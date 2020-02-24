@@ -25,7 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONStreamAware;
 
@@ -44,11 +44,11 @@ public final class TransferCurrency extends CreateTransaction {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        long recipient = HttpParameterParser.getAccountId(req, "recipient", true);
+        long recipient = HttpParameterParserUtil.getAccountId(req, "recipient", true);
 
-        Currency currency = HttpParameterParser.getCurrency(req);
-        long units = HttpParameterParser.getLong(req, "units", 0, Long.MAX_VALUE, true);
-        Account account = HttpParameterParser.getSenderAccount(req);
+        Currency currency = HttpParameterParserUtil.getCurrency(req);
+        long units = HttpParameterParserUtil.getLong(req, "units", 0, Long.MAX_VALUE, true);
+        Account account = HttpParameterParserUtil.getSenderAccount(req);
 
         Attachment attachment = new MonetarySystemCurrencyTransfer(currency.getId(), units);
         try {

@@ -15,7 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
@@ -31,12 +31,12 @@ public final class GetPrivateUnconfirmedTransactions extends AbstractAPIRequestH
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
-        HttpParameterParser.PrivateTransactionsAPIData data = HttpParameterParser.parsePrivateTransactionRequest(req);
+        HttpParameterParserUtil.PrivateTransactionsAPIData data = HttpParameterParserUtil.parsePrivateTransactionRequest(req);
         if (data == null) {
             return MISSING_SECRET_PHRASE_AND_PUBLIC_KEY;
         }
-        int firstIndex = HttpParameterParser.getFirstIndex(req);
-        int lastIndex = HttpParameterParser.getLastIndex(req);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
         JSONArray transactions = new JSONArray();
         try (FilteringIterator<? extends Transaction> transactionsIterator = new FilteringIterator<>(
                 lookupTransactionProcessor().getAllUnconfirmedTransactions(0, -1),

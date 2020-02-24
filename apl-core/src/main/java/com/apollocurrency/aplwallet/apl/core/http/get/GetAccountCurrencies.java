@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONArray;
@@ -52,9 +52,9 @@ public final class GetAccountCurrencies extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        long accountId = HttpParameterParser.getAccountId(req, true);
-        int height = HttpParameterParser.getHeight(req);
-        long currencyId = HttpParameterParser.getUnsignedLong(req, "currency", false);
+        long accountId = HttpParameterParserUtil.getAccountId(req, true);
+        int height = HttpParameterParserUtil.getHeight(req);
+        long currencyId = HttpParameterParserUtil.getUnsignedLong(req, "currency", false);
         boolean includeCurrencyInfo = "true".equalsIgnoreCase(req.getParameter("includeCurrencyInfo"));
 
         if (currencyId == 0) {

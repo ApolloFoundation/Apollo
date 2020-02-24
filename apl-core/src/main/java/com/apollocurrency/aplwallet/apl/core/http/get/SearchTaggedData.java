@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
@@ -47,11 +47,11 @@ public final class SearchTaggedData extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        long accountId = HttpParameterParser.getAccountId(req, "account", false);
-        String query = HttpParameterParser.getSearchQuery(req);
+        long accountId = HttpParameterParserUtil.getAccountId(req, "account", false);
+        String query = HttpParameterParserUtil.getSearchQuery(req);
         String channel = Convert.emptyToNull(req.getParameter("channel"));
-        int firstIndex = HttpParameterParser.getFirstIndex(req);
-        int lastIndex = HttpParameterParser.getLastIndex(req);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
         boolean includeData = "true".equalsIgnoreCase(req.getParameter("includeData"));
 
         JSONObject response = new JSONObject();

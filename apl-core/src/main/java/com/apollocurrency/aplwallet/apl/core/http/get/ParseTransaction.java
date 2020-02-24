@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -54,7 +54,7 @@ public final class ParseTransaction extends AbstractAPIRequestHandler {
         String transactionJSON = Convert.emptyToNull(req.getParameter("transactionJSON"));
         String prunableAttachmentJSON = Convert.emptyToNull(req.getParameter("prunableAttachmentJSON"));
 
-        Transaction transaction = HttpParameterParser.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON).build();
+        Transaction transaction = HttpParameterParserUtil.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON).build();
         JSONObject response = JSONData.unconfirmedTransaction(transaction);
         try {
             validator.validate(transaction);
