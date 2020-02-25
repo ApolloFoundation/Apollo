@@ -111,15 +111,10 @@ public class TestDex extends TestBaseNew {
         for (DexOrderDto order : orders) {
             if (order.status == 0) {
                 verifyTransactionInBlock(dexCancelOrder(order.id, TestConfiguration.getTestConfiguration().getVaultWallet()).getTransaction());
+                assertEquals(3, getDexOrder(order.id).status, "Status is not equal 3 (cancel)");
             }
             else log.info("orders with status OPEN are not present");
         }
-        assertEquals(3, getDexOrder(sellEthId).status, "Status is not equal 3 (cancel)");
-        assertEquals(3, getDexOrder(sellPaxId).status, "Status is not equal 3 (cancel)");
-        assertEquals(3, getDexOrder(buyEthId).status, "Status is not equal 3 (cancel)");
-        //assertEquals(false, getDexOrder(buyEthId).hasFrozenMoney, "Still has frozen money on SC. Can be failed because of ETH blockchain.");
-        assertEquals(3, getDexOrder(buyPaxId).status, "Status is not equal 3 (cancel)");
-        //assertEquals(false, getDexOrder(buyPaxId).hasFrozenMoney, "Still has frozen money on SC");
     }
 
     @DisplayName("withdraw ETH/PAX + validation of ETH/PAX balances")
