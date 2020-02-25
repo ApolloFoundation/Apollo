@@ -196,8 +196,6 @@ public abstract class TestBase implements ITest {
       /*  addParameters(RequestType.requestType, RequestType.getTransaction);
         addParameters(Parameters.transaction, transaction);
         return getInstanse(TransactionDTO.class);*/
-        System.out.println("+++++++++++++++++++++++++++++++++");
-        System.out.println(transaction);
         HashMap<String, String> param = new HashMap();
         param.put(ReqType.REQUEST_TYPE,ReqType.GET_TRANSACTION);
         param.put(ReqParam.TRANSACTION, transaction);
