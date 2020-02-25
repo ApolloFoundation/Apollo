@@ -50,13 +50,13 @@ import static org.junit.jupiter.api.Assertions.fail;
 public abstract class TestBase implements ITest {
     public TestInfo testInfo;
     protected static RetryPolicy retryPolicy;
-    protected static RestHelper restHelper;
+    protected static RestHelper restHelper = new RestHelper();;
     protected static ObjectMapper mapper = new ObjectMapper();
     public static final Logger log = LoggerFactory.getLogger(TestBase.class);
     private static RestAssuredConfig config;
 
     @BeforeAll
-    static void initAll() {
+     synchronized static void initAll() {
         log.info("Preconditions started");
          config = RestAssured.config()
             .httpClient(HttpClientConfig.httpClientConfig()
@@ -69,7 +69,6 @@ public abstract class TestBase implements ITest {
                 .withMaxRetries(50)
                 .withDelay(5, TimeUnit.SECONDS);
 
-        restHelper = new RestHelper();
         ClassLoader classLoader = TestBase.class.getClassLoader();
         String secretFilePath = Objects.requireNonNull(classLoader.getResource(TestConfiguration.getTestConfiguration().getVaultWallet().getUser())).getPath();
 
