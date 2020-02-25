@@ -283,7 +283,7 @@ public class TestShuffling extends TestBaseOld {
             log.info("Shuffling created " + shuffling.getTransaction());
             verifyCreatingTransaction(shuffling);
             verifyTransactionInBlock(shuffling.getTransaction());
-            ;
+
 
             waitForChangeShufflingStage(shuffling.getTransaction(), STAGE_REGISTRATION);
 

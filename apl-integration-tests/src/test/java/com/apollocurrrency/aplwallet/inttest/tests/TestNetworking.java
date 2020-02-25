@@ -31,8 +31,8 @@ public class TestNetworking extends TestBaseNew {
         List<String> peers = getPeers();
         if (peers.size() > 0) {
             PeerDTO peer = getPeer(String.valueOf(peers.get(0)));
-            assertNotNull(peer.getAddress());
-            assertNotNull(peer.getChainId());
+            assertNotNull(peer.getAddress(),"Address: "+peer.getAddress());
+            assertNotNull(peer.getChainId(),"ChainId: "+peer.getChainId());
             assertEquals("Apollo", peer.getApplication());
         } else
             fail("Peers not found");

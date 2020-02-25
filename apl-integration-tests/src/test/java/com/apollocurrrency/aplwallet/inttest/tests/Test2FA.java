@@ -57,7 +57,7 @@ public class Test2FA extends TestBaseNew {
         ClassLoader classLoader = getClass().getClassLoader();
         String secretFilePath = Objects.requireNonNull(classLoader.getResource("APL-MK35-9X23-YQ5E-8QBKH")).getPath();
         boolean isKeyImpoted = importSecretFile(secretFilePath, "1");
-        Assertions.assertTrue(isKeyImpoted);
+        Assertions.assertTrue(isKeyImpoted,"Secret key isn't imported");
     }
 
 
@@ -65,7 +65,6 @@ public class Test2FA extends TestBaseNew {
     @ParameterizedTest
     @ArgumentsSource(WalletProvider.class)
     public void enable2FATest(Wallet wallet) throws IOException {
-        ;
         AccountDTO accountDTO = enable2FA(wallet);
         Assertions.assertNotNull(accountDTO.getSecret());
     }
