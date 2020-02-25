@@ -179,18 +179,20 @@ public final class JSONData {
     public static JSONObject lessor(Account account, boolean includeEffectiveBalance) {
         JSONObject json = new JSONObject();
         AccountLease accountLease = accountLeaseService.getAccountLease(account);
-        if (accountLease.getCurrentLesseeId() != 0) {
-            putAccount(json, "currentLessee", accountLease.getCurrentLesseeId());
-            json.put("currentHeightFrom", String.valueOf(accountLease.getCurrentLeasingHeightFrom()));
-            json.put("currentHeightTo", String.valueOf(accountLease.getCurrentLeasingHeightTo()));
-            if (includeEffectiveBalance) {
-                json.put("effectiveBalanceAPL", String.valueOf(accountService.getGuaranteedBalanceATM(account) / Constants.ONE_APL));
+        if(accountLease != null) {
+            if (accountLease.getCurrentLesseeId() != 0) {
+                putAccount(json, "currentLessee", accountLease.getCurrentLesseeId());
+                json.put("currentHeightFrom", String.valueOf(accountLease.getCurrentLeasingHeightFrom()));
+                json.put("currentHeightTo", String.valueOf(accountLease.getCurrentLeasingHeightTo()));
+                if (includeEffectiveBalance) {
+                    json.put("effectiveBalanceAPL", String.valueOf(accountService.getGuaranteedBalanceATM(account) / Constants.ONE_APL));
+                }
             }
-        }
-        if (accountLease.getNextLesseeId() != 0) {
-            putAccount(json, "nextLessee", accountLease.getNextLesseeId());
-            json.put("nextHeightFrom", String.valueOf(accountLease.getNextLeasingHeightFrom()));
-            json.put("nextHeightTo", String.valueOf(accountLease.getNextLeasingHeightTo()));
+            if (accountLease.getNextLesseeId() != 0) {
+                putAccount(json, "nextLessee", accountLease.getNextLesseeId());
+                json.put("nextHeightFrom", String.valueOf(accountLease.getNextLeasingHeightFrom()));
+                json.put("nextHeightTo", String.valueOf(accountLease.getNextLeasingHeightTo()));
+            }
         }
         return json;
     }
