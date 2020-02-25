@@ -83,28 +83,24 @@ public class TestDex extends TestBaseNew {
         log.info("Creating SELL Dex Order (ETH)");
         CreateDexOrderResponse sellOrderEth = createDexOrder("40000", "1000", TestConfiguration.getTestConfiguration().getVaultWallet(), false, true);
         assertNotNull(sellOrderEth, "RESPONSE is not correct/dex offer wasn't created");
-        String sellEthId = sellOrderEth.getOrder().getId();
-        verifyTransactionInBlock(sellEthId);
+        verifyTransactionInBlock(sellOrderEth.getOrder().getId());
 
         log.info("Creating SELL Dex Order (PAX)");
         CreateDexOrderResponse sellOrderPax = createDexOrder("40000", "1000", TestConfiguration.getTestConfiguration().getVaultWallet(), false, false);
         assertNotNull(sellOrderPax, "RESPONSE is not correct/dex offer wasn't created");
-        String sellPaxId = sellOrderPax.getOrder().getId();
-        verifyTransactionInBlock(sellPaxId);
+        verifyTransactionInBlock(sellOrderPax.getOrder().getId());
 
         log.info("Creating BUY Dex Order (ETH)");
         CreateDexOrderResponse buyOrderEth = createDexOrder("15000", "1000", TestConfiguration.getTestConfiguration().getVaultWallet(), true, true);
         assertNotNull(buyOrderEth,  "RESPONSE is not correct/dex offer wasn't created");
         assertNotNull(buyOrderEth.getFrozenTx(), "FrozenTx isn't present. Can be exception in freezing money. This situation can be present when there is some problem in ETH blockchain or with our nodes. ETH/PAX should be frozen later. Or the problem can be in not enough ETH/PAX");
-        String buyEthId = buyOrderEth.getOrder().getId();
-        verifyTransactionInBlock(buyEthId);
+        verifyTransactionInBlock(buyOrderEth.getOrder().getId());
 
         log.info("Creating BUY Dex Order (PAX)");
         CreateDexOrderResponse buyOrderPax = createDexOrder("15000", "1000", TestConfiguration.getTestConfiguration().getVaultWallet(), true, false);
         assertNotNull(buyOrderPax,  "RESPONSE is not correct/dex offer wasn't created");
         assertNotNull(buyOrderPax.getFrozenTx(), "FrozenTx isn't present. Can be exception in freezing money. This situation can be present when there is some problem in ETH blockchain or with our nodes. ETH/PAX should be frozen later. Or the problem can be in not enough ETH/PAX");
-        String buyPaxId = buyOrderPax.getOrder().getId();
-        verifyTransactionInBlock(buyPaxId);
+        verifyTransactionInBlock(buyOrderPax.getOrder().getId());
 
         List<DexOrderDto> orders = getDexOrders("0", TestConfiguration.getTestConfiguration().getVaultWallet().getAccountId());
         //TODO: add additional asserts for checking statuses after order was cancelled
