@@ -41,9 +41,6 @@ import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.getInstans
 import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.getTestConfiguration;
 import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccount;
 import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccountId;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getBalance;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getForging;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.startForging;
 import static com.github.automatedowl.tools.AllureEnvironmentWriter.allureEnvironmentWriter;
 import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -154,13 +151,33 @@ public abstract class TestBase implements ITest {
 
 
     private static CreateTransactionResponse sendMoneySetUp(Wallet wallet, String recipient, int moneyAmount) {
-        addParameters(RequestType.requestType, RequestType.sendMoney);
+        /*addParameters(RequestType.requestType, RequestType.sendMoney);
         addParameters(Parameters.recipient, recipient);
         addParameters(Parameters.amountATM, moneyAmount + "00000000");
         addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.feeATM, "500000000");
         addParameters(Parameters.deadline, 1440);
-        return getInstanse(CreateTransactionResponse.class);
+        return getInstanse(CreateTransactionResponse.class);*/
+        HashMap<String, String> param = new HashMap();
+        param = restHelper.addWalletParameters(param,wallet);
+        param.put(ReqType.REQUEST_TYPE,ReqType.SEND_MONEY);
+        param.put(ReqParam.RECIPIENT, recipient);
+        param.put(ReqParam.AMOUNT, moneyAmount + "00000000");
+        param.put(ReqParam.FEE, "500000000");
+        param.put(ReqParam.DEADLINE, "1440");
+
+        String path = "/apl";
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .post(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", CreateTransactionResponse.class);
+
     }
 
     private static boolean verifyTransactionInBlockSetUp(String transaction) {
@@ -176,24 +193,53 @@ public abstract class TestBase implements ITest {
     }
 
     private static TransactionDTO getTransactionSetUP(String transaction) {
-        addParameters(RequestType.requestType, RequestType.getTransaction);
+      /*  addParameters(RequestType.requestType, RequestType.getTransaction);
         addParameters(Parameters.transaction, transaction);
-        return getInstanse(TransactionDTO.class);
+        return getInstanse(TransactionDTO.class);*/
+        System.out.println("+++++++++++++++++++++++++++++++++");
+        System.out.println(transaction);
+        HashMap<String, String> param = new HashMap();
+        param.put(ReqType.REQUEST_TYPE,ReqType.GET_TRANSACTION);
+        param.put(ReqParam.TRANSACTION, transaction);
+        String path = "/apl";
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .get(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", TransactionDTO.class);
     }
 
     private static BalanceDTO getBalanceSetUP(Wallet wallet) {
-        addParameters(RequestType.requestType, getBalance);
+        HashMap<String, String> param = new HashMap();
+        param.put(ReqType.REQUEST_TYPE, ReqType.GET_BALANCE);
+        param = restHelper.addWalletParameters(param, wallet);
+
+        String path = "/apl";
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .get(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", BalanceDTO.class);
+
+       /* addParameters(RequestType.requestType, getBalance);
         addParameters(Parameters.wallet, wallet);
-        return getInstanse(BalanceDTO.class);
+        return getInstanse(BalanceDTO.class);*/
     }
 
 
     private static void startForgingSetUp() {
         List<String> peersIp;
-        String path;
-       // if (TestConfiguration.getTestConfiguration().getBaseURL().equals("localhost"))
-        {
-            path = "/rest/networking/peer/all";
+        String path = "/rest/networking/peer/all";
             List<String> peers = given().log().uri()
                     .spec(restHelper.getPreconditionSpec())
                     .when()
@@ -257,11 +303,28 @@ public abstract class TestBase implements ITest {
                     }
                 try {
                    if (!isForgingEnableOnGen) {
-                        log.info("Start forging on APL-NZKH-MZRE-2CTT-98NPZ account");
-                        addParameters(RequestType.requestType, startForging);
+                       log.info("Start forging on APL-NZKH-MZRE-2CTT-98NPZ account");
+                       HashMap<String, String> param = new HashMap();
+                       param.put(ReqType.REQUEST_TYPE, ReqType.START_FORGING);
+                       param.put(ReqParam.ADMIN_PASSWORD, getTestConfiguration().getAdminPass());
+                       param = restHelper.addWalletParameters(param, TestConfiguration.getTestConfiguration().getGenesisWallet());
+
+                       path = "/apl";
+                       given().log().all()
+                           .spec(restHelper.getSpec())
+                           .contentType(ContentType.URLENC)
+                           .formParams(param)
+                           .when()
+                           .get(path)
+                           .then()
+                           .assertThat().statusCode(200)
+                           .extract().body().jsonPath()
+                           .getObject("", ForgingDetails.class);
+
+                        /*addParameters(RequestType.requestType, startForging);
                         addParameters(Parameters.wallet, TestConfiguration.getTestConfiguration().getGenesisWallet());
                         addParameters(Parameters.adminPassword, getTestConfiguration().getAdminPass());
-                        getInstanse(ForgingDetails.class);
+                        getInstanse(ForgingDetails.class);*/
                     }
                 } catch (Exception ex) {
                     log.warn("FAILED: Start Forging. " + ex.getMessage());
@@ -269,7 +332,6 @@ public abstract class TestBase implements ITest {
             }
         }
 
-    }
 
 
     private static void checkForgingAccountsBalance() {

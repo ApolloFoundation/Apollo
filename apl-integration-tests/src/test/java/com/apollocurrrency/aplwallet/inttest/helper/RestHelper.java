@@ -1,6 +1,6 @@
 package com.apollocurrrency.aplwallet.inttest.helper;
 
-import com.apollocurrrency.aplwallet.inttest.model.Parameters;
+import com.apollocurrrency.aplwallet.inttest.model.ReqParam;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.restassured.AllureRestAssured;
 import io.restassured.builder.RequestSpecBuilder;
@@ -38,12 +38,12 @@ public class RestHelper {
     }
 
     public HashMap<String, String> addWalletParameters(HashMap<String, String> param, Wallet wallet) {
-        param.put(String.valueOf(Parameters.account), wallet.getUser());
+        param.put(ReqParam.ACCOUNT, wallet.getUser());
         if (!wallet.isVault()) {
-            param.put(String.valueOf(Parameters.secretPhrase), wallet.getPass());
+            param.put(ReqParam.SECRET_PHRASE, wallet.getPass());
         } else {
-            param.put(String.valueOf(Parameters.sender), wallet.getUser());
-            param.put(String.valueOf(Parameters.passphrase), wallet.getPass());
+            param.put(ReqParam.SENDER, wallet.getUser());
+            param.put(ReqParam.PASSPHRASE, wallet.getPass());
         }
         return param;
     }
