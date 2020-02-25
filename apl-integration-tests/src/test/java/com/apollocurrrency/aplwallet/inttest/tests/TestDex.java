@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 @DisplayName("Dex")
 @Epic(value = "Dex")
-//@Execution(CONCURRENT)
+@Execution(CONCURRENT)
 public class TestDex extends TestBaseNew {
 
     @DisplayName("Get dex orders")
