@@ -499,6 +499,12 @@ public class TestBaseOld extends TestBase {
         throw new NotImplementedException("Already implemented in TestBaseNew");
     }
 
+    @Override
+    @Step
+    public DexOrderDto getDexOrder(String orderId) {
+        throw new NotImplementedException("Already implemented in TestBaseNew");
+    }
+
     @Step
     public PollDTO getPoll(String poll) {
         addParameters(RequestType.requestType, getPoll);

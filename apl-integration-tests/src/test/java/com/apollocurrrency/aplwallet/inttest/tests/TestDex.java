@@ -80,34 +80,46 @@ public class TestDex extends TestBaseNew {
     @DisplayName("Create 4 types of orders and cancel them")
     @Test
     public void dexOrders() {
-        //Create Sell order ETH
+        log.info("Creating SELL Dex Order (ETH)");
         CreateDexOrderResponse sellOrderEth = createDexOrder("40000", "1000", TestConfiguration.getTestConfiguration().getVaultWallet(), false, true);
         assertNotNull(sellOrderEth, "RESPONSE is not correct/dex offer wasn't created");
-        verifyTransactionInBlock(sellOrderEth.getOrder().getId());
-        //Create Sell order PAX
+        String sellEthId = sellOrderEth.getOrder().getId();
+        verifyTransactionInBlock(sellEthId);
+
+        log.info("Creating SELL Dex Order (PAX)");
         CreateDexOrderResponse sellOrderPax = createDexOrder("40000", "1000", TestConfiguration.getTestConfiguration().getVaultWallet(), false, false);
         assertNotNull(sellOrderPax, "RESPONSE is not correct/dex offer wasn't created");
-        verifyTransactionInBlock(sellOrderPax.getOrder().getId());
-        //Create Buy order PAX
-        CreateDexOrderResponse buyOrderPax = createDexOrder("15000", "1000", TestConfiguration.getTestConfiguration().getVaultWallet(), true, false);
-        assertNotNull(buyOrderPax,  "RESPONSE is not correct/dex offer wasn't created");
-        assertNotNull(buyOrderPax.getFrozenTx(), "FrozenTx isn't present");
-        verifyTransactionInBlock(buyOrderPax.getOrder().getId());
-        //Create Buy order ETH
+        String sellPaxId = sellOrderPax.getOrder().getId();
+        verifyTransactionInBlock(sellPaxId);
+
+        log.info("Creating BUY Dex Order (ETH)");
         CreateDexOrderResponse buyOrderEth = createDexOrder("15000", "1000", TestConfiguration.getTestConfiguration().getVaultWallet(), true, true);
         assertNotNull(buyOrderEth,  "RESPONSE is not correct/dex offer wasn't created");
-        assertNotNull(buyOrderEth.getFrozenTx(), "FrozenTx isn't present");
-        verifyTransactionInBlock(buyOrderEth.getOrder().getId());
+        assertNotNull(buyOrderEth.getFrozenTx(), "FrozenTx isn't present. Can be exception in freezing money. This situation can be present when there is some problem in ETH blockchain or with our nodes. ETH/PAX should be frozen later. Or the problem can be in not enough ETH/PAX");
+        String buyEthId = buyOrderEth.getOrder().getId();
+        verifyTransactionInBlock(buyEthId);
+
+        log.info("Creating BUY Dex Order (PAX)");
+        CreateDexOrderResponse buyOrderPax = createDexOrder("15000", "1000", TestConfiguration.getTestConfiguration().getVaultWallet(), true, false);
+        assertNotNull(buyOrderPax,  "RESPONSE is not correct/dex offer wasn't created");
+        assertNotNull(buyOrderPax.getFrozenTx(), "FrozenTx isn't present. Can be exception in freezing money. This situation can be present when there is some problem in ETH blockchain or with our nodes. ETH/PAX should be frozen later. Or the problem can be in not enough ETH/PAX");
+        String buyPaxId = buyOrderPax.getOrder().getId();
+        verifyTransactionInBlock(buyPaxId);
 
         List<DexOrderDto> orders = getDexOrders("0", TestConfiguration.getTestConfiguration().getVaultWallet().getAccountId());
         //TODO: add additional asserts for checking statuses after order was cancelled
         for (DexOrderDto order : orders) {
             if (order.status == 0) {
-                System.out.println("order ID = " + order.id + "    status = " + order.status);
-                verifyCreatingTransaction(dexCancelOrder(order.id, TestConfiguration.getTestConfiguration().getVaultWallet()));
+                verifyTransactionInBlock(dexCancelOrder(order.id, TestConfiguration.getTestConfiguration().getVaultWallet()).getTransaction());
             }
             else log.info("orders with status OPEN are not present");
         }
+        assertEquals(3, getDexOrder(sellEthId).status, "Status is not equal 3 (cancel)");
+        assertEquals(3, getDexOrder(sellPaxId).status, "Status is not equal 3 (cancel)");
+        assertEquals(3, getDexOrder(buyEthId).status, "Status is not equal 3 (cancel)");
+        //assertEquals(false, getDexOrder(buyEthId).hasFrozenMoney, "Still has frozen money on SC. Can be failed because of ETH blockchain.");
+        assertEquals(3, getDexOrder(buyPaxId).status, "Status is not equal 3 (cancel)");
+        //assertEquals(false, getDexOrder(buyPaxId).hasFrozenMoney, "Still has frozen money on SC");
     }
 
     @DisplayName("withdraw ETH/PAX + validation of ETH/PAX balances")

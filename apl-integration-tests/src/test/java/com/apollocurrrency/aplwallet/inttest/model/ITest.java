@@ -305,4 +305,6 @@ public interface ITest {
 
     List<DexOrderDto> getDexOrders(String status, String accountId);
 
+    DexOrderDto getDexOrder(String orderId);
+
 }

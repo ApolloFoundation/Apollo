@@ -477,6 +477,20 @@ public class TestBaseNew extends TestBase {
                 .getBody().jsonPath().getList("", DexOrderDto.class);
     }
 
+    @Override
+    @Step("Get Dex Order")
+    public DexOrderDto getDexOrder(String orderId) {
+        HashMap<String, String> param = new HashMap();
+        param.put("orderId", orderId);
+
+        String path = "/rest/dex/orders/" + orderId;
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .when()
+            .get(path)
+            .as(DexOrderDto.class);
+    }
+
 
     @Override
     @Step("Get Dex History (CLOSED ORDERS) with param: Account: {0}, Pair: {1} , Type: {2}")
