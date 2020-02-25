@@ -1,8 +1,9 @@
 package com.apollocurrency.aplwallet.apl.util.cert;
 
-import java.math.BigInteger;
 import org.bouncycastle.asn1.pkcs.Attribute;
 import org.bouncycastle.asn1.x500.X500Name;
+
+import java.math.BigInteger;
 
 /**
  * PKCS#10 and X.509 attribute parser
@@ -34,7 +35,6 @@ public class CertAttributes {
     }
 
     public void setSubjectStr(String name) throws ApolloCertificateException {
-        System.out.println("NAME: " + name);
         String[] names = name.split(",");
         try {
             for (String name1 : names) {
