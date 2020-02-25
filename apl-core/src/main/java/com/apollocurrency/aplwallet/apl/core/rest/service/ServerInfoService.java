@@ -9,9 +9,11 @@ import com.apollocurrency.aplwallet.api.dto.info.AccountEffectiveBalanceDto;
 import com.apollocurrency.aplwallet.api.dto.info.AccountsCountDto;
 import com.apollocurrency.aplwallet.api.dto.info.ApiTagDto;
 import com.apollocurrency.aplwallet.api.dto.info.BlockchainConstantsDto;
+import com.apollocurrency.aplwallet.api.dto.info.BlockchainStateDto;
 import com.apollocurrency.aplwallet.api.dto.info.BlockchainStatusDto;
 import com.apollocurrency.aplwallet.api.dto.info.NameCodeTypeDto;
 import com.apollocurrency.aplwallet.api.dto.info.SubTypeDto;
+import com.apollocurrency.aplwallet.api.dto.info.TimeDto;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
@@ -304,4 +306,17 @@ public class ServerInfoService {
         }
         return dto;
     }
+
+    public BlockchainStateDto getBlockchainState(boolean includeCounts, boolean isValidAdminPassword) {
+        BlockchainStatusDto blockchainStatusDto = this.getBlockchainStatus(); // get state data first
+        BlockchainStateDto dto = new BlockchainStateDto(blockchainStatusDto);
+        return dto;
+    }
+
+    public TimeDto getTime() {
+        TimeDto dto = new TimeDto();
+        dto.time = timeService.getEpochTime();
+        return dto;
+    }
+
 }

@@ -67,4 +67,44 @@ public class BlockchainStatusDto extends BaseDTO {
         this.time = time;
         this.blockchainState = blockchainState;
     }
+
+    public BlockchainStatusDto(BlockchainStatusDto statusDto) {
+        this.application = statusDto.application;
+        this.version = statusDto.version;
+        this.time = statusDto.time;
+        this.lastBlock = statusDto.lastBlock;
+        this.cumulativeDifficulty = statusDto.cumulativeDifficulty;
+        this.numberOfBlocks = statusDto.numberOfBlocks;
+        this.shardInitialBlock = statusDto.shardInitialBlock;
+        this.lastShardHeight = statusDto.lastShardHeight;
+        this.lastBlockchainFeeder = statusDto.lastBlockchainFeeder;
+        this.lastBlockchainFeederHeight = statusDto.lastBlockchainFeederHeight;
+        this.isScanning = statusDto.isScanning;
+        this.isDownloading = statusDto.isDownloading;
+        this.maxRollback = statusDto.maxRollback;
+        this.currentMinRollbackHeight = statusDto.currentMinRollbackHeight;
+        this.maxPrunableLifetime = statusDto.maxPrunableLifetime;
+        this.includeExpiredPrunable = statusDto.includeExpiredPrunable;
+        this.correctInvalidFees = statusDto.correctInvalidFees;
+        this.ledgerTrimKeep = statusDto.ledgerTrimKeep;
+        this.chainId = statusDto.chainId;
+        this.chainName = statusDto.chainName;
+        this.chainDescription = statusDto.chainDescription;
+        this.blockTime = statusDto.blockTime;
+        this.adaptiveForging = statusDto.adaptiveForging;
+        this.adaptiveBlockTime = statusDto.adaptiveBlockTime;
+        this.consensus = statusDto.consensus;
+        this.maxBlockPayloadLength = statusDto.maxBlockPayloadLength;
+        this.initialBaseTarget = statusDto.initialBaseTarget;
+        this.coinSymbol = statusDto.coinSymbol;
+        this.accountPrefix = statusDto.accountPrefix;
+        this.projectName = statusDto.projectName;
+        this.services = new ArrayList<>(statusDto.services);
+        this.apiProxy = statusDto.apiProxy;
+        this.apiProxyPeer = statusDto.apiProxyPeer;
+        this.isLightClient = statusDto.isLightClient;
+        this.maxAPIRecords = statusDto.maxAPIRecords;
+        this.blockchainState = statusDto.blockchainState;
+    }
+
 }

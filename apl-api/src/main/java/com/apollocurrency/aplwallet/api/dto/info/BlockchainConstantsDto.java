@@ -49,4 +49,16 @@ public class BlockchainConstantsDto extends BaseDTO {
     public List<NameCodeTypeDto> shufflingParticipantStates = new ArrayList<>();
     public List<ApiTagDto> apiTags = new ArrayList<>();
     public List<String> disabledAPIs = new ArrayList<>();
+
+    /**
+     * Constructor Used for unit test
+     * @param genesisBlockId
+     * @param genesisAccountId
+     * @param epochBeginning
+     */
+    public BlockchainConstantsDto(String genesisBlockId, String genesisAccountId, long epochBeginning) {
+        this.genesisBlockId = genesisBlockId;
+        this.genesisAccountId = genesisAccountId;
+        this.epochBeginning = epochBeginning;
+    }
 }
