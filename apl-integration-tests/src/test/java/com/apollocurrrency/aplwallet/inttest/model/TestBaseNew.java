@@ -80,12 +80,7 @@ import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class TestBaseNew extends TestBase {
-    /*@Override
-    public boolean verifyTransactionInBlock(String transaction) {
-        throw new NotImplementedException("Not implemented");
-    }*/
 
-    @Override
     @Step
     @DisplayName("Get Transaction")
     public TransactionDTO getTransaction(String transaction) {
