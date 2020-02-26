@@ -3,7 +3,6 @@ package com.apollocurrrency.aplwallet.inttest.model;
 import com.apollocurrency.aplwallet.api.dto.AccountDTO;
 import com.apollocurrency.aplwallet.api.dto.BalanceDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockchainInfoDTO;
-import com.apollocurrency.aplwallet.api.dto.DexOrderDto;
 import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
@@ -152,18 +151,11 @@ public abstract class TestBase implements ITest {
 
 
     private static CreateTransactionResponse sendMoneySetUp(Wallet wallet, String recipient, int moneyAmount) {
-        /*addParameters(RequestType.requestType, RequestType.sendMoney);
-        addParameters(Parameters.recipient, recipient);
-        addParameters(Parameters.amountATM, moneyAmount + "00000000");
-        addParameters(Parameters.wallet, wallet);
-        addParameters(Parameters.feeATM, "500000000");
-        addParameters(Parameters.deadline, 1440);
-        return getInstanse(CreateTransactionResponse.class);*/
         HashMap<String, String> param = new HashMap();
         param = restHelper.addWalletParameters(param,wallet);
         param.put(ReqType.REQUEST_TYPE,ReqType.SEND_MONEY);
         param.put(ReqParam.RECIPIENT, recipient);
-        param.put(ReqParam.AMOUNT, moneyAmount + "00000000");
+        param.put(ReqParam.AMOUNT_ATM, moneyAmount + "00000000");
         param.put(ReqParam.FEE, "500000000");
         param.put(ReqParam.DEADLINE, "1440");
 
@@ -194,9 +186,6 @@ public abstract class TestBase implements ITest {
     }
 
     private static TransactionDTO getTransactionSetUP(String transaction) {
-      /*  addParameters(RequestType.requestType, RequestType.getTransaction);
-        addParameters(Parameters.transaction, transaction);
-        return getInstanse(TransactionDTO.class);*/
         HashMap<String, String> param = new HashMap();
         param.put(ReqType.REQUEST_TYPE,ReqType.GET_TRANSACTION);
         param.put(ReqParam.TRANSACTION, transaction);
@@ -229,10 +218,6 @@ public abstract class TestBase implements ITest {
             .assertThat().statusCode(200)
             .extract().body().jsonPath()
             .getObject("", BalanceDTO.class);
-
-       /* addParameters(RequestType.requestType, getBalance);
-        addParameters(Parameters.wallet, wallet);
-        return getInstanse(BalanceDTO.class);*/
     }
 
 
@@ -245,7 +230,6 @@ public abstract class TestBase implements ITest {
                     .get(path).as(GetPeersIpResponse.class).getPeers();
 
             if (peers.size() > 0) {
-                //TODO: Change on REST Easy
                 HashMap<String, String> param = new HashMap();
                 param.put(RequestType.requestType.toString(), RequestType.getBlockchainStatus.toString());
                 path = "/apl";
@@ -319,11 +303,6 @@ public abstract class TestBase implements ITest {
                            .assertThat().statusCode(200)
                            .extract().body().jsonPath()
                            .getObject("", ForgingDetails.class);
-
-                        /*addParameters(RequestType.requestType, startForging);
-                        addParameters(Parameters.wallet, TestConfiguration.getTestConfiguration().getGenesisWallet());
-                        addParameters(Parameters.adminPassword, getTestConfiguration().getAdminPass());
-                        getInstanse(ForgingDetails.class);*/
                     }
                 } catch (Exception ex) {
                     log.warn("FAILED: Start Forging. " + ex.getMessage());
