@@ -126,16 +126,18 @@ public abstract class TestBase implements ITest {
         CreateTransactionResponse transactionResponse;
         if (getBalanceSetUP(TestConfiguration.getTestConfiguration().getStandartWallet()).getBalanceATM() < 90000000000000L) {
             log.info("Send money on: "+TestConfiguration.getTestConfiguration().getStandartWallet());
+
             transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getGenesisWallet(),
                     TestConfiguration.getTestConfiguration().getStandartWallet().getUser(), 1000000);
+
             verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
 
             transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getStandartWallet(),
                 TestConfiguration.getTestConfiguration().getStandartWallet().getUser(), 10);
+
             verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
 
         }
-
 
         if (getBalanceSetUP(TestConfiguration.getTestConfiguration().getVaultWallet()).getBalanceATM() < 90000000000000L) {
             log.info("Send money on: "+TestConfiguration.getTestConfiguration().getVaultWallet());
@@ -148,7 +150,6 @@ public abstract class TestBase implements ITest {
             verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
         }
     }
-
 
     private static CreateTransactionResponse sendMoneySetUp(Wallet wallet, String recipient, int moneyAmount) {
         HashMap<String, String> param = new HashMap();
@@ -219,7 +220,6 @@ public abstract class TestBase implements ITest {
             .extract().body().jsonPath()
             .getObject("", BalanceDTO.class);
     }
-
 
     private static void startForgingSetUp() {
         List<String> peersIp;

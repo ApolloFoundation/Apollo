@@ -302,7 +302,6 @@ public class TestAccounts extends TestBaseOld {
         Wallet secondtleaseWallet = new Wallet(getAccountId(secondtLeaseWalletPass).getAccountRS(), secondtLeaseWalletPass);
         
         GetAccountResponse accountDTO = getAccount(wallet.getUser());
-        System.out.println("Effective "+accountDTO.getEffectiveBalanceAPL());
        if (accountDTO.getEffectiveBalanceAPL() > 1000L) {
             startForging(wallet);
             response =  leaseBalance(firstleaseWallet.getUser(),wallet);
@@ -311,7 +310,6 @@ public class TestAccounts extends TestBaseOld {
 
 
         accountDTO = getAccount(firstleaseWallet.getUser());
-        System.out.println("Effective "+accountDTO.getEffectiveBalanceAPL());
         if (accountDTO.getEffectiveBalanceAPL() > 1000L) {
             startForging(firstleaseWallet);
             response =  leaseBalance(secondtleaseWallet.getUser(),firstleaseWallet);
@@ -319,11 +317,11 @@ public class TestAccounts extends TestBaseOld {
         }
        startForging(secondtleaseWallet);
 
-      /* accountDTO = getAccount(wallet.getUser());
-       assertEquals(accountDTO.getEffectiveBalanceAPL(),0,"Effective Balance not valid");
+       accountDTO = getAccount(wallet.getUser());
+       assertThat("Effective Balance not valid", accountDTO.getEffectiveBalanceAPL(),greaterThan(0L));
 
        accountDTO = getAccount(firstleaseWallet.getUser());
-       assertEquals(accountDTO.getEffectiveBalanceAPL(),0,"Effective Balance not valid");*/
+        assertThat("Effective Balance not valid", accountDTO.getEffectiveBalanceAPL(),greaterThan(0L));
 
     }
 
