@@ -141,6 +141,7 @@ public class TestBaseOld extends TestBase {
     public GetAccountResponse getAccount(String account) {
         addParameters(RequestType.requestType, getAccount);
         addParameters(Parameters.account, account);
+        addParameters(Parameters.includeEffectiveBalance, true);
         return getInstanse(GetAccountResponse.class);
     }
 
