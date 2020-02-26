@@ -57,7 +57,7 @@ public abstract class TestBase implements ITest {
 
     @BeforeAll
      synchronized static void initAll() {
-        log.info("Preconditions started");
+        log.info("Preconditions started.","TEST");
          config = RestAssured.config()
             .httpClient(HttpClientConfig.httpClientConfig()
                 .setParam(CoreConnectionPNames.CONNECTION_TIMEOUT, 10000)
@@ -126,26 +126,28 @@ public abstract class TestBase implements ITest {
         log.info("Balance check started");
         CreateTransactionResponse transactionResponse;
         if (getBalanceSetUP(TestConfiguration.getTestConfiguration().getStandartWallet()).getBalanceATM() < 90000000000000L) {
-            log.info("Send money on: ",TestConfiguration.getTestConfiguration().getStandartWallet());
+            log.info("Send money on: "+TestConfiguration.getTestConfiguration().getStandartWallet());
             transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getGenesisWallet(),
                     TestConfiguration.getTestConfiguration().getStandartWallet().getUser(), 1000000);
             verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
+
+            transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getStandartWallet(),
+                TestConfiguration.getTestConfiguration().getStandartWallet().getUser(), 10);
+            verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
+
         }
 
-        transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getStandartWallet(),
-                TestConfiguration.getTestConfiguration().getStandartWallet().getUser(), 10);
-        verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
 
         if (getBalanceSetUP(TestConfiguration.getTestConfiguration().getVaultWallet()).getBalanceATM() < 90000000000000L) {
-            log.info("Send money on: ",TestConfiguration.getTestConfiguration().getVaultWallet());
+            log.info("Send money on: "+TestConfiguration.getTestConfiguration().getVaultWallet());
             transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getGenesisWallet(),
                     TestConfiguration.getTestConfiguration().getVaultWallet().getUser(), 1000000);
             verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
-        }
-
-        transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getVaultWallet(),
+            log.info("Verify account: "+TestConfiguration.getTestConfiguration().getVaultWallet());
+            transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getVaultWallet(),
                 TestConfiguration.getTestConfiguration().getVaultWallet().getUser(), 10);
-        verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
+            verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
+        }
     }
 
 
@@ -246,7 +248,6 @@ public abstract class TestBase implements ITest {
                 //TODO: Change on REST Easy
                 HashMap<String, String> param = new HashMap();
                 param.put(RequestType.requestType.toString(), RequestType.getBlockchainStatus.toString());
-
                 path = "/apl";
                 BlockchainInfoDTO status = given().config(config).log().all()
                         .spec(restHelper.getPreconditionSpec())
@@ -301,6 +302,7 @@ public abstract class TestBase implements ITest {
                 try {
                    if (!isForgingEnableOnGen) {
                        log.info("Start forging on APL-NZKH-MZRE-2CTT-98NPZ account");
+
                        HashMap<String, String> param = new HashMap();
                        param.put(ReqType.REQUEST_TYPE, ReqType.START_FORGING);
                        param.put(ReqParam.ADMIN_PASSWORD, getTestConfiguration().getAdminPass());
@@ -312,7 +314,7 @@ public abstract class TestBase implements ITest {
                            .contentType(ContentType.URLENC)
                            .formParams(param)
                            .when()
-                           .get(path)
+                           .post(path)
                            .then()
                            .assertThat().statusCode(200)
                            .extract().body().jsonPath()
