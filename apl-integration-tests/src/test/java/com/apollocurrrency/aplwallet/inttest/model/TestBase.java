@@ -56,7 +56,7 @@ public abstract class TestBase implements ITest {
 
     @BeforeAll
      synchronized static void initAll() {
-        log.info("Preconditions started.","TEST");
+        log.info("Preconditions started");
          config = RestAssured.config()
             .httpClient(HttpClientConfig.httpClientConfig()
                 .setParam(CoreConnectionPNames.CONNECTION_TIMEOUT, 10000)

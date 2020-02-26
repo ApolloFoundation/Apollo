@@ -322,8 +322,6 @@ public class TestAccounts extends TestBaseOld {
 
        accountDTO = getAccount(firstleaseWallet.getUser());
         assertThat("Effective Balance not valid", accountDTO.getEffectiveBalanceAPL(),greaterThan(0L));
-
     }
-
 
 }
