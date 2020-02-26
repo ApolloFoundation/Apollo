@@ -14,40 +14,61 @@ import com.apollocurrency.aplwallet.api.dto.info.BlockchainStatusDto;
 import com.apollocurrency.aplwallet.api.dto.info.NameCodeTypeDto;
 import com.apollocurrency.aplwallet.api.dto.info.SubTypeDto;
 import com.apollocurrency.aplwallet.api.dto.info.TimeDto;
+import com.apollocurrency.aplwallet.api.dto.info.TotalSupplyDto;
+import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountLeaseService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
+import com.apollocurrency.aplwallet.apl.core.app.Order;
+import com.apollocurrency.aplwallet.apl.core.app.Poll;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
+import com.apollocurrency.aplwallet.apl.core.app.Trade;
+import com.apollocurrency.aplwallet.apl.core.app.Vote;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMinting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
+import com.apollocurrency.aplwallet.apl.core.http.AdminPasswordVerifier;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
+import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
+import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
+import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
+import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
+import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
-import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -60,8 +81,6 @@ import java.util.Random;
 @Slf4j
 @Singleton
 public class ServerInfoService {
-//    private DatabaseManager databaseManager;
-//    private AccountTable accountTable;
     private BlockchainConfig blockchainConfig;
     private Blockchain blockchain;
     private PropertiesHolder propertiesHolder;
@@ -70,16 +89,27 @@ public class ServerInfoService {
     private TimeService timeService;
     private AccountService accountService;
     private AccountLedgerService accountLedgerService;
+    private AccountPublicKeyService accountPublicKeyService;
+    private DGSService dgsService;
+    private PrunableMessageService prunableMessageService;
+    private TaggedDataService taggedDataService;
+    private AccountLeaseService accountLeaseService;
+    private AdminPasswordVerifier apw;
+    private UPnP upnp;
 
     @Inject
-    public ServerInfoService(//DatabaseManager databaseManager, AccountTable accTable,
-                             BlockchainConfig blockchainConfig, Blockchain blockchain,
+    public ServerInfoService(BlockchainConfig blockchainConfig, Blockchain blockchain,
                              PropertiesHolder propertiesHolder,
                              BlockchainProcessor blockchainProcessor,
                              PeersService peersService, TimeService timeService,
-                             AccountService accountService, AccountLedgerService accountLedgerService) {
-//        this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
-//        this.accountTable = Objects.requireNonNull(accTable, "accTable is NULL");
+                             AccountService accountService, AccountLedgerService accountLedgerService,
+                             AccountPublicKeyService accountPublicKeyService,
+                             DGSService dgsService,
+                             PrunableMessageService prunableMessageService,
+                             TaggedDataService taggedDataService,
+                             AccountLeaseService accountLeaseService,
+                             AdminPasswordVerifier apw,
+                             UPnP upnp) {
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
         this.blockchain = Objects.requireNonNull(blockchain, "blockchain is NULL");
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder,"propertiesHolder is NULL");
@@ -88,6 +118,13 @@ public class ServerInfoService {
         this.timeService = Objects.requireNonNull(timeService,"timeService is NULL");
         this.accountService = Objects.requireNonNull(accountService,"accountService is NULL");
         this.accountLedgerService = Objects.requireNonNull(accountLedgerService,"accountLedgerService is NULL");
+        this.accountPublicKeyService = Objects.requireNonNull(accountPublicKeyService,"accountPublicKeyService is NULL");
+        this.dgsService = Objects.requireNonNull(dgsService,"dgsService is NULL");
+        this.prunableMessageService = Objects.requireNonNull(prunableMessageService,"prunableMessageService is NULL");
+        this.taggedDataService = Objects.requireNonNull(taggedDataService,"taggedDataService is NULL");
+        this.accountLeaseService = Objects.requireNonNull(accountLeaseService,"accountLeaseService is NULL");
+        this.apw = Objects.requireNonNull(apw,"adminPasswordVerifier is NULL");
+        this.upnp = Objects.requireNonNull(upnp,"upnp is NULL");
     }
 
     public ApolloX509Info getX509Info(){
@@ -136,6 +173,7 @@ public class ServerInfoService {
         }
         return dto;
     }
+
     private AccountEffectiveBalanceDto accountBalance(Account account, boolean includeEffectiveBalance, int height) {
         AccountEffectiveBalanceDto json = new AccountEffectiveBalanceDto();
         if (account != null) {
@@ -307,15 +345,67 @@ public class ServerInfoService {
         return dto;
     }
 
-    public BlockchainStateDto getBlockchainState(boolean includeCounts, boolean isValidAdminPassword) {
+    public BlockchainStateDto getBlockchainState(Boolean includeCounts) {
         BlockchainStatusDto blockchainStatusDto = this.getBlockchainStatus(); // get state data first
         BlockchainStateDto dto = new BlockchainStateDto(blockchainStatusDto);
+        if (includeCounts != null && includeCounts) {
+            dto.numberOfTransactions = blockchain.getTransactionCount();
+            dto.numberOfAccounts = accountPublicKeyService.getCount();
+            dto.numberOfAssets = Asset.getCount();
+            int askCount = Order.Ask.getCount();
+            int bidCount = Order.Bid.getCount();
+            dto.numberOfOrders = askCount + bidCount;
+            dto.numberOfAskOrders = askCount;
+            dto.numberOfBidOrders = bidCount;
+            dto.numberOfTrades = Trade.getCount();
+            dto.numberOfTransfers = AssetTransfer.getCount();
+            dto.numberOfCurrencies = Currency.getCount();
+            dto.numberOfOffers = CurrencyBuyOffer.getCount();
+            dto.numberOfExchangeRequests = ExchangeRequest.getCount();
+            dto.numberOfExchanges = Exchange.getCount();
+            dto.numberOfCurrencyTransfers = CurrencyTransfer.getCount();
+            dto.numberOfAliases = Alias.getCount();
+            dto.numberOfGoods = dgsService.getGoodsCount();
+            dto.numberOfPurchases = dgsService.getPurchaseCount();
+            dto.numberOfTags = dgsService.getTagsCount();
+            dto.numberOfPolls = Poll.getCount();
+            dto.numberOfVotes = Vote.getCount();
+            dto.numberOfPrunableMessages = prunableMessageService.getCount();
+            dto.numberOfTaggedData = taggedDataService.getTaggedDataCount();
+            dto.numberOfDataTags = taggedDataService.getDataTagCount();
+            dto.numberOfAccountLeases = accountLeaseService.getAccountLeaseCount();
+            dto.numberOfActiveAccountLeases = accountService.getActiveLeaseCount();
+            dto.numberOfShufflings = Shuffling.getCount();
+            dto.numberOfActiveShufflings = Shuffling.getActiveCount();
+            dto.numberOfPhasingOnlyAccounts = PhasingOnly.getCount();
+        }
+        dto.numberOfPeers = peersService.getAllPeers().size();
+        dto.numberOfActivePeers = peersService.getActivePeers().size();
+        dto.numberOfUnlockedAccounts = Generator.getAllGenerators().size();
+        dto.availableProcessors = Runtime.getRuntime().availableProcessors();
+        dto.maxMemory = Runtime.getRuntime().maxMemory();
+        dto.totalMemory = Runtime.getRuntime().totalMemory();
+        dto.freeMemory = Runtime.getRuntime().freeMemory();
+        dto.peerPort = peersService.myPort;
+        dto.isOffline = propertiesHolder.isOffline();
+        dto.needsAdminPassword = !apw.disableAdminPassword;
+        dto.customLoginWarning = propertiesHolder.customLoginWarning();
+        InetAddress externalAddress = upnp.getExternalAddress();
+        if (externalAddress != null) {
+            dto.upnpExternalAddress = externalAddress.getHostAddress();
+        }
         return dto;
     }
 
     public TimeDto getTime() {
         TimeDto dto = new TimeDto();
         dto.time = timeService.getEpochTime();
+        return dto;
+    }
+
+    public TotalSupplyDto getTotalSupply() {
+        TotalSupplyDto dto = new TotalSupplyDto();
+        dto.totalAmount = accountService.getTotalSupply();
         return dto;
     }
 

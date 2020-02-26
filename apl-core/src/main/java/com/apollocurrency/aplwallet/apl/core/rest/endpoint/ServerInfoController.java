@@ -4,6 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -21,6 +22,7 @@ import com.apollocurrency.aplwallet.api.dto.info.BlockchainConstantsDto;
 import com.apollocurrency.aplwallet.api.dto.info.BlockchainStateDto;
 import com.apollocurrency.aplwallet.api.dto.info.BlockchainStatusDto;
 import com.apollocurrency.aplwallet.api.dto.info.TimeDto;
+import com.apollocurrency.aplwallet.api.dto.info.TotalSupplyDto;
 import com.apollocurrency.aplwallet.apl.core.rest.RestParameters;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
@@ -132,16 +134,16 @@ public class ServerInfoController {
                     schema = @Schema(implementation = BlockchainStateDto.class)))
         }
     )
-    @PermitAll
+    @RolesAllowed("admin")
     public Response blockchainState(
-        @Parameter(name = "includeCounts", description = "true for including additional data when Admin password is supplied", allowEmptyValue = true)
+        @Parameter(name = "includeCounts", description = "true for including additional data", allowEmptyValue = true)
             @QueryParam("includeCounts") Boolean includeCounts,
-        @Context SecurityContext securityContext
+        @Parameter(description = "The admin password." ) @QueryParam("adminPassword") String adminPassword
         ) {
-        log.debug("Started blockchain State: \t includeCounts = {}, isAdmin = {}", includeCounts, securityContext.isUserInRole("admin"));
+        log.debug("Started blockchain State: \t includeCounts = {}", includeCounts);
         ResponseBuilder response = ResponseBuilder.startTiming();
         // that dto is BlockchainStatusDto + additional fields in BlockchainStateDto
-        BlockchainStateDto dto = serverInfoService.getBlockchainState(includeCounts, securityContext.isUserInRole("admin"));
+        BlockchainStateDto dto = serverInfoService.getBlockchainState(includeCounts);
         log.debug("blockchain State result : {}", dto);
         return response.bind(dto).build();
     }
@@ -165,6 +167,28 @@ public class ServerInfoController {
         ResponseBuilder response = ResponseBuilder.startTiming();
         TimeDto dto = serverInfoService.getTime();
         log.debug("blockchain Constants result : {}", dto);
+        return response.bind(dto).build();
+    }
+
+    @Path("/blockchain/supply")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+        summary = "Returns Total Supply information",
+        description = "Returns total supply information for node",
+        tags = {"info"},
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Successful execution",
+                content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = TotalSupplyDto.class)))
+        }
+    )
+    @PermitAll
+    public Response blockchainTotalSupply() {
+        log.debug("Started Total Supply");
+        ResponseBuilder response = ResponseBuilder.startTiming();
+        TotalSupplyDto dto = serverInfoService.getTotalSupply();
+        log.debug("blockchain Total Supply result : {}", dto);
         return response.bind(dto).build();
     }
 
