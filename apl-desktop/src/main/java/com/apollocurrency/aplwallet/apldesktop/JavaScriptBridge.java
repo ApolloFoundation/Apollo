@@ -40,6 +40,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Base64;
+import javafx.stage.FileChooser.ExtensionFilter;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -110,7 +111,9 @@ public class JavaScriptBridge {
             String home = System.getProperty("user.home");
             Path downloadDir = Paths.get(home).resolve("Downloads");
             FileChooser fileChooser = new FileChooser();
-            fileChooser.setInitialDirectory(downloadDir.toFile());
+            fileChooser.getExtensionFilters().add(new ExtensionFilter("All Files", "*"));
+        
+        fileChooser.setInitialDirectory(downloadDir.toFile());
             fileChooser.setInitialFileName(fileName);
             File chosenFile = fileChooser.showSaveDialog(DesktopApplication.mainStage);
 
