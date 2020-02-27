@@ -57,7 +57,7 @@ public interface DerivedTableInterface<T> {
      */
     DerivedTableData<T> getAllByDbId(long from, int limit, long dbIdLimit) throws SQLException;
 
-    boolean delete(T t);
+    boolean deleteAtHeight(T t, int height);
 
     /**
      * Retrieve sql result set partial table's data for later processing with pagination on current table

@@ -8,6 +8,7 @@ import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedDbTable;
@@ -77,7 +78,7 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
 
     @Test
     public void testDelete() throws SQLException {
-        assertThrows(UnsupportedOperationException.class, () -> derivedDbTable.delete(mock(clazz)));
+        assertThrows(UnsupportedOperationException.class, () -> derivedDbTable.deleteAtHeight(mock(clazz), 1));
     }
 
     @Test

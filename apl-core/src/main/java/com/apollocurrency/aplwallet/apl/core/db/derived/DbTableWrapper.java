@@ -36,8 +36,8 @@ public class DbTableWrapper<T extends DerivedEntity> implements EntityDbTableInt
     }
 
     @Override
-    public boolean delete(T t) {
-        return table.delete(t);
+    public boolean deleteAtHeight(T t, int height) {
+        return table.deleteAtHeight(t, height);
     }
 
     @Override
@@ -96,11 +96,6 @@ public class DbTableWrapper<T extends DerivedEntity> implements EntityDbTableInt
     }
 
     @Override
-    public void checkAvailable(int height) {
-        table.checkAvailable(height);
-    }
-
-    @Override
     public T get(DbKey dbKey) {
         return table.get(dbKey);
     }
@@ -118,11 +113,6 @@ public class DbTableWrapper<T extends DerivedEntity> implements EntityDbTableInt
     @Override
     public T getBy(DbClause dbClause) {
         return table.getBy(dbClause);
-    }
-
-    @Override
-    public T getBy(DbClause dbClause, int height) {
-        return table.getBy(dbClause, height);
     }
 
     @Override
@@ -151,8 +141,8 @@ public class DbTableWrapper<T extends DerivedEntity> implements EntityDbTableInt
     }
 
     @Override
-    public boolean doesNotExceed(int height) {
-        return table.doesNotExceed(height);
+    public boolean isMultiversion() {
+        return table.isMultiversion();
     }
 
     @Override
@@ -168,16 +158,6 @@ public class DbTableWrapper<T extends DerivedEntity> implements EntityDbTableInt
     @Override
     public DbIterator<T> getAll(int from, int to, String sort) {
         return table.getAll(from, to, sort);
-    }
-
-    @Override
-    public DbIterator<T> getAll(int height, int from, int to) {
-        return table.getAll(height, from, to);
-    }
-
-    @Override
-    public DbIterator<T> getAll(int height, int from, int to, String sort) {
-        return table.getAll(height, from, to, sort);
     }
 
     @Override

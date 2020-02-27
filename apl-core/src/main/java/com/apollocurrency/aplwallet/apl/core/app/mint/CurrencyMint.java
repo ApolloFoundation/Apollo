@@ -56,6 +56,7 @@ import javax.enterprise.inject.spi.CDI;
  */
 public final class CurrencyMint {
     private static final Logger LOG = getLogger(CurrencyMint.class);
+    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     public enum Event {
         CURRENCY_MINT
@@ -220,7 +221,7 @@ public final class CurrencyMint {
                 currencyMints.add(mints.next());
             }
         }
-        currencyMints.forEach(currencyMintTable::delete);
+        currencyMints.forEach(c->currencyMintTable.deleteAtHeight(c, blockchain.getHeight()));
     }
 
 }

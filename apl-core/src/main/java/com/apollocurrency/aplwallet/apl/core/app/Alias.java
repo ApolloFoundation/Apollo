@@ -185,9 +185,9 @@ public final class Alias {
         final Offer offer = Alias.getOffer(alias);
         if (offer != null) {
             offer.priceATM = Long.MAX_VALUE;
-            offerTable.delete(offer);
+            offerTable.deleteAtHeight(offer, blockchain.getHeight());
         }
-        aliasTable.delete(alias);
+        aliasTable.deleteAtHeight(alias, blockchain.getHeight());
     }
 
     public static void addOrUpdateAlias(Transaction transaction, MessagingAliasAssignment attachment) {
@@ -230,7 +230,7 @@ public final class Alias {
         Offer offer = getOffer(alias);
         if (offer != null) {
             offer.priceATM = Long.MAX_VALUE;
-            offerTable.delete(offer);
+            offerTable.deleteAtHeight(offer, blockchain.getHeight());
         }
     }
 

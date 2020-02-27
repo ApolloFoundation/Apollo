@@ -7,8 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.account.service;
 import com.apollocurrency.aplwallet.apl.core.account.dao.GenesisPublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.db.service.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -30,10 +29,10 @@ import static org.mockito.Mockito.verify;
 
 class AccountPublicKeyServiceTest {
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
-    private Blockchain blockchain = mock(BlockchainImpl.class);
     private PublicKeyTable publicKeyTable = mock(PublicKeyTable.class);
     private GenesisPublicKeyTable genesisPublicKeyTable = mock(GenesisPublicKeyTable.class);
     private InMemoryCacheManager cacheManager = mock(InMemoryCacheManager.class);
+    private BlockChainInfoService blockChainInfoService = mock(BlockChainInfoService.class);
 
     private AccountPublicKeyService accountPublicKeyService;
     private AccountTestData testData;
@@ -45,10 +44,8 @@ class AccountPublicKeyServiceTest {
                 publicKeyTable,
                 genesisPublicKeyTable,
                 propertiesHolder,
-                blockchain,
-                cacheManager
-        ));
-
+                cacheManager,
+                blockChainInfoService));
     }
 
     @Test
