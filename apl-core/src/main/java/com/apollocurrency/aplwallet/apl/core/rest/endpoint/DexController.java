@@ -12,10 +12,9 @@ import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.http.AdminSecured;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.ExchangeContractToDTOConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.CustomRequestWrapper;
@@ -61,6 +60,8 @@ import org.jboss.resteasy.annotations.jaxrs.FormParam;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
+import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
@@ -133,6 +134,7 @@ public class DexController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Wallets balances"),
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
+    @PermitAll
     public Response getBalances(@Parameter(description = "Addresses to get balance", required = true) @QueryParam("eth") List<String> ethAddresses
         ) throws NotFoundException {
 
@@ -163,6 +165,7 @@ public class DexController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OK"),
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
+    @PermitAll
     public Response createOffer(@Parameter(description = "Type of the APL offer. (BUY APL / SELL APL) 0/1", required = true) @FormParam("offerType") Byte offerType,
                                 @Parameter(description = "From address", required = true) @FormParam("walletAddress") String walletAddress,
                                 @Parameter(description = "APL amount (buy or sell) for order in Gwei (1 Gwei = 0.000000001), " +
@@ -189,7 +192,7 @@ public class DexController {
 
         Integer currentTime = timeService.getEpochTime();
         try {
-            Account account = ParameterParser.getSenderAccount(req);
+            Account account = HttpParameterParserUtil.getSenderAccount(req);
             OrderType type = OrderType.getType(offerType);
             DexOrder order;
             try {
@@ -296,6 +299,7 @@ public class DexController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Exchange offers"),
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
+    @PermitAll
     public Response getOffers(@Parameter(description = "Type of the offer. (BUY = 0 /SELL = 1)") @QueryParam("orderType") Byte orderType,
                               @Parameter(description = "Criteria by Paired currency. (APL=0, ETH=1, PAX=2)") @QueryParam("pairCurrency") Byte pairCurrency,
                               @Parameter(description = "Offer status. (Open = 0, Close = 2)") @QueryParam("status") Byte status,
@@ -337,8 +341,8 @@ public class DexController {
             return Response.ok(JSON.toString(JSONResponses.ERROR_INCORRECT_REQUEST)).build();
         }
 
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
 
         int limit = DbUtils.calculateLimit(firstIndex, lastIndex);
 
@@ -374,6 +378,7 @@ public class DexController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Order"),
         @ApiResponse(responseCode = "200", description = "Unexpected error")})
+    @PermitAll
     public Response getOrder(@PathParam("orderId") String orderIdStr) throws NotFoundException {
         long orderId = Convert.parseLong(orderIdStr);
         DexOrderWithFreezing dexOrderWithFreezing = service.getOrderWithFreezing(orderId);
@@ -388,6 +393,7 @@ public class DexController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Order"),
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
+    @PermitAll
     public Response cancelOrderByOrderID(@Parameter(description = "Order id") @FormParam("orderId") String orderId,
                                          @Context HttpServletRequest req) throws NotFoundException {
 
@@ -395,7 +401,7 @@ public class DexController {
 
         try{
             Long transactionId;
-            Account account = ParameterParser.getSenderAccount(req);
+            Account account = HttpParameterParserUtil.getSenderAccount(req);
 
             if (StringUtils.isBlank(orderId)) {
                 return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("id", "Can't be null."))).build();
@@ -416,7 +422,7 @@ public class DexController {
                 return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("orderId", "Can cancel only Open orders."))).build();
             }
 
-            String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, true));
+            String passphrase = Convert.emptyToNull(HttpParameterParserUtil.getPassphrase(req, true));
             if(passphrase == null) {
                 return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("passphrase", "Can't be null."))).build();
             }
@@ -444,6 +450,7 @@ public class DexController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Transaction hash"),
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
+    @PermitAll
     public Response dexWithdrawPost(
                                     @NotNull @Parameter(description = "amount eth for withdraw") @FormParam("amount") BigDecimal amount,
                                     @NotNull @Parameter(description = "Send from address") @FormParam("fromAddress") String fromAddress,
@@ -458,8 +465,8 @@ public class DexController {
         String passphrase;
         long sender;
         try{
-            passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, true));
-            sender = ParameterParser.getAccountId(req, "sender", true);
+            passphrase = Convert.emptyToNull(HttpParameterParserUtil.getPassphrase(req, true));
+            sender = HttpParameterParserUtil.getAccountId(req, "sender", true);
 
             if (cryptocurrency != null) {
                 currencies = DexCurrency.getType(cryptocurrency);
@@ -518,6 +525,7 @@ public class DexController {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"dex"}, summary = "Eth gas info", description = "get gas prices for different tx speed.")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Eth gas info")})
+    @PermitAll
     public Response dexEthInfo(@Context SecurityContext securityContext) throws NotFoundException {
         try {
             EthGasInfo ethGasInfo = dexEthService.getEthPriceInfo();
@@ -545,7 +553,7 @@ public class DexController {
             if(!StringUtils.isBlank(accountIdStr)){
                 accountId = Long.parseUnsignedLong(accountIdStr);
             }
-            String xpassphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, true));
+            String xpassphrase = Convert.emptyToNull(HttpParameterParserUtil.getPassphrase(req, true));
             if(xpassphrase == null) {
                 log.error("null passphrase is unacceptable");
                 return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("passphrase", "Can't be null."))).build();
@@ -567,6 +575,7 @@ public class DexController {
     @Operation(tags = {"dex"}, summary = "Retrieve dex contracts for order", description = "Lookup the database to get dex contracts associated with specified account and order with status >= STEP1",
             responses = @ApiResponse(description = "List of contracts, by default should contain 1 entry, in some cases may contain more than 1 entry (i.e. order was reopened due to expired contract; few users sent matching contract to one order) ", responseCode = "200",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ExchangeContractDTO.class))))
+    @PermitAll
     public Response getContractForOrder(@Parameter(description = "APL account id (RS, singed or unsigned int64/long) ") @QueryParam("accountId") String account,
                                         @Parameter(description = "Order id (signed/unsigned int64/long) ") @QueryParam("orderId") String order) {
         long accountId = Convert.parseAccountId(account);
@@ -581,6 +590,7 @@ public class DexController {
     @Operation(tags = {"dex"}, summary = "Retrieve eth/pax deposits for eth address", description = "Query eth node for deposits for specified eth address",
         responses = @ApiResponse(description = "List of deposits with offset ", responseCode = "200",
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = EthDepositsWithOffset.class))))
+    @PermitAll
     public Response getUserActiveDeposits(@Parameter(description = "Number of first N deposits, which should be skipped during fetching (useful for pagination)") @QueryParam("offset") @PositiveOrZero long offset,
                                         @Parameter(description = "Number of deposits to extract") @QueryParam("limit") @Min(1) @Max(100) long limit,
                                         @Parameter(description = "Eth address, for which active deposits should be extracted") @QueryParam(DexApiConstants.WALLET_ADDRESS) @NotBlank String walletAddress) {
@@ -598,6 +608,7 @@ public class DexController {
     @Operation(tags = {"dex"}, summary = "Retrieve eth/pax order swaps for eth address", description = "Query eth node for orders, which participate in atomic swaps for specified eth address",
         responses = @ApiResponse(description = "List of swap deposits with offset ", responseCode = "200",
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = EthDepositsWithOffset.class))))
+    @PermitAll
     public Response getUsersFilledOrders(@Parameter(description = "Number of first N deposits, which should be skipped during fetching (useful for pagination)") @QueryParam("offset") @PositiveOrZero long offset,
                                          @Parameter(description = "Number of deposits to extract") @QueryParam("limit") @Min(1) @Max(100) long limit,
                                          @Parameter(description = "Eth address, for which deposits involved into atomic swap should be extracted") @QueryParam(DexApiConstants.WALLET_ADDRESS) @NotBlank String walletAddress) {
@@ -616,6 +627,7 @@ public class DexController {
     @Operation(tags = {"dex"}, summary = "Retrieve all versioned dex contracts for order", description = "Get all versions of dex contracts related to the specified order (including all contracts with STEP1 status and previous versions of processable contract) ",
             responses = @ApiResponse(description = "List of versioned contracts", responseCode = "200",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ExchangeContractDTO.class))))
+    @PermitAll
     public Response getAllVersionedContractsForOrder(@Parameter(description = "APL account id (RS, singed or unsigned int64/long) ") @QueryParam("accountId") String account,
                                                      @Parameter(description = "Order id (signed/unsigned int64/long) ") @QueryParam("orderId") String order) {
         long accountId = Convert.parseAccountId(account);
@@ -630,7 +642,7 @@ public class DexController {
     @Operation(tags = {"dex"}, description = "Get all user addresses on the smart contract. ",
         responses = @ApiResponse(description = "List of user addresses", responseCode = "200",
             content = @Content(mediaType = "application/json")))
-    @AdminSecured
+    @RolesAllowed("admin")
     public Response getAllUsers() {
         List<String> addresses;
         try {
@@ -647,7 +659,7 @@ public class DexController {
     @Operation(tags = {"dex"}, description = "Get all users filled orders on the smart contract. ",
         responses = @ApiResponse(description = "List of user filled orders", responseCode = "200",
             content = @Content(mediaType = "application/json")))
-    @AdminSecured
+    @RolesAllowed("admin")
     public Response getAllUsersFilledOrders() {
         List<AddressEthDepositsInfo> addressEthDepositsInfos;
         try {
@@ -665,7 +677,7 @@ public class DexController {
     @Operation(tags = {"dex"}, description = "Get all users expired swaps on the smart contract. ",
         responses = @ApiResponse(description = "List of user expired swaps", responseCode = "200",
             content = @Content(mediaType = "application/json")))
-    @AdminSecured
+    @RolesAllowed("admin")
     public Response getAllUsersExpiredSwaps() {
         List<AddressEthExpiredSwaps> addressEthExpiredSwaps;
         try {
@@ -684,7 +696,7 @@ public class DexController {
     @Operation(tags = {"dex"}, description = "Get all users active deposits on the smart contract. ",
         responses = @ApiResponse(description = "List of user active deposits", responseCode = "200",
             content = @Content(mediaType = "application/json")))
-    @AdminSecured
+    @RolesAllowed("admin")
     public Response getAllUsersActiveDeposits() {
         List<AddressEthDepositsInfo> addressEthDepositsInfos;
         try {

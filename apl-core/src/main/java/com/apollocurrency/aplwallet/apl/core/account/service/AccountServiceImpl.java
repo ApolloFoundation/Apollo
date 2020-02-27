@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
+import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
@@ -195,6 +196,10 @@ public class AccountServiceImpl implements AccountService {
         }
     }
 
+    @Override
+    public List<Block> getAccountBlocks(long accountId, int timestamp, int from, int to){
+        return toList(blockchain.getBlocks(accountId, timestamp, from, to));
+    }
 
     /**
      * The effective balance of an account is used as the basis for an account's forging calculations. An account's

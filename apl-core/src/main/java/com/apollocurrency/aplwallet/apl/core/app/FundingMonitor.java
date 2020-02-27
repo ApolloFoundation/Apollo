@@ -881,7 +881,7 @@ public class FundingMonitor {
      * Account event handler (BALANCE event)
      */
     @Singleton
-    static class AccountEventHandler{
+    public static class AccountEventHandler{
 
         /**
          * Account event notification
@@ -915,7 +915,7 @@ public class FundingMonitor {
      * Asset event handler (ASSET_BALANCE event)
      */
     @Singleton
-    static class AssetEventHandler{
+    public static class AssetEventHandler{
 
         /**
          * Asset event notification
@@ -952,7 +952,7 @@ public class FundingMonitor {
      * Currency event handler (CURRENCY_BALANCE event)
      */
     @Singleton
-    static class CurrencyEventHandler{
+    public static class CurrencyEventHandler{
 
         /**
          * Currency event notification
@@ -989,7 +989,7 @@ public class FundingMonitor {
      * Property event handler
      */
     @Singleton
-    static class AccountPropertyEventHandler{
+    public static class AccountPropertyEventHandler{
 
         /**
          * Property event notification

@@ -20,6 +20,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
+import com.apollocurrency.aplwallet.api.dto.AccountAssetDTO;
+import com.apollocurrency.aplwallet.api.dto.AccountCurrencyDTO;
+import com.apollocurrency.aplwallet.api.dto.AccountDTO;
+import com.apollocurrency.aplwallet.api.dto.BlockDTO;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerHolding;
 import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
@@ -176,6 +180,10 @@ public final class JSONData {
         return json;
     }
 
+    /**
+     * Use {@link com.apollocurrency.aplwallet.apl.core.rest.converter.AccountConverter#addAccountLessors(AccountDTO, List, boolean)}
+     */
+    @Deprecated
     public static JSONObject lessor(Account account, boolean includeEffectiveBalance) {
         JSONObject json = new JSONObject();
         AccountLease accountLease = accountLeaseService.getAccountLease(account);
@@ -256,6 +264,10 @@ public final class JSONData {
         return json;
     }
 
+    /**
+     * Use {@link com.apollocurrency.aplwallet.apl.core.rest.converter.AccountConverter#addAccountAssets(AccountDTO, List)}
+     */
+    @Deprecated
     public static JSONObject accountAsset(AccountAsset accountAsset, boolean includeAccount, boolean includeAssetInfo) {
         JSONObject json = new JSONObject();
         if (includeAccount) {
@@ -270,6 +282,10 @@ public final class JSONData {
         return json;
     }
 
+    /**
+     * Use {@link com.apollocurrency.aplwallet.apl.core.rest.converter.AccountConverter#addAccountCurrencies(AccountDTO, List)}
+     */
+    @Deprecated
     public static JSONObject accountCurrency(AccountCurrency accountCurrency, boolean includeAccount, boolean includeCurrencyInfo) {
         JSONObject json = new JSONObject();
         if (includeAccount) {
@@ -505,6 +521,10 @@ public final class JSONData {
         return json;
     }
 
+    /**
+     * Use {@link com.apollocurrency.aplwallet.apl.core.rest.converter.AccountBlockConverter#convert(Object)}
+     */
+    @Deprecated
     public static JSONObject block(Block block, boolean includeTransactions, boolean includeExecutedPhased) {
         JSONObject json = new JSONObject();
         json.put("block", block.getStringId());
@@ -1128,6 +1148,10 @@ public final class JSONData {
         return json;
     }
 
+    /**
+     * Use {@link com.apollocurrency.aplwallet.apl.core.rest.converter.AccountBlockConverter#addTransactions(BlockDTO, Block)}
+     */
+    @Deprecated
     public static JSONObject transaction(Transaction transaction, Filter<Appendix> filter, boolean isPrivate) {
         JSONObject json = unconfirmedTransaction(transaction, filter, isPrivate);
         json.put("block", Long.toUnsignedString(transaction.getBlockId()));
@@ -1279,6 +1303,7 @@ public final class JSONData {
         json.put("errorDescription", error + e.getMessage());
     }
 
+    @Deprecated
     static void putAccount(JSONObject json, String name, long accountId, boolean isPrivate) {
         json.put(name, Long.toUnsignedString(accountId));
         if (isPrivate) {
@@ -1288,6 +1313,10 @@ public final class JSONData {
         json.put(name + "RS", Convert2.rsAccount(accountId));
     }
 
+    /**
+     * Use {@link com.apollocurrency.aplwallet.apl.core.rest.converter.AccountConverter#convert(Object)}
+     */
+    @Deprecated
     public static void putAccount(JSONObject json, String name, long accountId) {
         putAccount(json, name, accountId, false);
     }
@@ -1295,6 +1324,10 @@ public final class JSONData {
         putAccount(json, name, accountId, true);
     }
 
+    /**
+     * Use {@link com.apollocurrency.aplwallet.apl.core.rest.converter.AccountCurrencyConverter#addCurrency(AccountCurrencyDTO, Currency)}
+     */
+    @Deprecated
     private static void putCurrencyInfo(JSONObject json, long currencyId) {
         Currency currency = Currency.getCurrency(currencyId);
         if (currency == null) {
@@ -1308,6 +1341,10 @@ public final class JSONData {
         putAccount(json, "issuerAccount", currency.getAccountId());
     }
 
+    /**
+     * Use {@link com.apollocurrency.aplwallet.apl.core.rest.converter.AccountAssetConverter#addAsset(AccountAssetDTO, Asset)}
+     */
+    @Deprecated
     private static void putAssetInfo(JSONObject json, long assetId) {
         Asset asset = Asset.getAsset(assetId);
         if(asset!=null){
