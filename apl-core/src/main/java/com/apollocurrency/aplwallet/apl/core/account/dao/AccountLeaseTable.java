@@ -77,50 +77,6 @@ public class AccountLeaseTable extends VersionedDeletableEntityDbTable<AccountLe
         }
     }
 
-    /**
-     * Remove records in account_lease table above the height.
-     * It's crucial to clear the active_lease_id field in the account table during the rolling back account_lease table;
-     * Otherwise, rollback/popoff operation might lead to 'Generation signature verification failed' exception.
-     * @see com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface#rollback(int)
-     */
-    @Override
-    public int rollback(int height) {
-        int rc;
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try(Connection con = dataSource.getConnection();
-            //TODO: Need to analyze, what statement is more suitable/effective "UPDATE account ac SET AC.ACTIVE_LESSEE_ID = null WHERE AC.ACTIVE_LESSEE_ID IS NOT NULL";
-            PreparedStatement updateStmtClear = con.prepareStatement("UPDATE ACCOUNT ac set ac.ACTIVE_LESSEE_ID = null where ac.LATEST = true and ac.ID in (select lessor_id from ACCOUNT_LEASE AL where AL.CURRENT_LEASING_HEIGHT_FROM > ?  AND AL.LATEST=true)");
-            PreparedStatement updateStmtSet = con.prepareStatement("UPDATE ACCOUNT ac set ac.ACTIVE_LESSEE_ID = ? where ac.ID = ? AND ac.LATEST = TRUE ");
-        ) {
-            int i = 0;
-            updateStmtClear.setInt(++i, height);
-            rc=updateStmtClear.executeUpdate();
-            log.trace("--lease-- rollback updated Lease count={}, height={}", rc, height);
-            rc=super.rollback(height);
-            log.trace("--lease-- rollback (super.rollback) removed Lease count={}, height={}", rc, height);
-            if (rc > 0){
-                List<AccountLease> accountLeaseList = getLeaseChangingAccountsByInterval(height);
-                if (log.isTraceEnabled()){
-                    log.trace("--lease-- rollback found {} changed accounts", accountLeaseList.size());
-                }
-                for(AccountLease lease: accountLeaseList){
-                    if (log.isTraceEnabled()){
-                        log.trace("--lease-- rollback Update account id={} set activeLeaseId={}",
-                            lease.getLessorId(), lease.getCurrentLesseeId());
-                    }
-                    i = 0;
-                    updateStmtSet.setLong(++i, lease.getCurrentLesseeId());
-                    updateStmtSet.setLong(++i, lease.getLessorId());
-                    updateStmtSet.executeUpdate();
-                }
-            }
-        }
-        catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-        return rc;
-    }
-
     public int getAccountLeaseCount() {
         return getCount();
     }

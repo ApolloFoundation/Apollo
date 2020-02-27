@@ -5,9 +5,9 @@
 package com.apollocurrency.aplwallet.apl.core.account;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SetPhasingOnly;
@@ -25,18 +26,18 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import javax.enterprise.inject.spi.CDI;
 
 /**
  *
  * @author al
  */
 public final class PhasingOnly {
-    
+
     private BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
@@ -75,6 +76,11 @@ public final class PhasingOnly {
             }
             AccountRestrictions.phasingControlTable.insert(phasingOnly);
         }
+        lookupAccountService().update(senderAccount);
+    }
+
+    private static AccountService lookupAccountService() {
+        return CDI.current().select(AccountService.class).get();
     }
 
     static void unset(Account account) {
@@ -89,7 +95,7 @@ public final class PhasingOnly {
     private short minDuration;
     private short maxDuration;
 
-    
+
     PhasingOnly(long accountId, PhasingParams params, long maxFees, short minDuration, short maxDuration) {
         this.accountId = accountId;
         dbKey = AccountRestrictions.phasingControlDbKeyFactory.newKey(this.accountId);
@@ -175,5 +181,5 @@ public final class PhasingOnly {
             pstmt.executeUpdate();
         }
     }
-    
+
 }
