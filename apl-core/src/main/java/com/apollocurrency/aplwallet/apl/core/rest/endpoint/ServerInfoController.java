@@ -15,6 +15,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 
+import java.util.Map;
 import java.util.Objects;
 
 import com.apollocurrency.aplwallet.api.dto.info.AccountsCountDto;
@@ -138,7 +139,7 @@ public class ServerInfoController {
     public Response blockchainState(
         @Parameter(name = "includeCounts", description = "true for including additional data", allowEmptyValue = true)
             @QueryParam("includeCounts") Boolean includeCounts,
-        @Parameter(description = "The admin password." ) @QueryParam("adminPassword") String adminPassword
+        @Parameter(description = "The admin password.", required = true) @QueryParam("adminPassword") String adminPassword
         ) {
         log.debug("Started blockchain State: \t includeCounts = {}", includeCounts);
         ResponseBuilder response = ResponseBuilder.startTiming();
@@ -190,6 +191,29 @@ public class ServerInfoController {
         TotalSupplyDto dto = serverInfoService.getTotalSupply();
         log.debug("blockchain Total Supply result : {}", dto);
         return response.bind(dto).build();
+    }
+
+    @Path("/blockchain/properties")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+        summary = "Returns all node properties",
+        description = "Returns all node properties",
+        tags = {"info"},
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Successful execution",
+                content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = Map.class)))
+        }
+    )
+    @RolesAllowed("admin")
+    public Response blockchainProperties(
+        @Parameter(description = "The admin password.") @QueryParam("adminPassword") String adminPassword
+    ) {
+        log.debug("Started get Properties");
+        Map<String, Object> dto = serverInfoService.getProperties();
+        log.debug("blockchain get Properties result : {}", dto);
+        return Response.status(Response.Status.OK).entity(dto).build();
     }
 
 }

@@ -10,6 +10,8 @@ import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.apollocurrency.aplwallet.api.dto.info.AccountEffectiveBalanceDto;
 import com.apollocurrency.aplwallet.api.dto.info.AccountsCountDto;
@@ -50,6 +52,7 @@ class ServerInfoControllerTest {
     private static String blockchainStateUri = "/server/blockchain/state";
     private static String timeUri = "/server/blockchain/time";
     private static String supplyUri = "/server/blockchain/supply";
+    private static String propertiesUri = "/server/blockchain/properties";
 
     @BeforeEach
     void setup(){
@@ -212,6 +215,30 @@ class ServerInfoControllerTest {
         assertEquals(100, dtoResult.totalAmount);
         // verify
         verify(serverInfoService, times(1)).getTotalSupply();
+    }
+
+    @Test
+    void properties_SUCCESS() throws URISyntaxException, IOException {
+        // prepare data
+        Map<String, Object> dto = new HashMap<>(1);
+        dto.put("testKey", "testValue");
+        doReturn(dto).when(serverInfoService).getProperties();
+        // init mocks
+        ServerInfoController controller = new ServerInfoController(serverInfoService);
+        dispatcher.getRegistry().addSingletonResource(controller);
+        // call
+        String uri = propertiesUri;
+        MockHttpRequest request = MockHttpRequest.get(uri);
+        MockHttpResponse response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+        // check
+        assertEquals(200, response.getStatus());
+        String respondJson = response.getContentAsString();
+        Map<String, Object> dtoResult = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertEquals(1, dtoResult.size());
+        assertEquals("testValue", dtoResult.get("testKey"));
+        // verify
+        verify(serverInfoService, times(1)).getProperties();
     }
 
 }

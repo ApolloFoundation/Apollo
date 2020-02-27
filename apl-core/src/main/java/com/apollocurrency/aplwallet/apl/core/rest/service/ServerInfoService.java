@@ -70,7 +70,9 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 
@@ -407,6 +409,21 @@ public class ServerInfoService {
         TotalSupplyDto dto = new TotalSupplyDto();
         dto.totalAmount = accountService.getTotalSupply();
         return dto;
+    }
+
+    public Map<String, Object> getProperties() {
+        Map<String, Object> map = new HashMap<>();
+        propertiesHolder.getProperties().forEach((k, v) -> {
+                if (k.equals("apl.adminPassword")
+                    || k.equals("apl.dbPassword") || k.equals("apl.dbUsername")
+                    || k.equals("apl.testDbPassword") || k.equals("apl.testDbUsername") ) {
+                    map.put(k.toString(), "***"); // password only
+                } else {
+                    map.put(k.toString(), v);
+                }
+            }
+        );
+        return map;
     }
 
 }
