@@ -6,6 +6,7 @@
 
 package com.apollocurrency.aplwallet.apl.testutil;
 
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
 import com.apollocurrency.aplwallet.apl.core.peer.BlockchainState;
 import com.apollocurrency.aplwallet.apl.core.peer.Hallmark;
@@ -249,6 +250,12 @@ public class EntityProducer {
 
         };
         return peer;
+    }
+
+    public static AccountAsset createAccountAsset(long accountId, long assetId, long quantityATU, long unconfirmedQuantityATU, int height){
+        AccountAsset accountAsset = new AccountAsset(accountId, assetId, quantityATU, unconfirmedQuantityATU, height);
+
+        return accountAsset;
     }
 
 }

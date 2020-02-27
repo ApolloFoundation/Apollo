@@ -21,20 +21,22 @@
 package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
-import java.util.Arrays;
-
+import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import java.util.Arrays;
 
+/**
+ * Use {@link com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder} and
+ * corresponded constant of {@link com.apollocurrency.aplwallet.apl.core.rest.ApiErrors}
+ */
+@Deprecated
 public final class JSONResponses {
 
     public static final JSONStreamAware INCORRECT_ALIAS = incorrect("alias");

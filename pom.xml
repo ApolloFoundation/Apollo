@@ -575,6 +575,13 @@
         <artifactId>mockito-junit-jupiter</artifactId>
         <version>${mockito.version}</version>
       </dependency>
+      <!-- RESTEasy Validator Provider -->
+      <dependency>
+        <groupId>org.jboss.resteasy</groupId>
+        <artifactId>resteasy-validator-provider</artifactId>
+        <version>${resteasy.version}</version>
+        <scope>test</scope>
+      </dependency>
       <!-- Desktop JAVAFX libraries -->
       <dependency>
         <groupId>org.openjfx</groupId>

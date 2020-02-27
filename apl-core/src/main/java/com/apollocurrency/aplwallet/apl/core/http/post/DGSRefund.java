@@ -30,7 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsRefund;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -52,8 +52,8 @@ public final class DGSRefund extends CreateTransaction {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        Account sellerAccount = ParameterParser.getSenderAccount(req);
-        DGSPurchase purchase = ParameterParser.getPurchase(service, req);
+        Account sellerAccount = HttpParameterParserUtil.getSenderAccount(req);
+        DGSPurchase purchase = HttpParameterParserUtil.getPurchase(service, req);
         if (sellerAccount.getId() != purchase.getSellerId()) {
             return INCORRECT_PURCHASE;
         }

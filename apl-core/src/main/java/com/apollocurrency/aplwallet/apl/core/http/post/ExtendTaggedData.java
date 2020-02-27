@@ -24,7 +24,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_T
 
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtendAttachment;
@@ -47,8 +47,8 @@ public final class ExtendTaggedData extends CreateTransaction {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        Account account = ParameterParser.getSenderAccount(req);
-        long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
+        Account account = HttpParameterParserUtil.getSenderAccount(req);
+        long transactionId = HttpParameterParserUtil.getUnsignedLong(req, "transaction", true);
         TaggedData taggedData = taggedDataService.getData(transactionId);
         if (taggedData == null) {
             return UNKNOWN_TRANSACTION;

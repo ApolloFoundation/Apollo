@@ -119,6 +119,11 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
     }
 
     @Override
+    public List<AccountCurrency> getCurrenciesByAccount(Account account) {
+        return getCurrenciesByAccount(account, 0, -1);
+    }
+
+    @Override
     public List<AccountCurrency> getCurrenciesByAccount(Account account, int from, int to) {
         return getCurrenciesByAccount(account.getId(), from, to);
     }

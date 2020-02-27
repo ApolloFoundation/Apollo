@@ -30,7 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
@@ -71,7 +71,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
         String transactionJSON = Convert.emptyToNull(req.getParameter("transactionJSON"));
         String transactionBytes = Convert.emptyToNull(req.getParameter("transactionBytes"));
         String prunableAttachmentJSON = Convert.emptyToNull(req.getParameter("prunableAttachmentJSON"));
-        long offerIssuerId = ParameterParser.getAccountId(req, "offerIssuer", true);
+        long offerIssuerId = HttpParameterParserUtil.getAccountId(req, "offerIssuer", true);
 
         try {
             JSONObject response;
@@ -81,11 +81,11 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                 if (broadcast) {
                     return JSONResponses.error("Must use broadcast=false to schedule a future currency buy");
                 }
-                Currency currency = ParameterParser.getCurrency(req);
-                long rateATM = ParameterParser.getLong(req, "rateATM", 0, Long.MAX_VALUE, true);
-                long units = ParameterParser.getLong(req, "units", 0, Long.MAX_VALUE, true);
-                Account account = ParameterParser.getSenderAccount(req);
-                byte[] keySeed = ParameterParser.getKeySeed(req, account.getId(), false);
+                Currency currency = HttpParameterParserUtil.getCurrency(req);
+                long rateATM = HttpParameterParserUtil.getLong(req, "rateATM", 0, Long.MAX_VALUE, true);
+                long units = HttpParameterParserUtil.getLong(req, "units", 0, Long.MAX_VALUE, true);
+                Account account = HttpParameterParserUtil.getSenderAccount(req);
+                byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, account.getId(), false);
                 Attachment attachment = new MonetarySystemExchangeBuyAttachment(currency.getId(), rateATM, units);
                 response = (JSONObject)JSONValue.parse(JSON.toString(createTransaction(req, account, attachment)));
                 if (keySeed == null || "true".equalsIgnoreCase(req.getParameter("calculateFee"))) {
@@ -95,7 +95,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                 transaction = Transaction.newTransactionBuilder((JSONObject) response.get("transactionJSON")).build();
             } else {
                 response = new JSONObject();
-                transaction = ParameterParser.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON).build();
+                transaction = HttpParameterParserUtil.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON).build();
                 JSONObject json = JSONData.unconfirmedTransaction(transaction);
                 response.put("transactionJSON", json);
                 try {
