@@ -3,6 +3,7 @@
  */
 package com.apollocurrency.aplwallet.api.dto;
 
+import com.apollocurrency.aplwallet.api.response.ResponseBase;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -19,7 +20,7 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonSerialize
 @Data
-public class TradingDataOutputDTO {
+public class TradingDataOutputDTO extends ResponseBase {
     @Schema(name="t", description="timestamps")
     public List<Integer> t;
     @Schema(name="l", description="low values")
