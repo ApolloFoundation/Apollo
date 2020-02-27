@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.db.service;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
@@ -81,5 +82,10 @@ public class BlockChainInfoServiceImpl implements BlockChainInfoService {
     @Override
     public Block getLastBlock() {
         return lookupBlockchain().getLastBlock();
+    }
+
+    @Override
+    public DbIterator<Block> getBlocks(long accountId, int timestamp, int from, int to) {
+        return blockchain.getBlocks(accountId, timestamp, from, to);
     }
 }
