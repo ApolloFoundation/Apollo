@@ -8,29 +8,43 @@ import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
 
 import java.util.HashMap;
+;
 
 
 public class RestHelper {
+    private static RestHelper restHelper;
     private RequestSpecification spec;
     private RequestSpecification preconditionSpec;
-    private String host = TestConfiguration.getTestConfiguration().getBaseURL();
-    private String port = TestConfiguration.getTestConfiguration().getPort();
 
-    public RestHelper() {
+    private RestHelper() {
+        String host = TestConfiguration.getTestConfiguration().getBaseURL();
+        String port = TestConfiguration.getTestConfiguration().getPort();
+        String url = String.format("http://%s:%s", host, port);
+        HttpHelper.setBaseURL_API(url);
+
         spec = new RequestSpecBuilder()
                 .setContentType(ContentType.JSON)
-                .setBaseUri(String.format("http://%s:%s", host, port))
+                .setBaseUri(url)
                 .addFilter(new AllureRestAssured())
                 .build();
 
         preconditionSpec = new RequestSpecBuilder()
                 .setContentType(ContentType.JSON)
-                .setBaseUri(String.format("http://%s:%s", host, port))
+                .setBaseUri(url)
                 .build();
     }
 
     public RequestSpecification getSpec() {
         return spec;
+    }
+
+    public static RestHelper getRestHelper() {
+        if (restHelper == null){
+            synchronized (RestHelper.class){
+                restHelper = new RestHelper();
+            }
+        }
+        return restHelper;
     }
 
     public RequestSpecification getPreconditionSpec() {

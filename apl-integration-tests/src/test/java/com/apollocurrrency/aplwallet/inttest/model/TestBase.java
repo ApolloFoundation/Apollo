@@ -49,7 +49,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 public abstract class TestBase implements ITest {
     public TestInfo testInfo;
     protected static RetryPolicy retryPolicy;
-    protected static RestHelper restHelper = new RestHelper();;
+    protected static RestHelper restHelper;
     protected static ObjectMapper mapper = new ObjectMapper();
     public static final Logger log = LoggerFactory.getLogger(TestBase.class);
     private static RestAssuredConfig config;
@@ -61,8 +61,7 @@ public abstract class TestBase implements ITest {
             .httpClient(HttpClientConfig.httpClientConfig()
                 .setParam(CoreConnectionPNames.CONNECTION_TIMEOUT, 10000)
                 .setParam(CoreConnectionPNames.SO_TIMEOUT, 10000));
-        TestConfiguration.getTestConfiguration();
-
+        restHelper = RestHelper.getRestHelper();
         retryPolicy = new RetryPolicy()
                 .retryWhen(false)
                 .withMaxRetries(50)

@@ -30,13 +30,14 @@ import static org.junit.jupiter.api.Assertions.fail;
 public class HttpHelper {
     public static final Logger log = LoggerFactory.getLogger(TestShuffling.class);
     public static ObjectMapper mapper = new ObjectMapper();
-    private static final String baseURL_API = "http://" +
-            TestConfiguration.getTestConfiguration().getBaseURL() + ":" +
-            TestConfiguration.getTestConfiguration().getPort() + "/apl?";
+    private static String baseURL_API;
 
     private static HashMap<String, Object> reqestParam = new HashMap<>();
     private static OkHttpClient client;
 
+    public static void setBaseURL_API(String baseURL_API) {
+        HttpHelper.baseURL_API = baseURL_API+"/apl?";
+    }
 
     public static OkHttpClient getClient() {
         if (client == null)
