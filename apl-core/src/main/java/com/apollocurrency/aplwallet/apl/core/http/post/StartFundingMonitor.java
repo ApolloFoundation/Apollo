@@ -29,7 +29,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import org.json.simple.JSONObject;
@@ -85,20 +85,20 @@ public final class StartFundingMonitor extends AbstractAPIRequestHandler {
      */
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        long accountId = ParameterParser.getAccountId(req, false);
-        HoldingType holdingType = ParameterParser.getHoldingType(req);
-        long holdingId = ParameterParser.getHoldingId(req, holdingType);
-        String property = ParameterParser.getAccountProperty(req, true);
-        long amount = ParameterParser.getLong(req, "amount", 0, Long.MAX_VALUE, true);
+        long accountId = HttpParameterParserUtil.getAccountId(req, false);
+        HoldingType holdingType = HttpParameterParserUtil.getHoldingType(req);
+        long holdingId = HttpParameterParserUtil.getHoldingId(req, holdingType);
+        String property = HttpParameterParserUtil.getAccountProperty(req, true);
+        long amount = HttpParameterParserUtil.getLong(req, "amount", 0, Long.MAX_VALUE, true);
         if (amount < FundingMonitor.MIN_FUND_AMOUNT) {
             throw new ParameterException(incorrect("amount", "Minimum funding amount is " + FundingMonitor.MIN_FUND_AMOUNT));
         }
-        long threshold = ParameterParser.getLong(req, "threshold", 0, Long.MAX_VALUE, true);
+        long threshold = HttpParameterParserUtil.getLong(req, "threshold", 0, Long.MAX_VALUE, true);
         if (threshold < FundingMonitor.MIN_FUND_THRESHOLD) {
             throw new ParameterException(incorrect("threshold", "Minimum funding threshold is " + FundingMonitor.MIN_FUND_THRESHOLD));
         }
-        int interval = ParameterParser.getInt(req, "interval", FundingMonitor.MIN_FUND_INTERVAL, Integer.MAX_VALUE, true);
-        byte[] keySeed = ParameterParser.getKeySeed(req, accountId, true);
+        int interval = HttpParameterParserUtil.getInt(req, "interval", FundingMonitor.MIN_FUND_INTERVAL, Integer.MAX_VALUE, true);
+        byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, accountId, true);
         switch (holdingType) {
             case ASSET:
                 Asset asset = Asset.getAsset(holdingId);

@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.google.zxing.BarcodeFormat;
@@ -52,26 +52,26 @@ import static org.slf4j.LoggerFactory.getLogger;
 /**
  * <p>The EncodeQRCode API converts a UTF-8 string to a base64-encoded
  * jpeg image of a 2-D QR (Quick Response) code, using the ZXing library.</p>
- * 
+ *
  * <p>The output qrCodeBase64 string can be incorporated into an in-line HTML
  * image like this: &lt;img src="data:image/jpeg;base64,qrCodeBase64"&gt;
  * </p>
- * 
+ *
  * <p>The output qrCodeBase64 can be input to the DecodeQRCode API to
  * recover the original qrCodeData.</p>
- * 
+ *
  * <p>Request parameters:</p>
- * 
+ *
  * <ul>
  * <li>qrCodeData - A UTF-8 text string.</li>
  * <li>width - The width of the output image in pixels, optional.</li>
  * <li>height - The height of the output image in pixels, optional.</li>
  * </ul>
- * 
+ *
  * <p>Notes:</p>
  * <ul>
  * <li>The output image consists of a centrally positioned square QR code
- * with a size which is an integer multiple of the minimum size, surrounded by 
+ * with a size which is an integer multiple of the minimum size, surrounded by
  * sufficient white padding to achieve the requested width/height.</li>
  * <li>The default width/height of 0 results in the minimum sized output
  * image, with one pixel per black/white region of the QR code and no
@@ -79,9 +79,9 @@ import static org.slf4j.LoggerFactory.getLogger;
  * <li>To eliminate padding, the requested width/height must be an integer
  * multiple of the minimum.</li>
  * </ul>
- * 
+ *
  * <p>Response fields:</p>
- * 
+ *
  * <ul>
  * <li>qrCodeBase64 - A base64 string encoding a jpeg image of
  * the QR code.</li>
@@ -94,18 +94,18 @@ public final class EncodeQRCode extends AbstractAPIRequestHandler {
     public EncodeQRCode() {
         super(new APITag[] {APITag.UTILS}, "qrCodeData", "width", "height");
     }
-    
+
     @Override
     public JSONStreamAware processRequest(HttpServletRequest request)
             throws AplException {
-        
+
         JSONObject response = new JSONObject();
 
         String qrCodeData = Convert.nullToEmpty(request.getParameter("qrCodeData"));
 
-        int width = ParameterParser.getInt(request, "width", 0, 5000, false);
-        int height = ParameterParser.getInt(request, "height", 0, 5000, false);
-        
+        int width = HttpParameterParserUtil.getInt(request, "width", 0, 5000, false);
+        int height = HttpParameterParserUtil.getInt(request, "height", 0, 5000, false);
+
         try {
             Map hints = new HashMap();
             // Error correction level: L (7%), M (15%), Q (25%), H (30%) -- Default L.
@@ -115,8 +115,8 @@ public final class EncodeQRCode extends AbstractAPIRequestHandler {
 
             BitMatrix matrix = new MultiFormatWriter().encode(qrCodeData,
                     BarcodeFormat.QR_CODE,
-                    width, 
-                    height, 
+                    width,
+                    height,
                     hints
             );
             BufferedImage bufferedImage = MatrixToImageWriter.toBufferedImage(matrix);

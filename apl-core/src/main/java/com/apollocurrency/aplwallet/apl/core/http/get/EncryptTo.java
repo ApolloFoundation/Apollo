@@ -23,8 +23,8 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.dgs.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -47,8 +47,8 @@ public final class EncryptTo extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        long senderAccountId = ParameterParser.getAccountId(req, "account", false);
-        long recipientId = ParameterParser.getAccountId(req, "recipient", true);
+        long senderAccountId = HttpParameterParserUtil.getAccountId(req, "account", false);
+        long recipientId = HttpParameterParserUtil.getAccountId(req, "recipient", true);
         byte[] recipientPublicKey = lookupAccountService().getPublicKeyByteArray(recipientId);
         if (recipientPublicKey == null) {
             return INCORRECT_RECIPIENT;
@@ -65,7 +65,7 @@ public final class EncryptTo extends AbstractAPIRequestHandler {
         } catch (RuntimeException e) {
             return INCORRECT_MESSAGE_TO_ENCRYPT;
         }
-        byte[] keySeed = ParameterParser.getKeySeed(req, senderAccountId, true);
+        byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, senderAccountId, true);
         EncryptedData encryptedData = EncryptedDataUtil.encryptTo(recipientPublicKey, plainMessageBytes, keySeed, compress);
         return JSONData.encryptedData(encryptedData);
 

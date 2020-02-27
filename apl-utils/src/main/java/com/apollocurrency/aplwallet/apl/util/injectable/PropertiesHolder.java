@@ -4,27 +4,20 @@
 
 package com.apollocurrency.aplwallet.apl.util.injectable;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import lombok.extern.slf4j.Slf4j;
 
-import org.slf4j.Logger;
-
+import javax.inject.Singleton;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
-import javax.inject.Singleton;
 
+@Slf4j
 @Singleton
 public class PropertiesHolder {
 
-    private static final Logger LOG = getLogger(PropertiesHolder.class);
-
     private Properties properties;
-
-    public PropertiesHolder() {
-     //   LOG.trace("Default constructor");
-    }
 
     public void init(Properties properties){
         this.properties = properties;
@@ -40,10 +33,9 @@ public class PropertiesHolder {
                 return defaultValue;
             }
             int result = Integer.parseInt(properties.getProperty(name));
-  //          LOG.debug(name + " = \"" + result + "\"");
             return result;
         } catch (NumberFormatException e) {
-            LOG.trace(name + " not defined or not numeric, using default value " + defaultValue);
+            log.trace("{} not defined or not numeric, using default value {}", name, defaultValue);
             return defaultValue;
         }
     }
@@ -65,10 +57,8 @@ public class PropertiesHolder {
             return defaultValue;
         }
         String value = properties.getProperty(name);
-        if (value != null && ! "".equals(value)) {
-           // LOG.debug(name + " = \"" + (doNotLog ? "{not logged}" : value) + "\"");
-        } else {
-            LOG.trace(name + " not defined");
+        if (value == null || "".equals(value)) {
+            log.trace("{} not defined", name);
             value = defaultValue;
         }
         if (encoding == null || value == null) {
@@ -109,13 +99,11 @@ public class PropertiesHolder {
         }
         String value = properties.getProperty(name);
         if (Boolean.TRUE.toString().equals(value)) {
-            // LOG.debug(name + " = \"true\"");
             return true;
         } else if (Boolean.FALSE.toString().equals(value)) {
-          //  LOG.debug(name + " = \"false\"");
             return false;
         }
-        LOG.trace(name + " not defined, using default " + defaultValue);
+        log.trace("{} not defined, using default {}", name, defaultValue);
         return defaultValue;
     }
 
@@ -153,14 +141,11 @@ public class PropertiesHolder {
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer("PropertiesHolder{");
-        sb.append("properties size=[]").append(properties != null ? properties.size() : -1);
-        sb.append('}');
-        return sb.toString();
+        return "PropertiesHolder{ properties size=[" + (properties != null ? properties.size() : -1) + "'] }";
     }
 
     public String dumpAllProperties() {
-        final StringBuffer sb = new StringBuffer("PropertiesHolder_DUMP : \n");
+        final StringBuilder sb = new StringBuilder("PropertiesHolder_DUMP : \n");
         properties.forEach((k, v) -> {
                 if (!k.equals("adminPassword")) {
                     sb.append("\t'").append(k).append("'->").append(v).append(", ");

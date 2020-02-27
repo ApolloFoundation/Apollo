@@ -4,6 +4,38 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountInfoService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountInfoServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountLeaseService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountLeaseServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPropertyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPropertyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TrimService;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.json.simple.JSONStreamAware;
+
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -13,30 +45,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import com.apollocurrency.aplwallet.apl.core.account.service.*;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.app.TimeService;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TrimService;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import org.json.simple.JSONStreamAware;
 
 public abstract class AbstractAPIRequestHandler {
 
@@ -163,7 +171,7 @@ public abstract class AbstractAPIRequestHandler {
     public AbstractAPIRequestHandler(String fileParameter, APITag[] apiTags, String... origParameters) {
         List<String> parameters = new ArrayList<>();
         Collections.addAll(parameters, origParameters);
-        if ((requirePassword() || parameters.contains("lastIndex")) && ! apw.disableAdminPassword) {
+        if ((requirePassword() || parameters.contains("lastIndex")) && ! apw.isDisabledAdminPassword()) {
             parameters.add("adminPassword");
         }
         if (allowRequiredBlockParameters()) {

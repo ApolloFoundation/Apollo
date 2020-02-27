@@ -30,7 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
@@ -46,8 +46,8 @@ public final class GenerateToken extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
-        long accountId = ParameterParser.getAccountId(req, true);
-        byte[] keySeed = ParameterParser.getKeySeed(req, accountId, true);
+        long accountId = HttpParameterParserUtil.getAccountId(req, true);
+        byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, accountId, true);
 
         String website = Convert.emptyToNull(req.getParameter("website"));
         if (website == null) {

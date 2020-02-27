@@ -16,26 +16,46 @@ import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Converter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.NetworkService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeIn;
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
+import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityScheme;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.*;
+import javax.validation.constraints.NotNull;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.FormParam;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
  * Apollo network endpoint
  */
-
+@OpenAPIDefinition(info = @Info(description = "Network operation"))
+@SecurityScheme(type = SecuritySchemeType.APIKEY, name = "admin_api_key", in = SecuritySchemeIn.QUERY, paramName = "adminPassword")
+@NoArgsConstructor
 @Path("/networking")
 public class NetworkController {
 
@@ -45,20 +65,24 @@ public class NetworkController {
     @Inject @Setter
     private NetworkService service;
 
-
+    public NetworkController(Converter<Peer, PeerDTO> peerConverter, NetworkService service) {
+        this.peerConverter = peerConverter;
+        this.service = service;
+    }
 
     @Path("/peer/mypeerinfo")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Return host information",
-            description = "Return the remote host name and address.",
+            description = "Return hostname and address of the requesting node.",
             tags = {"networking"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
                             content = @Content(mediaType = "application/json",
                                     schema = @Schema(implementation = MyPeerInfoDTO.class)))
             })
+    @PermitAll
     public Response getMyInfo(@Context HttpServletRequest request) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         MyPeerInfoDTO dto = new MyPeerInfoDTO(request.getRemoteHost(), request.getRemoteAddr());
@@ -69,14 +93,16 @@ public class NetworkController {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-            summary = "Returns peer information",
+            summary = "Returns information about a given peer.",
             description = "Returns peer information by host address.",
             tags = {"networking"},
+            parameters = {},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
                             content = @Content(mediaType = "application/json",
                                     schema = @Schema(implementation = PeerDTO.class)))
     })
+    @PermitAll
     public Response getPeer(
             @Parameter(description = "The certain peer IP address.", required = true)
             @QueryParam("peer") String peerAddress ) {
@@ -102,7 +128,8 @@ public class NetworkController {
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Operation(
             summary = "Add new peer or replace existing.",
-            description = "Add new peer or replace existing.",
+            description = "Add a peer to the list of known peers and attempt to connect to it.",
+            security = @SecurityRequirement(name = "admin_api_key"),
             method = "POST",
             tags = {"networking"},
             responses = {
@@ -111,7 +138,8 @@ public class NetworkController {
                                     schema = @Schema(implementation = PeerDTO.class)))
             }
     )
-    public Response addOrReplacePeer( @FormParam("peer") String peerAddress ) {
+    @RolesAllowed("admin")
+    public Response addOrReplacePeer(@Parameter(schema = @Schema( implementation = String.class, description = "the IP address or domain name of the peer")) @FormParam("peer") String peerAddress, @Context SecurityContext sc) {
         ResponseBuilder response = ResponseBuilder.ok();
 
         if (peerAddress == null) {
@@ -121,7 +149,7 @@ public class NetworkController {
         Peer peer = service.findOrCreatePeerByAddress(peerAddress);
 
         if (peer == null) {
-            return response.error( ApiErrors.FAILED_TO_ADD,peerAddress).build();
+            return response.error( ApiErrors.FAILED_TO_ADD_PEER,peerAddress).build();
         }
 
         boolean isNewlyAdded = service.addPeer(peer, peerAddress);
@@ -143,12 +171,13 @@ public class NetworkController {
                             content = @Content(mediaType = "application/json",
                                     schema = @Schema(implementation = GetPeersResponse.class)))
     })
+    @PermitAll
     //TODO: need to be divided into two separated methods
     // cause currently, this GET returns two different responses (GetPeersResponse or GetPeersSimpleResponse)
     // that depend on the value of the includePeerInfo parameter.
     public Response getPeersList(
             @Parameter(description = "include active only peers") @QueryParam("active") @DefaultValue("false") Boolean active,
-            @Parameter(description = "include peers in certain state (NON_CONNECTED, CONNECTED, DISCONNECTED).",
+            @Parameter(description = "include peers in certain state, one of NON_CONNECTED, CONNECTED, DISCONNECTED (optional).",
                     schema = @Schema(allowableValues = {"NON_CONNECTED", "CONNECTED", "DISCONNECTED"}))
                         @QueryParam("state") String stateValue,
             @Parameter(description = "include peer which provides services (HALLMARK, PRUNABLE, API, API_SSL, CORS)")
@@ -189,15 +218,15 @@ public class NetworkController {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-            summary = "Returns inbound peers list.",
-            description = "Returns a list of inbound peers. An inbound peer is a peer that has sent a request" +
-                         " to this peer within the previous 30 minutes.",
+            summary = "Returns a list of inbound peers.",
+            description = "Returns all peers that have sent a request to this peer in the last 30 minutes.",
             tags = {"networking"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
                             content = @Content(mediaType = "application/json",
                                     schema = @Schema( implementation = GetPeersResponse.class)))
     })
+    @PermitAll
     //TODO: need to be divided into two separated path
     // cause currently, this GET returns two different responses (GetPeersResponse or GetPeersSimpleResponse)
     // that depend on the value of the includePeerInfo parameter.
@@ -217,8 +246,9 @@ public class NetworkController {
     @Produces(MediaType.TEXT_HTML)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Operation(
-            summary = "Add peer in the black list.",
-            description = "Add peer in the black list.",
+            summary = "Blacklist a peer.",
+            description = "Blacklist a peer for the default blacklisting period.",
+            security = @SecurityRequirement(name = "admin_api_key"),
             method = "POST",
             tags = {"networking"},
             responses = {
@@ -227,12 +257,12 @@ public class NetworkController {
                                     schema = @Schema(implementation = ResponseDone.class)))
             }
     )
-    public Response addPeerInBlackList( @FormParam("peer") String peerAddress ) {
+    @RolesAllowed("admin")
+    public Response addPeerInBlackList( @Parameter(schema = @Schema( implementation = String.class, description = "the IP address or domain name of the peer"))
+                                            @FormParam("peer")
+                                            @NotNull
+                                            String peerAddress ) {
         ResponseBuilder response = ResponseBuilder.done();
-
-        if (peerAddress == null) {
-            return response.error( ApiErrors.MISSING_PARAM, "peer").build();
-        }
 
         Peer peer = service.putPeerInBlackList(peerAddress);
 
@@ -248,8 +278,9 @@ public class NetworkController {
     @Produces(MediaType.TEXT_HTML)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Operation(
-            summary = "Add peer in the proxy black list.",
-            description = "Add peer in the proxy black list.",
+            summary = "Blacklist a remote node.",
+            description = "Blacklist a remote node from the UI, so it won't be used when in roaming and light client modes.",
+            security = @SecurityRequirement(name = "admin_api_key"),
             method = "POST",
             tags = {"networking"},
             responses = {
@@ -258,12 +289,12 @@ public class NetworkController {
                                     schema = @Schema(implementation = ResponseDone.class)))
             }
     )
-    public Response addPeerInProxyBlackList(@FormParam("peer") String peerAddress ) {
+    @RolesAllowed("admin")
+    public Response addPeerInProxyBlackList(@Parameter(schema = @Schema( implementation = String.class, description = "the IP address or domain name of the peer"))
+                                                @FormParam("peer")
+                                                @NotNull
+                                                String peerAddress ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
-
-        if (peerAddress == null) {
-            return response.error( ApiErrors.MISSING_PARAM, "peer").build();
-        }
 
         Peer peer = service.findOrCreatePeerByAddress(peerAddress);
 
@@ -281,8 +312,9 @@ public class NetworkController {
     @Produces(MediaType.TEXT_HTML)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Operation(
-            summary = "Set peer as a proxy.",
-            description = "Set peer as a proxy.",
+            summary = "Set the remote node as a proxy.",
+            description = "Set the remote node to use when in roaming and light client modes.",
+            security = @SecurityRequirement(name = "admin_api_key"),
             method = "POST",
             tags = {"networking"},
             responses = {
@@ -291,7 +323,10 @@ public class NetworkController {
                                     schema = @Schema(implementation = PeerDTO.class)))
             }
     )
-    public Response setAPIProxyPeer( @FormParam("peer") String peerAddress ) {
+    @RolesAllowed("admin")
+    public Response setAPIProxyPeer( @Parameter(schema = @Schema( implementation = String.class, description = "the IP address or domain name of the peer"))
+                                         @FormParam("peer")
+                                             String peerAddress ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         Peer peer;
         if (peerAddress == null) {

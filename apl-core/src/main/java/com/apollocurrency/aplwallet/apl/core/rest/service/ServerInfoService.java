@@ -390,7 +390,7 @@ public class ServerInfoService {
         dto.freeMemory = Runtime.getRuntime().freeMemory();
         dto.peerPort = peersService.myPort;
         dto.isOffline = propertiesHolder.isOffline();
-        dto.needsAdminPassword = !apw.disableAdminPassword;
+        dto.needsAdminPassword = !apw.isDisabledAdminPassword();
         dto.customLoginWarning = propertiesHolder.customLoginWarning();
         InetAddress externalAddress = upnp.getExternalAddress();
         if (externalAddress != null) {

@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtend;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtendAttachment;
@@ -52,7 +52,7 @@ public final class GetTaggedDataExtendTransactions extends AbstractAPIRequestHan
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        long taggedDataId = ParameterParser.getUnsignedLong(req, "transaction", true);
+        long taggedDataId = HttpParameterParserUtil.getUnsignedLong(req, "transaction", true);
         List<TaggedDataExtend> extendTransactionList = taggedDataService.getExtendTransactionIds(taggedDataId);
         List<Long> extendTransactions = extendTransactionList.stream().map(TaggedDataExtend::getTaggedDataId).collect(Collectors.toList());
         JSONObject response = new JSONObject();

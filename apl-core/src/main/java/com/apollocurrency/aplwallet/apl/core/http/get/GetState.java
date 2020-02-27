@@ -106,7 +106,7 @@ public final class GetState extends AbstractAPIRequestHandler {
         response.put("freeMemory", Runtime.getRuntime().freeMemory());
         response.put("peerPort", lookupPeersService().myPort);
         response.put("isOffline", propertiesHolder.isOffline());
-        response.put("needsAdminPassword", !apw.disableAdminPassword);
+        response.put("needsAdminPassword", !apw.isDisabledAdminPassword());
         response.put("customLoginWarning", propertiesHolder.customLoginWarning());
         InetAddress externalAddress = upnp.getExternalAddress();
         if (externalAddress != null) {

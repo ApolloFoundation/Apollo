@@ -25,7 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
 import com.apollocurrency.aplwallet.apl.util.Filter;
@@ -54,8 +54,8 @@ public final class GetExpectedBuyOffers extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
-        long currencyId = ParameterParser.getUnsignedLong(req, "currency", false);
-        long accountId = ParameterParser.getAccountId(req, "account", false);
+        long currencyId = HttpParameterParserUtil.getUnsignedLong(req, "currency", false);
+        long accountId = HttpParameterParserUtil.getAccountId(req, "account", false);
         boolean sortByRate = "true".equalsIgnoreCase(req.getParameter("sortByRate"));
 
         Filter<Transaction> filter = transaction -> {

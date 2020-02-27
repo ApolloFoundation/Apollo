@@ -20,18 +20,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import javax.servlet.http.HttpServletRequest;
-
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+
+import javax.enterprise.inject.Vetoed;
+import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class GetAccountId extends AbstractAPIRequestHandler {
@@ -43,7 +43,7 @@ public final class GetAccountId extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
-        byte[] publicKey = ParameterParser.getPublicKey(req);
+        byte[] publicKey = HttpParameterParserUtil.getPublicKey(req);
         long accountId = AccountService.getId(publicKey);
         JSONObject response = new JSONObject();
         JSONData.putAccount(response, "account", accountId);
