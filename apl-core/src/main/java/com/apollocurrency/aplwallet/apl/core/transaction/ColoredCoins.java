@@ -16,6 +16,7 @@ public abstract class ColoredCoins extends TransactionType {
     public final byte getType() {
         return TransactionType.TYPE_COLORED_COINS;
     }
+
     public static final TransactionType ASSET_ISSUANCE = new CCAssetIssuance();
     public static final TransactionType ASSET_TRANSFER = new CCAssetTransfer();
     public static final TransactionType ASSET_DELETE = new CCAssetDelete();

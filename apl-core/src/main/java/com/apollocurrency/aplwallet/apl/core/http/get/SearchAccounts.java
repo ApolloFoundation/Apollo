@@ -20,8 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountInfo;
-import com.apollocurrency.aplwallet.apl.core.account.AccountInfoTable;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountInfo;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountInfoTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
@@ -36,6 +36,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 @Vetoed
 public final class SearchAccounts extends AbstractAPIRequestHandler {
@@ -55,7 +56,8 @@ public final class SearchAccounts extends AbstractAPIRequestHandler {
 
         JSONObject response = new JSONObject();
         JSONArray accountsJSONArray = new JSONArray();
-        try (DbIterator<AccountInfo> accounts = AccountInfoTable.searchAccounts(query, firstIndex, lastIndex)) {
+        List<AccountInfo> accounts = lookupAccountInfoService().searchAccounts(query, firstIndex, lastIndex);
+
             for (AccountInfo account : accounts) {
                 JSONObject accountJSON = new JSONObject();
                 JSONData.putAccount(accountJSON, "account", account.getAccountId());
@@ -67,7 +69,7 @@ public final class SearchAccounts extends AbstractAPIRequestHandler {
                 }
                 accountsJSONArray.add(accountJSON);
             }
-        }
+
         response.put("accounts", accountsJSONArray);
         return response;
     }

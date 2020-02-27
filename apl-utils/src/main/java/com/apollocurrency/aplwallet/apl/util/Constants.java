@@ -189,6 +189,7 @@ public final class Constants {
     public static final int DEX_GRAPH_INTERVAL_HOUR = 60 * 60;
     public static final int DEX_GRAPH_INTERVAL_DAY = 60 * 60 * 24;
 
+    public static final int HEALTH_CHECK_INTERVAL = 30*1000; //milliseconds
     private Constants() {
     } // never
 

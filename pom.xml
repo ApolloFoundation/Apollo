@@ -30,6 +30,15 @@
       <name>arti.firstbridge.work-releases</name>
       <url>https://arti.firstbridge.work/artifactory/apl</url>
     </repository>
+    <repository>
+      <id>aplsys</id>
+      <name>Artifactory APLSYS</name>
+      <layout>default</layout>
+      <url>https://arti.firstbridge.work/artifactory/aplsys</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
   </repositories>
   <modules>
     <module>apl-api</module>
@@ -93,7 +102,7 @@
     <lucene.version>7.5.0</lucene.version>
 
     <!--Db-->
-    <h2.version>1.4.196</h2.version>
+    <h2.version>1.4.199</h2.version>
 
     <!--Logging-->
     <slf4j.version>1.7.22</slf4j.version>

@@ -30,6 +30,8 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -62,8 +64,11 @@ public final class Alias {
         }
 
         private void save(Connection con) throws SQLException {
-            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO alias_offer (id, price, buyer_id, "
-                    + "height) KEY (id, height) VALUES (?, ?, ?, ?)")) {
+            try (
+                    @DatabaseSpecificDml(DmlMarker.MERGE)
+                    PreparedStatement pstmt = con.prepareStatement("MERGE INTO alias_offer (id, price, buyer_id, "
+                    + "height) KEY (id, height) VALUES (?, ?, ?, ?)")
+            ) {
                 int i = 0;
                 pstmt.setLong(++i, this.aliasId);
                 pstmt.setLong(++i, this.priceATM);
@@ -118,7 +123,7 @@ public final class Alias {
         }
 
         @Override
-        protected String defaultSort() {
+        public String defaultSort() {
             return " ORDER BY alias_name_lower ";
         }
 
@@ -258,9 +263,13 @@ public final class Alias {
     }
 
     private void save(Connection con) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO alias (id, account_id, alias_name, "
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
+                PreparedStatement pstmt = con.prepareStatement("MERGE INTO alias (id, account_id, alias_name, "
                 + "alias_uri, timestamp, height) KEY (id, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?)")) {
+                + "VALUES (?, ?, ?, ?, ?, ?)")
+        ) {
             int i = 0;
             pstmt.setLong(++i, this.id);
             pstmt.setLong(++i, this.accountId);

@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
@@ -44,7 +43,7 @@ public final class GetAccountPublicKey extends AbstractAPIRequestHandler {
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
         long accountId = ParameterParser.getAccountId(req, true);
-        byte[] publicKey = Account.getPublicKey(accountId);
+        byte[] publicKey = lookupAccountService().getPublicKeyByteArray(accountId);
         if (publicKey != null) {
             JSONObject response = new JSONObject();
             response.put("publicKey", Convert.toHexString(publicKey));

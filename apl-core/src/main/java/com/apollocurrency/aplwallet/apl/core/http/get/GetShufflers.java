@@ -24,9 +24,8 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
 import java.util.List;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffler;
-import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -56,10 +55,10 @@ public final class GetShufflers extends AbstractAPIRequestHandler {
         boolean includeParticipantState = "true".equalsIgnoreCase(req.getParameter("includeParticipantState"));
         List<Shuffler> shufflers;
         if (keySeed != null) {
-            if (accountId != 0 && Account.getId(Crypto.getPublicKey(keySeed)) != accountId) {
+            if (accountId != 0 && AccountService.getId(Crypto.getPublicKey(keySeed)) != accountId) {
                 return JSONResponses.INCORRECT_ACCOUNT;
             }
-            accountId = Account.getId(Crypto.getPublicKey(keySeed));
+            accountId = AccountService.getId(Crypto.getPublicKey(keySeed));
             if (shufflingFullHash.length == 0) {
                 shufflers = Shuffler.getAccountShufflers(accountId);
             } else {

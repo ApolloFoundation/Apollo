@@ -25,7 +25,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DGS_GOODS;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_PURCHASE;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
@@ -79,7 +79,7 @@ public final class DGSDelivery extends CreateTransaction {
             return INCORRECT_DGS_DISCOUNT;
         }
 
-        Account buyerAccount = Account.getAccount(purchase.getBuyerId());
+        Account buyerAccount = lookupAccountService().getAccount(purchase.getBuyerId());
         boolean goodsIsText = !"false".equalsIgnoreCase(req.getParameter("goodsIsText"));
         EncryptedData encryptedGoods = ParameterParser.getEncryptedData(req, "goods");
         byte[] goodsBytes = null;
@@ -97,13 +97,13 @@ public final class DGSDelivery extends CreateTransaction {
             }
             byte[] keySeed = ParameterParser.getKeySeed(req, sellerAccount.getId(),broadcast);
             if (keySeed != null) {
-                encryptedGoods = buyerAccount.encryptTo(goodsBytes, keySeed, true);
+                encryptedGoods = lookupAccountPublickKeyService().encryptTo(buyerAccount.getId(), goodsBytes, keySeed, true);
             }
         }
 
         Attachment attachment = encryptedGoods == null ?
                 new UnencryptedDigitalGoodsDelivery(purchase.getId(), goodsBytes,
-                        goodsIsText, discountATM, Account.getPublicKey(buyerAccount.getId())) :
+                        goodsIsText, discountATM, lookupAccountService().getPublicKeyByteArray(buyerAccount.getId())) :
                 new DigitalGoodsDelivery(purchase.getId(), encryptedGoods,
                         goodsIsText, discountATM);
         return createTransaction(req, sellerAccount, buyerAccount.getId(), 0, attachment);

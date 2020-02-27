@@ -22,7 +22,6 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import javax.servlet.http.HttpServletRequest;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
@@ -48,7 +47,7 @@ public final class GetSharedKey extends AbstractAPIRequestHandler {
 
         long participantAccountId = ParameterParser.getAccountId(req,"participantAccount", true);
         byte[] nonce = ParameterParser.getBytes(req, "nonce", true);
-        byte[] publicKey = Account.getPublicKey(participantAccountId);
+        byte[] publicKey = lookupAccountService().getPublicKeyByteArray(participantAccountId);
         if (publicKey == null) {
             return JSONResponses.INCORRECT_ACCOUNT;
         }

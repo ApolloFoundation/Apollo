@@ -20,20 +20,19 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountCurrency;
-import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 public final class GetAccountCurrencies extends AbstractAPIRequestHandler {
 
@@ -59,16 +58,13 @@ public final class GetAccountCurrencies extends AbstractAPIRequestHandler {
 
         if (currencyId == 0) {
             JSONObject response = new JSONObject();
-            try (DbIterator<AccountCurrency> accountCurrencies = AccountCurrencyTable.getAccountCurrencies(accountId, height, 0, -1)) {
-                JSONArray currencyJSON = new JSONArray();
-                while (accountCurrencies.hasNext()) {
-                    currencyJSON.add(JSONData.accountCurrency(accountCurrencies.next(), false, includeCurrencyInfo));
-                }
-                response.put("accountCurrencies", currencyJSON);
-                return response;
-            }
+            List<AccountCurrency> accountCurrencies = lookupAccountCurrencyService().getCurrenciesByAccount(accountId, height, 0, -1);
+            JSONArray currencyJSON = new JSONArray();
+            accountCurrencies.forEach(accountCurrency -> currencyJSON.add(JSONData.accountCurrency(accountCurrency, false, includeCurrencyInfo)));
+            response.put("accountCurrencies", currencyJSON);
+            return response;
         } else {
-            AccountCurrency accountCurrency = AccountCurrencyTable.getAccountCurrency(accountId, currencyId, height);
+            AccountCurrency accountCurrency = lookupAccountCurrencyService().getAccountCurrency(accountId, currencyId, height);
             if (accountCurrency != null) {
                 return JSONData.accountCurrency(accountCurrency, false, includeCurrencyInfo);
             }

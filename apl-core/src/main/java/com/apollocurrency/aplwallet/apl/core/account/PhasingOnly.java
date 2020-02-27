@@ -4,9 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.account;
 
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -15,24 +16,28 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SetPhasingOnly;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import javax.enterprise.inject.spi.CDI;
 
 /**
  *
  * @author al
  */
 public final class PhasingOnly {
-    
+
     private BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
@@ -53,13 +58,13 @@ public final class PhasingOnly {
         PhasingParams phasingParams = attachment.getPhasingParams();
         if (phasingParams.getVoteWeighting().getVotingModel() == VoteWeighting.VotingModel.NONE) {
             //no voting - remove the control
-            senderAccount.removeControl(Account.ControlType.PHASING_ONLY);
+            senderAccount.removeControl(AccountControlType.PHASING_ONLY);
             PhasingOnly phasingOnly = get(senderAccount.getId());
             phasingOnly.phasingParams = phasingParams;
             AccountRestrictions.phasingControlTable.delete(phasingOnly);
             unset(senderAccount);
         } else {
-            senderAccount.addControl(Account.ControlType.PHASING_ONLY);
+            senderAccount.addControl(AccountControlType.PHASING_ONLY);
             PhasingOnly phasingOnly = get(senderAccount.getId());
             if (phasingOnly == null) {
                 phasingOnly = new PhasingOnly(senderAccount.getId(), phasingParams, attachment.getMaxFees(), attachment.getMinDuration(), attachment.getMaxDuration());
@@ -71,10 +76,15 @@ public final class PhasingOnly {
             }
             AccountRestrictions.phasingControlTable.insert(phasingOnly);
         }
+        lookupAccountService().update(senderAccount);
+    }
+
+    private static AccountService lookupAccountService() {
+        return CDI.current().select(AccountService.class).get();
     }
 
     static void unset(Account account) {
-        account.removeControl(Account.ControlType.PHASING_ONLY);
+        account.removeControl(AccountControlType.PHASING_ONLY);
         PhasingOnly phasingOnly = get(account.getId());
         AccountRestrictions.phasingControlTable.delete(phasingOnly);
     }
@@ -85,7 +95,7 @@ public final class PhasingOnly {
     private short minDuration;
     private short maxDuration;
 
-    
+
     PhasingOnly(long accountId, PhasingParams params, long maxFees, short minDuration, short maxDuration) {
         this.accountId = accountId;
         dbKey = AccountRestrictions.phasingControlDbKeyFactory.newKey(this.accountId);
@@ -152,7 +162,10 @@ public final class PhasingOnly {
     }
 
     void save(Connection con) throws SQLException {
-        try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_control_phasing " + "(account_id, whitelist, voting_model, quorum, min_balance, holding_id, min_balance_model, " + "max_fees, min_duration, max_duration, height, latest) KEY (account_id, height) " + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_control_phasing " + "(account_id, whitelist, voting_model, quorum, min_balance, holding_id, min_balance_model, " + "max_fees, min_duration, max_duration, height, latest) KEY (account_id, height) " + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")
+        ) {
             int i = 0;
             pstmt.setLong(++i, this.accountId);
             DbUtils.setArrayEmptyToNull(pstmt, ++i, Convert.toArray(phasingParams.getWhitelist()));
@@ -168,5 +181,5 @@ public final class PhasingOnly {
             pstmt.executeUpdate();
         }
     }
-    
+
 }

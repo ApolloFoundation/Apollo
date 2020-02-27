@@ -20,31 +20,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-import javax.enterprise.event.ObservesAsync;
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Semaphore;
-
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountAsset;
-import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
-import com.apollocurrency.aplwallet.apl.core.account.AccountCurrency;
-import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
-import com.apollocurrency.aplwallet.apl.core.account.AccountProperty;
-import com.apollocurrency.aplwallet.apl.core.account.AccountPropertyTable;
+import com.apollocurrency.aplwallet.apl.core.account.AccountEventType;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountProperty;
+import com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEvent;
+import com.apollocurrency.aplwallet.apl.core.account.service.*;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
@@ -55,12 +40,22 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Filter;
-import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
+
+import javax.enterprise.event.Observes;
+import javax.enterprise.event.ObservesAsync;
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Semaphore;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Monitor account balances based on account properties
@@ -89,6 +84,11 @@ public class FundingMonitor {
     private static FeeCalculator feeCalculator = new FeeCalculator();
     private static TransactionProcessor transactionProcessor;
     private static GlobalSync globalSync; // prevent fail on node shutdown
+    private static AccountService accountService;
+    private static AccountAssetService accountAssetService;
+    private static AccountCurrencyService accountCurrencyService;
+    private static AccountPropertyService accountPropertyService;
+
     /** Maximum number of monitors */
     private static int MAX_MONITORS;// propertiesLoader.getIntProperty("apl.maxNumberOfMonitors");
 
@@ -274,6 +274,10 @@ public class FundingMonitor {
         blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
         blockchain = CDI.current().select(Blockchain.class).get();
         transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
+        accountService = CDI.current().select(AccountServiceImpl.class).get();
+        accountAssetService = CDI.current().select(AccountAssetServiceImpl.class).get();
+        accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
+        accountPropertyService = CDI.current().select(AccountPropertyServiceImpl.class).get();
         /** Maximum number of monitors */
         MAX_MONITORS = propertiesLoader.getIntProperty("apl.maxNumberOfMonitors");
 
@@ -283,7 +287,7 @@ public class FundingMonitor {
         // won't be used.
         //
         init();
-        long accountId = Account.getId(Crypto.getPublicKey(keySeed));
+        long accountId = AccountService.getId(Crypto.getPublicKey(keySeed));
         //
         // Create the monitor
         //
@@ -298,14 +302,13 @@ public class FundingMonitor {
             // Locate monitored accounts based on the account property and the setter identifier
             //
             List<MonitoredAccount> accountList = new ArrayList<>();
-            try (DbIterator<AccountProperty> it = AccountPropertyTable.getProperties(0, accountId, property, 0, Integer.MAX_VALUE)) {
-                while (it.hasNext()) {
-                    AccountProperty accountProperty = it.next();
-                    MonitoredAccount account = createMonitoredAccount(accountProperty.getRecipientId(),
-                            monitor, accountProperty.getValue());
-                    accountList.add(account);
-                }
-            }
+            List<AccountProperty> properties = accountPropertyService.getProperties(0, accountId, property,
+                    0, Integer.MAX_VALUE);
+            properties.forEach(accountProperty -> {
+                MonitoredAccount account = createMonitoredAccount(accountProperty.getRecipientId(),
+                        monitor, accountProperty.getValue());
+                accountList.add(account);
+            });
             //
             // Activate the monitor and check each monitored account to see if we need to submit
             // an initial fund transaction
@@ -528,13 +531,19 @@ public class FundingMonitor {
             Thread processingThread = new ProcessEvents();
             processingThread.start();
             //
+            //All listeners logic was moved to the Weld Event:
+            //              AccountEventHandler,
+            //              AssetEventHandler,
+            //              CurrencyEventHandler,
+            //              AccountPropertyEventHandler
+            //
             // Register our event listeners
             //
-            Account.addListener(new AccountEventHandler(), Account.Event.BALANCE);
-            Account.addAssetListener(new AssetEventHandler(), Account.Event.ASSET_BALANCE);
-            Account.addCurrencyListener(new CurrencyEventHandler(), Account.Event.CURRENCY_BALANCE);
-            Account.addPropertyListener(new SetPropertyEventHandler(), Account.Event.SET_PROPERTY);
-            Account.addPropertyListener(new DeletePropertyEventHandler(), Account.Event.DELETE_PROPERTY);
+            //AccountService.addListener(new AccountEventHandler(), AccountEventType.BALANCE);
+            //AccountAssetService.addAssetListener(new AssetEventHandler(), AccountEventType.ASSET_BALANCE);
+            //AccountCurrencyService.addCurrencyListener(new CurrencyEventHandler(), AccountEventType.CURRENCY_BALANCE);
+            //AccountPropertyService.addPropertyListener(new SetPropertyEventHandler(), AccountEventType.SET_PROPERTY);
+            //AccountPropertyService.addPropertyListener(new DeletePropertyEventHandler(), AccountEventType.DELETE_PROPERTY);
             //
             // All done
             //
@@ -616,8 +625,8 @@ public class FundingMonitor {
                     MonitoredAccount monitoredAccount;
                     while ((monitoredAccount = pendingEvents.poll()) != null) {
                         try {
-                            Account targetAccount = Account.getAccount(monitoredAccount.accountId);
-                            Account fundingAccount = Account.getAccount(monitoredAccount.monitor.accountId);
+                            Account targetAccount = accountService.getAccount(monitoredAccount.accountId);
+                            Account fundingAccount = accountService.getAccount(monitoredAccount.monitor.accountId);
                             if (blockchain.getHeight() - monitoredAccount.height < monitoredAccount.interval) {
                                 if (!suspendedEvents.contains(monitoredAccount)) {
                                     suspendedEvents.add(monitoredAccount);
@@ -704,8 +713,8 @@ public class FundingMonitor {
     private static void processAssetEvent(MonitoredAccount monitoredAccount, Account targetAccount, Account fundingAccount)
                                             throws AplException {
         FundingMonitor monitor = monitoredAccount.monitor;
-        AccountAsset targetAsset = AccountAssetTable.getAccountAsset(targetAccount.getId(), monitor.holdingId);
-        AccountAsset fundingAsset = AccountAssetTable.getAccountAsset(fundingAccount.getId(), monitor.holdingId);
+        AccountAsset targetAsset = accountAssetService.getAsset(targetAccount, monitor.holdingId);
+        AccountAsset fundingAsset = accountAssetService.getAsset(fundingAccount, monitor.holdingId);
         if (fundingAsset == null || fundingAsset.getUnconfirmedQuantityATU() < monitoredAccount.amount) {
             LOG.warn(
                     String.format("Funding account %s has insufficient quantity for asset %s; funding transaction discarded",
@@ -742,8 +751,8 @@ public class FundingMonitor {
     private static void processCurrencyEvent(MonitoredAccount monitoredAccount, Account targetAccount, Account fundingAccount)
                                             throws AplException {
         FundingMonitor monitor = monitoredAccount.monitor;
-        AccountCurrency targetCurrency = AccountCurrencyTable.getAccountCurrency(targetAccount.getId(), monitor.holdingId);
-        AccountCurrency fundingCurrency = AccountCurrencyTable.getAccountCurrency(fundingAccount.getId(), monitor.holdingId);
+        AccountCurrency targetCurrency = accountCurrencyService.getAccountCurrency(targetAccount.getId(), monitor.holdingId);
+        AccountCurrency fundingCurrency = accountCurrencyService.getAccountCurrency(fundingAccount.getId(), monitor.holdingId);
         if (fundingCurrency == null || fundingCurrency.getUnconfirmedUnits() < monitoredAccount.amount) {
             LOG.warn(
                     String.format("Funding account %s has insufficient quantity for currency %s; funding transaction discarded",
@@ -871,15 +880,16 @@ public class FundingMonitor {
     /**
      * Account event handler (BALANCE event)
      */
-    private static final class AccountEventHandler implements Listener<Account> {
+    @Singleton
+    static class AccountEventHandler{
 
         /**
          * Account event notification
          *
          * @param   account                 Account
          */
-        @Override
-        public void notify(Account account) {
+        public void onAccountBalance(@Observes @AccountEvent(AccountEventType.BALANCE) Account account) {
+            LOG.trace("Catch event {} account={}", AccountEventType.BALANCE, account);
             if (stopped) {
                 return;
             }
@@ -904,15 +914,16 @@ public class FundingMonitor {
     /**
      * Asset event handler (ASSET_BALANCE event)
      */
-    private static final class AssetEventHandler implements Listener<AccountAsset> {
+    @Singleton
+    static class AssetEventHandler{
 
         /**
          * Asset event notification
          *
          * @param   asset                   Account asset
          */
-        @Override
-        public void notify(AccountAsset asset) {
+        public void onAccountAssetBalance(@Observes @AccountEvent(AccountEventType.ASSET_BALANCE) AccountAsset asset) {
+            LOG.trace("Catch event {} asset={}", AccountEventType.ASSET_BALANCE, asset);
             if (stopped) {
                 return;
             }
@@ -940,15 +951,16 @@ public class FundingMonitor {
     /**
      * Currency event handler (CURRENCY_BALANCE event)
      */
-    private static final class CurrencyEventHandler implements Listener<AccountCurrency> {
+    @Singleton
+    static class CurrencyEventHandler{
 
         /**
          * Currency event notification
          *
          * @param   currency                Account currency
          */
-        @Override
-        public void notify(AccountCurrency currency) {
+        public void onAccountCurrencyBalance(@Observes @AccountEvent(AccountEventType.CURRENCY_BALANCE) AccountCurrency currency) {
+            LOG.trace("Catch event {} currency={}", AccountEventType.CURRENCY_BALANCE, currency);
             if (stopped) {
                 return;
             }
@@ -974,17 +986,18 @@ public class FundingMonitor {
     }
 
     /**
-     * Property event handler (SET_PROPERTY event)
+     * Property event handler
      */
-    private static final class SetPropertyEventHandler implements Listener<AccountProperty> {
+    @Singleton
+    static class AccountPropertyEventHandler{
 
         /**
          * Property event notification
          *
          * @param   property                Account property
          */
-        @Override
-        public void notify(AccountProperty property) {
+        public void onAccountSetProperty(@Observes @AccountEvent(AccountEventType.SET_PROPERTY) AccountProperty property) {
+            LOG.trace("Catch event {} property={}", AccountEventType.SET_PROPERTY, property);
             if (stopped) {
                 return;
             }
@@ -1043,20 +1056,9 @@ public class FundingMonitor {
                 LOG.error("Unable to process SET_PROPERTY event for account " + Convert2.rsAccount(accountId), exc);
             }
         }
-    }
 
-    /**
-     * Property event handler (DELETE_PROPERTY event)
-     */
-    private static final class DeletePropertyEventHandler implements Listener<AccountProperty> {
-
-        /**
-         * Property event notification
-         *
-         * @param   property                Account property
-         */
-        @Override
-        public void notify(AccountProperty property) {
+        public void onAccountDeleteProperty(@Observes @AccountEvent(AccountEventType.DELETE_PROPERTY) AccountProperty property) {
+            LOG.trace("Catch event {} property={}", AccountEventType.DELETE_PROPERTY, property);
             if (stopped) {
                 return;
             }
@@ -1096,6 +1098,7 @@ public class FundingMonitor {
          * Block event notification
          */
         public void onBlockPushed(@ObservesAsync @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
+            LOG.trace("Catch event {} block={}", BlockEventType.BLOCK_PUSHED, block);
             if (!stopped && !pendingEvents.isEmpty()) {
                 processSemaphore.release();
             }

@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
@@ -48,7 +48,9 @@ public final class GetGuaranteedBalance extends AbstractAPIRequestHandler {
         if (account == null) {
             response.put("guaranteedBalanceATM", "0");
         } else {
-            response.put("guaranteedBalanceATM", String.valueOf(account.getGuaranteedBalanceATM(numberOfConfirmations, lookupBlockchain().getHeight())));
+            response.put("guaranteedBalanceATM", String.valueOf(
+                    lookupAccountService().getGuaranteedBalanceATM(account, numberOfConfirmations,
+                            lookupBlockchain().getHeight())));
         }
 
         return response;

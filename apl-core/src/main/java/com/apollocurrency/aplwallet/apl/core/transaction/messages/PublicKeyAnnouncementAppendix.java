@@ -7,12 +7,17 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
+
+import javax.enterprise.inject.spi.CDI;
 
 public class PublicKeyAnnouncementAppendix extends AbstractAppendix {
 
@@ -23,6 +28,14 @@ public class PublicKeyAnnouncementAppendix extends AbstractAppendix {
             return null;
         }
         return new PublicKeyAnnouncementAppendix(attachmentData);
+    }
+    private static AccountPublicKeyService accountPublicKeyService;
+
+    protected AccountPublicKeyService lookupAccountPublickKeyService(){
+        if ( accountPublicKeyService == null) {
+            accountPublicKeyService = CDI.current().select(AccountPublicKeyServiceImpl.class).get();
+        }
+        return accountPublicKeyService;
     }
 
     private final byte[] publicKey;
@@ -71,10 +84,10 @@ public class PublicKeyAnnouncementAppendix extends AbstractAppendix {
             throw new AplException.NotValidException("Invalid recipient public key: " + Convert.toHexString(publicKey));
         }
         long recipientId = transaction.getRecipientId();
-        if (Account.getId(this.publicKey) != recipientId) {
+        if (AccountService.getId(this.publicKey) != recipientId) {
             throw new AplException.NotValidException("Announced public key does not match recipient accountId");
         }
-        byte[] recipientPublicKey = Account.getPublicKey(recipientId);
+        byte[] recipientPublicKey = lookupAccountPublickKeyService().getPublicKeyByteArray(recipientId);
         if (recipientPublicKey != null && ! Arrays.equals(publicKey, recipientPublicKey)) {
             throw new AplException.NotCurrentlyValidException("A different public key for this account has already been announced");
         }
@@ -82,8 +95,8 @@ public class PublicKeyAnnouncementAppendix extends AbstractAppendix {
 
     @Override
     public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        if (Account.setOrVerify(recipientAccount.getId(), publicKey)) {
-            recipientAccount.apply(this.publicKey);
+        if (lookupAccountPublickKeyService().setOrVerifyPublicKey(recipientAccount.getId(), publicKey)) {
+            lookupAccountPublickKeyService().apply(recipientAccount, this.publicKey);
         }
     }
 
