@@ -26,6 +26,9 @@ public final class AssetDividendTable extends EntityDbTable<AssetDividend>{
     private static final LongKeyFactory<AssetDividend> dividendDbKeyFactory = new LongKeyFactory<>("id") {
         @Override
         public DbKey newKey(AssetDividend assetDividend) {
+            if (assetDividend.getDbKey() == null) {
+                assetDividend.setDbKey(super.newKey(assetDividend.getId()));
+            }
             return assetDividend.getDbKey();
         }
 
