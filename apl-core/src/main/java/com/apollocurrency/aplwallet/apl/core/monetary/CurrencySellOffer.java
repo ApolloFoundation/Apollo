@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.monetary;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.db.service.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -29,11 +30,15 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public final class CurrencySellOffer extends CurrencyExchangeOffer {
+    private static final BlockChainInfoService BLOCK_CHAIN_INFO_SERVICE =
+        CDI.current().select(BlockChainInfoService.class).get();
+
 
     private static final LongKeyFactory<CurrencySellOffer> sellOfferDbKeyFactory = new LongKeyFactory<CurrencySellOffer>("id") {
 
@@ -111,7 +116,7 @@ public final class CurrencySellOffer extends CurrencyExchangeOffer {
     }
 
     static void remove(CurrencySellOffer sellOffer) {
-        sellOfferTable.delete(sellOffer);
+        sellOfferTable.deleteAtHeight(sellOffer, BLOCK_CHAIN_INFO_SERVICE.getHeight());
     }
 
     public static void init() {}

@@ -12,20 +12,21 @@ import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
+import com.apollocurrency.aplwallet.apl.core.db.service.BlockChainInfoService;
+import com.apollocurrency.aplwallet.apl.core.db.service.BlockChainInfoServiceImpl;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.yaml.snakeyaml.reader.StreamReader;
 
 import javax.enterprise.event.Event;
 import java.util.HashMap;
@@ -35,28 +36,34 @@ import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEventBinding.literal;
 import static com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl.EFFECTIVE_BALANCE_CONFIRMATIONS;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class AccountServiceTest {
 
-    private Blockchain blockchain = mock(BlockchainImpl.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
-    private BlockchainProcessor blockchainProcessor = mock(BlockchainProcessorImpl.class);
     private AccountTable accountTable = mock(AccountTable.class);
     private AccountGuaranteedBalanceTable accountGuaranteedBalanceTable = mock(AccountGuaranteedBalanceTable.class);
     private Event accountEvent = mock(Event.class);
     private Event ledgerEvent = mock(Event.class);
     private AccountPublicKeyService accountPublicKeyService = mock(AccountPublicKeyService.class);
+    private Blockchain blockchain = mock(Blockchain.class);
+    private BlockchainProcessor blockchainProcessor = mock(BlockchainProcessor.class);
+    private BlockChainInfoService blockChainInfoService = spy(new BlockChainInfoServiceImpl(
+        blockchain, blockchainProcessor
+    ));
 
     private AccountServiceImpl accountService;
     private AccountTestData testData;
@@ -66,15 +73,14 @@ class AccountServiceTest {
         testData = new AccountTestData();
         accountService = spy(new AccountServiceImpl(
                 accountTable,
-                blockchain,
                 blockchainConfig,
                 mock(GlobalSyncImpl.class),
                 accountPublicKeyService,
                 accountEvent,
                 ledgerEvent,
-                accountGuaranteedBalanceTable
+                accountGuaranteedBalanceTable,
+                blockChainInfoService
         ));
-        doReturn(blockchainProcessor).when(accountService).lookupBlockchainProcessor();
     }
 
     @AfterEach
@@ -138,7 +144,7 @@ class AccountServiceTest {
     @Test
     void testUpdate_as_insert() {
         int height = 1000;
-        doReturn(height).when(blockchain).getHeight();
+        doReturn(height).when(blockChainInfoService).getHeight();
         Account newAccount = testData.newAccount;
         newAccount.setBalanceATM(10000L);
         accountService.update(newAccount);
@@ -149,7 +155,7 @@ class AccountServiceTest {
     @Test
     void testUpdate_as_delete() {
         int height = 1000;
-        doReturn(height).when(blockchain).getHeight();
+        doReturn(height).when(blockChainInfoService).getHeight();
         accountService.update(testData.newAccount);
         verify(accountTable, times(1)).delete(eq(testData.newAccount), eq(true), eq(height));
         verify(accountTable, never()).insert(any(Account.class));
@@ -174,7 +180,7 @@ class AccountServiceTest {
         long balance = 0;
         long lessorsBalance = 10000L;
         long guaranteedBalance = 50000L;
-        doReturn(blockchainHeight).when(blockchain).getHeight();
+        doReturn(blockchainHeight).when(blockChainInfoService).getHeight();
         assertEquals(0, accountService.getEffectiveBalanceAPL(testData.ACC_0, height, lock));
 
         doReturn(testData.PUBLIC_KEY1).when(accountPublicKeyService).getPublicKey(AccountTable.newKey(testData.ACC_0.getId()));
@@ -195,9 +201,9 @@ class AccountServiceTest {
         long subBalance = 50000L;
         int numberOfConfirmation = 1440;
         int currentHeight = testData.ACC_GUARANTEE_BALANCE_HEIGHT_MAX;
-        doReturn(10).when(blockchain).getHeight();
+        doReturn(10).when(blockChainInfoService).getHeight();
         assertThrows(IllegalArgumentException.class, () -> accountService.getGuaranteedBalanceATM(testData.ACC_1, numberOfConfirmation, currentHeight));
-        doReturn(currentHeight+10).when(blockchain).getHeight();
+        doReturn(currentHeight+10).when(blockChainInfoService).getHeight();
 
         doReturn(null).when(accountGuaranteedBalanceTable).getSumOfAdditions(testData.ACC_1.getId(), currentHeight-numberOfConfirmation, currentHeight);
         long sum = accountService.getGuaranteedBalanceATM(testData.ACC_1, numberOfConfirmation, currentHeight);
@@ -212,7 +218,7 @@ class AccountServiceTest {
     void getLessorsGuaranteedBalanceATM() {
         int height = testData.ACC_7.getHeight();
         int blockchainHeight = height+1000;
-        doReturn(blockchainHeight).when(blockchain).getHeight();
+        doReturn(blockchainHeight).when(blockChainInfoService).getHeight();
         List<Account> lessorsList = List.of(testData.ACC_1, testData.ACC_7);
         doReturn(lessorsList).when(accountService).getLessors(testData.ACC_0, height);
         long lessorAdditionsSum = 500000L;
@@ -239,9 +245,9 @@ class AccountServiceTest {
         int height = 100_000;
         Block lastBlock = mock(Block.class);
         doReturn(1L).when(lastBlock).getPreviousBlockId();
-        doReturn(lastBlock).when(blockchain).getLastBlock();
+        doReturn(lastBlock).when(blockChainInfoService).getLastBlock();
         doReturn(height).when(lastBlock).getHeight();
-        doReturn(height).when(blockchain).getHeight();
+        doReturn(height).when(blockChainInfoService).getHeight();
 
         doReturn(firedEvent).when(accountEvent).select(literal(AccountEventType.BALANCE));
 
@@ -274,9 +280,9 @@ class AccountServiceTest {
         int height = 100_000;
         Block lastBlock = mock(Block.class);
         doReturn(1L).when(lastBlock).getPreviousBlockId();
-        doReturn(lastBlock).when(blockchain).getLastBlock();
+        doReturn(lastBlock).when(blockChainInfoService).getLastBlock();
         doReturn(height).when(lastBlock).getHeight();
-        doReturn(height).when(blockchain).getHeight();
+        doReturn(height).when(blockChainInfoService).getHeight();
 
         doReturn(firedEvent).when(accountEvent).select(literal(AccountEventType.BALANCE));
         doReturn(firedEvent).when(accountEvent).select(literal(AccountEventType.UNCONFIRMED_BALANCE));
@@ -314,9 +320,9 @@ class AccountServiceTest {
         int height = 100_000;
         Block lastBlock = mock(Block.class);
         doReturn(1L).when(lastBlock).getPreviousBlockId();
-        doReturn(lastBlock).when(blockchain).getLastBlock();
+        doReturn(lastBlock).when(blockChainInfoService).getLastBlock();
         doReturn(height).when(lastBlock).getHeight();
-        doReturn(height).when(blockchain).getHeight();
+        doReturn(height).when(blockChainInfoService).getHeight();
 
         doReturn(firedEvent).when(accountEvent).select(literal(AccountEventType.UNCONFIRMED_BALANCE));
 
@@ -337,4 +343,19 @@ class AccountServiceTest {
         verify(firedEventLedger, times(2)).fire(any(LedgerEntry.class));
     }
 
+    @Test
+    void testCheckAvailable_on_correct_height() {
+        doReturn(1440).when(blockchainConfig).getGuaranteedBalanceConfirmations();
+        doReturn(testData.ACC_BLOCKCHAIN_HEIGHT).when(blockChainInfoService).getHeight();
+        when(blockchain.getHeight()).thenReturn(testData.ACC_BLOCKCHAIN_HEIGHT);
+        when(accountTable.isMultiversion()).thenReturn(true);
+        assertDoesNotThrow(() -> accountService.checkAvailable(testData.ACC_BLOCKCHAIN_HEIGHT));
+    }
+
+    @Test
+    void testCheckAvailable_on_wrong_height() {
+        doReturn(1440).when(blockchainConfig).getGuaranteedBalanceConfirmations();
+        when(accountTable.isMultiversion()).thenReturn(true);
+        assertThrows(IllegalArgumentException.class, () -> accountService.checkAvailable(testData.ACC_BLOCKCHAIN_WRONG_HEIGHT));
+    }
 }

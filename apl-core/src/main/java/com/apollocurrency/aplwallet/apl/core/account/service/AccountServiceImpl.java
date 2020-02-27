@@ -28,13 +28,13 @@ import com.apollocurrency.aplwallet.apl.core.model.AplWalletKey;
 import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
 import com.apollocurrency.aplwallet.apl.core.model.Balances;
 import com.apollocurrency.aplwallet.apl.core.utils.AccountGeneratorUtil;
+import com.apollocurrency.aplwallet.apl.core.db.service.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Event;
-import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.Arrays;
@@ -58,36 +58,28 @@ public class AccountServiceImpl implements AccountService {
 
     private final AccountTable accountTable;
     private final AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
-    private final Blockchain blockchain;
     private final BlockchainConfig blockchainConfig;
     private final GlobalSync sync;
     private final AccountPublicKeyService accountPublicKeyService;
     private final Event<Account> accountEvent;
     private final Event<LedgerEntry> logLedgerEvent;
-    private BlockchainProcessor blockchainProcessor;
+    private final BlockChainInfoService blockChainInfoService;
 
     @Inject
-    public AccountServiceImpl(AccountTable accountTable, Blockchain blockchain, BlockchainConfig blockchainConfig,
+    public AccountServiceImpl(AccountTable accountTable, BlockchainConfig blockchainConfig,
                               GlobalSync sync,
                               AccountPublicKeyService accountPublicKeyService,
                               Event<Account> accountEvent, Event<LedgerEntry> logLedgerEvent,
-                              AccountGuaranteedBalanceTable accountGuaranteedBalanceTable) {
+                              AccountGuaranteedBalanceTable accountGuaranteedBalanceTable,
+                              BlockChainInfoService blockChainInfoService) {
         this.accountTable = accountTable;
-        this.blockchain = blockchain;
         this.blockchainConfig = blockchainConfig;
         this.sync = sync;
         this.accountPublicKeyService = accountPublicKeyService;
         this.accountEvent = accountEvent;
         this.logLedgerEvent = logLedgerEvent;
         this.accountGuaranteedBalanceTable = accountGuaranteedBalanceTable;
-    }
-
-    //TODO this lookup-method prevents the cyclic dependencies, need to be removed after refactoring the BlockchainProcessor class
-    protected BlockchainProcessor lookupBlockchainProcessor() {
-        if (this.blockchainProcessor == null) {
-            this.blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-        }
-        return blockchainProcessor;
+        this.blockChainInfoService = blockChainInfoService;
     }
 
     @Override
@@ -112,7 +104,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public Account getAccount(long id, int height) {
         DbKey dbKey = AccountTable.newKey(id);
-        Account account = accountTable.get(dbKey, height);
+        Account account = getAccount(dbKey, height);
         if (account == null) {
             PublicKey publicKey = accountPublicKeyService.loadPublicKeyFromDb(dbKey, height);
             if (publicKey != null) {
@@ -126,6 +118,24 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public Account getAccount(Account account) {
         return accountTable.get(account.getDbKey());
+    }
+
+    private Account getAccount(DbKey dbKey, int height) {
+        if (height < 0 || blockChainInfoService.doesNotExceed(height)) {
+            return accountTable.get(dbKey);
+        }
+        checkAvailable(height);
+        return accountTable.get(dbKey, height);
+    }
+
+    void checkAvailable(int height) {
+        if (height > blockchainConfig.getGuaranteedBalanceConfirmations()) {
+            blockChainInfoService.checkAvailable(height, accountTable.isMultiversion());
+            return;
+        }
+        if (height > blockChainInfoService.getHeight()) {
+            throw new IllegalArgumentException("Height " + height + " exceeds blockchain height " + blockChainInfoService.getHeight());
+        }
     }
 
     @Override
@@ -184,13 +194,13 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public void update(Account account) {
-        account.setHeight(blockchain.getHeight());
+        account.setHeight(blockChainInfoService.getHeight());
         if (account.getBalanceATM() == 0
                 && account.getUnconfirmedBalanceATM() == 0
                 && account.getForgedBalanceATM() == 0
                 && account.getActiveLesseeId() == 0
                 && account.getControls().isEmpty()) {
-            accountTable.delete(account, true, blockchain.getHeight());
+            accountTable.delete(account, true, blockChainInfoService.getHeight());
         } else {
             accountTable.insert(account);
         }
@@ -198,7 +208,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public List<Block> getAccountBlocks(long accountId, int timestamp, int from, int to){
-        return toList(blockchain.getBlocks(accountId, timestamp, from, to));
+        return toList(blockChainInfoService.getBlocks(accountId, timestamp, from, to));
     }
 
     /**
@@ -246,7 +256,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public long getGuaranteedBalanceATM(Account account) {
-        return getGuaranteedBalanceATM(account, blockchainConfig.getGuaranteedBalanceConfirmations(), blockchain.getHeight());
+        return getGuaranteedBalanceATM(account, blockchainConfig.getGuaranteedBalanceConfirmations(), blockChainInfoService.getHeight());
     }
 
     /**
@@ -258,15 +268,15 @@ public class AccountServiceImpl implements AccountService {
         sync.readLock();
         try {
             int height = currentHeight - numberOfConfirmations;
-            if (height + blockchainConfig.getGuaranteedBalanceConfirmations() < lookupBlockchainProcessor().getMinRollbackHeight()
-                    || height > blockchain.getHeight()) {
+            if (height + blockchainConfig.getGuaranteedBalanceConfirmations() < blockChainInfoService.getMinRollbackHeight()
+                    || height > blockChainInfoService.getHeight()) {
                 if(log.isDebugEnabled()) {
                     log.debug("GuaranteedBalance Restriction: if ({} < {} || {} > {}) throw ex.",
-                        height + blockchainConfig.getGuaranteedBalanceConfirmations(), blockchainProcessor.getMinRollbackHeight(),
-                        height, blockchain.getHeight());
+                        height + blockchainConfig.getGuaranteedBalanceConfirmations(), blockChainInfoService.getMinRollbackHeight(),
+                        height, blockChainInfoService.getHeight());
                 }
                 throw new IllegalArgumentException("Height " + height +
-                        " not available for guaranteed balance calculation, blockchain.Height="+blockchain.getHeight());
+                        " not available for guaranteed balance calculation, blockchain.Height="+ blockChainInfoService.getHeight());
             }
             Long sum = accountGuaranteedBalanceTable.getSumOfAdditions(account.getId(), height, currentHeight);
             if (sum == null) {
@@ -285,7 +295,7 @@ public class AccountServiceImpl implements AccountService {
         long total = 0L;
         Map<Long, Long> lessorsAdditions = accountGuaranteedBalanceTable.getLessorsAdditions(
                 lessors.stream().map(Account::getId).collect(Collectors.toList()),
-                height, blockchain.getHeight());
+                height, blockChainInfoService.getHeight());
         for (Account lessor : lessors) {
             long balance = lessor.getBalanceATM();
             Long additions = lessorsAdditions.get(lessor.getId());
@@ -308,8 +318,14 @@ public class AccountServiceImpl implements AccountService {
     @Deprecated
     @Override
     public DbIterator<Account> getLessorsIterator(Account account, int height) {
-        DbIterator<Account> iterator = accountTable.getManyBy(new DbClause.LongClause("active_lessee_id", account.getId()), height, 0, -1, " ORDER BY id ASC ");
-        return iterator;
+        final DbClause.LongClause clause =
+            new DbClause.LongClause("active_lessee_id", account.getId());
+        if (height < 0 || blockChainInfoService.doesNotExceed(height)) {
+            return accountTable.getManyBy(clause, 0, -1, " ORDER BY id ASC ");
+        }
+        checkAvailable(height);
+
+        return accountTable.getManyBy(clause, height, 0, -1, " ORDER BY id ASC ");
     }
 
     @Override
@@ -326,12 +342,12 @@ public class AccountServiceImpl implements AccountService {
         LedgerEntry entry;
         if (feeATM != 0) {
             entry = new LedgerEntry(LedgerEvent.TRANSACTION_FEE, eventId, account.getId(),
-                        LedgerHolding.APL_BALANCE, null, feeATM, account.getBalanceATM() - amountATM, blockchain.getLastBlock());
+                        LedgerHolding.APL_BALANCE, null, feeATM, account.getBalanceATM() - amountATM, blockChainInfoService.getLastBlock());
             logLedgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_ENTRY)).fire(entry);
         }
         if (amountATM != 0) {
             entry = new LedgerEntry(event, eventId, account.getId(),
-                        LedgerHolding.APL_BALANCE, null, amountATM, account.getBalanceATM(), blockchain.getLastBlock());
+                        LedgerHolding.APL_BALANCE, null, amountATM, account.getBalanceATM(), blockChainInfoService.getLastBlock());
             logLedgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_ENTRY)).fire(entry);
         }
     }
@@ -340,12 +356,12 @@ public class AccountServiceImpl implements AccountService {
         LedgerEntry entry;
         if (feeATM != 0) {
             entry = new LedgerEntry(LedgerEvent.TRANSACTION_FEE, eventId, account.getId(),
-                        LedgerHolding.UNCONFIRMED_APL_BALANCE, null, feeATM, account.getUnconfirmedBalanceATM() - amountATM, blockchain.getLastBlock());
+                        LedgerHolding.UNCONFIRMED_APL_BALANCE, null, feeATM, account.getUnconfirmedBalanceATM() - amountATM, blockChainInfoService.getLastBlock());
             logLedgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_UNCONFIRMED_ENTRY)).fire(entry);
         }
         if (amountATM != 0) {
             entry = new LedgerEntry(event, eventId, account.getId(),
-                        LedgerHolding.UNCONFIRMED_APL_BALANCE, null, amountATM, account.getUnconfirmedBalanceATM(), blockchain.getLastBlock());
+                        LedgerHolding.UNCONFIRMED_APL_BALANCE, null, amountATM, account.getUnconfirmedBalanceATM(), blockChainInfoService.getLastBlock());
             logLedgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_UNCONFIRMED_ENTRY)).fire(entry);
         }
     }
@@ -365,11 +381,11 @@ public class AccountServiceImpl implements AccountService {
         if (feeATM != 0 && log.isTraceEnabled()){
             log.trace("Add c balance for {} from {} , amount - {}, total conf- {}, height- {}",
                     account.getId(), last3Stacktrace(),
-                    amountATM, amountATM + account.getBalanceATM(), blockchain.getHeight());
+                    amountATM, amountATM + account.getBalanceATM(), blockChainInfoService.getHeight());
         }
         long totalAmountATM = Math.addExact(amountATM, feeATM);
         account.setBalanceATM(Math.addExact(account.getBalanceATM(), totalAmountATM));
-        accountGuaranteedBalanceTable.addToGuaranteedBalanceATM(account.getId(), totalAmountATM, blockchain.getHeight());
+        accountGuaranteedBalanceTable.addToGuaranteedBalanceATM(account.getId(), totalAmountATM, blockChainInfoService.getHeight());
         AccountService.checkBalance(account.getId(), account.getBalanceATM(), account.getUnconfirmedBalanceATM());
         update(account);
 
@@ -381,7 +397,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public  void addToBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM) {
         if(log.isTraceEnabled()) {
-            log.trace("Add c balance for {} from {} , amount - {}, total conf- {}, height -{}", account.getId(), last3Stacktrace(), amountATM, amountATM + account.getBalanceATM(), blockchain.getHeight());
+            log.trace("Add c balance for {} from {} , amount - {}, total conf- {}, height -{}", account.getId(), last3Stacktrace(), amountATM, amountATM + account.getBalanceATM(), blockChainInfoService.getHeight());
         }
         addToBalanceATM(account, event, eventId, amountATM, 0);
     }
@@ -394,12 +410,12 @@ public class AccountServiceImpl implements AccountService {
         if (feeATM != 0 && log.isTraceEnabled()){
             log.trace("Add u balance for {} from {} , amount - {}, total unc {}, height - {}",
                     account.getId(), last3Stacktrace(),
-                    amountATM, amountATM + account.getUnconfirmedBalanceATM(), blockchain.getHeight());
+                    amountATM, amountATM + account.getUnconfirmedBalanceATM(), blockChainInfoService.getHeight());
         }
         long totalAmountATM = Math.addExact(amountATM, feeATM);
         account.setBalanceATM(Math.addExact(account.getBalanceATM(), totalAmountATM));
         account.setUnconfirmedBalanceATM(Math.addExact(account.getUnconfirmedBalanceATM(), totalAmountATM));
-        accountGuaranteedBalanceTable.addToGuaranteedBalanceATM(account.getId(), totalAmountATM, blockchain.getHeight());
+        accountGuaranteedBalanceTable.addToGuaranteedBalanceATM(account.getId(), totalAmountATM, blockChainInfoService.getHeight());
         AccountService.checkBalance(account.getId(), account.getBalanceATM(), account.getUnconfirmedBalanceATM());
         update(account);
 
@@ -420,7 +436,7 @@ public class AccountServiceImpl implements AccountService {
         if (log.isTraceEnabled()){
             log.trace("Add c and  u balance for {} from {} , amount - {}, total conf- {}, total unc {}, height {}",
                     account.getId(), last3Stacktrace(),
-                    amountATM, amountATM + account.getBalanceATM(), amountATM + account.getUnconfirmedBalanceATM(), blockchain.getHeight());
+                    amountATM, amountATM + account.getBalanceATM(), amountATM + account.getUnconfirmedBalanceATM(), blockChainInfoService.getHeight());
         }
         addToBalanceAndUnconfirmedBalanceATM(account, event, eventId, amountATM, 0);
     }
@@ -433,7 +449,7 @@ public class AccountServiceImpl implements AccountService {
         if (feeATM!=0 && log.isTraceEnabled()){
             log.trace("Add u balance for {} from {} , amount - {}, total unc {}, height - {}",
                     account.getId(), last3Stacktrace(),
-                    amountATM, amountATM + account.getUnconfirmedBalanceATM(), blockchain.getHeight());
+                    amountATM, amountATM + account.getUnconfirmedBalanceATM(), blockChainInfoService.getHeight());
         }
         long totalAmountATM = Math.addExact(amountATM, feeATM);
         account.setUnconfirmedBalanceATM(Math.addExact(account.getUnconfirmedBalanceATM(), totalAmountATM));
@@ -454,7 +470,7 @@ public class AccountServiceImpl implements AccountService {
         if (log.isTraceEnabled()){
             log.trace("Add u balance for {} from {} , amount - {}, total unc {}, height - {}",
                     account.getId(), last3Stacktrace(),
-                    amountATM, amountATM + account.getUnconfirmedBalanceATM(), blockchain.getHeight());
+                    amountATM, amountATM + account.getUnconfirmedBalanceATM(), blockChainInfoService.getHeight());
         }
         addToUnconfirmedBalanceATM(account, event, eventId, amountATM, 0);
     }
@@ -487,12 +503,12 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public int getBlockchainHeight() {
-        return blockchain.getHeight();
+        return blockChainInfoService.getHeight();
     }
 
     @Override
     public Balances getAccountBalances(Account account, boolean includeEffectiveBalance){
-        return getAccountBalances(account, includeEffectiveBalance, blockchain.getHeight());
+        return getAccountBalances(account, includeEffectiveBalance, blockChainInfoService.getHeight());
     }
 
     @Override
@@ -507,7 +523,7 @@ public class AccountServiceImpl implements AccountService {
         balances.setForgedBalanceATM(account.getForgedBalanceATM());
 
         if (includeEffectiveBalance) {
-            balances.setEffectiveBalanceAPL(getEffectiveBalanceAPL(account, blockchain.getHeight(), false));
+            balances.setEffectiveBalanceAPL(getEffectiveBalanceAPL(account, blockChainInfoService.getHeight(), false));
             balances.setGuaranteedBalanceATM(getGuaranteedBalanceATM(account, blockchainConfig.getGuaranteedBalanceConfirmations(), height));
         }
 

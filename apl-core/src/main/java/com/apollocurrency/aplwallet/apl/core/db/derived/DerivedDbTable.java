@@ -111,7 +111,7 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
     }
 
     @Override
-    public boolean delete(T t) {
+    public boolean deleteAtHeight(T t, int height) {
         throw new UnsupportedOperationException("Delete is not supported");
     }
 

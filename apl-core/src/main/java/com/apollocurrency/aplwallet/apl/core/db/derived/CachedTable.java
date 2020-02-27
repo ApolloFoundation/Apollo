@@ -43,8 +43,8 @@ public class CachedTable<T extends DerivedEntity> extends DbTableWrapper<T> {
     }
 
     @Override
-    public boolean delete(T t) {
-        boolean rc = super.delete(t);
+    public boolean deleteAtHeight(T t, int height) {
+        boolean rc = super.deleteAtHeight(t, height);
         if (rc){
             log.trace("--cache-- remove  dbKey={} height={}", t.getDbKey(), t.getHeight());
             cache.invalidate(t.getDbKey());

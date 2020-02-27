@@ -80,7 +80,7 @@ public class AccountPropertyServiceImpl implements AccountPropertyService {
             throw new RuntimeException("Property " + Long.toUnsignedString(propertyId) + " cannot be deleted by " + Long.toUnsignedString(account.getId()));
         }
         accountProperty.setHeight(blockchain.getHeight());
-        accountPropertyTable.delete(accountProperty);
+        accountPropertyTable.deleteAtHeight(accountProperty, blockchain.getHeight());
         accountEvent.select(literal(AccountEventType.DELETE_PROPERTY)).fire(account);
         accountPropertyEvent.select(literal(AccountEventType.DELETE_PROPERTY)).fire(accountProperty);
     }

@@ -363,7 +363,7 @@ public final class ShufflingParticipant {
     }
 
     void delete() {
-        shufflingParticipantTable.delete(this);
+        shufflingParticipantTable.deleteAtHeight(this, blockchain.getHeight());
     }
 
 }
