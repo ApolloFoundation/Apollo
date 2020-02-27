@@ -6,6 +6,9 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -24,7 +27,6 @@ import com.apollocurrency.aplwallet.api.dto.info.BlockchainStateDto;
 import com.apollocurrency.aplwallet.api.dto.info.BlockchainStatusDto;
 import com.apollocurrency.aplwallet.api.dto.info.TimeDto;
 import com.apollocurrency.aplwallet.api.dto.info.TotalSupplyDto;
-import com.apollocurrency.aplwallet.apl.core.rest.RestParameters;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -65,12 +67,11 @@ public class ServerInfoController {
     @PermitAll
     public Response counts(
         @Parameter(name = "numberOfAccounts", description = "number Of returned Accounts", allowEmptyValue = true)
-            @QueryParam("numberOfAccounts") String numberOfAccountsStr
+            @QueryParam("numberOfAccounts") @Min(Constants.MIN_TOP_ACCOUNTS_NUMBER) @Max(Constants.MAX_TOP_ACCOUNTS_NUMBER)
+                @DefaultValue("50") Integer numberOfAccounts
     ) {
-        log.debug("Started counts : \t'numberOfAccounts' = {}", numberOfAccountsStr);
+        log.debug("Started counts : \t'numberOfAccounts' = {}", numberOfAccounts);
         ResponseBuilder response = ResponseBuilder.startTiming();
-        int numberOfAccounts = RestParameters.parseInt(numberOfAccountsStr, "numberOfAccounts",
-            Constants.MIN_TOP_ACCOUNTS_NUMBER, Constants.MAX_TOP_ACCOUNTS_NUMBER, false);
         int numberOfAccountsMax = Math.max(numberOfAccounts, Constants.MIN_TOP_ACCOUNTS_NUMBER);
 
         AccountsCountDto dto = serverInfoService.getAccountsStatistic(numberOfAccountsMax);
