@@ -294,15 +294,14 @@ public class TestBaseNew extends TestBase {
     public VaultWalletResponse exportSecretFile(Wallet wallet) {
         String path = "/rest/keyStore/download";
         HashMap<String, String> param = new HashMap();
-        param.put(ReqParam.ACCOUNT, wallet.getUser());
-        param.put(ReqParam.PASS_PHRASE, wallet.getPass());
-
+        param = restHelper.addWalletParameters(param,wallet);
         return given().log().all()
-                .spec(restHelper.getSpec())
-                .contentType(ContentType.URLENC)
-                .formParams(param)
-                .when()
-                .post(path).as(VaultWalletResponse.class);
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .post(path).as(VaultWalletResponse.class);
+
     }
 
     @Override
