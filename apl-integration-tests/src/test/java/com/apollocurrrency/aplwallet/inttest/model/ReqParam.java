@@ -4,7 +4,7 @@ public class ReqParam {
     public static final String ACCOUNT = "account";
     public static final String SECRET_PHRASE = "secretPhrase";
     public static final String SENDER = "sender";
-    public static final String PASSPHRASE = "passphrase";
+    public static final String PASS_PHRASE = "passphrase";
     public static final String ADMIN_PASSWORD = "adminPassword";
     public static final String TRANSACTION = "transaction";
     public static final String RECIPIENT = "recipient";
@@ -149,5 +149,24 @@ public class ReqParam {
     public static final String CHANNEL = "channel";
     public static final String AMOUNT_OF_TIME = "amountOfTime";
     public static final String TAG = "tag";
+    public static final String ORDER_TYPE = "orderType";
+    public static final String PAIR_CURRENCY = "pairCurrency";
+    public static final String STATUS = "status";
+    public static final String ACCOUNT_ID = "accountId";
+    public static final String RESOLUTION = "resolution";
+    public static final String FROM = "from";
+    public static final String TO = "to";;
+    public static final String SYMBOL = "symbol";
+    public static final String ETH = "eth";
+    public static final String FROM_ADDRESS = "fromAddress";
+    public static final String TO_ADDRESS = "toAddress";
+    public static final String TRANSFER_FEE = "transferFee";
+    public static final String CRYPTO_CURRENCY = "cryptocurrency";
+    public static final String ORDER_ID = "orderId";
+    public static final String OFFER_TYPE = "offerType";
+    public static final String PAIR_RATE = "pairRate";
+    public static final String OFFER_AMOUNT = "offerAmount";
+    public static final String ETH_WALLET_ADDRESS = "walletAddress";
+
 
 }

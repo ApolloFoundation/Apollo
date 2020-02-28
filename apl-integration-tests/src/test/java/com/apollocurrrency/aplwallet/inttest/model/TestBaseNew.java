@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.api.dto.BlockDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockchainInfoDTO;
 import com.apollocurrency.aplwallet.api.dto.Currency;
 import com.apollocurrency.aplwallet.api.dto.DexOrderDto;
-import com.apollocurrency.aplwallet.api.dto.DexTradeInfoDto;
 import com.apollocurrency.aplwallet.api.dto.ECBlockDTO;
 import com.apollocurrency.aplwallet.api.dto.EntryDTO;
 import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
@@ -80,6 +79,11 @@ import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class TestBaseNew extends TestBase {
+    private final int ETH = 1;
+    private final int PAX = 2;
+
+    private final int ORDER_SELL = 1;
+    private final int ORDER_BUY = 0;
 
     @Step
     @DisplayName("Get Transaction")
@@ -269,9 +273,9 @@ public class TestBaseNew extends TestBase {
     public Account2FAResponse deleteSecretFile(Wallet wallet) throws JsonProcessingException {
         //TODO: Change on REST Easy
         HashMap<String, String> param = new HashMap();
-        param.put(RequestType.requestType.toString(), RequestType.deleteKey.toString());
-        param.put(Parameters.account.toString(), wallet.getUser());
-        param.put(Parameters.passphrase.toString(), wallet.getPass());
+        param.put(ReqType.REQUEST_TYPE, ReqType.DELETE_KEY);
+        param.put(ReqParam.ACCOUNT, wallet.getUser());
+        param.put(ReqParam.PASS_PHRASE, wallet.getPass());
         String path = "/apl";
         return given().log().all()
                 .spec(restHelper.getSpec())
@@ -288,11 +292,11 @@ public class TestBaseNew extends TestBase {
     @Override
     @Step("Export Secret File")
     public VaultWalletResponse exportSecretFile(Wallet wallet) {
-        HashMap<String, String> param = new HashMap();
-        param.put("account", wallet.getUser());
-        param.put("passPhrase", wallet.getPass());
-
         String path = "/rest/keyStore/download";
+        HashMap<String, String> param = new HashMap();
+        param.put(ReqParam.ACCOUNT, wallet.getUser());
+        param.put(ReqParam.PASS_PHRASE, wallet.getPass());
+
         return given().log().all()
                 .spec(restHelper.getSpec())
                 .contentType(ContentType.URLENC)
@@ -318,12 +322,12 @@ public class TestBaseNew extends TestBase {
     @Override
     @Step("Enable 2FA")
     public AccountDTO enable2FA(Wallet wallet) throws JsonProcessingException {
-        //TODO: Change on REST Easy
+        String path = "/apl";
         HashMap<String, String> param = new HashMap();
-        param.put(RequestType.requestType.toString(), RequestType.enable2FA.toString());
+
+        param.put(ReqType.REQUEST_TYPE, ReqType.ENABLE_2FA);
         param = restHelper.addWalletParameters(param, wallet);
 
-        String path = "/apl";
         return given().log().all()
                 .spec(restHelper.getSpec())
                 .contentType(ContentType.URLENC)
@@ -377,10 +381,11 @@ public class TestBaseNew extends TestBase {
     @Override
     @Step("Get Block")
     public BlockDTO getBlock(String block) throws JsonProcessingException {
-        //TODO: Change on REST Easy
-        HashMap<String, String> param = new HashMap();
-        param.put(RequestType.requestType.toString(), RequestType.getBlock.toString());
         String path = "/apl";
+
+        HashMap<String, String> param = new HashMap();
+        param.put(ReqType.REQUEST_TYPE, ReqType.GET_BLOCK);
+
         return given().log().all()
                 .spec(restHelper.getSpec())
                 .contentType(ContentType.URLENC)
@@ -394,11 +399,12 @@ public class TestBaseNew extends TestBase {
     }
 
     @Step("Get Last Block")
-    public BlockDTO getLastBlock(String peer) throws JsonProcessingException {
-        //TODO: Change on REST Easy
-        HashMap<String, String> param = new HashMap();
-        param.put(RequestType.requestType.toString(), RequestType.getBlock.toString());
+    public BlockDTO getLastBlock(String peer){
         String path = "/apl";
+
+        HashMap<String, String> param = new HashMap();
+        param.put(ReqType.REQUEST_TYPE, ReqType.GET_BLOCK);
+
         return given()
                 .baseUri(String.format("http://%s:%s", peer, TestConfiguration.getTestConfiguration().getPort()))
                 .contentType(ContentType.URLENC)
@@ -415,13 +421,14 @@ public class TestBaseNew extends TestBase {
     @Override
     @Step("Get Dex Orders with param: Type {orderType}, Pair Currency {pairCurrency}, Order Status {status}, AccountId {accountId}")
     public List<DexOrderDto> getDexOrders(String orderType, String pairCurrency, String status, String accountId) {
-        HashMap<String, String> param = new HashMap();
-        param.put("orderType", orderType);
-        param.put("pairCurrency", pairCurrency);
-        param.put("status", status);
-        param.put("accountId", accountId);
-
         String path = "/rest/dex/offers";
+
+        HashMap<String, String> param = new HashMap();
+        param.put(ReqParam.ORDER_TYPE, orderType);
+        param.put(ReqParam.PAIR_CURRENCY, pairCurrency);
+        param.put(ReqParam.STATUS, status);
+        param.put(ReqParam.ACCOUNT_ID, accountId);
+
         return given().log().all()
                 .spec(restHelper.getSpec())
                 .formParams(param)
@@ -433,11 +440,11 @@ public class TestBaseNew extends TestBase {
     @Override
     @Step("Get Dex Orders with param: Order Status {status}, AccountId {accountId}")
     public List<DexOrderDto> getDexOrders(String status, String accountId) {
-        HashMap<String, String> param = new HashMap();
-        param.put("status", status);
-        param.put("accountId", accountId);
-
         String path = "/rest/dex/offers";
+        HashMap<String, String> param = new HashMap();
+        param.put(ReqParam.STATUS, status);
+        param.put(ReqParam.ACCOUNT_ID, accountId);
+
         return given().log().all()
             .spec(restHelper.getSpec())
             .formParams(param)
@@ -449,10 +456,11 @@ public class TestBaseNew extends TestBase {
     @Override
     @Step
     public List<DexOrderDto> getDexOrders(String accountId) {
-        HashMap<String, String> param = new HashMap();
-        param.put("accountId", accountId);
-
         String path = "/rest/dex/offers";
+
+        HashMap<String, String> param = new HashMap();
+        param.put(ReqParam.ACCOUNT_ID, accountId);
+
         return given().log().all()
                 .spec(restHelper.getSpec())
                 .formParams(param)
@@ -476,21 +484,19 @@ public class TestBaseNew extends TestBase {
     @Override
     @Step("Get Dex History (CLOSED ORDERS) with param: Account: {0}, Pair: {1} , Type: {2}")
     public List<DexOrderDto> getDexHistory(String account, boolean isEth, boolean isSell) {
-        HashMap<String, String> param = new HashMap();
-        param.put("accountId", account);
-        param.put("status", "5");
-        if (isEth) {
-            param.put("pairCurrency", "1");
-        } else {
-            param.put("pairCurrency", "2");
-        }
-        if (isSell) {
-            param.put("orderType", "1");
-        } else {
-            param.put("orderType", "0");
-        }
-
         String path = "/rest/dex/offers";
+
+
+        HashMap<String, String> param = new HashMap();
+        param.put(ReqParam.ACCOUNT_ID, account);
+        param.put(ReqParam.STATUS, "5");
+
+        int pair = (isEth)? ETH : PAX;
+        int orderType = (isSell)? ORDER_SELL : ORDER_BUY;
+
+        param.put(ReqParam.PAIR_CURRENCY, String.valueOf(pair));
+        param.put(ReqParam.ORDER_TYPE, String.valueOf(orderType));
+
         return given().log().all()
                 .spec(restHelper.getSpec())
                 .formParams(param)
@@ -502,11 +508,12 @@ public class TestBaseNew extends TestBase {
     @Override
     @Step("Get Dex History (CLOSED ORDERS) for certain account")
     public List<DexOrderDto> getDexHistory(String account) {
-        HashMap<String, String> param = new HashMap();
-        param.put("accountId", account);
-        param.put("status", "5");
-
         String path = "/rest/dex/offers";
+
+        HashMap<String, String> param = new HashMap();
+        param.put(ReqParam.ACCOUNT_ID, account);
+        param.put(ReqParam.STATUS, "5");
+
         return given().log().all()
                 .spec(restHelper.getSpec())
                 .formParams(param)
@@ -528,20 +535,20 @@ public class TestBaseNew extends TestBase {
     @Override
     @Step("Get history for certain Currency and period")
     public TradingDataOutputDTO getDexTradeInfo(boolean isEth, String resolution) {
+        String path = "/rest/dex/history";
         HashMap<String, String> param = new HashMap();
         Date today = Calendar.getInstance().getTime();
         long epochTime = today.getTime();
-        param.put("resolution", resolution);
-        param.put("from", String.valueOf(epochTime/1000-864000));
-        param.put("to", String.valueOf(epochTime/1000));
+
+        param.put(ReqParam.RESOLUTION, resolution);
+        param.put(ReqParam.FROM, String.valueOf(epochTime/1000-864000));
+        param.put(ReqParam.TO, String.valueOf(epochTime/1000));
         log.info("start = " + (epochTime/1000-864000));
         log.info("finish = " + (epochTime/1000));
-        if (isEth) {
-            param.put("symbol", "APL_ETH");
-        } else {
-            param.put("symbol", "APL_PAX");
-        }
-        String path = "/rest/dex/history";
+
+        String pair = (isEth)? "APL_ETH" : "APL_PAX";
+        param.put(ReqParam.SYMBOL, pair);
+
         return given().log().all()
                 .spec(restHelper.getSpec())
                 .formParams(param)
@@ -554,10 +561,11 @@ public class TestBaseNew extends TestBase {
     @Override
     @Step("dexGetBalances endpoint returns cryptocurrency wallets' (ETH/PAX) balances")
     public Account2FAResponse getDexBalances(String ethAddress) {
-        HashMap<String, String> param = new HashMap();
-        param.put("eth", ethAddress);
-
         String path = "/rest/dex/balance";
+
+        HashMap<String, String> param = new HashMap();
+        param.put(ReqParam.ETH, ethAddress);
+
         return given().log().all()
                 .spec(restHelper.getSpec())
                 .formParams(param)
@@ -569,20 +577,20 @@ public class TestBaseNew extends TestBase {
     @Override
     @Step
     public WithdrawResponse dexWidthraw(String fromAddress, Wallet wallet, String toAddress, String amount, String transferFee, boolean isEth) {
-        HashMap<String, String> param = new HashMap();
-        param.put("fromAddress", fromAddress);
-        param.put("sender", wallet.getAccountId());
-        param.put("passphrase", wallet.getPass());
-        param.put("toAddress", toAddress);
-        param.put("amount", amount);
-        param.put("transferFee", transferFee);
-        if (isEth) {
-            param.put("cryptocurrency", "1");
-        } else {
-            param.put("cryptocurrency", "2");
-        }
-
         String path = "/rest/dex/withdraw";
+
+        HashMap<String, String> param = new HashMap();
+        param = restHelper.addWalletParameters(param,wallet);
+        param.put(ReqParam.FROM_ADDRESS, fromAddress);
+        param.put(ReqParam.TO_ADDRESS, toAddress);
+        param.put(ReqParam.AMOUNT, amount);
+        param.put(ReqParam.TRANSFER_FEE, transferFee);
+        final int eth = 1;
+        final int pax = 2;
+
+        int cryptocurrency = (isEth)? eth : pax;
+        param.put(ReqParam.CRYPTO_CURRENCY, String.valueOf(cryptocurrency));
+
         return given().log().all()
                 .spec(restHelper.getSpec())
                 .contentType(ContentType.URLENC)
@@ -591,21 +599,18 @@ public class TestBaseNew extends TestBase {
                 .post(path)
                 .as(WithdrawResponse.class);
 
-
-        //.post(path).as(WithdrawResponse.class);
-        //.getBody().jsonPath().getList("", WithdrawResponse.class);
     }
 
     @Override
     @Step
     public CreateTransactionResponse dexCancelOrder(String orderId, Wallet wallet) {
         HashMap<String, String> param = new HashMap();
-        param.put("orderId", orderId);
-        param.put("sender", wallet.getUser());
-        param.put("passphrase", wallet.getPass());
-        param.put("feeATM", "100000000");
-
         String path = "/rest/dex/offer/cancel";
+
+        param = restHelper.addWalletParameters(param,wallet);
+        param.put(ReqParam.ORDER_ID, orderId);
+        param.put(ReqParam.FEE, "100000000");
+
         return given().log().all()
                 .spec(restHelper.getSpec())
                 .contentType(ContentType.URLENC)
@@ -618,26 +623,22 @@ public class TestBaseNew extends TestBase {
     @Override
     @Step
     public CreateDexOrderResponse createDexOrder(String pairRate, String offerAmount, Wallet wallet, boolean isBuyOrder, boolean isEth) {
-        HashMap<String, String> param = new HashMap();
-        if (isBuyOrder) {
-            param.put("offerType", "0");
-        } else {
-            param.put("offerType", "1");
-        }
-        if (isEth) {
-            param.put("pairCurrency", "1");
-        } else {
-            param.put("pairCurrency", "2");
-        }
-        param.put("pairRate", pairRate);
-        param.put("offerAmount", offerAmount + "000000000");
-        param.put("sender", wallet.getUser());
-        param.put("passphrase", wallet.getPass());
-        param.put("walletAddress", wallet.getEthAddress());
-        param.put("amountOfTime", "86400");
-        param.put("feeATM", "200000000");
-
         String path = "/rest/dex/offer";
+        HashMap<String, String> param = new HashMap();
+        param = restHelper.addWalletParameters(param,wallet);
+
+        int offerType = (isBuyOrder) ? ORDER_BUY : ORDER_SELL;
+        int pairCurrency = (isEth) ? ETH : PAX;
+
+        param.put(ReqParam.OFFER_TYPE, String.valueOf(offerType));
+        param.put(ReqParam.PAIR_CURRENCY, String.valueOf(pairCurrency));
+
+        param.put(ReqParam.PAIR_RATE, pairRate);
+        param.put(ReqParam.OFFER_AMOUNT, offerAmount + "000000000");
+        param.put(ReqParam.ETH_WALLET_ADDRESS, wallet.getEthAddress());
+        param.put(ReqParam.AMOUNT_OF_TIME, "86400");
+        param.put(ReqParam.FEE, "200000000");
+
         return given().log().all()
             .spec(restHelper.getSpec())
             .contentType(ContentType.URLENC)

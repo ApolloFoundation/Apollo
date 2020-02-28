@@ -57,7 +57,7 @@ public class RestHelper {
             param.put(ReqParam.SECRET_PHRASE, wallet.getPass());
         } else {
             param.put(ReqParam.SENDER, wallet.getUser());
-            param.put(ReqParam.PASSPHRASE, wallet.getPass());
+            param.put(ReqParam.PASS_PHRASE, wallet.getPass());
         }
         return param;
     }
