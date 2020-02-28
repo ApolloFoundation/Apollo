@@ -33,6 +33,7 @@ public class ApiSplitFilter implements Filter{
      */
     public static boolean isCoreReady = false;
 
+
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
 
@@ -99,8 +100,8 @@ public class ApiSplitFilter implements Filter{
             Map<String, String[]> params = rq.getParameterMap();
             String ps = "";
             ps=params.keySet().stream().map(k -> "\n\t" + "Name:>" + k + "< Value: >" + Arrays.toString(params.get(k))).reduce(ps, String::concat) + "<";
-            log.trace("Request parameters: {}", ps);
-        }
+            log.trace("Request parameters: {}",ps);
+}
     }
 
 }

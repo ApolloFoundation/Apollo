@@ -7,11 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.converter;
 import com.apollocurrency.aplwallet.api.dto.*;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
-import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class WalletKeysConverter implements Converter<WalletKeysInfo, WalletKeysInfoDTO> {
 

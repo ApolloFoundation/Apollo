@@ -55,6 +55,10 @@ public final class Convert2 {
         validate();
         return blockchainConfig.getAccountPrefix() + "-" + Crypto.rsEncode(accountId);
     }
+
+    public static String rsAccount(String accountPrefix, long accountId) {
+        return accountPrefix + "-" + Crypto.rsEncode(accountId);
+    }
     //avoid static initialization chain when call Constants.ACCOUNT_PREFIX in rsAccount method
     public static String defaultRsAccount(long accountId) {
         return  "APL-" + Crypto.rsEncode(accountId);

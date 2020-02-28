@@ -40,7 +40,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT
 import javax.enterprise.inject.Vetoed;
 import static org.slf4j.LoggerFactory.getLogger;
 
-
+@Deprecated
 @Vetoed
 public final class DetectMimeType extends AbstractAPIRequestHandler {
     private static final Logger LOG = getLogger(DetectMimeType.class);

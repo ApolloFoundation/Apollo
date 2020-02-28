@@ -13,8 +13,8 @@ public enum ApiErrors implements ErrorInfo {
 
     CONSTRAINT_VIOLATION(4, 2001, "Constraint violation [%s]."),
     MISSING_PARAM_LIST(3, 2002, "At least one of [%s] must be specified."),
-    MISSING_PARAM(3, 2003, "The mandatory parameter '%s' is not specified."),
-    INCORRECT_VALUE(4, 2004, "Incorrect {0} value, [{1}] is not defined or wrong"),
+    MISSING_PARAM(3, 2003, "The mandatory parameter ''{0}'' is not specified."),
+    INCORRECT_VALUE(4, 2004, "Incorrect ''{0}'' value, [{1}] is not defined or wrong"),
     UNKNOWN_VALUE(5, 2005, "Unknown {0} : {1}"),
     OUT_OF_RANGE(4, 2006, "{0} is not in range [{1}..{2}]"),
     PEER_NOT_CONNECTED(5, 2007, "Peer not connected."),
@@ -22,17 +22,20 @@ public enum ApiErrors implements ErrorInfo {
     FAILED_TO_ADD_PEER(8, 2009, "Failed to add peer %s"),
     ACCOUNT_GENERATION_ERROR(6, 2010, "Error occurred during account generation."),
     ONLY_ONE_OF_PARAM_LIST(6, 2011, "Not more than one of [%s] can be specified."),
-    INCORRECT_PARAM_VALUE(4, 2012, "Incorrect %s"),
-    INCORRECT_PARAM(4, 2012, "Incorrect {0}, {1}"),
-    ACCOUNT_2FA_ERROR(22, 2013, "%s"),
-    NO_PASSWORD_IN_CONFIG(8, 2014, "Administrator's password is not configured. Please set apl.adminPassword"),
-    UNKNOWN_SERVER_ERROR(1, 2015, "Unknown server error: '%s', see stacktrace for details"),
-    WEB3J_CRYPTO_ERROR(-1, 2016, "Web3j crypto error: '%s', see stacktrace for details"),
-    ETH_NODE_ERROR(-1, 2017, "Unable to query eth node: '%s'"),
-    PARAM_GREATER_OR_EQUAL_ERROR(4, 2018, "''{0}'' is greater or equal to ''{1}''"),
-    DEX_NOT_ENOUGH_AMOUNT(6, 2019, "Not enough %s"),
-    DEX_NOT_ENOUGH_FEE(6, 2019, "Not enough {0} for a fee. Min value is {1} {0}")
-    ;
+    INCORRECT_PARAM_VALUE(4, 2012, "Incorrect ''{0}''"),
+    INCORRECT_PARAM(4, 2013, "Incorrect {0}, {1}"),
+    ACCOUNT_2FA_ERROR(22, 2014, "%s"),
+    NO_PASSWORD_IN_CONFIG(8, 2015, "Administrator's password is not configured. Please set apl.adminPassword"),
+    UNKNOWN_SERVER_ERROR(1, 2016, "Unknown server error: '%s', see stacktrace for details"),
+    WEB3J_CRYPTO_ERROR(-1, 2017, "Web3j crypto error: '%s', see stacktrace for details"),
+    ETH_NODE_ERROR(-1, 2018, "Unable to query eth node: '%s'"),
+    PARAM_GREATER_OR_EQUAL_ERROR(4, 2019, "''{0}'' is greater or equal to ''{1}''"),
+    DEX_NOT_ENOUGH_AMOUNT(6, 2020, "Not enough %s"),
+    DEX_NOT_ENOUGH_FEE(6, 2021, "Not enough {0} for a fee. Min value is {1} {0}"),
+    OUT_OF_RANGE_NAME_VALUE(4, 2022, "param ''{0}'' with value ''{1}'' is not within range [{2}..{3}]"),
+    REST_API_SERVER_ERROR(1, 2023, "REST API error: ''%s'', see server's log for details"),
+    OVERFLOW(11, 2024, "Overflow for value ''{0}''"),
+    OVERFLOW_PARAM(11, 2025, "Overflow in param name ''{0}'' for value ''{1}''");
 
     private int oldErrorCode;
     private int errorCode;

@@ -22,7 +22,6 @@ public class NewApiRegistry {
         apis.put("getEthWalletAmount", "/rest/wallet/eth");
         apis.put("getEthWalletTransfer", "/rest/wallet/eth/transfer");
 
-
         apis.put("getDexHistory", "/rest/dex/history");
         apis.put("getDexOffers", "/rest/dex/offers");
         apis.put("getDexOrders", "/rest/dex/order");
@@ -53,7 +52,14 @@ public class NewApiRegistry {
         apis.put("getAccountCurrencies", "/rest/accounts/currencies"); //GET
         apis.put("getAccountCurrentAskOrderIds", "/rest/accounts/current-ask-order-ids"); //GET
 
-
+        apis.put("encodeQRCode", "/rest/utils/qrcode/encoding"); //POST
+        apis.put("decodeQRCode", "/rest/utils/qrcode/decoding"); //POST
+//        apis.put("detectMimeType", "/rest/utils/detect/mime-type"); //POST - different with OLD api
+        apis.put("fullHashToId", "/rest/utils/fullhash/toid"); //GET
+        apis.put("hexConvert", "/rest/utils/convert/hex"); //GET
+        apis.put("longConvert", "/rest/utils/convert/long"); //GET
+        apis.put("rsConvert", "/rest/utils/convert/rs"); //GET
+        apis.put("hash", "/rest/utils/hash"); //GET
 
         //TODO: add new implemented endpoints
     }
