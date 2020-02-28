@@ -35,11 +35,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.addParameters;
-import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.getInstanse;
 import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.getTestConfiguration;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccount;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccountId;
 import static com.github.automatedowl.tools.AllureEnvironmentWriter.allureEnvironmentWriter;
 import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -61,6 +57,7 @@ public abstract class TestBase implements ITest {
             .httpClient(HttpClientConfig.httpClientConfig()
                 .setParam(CoreConnectionPNames.CONNECTION_TIMEOUT, 10000)
                 .setParam(CoreConnectionPNames.SO_TIMEOUT, 10000));
+
         restHelper = RestHelper.getRestHelper();
         retryPolicy = new RetryPolicy()
                 .retryWhen(false)
@@ -140,9 +137,11 @@ public abstract class TestBase implements ITest {
 
         if (getBalanceSetUP(TestConfiguration.getTestConfiguration().getVaultWallet()).getBalanceATM() < 90000000000000L) {
             log.info("Send money on: "+TestConfiguration.getTestConfiguration().getVaultWallet());
+
             transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getGenesisWallet(),
                     TestConfiguration.getTestConfiguration().getVaultWallet().getUser(), 1000000);
             verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
+
             log.info("Verify account: "+TestConfiguration.getTestConfiguration().getVaultWallet());
             transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getVaultWallet(),
                 TestConfiguration.getTestConfiguration().getVaultWallet().getUser(), 10);
@@ -168,8 +167,7 @@ public abstract class TestBase implements ITest {
             .post(path)
             .then()
             .assertThat().statusCode(200)
-            .extract().body().jsonPath()
-            .getObject("", CreateTransactionResponse.class);
+            .extract().body().as(CreateTransactionResponse.class);
 
     }
 
@@ -198,8 +196,7 @@ public abstract class TestBase implements ITest {
             .get(path)
             .then()
             .assertThat().statusCode(200)
-            .extract().body().jsonPath()
-            .getObject("", TransactionDTO.class);
+            .extract().body().as(TransactionDTO.class);
     }
 
     private static BalanceDTO getBalanceSetUP(Wallet wallet) {
@@ -216,8 +213,7 @@ public abstract class TestBase implements ITest {
             .get(path)
             .then()
             .assertThat().statusCode(200)
-            .extract().body().jsonPath()
-            .getObject("", BalanceDTO.class);
+            .extract().body().as(BalanceDTO.class);
     }
 
     private static void startForgingSetUp() {
@@ -230,7 +226,7 @@ public abstract class TestBase implements ITest {
 
             if (peers.size() > 0) {
                 HashMap<String, String> param = new HashMap();
-                param.put(RequestType.requestType.toString(), RequestType.getBlockchainStatus.toString());
+                param.put(ReqType.REQUEST_TYPE, ReqType.GET_BLOCKCHAIN_STATUS);
                 path = "/apl";
                 BlockchainInfoDTO status = given().config(config).log().all()
                         .spec(restHelper.getPreconditionSpec())
@@ -240,8 +236,7 @@ public abstract class TestBase implements ITest {
                         .post(path)
                         .then()
                         .assertThat().statusCode(200)
-                        .extract().body().jsonPath()
-                        .getObject("", BlockchainInfoDTO.class);
+                        .extract().body().as(BlockchainInfoDTO.class);
 
                 peersIp = TestConfiguration.getTestConfiguration().getHostsByChainID(status.getChainId());
 
@@ -256,7 +251,7 @@ public abstract class TestBase implements ITest {
                     for (String ip : peersIp) {
                     log.info("Check Forging on: " + ip);
                     HashMap<String, String> param = new HashMap();
-                    param.put(RequestType.requestType.toString(), RequestType.getForging.toString());
+                    param.put(ReqType.REQUEST_TYPE,ReqType.GET_FORGING);
                     param.put(Parameters.adminPassword.toString(), getTestConfiguration().getAdminPass());
                     path = "/apl";
                     try {
@@ -268,8 +263,7 @@ public abstract class TestBase implements ITest {
                                 .post(path)
                                 .then()
                                 .assertThat().statusCode(200)
-                                .extract().body().jsonPath()
-                                .getObject("", ForgingResponse.class);
+                                .extract().body().as(ForgingResponse.class);
                         if (forgingResponse.getGenerators().size() > 0) {
                             log.info("Forgers founded");
                             isForgingEnableOnGen = true;
@@ -285,7 +279,6 @@ public abstract class TestBase implements ITest {
                 try {
                    if (!isForgingEnableOnGen) {
                        log.info("Start forging on APL-NZKH-MZRE-2CTT-98NPZ account");
-
                        HashMap<String, String> param = new HashMap();
                        param.put(ReqType.REQUEST_TYPE, ReqType.START_FORGING);
                        param.put(ReqParam.ADMIN_PASSWORD, getTestConfiguration().getAdminPass());
@@ -300,8 +293,7 @@ public abstract class TestBase implements ITest {
                            .post(path)
                            .then()
                            .assertThat().statusCode(200)
-                           .extract().body().jsonPath()
-                           .getObject("", ForgingDetails.class);
+                           .extract().body().as(ForgingDetails.class);
                     }
                 } catch (Exception ex) {
                     log.warn("FAILED: Start Forging. " + ex.getMessage());
@@ -309,21 +301,6 @@ public abstract class TestBase implements ITest {
             }
         }
 
-
-
-    private static void checkForgingAccountsBalance() {
-        for (int i = 1; i < 200; i++) {
-            addParameters(RequestType.requestType, getAccountId);
-            addParameters(Parameters.secretPhrase, i);
-            AccountDTO accountID = getInstanse(AccountDTO.class);
-            addParameters(RequestType.requestType, getAccount);
-            addParameters(Parameters.account, accountID.getAccount());
-            GetAccountResponse account = getInstanse(GetAccountResponse.class);
-            if (Long.valueOf(account.getBalanceATM()) < 10000000000000L) {
-                sendMoneySetUp(TestConfiguration.getTestConfiguration().getGenesisWallet(), account.getAccountRS(), 5000000);
-            }
-        }
-    }
 
     @Step
     public boolean verifyTransactionInBlock(String transaction) {
