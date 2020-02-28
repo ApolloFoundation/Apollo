@@ -6,9 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -21,7 +18,7 @@ import javax.ws.rs.core.SecurityContext;
 import java.util.Map;
 import java.util.Objects;
 
-import com.apollocurrency.aplwallet.api.dto.info.AccountsCountDto;
+import com.apollocurrency.aplwallet.api.dto.account.AccountsCountDto;
 import com.apollocurrency.aplwallet.api.dto.info.BlockchainConstantsDto;
 import com.apollocurrency.aplwallet.api.dto.info.BlockchainStateDto;
 import com.apollocurrency.aplwallet.api.dto.info.BlockchainStatusDto;
@@ -51,6 +48,7 @@ public class ServerInfoController {
 
     public ServerInfoController() {
     }
+/*
 
     @Path("/info/count")
     @GET
@@ -80,6 +78,7 @@ public class ServerInfoController {
         log.debug("counts result : {}", dto);
         return response.bind(dto).build();
     }
+*/
 
     @Path("/blockchain/status")
     @GET

@@ -5,8 +5,8 @@ package com.apollocurrency.aplwallet.apl.core.rest.service;
 
 import com.apollocurrency.aplwallet.api.dto.ApolloX509Info;
 import com.apollocurrency.aplwallet.api.dto.GeneratorInfo;
-import com.apollocurrency.aplwallet.api.dto.info.AccountEffectiveBalanceDto;
-import com.apollocurrency.aplwallet.api.dto.info.AccountsCountDto;
+import com.apollocurrency.aplwallet.api.dto.account.AccountEffectiveBalanceDto;
+import com.apollocurrency.aplwallet.api.dto.account.AccountsCountDto;
 import com.apollocurrency.aplwallet.api.dto.info.ApiTagDto;
 import com.apollocurrency.aplwallet.api.dto.info.BlockchainConstantsDto;
 import com.apollocurrency.aplwallet.api.dto.info.BlockchainStateDto;
@@ -149,6 +149,7 @@ public class ServerInfoService {
         }
         return res;
     }
+/*
 
     public AccountsCountDto getAccountsStatistic(int numberOfAccounts) {
         AccountsCountDto dto = new AccountsCountDto();
@@ -199,6 +200,7 @@ public class ServerInfoService {
         }
         json.accountRS = Convert2.rsAccount(blockchainConfig.getAccountPrefix(), accountId);
     }
+*/
 
     public BlockchainStatusDto getBlockchainStatus() {
         BlockchainStatusDto dto = new BlockchainStatusDto();

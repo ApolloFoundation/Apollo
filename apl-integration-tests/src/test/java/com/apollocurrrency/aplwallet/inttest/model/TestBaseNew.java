@@ -1,9 +1,9 @@
 package com.apollocurrrency.aplwallet.inttest.model;
 
 import com.apollocurrency.aplwallet.api.dto.AccountAliasDTO;
-import com.apollocurrency.aplwallet.api.dto.AccountAssetDTO;
+import com.apollocurrency.aplwallet.api.dto.account.AccountAssetDTO;
 import com.apollocurrency.aplwallet.api.dto.AccountAssetOrderDTO;
-import com.apollocurrency.aplwallet.api.dto.AccountDTO;
+import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
 import com.apollocurrency.aplwallet.api.dto.AccountMessageDTO;
 import com.apollocurrency.aplwallet.api.dto.BalanceDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockDTO;

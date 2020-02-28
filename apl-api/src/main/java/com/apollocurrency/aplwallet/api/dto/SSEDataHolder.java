@@ -1,6 +1,9 @@
 package com.apollocurrency.aplwallet.api.dto;
 
 
+import com.apollocurrency.aplwallet.api.dto.account.AccountAssetDTO;
+import com.apollocurrency.aplwallet.api.dto.account.AccountCurrencyDTO;
+import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
 import lombok.Getter;
 import lombok.Setter;
 

@@ -4,11 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
-import com.apollocurrency.aplwallet.api.dto.AccountAssetBalanceDTO;
-import com.apollocurrency.aplwallet.api.dto.AccountAssetUnconfirmedBalanceDTO;
-import com.apollocurrency.aplwallet.api.dto.AccountCurrencyDTO;
-import com.apollocurrency.aplwallet.api.dto.AccountDTO;
-import com.apollocurrency.aplwallet.api.dto.AccountLeaseDTO;
+import com.apollocurrency.aplwallet.api.dto.account.AccountAssetBalanceDTO;
+import com.apollocurrency.aplwallet.api.dto.account.AccountAssetUnconfirmedBalanceDTO;
+import com.apollocurrency.aplwallet.api.dto.account.AccountCurrencyDTO;
+import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
+import com.apollocurrency.aplwallet.api.dto.account.AccountLeaseDTO;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;

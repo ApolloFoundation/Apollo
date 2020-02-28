@@ -13,8 +13,8 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.apollocurrency.aplwallet.api.dto.info.AccountEffectiveBalanceDto;
-import com.apollocurrency.aplwallet.api.dto.info.AccountsCountDto;
+import com.apollocurrency.aplwallet.api.dto.account.AccountEffectiveBalanceDto;
+import com.apollocurrency.aplwallet.api.dto.account.AccountsCountDto;
 import com.apollocurrency.aplwallet.api.dto.info.BlockchainConstantsDto;
 import com.apollocurrency.aplwallet.api.dto.info.BlockchainStateDto;
 import com.apollocurrency.aplwallet.api.dto.info.BlockchainStatusDto;
@@ -46,7 +46,6 @@ class ServerInfoControllerTest {
     private static ObjectMapper mapper = new ObjectMapper();
     private static Dispatcher dispatcher;
 
-    private static String accountCountUri = "/server/info/count";
     private static String blockchainStatusUri = "/server/blockchain/status";
     private static String blockchainConstantsUri = "/server/blockchain/constants";
     private static String blockchainStateUri = "/server/blockchain/state";
@@ -58,46 +57,6 @@ class ServerInfoControllerTest {
     void setup(){
         dispatcher = MockDispatcherFactory.createDispatcher();
         doReturn("APL").when(blockchainConfig).getAccountPrefix();
-    }
-
-    @Test
-    void counts_SUCCESS() throws URISyntaxException, IOException {
-        // prepare data
-        AccountsCountDto dto = new AccountsCountDto(112L, 113L, 1, 124L);
-        AccountEffectiveBalanceDto balanceDto = new AccountEffectiveBalanceDto(
-            100L, 200L, 100L, 200L, 200L, "123", "RS-ADVB");
-        dto.topHolders.add(balanceDto);
-        doReturn(dto).when(serverInfoService).getAccountsStatistic(Constants.MIN_TOP_ACCOUNTS_NUMBER);
-        // init mocks
-        ServerInfoController controller = new ServerInfoController(serverInfoService);
-        dispatcher.getRegistry().addSingletonResource(controller);
-        // call
-        String uri = accountCountUri + "?numberOfAccounts=" + Constants.MIN_TOP_ACCOUNTS_NUMBER;
-        MockHttpRequest request = MockHttpRequest.get(uri);
-        MockHttpResponse response = new MockHttpResponse();
-        dispatcher.invoke(request, response);
-        // check
-        assertEquals(200, response.getStatus());
-        String respondJson = response.getContentAsString();
-        AccountsCountDto dtoResult = mapper.readValue(respondJson, new TypeReference<>(){});
-        assertNotNull(dtoResult.topHolders);
-        assertEquals(112L, dtoResult.totalSupply);
-        assertEquals(1, dtoResult.topHolders.size());
-
-        // call 2
-        uri = accountCountUri + "?numberOfAccounts="; // empty value
-        request = MockHttpRequest.get(uri);
-        response = new MockHttpResponse();
-        dispatcher.invoke(request, response);
-        // check
-        assertEquals(200, response.getStatus());
-        respondJson = response.getContentAsString();
-        dtoResult = mapper.readValue(respondJson, new TypeReference<>(){});
-        assertNotNull(dtoResult.topHolders);
-        assertEquals(112L, dtoResult.totalSupply);
-        assertEquals(1, dtoResult.topHolders.size());
-        // verify
-        verify(serverInfoService, times(2)).getAccountsStatistic(Constants.MIN_TOP_ACCOUNTS_NUMBER);
     }
 
     @Test

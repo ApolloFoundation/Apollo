@@ -52,8 +52,8 @@ public class NewApiRegistry {
         apis.put("getAccountCurrencyCount", "/rest/accounts/currency-count"); //GET
         apis.put("getAccountCurrencies", "/rest/accounts/currencies"); //GET
         apis.put("getAccountCurrentAskOrderIds", "/rest/accounts/current-ask-order-ids"); //GET
+        apis.put("getAccounts", "/rest/accounts/count"); //GET
 
-        apis.put("getAccounts", "/rest/server/info/count"); //GET
         apis.put("getBlockchainStatus", "/rest/server/blockchain/status"); //GET
 //        apis.put("getConstants", "/rest/server/blockchain/constants"); //GET // respond format has changed
         apis.put("getState", "/rest/server/blockchain/state"); //GET // admin password is needed now

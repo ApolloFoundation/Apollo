@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
-import com.apollocurrency.aplwallet.api.dto.Account2FADTO;
+import com.apollocurrency.aplwallet.api.dto.account.Account2FADTO;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
 

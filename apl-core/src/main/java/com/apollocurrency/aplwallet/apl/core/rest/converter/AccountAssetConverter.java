@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
-import com.apollocurrency.aplwallet.api.dto.AccountAssetDTO;
+import com.apollocurrency.aplwallet.api.dto.account.AccountAssetDTO;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 

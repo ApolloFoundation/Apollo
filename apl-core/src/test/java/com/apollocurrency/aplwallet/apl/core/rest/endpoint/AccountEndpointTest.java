@@ -22,6 +22,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountCurrencyConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.WalletKeysConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FAInterceptor;
+import com.apollocurrency.aplwallet.apl.core.rest.service.AccountStatisticsService;
 import com.apollocurrency.aplwallet.apl.core.rest.service.OrderService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
@@ -81,6 +82,7 @@ class AccountEndpointTest extends AbstractEndpointTest{
         .addBeans(MockBean.of(mock(Account2FADetailsConverter.class), Account2FADetailsConverter.class))
         .addBeans(MockBean.of(mock(Account2FAConverter.class), Account2FAConverter.class))
         .addBeans(MockBean.of(mock(OrderService.class), OrderService.class))
+        .addBeans(MockBean.of(mock(AccountStatisticsService.class), AccountStatisticsService.class))
         .build();
 
     @Inject @Setter

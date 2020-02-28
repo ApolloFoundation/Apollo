@@ -1,7 +1,9 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
-import com.apollocurrency.aplwallet.api.dto.AccountDTO;
+import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
+import com.apollocurrency.aplwallet.api.dto.account.AccountEffectiveBalanceDto;
+import com.apollocurrency.aplwallet.api.dto.account.AccountsCountDto;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
@@ -26,10 +28,14 @@ import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountCurrencyConve
 import com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.WalletKeysConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.service.AccountStatisticsService;
 import com.apollocurrency.aplwallet.apl.core.rest.service.OrderService;
+import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
 import com.apollocurrency.aplwallet.apl.core.utils.AccountGeneratorUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.jboss.resteasy.mock.MockHttpRequest;
 import org.jboss.resteasy.mock.MockHttpResponse;
@@ -38,6 +44,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
@@ -78,6 +86,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class AccountControllerTest extends AbstractEndpointTest{
@@ -108,6 +118,8 @@ class AccountControllerTest extends AbstractEndpointTest{
     private OrderService orderService = mock(OrderService.class);
 
     private Account2FAHelper account2FAHelper = mock(Account2FAHelper.class);
+    @Mock
+    private AccountStatisticsService accountStatisticsService = Mockito.mock(AccountStatisticsService.class);
 
     private Block GENESIS_BLOCK, LAST_BLOCK, NEW_BLOCK;
     private Block BLOCK_0, BLOCK_1, BLOCK_2, BLOCK_3;
@@ -131,7 +143,8 @@ class AccountControllerTest extends AbstractEndpointTest{
                 new Account2FADetailsConverter(),
                 new Account2FAConverter(),
             orderService,
-                restParametersParser
+                restParametersParser,
+            accountStatisticsService
                 );
 
         dispatcher.getRegistry().addSingletonResource(endpoint);
@@ -680,6 +693,49 @@ class AccountControllerTest extends AbstractEndpointTest{
 
         checkMandatoryParameterMissingErrorCode(response, 1000);
     }
+
+    @Test
+    void counts_SUCCESS() throws URISyntaxException, IOException {
+        String accountCountUri = "/accounts/count";
+
+        // prepare data
+        AccountsCountDto dto = new AccountsCountDto(112L, 113L, 1, 124L);
+        AccountEffectiveBalanceDto balanceDto = new AccountEffectiveBalanceDto(
+            100L, 200L, 100L, 200L, 200L, "123", "RS-ADVB");
+        dto.topHolders.add(balanceDto);
+        doReturn(dto).when(accountStatisticsService).getAccountsStatistic(Constants.MIN_TOP_ACCOUNTS_NUMBER);
+        // init mocks
+//        ServerInfoController controller = new ServerInfoController(serverInfoService);
+        dispatcher.getRegistry().addSingletonResource(endpoint);
+        // call
+        String uri = accountCountUri + "?numberOfAccounts=" + Constants.MIN_TOP_ACCOUNTS_NUMBER;
+        MockHttpRequest request = MockHttpRequest.get(uri);
+        MockHttpResponse response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+        // check
+        assertEquals(200, response.getStatus());
+        String respondJson = response.getContentAsString();
+        AccountsCountDto dtoResult = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(dtoResult.topHolders);
+        assertEquals(112L, dtoResult.totalSupply);
+        assertEquals(1, dtoResult.topHolders.size());
+
+        // call 2
+        uri = accountCountUri + "?numberOfAccounts="; // empty value
+        request = MockHttpRequest.get(uri);
+        response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+        // check
+        assertEquals(200, response.getStatus());
+        respondJson = response.getContentAsString();
+        dtoResult = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(dtoResult.topHolders);
+        assertEquals(112L, dtoResult.totalSupply);
+        assertEquals(1, dtoResult.topHolders.size());
+        // verify
+        verify(accountStatisticsService, times(2)).getAccountsStatistic(Constants.MIN_TOP_ACCOUNTS_NUMBER);
+    }
+
 
     private void check2FA_withPathPhraseAndAccountAndCode2FA(String uri, TwoFactorAuthParameters twoFactorAuthParameters) throws URISyntaxException, IOException {
         //doCallRealMethod().when(account2FAHelper).validate2FAParameters(twoFactorAuthParameters);
