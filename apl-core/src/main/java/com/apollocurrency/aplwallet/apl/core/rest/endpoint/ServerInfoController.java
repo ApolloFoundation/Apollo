@@ -48,37 +48,6 @@ public class ServerInfoController {
 
     public ServerInfoController() {
     }
-/*
-
-    @Path("/info/count")
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @Operation(
-        summary = "Returns statistics Account information",
-        description = "Returns statistics information about specified count of account",
-        tags = {"info"},
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Successful execution",
-                content = @Content(mediaType = "application/json",
-                    schema = @Schema(implementation = AccountsCountDto.class)))
-        }
-    )
-    @PermitAll
-    public Response counts(
-        @Parameter(name = "numberOfAccounts", description = "number Of returned Accounts", allowEmptyValue = true)
-        @QueryParam("numberOfAccounts") String numberOfAccountsStr
-    ) {
-        log.debug("Started counts : \t'numberOfAccounts' = {}", numberOfAccountsStr);
-        ResponseBuilder response = ResponseBuilder.startTiming();
-        int numberOfAccounts = RestParameters.parseInt(numberOfAccountsStr, "numberOfAccounts",
-            Constants.MIN_TOP_ACCOUNTS_NUMBER, Constants.MAX_TOP_ACCOUNTS_NUMBER, false);
-        int numberOfAccountsMax = Math.max(numberOfAccounts, Constants.MIN_TOP_ACCOUNTS_NUMBER);
-
-        AccountsCountDto dto = serverInfoService.getAccountsStatistic(numberOfAccountsMax);
-        log.debug("counts result : {}", dto);
-        return response.bind(dto).build();
-    }
-*/
 
     @Path("/blockchain/status")
     @GET

@@ -55,7 +55,7 @@ public class NewApiRegistry {
 
         apis.put("encodeQRCode", "/rest/utils/qrcode/encoding"); //POST
         apis.put("decodeQRCode", "/rest/utils/qrcode/decoding"); //POST
-//        apis.put("detectMimeType", "/rest/utils/detect/mime-type"); //POST - different with OLD api
+//        apis.put("detectMimeType", "/rest/utils/detect/mime-type"); //POST - differ with OLD api
         apis.put("fullHashToId", "/rest/utils/fullhash/toid"); //GET
         apis.put("hexConvert", "/rest/utils/convert/hex"); //GET
         apis.put("longConvert", "/rest/utils/convert/long"); //GET

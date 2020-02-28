@@ -5,8 +5,6 @@ package com.apollocurrency.aplwallet.apl.core.rest.service;
 
 import com.apollocurrency.aplwallet.api.dto.ApolloX509Info;
 import com.apollocurrency.aplwallet.api.dto.GeneratorInfo;
-import com.apollocurrency.aplwallet.api.dto.account.AccountEffectiveBalanceDto;
-import com.apollocurrency.aplwallet.api.dto.account.AccountsCountDto;
 import com.apollocurrency.aplwallet.api.dto.info.ApiTagDto;
 import com.apollocurrency.aplwallet.api.dto.info.BlockchainConstantsDto;
 import com.apollocurrency.aplwallet.api.dto.info.BlockchainStateDto;
@@ -16,7 +14,6 @@ import com.apollocurrency.aplwallet.api.dto.info.SubTypeDto;
 import com.apollocurrency.aplwallet.api.dto.info.TimeDto;
 import com.apollocurrency.aplwallet.api.dto.info.TotalSupplyDto;
 import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountLeaseService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
@@ -25,7 +22,6 @@ import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.Order;
@@ -74,7 +70,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Random;
 
 /**
  *
@@ -149,58 +144,6 @@ public class ServerInfoService {
         }
         return res;
     }
-/*
-
-    public AccountsCountDto getAccountsStatistic(int numberOfAccounts) {
-        AccountsCountDto dto = new AccountsCountDto();
-        long totalSupply = accountService.getTotalSupply();
-        long totalAccounts = accountService.getTotalNumberOfAccounts();
-        long totalAmountOnTopAccounts = accountService.getTotalAmountOnTopAccounts(numberOfAccounts);
-        List<Account> topHoldersIterator = accountService.getTopHolders(numberOfAccounts);
-        composeAccountCountDto(dto, topHoldersIterator, totalAmountOnTopAccounts, totalSupply, totalAccounts, numberOfAccounts);
-        return dto;
-    }
-
-    private AccountsCountDto composeAccountCountDto(AccountsCountDto dto, List<Account> topAccountsIterator,
-                                                    long totalAmountOnTopAccounts, long totalSupply,
-                                                    long totalAccounts, int numberOfAccounts) {
-        dto.totalSupply = totalSupply;
-        dto.totalNumberOfAccounts = totalAccounts;
-        dto.numberOfTopAccounts = numberOfAccounts;
-        dto.totalAmountOnTopAccounts = totalAmountOnTopAccounts;
-        while (topAccountsIterator.iterator().hasNext()) {
-            Account account = topAccountsIterator.iterator().next();
-            AccountEffectiveBalanceDto accountJson = accountBalance(account, false, blockchain.getHeight());
-            putAccountNameInfo(accountJson, account.getId(), false);
-            dto.topHolders.add(accountJson);
-        }
-        return dto;
-    }
-
-    private AccountEffectiveBalanceDto accountBalance(Account account, boolean includeEffectiveBalance, int height) {
-        AccountEffectiveBalanceDto json = new AccountEffectiveBalanceDto();
-        if (account != null) {
-            json.balanceATM = account.getBalanceATM();
-            json.unconfirmedBalanceATM = account.getUnconfirmedBalanceATM();
-            json.forgedBalanceATM = account.getForgedBalanceATM();
-            if (includeEffectiveBalance) {
-                json.effectiveBalanceAPL = accountService.getEffectiveBalanceAPL(account , height, false);
-                json.guaranteedBalanceATM = accountService.getGuaranteedBalanceATM(account,
-                    blockchainConfig.getGuaranteedBalanceConfirmations(), height);
-            }
-        }
-        return json;
-    }
-
-    private void putAccountNameInfo(AccountEffectiveBalanceDto json, long accountId, boolean isPrivate) {
-        json.account = Long.toUnsignedString(accountId);
-        if (isPrivate) {
-            Random random = new Random();
-            accountId = random.nextLong();
-        }
-        json.accountRS = Convert2.rsAccount(blockchainConfig.getAccountPrefix(), accountId);
-    }
-*/
 
     public BlockchainStatusDto getBlockchainStatus() {
         BlockchainStatusDto dto = new BlockchainStatusDto();
