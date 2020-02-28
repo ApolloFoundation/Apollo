@@ -65,7 +65,7 @@ public abstract class TestBase implements ITest {
         retryPolicy = new RetryPolicy()
                 .retryWhen(false)
                 .withMaxRetries(50)
-                .withDelay(5, TimeUnit.SECONDS);
+                .withDelay(10, TimeUnit.SECONDS);
 
         ClassLoader classLoader = TestBase.class.getClassLoader();
         String secretFilePath = Objects.requireNonNull(classLoader.getResource(TestConfiguration.getTestConfiguration().getVaultWallet().getUser())).getPath();
