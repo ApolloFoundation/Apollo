@@ -113,7 +113,7 @@ class UtilsControllerTest {
         assertNotNull(respondJson);
         Error error = mapper.readValue(respondJson, new TypeReference<>(){});
         assertNotNull(error.getErrorDescription());
-        assertEquals(2011, error.getNewErrorCode());
+        assertEquals(2013, error.getNewErrorCode());
 
         request = MockHttpRequest.post(encodeQrUri)
             .contentType(MediaType.APPLICATION_FORM_URLENCODED_TYPE)
@@ -127,7 +127,7 @@ class UtilsControllerTest {
         assertNotNull(respondJson);
         error = mapper.readValue(respondJson, new TypeReference<>(){});
         assertNotNull(error.getErrorDescription());
-        assertEquals(2011, error.getNewErrorCode());
+        assertEquals(2013, error.getNewErrorCode());
     }
 
     @Test
@@ -145,7 +145,7 @@ class UtilsControllerTest {
         assertNotNull(respondJson);
         Error error = mapper.readValue(respondJson, new TypeReference<>(){});
         assertNotNull(error.getErrorDescription());
-        assertEquals(2011, error.getNewErrorCode());
+        assertEquals(2013, error.getNewErrorCode());
     }
 
     @Test
@@ -162,7 +162,7 @@ class UtilsControllerTest {
         assertNotNull(respondJson);
         Error error = mapper.readValue(respondJson, new TypeReference<>(){});
         assertNotNull(error.getErrorDescription());
-        assertEquals(2011, error.getNewErrorCode());
+        assertEquals(2013, error.getNewErrorCode());
     }
 
     @Test

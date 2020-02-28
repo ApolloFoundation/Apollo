@@ -3,10 +3,9 @@
  */
 package com.apollocurrency.aplwallet.apl.core.rest.filters;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.Map;
+import com.apollocurrency.aplwallet.apl.core.rest.NewApiRegistry;
+import lombok.extern.slf4j.Slf4j;
+
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -16,14 +15,17 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.Map;
 
 /**
  * This filter routes request calls to new jax-rs based endpoints or to old ones
  * if new is not yet implemented.
  * @author alukin@gmail.com
  */
+@Slf4j
 public class ApiSplitFilter implements Filter{
     /**
      * this is just a "fuse" to disable API calls while core is starting.
@@ -31,7 +33,6 @@ public class ApiSplitFilter implements Filter{
      */
     public static boolean isCoreReady = false;
 
-    static final Logger logger = LoggerFactory.getLogger(ApiSplitFilter.class);
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
@@ -55,13 +56,15 @@ public class ApiSplitFilter implements Filter{
         resp.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD");
 
         String rqType = request.getParameter("requestType");
-        logger.trace("========= RequestType IS EMPTY!==========");
+        if (log.isTraceEnabled()) {
+            log.trace("========= RequestType IS {} ==========", null == rqType? "EMPTY!": rqType);
+        }
 
         String forwardUri = NewApiRegistry.getRestPath(rqType);
         //forward to new API, it should be ready always because it is on CDI and
         //does not require completion of old static init() methods
         if(forwardUri != null && !forwardUri.isEmpty()){
-           logger.trace("Request "+rqType+" forwarded to: "+forwardUri);
+           log.trace("Request "+rqType+" forwarded to: "+forwardUri);
             rq.getRequestDispatcher(forwardUri).forward(request, response);
             return;
         }
@@ -81,25 +84,24 @@ public class ApiSplitFilter implements Filter{
     }
 
     private void logRequest(HttpServletRequest rq){
-        logger.trace("Request from: "+rq.getRemoteAddr()+" Method: "+rq.getMethod()
-                +" User: "+rq.getRemoteUser()
-                +"\n\t Request URI: "+rq.getRequestURI()
-                +"\n\t Request session ID: "+rq.getRequestedSessionId()
-        );
-        //print all headers
-        Enumeration<String> hdre = rq.getHeaderNames();
-        String hdrs="";
-        while(hdre.hasMoreElements()){
-            String name = hdre.nextElement();
-            hdrs+="\n\t"+"Name:>"+name+"< Value:>"+rq.getHeader(name)+"<";
-        }
-        logger.trace("HTTP request headers:"+hdrs);
-        //print all request parameters
-        Map<String,String[]>params = rq.getParameterMap();
-        String ps="";
-        ps = params.keySet().stream().map((k) -> "\n\t"+"Name:>"+k+"< Value: >"+Arrays.toString(params.get(k))).reduce(ps, String::concat)+"<";
-        logger.trace("Request parameters: "+ps);
-
+        if(log.isTraceEnabled()) {
+            log.trace("Request from: {} Method: {} User: {}\n\t Request URI: {} \n\t Request session ID: {}",
+                rq.getRemoteAddr(), rq.getMethod(), rq.getRemoteUser(), rq.getRequestURI(), rq.getRequestedSessionId());
+            //print all headers
+            Enumeration<String> hdre = rq.getHeaderNames();
+            StringBuilder hdrs = new StringBuilder();
+            while (hdre.hasMoreElements()) {
+                String name = hdre.nextElement();
+                hdrs.append("\n\tName:>").append(name)
+                    .append("< Value:>").append(rq.getHeader(name)).append("<");
+            }
+            log.trace("HTTP request headers:{}", hdrs);
+            //print all request parameters
+            Map<String, String[]> params = rq.getParameterMap();
+            String ps = "";
+            ps=params.keySet().stream().map(k -> "\n\t" + "Name:>" + k + "< Value: >" + Arrays.toString(params.get(k))).reduce(ps, String::concat) + "<";
+            log.trace("Request parameters: {}",ps);
+}
     }
 
 }

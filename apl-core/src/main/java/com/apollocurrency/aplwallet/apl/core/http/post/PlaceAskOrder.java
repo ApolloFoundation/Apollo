@@ -25,7 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONStreamAware;
 
@@ -44,10 +44,10 @@ public final class PlaceAskOrder extends CreateTransaction {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        Asset asset = ParameterParser.getAsset(req);
-        long priceATM = ParameterParser.getPriceATM(req);
-        long quantityATU = ParameterParser.getQuantityATU(req);
-        Account account = ParameterParser.getSenderAccount(req);
+        Asset asset = HttpParameterParserUtil.getAsset(req);
+        long priceATM = HttpParameterParserUtil.getPriceATM(req);
+        long quantityATU = HttpParameterParserUtil.getQuantityATU(req);
+        Account account = HttpParameterParserUtil.getSenderAccount(req);
 
         Attachment attachment = new ColoredCoinsAskOrderPlacement(asset.getId(), quantityATU, priceATM);
         try {

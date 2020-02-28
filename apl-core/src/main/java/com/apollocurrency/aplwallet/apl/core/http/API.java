@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.core.rest.exception.ClientErrorExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ConstraintViolationExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.DefaultGlobalExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.LegacyParameterExceptionMapper;
@@ -28,6 +29,8 @@ import com.apollocurrency.aplwallet.apl.core.rest.exception.ParameterExceptionMa
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiProtectionFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
+import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FAInterceptor;
+import com.apollocurrency.aplwallet.apl.core.rest.filters.SecurityInterceptor;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.CharsetRequestFilter;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
@@ -175,7 +178,7 @@ public final class API {
 
     public static String findWebUiDir(){
         String dir = DirProvider.getBinDir()+ File.separator+WEB_UI_DIR;
-        dir=dir+File.separator+"build";
+        dir=dir+ File.separator+"build";
         File res = new File(dir);
         if(!res.exists()){ //we are in develop IDE or tests
             dir=DirProvider.getBinDir()+"/apl-exec/target/"+WEB_UI_DIR+"/build";
@@ -279,13 +282,16 @@ public final class API {
             ServletHolder restEasyServletHolder = new ServletHolder(new HttpServletDispatcher());
             restEasyServletHolder.setInitParameter("resteasy.servlet.mapping.prefix", "/rest");
             restEasyServletHolder.setInitParameter("resteasy.injector.factory", "org.jboss.resteasy.cdi.CdiInjectorFactory");
+            //restEasyServletHolder.setInitParameter("resteasy.role.based.security", "true");
 
             restEasyServletHolder.setInitParameter(ResteasyContextParameters.RESTEASY_PROVIDERS,
                     new StringJoiner(",")
                             .add(ConstraintViolationExceptionMapper.class.getName())
+                            .add(ClientErrorExceptionMapper.class.getName())
                             .add(ParameterExceptionMapper.class.getName())
                             .add(LegacyParameterExceptionMapper.class.getName())
                             .add(SecurityInterceptor.class.getName())
+                            .add(Secured2FAInterceptor.class.getName())
                             .add(RestParameterExceptionMapper.class.getName())
                             .add(DefaultGlobalExceptionMapper.class.getName())
                             .add(CharsetRequestFilter.class.getName())

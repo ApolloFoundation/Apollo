@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerService;
 import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerHolding;
@@ -20,7 +19,7 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import javax.enterprise.inject.Vetoed;
@@ -51,19 +50,19 @@ public class GetPrivateAccountLedger extends AbstractAPIRequestHandler {
         //
         // Process the request parameters
         //
-        ParameterParser.PrivateTransactionsAPIData data = ParameterParser.parsePrivateTransactionRequest(req);
+        HttpParameterParserUtil.PrivateTransactionsAPIData data = HttpParameterParserUtil.parsePrivateTransactionRequest(req);
         if (data == null) {
             return MISSING_SECRET_PHRASE_AND_PUBLIC_KEY;
         }
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
         String eventType = Convert.emptyToNull(req.getParameter("eventType"));
         LedgerEvent event = null;
         long eventId = 0;
         if (eventType != null) {
             try {
                 event = LedgerEvent.valueOf(eventType);
-                eventId = ParameterParser.getUnsignedLong(req, "event", false);
+                eventId = HttpParameterParserUtil.getUnsignedLong(req, "event", false);
             }
             catch (RuntimeException e) {
                 throw new ParameterException(JSONResponses.incorrect("eventType"));
@@ -75,7 +74,7 @@ public class GetPrivateAccountLedger extends AbstractAPIRequestHandler {
         if (holdingType != null) {
             try {
                 holding = LedgerHolding.valueOf(holdingType);
-                holdingId = ParameterParser.getUnsignedLong(req, "holding", false);
+                holdingId = HttpParameterParserUtil.getUnsignedLong(req, "holding", false);
             }
             catch (RuntimeException e) {
                 throw new ParameterException(JSONResponses.incorrect("holdingType"));

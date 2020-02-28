@@ -1,6 +1,5 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
-import com.apollocurrency.aplwallet.apl.core.http.AdminSecured;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.MandatoryTransactionService;
@@ -14,6 +13,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import lombok.Setter;
 
+import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
@@ -44,7 +44,7 @@ public class MandatoryTransactionController {
     @Operation(tags = {"mtxs"}, summary = "Delete mandatory transaction",
             description = "Delete mandatory transaction specified by id",
     security = @SecurityRequirement(name = "admin_api_key"))
-    @AdminSecured
+    @RolesAllowed("admin")
     public Response deleteById(@Parameter(description = "Id of mandatory transaction to delete", required = true) @PathParam("id") Long id,
                                @Context HttpServletRequest req) {
         return Response.ok(service.deleteById(id)).build();
@@ -55,7 +55,7 @@ public class MandatoryTransactionController {
     @Operation(tags = {"mtxs"}, summary = "Delete all mandatory transactions",
             description = "Delete from database all mandatory transactions",
     security = @SecurityRequirement(name = "admin_api_key"))
-    @AdminSecured
+    @RolesAllowed("admin")
     public Response deleteAll(@Context HttpServletRequest req) {
         return Response.ok(service.clearAll()).build();
     }

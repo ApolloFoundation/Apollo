@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
+import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.ws.rs.GET;
@@ -51,6 +52,7 @@ public class ShardController {
             content = @Content(mediaType = "application/json",
                 schema = @Schema(implementation = ShardDTO.class)))
     }    )
+    @PermitAll
     public Response getAllShards() {
         List<ShardDTO> allCompletedShards = shardService.getAllCompletedShards().stream()
                 .map(shard -> shardConverter.convert(shard)).collect(Collectors.toList());

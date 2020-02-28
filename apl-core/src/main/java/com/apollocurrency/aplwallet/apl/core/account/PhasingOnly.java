@@ -39,7 +39,7 @@ import java.sql.SQLException;
 public final class PhasingOnly {
 
     private BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
 
     public static PhasingOnly get(long accountId) {
@@ -61,7 +61,7 @@ public final class PhasingOnly {
             senderAccount.removeControl(AccountControlType.PHASING_ONLY);
             PhasingOnly phasingOnly = get(senderAccount.getId());
             phasingOnly.phasingParams = phasingParams;
-            AccountRestrictions.phasingControlTable.delete(phasingOnly);
+            AccountRestrictions.phasingControlTable.deleteAtHeight(phasingOnly, blockchain.getHeight());
             unset(senderAccount);
         } else {
             senderAccount.addControl(AccountControlType.PHASING_ONLY);
@@ -86,7 +86,7 @@ public final class PhasingOnly {
     static void unset(Account account) {
         account.removeControl(AccountControlType.PHASING_ONLY);
         PhasingOnly phasingOnly = get(account.getId());
-        AccountRestrictions.phasingControlTable.delete(phasingOnly);
+        AccountRestrictions.phasingControlTable.deleteAtHeight(phasingOnly, blockchain.getHeight());
     }
     final DbKey dbKey;
     private final long accountId;

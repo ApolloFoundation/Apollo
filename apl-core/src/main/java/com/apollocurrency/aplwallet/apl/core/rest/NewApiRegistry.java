@@ -1,7 +1,7 @@
 /*
  * Copyright © 2018-2019 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.core.rest.filters;
+package com.apollocurrency.aplwallet.apl.core.rest;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,14 +14,13 @@ import java.util.Map;
 public class NewApiRegistry {
     private static Map<String,String> apis = new HashMap<>();
     static{
-        apis.put("getServerInfo", "/rest/serverinfo");
+        apis.put("getServerInfo", "/rest/server-info");
         apis.put("importKeyStore", "/rest/keyStore/upload");
         apis.put("exportKeyStore", "/rest/keyStore/download");
         apis.put("getAccountInfo", "/rest/keyStore/accountInfo");
 
         apis.put("getEthWalletAmount", "/rest/wallet/eth");
         apis.put("getEthWalletTransfer", "/rest/wallet/eth/transfer");
-
 
         apis.put("getDexHistory", "/rest/dex/history");
         apis.put("getDexOffers", "/rest/dex/offers");
@@ -37,10 +36,25 @@ public class NewApiRegistry {
         apis.put("blacklistAPIProxyPeer", "/rest/networking/peer/proxyblacklist"); //POST
         apis.put("setAPIProxyPeer", "/rest/networking/peer/setproxy"); //POST
 
+        apis.put("getAccount", "/rest/accounts/account"); //GET
+        apis.put("generateAccount", "/rest/accounts/account"); //POST
+        apis.put("enable2FA", "/rest/accounts/enable2fa"); //POST
+        apis.put("disable2FA", "/rest/accounts/disable2fa"); //POST
+        apis.put("confirm2FA", "/rest/accounts/confirm2fa"); //POST
+        apis.put("deleteKey", "/rest/accounts/delete-key"); //POST
+        apis.put("exportKey", "/rest/accounts/export-key"); //POST
+        apis.put("getAccountAssetCount", "/rest/accounts/asset-count"); //GET
+        apis.put("getAccountAssets", "/rest/accounts/assets"); //GET
+        apis.put("getAccountBlockCount", "/rest/accounts/block-count"); //GET
+        apis.put("getAccountBlockIds", "/rest/accounts/block-ids"); //GET
+        apis.put("getAccountBlocks", "/rest/accounts/blocks"); //GET
+        apis.put("getAccountCurrencyCount", "/rest/accounts/currency-count"); //GET
+        apis.put("getAccountCurrencies", "/rest/accounts/currencies"); //GET
+        apis.put("getAccountCurrentAskOrderIds", "/rest/accounts/current-ask-order-ids"); //GET
 
         apis.put("encodeQRCode", "/rest/utils/qrcode/encoding"); //POST
         apis.put("decodeQRCode", "/rest/utils/qrcode/decoding"); //POST
-//        apis.put("detectMimeType", "/rest/utils/detect/mime-type"); //POST
+//        apis.put("detectMimeType", "/rest/utils/detect/mime-type"); //POST - different with OLD api
         apis.put("fullHashToId", "/rest/utils/fullhash/toid"); //GET
         apis.put("hexConvert", "/rest/utils/convert/hex"); //GET
         apis.put("longConvert", "/rest/utils/convert/long"); //GET

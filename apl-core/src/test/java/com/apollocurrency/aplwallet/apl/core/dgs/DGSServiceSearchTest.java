@@ -21,6 +21,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchEngine;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
+import com.apollocurrency.aplwallet.apl.core.db.service.BlockChainInfoServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSFeedbackTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSPublicFeedbackTable;
@@ -65,7 +66,7 @@ public class DGSServiceSearchTest {
             DerivedDbTablesRegistryImpl.class,
             BlockchainConfig.class,
             PropertiesHolder.class,
-            AccountServiceImpl.class, AccountTable.class
+            BlockChainInfoServiceImpl.class, AccountServiceImpl.class, AccountTable.class
     )
             .addBeans(MockBean.of(mock(GlobalSync.class), GlobalSync.class, GlobalSyncImpl.class))
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))

@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
@@ -44,8 +44,8 @@ public final class GetDGSPurchaseCount extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        long sellerId = ParameterParser.getAccountId(req, "seller", false);
-        long buyerId = ParameterParser.getAccountId(req, "buyer", false);
+        long sellerId = HttpParameterParserUtil.getAccountId(req, "seller", false);
+        long buyerId = HttpParameterParserUtil.getAccountId(req, "buyer", false);
         final boolean completed = "true".equalsIgnoreCase(req.getParameter("completed"));
         final boolean withPublicFeedbacksOnly = "true".equalsIgnoreCase(req.getParameter("withPublicFeedbacksOnly"));
 

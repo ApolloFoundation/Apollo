@@ -37,7 +37,7 @@ public class AccountInfoServiceImpl implements AccountInfoService {
         if (accountInfo.getName() != null || accountInfo.getDescription() != null) {
             accountInfoTable.insert(accountInfo);
         } else {
-            accountInfoTable.delete(accountInfo);
+            accountInfoTable.deleteAtHeight(accountInfo, blockchain.getHeight());
         }
     }
 

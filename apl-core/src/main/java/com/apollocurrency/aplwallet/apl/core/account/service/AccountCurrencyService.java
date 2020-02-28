@@ -45,6 +45,8 @@ public interface AccountCurrencyService {
 
     List<AccountCurrency> getCurrenciesByCurrency(long currencyId, int height, int from, int to);
 
+    List<AccountCurrency> getCurrenciesByAccount(Account account);
+
     long getCurrencyUnits(Account account, long currencyId);
 
     long getCurrencyUnits(long accountId, long currencyId);

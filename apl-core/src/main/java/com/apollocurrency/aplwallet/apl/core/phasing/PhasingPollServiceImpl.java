@@ -67,6 +67,16 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     }
 
     @Override
+    public List<Long> getApprovedTransactionIds(int height) {
+        List<Long> transactionIdList = new ArrayList<>();
+        try(DbIterator<PhasingPollResult> result = resultTable.getManyBy(new DbClause.IntClause("height", height).and(new DbClause.BooleanClause("approved", true)),
+                0, -1, " ORDER BY db_id ASC ")) {
+            result.forEach(phasingPollResult -> transactionIdList.add(phasingPollResult.getId()));
+        }
+        return transactionIdList;
+    }
+
+    @Override
     public PhasingPoll getPoll(long id) {
         PhasingPoll phasingPoll = phasingPollTable.get(id);
         if (phasingPoll != null) {

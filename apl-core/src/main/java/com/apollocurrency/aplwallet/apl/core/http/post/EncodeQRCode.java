@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.google.zxing.BarcodeFormat;
@@ -105,9 +105,8 @@ public final class EncodeQRCode extends AbstractAPIRequestHandler {
 
         String qrCodeData = Convert.nullToEmpty(request.getParameter("qrCodeData"));
 
-        int width = ParameterParser.getInt(request, "width", 0, 5000, false);
-        int height = ParameterParser.getInt(request, "height", 0, 5000, false);
-
+        int width = HttpParameterParserUtil.getInt(request, "width", 0, 5000, false);
+        int height = HttpParameterParserUtil.getInt(request, "height", 0, 5000, false);
         try {
             Map hints = new HashMap();
             // Error correction level: L (7%), M (15%), Q (25%), H (30%) -- Default L.
