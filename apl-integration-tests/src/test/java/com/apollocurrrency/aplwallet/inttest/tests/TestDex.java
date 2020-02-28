@@ -24,11 +24,11 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
+import static org.junit.jupiter.api.parallel.ExecutionMode.SAME_THREAD;
 
 @DisplayName("Dex")
 @Epic(value = "Dex")
-@Execution(CONCURRENT)
+@Execution(SAME_THREAD)
 public class TestDex extends TestBaseNew {
 
     @DisplayName("Get dex orders")

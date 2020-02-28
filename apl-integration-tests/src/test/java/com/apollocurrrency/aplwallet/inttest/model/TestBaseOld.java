@@ -170,6 +170,8 @@ public class TestBaseOld extends TestBase {
     public AccountLedgerResponse getAccountLedger(Wallet wallet) {
         addParameters(RequestType.requestType, getAccountLedger);
         addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.firstIndex, 0);
+        addParameters(Parameters.lastIndex, 15);
         return getInstanse(AccountLedgerResponse.class);
     }
 
