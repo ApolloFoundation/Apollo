@@ -85,8 +85,8 @@ public class TestBaseNew extends TestBase {
     @DisplayName("Get Transaction")
     public TransactionDTO getTransaction(String transaction) {
         HashMap<String, String> param = new HashMap();
-        param.put(RequestType.requestType.toString(), RequestType.getTransaction.toString());
-        param.put(Parameters.transaction.toString(), transaction);
+        param.put(ReqType.REQUEST_TYPE, ReqType.GET_TRANSACTION);
+        param.put(ReqParam.TRANSACTION, transaction);
         String path = "/apl";
         return given().log().all()
             .spec(restHelper.getSpec())

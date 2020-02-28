@@ -161,7 +161,7 @@ public abstract class TestBase implements ITest {
 
         String path = "/apl";
         return given().log().all()
-            .spec(restHelper.getSpec())
+            .spec(restHelper.getPreconditionSpec())
             .contentType(ContentType.URLENC)
             .formParams(param)
             .when()
@@ -191,7 +191,7 @@ public abstract class TestBase implements ITest {
         param.put(ReqParam.TRANSACTION, transaction);
         String path = "/apl";
         return given().log().all()
-            .spec(restHelper.getSpec())
+            .spec(restHelper.getPreconditionSpec())
             .contentType(ContentType.URLENC)
             .formParams(param)
             .when()
@@ -209,7 +209,7 @@ public abstract class TestBase implements ITest {
 
         String path = "/apl";
         return given().log().all()
-            .spec(restHelper.getSpec())
+            .spec(restHelper.getPreconditionSpec())
             .contentType(ContentType.URLENC)
             .formParams(param)
             .when()
@@ -293,7 +293,7 @@ public abstract class TestBase implements ITest {
 
                        path = "/apl";
                        given().log().all()
-                           .spec(restHelper.getSpec())
+                           .spec(restHelper.getPreconditionSpec())
                            .contentType(ContentType.URLENC)
                            .formParams(param)
                            .when()
