@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.api.response.EthGasInfoResponse;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
+import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
@@ -30,6 +31,10 @@ import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 @Epic(value = "Dex")
 @Execution(CONCURRENT)
 public class TestDex extends TestBaseNew {
+
+    Wallet vault1 = new Wallet("APL-D8L6-UJ22-PUK9-6EYMD", "1", true, "0xd54a7a3eff64b467f01f0640b201977e8d017c97", "5030464519701633604");
+    Wallet vault2 = new Wallet("APL-UB87-LVCF-M8LK-HC9U6", "1", true, "0x19826b8d344582a5e4610b300cb16de86a0d9f89", "17467469088293725381");
+
 
     @DisplayName("Get dex orders")
     @Test
@@ -158,6 +163,16 @@ public class TestDex extends TestBaseNew {
         //System.out.println(newEthBalance);
         //Account2FAResponse balanceValidationEthAfterPax = getDexBalances(TestConfiguration.getTestConfiguration().getVaultWallet().getEthAddress());
         //assertEquals(newEthBalanceAfterPax, balanceValidationEthAfterPax.getEth().get(0).getBalances().getEth(), "balances are different");
+    }
+
+    @DisplayName("dex exchange ETH SELL-BUY")
+    @Test
+    public void dexExchange() {
+        CreateDexOrderResponse sellOrder = createDexOrder("1000", "5000", vault1, false, true);
+
+
+
+
     }
 
 
