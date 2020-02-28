@@ -294,7 +294,8 @@ public class TestBaseNew extends TestBase {
     public VaultWalletResponse exportSecretFile(Wallet wallet) {
         String path = "/rest/keyStore/download";
         HashMap<String, String> param = new HashMap();
-        param = restHelper.addWalletParameters(param,wallet);
+        param.put("account", wallet.getUser());
+        param.put("passPhrase", wallet.getPass());
         return given().log().all()
             .spec(restHelper.getSpec())
             .contentType(ContentType.URLENC)

@@ -4,7 +4,7 @@ public class ReqParam {
     public static final String ACCOUNT = "account";
     public static final String SECRET_PHRASE = "secretPhrase";
     public static final String SENDER = "sender";
-    public static final String PASS_PHRASE = "passPhrase";
+    public static final String PASS_PHRASE = "passphrase";
     public static final String ADMIN_PASSWORD = "adminPassword";
     public static final String TRANSACTION = "transaction";
     public static final String RECIPIENT = "recipient";
