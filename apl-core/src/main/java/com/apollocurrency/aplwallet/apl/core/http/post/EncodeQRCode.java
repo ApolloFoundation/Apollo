@@ -87,6 +87,8 @@ import static org.slf4j.LoggerFactory.getLogger;
  * the QR code.</li>
  * </ul>
  */
+
+@Deprecated
 @Vetoed
 public final class EncodeQRCode extends AbstractAPIRequestHandler {
     private static final Logger LOG = getLogger(EncodeQRCode.class);
@@ -105,7 +107,6 @@ public final class EncodeQRCode extends AbstractAPIRequestHandler {
 
         int width = HttpParameterParserUtil.getInt(request, "width", 0, 5000, false);
         int height = HttpParameterParserUtil.getInt(request, "height", 0, 5000, false);
-
         try {
             Map hints = new HashMap();
             // Error correction level: L (7%), M (15%), Q (25%), H (30%) -- Default L.

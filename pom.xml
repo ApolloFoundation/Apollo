@@ -753,14 +753,14 @@
             <useSystemClassLoader>false</useSystemClassLoader>
           </configuration>
           <dependencies>
-            <!--
-                                    JDK 11
-                                    <dependency>
-                                        <groupId>org.ow2.asm</groupId>
-                                        <artifactId>asm</artifactId>
-                                        <version>6.2</version>
-                                    </dependency>
-            -->
+<!--
+                        JDK 11
+                        <dependency>
+                            <groupId>org.ow2.asm</groupId>
+                            <artifactId>asm</artifactId>
+                            <version>6.2</version>
+                        </dependency>
+-->
             <dependency>
               <groupId>org.apache.maven.wagon</groupId>
               <artifactId>wagon-webdav-jackrabbit</artifactId>
