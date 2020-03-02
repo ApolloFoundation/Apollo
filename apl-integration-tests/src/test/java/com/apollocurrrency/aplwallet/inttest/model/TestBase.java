@@ -50,7 +50,7 @@ public abstract class TestBase implements ITest {
     private static RestAssuredConfig config;
 
     @BeforeAll
-     synchronized static void initAll() {
+    public synchronized static void initAll() {
         log.info("Preconditions started");
          config = RestAssured.config()
             .httpClient(HttpClientConfig.httpClientConfig()
