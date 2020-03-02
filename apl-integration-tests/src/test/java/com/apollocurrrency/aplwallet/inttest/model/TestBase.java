@@ -26,6 +26,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +41,8 @@ import static com.github.automatedowl.tools.AllureEnvironmentWriter.allureEnviro
 import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.parallel.ResourceAccessMode.READ;
+import static org.junit.jupiter.api.parallel.Resources.SYSTEM_PROPERTIES;
 
 
 public abstract class TestBase implements ITest {
@@ -51,7 +54,7 @@ public abstract class TestBase implements ITest {
     private static RestAssuredConfig config;
 
     @BeforeAll
-     synchronized static void initAll() {
+    public synchronized static void initAll() {
         log.info("Preconditions started");
          config = RestAssured.config()
             .httpClient(HttpClientConfig.httpClientConfig()
@@ -106,7 +109,8 @@ public abstract class TestBase implements ITest {
     }
 
     //Static need for a BeforeAll method
-    private static void importSecretFileSetUp(String pathToSecretFile, String pass) {
+    @ResourceLock(value = SYSTEM_PROPERTIES, mode = READ)
+    protected synchronized static void importSecretFileSetUp(String pathToSecretFile, String pass) {
         String path = "/rest/keyStore/upload";
         given().log().all()
                 .spec(restHelper.getPreconditionSpec())
@@ -147,9 +151,10 @@ public abstract class TestBase implements ITest {
                 TestConfiguration.getTestConfiguration().getVaultWallet().getUser(), 10);
             verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
         }
+
     }
 
-    private static CreateTransactionResponse sendMoneySetUp(Wallet wallet, String recipient, int moneyAmount) {
+    protected synchronized static CreateTransactionResponse sendMoneySetUp(Wallet wallet, String recipient, int moneyAmount) {
         HashMap<String, String> param = new HashMap();
         param = restHelper.addWalletParameters(param,wallet);
         param.put(ReqType.REQUEST_TYPE,ReqType.SEND_MONEY);
@@ -171,7 +176,7 @@ public abstract class TestBase implements ITest {
 
     }
 
-    private static boolean verifyTransactionInBlockSetUp(String transaction) {
+    protected synchronized static boolean verifyTransactionInBlockSetUp(String transaction) {
         boolean inBlock = false;
         try {
             inBlock = Failsafe.with(retryPolicy).get(() -> getTransactionSetUP(transaction).getConfirmations() >= 0);
@@ -199,7 +204,7 @@ public abstract class TestBase implements ITest {
             .extract().body().as(TransactionDTO.class);
     }
 
-    private static BalanceDTO getBalanceSetUP(Wallet wallet) {
+    protected synchronized static BalanceDTO getBalanceSetUP(Wallet wallet) {
         HashMap<String, String> param = new HashMap();
         param.put(ReqType.REQUEST_TYPE, ReqType.GET_BALANCE);
         param = restHelper.addWalletParameters(param, wallet);
