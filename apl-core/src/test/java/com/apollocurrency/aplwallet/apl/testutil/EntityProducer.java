@@ -6,22 +6,29 @@
 
 package com.apollocurrency.aplwallet.apl.testutil;
 
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
 import com.apollocurrency.aplwallet.apl.core.peer.BlockchainState;
 import com.apollocurrency.aplwallet.apl.core.peer.Hallmark;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerTrustLevel;
+import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Produces;
+import javax.inject.Named;
 import java.util.Set;
 import java.util.UUID;
 
 public class EntityProducer {
 
-
+    @Produces @Named("CREATOR_ID")
+    public long getCreatorId(){ //only for tests, instead of using the GenesisImporter component.
+        return AccountTestData.CREATOR_ID;
+    }
     public static Peer createPeer(final String host, final String announcedAddress, boolean active, final long supportServices){
         final PeerState state = active ? PeerState.CONNECTED: PeerState.NON_CONNECTED;
 
@@ -243,6 +250,12 @@ public class EntityProducer {
 
         };
         return peer;
+    }
+
+    public static AccountAsset createAccountAsset(long accountId, long assetId, long quantityATU, long unconfirmedQuantityATU, int height){
+        AccountAsset accountAsset = new AccountAsset(accountId, assetId, quantityATU, unconfirmedQuantityATU, height);
+
+        return accountAsset;
     }
 
 }

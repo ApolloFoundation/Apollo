@@ -10,6 +10,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -33,7 +34,10 @@ public class TrimDao {
                     return trimEntry;
                 }
             } else {
-                try (PreparedStatement pstm = con.prepareStatement("INSERT INTO trim (height, done) VALUES (?, ?) ")) {
+                try (PreparedStatement pstm = con.prepareStatement(
+                        "INSERT INTO trim (height, done) VALUES (?, ?) ",
+                        Statement.RETURN_GENERATED_KEYS
+                )) {
                     pstm.setInt(1, trimEntry.getHeight());
                     pstm.setBoolean(2, trimEntry.isDone());
                     pstm.executeUpdate();

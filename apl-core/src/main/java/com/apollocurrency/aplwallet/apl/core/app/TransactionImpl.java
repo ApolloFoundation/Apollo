@@ -20,8 +20,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtendAttachment;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
@@ -49,6 +51,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -64,6 +67,9 @@ public class TransactionImpl implements Transaction {
 
 //    @Inject
     private static BlockchainImpl blockchain;
+
+    @Inject
+    private static AccountPublicKeyService accountPublicKeyService;
 
     public static final class BuilderImpl implements Builder {
 
@@ -129,6 +135,13 @@ public class TransactionImpl implements Transaction {
                 blockchain = CDI.current().select(BlockchainImpl.class).get();
             }
             return blockchain;
+        }
+
+        private AccountPublicKeyService lookupAndInjectAccountService() {
+            if (accountPublicKeyService == null) {
+                accountPublicKeyService = CDI.current().select(AccountPublicKeyServiceImpl.class).get();
+            }
+            return accountPublicKeyService;
         }
 
         @Override
@@ -396,6 +409,13 @@ public class TransactionImpl implements Transaction {
         return blockchain;
     }
 
+    private AccountPublicKeyService lookupAndInjectAccountService() {
+        if (accountPublicKeyService == null) {
+            accountPublicKeyService = CDI.current().select(AccountPublicKeyServiceImpl.class).get();
+        }
+        return accountPublicKeyService;
+    }
+
     @Override
     public short getDeadline() {
         return deadline;
@@ -404,7 +424,7 @@ public class TransactionImpl implements Transaction {
     @Override
     public byte[] getSenderPublicKey() {
         if (senderPublicKey == null) {
-            senderPublicKey = Account.getPublicKey(senderId);
+            senderPublicKey = lookupAndInjectAccountService().getPublicKeyByteArray(senderId);
         }
         return senderPublicKey;
     }
@@ -609,7 +629,7 @@ public class TransactionImpl implements Transaction {
     @Override
     public long getSenderId() {
         if (senderId == 0) {
-            senderId = Account.getId(getSenderPublicKey());
+            senderId = AccountService.getId(getSenderPublicKey());
         }
         return senderId;
     }
@@ -955,7 +975,8 @@ public class TransactionImpl implements Transaction {
     }
 
     public boolean verifySignature() {
-        return checkSignature() && Account.setOrVerify(getSenderId(), getSenderPublicKey());
+        lookupAndInjectAccountService();
+        return checkSignature() && lookupAndInjectAccountService().setOrVerifyPublicKey(getSenderId(), getSenderPublicKey());
     }
 
     private volatile boolean hasValidSignature = false;

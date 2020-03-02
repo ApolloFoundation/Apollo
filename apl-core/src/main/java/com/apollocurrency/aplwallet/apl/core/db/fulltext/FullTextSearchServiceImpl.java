@@ -5,6 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.db.fulltext;
 
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +23,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 @Singleton
+@DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
 public class FullTextSearchServiceImpl implements FullTextSearchService {
 
     private static final Logger LOG = LoggerFactory.getLogger(FullTextSearchServiceImpl.class);
@@ -61,7 +64,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
         // will be initialized when it is created.
         //
         try (Statement stmt = conn.createStatement()) {
-            stmt.execute(String.format("INSERT INTO FTL.INDEXES (schema, table, columns) "
+            stmt.execute(String.format("INSERT INTO FTL.INDEXES (schema, \"TABLE\", columns) "
                             + "VALUES('%s', '%s', '%s')",
                     upperSchema, upperTable, columnList.toUpperCase()));
             stmt.execute(String.format("CREATE TRIGGER FTL_%s AFTER INSERT,UPDATE,DELETE ON %s "
@@ -98,11 +101,11 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
         try (Statement qstmt = conn.createStatement();
              Statement stmt = conn.createStatement()) {
             try (ResultSet rs = qstmt.executeQuery(String.format(
-                    "SELECT COLUMNS FROM FTL.INDEXES WHERE SCHEMA = '%s' AND TABLE = '%s'",
+                    "SELECT COLUMNS FROM FTL.INDEXES WHERE SCHEMA = '%s' AND \"TABLE\" = '%s'",
                     upperSchema, upperTable))) {
                 if (rs.next()) {
                     stmt.execute("DROP TRIGGER IF EXISTS FTL_" + upperTable);
-                    stmt.execute(String.format("DELETE FROM FTL.INDEXES WHERE SCHEMA = '%s' AND TABLE = '%s'",
+                    stmt.execute(String.format("DELETE FROM FTL.INDEXES WHERE SCHEMA = '%s' AND \"TABLE\" = '%s'",
                             upperSchema, upperTable));
                     reindex = true;
                 }
@@ -178,7 +181,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             //
             stmt.execute("CREATE SCHEMA IF NOT EXISTS FTL");
             stmt.execute("CREATE TABLE IF NOT EXISTS FTL.INDEXES "
-                    + "(SCHEMA VARCHAR, TABLE VARCHAR, COLUMNS VARCHAR, PRIMARY KEY(SCHEMA, TABLE))");
+                    + "(SCHEMA VARCHAR, \"TABLE\" VARCHAR, COLUMNS VARCHAR, PRIMARY KEY(SCHEMA, \"TABLE\"))");
             LOG.info(" fulltext schema created");
             //
             // Drop existing triggers and create our triggers.  H2 will initialize the trigger
@@ -222,7 +225,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
         //
         try (Statement qstmt = conn.createStatement();
              Statement stmt = conn.createStatement();
-             ResultSet rs = qstmt.executeQuery("SELECT TABLE FROM FTL.INDEXES")) {
+             ResultSet rs = qstmt.executeQuery("SELECT \"TABLE\" FROM FTL.INDEXES")) {
             while(rs.next()) {
                 String table = rs.getString(1);
                 stmt.execute("DROP TRIGGER IF EXISTS FTL_" + table);

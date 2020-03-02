@@ -334,10 +334,10 @@ public enum APIEnum {
     ENCRYPT_TO("encryptTo", new EncryptTo()),
     GENERATE_TOKEN("generateToken", new GenerateToken()),
     GENERATE_FILE_TOKEN("generateFileToken", new GenerateFileToken()),
-    GET_ACCOUNT("getAccount", new GetAccount()),
-    GET_ACCOUNT_BLOCK_COUNT("getAccountBlockCount", new GetAccountBlockCount()),
-    GET_ACCOUNT_BLOCK_IDS("getAccountBlockIds", new GetAccountBlockIds()),
-    GET_ACCOUNT_BLOCKS("getAccountBlocks", new GetAccountBlocks()),
+    @Deprecated GET_ACCOUNT("getAccount", new GetAccount()),
+    @Deprecated GET_ACCOUNT_BLOCK_COUNT("getAccountBlockCount", new GetAccountBlockCount()),
+    @Deprecated GET_ACCOUNT_BLOCK_IDS("getAccountBlockIds", new GetAccountBlockIds()),
+    @Deprecated GET_ACCOUNT_BLOCKS("getAccountBlocks", new GetAccountBlocks()),
     GET_ACCOUNT_ID("getAccountId", new GetAccountId()),
     GET_ACCOUNT_LEDGER("getAccountLedger", new GetAccountLedger()),
     GET_ACCOUNT_LEDGER_ENTRY("getAccountLedgerEntry", new GetAccountLedgerEntry()),
@@ -348,10 +348,10 @@ public enum APIEnum {
     GET_ACCOUNT_PHASED_TRANSACTION_COUNT("getAccountPhasedTransactionCount", new GetAccountPhasedTransactionCount()),
     GET_ACCOUNT_PUBLIC_KEY("getAccountPublicKey", new GetAccountPublicKey()),
     GET_ACCOUNT_LESSORS("getAccountLessors", new GetAccountLessors()),
-    GET_ACCOUNT_ASSETS("getAccountAssets", new GetAccountAssets()),
-    GET_ACCOUNT_CURRENCIES("getAccountCurrencies", new GetAccountCurrencies()),
-    GET_ACCOUNT_CURRENCY_COUNT("getAccountCurrencyCount", new GetAccountCurrencyCount()),
-    GET_ACCOUNT_ASSET_COUNT("getAccountAssetCount", new GetAccountAssetCount()),
+    @Deprecated GET_ACCOUNT_ASSETS("getAccountAssets", new GetAccountAssets()),
+    @Deprecated GET_ACCOUNT_CURRENCIES("getAccountCurrencies", new GetAccountCurrencies()),
+    @Deprecated GET_ACCOUNT_CURRENCY_COUNT("getAccountCurrencyCount", new GetAccountCurrencyCount()),
+    @Deprecated GET_ACCOUNT_ASSET_COUNT("getAccountAssetCount", new GetAccountAssetCount()),
     GET_ACCOUNT_PROPERTIES("getAccountProperties", new GetAccountProperties()),
     SELL_ALIAS("sellAlias", new SellAlias()),
     BUY_ALIAS("buyAlias", new BuyAlias()),
@@ -431,7 +431,7 @@ public enum APIEnum {
     GET_UNCONFIRMED_TRANSACTION_IDS("getUnconfirmedTransactionIds", new GetUnconfirmedTransactionIds()),
     GET_UNCONFIRMED_TRANSACTIONS("getUnconfirmedTransactions", new GetUnconfirmedTransactions()),
     GET_EXPECTED_TRANSACTIONS("getExpectedTransactions", new GetExpectedTransactions()),
-    GET_ACCOUNT_CURRENT_ASK_ORDER_IDS("getAccountCurrentAskOrderIds", new GetAccountCurrentAskOrderIds()),
+    @Deprecated GET_ACCOUNT_CURRENT_ASK_ORDER_IDS("getAccountCurrentAskOrderIds", new GetAccountCurrentAskOrderIds()),
     GET_ACCOUNT_CURRENT_BID_ORDER_IDS("getAccountCurrentBidOrderIds", new GetAccountCurrentBidOrderIds()),
     GET_ACCOUNT_CURRENT_ASK_ORDERS("getAccountCurrentAskOrders", new GetAccountCurrentAskOrders()),
     GET_ACCOUNT_CURRENT_BID_ORDERS("getAccountCurrentBidOrders", new GetAccountCurrentBidOrders()),
@@ -570,14 +570,14 @@ public enum APIEnum {
     GET_CHAT_HISTORY("getChatHistory", new GetChatHistory()),
     GET_TOTAL_SUPPLY("getTotalSupply", new GetTotalSupply()),
     GET_ACCOUNTS("getAccounts", new GetAccounts()),
-    GENERATE_ACCOUNT("generateAccount", new GenerateAccount()),
-    EXPORT_KEY("exportKey", new ExportKey()),
+    @Deprecated GENERATE_ACCOUNT("generateAccount", new GenerateAccount()),
+    @Deprecated EXPORT_KEY("exportKey", new ExportKey()),
     IMPORT_KEY("importKey", new ImportKey()),
-    ENABLE_2FA("enable2FA", new Enable2FA()),
-    DISABLE_2FA("disable2FA", new Disable2FA()),
-    CONFIRM_2FA("confirm2FA", new Confirm2FA()),
+    @Deprecated ENABLE_2FA("enable2FA", new Enable2FA()),
+    @Deprecated DISABLE_2FA("disable2FA", new Disable2FA()),
+    @Deprecated CONFIRM_2FA("confirm2FA", new Confirm2FA()),
     GET_GENESIS_BALANCES("getGenesisBalances", new GetGenesisBalances()),
-    DELETE_KEY("deleteKey", new DeleteKey()),
+    @Deprecated DELETE_KEY("deleteKey", new DeleteKey()),
     ;
     private static final Map<String, APIEnum> apiByName = new HashMap<>();
 
@@ -628,7 +628,7 @@ public enum APIEnum {
         }
         byte[] decoded = Base64.getDecoder().decode(apiSetBase64);
         BitSet bs = BitSet.valueOf(decoded);
-        
+
         for (int i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i+1)) {
             result.add(APIEnum.values()[i]);
             if (i == Integer.MAX_VALUE) {

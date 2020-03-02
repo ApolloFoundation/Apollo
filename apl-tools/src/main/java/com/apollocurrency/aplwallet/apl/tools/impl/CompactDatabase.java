@@ -95,7 +95,7 @@ public class CompactDatabase {
         //TODO: this SQL script is lost. Dvelop new one and place in resources,
         // read it from resources
         File sqlFile = new File(dbProperties.getDbDir(), "backup.sql.gz");
-        File dbFile = new File(dbProperties.getDbDir(), dbProperties.getDbFileName()+".h2.db");
+        File dbFile = new File(dbProperties.getDbDir(), dbProperties.getDbFileName() + DbProperties.DB_EXTENSION_WITH_DOT);
         if (!dbFile.exists()) {
             dbFile = new File(dbProperties.getDbDir(), Constants.APPLICATION_DIR_NAME + ".mv.db");
             if (!dbFile.exists()) {
@@ -156,7 +156,7 @@ public class CompactDatabase {
                     //
                     // We failed while creating the new database
                     //
-                    File newFile = new File(dbProperties.getDbDir(), Constants.APPLICATION_DIR_NAME + ".h2.db");
+                    File newFile = new File(dbProperties.getDbDir(), Constants.APPLICATION_DIR_NAME + DbProperties.DB_EXTENSION_WITH_DOT);
                     if (newFile.exists()) {
                         if (!newFile.delete()) {
                             LOG.error(String.format("Unable to delete '%s'", newFile.getPath()));

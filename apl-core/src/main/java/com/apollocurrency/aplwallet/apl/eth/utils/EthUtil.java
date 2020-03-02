@@ -66,7 +66,7 @@ public class EthUtil {
     }
 
     public static BigDecimal fromAtm(BigDecimal ix) {
-        return ix.divide(BigDecimal.valueOf(Constants.ONE_APL));        
+        return ix.divide(BigDecimal.valueOf(Constants.ONE_APL));
     }
 
     public static boolean isAddressValid(String address){

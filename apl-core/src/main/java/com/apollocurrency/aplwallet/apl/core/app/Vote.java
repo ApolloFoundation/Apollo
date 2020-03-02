@@ -58,6 +58,7 @@ public final class Vote {
 
         @Override
         public void trim(int height) {
+            log.trace("Vote trim: NO_Sharding, height = {}", height);
             super.trim(height);
             try (Connection con = databaseManager.getDataSource().getConnection();
 //                 DbIterator<Poll> polls = Poll.getPollsFinishingAtOrBefore(height, 0, Integer.MAX_VALUE);
@@ -70,7 +71,7 @@ public final class Vote {
         }
 
         public void trim(int height, boolean isSharding) {
-            log.debug("Vote trim: isSharding={}, height = {}", isSharding, height);
+            log.trace("Vote trim: isSharding={}, height = {}", isSharding, height);
             if (isSharding) {
                 // trim when sharding process has been started
                 super.trim(height);
@@ -95,10 +96,10 @@ public final class Vote {
         int totalDeletedVotes = 0; // total number deleted Vote records from all affected Polls
         for (Poll poll : polls) {
             pstmt.setLong(1, poll.getId());
-            log.trace("Vote trim: Before deleting votes, index=[{}] by pollId={} at height = {}", index, poll.getId(), height);
+            log.trace("Vote trim common: Before deleting votes, index=[{}] by pollId={} at height = {}", index, poll.getId(), height);
             int deletedRecords = pstmt.executeUpdate();
             if (deletedRecords > 0) {
-                log.trace("Vote trim: deleted [{}] votes, index=[{}] by pollId = {}, poll finishHeight={} at blockchain height={}",
+                log.trace("Vote trim common: deleted [{}] votes, index=[{}] by pollId = {}, poll finishHeight={} at blockchain height={}",
                     deletedRecords, index, poll.getId(), poll.getFinishHeight(), height);
                 totalDeletedVotes += deletedRecords;
             }

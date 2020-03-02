@@ -26,7 +26,7 @@ public class AplDbVersion extends DbVersion {
         switch (nextUpdate) {
             case 1:
                 apply("CREATE TABLE IF NOT EXISTS block (db_id IDENTITY, id BIGINT NOT NULL, version INT NOT NULL, "
-                        + "timestamp INT NOT NULL, previous_block_id BIGINT, "
+                        + "\"TIMESTAMP\" INT NOT NULL, previous_block_id BIGINT, "
                         + "total_amount BIGINT NOT NULL, "
                         + "total_fee BIGINT NOT NULL, payload_length INT NOT NULL, "
                         + "previous_block_hash BINARY(32), cumulative_difficulty VARBINARY NOT NULL, base_target BIGINT NOT NULL, "
@@ -40,7 +40,7 @@ public class AplDbVersion extends DbVersion {
                         + "deadline SMALLINT NOT NULL, recipient_id BIGINT, transaction_index SMALLINT NOT NULL, "
                         + "amount BIGINT NOT NULL, fee BIGINT NOT NULL, full_hash BINARY(32) NOT NULL, "
                         + "height INT NOT NULL, block_id BIGINT NOT NULL, "
-                        + "signature BINARY(64) NOT NULL, timestamp INT NOT NULL, type TINYINT NOT NULL, subtype TINYINT NOT NULL, "
+                        + "signature BINARY(64) NOT NULL, \"TIMESTAMP\" INT NOT NULL, type TINYINT NOT NULL, subtype TINYINT NOT NULL, "
                         + "sender_id BIGINT NOT NULL, sender_public_key BINARY(32), block_timestamp INT NOT NULL, referenced_transaction_full_hash BINARY(32), "
                         + "phased BOOLEAN NOT NULL DEFAULT FALSE, "
                         + "attachment_bytes VARBINARY, version TINYINT NOT NULL, has_message BOOLEAN NOT NULL DEFAULT FALSE, "
@@ -66,7 +66,7 @@ public class AplDbVersion extends DbVersion {
                 apply("CREATE TABLE IF NOT EXISTS alias (db_id IDENTITY, id BIGINT NOT NULL, "
                         + "account_id BIGINT NOT NULL, alias_name VARCHAR NOT NULL, "
                         + "alias_name_lower VARCHAR AS LOWER (alias_name) NOT NULL, "
-                        + "alias_uri VARCHAR NOT NULL, timestamp INT NOT NULL, "
+                        + "alias_uri VARCHAR NOT NULL, \"TIMESTAMP\" INT NOT NULL, "
                         + "height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
             case 12:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS alias_id_height_idx ON alias (id, height DESC)");
@@ -91,7 +91,7 @@ public class AplDbVersion extends DbVersion {
                         + "ask_order_id BIGINT NOT NULL, bid_order_id BIGINT NOT NULL, ask_order_height INT NOT NULL, "
                         + "bid_order_height INT NOT NULL, seller_id BIGINT NOT NULL, buyer_id BIGINT NOT NULL, "
                         + "is_buy BOOLEAN NOT NULL, "
-                        + "quantity BIGINT NOT NULL, price BIGINT NOT NULL, timestamp INT NOT NULL, height INT NOT NULL)");
+                        + "quantity BIGINT NOT NULL, price BIGINT NOT NULL, \"TIMESTAMP\" INT NOT NULL, height INT NOT NULL)");
             case 20:
                 apply("CREATE INDEX IF NOT EXISTS trade_asset_id_idx ON trade (asset_id, height DESC)");
             case 21:
@@ -125,20 +125,20 @@ public class AplDbVersion extends DbVersion {
             case 31:
                 apply("CREATE TABLE IF NOT EXISTS goods (db_id IDENTITY, id BIGINT NOT NULL, seller_id BIGINT NOT NULL, "
                         + "name VARCHAR NOT NULL, description VARCHAR, parsed_tags ARRAY, has_image BOOLEAN NOT NULL, "
-                        + "tags VARCHAR, timestamp INT NOT NULL, quantity INT NOT NULL, price BIGINT NOT NULL, "
+                        + "tags VARCHAR, \"TIMESTAMP\" INT NOT NULL, quantity INT NOT NULL, price BIGINT NOT NULL, "
                         + "delisted BOOLEAN NOT NULL, height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
             case 32:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS goods_id_height_idx ON goods (id, height DESC)");
             case 33:
                 apply("CREATE INDEX IF NOT EXISTS goods_seller_id_name_idx ON goods (seller_id, name)");
             case 34:
-                apply("CREATE INDEX IF NOT EXISTS goods_timestamp_idx ON goods (timestamp DESC, height DESC)");
+                apply("CREATE INDEX IF NOT EXISTS goods_timestamp_idx ON goods (\"TIMESTAMP\" DESC, height DESC)");
             case 35:
                 apply("CREATE TABLE IF NOT EXISTS purchase (db_id IDENTITY, id BIGINT NOT NULL, buyer_id BIGINT NOT NULL, "
                         + "goods_id BIGINT NOT NULL, "
                         + "seller_id BIGINT NOT NULL, quantity INT NOT NULL, "
                         + "price BIGINT NOT NULL, deadline INT NOT NULL, note VARBINARY, nonce BINARY(32), "
-                        + "timestamp INT NOT NULL, pending BOOLEAN NOT NULL, goods VARBINARY, goods_nonce BINARY(32), goods_is_text BOOLEAN NOT NULL DEFAULT TRUE, "
+                        + "\"TIMESTAMP\" INT NOT NULL, pending BOOLEAN NOT NULL, goods VARBINARY, goods_nonce BINARY(32), goods_is_text BOOLEAN NOT NULL DEFAULT TRUE, "
                         + "refund_note VARBINARY, refund_nonce BINARY(32), has_feedback_notes BOOLEAN NOT NULL DEFAULT FALSE, "
                         + "has_public_feedbacks BOOLEAN NOT NULL DEFAULT FALSE, discount BIGINT NOT NULL, refund BIGINT NOT NULL, "
                         + "height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
@@ -187,7 +187,7 @@ public class AplDbVersion extends DbVersion {
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS unconfirmed_transaction_id_idx ON unconfirmed_transaction (id)");
             case 52:
                 apply("CREATE TABLE IF NOT EXISTS asset_transfer (db_id IDENTITY, id BIGINT NOT NULL, asset_id BIGINT NOT NULL, "
-                        + "sender_id BIGINT NOT NULL, recipient_id BIGINT NOT NULL, quantity BIGINT NOT NULL, timestamp INT NOT NULL, "
+                        + "sender_id BIGINT NOT NULL, recipient_id BIGINT NOT NULL, quantity BIGINT NOT NULL, \"TIMESTAMP\" INT NOT NULL, "
                         + "height INT NOT NULL)");
             case 53:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS asset_transfer_id_idx ON asset_transfer (id)");
@@ -200,13 +200,13 @@ public class AplDbVersion extends DbVersion {
             case 57:
                 apply("CREATE INDEX IF NOT EXISTS account_asset_quantity_idx ON account_asset (quantity DESC)");
             case 58:
-                apply("CREATE INDEX IF NOT EXISTS purchase_timestamp_idx ON purchase (timestamp DESC, id)");
+                apply("CREATE INDEX IF NOT EXISTS purchase_timestamp_idx ON purchase (\"TIMESTAMP\" DESC, id)");
             case 59:
                 apply("CREATE INDEX IF NOT EXISTS ask_order_creation_idx ON ask_order (creation_height DESC)");
             case 60:
                 apply("CREATE INDEX IF NOT EXISTS bid_order_creation_idx ON bid_order (creation_height DESC)");
             case 61:
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_timestamp_idx ON block (timestamp DESC)");
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS block_timestamp_idx ON block (\"TIMESTAMP\" DESC)");
             case 62:
                 apply("CREATE TABLE IF NOT EXISTS tag (db_id IDENTITY, tag VARCHAR NOT NULL, in_stock_count INT NOT NULL, "
                         + "total_count INT NOT NULL, height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
@@ -264,7 +264,7 @@ public class AplDbVersion extends DbVersion {
                 apply("CREATE TABLE IF NOT EXISTS exchange (db_id IDENTITY, transaction_id BIGINT NOT NULL, currency_id BIGINT NOT NULL, block_id BIGINT NOT NULL, "
                         + "offer_id BIGINT NOT NULL, seller_id BIGINT NOT NULL, "
                         + "buyer_id BIGINT NOT NULL, units BIGINT NOT NULL, "
-                        + "rate BIGINT NOT NULL, timestamp INT NOT NULL, height INT NOT NULL)");
+                        + "rate BIGINT NOT NULL, \"TIMESTAMP\" INT NOT NULL, height INT NOT NULL)");
             case 81:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS exchange_offer_idx ON exchange (transaction_id, offer_id)");
             case 82:
@@ -275,7 +275,7 @@ public class AplDbVersion extends DbVersion {
                 apply("CREATE INDEX IF NOT EXISTS exchange_buyer_id_idx ON exchange (buyer_id, height DESC)");
             case 85:
                 apply("CREATE TABLE IF NOT EXISTS currency_transfer (db_id IDENTITY, id BIGINT NOT NULL, currency_id BIGINT NOT NULL, "
-                        + "sender_id BIGINT NOT NULL, recipient_id BIGINT NOT NULL, units BIGINT NOT NULL, timestamp INT NOT NULL, "
+                        + "sender_id BIGINT NOT NULL, recipient_id BIGINT NOT NULL, units BIGINT NOT NULL, \"TIMESTAMP\" INT NOT NULL, "
                         + "height INT NOT NULL)");
             case 86:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS currency_transfer_id_idx ON currency_transfer (id)");
@@ -335,7 +335,7 @@ public class AplDbVersion extends DbVersion {
                 apply("CREATE TABLE IF NOT EXISTS poll (db_id IDENTITY, id BIGINT NOT NULL, "
                         + "account_id BIGINT NOT NULL, name VARCHAR NOT NULL, "
                         + "description VARCHAR, options ARRAY NOT NULL, min_num_options TINYINT, max_num_options TINYINT, "
-                        + "min_range_value TINYINT, max_range_value TINYINT, timestamp INT NOT NULL, "
+                        + "min_range_value TINYINT, max_range_value TINYINT, \"TIMESTAMP\" INT NOT NULL, "
                         + "finish_height INT NOT NULL, voting_model TINYINT NOT NULL, min_balance BIGINT, "
                         + "min_balance_model TINYINT, holding_id BIGINT, height INT NOT NULL)");
             case 111:
@@ -439,7 +439,7 @@ public class AplDbVersion extends DbVersion {
             case 151:
                 apply("CREATE INDEX IF NOT EXISTS data_tag_count_height_idx ON data_tag (tag_count DESC, height DESC)");
             case 152:
-                apply("CREATE TABLE IF NOT EXISTS tagged_data_timestamp (db_id IDENTITY, id BIGINT NOT NULL, timestamp INT NOT NULL, "
+                apply("CREATE TABLE IF NOT EXISTS tagged_data_timestamp (db_id IDENTITY, id BIGINT NOT NULL, \"TIMESTAMP\" INT NOT NULL, "
                         + "height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
             case 153:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS tagged_data_timestamp_id_height_idx ON tagged_data_timestamp (id, height DESC)");
@@ -515,7 +515,7 @@ public class AplDbVersion extends DbVersion {
             case 187:
                 apply("CREATE TABLE IF NOT EXISTS exchange_request (db_id IDENTITY, id BIGINT NOT NULL, account_id BIGINT NOT NULL, "
                         + "currency_id BIGINT NOT NULL, units BIGINT NOT NULL, rate BIGINT NOT NULL, is_buy BOOLEAN NOT NULL, "
-                        + "timestamp INT NOT NULL, height INT NOT NULL)");
+                        + "\"TIMESTAMP\" INT NOT NULL, height INT NOT NULL)");
             case 188:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS exchange_request_id_idx ON exchange_request (id)");
             case 189:
@@ -530,7 +530,7 @@ public class AplDbVersion extends DbVersion {
                 apply("CREATE TABLE IF NOT EXISTS account_ledger (db_id IDENTITY, account_id BIGINT NOT NULL, "
                         + "event_type TINYINT NOT NULL, event_id BIGINT NOT NULL, holding_type TINYINT NOT NULL, "
                         + "holding_id BIGINT, change BIGINT NOT NULL, balance BIGINT NOT NULL, "
-                        + "block_id BIGINT NOT NULL, height INT NOT NULL, timestamp INT NOT NULL)");
+                        + "block_id BIGINT NOT NULL, height INT NOT NULL, \"TIMESTAMP\" INT NOT NULL)");
             case 194:
                 apply("CREATE INDEX IF NOT EXISTS account_ledger_id_idx ON account_ledger(account_id, db_id)");
             case 195:
@@ -601,7 +601,7 @@ public class AplDbVersion extends DbVersion {
                 apply("CREATE INDEX IF NOT EXISTS account_control_phasing_height_id_idx ON account_control_phasing (height, account_id)");
             case 220:
                 apply("CREATE TABLE IF NOT EXISTS account_property (db_id IDENTITY, id BIGINT NOT NULL, recipient_id BIGINT NOT NULL, setter_id BIGINT, "
-                        + "property VARCHAR NOT NULL, value VARCHAR, height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
+                        + "property VARCHAR NOT NULL, \"VALUE\" VARCHAR, height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
             case 221:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS account_property_id_height_idx ON account_property (id, height DESC)");
             case 222:
@@ -612,7 +612,7 @@ public class AplDbVersion extends DbVersion {
                 apply("CREATE INDEX IF NOT EXISTS account_property_setter_recipient_idx ON account_property (setter_id, recipient_id)");
             case 225:
                 apply("CREATE TABLE IF NOT EXISTS asset_delete (db_id IDENTITY, id BIGINT NOT NULL, asset_id BIGINT NOT NULL, "
-                        + "account_id BIGINT NOT NULL, quantity BIGINT NOT NULL, timestamp INT NOT NULL, height INT NOT NULL)");
+                        + "account_id BIGINT NOT NULL, quantity BIGINT NOT NULL, \"TIMESTAMP\" INT NOT NULL, height INT NOT NULL)");
             case 226:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS asset_delete_id_idx ON asset_delete (id)");
             case 227:
@@ -631,7 +631,7 @@ public class AplDbVersion extends DbVersion {
             case 233:
                 apply("CREATE TABLE IF NOT EXISTS asset_dividend (db_id IDENTITY, id BIGINT NOT NULL, asset_id BIGINT NOT NULL, "
                         + "amount BIGINT NOT NULL, dividend_height INT NOT NULL, total_dividend BIGINT NOT NULL, "
-                        + "num_accounts BIGINT NOT NULL, timestamp INT NOT NULL, height INT NOT NULL)");
+                        + "num_accounts BIGINT NOT NULL, \"TIMESTAMP\" INT NOT NULL, height INT NOT NULL)");
             case 234:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS asset_dividend_id_idx ON asset_dividend (id)");
             case 235:
@@ -663,14 +663,14 @@ public class AplDbVersion extends DbVersion {
                 apply("CREATE TABLE IF NOT EXISTS two_factor_auth ("
                         + "account BIGINT PRIMARY KEY,"
                         + "secret VARBINARY,"
-                        + "confirmed BOOLEAN NOT NULL DEFAULT FALSE,"
+                        + "confirmed BOOLEAN NOT NULL DEFAULT FALSE"
                         + ")"
                 );
 
             case 243:
-                apply("CREATE TABLE IF NOT EXISTS option (name VARCHAR(100) not null, value VARCHAR(250))");
+                apply("CREATE TABLE IF NOT EXISTS option (name VARCHAR(100) not null, \"VALUE\" VARCHAR(250))");
             case 244:
-                apply("CREATE UNIQUE INDEX option_name_value_idx ON option(name, value)");
+                apply("CREATE UNIQUE INDEX option_name_value_idx ON option(name, \"VALUE\")");
             case 245:
                 apply("ALTER TABLE block ADD timeout INT NOT NULL DEFAULT 0");
             case 246:
@@ -801,7 +801,7 @@ public class AplDbVersion extends DbVersion {
             case 303:
                 apply("ALTER TABLE shard ADD COLUMN IF NOT EXISTS prunable_zip_hash VARBINARY DEFAULT NULL");
             case 304:
-                apply("ALTER TABLE dex_contract MODIFY secret_hash  BINARY(32) NULL DEFAULT NULL");
+                apply("ALTER TABLE dex_contract ALTER COLUMN secret_hash  BINARY(32) NULL DEFAULT NULL");
             case 305:
                 apply("ALTER TABLE dex_contract ADD COLUMN IF NOT EXISTS status TINYINT NOT NULL ");
             case 306:

@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.derived;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
@@ -19,6 +17,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Provide rollback and trim multiversion implementations and hold common parameters such as multiversion and keyfactory
@@ -44,15 +44,16 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
     }
 
     @Override
-    public void rollback(int height) {
+    public int rollback(int height) {
         if (multiversion) {
-            doMultiversionRollback(height);
+            return doMultiversionRollback(height);
         } else {
-            super.rollback(height);
+            return super.rollback(height);
         }
     }
 
-    private void doMultiversionRollback(int height) {
+    private int doMultiversionRollback(int height) {
+        int deletedRecordsCount;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
@@ -81,7 +82,7 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
             }
 
             pstmtDelete.setInt(1, height);
-            int deletedRecordsCount = pstmtDelete.executeUpdate();
+            deletedRecordsCount = pstmtDelete.executeUpdate();
 
             if (deletedRecordsCount > 0) {
                 LOG.trace("Rollback table {} deleting {} records", table, deletedRecordsCount);
@@ -92,7 +93,6 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
                 i = dbKey.setPK(pstmtSetLatest, i);
                 i = dbKey.setPK(pstmtSetLatest, i);
                 pstmtSetLatest.executeUpdate();
-                dataSource.getCache(table).remove(dbKey);
             }
         }
         catch (SQLException e) {
@@ -100,6 +100,7 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
             throw new RuntimeException(e.toString(), e);
         }
         LOG.trace("Rollback for table {} took {} ms", table, System.currentTimeMillis() - startTime);
+        return deletedRecordsCount;
     }
 
 
@@ -264,10 +265,5 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
             }
         }
         return dbKeys;
-    }
-
-    protected void clearCache() {
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        dataSource.clearCache(table);
     }
 }

@@ -20,7 +20,7 @@
 package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
@@ -44,7 +44,6 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
-import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
 import com.apollocurrency.aplwallet.apl.util.task.Tasks;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
@@ -138,9 +137,9 @@ public class PeersService {
     private static JSONObject myPeerInfo;
     public static PeerInfo myPI;
     private List<Peer.Service> myServices;
-    private volatile BlockchainState currentBlockchainState;
-    private volatile JSONStreamAware myPeerInfoRequest;
-    private volatile JSONStreamAware myPeerInfoResponse;
+    private BlockchainState currentBlockchainState;
+    private JSONStreamAware myPeerInfoRequest;
+    private JSONStreamAware myPeerInfoResponse;
 
     boolean shutdown = false;
     boolean suspend = false;
@@ -170,9 +169,9 @@ public class PeersService {
     private final Blockchain blockchain;
     private BlockchainProcessor blockchainProcessor;
     private volatile TimeService timeService;
-
     private final PeerHttpServer peerHttpServer;
     private final TaskDispatchManager taskDispatchManager;
+    private final AccountService accountService;
 
     public static int myPort;
     public final boolean isLightClient;
@@ -180,7 +179,7 @@ public class PeersService {
     @Inject
     public PeersService(PropertiesHolder propertiesHolder, BlockchainConfig blockchainConfig, Blockchain blockchain,
                         TimeService timeService, TaskDispatchManager taskDispatchManager, PeerHttpServer peerHttpServer,
-                        TimeLimiterService timeLimiterService) {
+                        TimeLimiterService timeLimiterService, AccountService accountService) {
         this.propertiesHolder = propertiesHolder;
         this.blockchainConfig = blockchainConfig;
         this.blockchain = blockchain;
@@ -188,6 +187,7 @@ public class PeersService {
         this.taskDispatchManager = taskDispatchManager;
         this.peerHttpServer = peerHttpServer;
         this.timeLimiterService = timeLimiterService;
+        this.accountService = accountService;
 
         isLightClient = propertiesHolder.isLightClient();
     }
@@ -211,7 +211,8 @@ public class PeersService {
         myHallmark = Convert.emptyToNull(propertiesHolder.getStringProperty("apl.myHallmark", "").trim());
         if (myHallmark != null && PeersService.myHallmark.length() > 0) {
             try {
-                Hallmark hallmark = Hallmark.parseHallmark(myHallmark);
+                long maxBalanceAPL = blockchainConfig.getCurrentConfig().getMaxBalanceAPL();
+                Hallmark hallmark = Hallmark.parseHallmark(myHallmark, maxBalanceAPL);
                 if (!hallmark.isValid()) {
                     throw new RuntimeException("Hallmark is not valid");
                 }
@@ -277,11 +278,12 @@ public class PeersService {
             }
         }), PeersService.Event.CHANGED_SERVICES);
 
-        Account.addListener(account -> connectablePeers.values().forEach(peer -> {
+        // moved to Weld Event
+       /* Account.addListener(account -> connectablePeers.values().forEach(peer -> {
             if (peer.getHallmark() != null && peer.getHallmark().getAccountId() == account.getId()) {
                 listeners.notify(peer, Event.WEIGHT);
             }
-        }), Account.Event.BALANCE);
+        }), AccountEventType.BALANCE);*/
 
         configureBackgroundTasks();
 
@@ -612,7 +614,7 @@ public class PeersService {
         //if it is not resolvable
         PeerAddress apa = resolveAnnouncedAddress(announcedAddress);
         peer = new PeerImpl(actualAddr, apa, blockchainConfig, blockchain, timeService, peerHttpServer.getPeerServlet(),
-                this, timeLimiterService.acquireLimiter("P2PTransport"));
+                this, timeLimiterService.acquireLimiter("P2PTransport"), accountService);
         listeners.notify(peer, Event.NEW_PEER);
         if(apa!=null){
             connectablePeers.put(apa.getAddrWithPort(),peer);

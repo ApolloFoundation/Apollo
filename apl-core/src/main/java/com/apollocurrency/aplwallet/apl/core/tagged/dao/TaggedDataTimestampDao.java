@@ -16,6 +16,8 @@ import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.tagged.mapper.TagDataTimestampMapper;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataTimestamp;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
 /**
  * DAO for TaggedDataTimestamp
@@ -49,9 +51,13 @@ public class TaggedDataTimestampDao extends VersionedDeletableEntityDbTable<Tagg
     }
 
     public void save(Connection con, TaggedDataTimestamp dataTimestamp) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement(
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
+                PreparedStatement pstmt = con.prepareStatement(
                 "MERGE INTO tagged_data_timestamp (id, timestamp, height, latest) "
-                        + "KEY (id, height) VALUES (?, ?, ?, TRUE)")) {
+                        + "KEY (id, height) VALUES (?, ?, ?, TRUE)")
+        ) {
             int i = 0;
             pstmt.setLong(++i, dataTimestamp.getId());
             pstmt.setInt(++i, dataTimestamp.getTimestamp());

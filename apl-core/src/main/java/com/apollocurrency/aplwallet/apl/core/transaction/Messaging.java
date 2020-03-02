@@ -3,10 +3,9 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountProperty;
-import com.apollocurrency.aplwallet.apl.core.account.AccountPropertyTable;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountProperty;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
@@ -786,7 +785,7 @@ public abstract class Messaging extends TransactionType {
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             MessagingAccountInfo attachment = (MessagingAccountInfo) transaction.getAttachment();
-            senderAccount.setAccountInfo(attachment.getName(), attachment.getDescription());
+            lookupAccountInfoService().updateAccountInfo(senderAccount, attachment.getName(), attachment.getDescription());
         }
 
         @Override
@@ -860,7 +859,7 @@ public abstract class Messaging extends TransactionType {
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             MessagingAccountProperty attachment = (MessagingAccountProperty) transaction.getAttachment();
-            recipientAccount.setProperty(transaction, senderAccount, attachment.getProperty(), attachment.getValue());
+            lookupAccountPropertyService().setProperty(recipientAccount, transaction, senderAccount, attachment.getProperty(), attachment.getValue());
         }
 
         @Override
@@ -902,7 +901,7 @@ public abstract class Messaging extends TransactionType {
         @Override
         public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
             MessagingAccountPropertyDelete attachment = (MessagingAccountPropertyDelete) transaction.getAttachment();
-            AccountProperty accountProperty = AccountPropertyTable.getProperty(attachment.getPropertyId());
+            AccountProperty accountProperty = lookupAccountPropertyService().getProperty(attachment.getPropertyId());
             if (accountProperty == null) {
                 throw new AplException.NotCurrentlyValidException("No such property " + Long.toUnsignedString(attachment.getPropertyId()));
             }
@@ -923,7 +922,7 @@ public abstract class Messaging extends TransactionType {
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             MessagingAccountPropertyDelete attachment = (MessagingAccountPropertyDelete) transaction.getAttachment();
-            senderAccount.deleteProperty(attachment.getPropertyId());
+            lookupAccountPropertyService().deleteProperty(senderAccount, attachment.getPropertyId());
         }
 
         @Override

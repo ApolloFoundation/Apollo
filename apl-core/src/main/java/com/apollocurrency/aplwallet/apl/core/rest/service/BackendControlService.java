@@ -37,7 +37,7 @@ import java.util.List;
  */
 @ApplicationScoped
 public class BackendControlService {
-    
+
     @Inject @Setter
     AplAppStatus appStatus;
 
@@ -77,9 +77,9 @@ public class BackendControlService {
         res.cpuLoad = mxbean.getSystemLoadAverage();
         res.operatingSystem=mxbean.getName()+" Version:"+mxbean.getVersion()+" Arch:"+mxbean.getArch();
         res.memoryTotal = Runtime.getRuntime().totalMemory();
-        res.memoryFree  = Runtime.getRuntime().freeMemory();    
+        res.memoryFree  = Runtime.getRuntime().freeMemory();
         return res;
-    } 
+    }
 
     public List<DurableTaskInfo> getNodeTasks(String state) {
         ArrayList<DurableTaskInfo> res;
@@ -95,7 +95,7 @@ public class BackendControlService {
         }
         return res;
     }
-    
+
     public RunningThreadsInfo getThreadsInfo(){
        RunningThreadsInfo res = new  RunningThreadsInfo();
        ThreadMXBean tmxb = ManagementFactory.getThreadMXBean();
@@ -112,8 +112,8 @@ public class BackendControlService {
        }
        return res;
     }
-    
-   //TODO: use AdminPasswordVerifier component 
+
+   //TODO: use AdminPasswordVerifier component
    public boolean isAdminPasswordOK(HttpServletRequest request) {
        boolean res = apv.checkPassword(request);
        return res;

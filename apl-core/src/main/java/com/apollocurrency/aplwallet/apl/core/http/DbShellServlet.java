@@ -38,7 +38,7 @@ import java.sql.SQLException;
 
 public final class DbShellServlet extends HttpServlet {
     protected  static AdminPasswordVerifier apw =  CDI.current().select(AdminPasswordVerifier.class).get();
-    
+
     private static final String JAVASCRIPT_SECTION = "    <script type=\"text/javascript\">\n" +
             "        function submitForm(form, adminPassword) {\n" +
             "            var url = '/dbshell';\n" +
@@ -81,7 +81,7 @@ public final class DbShellServlet extends HttpServlet {
 
     private static final String FORM =
             "<form action=\"/dbshell\" method=\"POST\" onsubmit=\"return submitForm(this" +
-                    (apw.disableAdminPassword ? "" : ", '{adminPassword}'") + ");\">" +
+                    (apw.isDisabledAdminPassword() ? "" : ", '{adminPassword}'") + ");\">" +
                     "<table class=\"table\" style=\"width:90%;\">" +
                     "<tr><td><pre class=\"result\" style=\"float:top;width:90%;\">" +
                     "This is a database shell. Enter SQL to be evaluated, or \"help\" for help:" +
@@ -123,10 +123,10 @@ public final class DbShellServlet extends HttpServlet {
         }
 
         String body;
-        if (apw.disableAdminPassword) {
+        if (apw.isDisabledAdminPassword()) {
             body = FORM;
         } else {
-            if (apw.adminPassword.isEmpty()) {
+            if (apw.isBlankAdminPassword()) {
                 body = ERROR_NO_PASSWORD_IS_CONFIGURED;
             } else {
                 body = PASSWORD_FORM;
@@ -151,8 +151,8 @@ public final class DbShellServlet extends HttpServlet {
         }
 
         String body = null;
-        if (!apw.disableAdminPassword) {
-            if (apw.adminPassword.isEmpty()) {
+        if (!apw.isDisabledAdminPassword()) {
+            if (apw.isBlankAdminPassword()) {
                 body = ERROR_NO_PASSWORD_IS_CONFIGURED;
             } else {
                 try {

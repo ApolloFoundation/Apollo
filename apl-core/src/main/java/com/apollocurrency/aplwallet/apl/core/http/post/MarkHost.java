@@ -20,26 +20,26 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.http.APITag;
+import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.peer.Hallmark;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONStreamAware;
+
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.http.HttpServletRequest;
+
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DATE;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_HOST;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_WEIGHT;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_DATE;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_HOST;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_WEIGHT;
-
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
-
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.core.peer.Hallmark;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import javax.enterprise.inject.Vetoed;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
 
 @Vetoed
 public final class MarkHost extends AbstractAPIRequestHandler {
@@ -50,8 +50,8 @@ public final class MarkHost extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
-        long accountId = ParameterParser.getAccountId(req, false);
-        byte[] keySeed = ParameterParser.getKeySeed(req, accountId, true);
+        long accountId = HttpParameterParserUtil.getAccountId(req, false);
+        byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, accountId, true);
         String host = Convert.emptyToNull(req.getParameter("host"));
         String weightValue = Convert.emptyToNull(req.getParameter("weight"));
         String dateValue = Convert.emptyToNull(req.getParameter("date"));
@@ -79,7 +79,8 @@ public final class MarkHost extends AbstractAPIRequestHandler {
 
         try {
 
-            String hallmark = Hallmark.generateHallmark(keySeed, host, weight, Hallmark.parseDate(dateValue));
+            long maxBalanceAPL = lookupBlockchainConfig().getCurrentConfig().getMaxBalanceAPL();
+            String hallmark = Hallmark.generateHallmark(keySeed, host, weight, Hallmark.parseDate(dateValue), maxBalanceAPL);
 
             JSONObject response = new JSONObject();
             response.put("hallmark", hallmark);

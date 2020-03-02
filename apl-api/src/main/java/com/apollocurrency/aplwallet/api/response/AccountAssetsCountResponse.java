@@ -17,5 +17,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AccountAssetsCountResponse extends ResponseBase {
+    /**
+     * the number of assets owned by the account
+     */
     private Integer numberOfAssets;
 }
