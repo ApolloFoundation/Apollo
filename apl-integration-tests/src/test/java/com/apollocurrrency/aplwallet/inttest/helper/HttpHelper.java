@@ -168,9 +168,10 @@ public class HttpHelper {
             if (Allure.getLifecycle().getCurrentTestCase().isPresent()) {
                 Allure.addAttachment("Response Body", responseBody);
             }
-            log.warn("Request failed: " + e.getMessage());
+            String msg = e.getMessage();
+            log.warn("Request failed: " + msg);
             log.warn("Response: " + responseBody);
-            return fail(responseBody + "\n" + e.getMessage());
+            return fail(responseBody + "\n" + msg);
         }
     }
 
