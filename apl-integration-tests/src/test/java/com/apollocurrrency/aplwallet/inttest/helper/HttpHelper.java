@@ -155,10 +155,6 @@ public class HttpHelper {
             responseBody = response.body().string();
             Assert.assertEquals(200, response.code());
 
-           /* if (TestBase.testInfo != null && TestBase.testInfo.getTags() != null && !TestBase.testInfo.getTags().contains("NEGATIVE")) {
-                Assertions.assertFalse(responseBody.contains("errorDescription"), responseBody);
-            } */
-
              if (Allure.getLifecycle().getCurrentTestCase().isPresent()) {
                  Allure.addAttachment("Response Body", responseBody);
              }
