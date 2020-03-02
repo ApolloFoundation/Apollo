@@ -141,6 +141,7 @@ public class TestBaseOld extends TestBase {
     public GetAccountResponse getAccount(String account) {
         addParameters(RequestType.requestType, getAccount);
         addParameters(Parameters.account, account);
+        addParameters(Parameters.includeEffectiveBalance, true);
         return getInstanse(GetAccountResponse.class);
     }
 
@@ -169,6 +170,8 @@ public class TestBaseOld extends TestBase {
     public AccountLedgerResponse getAccountLedger(Wallet wallet) {
         addParameters(RequestType.requestType, getAccountLedger);
         addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.firstIndex, 0);
+        addParameters(Parameters.lastIndex, 15);
         return getInstanse(AccountLedgerResponse.class);
     }
 

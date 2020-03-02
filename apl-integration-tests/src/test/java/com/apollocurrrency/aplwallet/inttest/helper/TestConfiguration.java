@@ -33,7 +33,7 @@ public class TestConfiguration {
     private HashMap<String, NetConfig> testNetIp;
 
 
-    private TestConfiguration() {
+    private  TestConfiguration() {
         try {
             ClassLoader classLoader = getClass().getClassLoader();
             parser = new JSONParser();
@@ -46,14 +46,15 @@ public class TestConfiguration {
             standartWallet = mapper.readValue(jsonObject.get("standartWallet").toString(), Wallet.class);
             vaultWallet = mapper.readValue(jsonObject.get("vaultWallet").toString(), Wallet.class);
             genesisWallet = mapper.readValue(jsonObject.get("genesisWallet").toString(), Wallet.class);
-            TypeReference<HashMap<String, NetConfig>> typeRef = new TypeReference<>() {
-            };
+            TypeReference<HashMap<String, NetConfig>> typeRef = new TypeReference<>() {};
             testNetIp = mapper.readValue(jsonObject.get("net").toString(), typeRef);
             Random rand = new Random();
             env = System.getProperty("test.env");
             if (!env.equals(host)) {
                 peers = testNetIp.get(env).getPeers();
                 host = peers.get(rand.nextInt(peers.size()));
+                System.out.println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+                System.out.println(host);
             } else {
                 peers = new ArrayList<>();
                 peers.add(host);
@@ -65,9 +66,12 @@ public class TestConfiguration {
     }
 
     public static TestConfiguration getTestConfiguration() {
-        if (testConfig == null) {
-            testConfig = new TestConfiguration();
-        }
+            if (testConfig == null) {
+                synchronized(TestConfiguration.class) {
+                    testConfig = new TestConfiguration();
+                }
+            }
+
         return testConfig;
     }
 

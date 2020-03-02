@@ -30,12 +30,10 @@ public class Test2FA extends TestBaseNew {
     @Test
     @Description("Delete Secret Key")
     public void deleteKey() throws JsonProcessingException {
-
         Account2FAResponse accountDTO = generateNewAccount();
         Wallet wallet = new Wallet(accountDTO.getAccount(), accountDTO.getPassphrase(), null, true, null, null);
         Account2FAResponse deletedAccount = deleteSecretFile(wallet);
         Assertions.assertEquals(Status2FA.OK, deletedAccount.getStatus());
-
     }
 
 

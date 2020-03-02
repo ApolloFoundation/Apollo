@@ -25,11 +25,11 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
+import static org.junit.jupiter.api.parallel.ExecutionMode.SAME_THREAD;
 
 @DisplayName("Dex")
 @Epic(value = "Dex")
-@Execution(CONCURRENT)
+@Execution(SAME_THREAD)
 public class TestDex extends TestBaseNew {
 
     Wallet vault1 = new Wallet("APL-D8L6-UJ22-PUK9-6EYMD", "1", true, "0xd54a7a3eff64b467f01f0640b201977e8d017c97", "5030464519701633604");
@@ -143,11 +143,10 @@ public class TestDex extends TestBaseNew {
                 String.valueOf(averageGas),
                 true);
         assertNotNull(withdrawEth.transactionAddress);
+
         //TODO: add transaction validation is accepted in ETH blockchain
         double newEthBalance = ethBalance - (21000 * 0.000000001 * averageGas);
-        //System.out.println(newEthBalance);
-        //Account2FAResponse balanceValidationEth = getDexBalances(TestConfiguration.getTestConfiguration().getVaultWallet().getEthAddress());
-        //assertEquals(newEthBalance, balanceValidationEth.getEth().get(0).getBalances().getEth(), "balances are different");
+
 
         WithdrawResponse withdrawPax = dexWidthraw(TestConfiguration.getTestConfiguration().getVaultWallet().getEthAddress(),
                 TestConfiguration.getTestConfiguration().getVaultWallet(),
@@ -157,12 +156,11 @@ public class TestDex extends TestBaseNew {
                 false);
         assertNotNull(withdrawPax.transactionAddress);
         Account2FAResponse balanceValidationPax = getDexBalances(TestConfiguration.getTestConfiguration().getVaultWallet().getEthAddress());
+
         //PAX balances are the same. All transaction fee is in ETH
         assertEquals(paxBalance, balanceValidationPax.getEth().get(0).getBalances().getPax(), "balances are different");
         double newEthBalanceAfterPax = newEthBalance - (300000 * 0.000000001 * fastGas);
-        //System.out.println(newEthBalance);
-        //Account2FAResponse balanceValidationEthAfterPax = getDexBalances(TestConfiguration.getTestConfiguration().getVaultWallet().getEthAddress());
-        //assertEquals(newEthBalanceAfterPax, balanceValidationEthAfterPax.getEth().get(0).getBalances().getEth(), "balances are different");
+
     }
 
     @DisplayName("dex exchange ETH SELL-BUY")

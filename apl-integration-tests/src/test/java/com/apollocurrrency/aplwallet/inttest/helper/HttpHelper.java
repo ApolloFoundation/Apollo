@@ -30,13 +30,14 @@ import static org.junit.jupiter.api.Assertions.fail;
 public class HttpHelper {
     public static final Logger log = LoggerFactory.getLogger(TestShuffling.class);
     public static ObjectMapper mapper = new ObjectMapper();
-    private static final String baseURL_API = "http://" +
-            TestConfiguration.getTestConfiguration().getBaseURL() + ":" +
-            TestConfiguration.getTestConfiguration().getPort() + "/apl?";
+    private static String baseURL_API;
 
     private static HashMap<String, Object> reqestParam = new HashMap<>();
     private static OkHttpClient client;
 
+    public static void setBaseURL_API(String baseURL_API) {
+        HttpHelper.baseURL_API = baseURL_API+"/apl?";
+    }
 
     public static OkHttpClient getClient() {
         if (client == null)
@@ -154,10 +155,6 @@ public class HttpHelper {
             responseBody = response.body().string();
             Assert.assertEquals(200, response.code());
 
-           /* if (TestBase.testInfo != null && TestBase.testInfo.getTags() != null && !TestBase.testInfo.getTags().contains("NEGATIVE")) {
-                Assertions.assertFalse(responseBody.contains("errorDescription"), responseBody);
-            } */
-
              if (Allure.getLifecycle().getCurrentTestCase().isPresent()) {
                  Allure.addAttachment("Response Body", responseBody);
              }
@@ -167,9 +164,10 @@ public class HttpHelper {
             if (Allure.getLifecycle().getCurrentTestCase().isPresent()) {
                 Allure.addAttachment("Response Body", responseBody);
             }
-            log.warn("Request failed: " + e.getMessage());
+            String msg = e.getMessage();
+            log.warn("Request failed: " + msg);
             log.warn("Response: " + responseBody);
-            return fail(responseBody + "\n" + e.getMessage());
+            return fail(responseBody + "\n" + msg);
         }
     }
 
