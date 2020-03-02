@@ -234,7 +234,7 @@ class AccountControllerTest extends AbstractEndpointTest{
     }
 
     @Test
-    void enable2FA_withPathPhraseAndAccount() throws URISyntaxException, IOException {
+    void enable2FA_withPassPhraseAndAccount() throws URISyntaxException, IOException {
         TwoFactorAuthParameters params2FA = new TwoFactorAuthParameters(ACCOUNT_ID, PASSPHRASE, null);
         TwoFactorAuthDetails authDetails = new TwoFactorAuthDetails(QR_CODE_URL, SECRET, Status2FA.OK);
 
@@ -278,14 +278,14 @@ class AccountControllerTest extends AbstractEndpointTest{
     }
 
     @Test
-    void disable2FA_withPathPhraseAndAccountAndCode2FA() throws URISyntaxException, IOException {
+    void disable2FA_withPassPhraseAndAccountAndCode2FA() throws URISyntaxException, IOException {
         String uri = "/accounts/disable2fa";
         TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(ACCOUNT_ID, PASSPHRASE, null);
         twoFactorAuthParameters.setCode2FA(CODE_2FA);
 
 
-        doReturn(Status2FA.OK).when(account2FAHelper).disable2FA(twoFactorAuthParameters, CODE_2FA);
-        check2FA_withPathPhraseAndAccountAndCode2FA(uri, twoFactorAuthParameters);
+        doReturn(Status2FA.OK).when(account2FAHelper).disable2FA(twoFactorAuthParameters);
+        check2FA_withPassPhraseAndAccountAndCode2FA(uri, twoFactorAuthParameters);
     }
 
     @Test
@@ -294,19 +294,19 @@ class AccountControllerTest extends AbstractEndpointTest{
         TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(ACCOUNT_ID, null, SECRET);
         twoFactorAuthParameters.setCode2FA(CODE_2FA);
 
-        doReturn(Status2FA.OK).when(account2FAHelper).disable2FA(twoFactorAuthParameters, CODE_2FA);
+        doReturn(Status2FA.OK).when(account2FAHelper).disable2FA(twoFactorAuthParameters);
         check2FA_withSecretPhraseAndCode2FA(uri, twoFactorAuthParameters);
     }
 
     @Test
-    void confirm2FA_withPathPhraseAndAccountAndCode2FA() throws URISyntaxException, IOException {
+    void confirm2FA_withPassPhraseAndAccountAndCode2FA() throws URISyntaxException, IOException {
         String uri = "/accounts/confirm2fa";
         TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(ACCOUNT_ID, PASSPHRASE, null);
         twoFactorAuthParameters.setCode2FA(CODE_2FA);
 
 
-        doReturn(Status2FA.OK).when(account2FAHelper).confirm2FA(twoFactorAuthParameters, CODE_2FA);
-        check2FA_withPathPhraseAndAccountAndCode2FA(uri, twoFactorAuthParameters);
+        doReturn(Status2FA.OK).when(account2FAHelper).confirm2FA(twoFactorAuthParameters);
+        check2FA_withPassPhraseAndAccountAndCode2FA(uri, twoFactorAuthParameters);
     }
 
     @Test
@@ -315,41 +315,40 @@ class AccountControllerTest extends AbstractEndpointTest{
         TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(ACCOUNT_ID, null, SECRET);
         twoFactorAuthParameters.setCode2FA(CODE_2FA);
 
-        doReturn(Status2FA.OK).when(account2FAHelper).confirm2FA(twoFactorAuthParameters, CODE_2FA);
+        doReturn(Status2FA.OK).when(account2FAHelper).confirm2FA(twoFactorAuthParameters);
         check2FA_withSecretPhraseAndCode2FA(uri, twoFactorAuthParameters);
     }
 
     @Test
-    void deleteKey_withPathPhraseAndAccountAndCode2FA() throws URISyntaxException, IOException {
+    void deleteKey_withPassPhraseAndAccountAndCode2FA() throws URISyntaxException, IOException {
         String uri = "/accounts/delete-key";
         TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(ACCOUNT_ID, PASSPHRASE, null);
         twoFactorAuthParameters.setCode2FA(CODE_2FA);
 
-        doReturn(KeyStoreService.Status.OK).when(account2FAHelper).deleteAccount(twoFactorAuthParameters);
-        check2FA_withPathPhraseAndAccountAndCode2FA(uri, twoFactorAuthParameters);
+        doReturn(KeyStoreService.Status.OK).when(account2FAHelper).deleteAccount(twoFactorAuthParameters.getAccountId(),
+                                                                                twoFactorAuthParameters.getPassphrase(),
+                                                                                twoFactorAuthParameters.getCode2FA());
+        check2FA_withPassPhraseAndAccountAndCode2FA(uri, twoFactorAuthParameters);
     }
 
-    @Test
-    void deleteKey_withSecretPhraseAndCode2FA() throws URISyntaxException, IOException {
-        String uri = "/accounts/delete-key";
-        TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(ACCOUNT_ID, null, SECRET);
-        twoFactorAuthParameters.setCode2FA(CODE_2FA);
+    @ParameterizedTest
+    @ValueSource(strings = {"wrong=value","passphrase="+PASSPHRASE+"&wrongAccount="+ACCOUNT_RS,"wrongPassphrase="+PASSPHRASE+"&account="+ACCOUNT_RS})
+    void deleteKey_withoutMandatoryParameters_thenGetError_2001(String bodyParams) throws URISyntaxException, IOException {
+        MockHttpResponse response = sendPostRequest("/accounts/delete-key",bodyParams);
 
-        doReturn(KeyStoreService.Status.OK).when(account2FAHelper).deleteAccount(twoFactorAuthParameters);
-        check2FA_withSecretPhraseAndCode2FA(uri, twoFactorAuthParameters);
+        checkMandatoryParameterMissingErrorCode(response, 2001);
     }
 
-    @Test
-    void exportKey_withoutMandatoryParameters_thenGetError_2001() throws URISyntaxException, IOException {
-        //doCallRealMethod().when(account2FAHelper).create2FAParameters(null, null,null);
-
-        MockHttpResponse response = sendPostRequest("/accounts/export-key","wrong=value");
+    @ParameterizedTest
+    @ValueSource(strings = {"wrong=value","passphrase="+PASSPHRASE+"&wrongAccount="+ACCOUNT_RS,"wrongPassphrase="+PASSPHRASE+"&account="+ACCOUNT_RS})
+    void exportKey_withoutMandatoryParameters_thenGetError_2001(String bodyParams) throws URISyntaxException, IOException {
+        MockHttpResponse response = sendPostRequest("/accounts/export-key",bodyParams);
 
         checkMandatoryParameterMissingErrorCode(response, 2001);
     }
 
     @Test
-    void exportKey_withPathPhraseAndAccountAndCode2FA() throws URISyntaxException, IOException {
+    void exportKey_withPassPhraseAndAccountAndCode2FA() throws URISyntaxException, IOException {
         String uri = "/accounts/export-key";
         byte[] secretBytes = SECRET.getBytes();
         TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(ACCOUNT_ID, PASSPHRASE, null);
@@ -357,7 +356,7 @@ class AccountControllerTest extends AbstractEndpointTest{
         doReturn(twoFactorAuthParameters).when(account2FAHelper).create2FAParameters(ACCOUNT_RS, PASSPHRASE, null);
 
         doReturn(secretBytes).when(account2FAHelper).findAplSecretBytes(twoFactorAuthParameters);
-        check2FA_withPathPhraseAndAccountAndCode2FA(uri, twoFactorAuthParameters);
+        check2FA_withPassPhraseAndAccountAndCode2FA(uri, twoFactorAuthParameters);
     }
 
     @Test
@@ -674,14 +673,14 @@ class AccountControllerTest extends AbstractEndpointTest{
     }
 
     @ParameterizedTest(name = "{index} url={arguments}")
-    @ValueSource(strings = {"/accounts/disable2fa","/accounts/confirm2fa","/accounts/deleteKey"})
+    @ValueSource(strings = {"/accounts/disable2fa","/accounts/confirm2fa","/accounts/delete-key"})
     public void check2FA_withoutRequestAttribute_thenGetError_1000(String uri) throws URISyntaxException, IOException {
         MockHttpResponse response = sendPostRequest(uri,"wrong=value");
 
-        checkMandatoryParameterMissingErrorCode(response, 1000);
+        checkMandatoryParameterMissingErrorCode(response, 2001);
     }
 
-    private void check2FA_withPathPhraseAndAccountAndCode2FA(String uri, TwoFactorAuthParameters twoFactorAuthParameters) throws URISyntaxException, IOException {
+    private void check2FA_withPassPhraseAndAccountAndCode2FA(String uri, TwoFactorAuthParameters twoFactorAuthParameters) throws URISyntaxException, IOException {
         //doCallRealMethod().when(account2FAHelper).validate2FAParameters(twoFactorAuthParameters);
 
         MockHttpRequest request = post(uri);

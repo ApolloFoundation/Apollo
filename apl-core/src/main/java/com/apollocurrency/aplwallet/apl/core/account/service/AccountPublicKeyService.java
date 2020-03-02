@@ -26,6 +26,13 @@ public interface AccountPublicKeyService {
 
     /**
      * Returns the public key from cache, or load from the data base if necessary.
+     * @param account the account to get entity from the cache
+     * @return  public key or null
+     */
+    PublicKey getPublicKey(Account account);
+
+    /**
+     * Returns the public key from cache, or load from the data base if necessary.
      * @param dbKey the key to get entity from the cache
      * @return  public key or null
      */
