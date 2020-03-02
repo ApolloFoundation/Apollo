@@ -9,7 +9,6 @@ import com.apollocurrency.aplwallet.api.response.ForgingResponse;
 import com.apollocurrency.aplwallet.api.response.GetPeersIpResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.RestHelper;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import io.qameta.allure.Step;
 import io.restassured.RestAssured;
@@ -42,38 +41,36 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 public abstract class TestBase implements ITest {
     public static final Logger log = LoggerFactory.getLogger(TestBase.class);
-    TestInfo testInfo;
-    static RetryPolicy retryPolicy;
-    static RestHelper restHelper;
-    static ObjectMapper mapper = new ObjectMapper();
 
-    private static RestAssuredConfig config;
+    static RetryPolicy retryPolicy = new RetryPolicy()
+        .retryWhen(false)
+        .withMaxRetries(50)
+        .withDelay(10, TimeUnit.SECONDS);
+    static RestHelper restHelper = RestHelper.getRestHelper();
+
+    private TestInfo testInfo;
+    private static RestAssuredConfig  config = RestAssured.config()
+        .httpClient(HttpClientConfig.httpClientConfig()
+            .setParam(CoreConnectionPNames.CONNECTION_TIMEOUT, 10000)
+            .setParam(CoreConnectionPNames.SO_TIMEOUT, 10000));
 
     @BeforeAll
     public synchronized static void initAll() {
         log.info("Preconditions started");
-         config = RestAssured.config()
-            .httpClient(HttpClientConfig.httpClientConfig()
-                .setParam(CoreConnectionPNames.CONNECTION_TIMEOUT, 10000)
-                .setParam(CoreConnectionPNames.SO_TIMEOUT, 10000));
-
-        restHelper = RestHelper.getRestHelper();
-        retryPolicy = new RetryPolicy()
-                .retryWhen(false)
-                .withMaxRetries(50)
-                .withDelay(10, TimeUnit.SECONDS);
-
-        ClassLoader classLoader = TestBase.class.getClassLoader();
-        String secretFilePath = Objects.requireNonNull(classLoader.getResource(TestConfiguration.getTestConfiguration().getVaultWallet().getUser())).getPath();
+        String secretFilePath = Objects.requireNonNull(TestBase.class.getClassLoader()
+            .getResource(TestConfiguration.getTestConfiguration()
+            .getVaultWallet().getUser()))
+            .getPath();
 
         allureEnvironmentWriter(
             ImmutableMap.<String, String>builder()
                 .put("URL", TestConfiguration.getTestConfiguration().getBaseURL())
                 .build());
 
-            importSecretFileSetUp(secretFilePath, "1");
+            importSecretFileSetUp(secretFilePath, TestConfiguration.getTestConfiguration().getVaultWallet().getPass());
             startForgingSetUp();
             setUpTestData();
+
         log.info("Preconditions finished");
     }
 

@@ -25,8 +25,8 @@ import static org.junit.jupiter.api.parallel.ExecutionMode.SAME_THREAD;
 
 @DisplayName("Dex")
 @Epic(value = "Dex")
-@Execution(SAME_THREAD)
 @ExtendWith(DexPreconditionExtension.class)
+@Execution(SAME_THREAD)
 public class TestDex extends TestBaseNew {
 
     @DisplayName("Get dex orders")

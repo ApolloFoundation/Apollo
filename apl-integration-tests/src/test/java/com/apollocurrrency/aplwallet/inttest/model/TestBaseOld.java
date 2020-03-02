@@ -65,6 +65,7 @@ import com.apollocurrency.aplwallet.api.response.ShufflingParticipantsResponse;
 import com.apollocurrency.aplwallet.api.response.TransactionListResponse;
 import com.apollocurrency.aplwallet.api.response.VaultWalletResponse;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.qameta.allure.Step;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
@@ -92,6 +93,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 public class TestBaseOld extends TestBase {
     public static final Logger log = LoggerFactory.getLogger(TestBaseOld.class);
+    private static ObjectMapper mapper = new ObjectMapper();
 
     @Step
     public boolean verifyTransactionInBlock(String transaction) {

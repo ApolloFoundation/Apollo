@@ -154,7 +154,6 @@ public class HttpHelper {
             response = httpCallPost();
             responseBody = response.body().string();
             Assert.assertEquals(200, response.code());
-
              if (Allure.getLifecycle().getCurrentTestCase().isPresent()) {
                  Allure.addAttachment("Response Body", responseBody);
              }
