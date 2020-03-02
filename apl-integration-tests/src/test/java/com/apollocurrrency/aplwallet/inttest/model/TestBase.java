@@ -124,7 +124,7 @@ public abstract class TestBase implements ITest {
             log.info("Send money on: "+TestConfiguration.getTestConfiguration().getStandartWallet());
 
             transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getGenesisWallet(),
-                    TestConfiguration.getTestConfiguration().getStandartWallet().getUser(), 1000000);
+                    TestConfiguration.getTestConfiguration().getStandartWallet().getUser(), 10000000);
 
             verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
 
@@ -139,7 +139,7 @@ public abstract class TestBase implements ITest {
             log.info("Send money on: "+TestConfiguration.getTestConfiguration().getVaultWallet());
 
             transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getGenesisWallet(),
-                    TestConfiguration.getTestConfiguration().getVaultWallet().getUser(), 1000000);
+                    TestConfiguration.getTestConfiguration().getVaultWallet().getUser(), 10000000);
             verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
 
             log.info("Verify account: "+TestConfiguration.getTestConfiguration().getVaultWallet());
@@ -154,7 +154,7 @@ public abstract class TestBase implements ITest {
         param = restHelper.addWalletParameters(param,wallet);
         param.put(ReqType.REQUEST_TYPE,ReqType.SEND_MONEY);
         param.put(ReqParam.RECIPIENT, recipient);
-        param.put(ReqParam.AMOUNT_ATM, moneyAmount + "00000000");
+        param.put(ReqParam.AMOUNT_ATM, moneyAmount + "000000000");
         param.put(ReqParam.FEE, "500000000");
         param.put(ReqParam.DEADLINE, "1440");
 
