@@ -25,12 +25,12 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DGS_GOODS;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_PURCHASE;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsDelivery;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.UnencryptedDigitalGoodsDelivery;
@@ -55,8 +55,8 @@ public final class DGSDelivery extends CreateTransaction {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        Account sellerAccount = ParameterParser.getSenderAccount(req);
-        DGSPurchase purchase = ParameterParser.getPurchase(service, req);
+        Account sellerAccount = HttpParameterParserUtil.getSenderAccount(req);
+        DGSPurchase purchase = HttpParameterParserUtil.getPurchase(service, req);
         if (sellerAccount.getId() != purchase.getSellerId()) {
             return INCORRECT_PURCHASE;
         }
@@ -79,9 +79,9 @@ public final class DGSDelivery extends CreateTransaction {
             return INCORRECT_DGS_DISCOUNT;
         }
 
-        Account buyerAccount = Account.getAccount(purchase.getBuyerId());
+        Account buyerAccount = lookupAccountService().getAccount(purchase.getBuyerId());
         boolean goodsIsText = !"false".equalsIgnoreCase(req.getParameter("goodsIsText"));
-        EncryptedData encryptedGoods = ParameterParser.getEncryptedData(req, "goods");
+        EncryptedData encryptedGoods = HttpParameterParserUtil.getEncryptedData(req, "goods");
         byte[] goodsBytes = null;
         boolean broadcast = !"false".equalsIgnoreCase(req.getParameter("broadcast"));
 
@@ -95,15 +95,15 @@ public final class DGSDelivery extends CreateTransaction {
             } catch (RuntimeException e) {
                 return INCORRECT_DGS_GOODS;
             }
-            byte[] keySeed = ParameterParser.getKeySeed(req, sellerAccount.getId(),broadcast);
+            byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, sellerAccount.getId(),broadcast);
             if (keySeed != null) {
-                encryptedGoods = buyerAccount.encryptTo(goodsBytes, keySeed, true);
+                encryptedGoods = lookupAccountPublickKeyService().encryptTo(buyerAccount.getId(), goodsBytes, keySeed, true);
             }
         }
 
         Attachment attachment = encryptedGoods == null ?
                 new UnencryptedDigitalGoodsDelivery(purchase.getId(), goodsBytes,
-                        goodsIsText, discountATM, Account.getPublicKey(buyerAccount.getId())) :
+                        goodsIsText, discountATM, lookupAccountService().getPublicKeyByteArray(buyerAccount.getId())) :
                 new DigitalGoodsDelivery(purchase.getId(), encryptedGoods,
                         goodsIsText, discountATM);
         return createTransaction(req, sellerAccount, buyerAccount.getId(), 0, attachment);

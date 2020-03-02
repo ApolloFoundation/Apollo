@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -52,6 +53,7 @@ public class NodeInfoController {
                                     schema = @Schema(implementation = ApolloX509Response.class)))
             }
     )
+    @PermitAll
     public Response getX509Info(){
         ApolloX509Response infoResponse = new ApolloX509Response();
         infoResponse.info = siService.getX509Info();

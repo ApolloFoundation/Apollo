@@ -13,15 +13,15 @@ import java.nio.file.Paths;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class H2DbInfoExtractorTest {
-    public static final String DB_SUFFIX = ".h2.db";
+class H2DbInfoExtractorTest {
     private H2DbInfoExtractor h2DbInfoExtractor = new H2DbInfoExtractor("sa", "sa");
-    private static Path path = Paths.get(System.getProperty("java.io.tmpdir"), "dbInfoExtractor");
+    private static Path path = Paths.get(System.getProperty("java.io.tmpdir"), "dbInfoExtractor" + DbProperties.DB_EXTENSION_WITH_DOT);
 
     @BeforeEach
     void setUp() throws IOException {
@@ -33,11 +33,11 @@ public class H2DbInfoExtractorTest {
 
     @AfterEach
     void tearDown() throws IOException {
-        Files.delete(Paths.get(path.toString() + DB_SUFFIX));
+        Files.delete(Paths.get(path.toString() + DbProperties.DB_EXTENSION_WITH_DOT));
     }
 
     @Test
-    public void testGetHeight() {
+    void testGetHeight() {
         int height = h2DbInfoExtractor.getHeight(path.toString());
         Assertions.assertEquals(BlockTestData.BLOCK_13_HEIGHT, height);
 
@@ -46,6 +46,6 @@ public class H2DbInfoExtractorTest {
     @Test
     public void testGetPath() {
         String path = H2DbInfoExtractorTest.path.toAbsolutePath().toString();
-        Assertions.assertEquals(Paths.get(path + DB_SUFFIX), h2DbInfoExtractor.getPath(path));
+        Assertions.assertEquals(Paths.get(path + DbProperties.DB_EXTENSION_WITH_DOT), h2DbInfoExtractor.getPath(path));
     }
 }

@@ -22,7 +22,8 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.api.p2p.BaseP2PResponse;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
@@ -33,12 +34,12 @@ import com.apollocurrency.aplwallet.apl.core.peer.endpoint.Errors;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import com.google.common.util.concurrent.TimeLimiter;
 import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.json.simple.JSONValue;
@@ -70,14 +71,14 @@ public final class PeerImpl implements Peer {
 
     private final String host;
     private volatile int port;
-    private volatile Hallmark hallmark;
-    private volatile EnumSet<APIEnum> disabledAPIs;
-    private volatile Version version;
+    private Hallmark hallmark;
+    private EnumSet<APIEnum> disabledAPIs;
+    private Version version;
     private volatile boolean isOldVersion;
     private volatile long adjustedWeight;
     private volatile int blacklistingTime;
     private volatile String blacklistingCause;
-    private volatile PeerState state;
+    private PeerState state;
     private final TimeLimiter limiter;
 
     private volatile int lastUpdated;
@@ -88,14 +89,15 @@ public final class PeerImpl implements Peer {
     private final Object servicesMonitor = new Object();
     private final ReadWriteLock stateLock = new ReentrantReadWriteLock();
 
-    private volatile BlockchainState blockchainState;
+    private BlockchainState blockchainState;
     private final AtomicReference<UUID> chainId = new AtomicReference<>();
 
     private final boolean isLightClient;
     private final BlockchainConfig blockchainConfig;
     private final Blockchain blockchain;
-    private volatile TimeService timeService;
+    private TimeService timeService;
     private final PeersService peers;
+    private final AccountService accountService;
 
     private final PeerInfo pi = new PeerInfo();
     //Jackson JSON
@@ -113,7 +115,8 @@ public final class PeerImpl implements Peer {
              TimeService timeService,
              PeerServlet peerServlet,
              PeersService peers,
-             TimeLimiter timeLimiter
+             TimeLimiter timeLimiter,
+             AccountService accountService
     ) {
         //TODO: remove Json.org entirely from P2P
         mapper.registerModule(new JsonOrgModule());
@@ -138,6 +141,7 @@ public final class PeerImpl implements Peer {
         this.limiter = timeLimiter;
         this.p2pTransport = new Peer2PeerTransport(this, peerServlet, timeLimiter);
         state = PeerState.NON_CONNECTED; // set this peer its' initial state
+        this.accountService = accountService;
     }
 
     @Override
@@ -357,8 +361,7 @@ public final class PeerImpl implements Peer {
             return 0;
         }
         if (hallmarkBalance == -1 || hallmarkBalanceHeight < blockchain.getHeight() - 60) {
-            long accountId = hallmark.getAccountId();
-            Account account = Account.getAccount(accountId);
+            Account account = accountService.getAccount(hallmark.getAccountId());
             hallmarkBalance = account == null ? 0 : account.getBalanceATM();
             hallmarkBalanceHeight = blockchain.getHeight();
         }
@@ -693,7 +696,8 @@ public final class PeerImpl implements Peer {
 
         try {
 
-            Hallmark hallmarkNew = Hallmark.parseHallmark(hallmarkString);
+            long maxBalanceAPL = blockchainConfig.getCurrentConfig().getMaxBalanceAPL();
+            Hallmark hallmarkNew = Hallmark.parseHallmark(hallmarkString, maxBalanceAPL);
             if (!hallmarkNew.isValid()) {
                 LOG.debug("Invalid hallmark " + hallmarkString + " for " + host);
                 unsetHallmark();
@@ -715,7 +719,7 @@ public final class PeerImpl implements Peer {
                 }
             }
             setHallmark(hallmarkNew);
-            long accountId = Account.getId(hallmark.getPublicKey());
+            long accountId = AccountService.getId(hallmark.getPublicKey());
             List<PeerImpl> groupedPeers = new ArrayList<>();
             int mostRecentDate = 0;
             long totalWeight = 0;

@@ -20,17 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.DECRYPTION_FAILED;
-import static org.slf4j.LoggerFactory.getLogger;
-
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
+import com.apollocurrency.aplwallet.apl.core.dgs.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -38,10 +35,13 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
-import java.util.Arrays;
 import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
+import java.util.Arrays;
+
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.DECRYPTION_FAILED;
+import static org.slf4j.LoggerFactory.getLogger;
 
 @Vetoed
 public final class GetDGSPurchase extends AbstractAPIRequestHandler {
@@ -56,12 +56,12 @@ public final class GetDGSPurchase extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        DGSPurchase purchase = ParameterParser.getPurchase(service, req);
+        DGSPurchase purchase = HttpParameterParserUtil.getPurchase(service, req);
         JSONObject response = JSONData.purchase(service, purchase);
 
-        byte[] sharedKey = ParameterParser.getBytes(req, "sharedKey", false);
-        long accountId = ParameterParser.getAccountId(req, false);
-        byte[] keySeed = ParameterParser.getKeySeed(req, accountId, false);
+        byte[] sharedKey = HttpParameterParserUtil.getBytes(req, "sharedKey", false);
+        long accountId = HttpParameterParserUtil.getAccountId(req, false);
+        byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, accountId, false);
         if (sharedKey.length != 0 && keySeed != null) {
             return JSONResponses.either("secretPhrase", "sharedKey", "passphrase & account");
         }
@@ -75,11 +75,11 @@ public final class GetDGSPurchase extends AbstractAPIRequestHandler {
                 if (data.length != 0) {
                     if (keySeed != null) {
                         byte[] readerPublicKey = Crypto.getPublicKey(keySeed);
-                        byte[] sellerPublicKey = Account.getPublicKey(purchase.getSellerId());
-                        byte[] buyerPublicKey = Account.getPublicKey(purchase.getBuyerId());
+                        byte[] sellerPublicKey = lookupAccountService().getPublicKeyByteArray(purchase.getSellerId());
+                        byte[] buyerPublicKey = lookupAccountService().getPublicKeyByteArray(purchase.getBuyerId());
                         byte[] publicKey = Arrays.equals(sellerPublicKey, readerPublicKey) ? buyerPublicKey : sellerPublicKey;
                         if (publicKey != null) {
-                            decrypted = Account.decryptFrom(publicKey, purchase.getEncryptedGoods(), keySeed, true);
+                            decrypted = EncryptedDataUtil.decryptFrom(publicKey, purchase.getEncryptedGoods(), keySeed, true);
                         }
                     } else {
                         decrypted = Crypto.aesDecrypt(purchase.getEncryptedGoods().getData(), sharedKey);

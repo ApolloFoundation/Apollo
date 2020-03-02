@@ -20,25 +20,19 @@
 
 package com.apollocurrency.aplwallet.apl.core.monetary;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountAsset;
-import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Trade;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import javax.enterprise.inject.spi.CDI;
-
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetIssuance;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.service.BlockChainInfoService;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetIssuance;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -46,8 +40,8 @@ import java.sql.SQLException;
 
 public final class Asset {
 
-    private static BlockchainProcessor blockchainProcessor;
-    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static final BlockChainInfoService BLOCK_CHAIN_INFO_SERVICE =
+        CDI.current().select(BlockChainInfoService.class).get();
 
     private static final LongKeyFactory<Asset> assetDbKeyFactory = new LongKeyFactory<Asset>("id") {
 
@@ -69,17 +63,6 @@ public final class Asset {
         public void save(Connection con, Asset asset) throws SQLException {
             asset.save(con);
         }
-
-        @Override
-        public void checkAvailable(int height) {
-            if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-            if (height < blockchainProcessor.getMinRollbackHeight()) {
-                throw new IllegalArgumentException("Historical data as of height " + height +" not available.");
-            }
-            if (height > blockchain.getHeight()) {
-                throw new IllegalArgumentException("Height " + height + " exceeds blockchain height " + blockchain.getHeight());
-            }
-        }
     };
 
     public static DbIterator<Asset> getAllAssets(int from, int to) {
@@ -95,7 +78,13 @@ public final class Asset {
     }
 
     public static Asset getAsset(long id, int height) {
-        return assetTable.get(assetDbKeyFactory.newKey(id), height);
+        final DbKey dbKey = assetDbKeyFactory.newKey(id);
+        if (height < 0 || BLOCK_CHAIN_INFO_SERVICE.doesNotExceed(height)) {
+            return assetTable.get(dbKey);
+        }
+        BLOCK_CHAIN_INFO_SERVICE.checkAvailable(height);
+
+        return assetTable.get(dbKey, height);
     }
 
     public static DbIterator<Asset> getAssetsIssuedBy(long accountId, int from, int to) {
@@ -152,10 +141,14 @@ public final class Asset {
     }
 
     private void save(Connection con) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO asset "
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
+                PreparedStatement pstmt = con.prepareStatement("MERGE INTO asset "
                 + "(id, account_id, name, description, initial_quantity, quantity, decimals, height, latest) "
                 + "KEY(id, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE)")
+        ) {
             int i = 0;
             pstmt.setLong(++i, this.assetId);
             pstmt.setLong(++i, this.accountId);
@@ -164,7 +157,7 @@ public final class Asset {
             pstmt.setLong(++i, this.initialQuantityATU);
             pstmt.setLong(++i, this.quantityATU);
             pstmt.setByte(++i, this.decimals);
-            pstmt.setInt(++i, blockchain.getHeight());
+            pstmt.setInt(++i, BLOCK_CHAIN_INFO_SERVICE.getHeight());
             pstmt.executeUpdate();
         }
     }
@@ -195,14 +188,6 @@ public final class Asset {
 
     public byte getDecimals() {
         return decimals;
-    }
-
-    public DbIterator<AccountAsset> getAccounts(int from, int to) {
-        return AccountAssetTable.getAssetAccounts(this.assetId, from, to);
-    }
-
-    public DbIterator<AccountAsset> getAccounts(int height, int from, int to) {
-        return AccountAssetTable.getAssetAccounts(this.assetId, height, from, to);
     }
 
     public DbIterator<Trade> getTrades(int from, int to) {

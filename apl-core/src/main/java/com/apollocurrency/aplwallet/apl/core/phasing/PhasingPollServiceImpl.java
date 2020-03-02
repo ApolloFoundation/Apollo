@@ -4,8 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.phasing;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
@@ -37,11 +38,13 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     private final Event<Transaction> event;
     private final PhasingVoteTable phasingVoteTable;
     private final Blockchain blockchain;
+    private final AccountService accountService;
 
     @Inject
     public PhasingPollServiceImpl(PhasingPollResultTable resultTable, PhasingPollTable phasingPollTable,
                                   PhasingPollVoterTable voterTable, PhasingPollLinkedTransactionTable linkedTransactionTable,
-                                  PhasingVoteTable phasingVoteTable, Blockchain blockchain, Event<Transaction> event) {
+                                  PhasingVoteTable phasingVoteTable, Blockchain blockchain, Event<Transaction> event,
+                                  AccountService accountService) {
         this.resultTable = resultTable;
         this.phasingPollTable = phasingPollTable;
         this.voterTable = voterTable;
@@ -49,6 +52,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
         this.phasingVoteTable = phasingVoteTable;
         this.blockchain = blockchain;
         this.event = Objects.requireNonNull(event);
+        this.accountService = Objects.requireNonNull(accountService, "accountService is null");
     }
 
     @Override
@@ -60,6 +64,16 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     public DbIterator<PhasingPollResult> getApproved(int height) {
         return resultTable.getManyBy(new DbClause.IntClause("height", height).and(new DbClause.BooleanClause("approved", true)),
                 0, -1, " ORDER BY db_id ASC ");
+    }
+
+    @Override
+    public List<Long> getApprovedTransactionIds(int height) {
+        List<Long> transactionIdList = new ArrayList<>();
+        try(DbIterator<PhasingPollResult> result = resultTable.getManyBy(new DbClause.IntClause("height", height).and(new DbClause.BooleanClause("approved", true)),
+                0, -1, " ORDER BY db_id ASC ")) {
+            result.forEach(phasingPollResult -> transactionIdList.add(phasingPollResult.getId()));
+        }
+        return transactionIdList;
     }
 
     @Override
@@ -195,8 +209,8 @@ public class PhasingPollServiceImpl implements PhasingPollService {
 
     private void release(Transaction transaction) {
 
-        Account senderAccount = Account.getAccount(transaction.getSenderId());
-        Account recipientAccount = transaction.getRecipientId() == 0 ? null : Account.getAccount(transaction.getRecipientId());
+        Account senderAccount = accountService.getAccount(transaction.getSenderId());
+        Account recipientAccount = transaction.getRecipientId() == 0 ? null : accountService.getAccount(transaction.getRecipientId());
         transaction.getAppendages().forEach(appendage -> {
             if (appendage.isPhasable()) {
                 appendage.apply(transaction, senderAccount, recipientAccount);
@@ -208,9 +222,9 @@ public class PhasingPollServiceImpl implements PhasingPollService {
 
     @Override
     public void reject(Transaction transaction) {
-        Account senderAccount = Account.getAccount(transaction.getSenderId());
+        Account senderAccount = accountService.getAccount(transaction.getSenderId());
         transaction.getType().undoAttachmentUnconfirmed(transaction, senderAccount);
-        senderAccount.addToUnconfirmedBalanceATM(LedgerEvent.REJECT_PHASED_TRANSACTION, transaction.getId(),
+        accountService.addToUnconfirmedBalanceATM(senderAccount, LedgerEvent.REJECT_PHASED_TRANSACTION, transaction.getId(),
                 transaction.getAmountATM());
         event.select(TxEventType.literal(TxEventType.REJECT_PHASED_TRANSACTION)).fire(transaction);
         log.trace("Phased transaction " + transaction.getStringId() + " has been rejected");

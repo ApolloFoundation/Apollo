@@ -31,6 +31,7 @@ import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.ZipImpl;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -130,9 +131,9 @@ public class ShardServiceIntegrationTest {
         doReturn(firedEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {
         });
         shardService = new ShardService(createShardDao(databaseManager.getJdbiHandleFactory()), blockchainProcessor, blockchain, dirProvider, zip, databaseManager, blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, trimEvent, globalSync, trimService, dbEvent);
-        Files.createFile(dbDir.resolve("apl-blockchain-shard-2-chain.h2.db")); // to be deleted
-        Files.createFile(dbDir.resolve("apl-blockchain-shard-1-chain.h2.db")); // to be replaced
-        Files.createFile(dbDir.resolve("apl-blockchain-shard-0-chain.h2.db")); // to be saved
+        Files.createFile(dbDir.resolve("apl-blockchain-shard-2-chain." + DbProperties.DB_EXTENSION)); // to be deleted
+        Files.createFile(dbDir.resolve("apl-blockchain-shard-1-chain." + DbProperties.DB_EXTENSION)); // to be replaced
+        Files.createFile(dbDir.resolve("apl-blockchain-shard-0-chain." + DbProperties.DB_EXTENSION)); // to be saved
         Path backupDir = dbDir.resolve("backup");
         Files.createDirectory(backupDir);
         Path dbPath = backupDir.resolve(Constants.APPLICATION_DIR_NAME);
@@ -153,10 +154,10 @@ public class ShardServiceIntegrationTest {
         assertThrows(IllegalStateException.class, () -> databaseManager.getDataSource().commit()); //previous datasource was closed
         assertThrows(SQLException.class, shardDatasource::getConnection); //shard datasource was closed
         List<Path> files = Files.list(dbDir).collect(Collectors.toList());
-        assertEquals(5, files.size());
+        assertEquals(4, files.size());
         Files.exists(zipPath);
         Files.exists(backupDir);
-        Files.exists(dbDir.resolve(Constants.APPLICATION_DIR_NAME + ".h2.db"));
+        Files.exists(dbDir.resolve(Constants.APPLICATION_DIR_NAME + DbProperties.DB_EXTENSION_WITH_DOT));
         List<Shard> allShards = shardService.getAllShards();
         assertEquals(1, allShards.size());
         Shard shard = allShards.get(0);

@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.phasing;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -39,6 +39,8 @@ public interface PhasingPollService {
     PhasingPollResult getResult(long id);
 
     DbIterator<PhasingPollResult> getApproved(int height);
+
+    List<Long> getApprovedTransactionIds(int height);
 
     PhasingPoll getPoll(long id);
 

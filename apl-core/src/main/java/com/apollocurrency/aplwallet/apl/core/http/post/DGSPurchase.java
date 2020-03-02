@@ -26,12 +26,12 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_DELIVERY_DEADLINE_TIMESTAMP;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_GOODS;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPurchase;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -53,17 +53,17 @@ public final class DGSPurchase extends CreateTransaction {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        DGSGoods goods = ParameterParser.getGoods(service, req);
+        DGSGoods goods = HttpParameterParserUtil.getGoods(service, req);
         if (goods.isDelisted()) {
             return UNKNOWN_GOODS;
         }
 
-        int quantity = ParameterParser.getGoodsQuantity(req);
+        int quantity = HttpParameterParserUtil.getGoodsQuantity(req);
         if (quantity > goods.getQuantity()) {
             return INCORRECT_PURCHASE_QUANTITY;
         }
 
-        long priceATM = ParameterParser.getPriceATM(req);
+        long priceATM = HttpParameterParserUtil.getPriceATM(req);
         if (priceATM != goods.getPriceATM()) {
             return INCORRECT_PURCHASE_PRICE;
         }
@@ -82,8 +82,8 @@ public final class DGSPurchase extends CreateTransaction {
             return INCORRECT_DELIVERY_DEADLINE_TIMESTAMP;
         }
 
-        Account buyerAccount = ParameterParser.getSenderAccount(req);
-        Account sellerAccount = Account.getAccount(goods.getSellerId());
+        Account buyerAccount = HttpParameterParserUtil.getSenderAccount(req);
+        Account sellerAccount = lookupAccountService().getAccount(goods.getSellerId());
 
         Attachment attachment = new DigitalGoodsPurchase(goods.getId(), quantity, priceATM,
                 deliveryDeadline);

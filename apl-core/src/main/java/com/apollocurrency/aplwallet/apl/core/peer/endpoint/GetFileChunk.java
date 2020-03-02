@@ -25,12 +25,12 @@ import java.util.Base64;
 @Slf4j
 public class GetFileChunk extends PeerRequestHandler {
     private DownloadableFilesManager downloadableFilesManager;
-    
+
     @Inject
     public GetFileChunk(DownloadableFilesManager downloadableFilesManager) {
         this.downloadableFilesManager = downloadableFilesManager;
     }
-    
+
     @Override
     public JSONStreamAware processRequest(JSONObject request, Peer peer) {
         FileChunkResponse res = new FileChunkResponse();
@@ -48,7 +48,7 @@ public class GetFileChunk extends PeerRequestHandler {
             FileChunk fc = new FileChunk();
             fc.info.crc=ops.getLastRDChunkCrc();
             fc.info.fileId=fcr.fileId;
-            fc.info.size=rres.longValue();            
+            fc.info.size=rres.longValue();
             fc.info.offset=fcr.offset;
             fc.mime64data=Base64.getEncoder().encodeToString(dataBuf);
             res.chunk = fc;

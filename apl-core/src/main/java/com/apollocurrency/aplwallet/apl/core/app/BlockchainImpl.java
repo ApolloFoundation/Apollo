@@ -77,7 +77,7 @@ public class BlockchainImpl implements Blockchain {
 
     private final AtomicReference<Block> lastBlock;
     private final AtomicReference<Block> shardInitialBlock;
-    
+
     @Inject
     public BlockchainImpl(BlockDao blockDao, TransactionDao transactionDao, BlockchainConfig blockchainConfig, TimeService timeService,
                           PropertiesHolder propertiesHolder, TransactionIndexDao transactionIndexDao, BlockIndexService blockIndexService,
@@ -184,7 +184,7 @@ public class BlockchainImpl implements Blockchain {
     }
 
     @Override
-    @Transactional(readOnly = true)    
+    @Transactional(readOnly = true)
     public Block loadBlock(Connection con, ResultSet rs, boolean loadTransactions) {
         Block block = blockDao.loadBlock(con, rs);
         if (loadTransactions) {
@@ -278,7 +278,7 @@ public class BlockchainImpl implements Blockchain {
 
 
     @Override
-    @Transactional(readOnly = true)    
+    @Transactional(readOnly = true)
     public List<Block> getBlocksAfter(long blockId, List<Long> blockIdList) {
         // Check the block cache
         if (blockIdList.isEmpty()) {

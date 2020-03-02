@@ -4,14 +4,14 @@
 
 package com.apollocurrency.aplwallet.apl.crypto;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class ConvertTest {
     private static final byte[] EMPTY = new byte[0];
@@ -43,12 +43,12 @@ public class ConvertTest {
     @Test
     void testConcatEmptyArray() {
         byte[] actual = Convert.concat(EMPTY);
-        assertArrayEquals(actual, EMPTY);
+        assertArrayEquals(EMPTY, actual);
     }
 
     @Test
     void testConcatNull() {
-        assertThrows(NullPointerException.class, () -> Convert.concat(null));
+        assertThrows(NullPointerException.class, () -> Convert.concat((byte[]) null));
     }
 
     @Test

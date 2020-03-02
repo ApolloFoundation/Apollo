@@ -25,7 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -43,7 +43,7 @@ public final class GetLastTrades extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
-        long[] assetIds = ParameterParser.getUnsignedLongs(req, "assets");
+        long[] assetIds = HttpParameterParserUtil.getUnsignedLongs(req, "assets");
         JSONArray tradesJSON = new JSONArray();
         List<Trade> trades = Trade.getLastTrades(assetIds);
         trades.forEach(trade -> tradesJSON.add(JSONData.trade(trade, false)));
