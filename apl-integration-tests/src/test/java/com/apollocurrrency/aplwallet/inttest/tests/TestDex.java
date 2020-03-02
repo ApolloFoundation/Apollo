@@ -13,24 +13,29 @@ import io.qameta.allure.Epic;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.Extensions;
 import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 
+import java.lang.annotation.ElementType;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 import static org.junit.jupiter.api.parallel.ExecutionMode.SAME_THREAD;
 
 @DisplayName("Dex")
 @Epic(value = "Dex")
 @ExtendWith(DexPreconditionExtension.class)
-@Execution(SAME_THREAD)
+@Execution(CONCURRENT)
 public class TestDex extends TestBaseNew {
 
     @DisplayName("Get dex orders")
     @Test
+    @Execution(SAME_THREAD)
     public void getExchangeOrders() {
         List<DexOrderDto> orders = getDexOrders();
         assertNotNull(orders);
@@ -38,6 +43,7 @@ public class TestDex extends TestBaseNew {
 
     @DisplayName("Get trading history (closed orders) for certain account with param")
     @Test
+    @Execution(SAME_THREAD)
     public void getTradeHistory() {
         List<DexOrderDto> orders = getDexHistory(TestConfiguration.getTestConfiguration().getVaultWallet().getAccountId(), true, true);
         assertNotNull(orders);
@@ -45,6 +51,7 @@ public class TestDex extends TestBaseNew {
 
     @DisplayName("Get trading history (closed orders) for certain account")
     @Test
+    @Execution(SAME_THREAD)
     public void getAllTradeHistoryByAccount() {
         List<DexOrderDto> orders = getDexHistory(TestConfiguration.getTestConfiguration().getVaultWallet().getAccountId());
         assertNotNull(orders);
@@ -52,6 +59,7 @@ public class TestDex extends TestBaseNew {
 
     @DisplayName("Get gas prices for different tx speed")
     @Test
+    @Execution(SAME_THREAD)
     public void getEthGasPrice() {
         EthGasInfoResponse gasPrice = getEthGasInfo();
         assertTrue(Float.valueOf(gasPrice.getFast()) >= Float.valueOf(gasPrice.getAverage()));
@@ -61,6 +69,7 @@ public class TestDex extends TestBaseNew {
 
     @DisplayName("Obtaining ETH trading information for the given period (10 days) with certain resolution")
     @Test
+    @Execution(SAME_THREAD)
     //@ParameterizedTest
     //@ValueSource(strings = {"D", "15", "60", "240"})
     public void getDexTradeInfoETH() {
@@ -70,6 +79,7 @@ public class TestDex extends TestBaseNew {
 
     @DisplayName("Obtaining PAX trading information for the given period (10 days) with certain resolution")
     @Test
+    @Execution(SAME_THREAD)
     public void getDexTradeInfoPAX() {
         TradingDataOutputDTO dexTrades = getDexTradeInfo(false, "15");
         assertNotNull(dexTrades);
@@ -77,6 +87,7 @@ public class TestDex extends TestBaseNew {
 
     @DisplayName("Create 4 types of orders and cancel them")
     @Test
+    @Execution(SAME_THREAD)
     public void dexOrders() {
         //Create Sell order ETH
         CreateDexOrderResponse sellOrderEth = createDexOrder("40000", "1000", TestConfiguration.getTestConfiguration().getVaultWallet(), false, true);
@@ -110,6 +121,7 @@ public class TestDex extends TestBaseNew {
 
     @DisplayName("withdraw ETH/PAX + validation of ETH/PAX balances")
     @Test
+    @Execution(SAME_THREAD)
     public void dexWithdrawTransactions() {
         Account2FAResponse balance = getDexBalances(TestConfiguration.getTestConfiguration().getVaultWallet().getEthAddress());
         assertNotNull(balance.getEth().get(0).getBalances().getEth());
