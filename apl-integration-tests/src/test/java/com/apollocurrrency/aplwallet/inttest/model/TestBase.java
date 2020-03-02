@@ -71,17 +71,10 @@ public abstract class TestBase implements ITest {
             ImmutableMap.<String, String>builder()
                 .put("URL", TestConfiguration.getTestConfiguration().getBaseURL())
                 .build());
-        try {
+
             importSecretFileSetUp(secretFilePath, "1");
             startForgingSetUp();
             setUpTestData();
-        } catch (Exception ex) {
-            if (TestConfiguration.getTestConfiguration().getEnv().equals("localhost")){
-                log.warn("One of the peers doesn't respond");
-            }else {
-                fail("Precondition FAILED: " + ex.getMessage(), ex);
-            }
-        }
         log.info("Preconditions finished");
     }
 
@@ -107,24 +100,29 @@ public abstract class TestBase implements ITest {
 
     //Static need for a BeforeAll method
     private static void importSecretFileSetUp(String pathToSecretFile, String pass) {
-        String path = "/rest/keyStore/upload";
-        given().log().all()
+        try {
+            String path = "/rest/keyStore/upload";
+            given().log().all()
                 .spec(restHelper.getPreconditionSpec())
                 .header("Content-Type", "multipart/form-data")
                 .multiPart("keyStore", new File(pathToSecretFile))
                 .formParam("passPhrase", pass)
                 .when()
                 .post(path);
+        }catch (Exception e){
+            fail("Import secret file failed: "+e.getMessage());
+        }
     }
 
     public static void setUpTestData() {
+      try {
         log.info("Balance check started");
         CreateTransactionResponse transactionResponse;
         if (getBalanceSetUP(TestConfiguration.getTestConfiguration().getStandartWallet()).getBalanceATM() < 90000000000000L) {
             log.info("Send money on: "+TestConfiguration.getTestConfiguration().getStandartWallet());
 
             transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getGenesisWallet(),
-                    TestConfiguration.getTestConfiguration().getStandartWallet().getUser(), 10000000);
+                    TestConfiguration.getTestConfiguration().getStandartWallet().getUser(), 1000000);
 
             verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
 
@@ -139,13 +137,16 @@ public abstract class TestBase implements ITest {
             log.info("Send money on: "+TestConfiguration.getTestConfiguration().getVaultWallet());
 
             transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getGenesisWallet(),
-                    TestConfiguration.getTestConfiguration().getVaultWallet().getUser(), 10000000);
+                    TestConfiguration.getTestConfiguration().getVaultWallet().getUser(), 1000000);
             verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
 
             log.info("Verify account: "+TestConfiguration.getTestConfiguration().getVaultWallet());
             transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getVaultWallet(),
                 TestConfiguration.getTestConfiguration().getVaultWallet().getUser(), 10);
             verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
+        }
+        }catch (Exception e){
+                fail("Send money failed: " + e.getMessage());
         }
     }
 
@@ -167,7 +168,8 @@ public abstract class TestBase implements ITest {
             .post(path)
             .then()
             .assertThat().statusCode(200)
-            .extract().body().as(CreateTransactionResponse.class);
+            .extract().body().jsonPath()
+            .getObject("",CreateTransactionResponse.class);
 
     }
 
@@ -196,7 +198,8 @@ public abstract class TestBase implements ITest {
             .get(path)
             .then()
             .assertThat().statusCode(200)
-            .extract().body().as(TransactionDTO.class);
+            .extract().body().jsonPath()
+            .getObject("",TransactionDTO.class);
     }
 
     private static BalanceDTO getBalanceSetUP(Wallet wallet) {
@@ -212,11 +215,12 @@ public abstract class TestBase implements ITest {
             .when()
             .get(path)
             .then()
-            .assertThat().statusCode(200)
-            .extract().body().as(BalanceDTO.class);
+            .extract().body().jsonPath()
+            .getObject("",BalanceDTO.class);
     }
 
     private static void startForgingSetUp() {
+
         List<String> peersIp;
         String path = "/rest/networking/peer/all";
             List<String> peers = given().log().uri()
@@ -225,6 +229,7 @@ public abstract class TestBase implements ITest {
                     .get(path).as(GetPeersIpResponse.class).getPeers();
 
             if (peers.size() > 0) {
+                try {
                 HashMap<String, String> param = new HashMap();
                 param.put(ReqType.REQUEST_TYPE, ReqType.GET_BLOCKCHAIN_STATUS);
                 path = "/apl";
@@ -236,13 +241,20 @@ public abstract class TestBase implements ITest {
                         .post(path)
                         .then()
                         .assertThat().statusCode(200)
-                        .extract().body().as(BlockchainInfoDTO.class);
+                    .extract().body().jsonPath()
+                    .getObject("",BlockchainInfoDTO.class);
 
                 peersIp = TestConfiguration.getTestConfiguration().getHostsByChainID(status.getChainId());
+                }catch (Exception e){
+                    peersIp = TestConfiguration.getTestConfiguration().getPeers();
+                    log.warn("FAILED: GET BLOCKCHAIN STATUS. " + e.getMessage());
+                }
 
             } else {
                 peersIp = TestConfiguration.getTestConfiguration().getPeers();
             }
+
+
             if (peersIp != null && peersIp.size() > 0) {
 
                 boolean isForgingEnableOnGen = false;
@@ -254,7 +266,7 @@ public abstract class TestBase implements ITest {
                     param.put(ReqType.REQUEST_TYPE,ReqType.GET_FORGING);
                     param.put(Parameters.adminPassword.toString(), getTestConfiguration().getAdminPass());
                     path = "/apl";
-                    try {
+                 try {
                        ForgingResponse forgingResponse = given().config(config).log().all()
                                 .baseUri(String.format("http://%s:%s", ip, 7876))
                                 .contentType(ContentType.URLENC)
@@ -263,7 +275,9 @@ public abstract class TestBase implements ITest {
                                 .post(path)
                                 .then()
                                 .assertThat().statusCode(200)
-                                .extract().body().as(ForgingResponse.class);
+                                .extract().body().jsonPath()
+                                .getObject("",ForgingResponse.class);
+
                         if (forgingResponse.getGenerators().size() > 0) {
                             log.info("Forgers founded");
                             isForgingEnableOnGen = true;
@@ -293,7 +307,8 @@ public abstract class TestBase implements ITest {
                            .post(path)
                            .then()
                            .assertThat().statusCode(200)
-                           .extract().body().as(ForgingDetails.class);
+                           .extract().body().jsonPath()
+                           .getObject("",ForgingDetails.class);
                     }
                 } catch (Exception ex) {
                     log.warn("FAILED: Start Forging. " + ex.getMessage());
