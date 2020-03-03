@@ -1,37 +1,31 @@
 package com.apollocurrrency.aplwallet.inttest.tests;
 
 import com.apollocurrency.aplwallet.api.dto.DexOrderDto;
-import com.apollocurrency.aplwallet.api.dto.DexTradeInfoDto;
 import com.apollocurrency.aplwallet.api.dto.TradingDataOutputDTO;
 import com.apollocurrency.aplwallet.api.response.Account2FAResponse;
 import com.apollocurrency.aplwallet.api.response.CreateDexOrderResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrency.aplwallet.api.response.EthGasInfoResponse;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
+import com.apollocurrrency.aplwallet.inttest.helper.DexPreconditionExtension;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.apollocurrrency.aplwallet.inttest.model.TestBase;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
-
-
 import java.util.List;
 import java.util.Objects;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.parallel.ExecutionMode.SAME_THREAD;
 
 @DisplayName("Dex")
 @Epic(value = "Dex")
 @Execution(SAME_THREAD)
+@ExtendWith(DexPreconditionExtension.class)
 public class TestDex extends TestBaseNew {
 
     private static Wallet vault1 = new Wallet("APL-D8L6-UJ22-PUK9-6EYMD", "1", true, "0xd54a7a3eff64b467f01f0640b201977e8d017c97", "5030464519701633604");

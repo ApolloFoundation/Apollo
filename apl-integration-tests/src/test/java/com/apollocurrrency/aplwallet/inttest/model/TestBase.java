@@ -1,13 +1,11 @@
 package com.apollocurrrency.aplwallet.inttest.model;
 
-import com.apollocurrency.aplwallet.api.dto.AccountDTO;
 import com.apollocurrency.aplwallet.api.dto.BalanceDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockchainInfoDTO;
 import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrency.aplwallet.api.response.ForgingResponse;
-import com.apollocurrency.aplwallet.api.response.GetAccountResponse;
 import com.apollocurrency.aplwallet.api.response.GetPeersIpResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.RestHelper;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
@@ -46,11 +44,12 @@ import static org.junit.jupiter.api.parallel.Resources.SYSTEM_PROPERTIES;
 
 
 public abstract class TestBase implements ITest {
-    public TestInfo testInfo;
-    protected static RetryPolicy retryPolicy;
-    protected static RestHelper restHelper;
-    protected static ObjectMapper mapper = new ObjectMapper();
     public static final Logger log = LoggerFactory.getLogger(TestBase.class);
+    TestInfo testInfo;
+    static RetryPolicy retryPolicy;
+    static RestHelper restHelper;
+    static ObjectMapper mapper = new ObjectMapper();
+
     private static RestAssuredConfig config;
 
     @BeforeAll
