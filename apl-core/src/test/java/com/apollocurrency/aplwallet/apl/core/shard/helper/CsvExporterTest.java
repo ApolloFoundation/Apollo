@@ -117,6 +117,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -481,8 +482,10 @@ class CsvExporterTest {
 
         Path shardExportedFile = dataExportPath.resolve("shard.csv");
         assertEquals(2, exportedRows);
-        long exportedFiles = Files.list(dataExportPath).count();
-        assertEquals(1, exportedFiles);
+
+        try(Stream<Path> pathStream = Files.list(dataExportPath)){
+            assertEquals(1, pathStream.count());
+        }
         assertTrue(Files.exists(shardExportedFile));
 
         List<String> lines = Files.readAllLines(shardExportedFile);
@@ -499,8 +502,9 @@ class CsvExporterTest {
         assertEquals(0, exportedRows);
 
         Path shardExportedFile = dataExportPath.resolve("shard.csv");
-        long exportedFiles = Files.list(dataExportPath).count();
-        assertEquals(0, exportedFiles);
+        try(Stream<Path> pathStream = Files.list(dataExportPath)){
+            assertEquals(0, pathStream.count());
+        }
         assertFalse(Files.exists(shardExportedFile));
     }
 
@@ -510,8 +514,9 @@ class CsvExporterTest {
         assertEquals(1, exportedRows);
 
         Path shardExportedFile = dataExportPath.resolve("shard.csv");
-        long exportedFiles = Files.list(dataExportPath).count();
-        assertEquals(1, exportedFiles);
+        try(Stream<Path> pathStream = Files.list(dataExportPath)){
+            assertEquals(1, pathStream.count());
+        }
         assertTrue(Files.exists(shardExportedFile));
 
         List<String> lines = Files.readAllLines(shardExportedFile);
