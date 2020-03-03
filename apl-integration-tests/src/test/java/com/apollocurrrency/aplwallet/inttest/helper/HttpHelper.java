@@ -3,7 +3,7 @@ package com.apollocurrrency.aplwallet.inttest.helper;
 
 import com.apollocurrrency.aplwallet.inttest.model.TestBase;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
-import com.apollocurrrency.aplwallet.inttest.tests.TestShuffling;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.qameta.allure.Allure;
 import okhttp3.MediaType;
@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 
 public class HttpHelper {
-    public static final Logger log = LoggerFactory.getLogger(TestShuffling.class);
+    public static final Logger log = LoggerFactory.getLogger(HttpHelper.class);
     public static ObjectMapper mapper = new ObjectMapper();
     private static String baseURL_API;
 
@@ -154,7 +154,6 @@ public class HttpHelper {
             response = httpCallPost();
             responseBody = response.body().string();
             Assert.assertEquals(200, response.code());
-
              if (Allure.getLifecycle().getCurrentTestCase().isPresent()) {
                  Allure.addAttachment("Response Body", responseBody);
              }

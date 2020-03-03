@@ -141,7 +141,7 @@
           </argLine>
           <systemPropertyVariables>
             <allure.results.directory>${project.build.directory}/allure-results</allure.results.directory>
-            <allure.link.issue.pattern>https://example.org/browse/{}</allure.link.issue.pattern>
+            <allure.link.issue.pattern>https://firstb.atlassian.net/browse/{}</allure.link.issue.pattern>
             <test.env>${test.env}</test.env>
           </systemPropertyVariables>
           <systemProperties>

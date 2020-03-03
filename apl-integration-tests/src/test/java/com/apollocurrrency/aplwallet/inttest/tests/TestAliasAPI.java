@@ -5,6 +5,7 @@ import com.apollocurrency.aplwallet.api.response.AccountAliasesResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCountAliasesResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
+import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
@@ -24,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("Alias")
 @Epic(value = "Alias")
-public class TestAliasAPI extends TestBaseOld {
+public class TestAliasAPI extends TestBaseNew {
 
     @DisplayName("SetAlias -> GetAliasesCount -> Get Aliases")
     @ParameterizedTest(name = "{displayName} {arguments}")
@@ -59,7 +60,7 @@ public class TestAliasAPI extends TestBaseOld {
     @DisplayName("Set Alias -> Get Alias")
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
-    public void getAlias(Wallet wallet) throws IOException {
+    public void getAlias(Wallet wallet) {
         String aliasname = "setAliasAPI" + new Date().getTime();
         String alias;
         CreateTransactionResponse setAlias = setAlias(wallet, "testapi.com", aliasname);
@@ -74,7 +75,7 @@ public class TestAliasAPI extends TestBaseOld {
     @DisplayName("Set Alias")
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
-    public void setAliasTest(Wallet wallet) throws IOException {
+    public void setAliasTest(Wallet wallet) {
         CreateTransactionResponse setAlias = setAlias(wallet, "testapi.com", "setAlias" + new Date().getTime());
         verifyCreatingTransaction(setAlias);
 
@@ -118,13 +119,12 @@ public class TestAliasAPI extends TestBaseOld {
         aliasset = setAlias.getTransaction();
         verifyTransactionInBlock(aliasset);
         AccountAliasesResponse getAliasesLike = getAliasesLike(aliasname);
-        //assertTrue(Arrays.stream(getAliasesLike.aliases)).anyMatch(aliasname::equals));
         assertTrue(getAliasesLike.getAliases().stream().filter(aliasDTO -> aliasDTO.getAliasName().contains(aliassearch)).count() >= 1);
 
 
     }
 
-    @DisplayName("setAlias + sellAlias + buyAlias")
+    @DisplayName("SetAlias -> SellAlias -> BuyAlias")
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void sellAlias(Wallet wallet) throws IOException {
@@ -136,14 +136,14 @@ public class TestAliasAPI extends TestBaseOld {
         aliasset = setAlias.getTransaction();
         verifyTransactionInBlock(aliasset);
 
-        CreateTransactionResponse sellAlias = sellAlias(wallet, aliasname);
+        CreateTransactionResponse sellAlias = sellAlias(wallet, aliasname,1500000000);
         assertTrue(sellAlias.toString().length() >= 1);
         verifyCreatingTransaction(sellAlias);
         aliassell = sellAlias.getTransaction();
         verifyTransactionInBlock(aliassell);
 
 
-        CreateTransactionResponse buyAlias = buyAlias(wallet, aliasname);
+        CreateTransactionResponse buyAlias = buyAlias(wallet, aliasname,1500000000);
         assertTrue(buyAlias.toString().length() >= 1);
 
     }
@@ -163,7 +163,7 @@ public class TestAliasAPI extends TestBaseOld {
         aliasset = setAlias.getTransaction();
         verifyTransactionInBlock(aliasset);
 
-        CreateTransactionResponse buyAlias = buyAlias(wallet, aliasname);
+        CreateTransactionResponse buyAlias = buyAlias(wallet, aliasname,1);
         assertTrue(buyAlias.errorDescription.contains("alias is not for sale at the moment"), buyAlias.errorDescription);
 
         assertTrue(buyAlias.errorCode.compareTo(new Long(4)) == 0);

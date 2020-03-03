@@ -18,17 +18,32 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.Extensions;
 import org.junit.jupiter.api.parallel.Execution;
+
 import java.util.List;
 import java.util.Objects;
 import static org.junit.jupiter.api.Assertions.*;
+
+import org.junit.jupiter.api.parallel.ExecutionMode;
+
+
+import java.lang.annotation.ElementType;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
+
 import static org.junit.jupiter.api.parallel.ExecutionMode.SAME_THREAD;
 
 @DisplayName("Dex")
 @Epic(value = "Dex")
-@Execution(SAME_THREAD)
 @ExtendWith(DexPreconditionExtension.class)
+@Execution(CONCURRENT)
 public class TestDex extends TestBaseNew {
+
 
     private static Wallet vault1 = new Wallet("APL-D8L6-UJ22-PUK9-6EYMD", "1", true, "0xd54a7a3eff64b467f01f0640b201977e8d017c97", "5030464519701633604");
     private static Wallet vault2 = new Wallet("APL-UB87-LVCF-M8LK-HC9U6", "1", true, "0x19826b8d344582a5e4610b300cb16de86a0d9f89", "17467469088293725381");
@@ -73,11 +88,10 @@ public class TestDex extends TestBaseNew {
             verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
         }
 
-    }
-
 
     @DisplayName("Get trading history (closed orders) for certain account with param")
     @Test
+    @Execution(SAME_THREAD)
     public void getTradeHistory() {
         List<DexOrderDto> ordersVault1 = getDexHistory(vault1.getAccountId(), true, true);
         assertNotNull(ordersVault1);
@@ -87,6 +101,7 @@ public class TestDex extends TestBaseNew {
 
     @DisplayName("Get trading history (closed orders) for certain account")
     @Test
+    @Execution(SAME_THREAD)
     public void getAllTradeHistoryByAccount() {
         List<DexOrderDto> ordersVault1 = getDexHistory(vault1.getAccountId());
         assertNotNull(ordersVault1);
@@ -96,6 +111,7 @@ public class TestDex extends TestBaseNew {
 
     @DisplayName("Get gas prices for different tx speed")
     @Test
+    @Execution(SAME_THREAD)
     public void getEthGasPrice() {
         EthGasInfoResponse gasPrice = getEthGasInfo();
         assertTrue(Float.valueOf(gasPrice.getFast()) >= Float.valueOf(gasPrice.getAverage()));
@@ -105,6 +121,7 @@ public class TestDex extends TestBaseNew {
 
     @DisplayName("Obtaining ETH trading information for the given period (10 days) with certain resolution")
     @Test
+    @Execution(SAME_THREAD)
     //@ParameterizedTest
     //@ValueSource(strings = {"D", "15", "60", "240"})
     public void getDexTradeInfoETH() {
@@ -120,6 +137,7 @@ public class TestDex extends TestBaseNew {
 
     @DisplayName("Obtaining PAX trading information for the given period (10 days) with certain resolution")
     @Test
+    @Execution(SAME_THREAD)
     public void getDexTradeInfoPAX() {
         TradingDataOutputDTO dexTrades = getDexTradeInfo(false, "15");
         assertNotNull(dexTrades.getL(), "response is incorrect");
@@ -133,6 +151,7 @@ public class TestDex extends TestBaseNew {
 
     @DisplayName("Create 4 types of orders and cancel them")
     @Test
+    @Execution(SAME_THREAD)
     public void dexOrders() {
         log.info("Creating SELL Dex Order (ETH)");
         CreateDexOrderResponse sellOrderEth = createDexOrder("40000", "1000", vault1, false, true);
@@ -185,6 +204,7 @@ public class TestDex extends TestBaseNew {
 
     @DisplayName("withdraw ETH/PAX + validation of ETH/PAX balances")
     @Test
+    @Execution(SAME_THREAD)
     public void dexWithdrawTransactions() {
         Account2FAResponse balance = getDexBalances(vault2.getEthAddress());
         double ethBalance = balance.getEth().get(0).getBalances().getEth();
@@ -235,7 +255,7 @@ public class TestDex extends TestBaseNew {
         String pairRate = "1000";
         String offerAmount = "5000";
         //TODO: balance
-        
+
         CreateDexOrderResponse sellOrderVault1 = createDexOrder(pairRate, offerAmount, vault1, false, true);
         assertNotNull(sellOrderVault1, "RESPONSE is not correct/dex offer wasn't created");
         verifyTransactionInBlock(sellOrderVault1.getOrder().getId());

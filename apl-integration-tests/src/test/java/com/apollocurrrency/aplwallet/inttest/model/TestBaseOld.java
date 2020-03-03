@@ -65,6 +65,7 @@ import com.apollocurrency.aplwallet.api.response.ShufflingParticipantsResponse;
 import com.apollocurrency.aplwallet.api.response.TransactionListResponse;
 import com.apollocurrency.aplwallet.api.response.VaultWalletResponse;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.qameta.allure.Step;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
@@ -92,6 +93,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 public class TestBaseOld extends TestBase {
     public static final Logger log = LoggerFactory.getLogger(TestBaseOld.class);
+    private static ObjectMapper mapper = new ObjectMapper();
 
     @Step
     public boolean verifyTransactionInBlock(String transaction) {
@@ -351,7 +353,7 @@ public class TestBaseOld extends TestBase {
 
     //Serhii Skrypchenko (sell Alias)
     @Step
-    public CreateTransactionResponse sellAlias(Wallet wallet, String aliasName) {
+    public CreateTransactionResponse sellAlias(Wallet wallet, String aliasName,int price) {
         addParameters(RequestType.requestType, RequestType.sellAlias);
         addParameters(Parameters.aliasName, aliasName);
         addParameters(Parameters.wallet, wallet);
@@ -362,7 +364,7 @@ public class TestBaseOld extends TestBase {
     }
 
     @Step
-    public CreateTransactionResponse buyAlias(Wallet wallet, String aliasName) {
+    public CreateTransactionResponse buyAlias(Wallet wallet, String aliasName,int price) {
         addParameters(RequestType.requestType, RequestType.buyAlias);
         addParameters(Parameters.aliasName, aliasName);
         addParameters(Parameters.wallet, wallet);
