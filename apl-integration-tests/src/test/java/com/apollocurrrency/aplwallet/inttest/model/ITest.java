@@ -122,9 +122,9 @@ public interface ITest {
 
     AccountAliasesResponse getAliasesLike(String aliasename);
 
-    CreateTransactionResponse sellAlias(Wallet wallet, String aliasName);
+    CreateTransactionResponse sellAlias(Wallet wallet, String aliasName, int price);
 
-    CreateTransactionResponse buyAlias(Wallet wallet, String aliasName);
+    CreateTransactionResponse buyAlias(Wallet wallet, String aliasName,int price);
 
     CreateTransactionResponse sendMoneyPrivate(Wallet wallet, String recipient, int moneyAmount);
 

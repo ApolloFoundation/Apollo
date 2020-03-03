@@ -353,7 +353,7 @@ public class TestBaseOld extends TestBase {
 
     //Serhii Skrypchenko (sell Alias)
     @Step
-    public CreateTransactionResponse sellAlias(Wallet wallet, String aliasName) {
+    public CreateTransactionResponse sellAlias(Wallet wallet, String aliasName,int price) {
         addParameters(RequestType.requestType, RequestType.sellAlias);
         addParameters(Parameters.aliasName, aliasName);
         addParameters(Parameters.wallet, wallet);
@@ -364,7 +364,7 @@ public class TestBaseOld extends TestBase {
     }
 
     @Step
-    public CreateTransactionResponse buyAlias(Wallet wallet, String aliasName) {
+    public CreateTransactionResponse buyAlias(Wallet wallet, String aliasName,int price) {
         addParameters(RequestType.requestType, RequestType.buyAlias);
         addParameters(Parameters.aliasName, aliasName);
         addParameters(Parameters.wallet, wallet);

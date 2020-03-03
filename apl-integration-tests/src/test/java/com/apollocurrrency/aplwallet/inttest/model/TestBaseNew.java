@@ -488,42 +488,167 @@ public class TestBaseNew extends TestBase {
 
     @Override
     public AccountAliasesResponse getAliases(Wallet wallet) {
-        throw new NotImplementedException("Not implemented");
+        HashMap<String, String> param = new HashMap();
+        param = restHelper.addWalletParameters(param,wallet);
+        param.put(ReqType.REQUEST_TYPE, ReqType.GET_ALIASES);
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .get(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", AccountAliasesResponse.class);
     }
 
     @Override
     public AccountCountAliasesResponse getAliasCount(Wallet wallet) {
-        throw new NotImplementedException("Not implemented");
+        HashMap<String, String> param = new HashMap();
+        param = restHelper.addWalletParameters(param,wallet);
+        param.put(ReqType.REQUEST_TYPE, ReqType.GET_ALIAS_COUNT);
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .get(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", AccountCountAliasesResponse.class);
     }
 
     @Override
-    public AccountAliasDTO getAlias(String aliasname) {
-        throw new NotImplementedException("Not implemented");
+    public AccountAliasDTO getAlias(String aliasName) {
+        HashMap<String, String> param = new HashMap();
+        param.put(ReqType.REQUEST_TYPE, ReqType.GET_ALIAS);
+        param.put(ReqParam.ALIAS_NAME,aliasName);
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .get(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", AccountAliasDTO.class);
     }
 
     @Override
+    @Step
     public CreateTransactionResponse setAlias(Wallet wallet, String aliasURL, String aliasName) {
-        throw new NotImplementedException("Not implemented");
+        HashMap<String, String> param = new HashMap();
+        param = restHelper.addWalletParameters(param,wallet);
+
+        param.put(ReqType.REQUEST_TYPE, ReqType.SET_ALIAS);
+        param.put(ReqParam.ALIAS_URI, aliasURL);
+        param.put(ReqParam.ALIAS_NAME, aliasName);
+        param.put(ReqParam.FEE, "1000000000");
+        param.put(ReqParam.DEADLINE, "1440");
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .post(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", CreateTransactionResponse.class);
     }
 
     @Override
-    public CreateTransactionResponse deleteAlias(Wallet wallet, String aliasname) {
-        throw new NotImplementedException("Not implemented");
+    @Step
+    public CreateTransactionResponse deleteAlias(Wallet wallet, String aliasName) {
+        HashMap<String, String> param = new HashMap();
+        param = restHelper.addWalletParameters(param,wallet);
+        param.put(ReqType.REQUEST_TYPE, ReqType.DELETE_ALIAS);
+        param.put(ReqParam.ALIAS_NAME, aliasName);
+        param.put(ReqParam.FEE, "1000000000");
+        param.put(ReqParam.DEADLINE, "1440");
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .post(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", CreateTransactionResponse.class);
     }
 
     @Override
-    public AccountAliasesResponse getAliasesLike(String aliasename) {
-        throw new NotImplementedException("Not implemented");
+    @Step
+    public AccountAliasesResponse getAliasesLike(String aliaseName) {
+        HashMap<String, String> param = new HashMap();
+        param.put(ReqType.REQUEST_TYPE, ReqType.GET_ALIASES_LIKE);
+        param.put(ReqParam.ALIAS_PREFIX,aliaseName);
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .get(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", AccountAliasesResponse.class);
     }
 
     @Override
-    public CreateTransactionResponse sellAlias(Wallet wallet, String aliasName) {
-        throw new NotImplementedException("Not implemented");
+    @Step
+    public CreateTransactionResponse sellAlias(Wallet wallet, String aliasName, int price) {
+        HashMap<String, String> param = new HashMap();
+        param = restHelper.addWalletParameters(param,wallet);
+
+        param.put(ReqType.REQUEST_TYPE, ReqType.SELL_ALIAS);
+        param.put(ReqParam.ALIAS_NAME, aliasName);
+        param.put(ReqParam.PRICE, String.valueOf(price));
+        param.put(ReqParam.FEE, "1000000000");
+        param.put(ReqParam.DEADLINE, "1440");
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .post(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", CreateTransactionResponse.class);
     }
 
     @Override
-    public CreateTransactionResponse buyAlias(Wallet wallet, String aliasName) {
-        throw new NotImplementedException("Not implemented");
+    public CreateTransactionResponse buyAlias(Wallet wallet, String aliasName, int price) {
+        HashMap<String, String> param = new HashMap();
+        param = restHelper.addWalletParameters(param,wallet);
+
+        param.put(ReqType.REQUEST_TYPE, ReqType.BUY_ALIAS);
+        param.put(ReqParam.ALIAS_NAME, aliasName);
+        param.put(ReqParam.AMOUNT_ATM, String.valueOf(price));
+        param.put(ReqParam.FEE, "1000000000");
+        param.put(ReqParam.DEADLINE, "1440");
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .post(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", CreateTransactionResponse.class);
     }
 
     @Override
