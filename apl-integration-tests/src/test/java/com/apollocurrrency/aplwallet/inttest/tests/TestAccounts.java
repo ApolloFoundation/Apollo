@@ -57,7 +57,7 @@ public class TestAccounts extends TestBaseOld {
 
     @Test
     @DisplayName("Verify GetAccount endpoint")
-    public void testAccount() throws IOException {
+    public void testAccount() {
         GetAccountResponse account = getAccount(getTestConfiguration().getStandartWallet().getUser());
         log.trace("Get Account = {}", account.getAccountRS());
         assertEquals(account.getAccountRS(), getTestConfiguration().getStandartWallet().getUser());
