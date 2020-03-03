@@ -11,8 +11,10 @@ import com.apollocurrrency.aplwallet.inttest.helper.DexPreconditionExtension;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.apollocurrrency.aplwallet.inttest.model.TestBase;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
+import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -229,14 +231,27 @@ public class TestDex extends TestBaseNew {
 
     @DisplayName("dex exchange ETH SELL-BUY")
     @Test
-    public void dexExchange() {
-        CreateDexOrderResponse sellOrderVault1 = createDexOrder("1000", "5000", vault1, false, true);
+    public void dexExchange() throws InterruptedException {
+        String pairRate = "1000";
+        String offerAmount = "5000";
+        //TODO: balance
+        
+        CreateDexOrderResponse sellOrderVault1 = createDexOrder(pairRate, offerAmount, vault1, false, true);
         assertNotNull(sellOrderVault1, "RESPONSE is not correct/dex offer wasn't created");
         verifyTransactionInBlock(sellOrderVault1.getOrder().getId());
-
-
-
-
+        //TODO: change wait on waitHeight method
+        Thread.sleep(200000);
+        CreateDexOrderResponse buyOrderVault2 = createDexOrder(pairRate, offerAmount, vault2, true, true);
+        assertNotNull(buyOrderVault2, "RESPONSE is not correct/dex offer wasn't created");
+        assertNotNull(buyOrderVault2.getFrozenTx(), "ETH isn't frozen");
+        assertNotNull(buyOrderVault2.getContract(), "CONTRACT isn't created");
+        assertNotNull(buyOrderVault2.getOrder(), "ORDER isn't in response");
+        verifyTransactionInBlock(buyOrderVault2.getOrder().getId());
+        //TODO: change wait on validation by status and transactions
+        Thread.sleep(900000);
+        assertEquals("5", getDexOrder(sellOrderVault1.getOrder().getId()).status, "SELL order has incorrect status");
+        assertEquals("5", getDexOrder(buyOrderVault2.getOrder().getId()).status, "BUY order has incorrect status");
+        //TODO: add balance validation APL + ETH
     }
 
 
