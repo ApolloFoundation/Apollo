@@ -19,8 +19,7 @@ import java.util.Objects;
 import java.util.Random;
 
 /**
- *
- * @author alukin@gmail.com
+ * Account statistic information.
  */
 @Slf4j
 @Singleton
@@ -39,23 +38,28 @@ public class AccountStatisticsService {
     }
 
     public AccountsCountDto getAccountsStatistic(int numberOfAccounts) {
+        log.trace("start getAccountsStatistic = {}", numberOfAccounts);
         AccountsCountDto dto = new AccountsCountDto();
         dto.totalSupply = accountService.getTotalSupply();
+        log.trace("getAccountsStatistic dto.totalSupply= {}", dto.totalSupply);
         dto.totalNumberOfAccounts = accountService.getTotalNumberOfAccounts();
+        log.trace("getAccountsStatistic dto.totalNumberOfAccounts= {}", dto.totalNumberOfAccounts);
         dto.numberOfTopAccounts = numberOfAccounts;
         dto.totalAmountOnTopAccounts = accountService.getTotalAmountOnTopAccounts(numberOfAccounts);
-        List<Account> topHoldersIterator = accountService.getTopHolders(numberOfAccounts);
-        composeAccountCountDto(dto, topHoldersIterator);
-        return dto;
-    }
-
-    private void composeAccountCountDto(AccountsCountDto dto, List<Account> topAccountsIterator) {
-        while (topAccountsIterator.iterator().hasNext()) {
-            Account account = topAccountsIterator.iterator().next();
+        log.trace("Found totalAmountOnTopAccounts = {} by numberOfAccounts={}", dto.totalAmountOnTopAccounts, numberOfAccounts);
+        List<Account> topHoldersList = accountService.getTopHolders(numberOfAccounts);
+        log.trace("topHoldersList = [{}]", topHoldersList.size());
+        int index = 0;
+        for (Account account : topHoldersList) {
+            long start = System.currentTimeMillis();
+            log.trace("accountJson START for  account={}, index={}", account.getId(), index);
             AccountEffectiveBalanceDto accountJson = accountBalance(account, false, blockchain.getHeight());
+            log.trace("accountJson = {}, index={} in '{}' msec, DONE", accountJson, index, System.currentTimeMillis() - start);
             putAccountNameInfo(accountJson, account.getId(), false);
             dto.topHolders.add(accountJson);
+            index++;
         }
+        return dto;
     }
 
     private AccountEffectiveBalanceDto accountBalance(Account account, boolean includeEffectiveBalance, int height) {
