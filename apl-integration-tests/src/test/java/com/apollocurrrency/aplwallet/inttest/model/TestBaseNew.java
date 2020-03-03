@@ -1086,25 +1086,64 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
+    @Step
     public GetBlockIdResponse getBlockId(String height) {
-        throw new NotImplementedException("Not implemented");
+        HashMap<String, String> param = new HashMap();
+        param.put(ReqType.REQUEST_TYPE, ReqType.GET_BLOCK_ID);
+        param.put(ReqParam.HEIGHT, height);
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .get(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", GetBlockIdResponse.class);
     }
 
     @Override
+    @Step
     public BlockchainInfoDTO getBlockchainStatus() {
-        throw new NotImplementedException("Not implemented");
+        HashMap<String, String> param = new HashMap();
+        param.put(ReqType.REQUEST_TYPE, ReqType.GET_BLOCKCHAIN_STATUS);
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .get(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", BlockchainInfoDTO.class);
     }
 
     @Override
+    @Step
     public AccountBlocksResponse getBlocks() {
-        throw new NotImplementedException("Not implemented");
+        HashMap<String, String> param = new HashMap();
+        param.put(ReqType.REQUEST_TYPE, ReqType.GET_BLOCKS);
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .get(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", AccountBlocksResponse.class);
     }
 
     @Override
+    @Step
     public void verifyCreatingTransaction(CreateTransactionResponse transaction) {
         assertNotNull(transaction);
-        assertNotNull(transaction.getTransaction(), transaction.errorDescription);
-        assertNotNull(transaction.getTransactionJSON(), transaction.errorDescription);
         assertNotNull(transaction.getTransactionJSON().getSenderPublicKey());
         assertNotNull(transaction.getTransactionJSON().getSignature());
         assertNotNull(transaction.getTransactionJSON().getFullHash());
@@ -1257,8 +1296,21 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
+    @Step
     public ECBlockDTO getECBlock() {
-        throw new NotImplementedException("Not implemented");
+        HashMap<String, String> param = new HashMap();
+        param.put(ReqType.REQUEST_TYPE, ReqType.GET_EC_BLOCK);
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .get(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", ECBlockDTO.class);
     }
 
     @Override
