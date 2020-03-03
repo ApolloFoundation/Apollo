@@ -19,11 +19,14 @@ import com.apollocurrency.aplwallet.api.response.AccountBlocksResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrencyCountResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrencyResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrentAskOrderIdsResponse;
+import com.apollocurrency.aplwallet.api.response.AccountNotFoundResponse;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
+import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -101,6 +104,8 @@ public class AccountController {
     @Inject @Setter
     private AccountService accountService;
     @Inject @Setter
+    private AccountPublicKeyService accountPublicKeyService;
+    @Inject @Setter
     private AccountAssetService accountAssetService;
     @Inject @Setter
     private AccountCurrencyService accountCurrencyService;
@@ -126,6 +131,7 @@ public class AccountController {
     public AccountController(Blockchain blockchain,
                              Account2FAHelper account2FAHelper,
                              AccountService accountService,
+                             AccountPublicKeyService accountPublicKeyService,
                              AccountAssetService accountAssetService,
                              AccountCurrencyService accountCurrencyService,
                              AccountAssetConverter accountAssetConverter,
@@ -141,6 +147,7 @@ public class AccountController {
         this.blockchain = blockchain;
         this.account2FAHelper = account2FAHelper;
         this.accountService = accountService;
+        this.accountPublicKeyService = accountPublicKeyService;
         this.accountAssetService = accountAssetService;
         this.accountCurrencyService = accountCurrencyService;
         this.accountAssetConverter = accountAssetConverter;
@@ -168,11 +175,16 @@ public class AccountController {
             })
     @PermitAll
     public Response getAccount(
-            @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
-            @Parameter(description = "include additional lessors, lessorsRS and lessorsInfo (optional)") @QueryParam("includeLessors") @DefaultValue("false") boolean includeLessors,
-            @Parameter(description = "include additional assetBalances and unconfirmedAssetBalances (optional)") @QueryParam("includeAssets") @DefaultValue("false") boolean includeAssets,
-            @Parameter(description = "include accountCurrencies (optional)") @QueryParam("includeCurrencies") @DefaultValue("false") boolean includeCurrencies,
-            @Parameter(description = "include effectiveBalanceAPL and guaranteedBalanceATM (optional)") @QueryParam("includeEffectiveBalance") @DefaultValue("false") boolean includeEffectiveBalance
+            @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
+            @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
+            @Parameter(description = "include additional lessors, lessorsRS and lessorsInfo (optional)")
+            @QueryParam("includeLessors") @DefaultValue("false") boolean includeLessors,
+            @Parameter(description = "include additional assetBalances and unconfirmedAssetBalances (optional)")
+            @QueryParam("includeAssets") @DefaultValue("false") boolean includeAssets,
+            @Parameter(description = "include accountCurrencies (optional)") @QueryParam("includeCurrencies")
+            @DefaultValue("false") boolean includeCurrencies,
+            @Parameter(description = "include effectiveBalanceAPL and guaranteedBalanceATM (optional)")
+            @QueryParam("includeEffectiveBalance") @DefaultValue("false") boolean includeEffectiveBalance
             ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
@@ -181,7 +193,20 @@ public class AccountController {
         Account account  = accountService.getAccount(accountId);
 
         if (account == null) {
-            return response.error( ApiErrors.UNKNOWN_VALUE, "account", accountId).build();
+            AccountNotFoundResponse accountErrorResponse = new AccountNotFoundResponse(
+                ResponseBuilder.createErrorResponse(
+                    ApiErrors.UNKNOWN_VALUE,
+                    null,
+                    "account", accountId));
+            accountErrorResponse.setAccount(Long.toUnsignedString(accountId));
+            accountErrorResponse.setAccountRS(Convert2.rsAccount(accountId));
+            accountErrorResponse.set2FA(account2FAHelper.isEnabled2FA(accountId));
+            return response.error(accountErrorResponse).build();
+        }
+
+        if(account.getPublicKey() == null) {
+            PublicKey pKey = accountPublicKeyService.getPublicKey(account.getId());
+            account.setPublicKey(pKey);
         }
 
         AccountDTO dto = converter.convert(account);

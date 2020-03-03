@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
@@ -99,6 +100,7 @@ class AccountControllerTest extends AbstractEndpointTest{
 
     private AccountConverter accountConverter = mock(AccountConverter.class);
     private AccountService accountService = mock(AccountService.class);
+    private AccountPublicKeyService accountPublicKeyService = mock(AccountPublicKeyService.class);
     private AccountAssetService accountAssetService = mock(AccountAssetService.class);
     private AccountCurrencyService accountCurrencyService = mock(AccountCurrencyService.class);
     private AccountCurrencyConverter accountCurrencyConverter = mock(AccountCurrencyConverter.class);
@@ -121,6 +123,7 @@ class AccountControllerTest extends AbstractEndpointTest{
                 blockchain,
                 account2FAHelper,
                 accountService,
+                accountPublicKeyService,
                 accountAssetService,
                 accountCurrencyService,
                 accountAssetConverter,
