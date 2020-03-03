@@ -103,6 +103,7 @@ public abstract class TestBase implements ITest {
     //Static need for a BeforeAll method
     @ResourceLock(value = SYSTEM_PROPERTIES, mode = READ)
     protected synchronized static void importSecretFileSetUp(String pathToSecretFile, String pass) {
+        try {
         String path = "/rest/keyStore/upload";
         given().log().all()
                 .spec(restHelper.getPreconditionSpec())

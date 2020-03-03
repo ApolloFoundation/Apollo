@@ -74,14 +74,6 @@ public class TestDex extends TestBaseNew {
     }
 
 
-
-    @DisplayName("Get dex orders")
-    @Test
-    public void getExchangeOrders() {
-        List<DexOrderDto> orders = getDexOrders();
-        assertNotNull(orders);
-    }
-
     @DisplayName("Get trading history (closed orders) for certain account with param")
     @Test
     public void getTradeHistory() {
@@ -115,14 +107,26 @@ public class TestDex extends TestBaseNew {
     //@ValueSource(strings = {"D", "15", "60", "240"})
     public void getDexTradeInfoETH() {
         TradingDataOutputDTO dexTrades = getDexTradeInfo(true, "D");
-        assertNotNull(dexTrades);
+        assertNotNull(dexTrades.getL(), "response is incorrect");
+        assertNotNull(dexTrades.getC(), "response is incorrect");
+        assertNotNull(dexTrades.getH(), "response is incorrect");
+        assertNotNull(dexTrades.getO(), "response is incorrect");
+        assertNotNull(dexTrades.getS(), "response is incorrect");
+        assertNotNull(dexTrades.getT(), "response is incorrect");
+        assertNotNull(dexTrades.getV(), "response is incorrect");
     }
 
     @DisplayName("Obtaining PAX trading information for the given period (10 days) with certain resolution")
     @Test
     public void getDexTradeInfoPAX() {
         TradingDataOutputDTO dexTrades = getDexTradeInfo(false, "15");
-        assertNotNull(dexTrades);
+        assertNotNull(dexTrades.getL(), "response is incorrect");
+        assertNotNull(dexTrades.getC(), "response is incorrect");
+        assertNotNull(dexTrades.getH(), "response is incorrect");
+        assertNotNull(dexTrades.getO(), "response is incorrect");
+        assertNotNull(dexTrades.getS(), "response is incorrect");
+        assertNotNull(dexTrades.getT(), "response is incorrect");
+        assertNotNull(dexTrades.getV(), "response is incorrect");
     }
 
     @DisplayName("Create 4 types of orders and cancel them")
@@ -131,6 +135,7 @@ public class TestDex extends TestBaseNew {
         log.info("Creating SELL Dex Order (ETH)");
         CreateDexOrderResponse sellOrderEth = createDexOrder("40000", "1000", vault1, false, true);
         assertNotNull(sellOrderEth, "RESPONSE is not correct/dex offer wasn't created");
+        assertNotNull(sellOrderEth.getOrder().getId());
         verifyTransactionInBlock(sellOrderEth.getOrder().getId());
 
         log.info("Creating SELL Dex Order (PAX)");
@@ -159,16 +164,32 @@ public class TestDex extends TestBaseNew {
             }
             else log.info("orders with status OPEN are not present");
         }
+
+
+        List<DexOrderDto> ordersDex = getDexOrders();
+        assertNotNull(ordersDex);
+        assertNotNull(ordersDex.get(0).id);
+        assertNotNull(ordersDex.get(0).status);
+        assertNotNull(ordersDex.get(0).hasFrozenMoney);
+        assertNotNull(ordersDex.get(0).accountId);
+        assertNotNull(ordersDex.get(0).fromAddress);
+        assertNotNull(ordersDex.get(0).height);
+        assertNotNull(ordersDex.get(0).offerAmount);
+        assertNotNull(ordersDex.get(0).offerCurrency);
+        assertNotNull(ordersDex.get(0).pairCurrency);
+        assertNotNull(ordersDex.get(0).pairRate);
+        assertNotNull(ordersDex.get(0).type);
     }
 
     @DisplayName("withdraw ETH/PAX + validation of ETH/PAX balances")
     @Test
     public void dexWithdrawTransactions() {
-        Account2FAResponse balance = getDexBalances(TestConfiguration.getTestConfiguration().getVaultWallet().getEthAddress());
-        assertNotNull(balance.getEth().get(0).getBalances().getEth());
+        Account2FAResponse balance = getDexBalances(vault2.getEthAddress());
         double ethBalance = balance.getEth().get(0).getBalances().getEth();
-        assertNotNull(balance.getEth().get(0).getBalances().getPax());
         double paxBalance = balance.getEth().get(0).getBalances().getPax();
+        assertTrue(ethBalance > 1, "ETH balance is less than 1 ETH");
+        assertTrue(paxBalance > 10, "PAX balance is less than 10 PAX");
+
 
         EthGasInfoResponse gasPrice = getEthGasInfo();
         assertTrue(Float.valueOf(gasPrice.getFast()) >= Float.valueOf(gasPrice.getAverage()));
@@ -179,9 +200,9 @@ public class TestDex extends TestBaseNew {
         Integer safeLowGas = Math.round(Float.valueOf(gasPrice.getSafeLow()));
 
         //TODO: add assertion and getEthGasFee to include it into tests and validation on balances
-        WithdrawResponse withdrawEth = dexWidthraw(TestConfiguration.getTestConfiguration().getVaultWallet().getEthAddress(),
-                TestConfiguration.getTestConfiguration().getVaultWallet(),
-                TestConfiguration.getTestConfiguration().getVaultWallet().getEthAddress(),
+        WithdrawResponse withdrawEth = dexWidthraw(vault2.getEthAddress(),
+            vault2,
+            vault2.getEthAddress(),
                 "0.5",
                 String.valueOf(averageGas),
                 true);
@@ -191,14 +212,14 @@ public class TestDex extends TestBaseNew {
         double newEthBalance = ethBalance - (21000 * 0.000000001 * averageGas);
 
 
-        WithdrawResponse withdrawPax = dexWidthraw(TestConfiguration.getTestConfiguration().getVaultWallet().getEthAddress(),
-                TestConfiguration.getTestConfiguration().getVaultWallet(),
-                TestConfiguration.getTestConfiguration().getVaultWallet().getEthAddress(),
+        WithdrawResponse withdrawPax = dexWidthraw(vault2.getEthAddress(),
+            vault2,
+            vault2.getEthAddress(),
                 "100",
                 String.valueOf(fastGas),
                 false);
         assertNotNull(withdrawPax.transactionAddress);
-        Account2FAResponse balanceValidationPax = getDexBalances(TestConfiguration.getTestConfiguration().getVaultWallet().getEthAddress());
+        Account2FAResponse balanceValidationPax = getDexBalances(vault2.getEthAddress());
 
         //PAX balances are the same. All transaction fee is in ETH
         assertEquals(paxBalance, balanceValidationPax.getEth().get(0).getBalances().getPax(), "balances are different");
@@ -209,7 +230,9 @@ public class TestDex extends TestBaseNew {
     @DisplayName("dex exchange ETH SELL-BUY")
     @Test
     public void dexExchange() {
-        CreateDexOrderResponse sellOrder = createDexOrder("1000", "5000", vault1, false, true);
+        CreateDexOrderResponse sellOrderVault1 = createDexOrder("1000", "5000", vault1, false, true);
+        assertNotNull(sellOrderVault1, "RESPONSE is not correct/dex offer wasn't created");
+        verifyTransactionInBlock(sellOrderVault1.getOrder().getId());
 
 
 
