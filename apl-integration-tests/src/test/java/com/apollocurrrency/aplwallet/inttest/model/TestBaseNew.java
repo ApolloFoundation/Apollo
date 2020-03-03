@@ -67,6 +67,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import io.qameta.allure.Step;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
+import net.jodah.failsafe.Failsafe;
 import org.apache.commons.lang3.NotImplementedException;
 import org.junit.jupiter.api.DisplayName;
 
@@ -75,15 +76,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Date;
 import java.util.Calendar;
+
 import static io.restassured.RestAssured.given;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TestBaseNew extends TestBase {
     private final int ETH = 1;
     private final int PAX = 2;
-
     private final int ORDER_SELL = 1;
     private final int ORDER_BUY = 0;
+    String path = "/apl";
 
     @Step
     @DisplayName("Get Transaction")
@@ -91,7 +93,6 @@ public class TestBaseNew extends TestBase {
         HashMap<String, String> param = new HashMap();
         param.put(ReqType.REQUEST_TYPE, ReqType.GET_TRANSACTION);
         param.put(ReqParam.TRANSACTION, transaction);
-        String path = "/apl";
         return given().log().all()
             .spec(restHelper.getSpec())
             .contentType(ContentType.URLENC)
@@ -105,104 +106,385 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
+    @Step
     public BlockListInfoResponse getAccountBlocks(String account) {
-        throw new NotImplementedException("Not implemented");
+        HashMap<String, String> param = new HashMap();
+        param.put(ReqType.REQUEST_TYPE, ReqType.GET_ACCOUNT_BLOCKS);
+        param.put(ReqParam.ACCOUNT, account);
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .get(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", BlockListInfoResponse.class);
     }
 
     @Override
+    @Step
     public GetAccountResponse getAccount(String account) {
-        throw new NotImplementedException("Not implemented");
+        HashMap<String, String> param = new HashMap();
+        param.put(ReqType.REQUEST_TYPE, ReqType.GET_ACCOUNT);
+        param.put(ReqParam.ACCOUNT, account);
+        param.put(ReqParam.INCLUDE_EFFECTIVE_BALANCE, "true");
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .get(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", GetAccountResponse.class);
     }
 
     @Override
+    @Step
     public GetAccountBlockCountResponse getAccountBlockCount(String account) {
-        throw new NotImplementedException("Not implemented");
+        HashMap<String, String> param = new HashMap();
+        param.put(ReqType.REQUEST_TYPE, ReqType.GET_ACCOUNT_BLOCK_COUNT);
+        param.put(ReqParam.ACCOUNT, account);
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .get(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", GetAccountBlockCountResponse.class);
     }
 
     @Override
+    @Step
     public AccountBlockIdsResponse getAccountBlockIds(String account) {
-        throw new NotImplementedException("Not implemented");
+        HashMap<String, String> param = new HashMap();
+        param.put(ReqType.REQUEST_TYPE, ReqType.GET_ACCOUNT_BLOCK_IDS);
+        param.put(ReqParam.ACCOUNT, account);
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .get(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", AccountBlockIdsResponse.class);
     }
 
     @Override
+    @Step
     public AccountDTO getAccountId(String secretPhrase) {
-        throw new NotImplementedException("Not implemented");
+        HashMap<String, String> param = new HashMap();
+        param.put(ReqType.REQUEST_TYPE, ReqType.GET_ACCOUNT_ID);
+        param.put(ReqParam.SECRET_PHRASE, secretPhrase);
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .get(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", AccountDTO.class);
     }
 
     @Override
+    @Step
     public AccountLedgerResponse getAccountLedger(Wallet wallet) {
-        throw new NotImplementedException("Not implemented");
+        HashMap<String, String> param = new HashMap();
+        param = restHelper.addWalletParameters(param,wallet);
+        param.put(ReqType.REQUEST_TYPE, ReqType.GET_ACCOUNT_LEDGER);
+        param.put(ReqParam.FIRST_INDEX, "0");
+        param.put(ReqParam.LAST_INDEX, "15");
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .get(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", AccountLedgerResponse.class);
     }
 
     @Override
+    @Step
     public AccountPropertiesResponse getAccountProperties(String account) {
-        throw new NotImplementedException("Not implemented");
+        HashMap<String, String> param = new HashMap();
+        param.put(ReqType.REQUEST_TYPE, ReqType.GET_ACCOUNT_PROPERTIES);
+        param.put(ReqParam.RECIPIENT, account);
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .get(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", AccountPropertiesResponse.class);
     }
 
     @Override
+    @Step
     public SearchAccountsResponse searchAccounts(String searchQuery) {
-        throw new NotImplementedException("Not implemented");
+        HashMap<String, String> param = new HashMap();
+        param.put(ReqType.REQUEST_TYPE, ReqType.SEARCH_ACCOUNTS);
+        param.put(ReqParam.QUERY,searchQuery);
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .get(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", SearchAccountsResponse.class);
     }
 
     @Override
+    @Step
     public TransactionListResponse getUnconfirmedTransactions(Wallet wallet) {
-        throw new NotImplementedException("Not implemented");
+        HashMap<String, String> param = new HashMap();
+        param.put(ReqType.REQUEST_TYPE, ReqType.GET_UNCONFIRMED_TRANSACTIONS);
+        param = restHelper.addWalletParameters(param,wallet);
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .get(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", TransactionListResponse.class);
     }
 
     @Override
+    @Step
     public AccountTransactionIdsResponse getUnconfirmedTransactionIds(String account) {
-        throw new NotImplementedException("Not implemented");
+        HashMap<String, String> param = new HashMap();
+        param.put(ReqType.REQUEST_TYPE, ReqType.GET_UNCONFIRMED_TRANSACTION_IDS);
+        param.put(ReqParam.ACCOUNT, account);
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .get(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", AccountTransactionIdsResponse.class);
     }
 
     @Override
+    @Step
     public BalanceDTO getGuaranteedBalance(String account, int confirmations) {
-        throw new NotImplementedException("Not implemented");
+        HashMap<String, String> param = new HashMap();
+        param.put(ReqType.REQUEST_TYPE, ReqType.GET_GUARANTEED_BALANCE);
+        param.put(ReqParam.ACCOUNT, account);
+        param.put(ReqParam.NUMBER_OF_CONFIRMATIONS, String.valueOf(confirmations));
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .get(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", BalanceDTO.class);
     }
 
     @Override
+    @Step
     public BalanceDTO getBalance(Wallet wallet) {
-        throw new NotImplementedException("Not implemented");
+        HashMap<String, String> param = new HashMap();
+        param = restHelper.addWalletParameters(param,wallet);
+        param.put(ReqType.REQUEST_TYPE, ReqType.GET_BALANCE);
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .get(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", BalanceDTO.class);
     }
 
     @Override
+    @Step
     public EntryDTO getAccountLedgerEntry(String ledgerId) {
-        throw new NotImplementedException("Not implemented");
+        HashMap<String, String> param = new HashMap();
+        param.put(ReqType.REQUEST_TYPE, ReqType.GET_ACCOUNT_LEDGER_ENTRY);
+        param.put(ReqParam.LEDGER_ID, ledgerId);
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .get(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", EntryDTO.class);
     }
 
     @Override
+    @Step
     public CreateTransactionResponse sendMoney(Wallet wallet, String recipient, int moneyAmount) {
-        throw new NotImplementedException("Not implemented");
+        HashMap<String, String> param = new HashMap();
+        param = restHelper.addWalletParameters(param,wallet);
+        param.put(ReqType.REQUEST_TYPE, ReqType.SEND_MONEY);
+        param.put(ReqParam.AMOUNT_ATM, moneyAmount +  "00000000");
+        param.put(ReqParam.RECIPIENT, recipient);
+        param.put(ReqParam.FEE, "100000000000");
+        param.put(ReqParam.DEADLINE, "1440");
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .post(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", CreateTransactionResponse.class);
     }
 
     @Override
+    @Step
     public AccountDTO getAccountPublicKey(Wallet wallet) {
-        throw new NotImplementedException("Not implemented");
+        HashMap<String, String> param = new HashMap();
+        param = restHelper.addWalletParameters(param,wallet);
+        param.put(ReqType.REQUEST_TYPE, ReqType.GET_ACCOUNT_PUBLIC_KEY);
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .get(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", AccountDTO.class);
     }
 
     @Override
+    @Step
     public BlockchainTransactionsResponse getAccountTransaction(Wallet wallet) {
-        throw new NotImplementedException("Not implemented");
+        HashMap<String, String> param = new HashMap();
+        param = restHelper.addWalletParameters(param,wallet);
+        param.put(ReqType.REQUEST_TYPE, ReqType.GET_BLOCKCHAIN_TRANSACTIONS);
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .get(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", BlockchainTransactionsResponse.class);
     }
 
     @Override
+    @Step
     public CreateTransactionResponse setAccountInfo(Wallet wallet, String accountName, String accountDescription) {
-        throw new NotImplementedException("Not implemented");
+        HashMap<String, String> param = new HashMap();
+        param = restHelper.addWalletParameters(param,wallet);
+        param.put(ReqType.REQUEST_TYPE, ReqType.SET_ACCOUNT_INFO);
+        param.put(ReqParam.NAME, accountName);
+        param.put(ReqParam.DESCRIPTION, accountDescription);
+        param.put(ReqParam.FEE, "100000000000");
+        param.put(ReqParam.DEADLINE, "1440");
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .post(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", CreateTransactionResponse.class);
     }
 
     @Override
+    @Step
     public CreateTransactionResponse setAccountProperty(Wallet wallet, String property) {
-        throw new NotImplementedException("Not implemented");
+        HashMap<String, String> param = new HashMap();
+        param = restHelper.addWalletParameters(param,wallet);
+        param.put(ReqType.REQUEST_TYPE, ReqType.SET_ACCOUNT_PROPERTY);
+        param.put(ReqParam.RECIPIENT, wallet.getUser());
+        param.put(ReqParam.PROPERTY, property);
+        param.put(ReqParam.FEE, "100000000000");
+        param.put(ReqParam.DEADLINE, "1440");
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .post(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", CreateTransactionResponse.class);
     }
 
     @Override
+    @Step
     public CreateTransactionResponse deleteAccountProperty(Wallet wallet, String property) {
-        throw new NotImplementedException("Not implemented");
+        HashMap<String, String> param = new HashMap();
+        param = restHelper.addWalletParameters(param,wallet);
+        param.put(ReqType.REQUEST_TYPE, ReqType.DELETE_ACCOUNT_PROPERTY);
+        param.put(ReqParam.PROPERTY, property);
+        param.put(ReqParam.FEE, "100000000000");
+        param.put(ReqParam.DEADLINE, "1440");
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .post(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", CreateTransactionResponse.class);
     }
 
-    @Override
-    public AccountPropertiesResponse getAccountProperty(Wallet wallet) {
-        throw new NotImplementedException("Not implemented");
-    }
 
     @Override
     public AccountAliasesResponse getAliases(Wallet wallet) {
@@ -245,17 +527,33 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
+    @Step
     public CreateTransactionResponse sendMoneyPrivate(Wallet wallet, String recipient, int moneyAmount) {
-        throw new NotImplementedException("Not implemented");
+        HashMap<String, String> param = new HashMap();
+        param = restHelper.addWalletParameters(param,wallet);
+        param.put(ReqType.REQUEST_TYPE, ReqType.SEND_MONEY_PRIVATE);
+        param.put(ReqParam.AMOUNT_ATM, moneyAmount +  "00000000");
+        param.put(ReqParam.RECIPIENT, recipient);
+        param.put(ReqParam.FEE, "100000000000");
+        param.put(ReqParam.DEADLINE, "1440");
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .post(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", CreateTransactionResponse.class);
     }
 
     @Override
     @Step("Generate New Account")
-    public Account2FAResponse generateNewAccount() throws JsonProcessingException {
-        //TODO: Change on REST Easy
+    public Account2FAResponse generateNewAccount() {
         HashMap<String, String> param = new HashMap();
-        param.put(RequestType.requestType.toString(), RequestType.generateAccount.toString());
-        String path = "/apl";
+        param.put(ReqType.REQUEST_TYPE, ReqType.GENERATE_ACCOUNT);
         return given().log().all()
                 .spec(restHelper.getSpec())
                 .contentType(ContentType.URLENC)
@@ -271,12 +569,11 @@ public class TestBaseNew extends TestBase {
     @Override
     @Step("Delete Secret File")
     public Account2FAResponse deleteSecretFile(Wallet wallet) throws JsonProcessingException {
-        //TODO: Change on REST Easy
         HashMap<String, String> param = new HashMap();
         param.put(ReqType.REQUEST_TYPE, ReqType.DELETE_KEY);
         param.put(ReqParam.ACCOUNT, wallet.getUser());
         param.put(ReqParam.PASS_PHRASE, wallet.getPass());
-        String path = "/apl";
+
         return given().log().all()
                 .spec(restHelper.getSpec())
                 .contentType(ContentType.URLENC)
@@ -322,7 +619,6 @@ public class TestBaseNew extends TestBase {
     @Override
     @Step("Enable 2FA")
     public AccountDTO enable2FA(Wallet wallet) throws JsonProcessingException {
-        String path = "/apl";
         HashMap<String, String> param = new HashMap();
 
         param.put(ReqType.REQUEST_TYPE, ReqType.ENABLE_2FA);
@@ -380,12 +676,13 @@ public class TestBaseNew extends TestBase {
 
     @Override
     @Step("Get Block")
-    public BlockDTO getBlock(String block) throws JsonProcessingException {
+    public BlockDTO getBlock(String block){
         String path = "/apl";
 
         HashMap<String, String> param = new HashMap();
         param.put(ReqType.REQUEST_TYPE, ReqType.GET_BLOCK);
-
+        param.put(ReqParam.BLOCK, block);
+        param.put(ReqParam.INCLUDE_TRANSACTIONS, "true");
         return given().log().all()
                 .spec(restHelper.getSpec())
                 .contentType(ContentType.URLENC)
@@ -396,6 +693,22 @@ public class TestBaseNew extends TestBase {
                 .assertThat().statusCode(200)
                 .extract().body().jsonPath()
                 .getObject("", BlockDTO.class);
+    }
+
+    @Step("Get Block")
+    public BlockDTO getBlock() {
+        HashMap<String, String> param = new HashMap();
+        param.put(ReqType.REQUEST_TYPE, ReqType.GET_BLOCK);
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .get(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", BlockDTO.class);
     }
 
     @Step("Get Last Block")
@@ -999,6 +1312,40 @@ public class TestBaseNew extends TestBase {
         throw new NotImplementedException("Not implemented");
     }
 
+    @Step
+    public boolean waitForHeight(int height){
+        log.info("Wait For Height: {}", height);
+        boolean isHeight = false;
+        try {
+            isHeight = Failsafe.with(retryPolicy).get(() -> getBlock().getHeight() >= height);
+        } catch (Exception e) {
+            fail(String.format("Height %s  not reached. Exception msg: %s", height, e.getMessage()));
+        }
+        assertTrue(isHeight, String.format("Height %s not reached: %s", height, getBlock().getHeight()));
+        return isHeight;
+    }
 
+
+    @Step
+    public CreateTransactionResponse leaseBalance(String recipient, Wallet wallet){
+        HashMap<String, String> param = new HashMap();
+        param = restHelper.addWalletParameters(param,wallet);
+        param.put(ReqType.REQUEST_TYPE, ReqType.LEASE_BALANCE);
+        param.put(ReqParam.RECIPIENT, recipient);
+        param.put(ReqParam.PERIOD, "1500");
+        param.put(ReqParam.FEE, "100000000000");
+        param.put(ReqParam.DEADLINE, "1440");
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .post(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", CreateTransactionResponse.class);
+    }
 
 }

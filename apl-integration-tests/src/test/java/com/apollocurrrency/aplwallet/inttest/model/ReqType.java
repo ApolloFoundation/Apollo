@@ -6,7 +6,7 @@ public class ReqType {
     public static final String START_FORGING = "startForging";
     public static final String GET_TRANSACTION = "getTransaction";
     public static final String SEND_MONEY = "sendMoney";
-    public static final String LEASE_BALANCE = "leaseBalance";
+    public static final String LEASE_BALANCE = "leaseBalanceTest";
     public static final String GET_SHUFFLING_PARTICIPANTS = "getShufflingParticipants";
     public static final String GET_ALL_SHUFFLINGS = "getAllShufflings";
     public static final String DGS_REFUND = "dgsRefund";
@@ -61,7 +61,7 @@ public class ReqType {
     public static final String GET_ACCOUNT_LEDGER_ENTRY = "getAccountLedgerEntry";
     public static final String GET_ACCOUNT_LESSORS = "getAccountLessors";
     public static final String GET_ACCOUNT_PROPERTIES = "getAccountProperties";
-    public static final String GET_ACCOUNT_PUBLICKEY = "getAccountPublicKey";
+    public static final String GET_ACCOUNT_PUBLIC_KEY = "getAccountPublicKey";
     public static final String GET_BLOCKCHAIN_TRANSACTIONS = "getBlockchainTransactions";
     public static final String GET_GUARANTEED_BALANCE = "getGuaranteedBalance";
     public static final String GET_UNCONFIRMED_TRANSACTION_IDS = "getUnconfirmedTransactionIds";
@@ -132,7 +132,7 @@ public class ReqType {
     public static final String SEARCH_ASSETS = "searchAssets";
     public static final String GET_BLOCK_ID = "getBlockId";
     public static final String GET_BLOCK = "getBlock";
-    public static final String send_Money_Private = "sendMoneyPrivate";
+    public static final String SEND_MONEY_PRIVATE = "sendMoneyPrivate";
     public static final String DIVIDEND_PAYMENT = "dividendPayment";
     public static final String GET_ASSET_DIVIDENDS = "getAssetDividends";
     public static final String GET_EXPECTED_ASSET_TRANSFERS = "getExpectedAssetTransfers";

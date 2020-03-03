@@ -41,8 +41,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 public abstract class TestBase implements ITest {
     public static final Logger log = LoggerFactory.getLogger(TestBase.class);
-
-    static RetryPolicy retryPolicy = new RetryPolicy()
+    public static RetryPolicy retryPolicy = new RetryPolicy()
         .retryWhen(false)
         .withMaxRetries(50)
         .withDelay(10, TimeUnit.SECONDS);

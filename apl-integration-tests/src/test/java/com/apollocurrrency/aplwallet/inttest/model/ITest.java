@@ -110,8 +110,6 @@ public interface ITest {
 
     CreateTransactionResponse deleteAccountProperty(Wallet wallet, String property);
 
-    AccountPropertiesResponse getAccountProperty(Wallet wallet);
-
     AccountAliasesResponse getAliases(Wallet wallet);
 
     AccountCountAliasesResponse getAliasCount(Wallet wallet);
