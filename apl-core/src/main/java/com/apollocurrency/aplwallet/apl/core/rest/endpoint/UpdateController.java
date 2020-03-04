@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.exchange.service.DexOrderTransactionCrea
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -35,7 +36,6 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.DefaultValue;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -76,7 +76,8 @@ public class UpdateController {
     }
 
     @Data
-    private static class SendUpdateRequest {
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class SendUpdateRequest {
         @Parameter(description = "Manifest url where release manifest is located. Https only", required = true)
         @org.hibernate.validator.constraints.URL(protocol = "https")
         @NotNull
@@ -86,7 +87,7 @@ public class UpdateController {
         @NotNull
         private Level level;
 
-        @Parameter(description = "Id of account  int64 singed/unsigned or RS", required = true)
+        @Parameter(description = "Id of account  int64 singed/unsigned or RS", required = true, schema = @Schema(implementation = String.class))
         @NotNull
         private AccountIdParameter account;
 
@@ -96,13 +97,11 @@ public class UpdateController {
 
         @Parameter(description = "Fee for transaction, by default is 1apl")
         @Range(min = Constants.ONE_APL)
-        @DefaultValue("" + Constants.ONE_APL)
-        private long feeATM;
+        private long feeATM = Constants.ONE_APL;
 
         @Parameter(description = "Deadline for transaction to expire in unconfirmed tx pool")
         @Positive
-        @DefaultValue("1440")
-        private short deadline;
+        private short deadline = 1440;
 
     }
 

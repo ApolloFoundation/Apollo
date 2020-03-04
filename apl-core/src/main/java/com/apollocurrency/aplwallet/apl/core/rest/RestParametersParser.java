@@ -8,13 +8,19 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.resteasy.core.interception.jaxrs.PostMatchContainerRequestContext;
+import org.jboss.resteasy.spi.HttpRequest;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,6 +36,7 @@ public class RestParametersParser {
     public static final String PASSPHRASE_PARAM_NAME="passphrase";
     public static final String SECRET_PHRASE_PARAM_NAME ="secretPhrase";
     public static final String CODE2FA_PARAM_NAME="code2FA";
+    private ObjectMapper mapper = new ObjectMapper();
 
     private final Blockchain blockchain;
 
@@ -38,15 +45,32 @@ public class RestParametersParser {
         this.blockchain = blockchain;
     }
 
-    public Map<String, String> parseRequestParameters(ContainerRequestContext requestContext, String ... params){
+    public Map<String, String> parseRequestParameters(ContainerRequestContext requestContext, String ... params) throws IOException {
         Map<String, String> parsedParams = new HashMap<>();
-        MultivaluedMap<String, String> requestParams;
-        requestParams = ((PostMatchContainerRequestContext) requestContext).getHttpRequest().getDecodedFormParameters();
-        requestParams.putAll(requestContext.getUriInfo().getQueryParameters(true));
-
-        Arrays.stream(params).forEach(p -> parsedParams.put(p, requestParams.getFirst(p)));
-
+        HttpRequest httpRequest = ((PostMatchContainerRequestContext) requestContext).getHttpRequest();
+        if (MediaType.APPLICATION_JSON_TYPE.equals(httpRequest.getHttpHeaders().getMediaType())) {
+            InputStream inputStream = ((PostMatchContainerRequestContext) requestContext).getHttpRequest().getInputStream();
+            inputStream.mark(inputStream.available());
+            String json = new String(inputStream.readAllBytes());
+            inputStream.reset();
+            JsonNode jsonNode = mapper.readTree(json);
+            parsedParams.putAll(findFields(jsonNode, params));
+        } else {
+            MultivaluedMap<String, String> requestParams = httpRequest.getDecodedFormParameters();
+            requestParams.putAll(requestContext.getUriInfo().getQueryParameters(true));
+            Arrays.stream(params).forEach(p -> parsedParams.put(p, requestParams.getFirst(p)));
+        }
         return parsedParams;
+    }
+    public static Map<String, String> findFields(JsonNode root, String...params) {
+        Map<String, String> found = new HashMap<>();
+        for (String param : params) {
+            JsonNode value = root.findValue(param);
+            if (value != null) {
+                found.put(param, value.asText());
+            }
+        }
+        return found;
     }
 
     public static TwoFactorAuthParameters get2FARequestAttribute(org.jboss.resteasy.spi.HttpRequest request) {
