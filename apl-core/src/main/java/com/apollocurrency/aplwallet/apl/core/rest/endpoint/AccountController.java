@@ -19,11 +19,14 @@ import com.apollocurrency.aplwallet.api.response.AccountBlocksResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrencyCountResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrencyResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrentAskOrderIdsResponse;
+import com.apollocurrency.aplwallet.api.response.AccountNotFoundResponse;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
+import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -101,6 +104,8 @@ public class AccountController {
     @Inject @Setter
     private AccountService accountService;
     @Inject @Setter
+    private AccountPublicKeyService accountPublicKeyService;
+    @Inject @Setter
     private AccountAssetService accountAssetService;
     @Inject @Setter
     private AccountCurrencyService accountCurrencyService;
@@ -126,6 +131,7 @@ public class AccountController {
     public AccountController(Blockchain blockchain,
                              Account2FAHelper account2FAHelper,
                              AccountService accountService,
+                             AccountPublicKeyService accountPublicKeyService,
                              AccountAssetService accountAssetService,
                              AccountCurrencyService accountCurrencyService,
                              AccountAssetConverter accountAssetConverter,
@@ -141,6 +147,7 @@ public class AccountController {
         this.blockchain = blockchain;
         this.account2FAHelper = account2FAHelper;
         this.accountService = accountService;
+        this.accountPublicKeyService = accountPublicKeyService;
         this.accountAssetService = accountAssetService;
         this.accountCurrencyService = accountCurrencyService;
         this.accountAssetConverter = accountAssetConverter;
@@ -168,11 +175,16 @@ public class AccountController {
             })
     @PermitAll
     public Response getAccount(
-            @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
-            @Parameter(description = "include additional lessors, lessorsRS and lessorsInfo (optional)") @QueryParam("includeLessors") @DefaultValue("false") boolean includeLessors,
-            @Parameter(description = "include additional assetBalances and unconfirmedAssetBalances (optional)") @QueryParam("includeAssets") @DefaultValue("false") boolean includeAssets,
-            @Parameter(description = "include accountCurrencies (optional)") @QueryParam("includeCurrencies") @DefaultValue("false") boolean includeCurrencies,
-            @Parameter(description = "include effectiveBalanceAPL and guaranteedBalanceATM (optional)") @QueryParam("includeEffectiveBalance") @DefaultValue("false") boolean includeEffectiveBalance
+            @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
+            @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
+            @Parameter(description = "include additional lessors, lessorsRS and lessorsInfo (optional)")
+            @QueryParam("includeLessors") @DefaultValue("false") boolean includeLessors,
+            @Parameter(description = "include additional assetBalances and unconfirmedAssetBalances (optional)")
+            @QueryParam("includeAssets") @DefaultValue("false") boolean includeAssets,
+            @Parameter(description = "include accountCurrencies (optional)") @QueryParam("includeCurrencies")
+            @DefaultValue("false") boolean includeCurrencies,
+            @Parameter(description = "include effectiveBalanceAPL and guaranteedBalanceATM (optional)")
+            @QueryParam("includeEffectiveBalance") @DefaultValue("false") boolean includeEffectiveBalance
             ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
@@ -181,7 +193,20 @@ public class AccountController {
         Account account  = accountService.getAccount(accountId);
 
         if (account == null) {
-            return response.error( ApiErrors.UNKNOWN_VALUE, "account", accountId).build();
+            AccountNotFoundResponse accountErrorResponse = new AccountNotFoundResponse(
+                ResponseBuilder.createErrorResponse(
+                    ApiErrors.UNKNOWN_VALUE,
+                    null,
+                    "account", accountId));
+            accountErrorResponse.setAccount(Long.toUnsignedString(accountId));
+            accountErrorResponse.setAccountRS(Convert2.rsAccount(accountId));
+            accountErrorResponse.set2FA(account2FAHelper.isEnabled2FA(accountId));
+            return response.error(accountErrorResponse).build();
+        }
+
+        if(account.getPublicKey() == null) {
+            PublicKey pKey = accountPublicKeyService.getPublicKey(account.getId());
+            account.setPublicKey(pKey);
         }
 
         AccountDTO dto = converter.convert(account);
@@ -517,8 +542,11 @@ public class AccountController {
                                     schema = @Schema(implementation = AccountKeyDTO.class)))
             })
     @PermitAll
-    public Response exportKey( @Parameter(description = "The secret passphrase of the account.", required = true) @FormParam("passphrase") @NotNull String passphrase,
-                               @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @FormParam("account") @NotNull AccountIdParameter accountIdParameter
+    //TODO: It's a good idea to protect the exportkey method by @Secured2FA annotation
+    public Response exportKey( @Parameter(description = "The secret passphrase of the account.", required = true)
+                                   @FormParam("passphrase") @NotNull String passphrase,
+                               @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
+                                   @FormParam("account") @NotNull AccountIdParameter accountIdParameter
     ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         accountIdParameter.get();
@@ -549,20 +577,20 @@ public class AccountController {
             })
     @PermitAll
     @Secured2FA
-    public Response deleteKey( @Parameter(description = "The passphrase", required = true) @FormParam("passphrase") String passphrase,
-                              @Parameter(description = "The account ID.") @FormParam("account") String accountStr,
-                              @Parameter(description = "The 2FA code.", required = true) @FormParam("code2FA") Integer code2FA,
-                              @Context org.jboss.resteasy.spi.HttpRequest request ) {
-
+    public Response deleteKey( @Parameter(description = "The passphrase", required = true)
+                                   @FormParam("passphrase") @NotNull String passphrase,
+                               @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
+                                   @FormParam("account") @NotNull AccountIdParameter accountIdParameter,
+                               @Parameter(description = "The 2FA code.", required = true)
+                                   @FormParam("code2FA") Integer code2FA ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
-        TwoFactorAuthParameters params2FA = RestParametersParser.get2FARequestAttribute(request);
+        long accountId = accountIdParameter.get();
 
-        KeyStoreService.Status status = account2FAHelper.deleteAccount(params2FA);
+        KeyStoreService.Status status = account2FAHelper.deleteAccount(accountId, passphrase, code2FA);
 
-        AccountKeyDTO dto = new AccountKeyDTO(
-                Long.toUnsignedString(params2FA.getAccountId()),
-                Convert2.rsAccount(params2FA.getAccountId()),
-                status.message, null );
+        AccountKeyDTO dto = new AccountKeyDTO(Long.toUnsignedString(accountId),
+                                                Convert2.rsAccount(accountId),
+                                                status.message, null );
 
         return response.bind(dto).build();
     }
@@ -587,13 +615,13 @@ public class AccountController {
             @Parameter(description = "The passphrase") @FormParam("passphrase") String passphraseParam,
             @Parameter(description = "The secret phrase") @FormParam("secretPhrase") String secretPhraseParam,
             @Parameter(description = "The account ID.") @FormParam("account") String accountStr,
-            @Parameter(description = "The 2FA code.", required = true) @FormParam("code2FA") Integer code2FA,
+            @Parameter(description = "The 2FA code.", required = true) @FormParam("code2FA") @NotNull Integer code2FA,
             @Context org.jboss.resteasy.spi.HttpRequest request
             ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         TwoFactorAuthParameters params2FA = RestParametersParser.get2FARequestAttribute(request);
 
-        account2FAHelper.confirm2FA(params2FA, params2FA.getCode2FA());
+        account2FAHelper.confirm2FA(params2FA);
         Account2FADTO dto = faConverter.convert(params2FA);
 
         return response.bind(dto).build();
@@ -620,13 +648,13 @@ public class AccountController {
             @Parameter(description = "The passphrase") @FormParam("passphrase") String passphraseParam,
             @Parameter(description = "The secret phrase") @FormParam("secretPhrase") String secretPhraseParam,
             @Parameter(description = "The account ID.") @FormParam("account") String accountStr,
-            @Parameter(description = "The 2FA code.", required = true) @FormParam("code2FA") Integer code2FA,
+            @Parameter(description = "The 2FA code.", required = true) @FormParam("code2FA") @NotNull Integer code2FA,
             @Context org.jboss.resteasy.spi.HttpRequest request
     ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         TwoFactorAuthParameters params2FA = RestParametersParser.get2FARequestAttribute(request);
 
-        account2FAHelper.disable2FA(params2FA, code2FA);
+        account2FAHelper.disable2FA(params2FA);
 
         Account2FADTO dto = faConverter.convert(params2FA);
 

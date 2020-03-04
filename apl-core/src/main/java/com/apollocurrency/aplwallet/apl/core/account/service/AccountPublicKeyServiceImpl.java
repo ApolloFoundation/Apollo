@@ -125,6 +125,12 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
     }
 
     @Override
+    public PublicKey getPublicKey(long accountId) {
+        DbKey dbKey = AccountTable.newKey(accountId);
+        return getPublicKey(dbKey);
+    }
+
+    @Override
     public PublicKey getPublicKey(DbKey dbKey) {
         PublicKey publicKey = getFromCache(dbKey);
         if (publicKey == null) {
