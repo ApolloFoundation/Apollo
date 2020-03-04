@@ -93,7 +93,6 @@ public class AccountServiceImpl implements AccountService {
             if (publicKey != null) {
                 account = new Account(id, dbKey);
                 account.setPublicKey(publicKey);
-                update(account);
             }
         }
         return account;
