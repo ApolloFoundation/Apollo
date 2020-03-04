@@ -98,7 +98,7 @@ public class TestBaseNew extends TestBase {
         HashMap<String, String> param = new HashMap();
         param.put(ReqType.REQUEST_TYPE, ReqType.GET_TRANSACTION);
         param.put(ReqParam.TRANSACTION, transaction);
-        return given().log().all()
+        return given()
             .spec(restHelper.getSpec())
             .contentType(ContentType.URLENC)
             .formParams(param)
