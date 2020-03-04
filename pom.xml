@@ -5,7 +5,7 @@
 
   <groupId>com.apollocurrency</groupId>
   <artifactId>apollo-wallet</artifactId>
-  <version>1.41.28</version>
+  <version>1.41.31</version>
   <packaging>pom</packaging>
   <name>Apollo wallet</name>
 
@@ -565,6 +565,13 @@
         <groupId>org.mockito</groupId>
         <artifactId>mockito-junit-jupiter</artifactId>
         <version>${mockito.version}</version>
+      </dependency>
+      <!-- RESTEasy Validator Provider -->
+      <dependency>
+        <groupId>org.jboss.resteasy</groupId>
+        <artifactId>resteasy-validator-provider</artifactId>
+        <version>${resteasy.version}</version>
+        <scope>test</scope>
       </dependency>
       <!-- Desktop JAVAFX libraries -->
       <dependency>
