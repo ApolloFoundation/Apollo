@@ -3,7 +3,6 @@ package com.apollocurrrency.aplwallet.inttest.tests;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
-import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
 import org.apache.commons.lang3.RandomStringUtils;

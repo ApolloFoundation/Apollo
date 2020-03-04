@@ -2,12 +2,10 @@ package com.apollocurrrency.aplwallet.inttest.tests;
 
 import com.apollocurrency.aplwallet.api.dto.BlockDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockchainInfoDTO;
-import com.apollocurrency.aplwallet.api.dto.BlockchainState;
 import com.apollocurrency.aplwallet.api.dto.ECBlockDTO;
 import com.apollocurrency.aplwallet.api.response.AccountBlocksResponse;
 import com.apollocurrency.aplwallet.api.response.GetBlockIdResponse;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
-import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import io.qameta.allure.Epic;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

@@ -4,7 +4,6 @@ import com.apollocurrency.aplwallet.api.dto.AccountMessageDTO;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
-import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
