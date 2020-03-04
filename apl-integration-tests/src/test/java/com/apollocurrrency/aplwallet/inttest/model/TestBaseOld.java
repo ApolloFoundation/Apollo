@@ -534,34 +534,28 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.option01, "NO");
         addParameters(Parameters.option02, "MAYBE");
         addParameters(Parameters.deadline, 1440);
+        addParameters(Parameters.votingModel, votingModel);
+        addParameters(Parameters.minBalanceModel, votingModel);
 
         if (votingModel == 0) {
-            addParameters(Parameters.votingModel, votingModel);
-            addParameters(Parameters.minBalanceModel, 0);
             addParameters(Parameters.minBalance, 0);
             addParameters(Parameters.description, "poll by account");
             addParameters(Parameters.holding, "");
         }
 
         if (votingModel == 1) {
-            addParameters(Parameters.votingModel, votingModel);
-            addParameters(Parameters.minBalanceModel, 1);
             addParameters(Parameters.minBalance, minBalance);
             addParameters(Parameters.description, "poll by account balance");
             addParameters(Parameters.holding, "");
         }
 
         if (votingModel == 2) {
-            addParameters(Parameters.votingModel, votingModel);
-            addParameters(Parameters.minBalanceModel, 2);
             addParameters(Parameters.minBalance, minBalance);
             addParameters(Parameters.holding, holding);
             addParameters(Parameters.description, "poll by asset");
         }
 
         if (votingModel == 3) {
-            addParameters(Parameters.votingModel, votingModel);
-            addParameters(Parameters.minBalanceModel, 3);
             addParameters(Parameters.minBalance, minBalance);
             addParameters(Parameters.holding, holding);
             addParameters(Parameters.description, "poll by currency");

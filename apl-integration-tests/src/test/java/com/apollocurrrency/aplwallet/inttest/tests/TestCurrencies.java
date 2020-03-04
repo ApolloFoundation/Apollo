@@ -3,6 +3,7 @@ package com.apollocurrrency.aplwallet.inttest.tests;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
+import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
@@ -20,13 +21,15 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.ArrayList;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.parallel.ExecutionMode.SAME_THREAD;
 
 @DisplayName("Currencies")
 @Epic(value = "Currencies")
-public class TestCurrencies extends TestBaseOld {
+public class TestCurrencies extends TestBaseNew {
     private final ArrayList<Wallet> wallets = new ArrayList<>();
 
     @BeforeEach
@@ -91,8 +94,8 @@ public class TestCurrencies extends TestBaseOld {
         verifyTransactionInBlock(currency.getTransaction());
         assertEquals(wallet.getUser(), getCurrency(currency.getTransaction()).getAccountRS());
         assertEquals(1, getCurrency(currency.getTransaction()).getType());
-        assertTrue(getCurrencyAccounts(currency.getTransaction()).getAccountCurrencies().size() > 0);
-        assertTrue(getAllCurrencies().getCurrencies().size() > 0);
+        assertThat(getCurrencyAccounts(currency.getTransaction()).getAccountCurrencies().size(), greaterThan(0));
+        assertThat(getAllCurrencies().getCurrencies().size(), greaterThan(0));
     }
 
     @DisplayName("Transfer currency")

@@ -226,8 +226,6 @@ public interface ITest {
 
     List getShards(String ip);
 
-    void createPhasingVote(long phasingFinishHeight, Parameters votingModel, int phasingQuorum, Long phasingMinBalance, Long phasingMinBalanceModel, String phasingHolding);
-
     List<DexOrderDto> getDexOrders(String orderType, String pairCurrency, String status, String accountId);
 
     List<DexOrderDto> getDexOrders();
