@@ -148,9 +148,9 @@ public class PropertiesHolder {
         final StringBuilder sb = new StringBuilder("PropertiesHolder_DUMP : \n");
         properties.forEach((k, v) -> {
                 if (!k.equals("adminPassword")) {
-                    sb.append("\t'").append(k).append("'->").append(v).append(", ");
+                    sb.append("\t'").append(k).append("' <- ").append(v).append(", ");
                 } else {
-                    sb.append("\t'").append(k).append("'->").append("***").append(", ");
+                    sb.append("\t'").append(k).append("' <- ").append("***").append(", ");
                 }
             }
         );

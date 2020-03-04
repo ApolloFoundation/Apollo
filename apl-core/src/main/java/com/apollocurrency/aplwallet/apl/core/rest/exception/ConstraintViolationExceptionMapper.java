@@ -24,7 +24,7 @@ public class ConstraintViolationExceptionMapper implements ExceptionMapper<Const
         for (ConstraintViolation<?> viol : exception.getConstraintViolations()) {
             String message = viol.getMessage();
             String parameter = viol.getPropertyPath().toString();
-            errorDescription.append (String.format("%s %s, got value %s", parameter, message, viol.getInvalidValue()));
+            errorDescription.append (String.format("%s %s, got value [%s];", parameter, message, viol.getInvalidValue()));
         }
         return ResponseBuilder.apiError(CONSTRAINT_VIOLATION, errorDescription).build();
     }

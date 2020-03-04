@@ -4,6 +4,8 @@ import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -72,6 +74,7 @@ class AccountEndpointTest extends AbstractEndpointTest{
         .addBeans(MockBean.of(mock(KeyStoreService.class), KeyStoreService.class))
         .addBeans(MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class))
         .addBeans(MockBean.of(mock(AccountService.class), AccountService.class, AccountServiceImpl.class))
+        .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyService.class, AccountPublicKeyServiceImpl.class))
         .addBeans(MockBean.of(mock(AccountAssetService.class), AccountAssetService.class, AccountAssetServiceImpl.class))
         .addBeans(MockBean.of(mock(AccountCurrencyService.class), AccountCurrencyService.class, AccountCurrencyServiceImpl.class))
         .addBeans(MockBean.of(mock(AccountAssetConverter.class), AccountAssetConverter.class))
