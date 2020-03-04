@@ -111,6 +111,7 @@ public abstract class TransactionType {
     public static final byte SUBTYPE_UPDATE_CRITICAL = 0;
     public static final byte SUBTYPE_UPDATE_IMPORTANT = 1;
     public static final byte SUBTYPE_UPDATE_MINOR = 2;
+    public static final byte SUBTYPE_UPDATE_V2 = 3;
 
     public static final byte SUBTYPE_DEX_ORDER = 0;
     public static final byte SUBTYPE_DEX_ORDER_CANCEL = 1;
@@ -284,6 +285,8 @@ public abstract class TransactionType {
                         return Update.IMPORTANT;
                     case SUBTYPE_UPDATE_MINOR:
                         return Update.MINOR;
+                    case SUBTYPE_UPDATE_V2:
+                        return Update.UPDATE_V2;
                     default:
                         return null;
                 }

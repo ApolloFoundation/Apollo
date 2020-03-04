@@ -4,11 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.UpdateAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateAttachment;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateData;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterService;
@@ -18,8 +16,10 @@ import com.apollocurrency.aplwallet.apl.util.Platform;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import org.slf4j.Logger;
 
-import java.util.regex.Pattern;
 import javax.inject.Inject;
+import java.util.regex.Pattern;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 
 public class UpdateTransactionVerifierImpl implements UpdateTransactionVerifier {

@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.endpoint.NodeInfoController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ShardController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.TradingDataController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.TransportInteractionController;
+import com.apollocurrency.aplwallet.apl.core.rest.endpoint.UpdateController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.UserErrorMessageController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.UtilsController;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexMatcherServiceImpl;
@@ -55,6 +56,7 @@ public class RestEasyApplication extends Application  {
         set.add(TradingDataController.class);
         set.add(DexTransactionSendingController.class);
         set.add(UtilsController.class);
+        set.add(UpdateController.class);
 
 
         //TODO: add all endpoints below

@@ -7,22 +7,24 @@ import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.CriticalUpdate;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ImportantUpdate;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MinorUpdate;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.UpdateAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.CriticalUpdate;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.ImportantUpdate;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.MinorUpdate;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateV2Attachment;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import java.nio.ByteBuffer;
 import org.json.simple.JSONObject;
+
+import java.nio.ByteBuffer;
 
 /**
  *
  * @author al
  */
 public abstract class Update extends TransactionType {
-    
+
     private final Fee UPDATE_FEE = new Fee.ConstantFee(Constants.ONE_APL);
 
     private Update() {
@@ -101,7 +103,7 @@ public abstract class Update extends TransactionType {
         }
 
         @Override
-        public CriticalUpdate parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+        public CriticalUpdate parseAttachment(JSONObject attachmentData) {
             return new CriticalUpdate(attachmentData);
         }
     };
@@ -163,9 +165,43 @@ public abstract class Update extends TransactionType {
         }
 
         @Override
-        public MinorUpdate parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+        public MinorUpdate parseAttachment(JSONObject attachmentData) {
             return new MinorUpdate(attachmentData);
         }
     };
-    
+    public static final TransactionType UPDATE_V2 = new Update() {
+        @Override
+        public Level getLevel() {
+            throw new RuntimeException("Level is statically not defined for UpdateV2");
+        }
+
+        @Override
+        public void validateAttachment(Transaction transaction) {}
+
+        @Override
+        public final byte getSubtype() {
+            return TransactionType.SUBTYPE_UPDATE_V2;
+        }
+
+        @Override
+        public LedgerEvent getLedgerEvent() {
+            return LedgerEvent.UPDATE_V2;
+        }
+
+        @Override
+        public String getName() {
+            return "UpdateV2";
+        }
+
+        @Override
+        public UpdateV2Attachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            return new UpdateV2Attachment(buffer);
+        }
+
+        @Override
+        public UpdateV2Attachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            return new UpdateV2Attachment(attachmentData);
+        }
+    };
+
 }

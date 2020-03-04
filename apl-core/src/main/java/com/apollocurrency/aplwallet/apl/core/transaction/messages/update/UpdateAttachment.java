@@ -1,9 +1,10 @@
 /*
  * Copyright © 2018-2019 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.core.transaction.messages;
+package com.apollocurrency.aplwallet.apl.core.transaction.messages.update;
 
 import com.apollocurrency.aplwallet.apl.core.transaction.Update;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -12,17 +13,18 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.util.Platform;
 import com.apollocurrency.aplwallet.apl.util.Version;
+import org.json.simple.JSONObject;
+
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Objects;
-import org.json.simple.JSONObject;
 
 /**
  *
  * @author al
  */
 public abstract class UpdateAttachment extends AbstractAttachment {
-    
+
     final Platform platform;
     final Architecture architecture;
     final DoubleByteArrayTuple url;
@@ -155,5 +157,5 @@ public abstract class UpdateAttachment extends AbstractAttachment {
         }
         return null;
     }
-    
+
 }

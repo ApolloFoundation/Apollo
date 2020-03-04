@@ -25,7 +25,7 @@ public enum LedgerEvent {
     TAGGED_DATA_UPLOAD(47, true), TAGGED_DATA_EXTEND(48, true), // TYPE_SHUFFLING
     SHUFFLING_REGISTRATION(51, true), SHUFFLING_PROCESSING(52, true), SHUFFLING_CANCELLATION(53, true), SHUFFLING_DISTRIBUTION(54, true), // TYPE_UPDATE
     UPDATE_CRITICAL(59, true), UPDATE_IMPORTANT(60, true), UPDATE_MINOR(61, true),
-    DEX_REFUND_FROZEN_MONEY(62, true), DEX_FREEZE_MONEY(63, true),  DEX_TRANSFER_MONEY(64, true);
+    DEX_REFUND_FROZEN_MONEY(62, true), DEX_FREEZE_MONEY(63, true),  DEX_TRANSFER_MONEY(64, true), UPDATE_V2(65, true);
     /** Event code mapping */
     private static final Map<Integer, LedgerEvent> eventMap = new HashMap<>();
     static {
@@ -82,5 +82,5 @@ public enum LedgerEvent {
         }
         return event;
     }
-    
+
 }
