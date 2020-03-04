@@ -18,6 +18,7 @@ import io.restassured.http.ContentType;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import org.apache.http.params.CoreConnectionPNames;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -43,6 +44,7 @@ import static org.junit.jupiter.api.parallel.Resources.SYSTEM_PROPERTIES;
 
 
 public abstract class TestBase implements ITest {
+    public SoftAssertions softAssertions = new SoftAssertions();
     public static final Logger log = LoggerFactory.getLogger(TestBase.class);
     public static RetryPolicy retryPolicy = new RetryPolicy()
         .retryWhen(false)
