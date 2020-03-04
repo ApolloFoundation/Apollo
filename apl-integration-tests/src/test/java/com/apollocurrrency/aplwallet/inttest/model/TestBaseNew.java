@@ -38,6 +38,7 @@ import com.apollocurrency.aplwallet.api.response.AccountLedgerResponse;
 import com.apollocurrency.aplwallet.api.response.AccountOpenAssetOrdersResponse;
 import com.apollocurrency.aplwallet.api.response.AccountPropertiesResponse;
 import com.apollocurrency.aplwallet.api.response.AccountTransactionIdsResponse;
+import com.apollocurrency.aplwallet.api.response.AllShufflingsResponse;
 import com.apollocurrency.aplwallet.api.response.AllTaggedDataResponse;
 import com.apollocurrency.aplwallet.api.response.AssetTradeResponse;
 import com.apollocurrency.aplwallet.api.response.AssetsAccountsCountResponse;
@@ -59,6 +60,8 @@ import com.apollocurrency.aplwallet.api.response.GetPeersIpResponse;
 import com.apollocurrency.aplwallet.api.response.PollResultResponse;
 import com.apollocurrency.aplwallet.api.response.PollVotesResponse;
 import com.apollocurrency.aplwallet.api.response.SearchAccountsResponse;
+import com.apollocurrency.aplwallet.api.response.ShufflingDTO;
+import com.apollocurrency.aplwallet.api.response.ShufflingParticipantsResponse;
 import com.apollocurrency.aplwallet.api.response.TransactionListResponse;
 import com.apollocurrency.aplwallet.api.response.VaultWalletResponse;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
@@ -2761,6 +2764,175 @@ public class TestBaseNew extends TestBase {
             .assertThat().statusCode(200)
             .extract().body().jsonPath()
             .getObject("", CreateTransactionResponse.class);
+    }
+
+
+    @Step
+    public CreateTransactionResponse shufflingRegister(Wallet wallet, String shufflingFullHash) {
+        HashMap<String, String> param = new HashMap();
+        param = restHelper.addWalletParameters(param,wallet);
+        param.put(ReqType.REQUEST_TYPE, ReqType.SHUFFLING_REGISTER);
+        param.put(ReqParam.SHUFFLING_FULL_HASH, shufflingFullHash);
+        param.put(ReqParam.FEE, "100000000000");
+        param.put(ReqParam.DEADLINE, "1440");
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .post(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", CreateTransactionResponse.class);
+    }
+
+    @Step
+    public CreateTransactionResponse shufflingProcess(Wallet wallet, String shuffling, String recipientSecretPhrase) {
+        HashMap<String, String> param = new HashMap();
+        param = restHelper.addWalletParameters(param,wallet);
+        param.put(ReqType.REQUEST_TYPE, ReqType.SHUFFLING_PROCESS);
+        param.put(ReqParam.SHUFFLING, shuffling);
+        param.put(ReqParam.RECIPIENT_SECRET_PHRASE, recipientSecretPhrase);
+        param.put(ReqParam.FEE, "100000000000");
+        param.put(ReqParam.DEADLINE, "1440");
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .post(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", CreateTransactionResponse.class);
+    }
+
+    @Step
+    public CreateTransactionResponse shufflingVerify(Wallet wallet, String shuffling, String shufflingStateHash) {
+        HashMap<String, String> param = new HashMap();
+
+        param = restHelper.addWalletParameters(param,wallet);
+        param.put(ReqType.REQUEST_TYPE, ReqType.SHUFFLING_PROCESS);
+        param.put(ReqParam.SHUFFLING, shuffling);
+        param.put(ReqParam.SHUFFLING_STATE_HASH, shufflingStateHash);
+        param.put(ReqParam.FEE, "100000000000");
+        param.put(ReqParam.DEADLINE, "1440");
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .post(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", CreateTransactionResponse.class);
+    }
+
+    @Step
+    public ShufflingDTO getShuffling(String shuffling) {
+        HashMap<String, String> param = new HashMap();
+        param.put(ReqType.REQUEST_TYPE, ReqType.GET_SHUFFLING);
+        param.put(ReqParam.SHUFFLING,shuffling);
+        param.put(ReqParam.INCLUDE_HOLDING_INFO,"false");
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .get(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", ShufflingDTO.class);
+    }
+
+    @Step
+    public CreateTransactionResponse shufflingCancel(Wallet wallet, String shuffling, String cancellingAccount, String shufflingStateHash) {
+        HashMap<String, String> param = new HashMap();
+        param = restHelper.addWalletParameters(param,wallet);
+        param.put(ReqType.REQUEST_TYPE, ReqType.SHUFFLING_CANCEL);
+        param.put(ReqParam.SHUFFLING, shuffling);
+        param.put(ReqParam.SHUFFLING_STATE_HASH, shufflingStateHash);
+        if (cancellingAccount != null) {
+            param.put(ReqParam.CANCELLING_ACCOUNT, cancellingAccount);
+        }
+        param.put(ReqParam.FEE, "100000000000");
+        param.put(ReqParam.DEADLINE, "1440");
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .post(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", CreateTransactionResponse.class);
+
+    }
+
+    @Step
+    public AllShufflingsResponse getAllShufflings() {
+        HashMap<String, String> param = new HashMap();
+        param.put(ReqType.REQUEST_TYPE, ReqType.GET_ALL_SHUFFLINGS);
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .get(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", AllShufflingsResponse.class);
+    }
+
+    @Step
+    public ShufflingParticipantsResponse getShufflingParticipants(String shuffling) {
+        HashMap<String, String> param = new HashMap();
+        param.put(ReqType.REQUEST_TYPE, ReqType.GET_SHUFFLING_PARTICIPANTS);
+        param.put(ReqParam.SHUFFLING, shuffling);
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .get(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", ShufflingParticipantsResponse.class);
+    }
+
+    @Step
+    public CreateTransactionResponse startShuffler(Wallet wallet, String shufflingFullHash, String recipientSecretPhrase) {
+        HashMap<String, String> param = new HashMap();
+        param = restHelper.addWalletParameters(param,wallet);
+        param.put(ReqType.REQUEST_TYPE, ReqType.START_SHUFFLER);
+        param.put(ReqParam.RECIPIENT_SECRET_PHRASE, recipientSecretPhrase);
+        param.put(ReqParam.SHUFFLING_FULL_HASH, shufflingFullHash);
+        param.put(ReqParam.FEE, "100000000000");
+        param.put(ReqParam.DEADLINE, "1440");
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .post(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", CreateTransactionResponse.class);
+
     }
 
 }

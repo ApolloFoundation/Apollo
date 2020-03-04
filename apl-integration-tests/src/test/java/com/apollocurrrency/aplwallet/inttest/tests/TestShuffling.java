@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrency.aplwallet.api.response.ShufflingDTO;
 import com.apollocurrency.aplwallet.api.response.ShufflingParticipantsResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
+import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
@@ -21,9 +22,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.TestInfo;
-import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,16 +31,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
+
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.parallel.ExecutionMode.SAME_THREAD;
+
 
 @DisplayName("Shuffling")
 @Epic(value = "Shuffling")
-public class TestShuffling extends TestBaseOld {
+public class TestShuffling extends TestBaseNew {
     public static final Logger log = LoggerFactory.getLogger(TestShuffling.class);
 
     RetryPolicy retry = new RetryPolicy()
@@ -236,8 +235,6 @@ public class TestShuffling extends TestBaseOld {
             log.info("Shuffling started " + shuffling.getTransaction());
             waitForShufflingDeleted(shuffling.getTransaction());
             assertShufflingDone(type, recipients);
-
-
         }
     }
 
