@@ -9,7 +9,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Vetoed
-public final class DbProperties implements Cloneable {
+public class DbProperties implements Cloneable {
 
     private long maxCacheSize;
     private String dbUrl;
