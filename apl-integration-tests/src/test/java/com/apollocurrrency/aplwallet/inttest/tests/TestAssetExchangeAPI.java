@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.api.response.AssetsResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrency.aplwallet.api.response.ExpectedAssetDeletes;
 import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
+import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
@@ -29,13 +30,15 @@ import java.io.IOException;
 import java.util.Date;
 
 import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.getTestConfiguration;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("Asset")
 @Epic(value = "Asset")
-public class TestAssetExchangeAPI extends TestBaseOld {
+public class TestAssetExchangeAPI extends TestBaseNew {
       // TODO:  Neeed imp full Exchange
     //SMOKE API TESTING (STATUS CODE 200)
     @DisplayName("issueAsset")
@@ -57,7 +60,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
         assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
         AccountAssetsResponse getAccountAssets = getAccountAssets(wallet);
-        assertTrue(getAccountAssets.getAccountAssets().size() >= 1);
+        assertThat(getAccountAssets.getAccountAssets().size(),greaterThanOrEqualTo(1));
 
     }
 

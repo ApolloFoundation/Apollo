@@ -4,6 +4,7 @@ import com.apollocurrency.aplwallet.api.dto.DGSGoodsDTO;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
+import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
@@ -22,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @DisplayName("Marketplace")
 @Epic(value = "Marketplace")
-public class TestMarketplace extends TestBaseOld {
+public class TestMarketplace extends TestBaseNew {
     private String dgsName;
     private String description;
     private String tag;
@@ -68,7 +69,9 @@ public class TestMarketplace extends TestBaseOld {
         verifyTransactionInBlock(dgs.getTransaction());
         CreateTransactionResponse dgsDelisting = dgsDelisting(wallet, dgs.getTransaction());
         verifyCreatingTransaction(dgsDelisting);
+        verifyTransactionInBlock(dgsDelisting.getTransaction());
     }
+    
 
     @DisplayName("DGS Quantity and Price Change")
     @ParameterizedTest(name = "{displayName} {arguments}")
@@ -92,6 +95,9 @@ public class TestMarketplace extends TestBaseOld {
         assertEquals(quantity + deltaQuantity, goodsDTO.getQuantity());
         assertEquals(newPrice, goodsDTO.getPriceATM());
     }
+
+
+
 
     @DisplayName("DGS Purchase -> Delivery -> Feedback -> Refund")
     @ParameterizedTest(name = "{displayName} {arguments}")
@@ -135,6 +141,7 @@ public class TestMarketplace extends TestBaseOld {
 
 
     }
+
 
     @Step
     private Wallet getRandomStandartWallet() {

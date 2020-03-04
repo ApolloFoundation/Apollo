@@ -67,6 +67,7 @@ public class HttpHelper {
         if (reqestParam.containsKey(messageFile.toString()) || reqestParam.containsKey(file.toString())) {
             String param = reqestParam.containsKey(messageFile.toString()) ? messageFile.toString() : file.toString();
             body = uploadImage(param);
+
         }
         Request request = new Request.Builder()
                 .url(buildGetReqestUrl())

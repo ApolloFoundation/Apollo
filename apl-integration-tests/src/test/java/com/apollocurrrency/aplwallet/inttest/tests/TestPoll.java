@@ -2,6 +2,7 @@ package com.apollocurrrency.aplwallet.inttest.tests;
 
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
+import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
@@ -19,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @DisplayName("Poll")
 @Epic(value = "Poll")
-public class TestPoll extends TestBaseOld {
+public class TestPoll extends TestBaseNew {
 
     private final int POLL_BY_ACCOUNT = 0;
     private final int POLL_BY_ACCOUNT_BALANCE = 1;

@@ -5,6 +5,7 @@ import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
 import com.apollocurrency.aplwallet.api.response.ForgingResponse;
 import com.apollocurrency.aplwallet.api.response.GetAccountResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
+import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
@@ -19,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("Forging")
 @Epic(value = "Forging")
-public class TestForging extends TestBaseOld {
+public class TestForging extends TestBaseNew {
 
 
     @DisplayName("Start Get Stop Forging")
@@ -34,8 +35,6 @@ public class TestForging extends TestBaseOld {
             assertNotNull(getForgingResponse.getGenerators().size() > 0);
             forgingDetails = stopForging(wallet);
             assertTrue(forgingDetails.getFoundAndStopped());
-        } else {
-            //TODO: Implement
         }
     }
 }
