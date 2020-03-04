@@ -64,10 +64,10 @@ public class ServerInfoController {
     )
     @PermitAll
     public Response blockchainStatus() {
-        log.debug("Started blockchain Status");
+        log.trace("Started blockchain Status");
         ResponseBuilder response = ResponseBuilder.startTiming();
         BlockchainStatusDto dto = serverInfoService.getBlockchainStatus();
-        log.debug("blockchain Status result : {}", dto);
+        log.trace("blockchain Status result : {}", dto);
         return response.bind(dto).build();
     }
 
@@ -86,10 +86,10 @@ public class ServerInfoController {
     )
     @PermitAll
     public Response blockchainConstants() {
-        log.debug("Started blockchain Constants");
+        log.trace("Started blockchain Constants");
         ResponseBuilder response = ResponseBuilder.startTiming();
         BlockchainConstantsDto dto = serverInfoService.getBlockchainConstants();
-        log.debug("blockchain Constants result : {}", dto);
+        log.trace("blockchain Constants result : {}", dto);
         return response.bind(dto).build();
     }
 
@@ -112,11 +112,11 @@ public class ServerInfoController {
             @QueryParam("includeCounts") Boolean includeCounts,
         @Parameter(description = "The admin password.", required = true) @QueryParam("adminPassword") String adminPassword
         ) {
-        log.debug("Started blockchain State: \t includeCounts = {}", includeCounts);
+        log.trace("Started blockchain State: \t includeCounts = {}", includeCounts);
         ResponseBuilder response = ResponseBuilder.startTiming();
         // that dto is BlockchainStatusDto + additional fields in BlockchainStateDto
         BlockchainStateDto dto = serverInfoService.getBlockchainState(includeCounts);
-        log.debug("blockchain State result : {}", dto);
+        log.trace("blockchain State result : {}", dto);
         return response.bind(dto).build();
     }
 
@@ -135,10 +135,10 @@ public class ServerInfoController {
     )
     @PermitAll
     public Response blockchainTime() {
-        log.debug("Started blockchain Time");
+        log.trace("Started blockchain Time");
         ResponseBuilder response = ResponseBuilder.startTiming();
         TimeDto dto = serverInfoService.getTime();
-        log.debug("blockchain Constants result : {}", dto);
+        log.trace("blockchain Constants result : {}", dto);
         return response.bind(dto).build();
     }
 
@@ -157,10 +157,10 @@ public class ServerInfoController {
     )
     @PermitAll
     public Response blockchainTotalSupply() {
-        log.debug("Started Total Supply");
+        log.trace("Started Total Supply");
         ResponseBuilder response = ResponseBuilder.startTiming();
         TotalSupplyDto dto = serverInfoService.getTotalSupply();
-        log.debug("blockchain Total Supply result : {}", dto);
+        log.trace("blockchain Total Supply result : {}", dto);
         return response.bind(dto).build();
     }
 
@@ -181,9 +181,9 @@ public class ServerInfoController {
     public Response blockchainProperties(
         @Parameter(description = "The admin password.") @QueryParam("adminPassword") String adminPassword
     ) {
-        log.debug("Started get Properties");
+        log.trace("Started get Properties");
         Map<String, Object> dto = serverInfoService.getProperties();
-        log.debug("blockchain get Properties result : {}", dto);
+        log.trace("blockchain get Properties result : {}", dto);
         return Response.status(Response.Status.OK).entity(dto).build();
     }
 

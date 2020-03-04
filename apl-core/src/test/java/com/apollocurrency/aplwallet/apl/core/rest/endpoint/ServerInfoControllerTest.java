@@ -5,6 +5,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -13,17 +14,15 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.apollocurrency.aplwallet.api.dto.account.AccountEffectiveBalanceDto;
-import com.apollocurrency.aplwallet.api.dto.account.AccountsCountDto;
 import com.apollocurrency.aplwallet.api.dto.info.BlockchainConstantsDto;
 import com.apollocurrency.aplwallet.api.dto.info.BlockchainStateDto;
 import com.apollocurrency.aplwallet.api.dto.info.BlockchainStatusDto;
 import com.apollocurrency.aplwallet.api.dto.info.TimeDto;
 import com.apollocurrency.aplwallet.api.dto.info.TotalSupplyDto;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.peer.BlockchainState;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -34,14 +33,13 @@ import org.jboss.resteasy.spi.Dispatcher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 
 @Slf4j
 class ServerInfoControllerTest {
     @Mock
-    private BlockchainConfig blockchainConfig = Mockito.mock(BlockchainConfig.class);
+    private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     @Mock
-    private ServerInfoService serverInfoService = Mockito.mock(ServerInfoService.class);
+    private ServerInfoService serverInfoService = mock(ServerInfoService.class);
 
     private static ObjectMapper mapper = new ObjectMapper();
     private static Dispatcher dispatcher;

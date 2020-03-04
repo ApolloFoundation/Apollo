@@ -700,7 +700,7 @@ public class AccountController {
         return response.bind(dto).build();
     }
 
-    @Path("/count")
+    @Path("/statistic")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(

@@ -51,7 +51,7 @@ public class NewApiRegistry {
         apis.put("getAccountCurrencyCount", "/rest/accounts/currency-count"); //GET
         apis.put("getAccountCurrencies", "/rest/accounts/currencies"); //GET
         apis.put("getAccountCurrentAskOrderIds", "/rest/accounts/current-ask-order-ids"); //GET
-        apis.put("getAccounts", "/rest/accounts/count"); //GET
+        apis.put("getAccounts", "/rest/accounts/statistic"); //GET
 
         apis.put("encodeQRCode", "/rest/utils/qrcode/encoding"); //POST
         apis.put("decodeQRCode", "/rest/utils/qrcode/decoding"); //POST
