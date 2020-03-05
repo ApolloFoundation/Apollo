@@ -47,9 +47,8 @@ public class ApolloCertificateTest {
      */
     @Test
     public void testGetAuthorityId() {
-        System.out.println("getAuthorityId");
         AuthorityID result = acert.getAuthorityId();
-        assertEquals(5139, result.getActorType()); //should be 12
+        assertEquals(5139, result.getActorType()); 
     }
 
     /**
@@ -57,7 +56,6 @@ public class ApolloCertificateTest {
      */
     @Test
     public void testGetCN() {
-        System.out.println("getCN");
         String result = acert.getCN();
         assertEquals("al.cn.ua", result);
     }
@@ -67,7 +65,6 @@ public class ApolloCertificateTest {
      */
     @Test
     public void testGetOrganization() {
-        System.out.println("getOrganization");
         ApolloCertificate instance = null;
         String expResult = "FirstBridge";
         String result = acert.getOrganization();
@@ -89,7 +86,6 @@ public class ApolloCertificateTest {
      */
     @Test
     public void testGetCountry() {
-        System.out.println("getCountry");
         String expResult = "UA";
         String result = acert.getCountry();
         assertEquals(expResult, result);
@@ -100,7 +96,6 @@ public class ApolloCertificateTest {
      */
     @Test
     public void testGetCity() {
-        System.out.println("getCity");
         ApolloCertificate instance = null;
         String expResult = "Chernigiv";
         String result = acert.getCity();
@@ -112,7 +107,6 @@ public class ApolloCertificateTest {
      */
     @Test
     public void testGetCertificatePurpose() {
-        System.out.println("getCertificatePurpose");
         String expResult = "Node";
         String result = acert.getCertificatePurpose();
         assertEquals(expResult, result);
@@ -123,7 +117,6 @@ public class ApolloCertificateTest {
      */
     @Test
     public void testGetIPAddresses() {
-        System.out.println("getIPAddresses");
         List<String> expResult = null;
         List<String> result = acert.getIPAddresses();
         assertEquals(expResult, result);
@@ -134,8 +127,6 @@ public class ApolloCertificateTest {
      */
     @Test
     public void testGetDNSNames() {
-        System.out.println("getDNSNames");
-
         List<String> expResult = null;
         List<String> result = acert.getDNSNames();
         assertEquals(expResult, result);
@@ -146,7 +137,6 @@ public class ApolloCertificateTest {
      */
     @Test
     public void testGetStateOrProvince() {
-        System.out.println("getStateOrProvince");
         String expResult = null;
         String result = acert.getStateOrProvince();
         assertEquals(expResult, result);
@@ -157,7 +147,6 @@ public class ApolloCertificateTest {
      */
     @Test
     public void testGetEmail() {
-        System.out.println("getEmail");
         String expResult = null; //"alukin@gmail.com";
         String result = acert.getEmail();
         assertEquals(expResult, result);
@@ -168,7 +157,6 @@ public class ApolloCertificateTest {
      */
     @Test
     public void testFromList() {
-        System.out.println("fromList");
     }
 
     /**
@@ -176,7 +164,6 @@ public class ApolloCertificateTest {
      */
     @Test
     public void testGetPEM() {
-        System.out.println("getPEM");
         String result = acert.getPEM();
         assertEquals(result.length() > 100, true);
     }
@@ -186,7 +173,6 @@ public class ApolloCertificateTest {
      */
     @Test
     public void testIsValid() {
-        System.out.println("isValid");
         Date date = null;
         boolean expResult = false;
         boolean result = acert.isValid(date);
@@ -198,7 +184,6 @@ public class ApolloCertificateTest {
      */
     @Test
     public void testGetSerial() {
-        System.out.println("getSerial");
         BigInteger result = acert.getSerial();
         //TODO: check
     }
