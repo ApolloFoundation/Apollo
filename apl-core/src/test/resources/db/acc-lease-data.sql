@@ -30,11 +30,11 @@ INSERT INTO PUBLIC.ACCOUNT
 
 
 INSERT INTO PUBLIC.ACCOUNT_LEASE
-(DB_ID, LESSOR_ID,  CURRENT_LEASING_HEIGHT_FROM, CURRENT_LEASING_HEIGHT_TO, CURRENT_LESSEE_ID, NEXT_LEASING_HEIGHT_FROM, NEXT_LEASING_HEIGHT_TO, NEXT_LESSEE_ID, HEIGHT, LATEST) VALUES
-(1,     100,        7000,                        11000,                     10,                0,                       0,                      0,              5000,  true),
-(2,     110,        7000,                        11000,                     10,                0,                       0,                      0,              5000,  true),
-(3,     120,        7000,                        11000,                     20,                0,                       0,                      0,              5000,  true),
-(4,     130,        8000,                        10000,                     30,                0,                       0,                      0,              8000,   true),
-(5,     140,        8000,                        9000,                      40,                0,                       0,                      0,              7000,   false),
-(6,     140,        9440,                        12440,                     50,                0,                       0,                      0,              8000,   true),
-(7,     150,        9440,                        12440,                     50,                0,                       0,                      0,              8000,   true);
+(DB_ID, ID,     LESSOR_ID,  CURRENT_LEASING_HEIGHT_FROM, CURRENT_LEASING_HEIGHT_TO, CURRENT_LESSEE_ID, NEXT_LEASING_HEIGHT_FROM, NEXT_LEASING_HEIGHT_TO, NEXT_LESSEE_ID, HEIGHT, LATEST) VALUES
+(1,     1000,         100,        7000,                        11000,                     10,                0,                       0,                      0,              5000,  true),
+(2,     1100,         110,        7000,                        11000,                     10,                0,                       0,                      0,              5000,  true),
+(3,     1200,         120,        7000,                        11000,                     20,                0,                       0,                      0,              5000,  true),
+(4,     1300,         130,        8000,                        10000,                     30,                0,                       0,                      0,              8000,   true),
+(5,     1400,         140,        8000,                        9000,                      40,                0,                       0,                      0,              7000,   false),
+(6,     1400,         140,        9440,                        12440,                     50,                0,                       0,                      0,              8000,   true),
+(7,     1500,         150,        9440,                        12440,                     50,                0,                       0,                      0,              8000,   true);
