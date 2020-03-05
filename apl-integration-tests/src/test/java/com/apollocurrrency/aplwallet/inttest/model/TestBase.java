@@ -315,12 +315,16 @@ public abstract class TestBase implements ITest {
     @Step
     public boolean verifyTransactionInBlock(String transaction) {
         boolean inBlock = false;
-        try {
-            inBlock = Failsafe.with(retryPolicy).get(() -> getTransaction(transaction).getConfirmations() >= 0);
-        } catch (Exception e) {
-            fail("Transaction does't add to block. Transaction " + transaction + " Exception: " + e.getMessage());
+        if (transaction != null) {
+            try {
+                inBlock = Failsafe.with(retryPolicy).get(() -> getTransaction(transaction).getConfirmations() >= 0);
+            } catch (Exception e) {
+                fail("Transaction does't add to block. Transaction " + transaction + " Exception: " + e.getMessage());
+            }
+            assertTrue(inBlock, String.format("Transaction %s in block: ", transaction));
+        }else{
+            fail("Transaction is null");
         }
-        assertTrue(inBlock, String.format("Transaction %s in block: ", transaction));
         return inBlock;
     }
 
