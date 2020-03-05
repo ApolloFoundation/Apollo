@@ -236,7 +236,6 @@ public class DataSourceWrapper implements DataSource {
         config.setIdleTimeout(60_000 * 20); // 20 minutes in milliseconds
         config.setPoolName(shardId);
         log.debug("Creating DataSource pool '{}', path = {}", shardId, dbUrl);
-        updateTransactionTable(config, dbVersion);
         dataSource = new HikariDataSource(config);
         jmxBean = dataSource.getHikariPoolMXBean();
 /*
@@ -289,25 +288,6 @@ public class DataSourceWrapper implements DataSource {
 
     public void update(DbVersion dbVersion) {
         dbVersion.init(this);
-    }
-
-    private void updateTransactionTable(HikariConfig config, DbVersion dbVersion) {
-        if (dbVersion instanceof AplDbVersion) {
-            HikariDataSource dataSource = new HikariDataSource(config);
-            // We should keep this bad code here, to make update for transaction table
-            // Also we will shutdown datasource after update, otherwise - database will be corrupted
-            // TODO find more elegant solution
-            try {
-                Connection connection = dataSource.getConnection();
-                Statement st = connection.createStatement();
-                st.executeUpdate("ALTER TABLE IF EXISTS transaction ADD COLUMN IF NOT EXISTS sender_public_key BINARY(32) DEFAULT NULL");
-                st.execute("SHUTDOWN COMPACT");
-            }
-            catch (SQLException e) {
-                throw new RuntimeException("Unable to add sender_public_key column to transaction table", e);
-            }
-            dataSource.close();
-        }
     }
 
     public void shutdown() {
