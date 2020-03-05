@@ -502,9 +502,7 @@ class CsvExporterTest {
         assertEquals(0, exportedRows);
 
         Path shardExportedFile = dataExportPath.resolve("shard.csv");
-        try(Stream<Path> pathStream = Files.list(dataExportPath)){
-            assertEquals(0, pathStream.count());
-        }
+        assertEquals(0, com.apollocurrency.aplwallet.apl.util.FileUtils.countElementsOfDirectory(dataExportPath));
         assertFalse(Files.exists(shardExportedFile));
     }
 
