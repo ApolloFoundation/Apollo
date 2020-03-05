@@ -48,24 +48,25 @@ import static org.slf4j.LoggerFactory.getLogger;
  * <p>The DecodeQRCode API converts a base64-encoded image of a
  * 2-D QR (Quick Response) code to a UTF-8 string, using the ZXing library.
  * </p>
- * 
+ *
  * <p>The input qrCodeBase64 can be the output of the DecodeQRCode API.</p>
- * 
+ *
  * <p>Request parameters:</p>
- * 
+ *
  * <ul>
  * <li>qrCodeBase64 - A base64 string encoded from an image of a QR code.
  * The length of the string must be less than the jetty server maximum allowed
  * parameter length, currently 200,000 bytes.
  * </li>
  * </ul>
- * 
+ *
  * <p>Response fields:</p>
- * 
+ *
  * <ul>
  * <li>qrCodeData - A UTF-8 string decoded from the QR code.</li>
  * </ul>
  */
+@Deprecated
 @Vetoed
 public final class DecodeQRCode extends AbstractAPIRequestHandler {
     private static final Logger LOG = getLogger(DecodeQRCode.class);
@@ -73,11 +74,11 @@ public final class DecodeQRCode extends AbstractAPIRequestHandler {
     public DecodeQRCode() {
         super(new APITag[] {APITag.UTILS}, "qrCodeBase64");
     }
-    
+
     @Override
     public JSONStreamAware processRequest(HttpServletRequest request)
             throws AplException {
-   
+
         String qrCodeBase64 = Convert.nullToEmpty(request.getParameter("qrCodeBase64"));
 
         JSONObject response = new JSONObject();
@@ -93,7 +94,7 @@ public final class DecodeQRCode extends AbstractAPIRequestHandler {
             Map hints = new HashMap();
             hints.put(DecodeHintType.POSSIBLE_FORMATS, EnumSet.of(BarcodeFormat.QR_CODE));
             hints.put(DecodeHintType.CHARACTER_SET, "UTF-8");
-            
+
             Result qrCodeData = new MultiFormatReader().decode(binaryBitmap, hints);
             response.put("qrCodeData", qrCodeData.getText());
         } catch(IOException ex) {

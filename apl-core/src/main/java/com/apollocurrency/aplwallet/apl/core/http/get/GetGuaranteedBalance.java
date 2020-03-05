@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
@@ -41,8 +41,8 @@ public final class GetGuaranteedBalance extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        Account account = ParameterParser.getAccount(req);
-        int numberOfConfirmations = ParameterParser.getNumberOfConfirmations(req);
+        Account account = HttpParameterParserUtil.getAccount(req);
+        int numberOfConfirmations = HttpParameterParserUtil.getNumberOfConfirmations(req);
 
         JSONObject response = new JSONObject();
         if (account == null) {

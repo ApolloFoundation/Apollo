@@ -49,4 +49,11 @@ public interface TwoFactorAuthService {
      */
     Status2FA confirm(long accountId, int authCode);
 
+    /**
+     * Check db and move all data into file if exists.
+     * That is one time method, it will be removed later.
+     */
+    @Deprecated
+    int attemptMoveDataFromDatabase();
+
 }

@@ -23,6 +23,7 @@ import static com.apollocurrency.aplwallet.apl.core.account.observer.events.Acco
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -107,7 +108,7 @@ class AccountPropertyServiceTest {
         doReturn(testData.ACC_PROP_4).when(accountPropertyTable).get(any(DbKey.class));
         accountPropertyService.deleteProperty(testData.ACC_1, testData.ACC_PROP_4.getId());
 
-        verify(accountPropertyTable).delete(testData.ACC_PROP_4);
+        verify(accountPropertyTable).deleteAtHeight(testData.ACC_PROP_4, blockchain.getHeight());
         verify(firedEventAcc).fire(testData.ACC_1);
         verify(firedEventProp).fire(testData.ACC_PROP_4);
     }
@@ -117,7 +118,7 @@ class AccountPropertyServiceTest {
         doReturn(null).when(accountPropertyTable).get(any(DbKey.class));
         accountPropertyService.deleteProperty(testData.ACC_1, testData.ACC_PROP_4.getId());
 
-        verify(accountPropertyTable, never()).delete(any(AccountProperty.class));
+        verify(accountPropertyTable, never()).deleteAtHeight(any(AccountProperty.class), anyInt());
     }
 
     @Test

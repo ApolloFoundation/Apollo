@@ -1004,7 +1004,7 @@ public final class Shuffling {
                 participant.delete();
             }
         }
-        shufflingTable.delete(this);
+        shufflingTable.deleteAtHeight(this, blockchain.getHeight());
         LOG.debug("DELETED Shuffling {} entered stage {}, assignee {}, remaining blocks {}",
                 Long.toUnsignedString(id), this.stage, Long.toUnsignedString(this.assigneeAccountId), this.blocksRemaining);
 

@@ -211,6 +211,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
         assertNull(uknownEntity, "Entity with unknown db_id should not exist");
     }
 
+    /*
     @Test
     public void testGetByDbClauseWithHeight() {
         T expected;
@@ -223,6 +224,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
         T actual = table.getBy((new DbClause.LongClause("db_id", DbClause.Op.EQ, expected.getDbId())), expected.getHeight());
         assertEquals(expected, actual);
     }
+     */
 
     @Test
     public void testGetByDbClauseWithHeightUsingIncorrectDbId() {
@@ -390,146 +392,6 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
                     }
                 }
         );
-    }
-
-    @Test
-    public void testGetAllWithMaxPagination() {
-        testGetAllWithPaginationHeightSorted(0, Integer.MAX_VALUE);
-        testGetAllWithPaginationCustomSorted(0, Integer.MAX_VALUE);
-    }
-
-    @Test
-    public void testGetAllWithDataSizePagination() {
-        testGetAllWithPaginationHeightSorted(0, getAllLatest().size());
-        testGetAllWithPaginationCustomSorted(0, getAllLatest().size());
-    }
-
-    @Test
-    public void testGetAllWithPaginationExcludingFirst() {
-        testGetAllWithPaginationHeightSorted(1, getAllLatest().size());
-        testGetAllWithPaginationCustomSorted(1, getAllLatest().size());
-    }
-
-    @Test
-    public void testGetAllWithPaginationExcludingLast() {
-        testGetAllWithPaginationHeightSorted(0, getAllLatest().size() - 1);
-        testGetAllWithPaginationCustomSorted(0, getAllLatest().size() - 1);
-    }
-
-    @Test
-    public void testGetAllWithPaginationExcludingFirstAndLast() {
-        testGetAllWithPaginationHeightSorted(1, getAllLatest().size() - 1);
-        testGetAllWithPaginationCustomSorted(1, getAllLatest().size() - 1);
-    }
-
-    public void testGetAllWithPaginationHeightSorted(int from, int to) {
-        testGetAllWithPagination(from, to, DB_ID_HEIGHT_COMPARATOR, DB_ID_HEIGHT_SORT);
-    }
-
-    public void testGetAllWithPaginationCustomSorted(int from, int to) {
-        testGetAllWithPagination(from, to, getDefaultComparator(), null);
-    }
-
-    public void testGetAllWithPagination(int from, int to, Comparator<T> comparator, String sort) {
-        List<T> expected = getAllLatest()
-                .stream()
-                .sorted(comparator)
-                .skip(from)
-                .limit(to - from)
-                .collect(Collectors.toList());
-
-        DbUtils.inTransaction(extension, (con) -> {
-            List<T> actual = getAllWithSort(from, to, sort);
-            assertEquals(expected, actual);
-        });
-
-        List<T> actual = getAllWithSort(from, to, sort);
-        assertEquals(expected, actual);
-    }
-
-    private List<T> getAllWithSort(int from, int to, String sort) {
-        List<T> actual;
-        if (StringUtils.isBlank(sort)) {
-            actual = CollectionUtil.toList(table.getAll(from, to - 1)); //default sort
-        } else {
-            actual = CollectionUtil.toList(table.getAll(from, to - 1, sort)); //default
-        }
-        return actual;
-    }
-
-    @Test
-    public void testGetAllWithPaginationForMaxHeight() {
-        testGetAllWithPaginationForHeight(Integer.MAX_VALUE);
-    }
-
-    @Test
-    public void testGetAllWithPaginationForLastHeight() {
-        Block mock = mock(Block.class);
-        doReturn(Integer.MAX_VALUE).when(mock).getHeight();
-        getBlockchain().setLastBlock(mock);
-        int height = getHeights().get(0);
-        testGetAllWithPaginationForHeight(height);
-    }
-
-    @Test
-    public void testGetAllWithPaginationForMiddleHeight() {
-        Block mock = mock(Block.class);
-        doReturn(Integer.MAX_VALUE).when(mock).getHeight();
-        getBlockchain().setLastBlock(mock);
-        List<Integer> heights = getHeights();
-        int height = heights.get(heights.size() / 2);
-        testGetAllWithPaginationForHeight(height);
-    }
-
-    @Test
-    public void testGetAllWithPaginationForMinHeight() {
-        Block mock = mock(Block.class);
-        doReturn(Integer.MAX_VALUE).when(mock).getHeight();
-        getBlockchain().setLastBlock(mock);
-        List<Integer> heights = getHeights();
-        int height = heights.get(heights.size() - 1);
-        testGetAllWithPaginationForHeight(height);
-    }
-
-    public void testGetAllWithPaginationForHeight(int height) {
-        testGetAllWithPaginationForHeight(1, 3, height);
-        testGetAllWithPaginationForHeight(0, 2, height);
-        testGetAllWithPaginationForHeight(1, 2, height);
-        testGetAllWithPaginationForHeight(2, 3, height);
-        testGetAllWithPaginationForHeight(0, 1, height);
-        testGetAllWithPaginationForHeight(0, Integer.MAX_VALUE, height);
-        testGetAllWithPaginationForHeight(1, Integer.MAX_VALUE, height);
-    }
-
-    public void testGetAllWithPaginationForHeight(int from, int to, int height) {
-        testGetAllWithPaginationForHeightHeightSorted(from, to, height); // check height sort
-        testGetAllWithPaginationForHeightCustomSorted(from, to, height); //check default sort
-    }
-
-    public void testGetAllWithPaginationForHeightHeightSorted(int from, int to, int height) {
-        testGetAllWithPaginationForHeight(from, to, height, DB_ID_HEIGHT_COMPARATOR, DB_ID_HEIGHT_SORT);
-    }
-
-    public void testGetAllWithPaginationForHeightCustomSorted(int from, int to, int height) {
-        testGetAllWithPaginationForHeight(from, to, height, getDefaultComparator(), null);
-    }
-
-
-    public void testGetAllWithPaginationForHeight(int from, int to, int height, Comparator<T> comp, String sort) {
-
-        List<T> expected = getExpectedAtHeight(from, to, height, comp, (t)->true);
-
-        DbUtils.inTransaction(extension, (con) -> {
-
-            List<T> actual;
-            if (StringUtils.isBlank(sort)) {
-                actual = CollectionUtil.toList(table.getAll(height, from, to - 1)); // default sort
-            } else {
-                actual = CollectionUtil.toList(table.getAll(height, from, to - 1, sort)); // custom sort
-            }
-            //check cache, which should not contain data
-            assertEquals(expected, actual);
-        });
     }
 
     protected List<T> getExpectedAtHeight(int from, int to, int height, Comparator<T> comp, Filter<T> filter) {

@@ -40,6 +40,8 @@ public interface PhasingPollService {
 
     DbIterator<PhasingPollResult> getApproved(int height);
 
+    List<Long> getApprovedTransactionIds(int height);
+
     PhasingPoll getPoll(long id);
 
     List<Transaction> getFinishingTransactions(int height);

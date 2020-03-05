@@ -58,17 +58,24 @@ public class ResponseBuilder {
         return instance;
     }
 
-
-    public ResponseBuilder detailedError(ErrorInfo error, String errorDetails, Object... args) {
-        this.status = 200;
-
+    public static ResponseBase createErrorResponse(ErrorInfo error, String errorDetails, Object... args){
         String reasonPhrase = Messages.format(error.getErrorDescription(), args);
-        this.response = new ResponseBase(error.getErrorCode(), reasonPhrase, errorDetails, (long) error.getOldErrorCode());
-        this.dto = null;
+        return  new ResponseBase(error.getErrorCode(), reasonPhrase, errorDetails, (long) error.getOldErrorCode());
+    }
 
+    public ResponseBuilder error(ResponseBase errorResponse) {
+        this.status = 200;
+        this.response = errorResponse;
+        this.dto = null;
         return this;
     }
 
+    public ResponseBuilder detailedError(ErrorInfo error, String errorDetails, Object... args) {
+        this.status = 200;
+        this.response = createErrorResponse(error, errorDetails, args);
+        this.dto = null;
+        return this;
+    }
 
     public ResponseBuilder error(ErrorInfo error, Object... args) {
         return detailedError(error, null, args);

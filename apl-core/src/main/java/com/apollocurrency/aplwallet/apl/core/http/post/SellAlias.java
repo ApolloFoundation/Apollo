@@ -32,7 +32,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasSell;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import javax.enterprise.inject.Vetoed;
@@ -47,11 +47,11 @@ public final class SellAlias extends CreateTransaction {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        Alias alias = ParameterParser.getAlias(req);
-        Account owner = ParameterParser.getSenderAccount(req);
+        Alias alias = HttpParameterParserUtil.getAlias(req);
+        Account owner = HttpParameterParserUtil.getSenderAccount(req);
 
         long priceATM =
-                ParameterParser.getLong(req, "priceATM", 0L, CDI.current().select(BlockchainConfig.class).get().getCurrentConfig().getMaxBalanceATM(),
+                HttpParameterParserUtil.getLong(req, "priceATM", 0L, CDI.current().select(BlockchainConfig.class).get().getCurrentConfig().getMaxBalanceATM(),
                 true);
 
         String recipientValue = Convert.emptyToNull(req.getParameter("recipient"));

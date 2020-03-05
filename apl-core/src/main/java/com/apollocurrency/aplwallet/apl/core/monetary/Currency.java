@@ -28,10 +28,6 @@ import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyServ
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
@@ -41,6 +37,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.service.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
 import com.apollocurrency.aplwallet.apl.util.Listener;
@@ -64,9 +61,9 @@ public final class Currency {
     public enum Event {
         BEFORE_DISTRIBUTE_CROWDFUNDING, BEFORE_UNDO_CROWDFUNDING, BEFORE_DELETE
     }
+    private static final BlockChainInfoService BLOCK_CHAIN_INFO_SERVICE =
+        CDI.current().select(BlockChainInfoService.class).get();
 
-    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-    private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
     private static AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
     private static AccountCurrencyService accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
     private static final LongKeyFactory<Currency> currencyDbKeyFactory = new LongKeyFactory<Currency>("id") {
@@ -128,7 +125,7 @@ public final class Currency {
                 pstmt.setLong(++i, this.currencyId);
                 pstmt.setLong(++i, this.currentSupply);
                 pstmt.setLong(++i, this.currentReservePerUnitATM);
-                pstmt.setInt(++i, blockchain.getHeight());
+                pstmt.setInt(++i, BLOCK_CHAIN_INFO_SERVICE.getHeight());
                 pstmt.executeUpdate();
             }
         }
@@ -261,7 +258,7 @@ public final class Currency {
         this.initialSupply = attachment.getInitialSupply();
         this.reserveSupply = attachment.getReserveSupply();
         this.maxSupply = attachment.getMaxSupply();
-        this.creationHeight = blockchain.getHeight();
+        this.creationHeight = BLOCK_CHAIN_INFO_SERVICE.getHeight();
         this.issuanceHeight = attachment.getIssuanceHeight();
         this.minReservePerUnitATM = attachment.getMinReservePerUnitATM();
         this.minDifficulty = attachment.getMinDifficulty();
@@ -340,7 +337,7 @@ public final class Currency {
             pstmt.setByte(++i, this.ruleset);
             pstmt.setByte(++i, this.algorithm);
             pstmt.setByte(++i, this.decimals);
-            pstmt.setInt(++i, blockchain.getHeight());
+            pstmt.setInt(++i, BLOCK_CHAIN_INFO_SERVICE.getHeight());
             pstmt.executeUpdate();
         }
     }
@@ -431,7 +428,7 @@ public final class Currency {
     }
 
     public boolean isActive() {
-        return issuanceHeight <= blockchain.getHeight();
+        return issuanceHeight <= BLOCK_CHAIN_INFO_SERVICE.getHeight();
     }
 
     private CurrencySupply getSupplyData() {
@@ -547,7 +544,7 @@ public final class Currency {
                 -accountCurrencyService.getUnconfirmedCurrencyUnits(senderAccount, currencyId));
         accountCurrencyService.addToCurrencyUnits(senderAccount, event, eventId, currencyId,
                 -accountCurrencyService.getCurrencyUnits(senderAccount, currencyId));
-        currencyTable.delete(this);
+        currencyTable.deleteAtHeight(this, BLOCK_CHAIN_INFO_SERVICE.getHeight());
     }
 
     @Slf4j
@@ -583,7 +580,7 @@ public final class Currency {
                     accountService.getAccount(currency.getAccountId()),
                     LedgerEvent.CURRENCY_UNDO_CROWDFUNDING, currency.getId(),
                             currency.getId(), - currency.getInitialSupply());
-            currencyTable.delete(currency);
+            currencyTable.deleteAtHeight(currency, BLOCK_CHAIN_INFO_SERVICE.getHeight());
             CurrencyFounder.remove(currency.getId());
         }
 

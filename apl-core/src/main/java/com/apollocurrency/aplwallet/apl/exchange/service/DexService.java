@@ -18,7 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.post.TransactionResponse;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
@@ -715,7 +715,7 @@ public class DexService {
 
         //Freeze ETH or PAX
         if (order.getPairCurrency().isEthOrPax() && order.getType().isBuy()) {
-            String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(requestWrapper, true));
+            String passphrase = Convert.emptyToNull(HttpParameterParserUtil.getPassphrase(requestWrapper, true));
             freezeTx = freezeEthPax(passphrase, order);
             log.debug("Create order - frozen money, accountId: {}, offerId: {}", account.getId(), order.getId());
         }

@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableData;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchEngine;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
+import com.apollocurrency.aplwallet.apl.core.db.service.BlockChainInfoServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
@@ -103,7 +104,7 @@ class GenesisImporterTest {
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             AccountTable.class, AccountGuaranteedBalanceTable.class, PublicKeyTableProducer.class,
-            AccountServiceImpl.class, AccountPublicKeyServiceImpl.class,
+            AccountServiceImpl.class, BlockChainInfoServiceImpl.class, AccountPublicKeyServiceImpl.class,
             FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class, PropertiesHolder.class,
             ShardRecoveryDaoJdbcImpl.class, GenesisImporter.class,
             TransactionDaoImpl.class, BlockchainImpl.class,

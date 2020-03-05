@@ -1,4 +1,8 @@
-package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
+/*
+ * Copyright (c)  2018-2020. Apollo Foundation.
+ */
+
+package com.apollocurrency.aplwallet.apl.core.rest.validation;
 
 import com.apollocurrency.aplwallet.apl.exchange.DexConfig;
 import lombok.Setter;

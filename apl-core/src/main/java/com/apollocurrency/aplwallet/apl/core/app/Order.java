@@ -48,7 +48,7 @@ import java.sql.SQLException;
 
 public abstract class Order {
 
-    private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
     private static AccountAssetService accountAssetService = CDI.current().select(AccountAssetServiceImpl.class).get();
     private static DatabaseManager databaseManager;
@@ -142,7 +142,7 @@ public abstract class Order {
         if (quantityATU > 0) {
             table.insert(order);
         } else if (quantityATU == 0) {
-            table.delete(order);
+            table.deleteAtHeight(order, blockchain.getHeight());
         } else {
             throw new IllegalArgumentException("Negative quantity: " + quantityATU
                     + " for order: " + Long.toUnsignedString(order.getId()));
@@ -311,7 +311,7 @@ public abstract class Order {
         }
 
         public static void removeOrder(long orderId) {
-            askOrderTable.delete(getAskOrder(orderId));
+            askOrderTable.deleteAtHeight(getAskOrder(orderId), blockchain.getHeight());
         }
 
         public static void init() {}
@@ -432,7 +432,7 @@ public abstract class Order {
         }
 
         public static void removeOrder(long orderId) {
-            bidOrderTable.delete(getBidOrder(orderId));
+            bidOrderTable.deleteAtHeight(getBidOrder(orderId), blockchain.getHeight());
         }
 
         public static void init() {}
