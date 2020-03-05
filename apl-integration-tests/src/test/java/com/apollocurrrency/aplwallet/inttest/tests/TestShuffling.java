@@ -145,8 +145,8 @@ public class TestShuffling extends TestBaseNew {
             waitForHeight(getBlock().getHeight()+1);
 
             int iteration = 0;
-            while (iteration != PARTICIPANT_COUNT) {
-                shufflingDTO = getShuffling(String.valueOf(shuffling.getTransaction()));
+            while (iteration != PARTICIPANT_COUNT && getShuffling(shuffling.getTransaction()).getStage() == STAGE_PROCESSING) {
+                shufflingDTO = getShuffling(shuffling.getTransaction());
                 if (shufflingDTO.getAssigneeRS().equals(wallet.getUser())){
                     verifyTransactionInBlock(shufflingProcess(wallet, shufflingDTO.getShuffling(), recipients.get(2).getPass()).getTransaction());
                     log.info(String.format("Wallet: %s REGISTERED", wallet.getUser()));
@@ -167,7 +167,7 @@ public class TestShuffling extends TestBaseNew {
 
             ShufflingParticipantsResponse shufflingParticipantsResponse = getShufflingParticipants(shuffling.getTransaction());
             for (ShufflingParticipant participant: shufflingParticipantsResponse.getParticipants()) {
-                if (participant.getState() == STAGE_PROCESSING){
+                if (participant.getState() == STAGE_PROCESSING && getShuffling(shuffling.getTransaction()).getStage() == STAGE_VERIFICATION){
                    if (participant.getAccountRS().equals(wallet.getUser())) {
                        verifyTransactionInBlock(shufflingVerify(wallet, shufflingDTO.getShuffling(), shufflingDTO.getShufflingStateHash()).getTransaction());
                    }else if(participant.getAccountRS().equals(randomStandart.getUser())){
@@ -297,7 +297,7 @@ public class TestShuffling extends TestBaseNew {
 
             int iteration = 0;
             while (iteration != PARTICIPANT_COUNT) {
-                shufflingDTO = getShuffling(String.valueOf(shuffling.getTransaction()));
+                shufflingDTO = getShuffling(shuffling.getTransaction());
                 if (shufflingDTO.getAssigneeRS().equals(wallet.getUser())){
                     verifyTransactionInBlock(shufflingProcess(wallet, shufflingDTO.getShuffling(), recipients.get(2).getPass()).getTransaction());
                     log.info(String.format("Wallet: %s REGISTERED", wallet.getUser()));

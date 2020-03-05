@@ -2819,7 +2819,7 @@ public class TestBaseNew extends TestBase {
         HashMap<String, String> param = new HashMap();
 
         param = restHelper.addWalletParameters(param,wallet);
-        param.put(ReqType.REQUEST_TYPE, ReqType.SHUFFLING_PROCESS);
+        param.put(ReqType.REQUEST_TYPE, ReqType.SHUFFLING_VERIFY);
         param.put(ReqParam.SHUFFLING, shuffling);
         param.put(ReqParam.SHUFFLING_STATE_HASH, shufflingStateHash);
         param.put(ReqParam.FEE, "100000000000");
@@ -2831,7 +2831,7 @@ public class TestBaseNew extends TestBase {
             .formParams(param)
             .when()
             .post(path)
-            .then()
+            .then().log().body()
             .assertThat().statusCode(200)
             .extract().body().jsonPath()
             .getObject("", CreateTransactionResponse.class);
@@ -2850,7 +2850,7 @@ public class TestBaseNew extends TestBase {
             .formParams(param)
             .when()
             .get(path)
-            .then()
+            .then().log().body()
             .assertThat().statusCode(200)
             .extract().body().jsonPath()
             .getObject("", ShufflingDTO.class);
