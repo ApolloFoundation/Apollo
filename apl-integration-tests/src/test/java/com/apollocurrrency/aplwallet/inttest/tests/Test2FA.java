@@ -5,7 +5,7 @@ import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import com.apollocurrency.aplwallet.api.response.Account2FAResponse;
 import com.apollocurrency.aplwallet.api.response.VaultWalletResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
-import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
+import com.apollocurrrency.aplwallet.inttest.helper.providers.WalletProvider;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import com.fasterxml.jackson.core.JsonProcessingException;

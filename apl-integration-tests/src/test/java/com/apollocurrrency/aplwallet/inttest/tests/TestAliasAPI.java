@@ -4,7 +4,7 @@ import com.apollocurrency.aplwallet.api.dto.AccountAliasDTO;
 import com.apollocurrency.aplwallet.api.response.AccountAliasesResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCountAliasesResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
-import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
+import com.apollocurrrency.aplwallet.inttest.helper.providers.WalletProvider;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;

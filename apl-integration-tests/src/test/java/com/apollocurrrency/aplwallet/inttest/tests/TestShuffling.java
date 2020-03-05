@@ -9,6 +9,8 @@ import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrency.aplwallet.api.response.ShufflingDTO;
 import com.apollocurrency.aplwallet.api.response.ShufflingParticipantsResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
+import com.apollocurrrency.aplwallet.inttest.helper.providers.ShufflingArgumentProvider;
+import com.apollocurrrency.aplwallet.inttest.helper.providers.WalletProvider;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
@@ -22,6 +24,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,16 +91,14 @@ public class TestShuffling extends TestBaseNew {
     }
 
     @DisplayName("Manual shuffling")
-    @ParameterizedTest(name = "{displayName} Currency type: {0}")
-    @ValueSource(ints = {0, 1, 2})
-    public void shufflingCreateTest(int type) {
+    @ParameterizedTest(name = "{displayName} Shuffling type: {0}  Wallet type: {1}")
+    @ArgumentsSource(ShufflingArgumentProvider.class)
+     void shufflingCreateTest(int type, Wallet wallet) {
         log.info("Shuffling Type: "+type);
         ShufflingDTO shufflingDTO;
         int registrationPeriod = RandomUtils.nextInt(500, 10080);
         randomStandart = getRandomStandartWallet();
         randomVault = getRandomVaultWallet();
-
-        for (Wallet wallet : wallets) {
             switch (type) {
                 case SHUFFLING_TYPE_APL:
                     shuffling = shufflingCreate(wallet, registrationPeriod, PARTICIPANT_COUNT, APL_AMOUNT, null, type);
@@ -180,18 +181,17 @@ public class TestShuffling extends TestBaseNew {
 
             waitForShufflingDeleted(shuffling.getTransaction());
             assertShufflingDone(type, recipients);
-        }
     }
 
     @DisplayName("Automation shuffling")
-    @ParameterizedTest(name = "{displayName} Currency type: {0}")
-    @ValueSource(ints = {0, 1, 2})
-    public void shufflingCreateAutomationTest(int type) {
+    @ParameterizedTest(name = "{displayName} Shuffling type: {0}  Wallet type: {1}")
+    @ArgumentsSource(ShufflingArgumentProvider.class)
+    public void shufflingCreateAutomationTest(int type,Wallet wallet) {
         int registrationPeriod = RandomUtils.nextInt(500, 10080);
         randomStandart = getRandomStandartWallet();
         randomVault = getRandomVaultWallet();
 
-        for (Wallet wallet : wallets) {
+
             switch (type) {
                 case SHUFFLING_TYPE_APL:
                     shuffling = shufflingCreate(wallet, registrationPeriod, PARTICIPANT_COUNT, APL_AMOUNT, null, type);
@@ -234,21 +234,19 @@ public class TestShuffling extends TestBaseNew {
             log.info("Shuffling started " + shuffling.getTransaction());
             waitForShufflingDeleted(shuffling.getTransaction());
             assertShufflingDone(type, recipients);
-        }
+
     }
 
 
     @DisplayName("Blame shuffling")
-    @ParameterizedTest(name = "{displayName} Currency type: {0}")
-    @ValueSource(ints = {0, 1, 2})
-    public void shufflingCancelTest(int type) {
+    @ParameterizedTest(name = "{displayName} Shuffling type: {0}  Wallet type: {1}")
+    @ArgumentsSource(ShufflingArgumentProvider.class)
+    void shufflingCancelTest(int type,Wallet wallet) {
         ShufflingDTO shufflingDTO;
         int registrationPeriod = RandomUtils.nextInt(500, 10080);
 
         randomStandart = getRandomStandartWallet();
         randomVault = getRandomVaultWallet();
-
-        for (Wallet wallet : wallets) {
             switch (type) {
                 case SHUFFLING_TYPE_APL:
                     shuffling = shufflingCreate(wallet, registrationPeriod, PARTICIPANT_COUNT, APL_AMOUNT, null, type);
@@ -324,7 +322,6 @@ public class TestShuffling extends TestBaseNew {
             waitForChangeShufflingStage(shuffling.getTransaction(), STAGE_BLAME);
             //TODO: Need implement assert STAGE_CANCELLED after 100 blocks
 
-        }
     }
 
 

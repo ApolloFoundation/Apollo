@@ -1,6 +1,6 @@
-package com.apollocurrrency.aplwallet.inttest.helper;
+package com.apollocurrrency.aplwallet.inttest.helper.annotations;
 
-import org.junit.jupiter.api.extension.ExtendWith;
+import com.apollocurrrency.aplwallet.inttest.helper.providers.DexWalletProvider;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 

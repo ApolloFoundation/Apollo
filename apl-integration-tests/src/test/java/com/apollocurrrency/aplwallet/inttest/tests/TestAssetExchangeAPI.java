@@ -15,7 +15,7 @@ import com.apollocurrency.aplwallet.api.response.AssetsAccountsCountResponse;
 import com.apollocurrency.aplwallet.api.response.AssetsResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrency.aplwallet.api.response.ExpectedAssetDeletes;
-import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
+import com.apollocurrrency.aplwallet.inttest.helper.providers.WalletProvider;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
