@@ -2648,7 +2648,7 @@ public class TestBaseNew extends TestBase {
             .header("Content-Type","multipart/form-data")
             .when()
             .post(path)
-            .then().log().body()
+            .then()
             .assertThat().statusCode(200)
             .extract().body().jsonPath()
             .getObject("", CreateTransactionResponse.class);
