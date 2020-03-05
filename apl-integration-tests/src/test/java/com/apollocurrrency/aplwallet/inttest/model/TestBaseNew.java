@@ -98,6 +98,7 @@ public class TestBaseNew extends TestBase {
         HashMap<String, String> param = new HashMap();
         param.put(ReqType.REQUEST_TYPE, ReqType.GET_TRANSACTION);
         param.put(ReqParam.TRANSACTION, transaction);
+
         return given()
             .spec(restHelper.getSpec())
             .contentType(ContentType.URLENC)
@@ -1830,6 +1831,8 @@ public class TestBaseNew extends TestBase {
         param.put(ReqParam.RECIPIENT, recipient);
         param.put(ReqParam.MESSAGE, testMessage);
         param.put(ReqParam.MESSAGE_IS_PRUNABLE, "true");
+        param.put(ReqParam.FEE, "100000000000");
+        param.put(ReqParam.DEADLINE, "1440");;
 
         return given().log().all()
             .spec(restHelper.getSpec())
