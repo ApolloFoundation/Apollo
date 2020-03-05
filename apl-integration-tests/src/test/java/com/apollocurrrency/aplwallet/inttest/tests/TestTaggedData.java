@@ -53,7 +53,7 @@ public class TestTaggedData extends TestBaseNew {
         log.info("Data channel: {}", channel);
     }
 
-    @DisplayName("upload TaggedData")
+    @DisplayName("Upload tagged data")
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     void TaggedDataTest(Wallet wallet) {

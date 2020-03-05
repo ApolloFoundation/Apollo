@@ -2406,12 +2406,12 @@ public class TestBaseNew extends TestBase {
 
         return given().log().all()
             .spec(restHelper.getSpec())
-            .multiPart(ReqParam.MESSAGE_FILE,file)
+            .multiPart(ReqParam.FILE,file)
             .queryParams(param)
             .header("Content-Type","multipart/form-data")
             .when()
             .post(path)
-            .then().log().body()
+            .then()
             .assertThat().statusCode(200)
             .extract().body().jsonPath()
             .getObject("", CreateTransactionResponse.class);
@@ -2440,6 +2440,7 @@ public class TestBaseNew extends TestBase {
     public TaggedDataDTO getTaggedData(String transaction) {
         HashMap<String, String> param = new HashMap();
         param.put(ReqType.REQUEST_TYPE, ReqType.GET_TAGGED_DATA);
+        param.put(ReqParam.TRANSACTION,transaction);
 
         return given().log().all()
             .spec(restHelper.getSpec())
