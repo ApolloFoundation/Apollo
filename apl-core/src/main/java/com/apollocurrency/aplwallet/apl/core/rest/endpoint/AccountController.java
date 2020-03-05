@@ -52,6 +52,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.parameter.AccountIdParameter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.OrderService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
+import com.apollocurrency.aplwallet.apl.core.rest.validation.ValidBlockchainHeight;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
@@ -275,11 +276,10 @@ public class AccountController {
         @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
         @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
         @Parameter(description = "The height of the blockchain to determine the asset count (optional, default is last block).")
-        @QueryParam("height") @PositiveOrZero Integer heightParam) {
+        @QueryParam("height") @DefaultValue("-1") @ValidBlockchainHeight int height) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
         long accountId  = accountIdParameter.get();
-        int height = restParametersParser.validateHeight(heightParam);
 
         AccountAssetsCountResponse dto = new AccountAssetsCountResponse();
         dto.setNumberOfAssets(accountAssetService.getCountByAccount(accountId, height));
@@ -309,7 +309,7 @@ public class AccountController {
             @Parameter(description = "The asset ID (optional).")
             @QueryParam("asset") @PositiveOrZero Long assetId,
             @Parameter(description = "The height of the blockchain to determine the asset count (optional, default is last block).")
-            @QueryParam("height") @PositiveOrZero Integer heightParam,
+            @QueryParam("height") @DefaultValue("-1") @ValidBlockchainHeight int height,
             @Parameter(description = "Include asset information (optional).")
             @QueryParam("includeAssetInfo") @DefaultValue("false") boolean includeAssetInfo,
             @Parameter(description = "A zero-based index to the first asset ID to retrieve (optional)." )
@@ -320,7 +320,6 @@ public class AccountController {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
         long accountId  = accountIdParameter.get();
-        int height = restParametersParser.validateHeight(heightParam);
 
         if (assetId == null || assetId == 0) {
             List<AccountAsset> accountAssets = accountAssetService.getAssetsByAccount(accountId, height, firstIndex, lastIndex);
@@ -456,13 +455,14 @@ public class AccountController {
             })
     @PermitAll
     public Response getAccountCurrencyCount(
-            @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
-            @Parameter(description = "The height of the blockchain to determine the currency count (optional, default is last block).") @QueryParam("height") @PositiveOrZero Integer heightParam
+            @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
+            @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
+            @Parameter(description = "The height of the blockchain to determine the currency count (optional, default is last block).")
+            @QueryParam("height") @DefaultValue("-1") @ValidBlockchainHeight int height
             ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
         long accountId  = accountIdParameter.get();
-        int height = restParametersParser.validateHeight(heightParam);
 
         Integer count = accountCurrencyService.getCountByAccount(accountId, height);
 
@@ -489,7 +489,7 @@ public class AccountController {
             @Parameter(description = "The currency ID (optional)." )
             @QueryParam("currency") @PositiveOrZero Long currencyId,
             @Parameter(description = "The height of the blockchain to determine the currencies (optional, default is last block).")
-            @QueryParam("height") @PositiveOrZero Integer heightParam,
+            @QueryParam("height") @DefaultValue("-1") @ValidBlockchainHeight int height,
             @Parameter(description = "Include additional currency info (optional)" )
             @QueryParam("includeCurrencyInfo") @DefaultValue("false") boolean includeCurrencyInfo,
             @Parameter(description = "A zero-based index to the first currency ID to retrieve (optional)." )
@@ -500,7 +500,6 @@ public class AccountController {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
         long accountId  = accountIdParameter.get();
-        int height = restParametersParser.validateHeight(heightParam);
         if (currencyId == null || currencyId == 0) {
             List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrenciesByAccount(accountId, height, firstIndex, lastIndex);
             List<AccountCurrencyDTO> accountCurrencyDTOList = accountCurrencyConverter.convert(accountCurrencies);

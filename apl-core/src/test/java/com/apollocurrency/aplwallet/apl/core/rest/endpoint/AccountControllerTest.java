@@ -370,10 +370,10 @@ class AccountControllerTest extends AbstractEndpointTest{
     }
 
     @Test
-    void getAccountAssetCount_whenCallwithWrongHeight_thenGetError_2004() throws URISyntaxException, IOException {
+    void getAccountAssetCount_whenCallwithWrongHeight_thenGetError_2001() throws URISyntaxException, IOException {
         MockHttpResponse response = sendGetRequest("/accounts/asset-count?account="+ACCOUNT_ID+"&height="+(CURRENT_HEIGHT+10));
 
-        checkMandatoryParameterMissingErrorCode(response, 2004);
+        checkMandatoryParameterMissingErrorCode(response, 2001);
     }
 
     @Test
@@ -417,11 +417,11 @@ class AccountControllerTest extends AbstractEndpointTest{
     }
 
     @Test
-    void getAccountAssets_whenCallwithWrongHeight_thenGetError_2004() throws URISyntaxException, IOException {
+    void getAccountAssets_whenCallwithWrongHeight_thenGetError_2001() throws URISyntaxException, IOException {
         doReturn(CURRENT_HEIGHT).when(accountService).getBlockchainHeight();
         MockHttpResponse response = sendGetRequest("/accounts/assets?account="+ACCOUNT_ID+"&height="+(CURRENT_HEIGHT+10));
 
-        checkMandatoryParameterMissingErrorCode(response, 2004);
+        checkMandatoryParameterMissingErrorCode(response, 2001);
     }
 
     @Test
@@ -478,10 +478,10 @@ class AccountControllerTest extends AbstractEndpointTest{
     }
 
     @Test
-    void getAccountCurrencyCount_whenCallwithWrongHeight_thenGetError_2004() throws URISyntaxException, IOException {
+    void getAccountCurrencyCount_whenCallwithWrongHeight_thenGetError_2001() throws URISyntaxException, IOException {
         MockHttpResponse response = sendGetRequest("/accounts/currency-count?account="+ACCOUNT_ID+"&height="+(CURRENT_HEIGHT+10));
 
-        checkMandatoryParameterMissingErrorCode(response, 2004);
+        checkMandatoryParameterMissingErrorCode(response, 2001);
     }
 
     @Test
@@ -509,11 +509,11 @@ class AccountControllerTest extends AbstractEndpointTest{
     }
 
     @Test
-    void getAccountCurrencies_whenCallwithWrongHeight_thenGetError_2004() throws URISyntaxException, IOException {
+    void getAccountCurrencies_whenCallwithWrongHeight_thenGetError_2001() throws URISyntaxException, IOException {
         doReturn(CURRENT_HEIGHT).when(accountService).getBlockchainHeight();
         MockHttpResponse response = sendGetRequest("/accounts/currencies?account="+ACCOUNT_ID+"&height="+(CURRENT_HEIGHT+10));
 
-        checkMandatoryParameterMissingErrorCode(response, 2004);
+        checkMandatoryParameterMissingErrorCode(response, 2001);
     }
 
     @Test
@@ -677,7 +677,7 @@ class AccountControllerTest extends AbstractEndpointTest{
 
     @ParameterizedTest(name = "{index} url={arguments}")
     @ValueSource(strings = {"/accounts/disable2fa","/accounts/confirm2fa","/accounts/delete-key"})
-    public void check2FA_withoutRequestAttribute_thenGetError_1000(String uri) throws URISyntaxException, IOException {
+    public void check2FA_withoutRequestAttribute_thenGetError_2001(String uri) throws URISyntaxException, IOException {
         MockHttpResponse response = sendPostRequest(uri,"wrong=value");
 
         checkMandatoryParameterMissingErrorCode(response, 2001);
