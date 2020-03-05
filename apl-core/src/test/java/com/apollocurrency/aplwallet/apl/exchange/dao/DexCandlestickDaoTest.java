@@ -100,4 +100,11 @@ class DexCandlestickDaoTest {
         assertEquals(11, dao.getForTimespan(0, Integer.MAX_VALUE, DexCurrency.ETH).size());
     }
 
+    @Test
+    void testGetLastBeforeTimestamp() {
+        DexCandlestick last = dao.getLast(DexCurrency.PAX, td.PAX_3_CANDLESTICK.getTimestamp());
+
+        assertEquals(td.PAX_2_CANDLESTICK, last);
+    }
+
 }

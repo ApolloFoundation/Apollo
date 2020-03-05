@@ -19,7 +19,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import org.slf4j.Logger;
 
 import java.sql.Array;
 import java.sql.Connection;
@@ -29,7 +29,7 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Arrays;
 
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public final class DbUtils {
     private static final Logger log = getLogger(DbUtils.class);
@@ -153,13 +153,12 @@ public final class DbUtils {
         }
     }
 
-    public static Integer calculateLimit(Integer from, Integer to) {
-        int limit = to >=0 && to >= from && to < Integer.MAX_VALUE ? to - from + 1 : 0;
-        return limit;
+    public static int calculateLimit(int from, int to) {
+        return to >=0 && to >= from && to < Integer.MAX_VALUE ? to - from + 1 : 0;
     }
 
     public static String limitsClause(int from, int to) {
-        int limit = to >=0 && to >= from && to < Integer.MAX_VALUE ? to - from + 1 : 0;
+        int limit = calculateLimit(from, to);
         if (limit > 0 && from > 0) {
             return " LIMIT ? OFFSET ? ";
         } else if (limit > 0) {
@@ -172,7 +171,7 @@ public final class DbUtils {
     }
 
     public static int setLimits(int index, PreparedStatement pstmt, int from, int to) throws SQLException {
-        int limit = to >=0 && to >= from && to < Integer.MAX_VALUE ? to - from + 1 : 0;
+        int limit = calculateLimit(from, to);
         if (limit > 0) {
             pstmt.setInt(index++, limit);
         }

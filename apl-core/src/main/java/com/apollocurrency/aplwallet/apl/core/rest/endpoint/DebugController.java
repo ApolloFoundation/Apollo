@@ -6,6 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfoResponse;
 import com.apollocurrency.aplwallet.apl.core.rest.service.DebugService;
+
+import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -53,6 +55,7 @@ public class DebugController {
                                     schema = @Schema(implementation = FileDownloadInfoResponse.class)))
             }
     )
+    @PermitAll
     public Response startDownload(@PathParam(value = "id") String id, @QueryParam(value="password") String password){
         
         FileDownloadInfoResponse infoResponse = new FileDownloadInfoResponse();

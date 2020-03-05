@@ -34,6 +34,11 @@ public interface DexCandlestickDao {
     @RegisterRowMapper(DexCandlestickMapper.class)
     DexCandlestick getLast();
 
+    @Transactional(readOnly = true)
+    @SqlQuery("SELECT * FROM dex_candlestick WHERE coin = :pairedCoin AND timestamp < :timestamp ORDER BY timestamp DESC LIMIT 1")
+    @RegisterRowMapper(DexCandlestickMapper.class)
+    DexCandlestick getLast(@Bind("pairedCoin") DexCurrency pairedCoin, @Bind("timestamp") int beforeTimestamp);
+
     @Transactional
     @SqlUpdate("DELETE FROM dex_candlestick")
     int removeAll();

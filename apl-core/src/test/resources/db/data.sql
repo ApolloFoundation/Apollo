@@ -37,6 +37,7 @@ delete from mandatory_transaction;
 delete from dex_contract;
 delete from dex_transaction;
 delete from user_error_message;
+delete from PUBLIC.ACCOUNT_INFO;
 
 INSERT INTO PUBLIC.BLOCK
 (DB_ID,         ID,                HEIGHT,      VERSION,   "TIMESTAMP",  PREVIOUS_BLOCK_ID,  TOTAL_AMOUNT,        TOTAL_FEE,   PAYLOAD_LENGTH,   PREVIOUS_BLOCK_HASH,                                                   CUMULATIVE_DIFFICULTY,  BASE_TARGET,    NEXT_BLOCK_ID,               GENERATION_SIGNATURE,                                                   BLOCK_SIGNATURE,                                                                                                                        PAYLOAD_HASH,                                                           GENERATOR_ID,       TIMEOUT) VALUES
@@ -86,7 +87,17 @@ insert into account
 (20          ,100                           ,100000000          , 100000000             ,false                  ,0                  ,null               ,104595     ,true ),
 (30          ,200                           , 250000000         , 200000000             ,false                  ,0                  , null              ,104670     ,true ),
 (40          ,7821792282123976600           , 15025000000000    , 14725000000000        ,false                  ,0                  , null              ,105000     ,true ),
-(50          ,9211698109297098287           , 25100000000000    , 22700000000000        ,false                  ,0                  , null              ,106000     ,true )
+(50          ,9211698109297098287           , 25100000000000    , 22700000000000        ,false                  ,0                  , null              ,106000     ,true ),
+(60     ,500                    ,77182383705332315  ,77182383705332315      ,false                  ,0                  ,null               ,141839     ,false),
+(70     ,500                    ,77216366305332315  ,77216366305332315      ,false                  ,0                  ,null               ,141844     ,false),
+(80     ,500                    ,77798522705332315  ,77798522705332315      ,false                  ,0                  ,null               ,141853     ,true),
+(90     ,600                    ,40767800000000     ,40767800000000         ,false                  ,0                  ,null               ,141855     ,false),
+(100    ,600                    ,41167700000000     ,41167700000000         ,false                  ,0                  ,null               ,141858     ,true),
+(110    ,700                    ,2424711969422000   ,2424711969422000       ,false                  ,1150030000000      ,null               ,141860     ,true),
+(120    ,800                    ,2424711869422000   ,2424711869422000       ,false                  ,1150030000000      ,null               ,141862     ,false),
+(130    ,800                    ,2424711769422000   ,2424711769422000       ,false                  ,1150030000000      ,null               ,141864     ,false),
+(140    ,800                    ,77200915499807515  ,77200915499807515      ,false                  ,0                  ,null               ,141866     ,false),
+(150    ,800                    ,40367900000000     ,40367900000000         ,false                  ,0                  ,null               ,141868     ,false)
 ;
 
 INSERT INTO PUBLIC.TWO_FACTOR_AUTH (account, secret, confirmed) VALUES
@@ -425,4 +436,12 @@ INSERT INTO user_error_message
 (100,            '0x0398E119419E0D7792c53913d3f370f9202Ae137', 'Invalid transaction' ,'deposit',  '900'                                                             , 1000),
 (200,            '0x8e96e98b32c56115614B64704bA35feFE9e8f7bC', 'Out of gas'          ,'redeem',   '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', 1100),
 (300,            '0x0398E119419E0D7792c53913d3f370f9202Ae137', 'Double spending'     ,'withdraw', '100'                                                              ,1200)
+;
+INSERT INTO PUBLIC.ACCOUNT_INFO (DB_ID, ACCOUNT_ID, NAME, DESCRIPTION, HEIGHT, LATEST) VALUES
+(3, 100, 'Madan Reddy', 'Apollo Community tokens', 2331, true),
+(5, 110, 'ZT', null, 3073, true),
+(6, 120, 'CALIGULA', null, 3559, true),
+(7, 130, 'Adnan Celik', null, 3563, true),
+(10, 140, 'Vasily', 'Front end wallet ui/ux', 26068, true),
+(15, 150, 'CALIGULA shubham nitin bhabad', 'abuse brain fright always', 70858, true)
 ;

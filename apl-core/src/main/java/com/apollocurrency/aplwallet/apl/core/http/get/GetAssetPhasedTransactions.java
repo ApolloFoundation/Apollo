@@ -27,7 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -48,10 +48,10 @@ public class GetAssetPhasedTransactions extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
-        long assetId = ParameterParser.getUnsignedLong(req, "asset", true);
-        long accountId = ParameterParser.getAccountId(req, false);
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
+        long assetId = HttpParameterParserUtil.getUnsignedLong(req, "asset", true);
+        long accountId = HttpParameterParserUtil.getAccountId(req, false);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
         boolean withoutWhitelist = "true".equalsIgnoreCase(req.getParameter("withoutWhitelist"));
 
         JSONArray transactions = new JSONArray();

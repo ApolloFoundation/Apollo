@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Poll;
 import javax.enterprise.inject.Vetoed;
@@ -40,7 +40,7 @@ public final class GetPoll extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        Poll poll = ParameterParser.getPoll(req);
+        Poll poll = HttpParameterParserUtil.getPoll(req);
         return JSONData.poll(poll);
     }
 }

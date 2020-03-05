@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Trade;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -40,12 +40,12 @@ public final class GetAllTrades extends AbstractAPIRequestHandler {
     public GetAllTrades() {
         super(new APITag[] {APITag.AE}, "timestamp", "firstIndex", "lastIndex", "includeAssetInfo");
     }
-    
+
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        final int timestamp = ParameterParser.getTimestamp(req);
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
+        final int timestamp = HttpParameterParserUtil.getTimestamp(req);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
         boolean includeAssetInfo = "true".equalsIgnoreCase(req.getParameter("includeAssetInfo"));
 
         JSONObject response = new JSONObject();

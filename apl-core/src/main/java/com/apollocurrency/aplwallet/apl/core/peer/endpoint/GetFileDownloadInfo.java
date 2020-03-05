@@ -21,7 +21,7 @@ import javax.inject.Inject;
 public class GetFileDownloadInfo extends PeerRequestHandler{
 
     private DownloadableFilesManager downloadableFilesManager;
-    
+
     @Inject
     public GetFileDownloadInfo(DownloadableFilesManager downloadableFilesManager) {
         this.downloadableFilesManager = downloadableFilesManager;
@@ -40,12 +40,12 @@ public class GetFileDownloadInfo extends PeerRequestHandler{
         }
         JSONObject response = mapper.convertValue(res, JSONObject.class);
         log.debug("GetFileDownloadInfo response = {}", response);
-        return response;        
+        return response;
     }
 
     @Override
     public boolean rejectWhileDownloading() {
        return false;
     }
-    
+
 }

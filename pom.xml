@@ -5,7 +5,7 @@
 
   <groupId>com.apollocurrency</groupId>
   <artifactId>apollo-wallet</artifactId>
-  <version>1.41.7</version>
+  <version>1.42.0</version>
   <packaging>pom</packaging>
   <name>Apollo wallet</name>
 
@@ -72,15 +72,15 @@
         <!-- cross-platform zip distribution -->
         <zipname>apollo-wallet</zipname>
         <!--Dependency Versions-->
-      <web-wallet.version>2.5.41</web-wallet.version>
+      <web-wallet.version>2.5.52</web-wallet.version>
         <!--Web-->
         <servlet-api.version>3.1.0</servlet-api.version>
         <!--  -->
-        <antifraud.version>1.0.6</antifraud.version>
+        <antifraud.version>1.0.7</antifraud.version>
 
     <!--Crypto-->
 
-    <fbcrypto.version>1.2.8</fbcrypto.version>
+    <fbcrypto.version>1.2.10</fbcrypto.version>
     <bcprov.version>1.64</bcprov.version>
 
 
@@ -102,7 +102,7 @@
     <lucene.version>7.5.0</lucene.version>
 
     <!--Db-->
-    <h2.version>1.4.200</h2.version>
+    <h2.version>1.4.199</h2.version>
 
     <!--Logging-->
     <slf4j.version>1.7.22</slf4j.version>
@@ -122,8 +122,8 @@
     <weld-junit5.version>2.0.1.Final</weld-junit5.version>
     <rs-api.version>2.1.1</rs-api.version>
     <resteasy.version>4.4.2.Final</resteasy.version>
-    <swagger.version>2.1.0</swagger.version>
-    <junit5-bom.version>5.5.2</junit5-bom.version>
+    <swagger.version>2.1.1</swagger.version>
+    <junit5-bom.version>5.6.0</junit5-bom.version>
     <mockito.version>3.0.0</mockito.version>
     <hikari.version>3.4.1</hikari.version>
     <jcommander.version>1.72</jcommander.version>
@@ -199,6 +199,10 @@
           <exclusion>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.junit</groupId>
+            <artifactId>junit-bom</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -359,6 +363,11 @@
       <dependency>
         <groupId>org.jboss.resteasy</groupId>
         <artifactId>resteasy-cdi</artifactId>
+        <version>${resteasy.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.resteasy</groupId>
+        <artifactId>resteasy-multipart-provider</artifactId>
         <version>${resteasy.version}</version>
       </dependency>
 <!--      Validation-->
@@ -571,6 +580,13 @@
         <artifactId>mockito-junit-jupiter</artifactId>
         <version>${mockito.version}</version>
       </dependency>
+      <!-- RESTEasy Validator Provider -->
+      <dependency>
+        <groupId>org.jboss.resteasy</groupId>
+        <artifactId>resteasy-validator-provider</artifactId>
+        <version>${resteasy.version}</version>
+        <scope>test</scope>
+      </dependency>
       <!-- Desktop JAVAFX libraries -->
       <dependency>
         <groupId>org.openjfx</groupId>
@@ -737,14 +753,14 @@
             <useSystemClassLoader>false</useSystemClassLoader>
           </configuration>
           <dependencies>
-            <!--
-                                    JDK 11
-                                    <dependency>
-                                        <groupId>org.ow2.asm</groupId>
-                                        <artifactId>asm</artifactId>
-                                        <version>6.2</version>
-                                    </dependency>
-            -->
+<!--
+                        JDK 11
+                        <dependency>
+                            <groupId>org.ow2.asm</groupId>
+                            <artifactId>asm</artifactId>
+                            <version>6.2</version>
+                        </dependency>
+-->
             <dependency>
               <groupId>org.apache.maven.wagon</groupId>
               <artifactId>wagon-webdav-jackrabbit</artifactId>

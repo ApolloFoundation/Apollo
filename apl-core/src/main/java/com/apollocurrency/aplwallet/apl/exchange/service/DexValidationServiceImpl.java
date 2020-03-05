@@ -4,7 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -14,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
+import com.apollocurrency.aplwallet.apl.exchange.DexConfig;
 import com.apollocurrency.aplwallet.apl.exchange.dao.EthGasStationInfoDao;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
@@ -32,8 +34,6 @@ import java.math.BigInteger;
 import java.util.Objects;
 
 import static com.apollocurrency.aplwallet.apl.util.Constants.APL_COMMISSION;
-import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
-import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
 import static com.apollocurrency.aplwallet.apl.util.Constants.ETH_GAS_MULTIPLIER;
 import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_APL_COMMISSION;
 import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_APL_DEPOSIT;
@@ -60,29 +60,38 @@ public class DexValidationServiceImpl implements IDexValidator {
     private DexSmartContractService dexSmartContractService;
     private EthereumWalletService ethereumWalletService;
     private EthGasStationInfoDao ethGasStationInfoDao;
+    private AccountService accountService;
     private TimeService timeService;
     private PhasingPollService phasingPollService;
     private Blockchain blockchain;
+    private DexConfig dexConfig;
 
     @Inject
-    DexValidationServiceImpl(DexSmartContractService dexSmartContractService, EthereumWalletService ethereumWalletService, EthGasStationInfoDao ethGasStationInfoDao, TimeService timeService,
-                             PhasingPollService phasingPollService, Blockchain blockchain) {
+    DexValidationServiceImpl(DexSmartContractService dexSmartContractService, EthereumWalletService ethereumWalletService, EthGasStationInfoDao ethGasStationInfoDao,
+                             AccountService accountService,
+                             TimeService timeService,
+                             PhasingPollService phasingPollService,
+                             Blockchain blockchain,
+                             DexConfig dexConfig
+                             ) {
         this.dexSmartContractService = Objects.requireNonNull(dexSmartContractService, "dexSmartContractService is null");
         this.ethereumWalletService = Objects.requireNonNull(ethereumWalletService, "ethereumWalletService is null");
-        this.ethGasStationInfoDao = Objects.requireNonNull(ethGasStationInfoDao, "ethGasStationInfoDao is null");
+        this.ethGasStationInfoDao = Objects.requireNonNull( ethGasStationInfoDao, "ethGasStationInfoDao is null");
+        this.accountService = Objects.requireNonNull(accountService, "accountService is null");
         this.timeService = Objects.requireNonNull(timeService, "timeService is null");
         this.phasingPollService = Objects.requireNonNull(phasingPollService, "phasingPollService is null");
         this.blockchain = Objects.requireNonNull(blockchain, "blockchain is null");
+        this.dexConfig = dexConfig;
     }
 
     Long getAplUnconfirmedBalance(Long hisAccountID) {
-        Account hisAccount = Account.getAccount(hisAccountID);
+        Account hisAccount = accountService.getAccount(hisAccountID);
         long hisUnconfirmedAplBalance = hisAccount.getUnconfirmedBalanceATM();
         return hisUnconfirmedAplBalance;
     }
 
     Long getAplBalanceAtm(Long hisAccountID) {
-        Account hisAccount = Account.getAccount(hisAccountID);
+        Account hisAccount = accountService.getAccount(hisAccountID);
         Long hisAplBalance = hisAccount.getBalanceATM();
         return hisAplBalance;
     }
@@ -293,12 +302,12 @@ public class DexValidationServiceImpl implements IDexValidator {
             log.debug("Time is expired, unable to proceed with exchange process, order - {}", orderID);
             return false;
         }
-        if (timeLeft < DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS) {
-            log.warn("Will not participate in atomic swap (not enough time), timeLeft {} min, expected at least {} min. order - {}", timeLeft / 60, DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS / 60, orderID);
+        if (timeLeft < dexConfig.getMinAtomicSwapDurationWithDeviation()) {
+            log.warn("Will not participate in atomic swap (not enough time), timeLeft {} min, expected at least {} min. order - {}", timeLeft / 60, dexConfig.getMinAtomicSwapDurationWithDeviation() / 60, orderID);
             return false;
         }
-        if (timeLeft > DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS) {
-            log.warn("Will not participate in atomic swap (duration is too long), timeLeft {} min, expected not above {} min. order - {}", timeLeft / 60, DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS / 60, orderID);
+        if (timeLeft > dexConfig.getMaxAtomicSwapDurationWithDeviation()) {
+            log.warn("Will not participate in atomic swap (duration is too long), timeLeft {} min, expected not above {} min. order - {}", timeLeft / 60, dexConfig.getMaxAtomicSwapDurationWithDeviation() / 60, orderID);
             return false;
         }
         return true;

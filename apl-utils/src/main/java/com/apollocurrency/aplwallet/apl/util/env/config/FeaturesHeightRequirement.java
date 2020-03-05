@@ -14,17 +14,17 @@ import lombok.ToString;
 @NoArgsConstructor
 public class FeaturesHeightRequirement {
     private Integer dexReopenPendingOrdersHeight;
-    private Integer dexExpiredContractWithFinishedPhasingHeight;
+    private Integer dexExpiredContractWithFinishedPhasingHeightAndStep3;
 
     @JsonCreator
     public FeaturesHeightRequirement(@JsonProperty("dexReopenPendingOrdersHeight") Integer dexReopenPendingOrdersHeight,
-                                     @JsonProperty("dexExpiredContractWithFinishedPhasingHeight") Integer dexExpiredContractWithFinishedPhasingHeight
+                                     @JsonProperty("dexExpiredContractWithFinishedPhasingHeightAndStep3") Integer dexExpiredContractWithFinishedPhasingHeightAndStep3
     ) {
         this.dexReopenPendingOrdersHeight = dexReopenPendingOrdersHeight;
-        this.dexExpiredContractWithFinishedPhasingHeight = dexExpiredContractWithFinishedPhasingHeight;
+        this.dexExpiredContractWithFinishedPhasingHeightAndStep3 = dexExpiredContractWithFinishedPhasingHeightAndStep3;
     }
 
     public FeaturesHeightRequirement copy(){
-        return new FeaturesHeightRequirement(dexReopenPendingOrdersHeight, dexExpiredContractWithFinishedPhasingHeight);
+        return new FeaturesHeightRequirement(dexReopenPendingOrdersHeight, dexExpiredContractWithFinishedPhasingHeightAndStep3);
     }
 }

@@ -5,7 +5,7 @@
   <parent>
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-wallet</artifactId>
-    <version>1.41.7</version>
+    <version>1.42.0</version>
   </parent>
 
   <artifactId>apl-core</artifactId>
@@ -17,6 +17,16 @@
       <groupId>com.apollocurrency</groupId>
       <artifactId>apl-crypto</artifactId>
       <version>${project.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-log4j12</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.junit</groupId>
+          <artifactId>junit-bom</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.apollocurrency</groupId>
@@ -31,6 +41,16 @@
     <dependency>
       <groupId>io.firstbridge</groupId>
       <artifactId>cryptolib</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-log4j12</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.junit</groupId>
+          <artifactId>junit-bom</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>
@@ -86,12 +106,16 @@
       <artifactId>resteasy-jackson2-provider</artifactId>
     </dependency>
     <!-- we do not need validation at the moment, but keep in mind that it is interface
-         only and requires implementation laso, e.g hybernate-validator
-            <dependency>
-                <groupId>org.jboss.resteasy</groupId>
-                <artifactId>resteasy-validator-provider-11</artifactId>
-            </dependency>
-    -->
+         only and requires implementation laso, e.g hybernate-validator -->
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-validator-provider</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-multipart-provider</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
       <artifactId>resteasy-cdi</artifactId>
@@ -285,7 +309,7 @@
     <dependency>
       <groupId>com.apollocurrency.antifraud</groupId>
       <artifactId>antifraud</artifactId>
-      <version>1.0.4</version>
+      <version>1.0.7</version>
     </dependency>
 
     <!-- Ethereum API -->

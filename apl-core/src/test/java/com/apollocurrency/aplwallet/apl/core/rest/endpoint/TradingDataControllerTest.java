@@ -5,7 +5,6 @@ import com.apollocurrency.aplwallet.api.trading.TradingDataOutput;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.TradingDataOutputToDtoConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.LegacyParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
-import com.apollocurrency.aplwallet.apl.exchange.service.graph.CandlestickTestUtil;
 import com.apollocurrency.aplwallet.apl.exchange.service.graph.DexTradingDataService;
 import com.apollocurrency.aplwallet.apl.exchange.service.graph.TimeFrame;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,8 +21,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.List;
 
+import static com.apollocurrency.aplwallet.apl.exchange.service.graph.CandlestickTestUtil.dec;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.doReturn;
 @ExtendWith(MockitoExtension.class)
@@ -37,18 +36,23 @@ class TradingDataControllerTest {
     @BeforeEach
     void setup(){
         dispatcher = MockDispatcherFactory.createDispatcher();
-        TradingDataController tradingDataController = new TradingDataController();
-        tradingDataController.setService(service);
+        TradingDataController tradingDataController = new TradingDataController(service, null, null);
         dispatcher.getRegistry().addSingletonResource(tradingDataController);
         dispatcher.getProviderFactory().registerProvider(LegacyParameterExceptionMapper.class);
-        tradingDataOutput.setData(List.of(CandlestickTestUtil.fromRawData("100", "200", "150", "180", "659400.34", "325000.025", 14400)));
+        tradingDataOutput.init();
+        tradingDataOutput.getL().add(dec("100"));
+        tradingDataOutput.getH().add(dec("200"));
+        tradingDataOutput.getO().add(dec("150"));
+        tradingDataOutput.getC().add(dec("180"));
+        tradingDataOutput.getV().add(dec("659400.34"));
+        tradingDataOutput.getT().add(14400);
     }
 
     @Test
     void testGetCandlesticks() throws URISyntaxException, IOException {
-        doReturn(tradingDataOutput).when(service).getForTimeFrame(15000, 1, DexCurrency.ETH, TimeFrame.HOUR);
+        doReturn(tradingDataOutput).when(service).getBars(14000, 15000, DexCurrency.ETH, TimeFrame.HOUR);
 
-        MockHttpRequest request = MockHttpRequest.get("/dex/chart?fsym=APL&tsym=ETH&toTs=15000&limit=1&timeFrame=HOUR").contentType(MediaType.APPLICATION_JSON_TYPE);
+        MockHttpRequest request = MockHttpRequest.get("/dex/chart?symbol=ETH&from=14000&to=15000&resolution=60").contentType(MediaType.APPLICATION_JSON_TYPE);
         MockHttpResponse response = new MockHttpResponse();
         dispatcher.invoke(request, response);
 
@@ -60,8 +64,8 @@ class TradingDataControllerTest {
     }
 
     @Test
-    void testGetCandlesticksForWrongBaseCurrencyType() throws URISyntaxException, IOException {
-        MockHttpRequest request = MockHttpRequest.get("/dex/chart?fsym=ETH&tsym=APL&toTs=15000&limit=1&timeFrame=HOUR").contentType(MediaType.APPLICATION_JSON_TYPE);
+    void testGetCandlesticksForWrongCurrencyType() throws URISyntaxException, IOException {
+        MockHttpRequest request = MockHttpRequest.get("/dex/chart?symbol=ETH/APL&from=14000&to=15000&resolution=HOUR").contentType(MediaType.APPLICATION_JSON_TYPE);
         MockHttpResponse response = new MockHttpResponse();
         dispatcher.invoke(request, response);
 
@@ -69,12 +73,12 @@ class TradingDataControllerTest {
 
         String json = response.getContentAsString();
         Error error = mapper.readValue(json, Error.class);
-        assertEquals("Base currency should be equal to 'APL'", error.getErrorDescription());
+        assertEquals("Incorrect symbol, Paired currency should not be equal to 'APL'", error.getErrorDescription());
     }
 
     @Test
-    void testGetCandlesticksForWrongPairedCurrencyType() throws URISyntaxException, IOException {
-        MockHttpRequest request = MockHttpRequest.get("/dex/chart?fsym=APL&tsym=APL&toTs=15000&limit=1&timeFrame=HOUR").contentType(MediaType.APPLICATION_JSON_TYPE);
+    void testGetCandlesticksForFromTimestampGreaterThanToTimestamp() throws URISyntaxException, IOException {
+        MockHttpRequest request = MockHttpRequest.get("/dex/chart?symbol=APL/ETH&from=15000&to=15000&resolution=D").contentType(MediaType.APPLICATION_JSON_TYPE);
         MockHttpResponse response = new MockHttpResponse();
         dispatcher.invoke(request, response);
 
@@ -82,7 +86,7 @@ class TradingDataControllerTest {
 
         String json = response.getContentAsString();
         Error error = mapper.readValue(json, Error.class);
-        assertEquals("Paired currency should not be equal to 'APL'", error.getErrorDescription());
+        assertEquals("'from' is greater or equal to 'to'", error.getErrorDescription());
     }
 
 }

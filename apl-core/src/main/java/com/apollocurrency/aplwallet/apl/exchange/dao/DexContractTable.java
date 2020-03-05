@@ -54,9 +54,9 @@ public class DexContractTable  extends VersionedDeletableEntityDbTable<ExchangeC
 
     @Override
     public void save(Connection con, ExchangeContract entity) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO dex_contract (id, offer_id, counter_offer_id, " +
+        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO dex_contract (id, offer_id, counter_offer_id, " +
                 "sender, recipient, secret_hash, encrypted_secret, transfer_tx_id, counter_transfer_tx_id, deadline_to_reply, status, height, latest) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+            "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
             int i = 0;
             pstmt.setLong(++i, entity.getId());
             pstmt.setLong(++i, entity.getOrderId());
@@ -93,6 +93,23 @@ public class DexContractTable  extends VersionedDeletableEntityDbTable<ExchangeC
         return CollectionUtil.toList(dbIterator);
     }
 
+    public List<ExchangeContract> getByOrderIdAndHeight(long orderId, int height) throws AplException.ExecutiveProcessException {
+        try (Connection con = getDatabaseManager().getDataSource().getConnection();
+             PreparedStatement pstmt = con
+                 .prepareStatement("SELECT * FROM dex_contract  where latest = true " +
+                     "AND height = ? AND (offer_id = ? OR counter_offer_id = ?)")
+        ) {
+            int i = 0;
+            pstmt.setInt(++i, height);
+            pstmt.setLong(++i, orderId);
+            pstmt.setLong(++i, orderId);
+
+            return CollectionUtil.toList(getManyBy(con, pstmt, true));
+        } catch (SQLException ex) {
+            throw new AplException.ExecutiveProcessException(ex.getMessage(), ex);
+        }
+    }
+
     public ExchangeContract getLastByOrder(Long orderId) {
         List<ExchangeContract> allByOrder = getAllByLongParameterFromStatusHeightSorted(orderId, "offer_id", 1);
         return getFirstOrNull(allByOrder);
@@ -118,10 +135,22 @@ public class DexContractTable  extends VersionedDeletableEntityDbTable<ExchangeC
     }
 
     public List<ExchangeContract> getOverdueContractsStep1and2(int deadlineToReply) throws AplException.ExecutiveProcessException {
+        String sql = "SELECT * FROM dex_contract  where latest = true " +
+            "AND status IN (0,1) AND deadline_to_reply < ?";
+
+        return getOverdueContracts(deadlineToReply, sql);
+    }
+    public List<ExchangeContract> getOverdueContractsStep1_2_3(int deadlineToReply) throws AplException.ExecutiveProcessException {
+        String sql = "SELECT * FROM dex_contract  where latest = true " +
+            "AND status IN (0,1,2) AND deadline_to_reply < ?";
+
+        return getOverdueContracts(deadlineToReply, sql);
+    }
+
+    private List<ExchangeContract> getOverdueContracts(int deadlineToReply, String sql) throws AplException.ExecutiveProcessException {
         try (Connection con = getDatabaseManager().getDataSource().getConnection();
              PreparedStatement pstmt = con
-                     .prepareStatement("SELECT * FROM dex_contract  where latest = true " +
-                             "AND status IN (0,1) AND deadline_to_reply < ?")
+                     .prepareStatement(sql)
         ) {
             int i = 0;
             pstmt.setLong(++i, deadlineToReply);

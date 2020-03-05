@@ -4,28 +4,32 @@
 
 package com.apollocurrency.aplwallet.apl.core.message;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.dgs.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 
-import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.List;
 
 @Singleton
 public class PrunableMessageServiceImpl implements PrunableMessageService {
     private PrunableMessageTable table;
     private Blockchain blockchain;
+    private AccountPublicKeyService accountPublicKeyService;
 
     @Inject
-    public PrunableMessageServiceImpl(PrunableMessageTable table, Blockchain blockchain) {
+    public PrunableMessageServiceImpl(PrunableMessageTable table, Blockchain blockchain, AccountPublicKeyService accountPublicKeyService) {
         this.table = table;
         this.blockchain = blockchain;
+        this.accountPublicKeyService = accountPublicKeyService;
     }
     @Override
     public int getCount() {
@@ -74,9 +78,9 @@ public class PrunableMessageServiceImpl implements PrunableMessageService {
         if (message.getEncryptedData() == null) {
             return null;
         }
-        byte[] publicKey = message.getSenderId() == Account.getId(Crypto.getPublicKey(keySeed))
-                ? Account.getPublicKey(message.getRecipientId()) : Account.getPublicKey(message.getSenderId());
-        return Account.decryptFrom(publicKey, message.getEncryptedData(), keySeed, message.isCompressed());
+        byte[] publicKey = message.getSenderId() == AccountService.getId(Crypto.getPublicKey(keySeed))
+                ? accountPublicKeyService.getPublicKeyByteArray(message.getRecipientId()) : accountPublicKeyService.getPublicKeyByteArray(message.getSenderId());
+        return EncryptedDataUtil.decryptFrom(publicKey, message.getEncryptedData(), keySeed, message.isCompressed());
     }
 
 

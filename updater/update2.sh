@@ -36,13 +36,13 @@ then
 #    notify "Updating Java runtime..."
         
     if [[ "$unamestr" == 'Linux' ]]; then
-	curl -o $1/jre.tar.gz $OPENJDK_URL_Linux
+	wget $OPENJDK_URL_Linux || curl -o $1/jre.tar.gz $OPENJDK_URL_Linux
 	tar -C $1 -zxvf $1/jre.tar.gz 
 	mv $1/$OPENJDK_DIR $1/jre
     fi
     
     if [[ "$unamestr" == 'Darwin' ]]; then
-	curl -o $1/jre.tar.gz $OPENJDK_URL_Darwin
+	wget $OPENJDK_URL_Darwin || curl -o $1/jre.tar.gz $OPENJDK_URL_Darwin
 	tar -C $1 -zxvf jre.tar.gz
 	mv $1/$OPENJDK_DIR/Contents/Home $1/jre
 	rm -rf $1/$OPENJDK_DIR
@@ -60,12 +60,12 @@ then
     
 #    notify "Updating libraries..."
     
-    curl -o $1/libs.tar.gz $APOLLO_LIBS_URL
+#    curl -o $1/libs.tar.gz $APOLLO_LIBS_URL
 #    curl -o $1/libs.tar.gz.sha256 $APOLLO_LIBS_SHA256_URL
-    tar -C $1 -zxvf $1/libs.tar.gz
+#    tar -C $1 -zxvf $1/libs.tar.gz
     
-    mv $1/${APOLLO_LIBS_DIR} $1/lib
-    rm -f $1/${APOLLO_LIBS_FILE}
+#    mv $1/${APOLLO_LIBS_DIR} $1/lib
+#    rm -f $1/${APOLLO_LIBS_FILE}
 #    rm -f $1/${APOLLO_LIBS_FILE}.sha256
 else
     echo Invalid input parameters $1

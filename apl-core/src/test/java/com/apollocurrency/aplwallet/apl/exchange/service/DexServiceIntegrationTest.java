@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
@@ -12,12 +14,14 @@ import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
 import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingApprovedResultTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingApprovalResult;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
 import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
+import com.apollocurrency.aplwallet.apl.exchange.DexConfig;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
@@ -29,6 +33,7 @@ import com.apollocurrency.aplwallet.apl.testutil.WeldUtils;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
@@ -48,32 +53,33 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 @EnableWeld
 class DexServiceIntegrationTest {
 
-
     @WeldSetup
     WeldInitiator weld = WeldUtils.from(List.of(DexService.class, CacheProducer.class), List.of(EthereumWalletService.class,
-            DexOrderDao.class,
-            DexOrderTable.class,
-            TransactionProcessor.class,
-            DexSmartContractService.class,
-            SecureStorageService.class,
-            DexContractTable.class,
-            MandatoryTransactionDao.class,
-            DexOrderTransactionCreator.class,
-            TimeService.class,
-            DexContractDao.class,
-            Blockchain.class,
-            PhasingPollServiceImpl.class,
-            IDexMatcherInterface.class,            
-            PhasingApprovedResultTable.class,
-            BlockchainConfig.class,
-            BlockchainImpl.class))
-            .build();
+        DexOrderDao.class,
+        DexOrderTable.class,
+        TransactionProcessor.class,
+        DexSmartContractService.class,
+        SecureStorageService.class,
+        DexContractTable.class,
+        MandatoryTransactionDao.class,
+        DexOrderTransactionCreator.class,
+        TimeService.class,
+        DexContractDao.class,
+        Blockchain.class,
+        IDexMatcherInterface.class,
+        PhasingApprovedResultTable.class,
+        BlockchainConfig.class,
+        DexConfig.class,
+        BlockchainImpl.class))
+        .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
+        .addBeans(MockBean.of(mock(AccountService.class), AccountService.class, AccountServiceImpl.class))
+        .build();
     @Inject
     DexService dexService;
     @Inject
     Event<Transaction> txEvent;
     @Inject
-    PhasingPollServiceImpl phasingPollService;
+    PhasingPollService phasingPollService;
     @Inject
     PhasingApprovedResultTable approvedResultTable;
 
@@ -83,20 +89,22 @@ class DexServiceIntegrationTest {
         Transaction phasedTx = mock(Transaction.class);
         doReturn(1L).when(phasedTx).getId();
         doReturn(DEX.DEX_TRANSFER_MONEY_TRANSACTION).when(phasedTx).getType();
-
+        DexControlOfFrozenMoneyAttachment attachment = new DexControlOfFrozenMoneyAttachment(100L, 200L);
+        doReturn(attachment).when(phasedTx).getAttachment();
         txEvent.select(TxEventType.literal(TxEventType.RELEASE_PHASED_TRANSACTION)).fire(phasedTx);
 
         verify(approvedResultTable).insert(new PhasingApprovalResult(0, 1, 20));
 
     }
-    @Singleton
-static class CacheProducer {
-        @Produces
-    private LoadingCache<Long, OrderFreezing> createCache() {
-        return CacheBuilder.newBuilder().build(CacheLoader.from(ord-> new OrderFreezing(1, true)));
-    }
 
-}
+    @Singleton
+    static class CacheProducer {
+        @Produces
+        private LoadingCache<Long, OrderFreezing> createCache() {
+            return CacheBuilder.newBuilder().build(CacheLoader.from(ord -> new OrderFreezing(1, true)));
+        }
+
+    }
 
     @Test
     void testTriggerPhasingForDifferentEvent() {

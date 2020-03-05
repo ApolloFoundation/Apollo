@@ -21,23 +21,23 @@
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.app.ActiveGenerator;
+import com.apollocurrency.aplwallet.apl.core.app.ActiveGenerators;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
-import com.apollocurrency.aplwallet.apl.core.app.ActiveGenerators;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import java.util.List;
 import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 
 /**
@@ -84,7 +84,7 @@ public final class GetNextBlockGeneratorsTemp extends AbstractAPIRequestHandler 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         JSONObject response = new JSONObject();
-        int limit = Math.max(1, ParameterParser.getInt(req, "limit", 1, Integer.MAX_VALUE, false));
+        int limit = Math.max(1, HttpParameterParserUtil.getInt(req, "limit", 1, Integer.MAX_VALUE, false));
         Blockchain blockchain = lookupBlockchain();
         globalSync.readLock();
         try {

@@ -3,6 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.http;
 
+import com.apollocurrency.aplwallet.apl.core.rest.endpoint.AccountController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.DebugController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.DexController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.DexTransactionSendingController;
@@ -16,6 +17,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ShardController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.TradingDataController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.TransportInteractionController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.UserErrorMessageController;
+import com.apollocurrency.aplwallet.apl.core.rest.endpoint.UtilsController;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexMatcherServiceImpl;
 import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
 
@@ -47,10 +49,12 @@ public class RestEasyApplication extends Application  {
         set.add(NodeControlController.class);
         set.add(TransportInteractionController.class);
         set.add(ShardController.class);
+        set.add(AccountController.class);
         set.add(MandatoryTransactionController.class);
         set.add(UserErrorMessageController.class);
         set.add(TradingDataController.class);
         set.add(DexTransactionSendingController.class);
+        set.add(UtilsController.class);
 
 
         //TODO: add all endpoints below

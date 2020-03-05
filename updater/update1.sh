@@ -163,7 +163,7 @@ then
     rm -rf apollo-wallet-deps-${VERSION}.tar.gz
     rm -rf apollo-wallet-deps-*
     echo Version = $VERSION
-    curl --retry 100  https://s3.amazonaws.com/updates.apollowallet.org/libs/apollo-wallet-deps-${VERSION}.tar.gz -o apollo-wallet-deps-${VERSION}.tar.gz
+    wget https://s3.amazonaws.com/updates.apollowallet.org/libs/apollo-wallet-deps-${VERSION}.tar.gz || curl --retry 100  https://s3.amazonaws.com/updates.apollowallet.org/libs/apollo-wallet-deps-${VERSION}.tar.gz -o apollo-wallet-deps-${VERSION}.tar.gz
     tar -zxvf apollo-wallet-deps-${VERSION}.tar.gz
     cp apollo-wallet-deps-${VERSION}/* $1/lib
     
@@ -199,16 +199,17 @@ then
 	    
     esac    
 
-    if [ "$#" -eq 3 ]
-    then
-	if [ ${NOSHARD} == false ]
-	then
-	    bash ./update3.sh $1 $2 $3 true ${NETID}
-	fi
-    elif [ $4 == false ]
-    then
-	bash ./update3.sh $1 $2 $3 $4 $5
-    fi
+# TODO: ! refactor and ncomment that block
+#    if [ "$#" -eq 3 ]
+#    then
+#	if [ ${NOSHARD} == false ]
+#	then
+#	    bash ./update3.sh $1 $2 $3 true ${NETID}
+#	fi
+#    elif [ $4 == false ]
+#    then
+#	bash ./update3.sh $1 $2 $3 $4 $5
+#    fi
 
     
 
