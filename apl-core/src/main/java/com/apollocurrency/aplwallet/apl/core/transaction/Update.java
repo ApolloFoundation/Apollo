@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateV
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.Version;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -172,11 +173,17 @@ public abstract class Update extends TransactionType {
     public static final TransactionType UPDATE_V2 = new Update() {
         @Override
         public Level getLevel() {
-            throw new RuntimeException("Level is statically not defined for UpdateV2");
+            throw new RuntimeException("Level is not defined for UpdateV2 statically");
         }
 
         @Override
-        public void validateAttachment(Transaction transaction) {}
+        public void validateAttachment(Transaction transaction) throws AplException.NotValidException {
+            UpdateV2Attachment attachment = (UpdateV2Attachment) transaction.getAttachment();
+            Version version = attachment.getReleaseVersion();
+            if (version.getMinorVersion() >= Short.MAX_VALUE || version.getIntermediateVersion() >= Short.MAX_VALUE || version.getMajorVersion() >= Byte.MAX_VALUE) {
+                throw new AplException.NotValidException("Update version is too big! " + version);
+            }
+        }
 
         @Override
         public final byte getSubtype() {

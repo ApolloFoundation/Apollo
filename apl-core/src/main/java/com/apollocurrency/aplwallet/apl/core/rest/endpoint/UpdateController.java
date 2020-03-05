@@ -15,8 +15,10 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateV
 import com.apollocurrency.aplwallet.apl.exchange.service.DexOrderTransactionCreator;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Architecture;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.apollocurrency.aplwallet.apl.util.Platform;
+import com.apollocurrency.aplwallet.apl.util.Version;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -24,18 +26,18 @@ import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import lombok.Data;
 import lombok.Setter;
-import org.hibernate.validator.constraints.Range;
+import org.hibernate.validator.constraints.URL;
 
 import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Positive;
+import javax.validation.constraints.Pattern;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -51,6 +53,7 @@ public class UpdateController {
     private AccountService accountService;
     private DexOrderTransactionCreator txCreator;
     private UnconfirmedTransactionConverter converter = new UnconfirmedTransactionConverter();
+
     public UpdateController() {
     }
 
@@ -62,47 +65,28 @@ public class UpdateController {
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Operation(tags = {"updates"}, summary = "Send update v2 transaction ", description = "Will send update v2 transaction with specified manifest url and level")
     @ApiResponse(description = "Transaction in json format", content = @Content(schema = @Schema(implementation = TransactionDTO.class)))
     @PermitAll
     @Secured2FA
-    public Response sendUpdateV2(@Valid SendUpdateRequest request, @Context HttpServletRequest servletRequest) throws ParameterException, AplException.ValidationException {
-        Account account = accountService.getAccount(request.getAccount().get());
-        CreateTransactionRequest txRequest = HttpRequestToCreateTransactionRequestConverter.convert(servletRequest, account, 0, 0, new UpdateV2Attachment(request.getManifestUrl(), request.getLevel()), true, accountService);
+    public Response sendUpdateV2(
+        @Parameter(required = true) @URL(protocol = "https") @NotNull @Schema(implementation = String.class, description = "Manifest url where release manifest is located. Https only") @FormParam("manifestUrl") String manifestUrl,
+        @Parameter(required = true) @NotNull @Schema(description = "Level of update") @FormParam("level") Level level,
+        @Parameter(required = true) @NotNull @Schema(description = "Target update architecture") @FormParam("level") Architecture architecture,
+        @Parameter(required = true) @NotNull @Schema(description = "OS for which update is intended, specify ALL to update all existing platforms") @FormParam("level") Platform platform,
+        @Parameter(required = true) @NotNull @Schema(description = "Version of update: 1.2.3, 1.25.10, etc") @FormParam("version") @Pattern(regexp = "\\d+\\.\\d+\\.\\d+") Version version,
+        @Parameter(required = true, schema = @Schema(implementation = String.class, description = "Id of account  int64 singed/unsigned or RS")) @FormParam("account") AccountIdParameter account,
+        @Parameter @Schema(description = "Passphrase to vault account, should be specified if sender account is vault") @FormParam("passphrase") String passphrase,
+        @Parameter @Schema(description = "Secret phrase of standard account, when specified - passphrase param will be ignored") @FormParam("secretPhrase") String secretPhrase,
+        @Parameter @Schema(description = "Two-factor auth code, if 2fa enabled") @FormParam("code2FA") @DefaultValue("0") Integer code2FA,
+        @Context HttpServletRequest servletRequest) throws ParameterException, AplException.ValidationException {
+        Account senderAccount = accountService.getAccount(account.get());
+        CreateTransactionRequest txRequest = HttpRequestToCreateTransactionRequestConverter.convert(servletRequest, senderAccount, 0, 0, new UpdateV2Attachment(manifestUrl, level, platform, architecture, version), true, accountService);
+        txRequest.setDeadlineValue("1440");
+        txRequest.setFeeATM(Constants.ONE_APL);
         Transaction transaction = txCreator.createTransaction(txRequest);
         UnconfirmedTransactionDTO txDto = converter.convert(transaction);
         return Response.ok(txDto).build();
     }
-
-    @Data
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class SendUpdateRequest {
-        @Parameter(description = "Manifest url where release manifest is located. Https only", required = true)
-        @org.hibernate.validator.constraints.URL(protocol = "https")
-        @NotNull
-        private String manifestUrl;
-
-        @Parameter(description = "Level of update", required = true)
-        @NotNull
-        private Level level;
-
-        @Parameter(description = "Id of account  int64 singed/unsigned or RS", required = true, schema = @Schema(implementation = String.class))
-        @NotNull
-        private AccountIdParameter account;
-
-        @Parameter(description = "Id of account  int64 singed/unsigned or RS", required = true)
-        @NotNull
-        private String passphrase;
-
-        @Parameter(description = "Fee for transaction, by default is 1apl")
-        @Range(min = Constants.ONE_APL)
-        private long feeATM = Constants.ONE_APL;
-
-        @Parameter(description = "Deadline for transaction to expire in unconfirmed tx pool")
-        @Positive
-        private short deadline = 1440;
-
-    }
-
 }

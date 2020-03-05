@@ -4,9 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.udpater.intfce;
 
-import lombok.Getter;
-
-@Getter
 public enum Level {
     CRITICAL(0), IMPORTANT(1), MINOR(2);
 
@@ -14,7 +11,7 @@ public enum Level {
         this.code = (byte) code;
     }
 
-    private final byte code;
+    public final byte code;
 
     public static Level from(int code) {
         for (Level value : values()) {
