@@ -39,7 +39,6 @@ import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
-import com.apollocurrency.aplwallet.apl.core.rest.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FAConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FADetailsConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountAssetConverter;
@@ -51,7 +50,9 @@ import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FA;
 import com.apollocurrency.aplwallet.apl.core.rest.parameter.AccountIdParameter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.OrderService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
+import com.apollocurrency.aplwallet.apl.core.rest.utils.FirstLastIndexParser;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
+import com.apollocurrency.aplwallet.apl.core.rest.utils.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.core.rest.validation.ValidBlockchainHeight;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
@@ -127,7 +128,7 @@ public class AccountController {
     @Inject @Setter
     private OrderService orderService;
     @Inject @Setter
-    private RestParametersParser restParametersParser;
+    private FirstLastIndexParser indexParser;
 
     public AccountController(Blockchain blockchain,
                              Account2FAHelper account2FAHelper,
@@ -143,7 +144,7 @@ public class AccountController {
                              Account2FADetailsConverter faDetailsConverter,
                              Account2FAConverter faConverter,
                              OrderService orderService,
-                             RestParametersParser restParametersParser) {
+                             FirstLastIndexParser indexParser) {
 
         this.blockchain = blockchain;
         this.account2FAHelper = account2FAHelper;
@@ -159,7 +160,7 @@ public class AccountController {
         this.faDetailsConverter = faDetailsConverter;
         this.faConverter = faConverter;
         this.orderService = orderService;
-        this.restParametersParser = restParametersParser;
+        this.indexParser = indexParser;
     }
 
     @Path("/account")
@@ -321,8 +322,12 @@ public class AccountController {
         ResponseBuilder response = ResponseBuilder.startTiming();
         long accountId  = accountIdParameter.get();
 
+        FirstLastIndexParser.FirstLastIndex flIndex = indexParser.adjustIndexes(firstIndex, lastIndex);
+
         if (assetId == null || assetId == 0) {
-            List<AccountAsset> accountAssets = accountAssetService.getAssetsByAccount(accountId, height, firstIndex, lastIndex);
+            List<AccountAsset> accountAssets = accountAssetService.getAssetsByAccount(accountId, height,
+                                                                                        flIndex.getFirstIndex(),
+                                                                                        flIndex.getLastIndex());
             List<AccountAssetDTO> accountAssetDTOList = accountAssetConverter.convert(accountAssets);
             if(includeAssetInfo){
                 accountAssetDTOList.forEach(dto -> accountAssetConverter.addAsset(dto, Asset.getAsset(dto.getAssetId())));
@@ -539,8 +544,10 @@ public class AccountController {
     public Response getAccountCurrentAskOrderIds(
             @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
             @Parameter(description = "The asset ID.") @QueryParam("asset") @PositiveOrZero Long assetIdParam,
-            @Parameter(description = "A zero-based index to the first order ID to retrieve (optional)." ) @QueryParam("firstIndex") @PositiveOrZero int firstIndex,
-            @Parameter(description = "A zero-based index to the last order ID to retrieve (optional)." ) @QueryParam("lastIndex") @PositiveOrZero int lastIndex
+            @Parameter(description = "A zero-based index to the first order ID to retrieve (optional)." )
+            @QueryParam("firstIndex") @DefaultValue("0") @PositiveOrZero int firstIndex,
+            @Parameter(description = "A zero-based index to the last order ID to retrieve (optional)." )
+            @QueryParam("lastIndex") @DefaultValue("-1") int lastIndex
             ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
