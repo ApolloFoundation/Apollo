@@ -4,40 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
-import javax.annotation.security.PermitAll;
-import javax.imageio.ImageIO;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.FormParam;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
-
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-
-import com.apollocurrency.aplwallet.api.request.DecodeQRCodeRequestForm;
 import com.apollocurrency.aplwallet.api.dto.utils.DetectMimeTypeDto;
 import com.apollocurrency.aplwallet.api.dto.utils.FullHashToIdDto;
 import com.apollocurrency.aplwallet.api.dto.utils.HashDto;
@@ -45,11 +11,12 @@ import com.apollocurrency.aplwallet.api.dto.utils.HexConvertDto;
 import com.apollocurrency.aplwallet.api.dto.utils.QrDecodeDto;
 import com.apollocurrency.aplwallet.api.dto.utils.QrEncodeDto;
 import com.apollocurrency.aplwallet.api.dto.utils.RsConvertDto;
+import com.apollocurrency.aplwallet.api.request.DecodeQRCodeRequestForm;
 import com.apollocurrency.aplwallet.api.request.DetectMimeTypeUploadForm;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
-import com.apollocurrency.aplwallet.apl.core.rest.RestParameters;
+import com.apollocurrency.aplwallet.apl.core.rest.utils.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -80,11 +47,42 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.jboss.resteasy.annotations.Form;
 import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
 import org.jboss.resteasy.plugins.providers.multipart.InputPart;
 import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataInput;
+
+import javax.annotation.security.PermitAll;
+import javax.imageio.ImageIO;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.FormParam;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * Expose several utility methods
@@ -130,13 +128,13 @@ public class UtilsController {
         ResponseBuilder response = ResponseBuilder.startTiming();
         int width;
         try {
-            width = RestParameters.parseInt(widthStr, "width", 0, 5000, false);
+            width = RestParametersParser.parseInt(widthStr, 0, 5000, "width");
         } catch (RestParameterException e) {
             return response.error(ApiErrors.INCORRECT_PARAM, "width", widthStr).build();
         }
         int height;
         try {
-            height = RestParameters.parseInt(heightStr, "height", 0, 5000, false);
+            height = RestParametersParser.parseInt(heightStr, 0, 5000, "height");
         } catch (RestParameterException e) {
             return response.error(ApiErrors.INCORRECT_PARAM, "height", heightStr).build();
         }

@@ -17,7 +17,8 @@ import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
 import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.core.rest.RestParametersParser;
+import com.apollocurrency.aplwallet.apl.core.rest.utils.FirstLastIndexParser;
+import com.apollocurrency.aplwallet.apl.core.rest.utils.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FAConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FADetailsConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountAssetConverter;
@@ -36,9 +37,12 @@ import org.jboss.resteasy.mock.MockHttpRequest;
 import org.jboss.resteasy.mock.MockHttpResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
@@ -81,6 +85,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class AccountControllerTest extends AbstractEndpointTest{
 
     public static final String PUBLIC_KEY_HEX = "e03f00485cabc82491d05297acd9d140f62d61d86f16ba4bcf2a922482a4617d";
@@ -98,18 +103,30 @@ class AccountControllerTest extends AbstractEndpointTest{
 
     private AccountController endpoint;
 
-    private AccountConverter accountConverter = mock(AccountConverter.class);
-    private AccountService accountService = mock(AccountService.class);
-    private AccountPublicKeyService accountPublicKeyService = mock(AccountPublicKeyService.class);
-    private AccountAssetService accountAssetService = mock(AccountAssetService.class);
-    private AccountCurrencyService accountCurrencyService = mock(AccountCurrencyService.class);
-    private AccountCurrencyConverter accountCurrencyConverter = mock(AccountCurrencyConverter.class);
-    private AccountAssetConverter accountAssetConverter = mock(AccountAssetConverter.class);
+    @Mock
+    private AccountConverter accountConverter;
+    @Mock
+    private AccountService accountService;
+    @Mock
+    private AccountPublicKeyService accountPublicKeyService;
+    @Mock
+    private AccountAssetService accountAssetService;
+    @Mock
+    private AccountCurrencyService accountCurrencyService;
+    @Mock
+    private AccountCurrencyConverter accountCurrencyConverter;
+    @Mock
+    private AccountAssetConverter accountAssetConverter;
+    @Mock
+    private OrderService orderService;
+
     private TransactionConverter transactionConverter = new TransactionConverter(blockchain, new UnconfirmedTransactionConverter());
     private AccountBlockConverter accountBlockConverter = new AccountBlockConverter(blockchain, transactionConverter, mock(PhasingPollService.class));
-    private OrderService orderService = mock(OrderService.class);
 
-    private Account2FAHelper account2FAHelper = mock(Account2FAHelper.class);
+    @Mock
+    private Account2FAHelper account2FAHelper;
+
+    private FirstLastIndexParser indexParser = new FirstLastIndexParser(100);
 
     private Block GENESIS_BLOCK, LAST_BLOCK, NEW_BLOCK;
     private Block BLOCK_0, BLOCK_1, BLOCK_2, BLOCK_3;
@@ -133,8 +150,8 @@ class AccountControllerTest extends AbstractEndpointTest{
                 new WalletKeysConverter(),
                 new Account2FADetailsConverter(),
                 new Account2FAConverter(),
-            orderService,
-                restParametersParser
+                orderService,
+                indexParser
                 );
 
         dispatcher.getRegistry().addSingletonResource(endpoint);
@@ -156,8 +173,6 @@ class AccountControllerTest extends AbstractEndpointTest{
                 CURRENCY_ID,
                 1000, 1100,
                 CURRENT_HEIGHT);
-
-        doReturn(CURRENT_HEIGHT).when(accountService).getBlockchainHeight();
 
         setupBlocks();
     }
@@ -370,10 +385,10 @@ class AccountControllerTest extends AbstractEndpointTest{
     }
 
     @Test
-    void getAccountAssetCount_whenCallwithWrongHeight_thenGetError_2004() throws URISyntaxException, IOException {
+    void getAccountAssetCount_whenCallwithWrongHeight_thenGetError_2001() throws URISyntaxException, IOException {
         MockHttpResponse response = sendGetRequest("/accounts/asset-count?account="+ACCOUNT_ID+"&height="+(CURRENT_HEIGHT+10));
 
-        checkMandatoryParameterMissingErrorCode(response, 2004);
+        checkMandatoryParameterMissingErrorCode(response, 2001);
     }
 
     @Test
@@ -417,16 +432,14 @@ class AccountControllerTest extends AbstractEndpointTest{
     }
 
     @Test
-    void getAccountAssets_whenCallwithWrongHeight_thenGetError_2004() throws URISyntaxException, IOException {
-        doReturn(CURRENT_HEIGHT).when(accountService).getBlockchainHeight();
+    void getAccountAssets_whenCallwithWrongHeight_thenGetError_2001() throws URISyntaxException, IOException {
         MockHttpResponse response = sendGetRequest("/accounts/assets?account="+ACCOUNT_ID+"&height="+(CURRENT_HEIGHT+10));
 
-        checkMandatoryParameterMissingErrorCode(response, 2004);
+        checkMandatoryParameterMissingErrorCode(response, 2001);
     }
 
     @Test
     void getAccountAssets_whenCallwithWrongAsset_thenGetError_2012() throws URISyntaxException, IOException {
-        doReturn(CURRENT_HEIGHT).when(accountService).getBlockchainHeight();
         MockHttpResponse response = sendGetRequest("/accounts/assets?account="+ACCOUNT_ID+"&asset=AS123&height="+(CURRENT_HEIGHT+10));
 
         checkMandatoryParameterMissingErrorCode(response, 2012);
@@ -435,7 +448,7 @@ class AccountControllerTest extends AbstractEndpointTest{
     @Test
     void getAccountAssets_getList() throws URISyntaxException, IOException {
         endpoint.setAccountAssetConverter(new AccountAssetConverter());
-        doReturn(List.of(accountAsset)).when(accountAssetService).getAssetsByAccount(ACCOUNT_ID, CURRENT_HEIGHT, 0, -1);
+        doReturn(List.of(accountAsset)).when(accountAssetService).getAssetsByAccount(ACCOUNT_ID, CURRENT_HEIGHT, 0, 99);
 
         MockHttpResponse response = sendGetRequest("/accounts/assets?account="+ACCOUNT_ID+"&height="+CURRENT_HEIGHT);
 
@@ -478,10 +491,10 @@ class AccountControllerTest extends AbstractEndpointTest{
     }
 
     @Test
-    void getAccountCurrencyCount_whenCallwithWrongHeight_thenGetError_2004() throws URISyntaxException, IOException {
+    void getAccountCurrencyCount_whenCallwithWrongHeight_thenGetError_2001() throws URISyntaxException, IOException {
         MockHttpResponse response = sendGetRequest("/accounts/currency-count?account="+ACCOUNT_ID+"&height="+(CURRENT_HEIGHT+10));
 
-        checkMandatoryParameterMissingErrorCode(response, 2004);
+        checkMandatoryParameterMissingErrorCode(response, 2001);
     }
 
     @Test
@@ -509,16 +522,14 @@ class AccountControllerTest extends AbstractEndpointTest{
     }
 
     @Test
-    void getAccountCurrencies_whenCallwithWrongHeight_thenGetError_2004() throws URISyntaxException, IOException {
-        doReturn(CURRENT_HEIGHT).when(accountService).getBlockchainHeight();
+    void getAccountCurrencies_whenCallwithWrongHeight_thenGetError_2001() throws URISyntaxException, IOException {
         MockHttpResponse response = sendGetRequest("/accounts/currencies?account="+ACCOUNT_ID+"&height="+(CURRENT_HEIGHT+10));
 
-        checkMandatoryParameterMissingErrorCode(response, 2004);
+        checkMandatoryParameterMissingErrorCode(response, 2001);
     }
 
     @Test
     void getAccountCurrencies_whenCallwithWrongCurrencyId_thenGetError_2012() throws URISyntaxException, IOException {
-        doReturn(CURRENT_HEIGHT).when(accountService).getBlockchainHeight();
         MockHttpResponse response = sendGetRequest("/accounts/currencies?account="+ACCOUNT_ID+"&currency=AS123&height="+(CURRENT_HEIGHT+10));
 
         checkMandatoryParameterMissingErrorCode(response, 2012);
@@ -677,7 +688,7 @@ class AccountControllerTest extends AbstractEndpointTest{
 
     @ParameterizedTest(name = "{index} url={arguments}")
     @ValueSource(strings = {"/accounts/disable2fa","/accounts/confirm2fa","/accounts/delete-key"})
-    public void check2FA_withoutRequestAttribute_thenGetError_1000(String uri) throws URISyntaxException, IOException {
+    public void check2FA_withoutRequestAttribute_thenGetError_2001(String uri) throws URISyntaxException, IOException {
         MockHttpResponse response = sendPostRequest(uri,"wrong=value");
 
         checkMandatoryParameterMissingErrorCode(response, 2001);

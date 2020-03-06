@@ -140,7 +140,11 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
 
     @Override
     public List<AccountCurrency> getCurrenciesByAccount(long accountId, int height, int from, int to) {
-        return toList(accountCurrencyTable.getByAccount(accountId, height, from, to));
+        if( height < 0 ){
+            return toList(accountCurrencyTable.getByAccount(accountId, from, to));
+        }else {
+            return toList(accountCurrencyTable.getByAccount(accountId, height, from, to));
+        }
     }
 
     @Override
@@ -150,7 +154,11 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
 
     @Override
     public List<AccountCurrency> getCurrenciesByCurrency(long currencyId, int height, int from, int to) {
-        return toList(accountCurrencyTable.getByCurrency(currencyId, height, from, to));
+        if(height < 0) {
+            return toList(accountCurrencyTable.getByCurrency(currencyId, from, to));
+        }else {
+            return toList(accountCurrencyTable.getByCurrency(currencyId, height, from, to));
+        }
     }
 
     @Override

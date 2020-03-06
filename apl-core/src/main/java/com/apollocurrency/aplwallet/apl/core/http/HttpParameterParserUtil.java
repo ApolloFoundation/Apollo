@@ -42,7 +42,7 @@ import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
-import com.apollocurrency.aplwallet.apl.core.rest.RestParametersParser;
+import com.apollocurrency.aplwallet.apl.core.rest.utils.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
