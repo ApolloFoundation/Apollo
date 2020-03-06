@@ -54,9 +54,9 @@ class UpdateV2AttachmentTest {
         json.writeJSONString(out);
         JSONObject parsedJson = (JSONObject) JSONValue.parseWithException(new String(out.toCharArray()));
 
-        UpdateV2Attachment parsedFromBytes = new UpdateV2Attachment(parsedJson);
+        UpdateV2Attachment parsedFromJson = new UpdateV2Attachment(parsedJson);
 
-        assertEquals(attachment, parsedFromBytes);
+        assertEquals(attachment, parsedFromJson);
     }
 
 }

@@ -173,14 +173,14 @@ public abstract class Update extends TransactionType {
     public static final TransactionType UPDATE_V2 = new Update() {
         @Override
         public Level getLevel() {
-            throw new RuntimeException("Level is not defined for UpdateV2 statically");
+            throw new UnsupportedOperationException("Level is not defined for UpdateV2 statically");
         }
 
         @Override
         public void validateAttachment(Transaction transaction) throws AplException.NotValidException {
             UpdateV2Attachment attachment = (UpdateV2Attachment) transaction.getAttachment();
             Version version = attachment.getReleaseVersion();
-            if (version.getMinorVersion() >= Short.MAX_VALUE || version.getIntermediateVersion() >= Short.MAX_VALUE || version.getMajorVersion() >= Byte.MAX_VALUE) {
+            if (version.getMinorVersion() > Short.MAX_VALUE || version.getIntermediateVersion() > Short.MAX_VALUE || version.getMajorVersion() > Byte.MAX_VALUE) {
                 throw new AplException.NotValidException("Update version is too big! " + version);
             }
         }
