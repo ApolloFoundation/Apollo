@@ -48,7 +48,7 @@ public class TestAccounts extends TestBaseNew {
     @DisplayName("Verify AccountBlockCount endpoint")
     public void testAccountBlockCount(){
         GetAccountBlockCountResponse accountBlockCount = getAccountBlockCount(getTestConfiguration().getGenesisWallet().getUser());
-        log.trace("Account count = {}", accountBlockCount.getNumberOfBlocks());
+        log.info("Account count = {}", accountBlockCount.getNumberOfBlocks());
         assertThat("Genesis account has more than 0 generated blocks",accountBlockCount.getNumberOfBlocks().intValue(), greaterThan( 0 ));
     }
 
