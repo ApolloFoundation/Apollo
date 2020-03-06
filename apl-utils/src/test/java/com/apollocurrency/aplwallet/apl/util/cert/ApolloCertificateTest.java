@@ -171,7 +171,9 @@ public class ApolloCertificateTest {
     @Test
     public void testGetSerial() {
         BigInteger result = acert.getSerial();
-        //TODO: check
+        System.out.println(result.toString());
+        BigInteger expResult = BigInteger.valueOf(1582313240538L);
+        assertEquals(expResult, result);
     }
 
 }
