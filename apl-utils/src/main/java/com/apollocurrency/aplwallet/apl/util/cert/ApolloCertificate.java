@@ -29,7 +29,11 @@ public class ApolloCertificate extends CertBase {
     private final CertAttributes va  = new CertAttributes();
 
     public static ApolloCertificate loadPEMFromPath(String path) throws  ApolloCertificateException, IOException {
-        return ApolloCertificate.loadPEMFromStream(new FileInputStream(path));
+        ApolloCertificate res = null;
+        try(FileInputStream fis = new FileInputStream(path)){
+           res = ApolloCertificate.loadPEMFromStream(fis);
+        }
+        return res;
     }
     
     public static ApolloCertificate loadPEMFromStream(InputStream is) throws IOException, ApolloCertificateException {
@@ -39,6 +43,7 @@ public class ApolloCertificate extends CertBase {
         vc.parseAttributes();
         return vc;
     }
+    
     public ApolloCertificate(X509Certificate certificate) throws ApolloCertificateException {
         if (certificate == null) {
             throw new ApolloCertificateException("Null certificate");

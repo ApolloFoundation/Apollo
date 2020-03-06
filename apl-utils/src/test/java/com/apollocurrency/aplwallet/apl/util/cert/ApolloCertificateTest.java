@@ -3,6 +3,7 @@ package com.apollocurrency.aplwallet.apl.util.cert;
 
 import io.firstbridge.cryptolib.FBCryptoParams;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Date;
@@ -17,8 +18,6 @@ import org.slf4j.LoggerFactory;
  *
  * @author alukin@gmail.com
  */
-@Disabled
-//TODO: KeyFactory stopped read PEM cers, it is strange
 public class ApolloCertificateTest {
     private static final FBCryptoParams params = FBCryptoParams.createDefault();
     static ApolloCertificate acert;
@@ -28,8 +27,8 @@ public class ApolloCertificateTest {
     
     @BeforeAll
     public static void setUpClass() {
-        try {
-            acert = ApolloCertificate.loadPEMFromStream(ApolloCertificateTest.class.getClassLoader().getResourceAsStream("test_cert.pem"));
+        try (InputStream is = ApolloCertificateTest.class.getClassLoader().getResourceAsStream("test_cert.pem")) {
+            acert = ApolloCertificate.loadPEMFromStream(is);
             acert.parseAttributes();
         } catch (IOException ex) {
             log.error("Can not load test certificate ", ex);
@@ -44,7 +43,6 @@ public class ApolloCertificateTest {
      */
     @Test
     public void testGetAuthorityId() {
-        System.out.println("getAuthorityId");
         AuthorityID result = acert.getAuthorityId();
         assertEquals(12, result.getActorType());
     }
@@ -54,7 +52,6 @@ public class ApolloCertificateTest {
      */
     @Test
     public void testGetCN() {
-        System.out.println("getCN");
         String result = acert.getCN();
         assertEquals("al.cn.ua", result);
     }
@@ -64,8 +61,6 @@ public class ApolloCertificateTest {
      */
     @Test
     public void testGetOrganization() {
-        System.out.println("getOrganization");
-        ApolloCertificate instance = null;
         String expResult = "FirstBridge";
         String result = acert.getOrganization();
         assertEquals(expResult, result);
@@ -86,10 +81,8 @@ public class ApolloCertificateTest {
      */
     @Test
     public void testGetCountry() {
-        System.out.println("getCountry");
-        ApolloCertificate instance = null;
         String expResult = "";
-        String result = instance.getCountry();
+        String result = acert.getCountry();
         assertEquals(expResult, result);
         // TODO review the generated test code and remove the default call to fail.
         fail("The test case is a prototype.");
@@ -100,8 +93,6 @@ public class ApolloCertificateTest {
      */
     @Test
     public void testGetCity() {
-        System.out.println("getCity");
-        ApolloCertificate instance = null;
         String expResult = "";
         String result = acert.getCity();
         assertEquals(expResult, result);
@@ -112,7 +103,6 @@ public class ApolloCertificateTest {
      */
     @Test
     public void testGetCertificatePurpose() {
-        System.out.println("getCertificatePurpose");
         String expResult = "";
         String result = acert.getCertificatePurpose();
         assertEquals(expResult, result);
@@ -123,7 +113,6 @@ public class ApolloCertificateTest {
      */
     @Test
     public void testGetIPAddresses() {
-        System.out.println("getIPAddresses");
         List<String> expResult = new ArrayList<>();
         List<String> result = acert.getIPAddresses();
         assertEquals(expResult, result);
@@ -134,7 +123,6 @@ public class ApolloCertificateTest {
      */
     @Test
     public void testGetDNSNames() {
-        System.out.println("getDNSNames");
         ApolloCertificate instance = null;
         List<String> expResult = new ArrayList<>();
         List<String> result = instance.getDNSNames();
@@ -146,7 +134,6 @@ public class ApolloCertificateTest {
      */
     @Test
     public void testGetStateOrProvince() {
-        System.out.println("getStateOrProvince");
         String expResult = "";
         String result = acert.getStateOrProvince();
         assertEquals(expResult, result);
@@ -157,19 +144,11 @@ public class ApolloCertificateTest {
      */
     @Test
     public void testGetEmail() {
-        System.out.println("getEmail");
         String expResult = "alukin@gmail.com";
         String result = acert.getEmail();
         assertEquals(expResult, result);
     }
 
-    /**
-     * Test of fromList method, of class ApolloCertificate.
-     */
-    @Test
-    public void testFromList() {
-        System.out.println("fromList");
-    }
 
     /**
      * Test of getPEM method, of class ApolloCertificate.

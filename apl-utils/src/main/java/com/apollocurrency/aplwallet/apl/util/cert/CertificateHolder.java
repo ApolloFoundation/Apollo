@@ -87,8 +87,8 @@ public class CertificateHolder {
     public PrivateKey readPvtKey(String filePath) {
         KeyReader kr = new KeyReaderImpl();
         PrivateKey res = null;
-        try {
-            res = kr.readPrivateKeyPEM(new FileInputStream(filePath));
+        try (FileInputStream fis = new FileInputStream(filePath)){
+            res = kr.readPrivateKeyPEM(fis);
         } catch (IOException ex) {
             log.trace("Can not read private key: {}", filePath);
         }

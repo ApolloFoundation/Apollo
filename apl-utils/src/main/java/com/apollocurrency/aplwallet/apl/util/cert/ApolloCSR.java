@@ -32,9 +32,7 @@ public class ApolloCSR extends CertBase {
     public static ApolloCSR loadCSR(String path){
         PKCS10CertificationRequest cr;
         ApolloCSR res = null;
-        FileReader fr;
-        try {
-            fr = new FileReader(path);
+        try (FileReader fr = new FileReader(path)) {
             PEMParser parser = new PEMParser(fr);
             cr = (PKCS10CertificationRequest)parser.readObject();
             res = ApolloCSR.fromPKCS10(cr);            
