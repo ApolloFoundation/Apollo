@@ -1348,8 +1348,8 @@ public class TestBaseNew extends TestBase {
     @Step
     public AccountAssetsResponse getAccountAssets(Wallet wallet) {
         HashMap<String, String> param = new HashMap();
-        param = restHelper.addWalletParameters(param,wallet);
         param.put(ReqType.REQUEST_TYPE, ReqType.GET_ACCOUNT_ASSETS);
+        param.put(ReqParam.ACCOUNT, wallet.getUser());
 
         return given().log().all()
             .spec(restHelper.getSpec())
@@ -1361,6 +1361,25 @@ public class TestBaseNew extends TestBase {
             .assertThat().statusCode(200)
             .extract().body().jsonPath()
             .getObject("", AccountAssetsResponse.class);
+    }
+
+    @Step
+    public AccountAssetDTO getAccountAssets(Wallet wallet, String asset) {
+        HashMap<String, String> param = new HashMap();
+        param.put(ReqType.REQUEST_TYPE, ReqType.GET_ACCOUNT_ASSETS);
+        param.put(ReqParam.ACCOUNT, wallet.getUser());
+        param.put(ReqParam.ASSET, asset);
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .get(path)
+            .then().log().body()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", AccountAssetDTO.class);
     }
 
     @Override
@@ -1725,6 +1744,7 @@ public class TestBaseNew extends TestBase {
         HashMap<String, String> param = new HashMap();
         param = restHelper.addWalletParameters(param,wallet);
         param.put(ReqType.REQUEST_TYPE, ReqType.TRANSFER_ASSET);
+        param.put(ReqParam.ASSET, asset);
         param.put(ReqParam.RECIPIENT, recipient);
         param.put(ReqParam.QUANTITY_ATU, String.valueOf(quantityATU));
         param.put(ReqParam.FEE, "100000000000");
@@ -2324,7 +2344,7 @@ public class TestBaseNew extends TestBase {
 
         HashMap<String, String> param = new HashMap();
         param = restHelper.addWalletParameters(param,wallet);
-
+        param.put(ReqParam.AMOUNT, String.valueOf(amount));
         param.put(ReqType.REQUEST_TYPE, ReqType.SHUFFLING_CREATE);
         param.put(ReqParam.DEADLINE, "1440");
         param.put(ReqParam.FEE, "100000000000");
@@ -2345,7 +2365,7 @@ public class TestBaseNew extends TestBase {
             .formParams(param)
             .when()
             .post(path)
-            .then()
+            .then().log().body()
             .assertThat().statusCode(200)
             .extract().body().jsonPath()
             .getObject("", CreateTransactionResponse.class);

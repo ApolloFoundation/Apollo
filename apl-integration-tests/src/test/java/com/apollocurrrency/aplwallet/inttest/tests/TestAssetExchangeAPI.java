@@ -21,6 +21,7 @@ import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
@@ -30,6 +31,7 @@ import java.util.Date;
 
 import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.getTestConfiguration;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -437,10 +439,12 @@ public class TestAssetExchangeAPI extends TestBaseNew {
     @DisplayName("getAssetAccounts")
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
-    public void getAssetIdsTest() throws IOException {
-
+    @Order(2)
+    public void getAssetIdsTest() {
         AccountAssetsIdsResponse getAssetIds = getAssetIds();
-        assertTrue(getAssetIds.getAssetIds().size() >= 0);
+        assertThat(getAssetIds.getAssetIds().size(),greaterThanOrEqualTo(0));
+        AccountAssetsResponse accountAssets = getAccountAssets(getTestConfiguration().getVaultWallet());
+        assertThat(accountAssets.getAccountAssets().size(),greaterThan(0));
 
     }
 
@@ -464,15 +468,15 @@ public class TestAssetExchangeAPI extends TestBaseNew {
             verifyCreatingTransaction(transferAsset);
             verifyTransactionInBlock(transferAsset.getTransaction());
 
-            AccountAssetsResponse getAccountAssets = getAccountAssets(getTestConfiguration().getVaultWallet());
-            assertTrue(getAccountAssets.getAccountAssets().stream().filter(accountAssets -> accountAssets.getAsset().contains(assetID)).count() == 1);
+            AccountAssetDTO getAccountAssets = getAccountAssets(getTestConfiguration().getVaultWallet(),assetID);
+            assertEquals(assetID,getAccountAssets.getAsset());
         } else {
             CreateTransactionResponse transferAsset = transferAsset(wallet, assetID, quantityATU, getTestConfiguration().getStandartWallet().getUser());
             verifyCreatingTransaction(transferAsset);
             verifyTransactionInBlock(transferAsset.getTransaction());
 
-            AccountAssetsResponse getAccountAssets = getAccountAssets(getTestConfiguration().getStandartWallet());
-            assertTrue(getAccountAssets.getAccountAssets().stream().filter(accountAssets -> accountAssets.getAsset().contains(assetID)).count() == 1);
+            AccountAssetDTO getAccountAssets = getAccountAssets(getTestConfiguration().getStandartWallet(),assetID);
+            assertEquals(assetID,getAccountAssets.getAsset());
 
         }
 

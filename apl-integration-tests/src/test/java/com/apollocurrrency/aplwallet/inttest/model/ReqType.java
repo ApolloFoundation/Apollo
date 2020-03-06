@@ -6,7 +6,7 @@ public class ReqType {
     public static final String START_FORGING = "startForging";
     public static final String GET_TRANSACTION = "getTransaction";
     public static final String SEND_MONEY = "sendMoney";
-    public static final String LEASE_BALANCE = "leaseBalanceTest";
+    public static final String LEASE_BALANCE = "leaseBalance";
     public static final String GET_SHUFFLING_PARTICIPANTS = "getShufflingParticipants";
     public static final String GET_ALL_SHUFFLINGS = "getAllShufflings";
     public static final String DGS_REFUND = "dgsRefund";
