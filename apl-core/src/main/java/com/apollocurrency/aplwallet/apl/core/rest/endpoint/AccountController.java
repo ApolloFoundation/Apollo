@@ -752,14 +752,14 @@ public class AccountController {
         @Parameter(name = "numberOfAccounts", description = "number Of returned Accounts, optional, minimal value = 50, maximum = 500", allowEmptyValue = true)
         @QueryParam("numberOfAccounts") String numberOfAccountsStr
     ) {
-        log.debug("Started counts : \t'numberOfAccounts' = {}", numberOfAccountsStr);
+        log.trace("Started counts : \t'numberOfAccounts' = {}", numberOfAccountsStr);
         ResponseBuilder response = ResponseBuilder.startTiming();
         int numberOfAccounts = RestParametersParser.parseInt(numberOfAccountsStr, "numberOfAccounts",
             Constants.MIN_TOP_ACCOUNTS_NUMBER, Constants.MAX_TOP_ACCOUNTS_NUMBER, false);
         int numberOfAccountsMax = Math.max(numberOfAccounts, Constants.MIN_TOP_ACCOUNTS_NUMBER);
 
         AccountsCountDto dto = accountStatisticsService.getAccountsStatistic(numberOfAccountsMax);
-        log.debug("counts result : {}", dto);
+        log.trace("counts result : {}", dto);
         return response.bind(dto).build();
     }
 
