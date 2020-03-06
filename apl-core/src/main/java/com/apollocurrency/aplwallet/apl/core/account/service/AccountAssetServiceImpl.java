@@ -86,6 +86,10 @@ public class AccountAssetServiceImpl implements AccountAssetService {
 
     @Override
     public List<AccountAsset> getAssetsByAccount(long accountId, int height, int from, int to) {
+        if( height<0 ){
+            return accountAssetTable.getByAccountId(accountId, from, to);
+        }
+        checkAvailable(height);
         return accountAssetTable.getByAccountId(accountId, height, from, to);
     }
 
@@ -110,6 +114,11 @@ public class AccountAssetServiceImpl implements AccountAssetService {
 
     @Override
     public int getCountByAccount(long accountId, int height) {
+        if( height < 0 ) {
+            return accountAssetTable.getCountByAccountId(accountId);
+        }
+
+        checkAvailable(height);
         return accountAssetTable.getCountByAccountId(accountId, height);
     }
 

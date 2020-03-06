@@ -38,6 +38,7 @@
       <groupId>javax.ws.rs</groupId>
       <artifactId>javax.ws.rs-api</artifactId>
     </dependency>
+
     <!-- POPJO <-> JSON -->
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>

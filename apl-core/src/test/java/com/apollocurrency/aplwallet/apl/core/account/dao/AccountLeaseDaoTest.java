@@ -107,6 +107,12 @@ class AccountLeaseDaoTest {
     }
 
     @Test
+    void getLeaseByLessor() {
+        AccountLease actual = table.getByAccount(testData.ACC_LEAS_4.getLessorId());
+        assertEquals(testData.ACC_LEAS_5, actual);
+    }
+
+    @Test
     void getLeaseChangingAccounts() {
         List<AccountLease> accounts = table.getLeaseChangingAccountsAtHeight(testData.ACC_LEAS_0.getHeight());
         List<AccountLease> expected = testData.ALL_LEASE.stream()

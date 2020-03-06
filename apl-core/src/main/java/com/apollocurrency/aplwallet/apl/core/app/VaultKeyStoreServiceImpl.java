@@ -37,6 +37,7 @@
  import java.util.List;
  import java.util.Objects;
  import java.util.stream.Collectors;
+ import java.util.stream.Stream;
 
  import static org.slf4j.LoggerFactory.getLogger;
 @Singleton
@@ -115,8 +116,8 @@
 
 
      public Path findKeyStorePathWithLatestVersion(long accountId) {
-         try {
-             Path path = Files.list(keystoreDirPath)
+         try(Stream<Path> files = Files.list(keystoreDirPath)) {
+             Path path = files
                      //Find files for this account.
                      .filter(p -> Objects.equals(
                              FbWalletUtil.getAccount(p.toString().toUpperCase()),
@@ -139,8 +140,8 @@
      }
 
      public List<Path> findKeyStorePaths(long accountId) {
-         try {
-             List<Path> paths = Files.list(keystoreDirPath)
+         try(Stream<Path> files = Files.list(keystoreDirPath)) {
+             List<Path> paths = files
                      //Find files for this account.
                      .filter(path -> Objects.equals(
                              FbWalletUtil.getAccount(path.toString().toUpperCase()),
