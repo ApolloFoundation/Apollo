@@ -315,6 +315,7 @@ public class TestDex extends TestBaseNew {
         log.info("Creating BUY Dex Order (ETH)");
         CreateDexOrderResponse buyOrderEth = createDexOrder(PAIR_RATE, OFFER_AMOUNT, vault1, true, true);
         assertNotNull(buyOrderEth,  "RESPONSE is not correct/dex offer wasn't created");
+        assertNotEquals("Exception in the process of freezing money.", buyOrderEth.errorDescription, "Exception in the process of freezing money. Problem with ETH node.");
         verifyTransactionInBlock(buyOrderEth.getOrder().getId());
         String orderId = buyOrderEth.getOrder().getId();
         assertNotNull(buyOrderEth.getFrozenTx(), "FrozenTx isn't present. Can be exception in freezing money. This situation can be present when there is some problem in ETH blockchain or with our nodes. ETH/PAX should be frozen later. Or the problem can be in not enough ETH/PAX");
@@ -345,6 +346,7 @@ public class TestDex extends TestBaseNew {
         log.info("Creating BUY Dex Order (PAX)");
         CreateDexOrderResponse buyOrderEth = createDexOrder(PAIR_RATE, OFFER_AMOUNT, vault1, true, false);
         assertNotNull(buyOrderEth,  "RESPONSE is not correct/dex offer wasn't created");
+        assertNotEquals("Exception in the process of freezing money.", buyOrderEth.errorDescription, "Exception in the process of freezing money. Problem with ETH node.");
         verifyTransactionInBlock(buyOrderEth.getOrder().getId());
         String orderId = buyOrderEth.getOrder().getId();
         assertNotNull(buyOrderEth.getFrozenTx(), "FrozenTx isn't present. Can be exception in freezing money. This situation can be present when there is some problem in ETH blockchain or with our nodes. ETH/PAX should be frozen later. Or the problem can be in not enough ETH/PAX");
@@ -435,6 +437,7 @@ public class TestDex extends TestBaseNew {
         Integer currentHeight = getBlock().getHeight();
         waitForHeight(currentHeight+25);
         CreateDexOrderResponse buyOrderVault2 = createDexOrder(PAIR_RATE, OFFER_AMOUNT, vault2, true, true);
+        assertNotEquals("Exception in the process of freezing money.", buyOrderVault2.errorDescription, "Exception in the process of freezing money. Problem with ETH node.");
         assertNotNull(buyOrderVault2, "RESPONSE is not correct/dex offer wasn't created");
         assertNotNull(buyOrderVault2.getFrozenTx(), "ETH isn't frozen");
         assertNotNull(buyOrderVault2.getContract(), "CONTRACT isn't created");
@@ -486,6 +489,7 @@ public class TestDex extends TestBaseNew {
 
         //creating BUY dex order transaction and validate response
         CreateDexOrderResponse buyOrderVault1 = createDexOrder(PAIR_RATE, OFFER_AMOUNT, vault1, true, true);
+        assertNotEquals("Exception in the process of freezing money.", buyOrderVault1.errorDescription, "Exception in the process of freezing money. Problem with ETH node.");
         verifyTransactionInBlock(buyOrderVault1.getOrder().getId());
         assertNotNull(buyOrderVault1, "RESPONSE is not correct/dex offer wasn't created");
         assertNotNull(buyOrderVault1.getFrozenTx(), "ETH is n't frozen");
@@ -537,7 +541,7 @@ public class TestDex extends TestBaseNew {
     public void dexExchangePaxSellBuy() {
         //creating parameters
         final String PAIR_RATE = "1000";
-        final String OFFER_AMOUNT = "5000";
+        final String OFFER_AMOUNT = "5000000";
         final Long VAULT1_FEE = 900000000L; // by this dex flow it is apl fee which vault1 should pay for all dex operations
         final Long VAULT2_FEE = 800000000L; // by this dex flow it is apl fee which vault2 should pay for all dex operations
         final Long APL_AMOUNT = Long.valueOf(OFFER_AMOUNT)*100000000;
@@ -557,6 +561,7 @@ public class TestDex extends TestBaseNew {
         Integer currentHeight = getBlock().getHeight();
         waitForHeight(currentHeight+25);
         CreateDexOrderResponse buyOrderVault2 = createDexOrder(PAIR_RATE, OFFER_AMOUNT, vault2, true, false);
+        assertNotEquals("Exception in the process of freezing money.", buyOrderVault2.errorDescription, "Exception in the process of freezing money. Problem with ETH node.");
         assertNotNull(buyOrderVault2, "RESPONSE is not correct/dex offer wasn't created");
         assertNotNull(buyOrderVault2.getFrozenTx(), "PAX isn't frozen");
         assertNotNull(buyOrderVault2.getContract(), "CONTRACT isn't created");
@@ -596,7 +601,7 @@ public class TestDex extends TestBaseNew {
     public void dexExchangePaxBuySell() {
         //creating parameters
         final String pairRate = "1000";
-        final String offerAmount = "4000";
+        final String offerAmount = "4000000";
         final Long vault1Fee = 600000000L; // by this dex flow it is apl fee which vault1 should pay for all dex operations
         final Long vault2Fee = 1100000000L; // by this dex flow it is apl fee which vault2 should pay for all dex operations
         final Long aplAmount = Long.valueOf(offerAmount)*100000000;
@@ -609,6 +614,7 @@ public class TestDex extends TestBaseNew {
 
         //creating BUY dex order transaction and validate response
         CreateDexOrderResponse buyOrderVault1 = createDexOrder(pairRate, offerAmount, vault1, true, false);
+        assertNotEquals("Exception in the process of freezing money.", buyOrderVault1.errorDescription, "Exception in the process of freezing money. Problem with ETH node.");
         verifyTransactionInBlock(buyOrderVault1.getOrder().getId());
         assertNotNull(buyOrderVault1, "RESPONSE is not correct/dex offer wasn't created");
         assertNotNull(buyOrderVault1.getFrozenTx(), "ETH/PAX is n't frozen");
@@ -653,28 +659,28 @@ public class TestDex extends TestBaseNew {
         validateDexOrderResponse(buyOrderVault1.getOrder().getId(), 5, Long.valueOf(pairRate), vault1, false, false);
     }
 
-    @DisplayName("EXPIRED SELL APL DEX ORDER (ETH)")
+    @DisplayName("EXPIRED SELL APL DEX ORDER (ETH) --- > NOT IMPLEMENTED YET")
     @Test
     @Execution(SAME_THREAD)
     public void expiredSellDexEth() {
 
     }
 
-    @DisplayName("EXPIRED SELL APL DEX ORDER (PAX)")
+    @DisplayName("EXPIRED SELL APL DEX ORDER (PAX) --- > NOT IMPLEMENTED YET")
     @Test
     @Execution(SAME_THREAD)
     public void expiredSellDexPax() {
 
     }
 
-    @DisplayName("EXPIRED BUY APL DEX ORDER (ETH)")
+    @DisplayName("EXPIRED BUY APL DEX ORDER (ETH) --- > NOT IMPLEMENTED YET")
     @Test
     @Execution(SAME_THREAD)
     public void expiredBuyDexEth() {
 
     }
 
-    @DisplayName("EXPIRED BUY APL DEX ORDER (PAX)")
+    @DisplayName("EXPIRED BUY APL DEX ORDER (PAX) --- > NOT IMPLEMENTED YET")
     @Test
     @Execution(SAME_THREAD)
     public void expiredBuyDexPax() {

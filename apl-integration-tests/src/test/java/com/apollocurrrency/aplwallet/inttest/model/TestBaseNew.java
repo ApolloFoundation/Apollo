@@ -1097,7 +1097,8 @@ public class TestBaseNew extends TestBase {
             .contentType(ContentType.URLENC)
             .formParams(param)
             .when()
-            .post(path).as(CreateDexOrderResponse.class);
+            .post(path)
+            .as(CreateDexOrderResponse.class);
     }
 
 
