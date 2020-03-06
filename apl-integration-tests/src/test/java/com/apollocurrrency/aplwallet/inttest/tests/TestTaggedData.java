@@ -77,7 +77,6 @@ public class TestTaggedData extends TestBaseNew {
     @DisplayName("upload TaggedData Test with extend TaggedData request")
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
-    @Disabled
     void extendTaggedDataTest(Wallet wallet) {
         Long tagsQuantity = getDataTagCount().getNumberOfDataTags();
         log.info("Tags quantity: {} before uploading new TaggedData", tagsQuantity);
