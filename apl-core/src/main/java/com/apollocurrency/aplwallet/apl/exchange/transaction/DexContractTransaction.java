@@ -1,11 +1,12 @@
 package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexContractAttachment;
+import com.apollocurrency.aplwallet.apl.exchange.DexConfig;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
@@ -26,6 +27,7 @@ import java.util.stream.Collectors;
 public class DexContractTransaction extends DEX {
 
     private DexService dexService = CDI.current().select(DexService.class).get();
+    private DexConfig dexConfig = CDI.current().select(DexConfig.class).get();
 
     @Override
     public byte getSubtype() {
@@ -64,7 +66,7 @@ public class DexContractTransaction extends DEX {
 
         if (attachment.getContractStatus().isStep1()) {
             if (contract != null) {
-                throw new AplException.NotValidException("Contract was created earlier");
+                throw new AplException.NotCurrentlyValidException("Contract was created earlier");
             }
             if (attachment.getEncryptedSecret() != null) {
                 throw new AplException.NotValidException("Encrypted secret should not present at step1");
@@ -79,19 +81,19 @@ public class DexContractTransaction extends DEX {
                 throw new AplException.NotValidException("Contract step1 can be send only by order creator");
             }
             if (counterOrder.getStatus() != OrderStatus.OPEN) {
-                throw new AplException.NotValidException("Unable to create contract matched to counterOrder with status " + counterOrder.getStatus() + ", expected status OPEN");
+                throw new AplException.NotCurrentlyValidException("Unable to create contract matched to counterOrder with status " + counterOrder.getStatus() + ", expected status OPEN");
             }
             if (order.getStatus() != OrderStatus.PENDING) {
-                throw new AplException.NotValidException("Unable to create contract for order in status " + order.getStatus() + ", expected PENDING");
+                throw new AplException.NotCurrentlyValidException("Unable to create contract for order in status " + order.getStatus() + ", expected PENDING");
             }
         }
         if(attachment.getContractStatus().isStep2()) {
 
             if (contract == null) {
-                throw new AplException.NotValidException("Don't find contract.");
+                throw new AplException.NotCurrentlyValidException("Don't find contract.");
             }
             if (contract.getContractStatus() != ExchangeContractStatus.STEP_1) {
-                throw new AplException.NotValidException("Incorrect status of contract, expected step1, got " + contract.getContractStatus());
+                throw new AplException.NotCurrentlyValidException("Incorrect status of contract, expected step1, got " + contract.getContractStatus());
             }
             if (attachment.getEncryptedSecret() == null) {
                 throw new AplException.NotValidException("Encrypted secret should be specified");
@@ -115,19 +117,19 @@ public class DexContractTransaction extends DEX {
                 throw new AplException.NotValidException("Contract step2 can be send only by counterOrder creator");
             }
             if (counterOrder.getStatus() != OrderStatus.OPEN) {
-                throw new AplException.NotValidException("Unable to create contract matched to counterOrder with status " + counterOrder.getStatus() + ", expected status OPEN");
+                throw new AplException.NotCurrentlyValidException("Unable to create contract matched to counterOrder with status " + counterOrder.getStatus() + ", expected status OPEN");
             }
             if (order.getStatus() != OrderStatus.PENDING) {
-                throw new AplException.NotValidException("Unable to create contract for order in status " + order.getStatus() + ", expected PENDING");
+                throw new AplException.NotCurrentlyValidException("Unable to create contract for order in status " + order.getStatus() + ", expected PENDING");
             }
         }
 
         if (attachment.getContractStatus().isStep3()) {
             if (contract == null) {
-                throw new AplException.NotValidException("Don't find contract.");
+                throw new AplException.NotCurrentlyValidException("Don't find contract.");
             }
             if (contract.getContractStatus() != ExchangeContractStatus.STEP_2) {
-                throw new AplException.NotValidException("Incorrect status of contract, expected step2, got " + contract.getContractStatus());
+                throw new AplException.NotCurrentlyValidException("Incorrect status of contract, expected step2, got " + contract.getContractStatus());
             }
             if (attachment.getEncryptedSecret() != null) {
                 throw new AplException.NotValidException("Encrypted secret should not be specified");
@@ -143,7 +145,7 @@ public class DexContractTransaction extends DEX {
             }
         }
 
-        if (attachment.getTimeToReply() < Constants.DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY) {
+        if (attachment.getTimeToReply() < dexConfig.getMinAtomicSwapDuration()) {
             throw new AplException.NotValidException("Time to reply is less than minimal.");
         }
         if (attachment.getTimeToReply() > Constants.DEX_MAX_CONTRACT_TIME_WAITING_TO_REPLY) {
@@ -234,6 +236,6 @@ public class DexContractTransaction extends DEX {
                 .filter(c -> !c.getOrderId().equals(contract.getOrderId()))
                 .collect(Collectors.toList());
 
-        dexService.closeContracts(contractsForReopen);
+        dexService.closeContractsReopenOrders(contractsForReopen);
     }
 }

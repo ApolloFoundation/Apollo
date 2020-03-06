@@ -3,7 +3,7 @@ package com.apollocurrency.aplwallet.apl.exchange.model;
 import lombok.Builder;
 import lombok.Data;
 
-import java.math.BigInteger;
+import java.math.BigDecimal;
 
 @Data
 @Builder
@@ -17,8 +17,8 @@ public class SwapDataInfo {
     private String addressTo;
     private String addressAsset;
 
-    //Wei
-    private BigInteger amount;
-    private String status;
+    //Eth
+    private BigDecimal amount;
+    private Integer status;
 
 }

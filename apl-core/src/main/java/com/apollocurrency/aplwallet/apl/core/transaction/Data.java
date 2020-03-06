@@ -3,8 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttach
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -24,6 +25,7 @@ import javax.enterprise.inject.spi.CDI;
  *
  * @author al
  */
+@Slf4j
 public abstract class Data extends TransactionType {
 
     private static TaggedDataService taggedDataService;
@@ -34,7 +36,7 @@ public abstract class Data extends TransactionType {
         }
         return taggedDataService;
     }
-    
+
     private static final Fee TAGGED_DATA_FEE = new Fee.SizeBasedFee(Constants.ONE_APL, Constants.ONE_APL / 10) {
         @Override
         public int getSize(Transaction transaction, Appendix appendix) {
@@ -134,6 +136,7 @@ public abstract class Data extends TransactionType {
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             TaggedDataUploadAttachment attachment = (TaggedDataUploadAttachment) transaction.getAttachment();
+            log.trace("applyAttach taggedDataUpload, trId = {}, att = {}", transaction.getId(), attachment);
             lookupTaggedDataService().add(transaction, attachment);
         }
 
@@ -187,6 +190,7 @@ public abstract class Data extends TransactionType {
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             TaggedDataExtendAttachment attachment = (TaggedDataExtendAttachment) transaction.getAttachment();
+            log.trace("applyAttach taggedDataExtend, trId = {}, att = {}", transaction.getId(), attachment);
             lookupTaggedDataService().extend(transaction, attachment);
         }
 
@@ -200,5 +204,5 @@ public abstract class Data extends TransactionType {
             return false;
         }
     };
-    
+
 }

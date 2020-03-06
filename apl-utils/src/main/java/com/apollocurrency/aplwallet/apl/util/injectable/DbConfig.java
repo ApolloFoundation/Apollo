@@ -32,7 +32,6 @@ public class DbConfig {
         DirProvider dp = RuntimeEnvironment.getInstance().getDirProvider();
         DbProperties dbProperties = new DbProperties()
                 .maxCacheSize(propertiesHolder.getIntProperty("apl.dbCacheKB"))
-                .dbUrl(propertiesHolder.getStringProperty("apl.dbUrl"))
                 .dbType(propertiesHolder.getStringProperty("apl.dbType"))
                 .dbDir(dp != null ? dp.getDbDir().toAbsolutePath().toString() : "./unit-test-db") // for unit tests
                 .dbFileName(dbFileName)

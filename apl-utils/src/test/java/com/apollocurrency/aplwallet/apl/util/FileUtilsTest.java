@@ -51,7 +51,7 @@ class FileUtilsTest {
         Files.createFile(directory.resolve("file2.txt"));
         FileUtils.clearDirectorySilently(directory);
         assertTrue(Files.exists(directory));
-        assertEquals(0, Files.list(directory).count());
+        assertEquals(0, FileUtils.countElementsOfDirectory(directory));
     }
 
     @Test
@@ -62,7 +62,7 @@ class FileUtilsTest {
         Files.createFile(directory.resolve("file3.tt"));
         FileUtils.deleteFilesByPattern(directory, new String[]{"tx", "txt"}, null);
         assertTrue(Files.exists(directory));
-        assertEquals(1, Files.list(directory).count());
+        assertEquals(1, FileUtils.countElementsOfDirectory(directory));
     }
 
     @Test
@@ -73,7 +73,7 @@ class FileUtilsTest {
         Path shouldExists = Files.createFile(directory.resolve("fil3.tt"));
         FileUtils.deleteFilesByPattern(directory, null, new String[]{"file"});
         assertTrue(Files.exists(directory));
-        assertEquals(1, Files.list(directory).count());
+        assertEquals(1, FileUtils.countElementsOfDirectory(directory));
         assertTrue(Files.exists(shouldExists));
     }
 
@@ -87,7 +87,7 @@ class FileUtilsTest {
         Files.createFile(directory.resolve("fil3.tt"));
         FileUtils.deleteFilesByPattern(directory, new String[]{"tt"}, new String[]{"file"});
         assertTrue(Files.exists(directory));
-        assertEquals(3, Files.list(directory).count());
+        assertEquals(3, FileUtils.countElementsOfDirectory(directory));
     }
 
     @Test
@@ -98,7 +98,7 @@ class FileUtilsTest {
         Path existingFile = directory.resolve("file3.tt");
         Files.createFile(existingFile);
         FileUtils.deleteFilesByFilter(directory, (p) -> p.toString().endsWith(".txt"));
-        long filesCount = Files.list(directory).count();
+        long filesCount = FileUtils.countElementsOfDirectory(directory);
         assertEquals(1, filesCount);
         assertTrue(Files.exists(existingFile));
     }

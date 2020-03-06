@@ -8,7 +8,11 @@ import com.apollocurrency.aplwallet.api.dto.ShardDTO;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.ShardToDtoConverter;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
+import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.ws.rs.GET;
@@ -39,7 +43,16 @@ public class ShardController {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(tags = {"shards"}, summary = "Retrieve all completed only shards", description = "Get all 'completed' shard entries from database")
+    @Operation(
+        summary = "Retrieve all completed only shards",
+        description = "Get all 'completed' shard entries from database",
+        tags = {"shards"},
+        responses = {
+        @ApiResponse(responseCode = "200", description = "Successful execution",
+            content = @Content(mediaType = "application/json",
+                schema = @Schema(implementation = ShardDTO.class)))
+    }    )
+    @PermitAll
     public Response getAllShards() {
         List<ShardDTO> allCompletedShards = shardService.getAllCompletedShards().stream()
                 .map(shard -> shardConverter.convert(shard)).collect(Collectors.toList());
@@ -49,7 +62,11 @@ public class ShardController {
     @POST
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(tags = {"shards"}, summary = "Reset node to backup db before sharding specified by id", description = "Find backup before shard with specified id and when it exists - we will drop our blockchain and load backup entirely")
+    @Operation(
+        summary = "Reset node to backup db before sharding specified by id",
+        description = "Find backup before shard with specified id and when it exists - we will drop our blockchain and load backup entirely",
+        tags = {"shards"}
+    )
     public Response resetToBackup(@PathParam("id") long shardId) {
         return Response.ok(shardService.reset(shardId)).build();
     }

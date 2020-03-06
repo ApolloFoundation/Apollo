@@ -7,9 +7,11 @@ package com.apollocurrency.aplwallet.apl.exchange.dao;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
 import com.apollocurrency.aplwallet.apl.data.DexTestData;
+import com.apollocurrency.aplwallet.apl.exchange.model.DBSortOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderSortBy;
 import com.apollocurrency.aplwallet.apl.exchange.model.HeightDbIdRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderDbIdPaginationDbRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
@@ -39,7 +41,8 @@ class DexOrderDaoTest {
 
     @Test
     void testGetOrdersByType() {
-        List<DexOrder> orders = dexOrderDao.getOrders(DexOrderDBRequest.builder().type(OrderType.SELL.ordinal()).build());
+        List<DexOrder> orders = dexOrderDao.getOrders(DexOrderDBRequest.builder().type(OrderType.SELL.ordinal()).build(),
+            DexOrderSortBy.PAIR_RATE, DBSortOrder.DESC);
 
         assertEquals(List.of(td.ORDER_SPA_2, td.ORDER_SEA_7, td.ORDER_SEA_3), orders); // sorted by pair rate desc
     }
@@ -50,7 +53,8 @@ class DexOrderDaoTest {
                 .dbId(td.ORDER_SPA_2.getDbId())
                 .accountId(td.BOB)
                 .pairCur(DexCurrency.PAX.ordinal())
-                .build());
+                .build(),
+            DexOrderSortBy.PAIR_RATE, DBSortOrder.DESC);
 
         assertEquals(List.of(td.ORDER_BPB_1, td.ORDER_BPB_2), orders);
     }
@@ -84,6 +88,13 @@ class DexOrderDaoTest {
                 .build());
 
         assertEquals(List.of(td.ORDER_BEA_1, td.ORDER_BEA_8), orders);
+    }
+
+    @Test
+    void testGetLastOrderBeforeTimestamp() {
+        DexOrder order = dexOrderDao.getLastClosedOrderBeforeTimestamp(DexCurrency.PAX, td.ORDER_BEA_6.getFinishTime());
+
+        assertEquals(td.ORDER_BPA_5, order);
     }
 
     @Test

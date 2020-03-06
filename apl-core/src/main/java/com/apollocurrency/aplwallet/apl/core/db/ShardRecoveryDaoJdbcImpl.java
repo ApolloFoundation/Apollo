@@ -11,6 +11,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Types;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -144,7 +145,8 @@ public class ShardRecoveryDaoJdbcImpl implements ShardRecoveryDaoJdbc {
         try (PreparedStatement pstmt = con.prepareStatement(
                 "INSERT INTO shard_recovery(" +
                         "state, object_name, column_name, last_column_value, processed_object, updated, height) " +
-                        "VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP(), ?)"
+                        "VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP(), ?)",
+                Statement.RETURN_GENERATED_KEYS
         )) {
             int i = 0;
             pstmt.setString(++i, recovery.getState().name()); // recovery.getState() SHOULD NEVER be NULL, field restriction

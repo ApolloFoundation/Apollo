@@ -20,11 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Poll;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteCasting;
@@ -46,7 +46,7 @@ public final class CastVote extends CreateTransaction {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        Poll poll = ParameterParser.getPoll(req);
+        Poll poll = HttpParameterParserUtil.getPoll(req);
         if (poll.isFinished()) {
             return POLL_FINISHED;
         }
@@ -69,7 +69,7 @@ public final class CastVote extends CreateTransaction {
             return INCORRECT_VOTE;
         }
 
-        Account account = ParameterParser.getSenderAccount(req);
+        Account account = HttpParameterParserUtil.getSenderAccount(req);
         Attachment attachment = new MessagingVoteCasting(poll.getId(), vote);
         return createTransaction(req, account, attachment);
     }

@@ -89,9 +89,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
         DbUtils.inTransaction(extension, (con) -> {
             T actual = table.get(dbKey, true);
             assertEquals(expected, actual);
-            assertInCache(expected);
         });
-        assertNotInCache(expected);
         T actual = table.get(dbKey, true);
         assertEquals(expected, actual);
     }
@@ -104,9 +102,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
         DbUtils.inTransaction(extension, (con) -> {
             T actual = table.get(dbKey, false);
             assertEquals(expected, actual);
-            assertNotInCache(expected);
         });
-        assertNotInCache(expected);
         T actual = table.get(dbKey, false);
         assertEquals(expected, actual);
     }
@@ -118,7 +114,6 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
         DbKey dbKey = table.getDbKeyFactory().newKey(expected);
         T actual = table.get(dbKey, true);
         assertEquals(expected, actual);
-        assertNotInCache(expected);
     }
 
     @Test
@@ -216,6 +211,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
         assertNull(uknownEntity, "Entity with unknown db_id should not exist");
     }
 
+    /*
     @Test
     public void testGetByDbClauseWithHeight() {
         T expected;
@@ -228,6 +224,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
         T actual = table.getBy((new DbClause.LongClause("db_id", DbClause.Op.EQ, expected.getDbId())), expected.getHeight());
         assertEquals(expected, actual);
     }
+     */
 
     @Test
     public void testGetByDbClauseWithHeightUsingIncorrectDbId() {
@@ -382,37 +379,6 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
     }
 
     @Test
-    public void testGetManyOnConnectionWithCache() {
-        List<T> allExpectedData = sortByHeightDesc(getAll());
-        Map<DbKey, T> keys = new HashMap<>();
-        for (int i = 0; i < allExpectedData.size(); i++) {
-            T t = allExpectedData.get(i);
-            DbKey key = table.getDbKeyFactory().newKey(t);
-            if (keys.containsKey(key)) {
-                allExpectedData.set(i, keys.get(key));
-            } else {
-                keys.put(key, t);
-            }
-        }
-        DbUtils.inTransaction(extension, (con) -> {
-                    try {
-                        PreparedStatement pstm = con.prepareStatement("select * from " + table.getTableName() + " ORDER BY height desc, DB_ID desc ");
-                        List<T> all = CollectionUtil.toList(table.getManyBy(con, pstm, true));
-
-                        assertEquals(allExpectedData, all);
-                        assertListInCache(allExpectedData);
-                    }
-                    catch (SQLException e) {
-                        throw new RuntimeException(e.toString(), e);
-                    }
-                }
-        );
-        assertListNotInCache(allExpectedData);
-    }
-
-
-
-    @Test
     public void testGetManyOnConnectionWithoutCache() {
         List<T> allExpectedData = sortByHeightDesc(getAll());
         DbUtils.inTransaction(extension, (con) -> {
@@ -420,165 +386,12 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
                         PreparedStatement pstm = con.prepareStatement("select * from " + table.getTableName() + " order by height desc, db_id desc");
                         List<T> all = CollectionUtil.toList(table.getManyBy(con, pstm, false));
                         assertEquals(allExpectedData, all);
-                        assertListNotInCache(allExpectedData);
                     }
                     catch (SQLException e) {
                         throw new RuntimeException(e.toString(), e);
                     }
                 }
         );
-        assertListNotInCache(allExpectedData);
-    }
-
-    @Test
-    public void testGetAllWithMaxPagination() {
-        testGetAllWithPaginationHeightSorted(0, Integer.MAX_VALUE);
-        testGetAllWithPaginationCustomSorted(0, Integer.MAX_VALUE);
-    }
-
-    @Test
-    public void testGetAllWithDataSizePagination() {
-        testGetAllWithPaginationHeightSorted(0, getAllLatest().size());
-        testGetAllWithPaginationCustomSorted(0, getAllLatest().size());
-    }
-
-    @Test
-    public void testGetAllWithPaginationExcludingFirst() {
-        testGetAllWithPaginationHeightSorted(1, getAllLatest().size());
-        testGetAllWithPaginationCustomSorted(1, getAllLatest().size());
-    }
-
-    @Test
-    public void testGetAllWithPaginationExcludingLast() {
-        testGetAllWithPaginationHeightSorted(0, getAllLatest().size() - 1);
-        testGetAllWithPaginationCustomSorted(0, getAllLatest().size() - 1);
-    }
-
-    @Test
-    public void testGetAllWithPaginationExcludingFirstAndLast() {
-        testGetAllWithPaginationHeightSorted(1, getAllLatest().size() - 1);
-        testGetAllWithPaginationCustomSorted(1, getAllLatest().size() - 1);
-    }
-
-    public void testGetAllWithPaginationHeightSorted(int from, int to) {
-        testGetAllWithPagination(from, to, DB_ID_HEIGHT_COMPARATOR, DB_ID_HEIGHT_SORT);
-    }
-
-    public void testGetAllWithPaginationCustomSorted(int from, int to) {
-        testGetAllWithPagination(from, to, getDefaultComparator(), null);
-    }
-
-    public void testGetAllWithPagination(int from, int to, Comparator<T> comparator, String sort) {
-        List<T> expected = getAllLatest()
-                .stream()
-                .sorted(comparator)
-                .skip(from)
-                .limit(to - from)
-                .collect(Collectors.toList());
-
-        DbUtils.inTransaction(extension, (con) -> {
-            List<T> actual = getAllWithSort(from, to, sort);
-            assertEquals(expected, actual);
-            assertListInCache(expected);
-        });
-
-        assertListNotInCache(expected);
-
-        List<T> actual = getAllWithSort(from, to, sort);
-        assertEquals(expected, actual);
-        assertListNotInCache(expected);
-
-    }
-
-    private List<T> getAllWithSort(int from, int to, String sort) {
-        List<T> actual;
-        if (StringUtils.isBlank(sort)) {
-            actual = CollectionUtil.toList(table.getAll(from, to - 1)); //default sort
-        } else {
-            actual = CollectionUtil.toList(table.getAll(from, to - 1, sort)); //default
-        }
-        return actual;
-    }
-
-    @Test
-    public void testGetAllWithPaginationForMaxHeight() {
-        testGetAllWithPaginationForHeight(Integer.MAX_VALUE);
-    }
-
-    @Test
-    public void testGetAllWithPaginationForLastHeight() {
-        Block mock = mock(Block.class);
-        doReturn(Integer.MAX_VALUE).when(mock).getHeight();
-        getBlockchain().setLastBlock(mock);
-        int height = getHeights().get(0);
-        testGetAllWithPaginationForHeight(height);
-    }
-
-    @Test
-    public void testGetAllWithPaginationForMiddleHeight() {
-        Block mock = mock(Block.class);
-        doReturn(Integer.MAX_VALUE).when(mock).getHeight();
-        getBlockchain().setLastBlock(mock);
-        List<Integer> heights = getHeights();
-        int height = heights.get(heights.size() / 2);
-        testGetAllWithPaginationForHeight(height);
-    }
-
-    @Test
-    public void testGetAllWithPaginationForMinHeight() {
-        Block mock = mock(Block.class);
-        doReturn(Integer.MAX_VALUE).when(mock).getHeight();
-        getBlockchain().setLastBlock(mock);
-        List<Integer> heights = getHeights();
-        int height = heights.get(heights.size() - 1);
-        testGetAllWithPaginationForHeight(height);
-    }
-
-    public void testGetAllWithPaginationForHeight(int height) {
-        testGetAllWithPaginationForHeight(1, 3, height);
-        testGetAllWithPaginationForHeight(0, 2, height);
-        testGetAllWithPaginationForHeight(1, 2, height);
-        testGetAllWithPaginationForHeight(2, 3, height);
-        testGetAllWithPaginationForHeight(0, 1, height);
-        testGetAllWithPaginationForHeight(0, Integer.MAX_VALUE, height);
-        testGetAllWithPaginationForHeight(1, Integer.MAX_VALUE, height);
-    }
-
-    public void testGetAllWithPaginationForHeight(int from, int to, int height) {
-        testGetAllWithPaginationForHeightHeightSorted(from, to, height); // check height sort
-        testGetAllWithPaginationForHeightCustomSorted(from, to, height); //check default sort
-    }
-
-    public void testGetAllWithPaginationForHeightHeightSorted(int from, int to, int height) {
-        testGetAllWithPaginationForHeight(from, to, height, DB_ID_HEIGHT_COMPARATOR, DB_ID_HEIGHT_SORT);
-    }
-
-    public void testGetAllWithPaginationForHeightCustomSorted(int from, int to, int height) {
-        testGetAllWithPaginationForHeight(from, to, height, getDefaultComparator(), null);
-    }
-
-
-    public void testGetAllWithPaginationForHeight(int from, int to, int height, Comparator<T> comp, String sort) {
-
-        List<T> expected = getExpectedAtHeight(from, to, height, comp, (t)->true);
-
-        DbUtils.inTransaction(extension, (con) -> {
-
-            List<T> actual;
-            if (StringUtils.isBlank(sort)) {
-                actual = CollectionUtil.toList(table.getAll(height, from, to - 1)); // default sort
-            } else {
-                actual = CollectionUtil.toList(table.getAll(height, from, to - 1, sort)); // custom sort
-            }
-            //check cache, which should not contain data
-            assertEquals(expected, actual);
-            if (getBlockchain().getHeight() <= height || height < 0) {
-                assertListInCache(expected);
-            } else {
-                assertListNotInCache(expected);
-            }
-        });
-        assertListNotInCache(expected);
     }
 
     protected List<T> getExpectedAtHeight(int from, int to, int height, Comparator<T> comp, Filter<T> filter) {
@@ -740,18 +553,6 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
         Assertions.assertThrows(IllegalStateException.class, () -> table.insert(mock(clazz)));
     }
 
-    @Test
-    public void testInsertWhenCachedValueDbKeyEqualsToInsertedButReferencesDiffer() {
-        Assertions.assertThrows(IllegalStateException.class, () -> DbUtils.inTransaction(extension, (con) -> {
-            T t = getAllLatest().get(0);
-            DbKey dbKey = table.getDbKeyFactory().newKey(t);
-            table.get(dbKey, true); //add to cache
-            T mock = mock(clazz);
-            doReturn(dbKey).when(mock).getDbKey();
-            table.insert(mock);
-        }));
-    }
-
     @Override
     @Test
     public void testInsert() {
@@ -759,9 +560,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
         DbUtils.inTransaction(extension, (con) -> {
             table.insert(value);
             assertEquals(value, table.get(table.getDbKeyFactory().newKey(value)));
-            assertInCache(value);
         });
-        assertNotInCache(value);
     }
 
     @Test
@@ -773,7 +572,6 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
             table.insert(value);
             T t = table.get(table.getDbKeyFactory().newKey(value));
             assertEquals(t, value);
-            assertInCache(t);
         });
         T actual = table.get(table.getDbKeyFactory().newKey(value));
         assertEquals(value, actual);
@@ -786,44 +584,6 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
 
     Map<DbKey, List<T>> groupByDbKey() {
         return groupByDbKey(table.getDbKeyFactory());
-    }
-
-    public void assertInCache(T value) {
-        T cachedValue = getCache(table.getDbKeyFactory().newKey(value));
-        assertEquals(value, cachedValue);
-    }
-
-    public void assertNotInCache(T value) {
-        T cachedValue = getCache(table.getDbKeyFactory().newKey(value));
-        assertNotEquals(value, cachedValue);
-    }
-
-    public void assertListNotInCache(List<T> values) {
-        values.forEach(this::assertNotInCache);
-    }
-
-    public void assertListInCache(List<T> values) {
-        values.forEach(this::assertInCache);
-    }
-
-    public T getCache(DbKey dbKey) {
-        if (!extension.getDatabaseManager().getDataSource().isInTransaction()) {
-            return DbUtils.getInTransaction(extension, (con) -> getCacheInTransaction(dbKey));
-        } else {
-            return getCacheInTransaction(dbKey);
-        }
-    }
-
-    public T getCacheInTransaction(DbKey dbKey) {
-        Map<DbKey, Object> cache = extension.getDatabaseManager().getDataSource().getCache(derivedDbTable.getTableName());
-        return (T) cache.get(dbKey);
-    }
-
-
-    public void removeFromCache(T value) {
-        DbKey dbKey = table.getDbKeyFactory().newKey(value);
-        Map<DbKey, Object> cache = extension.getDatabaseManager().getDataSource().getCache(derivedDbTable.getTableName());
-        cache.remove(dbKey);
     }
 
     public List<T> getAllLatest() {

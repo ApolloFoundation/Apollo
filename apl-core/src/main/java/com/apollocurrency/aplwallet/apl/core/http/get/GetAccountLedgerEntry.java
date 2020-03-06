@@ -20,18 +20,17 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
-import com.apollocurrency.aplwallet.apl.core.account.LedgerEntry;
+import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 /**
@@ -197,14 +196,14 @@ public class GetAccountLedgerEntry extends AbstractAPIRequestHandler {
         //
         // Process the request parameters
         //
-        long ledgerId = ParameterParser.getUnsignedLong(req, "ledgerId", true);
+        long ledgerId = HttpParameterParserUtil.getUnsignedLong(req, "ledgerId", true);
         boolean includeTransaction = "true".equalsIgnoreCase(req.getParameter("includeTransaction"));
         boolean includeHoldingInfo = "true".equalsIgnoreCase(req.getParameter("includeHoldingInfo"));
 
         //
         // Get the ledger entry
         //
-        LedgerEntry ledgerEntry = AccountLedger.getEntry(ledgerId, false);
+        LedgerEntry ledgerEntry = lookupAccountLedgerService().getEntry(ledgerId, false);
         if (ledgerEntry == null)
             return JSONResponses.UNKNOWN_ENTRY;
         //

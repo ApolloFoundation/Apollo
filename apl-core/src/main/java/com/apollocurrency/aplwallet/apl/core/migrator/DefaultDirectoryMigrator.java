@@ -38,7 +38,7 @@ public class DefaultDirectoryMigrator implements Migrator {
                 for (Path p : srcDirectoriesPaths) {
                     if (Files.exists(p)) {
                         if (Files.isDirectory(p)) {
-                            if (Files.list(p).count() > 0) {
+                            if (com.apollocurrency.aplwallet.apl.util.FileUtils.countElementsOfDirectory(p) > 0) {
                                 if (!p.equals(destDirectoryPath)) {
                                     listOfMigratedSrcPaths.add(p);
                                     FileUtils.copyDirectory(p.toFile(), tempDirectory.toFile());

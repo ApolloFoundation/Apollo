@@ -3,9 +3,10 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
@@ -14,16 +15,17 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.AccountControl
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SetPhasingOnly;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import org.json.simple.JSONObject;
+
 import java.nio.ByteBuffer;
 import java.util.Map;
-import org.json.simple.JSONObject;
 
 /**
  *
  * @author al
  */
 public abstract class AccountControl extends TransactionType {
-    
+
     private AccountControl() {
     }
 
@@ -40,6 +42,7 @@ public abstract class AccountControl extends TransactionType {
     @Override
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
     }
+
     public static final TransactionType EFFECTIVE_BALANCE_LEASING = new AccountControl() {
         @Override
         public final byte getSubtype() {
@@ -69,7 +72,8 @@ public abstract class AccountControl extends TransactionType {
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             AccountControlEffectiveBalanceLeasing attachment = (AccountControlEffectiveBalanceLeasing) transaction.getAttachment();
-            Account.getAccount(transaction.getSenderId()).leaseEffectiveBalance(transaction.getRecipientId(), attachment.getPeriod());
+            Account sender = lookupAccountService().getAccount(transaction.getSenderId());
+            lookupAccountLeaseService().leaseEffectiveBalance(transaction.getId(), sender, transaction.getRecipientId(), attachment.getPeriod());
         }
 
         @Override
@@ -84,7 +88,7 @@ public abstract class AccountControl extends TransactionType {
             if (attachment.getPeriod() < blockchainConfig.getLeasingDelay() || attachment.getPeriod() > 65535) {
                 throw new AplException.NotValidException("Invalid effective balance leasing period: " + attachment.getPeriod());
             }
-            byte[] recipientPublicKey = Account.getPublicKey(transaction.getRecipientId());
+            byte[] recipientPublicKey = lookupAccountService().getPublicKeyByteArray(transaction.getRecipientId());
             if (recipientPublicKey == null) {
                 throw new AplException.NotCurrentlyValidException("Invalid effective balance leasing: " + " recipient account " + Long.toUnsignedString(transaction.getRecipientId()) + " not found or no public key published");
             }
@@ -130,8 +134,8 @@ public abstract class AccountControl extends TransactionType {
             VoteWeighting.VotingModel votingModel = attachment.getPhasingParams().getVoteWeighting().getVotingModel();
             attachment.getPhasingParams().validate();
             if (votingModel == VoteWeighting.VotingModel.NONE) {
-                Account senderAccount = Account.getAccount(transaction.getSenderId());
-                if (senderAccount == null || !senderAccount.getControls().contains(Account.ControlType.PHASING_ONLY)) {
+                Account senderAccount = lookupAccountService().getAccount(transaction.getSenderId());
+                if (senderAccount == null || !senderAccount.getControls().contains(AccountControlType.PHASING_ONLY)) {
                     throw new AplException.NotCurrentlyValidException("Phasing only account control is not currently enabled");
                 }
             } else if (votingModel == VoteWeighting.VotingModel.TRANSACTION || votingModel == VoteWeighting.VotingModel.HASH) {
@@ -181,5 +185,5 @@ public abstract class AccountControl extends TransactionType {
             return false;
         }
     };
-    
+
 }

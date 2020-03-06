@@ -76,7 +76,7 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
      * @param DexOrder  hisOffer - matched offer
      */
     private int validateOfferSellAplEth(DexOrder myOffer, DexOrder hisOrder) {
-        return dexValidator.validateOfferSellAplEth(myOffer, hisOrder);
+        return dexValidator.validateOfferSellAplEthActiveDeposit(myOffer, hisOrder);
     }
 
     /**
@@ -94,7 +94,7 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
      * @param hisOffer - matched offer
      */
     private int validateOfferSellAplPax( DexOrder myOrder, DexOrder hisOrder) {
-        return dexValidator.validateOfferSellAplPax(myOrder, hisOrder);
+        return dexValidator.validateOfferSellAplPaxActiveDeposit(myOrder, hisOrder);
     }
 
     

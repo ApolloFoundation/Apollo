@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper.csv;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExportData;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.ColumnMetaData;
+import com.apollocurrency.aplwallet.apl.core.shard.model.ArrayColumn;
 import org.slf4j.Logger;
 
 import java.io.BufferedOutputStream;
@@ -27,11 +28,11 @@ import java.sql.Statement;
 import java.sql.Types;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -47,6 +48,11 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
     private Writer output;
     private final StringBuilder outputBuffer = new StringBuilder(400);
     private final Set<String> excludeColumn = new HashSet<>();
+    /**
+     * Extends H2 ARRAY SQL type by providing a proper precision and scale
+     * as per Java type.
+     */
+    private static final Map<ArrayColumn, ArrayColumn> ARRAY_COLUMN_INDEX;
 
     public CsvWriterImpl(Path dataExportPath, Set<String> excludeColumnNames, CsvEscaper translator) {
         super.dataExportPath = Objects.requireNonNull(dataExportPath, "dataExportPath is NULL.");
@@ -170,9 +176,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
             for (int i = 0; i < columnCount; i++) {
                 rowColumnNames[i] = meta.getColumnLabel(i + 1);
                 // fill in meta data
-                columnsMetaData[i] = new ColumnMetaData(meta.getColumnLabel(i + 1),
-                        meta.getColumnTypeName(i + 1), meta.getColumnType(i + 1),
-                        meta.getPrecision(i + 1), meta.getScale(i + 1));
+                columnsMetaData[i] = getColumnMetaData(meta, i+1);
             }
             if(log.isTraceEnabled()) {
                 log.trace("Table/File = '{}', MetaData = {}", this.fileName, Arrays.toString(columnsMetaData));
@@ -302,6 +306,99 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
             }
             DbUtils.closeSilently(rs);
         }
+    }
+
+    private static Map<ArrayColumn, ArrayColumn> getArrayColumnIndex() {
+        ArrayColumn arrayColumn1 =
+            new ArrayColumn("ACCOUNT_CONTROL_PHASING", "WHITELIST", 19, 0);
+        ArrayColumn arrayColumn2 =
+            new ArrayColumn("GOODS", "PARSED_TAGS", 2147483647, 0);
+        ArrayColumn arrayColumn3 =
+            new ArrayColumn("POLL", "OPTIONS", 2147483647, 0);
+        ArrayColumn arrayColumn4 =
+            new ArrayColumn("SHARD", "BLOCK_TIMEOUTS", 10, 0);
+        ArrayColumn arrayColumn5 =
+            new ArrayColumn("SHARD", "GENERATOR_IDS", 19, 0);
+        ArrayColumn arrayColumn6 =
+            new ArrayColumn("SHARD", "BLOCK_TIMESTAMPS" ,10, 0);
+        ArrayColumn arrayColumn7 =
+            new ArrayColumn("SHUFFLING", "RECIPIENT_PUBLIC_KEYS", 2147483647, 0);
+        ArrayColumn arrayColumn8 =
+            new ArrayColumn("SHUFFLING_DATA", "DATA", 2147483647, 0);
+        ArrayColumn arrayColumn9 =
+            new ArrayColumn("SHUFFLING_PARTICIPANT", "BLAME_DATA", 2147483647, 0);
+        ArrayColumn arrayColumn10 =
+            new ArrayColumn("SHUFFLING_PARTICIPANT", "KEY_SEEDS", 2147483647, 0);
+        ArrayColumn arrayColumn11 =
+            new ArrayColumn("TAGGED_DATA", "PARSED_TAGS", 2147483647, 0);
+
+        return Map.ofEntries(
+            Map.entry(arrayColumn1, arrayColumn1),
+            Map.entry(arrayColumn2, arrayColumn2),
+            Map.entry(arrayColumn3, arrayColumn3),
+            Map.entry(arrayColumn4, arrayColumn4),
+            Map.entry(arrayColumn5, arrayColumn5),
+            Map.entry(arrayColumn6, arrayColumn6),
+            Map.entry(arrayColumn7, arrayColumn7),
+            Map.entry(arrayColumn8, arrayColumn8),
+            Map.entry(arrayColumn9, arrayColumn9),
+            Map.entry(arrayColumn10, arrayColumn10),
+            Map.entry(arrayColumn11, arrayColumn11)
+        );
+    }
+
+    static {
+        ARRAY_COLUMN_INDEX = getArrayColumnIndex();
+    }
+
+    /**
+     * Gets a ColumnMetaData object as per an index in ResultSetMetaData.
+     * When it comes to the ARRAY SQL type, this method asks a prepopulated index map
+     * for a proper precision and scale. This is because, H2 has no concrete types for arrays
+     * and the precision of arrays may change (as it was from 196 to 200).
+     *
+     * @param meta
+     * @param index
+     * @return
+     * @throws SQLException
+     */
+    private ColumnMetaData getColumnMetaData(
+            final ResultSetMetaData meta,
+            final int index
+    ) throws SQLException {
+        final int columnType = meta.getColumnType(index);
+        final String columnLabel = meta.getColumnLabel(index);
+        final String columnTypeName = meta.getColumnTypeName(index);
+        int precision;
+        int scale;
+        if (columnType == Types.ARRAY) {
+            final String tableName = meta.getTableName(index);
+            final String columnName = meta.getColumnName(index);
+            final ArrayColumn arrayColumn = getArrayColumn(tableName, columnName);
+            precision = arrayColumn.getPrecision();
+            scale = arrayColumn.getScale();
+        } else {
+            precision = meta.getPrecision(index);
+            scale = meta.getScale(index);
+        }
+        return new ColumnMetaData(columnLabel, columnTypeName, columnType, precision, scale);
+    }
+
+    private ArrayColumn getArrayColumn(String tableName, String columnName) {
+        return Optional.ofNullable(
+            ARRAY_COLUMN_INDEX.get(
+                ArrayColumn.builder().tableName(tableName).columnName(columnName).build()
+            )
+        ).orElseThrow(() -> {
+                final String message = String.format(
+                    "Cannot find tableName: %s and columnName: %s.",
+                    tableName,
+                    columnName
+                );
+                log.error(message);
+                return new IllegalStateException(message);
+            }
+        );
     }
 
     /**

@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.tools;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
@@ -220,7 +220,7 @@ public final class PassphraseRecovery {
                 } else {
                     String secretPhrase = new String(wildcard);
                     byte[] publicKey = Crypto.getPublicKey(secretPhrase);
-                    long id = Account.getId(publicKey);
+                    long id = AccountService.getId(publicKey);
                     if (publicKeys.keySet().contains(id)) {
                         return new Solution(secretPhrase, publicKeys.get(id), id, Convert2.rsAccount(id));
                     }

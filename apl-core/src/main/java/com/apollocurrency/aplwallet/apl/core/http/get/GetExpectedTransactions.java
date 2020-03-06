@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Filter;
@@ -47,7 +47,7 @@ public final class GetExpectedTransactions extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        Set<Long> accountIds = Convert.toSet(ParameterParser.getAccountIds(req, false));
+        Set<Long> accountIds = Convert.toSet(HttpParameterParserUtil.getAccountIds(req, false));
         Filter<Transaction> filter = accountIds.isEmpty() ? transaction -> true :
                 transaction -> accountIds.contains(transaction.getSenderId()) || accountIds.contains(transaction.getRecipientId());
 

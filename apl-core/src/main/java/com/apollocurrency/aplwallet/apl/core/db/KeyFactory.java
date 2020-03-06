@@ -11,7 +11,7 @@ import java.sql.SQLException;
  * @author al
  */
 public abstract class KeyFactory<T> {
-    
+
     private final String pkClause;
     private final String pkColumns;
     private final String selfJoinClause;
@@ -26,16 +26,6 @@ public abstract class KeyFactory<T> {
 
     public abstract DbKey newKey(ResultSet rs) throws SQLException;
 
-
-    /**
-     * Used for creating and caching newly created entity for using in transaction
-     * TODO Should be completely removed later
-     */
-    @Deprecated
-    public T newEntity(DbKey dbKey) {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
     public final String getPKClause() {
         return pkClause;
     }
@@ -48,5 +38,5 @@ public abstract class KeyFactory<T> {
     public final String getSelfJoinClause() {
         return selfJoinClause;
     }
-    
+
 }

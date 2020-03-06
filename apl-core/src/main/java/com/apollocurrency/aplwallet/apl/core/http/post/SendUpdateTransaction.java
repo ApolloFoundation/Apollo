@@ -6,14 +6,14 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import javax.servlet.http.HttpServletRequest;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.UpdateAttachment;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Architecture;
@@ -35,11 +35,11 @@ public final class SendUpdateTransaction extends CreateTransaction {
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         Architecture architecture = Architecture.valueOf(Convert.nullToEmpty(req.getParameter("architecture")).trim());
         Platform platform = Platform.valueOf(Convert.nullToEmpty(req.getParameter("platform")).trim());
-        byte[] urlFirstPart = ParameterParser.getBytes(req, "urlFirstPart", true);
-        byte[] urlSecondPart = ParameterParser.getBytes(req, "urlSecondPart", true);
+        byte[] urlFirstPart = HttpParameterParserUtil.getBytes(req, "urlFirstPart", true);
+        byte[] urlSecondPart = HttpParameterParserUtil.getBytes(req, "urlSecondPart", true);
         Version version = new Version(Convert.nullToEmpty(req.getParameter("version")).trim());
-        byte[] hash = ParameterParser.getBytes(req, "hash", true);
-        byte level = ParameterParser.getByte(req, "level", (byte)0, Byte.MAX_VALUE, true);
+        byte[] hash = HttpParameterParserUtil.getBytes(req, "hash", true);
+        byte level = HttpParameterParserUtil.getByte(req, "level", (byte)0, Byte.MAX_VALUE, true);
         if (urlFirstPart.length != Constants.UPDATE_URL_PART_LENGTH) {
             return JSONResponses.INCORRECT_UPDATE_URL_FIRST_PART_LENGTH;
         }
@@ -50,7 +50,7 @@ public final class SendUpdateTransaction extends CreateTransaction {
             return JSONResponses.INCORRECT_UPDATE_HASH_LENGTH;
         }
         DoubleByteArrayTuple url = new DoubleByteArrayTuple(urlFirstPart, urlSecondPart);
-        Account account = ParameterParser.getSenderAccount(req);
+        Account account = HttpParameterParserUtil.getSenderAccount(req);
         Attachment attachment = UpdateAttachment.getAttachment(platform, architecture, url, version, hash, level);
         return createTransaction(req, account, attachment);
     }

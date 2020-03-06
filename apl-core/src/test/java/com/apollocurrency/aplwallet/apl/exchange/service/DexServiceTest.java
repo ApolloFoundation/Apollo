@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
@@ -12,21 +13,23 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingApprovedResultTable;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
+import com.apollocurrency.aplwallet.apl.exchange.DexConfig;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
+import com.apollocurrency.aplwallet.apl.exchange.model.DBSortOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderSortBy;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderWithFreezing;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderFreezing;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.google.common.cache.LoadingCache;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -62,7 +65,7 @@ class DexServiceTest {
     @Mock DexContractDao dexContractDao;
     @Mock Blockchain blockchain;
     @Mock PhasingPollServiceImpl phasingPollService;
-    @Mock DexMatcherServiceImpl dexMatcherService;    
+    @Mock DexMatcherServiceImpl dexMatcherService;
     @Mock
     PhasingApprovedResultTable approvedResultTable;
     @Mock
@@ -71,6 +74,10 @@ class DexServiceTest {
     BlockchainConfig blockchainConfig;
     @Mock
     LoadingCache<Long, OrderFreezing> cache;
+    @Mock
+    DexConfig dexConfig;
+    @Mock
+    AccountService accountService;
 
     DexOrder order = new DexOrder(2L, 100L, "from-address", "to-address", OrderType.BUY, OrderStatus.OPEN, DexCurrency.APL, 127_000_000L, DexCurrency.ETH, BigDecimal.valueOf(0.0001), 500);
     DexOrder order1 = new DexOrder(1L, 2L, OrderType.BUY, 100L, DexCurrency.APL, 10000L, DexCurrency.PAX, BigDecimal.ONE, 90, OrderStatus.OPEN, 259 , "", "");
@@ -81,7 +88,7 @@ class DexServiceTest {
             0L, 2L, 1L, 3L, 200L, 100L,
             ExchangeContractStatus.STEP_3, new byte[32], "123",
             "0x86d5bc08c2eba828a8e3588e25ad26a312ce77f6ecc02e3500ba05607f49c935",
-            new byte[32], Constants.DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY, null, true);
+            new byte[32], 100, null, true);
 
     DexService dexService;
 
@@ -89,13 +96,14 @@ class DexServiceTest {
     void setUp() {
         dexService = new DexService(ethWalletService, dexOrderDao, dexOrderTable, transactionProcessor, dexSmartContractService, secureStorageService,
                 dexContractTable, dexOrderTransactionCreator, timeService, dexContractDao, blockchain, phasingPollService, dexMatcherService,
-                approvedResultTable, mandatoryTransactionDao, blockchainConfig, cache);
+                approvedResultTable, mandatoryTransactionDao, accountService, blockchainConfig, cache, dexConfig);
     }
 
     @Test
     void testNotEnoughConfirmationsForAplTransaction() {
         doReturn(60).when(blockchain).getHeight();
         doReturn(false).when(blockchain).hasTransaction(123, 30);
+        doReturn(30).when(dexConfig).getAplConfirmations();
 
         boolean hasEnoughConfirmations = dexService.hasConfirmations(contract, order);
 
@@ -106,6 +114,7 @@ class DexServiceTest {
     void testHasEnoughConfirmationsForAplTransaction() {
         doReturn(60).when(blockchain).getHeight();
         doReturn(true).when(blockchain).hasTransaction(123, 30);
+        doReturn(30).when(dexConfig).getAplConfirmations();
 
         boolean hasEnoughConfirmations = dexService.hasConfirmations(contract, order);
 
@@ -116,6 +125,7 @@ class DexServiceTest {
     void testNotEnoughConfirmationsForEthTransaction() {
         order.setType(OrderType.SELL);
         doReturn(9).when(ethWalletService).getNumberOfConfirmations(contract.getTransferTxId());
+        doReturn(10).when(dexConfig).getEthConfirmations();
 
         boolean hasEnoughConfirmations = dexService.hasConfirmations(contract, order);
 
@@ -177,8 +187,8 @@ class DexServiceTest {
     void testGetOrdersWithoutHasFrozenMoneyParameter() {
         DexOrder order1 = new DexOrder(1L, 2L, OrderType.BUY, 100L, DexCurrency.APL, 10000L, DexCurrency.PAX, BigDecimal.ONE, 90, OrderStatus.OPEN, 259 , "", "");
         DexOrder order2 = new DexOrder(2L, 4L, OrderType.SELL, 200L, DexCurrency.APL, 50000L, DexCurrency.ETH, BigDecimal.TEN, 290, OrderStatus.WAITING_APPROVAL, 380 , "", "");
-        DexOrderDBRequest request = DexOrderDBRequest.builder().limit(2).build();
-        doReturn(List.of(order1, order2)).when(dexOrderDao).getOrders(request);
+        DexOrderDBRequest request = DexOrderDBRequest.builder().limit(2).sortBy(DexOrderSortBy.PAIR_RATE).sortOrder(DBSortOrder.DESC).build();
+        doReturn(List.of(order1, order2)).when(dexOrderDao).getOrders(request, DexOrderSortBy.PAIR_RATE, DBSortOrder.DESC);
         doReturn(new OrderFreezing(2L, false)).when(cache).getUnchecked(2L);
 
         List<DexOrderWithFreezing> ordersWithFreezing = dexService.getOrdersWithFreezing(request);
@@ -188,10 +198,10 @@ class DexServiceTest {
 
     @Test
     void testGetOrdersWithFrozenMoney() {
-        DexOrderDBRequest request1 = DexOrderDBRequest.builder().offset(1).limit(2).hasFrozenMoney(true).build();
-        doReturn(List.of(order1, order2)).when(dexOrderDao).getOrders(request1);
-        DexOrderDBRequest request2 = DexOrderDBRequest.builder().offset(3).limit(2).hasFrozenMoney(true).build();
-        doReturn(List.of(order3, order4)).when(dexOrderDao).getOrders(request2);
+        DexOrderDBRequest request1 = DexOrderDBRequest.builder().offset(1).limit(2).sortBy(DexOrderSortBy.PAIR_RATE).sortOrder(DBSortOrder.DESC).hasFrozenMoney(true).build();
+        doReturn(List.of(order1, order2)).when(dexOrderDao).getOrders(request1, DexOrderSortBy.PAIR_RATE, DBSortOrder.DESC);
+        DexOrderDBRequest request2 = DexOrderDBRequest.builder().offset(3).limit(2).sortBy(DexOrderSortBy.PAIR_RATE).sortOrder(DBSortOrder.DESC).hasFrozenMoney(true).build();
+        doReturn(List.of(order3, order4)).when(dexOrderDao).getOrders(request2, DexOrderSortBy.PAIR_RATE, DBSortOrder.DESC);
 
         doReturn(new OrderFreezing(2L, false)).when(cache).getUnchecked(2L);
         doReturn(new OrderFreezing(6L, true)).when(cache).getUnchecked(6L);
@@ -204,12 +214,12 @@ class DexServiceTest {
 
     @Test
     void testGetOrdersWithoutFrozenMoney() {
-        DexOrderDBRequest request1 = DexOrderDBRequest.builder().offset(1).limit(2).hasFrozenMoney(false).build();
-        doReturn(List.of(order1, order2)).when(dexOrderDao).getOrders(request1);
-        DexOrderDBRequest request2 = DexOrderDBRequest.builder().offset(3).limit(2).hasFrozenMoney(false).build();
-        doReturn(List.of(order3, order4)).when(dexOrderDao).getOrders(request2);
-        DexOrderDBRequest request3 = DexOrderDBRequest.builder().offset(5).limit(2).hasFrozenMoney(false).build();
-        doReturn(List.of(order)).when(dexOrderDao).getOrders(request3);
+        DexOrderDBRequest request1 = DexOrderDBRequest.builder().offset(1).limit(2).sortBy(DexOrderSortBy.PAIR_RATE).sortOrder(DBSortOrder.DESC).hasFrozenMoney(false).build();
+        doReturn(List.of(order1, order2)).when(dexOrderDao).getOrders(request1, DexOrderSortBy.PAIR_RATE, DBSortOrder.DESC);
+        DexOrderDBRequest request2 = DexOrderDBRequest.builder().offset(3).limit(2).sortBy(DexOrderSortBy.PAIR_RATE).sortOrder(DBSortOrder.DESC).hasFrozenMoney(false).build();
+        doReturn(List.of(order3, order4)).when(dexOrderDao).getOrders(request2, DexOrderSortBy.PAIR_RATE, DBSortOrder.DESC);
+        DexOrderDBRequest request3 = DexOrderDBRequest.builder().offset(5).limit(2).sortBy(DexOrderSortBy.PAIR_RATE).sortOrder(DBSortOrder.DESC).hasFrozenMoney(false).build();
+        doReturn(List.of(order)).when(dexOrderDao).getOrders(request3, DexOrderSortBy.PAIR_RATE, DBSortOrder.DESC);
 
         doReturn(new OrderFreezing(2L, true)).when(cache).getUnchecked(2L);
         doReturn(new OrderFreezing(6L, true)).when(cache).getUnchecked(6L);
@@ -222,10 +232,10 @@ class DexServiceTest {
 
     @Test
     void testGetOrdersWithoutOffset() {
-        DexOrderDBRequest request1 = DexOrderDBRequest.builder().limit(2).hasFrozenMoney(false).build();
-        doReturn(List.of(order1, order2)).when(dexOrderDao).getOrders(request1);
-        DexOrderDBRequest request2 = DexOrderDBRequest.builder().offset(2).limit(2).hasFrozenMoney(false).build();
-        doReturn(List.of()).when(dexOrderDao).getOrders(request2);
+        DexOrderDBRequest request1 = DexOrderDBRequest.builder().limit(2).sortBy(DexOrderSortBy.PAIR_RATE).sortOrder(DBSortOrder.DESC).hasFrozenMoney(false).build();
+        doReturn(List.of(order1, order2)).when(dexOrderDao).getOrders(request1, DexOrderSortBy.PAIR_RATE, DBSortOrder.DESC);
+        DexOrderDBRequest request2 = DexOrderDBRequest.builder().offset(2).limit(2).sortBy(DexOrderSortBy.PAIR_RATE).sortOrder(DBSortOrder.DESC).hasFrozenMoney(false).build();
+        doReturn(List.of()).when(dexOrderDao).getOrders(request2, DexOrderSortBy.PAIR_RATE, DBSortOrder.DESC);
 
         doReturn(new OrderFreezing(2L, false)).when(cache).getUnchecked(2L);
 

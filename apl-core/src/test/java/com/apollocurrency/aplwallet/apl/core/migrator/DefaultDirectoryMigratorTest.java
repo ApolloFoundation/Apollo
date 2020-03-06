@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.migrator;
 
 
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
+import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,6 +22,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class DefaultDirectoryMigratorTest {
     private Path firstDirFile1;
@@ -94,9 +98,12 @@ public class DefaultDirectoryMigratorTest {
         Path firstDirFile2TargetPath = targetDir.resolve(firstDirFile2.getFileName());
         Set<Path> expectedMigratedFilePaths = new HashSet<>(Arrays.asList(
                 firstDirFile1TargetPath, firstDirFile2TargetPath));
-        Assertions.assertEquals(expectedMigratedFilePaths, Files.list(targetDir).collect(Collectors.toSet()));
-        Assertions.assertArrayEquals(firstFilePayload, Files.readAllBytes(firstDirFile2TargetPath));
-        Assertions.assertArrayEquals(firstFilePayload, Files.readAllBytes(firstDirFile1TargetPath));
+
+        try(Stream<Path> pathStream = Files.list(targetDir)) {
+            Assertions.assertEquals(expectedMigratedFilePaths, pathStream.collect(Collectors.toSet()));
+            Assertions.assertArrayEquals(firstFilePayload, Files.readAllBytes(firstDirFile2TargetPath));
+            Assertions.assertArrayEquals(firstFilePayload, Files.readAllBytes(firstDirFile1TargetPath));
+        }
     }
     @Test
     public void testMigrateDirectoriesToDirectory() throws IOException {
@@ -113,10 +120,12 @@ public class DefaultDirectoryMigratorTest {
         List<Path> migratedDirs = defaultDirectoryMigrator.migrate(dirsToMigrate, targetDir);
 
         Assertions.assertEquals(migratedDirs, dirsToMigrate);
-        Assertions.assertEquals(expectedMigratedFilePaths, Files.list(targetDir).collect(Collectors.toSet()));
-        Assertions.assertArrayEquals(firstFilePayload, Files.readAllBytes(firstDirFile2TargetPath));
-        Assertions.assertArrayEquals(firstFilePayload, Files.readAllBytes(firstDirFile1TargetPath));
-        Assertions.assertArrayEquals(secondFilePayload, Files.readAllBytes(secondDirFileTargetPath));
+        try(Stream<Path> pathStream = Files.list(targetDir)) {
+            Assertions.assertEquals(expectedMigratedFilePaths, pathStream.collect(Collectors.toSet()));
+            Assertions.assertArrayEquals(firstFilePayload, Files.readAllBytes(firstDirFile2TargetPath));
+            Assertions.assertArrayEquals(firstFilePayload, Files.readAllBytes(firstDirFile1TargetPath));
+            Assertions.assertArrayEquals(secondFilePayload, Files.readAllBytes(secondDirFileTargetPath));
+        }
     }
 
     @Test
@@ -132,10 +141,12 @@ public class DefaultDirectoryMigratorTest {
         List<Path> migratedDirs = defaultDirectoryMigrator.migrate(dirsToMigrate, targetDir);
 
         Assertions.assertEquals(migratedDirs, dirsToMigrate);
-        Set<Path> actualFilePaths = Files.walk(targetDir).filter(f -> !f.equals(targetDir)).collect(Collectors.toSet());
-        Assertions.assertEquals(expectedMigratedFilePaths, actualFilePaths);
-        Assertions.assertArrayEquals(thirdFilePayload, Files.readAllBytes(thirdDirFileTargetPath));
-        Assertions.assertArrayEquals(targetFilePayload, Files.readAllBytes(targetFile));
+        try(Stream<Path> pathStream = Files.walk(targetDir)) {
+            Set<Path> actualFilePaths = pathStream.filter(f -> !f.equals(targetDir)).collect(Collectors.toSet());
+            Assertions.assertEquals(expectedMigratedFilePaths, actualFilePaths);
+            Assertions.assertArrayEquals(thirdFilePayload, Files.readAllBytes(thirdDirFileTargetPath));
+            Assertions.assertArrayEquals(targetFilePayload, Files.readAllBytes(targetFile));
+        }
     }
 
     @Test
@@ -149,9 +160,11 @@ public class DefaultDirectoryMigratorTest {
         List<Path> migratedDirs = defaultDirectoryMigrator.migrate(dirsToMigrate, targetDir);
 
         Assertions.assertEquals(Collections.emptyList(), migratedDirs);
-        Set<Path> actualFilePaths = Files.walk(targetDir).filter(f -> !f.equals(targetDir)).collect(Collectors.toSet());
-        Assertions.assertEquals(expectedMigratedFilePaths, actualFilePaths);
-        Assertions.assertArrayEquals(targetFilePayload, Files.readAllBytes(targetFile));
+        try(Stream<Path> pathStream = Files.walk(targetDir)) {
+            Set<Path> actualFilePaths = pathStream.filter(f -> !f.equals(targetDir)).collect(Collectors.toSet());
+            Assertions.assertEquals(expectedMigratedFilePaths, actualFilePaths);
+            Assertions.assertArrayEquals(targetFilePayload, Files.readAllBytes(targetFile));
+        }
     }
     @Test
     public void testMigrateDirectoryToDirectoryWhichNotExist() throws IOException {
@@ -170,8 +183,10 @@ public class DefaultDirectoryMigratorTest {
 
 
         Assertions.assertEquals(dirsToMigrate, actualMigratedPaths);
-        Set<Path> actualFilePaths = Files.walk(noneExistentDir1).filter(f -> !f.equals(noneExistentDir1)).collect(Collectors.toSet());
-        Assertions.assertEquals(expectedMigratedFilePaths, actualFilePaths);
+        try(Stream<Path> pathStream = Files.walk(noneExistentDir1)) {
+            Set<Path> actualFilePaths = pathStream.filter(f -> !f.equals(noneExistentDir1)).collect(Collectors.toSet());
+            Assertions.assertEquals(expectedMigratedFilePaths, actualFilePaths);
+        }
         Assertions.assertArrayEquals(firstFilePayload, Files.readAllBytes(firstDirFile1TargetPath));
         Assertions.assertArrayEquals(firstFilePayload, Files.readAllBytes(firstDirFile2TargetPath));
 
@@ -219,8 +234,7 @@ public class DefaultDirectoryMigratorTest {
         List<Path> migrated = defaultDirectoryMigrator.migrate(dirsToMigrate, secondFirstDir);
 
         Assertions.assertEquals(2, migrated.size());
-        List<Path> files = Files.list(secondFirstDir).collect(Collectors.toList());
-        Assertions.assertEquals(4, files.size());
+        Assertions.assertEquals(4, FileUtils.countElementsOfDirectory(secondFirstDir));
     }
 
 

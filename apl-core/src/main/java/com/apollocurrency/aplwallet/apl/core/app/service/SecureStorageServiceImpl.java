@@ -33,7 +33,6 @@ public class SecureStorageServiceImpl implements SecureStorageService {
 
     private static final String SECURE_STORE_FILE_NAME = "secure_store";
     private static final String SECURE_STORE_FILE_COPY_NAME = "secure_store_copy";
-    private static final String SECURE_STORE_KEY = "secure_store_key";
 
     private Map<Long, String> store = new ConcurrentHashMap<>();
     private OptionDAO optionDAO;

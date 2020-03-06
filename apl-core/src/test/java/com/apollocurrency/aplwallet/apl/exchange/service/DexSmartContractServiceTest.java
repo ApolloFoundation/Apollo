@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.eth.web3j.ComparableStaticGasProvider;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexTransactionDao;
+import com.apollocurrency.aplwallet.apl.exchange.model.DepositedOrderDetails;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexTransaction;
@@ -20,7 +21,6 @@ import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.EthStationGasInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
-import com.apollocurrency.aplwallet.apl.exchange.model.UserEthDepositInfo;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -34,6 +34,7 @@ import org.web3j.crypto.Credentials;
 import org.web3j.crypto.ECKeyPair;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.Request;
+import org.web3j.protocol.core.Response;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.protocol.core.methods.response.Transaction;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
@@ -44,7 +45,6 @@ import org.web3j.utils.Numeric;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
@@ -70,7 +70,6 @@ class DexSmartContractServiceTest {
     @Mock
     private KeyStoreService keyStoreService;
 
-    private PropertiesHolder holder;
     @Mock
     private DexEthService dexEthService;
     @Mock
@@ -104,9 +103,9 @@ class DexSmartContractServiceTest {
         Properties props = new Properties();
         props.setProperty("apl.eth.swap.proxy.contract.address", SWAP_ETH_ADDRESS);
         props.setProperty("apl.eth.pax.contract.address", PAX_ETH_ADDRESS);
-        holder = new PropertiesHolder();
+        PropertiesHolder holder = new PropertiesHolder();
         holder.init(props);
-        service = spy(new DexSmartContractService(web3j, holder, keyStoreService, dexEthService, ethereumWalletService, dexTransactionDao, receiptProcessor, receiptProcessorProducer));
+        service = spy(new DexSmartContractService(web3j, holder, keyStoreService, dexEthService, ethereumWalletService, dexTransactionDao, receiptProcessor, receiptProcessorProducer, null));
         aliceWalletKey = new EthWalletKey(Credentials.create(ECKeyPair.create(Crypto.getPrivateKey(Convert.parseHexString(ALICE_PRIV_KEY)))));
         ApolloFbWallet apolloFbWallet = new ApolloFbWallet();
         apolloFbWallet.addAplKey(new AplWalletKey(Convert.parseHexString(ALICE_PRIV_KEY)));
@@ -127,8 +126,8 @@ class DexSmartContractServiceTest {
 
     @Test
     void testHasFrozenMoneyForBuyOrder() throws AplException.ExecutiveProcessException {
-        List<UserEthDepositInfo> userDeposits = List.of(new UserEthDepositInfo(order.getId(), BigDecimal.valueOf(0.000126), 2L), new UserEthDepositInfo(1L, BigDecimal.valueOf(0.000127), 1L), new UserEthDepositInfo(order.getId(), BigDecimal.valueOf(0.000127), 1L));
-        doReturn(userDeposits).when(service).getUserActiveDeposits(order.getFromAddress());
+        DepositedOrderDetails depositedOrderDetails = new DepositedOrderDetails(true, null, new BigDecimal("0.0001270"), false);
+        doReturn(depositedOrderDetails).when(service).getDepositedOrderDetails(order.getFromAddress(), order.getId());
 
         boolean result = service.hasFrozenMoney(order);
 
@@ -137,22 +136,14 @@ class DexSmartContractServiceTest {
 
     @Test
     void testHasFrozenMoneyForBuyOrderWithoutUserDeposits() throws AplException.ExecutiveProcessException {
-        List<UserEthDepositInfo> userDeposits = List.of();
-        doReturn(userDeposits).when(service).getUserActiveDeposits(order.getFromAddress());
+        DepositedOrderDetails depositedOrderDetails = new DepositedOrderDetails(false, null, null, false);
+        doReturn(depositedOrderDetails).when(service).getDepositedOrderDetails(order.getFromAddress(), order.getId());
 
         boolean result = service.hasFrozenMoney(order);
 
         assertFalse(result);
     }
 
-    @Test
-    void testHasFrozenMoneyForBuyOrderWithException() throws AplException.ExecutiveProcessException {
-        doThrow(new AplException.ExecutiveProcessException()).when(service).getUserActiveDeposits(order.getFromAddress());
-
-        boolean result = service.hasFrozenMoney(order);
-
-        assertFalse(result);
-    }
 
     @Test
     void testDepositEth() throws ExecutionException, AplException.ExecutiveProcessException {
@@ -224,7 +215,7 @@ class DexSmartContractServiceTest {
     }
 
     @Test
-    void testDepositOnExceptionDuringAllowance() throws IOException, ExecutionException, AplException.ExecutiveProcessException {
+    void testDepositOnExceptionDuringAllowance() throws IOException, AplException.ExecutiveProcessException {
         BigInteger amount = EthUtil.etherToWei(BigDecimal.ONE);
         doReturn(aliceWalletKeysInfo).when(keyStoreService).getWalletKeysInfo(ALICE_PASS, ALICE_ID);
         doThrow(new IOException()).when(ethereumWalletService).getAllowance(SWAP_ETH_ADDRESS, ALICE_ETH_ADDRESS, PAX_ETH_ADDRESS);
@@ -237,7 +228,7 @@ class DexSmartContractServiceTest {
     }
 
     @Test
-    void testDepositNotSupportedCurrency() throws IOException, ExecutionException, AplException.ExecutiveProcessException {
+    void testDepositNotSupportedCurrency() throws AplException.ExecutiveProcessException {
         doReturn(aliceWalletKeysInfo).when(keyStoreService).getWalletKeysInfo(ALICE_PASS, ALICE_ID);
 
         assertThrows(UnsupportedOperationException.class, () -> service.deposit(ALICE_PASS, 100L, ALICE_ID, ALICE_ETH_ADDRESS, BigInteger.TEN, 10L, DexCurrency.APL));
@@ -247,7 +238,7 @@ class DexSmartContractServiceTest {
     }
 
     @Test
-    void testDepositWithExceptionDuringApproving() throws IOException, AplException.ExecutiveProcessException {
+    void testDepositWithExceptionDuringApproving() throws IOException {
         BigInteger amount = EthUtil.etherToWei(BigDecimal.ONE);
         doReturn(aliceWalletKeysInfo).when(keyStoreService).getWalletKeysInfo(ALICE_PASS, ALICE_ID);
         doReturn(BigInteger.ZERO).when(ethereumWalletService).getAllowance(SWAP_ETH_ADDRESS, ALICE_ETH_ADDRESS, PAX_ETH_ADDRESS);
@@ -256,7 +247,7 @@ class DexSmartContractServiceTest {
     }
 
     @Test
-    void testDepositWhenUncTransactionWasSentBefore() throws ExecutionException, AplException.ExecutiveProcessException, IOException {
+    void testDepositWhenUncTransactionWasSentBefore() throws AplException.ExecutiveProcessException, IOException {
         DexTransaction tx = new DexTransaction(1L, new byte[32], new byte[32], DexTransaction.Op.DEPOSIT, "100", ALICE_ETH_ADDRESS, 150);
         doReturn(aliceWalletKeysInfo).when(keyStoreService).getWalletKeysInfo(ALICE_PASS, ALICE_ID);
         doReturn(tx).when(dexTransactionDao).get(tx.getParams(), tx.getAccount(), tx.getOperation());
@@ -270,7 +261,7 @@ class DexSmartContractServiceTest {
 
 
     @Test
-    void testDepositWhenConfirmedTxWasSent() throws ExecutionException, AplException.ExecutiveProcessException, IOException {
+    void testDepositWhenConfirmedTxWasSent() throws AplException.ExecutiveProcessException, IOException {
         DexTransaction tx = new DexTransaction(1L, new byte[32], new byte[32], DexTransaction.Op.DEPOSIT, "100", ALICE_ETH_ADDRESS, 150);
         doReturn(aliceWalletKeysInfo).when(keyStoreService).getWalletKeysInfo(ALICE_PASS, ALICE_ID);
         doReturn(tx).when(dexTransactionDao).get(tx.getParams(), tx.getAccount(), tx.getOperation());
@@ -288,7 +279,7 @@ class DexSmartContractServiceTest {
     }
 
     @Test
-    void testDepositWhenConfirmedFailedTxWasSent() throws ExecutionException, AplException.ExecutiveProcessException, IOException {
+    void testDepositWhenConfirmedFailedTxWasSent() throws AplException.ExecutiveProcessException, IOException {
         DexTransaction tx = new DexTransaction(1L, new byte[32], new byte[32], DexTransaction.Op.DEPOSIT, "100", ALICE_ETH_ADDRESS, 150);
         doReturn(aliceWalletKeysInfo).when(keyStoreService).getWalletKeysInfo(ALICE_PASS, ALICE_ID);
         doReturn(tx).when(dexTransactionDao).get(tx.getParams(), tx.getAccount(), tx.getOperation());
@@ -309,7 +300,7 @@ class DexSmartContractServiceTest {
     }
 
     @Test
-    void testDepositWhenConfirmedReceiptIsNull() throws ExecutionException, AplException.ExecutiveProcessException, IOException {
+    void testDepositWhenConfirmedReceiptIsNull() throws AplException.ExecutiveProcessException, IOException {
         DexTransaction tx = new DexTransaction(1L, new byte[32], new byte[32], DexTransaction.Op.DEPOSIT, "100", ALICE_ETH_ADDRESS, 150);
         doReturn(aliceWalletKeysInfo).when(keyStoreService).getWalletKeysInfo(ALICE_PASS, ALICE_ID);
         doReturn(tx).when(dexTransactionDao).get(tx.getParams(), tx.getAccount(), tx.getOperation());
@@ -324,13 +315,13 @@ class DexSmartContractServiceTest {
     }
 
     @Test
-    void testDepositWhenTxWasNotSent() throws ExecutionException, AplException.ExecutiveProcessException, IOException {
+    void testDepositWhenTxWasNotSent() throws AplException.ExecutiveProcessException, IOException {
         DexTransaction tx = new DexTransaction(1L, new byte[32], new byte[32], DexTransaction.Op.DEPOSIT, "100", ALICE_ETH_ADDRESS, 150);
         doReturn(aliceWalletKeysInfo).when(keyStoreService).getWalletKeysInfo(ALICE_PASS, ALICE_ID);
         doReturn(tx).when(dexTransactionDao).get(tx.getParams(), tx.getAccount(), tx.getOperation());
         String empty32Bytes = Numeric.toHexString(new byte[32]);
         doReturn(Optional.empty()).when(service).getTxByHash(empty32Bytes);
-        mockEthSendTransaction(empty32EncodedBytes, empty32EncodedBytes);
+        mockEthSendTransactionCorrectResponse(empty32EncodedBytes, empty32EncodedBytes);
 
         String hash = service.deposit(ALICE_PASS, 100L, ALICE_ID, ALICE_ETH_ADDRESS, BigInteger.TEN, 10L, DexCurrency.ETH);
 
@@ -338,7 +329,7 @@ class DexSmartContractServiceTest {
     }
 
     @Test
-    void testDepositWhenUnableToGetResponseFromNode() throws IOException, ExecutionException, AplException.ExecutiveProcessException {
+    void testDepositWhenUnableToGetResponseFromNode() throws IOException, AplException.ExecutiveProcessException {
         DexTransaction tx = new DexTransaction(1L, new byte[32], new byte[32], DexTransaction.Op.DEPOSIT, "100", ALICE_ETH_ADDRESS, 150);
         doReturn(aliceWalletKeysInfo).when(keyStoreService).getWalletKeysInfo(ALICE_PASS, ALICE_ID);
         doReturn(tx).when(dexTransactionDao).get(tx.getParams(), tx.getAccount(), tx.getOperation());
@@ -351,7 +342,24 @@ class DexSmartContractServiceTest {
     }
 
     @Test
-    void testRefund() throws ExecutionException, AplException.ExecutiveProcessException, IOException {
+    void testDepositWhenStoredPreviousTxIsIncorrect() throws IOException, AplException.ExecutiveProcessException {
+        DexTransaction tx = new DexTransaction(1L, new byte[32], new byte[32], DexTransaction.Op.DEPOSIT, "100", ALICE_ETH_ADDRESS, 150);
+        doReturn(aliceWalletKeysInfo).when(keyStoreService).getWalletKeysInfo(ALICE_PASS, ALICE_ID);
+        doReturn(dexContract).when(service).createDexContract(new ComparableStaticGasProvider(BigInteger.valueOf(10_000_000_000L), BigInteger.valueOf(400_000)), new DexTransaction(null, null, null, DexTransaction.Op.DEPOSIT, "100", ALICE_ETH_ADDRESS, 0), aliceWalletKey.getCredentials());
+        doReturn("hash").when(dexContract).deposit(BigInteger.valueOf(100), BigInteger.TEN);
+        doReturn(tx).when(dexTransactionDao).get(tx.getParams(), tx.getAccount(), tx.getOperation());
+        String empty32Bytes = Numeric.toHexString(new byte[32]);
+        doReturn(Optional.empty()).when(service).getTxByHash(empty32Bytes);
+        mockEthSendTransactionWithErrorResponse(empty32EncodedBytes);
+
+        String hash = service.deposit(ALICE_PASS, 100L, ALICE_ID, ALICE_ETH_ADDRESS, BigInteger.TEN, 10L, DexCurrency.ETH);
+
+        assertEquals("hash", hash);
+        verify(dexTransactionDao).delete(1);
+    }
+
+    @Test
+    void testRefund() throws ExecutionException, AplException.ExecutiveProcessException {
         doReturn(aliceWalletKeysInfo).when(keyStoreService).getWalletKeysInfo(ALICE_PASS, ALICE_ID);
         doReturn(gasInfo).when(dexEthService).getEthPriceInfo();
         doReturn(dexContract).when(service).createDexContract(new ComparableStaticGasProvider(BigInteger.valueOf(100_000_000_000L), BigInteger.valueOf(400_000)), new DexTransaction(null, null, null, DexTransaction.Op.REFUND, empty32EncodedBytes, ALICE_ETH_ADDRESS, 0), aliceWalletKey.getCredentials());
@@ -363,7 +371,7 @@ class DexSmartContractServiceTest {
     }
 
     @Test
-    void testNotSuccessfulRefund() throws ExecutionException, AplException.ExecutiveProcessException, IOException {
+    void testNotSuccessfulRefund() throws ExecutionException, AplException.ExecutiveProcessException {
         doReturn(aliceWalletKeysInfo).when(keyStoreService).getWalletKeysInfo(ALICE_PASS, ALICE_ID);
         doReturn(gasInfo).when(dexEthService).getEthPriceInfo();
         doReturn(dexContract).when(service).createDexContract(new ComparableStaticGasProvider(BigInteger.valueOf(100_000_000_000L), BigInteger.valueOf(400_000)), new DexTransaction(null, null, null, DexTransaction.Op.REFUND, empty32EncodedBytes, ALICE_ETH_ADDRESS, 0), aliceWalletKey.getCredentials());
@@ -374,7 +382,7 @@ class DexSmartContractServiceTest {
     }
 
     @Test
-    void testRefundSendExistingRawTransactionWithConfirmation() throws ExecutionException, AplException.ExecutiveProcessException, IOException, TransactionException {
+    void testRefundSendExistingRawTransactionWithConfirmation() throws AplException.ExecutiveProcessException, IOException, TransactionException {
         mockExistingTransactionSendingWithReceipt(empty32EncodedBytes);
 
         boolean r = service.refundAndWithdraw(secretHash, ALICE_PASS, ALICE_ETH_ADDRESS, ALICE_ID, true) != null;
@@ -385,7 +393,7 @@ class DexSmartContractServiceTest {
 
 
     @Test
-    void testRefundSendExistingRawTransactionWithConfirmationWhenHashesNotMatch() throws ExecutionException, AplException.ExecutiveProcessException, IOException, TransactionException {
+    void testRefundSendExistingRawTransactionWithConfirmationWhenHashesNotMatch() throws IOException, TransactionException {
         mockExistingTransactionSendingWithReceipt("");
 
         assertThrows(AplException.DEXProcessingException.class, () -> service.refundAndWithdraw(secretHash, ALICE_PASS, ALICE_ETH_ADDRESS, ALICE_ID, true));
@@ -394,7 +402,7 @@ class DexSmartContractServiceTest {
     }
 
     @Test
-    void testRefundSendExistingRawTransactionWithConfirmationWhenTransactionExceptionThrown() throws ExecutionException, AplException.ExecutiveProcessException, IOException, TransactionException {
+    void testRefundSendExistingRawTransactionWithConfirmationWhenTransactionExceptionThrown() throws IOException, TransactionException {
         mockExistingTransactionSendingWithoutReceipt(empty32EncodedBytes);
         doThrow(new TransactionException("Test tx exception")).when(receiptProcessor).waitForTransactionReceipt(empty32EncodedBytes);
 
@@ -408,7 +416,7 @@ class DexSmartContractServiceTest {
         doReturn(aliceWalletKeysInfo).when(keyStoreService).getWalletKeysInfo(ALICE_PASS, ALICE_ID);
         doReturn(tx).when(dexTransactionDao).get(tx.getParams(), tx.getAccount(), tx.getOperation());
         doReturn(Optional.empty()).when(service).getTxByHash(Numeric.toHexString(new byte[32]));
-        mockEthSendTransaction(empty32EncodedBytes, hash);
+        mockEthSendTransactionCorrectResponse(empty32EncodedBytes, hash);
     }
 
     private void mockExistingTransactionSendingWithReceipt(String hash) throws IOException, TransactionException {
@@ -418,13 +426,25 @@ class DexSmartContractServiceTest {
         doReturn(receipt).when(receiptProcessor).waitForTransactionReceipt(hash);
     }
 
-    private EthSendTransaction mockEthSendTransaction(String encodedTx, String hash) throws IOException {
-        Request request = mock(Request.class);
-        doReturn(request).when(web3j).ethSendRawTransaction(encodedTx);
+    private void mockEthSendTransactionCorrectResponse(String encodedTx, String hash) throws IOException {
         EthSendTransaction response = mock(EthSendTransaction.class);
         doReturn(hash).when(response).getTransactionHash();
+        mockEthSendTransactionWithRespnse(encodedTx, response);
+    }
+
+    private void mockEthSendTransactionWithRespnse(String encodedTx, EthSendTransaction response) throws IOException {
+        Request request = mock(Request.class);
+        doReturn(request).when(web3j).ethSendRawTransaction(encodedTx);
         doReturn(response).when(request).send();
-        return response;
+    }
+    private void mockEthSendTransactionWithErrorResponse(String encodedTx) throws IOException {
+        EthSendTransaction response = mock(EthSendTransaction.class);
+        doReturn(true).when(response).hasError();
+        Response.Error error = new Response.Error();
+        error.setData(encodedTx);
+        error.setMessage("nonce too low");
+        doReturn(error).when(response).getError();
+        mockEthSendTransactionWithRespnse(encodedTx, response);
     }
 
 }

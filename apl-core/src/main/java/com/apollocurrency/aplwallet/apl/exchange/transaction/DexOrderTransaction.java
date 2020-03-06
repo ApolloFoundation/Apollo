@@ -3,8 +3,11 @@
  */
 package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
+import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
+
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.rest.service.DexOrderAttachmentFactory;
@@ -23,13 +26,10 @@ import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import org.json.simple.JSONObject;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 import java.util.Map;
-
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
-import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
 
 @Singleton
 public class DexOrderTransaction extends DEX {
@@ -92,7 +92,7 @@ public class DexOrderTransaction extends DEX {
 
         int currentTime = timeService.getEpochTime();
         if (attachment.getFinishTime() <= 0 || attachment.getFinishTime() - currentTime > MAX_ORDER_DURATION_SEC) {
-            throw new AplException.NotValidException(JSON.toString(incorrect("amountOfTime", String.format("value %d not in range [%d-%d]", attachment.getFinishTime(), 0, MAX_ORDER_DURATION_SEC))));
+            throw new AplException.NotCurrentlyValidException(JSON.toString(incorrect("amountOfTime", String.format("value %d not in range [%d-%d]", attachment.getFinishTime(), 0, MAX_ORDER_DURATION_SEC))));
         }
     }
 
@@ -108,7 +108,7 @@ public class DexOrderTransaction extends DEX {
         DexOrderAttachment attachment = (DexOrderAttachment) transaction.getAttachment();
         if (attachment.getType() == OrderType.SELL.ordinal()) {
             if (senderAccount.getUnconfirmedBalanceATM() >= attachment.getOrderAmount()) {
-                senderAccount.addToUnconfirmedBalanceATM(LedgerEvent.DEX_FREEZE_MONEY, transaction.getId(), -attachment.getOrderAmount());
+                lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, LedgerEvent.DEX_FREEZE_MONEY, transaction.getId(), -attachment.getOrderAmount());
             } else {
                 result = false;
             }
@@ -127,7 +127,7 @@ public class DexOrderTransaction extends DEX {
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         DexOrderAttachment attachment = (DexOrderAttachment) transaction.getAttachment();
         if (attachment.getType() == OrderType.SELL.ordinal()) {
-            senderAccount.addToUnconfirmedBalanceATM(LedgerEvent.DEX_FREEZE_MONEY, transaction.getId(), attachment.getOrderAmount());
+            lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, LedgerEvent.DEX_FREEZE_MONEY, transaction.getId(), attachment.getOrderAmount());
         }
     }
 
