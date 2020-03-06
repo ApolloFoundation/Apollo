@@ -7,24 +7,21 @@ package com.apollocurrency.aplwallet.api.dto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
 
 import java.util.List;
 import java.util.Set;
 
 @Schema(name = "AccountDTO", description = "Information about account, asset, lease, balance etc")
-@Getter
-@Setter
-@NoArgsConstructor
-@ToString
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
+@NoArgsConstructor
+@Data
 public class AccountDTO extends BaseDTO {
     private String account;
     private String accountRS;
@@ -32,6 +29,7 @@ public class AccountDTO extends BaseDTO {
     private String passphrase;
     private String secret;
     //account info
+    @JsonProperty("is2FA")
     private boolean is2FA;
     private String name;
     private String description;

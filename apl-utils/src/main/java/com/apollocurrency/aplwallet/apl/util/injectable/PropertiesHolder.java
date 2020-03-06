@@ -145,9 +145,9 @@ public class PropertiesHolder {
     }
 
     public String dumpAllProperties() {
-        final StringBuilder sb = new StringBuilder("PropertiesHolder_DUMP : \n");
+        final StringBuilder sb = new StringBuilder("PropertiesHolder_DUMP :");
         properties.forEach((k, v) ->
-            sb.append('\'').append(k).append("'->").append(v).append(", ")
+            sb.append("\n").append('\'').append(k).append("' <- ").append(v)
         );
         sb.append('\n');
         return sb.toString();

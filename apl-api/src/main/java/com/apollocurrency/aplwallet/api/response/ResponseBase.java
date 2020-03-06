@@ -65,6 +65,14 @@ public class ResponseBase {
         this(newErrorCode, errorDescription, null, errorCode);
     }
 
+    public ResponseBase(ResponseBase response){
+        this.errorCode = response.errorCode;
+        this.errorDescription = response.errorDescription;
+        this.errorDetails = response.errorDetails;
+        this.newErrorCode = response.newErrorCode;
+        this.requestProcessingTime = response.requestProcessingTime;
+    }
+
     public ResponseBase() {
     }
 }
