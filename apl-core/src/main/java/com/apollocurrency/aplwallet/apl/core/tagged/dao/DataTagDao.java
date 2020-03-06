@@ -13,6 +13,8 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.tagged.mapper.DataTagMapper;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.DataTag;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -143,9 +145,12 @@ public class DataTagDao extends EntityDbTable<DataTag> {
 
     @Override
     public void save(Connection con, DataTag dataTag) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement(
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                PreparedStatement pstmt = con.prepareStatement(
                 "MERGE INTO data_tag (tag, tag_count, height, latest) "
-                        + "KEY (tag, height) VALUES (?, ?, ?, TRUE)")) {
+                        + "KEY (tag, height) VALUES (?, ?, ?, TRUE)")
+        ) {
             int i = 0;
             pstmt.setString(++i, dataTag.getTag());
             pstmt.setInt(++i, dataTag.getCount());

@@ -21,12 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 public class OptionDAO {
     private DatabaseManager databaseManager;
 
-/*
-    public OptionDAO() {
-        databaseManager = CDI.current().select(DatabaseManager.class).get();
-    }
-*/
-
     @Inject
     public OptionDAO(DatabaseManager databaseManager) {
         Objects.requireNonNull(databaseManager, "Database Manager cannot be null");
@@ -54,7 +48,7 @@ public class OptionDAO {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!exist(optionName)) {
             try (Connection con = dataSource.getConnection()) {
-                PreparedStatement stmt = con.prepareStatement("INSERT INTO option (name, value) VALUES (?, ?)");
+                PreparedStatement stmt = con.prepareStatement("INSERT INTO option (name, \"VALUE\") VALUES (?, ?)");
                 stmt.setString(1, optionName);
                 stmt.setString(2, optionValue);
                 stmt.execute();

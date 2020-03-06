@@ -1,15 +1,16 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.api.dto.TransactionHash;
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
+import com.apollocurrency.aplwallet.apl.core.rest.validation.ValidAtomicSwapTime;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
@@ -441,8 +442,8 @@ public class DexTransactionSendingController {
     }
 
     private AccountDetails getAndVerifyAccount(String accountString, String passphrase, int code2FA) throws ParameterException {
-        Account account = ParameterParser.getAccount(accountString, "sender");
-        String decryptedPassphrase = ParameterParser.getPassphrase(passphrase, true);
+        Account account = HttpParameterParserUtil.getAccount(accountString, "sender");
+        String decryptedPassphrase = HttpParameterParserUtil.getPassphrase(passphrase, true);
         validator.validateVaultAccount(account.getId(), passphrase);
         Helper2FA.verifyVault2FA(account.getId(), code2FA);
         return new AccountDetails(decryptedPassphrase, account);

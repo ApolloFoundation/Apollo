@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
@@ -17,17 +18,19 @@ import javax.inject.Singleton;
 import java.math.BigInteger;
 @Singleton
 public class DexApiValidator {
-    private EthereumWalletService walletService;
-    private KeyStoreService keyStoreService;
+    private final EthereumWalletService walletService;
+    private final KeyStoreService keyStoreService;
+    private final AccountService accountService;
 
     @Inject
-    public DexApiValidator(EthereumWalletService walletService, KeyStoreService keyStoreService) {
+    public DexApiValidator(EthereumWalletService walletService, KeyStoreService keyStoreService, AccountService accountService) {
         this.walletService = walletService;
         this.keyStoreService = keyStoreService;
+        this.accountService = accountService;
     }
 
     private void validateAplAccountBalance(long orderAmountGwei, long accountId) throws ParameterException {
-        Account account = Account.getAccount(accountId);
+        Account account = accountService.getAccount(accountId);
         if (account.getUnconfirmedBalanceATM() <= EthUtil.gweiToAtm(orderAmountGwei)) {
             throw new ParameterException(JSONResponses.NOT_ENOUGH_APL);
         }

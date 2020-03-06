@@ -23,11 +23,12 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 import com.apollocurrency.aplwallet.apl.core.app.Token;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.Part;
@@ -36,7 +37,6 @@ import java.io.IOException;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_FILE;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TOKEN;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_TOKEN;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public final class DecodeFileToken extends AbstractAPIRequestHandler {
@@ -57,7 +57,7 @@ public final class DecodeFileToken extends AbstractAPIRequestHandler {
             if (part == null) {
                 throw new ParameterException(INCORRECT_FILE);
             }
-            ParameterParser.FileData fileData = new ParameterParser.FileData(part).invoke();
+            HttpParameterParserUtil.FileData fileData = new HttpParameterParserUtil.FileData(part).invoke();
             data = fileData.getData();
         } catch (IOException | ServletException e) {
             throw new ParameterException(INCORRECT_FILE);

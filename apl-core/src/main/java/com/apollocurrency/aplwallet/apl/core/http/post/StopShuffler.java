@@ -22,14 +22,13 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import javax.servlet.http.HttpServletRequest;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffler;
-import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
@@ -44,15 +43,15 @@ public final class StopShuffler extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
-        byte[] shufflingFullHash = ParameterParser.getBytes(req, "shufflingFullHash", false);
-        long accountId = ParameterParser.getAccountId(req, false);
-        byte[] keySeed = ParameterParser.getKeySeed(req,accountId, false);
+        byte[] shufflingFullHash = HttpParameterParserUtil.getBytes(req, "shufflingFullHash", false);
+        long accountId = HttpParameterParserUtil.getAccountId(req, false);
+        byte[] keySeed = HttpParameterParserUtil.getKeySeed(req,accountId, false);
         JSONObject response = new JSONObject();
         if (keySeed != null) {
-            if (accountId != 0 && Account.getId(Crypto.getPublicKey(keySeed)) != accountId) {
+            if (accountId != 0 && AccountService.getId(Crypto.getPublicKey(keySeed)) != accountId) {
                 return JSONResponses.INCORRECT_ACCOUNT;
             }
-            accountId = Account.getId(Crypto.getPublicKey(keySeed));
+            accountId = AccountService.getId(Crypto.getPublicKey(keySeed));
             if (shufflingFullHash.length == 0) {
                 return JSONResponses.missing("shufflingFullHash");
             }

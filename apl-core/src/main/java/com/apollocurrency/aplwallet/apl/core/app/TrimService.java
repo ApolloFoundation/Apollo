@@ -261,8 +261,8 @@ public class TrimService {
         while ( isTrimming() ) {
             ThreadUtils.sleep(100);
             if(count%10==0){
-              log.debug("--- Waiting . . . Lock: isLocked={}, isFair={}, isHeldByCurrentThread={}, holdCount={}",
-                        lock.isLocked(), lock.isFair(), lock.isHeldByCurrentThread(), lock.getHoldCount());
+              log.debug("--- WaitingTrim [{}]. . . Lock: isLocked={}, isFair={}, isHeldByCurrentThread={}, holdCount={}",
+                  count, lock.isLocked(), lock.isFair(), lock.isHeldByCurrentThread(), lock.getHoldCount());
             }
             count++;
         }

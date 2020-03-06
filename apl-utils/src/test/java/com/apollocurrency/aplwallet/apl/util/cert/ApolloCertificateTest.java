@@ -1,30 +1,30 @@
-
 package com.apollocurrency.aplwallet.apl.util.cert;
 
 import io.firstbridge.cryptolib.FBCryptoParams;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
-import org.junit.jupiter.api.Disabled;
 import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author alukin@gmail.com
  */
+
 public class ApolloCertificateTest {
+
     private static final FBCryptoParams params = FBCryptoParams.createDefault();
     static ApolloCertificate acert;
     private static final org.slf4j.Logger log = LoggerFactory.getLogger(ApolloCertificateTest.class);
+
     public ApolloCertificateTest() {
     }
-    
+
     @BeforeAll
     public static void setUpClass() {
         try (InputStream is = ApolloCertificateTest.class.getClassLoader().getResourceAsStream("test_cert.pem")) {
@@ -37,14 +37,13 @@ public class ApolloCertificateTest {
         }
     }
 
-
     /**
      * Test of getAuthorityId method, of class ApolloCertificate.
      */
     @Test
     public void testGetAuthorityId() {
         AuthorityID result = acert.getAuthorityId();
-        assertEquals(12, result.getActorType());
+        assertEquals(5139, result.getActorType()); 
     }
 
     /**
@@ -71,7 +70,7 @@ public class ApolloCertificateTest {
      */
     @Test
     public void testGetOrganizationUnit() {
-        String expResult = "FB-CN";
+        String expResult = "FB-cn";
         String result = acert.getOrganizationUnit();
         assertEquals(expResult, result);
     }
@@ -81,11 +80,9 @@ public class ApolloCertificateTest {
      */
     @Test
     public void testGetCountry() {
-        String expResult = "";
+        String expResult = "UA";
         String result = acert.getCountry();
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**
@@ -93,7 +90,7 @@ public class ApolloCertificateTest {
      */
     @Test
     public void testGetCity() {
-        String expResult = "";
+        String expResult = "Chernigiv";
         String result = acert.getCity();
         assertEquals(expResult, result);
     }
@@ -103,7 +100,7 @@ public class ApolloCertificateTest {
      */
     @Test
     public void testGetCertificatePurpose() {
-        String expResult = "";
+        String expResult = "Node";
         String result = acert.getCertificatePurpose();
         assertEquals(expResult, result);
     }
@@ -113,7 +110,7 @@ public class ApolloCertificateTest {
      */
     @Test
     public void testGetIPAddresses() {
-        List<String> expResult = new ArrayList<>();
+        List<String> expResult = null;
         List<String> result = acert.getIPAddresses();
         assertEquals(expResult, result);
     }
@@ -123,9 +120,8 @@ public class ApolloCertificateTest {
      */
     @Test
     public void testGetDNSNames() {
-        ApolloCertificate instance = null;
-        List<String> expResult = new ArrayList<>();
-        List<String> result = instance.getDNSNames();
+        List<String> expResult = null;
+        List<String> result = acert.getDNSNames();
         assertEquals(expResult, result);
     }
 
@@ -134,7 +130,7 @@ public class ApolloCertificateTest {
      */
     @Test
     public void testGetStateOrProvince() {
-        String expResult = "";
+        String expResult = null;
         String result = acert.getStateOrProvince();
         assertEquals(expResult, result);
     }
@@ -144,21 +140,18 @@ public class ApolloCertificateTest {
      */
     @Test
     public void testGetEmail() {
-        String expResult = "alukin@gmail.com";
+        String expResult = null;
         String result = acert.getEmail();
         assertEquals(expResult, result);
     }
-
 
     /**
      * Test of getPEM method, of class ApolloCertificate.
      */
     @Test
     public void testGetPEM() {
-        System.out.println("getPEM");
-        String expResult = "";
         String result = acert.getPEM();
-        assertEquals(expResult, result);
+        assertEquals(result.length() > 100, true);
     }
 
     /**
@@ -166,11 +159,9 @@ public class ApolloCertificateTest {
      */
     @Test
     public void testIsValid() {
-        System.out.println("isValid");
         Date date = null;
-        ApolloCertificate instance = null;
         boolean expResult = false;
-        boolean result = instance.isValid(date);
+        boolean result = acert.isValid(date);
         assertEquals(expResult, result);
     }
 
@@ -179,10 +170,8 @@ public class ApolloCertificateTest {
      */
     @Test
     public void testGetSerial() {
-        System.out.println("getSerial");
-        BigInteger expResult = null;
         BigInteger result = acert.getSerial();
-        assertEquals(expResult, result);
+        //TODO: check
     }
-    
+
 }

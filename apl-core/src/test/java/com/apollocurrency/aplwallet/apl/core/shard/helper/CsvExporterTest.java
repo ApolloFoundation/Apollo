@@ -4,16 +4,19 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
-import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
-import com.apollocurrency.aplwallet.apl.core.account.AccountInfoTable;
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedgerTable;
-import com.apollocurrency.aplwallet.apl.core.account.AccountTable;
-import com.apollocurrency.aplwallet.apl.core.account.GenesisPublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
-import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountAssetTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountCurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountInfoTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountLedgerTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.GenesisPublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.PublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -189,16 +192,16 @@ class CsvExporterTest {
             PhasingPollResultTable.class,
             PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class,
             PhasingVoteTable.class, PhasingPollTable.class,
-            AccountTable.class, AccountLedgerTable.class, DGSPurchaseTable.class,
+            AccountLedgerTable.class, DGSPurchaseTable.class,
             DerivedDbTablesRegistryImpl.class,
             TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
-            GenesisPublicKeyTable.class, DexOrderTable.class,
+            DexOrderTable.class,
             CsvEscaperImpl.class)
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
-            .addBeans(MockBean.of(AccountGuaranteedBalanceTable.class, AccountGuaranteedBalanceTable.class))
+            .addBeans(MockBean.of(mock(AccountGuaranteedBalanceTable.class), AccountGuaranteedBalanceTable.class))
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(time, NtpTime.class))
             .addBeans(MockBean.of(mock(TrimService.class), TrimService.class))
@@ -209,12 +212,18 @@ class CsvExporterTest {
 //            .addBeans(MockBean.of(ftlService, FullTextSearchService.class)) // prod data test
             .addBeans(MockBean.of(keyStore, KeyStoreService.class))
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
+            .addBeans(MockBean.of(mock(AccountService.class), AccountServiceImpl.class, AccountService.class))
+            .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyServiceImpl.class, AccountPublicKeyService.class))
+            .addBeans(MockBean.of(mock(AccountTable.class), AccountTable.class))
             .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
             .build();
     @Inject
     ShardDao shardDao;
     @Inject
     AccountTable accountTable;
+    @Inject
+    AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
+
     @Inject
     PrunableMessageTable messageTable;
     @Inject
@@ -258,15 +267,18 @@ class CsvExporterTest {
         doReturn(chain).when(blockchainConfig).getChain();
         doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(chain).getChainId();
         // init several derived tables
-        AccountCurrencyTable.getInstance().init();
-        Account.init(extension.getDatabaseManager(), propertiesHolder, null, null, blockchain, null, null, accountTable, null, null);
-        AccountInfoTable.getInstance().init();
+        AccountCurrencyTable accountCurrencyTable = new AccountCurrencyTable();
+        accountCurrencyTable.init();
+        //Account.init(extension.getDatabaseManager(), propertiesHolder, null, null, blockchain, null, null, accountTable, null);
+        AccountInfoTable accountInfoTable = new AccountInfoTable();
+        accountInfoTable.init();
         Alias.init();
         PhasingOnly.get(7995581942006468815L); // works OK!
         PhasingOnly.get(2728325718715804811L); // check 1
         PhasingOnly.get(-8446384352342482748L); // check 2
         PhasingOnly.get(-4013722529644937202L); // works OK!
-        AccountAssetTable.getInstance().init();
+        AccountAssetTable accountAssetTable = new AccountAssetTable();
+        accountAssetTable.init();
         PublicKeyTable publicKeyTable = new PublicKeyTable(blockchain);
         publicKeyTable.init();
         DexContractTable dexContractTable = new DexContractTable();

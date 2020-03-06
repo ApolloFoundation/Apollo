@@ -4,9 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import static com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix.hasAppendix;
-
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -19,9 +17,11 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 
+import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
-import javax.enterprise.inject.spi.CDI;
+
+import static com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix.hasAppendix;
 
 public class PrunablePlainMessageAppendix extends AbstractAppendix implements Prunable {
 

@@ -398,7 +398,7 @@ public class CsvExporterImpl implements CsvExporter {
                 log.debug("Skipped exporting Table = {}", table);
             }
         } catch (Exception e) {
-            throw new CsvExportException("Exporting derived table exception " + table, e);
+            throw new CsvExportException("Exporting derived table exception: " + table, e);
         }
 
         return totalCount;

@@ -5,6 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.db;
 
 import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import org.slf4j.Logger;
 
@@ -82,6 +84,7 @@ public class ShardDataSourceCreateHelper {
     public String checkGenerateShardName() {
         if (shardId == null) {
             try (Connection con = databaseManager.getDataSource().getConnection();
+                 @DatabaseSpecificDml(DmlMarker.IFNULL_USE)
                  PreparedStatement pstmt = con.prepareStatement("SELECT IFNULL(max(SHARD_ID), 0) as shard_id FROM shard")) {
                 try (ResultSet rs = pstmt.executeQuery()) {
                     if (rs.next()) {

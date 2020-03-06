@@ -22,15 +22,14 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import javax.servlet.http.HttpServletRequest;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.FundingMonitor;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
-import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
@@ -67,8 +66,8 @@ public class StopFundingMonitor extends AbstractAPIRequestHandler {
      */
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
-        long accountId = ParameterParser.getAccountId(req, false);
-        byte[] keySeed = ParameterParser.getKeySeed(req, accountId, false);
+        long accountId = HttpParameterParserUtil.getAccountId(req, false);
+        byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, accountId, false);
 
         JSONObject response = new JSONObject();
         if (keySeed == null) {
@@ -77,16 +76,16 @@ public class StopFundingMonitor extends AbstractAPIRequestHandler {
         if (keySeed != null || accountId != 0) {
             if (keySeed != null) {
                 if (accountId != 0) {
-                    if (Account.getId(Crypto.getPublicKey(keySeed)) != accountId) {
+                    if (AccountService.getId(Crypto.getPublicKey(keySeed)) != accountId) {
                         return JSONResponses.INCORRECT_ACCOUNT;
                     }
                 } else {
-                    accountId = Account.getId(Crypto.getPublicKey(keySeed));
+                    accountId = AccountService.getId(Crypto.getPublicKey(keySeed));
                 }
             }
-            HoldingType holdingType = ParameterParser.getHoldingType(req);
-            long holdingId = ParameterParser.getHoldingId(req, holdingType);
-            String property = ParameterParser.getAccountProperty(req, true);
+            HoldingType holdingType = HttpParameterParserUtil.getHoldingType(req);
+            long holdingId = HttpParameterParserUtil.getHoldingId(req, holdingType);
+            String property = HttpParameterParserUtil.getAccountProperty(req, true);
             boolean stopped = FundingMonitor.stopMonitor(holdingType, holdingId, property, accountId);
             response.put("stopped", stopped ? 1 : 0);
         } else {

@@ -61,44 +61,44 @@ public class TaggedDataServiceImpl implements TaggedDataService {
     @Override
     public void add(Transaction transaction, TaggedDataUploadAttachment attachment) {
         int blockchainHeight = blockchain.getHeight();
-        log.debug("add TaggedDataUpload: trId = {} / blId={}, height={}, {}",
+        log.trace("add TaggedDataUpload: trId = {} / blId={}, height={}, {}",
             transaction.getId(), transaction.getBlockId(), blockchainHeight, attachment);
         if (timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMaxPrunableLifetime() && attachment.getData() != null) {
             if (keyFactory == null) {
                 keyFactory = CDI.current().select(new TypeLiteral<LongKeyFactory<UnconfirmedTransaction>>(){}).get();
             }
             DbKey dbKey = keyFactory.newKey(transaction.getId());
-            log.debug("add TaggedDataUpload: dbKey = {}", dbKey);
+            log.trace("add TaggedDataUpload: dbKey = {}", dbKey);
             TaggedData taggedData = taggedDataDao.get(dbKey);
-            log.debug("add TaggedDataUpload: isFound = {}", taggedData);
+            log.trace("add TaggedDataUpload: isFound = {}", taggedData);
             if (taggedData == null) {
                 taggedData = new TaggedData(transaction, attachment,
                         blockchain.getLastBlockTimestamp(), blockchainHeight);
-                log.debug("add TaggedDataUpload: insert new = {}", taggedData);
+                log.trace("add TaggedDataUpload: insert new = {}", taggedData);
                 taggedDataDao.insert(taggedData);
                 dataTagDao.add(taggedData);
             } else {
-                log.debug("add TaggedDataUpload: skipped = {}", taggedData);
+                log.trace("add TaggedDataUpload: skipped = {}", taggedData);
             }
         }
         TaggedDataTimestamp timestamp = new TaggedDataTimestamp(transaction.getId(), transaction.getTimestamp(), blockchainHeight);
-        log.debug("add TaggedDataUpload: insert = {}", timestamp);
+        log.trace("add TaggedDataUpload: insert = {}", timestamp);
         taggedDataTimestampDao.insert(timestamp);
     }
 
     @Override
     public void extend(Transaction transaction, TaggedDataExtendAttachment attachment) {
         int blockchainHeight = blockchain.getHeight();
-        log.debug("extend TaggedData: trId = {} / blId={}, height={}, {}",
+        log.trace("extend TaggedData: trId = {} / blId={}, height={}, {}",
             transaction.getId(), transaction.getBlockId(), blockchainHeight, attachment);
         long taggedDataId = attachment.getTaggedDataId();
         DbKey dbKey = taggedDataDao.newKey(taggedDataId);
-        log.debug("extend TaggedData: dbKey = {}", dbKey);
+        log.trace("extend TaggedData: dbKey = {}", dbKey);
         TaggedDataTimestamp timestamp = taggedDataTimestampDao.get(dbKey);
-        log.debug("extend TaggedData: timestamp = {}", timestamp);
+        log.trace("extend TaggedData: timestamp = {}", timestamp);
         int timestampInRecord = timestamp.getTimestamp();
         int minPrunableLifetime = blockchainConfig.getMinPrunableLifetime();
-        log.debug("extend TaggedData: timestamp cond ? = '{}' (trTs={}, minPrunableLifetime={}, timestampInRecord={})",
+        log.trace("extend TaggedData: timestamp cond ? = '{}' (trTs={}, minPrunableLifetime={}, timestampInRecord={})",
             transaction.getTimestamp() - minPrunableLifetime > timestampInRecord,
             transaction.getTimestamp(), minPrunableLifetime, timestampInRecord
             );
@@ -109,17 +109,16 @@ public class TaggedDataServiceImpl implements TaggedDataService {
                     + Math.min(minPrunableLifetime, Integer.MAX_VALUE - timestampInRecord));
         }
         timestamp.setHeight(blockchainHeight);
-        log.debug("extend TaggedData: insert timestamp = {}", timestamp);
+        log.trace("extend TaggedData: insert timestamp = {}", timestamp);
         taggedDataTimestampDao.insert(timestamp);
 
-//        List<Long> extendTransactionIds = taggedDataExtendDao.get(dbKey);
         List<TaggedDataExtend> taggedDataExtendList = taggedDataExtendDao.get(dbKey)
                 .stream()
                 .peek(e-> e.setHeight(blockchainHeight))
                 .collect(Collectors.toList());
-        log.debug("extend TaggedData: taggedDataExtendList = [{}]", taggedDataExtendList.size());
+        log.trace("extend TaggedData: taggedDataExtendList = [{}]", taggedDataExtendList.size());
         taggedDataExtendList.add(new TaggedDataExtend(null, blockchainHeight, taggedDataId, transaction.getId()));
-        log.debug("extend TaggedData: insert taggedDataExtendList = {}", taggedDataExtendList);
+        log.trace("extend TaggedData: insert taggedDataExtendList = {}", taggedDataExtendList);
         taggedDataExtendDao.insert(taggedDataExtendList);
         int maxPrunableLifetime = blockchainConfig.getMaxPrunableLifetime();
         int epochTime = timeService.getEpochTime();
@@ -129,13 +128,13 @@ public class TaggedDataServiceImpl implements TaggedDataService {
                 taggedData.setTransactionTimestamp(timestampInRecord);
                 taggedData.setBlockTimestamp(blockchain.getLastBlockTimestamp());
                 taggedData.setHeight(blockchainHeight);
-                log.debug("extend TaggedData: insert taggedData = {}", taggedData);
+                log.trace("extend TaggedData: insert taggedData = {}", taggedData);
                 taggedDataDao.insert(taggedData);
             } else {
-                log.debug("extend TaggedData: skipped = {}", taggedData);
+                log.trace("extend TaggedData: skipped = {}", taggedData);
             }
         } else {
-            log.debug("extend TaggedData: timeStamp skipped ? = '{}' (epochTime={}, maxPrunableLifetime={}, timestampInRecord={})",
+            log.trace("extend TaggedData: timeStamp skipped ? = '{}' (epochTime={}, maxPrunableLifetime={}, timestampInRecord={})",
                 epochTime - maxPrunableLifetime < timestampInRecord,
                 epochTime, maxPrunableLifetime, timestampInRecord);
         }
@@ -143,17 +142,17 @@ public class TaggedDataServiceImpl implements TaggedDataService {
 
     @Override
     public void restore(Transaction transaction, TaggedDataUploadAttachment attachment, int blockTimestamp, int height) {
-        log.debug("restore TaggedData: trId = {} / blId={}, height={}, {}",
+        log.trace("restore TaggedData: trId = {} / blId={}, height={}, {}",
             transaction.getId(), transaction.getBlockId(), height, attachment);
         TaggedData taggedData = new TaggedData(transaction, attachment, blockTimestamp, height);
         taggedData.setDbKey(taggedDataDao.newKey(transaction.getId()));
-        log.debug("restore TaggedData: insert = {}", taggedData);
+        log.trace("restore TaggedData: insert = {}", taggedData);
         taggedDataDao.insert(taggedData);
         dataTagDao.add(taggedData, height);
         int timestamp = transaction.getTimestamp();
         for (TaggedDataExtend taggedDataForTransaction : taggedDataExtendDao.getExtendTransactionIds(transaction.getId())) {
             Transaction extendTransaction = blockchain.getTransaction(taggedDataForTransaction.getExtendId());
-            log.debug("restore TaggedData: extendTransaction = {}", extendTransaction);
+            log.trace("restore TaggedData: extendTransaction = {}", extendTransaction);
             // NPE is possible here if 'extendTransaction' not found
             if (extendTransaction.getTimestamp() - blockchainConfig.getMinPrunableLifetime() > timestamp) {
                 timestamp = extendTransaction.getTimestamp();
@@ -163,7 +162,7 @@ public class TaggedDataServiceImpl implements TaggedDataService {
             taggedData.setTransactionTimestamp(timestamp);
             taggedData.setBlockTimestamp(extendTransaction.getBlockTimestamp());
             taggedData.setHeight(extendTransaction.getHeight());
-            log.debug("restore TaggedData: taggedData = {}", extendTransaction);
+            log.trace("restore TaggedData: taggedData = {}", extendTransaction);
             taggedDataDao.insert(taggedData);
         }
     }

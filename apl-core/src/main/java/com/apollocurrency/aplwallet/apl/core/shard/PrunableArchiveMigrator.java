@@ -84,7 +84,10 @@ public class PrunableArchiveMigrator {
                     csvExporter.exportShardTableIgnoringLastZipHashes(shard.getShardHeight(), 100);
                     String zipName = "shard-" + shard.getShardId() + ".zip";
                     Path newArchive = tempDirectory.resolve(zipName);
-                    ChunkedFileOps fops = zip.compressAndHash(newArchive.toAbsolutePath().toString(), tempDirectoryString, 0L, (dir, name) -> !tablesToExclude.contains(name.substring(0, name.indexOf(".csv"))), false);
+                    ChunkedFileOps fops = zip.compressAndHash(newArchive.toAbsolutePath().toString(), tempDirectoryString, 0L, (dir, name) -> {
+                        int csvSuffixPos = name.indexOf(".csv");
+                        return csvSuffixPos != -1 && !tablesToExclude.contains(name.substring(0, csvSuffixPos));
+                    }, false);
                     if (fops != null && fops.isHashedOK()) {
                         byte[] hash = fops.getFileHash();
                         shard.setCoreZipHash(hash);
@@ -98,7 +101,7 @@ public class PrunableArchiveMigrator {
                         log.debug("Firing 'FILE_CHANDED' event {}", fops.getFileId());
                     } else {
                         log.error("Can not comperess prunable zip: {}", zipName);
-                    }        
+                    }
                     FileUtils.clearDirectorySilently(tempDirectory); // clean is not mandatory, but desirable
                 }
                 catch (IOException e) {

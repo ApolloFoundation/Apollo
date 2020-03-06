@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
@@ -75,6 +76,8 @@ class DexServiceTest {
     LoadingCache<Long, OrderFreezing> cache;
     @Mock
     DexConfig dexConfig;
+    @Mock
+    AccountService accountService;
 
     DexOrder order = new DexOrder(2L, 100L, "from-address", "to-address", OrderType.BUY, OrderStatus.OPEN, DexCurrency.APL, 127_000_000L, DexCurrency.ETH, BigDecimal.valueOf(0.0001), 500);
     DexOrder order1 = new DexOrder(1L, 2L, OrderType.BUY, 100L, DexCurrency.APL, 10000L, DexCurrency.PAX, BigDecimal.ONE, 90, OrderStatus.OPEN, 259 , "", "");
@@ -93,7 +96,7 @@ class DexServiceTest {
     void setUp() {
         dexService = new DexService(ethWalletService, dexOrderDao, dexOrderTable, transactionProcessor, dexSmartContractService, secureStorageService,
                 dexContractTable, dexOrderTransactionCreator, timeService, dexContractDao, blockchain, phasingPollService, dexMatcherService,
-                approvedResultTable, mandatoryTransactionDao, blockchainConfig, cache, dexConfig);
+                approvedResultTable, mandatoryTransactionDao, accountService, blockchainConfig, cache, dexConfig);
     }
 
     @Test

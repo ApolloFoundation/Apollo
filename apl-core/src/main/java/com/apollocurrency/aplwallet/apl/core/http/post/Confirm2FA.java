@@ -5,20 +5,21 @@
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
-import javax.servlet.http.HttpServletRequest;
-
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.core.http.TwoFactorAuthParameters;
+import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
+import javax.servlet.http.HttpServletRequest;
+
 @Vetoed
+@Deprecated
 public class Confirm2FA extends AbstractAPIRequestHandler {
     public Confirm2FA() {
         super(new APITag[] {APITag.ACCOUNTS, APITag.TWO_FACTOR_AUTH}, "secretPhrase");
@@ -26,8 +27,8 @@ public class Confirm2FA extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
-        TwoFactorAuthParameters params2FA = ParameterParser.parse2FARequest(request);
-        int code = ParameterParser.getInt(request, "code2FA", Integer.MIN_VALUE, Integer.MAX_VALUE, true);
+        TwoFactorAuthParameters params2FA = HttpParameterParserUtil.parse2FARequest(request);
+        int code = HttpParameterParserUtil.getInt(request, "code2FA", Integer.MIN_VALUE, Integer.MAX_VALUE, true);
 
         JSONObject response = new JSONObject();
 

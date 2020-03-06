@@ -37,11 +37,11 @@ public class ShardObserver {
 
 //no matter how we get signal sync or async, do it async
 public void onTrimDoneAsync(@ObservesAsync @TrimEvent TrimData trimData) {
-        tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight());        
+        tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight());
     }
 
     public void onTrimDone(@Observes @TrimEvent TrimData trimData) {
-//do it async anyway because we have to exit from trim and unlock it       
+//do it async anyway because we have to exit from trim and unlock it
         tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight());
     }
 

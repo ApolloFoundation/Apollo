@@ -26,11 +26,11 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.peer.Hallmark;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_HALLMARK;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_HALLMARK;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public final class DecodeHallmark extends AbstractAPIRequestHandler {
@@ -49,7 +49,8 @@ public final class DecodeHallmark extends AbstractAPIRequestHandler {
 
         try {
 
-            Hallmark hallmark = Hallmark.parseHallmark(hallmarkValue);
+            long maxBalanceAPL = lookupBlockchainConfig().getCurrentConfig().getMaxBalanceAPL();
+            Hallmark hallmark = Hallmark.parseHallmark(hallmarkValue, maxBalanceAPL);
 
             return JSONData.hallmark(hallmark);
 
