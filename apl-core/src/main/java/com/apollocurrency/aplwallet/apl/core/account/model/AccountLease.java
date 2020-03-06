@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.core.account.model;
 
@@ -12,14 +12,12 @@ import lombok.ToString;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-/**
- *
- * @author al
- */
+
 @ToString(callSuper = true)
 @Getter @Setter
 public final class AccountLease extends VersionedDerivedEntity {
 
+    private long id;
     private final long lessorId;
 
     private long currentLesseeId;
@@ -29,8 +27,9 @@ public final class AccountLease extends VersionedDerivedEntity {
     private int nextLeasingHeightFrom;
     private int nextLeasingHeightTo;
 
-    public AccountLease(long lessorId, int currentLeasingHeightFrom, int currentLeasingHeightTo, long currentLesseeId, int height) {
+    public AccountLease(long txId, long lessorId, int currentLeasingHeightFrom, int currentLeasingHeightTo, long currentLesseeId, int height) {
         super(null, height);
+        this.id = txId;
         this.lessorId = lessorId;
         this.currentLeasingHeightFrom = currentLeasingHeightFrom;
         this.currentLeasingHeightTo = currentLeasingHeightTo;
@@ -39,6 +38,7 @@ public final class AccountLease extends VersionedDerivedEntity {
 
     public AccountLease(ResultSet rs, DbKey dbKey) throws SQLException {
         super(rs);
+        this.id = rs.getLong("id");
         this.lessorId = rs.getLong("lessor_id");
         this.currentLeasingHeightFrom = rs.getInt("current_leasing_height_from");
         this.currentLeasingHeightTo = rs.getInt("current_leasing_height_to");
@@ -48,5 +48,4 @@ public final class AccountLease extends VersionedDerivedEntity {
         this.nextLesseeId = rs.getLong("next_lessee_id");
         setDbKey(dbKey);
     }
-
 }

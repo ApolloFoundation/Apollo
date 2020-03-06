@@ -73,7 +73,7 @@ public abstract class AccountControl extends TransactionType {
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             AccountControlEffectiveBalanceLeasing attachment = (AccountControlEffectiveBalanceLeasing) transaction.getAttachment();
             Account sender = lookupAccountService().getAccount(transaction.getSenderId());
-            lookupAccountLeaseService().leaseEffectiveBalance(sender, transaction.getRecipientId(), attachment.getPeriod());
+            lookupAccountLeaseService().leaseEffectiveBalance(transaction.getId(), sender, transaction.getRecipientId(), attachment.getPeriod());
         }
 
         @Override
