@@ -92,6 +92,7 @@ import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.ZipImpl;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
@@ -722,7 +723,7 @@ class ShardEngineTest {
         assertTrue(Files.exists(path));
         Path output = dataExportDirPath.resolve("output-" + path.getFileName());
         zip.extract(path.toAbsolutePath().toString(), output.toAbsolutePath().toString());
-        assertEquals(files.length, Files.list(output).count());
+        assertEquals(files.length, FileUtils.countElementsOfDirectory(output));
         for (String file : files) {
             Files.exists(output.resolve(file));
         }

@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.filters;
 
 import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
-import com.apollocurrency.aplwallet.apl.core.rest.RestParametersParser;
+import com.apollocurrency.aplwallet.apl.core.rest.utils.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
 import lombok.Setter;
@@ -22,10 +22,10 @@ import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 import java.util.Map;
 
-import static com.apollocurrency.aplwallet.apl.core.rest.RestParametersParser.CODE2FA_PARAM_NAME;
-import static com.apollocurrency.aplwallet.apl.core.rest.RestParametersParser.PASSPHRASE_PARAM_NAME;
-import static com.apollocurrency.aplwallet.apl.core.rest.RestParametersParser.SECRET_PHRASE_PARAM_NAME;
-import static com.apollocurrency.aplwallet.apl.core.rest.RestParametersParser.TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.rest.utils.RestParametersParser.CODE2FA_PARAM_NAME;
+import static com.apollocurrency.aplwallet.apl.core.rest.utils.RestParametersParser.PASSPHRASE_PARAM_NAME;
+import static com.apollocurrency.aplwallet.apl.core.rest.utils.RestParametersParser.SECRET_PHRASE_PARAM_NAME;
+import static com.apollocurrency.aplwallet.apl.core.rest.utils.RestParametersParser.TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME;
 
 @Secured2FA
 @Provider
@@ -34,8 +34,6 @@ public class Secured2FAInterceptor implements ContainerRequestFilter {
 
     @Inject @Setter
     private Account2FAHelper faHelper;
-    @Inject @Setter
-    private RestParametersParser restParametersParser;
 
     @Context
     ResourceInfo info;
@@ -46,7 +44,7 @@ public class Secured2FAInterceptor implements ContainerRequestFilter {
             Secured2FA secured2FA = info.getResourceMethod().getAnnotation(Secured2FA.class);
             String vault = secured2FA.value();
 
-            Map<String, String> params = restParametersParser.parseRequestParameters( requestContext,
+            Map<String, String> params = RestParametersParser.parseRequestParameters( requestContext,
                     vault,
                     PASSPHRASE_PARAM_NAME,
                     SECRET_PHRASE_PARAM_NAME,

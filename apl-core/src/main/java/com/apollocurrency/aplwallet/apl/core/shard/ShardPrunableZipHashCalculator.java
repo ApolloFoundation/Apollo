@@ -29,6 +29,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 @Singleton
@@ -88,7 +89,7 @@ public class ShardPrunableZipHashCalculator {
                 prunableTables.forEach(
                         t -> csvExporter.exportPrunableDerivedTable(t, shard.getShardHeight(), lastPruningTime, 100)
                 );
-                long count = Files.list(tempDirectory).count();
+                long count = FileUtils.countElementsOfDirectory(tempDirectory);
                 ShardNameHelper shardNameHelper = new ShardNameHelper();
                 String prunableArchiveName = shardNameHelper.getPrunableShardArchiveNameByShardId(shard.getShardId(), chainId );
                 Path prunableArchivePath = dirProvider.getDataExportDir().resolve(prunableArchiveName);

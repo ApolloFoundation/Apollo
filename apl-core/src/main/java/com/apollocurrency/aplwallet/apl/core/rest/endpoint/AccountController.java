@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
@@ -40,8 +40,6 @@ import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
-import com.apollocurrency.aplwallet.apl.core.rest.RestParameters;
-import com.apollocurrency.aplwallet.apl.core.rest.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FAConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FADetailsConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountAssetConverter;
@@ -54,7 +52,10 @@ import com.apollocurrency.aplwallet.apl.core.rest.parameter.AccountIdParameter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.AccountStatisticsService;
 import com.apollocurrency.aplwallet.apl.core.rest.service.OrderService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
+import com.apollocurrency.aplwallet.apl.core.rest.utils.FirstLastIndexParser;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
+import com.apollocurrency.aplwallet.apl.core.rest.utils.RestParametersParser;
+import com.apollocurrency.aplwallet.apl.core.rest.validation.ValidBlockchainHeight;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
@@ -130,7 +131,7 @@ public class AccountController {
     @Inject @Setter
     private OrderService orderService;
     @Inject @Setter
-    private RestParametersParser restParametersParser;
+    private FirstLastIndexParser indexParser;
     @Inject @Setter
     private AccountStatisticsService accountStatisticsService;
 
@@ -148,7 +149,7 @@ public class AccountController {
                              Account2FADetailsConverter faDetailsConverter,
                              Account2FAConverter faConverter,
                              OrderService orderService,
-                             RestParametersParser restParametersParser,
+                             FirstLastIndexParser indexParser,
                              AccountStatisticsService accountStatisticsService) {
 
         this.blockchain = blockchain;
@@ -165,7 +166,7 @@ public class AccountController {
         this.faDetailsConverter = faDetailsConverter;
         this.faConverter = faConverter;
         this.orderService = orderService;
-        this.restParametersParser = restParametersParser;
+        this.indexParser = indexParser;
         this.accountStatisticsService = accountStatisticsService;
     }
 
@@ -280,12 +281,13 @@ public class AccountController {
             })
     @PermitAll
     public Response getAccountAssetsCount(
-        @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
-        @Parameter(description = "The height of the blockchain to determine the asset count (optional, default is last block).") @QueryParam("height") @PositiveOrZero Integer heightParam) {
+        @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
+        @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
+        @Parameter(description = "The height of the blockchain to determine the asset count (optional, default is last block).")
+        @QueryParam("height") @DefaultValue("-1") @ValidBlockchainHeight int height) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
         long accountId  = accountIdParameter.get();
-        int height = restParametersParser.validateHeight(heightParam);
 
         AccountAssetsCountResponse dto = new AccountAssetsCountResponse();
         dto.setNumberOfAssets(accountAssetService.getCountByAccount(accountId, height));
@@ -310,17 +312,29 @@ public class AccountController {
     // This GET returns two different responses (countAssetDTO or AccountAssetResponse)
     // it depends on the value of the asset parameter.
     public Response getAccountAssets(
-            @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
-            @Parameter(description = "The asset ID (optional).") @QueryParam("asset") @PositiveOrZero Long assetId,
-            @Parameter(description = "The height of the blockchain to determine the asset count (optional, default is last block).") @QueryParam("height") @PositiveOrZero Integer heightParam,
-            @Parameter(description = "Include asset information (optional).") @QueryParam("includeAssetInfo") @DefaultValue("false") boolean includeAssetInfo
+            @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
+            @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
+            @Parameter(description = "The asset ID (optional).")
+            @QueryParam("asset") @PositiveOrZero Long assetId,
+            @Parameter(description = "The height of the blockchain to determine the asset count (optional, default is last block).")
+            @QueryParam("height") @DefaultValue("-1") @ValidBlockchainHeight int height,
+            @Parameter(description = "Include asset information (optional).")
+            @QueryParam("includeAssetInfo") @DefaultValue("false") boolean includeAssetInfo,
+            @Parameter(description = "A zero-based index to the first asset ID to retrieve (optional)." )
+            @QueryParam("firstIndex") @DefaultValue("0") @PositiveOrZero int firstIndex,
+            @Parameter(description = "A zero-based index to the last asset ID to retrieve (optional)." )
+            @QueryParam("lastIndex") @DefaultValue("-1") int lastIndex
             ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
         long accountId  = accountIdParameter.get();
-        int height = restParametersParser.validateHeight(heightParam);
+
+        FirstLastIndexParser.FirstLastIndex flIndex = indexParser.adjustIndexes(firstIndex, lastIndex);
+
         if (assetId == null || assetId == 0) {
-            List<AccountAsset> accountAssets = accountAssetService.getAssetsByAccount(accountId, height, 0, -1);
+            List<AccountAsset> accountAssets = accountAssetService.getAssetsByAccount(accountId, height,
+                                                                                        flIndex.getFirstIndex(),
+                                                                                        flIndex.getLastIndex());
             List<AccountAssetDTO> accountAssetDTOList = accountAssetConverter.convert(accountAssets);
             if(includeAssetInfo){
                 accountAssetDTOList.forEach(dto -> accountAssetConverter.addAsset(dto, Asset.getAsset(dto.getAssetId())));
@@ -352,7 +366,8 @@ public class AccountController {
             })
     @PermitAll
     public Response getAccountBlocksCount(
-        @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @QueryParam("account") @NotNull AccountIdParameter accountIdParameter
+        @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
+        @QueryParam("account") @NotNull AccountIdParameter accountIdParameter
         ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
@@ -379,10 +394,14 @@ public class AccountController {
             })
     @RolesAllowed("admin")
     public Response getAccountBlockIds(
-            @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
-            @Parameter(description = "The earliest block (in seconds since the genesis block) to retrieve (optional)." ) @QueryParam("timestamp") @PositiveOrZero int timestamp,
-            @Parameter(description = "A zero-based index to the first block ID to retrieve (optional)." ) @QueryParam("firstIndex") @PositiveOrZero int firstIndex,
-            @Parameter(description = "A zero-based index to the last block ID to retrieve (optional)." ) @QueryParam("lastIndex") @PositiveOrZero int lastIndex
+            @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
+            @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
+            @Parameter(description = "The earliest block (in seconds since the genesis block) to retrieve (optional)." )
+            @QueryParam("timestamp") @PositiveOrZero int timestamp,
+            @Parameter(description = "A zero-based index to the first block ID to retrieve (optional)." )
+            @QueryParam("firstIndex") @DefaultValue("0") @PositiveOrZero int firstIndex,
+            @Parameter(description = "A zero-based index to the last block ID to retrieve (optional)." )
+            @QueryParam("lastIndex") @DefaultValue("-1") int lastIndex
             ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
@@ -412,11 +431,16 @@ public class AccountController {
             })
     @RolesAllowed("admin")
     public Response getAccountBlocks(
-            @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
-            @Parameter(description = "The earliest block (in seconds since the genesis block) to retrieve (optional)." ) @QueryParam("timestamp") @PositiveOrZero int timestamp,
-            @Parameter(description = "A zero-based index to the first block ID to retrieve (optional)." ) @QueryParam("firstIndex") @PositiveOrZero int firstIndex,
-            @Parameter(description = "A zero-based index to the last block ID to retrieve (optional)." ) @QueryParam("lastIndex") @PositiveOrZero int lastIndex,
-            @Parameter(description = "Include transactions detail info" ) @QueryParam("includeTransaction") @DefaultValue("false") boolean includeTransaction
+            @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
+            @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
+            @Parameter(description = "The earliest block (in seconds since the genesis block) to retrieve (optional)." )
+            @QueryParam("timestamp") @PositiveOrZero int timestamp,
+            @Parameter(description = "A zero-based index to the first block ID to retrieve (optional)." )
+            @QueryParam("firstIndex") @DefaultValue("0") @PositiveOrZero int firstIndex,
+            @Parameter(description = "A zero-based index to the last block ID to retrieve (optional)." )
+            @QueryParam("lastIndex") @DefaultValue("-1") int lastIndex,
+            @Parameter(description = "Include transactions detail info" )
+            @QueryParam("includeTransaction") @DefaultValue("false") boolean includeTransaction
     ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         long accountId  = accountIdParameter.get();
@@ -443,13 +467,14 @@ public class AccountController {
             })
     @PermitAll
     public Response getAccountCurrencyCount(
-            @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
-            @Parameter(description = "The height of the blockchain to determine the currency count (optional, default is last block).") @QueryParam("height") @PositiveOrZero Integer heightParam
+            @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
+            @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
+            @Parameter(description = "The height of the blockchain to determine the currency count (optional, default is last block).")
+            @QueryParam("height") @DefaultValue("-1") @ValidBlockchainHeight int height
             ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
         long accountId  = accountIdParameter.get();
-        int height = restParametersParser.validateHeight(heightParam);
 
         Integer count = accountCurrencyService.getCountByAccount(accountId, height);
 
@@ -471,17 +496,24 @@ public class AccountController {
             })
     @RolesAllowed("admin")
     public Response getAccountCurrencies(
-            @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
-            @Parameter(description = "The currency ID (optional)." ) @QueryParam("currency") @PositiveOrZero Long currencyId,
-            @Parameter(description = "The height of the blockchain to determine the currencies (optional, default is last block).") @QueryParam("height") @PositiveOrZero Integer heightParam,
-            @Parameter(description = "Include additional currency info (optional)" ) @QueryParam("includeCurrencyInfo") @DefaultValue("false") boolean includeCurrencyInfo
+            @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
+            @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
+            @Parameter(description = "The currency ID (optional)." )
+            @QueryParam("currency") @PositiveOrZero Long currencyId,
+            @Parameter(description = "The height of the blockchain to determine the currencies (optional, default is last block).")
+            @QueryParam("height") @DefaultValue("-1") @ValidBlockchainHeight int height,
+            @Parameter(description = "Include additional currency info (optional)" )
+            @QueryParam("includeCurrencyInfo") @DefaultValue("false") boolean includeCurrencyInfo,
+            @Parameter(description = "A zero-based index to the first currency ID to retrieve (optional)." )
+            @QueryParam("firstIndex") @DefaultValue("0") @PositiveOrZero int firstIndex,
+            @Parameter(description = "A zero-based index to the last currency ID to retrieve (optional)." )
+            @QueryParam("lastIndex") @DefaultValue("-1") int lastIndex
     ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
         long accountId  = accountIdParameter.get();
-        int height = restParametersParser.validateHeight(heightParam);
         if (currencyId == null || currencyId == 0) {
-            List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrenciesByAccount(accountId, height, 0, -1);
+            List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrenciesByAccount(accountId, height, firstIndex, lastIndex);
             List<AccountCurrencyDTO> accountCurrencyDTOList = accountCurrencyConverter.convert(accountCurrencies);
             if(includeCurrencyInfo){
                 accountCurrencyDTOList.forEach(dto -> accountCurrencyConverter
@@ -519,8 +551,10 @@ public class AccountController {
     public Response getAccountCurrentAskOrderIds(
             @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
             @Parameter(description = "The asset ID.") @QueryParam("asset") @PositiveOrZero Long assetIdParam,
-            @Parameter(description = "A zero-based index to the first block ID to retrieve (optional)." ) @QueryParam("firstIndex") @PositiveOrZero int firstIndex,
-            @Parameter(description = "A zero-based index to the last block ID to retrieve (optional)." ) @QueryParam("lastIndex") @PositiveOrZero int lastIndex
+            @Parameter(description = "A zero-based index to the first order ID to retrieve (optional)." )
+            @QueryParam("firstIndex") @DefaultValue("0") @PositiveOrZero int firstIndex,
+            @Parameter(description = "A zero-based index to the last order ID to retrieve (optional)." )
+            @QueryParam("lastIndex") @DefaultValue("-1") int lastIndex
             ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
@@ -720,7 +754,7 @@ public class AccountController {
     ) {
         log.debug("Started counts : \t'numberOfAccounts' = {}", numberOfAccountsStr);
         ResponseBuilder response = ResponseBuilder.startTiming();
-        int numberOfAccounts = RestParameters.parseInt(numberOfAccountsStr, "numberOfAccounts",
+        int numberOfAccounts = RestParametersParser.parseInt(numberOfAccountsStr, "numberOfAccounts",
             Constants.MIN_TOP_ACCOUNTS_NUMBER, Constants.MAX_TOP_ACCOUNTS_NUMBER, false);
         int numberOfAccountsMax = Math.max(numberOfAccounts, Constants.MIN_TOP_ACCOUNTS_NUMBER);
 

@@ -448,7 +448,7 @@ public class AplDbVersion extends DbVersion {
             case 155:
                 apply("CREATE INDEX IF NOT EXISTS account_active_lessee_id_idx ON account (active_lessee_id)");
             case 156:
-                apply("CREATE TABLE IF NOT EXISTS account_lease (db_id IDENTITY, lessor_id BIGINT NOT NULL, "
+                apply("CREATE TABLE IF NOT EXISTS account_lease (db_id IDENTITY, id BIGINT NOT NULL, lessor_id BIGINT NOT NULL, "
                         + "current_leasing_height_from INT, current_leasing_height_to INT, current_lessee_id BIGINT, "
                         + "next_leasing_height_from INT, next_leasing_height_to INT, next_lessee_id BIGINT, "
                         + "height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
@@ -849,7 +849,9 @@ public class AplDbVersion extends DbVersion {
             case 326:
                 apply("ALTER TABLE dex_operation ADD CONSTRAINT IF NOT EXISTS dex_operation_account_stage_eid_idx UNIQUE (account, stage, eid)");
             case 327:
-                return 327;
+                apply("ALTER TABLE account_lease ADD COLUMN IF NOT EXISTS id BIGINT NOT NULL DEFAULT -1");
+            case 328:
+                return 328;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

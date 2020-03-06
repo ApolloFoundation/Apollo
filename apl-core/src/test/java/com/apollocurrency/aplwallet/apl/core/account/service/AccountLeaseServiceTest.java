@@ -9,28 +9,34 @@ import com.apollocurrency.aplwallet.apl.core.account.dao.AccountLeaseTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountLease;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.enterprise.event.Event;
 
 import static com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEventBinding.literal;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
-
+@ExtendWith(MockitoExtension.class)
 class AccountLeaseServiceTest {
 
-    private Blockchain blockchain = mock(BlockchainImpl.class);
-    private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
-    private AccountLeaseTable accountLeaseTable = mock(AccountLeaseTable.class);
-    private Event leaseEvent = mock(Event.class);
+    @Mock
+    private Blockchain blockchain;
+    @Mock
+    private BlockchainConfig blockchainConfig;
+    @Mock
+    private AccountLeaseTable accountLeaseTable;
+    @Mock
+    private Event leaseEvent;
 
     private AccountLeaseService accountLeaseService;
     private AccountTestData testData;
@@ -46,7 +52,7 @@ class AccountLeaseServiceTest {
 
     @Test
     void leaseEffectiveBalance1() {
-        check_leaseEffectiveBalance(
+        check_leaseEffectiveBalance(1,
                 testData.ACC_1,
                 testData.ACC_LEAS_0,
                 testData.ACC_LEAS_0.getCurrentLeasingHeightTo()-leasingDelay-1,
@@ -56,7 +62,7 @@ class AccountLeaseServiceTest {
 
     @Test
     void leaseEffectiveBalance2() {
-        check_leaseEffectiveBalance(
+        check_leaseEffectiveBalance(2,
                 testData.ACC_1,
                 testData.ACC_LEAS_0,
                 testData.ACC_LEAS_0.getCurrentLeasingHeightTo() + 1,
@@ -66,7 +72,7 @@ class AccountLeaseServiceTest {
 
     @Test
     void leaseEffectiveBalance_newLease() {
-        check_leaseEffectiveBalance(
+        check_leaseEffectiveBalance(2,
                 testData.ACC_1,
                 null,
                 testData.ACC_LEAS_0.getCurrentLeasingHeightTo() + 1,
@@ -74,15 +80,16 @@ class AccountLeaseServiceTest {
         );
     }
 
-    private void check_leaseEffectiveBalance(Account account, AccountLease accountLeaseFromTable, int height, int period) {
+    private void check_leaseEffectiveBalance(long txId, Account account, AccountLease accountLeaseFromTable, int height, int period) {
         long lesseeId = -1;
+
         long expectedFrom = height + leasingDelay;
         long expectedTo = expectedFrom + period;
         AccountLease accountLease = null;
 
         if(accountLeaseFromTable == null){
             lesseeId = account.getId();
-            accountLease = new AccountLease(account.getId(),
+            accountLease = new AccountLease(txId, account.getId(),
                     height + leasingDelay,
                     height + leasingDelay + period,
                     lesseeId, height);
@@ -100,18 +107,20 @@ class AccountLeaseServiceTest {
         doReturn(height).when(blockchain).getHeight();
         doReturn(leasingDelay).when(blockchainConfig).getLeasingDelay();
         doReturn(firedEvent).when(leaseEvent).select(literal(AccountEventType.LEASE_SCHEDULED));
-        doReturn(accountLeaseFromTable).when(accountLeaseTable).get(any());
+        doReturn(accountLeaseFromTable).when(accountLeaseTable).getByAccount(anyLong());
 
-        accountLeaseService.leaseEffectiveBalance(account, lesseeId, period);
+        accountLeaseService.leaseEffectiveBalance(txId, account, lesseeId, period);
 
         if (accountLeaseFromTable == null){
             assertEquals(expectedFrom, accountLease.getCurrentLeasingHeightFrom());
             assertEquals(expectedTo, accountLease.getCurrentLeasingHeightTo());
             assertEquals(lesseeId, accountLease.getCurrentLesseeId());
+            assertEquals(txId, accountLease.getId());
         }else {
             assertEquals(expectedFrom, accountLease.getNextLeasingHeightFrom());
             assertEquals(expectedTo, accountLease.getNextLeasingHeightTo());
             assertEquals(lesseeId, accountLease.getNextLesseeId());
+            assertEquals(accountLeaseFromTable.getId(), accountLease.getId());
         }
         verify(accountLeaseTable).insert(accountLease);
         verify(firedEvent).fire(accountLease);
