@@ -50,6 +50,7 @@ import com.apollocurrency.aplwallet.api.response.CurrencyAccountsResponse;
 import com.apollocurrency.aplwallet.api.response.DataTagCountResponse;
 import com.apollocurrency.aplwallet.api.response.EthGasInfoResponse;
 import com.apollocurrency.aplwallet.api.response.ExpectedAssetDeletes;
+import com.apollocurrency.aplwallet.api.response.FilledOrdersResponse;
 import com.apollocurrency.aplwallet.api.response.ForgingResponse;
 import com.apollocurrency.aplwallet.api.response.GetAccountBlockCountResponse;
 import com.apollocurrency.aplwallet.api.response.GetAccountResponse;
@@ -304,5 +305,8 @@ public interface ITest {
     List<DexOrderDto> getDexOrders(String status, String accountId);
 
     DexOrderDto getDexOrder(String orderId);
+
+
+
 
 }

@@ -7,6 +7,7 @@ import com.apollocurrency.aplwallet.api.response.Account2FAResponse;
 import com.apollocurrency.aplwallet.api.response.CreateDexOrderResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrency.aplwallet.api.response.EthGasInfoResponse;
+import com.apollocurrency.aplwallet.api.response.FilledOrdersResponse;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.DexPreconditionExtension;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
@@ -31,6 +32,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.closeTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -64,6 +66,32 @@ public class TestDex extends TestBaseNew {
         .withDelay(60, TimeUnit.SECONDS);
 
     @Step
+    private boolean waitEmptyFilledOrders(String ethWallet){
+        log.info("Wait For ETh wallet empty: {}", ethWallet);
+        boolean isStatus = false;
+        try {
+            isStatus = Failsafe.with(retryPolicyDex).get(() -> getFilledOrders().stream().filter(ordersInfo -> ordersInfo.getAddress().equals(ethWallet)).findFirst().get().getDepositsInfo().isEmpty());
+        } catch (Exception e) {
+            fail(String.format("DepositInfo %s  not reached. Exception msg: %s", ethWallet, e.getMessage()));
+        }
+        assertTrue(isStatus, "deposit Info is still NOT EMPTY");
+        return isStatus;
+    }
+
+    @Step
+    private boolean waitEmptyActiveOrders(String ethWallet){
+        log.info("Wait For ETh wallet empty: {}", ethWallet);
+        boolean isStatus = false;
+        try {
+            isStatus = Failsafe.with(retryPolicyDex).get(() -> getActiveDeposits().stream().filter(ordersInfo -> ordersInfo.getAddress().equals(ethWallet)).findFirst().get().getDepositsInfo().isEmpty());
+        } catch (Exception e) {
+            fail(String.format("DepositInfo %s  not reached. Exception msg: %s", ethWallet, e.getMessage()));
+        }
+        assertTrue(isStatus, "deposit Info is still NOT EMPTY");
+        return isStatus;
+    }
+
+    @Step
     private boolean waitForOrderStatus(int status, String orderId){
         log.info("Wait For Status: {}", status);
         boolean isStatus = false;
@@ -90,36 +118,53 @@ public class TestDex extends TestBaseNew {
     }
 
     @Step
+    public void assertNotNullGetDexOrders(){
+        List<DexOrderDto> ordersDex = getDexOrders();
+        assertNotNull(ordersDex);
+        assertNotNull(ordersDex.get(0));
+        assertNotNull(ordersDex.get(0).id);
+        assertNotNull(ordersDex.get(0).status);
+        assertNotNull(ordersDex.get(0).hasFrozenMoney);
+        assertNotNull(ordersDex.get(0).accountId);
+        assertNotNull(ordersDex.get(0).fromAddress);
+        assertNotNull(ordersDex.get(0).height);
+        assertNotNull(ordersDex.get(0).offerAmount);
+        assertNotNull(ordersDex.get(0).offerCurrency);
+        assertNotNull(ordersDex.get(0).pairCurrency);
+        assertNotNull(ordersDex.get(0).pairRate);
+        assertNotNull(ordersDex.get(0).type);
+    }
+
+    @Step
     public void validateDexOrderResponse(String orderId, Integer status, Long pairRate, Wallet wallet, boolean isEth, boolean isSell){
         final int ETH = 1;
         final int PAX = 2;
         final int SELL = 1;
         final int BUY = 0;
-        DexOrderDto order = getDexOrder(orderId);
-        assertNotNull(order.finishTime, "NO DATA in finishTime field");
-        assertNotNull(order.height, "NO DATA in height field");
-        assertNotNull(order.offerCurrency, "NO DATA in offerCurrency");
-        assertNotNull(order.offerAmount, "NO DATA in offerAmount field");
-        assertEquals(status, order.status, "status is correct");
-        assertEquals(Long.valueOf(pairRate), order.pairRate, "pair rate is incorrect");
-        assertEquals(orderId, order.id, "order Id is correct");
-        assertEquals(wallet.getAccountId(), order.accountId, "accountId is incorrect");
-
-
         Integer type = (isSell)? SELL : BUY;
-        assertEquals(type, order.type, "type is incorrect");
-
         Integer pairCurrency = (isEth)? ETH : PAX;
-        assertEquals(pairCurrency, order.pairCurrency, "pairCurrency is incorrect");
+        DexOrderDto order = getDexOrder(orderId);
+        assertAll(
+            () -> assertNotNull(order.finishTime, "NO DATA in finishTime field"),
+            () -> assertNotNull(order.height, "NO DATA in height field"),
+            () -> assertNotNull(order.offerCurrency, "NO DATA in offerCurrency"),
+            () -> assertNotNull(order.offerAmount, "NO DATA in offerAmount field"),
+            () -> assertEquals(status, order.status, "status is correct"),
+            () -> assertEquals(Long.valueOf(pairRate), order.pairRate, "pair rate is incorrect"),
+            () -> assertEquals(orderId, order.id, "order Id is correct"),
+            () -> assertEquals(wallet.getAccountId(), order.accountId, "accountId is incorrect"),
+            () -> assertEquals(type, order.type, "type is incorrect"),
+            () -> assertEquals(pairCurrency, order.pairCurrency, "pairCurrency is incorrect"),
+            () -> {if (isSell) {
+                assertEquals(wallet.getUser(), order.fromAddress, "fromAddress data is incorrect");
+                assertEquals(wallet.getEthAddress(), order.toAddress, "toAddress data is incorrect");
+            }
+            else {
+                assertEquals(wallet.getEthAddress(), order.fromAddress, "fromAddress data is incorrect");
+                assertEquals(wallet.getUser(), order.toAddress, "toAddress data is incorrect");
+            }}
+        );
 
-        if (isSell) {
-            assertEquals(wallet.getUser(), order.fromAddress, "fromAddress data is incorrect");
-            assertEquals(wallet.getEthAddress(), order.toAddress, "toAddress data is incorrect");
-        }
-        else {
-            assertEquals(wallet.getEthAddress(), order.fromAddress, "fromAddress data is incorrect");
-            assertEquals(wallet.getUser(), order.toAddress, "toAddress data is incorrect");
-        }
     }
 
     @BeforeAll
@@ -141,22 +186,12 @@ public class TestDex extends TestBaseNew {
             transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getGenesisWallet(),
                 vault1.getUser(), 1000000);
             verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
-
-            log.info("Verify account: " + vault1);
-            transactionResponse = sendMoneySetUp(vault1,
-                vault1.getUser(), 10);
-            verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
         }
         if (getBalanceSetUP(vault2).getBalanceATM() < 90000000000000L) {
             log.info("Send money on: " + vault2);
 
             transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getGenesisWallet(),
                 vault2.getUser(), 1000000);
-            verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
-
-            log.info("Verify account: " + vault2);
-            transactionResponse = sendMoneySetUp(vault2,
-                vault2.getUser(), 10);
             verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
         }
     }
@@ -222,56 +257,109 @@ public class TestDex extends TestBaseNew {
         assertNotNull(dexTrades.getV(), "response is incorrect");
     }
 
-    @DisplayName("Create 4 types of orders and cancel them")
+    //TODO: divide cancel on four different tests
+    @DisplayName("CANCEL SELL APL/ETH DEX ORDER")
     @Test
     @Execution(SAME_THREAD)
-    public void dexOrders() {
+    public void cancelSellEth(){
         log.info("Creating SELL Dex Order (ETH)");
-        CreateDexOrderResponse sellOrderEth = createDexOrder("40000", "1000", vault1, false, true);
+        final Long APL_FEE = 300000000L;
+        final Long BALANCE_APL = getBalance(vault1).getBalanceATM();
+        CreateDexOrderResponse sellOrderEth = createDexOrder("30000", "1000", vault1, false, true);
+        String orderId = sellOrderEth.getOrder().getId();
         assertNotNull(sellOrderEth, "RESPONSE is not correct/dex offer wasn't created");
-        assertNotNull(sellOrderEth.getOrder().getId());
-        verifyTransactionInBlock(sellOrderEth.getOrder().getId());
+        assertNotNull(orderId);
+        verifyTransactionInBlock(orderId);
+        assertEquals(0, getDexOrder(orderId).status, "status isn't opened/canceling functionality will not work/reason: is in dex proccess.");
+        CreateTransactionResponse cancelOrder = dexCancelOrder(orderId, vault1);
+        verifyTransactionInBlock(cancelOrder.getTransaction());
+        assertEquals(3, getDexOrder(orderId).status, "status isn't cancelled (3)");
+        assertEquals(BALANCE_APL-APL_FEE, getBalance(vault1).getBalanceATM(), "APL BALANCE ISN'T CORRECT.");
+        assertNotNullGetDexOrders();
+    }
 
-        log.info("Creating SELL Dex Order (PAX)");
+    @DisplayName("CANCEL SELL APL/PAX DEX ORDER")
+    @Test
+    @Execution(SAME_THREAD)
+    public void cancelSellPax(){
+
+        final Long APL_FEE = 300000000L;
+        final Long BALANCE_APL = getBalance(vault1).getBalanceATM();
+
+        log.info("Create SELL Dex Order (PAX)");
         CreateDexOrderResponse sellOrderPax = createDexOrder("40000", "1000", vault1, false, false);
         assertNotNull(sellOrderPax, "RESPONSE is not correct/dex offer wasn't created");
+        assertNotNull(sellOrderPax.getOrder().getId());
         verifyTransactionInBlock(sellOrderPax.getOrder().getId());
+        String orderId = sellOrderPax.getOrder().getId();
+        assertEquals(0, getDexOrder(orderId).status, "status isn't opened. Canceling functionality will not work. Reason: is in dex proccess.");
+        //cancel sellOrder
+        CreateTransactionResponse cancelOrder = dexCancelOrder(orderId, vault1);
+        assertNotNull(cancelOrder);
+        verifyTransactionInBlock(cancelOrder.getTransaction());
+        assertEquals(3, getDexOrder(orderId).status, "status isn't cancelled (3)");
+        assertEquals(BALANCE_APL-APL_FEE, getBalance(vault1).getBalanceATM(), "APL BALANCE ISN'T CORRECT.");
+        assertNotNullGetDexOrders();
+    }
+
+    @DisplayName("CANCEL BUY ETH ORDER")
+    @Test
+    @Execution(SAME_THREAD)
+    public void cancelBuyEth(){
+        final String PAIR_RATE = "15000";
+        final String OFFER_AMOUNT = "1000";
+        final Long APL_FEE = 300000000L;
+        final Long BALANCE_APL = getBalance(vault1).getBalanceATM();
+        double balanceEthVault1 = getDexBalances(vault1.getEthAddress()).getEth().get(0).getBalances().getEth();
 
         log.info("Creating BUY Dex Order (ETH)");
-        CreateDexOrderResponse buyOrderEth = createDexOrder("15000", "1000", vault1, true, true);
+        CreateDexOrderResponse buyOrderEth = createDexOrder(PAIR_RATE, OFFER_AMOUNT, vault1, true, true);
         assertNotNull(buyOrderEth,  "RESPONSE is not correct/dex offer wasn't created");
-        assertNotNull(buyOrderEth.getFrozenTx(), "FrozenTx isn't present. Can be exception in freezing money. This situation can be present when there is some problem in ETH blockchain or with our nodes. ETH/PAX should be frozen later. Or the problem can be in not enough ETH/PAX");
         verifyTransactionInBlock(buyOrderEth.getOrder().getId());
+        String orderId = buyOrderEth.getOrder().getId();
+        assertNotNull(buyOrderEth.getFrozenTx(), "FrozenTx isn't present. Can be exception in freezing money. This situation can be present when there is some problem in ETH blockchain or with our nodes. ETH/PAX should be frozen later. Or the problem can be in not enough ETH/PAX");
+        assertEquals(0, getDexOrder(orderId).status, "status isn't opened. Canceling functionality will not work. Reason: is in dex proccess.");
+        waitForFrozenMoneyStatus(true, orderId);
+        //cancel sellOrder
+        CreateTransactionResponse cancelOrder = dexCancelOrder(orderId, vault1);
+        assertNotNull(cancelOrder);
+        verifyTransactionInBlock(cancelOrder.getTransaction());
+        assertEquals(3, getDexOrder(orderId).status, "status isn't cancelled (3)");
+        assertEquals(BALANCE_APL-APL_FEE, getBalance(vault1).getBalanceATM(), "APL BALANCE ISN'T CORRECT.");
+        waitForFrozenMoneyStatus(false, orderId);
+        waitEmptyActiveOrders(vault1.getEthAddress());
+        assertThat("ETH balance is too different", getDexBalances(vault1.getEthAddress()).getEth().get(0).getBalances().getEth(), closeTo((balanceEthVault1), 0.003));
+        assertNotNullGetDexOrders();
+    }
+
+    @DisplayName("CANCEL BUY PAX ORDER")
+    @Test
+    @Execution(SAME_THREAD)
+    public void cancelBuyPax(){
+        final String PAIR_RATE = "20000";
+        final String OFFER_AMOUNT = "1000";
+        final Long APL_FEE = 300000000L;
+        final Long BALANCE_APL = getBalance(vault1).getBalanceATM();
+        double balancePAX = getDexBalances(vault1.getEthAddress()).getEth().get(0).getBalances().getPax();
 
         log.info("Creating BUY Dex Order (PAX)");
-        CreateDexOrderResponse buyOrderPax = createDexOrder("15000", "1000", vault1, true, false);
-        assertNotNull(buyOrderPax,  "RESPONSE is not correct/dex offer wasn't created");
-        assertNotNull(buyOrderPax.getFrozenTx(), "FrozenTx isn't present. Can be exception in freezing money. This situation can be present when there is some problem in ETH blockchain or with our nodes. ETH/PAX should be frozen later. Or the problem can be in not enough ETH/PAX");
-        verifyTransactionInBlock(buyOrderPax.getOrder().getId());
-
-        List<DexOrderDto> orders = getDexOrders("0", vault1.getAccountId());
-        //TODO: add additional asserts for checking statuses after order was cancelled
-        for (DexOrderDto order : orders) {
-            if (order.status == 0) {
-                verifyTransactionInBlock(dexCancelOrder(order.id, vault1).getTransaction());
-                assertEquals(3, getDexOrder(order.id).status, "Status is not equal 3 (cancel)");
-            }
-            else log.info("orders with status OPEN are not present");
-        }
-
-        List<DexOrderDto> ordersDex = getDexOrders();
-        assertNotNull(ordersDex);
-        assertNotNull(ordersDex.get(0).id);
-        assertNotNull(ordersDex.get(0).status);
-        assertNotNull(ordersDex.get(0).hasFrozenMoney);
-        assertNotNull(ordersDex.get(0).accountId);
-        assertNotNull(ordersDex.get(0).fromAddress);
-        assertNotNull(ordersDex.get(0).height);
-        assertNotNull(ordersDex.get(0).offerAmount);
-        assertNotNull(ordersDex.get(0).offerCurrency);
-        assertNotNull(ordersDex.get(0).pairCurrency);
-        assertNotNull(ordersDex.get(0).pairRate);
-        assertNotNull(ordersDex.get(0).type);
+        CreateDexOrderResponse buyOrderEth = createDexOrder(PAIR_RATE, OFFER_AMOUNT, vault1, true, false);
+        assertNotNull(buyOrderEth,  "RESPONSE is not correct/dex offer wasn't created");
+        verifyTransactionInBlock(buyOrderEth.getOrder().getId());
+        String orderId = buyOrderEth.getOrder().getId();
+        assertNotNull(buyOrderEth.getFrozenTx(), "FrozenTx isn't present. Can be exception in freezing money. This situation can be present when there is some problem in ETH blockchain or with our nodes. ETH/PAX should be frozen later. Or the problem can be in not enough ETH/PAX");
+        assertEquals(0, getDexOrder(orderId).status, "status isn't opened. Canceling functionality will not work. Reason: is in dex proccess.");
+        waitForFrozenMoneyStatus(true, orderId);
+        //cancel sellOrder
+        CreateTransactionResponse cancelOrder = dexCancelOrder(orderId, vault1);
+        assertNotNull(cancelOrder);
+        verifyTransactionInBlock(cancelOrder.getTransaction());
+        waitForFrozenMoneyStatus(false, orderId);
+        waitEmptyActiveOrders(vault1.getEthAddress());
+        assertEquals(3, getDexOrder(orderId).status, "status isn't cancelled (3)");
+        assertEquals(BALANCE_APL-APL_FEE, getBalance(vault1).getBalanceATM(), "APL BALANCE ISN'T CORRECT.");
+        assertEquals(balancePAX, getDexBalances(vault1.getEthAddress()).getEth().get(0).getBalances().getPax(), "PAX BALANCE IS WRONG");
+        assertNotNullGetDexOrders();
     }
 
     @DisplayName("withdraw ETH/PAX + validation of ETH/PAX balances")
@@ -325,20 +413,20 @@ public class TestDex extends TestBaseNew {
     @Test
     @Execution(SAME_THREAD)
     public void dexExchangeEthSellBuy() {
-        //creating parameters
-        String pairRate = "1000";
-        String offerAmount = "2000";
-        Long vault1Fee = 900000000L; // by this dex flow it is apl fee which vault1 should pay for all dex operations
-        Long vault2Fee = 800000000L; // by this dex flow it is apl fee which vault2 should pay for all dex operations
-        Long aplAmount = Long.valueOf(offerAmount)*100000000;
-        Long balanceAplVault1 = getBalance(vault1).getBalanceATM();
-        Long balanceAplVault2 = getBalance(vault2).getBalanceATM();
+        //initializing parameters
+        final String PAIR_RATE = "1000";
+        final String OFFER_AMOUNT = "2000";
+        final Long VAULT1_FEE = 900000000L; // by this dex flow it is apl fee which vault1 should pay for all dex operations
+        final Long VAULT2_FEE = 800000000L; // by this dex flow it is apl fee which vault2 should pay for all dex operations
+        final Long APL_AMOUNT = Long.valueOf(OFFER_AMOUNT)*100000000;
+        final Long BALANCE_APL_VAULT1 = getBalance(vault1).getBalanceATM();
+        final Long BALANCE_APL_VAULT2 = getBalance(vault2).getBalanceATM();
         double balanceEthVault1 = getDexBalances(vault1.getEthAddress()).getEth().get(0).getBalances().getEth();
         double balanceEthVault2 = getDexBalances(vault2.getEthAddress()).getEth().get(0).getBalances().getEth();
-        double ethAmount = ((Double.valueOf(pairRate) * Double.valueOf(offerAmount)) * 0.000000001);
+        double ethAmount = ((Double.valueOf(PAIR_RATE) * Double.valueOf(OFFER_AMOUNT)) * 0.000000001);
 
         //creating sell dex order transaction and validate response
-        CreateDexOrderResponse sellOrderVault1 = createDexOrder(pairRate, offerAmount, vault1, false, true);
+        CreateDexOrderResponse sellOrderVault1 = createDexOrder(PAIR_RATE, OFFER_AMOUNT, vault1, false, true);
         verifyTransactionInBlock(sellOrderVault1.getOrder().getId());
         assertNotNull(sellOrderVault1, "RESPONSE is not correct/dex offer wasn't created");
         assertEquals(0, getDexOrder(sellOrderVault1.getOrder().getId()).status, "STATUS is NOT OPENED");
@@ -346,7 +434,7 @@ public class TestDex extends TestBaseNew {
         //wait 25 blocks and create buy dex order and validate response
         Integer currentHeight = getBlock().getHeight();
         waitForHeight(currentHeight+25);
-        CreateDexOrderResponse buyOrderVault2 = createDexOrder(pairRate, offerAmount, vault2, true, true);
+        CreateDexOrderResponse buyOrderVault2 = createDexOrder(PAIR_RATE, OFFER_AMOUNT, vault2, true, true);
         assertNotNull(buyOrderVault2, "RESPONSE is not correct/dex offer wasn't created");
         assertNotNull(buyOrderVault2.getFrozenTx(), "ETH isn't frozen");
         assertNotNull(buyOrderVault2.getContract(), "CONTRACT isn't created");
@@ -359,34 +447,25 @@ public class TestDex extends TestBaseNew {
         waitForFrozenMoneyStatus(false, buyOrderVault2.getOrder().getId());
 
         //validate APL balance + ETH balance
-        assertEquals(balanceAplVault1-vault1Fee-aplAmount, getBalance(vault1).getBalanceATM(), "APL BALANCE validation isn't passed on VAULT1");
-        assertEquals(balanceAplVault2-vault2Fee+aplAmount, getBalance(vault2).getBalanceATM(), "APL BALANCE validation isn't passed on VAULT2");
-        assertTrue(getDexBalances(vault1.getEthAddress()).getEth().get(0).getBalances().getEth() > balanceEthVault1, "ETH balance of vault1 (SELL ACCOUNT) didn't become more than it was");
-        assertTrue(getDexBalances(vault2.getEthAddress()).getEth().get(0).getBalances().getEth() < (balanceEthVault2 - ethAmount), "ETH balance of vault2 (BUY ACCOUNT) didn't become less than it was ");
-        assertTrue(getDexBalances(vault1.getEthAddress()).getEth().get(0).getBalances().getEth() < (balanceEthVault1 + ethAmount), "ETH balance of vault1 (SELL ACCOUNT) is more than should be! ");
+        assertEquals(BALANCE_APL_VAULT1-VAULT1_FEE-APL_AMOUNT, getBalance(vault1).getBalanceATM(), "APL BALANCE validation isn't passed on VAULT1");
+        assertEquals(BALANCE_APL_VAULT2-VAULT2_FEE+APL_AMOUNT, getBalance(vault2).getBalanceATM(), "APL BALANCE validation isn't passed on VAULT2");
+
+        waitEmptyFilledOrders(vault2.getEthAddress());
+
+        assertThat("ETH balance of vault1 (SELL ACCOUNT) didn't become more than it was", getDexBalances(vault1.getEthAddress()).getEth().get(0).getBalances().getEth(), closeTo((balanceEthVault1 + ethAmount), 0.002));
+        assertThat("ETH balance of vault2 (BUY ACCOUNT) didn't become less than it was", getDexBalances(vault2.getEthAddress()).getEth().get(0).getBalances().getEth(), closeTo((balanceEthVault2 - ethAmount), 0.005));
 
         //TODO: edit ETH balance validation (should include eth comission)
         //TODO: add transaction validation on each account
         //TODO: add order status validation on each account
-        //TODO: add trade history (closed) validation
 
-        //validate dex history and closed orders for account
+        //validate dex history and closed orders for account  NOW BUG IS HERE, SHOULD WORK
         /*TradingDataOutputDTO dexTrades = getDexTradeInfo(true, "15");
-        BigDecimal offerAmountBigDecimal = new BigDecimal(offerAmount);
+        BigDecimal offerAmountBigDecimal = new BigDecimal(OFFER_AMOUNT);
+        assertTrue(dexTrades.getV().get(0).compareTo(offerAmountBigDecimal) >= 0, "dex trade isn't shown on trading view");*/
 
-
-        softAssertions.assertThat(dexTrades.getV().get(0).compareTo(offerAmountBigDecimal)).isGreaterThanOrEqualTo(0);
-        softAssertions.assertThat(getDexHistory(vault1.getAccountId(), true, true).stream().findFirst().get().id).isEqualTo(sellOrderVault1.getOrder().getId());
-        softAssertions.assertThat(getDexHistory(vault2.getAccountId(), true, false).stream().findFirst().get().id).isEqualTo(buyOrderVault2.getOrder().getId());
-        softAssertions.assertAll();
-        assertAll(
-            () -> assertThat(dexTrades.getV().get(0).compareTo(offerAmountBigDecimal), greaterThan(10)),
-            () -> assertThat(getDexHistory(vault1.getAccountId(), true, true).stream().findFirst().get().id, equals(sellOrderVault1.getOrder().getId())),
-            () -> assertThat(getDexHistory(vault2.getAccountId(), true, false).stream().findFirst().get().id, equals(buyOrderVault2.getOrder().getId()))
-        );    */
-
-        validateDexOrderResponse(sellOrderVault1.getOrder().getId(), 5, Long.valueOf(pairRate), vault1, true, true);
-        validateDexOrderResponse(buyOrderVault2.getOrder().getId(), 5, Long.valueOf(pairRate), vault2, true, false);
+        validateDexOrderResponse(sellOrderVault1.getOrder().getId(), 5, Long.valueOf(PAIR_RATE), vault1, true, true);
+        validateDexOrderResponse(buyOrderVault2.getOrder().getId(), 5, Long.valueOf(PAIR_RATE), vault2, true, false);
     }
 
     @DisplayName("dex exchange ETH BUY-SELL")
@@ -394,19 +473,19 @@ public class TestDex extends TestBaseNew {
     @Execution(SAME_THREAD)
     public void dexExchangeEthBuySell() {
         //creating parameters
-        String pairRate = "1000";
-        String offerAmount = "3000";
-        Long vault1Fee = 600000000L; // by this dex flow it is apl fee which vault1 should pay for all dex operations
-        Long vault2Fee = 1100000000L; // by this dex flow it is apl fee which vault2 should pay for all dex operations
-        Long aplAmount = Long.valueOf(offerAmount)*100000000;
-        Long balanceAplVault1 = getBalance(vault1).getBalanceATM();
-        Long balanceAplVault2 = getBalance(vault2).getBalanceATM();
+        final String PAIR_RATE = "1000";
+        final String OFFER_AMOUNT = "3000";
+        final Long VAULT1_FEE = 600000000L; // by this dex flow it is apl fee which vault1 should pay for all dex operations
+        final Long VAULT2_FEE = 1100000000L; // by this dex flow it is apl fee which vault2 should pay for all dex operations
+        final Long APL_AMOUNT = Long.valueOf(OFFER_AMOUNT)*100000000;
+        final Long BALANCE_APL_VAULT1 = getBalance(vault1).getBalanceATM();
+        final Long BALANCE_APL_VAULT2 = getBalance(vault2).getBalanceATM();
         double balanceEthVault1 = getDexBalances(vault1.getEthAddress()).getEth().get(0).getBalances().getEth();
         double balanceEthVault2 = getDexBalances(vault2.getEthAddress()).getEth().get(0).getBalances().getEth();
-        double ethAmount = ((Double.valueOf(pairRate) * Double.valueOf(offerAmount)) * 0.000000001);
+        double ethAmount = ((Double.valueOf(PAIR_RATE) * Double.valueOf(OFFER_AMOUNT)) * 0.000000001);
 
         //creating BUY dex order transaction and validate response
-        CreateDexOrderResponse buyOrderVault1 = createDexOrder(pairRate, offerAmount, vault1, true, true);
+        CreateDexOrderResponse buyOrderVault1 = createDexOrder(PAIR_RATE, OFFER_AMOUNT, vault1, true, true);
         verifyTransactionInBlock(buyOrderVault1.getOrder().getId());
         assertNotNull(buyOrderVault1, "RESPONSE is not correct/dex offer wasn't created");
         assertNotNull(buyOrderVault1.getFrozenTx(), "ETH is n't frozen");
@@ -415,7 +494,7 @@ public class TestDex extends TestBaseNew {
         //wait 25 blocks and create SELL dex order and validate response
         Integer currentHeight = getBlock().getHeight();
         waitForHeight(currentHeight+25);
-        CreateDexOrderResponse sellOrderVault2 = createDexOrder(pairRate, offerAmount, vault2, false, true);
+        CreateDexOrderResponse sellOrderVault2 = createDexOrder(PAIR_RATE, OFFER_AMOUNT, vault2, false, true);
         assertNotNull(sellOrderVault2, "RESPONSE is not correct/dex offer wasn't created");
         assertNotNull(sellOrderVault2.getContract(), "CONTRACT isn't created");
         assertNotNull(sellOrderVault2.getOrder(), "ORDER isn't in response");
@@ -427,8 +506,13 @@ public class TestDex extends TestBaseNew {
         waitForFrozenMoneyStatus(false, buyOrderVault1.getOrder().getId());
 
         //validate APL balance + ETH balance
-        assertEquals(balanceAplVault1-vault1Fee+aplAmount, getBalance(vault1).getBalanceATM(), "APL BALANCE validation isn't passed on VAULT1");
-        assertEquals(balanceAplVault2-vault2Fee-aplAmount, getBalance(vault2).getBalanceATM(), "APL BALANCE validation isn't passed on VAULT2");
+        assertEquals(BALANCE_APL_VAULT1-VAULT1_FEE+APL_AMOUNT, getBalance(vault1).getBalanceATM(), "APL BALANCE validation isn't passed on VAULT1");
+        assertEquals(BALANCE_APL_VAULT2-VAULT2_FEE-APL_AMOUNT, getBalance(vault2).getBalanceATM(), "APL BALANCE validation isn't passed on VAULT2");
+
+        waitEmptyFilledOrders(vault1.getEthAddress());
+
+        assertThat("ETH balance of vault2 (SELL ACCOUNT) didn't become more than it was", getDexBalances(vault2.getEthAddress()).getEth().get(0).getBalances().getEth(), closeTo((balanceEthVault2 + ethAmount), 0.003));
+        assertThat("ETH balance of vault1 (BUY ACCOUNT) didn't become more than it was", getDexBalances(vault1.getEthAddress()).getEth().get(0).getBalances().getEth(), closeTo((balanceEthVault1 - ethAmount), 0.005));
         assertTrue(getDexBalances(vault2.getEthAddress()).getEth().get(0).getBalances().getEth() > balanceEthVault2, "ETH balance of vault2 (SELL ACCOUNT) didn't become more than it was");
         assertTrue(getDexBalances(vault1.getEthAddress()).getEth().get(0).getBalances().getEth() < (balanceEthVault1 - ethAmount), "ETH balance of vault1 (BUY ACCOUNT) didn't become less than it was ");
         assertTrue(getDexBalances(vault2.getEthAddress()).getEth().get(0).getBalances().getEth() < (balanceEthVault2 + ethAmount), "ETH balance of vault2 (SELL ACCOUNT) is more than should be! ");
@@ -436,25 +520,15 @@ public class TestDex extends TestBaseNew {
         //TODO: edit ETH balance validation (should include eth comission)
         //TODO: add transaction validation on each account
         //TODO: add order status validation on each account
-        //TODO: add trade history (closed) validation
 
         //validate dex history and closed orders for account
         /*TradingDataOutputDTO dexTrades = getDexTradeInfo(true, "15");
-        BigDecimal offerAmountBigDecimal = new BigDecimal(offerAmount);
+        BigDecimal offerAmountBigDecimal = new BigDecimal(OFFER_AMOUNT);
+        assertTrue(dexTrades.getV().get(0).compareTo(offerAmountBigDecimal) >= 0, "missing dex trade in trading view history");*/
 
 
-        softAssertions.assertThat(dexTrades.getV().get(0).compareTo(offerAmountBigDecimal)).isGreaterThanOrEqualTo(0);
-        softAssertions.assertThat(getDexHistory(vault1.getAccountId(), true, true).stream().findFirst().get().id).isEqualTo(sellOrderVault1.getOrder().getId());
-        softAssertions.assertThat(getDexHistory(vault2.getAccountId(), true, false).stream().findFirst().get().id).isEqualTo(buyOrderVault2.getOrder().getId());
-        softAssertions.assertAll();
-        assertAll(
-            () -> assertThat(dexTrades.getV().get(0).compareTo(offerAmountBigDecimal), greaterThan(10)),
-            () -> assertThat(getDexHistory(vault1.getAccountId(), true, true).stream().findFirst().get().id, equals(sellOrderVault1.getOrder().getId())),
-            () -> assertThat(getDexHistory(vault2.getAccountId(), true, false).stream().findFirst().get().id, equals(buyOrderVault2.getOrder().getId()))
-        );    */
-
-        validateDexOrderResponse(sellOrderVault2.getOrder().getId(), 5, Long.valueOf(pairRate), vault2, true, true);
-        validateDexOrderResponse(buyOrderVault1.getOrder().getId(), 5, Long.valueOf(pairRate), vault1, true, false);
+        validateDexOrderResponse(sellOrderVault2.getOrder().getId(), 5, Long.valueOf(PAIR_RATE), vault2, true, true);
+        validateDexOrderResponse(buyOrderVault1.getOrder().getId(), 5, Long.valueOf(PAIR_RATE), vault1, true, false);
     }
 
     @DisplayName("dex exchange PAX SELL-BUY")
@@ -462,19 +536,19 @@ public class TestDex extends TestBaseNew {
     @Execution(SAME_THREAD)
     public void dexExchangePaxSellBuy() {
         //creating parameters
-        String pairRate = "1000";
-        String offerAmount = "5000";
-        Long vault1Fee = 900000000L; // by this dex flow it is apl fee which vault1 should pay for all dex operations
-        Long vault2Fee = 800000000L; // by this dex flow it is apl fee which vault2 should pay for all dex operations
-        Long aplAmount = Long.valueOf(offerAmount)*100000000;
-        Long balanceAplVault1 = getBalance(vault1).getBalanceATM();
-        Long balanceAplVault2 = getBalance(vault2).getBalanceATM();
+        final String PAIR_RATE = "1000";
+        final String OFFER_AMOUNT = "5000";
+        final Long VAULT1_FEE = 900000000L; // by this dex flow it is apl fee which vault1 should pay for all dex operations
+        final Long VAULT2_FEE = 800000000L; // by this dex flow it is apl fee which vault2 should pay for all dex operations
+        final Long APL_AMOUNT = Long.valueOf(OFFER_AMOUNT)*100000000;
+        final Long BALANCE_APL_VAULT1 = getBalance(vault1).getBalanceATM();
+        final Long BALANCE_APL_VAULT2 = getBalance(vault2).getBalanceATM();
         double balancePaxVault1 = getDexBalances(vault1.getEthAddress()).getEth().get(0).getBalances().getPax();
         double balancePaxVault2 = getDexBalances(vault2.getEthAddress()).getEth().get(0).getBalances().getPax();
-        double paxAmount = ((Double.valueOf(pairRate) * Double.valueOf(offerAmount)) * 0.000000001);
+        double paxAmount = ((Double.valueOf(PAIR_RATE) * Double.valueOf(OFFER_AMOUNT)) * 0.000000001);
 
         //creating sell dex order transaction and validate response
-        CreateDexOrderResponse sellOrderVault1 = createDexOrder(pairRate, offerAmount, vault1, false, false);
+        CreateDexOrderResponse sellOrderVault1 = createDexOrder(PAIR_RATE, OFFER_AMOUNT, vault1, false, false);
         verifyTransactionInBlock(sellOrderVault1.getOrder().getId());
         assertNotNull(sellOrderVault1, "RESPONSE is not correct/dex offer wasn't created");
         assertEquals(0, getDexOrder(sellOrderVault1.getOrder().getId()).status, "STATUS is NOT OPENED");
@@ -482,7 +556,7 @@ public class TestDex extends TestBaseNew {
         //wait 25 blocks and create buy dex order and validate response
         Integer currentHeight = getBlock().getHeight();
         waitForHeight(currentHeight+25);
-        CreateDexOrderResponse buyOrderVault2 = createDexOrder(pairRate, offerAmount, vault2, true, false);
+        CreateDexOrderResponse buyOrderVault2 = createDexOrder(PAIR_RATE, OFFER_AMOUNT, vault2, true, false);
         assertNotNull(buyOrderVault2, "RESPONSE is not correct/dex offer wasn't created");
         assertNotNull(buyOrderVault2.getFrozenTx(), "PAX isn't frozen");
         assertNotNull(buyOrderVault2.getContract(), "CONTRACT isn't created");
@@ -495,8 +569,10 @@ public class TestDex extends TestBaseNew {
         waitForFrozenMoneyStatus(false, buyOrderVault2.getOrder().getId());
 
         //validate APL balance + ETH balance
-        assertEquals(balanceAplVault1-vault1Fee-aplAmount, getBalance(vault1).getBalanceATM(), "APL BALANCE validation isn't passed on VAULT1");
-        assertEquals(balanceAplVault2-vault2Fee+aplAmount, getBalance(vault2).getBalanceATM(), "APL BALANCE validation isn't passed on VAULT2");
+        assertEquals(BALANCE_APL_VAULT1-VAULT1_FEE-APL_AMOUNT, getBalance(vault1).getBalanceATM(), "APL BALANCE validation isn't passed on VAULT1");
+        assertEquals(BALANCE_APL_VAULT2-VAULT2_FEE+APL_AMOUNT, getBalance(vault2).getBalanceATM(), "APL BALANCE validation isn't passed on VAULT2");
+
+        waitEmptyFilledOrders(vault2.getEthAddress());
 
         assertEquals(balancePaxVault1 + paxAmount, getDexBalances(vault1.getEthAddress()).getEth().get(0).getBalances().getPax(), "PAX balance of vault1 (SELL ACCOUNT) isn't correct");
         assertEquals(balancePaxVault2 - paxAmount, getDexBalances(vault2.getEthAddress()).getEth().get(0).getBalances().getPax(), "PAX balance of vault2 (BUY ACCOUNT) isn't correct ");
@@ -504,25 +580,14 @@ public class TestDex extends TestBaseNew {
         //TODO: edit ETH balance validation (should include eth comission)
         //TODO: add transaction validation on each account
         //TODO: add order status validation on each account
-        //TODO: add trade history (closed) validation
 
         //validate dex history and closed orders for account
         /*TradingDataOutputDTO dexTrades = getDexTradeInfo(true, "15");
-        BigDecimal offerAmountBigDecimal = new BigDecimal(offerAmount);
+        BigDecimal offerAmountBigDecimal = new BigDecimal(OFFER_AMOUNT);
+        assertTrue(dexTrades.getV().get(0).compareTo(offerAmountBigDecimal) >= 0, "dex trade isn't in trading view history");*/
 
-
-        softAssertions.assertThat(dexTrades.getV().get(0).compareTo(offerAmountBigDecimal)).isGreaterThanOrEqualTo(0);
-        softAssertions.assertThat(getDexHistory(vault1.getAccountId(), true, true).stream().findFirst().get().id).isEqualTo(sellOrderVault1.getOrder().getId());
-        softAssertions.assertThat(getDexHistory(vault2.getAccountId(), true, false).stream().findFirst().get().id).isEqualTo(buyOrderVault2.getOrder().getId());
-        softAssertions.assertAll();
-        assertAll(
-            () -> assertThat(dexTrades.getV().get(0).compareTo(offerAmountBigDecimal), greaterThan(10)),
-            () -> assertThat(getDexHistory(vault1.getAccountId(), true, true).stream().findFirst().get().id, equals(sellOrderVault1.getOrder().getId())),
-            () -> assertThat(getDexHistory(vault2.getAccountId(), true, false).stream().findFirst().get().id, equals(buyOrderVault2.getOrder().getId()))
-        );    */
-
-        validateDexOrderResponse(sellOrderVault1.getOrder().getId(), 5, Long.valueOf(pairRate), vault1, false, true);
-        validateDexOrderResponse(buyOrderVault2.getOrder().getId(), 5, Long.valueOf(pairRate), vault2, false, false);
+        validateDexOrderResponse(sellOrderVault1.getOrder().getId(), 5, Long.valueOf(PAIR_RATE), vault1, false, true);
+        validateDexOrderResponse(buyOrderVault2.getOrder().getId(), 5, Long.valueOf(PAIR_RATE), vault2, false, false);
     }
 
     @DisplayName("dex exchange PAX BUY-SELL")
@@ -530,16 +595,17 @@ public class TestDex extends TestBaseNew {
     @Execution(SAME_THREAD)
     public void dexExchangePaxBuySell() {
         //creating parameters
-        String pairRate = "1000";
-        String offerAmount = "4000";
-        Long vault1Fee = 600000000L; // by this dex flow it is apl fee which vault1 should pay for all dex operations
-        Long vault2Fee = 1100000000L; // by this dex flow it is apl fee which vault2 should pay for all dex operations
-        Long aplAmount = Long.valueOf(offerAmount)*100000000;
-        Long balanceAplVault1 = getBalance(vault1).getBalanceATM();
-        Long balanceAplVault2 = getBalance(vault2).getBalanceATM();
+        final String pairRate = "1000";
+        final String offerAmount = "4000";
+        final Long vault1Fee = 600000000L; // by this dex flow it is apl fee which vault1 should pay for all dex operations
+        final Long vault2Fee = 1100000000L; // by this dex flow it is apl fee which vault2 should pay for all dex operations
+        final Long aplAmount = Long.valueOf(offerAmount)*100000000;
+        final Long balanceAplVault1 = getBalance(vault1).getBalanceATM();
+        final Long balanceAplVault2 = getBalance(vault2).getBalanceATM();
         double balancePaxVault1 = getDexBalances(vault1.getEthAddress()).getEth().get(0).getBalances().getPax();
         double balancePaxVault2 = getDexBalances(vault2.getEthAddress()).getEth().get(0).getBalances().getPax();
         double paxAmount = ((Double.valueOf(pairRate) * Double.valueOf(offerAmount)) * 0.000000001);
+
 
         //creating BUY dex order transaction and validate response
         CreateDexOrderResponse buyOrderVault1 = createDexOrder(pairRate, offerAmount, vault1, true, false);
@@ -561,13 +627,17 @@ public class TestDex extends TestBaseNew {
         waitForOrderStatus(5, sellOrderVault2.getOrder().getId());
         waitForOrderStatus(5, buyOrderVault1.getOrder().getId());
         waitForFrozenMoneyStatus(false, buyOrderVault1.getOrder().getId());
-
+        waitEmptyFilledOrders(vault2.getEthAddress());
         //validate APL balance + ETH balance
         assertEquals(balanceAplVault1-vault1Fee+aplAmount, getBalance(vault1).getBalanceATM(), "APL BALANCE validation isn't passed on VAULT1");
         assertEquals(balanceAplVault2-vault2Fee-aplAmount, getBalance(vault2).getBalanceATM(), "APL BALANCE validation isn't passed on VAULT2");
+        log.info("EXPECTED BAlANCE PAX:");
+        System.out.println(balancePaxVault2 + paxAmount);
+        log.info("ACTUAL BAlANCE PAX:");
+        System.out.println(getDexBalances(vault2.getEthAddress()).getEth().get(0).getBalances().getPax());
+
         assertEquals(balancePaxVault2 + paxAmount, getDexBalances(vault2.getEthAddress()).getEth().get(0).getBalances().getPax(), "PAX balance of vault2 (SELL ACCOUNT) isn't correct");
         assertEquals(balancePaxVault1 - paxAmount, getDexBalances(vault1.getEthAddress()).getEth().get(0).getBalances().getPax(), "PAX balance of vault1 (BUY ACCOUNT) isn't correct ");
-
 
         //TODO: edit ETH balance validation (should include eth comission)
         //TODO: add transaction validation on each account
@@ -577,20 +647,39 @@ public class TestDex extends TestBaseNew {
         //validate dex history and closed orders for account
         /*TradingDataOutputDTO dexTrades = getDexTradeInfo(true, "15");
         BigDecimal offerAmountBigDecimal = new BigDecimal(offerAmount);
-
-
-        softAssertions.assertThat(dexTrades.getV().get(0).compareTo(offerAmountBigDecimal)).isGreaterThanOrEqualTo(0);
-        softAssertions.assertThat(getDexHistory(vault1.getAccountId(), true, true).stream().findFirst().get().id).isEqualTo(sellOrderVault1.getOrder().getId());
-        softAssertions.assertThat(getDexHistory(vault2.getAccountId(), true, false).stream().findFirst().get().id).isEqualTo(buyOrderVault2.getOrder().getId());
-        softAssertions.assertAll();
-        assertAll(
-            () -> assertThat(dexTrades.getV().get(0).compareTo(offerAmountBigDecimal), greaterThan(10)),
-            () -> assertThat(getDexHistory(vault1.getAccountId(), true, true).stream().findFirst().get().id, equals(sellOrderVault1.getOrder().getId())),
-            () -> assertThat(getDexHistory(vault2.getAccountId(), true, false).stream().findFirst().get().id, equals(buyOrderVault2.getOrder().getId()))
-        );    */
+        assertTrue(dexTrades.getV().get(0).compareTo(offerAmountBigDecimal) >= 0, "dex trade isn't in trading view history"); */
 
         validateDexOrderResponse(sellOrderVault2.getOrder().getId(), 5, Long.valueOf(pairRate), vault2, false, true);
         validateDexOrderResponse(buyOrderVault1.getOrder().getId(), 5, Long.valueOf(pairRate), vault1, false, false);
     }
+
+    @DisplayName("EXPIRED SELL APL DEX ORDER (ETH)")
+    @Test
+    @Execution(SAME_THREAD)
+    public void expiredSellDexEth() {
+
+    }
+
+    @DisplayName("EXPIRED SELL APL DEX ORDER (PAX)")
+    @Test
+    @Execution(SAME_THREAD)
+    public void expiredSellDexPax() {
+
+    }
+
+    @DisplayName("EXPIRED BUY APL DEX ORDER (ETH)")
+    @Test
+    @Execution(SAME_THREAD)
+    public void expiredBuyDexEth() {
+
+    }
+
+    @DisplayName("EXPIRED BUY APL DEX ORDER (PAX)")
+    @Test
+    @Execution(SAME_THREAD)
+    public void expiredBuyDexPax() {
+
+    }
+
 }
 

@@ -50,6 +50,7 @@ import com.apollocurrency.aplwallet.api.response.CurrencyAccountsResponse;
 import com.apollocurrency.aplwallet.api.response.DataTagCountResponse;
 import com.apollocurrency.aplwallet.api.response.EthGasInfoResponse;
 import com.apollocurrency.aplwallet.api.response.ExpectedAssetDeletes;
+import com.apollocurrency.aplwallet.api.response.FilledOrdersResponse;
 import com.apollocurrency.aplwallet.api.response.ForgingResponse;
 import com.apollocurrency.aplwallet.api.response.GetAccountBlockCountResponse;
 import com.apollocurrency.aplwallet.api.response.GetAccountResponse;
@@ -1072,7 +1073,6 @@ public class TestBaseNew extends TestBase {
                 .post(path).as(CreateTransactionResponse.class);
     }
 
-    //TODO: edit when NEW DTO will be added
     @Override
     @Step
     public CreateDexOrderResponse createDexOrder(String pairRate, String offerAmount, Wallet wallet, boolean isBuyOrder, boolean isEth) {
@@ -1098,8 +1098,54 @@ public class TestBaseNew extends TestBase {
             .formParams(param)
             .when()
             .post(path).as(CreateDexOrderResponse.class);
+    }
 
 
+    @Step
+    public CreateDexOrderResponse createDexOrderWithAmountOfTime(String pairRate, String offerAmount, Wallet wallet, boolean isBuyOrder, boolean isEth, String amountOfTime) {
+        String path = "/rest/dex/offer";
+        HashMap<String, String> param = new HashMap();
+        param = restHelper.addWalletParameters(param,wallet);
+
+        int offerType = (isBuyOrder) ? ORDER_BUY : ORDER_SELL;
+        int pairCurrency = (isEth) ? ETH : PAX;
+
+        param.put(ReqParam.OFFER_TYPE, String.valueOf(offerType));
+        param.put(ReqParam.PAIR_CURRENCY, String.valueOf(pairCurrency));
+
+        param.put(ReqParam.PAIR_RATE, pairRate);
+        param.put(ReqParam.OFFER_AMOUNT, offerAmount + "000000000");
+        param.put(ReqParam.ETH_WALLET_ADDRESS, wallet.getEthAddress());
+        param.put(ReqParam.AMOUNT_OF_TIME, amountOfTime);
+        param.put(ReqParam.FEE, "200000000");
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .post(path).as(CreateDexOrderResponse.class);
+    }
+
+
+    @Step
+    public List<FilledOrdersResponse> getFilledOrders(){
+        String path = "/rest/dex/eth/filled-orders";
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .when().log().body()
+            .get(path)
+            .getBody().jsonPath().getList("", FilledOrdersResponse.class);
+    }
+
+    @Step
+    public List<FilledOrdersResponse> getActiveDeposits(){
+        String path = "/rest/dex/eth/active-deposits";
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .when().log().body()
+            .get(path)
+            .getBody().jsonPath().getList("", FilledOrdersResponse.class);
     }
 
     @Override
