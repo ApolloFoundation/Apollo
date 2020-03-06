@@ -29,7 +29,6 @@ public class ApolloCertificateTest {
     public static void setUpClass() {
         try (InputStream is = ApolloCertificateTest.class.getClassLoader().getResourceAsStream("test_cert.pem")) {
             acert = ApolloCertificate.loadPEMFromStream(is);
-            acert.parseAttributes();
         } catch (IOException ex) {
             log.error("Can not load test certificate ", ex);
         } catch (ApolloCertificateException ex) {
@@ -140,7 +139,7 @@ public class ApolloCertificateTest {
      */
     @Test
     public void testGetEmail() {
-        String expResult = null;
+        String expResult = "alukin@gmail.com";
         String result = acert.getEmail();
         assertEquals(expResult, result);
     }
@@ -151,7 +150,7 @@ public class ApolloCertificateTest {
     @Test
     public void testGetPEM() {
         String result = acert.getPEM();
-        assertEquals(result.length() > 100, true);
+        assertEquals(true, result.startsWith("-----BEGIN CERTIFICATE----"));
     }
 
     /**
