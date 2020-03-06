@@ -10,30 +10,45 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Architecture;
 import com.apollocurrency.aplwallet.apl.util.Platform;
 import com.apollocurrency.aplwallet.apl.util.Version;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 import org.json.simple.JSONObject;
+import org.web3j.crypto.Pair;
 
 import java.nio.ByteBuffer;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Set;
+
 @EqualsAndHashCode(callSuper = false)
 @ToString
 @Getter
 public class UpdateV2Attachment extends AbstractAttachment {
     private final String manifestUrl;
     private final Level updateLevel;
-    private final Platform platform;
-    private final Architecture architecture;
+    private final Set<PlatformPair> platforms = new HashSet<>();
     private final Version releaseVersion;
+    private final String cn;
+    private final long serialNumber;
+    private final byte[] signature;
 
     public UpdateV2Attachment(ByteBuffer buffer) throws AplException.NotValidException {
         super(buffer);
         try {
-            this.manifestUrl = Convert.readString(buffer, buffer.getShort(), Short.MAX_VALUE);
+            this.manifestUrl = Convert.readString(buffer, buffer.getShort(), 2048);
             this.updateLevel = Level.from(buffer.get());
-            this.platform = Platform.from(buffer.get());
-            this.architecture = Architecture.from(buffer.get());
+            byte platformsLength = buffer.get();
+            for (int i = 0; i < platformsLength; i++) {
+                this.platforms.add(new PlatformPair(Platform.from(buffer.get()), Architecture.from(buffer.get())));
+            }
             this.releaseVersion = new Version(buffer.get(), buffer.getShort(), buffer.getShort());
+            this.cn = Convert.readString(buffer, buffer.getShort(), 2048);
+            this.serialNumber = buffer.getLong();
+            byte sigLength = buffer.get();
+            this.signature = new byte[sigLength];
+            buffer.get(this.signature);
         } catch (NotValidException ex) {
             throw new AplException.NotValidException(ex.getMessage());
         }
@@ -43,7 +58,8 @@ public class UpdateV2Attachment extends AbstractAttachment {
         super(attachmentData);
         manifestUrl =  Convert.nullToEmpty((String) attachmentData.get("manifestUrl"));
         updateLevel = Level.from((int)Convert.parseLong(attachmentData.get("level")));
-        platform = Platform.from((int)Convert.parseLong(attachmentData.get("platform")));
+
+        Platform.from((int)Convert.parseLong(attachmentData.get("platform")));
         architecture = Architecture.from((int)Convert.parseLong(attachmentData.get("architecture")));
         releaseVersion = new Version((String)(attachmentData.get("version")));
 
@@ -88,5 +104,11 @@ public class UpdateV2Attachment extends AbstractAttachment {
     @Override
     public TransactionType getTransactionType() {
         return Update.UPDATE_V2;
+    }
+
+    @Data
+    public static class PlatformPair {
+        private final Platform platform;
+        private final Architecture architecture;
     }
 }
