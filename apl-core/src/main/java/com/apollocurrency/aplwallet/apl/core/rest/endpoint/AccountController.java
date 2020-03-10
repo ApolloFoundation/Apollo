@@ -71,7 +71,6 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.security.PermitAll;
-import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.PositiveOrZero;
@@ -422,7 +421,7 @@ public class AccountController {
                             content = @Content(mediaType = "application/json",
                                     schema = @Schema(implementation = AccountBlocksCountResponse.class)))
             })
-    @RolesAllowed("admin")
+    @PermitAll
     public Response getAccountBlocks(
             @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
             @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
@@ -437,8 +436,9 @@ public class AccountController {
     ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         long accountId  = accountIdParameter.get();
+        FirstLastIndexParser.FirstLastIndex flIndex = indexParser.adjustIndexes(firstIndex, lastIndex);
 
-        List<Block> blocks = accountService.getAccountBlocks(accountId, timestamp, firstIndex, lastIndex);
+        List<Block> blocks = accountService.getAccountBlocks(accountId, timestamp, flIndex.getFirstIndex(), flIndex.getLastIndex());
 
         AccountBlocksResponse dto = new AccountBlocksResponse();
         dto.setBlocks(accountBlockConverter.convert(blocks));

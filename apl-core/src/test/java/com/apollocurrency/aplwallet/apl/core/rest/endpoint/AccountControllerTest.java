@@ -661,9 +661,9 @@ class AccountControllerTest extends AbstractEndpointTest{
     void getAccountBlocks() throws URISyntaxException, IOException {
         int timestamp = (int) (System.currentTimeMillis()/1000);
         int from = 0;
-        int to = 100;
+        int to = 200;
 
-        doReturn(BLOCKS).when(accountService).getAccountBlocks(ACCOUNT_ID, timestamp, from, to);
+        doReturn(BLOCKS).when(accountService).getAccountBlocks(ACCOUNT_ID, timestamp, from, 99);
 
         MockHttpResponse response = sendGetRequest("/accounts/blocks?account="+ACCOUNT_ID
                 +"&timestamp="+timestamp
