@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Architecture;
 import com.apollocurrency.aplwallet.apl.util.Platform;
 import com.apollocurrency.aplwallet.apl.util.Version;
-import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
@@ -29,7 +28,7 @@ import java.util.Set;
 public class UpdateV2Attachment extends AbstractAttachment {
     private final String manifestUrl;
     private final Level updateLevel;
-    private final Set<PlatformPair> platforms = new HashSet<>();
+    private final Set<PlatformSpec> platforms = new HashSet<>();
     private final Version releaseVersion;
     private final String cn;
     private final BigInteger serialNumber;
@@ -42,7 +41,7 @@ public class UpdateV2Attachment extends AbstractAttachment {
             this.updateLevel = Level.from(buffer.get());
             byte platformsLength = buffer.get();
             for (int i = 0; i < platformsLength; i++) {
-                this.platforms.add(new PlatformPair(Platform.from(buffer.get()), Architecture.from(buffer.get())));
+                this.platforms.add(new PlatformSpec(Platform.from(buffer.get()), Architecture.from(buffer.get())));
             }
             this.releaseVersion = new Version(buffer.getShort(), buffer.getShort(), buffer.getShort());
             this.cn = Convert.readString(buffer, buffer.getShort(), 2048);
@@ -64,8 +63,8 @@ public class UpdateV2Attachment extends AbstractAttachment {
         JSONArray platforms = (JSONArray) attachmentData.get("platforms");
         for (Object platformObj : platforms) {
             JSONObject platformJsonObj = (JSONObject) platformObj;
-            PlatformPair platformPair = new PlatformPair(Platform.from(((Long) platformJsonObj.get("platform")).intValue()), Architecture.from(((Long) platformJsonObj.get("architecture")).intValue()));
-            this.platforms.add(platformPair);
+            PlatformSpec platformSpec = new PlatformSpec(Platform.from(((Long) platformJsonObj.get("platform")).intValue()), Architecture.from(((Long) platformJsonObj.get("architecture")).intValue()));
+            this.platforms.add(platformSpec);
         }
         this.cn = (String) attachmentData.get("cn");
         this.signature = Convert.parseHexString((String) attachmentData.get("signature"));
@@ -75,7 +74,7 @@ public class UpdateV2Attachment extends AbstractAttachment {
     }
 
 
-    public UpdateV2Attachment(String manifestUrl, Level updateLevel, Version releaseVersion, String cn, BigInteger serialNumber, byte[] signature, Set<PlatformPair> platforms) {
+    public UpdateV2Attachment(String manifestUrl, Level updateLevel, Version releaseVersion, String cn, BigInteger serialNumber, byte[] signature, Set<PlatformSpec> platforms) {
         this.manifestUrl = manifestUrl;
         this.updateLevel = updateLevel;
         this.releaseVersion = releaseVersion;
@@ -97,9 +96,9 @@ public class UpdateV2Attachment extends AbstractAttachment {
         buffer.put(manifestUrlBytes);
         buffer.put(updateLevel.code);
         buffer.put((byte) platforms.size());
-        for (PlatformPair platformPair : platforms) {
-            buffer.put(platformPair.platform.code);
-            buffer.put(platformPair.architecture.code);
+        for (PlatformSpec platformSpec : platforms) {
+            buffer.put(platformSpec.platform.code);
+            buffer.put(platformSpec.architecture.code);
         }
         buffer.putShort((short) releaseVersion.getMajorVersion());
         buffer.putShort((short) releaseVersion.getIntermediateVersion());
@@ -119,8 +118,8 @@ public class UpdateV2Attachment extends AbstractAttachment {
         attachment.put("manifestUrl", manifestUrl);
         attachment.put("level", updateLevel.code);
         JSONArray platformArray = new JSONArray();
-        for (PlatformPair platformPair : this.platforms) {
-            platformArray.add(new JSONObject(Map.of("platform", platformPair.platform.code, "architecture", platformPair.architecture.code)));
+        for (PlatformSpec platformSpec : this.platforms) {
+            platformArray.add(new JSONObject(Map.of("platform", platformSpec.platform.code, "architecture", platformSpec.architecture.code)));
         }
         attachment.put("platforms", platformArray);
         attachment.put("version", releaseVersion.toString());
@@ -134,9 +133,4 @@ public class UpdateV2Attachment extends AbstractAttachment {
         return Update.UPDATE_V2;
     }
 
-    @Data
-    public static class PlatformPair {
-        private final Platform platform;
-        private final Architecture architecture;
-    }
 }

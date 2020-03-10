@@ -7,6 +7,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.Update;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.PlatformSpec;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateV2Attachment;
 import com.apollocurrency.aplwallet.apl.testutil.WeldUtils;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
@@ -69,7 +70,7 @@ public class UpdateTransactionTest {
     private Transaction createUpdateTx(String v) {
         Transaction tx = mock(Transaction.class);
         Version version = new Version(v);
-        UpdateV2Attachment attachment = new UpdateV2Attachment("htpps://update.zip", Level.CRITICAL, version, "somesite.com", BigInteger.ONE, new byte[128], Set.of(new UpdateV2Attachment.PlatformPair(Platform.ALL, Architecture.AMD64), new UpdateV2Attachment.PlatformPair(Platform.ALL, Architecture.X86), new UpdateV2Attachment.PlatformPair(Platform.MAC_OS, Architecture.ARM)));
+        UpdateV2Attachment attachment = new UpdateV2Attachment("htpps://update.zip", Level.CRITICAL, version, "somesite.com", BigInteger.ONE, new byte[128], Set.of(new PlatformSpec(Platform.ALL, Architecture.AMD64), new PlatformSpec(Platform.ALL, Architecture.X86), new PlatformSpec(Platform.MAC_OS, Architecture.ARM)));
         when(tx.getAttachment()).thenReturn(attachment);
         return tx;
     }

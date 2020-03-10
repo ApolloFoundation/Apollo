@@ -17,7 +17,7 @@ import javax.servlet.http.HttpServletRequest;
 public class HttpRequestToCreateTransactionRequestConverter {
 
 
-    public static CreateTransactionRequest convert(HttpServletRequest req, Account senderAccount, long recipientId, long amountATM,
+    public static CreateTransactionRequest convert(HttpServletRequest req, Account senderAccount, long recipientId, long amountATM, long feeATM,
                                                    Attachment attachment, boolean broadcast,
                                                    AccountService accountService) throws ParameterException {
         String passphrase = Convert.emptyToNull(HttpParameterParserUtil.getPassphrase(req, false));
@@ -42,7 +42,7 @@ public class HttpRequestToCreateTransactionRequestConverter {
                 .keySeed(HttpParameterParserUtil.getKeySeed(req, senderAccount.getId(), false))
 
                 .amountATM(amountATM)
-                .feeATM(HttpParameterParserUtil.getFeeATM(req))
+                .feeATM(feeATM)
                 .senderAccount(senderAccount)
                 .recipientId(recipientId)
                 .recipientPublicKey(Convert.emptyToNull(req.getParameter("recipientPublicKey")))
@@ -64,5 +64,9 @@ public class HttpRequestToCreateTransactionRequestConverter {
         return createTransactionRequest;
     }
 
-
+    public static CreateTransactionRequest convert(HttpServletRequest req, Account senderAccount, long recipientId, long amountATM,
+                                                   Attachment attachment, boolean broadcast,
+                                                   AccountService accountService) throws ParameterException {
+        return convert(req, senderAccount, recipientId, amountATM, HttpParameterParserUtil.getFeeATM(req), attachment, broadcast, accountService);
+    }
 }

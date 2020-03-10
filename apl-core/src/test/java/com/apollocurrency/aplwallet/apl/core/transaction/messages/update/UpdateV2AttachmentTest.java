@@ -41,7 +41,7 @@ class UpdateV2AttachmentTest {
     void setUp() {
         byte[] signature = new byte[256];
         Arrays.fill(signature, (byte) 1);
-        attachment = new UpdateV2Attachment("https://update.zip", Level.CRITICAL, new Version("127.3.122"), "appollo.com", BigInteger.ZERO, signature, Set.of(new UpdateV2Attachment.PlatformPair(Platform.ALL, Architecture.AMD64), new UpdateV2Attachment.PlatformPair(Platform.ALL, Architecture.X86), new UpdateV2Attachment.PlatformPair(Platform.LINUX, Architecture.ARM)));
+        attachment = new UpdateV2Attachment("https://update.zip", Level.CRITICAL, new Version("127.3.122"), "appollo.com", BigInteger.ZERO, signature, Set.of(new PlatformSpec(Platform.ALL, Architecture.AMD64), new PlatformSpec(Platform.ALL, Architecture.X86), new PlatformSpec(Platform.LINUX, Architecture.ARM)));
     }
 
     @Test
