@@ -24,7 +24,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.math.BigInteger;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -67,7 +69,7 @@ public class UpdateTransactionTest {
     private Transaction createUpdateTx(String v) {
         Transaction tx = mock(Transaction.class);
         Version version = new Version(v);
-        UpdateV2Attachment attachment = new UpdateV2Attachment("htpps://update.zip", Level.CRITICAL, Platform.ALL, Architecture.AMD64, version);
+        UpdateV2Attachment attachment = new UpdateV2Attachment("htpps://update.zip", Level.CRITICAL, version, "somesite.com", BigInteger.ONE, new byte[128], Set.of(new UpdateV2Attachment.PlatformPair(Platform.ALL, Architecture.AMD64)));
         when(tx.getAttachment()).thenReturn(attachment);
         return tx;
     }

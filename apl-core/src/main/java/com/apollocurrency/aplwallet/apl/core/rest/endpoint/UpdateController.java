@@ -44,6 +44,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.math.BigInteger;
+import java.util.Set;
 
 @Path("/updates")
 @OpenAPIDefinition(info = @Info(description = "Update v2 operations"))
@@ -82,7 +84,7 @@ public class UpdateController {
         @Parameter @Schema(description = "Two-factor auth code, if 2fa enabled") @FormParam("code2FA") @DefaultValue("0") Integer code2FA,
         @Context HttpServletRequest servletRequest) throws ParameterException, AplException.ValidationException {
         Account senderAccount = accountService.getAccount(account.get());
-        CreateTransactionRequest txRequest = HttpRequestToCreateTransactionRequestConverter.convert(servletRequest, senderAccount, 0, 0, new UpdateV2Attachment(manifestUrl, level, platform, architecture, version), true, accountService);
+        CreateTransactionRequest txRequest = HttpRequestToCreateTransactionRequestConverter.convert(servletRequest, senderAccount, 0, 0, new UpdateV2Attachment(manifestUrl, level, version, "", BigInteger.ONE, new byte[32], Set.of(new UpdateV2Attachment.PlatformPair(platform, architecture)) ), true, accountService);
         txRequest.setDeadlineValue("1440");
         txRequest.setFeeATM(Constants.ONE_APL);
         Transaction transaction = txCreator.createTransaction(txRequest);

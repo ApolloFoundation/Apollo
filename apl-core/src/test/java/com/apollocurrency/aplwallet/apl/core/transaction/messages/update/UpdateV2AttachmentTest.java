@@ -18,12 +18,16 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.CharArrayWriter;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 @EnableWeld
@@ -31,7 +35,14 @@ class UpdateV2AttachmentTest {
     @WeldSetup
     WeldInitiator weld = WeldUtils.from(List.of(), List.of(BlockchainConfig.class, PropertiesHolder.class, Blockchain.class, BlockchainImpl.class, NtpTime.class, TimeService.class)).build();
 
-    UpdateV2Attachment attachment = new UpdateV2Attachment("https://update.zip", Level.CRITICAL, Platform.ALL, Architecture.AMD64, new Version("127.3.122"));
+    UpdateV2Attachment attachment;
+
+    @BeforeEach
+    void setUp() {
+        byte[] signature = new byte[256];
+        Arrays.fill(signature, (byte) 1);
+        attachment = new UpdateV2Attachment("https://update.zip", Level.CRITICAL, new Version("127.3.122"), "appollo.com", BigInteger.ZERO, signature, Set.of(new UpdateV2Attachment.PlatformPair(Platform.ALL, Architecture.AMD64), new UpdateV2Attachment.PlatformPair(Platform.ALL, Architecture.X86), new UpdateV2Attachment.PlatformPair(Platform.LINUX, Architecture.ARM)));
+    }
 
     @Test
     void testParseFromBytes() throws AplException.NotValidException {

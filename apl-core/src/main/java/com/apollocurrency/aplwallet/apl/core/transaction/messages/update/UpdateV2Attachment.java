@@ -14,7 +14,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
-import org.json.JSONArray;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.math.BigInteger;
@@ -60,11 +60,11 @@ public class UpdateV2Attachment extends AbstractAttachment {
     public UpdateV2Attachment(JSONObject attachmentData) {
         super(attachmentData);
         this.manifestUrl =  Convert.nullToEmpty((String) attachmentData.get("manifestUrl"));
-        this.updateLevel = Level.from((int)Convert.parseLong(attachmentData.get("level")));
+        this.updateLevel = Level.from(((Long) Convert.parseLong(attachmentData.get("level"))).intValue());
         JSONArray platforms = (JSONArray) attachmentData.get("platforms");
         for (Object platformObj : platforms) {
             JSONObject platformJsonObj = (JSONObject) platformObj;
-            PlatformPair platformPair = new PlatformPair(Platform.from((int) platformJsonObj.get("platform")), Architecture.from((int) platformJsonObj.get("architecture")));
+            PlatformPair platformPair = new PlatformPair(Platform.from(((Long) platformJsonObj.get("platform")).intValue()), Architecture.from(((Long) platformJsonObj.get("architecture")).intValue()));
             this.platforms.add(platformPair);
         }
         this.cn = (String) attachmentData.get("cn");
@@ -75,13 +75,14 @@ public class UpdateV2Attachment extends AbstractAttachment {
     }
 
 
-    public UpdateV2Attachment(String manifestUrl, Level updateLevel, Version releaseVersion, String cn, BigInteger serialNumber, byte[] signature) {
+    public UpdateV2Attachment(String manifestUrl, Level updateLevel, Version releaseVersion, String cn, BigInteger serialNumber, byte[] signature, Set<PlatformPair> platforms) {
         this.manifestUrl = manifestUrl;
         this.updateLevel = updateLevel;
         this.releaseVersion = releaseVersion;
         this.cn = cn;
         this.serialNumber = serialNumber;
         this.signature = signature;
+        this.platforms.addAll(platforms);
     }
 
     @Override
@@ -91,7 +92,7 @@ public class UpdateV2Attachment extends AbstractAttachment {
 
     @Override
     public void putMyBytes(ByteBuffer buffer) {
-        byte[] manifestUrlBytes = manifestUrl.getBytes();
+        byte[] manifestUrlBytes = Convert.toBytes(manifestUrl);
         buffer.putShort((short) manifestUrlBytes.length);
         buffer.put(manifestUrlBytes);
         buffer.put(updateLevel.code);
@@ -103,8 +104,9 @@ public class UpdateV2Attachment extends AbstractAttachment {
         buffer.putShort((short) releaseVersion.getMajorVersion());
         buffer.putShort((short) releaseVersion.getIntermediateVersion());
         buffer.putShort((short) releaseVersion.getMinorVersion());
-        buffer.putShort((short) cn.length());
-        buffer.put(cn.getBytes());
+        byte[] cnBytes = Convert.toBytes(cn);
+        buffer.putShort((short) cnBytes.length);
+        buffer.put(cnBytes);
         byte[] snBytes = serialNumber.toByteArray();
         buffer.putShort((short) snBytes.length);
         buffer.put(snBytes);
@@ -118,7 +120,7 @@ public class UpdateV2Attachment extends AbstractAttachment {
         attachment.put("level", updateLevel.code);
         JSONArray platformArray = new JSONArray();
         for (PlatformPair platformPair : this.platforms) {
-            platformArray.put(new JSONObject(Map.of("platform", platformPair.platform.code, "architecture", platformPair.architecture.code)));
+            platformArray.add(new JSONObject(Map.of("platform", platformPair.platform.code, "architecture", platformPair.architecture.code)));
         }
         attachment.put("platforms", platformArray);
         attachment.put("version", releaseVersion.toString());
