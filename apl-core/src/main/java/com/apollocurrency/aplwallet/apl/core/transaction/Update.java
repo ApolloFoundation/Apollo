@@ -180,7 +180,7 @@ public abstract class Update extends TransactionType {
         public void validateAttachment(Transaction transaction) throws AplException.NotValidException {
             UpdateV2Attachment attachment = (UpdateV2Attachment) transaction.getAttachment();
             Version version = attachment.getReleaseVersion();
-            if (version.getMinorVersion() > Short.MAX_VALUE || version.getIntermediateVersion() > Short.MAX_VALUE || version.getMajorVersion() > Byte.MAX_VALUE) {
+            if (version.getMinorVersion() > Short.MAX_VALUE || version.getIntermediateVersion() > Short.MAX_VALUE || version.getMajorVersion() > Short.MAX_VALUE) {
                 throw new AplException.NotValidException("Update version is too big! " + version);
             }
         }

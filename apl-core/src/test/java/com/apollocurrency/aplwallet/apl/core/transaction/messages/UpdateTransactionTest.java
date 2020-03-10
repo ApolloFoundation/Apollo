@@ -44,7 +44,7 @@ public class UpdateTransactionTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"1.2.3", "127.32767.32767"})
+    @ValueSource(strings = {"1.2.3", "32767.32767.32767"})
     void testValidateAttachment_successfully(String v) throws AplException.ValidationException {
         Transaction tx = createUpdateTx(v);
 
@@ -52,7 +52,7 @@ public class UpdateTransactionTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"128.1.1", "120.32768.32767", "120.0.33000"})
+    @ValueSource(strings = {"32768.1.1", "120.32768.32767", "120.0.33000"})
     void testValidateAttachment_incorrectVersion(String incorrectVersionString) throws AplException.ValidationException {
         Transaction tx = createUpdateTx(incorrectVersionString);
 
@@ -69,7 +69,7 @@ public class UpdateTransactionTest {
     private Transaction createUpdateTx(String v) {
         Transaction tx = mock(Transaction.class);
         Version version = new Version(v);
-        UpdateV2Attachment attachment = new UpdateV2Attachment("htpps://update.zip", Level.CRITICAL, version, "somesite.com", BigInteger.ONE, new byte[128], Set.of(new UpdateV2Attachment.PlatformPair(Platform.ALL, Architecture.AMD64)));
+        UpdateV2Attachment attachment = new UpdateV2Attachment("htpps://update.zip", Level.CRITICAL, version, "somesite.com", BigInteger.ONE, new byte[128], Set.of(new UpdateV2Attachment.PlatformPair(Platform.ALL, Architecture.AMD64), new UpdateV2Attachment.PlatformPair(Platform.ALL, Architecture.X86), new UpdateV2Attachment.PlatformPair(Platform.MAC_OS, Architecture.ARM)));
         when(tx.getAttachment()).thenReturn(attachment);
         return tx;
     }
