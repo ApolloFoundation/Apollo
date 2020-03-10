@@ -34,8 +34,8 @@ import static com.apollocurrency.aplwallet.apl.core.http.AdminPasswordVerifier.A
 @Provider
 @Priority(Priorities.AUTHORIZATION)
 public class SecurityInterceptor implements ContainerRequestFilter {
-    private static final ServerResponse ACCESS_DENIED = new ServerResponse("Access denied for this resource", 401, new Headers<Object>());
-    private static final ServerResponse ACCESS_FORBIDDEN = new ServerResponse("Nobody can access this resource", 403, new Headers<Object>());
+    private static final ServerResponse ACCESS_DENIED = new ServerResponse("Access denied for this resource", Response.Status.UNAUTHORIZED.getStatusCode(), new Headers<Object>());
+    private static final ServerResponse ACCESS_FORBIDDEN = new ServerResponse("Nobody can access this resource", Response.Status.FORBIDDEN.getStatusCode(), new Headers<Object>());
 
     @Context
     private UriInfo uriInfo;
@@ -57,14 +57,16 @@ public class SecurityInterceptor implements ContainerRequestFilter {
         }
 
         Method method = info.getResourceMethod();
+        Class<?> resourceClass = info.getResourceClass();
         /*if (true){ return; }*/ // don't remove, use for debugging
 
         //Access allowed for all
-        if( info.getResourceClass().isAnnotationPresent(PermitAll.class)) {
+        if( resourceClass.isAnnotationPresent(PermitAll.class)) {
             return;
         }
         //Access denied for all
-        if( info.getResourceClass().isAnnotationPresent(PermitAll.class)) {
+        if( resourceClass.isAnnotationPresent(DenyAll.class)) {
+            requestContext.abortWith(ACCESS_FORBIDDEN);
             return;
         }
 

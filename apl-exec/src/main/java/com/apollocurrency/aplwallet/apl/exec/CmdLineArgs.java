@@ -9,7 +9,7 @@ import com.beust.jcommander.Parameter;
  */
 public class CmdLineArgs {
     public static int DEFAULT_DEBUG_LEVEL=2;
-    
+
     @Parameter(names = {"--debug", "-d"}, description = "Debug level [0-4] from ERROR to TRACE")
     public int debug = DEFAULT_DEBUG_LEVEL;
     @Parameter(names = {"--debug-updater", "-du"}, description = "Force updater to use debug certificates for verifying update transactions")
@@ -53,6 +53,10 @@ public class CmdLineArgs {
     public int netIdx=0;
     @Parameter(names = {"--testnet"}, help = true, description = "Connect to testent 1. Has higher priority then --net")
     public boolean isTestnet = false;
+    //---
+    @Parameter(names = {"--disable-weld-concurrent-deployment"},
+        description = "If use it, Weld doesn't use ConcurrentDeployer and ConcurrentValidator to build the container. Default value is true.")
+    public boolean disableWeldConcurrentDeployment = false;
 
     public boolean isResourceIgnored() {
         return !resourcesPath.isEmpty() || ingnoreResources;

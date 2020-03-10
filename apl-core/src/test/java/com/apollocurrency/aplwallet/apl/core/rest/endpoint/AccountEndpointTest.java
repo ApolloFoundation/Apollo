@@ -4,6 +4,8 @@ import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -13,7 +15,6 @@ import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
 import com.apollocurrency.aplwallet.apl.core.http.ElGamalEncryptor;
-import com.apollocurrency.aplwallet.apl.core.rest.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FAConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FADetailsConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountAssetConverter;
@@ -24,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.converter.WalletKeysConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FAInterceptor;
 import com.apollocurrency.aplwallet.apl.core.rest.service.OrderService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
+import com.apollocurrency.aplwallet.apl.core.rest.utils.FirstLastIndexParser;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -61,16 +63,17 @@ class AccountEndpointTest extends AbstractEndpointTest{
         PropertiesHolder.class, PropertyProducer.class,
         Account2FAHelper.class,
         AccountController.class,
-        Secured2FAInterceptor.class
+        Secured2FAInterceptor.class,
+        FirstLastIndexParser.class
         )
         .addBeans(MockBean.of(blockchain, Blockchain.class))
         .addBeans(MockBean.of(elGamal, ElGamalEncryptor.class))
-        .addBeans(MockBean.of(restParametersParser, RestParametersParser.class))
         .addBeans(MockBean.of(twoFactorAuthService, TwoFactorAuthService.class, TwoFactorAuthServiceImpl.class))
         .addBeans(MockBean.of(mock(DirProvider.class), DirProvider.class))
         .addBeans(MockBean.of(mock(KeyStoreService.class), KeyStoreService.class))
         .addBeans(MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class))
         .addBeans(MockBean.of(mock(AccountService.class), AccountService.class, AccountServiceImpl.class))
+        .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyService.class, AccountPublicKeyServiceImpl.class))
         .addBeans(MockBean.of(mock(AccountAssetService.class), AccountAssetService.class, AccountAssetServiceImpl.class))
         .addBeans(MockBean.of(mock(AccountCurrencyService.class), AccountCurrencyService.class, AccountCurrencyServiceImpl.class))
         .addBeans(MockBean.of(mock(AccountAssetConverter.class), AccountAssetConverter.class))

@@ -23,10 +23,16 @@ public interface AccountPublicKeyService {
     int getGenesisPublicKeysCount();
 
     List<PublicKey> loadPublicKeyList(int from, int to, boolean isGenesis);
+    /**
+     * Returns the public key from cache, or load from the data base if necessary.
+     * @param accountId get entity from the cache for specified account Id
+     * @return  public key or null
+     */
+    PublicKey getPublicKey(long accountId);
 
     /**
      * Returns the public key from cache, or load from the data base if necessary.
-     * @param dbKey the key to get entity from the cache
+     * @param dbKey the key to getting an entity from the cache
      * @return  public key or null
      */
     PublicKey getPublicKey(DbKey dbKey);

@@ -102,30 +102,30 @@ public class Account2FAHelper {
         return authDetails;
     }
 
-    public Status2FA disable2FA(TwoFactorAuthParameters params2FA, int code){
-        Status2FA status2FA;
-        if (params2FA.isPassphrasePresent()) {
-            findAplSecretBytes(params2FA.getAccountId(), params2FA.getPassphrase());
-        }
-        status2FA = service2FA.disable(params2FA.getAccountId(), code);
-        validate2FAStatus(status2FA, params2FA.getAccountId());
+    public Status2FA disable2FA(TwoFactorAuthParameters params2FA){
+        Status2FA status2FA = disable2FA(params2FA.getAccountId(), params2FA.getPassphrase(), params2FA.getCode2FA());
         params2FA.setStatus2FA(status2FA);
         return status2FA;
     }
 
-    public Status2FA disable2FA(long accountId, String passphrase, int code){
-        findAplSecretBytes(accountId, passphrase);
+    public Status2FA disable2FA(long accountId, String passphrase, Integer code){
+        if(passphrase != null) {
+            findAplSecretBytes(accountId, passphrase);
+        }
         Status2FA status2FA = service2FA.disable(accountId, code);
         validate2FAStatus(status2FA, accountId);
         return status2FA;
     }
 
-    public Status2FA confirm2FA(TwoFactorAuthParameters params2FA, int code) {
+    public Status2FA confirm2FA(TwoFactorAuthParameters params2FA) {
         Status2FA status2FA;
+        if (params2FA.getCode2FA() == null) {
+            throw new RestParameterException(ApiErrors.MISSING_PARAM, "code2FA");
+        }
         if (params2FA.isPassphrasePresent()) {
             findAplSecretBytes(params2FA.getAccountId(), params2FA.getPassphrase());
         }
-        status2FA = service2FA.confirm(params2FA.getAccountId(), code);
+        status2FA = service2FA.confirm(params2FA.getAccountId(), params2FA.getCode2FA());
         validate2FAStatus(status2FA, params2FA.getAccountId());
         return status2FA;
     }
@@ -183,8 +183,11 @@ public class Account2FAHelper {
         return walletKeyInfo;
     }
 
-    public KeyStoreService.Status deleteAccount(long accountId, String passphrase, int code) throws RestParameterException {
+    public KeyStoreService.Status deleteAccount(long accountId, String passphrase, Integer code) throws RestParameterException {
         if (isEnabled2FA(accountId)) {
+            if(code == null){
+                throw new RestParameterException(ApiErrors.MISSING_PARAM, "code2FA");
+            }
             Status2FA status2FA = disable2FA(accountId, passphrase, code);
             validate2FAStatus(status2FA, accountId);
         }

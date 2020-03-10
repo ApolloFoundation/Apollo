@@ -5,7 +5,7 @@
   <parent>
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-wallet</artifactId>
-    <version>1.41.28</version>
+    <version>1.42.0</version>
   </parent>
 
   <artifactId>apl-api</artifactId>
@@ -38,6 +38,7 @@
       <groupId>javax.ws.rs</groupId>
       <artifactId>javax.ws.rs-api</artifactId>
     </dependency>
+
     <!-- POPJO <-> JSON -->
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
