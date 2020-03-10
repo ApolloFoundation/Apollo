@@ -259,7 +259,7 @@ public abstract class TestBase implements ITest {
                     log.info("Check Forging on: " + ip);
                     HashMap<String, String> param = new HashMap();
                     param.put(ReqType.REQUEST_TYPE,ReqType.GET_FORGING);
-                    param.put(Parameters.adminPassword.toString(), getTestConfiguration().getAdminPass());
+                    param.put(ReqParam.ADMIN_PASSWORD, getTestConfiguration().getAdminPass());
                     path = "/apl";
                  try {
                        ForgingResponse forgingResponse = given().config(config).log().all()
