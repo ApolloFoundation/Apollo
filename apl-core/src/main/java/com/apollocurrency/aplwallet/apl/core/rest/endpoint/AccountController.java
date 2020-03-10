@@ -398,8 +398,9 @@ public class AccountController {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
         long accountId  = accountIdParameter.get();
+        FirstLastIndexParser.FirstLastIndex flIndex = indexParser.adjustIndexes(firstIndex, lastIndex);
 
-        List<Block> blocks = accountService.getAccountBlocks(accountId, timestamp, firstIndex, lastIndex);
+        List<Block> blocks = accountService.getAccountBlocks(accountId, timestamp, flIndex.getFirstIndex(), flIndex.getLastIndex());
         List<String> blockIds = blocks.stream().map(Block::getStringId).collect(Collectors.toList());
 
         AccountBlockIdsResponse dto = new AccountBlockIdsResponse();
@@ -503,8 +504,10 @@ public class AccountController {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
         long accountId  = accountIdParameter.get();
+        FirstLastIndexParser.FirstLastIndex flIndex = indexParser.adjustIndexes(firstIndex, lastIndex);
+
         if (currencyId == null || currencyId == 0) {
-            List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrenciesByAccount(accountId, height, firstIndex, lastIndex);
+            List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrenciesByAccount(accountId, height, flIndex.getFirstIndex(), flIndex.getLastIndex());
             List<AccountCurrencyDTO> accountCurrencyDTOList = accountCurrencyConverter.convert(accountCurrencies);
             if(includeCurrencyInfo){
                 accountCurrencyDTOList.forEach(dto -> accountCurrencyConverter
@@ -549,11 +552,13 @@ public class AccountController {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
         long accountId  = accountIdParameter.get();
+        FirstLastIndexParser.FirstLastIndex flIndex = indexParser.adjustIndexes(firstIndex, lastIndex);
+
         List<Order.Ask> ordersByAccount;
         if ( assetIdParam == null || assetIdParam == 0 ) {
-            ordersByAccount = orderService.getAskOrdersByAccount(accountId, firstIndex, lastIndex);
+            ordersByAccount = orderService.getAskOrdersByAccount(accountId, flIndex.getFirstIndex(), flIndex.getLastIndex());
         }else{
-            ordersByAccount = orderService.getAskOrdersByAccountAsset(accountId, assetIdParam, firstIndex, lastIndex);
+            ordersByAccount = orderService.getAskOrdersByAccountAsset(accountId, assetIdParam, flIndex.getFirstIndex(), flIndex.getLastIndex());
         }
         List<String> ordersIdList = ordersByAccount.stream().map(ask -> Long.toUnsignedString(ask.getId())).collect(Collectors.toList());
 
