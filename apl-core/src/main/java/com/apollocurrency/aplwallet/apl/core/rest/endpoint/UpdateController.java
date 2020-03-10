@@ -34,6 +34,7 @@ import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
@@ -67,24 +68,26 @@ public class UpdateController {
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    @Operation(tags = {"updates"}, summary = "Send update v2 transaction ", description = "Will send update v2 transaction with specified manifest url and level")
+    @Consumes({MediaType.APPLICATION_FORM_URLENCODED})
+    @Operation(tags = {"updates"}, summary = "Send update v2 transaction ", description = "Will send update v2 transaction with specified manifest url, level, platforms signed by private key holder to which certificate specified by cn + sn belongs.")
     @ApiResponse(description = "Transaction in json format", content = @Content(schema = @Schema(implementation = TransactionDTO.class)))
     @PermitAll
     @Secured2FA
     public Response sendUpdateV2(
-        @Parameter(required = true) @URL(protocol = "https") @NotNull @Schema(implementation = String.class, description = "Manifest url where release manifest is located. Https only") @FormParam("manifestUrl") String manifestUrl,
+        @Parameter(required = true) @URL(protocol = "https") @NotNull @Schema(example = "https://aws.s3/manifest-pack.zip", description = "Manifest url where release manifest is located. Https only") @FormParam("manifestUrl") String manifestUrl,
         @Parameter(required = true) @NotNull @Schema(description = "Level of update") @FormParam("level") Level level,
-        @Parameter(required = true) @ValidPlatformSpecs @NotNull @Schema( implementation = String.class, description = "Target update platform specs, represent a set of coma separated platforms to update (each platform spec is represented by two hyphen separated params: first is a Platform(OS) such as MAC_OS, WINDOWS, LINUX; second is an Architecture, such as AMD64") @FormParam("platformSpec") PlatformSpecs platformSpec,
-        @Parameter(required = true) @Schema(implementation = String.class, description = "Version of update: 1.2.3, 1.25.10, etc") @FormParam("version") Version version,
+        @Parameter(required = true) @ValidPlatformSpecs @NotNull @Schema(example = "MAC_OS-AMD64,WINDOWS-ARM,WINDOWS-AMD-64,ALL-X86", description = "Target update platform specs, represent a set of coma separated platforms to update (each platform spec is represented by two hyphen separated params: first is a Platform(OS) such as MAC_OS, WINDOWS, LINUX; second is an Architecture, such as AMD64") @FormParam("platformSpec") PlatformSpecs platformSpec,
+        @Parameter(required = true) @Schema(example = "1.42.111", description = "Version of update: 1.2.3, 1.25.10, etc") @FormParam("version") Version version,
+        @Parameter(required = true) @NotBlank @URL @Schema(example = "https://example.ca.com", description = " CA identifier represented by domain name") @FormParam("cn") String cn,
+        @Parameter(required = true) @Schema(example = "1", description = "Serial number of issued certificate by CA, which is used to sign update") @FormParam("serialNumber") BigInteger serialNumber,
+        @Parameter(required = true) @NotNull @Schema(implementation = String.class, example = "aff3892310", description = "Signature (hexadecimal format) made on update data by utilizing private key for certificate identified by cn+serialNumber") @FormParam("signature") byte[] signature,
         @Parameter(required = true, schema = @Schema(implementation = String.class, description = "Id of account  int64 singed/unsigned or RS")) @FormParam("account") AccountIdParameter account,
         @Parameter @Schema(description = "Passphrase to vault account, should be specified if sender account is vault") @FormParam("passphrase") String passphrase,
         @Parameter @Schema(description = "Secret phrase of standard account, when specified - passphrase param will be ignored") @FormParam("secretPhrase") String secretPhrase,
         @Parameter @Schema(description = "Two-factor auth code, if 2fa enabled") @FormParam("code2FA") @DefaultValue("0") Integer code2FA,
         @Context HttpServletRequest servletRequest) throws ParameterException, AplException.ValidationException {
         Account senderAccount = HttpParameterParserUtil.getSenderAccount(servletRequest, "account");
-
-        UpdateV2Attachment attachment = new UpdateV2Attachment(manifestUrl, level, version, "", BigInteger.ONE, new byte[32], new HashSet<>(platformSpec.getSpecList()));
+        UpdateV2Attachment attachment = new UpdateV2Attachment(manifestUrl, level, version, cn, serialNumber, signature, new HashSet<>(platformSpec.getSpecList()));
         CreateTransactionRequest txRequest = HttpRequestToCreateTransactionRequestConverter.convert(servletRequest, senderAccount, 0, 0, Constants.ONE_APL, attachment, true, accountService);
         txRequest.setDeadlineValue("1440");
         Transaction transaction = txCreator.createTransaction(txRequest);
@@ -92,3 +95,5 @@ public class UpdateController {
         return Response.ok(txDto).build();
     }
 }
+
+

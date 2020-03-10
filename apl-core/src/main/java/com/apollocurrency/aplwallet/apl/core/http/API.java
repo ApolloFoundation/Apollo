@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.core.rest.ByteArrayConverterProvider;
 import com.apollocurrency.aplwallet.apl.core.rest.PlatformSpecConverterProvider;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ClientErrorExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ConstraintViolationExceptionMapper;
@@ -297,6 +298,7 @@ public final class API {
                             .add(DefaultGlobalExceptionMapper.class.getName())
                             .add(CharsetRequestFilter.class.getName())
                             .add(PlatformSpecConverterProvider.class.getName())
+                            .add(ByteArrayConverterProvider.class.getName())
                             .toString()
             );
 

@@ -56,6 +56,33 @@ public class UpdateV2Attachment extends AbstractAttachment {
         }
     }
 
+    public byte[] dataBytes() {
+        ByteBuffer buff = ByteBuffer.allocate(getMySize() - signature.length - 2);
+        putDataBytes(buff);
+        return buff.array();
+    }
+
+    public void putDataBytes(ByteBuffer buffer) {
+        byte[] manifestUrlBytes = Convert.toBytes(manifestUrl);
+        buffer.putShort((short) manifestUrlBytes.length);
+        buffer.put(manifestUrlBytes);
+        buffer.put(updateLevel.code);
+        buffer.put((byte) platforms.size());
+        for (PlatformSpec platformSpec : platforms) {
+            buffer.put(platformSpec.platform.code);
+            buffer.put(platformSpec.architecture.code);
+        }
+        buffer.putShort((short) releaseVersion.getMajorVersion());
+        buffer.putShort((short) releaseVersion.getIntermediateVersion());
+        buffer.putShort((short) releaseVersion.getMinorVersion());
+        byte[] cnBytes = Convert.toBytes(cn);
+        buffer.putShort((short) cnBytes.length);
+        buffer.put(cnBytes);
+        byte[] snBytes = serialNumber.toByteArray();
+        buffer.putShort((short) snBytes.length);
+        buffer.put(snBytes);
+    }
+
     public UpdateV2Attachment(JSONObject attachmentData) {
         super(attachmentData);
         this.manifestUrl =  Convert.nullToEmpty((String) attachmentData.get("manifestUrl"));
@@ -91,27 +118,11 @@ public class UpdateV2Attachment extends AbstractAttachment {
 
     @Override
     public void putMyBytes(ByteBuffer buffer) {
-        byte[] manifestUrlBytes = Convert.toBytes(manifestUrl);
-        buffer.putShort((short) manifestUrlBytes.length);
-        buffer.put(manifestUrlBytes);
-        buffer.put(updateLevel.code);
-        buffer.put((byte) platforms.size());
-        for (PlatformSpec platformSpec : platforms) {
-            buffer.put(platformSpec.platform.code);
-            buffer.put(platformSpec.architecture.code);
-        }
-        buffer.putShort((short) releaseVersion.getMajorVersion());
-        buffer.putShort((short) releaseVersion.getIntermediateVersion());
-        buffer.putShort((short) releaseVersion.getMinorVersion());
-        byte[] cnBytes = Convert.toBytes(cn);
-        buffer.putShort((short) cnBytes.length);
-        buffer.put(cnBytes);
-        byte[] snBytes = serialNumber.toByteArray();
-        buffer.putShort((short) snBytes.length);
-        buffer.put(snBytes);
+        putDataBytes(buffer);
         buffer.putShort((short) signature.length);
         buffer.put(signature);
     }
+
 
     @Override
     public void putMyJSON(JSONObject attachment) {
