@@ -4,6 +4,7 @@ package com.apollocurrrency.aplwallet.inttest.helper;
 import com.apollocurrrency.aplwallet.inttest.model.NetConfig;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
@@ -13,8 +14,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
-
-import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.mapper;
 
 
 public class TestConfiguration {
@@ -31,7 +30,7 @@ public class TestConfiguration {
     private List<String> peers;
     private String env;
     private HashMap<String, NetConfig> testNetIp;
-
+    private ObjectMapper mapper = new ObjectMapper();
 
     private  TestConfiguration() {
         try {

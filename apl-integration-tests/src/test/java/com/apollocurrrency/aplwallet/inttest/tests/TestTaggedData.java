@@ -2,8 +2,8 @@ package com.apollocurrrency.aplwallet.inttest.tests;
 
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
-import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
-import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
+import com.apollocurrrency.aplwallet.inttest.helper.providers.WalletProvider;
+import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @DisplayName("TaggedData")
 @Epic(value = "TaggedData")
-public class TestTaggedData extends TestBaseOld {
+public class TestTaggedData extends TestBaseNew {
 
     private String Name;
     private String description;
@@ -53,7 +53,7 @@ public class TestTaggedData extends TestBaseOld {
         log.info("Data channel: {}", channel);
     }
 
-    @DisplayName("upload TaggedData")
+    @DisplayName("Upload tagged data")
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     void TaggedDataTest(Wallet wallet) {
@@ -77,7 +77,6 @@ public class TestTaggedData extends TestBaseOld {
     @DisplayName("upload TaggedData Test with extend TaggedData request")
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
-    @Disabled
     void extendTaggedDataTest(Wallet wallet) {
         Long tagsQuantity = getDataTagCount().getNumberOfDataTags();
         log.info("Tags quantity: {} before uploading new TaggedData", tagsQuantity);

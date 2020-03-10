@@ -1,5 +1,6 @@
-package com.apollocurrrency.aplwallet.inttest.helper;
+package com.apollocurrrency.aplwallet.inttest.helper.providers;
 
+import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.provider.Arguments;

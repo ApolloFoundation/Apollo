@@ -20,7 +20,7 @@ public class RestHelper {
         String host = TestConfiguration.getTestConfiguration().getBaseURL();
         String port = TestConfiguration.getTestConfiguration().getPort();
         String url = String.format("http://%s:%s", host, port);
-        HttpHelper.setBaseURL_API(url);
+
 
         spec = new RequestSpecBuilder()
                 .setContentType(ContentType.JSON)

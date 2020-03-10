@@ -2,7 +2,8 @@ package com.apollocurrrency.aplwallet.inttest.tests;
 
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
-import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
+import com.apollocurrrency.aplwallet.inttest.helper.providers.PollArgumentProvider;
+import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.ArrayList;
@@ -19,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @DisplayName("Poll")
 @Epic(value = "Poll")
-public class TestPoll extends TestBaseOld {
+public class TestPoll extends TestBaseNew {
 
     private final int POLL_BY_ACCOUNT = 0;
     private final int POLL_BY_ACCOUNT_BALANCE = 1;
@@ -37,9 +39,9 @@ public class TestPoll extends TestBaseOld {
     }
 
     @DisplayName("Poll flow. Creating. Voting.")
-    @ParameterizedTest(name = "{displayName} votingModel: {0}")
-    @ValueSource(ints = {0, 1, 2, 3})
-    public void pollTest(int votingModel) {
+    @ParameterizedTest(name = "{displayName} votingModel: {0} for: {1}")
+    @ArgumentsSource(PollArgumentProvider.class)
+    public void pollTest(int votingModel,Wallet wallet) {
 
         String name = RandomStringUtils.randomAlphabetic(7);
         int plusFinishHeight = 9;
@@ -52,7 +54,6 @@ public class TestPoll extends TestBaseOld {
         long weight = 1;
         long result = 0;
 
-        for (Wallet wallet : wallets) {
             switch (votingModel) {
                 case POLL_BY_ACCOUNT:
                     poll = createPoll(wallet, votingModel, name, plusFinishHeight, "", 0, maxRangeValue);
@@ -110,7 +111,6 @@ public class TestPoll extends TestBaseOld {
             assertEquals(wallet.getUser(), getPollVotes(pollId).getVotes().get(0).getVoterRS(), "account ID's of voters are different");
         }
 
-    }
 
 }
 

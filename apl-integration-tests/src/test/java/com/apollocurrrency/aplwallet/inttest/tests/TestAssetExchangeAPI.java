@@ -15,12 +15,13 @@ import com.apollocurrency.aplwallet.api.response.AssetsAccountsCountResponse;
 import com.apollocurrency.aplwallet.api.response.AssetsResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrency.aplwallet.api.response.ExpectedAssetDeletes;
-import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
-import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
+import com.apollocurrrency.aplwallet.inttest.helper.providers.WalletProvider;
+import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
@@ -29,13 +30,16 @@ import java.io.IOException;
 import java.util.Date;
 
 import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.getTestConfiguration;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("Asset")
 @Epic(value = "Asset")
-public class TestAssetExchangeAPI extends TestBaseOld {
+public class TestAssetExchangeAPI extends TestBaseNew {
       // TODO:  Neeed imp full Exchange
     //SMOKE API TESTING (STATUS CODE 200)
     @DisplayName("issueAsset")
@@ -57,7 +61,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
         assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
         AccountAssetsResponse getAccountAssets = getAccountAssets(wallet);
-        assertTrue(getAccountAssets.getAccountAssets().size() >= 1);
+        assertThat(getAccountAssets.getAccountAssets().size(),greaterThanOrEqualTo(1));
 
     }
 
@@ -435,10 +439,12 @@ public class TestAssetExchangeAPI extends TestBaseOld {
     @DisplayName("getAssetAccounts")
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
-    public void getAssetIdsTest() throws IOException {
-
+    @Order(2)
+    public void getAssetIdsTest() {
         AccountAssetsIdsResponse getAssetIds = getAssetIds();
-        assertTrue(getAssetIds.getAssetIds().size() >= 0);
+        assertThat(getAssetIds.getAssetIds().size(),greaterThanOrEqualTo(0));
+        AccountAssetsResponse accountAssets = getAccountAssets(getTestConfiguration().getVaultWallet());
+        assertThat(accountAssets.getAccountAssets().size(),greaterThan(0));
 
     }
 
@@ -462,15 +468,15 @@ public class TestAssetExchangeAPI extends TestBaseOld {
             verifyCreatingTransaction(transferAsset);
             verifyTransactionInBlock(transferAsset.getTransaction());
 
-            AccountAssetsResponse getAccountAssets = getAccountAssets(getTestConfiguration().getVaultWallet());
-            assertTrue(getAccountAssets.getAccountAssets().stream().filter(accountAssets -> accountAssets.getAsset().contains(assetID)).count() == 1);
+            AccountAssetDTO getAccountAssets = getAccountAssets(getTestConfiguration().getVaultWallet(),assetID);
+            assertEquals(assetID,getAccountAssets.getAsset());
         } else {
             CreateTransactionResponse transferAsset = transferAsset(wallet, assetID, quantityATU, getTestConfiguration().getStandartWallet().getUser());
             verifyCreatingTransaction(transferAsset);
             verifyTransactionInBlock(transferAsset.getTransaction());
 
-            AccountAssetsResponse getAccountAssets = getAccountAssets(getTestConfiguration().getStandartWallet());
-            assertTrue(getAccountAssets.getAccountAssets().stream().filter(accountAssets -> accountAssets.getAsset().contains(assetID)).count() == 1);
+            AccountAssetDTO getAccountAssets = getAccountAssets(getTestConfiguration().getStandartWallet(),assetID);
+            assertEquals(assetID,getAccountAssets.getAsset());
 
         }
 

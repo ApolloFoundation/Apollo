@@ -41,8 +41,7 @@ public class Wallet {
 
     @Override
     public String toString() {
-        if (!vault) return "Standart Wallet";
-        else return "Vault Wallet";
-
+        String walletType =  (vault)? "Vault Wallet: ":"Standard Wallet: ";
+        return walletType + getUser();
     }
 }
