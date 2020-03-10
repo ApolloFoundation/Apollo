@@ -170,9 +170,15 @@ public class ApolloCertificateTest {
     @Test
     public void testGetSerial() {
         BigInteger result = acert.getSerial();
-        System.out.println(result.toString());
         BigInteger expResult = BigInteger.valueOf(1582313240538L);
         assertEquals(expResult, result);
+    }
+    
+    @Test
+    public void testGetIssuerAttributes() {
+        CertAttributes cert_attr = acert.getIssuerAttrinutes();        
+        assertEquals("al.cn.ua", cert_attr.getCn());
+        assertEquals("FirstBridge", cert_attr.getO());
     }
 
 }
