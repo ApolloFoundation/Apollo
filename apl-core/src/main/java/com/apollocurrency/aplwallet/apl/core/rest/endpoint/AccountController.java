@@ -378,14 +378,13 @@ public class AccountController {
     @Operation(
             summary = "Get the block IDs of all blocks forged by an account.",
             description = "Get the block IDs of all blocks forged (generated) by an account in reverse block height order.",
-            security = @SecurityRequirement(name = "admin_api_key"),
             tags = {"accounts"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
                             content = @Content(mediaType = "application/json",
                                     schema = @Schema(implementation = AccountBlocksCountResponse.class)))
             })
-    @RolesAllowed("admin")
+    @PermitAll
     public Response getAccountBlockIds(
             @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
             @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
@@ -480,14 +479,13 @@ public class AccountController {
     @Operation(
             summary = "Get the currencies issued by a given account.",
             description = "Return the currencies issued by a given account and height.",
-            security = @SecurityRequirement(name = "admin_api_key"),
             tags = {"accounts"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
                             content = @Content(mediaType = "application/json",
                                     schema = @Schema(implementation = AccountCurrencyResponse.class)))
             })
-    @RolesAllowed("admin")
+    @PermitAll
     public Response getAccountCurrencies(
             @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
             @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
@@ -533,14 +531,13 @@ public class AccountController {
     @Operation(
             summary = "Get current asset order IDs given an account ID.",
             description = "Get current asset order IDs given an account ID in reverse block height order. The admin password is required.",
-            security = @SecurityRequirement(name = "admin_api_key"),
             tags = {"accounts"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
                             content = @Content(mediaType = "application/json",
                                     schema = @Schema(implementation = AccountCurrentAskOrderIdsResponse.class)))
             })
-    @RolesAllowed("admin")
+    @PermitAll
     public Response getAccountCurrentAskOrderIds(
             @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
             @Parameter(description = "The asset ID.") @QueryParam("asset") @PositiveOrZero Long assetIdParam,
