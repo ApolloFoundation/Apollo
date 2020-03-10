@@ -6,12 +6,14 @@ import com.apollocurrency.aplwallet.api.dto.TradingDataOutputDTO;
 import com.apollocurrency.aplwallet.api.response.Account2FAResponse;
 import com.apollocurrency.aplwallet.api.response.CreateDexOrderResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
+import com.apollocurrency.aplwallet.api.response.DexAccountInfoResponse;
 import com.apollocurrency.aplwallet.api.response.EthGasInfoResponse;
 import com.apollocurrency.aplwallet.api.response.FilledOrdersResponse;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.DexPreconditionExtension;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.apollocurrrency.aplwallet.inttest.model.Parameters;
+import com.apollocurrrency.aplwallet.inttest.model.ReqParam;
 import com.apollocurrrency.aplwallet.inttest.model.TestBase;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
@@ -21,6 +23,7 @@ import io.qameta.allure.Step;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,9 +31,11 @@ import org.junit.jupiter.api.extension.Extensions;
 import org.junit.jupiter.api.parallel.Execution;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
+import static io.restassured.RestAssured.given;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.closeTo;
 import static org.hamcrest.Matchers.greaterThan;
@@ -165,6 +170,16 @@ public class TestDex extends TestBaseNew {
             }}
         );
 
+    }
+
+    @BeforeEach
+    public void logInDexExchange(){
+        DexAccountInfoResponse vault1Log = logInDex(vault1);
+        assertTrue(vault1Log.getCurrencies().get(0).getCurrency().equals("eth"), "response isn't correct for vault1");
+        assertTrue(vault1Log.getCurrencies().get(0).getWallets().get(0).getAddress().equals(vault1.getEthAddress()), "response isn't correct for vault1");
+        DexAccountInfoResponse vault2Log = logInDex(vault2);
+        assertTrue(vault2Log.getCurrencies().get(0).getCurrency().equals("eth"), "response isn't correct for vault2");
+        assertTrue(vault2Log.getCurrencies().get(0).getWallets().get(0).getAddress().equals(vault2.getEthAddress()), "response isn't correct for vault2");
     }
 
     @BeforeAll
@@ -356,8 +371,8 @@ public class TestDex extends TestBaseNew {
         CreateTransactionResponse cancelOrder = dexCancelOrder(orderId, vault1);
         assertNotNull(cancelOrder);
         verifyTransactionInBlock(cancelOrder.getTransaction());
-        waitForFrozenMoneyStatus(false, orderId);
         waitEmptyActiveOrders(vault1.getEthAddress());
+        waitForFrozenMoneyStatus(false, orderId);
         assertEquals(3, getDexOrder(orderId).status, "status isn't cancelled (3)");
         assertEquals(BALANCE_APL-APL_FEE, getBalance(vault1).getBalanceATM(), "APL BALANCE ISN'T CORRECT.");
         assertEquals(balancePAX, getDexBalances(vault1.getEthAddress()).getEth().get(0).getBalances().getPax(), "PAX BALANCE IS WRONG");
@@ -411,7 +426,7 @@ public class TestDex extends TestBaseNew {
 
     }
 
-    @DisplayName("dex exchange ETH SELL-BUY")
+    @DisplayName("DEX EXCHANGE ETH SELL-BUY")
     @Test
     @Execution(SAME_THREAD)
     public void dexExchangeEthSellBuy() {
@@ -471,7 +486,7 @@ public class TestDex extends TestBaseNew {
         validateDexOrderResponse(buyOrderVault2.getOrder().getId(), 5, Long.valueOf(PAIR_RATE), vault2, true, false);
     }
 
-    @DisplayName("dex exchange ETH BUY-SELL")
+    @DisplayName("DEX EXCHANGE ETH BUY-SELL")
     @Test
     @Execution(SAME_THREAD)
     public void dexExchangeEthBuySell() {
@@ -535,7 +550,7 @@ public class TestDex extends TestBaseNew {
         validateDexOrderResponse(buyOrderVault1.getOrder().getId(), 5, Long.valueOf(PAIR_RATE), vault1, true, false);
     }
 
-    @DisplayName("dex exchange PAX SELL-BUY")
+    @DisplayName("DEX EXCHANGE PAX SELL-BUY")
     @Test
     @Execution(SAME_THREAD)
     public void dexExchangePaxSellBuy() {
@@ -595,7 +610,7 @@ public class TestDex extends TestBaseNew {
         validateDexOrderResponse(buyOrderVault2.getOrder().getId(), 5, Long.valueOf(PAIR_RATE), vault2, false, false);
     }
 
-    @DisplayName("dex exchange PAX BUY-SELL")
+    @DisplayName("DEX EXCHANGE PAX BUY-SELL")
     @Test
     @Execution(SAME_THREAD)
     public void dexExchangePaxBuySell() {

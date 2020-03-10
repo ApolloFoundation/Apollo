@@ -48,6 +48,7 @@ import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrency.aplwallet.api.response.CurrenciesResponse;
 import com.apollocurrency.aplwallet.api.response.CurrencyAccountsResponse;
 import com.apollocurrency.aplwallet.api.response.DataTagCountResponse;
+import com.apollocurrency.aplwallet.api.response.DexAccountInfoResponse;
 import com.apollocurrency.aplwallet.api.response.EthGasInfoResponse;
 import com.apollocurrency.aplwallet.api.response.ExpectedAssetDeletes;
 import com.apollocurrency.aplwallet.api.response.FilledOrdersResponse;
@@ -1147,6 +1148,25 @@ public class TestBaseNew extends TestBase {
             .when().log().body()
             .get(path)
             .getBody().jsonPath().getList("", FilledOrdersResponse.class);
+    }
+
+    @Step
+    public DexAccountInfoResponse logInDex (Wallet wallet){
+        String path = "/rest/keyStore/accountInfo";
+
+        HashMap<String, String> param = new HashMap();
+        param = restHelper.addWalletParameters(param, wallet);
+        param.put(ReqParam.ACCOUNT, wallet.getAccountId());
+        param.put(ReqParam.PASS_PHRASE, wallet.getPass());
+
+        return given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .log().body()
+            .post(path)
+            .as(DexAccountInfoResponse.class);
     }
 
     @Override
