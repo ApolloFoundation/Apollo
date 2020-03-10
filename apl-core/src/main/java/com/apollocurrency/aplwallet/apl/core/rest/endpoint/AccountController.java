@@ -619,14 +619,16 @@ public class AccountController {
                                @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
                                    @FormParam("account") @NotNull AccountIdParameter accountIdParameter,
                                @Parameter(description = "The 2FA code.", required = true)
-                                   @FormParam("code2FA") Integer code2FA ) {
+                                   @FormParam("code2FA") Integer code2FA,
+                               @Context org.jboss.resteasy.spi.HttpRequest request
+    ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
-        long accountId = accountIdParameter.get();
+        TwoFactorAuthParameters params2FA = RestParametersParser.get2FARequestAttribute(request);
 
-        KeyStoreService.Status status = account2FAHelper.deleteAccount(accountId, passphrase, code2FA);
+        KeyStoreService.Status status = account2FAHelper.deleteAccount(params2FA);
 
-        AccountKeyDTO dto = new AccountKeyDTO(Long.toUnsignedString(accountId),
-                                                Convert2.rsAccount(accountId),
+        AccountKeyDTO dto = new AccountKeyDTO(Long.toUnsignedString(params2FA.getAccountId()),
+                                                Convert2.rsAccount(params2FA.getAccountId()),
                                                 status.message, null );
 
         return response.bind(dto).build();
