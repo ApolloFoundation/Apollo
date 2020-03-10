@@ -30,6 +30,15 @@ public class Wallet {
         this.vault = vault;
     }
 
+
+    public Wallet(String user, String pass, boolean vault, String ethAddress, String accountId) {
+        this.user = user;
+        this.pass = pass;
+        this.vault = vault;
+        this.ethAddress = ethAddress;
+        this.accountId = accountId;
+    }
+
     @Override
     public String toString() {
         String walletType =  (vault)? "Vault Wallet: ":"Standard Wallet: ";

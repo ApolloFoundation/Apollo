@@ -18,11 +18,13 @@ import io.restassured.http.ContentType;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import org.apache.http.params.CoreConnectionPNames;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,9 +39,12 @@ import static com.github.automatedowl.tools.AllureEnvironmentWriter.allureEnviro
 import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.parallel.ResourceAccessMode.READ;
+import static org.junit.jupiter.api.parallel.Resources.SYSTEM_PROPERTIES;
 
 
 public abstract class TestBase implements ITest {
+    public SoftAssertions softAssertions = new SoftAssertions();
     public static final Logger log = LoggerFactory.getLogger(TestBase.class);
     public static RetryPolicy retryPolicy = new RetryPolicy()
         .retryWhen(false)
@@ -94,10 +99,11 @@ public abstract class TestBase implements ITest {
     }
 
     //Static need for a BeforeAll method
-    private static void importSecretFileSetUp(String pathToSecretFile, String pass) {
+    @ResourceLock(value = SYSTEM_PROPERTIES, mode = READ)
+    protected synchronized static void importSecretFileSetUp(String pathToSecretFile, String pass) {
         try {
-            String path = "/rest/keyStore/upload";
-            given().log().all()
+        String path = "/rest/keyStore/upload";
+        given().log().all()
                 .spec(restHelper.getPreconditionSpec())
                 .header("Content-Type", "multipart/form-data")
                 .multiPart("keyStore", new File(pathToSecretFile))
@@ -145,7 +151,7 @@ public abstract class TestBase implements ITest {
         }
     }
 
-    private static CreateTransactionResponse sendMoneySetUp(Wallet wallet, String recipient, int moneyAmount) {
+    protected synchronized static CreateTransactionResponse sendMoneySetUp(Wallet wallet, String recipient, int moneyAmount) {
         HashMap<String, String> param = new HashMap();
         param = restHelper.addWalletParameters(param,wallet);
         param.put(ReqType.REQUEST_TYPE,ReqType.SEND_MONEY);
@@ -168,7 +174,7 @@ public abstract class TestBase implements ITest {
 
     }
 
-    private static boolean verifyTransactionInBlockSetUp(String transaction) {
+    protected synchronized static boolean verifyTransactionInBlockSetUp(String transaction) {
         boolean inBlock = false;
         try {
             inBlock = Failsafe.with(retryPolicy).get(() -> getTransactionSetUP(transaction).getConfirmations() >= 0);
@@ -197,7 +203,7 @@ public abstract class TestBase implements ITest {
             .getObject("",TransactionDTO.class);
     }
 
-    private static BalanceDTO getBalanceSetUP(Wallet wallet) {
+    protected synchronized static BalanceDTO getBalanceSetUP(Wallet wallet) {
         HashMap<String, String> param = new HashMap();
         param.put(ReqType.REQUEST_TYPE, ReqType.GET_BALANCE);
         param = restHelper.addWalletParameters(param, wallet);
