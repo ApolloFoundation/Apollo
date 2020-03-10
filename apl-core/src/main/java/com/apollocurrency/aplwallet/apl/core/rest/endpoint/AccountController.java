@@ -71,7 +71,6 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.security.PermitAll;
-import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.PositiveOrZero;
@@ -378,14 +377,13 @@ public class AccountController {
     @Operation(
             summary = "Get the block IDs of all blocks forged by an account.",
             description = "Get the block IDs of all blocks forged (generated) by an account in reverse block height order.",
-            security = @SecurityRequirement(name = "admin_api_key"),
             tags = {"accounts"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
                             content = @Content(mediaType = "application/json",
                                     schema = @Schema(implementation = AccountBlocksCountResponse.class)))
             })
-    @RolesAllowed("admin")
+    @PermitAll
     public Response getAccountBlockIds(
             @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
             @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
@@ -399,8 +397,9 @@ public class AccountController {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
         long accountId  = accountIdParameter.get();
+        FirstLastIndexParser.FirstLastIndex flIndex = indexParser.adjustIndexes(firstIndex, lastIndex);
 
-        List<Block> blocks = accountService.getAccountBlocks(accountId, timestamp, firstIndex, lastIndex);
+        List<Block> blocks = accountService.getAccountBlocks(accountId, timestamp, flIndex.getFirstIndex(), flIndex.getLastIndex());
         List<String> blockIds = blocks.stream().map(Block::getStringId).collect(Collectors.toList());
 
         AccountBlockIdsResponse dto = new AccountBlockIdsResponse();
@@ -422,7 +421,7 @@ public class AccountController {
                             content = @Content(mediaType = "application/json",
                                     schema = @Schema(implementation = AccountBlocksCountResponse.class)))
             })
-    @RolesAllowed("admin")
+    @PermitAll
     public Response getAccountBlocks(
             @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
             @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
@@ -437,8 +436,9 @@ public class AccountController {
     ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         long accountId  = accountIdParameter.get();
+        FirstLastIndexParser.FirstLastIndex flIndex = indexParser.adjustIndexes(firstIndex, lastIndex);
 
-        List<Block> blocks = accountService.getAccountBlocks(accountId, timestamp, firstIndex, lastIndex);
+        List<Block> blocks = accountService.getAccountBlocks(accountId, timestamp, flIndex.getFirstIndex(), flIndex.getLastIndex());
 
         AccountBlocksResponse dto = new AccountBlocksResponse();
         dto.setBlocks(accountBlockConverter.convert(blocks));
@@ -480,14 +480,13 @@ public class AccountController {
     @Operation(
             summary = "Get the currencies issued by a given account.",
             description = "Return the currencies issued by a given account and height.",
-            security = @SecurityRequirement(name = "admin_api_key"),
             tags = {"accounts"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
                             content = @Content(mediaType = "application/json",
                                     schema = @Schema(implementation = AccountCurrencyResponse.class)))
             })
-    @RolesAllowed("admin")
+    @PermitAll
     public Response getAccountCurrencies(
             @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
             @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
@@ -505,8 +504,10 @@ public class AccountController {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
         long accountId  = accountIdParameter.get();
+        FirstLastIndexParser.FirstLastIndex flIndex = indexParser.adjustIndexes(firstIndex, lastIndex);
+
         if (currencyId == null || currencyId == 0) {
-            List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrenciesByAccount(accountId, height, firstIndex, lastIndex);
+            List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrenciesByAccount(accountId, height, flIndex.getFirstIndex(), flIndex.getLastIndex());
             List<AccountCurrencyDTO> accountCurrencyDTOList = accountCurrencyConverter.convert(accountCurrencies);
             if(includeCurrencyInfo){
                 accountCurrencyDTOList.forEach(dto -> accountCurrencyConverter
@@ -533,14 +534,13 @@ public class AccountController {
     @Operation(
             summary = "Get current asset order IDs given an account ID.",
             description = "Get current asset order IDs given an account ID in reverse block height order. The admin password is required.",
-            security = @SecurityRequirement(name = "admin_api_key"),
             tags = {"accounts"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
                             content = @Content(mediaType = "application/json",
                                     schema = @Schema(implementation = AccountCurrentAskOrderIdsResponse.class)))
             })
-    @RolesAllowed("admin")
+    @PermitAll
     public Response getAccountCurrentAskOrderIds(
             @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
             @Parameter(description = "The asset ID.") @QueryParam("asset") @PositiveOrZero Long assetIdParam,
@@ -552,11 +552,13 @@ public class AccountController {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
         long accountId  = accountIdParameter.get();
+        FirstLastIndexParser.FirstLastIndex flIndex = indexParser.adjustIndexes(firstIndex, lastIndex);
+
         List<Order.Ask> ordersByAccount;
         if ( assetIdParam == null || assetIdParam == 0 ) {
-            ordersByAccount = orderService.getAskOrdersByAccount(accountId, firstIndex, lastIndex);
+            ordersByAccount = orderService.getAskOrdersByAccount(accountId, flIndex.getFirstIndex(), flIndex.getLastIndex());
         }else{
-            ordersByAccount = orderService.getAskOrdersByAccountAsset(accountId, assetIdParam, firstIndex, lastIndex);
+            ordersByAccount = orderService.getAskOrdersByAccountAsset(accountId, assetIdParam, flIndex.getFirstIndex(), flIndex.getLastIndex());
         }
         List<String> ordersIdList = ordersByAccount.stream().map(ask -> Long.toUnsignedString(ask.getId())).collect(Collectors.toList());
 
@@ -617,14 +619,16 @@ public class AccountController {
                                @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
                                    @FormParam("account") @NotNull AccountIdParameter accountIdParameter,
                                @Parameter(description = "The 2FA code.", required = true)
-                                   @FormParam("code2FA") Integer code2FA ) {
+                                   @FormParam("code2FA") Integer code2FA,
+                               @Context org.jboss.resteasy.spi.HttpRequest request
+    ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
-        long accountId = accountIdParameter.get();
+        TwoFactorAuthParameters params2FA = RestParametersParser.get2FARequestAttribute(request);
 
-        KeyStoreService.Status status = account2FAHelper.deleteAccount(accountId, passphrase, code2FA);
+        KeyStoreService.Status status = account2FAHelper.deleteAccount(params2FA);
 
-        AccountKeyDTO dto = new AccountKeyDTO(Long.toUnsignedString(accountId),
-                                                Convert2.rsAccount(accountId),
+        AccountKeyDTO dto = new AccountKeyDTO(Long.toUnsignedString(params2FA.getAccountId()),
+                                                Convert2.rsAccount(params2FA.getAccountId()),
                                                 status.message, null );
 
         return response.bind(dto).build();
