@@ -240,6 +240,8 @@ public final class AplCore {
                 Generator.init();
                 AddOns.init();
                 Helper2FA.init(databaseManager);
+                // do one time '2fa data' migration from db into files. That method is safe for multiple repeatable calls
+                Helper2FA.attemptMoveDataFromDatabase();
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  70.1, "Apollo core classes initialization done");
                 //signal to API that core is ready to serve requests. Should be removed as soon as all API will be on RestEasy
                 ApiSplitFilter.isCoreReady = true;

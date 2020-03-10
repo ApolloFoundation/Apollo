@@ -50,6 +50,7 @@ import com.apollocurrency.aplwallet.api.response.CurrencyAccountsResponse;
 import com.apollocurrency.aplwallet.api.response.DataTagCountResponse;
 import com.apollocurrency.aplwallet.api.response.EthGasInfoResponse;
 import com.apollocurrency.aplwallet.api.response.ExpectedAssetDeletes;
+import com.apollocurrency.aplwallet.api.response.FilledOrdersResponse;
 import com.apollocurrency.aplwallet.api.response.ForgingResponse;
 import com.apollocurrency.aplwallet.api.response.GetAccountBlockCountResponse;
 import com.apollocurrency.aplwallet.api.response.GetAccountResponse;
@@ -110,8 +111,6 @@ public interface ITest {
 
     CreateTransactionResponse deleteAccountProperty(Wallet wallet, String property);
 
-    AccountPropertiesResponse getAccountProperty(Wallet wallet);
-
     AccountAliasesResponse getAliases(Wallet wallet);
 
     AccountCountAliasesResponse getAliasCount(Wallet wallet);
@@ -124,9 +123,9 @@ public interface ITest {
 
     AccountAliasesResponse getAliasesLike(String aliasename);
 
-    CreateTransactionResponse sellAlias(Wallet wallet, String aliasName);
+    CreateTransactionResponse sellAlias(Wallet wallet, String aliasName, int price);
 
-    CreateTransactionResponse buyAlias(Wallet wallet, String aliasName);
+    CreateTransactionResponse buyAlias(Wallet wallet, String aliasName,int price);
 
     CreateTransactionResponse sendMoneyPrivate(Wallet wallet, String recipient, int moneyAmount);
 
@@ -304,5 +303,10 @@ public interface ITest {
     CreateTransactionResponse extendTaggedData(Wallet wallet, String transaction);
 
     List<DexOrderDto> getDexOrders(String status, String accountId);
+
+    DexOrderDto getDexOrder(String orderId);
+
+
+
 
 }

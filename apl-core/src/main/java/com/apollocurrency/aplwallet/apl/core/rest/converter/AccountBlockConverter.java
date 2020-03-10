@@ -42,7 +42,7 @@ public class AccountBlockConverter implements Converter<Block, BlockDTO> {
         dto.setGeneratorPublicKey(Convert.toHexString(model.getGeneratorPublicKey()));
         dto.setTimestamp(model.getTimestamp());
         dto.setTimeout(model.getTimeout());
-        dto.setNumberOfTransactions(model.getTransactions().size());
+        dto.setNumberOfTransactions(model.getOrLoadTransactions().size());
         dto.setTotalFeeATM(String.valueOf(model.getTotalFeeATM()));
         dto.setPayloadLength(model.getPayloadLength());
         dto.setVersion(model.getVersion());
@@ -60,13 +60,13 @@ public class AccountBlockConverter implements Converter<Block, BlockDTO> {
         dto.setBlockSignature(Convert.toHexString(model.getBlockSignature()));
         dto.setTransactions(Collections.emptyList());
         dto.setTotalAmountATM(String.valueOf(
-                model.getTransactions().stream().mapToLong(Transaction::getAmountATM).sum()));
+                model.getOrLoadTransactions().stream().mapToLong(Transaction::getAmountATM).sum()));
 
         return dto;
     }
 
     public void addTransactions(BlockDTO o, Block model){
-        if ( o != null){
+        if ( o != null && model != null){
             List<TransactionDTO> transactionDTOList = new ArrayList<>();
             model.getTransactions()
                     .forEach(t -> transactionDTOList.add(transactionConverter.convert(t)));
@@ -75,7 +75,7 @@ public class AccountBlockConverter implements Converter<Block, BlockDTO> {
     }
 
     public void addPhasedTransactions(BlockDTO o, Block model){
-        if ( o != null){
+        if ( o != null && model != null){
             List<TransactionDTO> transactionDTOList = new ArrayList<>();
             List<Long> transactrionIdList = phasingPollService.getApprovedTransactionIds(model.getHeight());
             transactrionIdList
@@ -87,7 +87,7 @@ public class AccountBlockConverter implements Converter<Block, BlockDTO> {
     }
 
     public void addPhasedTransactionIds(BlockDTO o, Block model){
-        if ( o != null){
+        if ( o != null && model != null){
             List<String> transactionList = new ArrayList<>();
             List<Long> approvedTransactionIds = phasingPollService.getApprovedTransactionIds(model.getHeight());
             approvedTransactionIds

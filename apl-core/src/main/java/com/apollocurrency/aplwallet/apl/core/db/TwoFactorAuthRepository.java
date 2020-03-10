@@ -1,5 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import java.util.List;
+
 public interface TwoFactorAuthRepository {
     /**
      * Retrieves 2fa data by id of account
@@ -32,4 +34,9 @@ public interface TwoFactorAuthRepository {
      */
     boolean delete(long account);
 
+    /**
+     * Select all 2fa records
+     * @return found list
+     */
+    List<TwoFactorAuthEntity> selectAll();
 }

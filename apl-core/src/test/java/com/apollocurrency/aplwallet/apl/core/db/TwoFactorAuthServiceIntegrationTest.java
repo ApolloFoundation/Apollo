@@ -19,6 +19,7 @@ import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthService;
 import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthServiceImpl;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData;
+import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.testutil.TwoFactorAuthUtil;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
@@ -38,15 +39,19 @@ public class TwoFactorAuthServiceIntegrationTest {
 
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension();
+    @RegisterExtension
+    static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from().addBeans(MockBean.of(Mockito.mock(NtpTime.class), NtpTime.class)).build();
 
-    private TwoFactorAuthRepository repository = new TwoFactorAuthRepositoryImpl(dbExtension.getDatabaseManager().getDataSource());
-    private TwoFactorAuthService    service = new TwoFactorAuthServiceImpl(repository, "test");
+    private TwoFactorAuthRepository dbRepository = new TwoFactorAuthRepositoryImpl(dbExtension.getDatabaseManager().getDataSource());
+    private TwoFactorAuthRepository fileRepository = new TwoFactorAuthFileSystemRepository(temporaryFolderExtension.getRoot().toPath());
+    private TwoFactorAuthService    service;// = new TwoFactorAuthServiceImpl(repository, "test", targetFileRepository);
 
     @Test
     public void testEnable() {
         TwoFactorAuthTestData td = new TwoFactorAuthTestData();
+        service = new TwoFactorAuthServiceImpl(dbRepository, "test", fileRepository);
         TwoFactorAuthDetails authDetails = service.enable(td.ACC_3.getId());
         TwoFactorAuthUtil.verifySecretCode(authDetails, Convert2.defaultRsAccount(td.ACC_3.getId()));
         assertFalse(service.isEnabled(td.ACC_3.getId()));
@@ -55,20 +60,27 @@ public class TwoFactorAuthServiceIntegrationTest {
     @Test
     public void testEnableAlreadyRegistered() {
         TwoFactorAuthTestData td = new TwoFactorAuthTestData();
+        service = new TwoFactorAuthServiceImpl(fileRepository, "test", dbRepository); // switch repos for test only
         TwoFactorAuthDetails details2FA = service.enable(td.ACC_1.getId());
         assertEquals(Status2FA.ALREADY_ENABLED, details2FA.getStatus2Fa());
     }
+
     @Test
     public void testEnableNotConfirmed() {
         TwoFactorAuthTestData td = new TwoFactorAuthTestData();
+        service = new TwoFactorAuthServiceImpl(dbRepository, "test", fileRepository);
         TwoFactorAuthDetails authDetails = service.enable(td.ACC_2.getId());
         TwoFactorAuthUtil.verifySecretCode(authDetails, Convert2.defaultRsAccount(td.ACC_2.getId()));
         assertFalse(service.isEnabled(td.ACC_2.getId()));
+        // remove 2fa-file after test has passed
+        boolean result = fileRepository.delete(td.ACC_2.getId());
+        assertTrue(result);
     }
 
     @Test
     public void testDisable() throws GeneralSecurityException {
         TwoFactorAuthTestData td = new TwoFactorAuthTestData();
+        service = new TwoFactorAuthServiceImpl(dbRepository, "test", fileRepository);
         TwoFactorAuthService spy = spy(service);
         int currentCode = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(td.ACCOUNT1_2FA_SECRET_BASE32);
         spy.disable(td.ACC_1.getId(), currentCode);
@@ -77,8 +89,8 @@ public class TwoFactorAuthServiceIntegrationTest {
     @Test
     public void testDisableFailAuth() {
         TwoFactorAuthTestData td = new TwoFactorAuthTestData();
+        service = new TwoFactorAuthServiceImpl(fileRepository, "test", dbRepository); // switch repos for test only
         Status2FA status2FA = service.disable(td.ACC_1.getId(), INVALID_CODE);
-
         assertEquals(Status2FA.INCORRECT_CODE, status2FA);
     }
 
@@ -86,14 +98,15 @@ public class TwoFactorAuthServiceIntegrationTest {
     @Test
     public void testIsEnabledTrue() {
         TwoFactorAuthTestData td = new TwoFactorAuthTestData();
+        service = new TwoFactorAuthServiceImpl(fileRepository, "test", dbRepository); // switch repos for test only
         boolean enabled = service.isEnabled(td.ACC_1.getId());
-
         assertTrue(enabled);
     }
 
     @Test
     public void testIsEnabledFalseWhenAccountIsNotExists() {
         TwoFactorAuthTestData td = new TwoFactorAuthTestData();
+        service = new TwoFactorAuthServiceImpl(dbRepository, "test", fileRepository);
         boolean enabled = service.isEnabled(td.newAccount.getId());
         assertFalse(enabled);
     }
@@ -101,6 +114,7 @@ public class TwoFactorAuthServiceIntegrationTest {
     @Test
     public void testIsEnabledFalseWhenAccountIsNotConfirmed() {
         TwoFactorAuthTestData td = new TwoFactorAuthTestData();
+        service = new TwoFactorAuthServiceImpl(dbRepository, "test", fileRepository);
         boolean enabled = service.isEnabled(td.ACC_2.getId());
         assertFalse(enabled);
     }
@@ -108,8 +122,8 @@ public class TwoFactorAuthServiceIntegrationTest {
     @Test
     public void testTryAuth() throws GeneralSecurityException {
         TwoFactorAuthTestData td = new TwoFactorAuthTestData();
+        service = new TwoFactorAuthServiceImpl(fileRepository, "test", dbRepository); // switch repos for test only
         boolean authenticated = TwoFactorAuthUtil.tryAuth(service, td.ACC_1.getId(), td.ACCOUNT1_2FA_SECRET_BASE32, MAX_2FA_ATTEMPTS);
-
         assertTrue(authenticated);
     }
 
@@ -117,6 +131,7 @@ public class TwoFactorAuthServiceIntegrationTest {
     public void testTryAuthCodesNotEquals() {
         int fakeNumber = new Random().nextInt();
         TwoFactorAuthTestData td = new TwoFactorAuthTestData();
+        service = new TwoFactorAuthServiceImpl(dbRepository, "test", fileRepository);
         Status2FA status2FA = service.tryAuth(td.ACC_1.getId(), fakeNumber);
         assertEquals(Status2FA.INCORRECT_CODE, status2FA);
     }
@@ -125,8 +140,8 @@ public class TwoFactorAuthServiceIntegrationTest {
     public void testTryAuthNotConfirmed() {
         TwoFactorAuthTestData td = new TwoFactorAuthTestData();
         int fakeNumber = new Random().nextInt();
+        service = new TwoFactorAuthServiceImpl(fileRepository, "test", dbRepository); // switch repos for test only
         Status2FA status2FA = service.tryAuth(td.ACC_2.getId(), fakeNumber);
-
         assertEquals(Status2FA.NOT_CONFIRMED, status2FA);
     }
 
@@ -134,8 +149,8 @@ public class TwoFactorAuthServiceIntegrationTest {
     public void testConfirm() throws GeneralSecurityException {
         TwoFactorAuthTestData td = new TwoFactorAuthTestData();
         int currentCode = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(td.ACCOUNT2_2FA_SECRET_BASE32);
+        service = new TwoFactorAuthServiceImpl(fileRepository, "test", dbRepository); // switch repos for test only
         Status2FA status2FA = service.confirm(td.ACC_2.getId(), currentCode);
-
         assertEquals(Status2FA.OK, status2FA);
         assertTrue(service.isEnabled(td.ACC_2.getId()));
     }
@@ -143,6 +158,7 @@ public class TwoFactorAuthServiceIntegrationTest {
     public void testConfirmAlreadyConfirmed() throws GeneralSecurityException {
         TwoFactorAuthTestData td = new TwoFactorAuthTestData();
         int currentCode = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(td.ACCOUNT1_2FA_SECRET_BASE32);
+        service = new TwoFactorAuthServiceImpl(fileRepository, "test", dbRepository); // switch repos for test only
         Status2FA status2FA = service.confirm(td.ACC_1.getId(), currentCode);
         assertEquals(Status2FA.ALREADY_CONFIRMED, status2FA);
         assertTrue(service.isEnabled(td.ACC_1.getId()));
@@ -152,8 +168,18 @@ public class TwoFactorAuthServiceIntegrationTest {
     public void testConfirmNotExists() throws GeneralSecurityException {
         TwoFactorAuthTestData td = new TwoFactorAuthTestData();
         int currentCode = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(ACCOUNT3_2FA_SECRET_BASE32);
+        service = new TwoFactorAuthServiceImpl(dbRepository, "test", fileRepository);
         Status2FA status2FA = service.confirm(td.newAccount.getId(), currentCode);
         assertEquals(Status2FA.NOT_ENABLED,status2FA);
         assertFalse(service.isEnabled(td.newAccount.getId()));
+    }
+
+    @Test
+    public void testMoveData() throws GeneralSecurityException {
+        TwoFactorAuthTestData td = new TwoFactorAuthTestData();
+        service = new TwoFactorAuthServiceImpl(dbRepository, "test", fileRepository);
+        int result = service.attemptMoveDataFromDatabase();
+        assertEquals(2, result, "Error on moving data from DB into File repo");
+        assertFalse(service.isEnabled(td.ACC_3.getId()));
     }
 }

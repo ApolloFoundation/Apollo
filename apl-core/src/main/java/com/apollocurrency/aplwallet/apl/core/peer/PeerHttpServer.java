@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.MyNetworkInterfaces;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
-import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -39,9 +38,9 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 @Singleton
 public class PeerHttpServer {
-    
+
      private static final Logger LOG = getLogger(PeerHttpServer.class);
-     
+
      public static final int MAX_PLATFORM_LENGTH = 30;
      public static final int DEFAULT_PEER_PORT=47874;
      public static final int DEFAULT_PEER_PORT_TLS=48743;
@@ -49,7 +48,7 @@ public class PeerHttpServer {
      private int myPeerServerPort;
      private final int myPeerServerPortTLS;
      private final boolean useTLS;
-     boolean enablePeerUPnP;    
+     boolean enablePeerUPnP;
      private final String myPlatform;
      private PeerAddress myExtAddress;
      private final Server peerServer;
@@ -60,7 +59,7 @@ public class PeerHttpServer {
      private static List<Integer> externalPorts=new ArrayList<>();
 
      private TaskDispatchManager taskDispatchManager;
-     
+
     public boolean isShareMyAddress() {
         return shareMyAddress;
     }
@@ -83,12 +82,12 @@ public class PeerHttpServer {
     public PeerServlet getPeerServlet(){
         return peerServlet;
     }
-    
+
     @Inject
     public PeerHttpServer(PropertiesHolder propertiesHolder, UPnP upnp, JettyConnectorCreator conCreator, TaskDispatchManager taskDispatchManager) {
         this.upnp = upnp;
         this.taskDispatchManager = taskDispatchManager;
-        shareMyAddress = propertiesHolder.getBooleanProperty("apl.shareMyAddress") && ! propertiesHolder.isOffline();  
+        shareMyAddress = propertiesHolder.getBooleanProperty("apl.shareMyAddress") && ! propertiesHolder.isOffline();
         myPeerServerPort = propertiesHolder.getIntProperty("apl.myPeerServerPort",DEFAULT_PEER_PORT);
         myPeerServerPortTLS = propertiesHolder.getIntProperty("apl.myPeerServerPortTLS", DEFAULT_PEER_PORT_TLS);
         useTLS=propertiesHolder.getBooleanProperty("apl.peerUseTLS");
@@ -104,7 +103,7 @@ public class PeerHttpServer {
 
         //get configured external adderes from config. UPnP should be disabled, in other case
         // UPnP re-writes this
-        String myAddress = Convert.emptyToNull(propertiesHolder.getStringProperty("apl.myAddress", "").trim());      
+        String myAddress = Convert.emptyToNull(propertiesHolder.getStringProperty("apl.myAddress", "").trim());
         if(myAddress!=null){
             myExtAddress = new PeerAddress(myPeerServerPort, myAddress);
         }
@@ -146,7 +145,7 @@ public class PeerHttpServer {
                        internalPorts.add(((ServerConnector) peerConnector).getPort());
                     }
                 }
-            //if address is set in config file, we ignore UPnP    
+            //if address is set in config file, we ignore UPnP
             if (enablePeerUPnP && upnp.isAvailable() && myExtAddress==null) {
                 for (Integer pn : internalPorts) {
                     int port = upnp.addPort(pn, "Peer2Peer");
@@ -154,7 +153,7 @@ public class PeerHttpServer {
                         externalPorts.add(port);
                     }
                 }
-                myExtAddress = new PeerAddress(externalPorts.get(0),upnp.getExternalAddress().getHostAddress());                
+                myExtAddress = new PeerAddress(externalPorts.get(0),upnp.getExternalAddress().getHostAddress());
             }else{
                 externalPorts.addAll(internalPorts);
             }
@@ -179,8 +178,12 @@ public class PeerHttpServer {
                 .name("PeerUPnPInit")
                 .task(() -> {
                     try {
-                        peerServer.start();
-                        LOG.info("Started peer networking server at " + host + ":" + myPeerServerPort);
+                        if (peerServer != null) { // prevent NPE in offLine mode
+                            peerServer.start();
+                            LOG.info("Started peer networking server at " + host + ":" + myPeerServerPort);
+                        } else {
+                            LOG.warn("Peer networking server NOT STARTED (offLine mode?)");
+                        }
                     } catch (Exception e) {
                         LOG.error("Failed to start peer networking server", e);
                         throw new RuntimeException(e.toString(), e);
@@ -191,7 +194,7 @@ public class PeerHttpServer {
         taskDispatchManager.newBackgroundDispatcher("PeerUPnPService")
                 .invokeBefore(peerUPnPInitTask);
     }
-    
+
     public void shutdown(){
         if (peerServer != null) {
             try {
@@ -204,9 +207,9 @@ public class PeerHttpServer {
             } catch (Exception e) {
                 LOG.info("Failed to stop peer server", e);
             }
-        }        
+        }
     }
-    
+
     public boolean suspend(){
          boolean res = false;
            if (peerServer != null) {
@@ -216,10 +219,10 @@ public class PeerHttpServer {
             } catch (Exception e) {
                 LOG.info("Failed to stop peer server", e);
             }
-        }  
+        }
         return res;
     }
-    
+
     public  boolean resume() {
         boolean res = false;
         if (peerServer != null) {
@@ -233,16 +236,16 @@ public class PeerHttpServer {
             }
         }
         return res;
-    }    
+    }
 
     public InetAddress getExternalAddress() {
         if(myExtAddress!=null){
             return myExtAddress.getInetAddress();
         }else{
             return null;
-        }   
+        }
     }
-    
+
     private String getMyPublicIPAdresses(){
         String res=null;
         MyNetworkInterfaces interfaces = new MyNetworkInterfaces();
@@ -253,7 +256,7 @@ public class PeerHttpServer {
                  ||a.isSiteLocalAddress()
                  ||a.isLoopbackAddress()
                  ||a.isMulticastAddress()
-                 ||a instanceof Inet6Address  // it is not completely right, but some nodes have wrong IPv6 settings   
+                 ||a instanceof Inet6Address  // it is not completely right, but some nodes have wrong IPv6 settings
               ))
             {
                res=a.getHostAddress();

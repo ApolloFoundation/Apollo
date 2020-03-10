@@ -53,7 +53,6 @@ public class TestConfiguration {
             if (!env.equals(host)) {
                 peers = testNetIp.get(env).getPeers();
                 host = peers.get(rand.nextInt(peers.size()));
-                System.out.println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
                 System.out.println(host);
             } else {
                 peers = new ArrayList<>();

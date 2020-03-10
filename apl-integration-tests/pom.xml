@@ -5,7 +5,7 @@
   <parent>
     <artifactId>apollo-wallet</artifactId>
     <groupId>com.apollocurrency</groupId>
-    <version>1.41.28</version>
+    <version>1.42.0</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>apl-integration-tests</artifactId>
@@ -59,6 +59,12 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-annotations</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <version>3.15.0</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
@@ -141,7 +147,7 @@
           </argLine>
           <systemPropertyVariables>
             <allure.results.directory>${project.build.directory}/allure-results</allure.results.directory>
-            <allure.link.issue.pattern>https://example.org/browse/{}</allure.link.issue.pattern>
+            <allure.link.issue.pattern>https://firstb.atlassian.net/browse/{}</allure.link.issue.pattern>
             <test.env>${test.env}</test.env>
           </systemPropertyVariables>
           <systemProperties>
