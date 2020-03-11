@@ -112,6 +112,7 @@
 
     <!--Tests-->
     <json-simple.version>1.1.1</json-simple.version>
+      <jsonassert.version>1.5.0</jsonassert.version>
     <json-unit.version>1.20.0</json-unit.version>
     <okhttp-eventsource.version>1.8.0</okhttp-eventsource.version>
     <okhttp.version>2.7.5</okhttp.version>
@@ -558,6 +559,12 @@
         <version>${junit5-bom.version}</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.skyscreamer</groupId>
+        <artifactId>jsonassert</artifactId>
+        <version>${jsonassert.version}</version>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.junit.jupiter</groupId>

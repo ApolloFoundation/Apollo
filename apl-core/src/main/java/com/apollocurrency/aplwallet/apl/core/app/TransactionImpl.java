@@ -66,7 +66,7 @@ public class TransactionImpl implements Transaction {
     private static final Logger LOG = LoggerFactory.getLogger(TransactionImpl.class);
 
 //    @Inject
-    private static BlockchainImpl blockchain;
+    private static Blockchain blockchain;
 
     @Inject
     private static AccountPublicKeyService accountPublicKeyService;
@@ -132,7 +132,7 @@ public class TransactionImpl implements Transaction {
 
         private Blockchain lookupAndInjectBlockchain() {
             if (blockchain == null) {
-                blockchain = CDI.current().select(BlockchainImpl.class).get();
+                blockchain = CDI.current().select(Blockchain.class).get();
             }
             return blockchain;
         }
