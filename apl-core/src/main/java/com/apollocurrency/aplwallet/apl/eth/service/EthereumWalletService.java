@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.exchange.exception.NotValidTransactionEx
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.UserErrorMessage;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexBeanProducer;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexEthService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -47,6 +48,7 @@ import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.utils.Numeric;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
@@ -70,17 +72,24 @@ public class EthereumWalletService {
     private KeyStoreService keyStoreService;
     private DexEthService dexEthService;
     private UserErrorMessageDao userErrorMessageDao;
+    private DexBeanProducer dexBeanProducer;
 
     public String PAX_CONTRACT_ADDRESS;
 
     @Inject
-    public EthereumWalletService(Web3j web3j, PropertiesHolder propertiesHolder, KeyStoreService keyStoreService, DexEthService dexEthService, UserErrorMessageDao userErrorMessageDao) {
-        this.web3j = web3j;
+    public EthereumWalletService(PropertiesHolder propertiesHolder, KeyStoreService keyStoreService, DexEthService dexEthService, UserErrorMessageDao userErrorMessageDao,
+                                 DexBeanProducer dexBeanProducer) {
+        this.dexBeanProducer = dexBeanProducer;
         this.keyStoreService = keyStoreService;
         this.dexEthService = dexEthService;
         this.userErrorMessageDao = userErrorMessageDao;
 
         this.PAX_CONTRACT_ADDRESS = propertiesHolder.getStringProperty("apl.eth.pax.contract.address");
+    }
+
+    @PostConstruct
+    public void init() {
+        this.web3j = dexBeanProducer.web3j();
     }
 
     /**
