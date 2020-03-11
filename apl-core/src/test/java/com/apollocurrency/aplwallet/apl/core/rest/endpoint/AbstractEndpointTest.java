@@ -1,12 +1,8 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.http.ElGamalEncryptor;
-import com.apollocurrency.aplwallet.apl.core.rest.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ClientErrorExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ConstraintViolationExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.DefaultGlobalExceptionMapper;
@@ -55,10 +51,6 @@ public class AbstractEndpointTest {
                        Map.of( BlockchainHeightValidator.class, new BlockchainHeightValidator(blockchain) )) )
         .buildValidatorFactory();
     Validator validator = validatorFactory.getValidator();
-    ElGamalEncryptor elGamal = mock(ElGamalEncryptor.class);
-    AccountService accountService = mock(AccountService.class);
-    KeyStoreService keystoreService = mock(KeyStoreService.class);
-    RestParametersParser restParametersParser = new RestParametersParser(accountService, blockchain, keystoreService, elGamal);
 
     static{
         BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);

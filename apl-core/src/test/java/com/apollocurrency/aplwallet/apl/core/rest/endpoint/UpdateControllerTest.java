@@ -2,17 +2,20 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EcBlockData;
+import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.core.http.ElGamalEncryptor;
 import com.apollocurrency.aplwallet.apl.core.rest.ByteArrayConverterProvider;
 import com.apollocurrency.aplwallet.apl.core.rest.PlatformSpecConverterProvider;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.LegacyParameterExceptionMapper;
+import com.apollocurrency.aplwallet.apl.core.rest.utils.AccountParametersParser;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.PlatformSpec;
@@ -48,11 +51,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-@EnableWeld
+@EnableWeld // enable weld only to have an ability of creation Transaction since it require dynamic CDI injection TODO should be removed after refactoring
 class UpdateControllerTest extends AbstractEndpointTest {
     TransactionCreator transactionCreator;
     @Mock
@@ -63,6 +67,13 @@ class UpdateControllerTest extends AbstractEndpointTest {
     TimeService timeService;
     @Mock
     TransactionProcessor processor;
+    @Mock
+    ElGamalEncryptor elGamal = mock(ElGamalEncryptor.class);
+    @Mock
+    AccountService accountService = mock(AccountService.class);
+    @Mock
+    KeyStoreService keystoreService = mock(KeyStoreService.class);
+
     UpdateV2Attachment attachment = new UpdateV2Attachment("https://test.com", Level.CRITICAL, new Version("1.23.4"), "https://con.com", BigInteger.ONE, Convert.parseHexString("111100ff"), Set.of(new PlatformSpec(Platform.WINDOWS, Architecture.AMD64), new PlatformSpec(Platform.ALL, Architecture.ARM)));
     @WeldSetup
     WeldInitiator weldInitiator = WeldInitiator.from().addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class)).build();
@@ -76,13 +87,13 @@ class UpdateControllerTest extends AbstractEndpointTest {
             .register(ByteArrayConverterProvider.class)
             .register(LegacyParameterExceptionMapper.class)
             .register(PlatformSpecConverterProvider.class);
-        UpdateController updateController = new UpdateController(restParametersParser, transactionCreator);
+        UpdateController updateController = new UpdateController(new AccountParametersParser(accountService, blockchain, keystoreService, elGamal), transactionCreator);
         dispatcher.getRegistry().addSingletonResource(updateController);
         dispatcher.getDefaultContextObjects().put(HttpServletRequest.class, req);
     }
 
     @Test
-    void testSendUpdateSuccessful() throws URISyntaxException, UnsupportedEncodingException, ParameterException, AplException.ValidationException {
+    void testSendUpdateSuccessful() throws URISyntaxException, UnsupportedEncodingException, AplException.ValidationException {
         when(elGamal.elGamalDecrypt(SECRET)).thenReturn(SECRET);
         Account sender = new Account(ACCOUNT_ID_WITH_SECRET, 10000 * Constants.ONE_APL, 10000 * Constants.ONE_APL, 0, 0, CURRENT_HEIGHT);
         sender.setPublicKey(new PublicKey(sender.getId(), null, 0));
@@ -91,16 +102,16 @@ class UpdateControllerTest extends AbstractEndpointTest {
         doReturn(ecBlockData).when(blockchain).getECBlock(0);
         doAnswer(invocation -> {
             String argument = invocation.getArgument(0);
-            switch (argument) {
-                case "secretPhrase":
-                    return SECRET;
+            if ("secretPhrase".equals(argument)) {
+                return SECRET;
             }
             return "";
         }).when(req).getParameter(anyString());
+
         MockHttpResponse response = sendPostRequest("/updates", "secretPhrase=" + SECRET + "&manifestUrl=https://test.com&level=CRITICAL&platformSpec=WINDOWS-AMD64,ALL-ARM" +
             "&version=1.23.4&cn=https://cn.com&serialNumber=1&signature=111100ff");
         String json = response.getContentAsString();
-        System.out.println(json);
+
         JSONAssert.assertEquals("{\"timestamp\": 0, \"attachment\" : {\"level\": 0, \"manifestUrl\":\"https://test.com\", \"platforms\": [{\"platform\": 1, \"architecture\": 1},{\"platform\": -1, \"architecture\": 2}]}, \"type\" : 8, \"subtype\": 3}", json, JSONCompareMode.LENIENT);
         verify(processor).broadcast(any(Transaction.class));
     }

@@ -6,11 +6,11 @@ import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.rest.PlatformSpecs;
-import com.apollocurrency.aplwallet.apl.core.rest.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FA;
 import com.apollocurrency.aplwallet.apl.core.rest.parameter.AccountIdParameter;
+import com.apollocurrency.aplwallet.apl.core.rest.utils.AccountParametersParser;
 import com.apollocurrency.aplwallet.apl.core.rest.validation.ValidPlatformSpecs;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateV2Attachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -50,7 +50,7 @@ import java.util.HashSet;
 @Singleton
 @Setter
 public class UpdateController {
-    private RestParametersParser parser;
+    private AccountParametersParser parser;
     private TransactionCreator txCreator;
     private UnconfirmedTransactionConverter converter = new UnconfirmedTransactionConverter();
 
@@ -58,7 +58,7 @@ public class UpdateController {
     }
 
     @Inject
-    public UpdateController(RestParametersParser parser, TransactionCreator txCreator) {
+    public UpdateController(AccountParametersParser parser, TransactionCreator txCreator) {
         this.parser = parser;
         this.txCreator = txCreator;
     }
