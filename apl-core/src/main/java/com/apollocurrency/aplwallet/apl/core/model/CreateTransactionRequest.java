@@ -19,6 +19,7 @@ public class CreateTransactionRequest {
     private String passphrase;
     private boolean broadcast;
     private boolean validate = true;
+    private int timestamp;
 
 
     private boolean encryptedMessageIsPrunable;
@@ -41,8 +42,8 @@ public class CreateTransactionRequest {
 
     private long feeATM;
     private long amountATM;
-    private Integer ecBlockHeight;
-    private Long ecBlockId;
+    private int ecBlockHeight;
+    private long ecBlockId;
     private byte[] publicKey;
     private byte[] keySeed;
 

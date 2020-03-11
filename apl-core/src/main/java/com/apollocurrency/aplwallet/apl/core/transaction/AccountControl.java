@@ -85,7 +85,7 @@ public abstract class AccountControl extends TransactionType {
             if (transaction.getAmountATM() != 0) {
                 throw new AplException.NotValidException("Transaction amount must be 0 for effective balance leasing");
             }
-            if (attachment.getPeriod() < blockchainConfig.getLeasingDelay() || attachment.getPeriod() > 65535) {
+            if (attachment.getPeriod() < AccountControl.lookupBlockchainConfig().getLeasingDelay() || attachment.getPeriod() > 65535) {
                 throw new AplException.NotValidException("Invalid effective balance leasing period: " + attachment.getPeriod());
             }
             byte[] recipientPublicKey = lookupAccountService().getPublicKeyByteArray(transaction.getRecipientId());
@@ -143,8 +143,8 @@ public abstract class AccountControl extends TransactionType {
             }
             long maxFees = attachment.getMaxFees();
             long maxFeesLimit = (attachment.getPhasingParams().getVoteWeighting().isBalanceIndependent() ? 3 : 22) * Constants.ONE_APL;
-            if (maxFees < 0 || (maxFees > 0 && maxFees < maxFeesLimit) || maxFees > blockchainConfig.getCurrentConfig().getMaxBalanceATM()) {
-                throw new AplException.NotValidException(String.format("Invalid max fees %f %s", ((double) maxFees) / Constants.ONE_APL, blockchainConfig.getCoinSymbol()));
+            if (maxFees < 0 || (maxFees > 0 && maxFees < maxFeesLimit) || maxFees > AccountControl.lookupBlockchainConfig().getCurrentConfig().getMaxBalanceATM()) {
+                throw new AplException.NotValidException(String.format("Invalid max fees %f %s", ((double) maxFees) / Constants.ONE_APL, lookupBlockchainConfig().getCoinSymbol()));
             }
             short minDuration = attachment.getMinDuration();
             if (minDuration < 0 || (minDuration > 0 && minDuration < 3) || minDuration >= Constants.MAX_PHASING_DURATION) {

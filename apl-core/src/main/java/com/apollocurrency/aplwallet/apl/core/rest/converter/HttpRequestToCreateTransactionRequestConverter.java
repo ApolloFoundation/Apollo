@@ -17,19 +17,13 @@ import javax.servlet.http.HttpServletRequest;
 public class HttpRequestToCreateTransactionRequestConverter {
 
 
-    public static CreateTransactionRequest convert(HttpServletRequest req, Account senderAccount, long recipientId, long amountATM, long feeATM,
-                                                   Attachment attachment, boolean broadcast,
-                                                   AccountService accountService) throws ParameterException {
+    public static CreateTransactionRequest convert(HttpServletRequest req, Account senderAccount, Account recipientAccount, long recipientId, long amountATM, long feeATM,
+                                                   Attachment attachment, boolean broadcast) throws ParameterException {
         String passphrase = Convert.emptyToNull(HttpParameterParserUtil.getPassphrase(req, false));
         String secretPhrase = HttpParameterParserUtil.getSecretPhrase(req, false);
         Boolean encryptedMessageIsPrunable = Boolean.valueOf(req.getParameter("encryptedMessageIsPrunable"));
         Boolean messageIsPrunable = Boolean.valueOf(req.getParameter("messageIsPrunable"));
         Boolean isPhased = Boolean.valueOf(req.getParameter("phased"));
-        Account recipient = null;
-
-        if (recipientId != 0) {
-            recipient = accountService.getAccount(recipientId);
-        }
 
         CreateTransactionRequest createTransactionRequest = CreateTransactionRequest.builder()
                 .broadcast(!"false".equalsIgnoreCase(req.getParameter("broadcast")) && broadcast && (secretPhrase != null || passphrase != null))
@@ -52,7 +46,7 @@ public class HttpRequestToCreateTransactionRequestConverter {
                 .attachment(attachment)
                 .encryptToSelfMessage(HttpParameterParserUtil.getEncryptToSelfMessage(req, senderAccount.getId()))
                 .encryptedMessageIsPrunable(encryptedMessageIsPrunable)
-                .appendix(HttpParameterParserUtil.getEncryptedMessage(req, recipient, senderAccount.getId(), encryptedMessageIsPrunable))
+                .appendix(HttpParameterParserUtil.getEncryptedMessage(req, recipientAccount, senderAccount.getId(), encryptedMessageIsPrunable))
                 .messageIsPrunable(messageIsPrunable)
                 .message(HttpParameterParserUtil.getPlainMessage(req, messageIsPrunable))
 
@@ -67,6 +61,15 @@ public class HttpRequestToCreateTransactionRequestConverter {
     public static CreateTransactionRequest convert(HttpServletRequest req, Account senderAccount, long recipientId, long amountATM,
                                                    Attachment attachment, boolean broadcast,
                                                    AccountService accountService) throws ParameterException {
-        return convert(req, senderAccount, recipientId, amountATM, HttpParameterParserUtil.getFeeATM(req), attachment, broadcast, accountService);
+        Account recipient = null;
+
+        if (recipientId != 0) {
+            recipient = accountService.getAccount(recipientId);
+        }
+        return convert(req, senderAccount, recipient, recipientId, amountATM, HttpParameterParserUtil.getFeeATM(req), attachment, broadcast);
+    }
+    public static CreateTransactionRequest convert(HttpServletRequest req, Account senderAccount, long recipientId, long amountATM,
+                                                   Attachment attachment, boolean broadcast, long feeATM) throws ParameterException {
+        return convert(req, senderAccount, null, recipientId, amountATM, feeATM, attachment, broadcast);
     }
 }

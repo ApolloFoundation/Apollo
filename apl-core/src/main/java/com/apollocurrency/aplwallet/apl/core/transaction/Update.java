@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.CriticalUpdate;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.ImportantUpdate;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.MinorUpdate;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.PlatformSpec;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateV2Attachment;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
@@ -182,6 +183,15 @@ public abstract class Update extends TransactionType {
             Version version = attachment.getReleaseVersion();
             if (version.getMinorVersion() > Short.MAX_VALUE || version.getIntermediateVersion() > Short.MAX_VALUE || version.getMajorVersion() > Short.MAX_VALUE) {
                 throw new AplException.NotValidException("Update version is too big! " + version);
+            }
+        }
+
+        @Override
+        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            super.applyAttachment(transaction, senderAccount, recipientAccount);
+            UpdateV2Attachment attachment = (UpdateV2Attachment) transaction.getAttachment();
+            if (attachment.getUpdateLevel() == Level.CRITICAL && attachment.getPlatforms().contains(PlatformSpec.current())) {
+                // TODO send message to supervisor
             }
         }
 

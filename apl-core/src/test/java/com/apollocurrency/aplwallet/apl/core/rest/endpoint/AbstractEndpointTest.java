@@ -1,8 +1,11 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
+import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.http.ElGamalEncryptor;
 import com.apollocurrency.aplwallet.apl.core.rest.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ClientErrorExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ConstraintViolationExceptionMapper;
@@ -33,13 +36,17 @@ public class AbstractEndpointTest {
     public static final int CODE_2FA = 123456;
     public static final String PASSPHRASE = "123456";
     public static final String SECRET = "SuperSecretPhrase"; //accountId=-3831750337430207973
+    public static final String PUBLIC_KEY_SECRET = "ce2466ca75ba9703be43f24a9d638e0cc5005b41df72383cbf85093233c17e21"; //accountId=-3831750337430207973
     public static final long ACCOUNT_ID_WITH_SECRET = -3831750337430207973L;
 
     static ObjectMapper mapper = new ObjectMapper();
     Dispatcher dispatcher;
 
     Blockchain blockchain = mock(Blockchain.class);
-    RestParametersParser restParametersParser = new RestParametersParser(blockchain);
+    ElGamalEncryptor elGamal = mock(ElGamalEncryptor.class);
+    AccountService accountService = mock(AccountService.class);
+    KeyStoreService keystoreService = mock(KeyStoreService.class);
+    RestParametersParser restParametersParser = new RestParametersParser(accountService, blockchain, keystoreService, elGamal);
 
     static{
         BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
@@ -84,7 +91,7 @@ public class AbstractEndpointTest {
     }
 
     MockHttpResponse sendPostRequest(MockHttpRequest request, String body) throws URISyntaxException{
-        request.accept(MediaType.TEXT_HTML);
+//        request.accept(MediaType.TEXT_HTML);
         request.contentType(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
         if (StringUtils.isNoneEmpty(body)) {
             request.content(body.getBytes());

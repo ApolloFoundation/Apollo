@@ -9,6 +9,9 @@ public class PlatformSpec {
     final Platform platform;
     final Architecture architecture;
 
+    public static PlatformSpec current() {
+        return new PlatformSpec(Platform.current(), Architecture.current());
+    }
 
 }
 
