@@ -10,7 +10,10 @@ import com.apollocurrency.aplwallet.apl.core.rest.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ClientErrorExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ConstraintViolationExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.DefaultGlobalExceptionMapper;
+import com.apollocurrency.aplwallet.apl.core.rest.exception.IllegalArgumentExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterExceptionMapper;
+import com.apollocurrency.aplwallet.apl.core.rest.validation.BlockchainHeightValidator;
+import com.apollocurrency.aplwallet.apl.core.rest.validation.CustomValidatorFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.jboss.resteasy.mock.MockDispatcherFactory;
@@ -18,6 +21,9 @@ import org.jboss.resteasy.mock.MockHttpRequest;
 import org.jboss.resteasy.mock.MockHttpResponse;
 import org.jboss.resteasy.spi.Dispatcher;
 
+import javax.validation.Validation;
+import javax.validation.Validator;
+import javax.validation.ValidatorFactory;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
@@ -43,6 +49,12 @@ public class AbstractEndpointTest {
     Dispatcher dispatcher;
 
     Blockchain blockchain = mock(Blockchain.class);
+    ValidatorFactory validatorFactory = Validation.byDefaultProvider()
+        .configure()
+        .constraintValidatorFactory( new CustomValidatorFactory(
+                       Map.of( BlockchainHeightValidator.class, new BlockchainHeightValidator(blockchain) )) )
+        .buildValidatorFactory();
+    Validator validator = validatorFactory.getValidator();
     ElGamalEncryptor elGamal = mock(ElGamalEncryptor.class);
     AccountService accountService = mock(AccountService.class);
     KeyStoreService keystoreService = mock(KeyStoreService.class);
@@ -60,6 +72,7 @@ public class AbstractEndpointTest {
             .register(DefaultGlobalExceptionMapper.class)
             .register(RestParameterExceptionMapper.class)
             .register(ConstraintViolationExceptionMapper.class)
+            .register(IllegalArgumentExceptionMapper.class)
             .register(ClientErrorExceptionMapper.class);
 
         doReturn(CURRENT_HEIGHT).when(blockchain).getHeight();
@@ -79,6 +92,7 @@ public class AbstractEndpointTest {
         MockHttpRequest request = get(uri);
         request.accept(MediaType.APPLICATION_JSON);
         request.contentType(MediaType.APPLICATION_JSON_TYPE);
+        request.setAttribute(Validator.class.getName(), validator);
 
         MockHttpResponse response = new MockHttpResponse();
 
@@ -93,6 +107,7 @@ public class AbstractEndpointTest {
     MockHttpResponse sendPostRequest(MockHttpRequest request, String body) throws URISyntaxException{
 //        request.accept(MediaType.TEXT_HTML);
         request.contentType(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
+        request.setAttribute(Validator.class.getName(), validator);
         if (StringUtils.isNoneEmpty(body)) {
             request.content(body.getBytes());
         }

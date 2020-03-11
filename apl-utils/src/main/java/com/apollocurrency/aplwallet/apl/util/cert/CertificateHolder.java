@@ -43,13 +43,19 @@ public class CertificateHolder {
     }
 
     public void readCertDirectory(String path, boolean loadPrivateKey) {
-        CertificateLoader cl = new CertificateLoader();
         File dir = new File(path);
         if (dir.exists() && dir.isDirectory()) {
             File[] filesList = dir.listFiles();
             for (File f : filesList) {
                 if (f.isFile() && f.canRead()) {
-                    ApolloCertificate vc = cl.loadCertificate(f.getAbsolutePath());
+                    ApolloCertificate vc=null;
+                    try {
+                        vc = ApolloCertificate.loadPEMFromPath(f.getAbsolutePath());
+                    } catch (IOException ex) {
+                        //impossible here
+                    } catch (ApolloCertificateException ex) {
+                        log.error("Certificate load exception wilr loading "+f.getAbsolutePath(), ex);
+                    }
                     if (vc != null) {
                         put(vc.getApolloId(), vc);
                         if (loadPrivateKey) {
@@ -81,8 +87,8 @@ public class CertificateHolder {
     public PrivateKey readPvtKey(String filePath) {
         KeyReader kr = new KeyReaderImpl();
         PrivateKey res = null;
-        try {
-            res = kr.readPrivateKeyPEM(new FileInputStream(filePath));
+        try (FileInputStream fis = new FileInputStream(filePath)){
+            res = kr.readPrivateKeyPEM(fis);
         } catch (IOException ex) {
             log.trace("Can not read private key: {}", filePath);
         }

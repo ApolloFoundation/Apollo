@@ -5,8 +5,8 @@ import io.firstbridge.cryptolib.KeyWriter;
 import io.firstbridge.cryptolib.impl.KeyReaderImpl;
 import io.firstbridge.cryptolib.impl.KeyWriterImpl;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -26,56 +26,64 @@ public class ApolloCertificate extends CertBase {
     private static final Logger log = LoggerFactory.getLogger(ApolloCertificate.class);
 
     private final X509Certificate certificate;
-    private final CertAttributes va  = new CertAttributes();
-
-    public static ApolloCertificate loadPEMFromPath(String path) throws FileNotFoundException, ApolloCertificateException {
-        KeyReader kr = new KeyReaderImpl();
-        X509Certificate cert = kr.readX509CertPEMorDER(new FileInputStream(path));
-        ApolloCertificate vc = new ApolloCertificate(cert);
-        vc.parseAttributes();
-        return vc;
+    private final CertAttributes cert_attr;
+    private final CertAttributes issuer_attr;
+    
+    public static ApolloCertificate loadPEMFromPath(String path) throws  ApolloCertificateException, IOException {
+        ApolloCertificate res = null;
+        try(FileInputStream fis = new FileInputStream(path)){
+           res = ApolloCertificate.loadPEMFromStream(fis);
+        }
+        return res;
     }
-
+    
+    public static ApolloCertificate loadPEMFromStream(InputStream is) throws IOException, ApolloCertificateException {
+        KeyReader kr = new KeyReaderImpl();
+        X509Certificate cert = kr.readX509CertPEMorDER(is);
+        ApolloCertificate ac = new ApolloCertificate(cert);
+        return ac;
+    }
+    
     public ApolloCertificate(X509Certificate certificate) throws ApolloCertificateException {
         if (certificate == null) {
             throw new ApolloCertificateException("Null certificate");
         }
         this.certificate = certificate;
-        parseAttributes();
         pubKey = certificate.getPublicKey();
+        cert_attr = new CertAttributes();
+        issuer_attr = new CertAttributes();
+        cert_attr.setSubjectStr(certificate.getSubjectX500Principal().toString());
+        issuer_attr.setSubjectStr(certificate.getIssuerX500Principal().toString());
     }
 
-    public final void parseAttributes() throws ApolloCertificateException {
-        va.setSubjectStr(certificate.getSubjectX500Principal().toString());
-    }
 
     public BigInteger getApolloId() {
-        return va.getApolloId();
+        return cert_attr.getApolloId();
     }
 
     public AuthorityID getAuthorityId() {
-        return va.getAuthorityId();
+        return cert_attr.getAuthorityId();
     }
 
 
     public String getCN() {
-        return va.getCn();
+        return cert_attr.getCn();
     }
 
     public String getOrganization() {
-        return va.getO();
+        return cert_attr.getO();
     }
 
     public String getOrganizationUnit() {
-        return va.getOu();
+        return cert_attr.getOu();
     }
 
     public String getCountry() {
-        return va.getCountry();
+        return cert_attr.getCountry();
     }
 
     public String getCity() {
-        return va.getCity();
+        return cert_attr.getCity();
     }
 
     public String getCertificatePurpose() {
@@ -84,8 +92,7 @@ public class ApolloCertificate extends CertBase {
     }
 
     public List<String> getIPAddresses() {
-        return null;
-        //TODO: imiplement
+        return cert_attr.IpAddresses();
     }
 
     public List<String> getDNSNames() {
@@ -98,7 +105,7 @@ public class ApolloCertificate extends CertBase {
     }
 
     public String getEmail() {
-        return null;
+        return cert_attr.geteMail();
     }
 
     public String fromList(List<String> sl) {
@@ -120,11 +127,11 @@ public class ApolloCertificate extends CertBase {
         }
         return res;
     }
-
+    
     @Override
     public String toString() {
         String res = "Apollo X.509 Certificate:\n";
-        res += "CN=" + va.getCn() + "\n"
+        res += "CN=" + cert_attr.getCn() + "\n"
                 + "ApolloID=" + getApolloId().toString(16) + "\n";
 
         res += "emailAddress=" + getEmail() + "\n";
@@ -164,5 +171,15 @@ public class ApolloCertificate extends CertBase {
 
     public BigInteger getSerial() {
         return certificate.getSerialNumber();
+    }
+    
+    public CertAttributes getIssuerAttrinutes(){
+        return issuer_attr;
+    }
+    
+    public boolean verify(){
+        boolean res = true;
+        //TODO: implement
+        return res;
     }
 }

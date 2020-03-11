@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactor
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
+import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -97,10 +98,12 @@ public abstract class AbstractMigrationExecutorTest {
         executor.performMigration(destDir.toPath());
         OptionDAO optionDAO = new OptionDAO(databaseManager);
         Assertions.assertFalse(Boolean.parseBoolean(optionDAO.get(migrationProp)));
-        Assertions.assertEquals(2, Files.list(destDir.toPath()).count());
-        List<Path> paths = Files.list(folder.getRoot().toPath()).filter(Files::exists).collect(Collectors.toList());
-        Assertions.assertEquals(1, paths.size());
-        Assertions.assertEquals(destDir.toPath(), paths.get(0));
+        Assertions.assertEquals(2, FileUtils.countElementsOfDirectory(destDir.toPath()));
+        try (Stream<Path> streem = Files.list(folder.getRoot().toPath())) {
+            List<Path> paths = streem.filter(Files::exists).collect(Collectors.toList());
+            Assertions.assertEquals(1, paths.size());
+            Assertions.assertEquals(destDir.toPath(), paths.get(0));
+        }
     }
 
     @Test
@@ -119,10 +122,12 @@ public abstract class AbstractMigrationExecutorTest {
         executor.performMigration(destDir.toPath());
         OptionDAO optionDAO = new OptionDAO(databaseManager);
         Assertions.assertFalse(Boolean.parseBoolean(optionDAO.get(migrationProp)));
-        Assertions.assertEquals(2, Files.list(destDir.toPath()).count());
-        List<Path> paths = Files.list(folder.getRoot().toPath()).collect(Collectors.toList());
-        Assertions.assertEquals(1, paths.size());
-        Assertions.assertEquals(destDir.toPath(), paths.get(0));
+        Assertions.assertEquals(2, FileUtils.countElementsOfDirectory(destDir.toPath()));
+        try (Stream<Path> stream = Files.list(folder.getRoot().toPath())) {
+            List<Path> paths = stream.collect(Collectors.toList());
+            Assertions.assertEquals(1, paths.size());
+            Assertions.assertEquals(destDir.toPath(), paths.get(0));
+        }
     }
 
     @Test
@@ -140,12 +145,14 @@ public abstract class AbstractMigrationExecutorTest {
         executor.performMigration(destDir.toPath());
         OptionDAO optionDAO = new OptionDAO(databaseManager);
         Assertions.assertFalse(Boolean.parseBoolean(optionDAO.get(migrationProp)));
-        Assertions.assertEquals(2, Files.list(destDir.toPath()).count());
+        Assertions.assertEquals(2, FileUtils.countElementsOfDirectory(destDir.toPath()));
         List<Path> paths = Files.list(srcFolder.toPath()).collect(Collectors.toList());
         Assertions.assertEquals(paths.size(), 1);
-        paths = Files.list(folder.getRoot().toPath()).collect(Collectors.toList());
-        Assertions.assertEquals(paths.size(), 1);
-        Assertions.assertEquals(paths.get(0), srcFolder.toPath());
+        try (Stream<Path> stream = Files.list(folder.getRoot().toPath())) {
+            paths = stream.collect(Collectors.toList());
+            Assertions.assertEquals(paths.size(), 1);
+            Assertions.assertEquals(paths.get(0), srcFolder.toPath());
+        }
     }
 
 
@@ -164,8 +171,8 @@ public abstract class AbstractMigrationExecutorTest {
         executor.performMigration(destDir.toPath());
         OptionDAO optionDAO = new OptionDAO(databaseManager);
         Assertions.assertFalse(Boolean.parseBoolean(optionDAO.get(migrationProp)));
-        Assertions.assertEquals(2, Files.list(destDir.toPath()).count());
-        Assertions.assertEquals(2, Files.list(srcFolder.toPath()).count());
+        Assertions.assertEquals(2, FileUtils.countElementsOfDirectory(destDir.toPath()));
+        Assertions.assertEquals(2, FileUtils.countElementsOfDirectory(srcFolder.toPath()));
         Stream<Path> paths = Files.list(folder.getRoot().toPath());
         Set<Path> expected = new HashSet<>();
         expected.add(destDir.toPath());
@@ -184,12 +191,13 @@ public abstract class AbstractMigrationExecutorTest {
         executor.performMigration(destDir.toPath());
         OptionDAO optionDAO = new OptionDAO(databaseManager);
         Assertions.assertFalse(Boolean.parseBoolean(optionDAO.get(migrationProp)));
-        Assertions.assertEquals(0, Files.list(destDir.toPath()).count());
-        Assertions.assertEquals(0, Files.list(srcFolder.toPath()).count());
-        Stream<Path> paths = Files.list(folder.getRoot().toPath());
-        Set<Path> expected = new HashSet<>();
-        expected.add(destDir.toPath());
-        expected.add(srcFolder.toPath());
-        Assertions.assertEquals(expected, paths.collect(Collectors.toSet()));
+        Assertions.assertEquals(0, FileUtils.countElementsOfDirectory(destDir.toPath()));
+        Assertions.assertEquals(0, FileUtils.countElementsOfDirectory(srcFolder.toPath()));
+        try (Stream<Path> paths = Files.list(folder.getRoot().toPath())) {
+            Set<Path> expected = new HashSet<>();
+            expected.add(destDir.toPath());
+            expected.add(srcFolder.toPath());
+            Assertions.assertEquals(expected, paths.collect(Collectors.toSet()));
+        }
     }
 }

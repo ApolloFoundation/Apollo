@@ -44,11 +44,11 @@
         },
         "shardingSettings": {
           "enabled": true,
-          "frequency": 500000
+          "frequency": 50000
         }
       },
       {
-        "height": 70000,
+        "height": 50000,
         "maxNumberOfTransactions": 255,
         "blockTime": 2,
         "maxBlockTimeLimit": 3,
