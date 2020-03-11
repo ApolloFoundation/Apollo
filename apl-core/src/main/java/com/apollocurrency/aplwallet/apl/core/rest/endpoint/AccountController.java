@@ -513,7 +513,7 @@ public class AccountController {
                 accountCurrencyDTOList.forEach(dto -> accountCurrencyConverter
                         .addCurrency(dto,
                                 Currency.getCurrency(
-                                        Long.parseLong(dto.getCurrency()))));
+                                        Convert.parseLong(dto.getCurrency()))));
             }
 
             return response.bind(new AccountCurrencyResponse(accountCurrencyDTOList)).build();
