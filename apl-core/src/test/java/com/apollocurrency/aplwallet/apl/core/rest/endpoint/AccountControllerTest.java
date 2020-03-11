@@ -437,10 +437,10 @@ class AccountControllerTest extends AbstractEndpointTest{
     }
 
     @Test
-    void getAccountAssets_whenCallwithWrongAsset_thenGetError_2012() throws URISyntaxException, IOException {
+    void getAccountAssets_whenCallwithWrongAsset_thenGetError_2001() throws URISyntaxException, IOException {
         MockHttpResponse response = sendGetRequest("/accounts/assets?account="+ACCOUNT_ID+"&asset=AS123&height="+(CURRENT_HEIGHT+10));
 
-        checkMandatoryParameterMissingErrorCode(response, 2012);
+        checkMandatoryParameterMissingErrorCode(response, 2001);
     }
 
     @Test
@@ -527,10 +527,10 @@ class AccountControllerTest extends AbstractEndpointTest{
     }
 
     @Test
-    void getAccountCurrencies_whenCallwithWrongCurrencyId_thenGetError_2012() throws URISyntaxException, IOException {
+    void getAccountCurrencies_whenCallwithWrongCurrencyId_thenGetError_2001() throws URISyntaxException, IOException {
         MockHttpResponse response = sendGetRequest("/accounts/currencies?account="+ACCOUNT_ID+"&currency=AS123&height="+(CURRENT_HEIGHT+10));
 
-        checkMandatoryParameterMissingErrorCode(response, 2012);
+        checkMandatoryParameterMissingErrorCode(response, 2001);
         NotFoundException exception;
     }
 

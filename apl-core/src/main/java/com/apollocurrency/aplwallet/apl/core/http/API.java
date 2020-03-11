@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ClientErrorExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ConstraintViolationExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.DefaultGlobalExceptionMapper;
+import com.apollocurrency.aplwallet.apl.core.rest.exception.IllegalArgumentExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.LegacyParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterExceptionMapper;
@@ -295,6 +296,7 @@ public final class API {
                             .add(RestParameterExceptionMapper.class.getName())
                             .add(DefaultGlobalExceptionMapper.class.getName())
                             .add(CharsetRequestFilter.class.getName())
+                            .add(IllegalArgumentExceptionMapper.class.getName())
                             .toString()
             );
 
