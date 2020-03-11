@@ -130,7 +130,8 @@ public class ShardDownloadPresenceObserver {
      */
     public void onNoShardPresent(@Observes @ShardPresentEvent(ShardPresentEventType.NO_SHARD) ShardPresentData shardPresentData) {
         // start adding old Genesis Data
-            try {
+        log.trace("Catch event NO_SHARD {}", shardPresentData);
+        try {
                 log.info("Genesis block not in database, starting from scratch");
                 TransactionalDataSource dataSource = databaseManager.getDataSource();
                 if (!dataSource.isInTransaction()) {

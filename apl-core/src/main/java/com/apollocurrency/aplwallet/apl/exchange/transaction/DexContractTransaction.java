@@ -1,7 +1,7 @@
 package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
@@ -236,6 +236,6 @@ public class DexContractTransaction extends DEX {
                 .filter(c -> !c.getOrderId().equals(contract.getOrderId()))
                 .collect(Collectors.toList());
 
-        dexService.closeContracts(contractsForReopen);
+        dexService.closeContractsReopenOrders(contractsForReopen);
     }
 }

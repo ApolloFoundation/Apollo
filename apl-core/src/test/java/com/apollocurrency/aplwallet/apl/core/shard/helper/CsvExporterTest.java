@@ -4,16 +4,19 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
-import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
-import com.apollocurrency.aplwallet.apl.core.account.AccountInfoTable;
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedgerTable;
-import com.apollocurrency.aplwallet.apl.core.account.AccountTable;
-import com.apollocurrency.aplwallet.apl.core.account.GenesisPublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
-import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountAssetTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountCurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountInfoTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountLedgerTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.GenesisPublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.PublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -114,6 +117,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -189,7 +193,7 @@ class CsvExporterTest {
             PhasingPollResultTable.class,
             PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class,
             PhasingVoteTable.class, PhasingPollTable.class,
-            AccountTable.class, AccountLedgerTable.class, DGSPurchaseTable.class,
+            AccountLedgerTable.class, DGSPurchaseTable.class,
             DerivedDbTablesRegistryImpl.class,
             TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
             DexOrderTable.class,
@@ -209,6 +213,9 @@ class CsvExporterTest {
 //            .addBeans(MockBean.of(ftlService, FullTextSearchService.class)) // prod data test
             .addBeans(MockBean.of(keyStore, KeyStoreService.class))
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
+            .addBeans(MockBean.of(mock(AccountService.class), AccountServiceImpl.class, AccountService.class))
+            .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyServiceImpl.class, AccountPublicKeyService.class))
+            .addBeans(MockBean.of(mock(AccountTable.class), AccountTable.class))
             .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
             .build();
     @Inject
@@ -261,15 +268,18 @@ class CsvExporterTest {
         doReturn(chain).when(blockchainConfig).getChain();
         doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(chain).getChainId();
         // init several derived tables
-        AccountCurrencyTable.getInstance().init();
-        Account.init(extension.getDatabaseManager(),null, null, blockchain, null, accountTable, accountGuaranteedBalanceTable,null);
-        AccountInfoTable.getInstance().init();
+        AccountCurrencyTable accountCurrencyTable = new AccountCurrencyTable();
+        accountCurrencyTable.init();
+        //Account.init(extension.getDatabaseManager(), propertiesHolder, null, null, blockchain, null, null, accountTable, null);
+        AccountInfoTable accountInfoTable = new AccountInfoTable();
+        accountInfoTable.init();
         Alias.init();
         PhasingOnly.get(7995581942006468815L); // works OK!
         PhasingOnly.get(2728325718715804811L); // check 1
         PhasingOnly.get(-8446384352342482748L); // check 2
         PhasingOnly.get(-4013722529644937202L); // works OK!
-        AccountAssetTable.getInstance().init();
+        AccountAssetTable accountAssetTable = new AccountAssetTable();
+        accountAssetTable.init();
         PublicKeyTable publicKeyTable = new PublicKeyTable(blockchain);
         publicKeyTable.init();
         DexContractTable dexContractTable = new DexContractTable();
@@ -472,8 +482,10 @@ class CsvExporterTest {
 
         Path shardExportedFile = dataExportPath.resolve("shard.csv");
         assertEquals(2, exportedRows);
-        long exportedFiles = Files.list(dataExportPath).count();
-        assertEquals(1, exportedFiles);
+
+        try(Stream<Path> pathStream = Files.list(dataExportPath)){
+            assertEquals(1, pathStream.count());
+        }
         assertTrue(Files.exists(shardExportedFile));
 
         List<String> lines = Files.readAllLines(shardExportedFile);
@@ -490,8 +502,7 @@ class CsvExporterTest {
         assertEquals(0, exportedRows);
 
         Path shardExportedFile = dataExportPath.resolve("shard.csv");
-        long exportedFiles = Files.list(dataExportPath).count();
-        assertEquals(0, exportedFiles);
+        assertEquals(0, com.apollocurrency.aplwallet.apl.util.FileUtils.countElementsOfDirectory(dataExportPath));
         assertFalse(Files.exists(shardExportedFile));
     }
 
@@ -501,8 +512,9 @@ class CsvExporterTest {
         assertEquals(1, exportedRows);
 
         Path shardExportedFile = dataExportPath.resolve("shard.csv");
-        long exportedFiles = Files.list(dataExportPath).count();
-        assertEquals(1, exportedFiles);
+        try(Stream<Path> pathStream = Files.list(dataExportPath)){
+            assertEquals(1, pathStream.count());
+        }
         assertTrue(Files.exists(shardExportedFile));
 
         List<String> lines = Files.readAllLines(shardExportedFile);

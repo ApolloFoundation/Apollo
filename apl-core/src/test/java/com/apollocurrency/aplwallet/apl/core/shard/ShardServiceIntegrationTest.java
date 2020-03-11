@@ -27,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.ZipImpl;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
@@ -153,8 +154,7 @@ public class ShardServiceIntegrationTest {
         assertTrue(reset);
         assertThrows(IllegalStateException.class, () -> databaseManager.getDataSource().commit()); //previous datasource was closed
         assertThrows(SQLException.class, shardDatasource::getConnection); //shard datasource was closed
-        List<Path> files = Files.list(dbDir).collect(Collectors.toList());
-        assertEquals(4, files.size());
+        assertEquals(4, FileUtils.countElementsOfDirectory(dbDir));
         Files.exists(zipPath);
         Files.exists(backupDir);
         Files.exists(dbDir.resolve(Constants.APPLICATION_DIR_NAME + DbProperties.DB_EXTENSION_WITH_DOT));

@@ -11,6 +11,6 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class EthDepositsWithOffset {
-    private List<UserEthDepositInfo> deposits = new ArrayList<>();
+    private List<EthDepositInfo> deposits = new ArrayList<>();
     private long offset;
 }

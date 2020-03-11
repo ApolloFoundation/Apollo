@@ -20,7 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventBinding;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
@@ -149,6 +150,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 //    private final Listeners<Block, Event> blockListeners = new Listeners<>();
     private volatile Peer lastBlockchainFeeder;
     private final javax.enterprise.event.Event<Block> blockEvent;
+    private final javax.enterprise.event.Event<AccountLedgerEventType> ledgerEvent;
     private final javax.enterprise.event.Event<List<Transaction>> txEvent;
     private final javax.enterprise.event.Event<BlockchainConfig> blockchainEvent;
     private final GlobalSync globalSync;
@@ -298,7 +300,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     @Inject
-    public BlockchainProcessorImpl(BlockValidator validator, Event<Block> blockEvent,
+    public BlockchainProcessorImpl(BlockValidator validator, Event<Block> blockEvent, Event<AccountLedgerEventType> ledgerEvent,
                                    GlobalSync globalSync, DerivedTablesRegistry dbTables,
                                    ReferencedTransactionService referencedTransactionService, PhasingPollService phasingPollService,
                                    TransactionValidator transactionValidator,
@@ -312,6 +314,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    ShardDao shardDao) {
         this.validator = validator;
         this.blockEvent = blockEvent;
+        this.ledgerEvent = ledgerEvent;
         this.globalSync = globalSync;
         this.dbTables = dbTables;
         this.trimService = trimService;
@@ -1037,9 +1040,17 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 //                }
             });
             log.trace(":accept: dex service block.");
+
             try {
                 dexService.closeOverdueOrders(block.getTimestamp());
-                dexService.closeExpiredContracts(block.getTimestamp());
+
+                if (blockchainConfig.getDexExpiredContractWithFinishedPhasingHeightAndStep3() != null && block.getHeight() > blockchainConfig.getDexExpiredContractWithFinishedPhasingHeightAndStep3()) {
+                    dexService.closeExpiredContractsStep1_2_3(block.getTimestamp());
+                } else {
+                    dexService.closeExpiredContractsStep1_2(block.getTimestamp());
+                }
+
+
                 if (blockchainConfig.getDexPendingOrdersReopeningHeight() != null && block.getHeight() >= blockchainConfig.getDexPendingOrdersReopeningHeight()) {
                     dexService.reopenPendingOrders(block.getHeight(), block.getTimestamp());
                 }
@@ -1053,12 +1064,13 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             if (block.getOrLoadTransactions().size() > 0) {
                 txEvent.select(TxEventType.literal(TxEventType.ADDED_CONFIRMED_TRANSACTIONS)).fire(block.getOrLoadTransactions());
             }
-            log.trace(":accept: Account ledger commit.");
-            AccountLedger.commitEntries();
+            log.trace(":accept: Fire event COMMIT_ENTRIES");
+            ledgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.COMMIT_ENTRIES)).fire(AccountLedgerEventType.COMMIT_ENTRIES);
             log.trace(":accept: that's it.");
         } finally {
             isProcessingBlock = false;
-            AccountLedger.clearEntries();
+            log.trace("Fire event CLEAR_ENTRIES");
+            ledgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.CLEAR_ENTRIES)).fire(AccountLedgerEventType.CLEAR_ENTRIES);
             log.trace("Accepting block DONE: {} height: {} processing time ms: {}", block.getId(), block.getHeight(), System.currentTimeMillis() - start);
         }
     }
@@ -1141,11 +1153,16 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }
             long rollbackStartTime = System.currentTimeMillis();
             log.debug("Start rollback for tables=[{}]", dbTables.getDerivedTables().size());
+            if (log.isTraceEnabled()){
+                log.trace("popOffToInTransaction rollback: {}", dbTables.toString());
+            }
             for (DerivedTableInterface table : dbTables.getDerivedTables()) {
                 long start = System.currentTimeMillis();
                 table.rollback(commonBlockHeight);
-                log.trace("rollback for table={} to commonBlockHeight={} in {} ms", table.getName(),
+                if (log.isTraceEnabled()) {
+                    log.trace("rollback for table={} to commonBlockHeight={} in {} ms", table.getName(),
                         commonBlockHeight, System.currentTimeMillis() - start);
+                }
             }
             log.debug("Total rollback time: {} ms", System.currentTimeMillis() - rollbackStartTime);
             dataSource.commit(false); // should happen definitely otherwise

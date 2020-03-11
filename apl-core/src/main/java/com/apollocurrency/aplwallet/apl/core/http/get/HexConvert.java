@@ -30,6 +30,7 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Deprecated
 @Vetoed
 public final class HexConvert extends AbstractAPIRequestHandler {
 

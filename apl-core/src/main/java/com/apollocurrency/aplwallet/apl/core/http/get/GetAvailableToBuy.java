@@ -25,7 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
@@ -41,8 +41,8 @@ public final class GetAvailableToBuy extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
-        long currencyId = ParameterParser.getUnsignedLong(req, "currency", true);
-        long units = ParameterParser.getLong(req, "units", 1L, Long.MAX_VALUE, true);
+        long currencyId = HttpParameterParserUtil.getUnsignedLong(req, "currency", true);
+        long units = HttpParameterParserUtil.getLong(req, "units", 1L, Long.MAX_VALUE, true);
         CurrencyExchangeOffer.AvailableOffers availableOffers = CurrencyExchangeOffer.getAvailableToBuy(currencyId, units);
         return JSONData.availableOffers(availableOffers);
     }

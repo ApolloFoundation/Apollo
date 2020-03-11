@@ -4,9 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.message;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.PublicKeyService;
-import com.apollocurrency.aplwallet.apl.core.account.PublicKeyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -15,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.PublicKeyTableProducer;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.db.service.BlockChainInfoServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
@@ -30,7 +30,6 @@ import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -60,8 +59,9 @@ class PrunableMessageServiceTest {
             NtpTime.class,
             BlockchainConfig.class,
             PropertiesHolder.class,
-            PublicKeyServiceImpl.class,
-            PublicKeyTableProducer.class
+            AccountPublicKeyServiceImpl.class,
+            PublicKeyTableProducer.class,
+            BlockChainInfoServiceImpl.class, AccountPublicKeyServiceImpl.class
     )
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(blockchain, Blockchain.class))
@@ -71,15 +71,9 @@ class PrunableMessageServiceTest {
     @Inject
     PrunableMessageService service;
     @Inject
-    PublicKeyService publicKeyService;
+    AccountPublicKeyService accountPublicKeyService;
 
     PrunableMessageTestData data = new PrunableMessageTestData();
-
-    @BeforeEach
-    void setUp() {
-        Account.init(extension.getDatabaseManager(), null,
-            null, blockchain, null, null, null, publicKeyService);
-    }
 
     @Test
     void testGetCount() {

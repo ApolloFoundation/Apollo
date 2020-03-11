@@ -4,13 +4,16 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
@@ -53,20 +56,26 @@ class DexTransferMoneyTransactionTest {
             ExchangeContractStatus.STEP_3, new byte[32], null, null,
             new byte[32], 7200, 1, false);
     DexService dexService = mock(DexService.class);
+
+    private AccountService accountService = mock(AccountService.class);
+
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from()
             .addBeans(
                     MockBean.of(mock(DexConfig.class), DexConfig.class),
                     MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class),
                     MockBean.of(mock(BlockchainImpl.class), Blockchain.class, BlockchainImpl.class),
+                    MockBean.of(mock(PhasingPollService.class), PhasingPollService.class),
                     MockBean.of(dexService, DexService.class),
-                    MockBean.of(mock(TimeService.class), TimeService.class)
+                    MockBean.of(mock(TimeService.class), TimeService.class),
+                    MockBean.of(accountService, AccountService.class, AccountServiceImpl.class)
             ).build();
 
     DexTransferMoneyTransaction transactionType;
     @BeforeEach
     void setUp() {
         transactionType = new DexTransferMoneyTransaction();
+        transactionType.lookupAccountService();
     }
 
     @Test
@@ -118,33 +127,33 @@ class DexTransferMoneyTransactionTest {
     void testValidateAttachment() throws AplException.ValidationException {
         Transaction tx = mock(Transaction.class);
         doReturn(attachment).when(tx).getAttachment();
-        assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx)); // no contract
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx)); // no contract
 
         doReturn(contract).when(dexService).getDexContractById(anyLong());
-        assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
 
         doReturn(1000L).when(tx).getSenderId();
-        assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
 
         doReturn(2000L).when(tx).getSenderId();
         doReturn(1000L).when(tx).getRecipientId();
-        assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
 
         contract.setCounterTransferTxId("100");
-        assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
 
         doReturn(100L).when(tx).getId();
-        assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
 
         DexOrder offer = new DexOrder(300L, 0L, "", "", OrderType.SELL, OrderStatus.OPEN, DexCurrency.APL, 100L, DexCurrency.PAX, BigDecimal.ONE, 500);
         doReturn(offer).when(dexService).getOrder(200L);
-        assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
 
         offer.setAccountId(1000L);
-        assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
 
         offer.setStatus(OrderStatus.WAITING_APPROVAL);
-        assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
 
         offer.setType(OrderType.BUY);
         transactionType.validateAttachment(tx);
@@ -172,8 +181,8 @@ class DexTransferMoneyTransactionTest {
 
         transactionType.applyAttachment(tx, sender, recipient);
 
-        verify(sender).addToBalanceATM(LedgerEvent.DEX_TRANSFER_MONEY, 0, -100);
-        verify(recipient).addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.DEX_TRANSFER_MONEY, 0, 100);
+        verify(transactionType.lookupAccountService()).addToBalanceATM(sender, LedgerEvent.DEX_TRANSFER_MONEY, 0, -100);
+        verify(transactionType.lookupAccountService()).addToBalanceAndUnconfirmedBalanceATM(recipient, LedgerEvent.DEX_TRANSFER_MONEY, 0, 100);
         verify(dexService).closeOrder( 300);
     }
 
@@ -189,8 +198,8 @@ class DexTransferMoneyTransactionTest {
 
         transactionType.applyAttachment(tx, sender, recipient);
 
-        verify(sender).addToBalanceATM(LedgerEvent.DEX_TRANSFER_MONEY, 0, -100);
-        verify(recipient).addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.DEX_TRANSFER_MONEY, 0, 100);
+        verify(transactionType.lookupAccountService()).addToBalanceATM(sender, LedgerEvent.DEX_TRANSFER_MONEY, 0, -100);
+        verify(transactionType.lookupAccountService()).addToBalanceAndUnconfirmedBalanceATM(recipient, LedgerEvent.DEX_TRANSFER_MONEY, 0, 100);
         verify(dexService).closeOrder( 200);
     }
 

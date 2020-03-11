@@ -21,14 +21,15 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
+import javax.inject.Singleton;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
@@ -40,6 +41,7 @@ import java.util.List;
  *
  * @author alukin@gmail.com
  */
+@Singleton
 @Path("/control")
 public class NodeControlController {
     private static final Logger log = LoggerFactory.getLogger(NodeControlController.class);
@@ -56,7 +58,7 @@ public class NodeControlController {
 
 
     public NodeControlController() {
-       log.debug("Empty BackendControlEndpoint created"); 
+       log.debug("Empty BackendControlEndpoint created");
     }
 
     @Inject
@@ -65,7 +67,7 @@ public class NodeControlController {
         this.cacheManager = cacheManager;
         this.statsConverter = statsConverter;
     }
-    
+
     @Path("/status")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -79,13 +81,14 @@ public class NodeControlController {
                                     schema = @Schema(implementation = NodeStatusResponse.class)))
             }
     )
+    @PermitAll
     public Response getBackendStatus(@QueryParam("status") @DefaultValue("All") String state) {
         NodeStatusResponse statusResponse = new NodeStatusResponse();
         statusResponse.nodeInfo = bcService.getNodeStatus();
         statusResponse.tasks = bcService.getNodeTasks(state);
         return Response.status(Response.Status.OK).entity(statusResponse).build();
     }
-    
+
     @Path("/threads")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -98,14 +101,10 @@ public class NodeControlController {
                                     schema = @Schema(implementation = RunningThreadsInfo.class)))
             }
     )
-    public Response getBackendThreads(@Context HttpServletRequest request, @QueryParam("adminPassword") String password) {
-        boolean passwordOK = bcService.isAdminPasswordOK(request);
-        if(passwordOK){
-            RunningThreadsInfo threadsResponse=bcService.getThreadsInfo();
-            return Response.status(Response.Status.OK).entity(threadsResponse).build();
-        }else{
-            return Response.status(Response.Status.UNAUTHORIZED).build();
-        }
+    @RolesAllowed("admin")
+    public Response getBackendThreads(@QueryParam("adminPassword") @DefaultValue("") String adminPassword) {
+        RunningThreadsInfo threadsResponse=bcService.getThreadsInfo();
+        return Response.status(Response.Status.OK).entity(threadsResponse).build();
     }
 
     @Path("/health")
@@ -121,19 +120,15 @@ public class NodeControlController {
                                     schema = @Schema(implementation = ApolloX509Response.class)))
             }
     )
-    public Response getHealthInfo(@Context HttpServletRequest request, @QueryParam("adminPassword") String password) {
-        boolean passwordOK = bcService.isAdminPasswordOK(request);
-        if (passwordOK) {
-            NodeHealthResponse infoResponse = new NodeHealthResponse();
-            infoResponse.healthInfo = bcService.getNodeHealth();
-            infoResponse.statusInfo = bcService.getNodeStatus();
-            infoResponse.networkingInfo = bcService.getNetworkingInfo();
-            infoResponse.healthInfo.needReboot = !infoResponse.healthInfo.dbOK
-                    || (infoResponse.networkingInfo.inboundPeers == 0 && infoResponse.networkingInfo.outboundPeers == 0);
-            return Response.status(Response.Status.OK).entity(infoResponse).build();
-        } else {
-            return Response.status(Response.Status.UNAUTHORIZED).build();
-        }
+    @RolesAllowed("admin")
+    public Response getHealthInfo(@QueryParam("adminPassword") @DefaultValue("") String adminPassword) {
+        NodeHealthResponse infoResponse = new NodeHealthResponse();
+        infoResponse.healthInfo = bcService.getNodeHealth();
+        infoResponse.statusInfo = bcService.getNodeStatus();
+        infoResponse.networkingInfo = bcService.getNetworkingInfo();
+        infoResponse.healthInfo.needReboot = !infoResponse.healthInfo.dbOK
+                    || (infoResponse.networkingInfo.inboundPeers==0 && infoResponse.networkingInfo.outboundPeers==0);
+        return Response.status(Response.Status.OK).entity(infoResponse).build();
     }
 
     @Path("/cache")

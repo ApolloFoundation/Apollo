@@ -14,12 +14,15 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class DbUtils {
+
     public static void inTransaction(DbExtension extension, Consumer<Connection> consumer) {
         inTransaction(extension.getDatabaseManager(), consumer);
     }
+
     public static void inTransaction(DatabaseManager manager, Consumer<Connection> consumer) {
         inTransaction(manager.getDataSource(), consumer);
     }
+
     public static void inTransaction(TransactionalDataSource dataSource, Consumer<Connection> consumer) {
         try (Connection con = dataSource.begin()) { // start new transaction
             consumer.accept(con);
@@ -30,8 +33,6 @@ public class DbUtils {
             throw new RuntimeException(e);
         }
     }
-
-
 
     public static<T> T getInTransaction(DbExtension extension, Function<Connection, T> function) {
         TransactionalDataSource dataSource = extension.getDatabaseManager().getDataSource();

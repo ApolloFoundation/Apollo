@@ -94,22 +94,24 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
     }
 
     @Override
-    public void rollback(int height) {
+    public int rollback(int height) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
+        int rc;
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM " + table + " WHERE height > ?")) {
             pstmtDelete.setInt(1, height);
-            pstmtDelete.executeUpdate();
+            rc = pstmtDelete.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
+        return rc;
     }
 
     @Override
-    public boolean delete(T t) {
+    public boolean deleteAtHeight(T t, int height) {
         throw new UnsupportedOperationException("Delete is not supported");
     }
 
@@ -140,6 +142,13 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
 
     public  DatabaseManager getDatabaseManager() {
         return databaseManager;
+    }
+
+    /**
+     * @see TransactionalDataSource#isInTransaction()
+     */
+    public boolean isInTransaction(){
+        return databaseManager.getDataSource().isInTransaction();
     }
 
     /**
