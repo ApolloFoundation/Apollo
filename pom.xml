@@ -80,7 +80,7 @@
 
     <!--Crypto-->
 
-    <fbcrypto.version>1.2.10</fbcrypto.version>
+    <fbcrypto.version>1.2.11</fbcrypto.version>
     <bcprov.version>1.64</bcprov.version>
 
 

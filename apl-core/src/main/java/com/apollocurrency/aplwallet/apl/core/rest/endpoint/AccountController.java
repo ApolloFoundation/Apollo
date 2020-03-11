@@ -48,6 +48,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountCurrencyConve
 import com.apollocurrency.aplwallet.apl.core.rest.converter.WalletKeysConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FA;
 import com.apollocurrency.aplwallet.apl.core.rest.parameter.AccountIdParameter;
+import com.apollocurrency.aplwallet.apl.core.rest.parameter.LongParameter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.OrderService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.FirstLastIndexParser;
@@ -307,7 +308,7 @@ public class AccountController {
             @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
             @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
             @Parameter(description = "The asset ID (optional).")
-            @QueryParam("asset") @PositiveOrZero Long assetId,
+            @QueryParam("asset") LongParameter assetId,
             @Parameter(description = "The height of the blockchain to determine the asset count (optional, default is last block).")
             @QueryParam("height") @DefaultValue("-1") @ValidBlockchainHeight int height,
             @Parameter(description = "Include asset information (optional).")
@@ -323,7 +324,7 @@ public class AccountController {
 
         FirstLastIndexParser.FirstLastIndex flIndex = indexParser.adjustIndexes(firstIndex, lastIndex);
 
-        if (assetId == null || assetId == 0) {
+        if (assetId == null || assetId.get() == 0) {
             List<AccountAsset> accountAssets = accountAssetService.getAssetsByAccount(accountId, height,
                                                                                         flIndex.getFirstIndex(),
                                                                                         flIndex.getLastIndex());
@@ -334,13 +335,17 @@ public class AccountController {
 
             return response.bind(new AccountAssetsResponse(accountAssetDTOList)).build();
         }else{
-            AccountAsset accountAsset = accountAssetService.getAsset(accountId, assetId, height);
+            AccountAsset accountAsset = accountAssetService.getAsset(accountId, assetId.get(), height);
             AccountAssetDTO dto = accountAssetConverter.convert(accountAsset);
-            if(includeAssetInfo){
-                accountAssetConverter.addAsset(dto, Asset.getAsset(assetId));
-            }
+            if(dto != null) {
+                if (includeAssetInfo) {
+                    accountAssetConverter.addAsset(dto, Asset.getAsset(assetId.get()));
+                }
 
-            return response.bind(dto).build();
+                return response.bind(dto).build();
+            }else{
+                return response.emptyResponse();
+            }
         }
     }
 
@@ -491,7 +496,7 @@ public class AccountController {
             @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
             @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
             @Parameter(description = "The currency ID (optional)." )
-            @QueryParam("currency") @PositiveOrZero Long currencyId,
+            @QueryParam("currency") LongParameter currencyId,
             @Parameter(description = "The height of the blockchain to determine the currencies (optional, default is last block).")
             @QueryParam("height") @DefaultValue("-1") @ValidBlockchainHeight int height,
             @Parameter(description = "Include additional currency info (optional)" )
@@ -506,7 +511,7 @@ public class AccountController {
         long accountId  = accountIdParameter.get();
         FirstLastIndexParser.FirstLastIndex flIndex = indexParser.adjustIndexes(firstIndex, lastIndex);
 
-        if (currencyId == null || currencyId == 0) {
+        if (currencyId == null || currencyId.get() == 0) {
             List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrenciesByAccount(accountId, height, flIndex.getFirstIndex(), flIndex.getLastIndex());
             List<AccountCurrencyDTO> accountCurrencyDTOList = accountCurrencyConverter.convert(accountCurrencies);
             if(includeCurrencyInfo){
@@ -518,13 +523,16 @@ public class AccountController {
 
             return response.bind(new AccountCurrencyResponse(accountCurrencyDTOList)).build();
         }else{
-            AccountCurrency accountCurrency = accountCurrencyService.getAccountCurrency(accountId, currencyId, height);
+            AccountCurrency accountCurrency = accountCurrencyService.getAccountCurrency(accountId, currencyId.get(), height);
             AccountCurrencyDTO dto = accountCurrencyConverter.convert(accountCurrency);
-            if(includeCurrencyInfo){
-                accountCurrencyConverter.addCurrency(dto,Currency.getCurrency(currencyId));
+            if(dto != null) {
+                if (includeCurrencyInfo) {
+                    accountCurrencyConverter.addCurrency(dto, Currency.getCurrency(currencyId.get()));
+                }
+                return response.bind(dto).build();
+            }else {
+                return response.emptyResponse();
             }
-
-            return response.bind(dto).build();
         }
     }
 
@@ -543,7 +551,7 @@ public class AccountController {
     @PermitAll
     public Response getAccountCurrentAskOrderIds(
             @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
-            @Parameter(description = "The asset ID.") @QueryParam("asset") @PositiveOrZero Long assetIdParam,
+            @Parameter(description = "The asset ID.") @QueryParam("asset") LongParameter assetId,
             @Parameter(description = "A zero-based index to the first order ID to retrieve (optional)." )
             @QueryParam("firstIndex") @DefaultValue("0") @PositiveOrZero int firstIndex,
             @Parameter(description = "A zero-based index to the last order ID to retrieve (optional)." )
@@ -555,10 +563,10 @@ public class AccountController {
         FirstLastIndexParser.FirstLastIndex flIndex = indexParser.adjustIndexes(firstIndex, lastIndex);
 
         List<Order.Ask> ordersByAccount;
-        if ( assetIdParam == null || assetIdParam == 0 ) {
+        if ( assetId == null || assetId.get() == 0 ) {
             ordersByAccount = orderService.getAskOrdersByAccount(accountId, flIndex.getFirstIndex(), flIndex.getLastIndex());
         }else{
-            ordersByAccount = orderService.getAskOrdersByAccountAsset(accountId, assetIdParam, flIndex.getFirstIndex(), flIndex.getLastIndex());
+            ordersByAccount = orderService.getAskOrdersByAccountAsset(accountId, assetId.get(), flIndex.getFirstIndex(), flIndex.getLastIndex());
         }
         List<String> ordersIdList = ordersByAccount.stream().map(ask -> Long.toUnsignedString(ask.getId())).collect(Collectors.toList());
 
