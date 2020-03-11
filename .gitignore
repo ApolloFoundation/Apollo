@@ -24,3 +24,5 @@ nbactions.xml
 /apl-core/nbproject/
 /apl-integration-tests/allure-results
 /apl-integration-tests/.allure
+/apl-utils/nbproject/
+/.mvn/

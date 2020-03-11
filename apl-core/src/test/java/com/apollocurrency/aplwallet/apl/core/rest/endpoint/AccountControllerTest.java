@@ -343,9 +343,7 @@ class AccountControllerTest extends AbstractEndpointTest{
         TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(ACCOUNT_ID, PASSPHRASE, null);
         twoFactorAuthParameters.setCode2FA(CODE_2FA);
 
-        doReturn(KeyStoreService.Status.OK).when(account2FAHelper).deleteAccount(twoFactorAuthParameters.getAccountId(),
-                                                                                twoFactorAuthParameters.getPassphrase(),
-                                                                                twoFactorAuthParameters.getCode2FA());
+        doReturn(KeyStoreService.Status.OK).when(account2FAHelper).deleteAccount(twoFactorAuthParameters);
         check2FA_withPassPhraseAndAccountAndCode2FA(uri, twoFactorAuthParameters);
     }
 
@@ -439,10 +437,10 @@ class AccountControllerTest extends AbstractEndpointTest{
     }
 
     @Test
-    void getAccountAssets_whenCallwithWrongAsset_thenGetError_2012() throws URISyntaxException, IOException {
+    void getAccountAssets_whenCallwithWrongAsset_thenGetError_2001() throws URISyntaxException, IOException {
         MockHttpResponse response = sendGetRequest("/accounts/assets?account="+ACCOUNT_ID+"&asset=AS123&height="+(CURRENT_HEIGHT+10));
 
-        checkMandatoryParameterMissingErrorCode(response, 2012);
+        checkMandatoryParameterMissingErrorCode(response, 2001);
     }
 
     @Test
@@ -529,17 +527,17 @@ class AccountControllerTest extends AbstractEndpointTest{
     }
 
     @Test
-    void getAccountCurrencies_whenCallwithWrongCurrencyId_thenGetError_2012() throws URISyntaxException, IOException {
+    void getAccountCurrencies_whenCallwithWrongCurrencyId_thenGetError_2001() throws URISyntaxException, IOException {
         MockHttpResponse response = sendGetRequest("/accounts/currencies?account="+ACCOUNT_ID+"&currency=AS123&height="+(CURRENT_HEIGHT+10));
 
-        checkMandatoryParameterMissingErrorCode(response, 2012);
+        checkMandatoryParameterMissingErrorCode(response, 2001);
         NotFoundException exception;
     }
 
     @Test
     void getAccountCurrencies_getList() throws URISyntaxException, IOException {
         endpoint.setAccountCurrencyConverter(new AccountCurrencyConverter());
-        doReturn(List.of(accountCurrency)).when(accountCurrencyService).getCurrenciesByAccount(ACCOUNT_ID, CURRENT_HEIGHT, 0, -1);
+        doReturn(List.of(accountCurrency)).when(accountCurrencyService).getCurrenciesByAccount(ACCOUNT_ID, CURRENT_HEIGHT, 0, 99);
 
         MockHttpResponse response = sendGetRequest("/accounts/currencies?account="+ACCOUNT_ID+"&height="+CURRENT_HEIGHT);
 
@@ -622,7 +620,7 @@ class AccountControllerTest extends AbstractEndpointTest{
     void getAccountBlockIds() throws URISyntaxException, IOException {
         int timestamp = (int) (System.currentTimeMillis()/1000);
         int from = 0;
-        int to = 100;
+        int to = 99;
 
         doReturn(BLOCKS).when(accountService).getAccountBlocks(ACCOUNT_ID, timestamp, from, to);
 
@@ -663,9 +661,9 @@ class AccountControllerTest extends AbstractEndpointTest{
     void getAccountBlocks() throws URISyntaxException, IOException {
         int timestamp = (int) (System.currentTimeMillis()/1000);
         int from = 0;
-        int to = 100;
+        int to = 200;
 
-        doReturn(BLOCKS).when(accountService).getAccountBlocks(ACCOUNT_ID, timestamp, from, to);
+        doReturn(BLOCKS).when(accountService).getAccountBlocks(ACCOUNT_ID, timestamp, from, 99);
 
         MockHttpResponse response = sendGetRequest("/accounts/blocks?account="+ACCOUNT_ID
                 +"&timestamp="+timestamp
