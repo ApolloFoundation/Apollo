@@ -131,10 +131,7 @@ public class TransactionImpl implements Transaction {
         }
 
         private Blockchain lookupAndInjectBlockchain() {
-            if (blockchain == null) {
-                blockchain = CDI.current().select(Blockchain.class).get();
-            }
-            return blockchain;
+            return CDI.current().select(Blockchain.class).get();
         }
 
         private AccountPublicKeyService lookupAndInjectAccountService() {

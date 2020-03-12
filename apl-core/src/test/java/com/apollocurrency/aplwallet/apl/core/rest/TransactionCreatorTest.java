@@ -80,7 +80,7 @@ class TransactionCreatorTest {
     @Test
     void testCreateTransactionSuccessful() throws AplException.ValidationException {
         EcBlockData ecBlockData = new EcBlockData(121, 100_000);
-        doReturn(ecBlockData).when(blockchain).getECBlock(0);
+        doReturn(ecBlockData).when(blockchain).getECBlock(300);
         CreateTransactionRequest request = CreateTransactionRequest.builder()
             .senderAccount(sender)
             .deadlineValue("1440")
