@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.http.ElGamalEncryptor;
+import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
 import com.apollocurrency.aplwallet.apl.core.rest.ByteArrayConverterProvider;
 import com.apollocurrency.aplwallet.apl.core.rest.PlatformSpecConverterProvider;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
@@ -21,6 +22,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.PlatformSpec;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateV2Attachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Architecture;
@@ -52,6 +54,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -114,5 +117,66 @@ class UpdateControllerTest extends AbstractEndpointTest {
 
         JSONAssert.assertEquals("{\"timestamp\": 0, \"attachment\" : {\"level\": 0, \"manifestUrl\":\"https://test.com\", \"platforms\": [{\"platform\": 1, \"architecture\": 1},{\"platform\": -1, \"architecture\": 2}]}, \"type\" : 8, \"subtype\": 3}", json, JSONCompareMode.LENIENT);
         verify(processor).broadcast(any(Transaction.class));
+    }
+
+    @Test
+    void testSendUpdateSuccessful_usingVault() throws URISyntaxException, UnsupportedEncodingException, AplException.ValidationException {
+        when(elGamal.elGamalDecrypt(SECRET)).thenReturn(SECRET);
+        Account sender = new Account(ACCOUNT_ID_WITH_SECRET, 10000 * Constants.ONE_APL, 10000 * Constants.ONE_APL, 0, 0, CURRENT_HEIGHT);
+        sender.setPublicKey(new PublicKey(sender.getId(), null, 0));
+        ApolloFbWallet wallet = mock(ApolloFbWallet.class);
+        doReturn(Convert.toHexString(Crypto.getKeySeed(Convert.toBytes(SECRET)))).when(wallet).getAplKeySecret();
+        doReturn(wallet).when(keystoreService).getSecretStore(SECRET, ACCOUNT_ID_WITH_SECRET);
+        doReturn(sender).when(accountService).getAccount(Convert.parseHexString(PUBLIC_KEY_SECRET));
+        EcBlockData ecBlockData = new EcBlockData(121, 100_000);
+        doReturn(ecBlockData).when(blockchain).getECBlock(0);
+        doAnswer(invocation -> {
+            String argument = invocation.getArgument(0);
+            if ("passphrase".equals(argument)) {
+                return SECRET;
+            } else if ("account".equals(argument)) {
+                return "" + ACCOUNT_ID_WITH_SECRET;
+            }
+            return "";
+        }).when(req).getParameter(anyString());
+
+        MockHttpResponse response = sendPostRequest("/updates", "passphrase=" + SECRET + "&account=" + ACCOUNT_ID_WITH_SECRET +  "&manifestUrl=https://test.com&level=CRITICAL&platformSpec=WINDOWS-AMD64,ALL-ARM" +
+            "&version=1.23.4&cn=https://cn.com&serialNumber=1&signature=111100ff");
+        String json = response.getContentAsString();
+
+        JSONAssert.assertEquals("{\"timestamp\": 0, \"attachment\" : {\"level\": 0, \"manifestUrl\":\"https://test.com\", \"platforms\": [{\"platform\": 1, \"architecture\": 1},{\"platform\": -1, \"architecture\": 2}]}, \"type\" : 8, \"subtype\": 3}", json, JSONCompareMode.LENIENT);
+        verify(processor).broadcast(any(Transaction.class));
+    }
+
+    @Test
+    void testSendUpdate_missingSecretPhrase() throws URISyntaxException, UnsupportedEncodingException, AplException.ValidationException {
+        Account sender = new Account(ACCOUNT_ID_WITH_SECRET, 10000 * Constants.ONE_APL, 10000 * Constants.ONE_APL, 0, 0, CURRENT_HEIGHT);
+        sender.setPublicKey(new PublicKey(sender.getId(), null, 0));
+
+        MockHttpResponse response = sendPostRequest("/updates", "manifestUrl=https://test.com&level=CRITICAL&platformSpec=WINDOWS-AMD64,ALL-ARM" +
+            "&version=1.23.4&cn=https://cn.com&serialNumber=1&signature=111100ff");
+        String json = response.getContentAsString();
+
+        JSONAssert.assertEquals("{\"newErrorCode\": 2002, \"errorDescription\" : \"At least one of [secretPhrase,publicKey,passphrase] must be specified.\"}", json, JSONCompareMode.LENIENT);
+        verify(processor, never()).broadcast(any(Transaction.class));
+    }
+
+    @Test
+    void testSendUpdate_missingAccount() throws URISyntaxException, UnsupportedEncodingException, AplException.ValidationException {
+        when(elGamal.elGamalDecrypt(SECRET)).thenReturn(SECRET);
+        doAnswer(invocation -> {
+            String argument = invocation.getArgument(0);
+            if ("passphrase".equals(argument)) {
+                return SECRET;
+            }
+            return "";
+        }).when(req).getParameter(anyString());
+
+        MockHttpResponse response = sendPostRequest("/updates", "passphrase=" + SECRET + "&manifestUrl=https://test.com&level=CRITICAL&platformSpec=WINDOWS-AMD64,ALL-ARM" +
+            "&version=1.23.4&cn=https://cn.com&serialNumber=1&signature=111100ff");
+        String json = response.getContentAsString();
+
+        JSONAssert.assertEquals("{\"newErrorCode\": 2002, \"errorDescription\" : \"At least one of [secretPhrase,publicKey,passphrase] must be specified.\"}", json, JSONCompareMode.LENIENT);
+        verify(processor, never()).broadcast(any(Transaction.class));
     }
 }

@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.utils;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
@@ -134,6 +135,7 @@ public class AccountParametersParser {
         if (account == null) {
             throw new RestParameterException(ApiErrors.UNKNOWN_VALUE, "account", "publicKey:" + Convert.toHexString(publicKey));
         }
+        account.setPublicKey(new PublicKey(accountId, publicKey, account.getPublicKey().getHeight()));
         return account;
     }
 
@@ -148,7 +150,10 @@ public class AccountParametersParser {
         if (secretPhrase == null && isMandatory) {
             throw new RestParameterException(ApiErrors.MISSING_PARAM, secretPhraseParamName);
         }
-        return elGamal.elGamalDecrypt(secretPhrase);
+        if (secretPhrase != null) {
+            return elGamal.elGamalDecrypt(secretPhrase);
+        }
+        return null;
 
     }
 
@@ -197,6 +202,8 @@ public class AccountParametersParser {
                         return publicKey;
                     }
                 }
+            } catch (RestParameterException e) {
+              throw e;
             } catch (RuntimeException e) {
                 if (isMandatory) {
                     throw new RestParameterException(ApiErrors.INCORRECT_PARAM_VALUE, publicKeyParam);

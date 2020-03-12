@@ -87,7 +87,6 @@ public class UpdateController {
         Account senderAccount = parser.getSenderAccount(servletRequest, "account");
         UpdateV2Attachment attachment = new UpdateV2Attachment(manifestUrl, level, version, cn, serialNumber, signature, new HashSet<>(platformSpec.getSpecList()));
         byte[] keySeed = parser.getKeySeed(servletRequest, senderAccount.getId(), false);
-        byte[] pk = parser.getPublicKey(servletRequest);
         CreateTransactionRequest txRequest = CreateTransactionRequest.builder()
             .attachment(attachment)
             .timestamp(timestamp)
@@ -96,8 +95,8 @@ public class UpdateController {
             .feeATM(Constants.ONE_APL)
             .deadlineValue("1440")
             .keySeed(keySeed)
-            .publicKeyValue(Convert.toHexString(pk))
-            .publicKey(pk)
+            .publicKeyValue(Convert.toHexString(senderAccount.getPublicKey().getPublicKey()))
+            .publicKey(senderAccount.getPublicKey().getPublicKey())
             .secretPhrase(secretPhrase)
             .passphrase(passphrase)
             .build();

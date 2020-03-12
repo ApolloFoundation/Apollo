@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryp
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.Data;
@@ -59,8 +60,11 @@ public class TransactionCreator {
         if (txRequest.getRecipientPublicKey() != null) {
             publicKeyAnnouncement = new PublicKeyAnnouncementAppendix(Convert.parseHexString(txRequest.getRecipientPublicKey()));
         }
+        if (txRequest.getKeySeed() != null) {
+            txRequest.setPublicKey(Crypto.getPublicKey(txRequest.getKeySeed()));
+        }
 
-        if (txRequest.getKeySeed() == null && txRequest.getPublicKeyValue() == null) {
+        if (txRequest.getKeySeed() == null && txRequest.getPublicKey() == null) {
             tcd.setErrorType(TransactionCreationData.ErrorType.MISSING_SECRET_PHRASE);
             return tcd;
         } else if (txRequest.getDeadlineValue() == null) {
@@ -171,7 +175,7 @@ public class TransactionCreator {
     }
 
     @Data
-    private static class TransactionCreationData {
+    static class TransactionCreationData {
         Transaction tx;
         String error = "";
         ErrorType errorType;
