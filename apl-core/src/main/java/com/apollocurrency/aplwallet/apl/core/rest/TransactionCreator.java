@@ -22,12 +22,12 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 @Singleton
 public class TransactionCreator {
-    private TransactionValidator validator;
-    private PropertiesHolder propertiesHolder;
-    private TimeService timeService;
-    private FeeCalculator feeCalculator;
-    private Blockchain blockchain;
-    private TransactionProcessor processor;
+    private final TransactionValidator validator;
+    private final PropertiesHolder propertiesHolder;
+    private final TimeService timeService;
+    private final FeeCalculator feeCalculator;
+    private final Blockchain blockchain;
+    private final TransactionProcessor processor;
 
     @Inject
     public TransactionCreator(TransactionValidator validator, PropertiesHolder propertiesHolder, TimeService timeService, FeeCalculator feeCalculator, Blockchain blockchain, TransactionProcessor processor) {
