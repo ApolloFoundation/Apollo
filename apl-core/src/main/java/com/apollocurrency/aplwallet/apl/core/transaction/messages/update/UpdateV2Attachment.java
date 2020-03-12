@@ -26,6 +26,7 @@ import java.util.Set;
 @ToString
 @Getter
 public class UpdateV2Attachment extends AbstractAttachment {
+    public static final int MAX_URL_LENGTH = 2048;
     private final String manifestUrl;
     private final Level updateLevel;
     private final Set<PlatformSpec> platforms = new HashSet<>();
@@ -37,14 +38,14 @@ public class UpdateV2Attachment extends AbstractAttachment {
     public UpdateV2Attachment(ByteBuffer buffer) throws AplException.NotValidException {
         super(buffer);
         try {
-            this.manifestUrl = Convert.readString(buffer, buffer.getShort(), 2048);
+            this.manifestUrl = Convert.readString(buffer, buffer.getShort(), MAX_URL_LENGTH);
             this.updateLevel = Level.from(buffer.get());
             byte platformsLength = buffer.get();
             for (int i = 0; i < platformsLength; i++) {
                 this.platforms.add(new PlatformSpec(Platform.from(buffer.get()), Architecture.from(buffer.get())));
             }
             this.releaseVersion = new Version(buffer.getShort(), buffer.getShort(), buffer.getShort());
-            this.cn = Convert.readString(buffer, buffer.getShort(), 2048);
+            this.cn = Convert.readString(buffer, buffer.getShort(), MAX_URL_LENGTH);
             byte[] serialNumberBytes = new byte[buffer.getShort()];
             buffer.get(serialNumberBytes);
             this.serialNumber = new BigInteger(serialNumberBytes);

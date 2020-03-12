@@ -172,19 +172,19 @@ public abstract class TransactionType {
         }
         return accountInfoService;
     }
-    public static Blockchain lookupBlockchain() {
+    public static synchronized Blockchain lookupBlockchain() {
         if ( blockchain == null) {
             blockchain = CDI.current().select(Blockchain.class).get();
         }
         return blockchain;
     }
-    public static TimeService lookupTimeService(){
+    public static synchronized TimeService lookupTimeService(){
         if ( timeService == null) {
             timeService = CDI.current().select(TimeService.class).get();
         }
         return timeService;
     }
-    public static BlockchainConfig lookupBlockchainConfig(){
+    public static synchronized BlockchainConfig lookupBlockchainConfig(){
         if ( blockchainConfig == null) {
             blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
         }
