@@ -20,7 +20,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 import java.io.IOException;
 import java.util.Objects;
 
-;
+;import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @DisplayName("Secret File")
 @Epic(value = "Secret File")
@@ -33,7 +33,7 @@ public class Test2FA extends TestBaseNew {
         Account2FAResponse accountDTO = generateNewAccount();
         Wallet wallet = new Wallet(accountDTO.getAccount(), accountDTO.getPassphrase(), null, true, null, null);
         Account2FAResponse deletedAccount = deleteSecretFile(wallet);
-        Assertions.assertEquals(Status2FA.OK, deletedAccount.getStatus());
+        assertEquals(Status2FA.OK, deletedAccount.getStatus());
     }
 
 
