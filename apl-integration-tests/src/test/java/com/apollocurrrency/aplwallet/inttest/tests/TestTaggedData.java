@@ -38,7 +38,7 @@ public class TestTaggedData extends TestBaseNew {
         this.description = RandomStringUtils.randomAlphabetic(5);
         this.channel = RandomStringUtils.randomAlphabetic(5);
         StringBuilder tags = new StringBuilder();
-        String symbols = "!@$^&*()_+{}:'./,\"";
+        String symbols = "!@$^&*()_+{}'./,\"";
         for (int i = 0; i < RandomUtils.nextInt(2, 5); i++) {
             if (i > 0) {
                 tags.append(symbols.charAt(RandomUtils.nextInt(0, symbols.length())));

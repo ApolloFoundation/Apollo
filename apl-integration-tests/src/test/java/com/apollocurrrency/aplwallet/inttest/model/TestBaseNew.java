@@ -74,9 +74,7 @@ import io.qameta.allure.Step;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import net.jodah.failsafe.Failsafe;
-import org.apache.commons.lang3.NotImplementedException;
 import org.junit.jupiter.api.DisplayName;
-import org.testng.asserts.SoftAssert;
 
 import java.io.File;
 import java.util.HashMap;
@@ -114,7 +112,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", TransactionDTO.class);
     }
 
-    @Override
     @Step
     public BlockListInfoResponse getAccountBlocks(String account) {
         HashMap<String, String> param = new HashMap();
@@ -133,7 +130,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", BlockListInfoResponse.class);
     }
 
-    @Override
     @Step
     public GetAccountResponse getAccount(String account) {
         HashMap<String, String> param = new HashMap();
@@ -153,7 +149,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", GetAccountResponse.class);
     }
 
-    @Override
     @Step
     public GetAccountBlockCountResponse getAccountBlockCount(String account) {
         HashMap<String, String> param = new HashMap();
@@ -172,7 +167,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", GetAccountBlockCountResponse.class);
     }
 
-    @Override
     @Step
     public AccountBlockIdsResponse getAccountBlockIds(String account) {
         HashMap<String, String> param = new HashMap();
@@ -191,7 +185,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", AccountBlockIdsResponse.class);
     }
 
-    @Override
     @Step
     public AccountDTO getAccountId(String secretPhrase) {
         HashMap<String, String> param = new HashMap();
@@ -210,7 +203,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", AccountDTO.class);
     }
 
-    @Override
     @Step
     public AccountLedgerResponse getAccountLedger(Wallet wallet) {
         HashMap<String, String> param = new HashMap();
@@ -231,7 +223,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", AccountLedgerResponse.class);
     }
 
-    @Override
     @Step
     public AccountPropertiesResponse getAccountProperties(String account) {
         HashMap<String, String> param = new HashMap();
@@ -250,7 +241,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", AccountPropertiesResponse.class);
     }
 
-    @Override
     @Step
     public SearchAccountsResponse searchAccounts(String searchQuery) {
         HashMap<String, String> param = new HashMap();
@@ -269,7 +259,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", SearchAccountsResponse.class);
     }
 
-    @Override
     @Step
     public TransactionListResponse getUnconfirmedTransactions(Wallet wallet) {
         HashMap<String, String> param = new HashMap();
@@ -288,7 +277,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", TransactionListResponse.class);
     }
 
-    @Override
     @Step
     public AccountTransactionIdsResponse getUnconfirmedTransactionIds(String account) {
         HashMap<String, String> param = new HashMap();
@@ -307,7 +295,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", AccountTransactionIdsResponse.class);
     }
 
-    @Override
     @Step
     public BalanceDTO getGuaranteedBalance(String account, int confirmations) {
         HashMap<String, String> param = new HashMap();
@@ -327,7 +314,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", BalanceDTO.class);
     }
 
-    @Override
     @Step
     public BalanceDTO getBalance(Wallet wallet) {
         HashMap<String, String> param = new HashMap();
@@ -346,7 +332,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", BalanceDTO.class);
     }
 
-    @Override
     @Step
     public EntryDTO getAccountLedgerEntry(String ledgerId) {
         HashMap<String, String> param = new HashMap();
@@ -365,7 +350,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", EntryDTO.class);
     }
 
-    @Override
     @Step
     public CreateTransactionResponse sendMoney(Wallet wallet, String recipient, int moneyAmount) {
         HashMap<String, String> param = new HashMap();
@@ -388,7 +372,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", CreateTransactionResponse.class);
     }
 
-    @Override
     @Step
     public AccountDTO getAccountPublicKey(Wallet wallet) {
         HashMap<String, String> param = new HashMap();
@@ -407,7 +390,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", AccountDTO.class);
     }
 
-    @Override
     @Step
     public BlockchainTransactionsResponse getAccountTransaction(Wallet wallet) {
         HashMap<String, String> param = new HashMap();
@@ -426,7 +408,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", BlockchainTransactionsResponse.class);
     }
 
-    @Override
     @Step
     public CreateTransactionResponse setAccountInfo(Wallet wallet, String accountName, String accountDescription) {
         HashMap<String, String> param = new HashMap();
@@ -449,7 +430,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", CreateTransactionResponse.class);
     }
 
-    @Override
     @Step
     public CreateTransactionResponse setAccountProperty(Wallet wallet, String property) {
         HashMap<String, String> param = new HashMap();
@@ -472,7 +452,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", CreateTransactionResponse.class);
     }
 
-    @Override
     @Step
     public CreateTransactionResponse deleteAccountProperty(Wallet wallet, String property) {
         HashMap<String, String> param = new HashMap();
@@ -495,7 +474,6 @@ public class TestBaseNew extends TestBase {
     }
 
 
-    @Override
     @Step
     public AccountAliasesResponse getAliases(Wallet wallet) {
         HashMap<String, String> param = new HashMap();
@@ -514,7 +492,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", AccountAliasesResponse.class);
     }
 
-    @Override
     @Step
     public AccountCountAliasesResponse getAliasCount(Wallet wallet) {
         HashMap<String, String> param = new HashMap();
@@ -533,7 +510,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", AccountCountAliasesResponse.class);
     }
 
-    @Override
     @Step
     public AccountAliasDTO getAlias(String aliasName) {
         HashMap<String, String> param = new HashMap();
@@ -551,7 +527,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", AccountAliasDTO.class);
     }
 
-    @Override
     @Step
     public CreateTransactionResponse setAlias(Wallet wallet, String aliasURL, String aliasName) {
         HashMap<String, String> param = new HashMap();
@@ -575,7 +550,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", CreateTransactionResponse.class);
     }
 
-    @Override
     @Step
     public CreateTransactionResponse deleteAlias(Wallet wallet, String aliasName) {
         HashMap<String, String> param = new HashMap();
@@ -597,7 +571,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", CreateTransactionResponse.class);
     }
 
-    @Override
     @Step
     public AccountAliasesResponse getAliasesLike(String aliaseName) {
         HashMap<String, String> param = new HashMap();
@@ -616,7 +589,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", AccountAliasesResponse.class);
     }
 
-    @Override
     @Step
     public CreateTransactionResponse sellAlias(Wallet wallet, String aliasName, int price) {
         HashMap<String, String> param = new HashMap();
@@ -640,7 +612,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", CreateTransactionResponse.class);
     }
 
-    @Override
     @Step
     public CreateTransactionResponse buyAlias(Wallet wallet, String aliasName, int price) {
         HashMap<String, String> param = new HashMap();
@@ -664,7 +635,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", CreateTransactionResponse.class);
     }
 
-    @Override
     @Step
     public CreateTransactionResponse sendMoneyPrivate(Wallet wallet, String recipient, int moneyAmount) {
         HashMap<String, String> param = new HashMap();
@@ -687,7 +657,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", CreateTransactionResponse.class);
     }
 
-    @Override
     @Step("Generate New Account")
     public Account2FAResponse generateNewAccount() {
         HashMap<String, String> param = new HashMap();
@@ -704,7 +673,6 @@ public class TestBaseNew extends TestBase {
                 .getObject("", Account2FAResponse.class);
     }
 
-    @Override
     @Step("Delete Secret File")
     public Account2FAResponse deleteSecretFile(Wallet wallet) throws JsonProcessingException {
         HashMap<String, String> param = new HashMap();
@@ -724,7 +692,6 @@ public class TestBaseNew extends TestBase {
                 .getObject("", Account2FAResponse.class);
     }
 
-    @Override
     @Step("Export Secret File")
     public VaultWalletResponse exportSecretFile(Wallet wallet) {
         String path = "/rest/keyStore/download";
@@ -740,7 +707,6 @@ public class TestBaseNew extends TestBase {
 
     }
 
-    @Override
     @Step("Import Secret File")
     public boolean importSecretFile(String pathToSecretFile, String pass) {
         String path = "/rest/keyStore/upload";
@@ -754,7 +720,6 @@ public class TestBaseNew extends TestBase {
         return !response.body().asString().contains("error");
     }
 
-    @Override
     @Step("Enable 2FA")
     public AccountDTO enable2FA(Wallet wallet) throws JsonProcessingException {
         HashMap<String, String> param = new HashMap();
@@ -774,7 +739,6 @@ public class TestBaseNew extends TestBase {
                 .getObject("", AccountDTO.class);
     }
 
-    @Override
     @Step
     @DisplayName("Get All Peers")
     public List<String> getPeers() {
@@ -786,7 +750,6 @@ public class TestBaseNew extends TestBase {
 
     }
 
-    @Override
     @Step
     @DisplayName("Get Peer")
     public PeerDTO getPeer(String peer) {
@@ -797,7 +760,6 @@ public class TestBaseNew extends TestBase {
                 .get(path).as(PeerDTO.class);
     }
 
-    @Override
     @Step
     public PeerDTO addPeer(String ip) {
         HashMap<String, String> param = new HashMap();
@@ -817,7 +779,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", PeerDTO.class);
     }
 
-    @Override
     @Step("Get My Peer Info")
     public PeerInfo getMyInfo() {
         String path = "/rest/networking/peer/mypeerinfo";
@@ -827,7 +788,6 @@ public class TestBaseNew extends TestBase {
                 .get(path).as(PeerInfo.class);
     }
 
-    @Override
     @Step("Get Block")
     public BlockDTO getBlock(String block){
        HashMap<String, String> param = new HashMap();
@@ -882,7 +842,6 @@ public class TestBaseNew extends TestBase {
     }
 
     //TODO add: boolean isAvailableForNow, int minAskPrice, int maxBidPrice
-    @Override
     @Step("Get Dex Orders with param: Type {orderType}, Pair Currency {pairCurrency}, Order Status {status}, AccountId {accountId}")
     public List<DexOrderDto> getDexOrders(String orderType, String pairCurrency, String status, String accountId) {
         String path = "/rest/dex/offers";
@@ -901,7 +860,6 @@ public class TestBaseNew extends TestBase {
                 .getBody().jsonPath().getList("", DexOrderDto.class);
     }
 
-    @Override
     @Step("Get Dex Orders with param: Order Status {status}, AccountId {accountId}")
     public List<DexOrderDto> getDexOrders(String status, String accountId) {
         String path = "/rest/dex/offers";
@@ -917,7 +875,6 @@ public class TestBaseNew extends TestBase {
             .getBody().jsonPath().getList("", DexOrderDto.class);
     }
 
-    @Override
     @Step
     public List<DexOrderDto> getDexOrders(String accountId) {
         String path = "/rest/dex/offers";
@@ -933,7 +890,6 @@ public class TestBaseNew extends TestBase {
                 .getBody().jsonPath().getList("", DexOrderDto.class);
     }
 
-    @Override
     @Step("Get Dex Orders")
     public List<DexOrderDto> getDexOrders() {
         String path = "/rest/dex/offers";
@@ -944,7 +900,6 @@ public class TestBaseNew extends TestBase {
                 .getBody().jsonPath().getList("", DexOrderDto.class);
     }
 
-    @Override
     @Step("Get Dex Order")
     public DexOrderDto getDexOrder(String orderId) {
         HashMap<String, String> param = new HashMap();
@@ -959,7 +914,6 @@ public class TestBaseNew extends TestBase {
     }
 
 
-    @Override
     @Step("Get Dex History (CLOSED ORDERS) with param: Account: {0}, Pair: {1} , Type: {2}")
     public List<DexOrderDto> getDexHistory(String account, boolean isEth, boolean isSell) {
         String path = "/rest/dex/offers";
@@ -983,7 +937,6 @@ public class TestBaseNew extends TestBase {
                 .getBody().jsonPath().getList("", DexOrderDto.class);
     }
 
-    @Override
     @Step("Get Dex History (CLOSED ORDERS) for certain account")
     public List<DexOrderDto> getDexHistory(String account) {
         String path = "/rest/dex/offers";
@@ -1000,7 +953,6 @@ public class TestBaseNew extends TestBase {
                 .getBody().jsonPath().getList("", DexOrderDto.class);
     }
 
-    @Override
     @Step("Get Eth Gas Info")
     public EthGasInfoResponse getEthGasInfo() {
         String path = "/rest/dex/ethInfo";
@@ -1010,7 +962,6 @@ public class TestBaseNew extends TestBase {
                 .get(path).as(EthGasInfoResponse.class);
     }
 
-    @Override
     @Step("Get history for certain Currency and period")
     public TradingDataOutputDTO getDexTradeInfo(boolean isEth, String resolution) {
         String path = "/rest/dex/history";
@@ -1036,7 +987,6 @@ public class TestBaseNew extends TestBase {
     }
 
     //TODO: edit to new RESPONSEDTO, not STRING
-    @Override
     @Step("dexGetBalances endpoint returns cryptocurrency wallets' (ETH/PAX) balances")
     public Account2FAResponse getDexBalances(String ethAddress) {
         String path = "/rest/dex/balance";
@@ -1052,7 +1002,6 @@ public class TestBaseNew extends TestBase {
                 .getBody().as(Account2FAResponse.class);
     }
 
-    @Override
     @Step
     public WithdrawResponse dexWidthraw(String fromAddress, Wallet wallet, String toAddress, String amount, String transferFee, boolean isEth) {
         String path = "/rest/dex/withdraw";
@@ -1079,7 +1028,6 @@ public class TestBaseNew extends TestBase {
 
     }
 
-    @Override
     @Step
     public CreateTransactionResponse dexCancelOrder(String orderId, Wallet wallet) {
         HashMap<String, String> param = new HashMap();
@@ -1097,7 +1045,6 @@ public class TestBaseNew extends TestBase {
                 .post(path).as(CreateTransactionResponse.class);
     }
 
-    @Override
     @Step
     public CreateDexOrderResponse createDexOrder(String pairRate, String offerAmount, Wallet wallet, boolean isBuyOrder, boolean isEth) {
         String path = "/rest/dex/offer";
@@ -1192,7 +1139,6 @@ public class TestBaseNew extends TestBase {
             .as(DexAccountInfoResponse.class);
     }
 
-    @Override
     @Step
     public GetBlockIdResponse getBlockId(String height) {
         HashMap<String, String> param = new HashMap();
@@ -1211,7 +1157,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", GetBlockIdResponse.class);
     }
 
-    @Override
     @Step
     public BlockchainInfoDTO getBlockchainStatus() {
         HashMap<String, String> param = new HashMap();
@@ -1229,7 +1174,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", BlockchainInfoDTO.class);
     }
 
-    @Override
     @Step
     public AccountBlocksResponse getBlocks() {
         HashMap<String, String> param = new HashMap();
@@ -1247,7 +1191,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", AccountBlocksResponse.class);
     }
 
-    @Override
     @Step
     public void verifyCreatingTransaction(CreateTransactionResponse transaction) {
         assertAll(
@@ -1265,7 +1208,6 @@ public class TestBaseNew extends TestBase {
         );
     }
 
-    @Override
     @Step
     public CreateTransactionResponse issueAsset(Wallet wallet, String assetName, String description, Integer quantityATU) {
         HashMap<String, String> param = new HashMap();
@@ -1289,7 +1231,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", CreateTransactionResponse.class);
     }
 
-    @Override
     @Step
     public CreateTransactionResponse placeBidOrder(Wallet wallet, String assetID, String priceATM, Integer quantityATU) {
         HashMap<String, String> param = new HashMap();
@@ -1313,7 +1254,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", CreateTransactionResponse.class);
     }
 
-    @Override
     @Step
     public CreateTransactionResponse placeAskOrder(Wallet wallet, String assetID, String priceATM, Integer quantityATU) {
         HashMap<String, String> param = new HashMap();
@@ -1337,7 +1277,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", CreateTransactionResponse.class);
     }
 
-    @Override
     @Step
     public CreateTransactionResponse cancelBidOrder(Wallet wallet, String bidOrder) {
         HashMap<String, String> param = new HashMap();
@@ -1359,7 +1298,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", CreateTransactionResponse.class);
     }
 
-    @Override
     @Step
     public CreateTransactionResponse cancelAskOrder(Wallet wallet, String askOrder) {
         HashMap<String, String> param = new HashMap();
@@ -1381,7 +1319,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", CreateTransactionResponse.class);
     }
 
-    @Override
     @Step
     public CreateTransactionResponse deleteAssetShares(Wallet wallet, String assetID, String quantityATU) {
         HashMap<String, String> param = new HashMap();
@@ -1404,7 +1341,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", CreateTransactionResponse.class);
     }
 
-    @Override
     @Step
     public CreateTransactionResponse dividendPayment(Wallet wallet, String assetID, Integer amountATMPerATU, Integer height) {
         HashMap<String, String> param = new HashMap();
@@ -1428,7 +1364,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", CreateTransactionResponse.class);
     }
 
-    @Override
     @Step
     public AccountAssetsResponse getAccountAssets(Wallet wallet) {
         HashMap<String, String> param = new HashMap();
@@ -1466,7 +1401,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", AccountAssetDTO.class);
     }
 
-    @Override
     @Step
     public AccountAssetsCountResponse getAccountAssetCount(Wallet wallet) {
         HashMap<String, String> param = new HashMap();
@@ -1485,7 +1419,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", AccountAssetsCountResponse.class);
     }
 
-    @Override
     @Step
     public AccountAssetDTO getAsset(String asset) {
         HashMap<String, String> param = new HashMap();
@@ -1504,7 +1437,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", AccountAssetDTO.class);
     }
 
-    @Override
     @Step
     public AccountCurrentAssetAskOrderIdsResponse getAccountCurrentAskOrderIds(Wallet wallet) {
         HashMap<String, String> param = new HashMap();
@@ -1523,7 +1455,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", AccountCurrentAssetAskOrderIdsResponse.class);
     }
 
-    @Override
     @Step
     public AccountCurrentAssetBidOrderIdsResponse getAccountCurrentBidOrderIds(Wallet wallet) {
         HashMap<String, String> param = new HashMap();
@@ -1542,7 +1473,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", AccountCurrentAssetBidOrderIdsResponse.class);
     }
 
-    @Override
     @Step
     public AccountCurrentAssetAskOrdersResponse getAccountCurrentAskOrders(Wallet wallet) {
         HashMap<String, String> param = new HashMap();
@@ -1561,7 +1491,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", AccountCurrentAssetAskOrdersResponse.class);
     }
 
-    @Override
     @Step
     public AccountCurrentAssetBidOrdersResponse getAccountCurrentBidOrders(Wallet wallet) {
         HashMap<String, String> param = new HashMap();
@@ -1580,7 +1509,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", AccountCurrentAssetBidOrdersResponse.class);
     }
 
-    @Override
     @Step
     public AssetsResponse getAllAssets() {
         HashMap<String, String> param = new HashMap();
@@ -1598,7 +1526,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", AssetsResponse.class);
     }
 
-    @Override
     @Step
     public AccountOpenAssetOrdersResponse getAllOpenAskOrders() {
         HashMap<String, String> param = new HashMap();
@@ -1616,7 +1543,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", AccountOpenAssetOrdersResponse.class);
     }
 
-    @Override
     @Step
     public AccountOpenAssetOrdersResponse getAllOpenBidOrders() {
         HashMap<String, String> param = new HashMap();
@@ -1634,7 +1560,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", AccountOpenAssetOrdersResponse.class);
     }
 
-    @Override
     @Step
     public AssetTradeResponse getAllTrades() {
         HashMap<String, String> param = new HashMap();
@@ -1652,7 +1577,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", AssetTradeResponse.class);
     }
 
-    @Override
     @Step
     public AccountAssetOrderDTO getAskOrder(String askOrder) {
         HashMap<String, String> param = new HashMap();
@@ -1671,7 +1595,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", AccountAssetOrderDTO.class);
     }
 
-    @Override
     @Step
     public AccountCurrentAssetAskOrderIdsResponse getAskOrderIds(String assetID) {
         HashMap<String, String> param = new HashMap();
@@ -1690,7 +1613,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", AccountCurrentAssetAskOrderIdsResponse.class);
     }
 
-    @Override
     @Step
     public AccountCurrentAssetAskOrdersResponse getAskOrders(String assetID) {
         HashMap<String, String> param = new HashMap();
@@ -1709,7 +1631,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", AccountCurrentAssetAskOrdersResponse.class);
     }
 
-    @Override
     @Step
     public AccountCurrentAssetBidOrdersResponse getBidOrders(String assetID) {
         HashMap<String, String> param = new HashMap();
@@ -1728,7 +1649,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", AccountCurrentAssetBidOrdersResponse.class);
     }
 
-    @Override
     @Step
     public AssetsAccountsCountResponse getAssetAccountCount(String assetID) {
         HashMap<String, String> param = new HashMap();
@@ -1747,7 +1667,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", AssetsAccountsCountResponse.class);
     }
 
-    @Override
     @Step
     public AccountAssetsResponse getAssetAccounts(String assetID) {
         HashMap<String, String> param = new HashMap();
@@ -1766,7 +1685,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", AccountAssetsResponse.class);
     }
 
-    @Override
     @Step
     public ExpectedAssetDeletes getAssetDeletes(Wallet wallet) {
         HashMap<String, String> param = new HashMap();
@@ -1785,7 +1703,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", ExpectedAssetDeletes.class);
     }
 
-    @Override
     @Step
     public ExpectedAssetDeletes getExpectedAssetDeletes(Wallet wallet) {
         HashMap<String, String> param = new HashMap();
@@ -1804,7 +1721,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", ExpectedAssetDeletes.class);
     }
 
-    @Override
     @Step
     public AccountAssetsIdsResponse getAssetIds() {
         HashMap<String, String> param = new HashMap();
@@ -1822,7 +1738,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", AccountAssetsIdsResponse.class);
     }
 
-    @Override
     @Step
     public CreateTransactionResponse transferAsset(Wallet wallet, String asset, Integer quantityATU, String recipient) {
         HashMap<String, String> param = new HashMap();
@@ -1846,7 +1761,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", CreateTransactionResponse.class);
     }
 
-    @Override
     @Step
     public ECBlockDTO getECBlock() {
         HashMap<String, String> param = new HashMap();
@@ -1864,7 +1778,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", ECBlockDTO.class);
     }
 
-    @Override
     @Step("Get Forging")
     public ForgingResponse getForging() {
         String path = "/rest/nodeinfo/forgers";
@@ -1874,7 +1787,6 @@ public class TestBaseNew extends TestBase {
                 .get(path).as(ForgingResponse.class);
     }
 
-    @Override
     @Step("Get Shards from peer")
     public List<ShardDTO> getShards(String ip) {
         String path = "/rest/shards";
@@ -1885,7 +1797,6 @@ public class TestBaseNew extends TestBase {
                 .get(path).getBody().jsonPath().getList("", ShardDTO.class);
     }
 
-    @Override
     @Step
     public ForgingDetails startForging(Wallet wallet) {
         HashMap<String, String> param = new HashMap();
@@ -1905,7 +1816,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", ForgingDetails.class);
     }
 
-    @Override
     @Step
     public ForgingDetails stopForging(Wallet wallet) {
         HashMap<String, String> param = new HashMap();
@@ -1925,7 +1835,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", ForgingDetails.class);
     }
 
-    @Override
     @Step
     public CreateTransactionResponse sendMessage(Wallet wallet, String recipient, String testMessage) {
         HashMap<String, String> param = new HashMap();
@@ -1950,7 +1859,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", CreateTransactionResponse.class);
     }
 
-    @Override
     @Step
     public AccountMessageDTO readMessage(Wallet wallet, String transaction) {
         HashMap<String, String> param = new HashMap();
@@ -1972,7 +1880,6 @@ public class TestBaseNew extends TestBase {
 
 
 
-    @Override
     @Step("Issue Currency with param: Type: {2}")
     public CreateTransactionResponse issueCurrency(Wallet wallet, int type, String name, String description, String code, int initialSupply, int maxSupply, int decimals) {
         int currentHeight = getBlock().getHeight();
@@ -2038,7 +1945,6 @@ public class TestBaseNew extends TestBase {
 
     }
 
-    @Override
     @Step
     public CurrenciesResponse getAllCurrencies() {
         HashMap<String, String> param = new HashMap();
@@ -2056,7 +1962,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", CurrenciesResponse.class);
     }
 
-    @Override
     @Step
     public Currency getCurrency(String CurrencyId) {
         HashMap<String, String> param = new HashMap();
@@ -2074,7 +1979,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", Currency.class);
     }
 
-    @Override
     @Step
     public PollDTO getPoll(String poll) {
         HashMap<String, String> param = new HashMap();
@@ -2093,7 +1997,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", PollResultResponse.class);
     }
 
-    @Override
     @Step
     public CreateTransactionResponse createPoll(Wallet wallet, int votingModel, String name, int plusFinishHeight, String holding, int minBalance, int maxRangeValue) {
         final int POLL_BY_ACCOUNT = 0;
@@ -2162,7 +2065,6 @@ public class TestBaseNew extends TestBase {
 
     }
 
-    @Override
     public CreateTransactionResponse castVote(Wallet wallet, String poll, int vote) {
         HashMap<String, String> param = new HashMap();
         param = restHelper.addWalletParameters(param,wallet);
@@ -2187,7 +2089,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", CreateTransactionResponse.class);
     }
 
-    @Override
     @Step
     public CurrencyAccountsResponse getCurrencyAccounts(String CurrencyId) {
         HashMap<String, String> param = new HashMap();
@@ -2206,7 +2107,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", CurrencyAccountsResponse.class);
     }
 
-    @Override
     @Step
     public CreateTransactionResponse deleteCurrency(Wallet wallet, String CurrencyId) {
         HashMap<String, String> param = new HashMap();
@@ -2228,7 +2128,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", CreateTransactionResponse.class);
     }
 
-    @Override
     @Step
     public CreateTransactionResponse transferCurrency(String recipient, String currency, Wallet wallet, int units) {
         HashMap<String, String> param = new HashMap();
@@ -2252,7 +2151,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", CreateTransactionResponse.class);
     }
 
-    @Override
     @Step
     public CreateTransactionResponse currencyReserveClaim(String currency, Wallet wallet, int units) {
         HashMap<String, String> param = new HashMap();
@@ -2275,7 +2173,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", CreateTransactionResponse.class);
     }
 
-    @Override
     @Step
     public CreateTransactionResponse currencyReserveIncrease(String currency, Wallet wallet, int amountPerUnitATM) {
         HashMap<String, String> param = new HashMap();
@@ -2298,7 +2195,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", CreateTransactionResponse.class);
     }
 
-    @Override
     @Step
     public CreateTransactionResponse publishExchangeOffer(String currency, Wallet wallet, int buyRateATM, int sellRateATM, int initialBuySupply, int initialSellSupply) {
         HashMap<String, String> param = new HashMap();
@@ -2327,7 +2223,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", CreateTransactionResponse.class);
     }
 
-    @Override
     @Step
     public CreateTransactionResponse currencySell(String currency, Wallet wallet, int units, int rate) {
         HashMap<String, String> param = new HashMap();
@@ -2351,7 +2246,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", CreateTransactionResponse.class);
     }
 
-    @Override
     @Step
     public CreateTransactionResponse currencyBuy(String currency, Wallet wallet, int units, int rate) {
         HashMap<String, String> param = new HashMap();
@@ -2375,7 +2269,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", CreateTransactionResponse.class);
     }
 
-    @Override
     @Step
     public CreateTransactionResponse scheduleCurrencyBuy(String currency, Wallet wallet, int units, int rate, String offerIssuer) {
         HashMap<String, String> param = new HashMap();
@@ -2399,7 +2292,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", CreateTransactionResponse.class);
     }
 
-    @Override
     @Step
     public AccountCurrencyResponse getAccountCurrencies(Wallet wallet) {
         HashMap<String, String> param = new HashMap();
@@ -2419,7 +2311,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", AccountCurrencyResponse.class);
         }
 
-    @Override
     @Step
     public CreateTransactionResponse shufflingCreate(Wallet wallet, int registrationPeriod, int participantCount, int amount, String holding, int holdingType) {
         final int HOLDING_TYPE_BALANCE = 0;
@@ -2455,7 +2346,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", CreateTransactionResponse.class);
     }
 
-    @Override
     @Step
     public PollVotesResponse getPollVotes(String poll) {
         HashMap<String, String> param = new HashMap();
@@ -2474,7 +2364,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", PollVotesResponse.class);
     }
 
-    @Override
     @Step
     public PollResultResponse getPollResult(String poll) {
         HashMap<String, String> param = new HashMap();
@@ -2493,7 +2382,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", PollResultResponse.class);
     }
 
-    @Override
     @Step
     public CreateTransactionResponse uploadTaggedData(Wallet wallet, String name, String description, String tags, String channel, File file) {
         HashMap<String, String> param = new HashMap();
@@ -2521,7 +2409,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", CreateTransactionResponse.class);
     }
 
-    @Override
     @Step
     public AllTaggedDataResponse getAllTaggedData() {
         HashMap<String, String> param = new HashMap();
@@ -2539,7 +2426,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", AllTaggedDataResponse.class);
     }
 
-    @Override
     @Step
     public TaggedDataDTO getTaggedData(String transaction) {
         HashMap<String, String> param = new HashMap();
@@ -2558,7 +2444,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", TaggedDataDTO.class);
     }
 
-    @Override
     @Step
     public DataTagCountResponse getDataTagCount() {
         HashMap<String, String> param = new HashMap();
@@ -2576,7 +2461,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", DataTagCountResponse.class);
     }
 
-    @Override
     @Step
     public AllTaggedDataResponse searchTaggedDataByName(String query) {
         HashMap<String, String> param = new HashMap();
@@ -2595,7 +2479,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", AllTaggedDataResponse.class);
     }
 
-    @Override
     @Step
     public AllTaggedDataResponse searchTaggedDataByTag(String tag) {
         HashMap<String, String> param = new HashMap();
@@ -2614,7 +2497,6 @@ public class TestBaseNew extends TestBase {
             .getObject("", AllTaggedDataResponse.class);
     }
 
-    @Override
     @Step
     public CreateTransactionResponse extendTaggedData(Wallet wallet, String transaction) {
         HashMap<String, String> param = new HashMap();
