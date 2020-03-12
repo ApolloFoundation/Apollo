@@ -23,6 +23,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.slf4j.Logger;
@@ -43,8 +44,7 @@ import static org.junit.jupiter.api.parallel.ResourceAccessMode.READ;
 import static org.junit.jupiter.api.parallel.Resources.SYSTEM_PROPERTIES;
 
 
-public abstract class TestBase implements ITest {
-    public SoftAssertions softAssertions = new SoftAssertions();
+public abstract class TestBase {
     public static final Logger log = LoggerFactory.getLogger(TestBase.class);
     public static RetryPolicy retryPolicy = new RetryPolicy()
         .retryWhen(false)
@@ -57,6 +57,7 @@ public abstract class TestBase implements ITest {
         .httpClient(HttpClientConfig.httpClientConfig()
             .setParam(CoreConnectionPNames.CONNECTION_TIMEOUT, 10000)
             .setParam(CoreConnectionPNames.SO_TIMEOUT, 10000));
+    private String path = "/apl";
 
     @BeforeAll
     public synchronized static void initAll() {
@@ -332,6 +333,25 @@ public abstract class TestBase implements ITest {
             fail("Transaction is null");
         }
         return inBlock;
+    }
+
+    @Step
+    @DisplayName("Get Transaction")
+    public TransactionDTO getTransaction(String transaction) {
+        HashMap<String, String> param = new HashMap();
+        param.put(ReqType.REQUEST_TYPE, ReqType.GET_TRANSACTION);
+        param.put(ReqParam.TRANSACTION, transaction);
+
+        return given()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .get(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", TransactionDTO.class);
     }
 
 
