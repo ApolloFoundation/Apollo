@@ -2,7 +2,7 @@ package com.apollocurrrency.aplwallet.inttest.tests;
 
 import com.apollocurrency.aplwallet.api.dto.ShardDTO;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
-import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
+import com.apollocurrrency.aplwallet.inttest.model.TestBase;
 import io.qameta.allure.Epic;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 
 @DisplayName("Sharding")
 @Epic(value = "Sharding")
-public class TestSharding extends TestBaseNew {
+public class TestSharding extends TestBase {
 
 
     @Test

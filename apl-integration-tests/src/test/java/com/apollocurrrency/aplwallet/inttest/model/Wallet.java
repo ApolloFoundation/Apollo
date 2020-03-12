@@ -9,7 +9,6 @@ import lombok.ToString;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-@ToString
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Wallet {
     private String user;

@@ -11,7 +11,6 @@ import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.DexPreconditionExtension;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.apollocurrrency.aplwallet.inttest.model.TestBase;
-import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Step;
@@ -19,29 +18,20 @@ import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.extension.Extensions;
 import org.junit.jupiter.api.parallel.Execution;
 
-import java.math.BigDecimal;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.closeTo;
-import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.jupiter.api.parallel.ExecutionMode;
 
-
-import java.lang.annotation.ElementType;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -55,7 +45,7 @@ import static org.junit.jupiter.api.parallel.ExecutionMode.SAME_THREAD;
 @Epic(value = "Dex")
 @ExtendWith(DexPreconditionExtension.class)
 @Execution(CONCURRENT)
-public class TestDex extends TestBaseNew {
+public class TestDex extends TestBase {
 
 
     private static Wallet vault1 = new Wallet("APL-D8L6-UJ22-PUK9-6EYMD", "1", true, "0xd54a7a3eff64b467f01f0640b201977e8d017c97", "5030464519701633604");
@@ -69,6 +59,7 @@ public class TestDex extends TestBaseNew {
     @Step
     private boolean waitEmptyFilledOrders(String ethWallet){
         log.info("Wait For ETh wallet empty: {}", ethWallet);
+
         boolean isStatus = false;
         try {
             isStatus = Failsafe.with(retryPolicyDex).get(() -> getFilledOrders().stream().filter(ordersInfo -> ordersInfo.getAddress().equals(ethWallet)).findFirst().get().getDepositsInfo().isEmpty());

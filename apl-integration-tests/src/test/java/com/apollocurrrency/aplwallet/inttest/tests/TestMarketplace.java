@@ -4,7 +4,7 @@ import com.apollocurrency.aplwallet.api.dto.DGSGoodsDTO;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.apollocurrrency.aplwallet.inttest.helper.providers.WalletProvider;
-import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
+import com.apollocurrrency.aplwallet.inttest.model.TestBase;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Step;
@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @DisplayName("Marketplace")
 @Epic(value = "Marketplace")
-public class TestMarketplace extends TestBaseNew {
+public class TestMarketplace extends TestBase {
     private String dgsName;
     private String description;
     private String tag;

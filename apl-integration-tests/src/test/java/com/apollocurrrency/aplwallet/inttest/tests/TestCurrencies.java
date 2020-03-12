@@ -3,7 +3,7 @@ package com.apollocurrrency.aplwallet.inttest.tests;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.apollocurrrency.aplwallet.inttest.helper.providers.WalletProvider;
-import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
+import com.apollocurrrency.aplwallet.inttest.model.TestBase;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Step;
@@ -32,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("Currencies")
 @Epic(value = "Currencies")
-public class TestCurrencies extends TestBaseNew {
+public class TestCurrencies extends TestBase {
     private final ArrayList<Wallet> wallets = new ArrayList<>();
 
 

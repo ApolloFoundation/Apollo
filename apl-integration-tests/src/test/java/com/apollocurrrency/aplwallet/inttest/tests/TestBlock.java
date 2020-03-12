@@ -5,7 +5,7 @@ import com.apollocurrency.aplwallet.api.dto.BlockchainInfoDTO;
 import com.apollocurrency.aplwallet.api.dto.ECBlockDTO;
 import com.apollocurrency.aplwallet.api.response.AccountBlocksResponse;
 import com.apollocurrency.aplwallet.api.response.GetBlockIdResponse;
-import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
+import com.apollocurrrency.aplwallet.inttest.model.TestBase;
 import io.qameta.allure.Epic;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("Blocks")
 @Epic(value = "Blocks")
-public class TestBlock extends TestBaseNew {
+public class TestBlock extends TestBase {
 
     @Test
     @DisplayName("Get Block")

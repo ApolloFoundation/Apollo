@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.api.response.ForgingResponse;
 import com.apollocurrency.aplwallet.api.response.GetPeersIpResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.RestHelper;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
+import com.apollocurrrency.aplwallet.inttest.model.steps.Steps;
 import com.google.common.collect.ImmutableMap;
 import io.qameta.allure.Step;
 import io.restassured.RestAssured;
@@ -45,6 +46,7 @@ import static org.junit.jupiter.api.parallel.Resources.SYSTEM_PROPERTIES;
 
 
 public abstract class TestBase {
+    public final Steps STEPS = new Steps();
     public static final Logger log = LoggerFactory.getLogger(TestBase.class);
     public static RetryPolicy retryPolicy = new RetryPolicy()
         .retryWhen(false)
@@ -317,42 +319,5 @@ public abstract class TestBase {
                 }
             }
         }
-
-
-    @Step
-    public boolean verifyTransactionInBlock(String transaction) {
-        boolean inBlock = false;
-        if (transaction != null) {
-            try {
-                inBlock = Failsafe.with(retryPolicy).get(() -> getTransaction(transaction).getConfirmations() >= 0);
-            } catch (Exception e) {
-                fail("Transaction does't add to block. Transaction " + transaction + " Exception: " + e.getMessage());
-            }
-            assertTrue(inBlock, String.format("Transaction %s in block: ", transaction));
-        }else{
-            fail("Transaction is null");
-        }
-        return inBlock;
-    }
-
-    @Step
-    @DisplayName("Get Transaction")
-    public TransactionDTO getTransaction(String transaction) {
-        HashMap<String, String> param = new HashMap();
-        param.put(ReqType.REQUEST_TYPE, ReqType.GET_TRANSACTION);
-        param.put(ReqParam.TRANSACTION, transaction);
-
-        return given()
-            .spec(restHelper.getSpec())
-            .contentType(ContentType.URLENC)
-            .formParams(param)
-            .when()
-            .get(path)
-            .then()
-            .assertThat().statusCode(200)
-            .extract().body().jsonPath()
-            .getObject("", TransactionDTO.class);
-    }
-
 
 }

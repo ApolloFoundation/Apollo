@@ -10,8 +10,7 @@ import com.apollocurrency.aplwallet.api.response.ShufflingDTO;
 import com.apollocurrency.aplwallet.api.response.ShufflingParticipantsResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.apollocurrrency.aplwallet.inttest.helper.providers.ShufflingArgumentProvider;
-import com.apollocurrrency.aplwallet.inttest.helper.providers.WalletProvider;
-import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
+import com.apollocurrrency.aplwallet.inttest.model.TestBase;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Step;
@@ -25,7 +24,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +40,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("Shuffling")
 @Epic(value = "Shuffling")
-public class TestShuffling extends TestBaseNew {
+public class TestShuffling extends TestBase {
     public static final Logger log = LoggerFactory.getLogger(TestShuffling.class);
 
     RetryPolicy retry = new RetryPolicy()

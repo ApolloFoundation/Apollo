@@ -5,7 +5,7 @@ import com.apollocurrency.aplwallet.api.response.AccountAliasesResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCountAliasesResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.providers.WalletProvider;
-import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
+import com.apollocurrrency.aplwallet.inttest.model.TestBase;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
 import org.junit.jupiter.api.DisplayName;
@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("Alias")
 @Epic(value = "Alias")
-public class TestAliasAPI extends TestBaseNew {
+public class TestAliasAPI extends TestBase {
 
     @DisplayName("SetAlias -> GetAliasesCount -> Get Aliases")
     @ParameterizedTest(name = "{displayName} {arguments}")

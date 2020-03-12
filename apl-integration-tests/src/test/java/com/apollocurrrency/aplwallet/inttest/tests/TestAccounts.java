@@ -17,7 +17,7 @@ import com.apollocurrency.aplwallet.api.response.SearchAccountsResponse;
 import com.apollocurrency.aplwallet.api.response.TransactionListResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.apollocurrrency.aplwallet.inttest.helper.providers.WalletProvider;
-import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
+import com.apollocurrrency.aplwallet.inttest.model.TestBase;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Issue;
@@ -41,13 +41,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("Accounts")
 @Epic(value = "Accounts")
-public class TestAccounts extends TestBaseNew {
+public class TestAccounts extends TestBase {
 
 
     @Test
     @DisplayName("Verify AccountBlockCount endpoint")
     public void testAccountBlockCount(){
-        GetAccountBlockCountResponse accountBlockCount = getAccountBlockCount(getTestConfiguration().getGenesisWallet().getUser());
+        GetAccountBlockCountResponse accountBlockCount = STEPS.ACCOUNT_STEPS.getAccountBlockCount(getTestConfiguration().getGenesisWallet().getUser());
         log.info("Account count = {}", accountBlockCount.getNumberOfBlocks());
         assertThat("Genesis account has more than 0 generated blocks",accountBlockCount.getNumberOfBlocks().intValue(), greaterThan( 0 ));
     }
@@ -55,7 +55,7 @@ public class TestAccounts extends TestBaseNew {
     @Test
     @DisplayName("Verify GetAccount endpoint")
     public void testAccount() {
-        GetAccountResponse account = getAccount(getTestConfiguration().getStandartWallet().getUser());
+        GetAccountResponse account = STEPS.ACCOUNT_STEPS.getAccount(getTestConfiguration().getStandartWallet().getUser());
         log.trace("Get Account = {}", account.getAccountRS());
         assertEquals(account.getAccountRS(), getTestConfiguration().getStandartWallet().getUser());
         assertNotNull(account.getAccount(), "Check account");
@@ -66,7 +66,7 @@ public class TestAccounts extends TestBaseNew {
     @Test
     @DisplayName("Verify AccountBlockIds endpoint")
     public void testAccountBlockIds() {
-        AccountBlockIdsResponse accountBlockIds = getAccountBlockIds(getTestConfiguration().getGenesisWallet().getUser());
+        AccountBlockIdsResponse accountBlockIds = STEPS.ACCOUNT_STEPS.getAccountBlockIds(getTestConfiguration().getGenesisWallet().getUser());
         log.trace("BlockIds count = {}", accountBlockIds.getBlockIds().size());
         assertThat("Genesis account has more than 0 generated blocks",accountBlockIds.getBlockIds().size(), greaterThan( 0 ));
     }
@@ -76,7 +76,7 @@ public class TestAccounts extends TestBaseNew {
     @DisplayName("Verify getAccountBlocks endpoint")
     @Issue("APL-1388")
     public void testAccountBlocks(){
-        BlockListInfoResponse accountBlocks = getAccountBlocks(getTestConfiguration().getGenesisWallet().getUser());
+        BlockListInfoResponse accountBlocks = STEPS.ACCOUNT_STEPS.getAccountBlocks(getTestConfiguration().getGenesisWallet().getUser());
         log.info("Blocks count = {}", accountBlocks.getBlocks().size());
         assertThat("Genesis account has more than 0 generated blocks",accountBlocks.getBlocks().size(), greaterThan( 0 ));
     }
@@ -86,7 +86,7 @@ public class TestAccounts extends TestBaseNew {
     @Test
     public void testAccountId() {
         Wallet wallet = TestConfiguration.getTestConfiguration().getStandartWallet();
-        AccountDTO account = getAccountId(wallet.getPass());
+        AccountDTO account = STEPS.ACCOUNT_STEPS.getAccountId(wallet.getPass());
         assertEquals(getTestConfiguration().getStandartWallet().getUser(), account.getAccountRS());
         assertEquals(getTestConfiguration().getStandartWallet().getPublicKey(), account.getPublicKey());
         assertNotNull(account.getAccount());
@@ -96,7 +96,8 @@ public class TestAccounts extends TestBaseNew {
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void testAccountLedger(Wallet wallet) throws IOException {
-        AccountLedgerResponse accountLedger = getAccountLedger(wallet);
+        AccountLedgerResponse accountLedger = STEPS.ACCOUNT_STEPS.getAccountLedger(wallet);
+
         assertThat("No any ledger:",accountLedger.getEntries().size(), greaterThan(0));
         assertNotNull(accountLedger.getEntries().stream().findFirst().get().getAccount());
         assertNotNull(accountLedger.getEntries().stream().findFirst().get().getAccountRS());
@@ -112,9 +113,9 @@ public class TestAccounts extends TestBaseNew {
     @DisplayName("Get Account Properties")
     public void testAccountProperties() throws IOException {
         String property = "Property " + new Date().getTime();
-        CreateTransactionResponse setAccountInfo = setAccountProperty(getTestConfiguration().getStandartWallet(), property);
+        CreateTransactionResponse setAccountInfo = STEPS.ACCOUNT_STEPS.setAccountProperty(getTestConfiguration().getStandartWallet(), property);
         verifyTransactionInBlock(setAccountInfo.getTransaction());
-        AccountPropertiesResponse accountPropertiesResponse = getAccountProperties(getTestConfiguration().getStandartWallet().getUser());
+        AccountPropertiesResponse accountPropertiesResponse = STEPS.ACCOUNT_STEPS.getAccountProperties(getTestConfiguration().getStandartWallet().getUser());
         assertNotNull(accountPropertiesResponse.getProperties(), "Account Properties is NULL");
         assertTrue(accountPropertiesResponse.getProperties().size() > 0, "Account Properties count = 0");
     }
@@ -124,10 +125,9 @@ public class TestAccounts extends TestBaseNew {
     public void testSearchAccounts() throws IOException {
         String accountName = "Account " + new Date().getTime();
         String accountDesc = "Decription " + new Date().getTime();
-        CreateTransactionResponse setAccountInfo = setAccountInfo(TestConfiguration.getTestConfiguration().getGenesisWallet(), accountName, accountDesc);
-        verifyCreatingTransaction(setAccountInfo);
-        verifyTransactionInBlock(setAccountInfo.getTransaction());
-        SearchAccountsResponse searchAccountsResponse = searchAccounts(accountName);
+        CreateTransactionResponse setAccountInfo = STEPS.ACCOUNT_STEPS.setAccountInfo(TestConfiguration.getTestConfiguration().getGenesisWallet(), accountName, accountDesc);
+        STEPS.ACCOUNT_STEPS.verifyTransactionInBlock(setAccountInfo.getTransaction());
+        SearchAccountsResponse searchAccountsResponse = STEPS.ACCOUNT_STEPS.searchAccounts(accountName);
         assertNotNull(searchAccountsResponse, "Response - null");
         assertNotNull(searchAccountsResponse.getAccounts(), "Response accountDTOS - null");
         assertThat("Account not found",searchAccountsResponse.getAccounts().size(), greaterThan(0) );
@@ -138,7 +138,7 @@ public class TestAccounts extends TestBaseNew {
     @ArgumentsSource(WalletProvider.class)
     public void testGetUnconfirmedTransactions(Wallet wallet) throws IOException {
         sendMoney(wallet, getTestConfiguration().getStandartWallet().getUser(), 2);
-        TransactionListResponse transactionInfos = getUnconfirmedTransactions(wallet);
+        TransactionListResponse transactionInfos = STEPS.ACCOUNT_STEPS.getUnconfirmedTransactions(wallet);
         assertNotNull(transactionInfos.getUnconfirmedTransactions());
         assertThat(transactionInfos.getUnconfirmedTransactions().size(),greaterThan(0));
     }
@@ -209,7 +209,7 @@ public class TestAccounts extends TestBaseNew {
         int countOfTransactions = 50;
         for (int i = 0; i < countOfTransactions; i++) {
             CreateTransactionResponse sendMoneyResponse = sendMoney(wallet, wallet.getUser(), 10);
-            verifyCreatingTransaction(sendMoneyResponse);
+            STEPS.ASSERT_STEPS.verifyCreatingTransaction(sendMoneyResponse);
             transactions.add(sendMoneyResponse.getTransaction());
         }
         waitForHeight(getBlock().getHeight() + 10);
@@ -225,7 +225,7 @@ public class TestAccounts extends TestBaseNew {
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void testSendMoneyPrivate(Wallet wallet) throws IOException {
-        CreateTransactionResponse sendMoneyResponse = sendMoneyPrivate(wallet, wallet.getUser(), 100);
+        CreateTransactionResponse sendMoneyResponse = STEPS.ACCOUNT_STEPS.sendMoneyPrivate(wallet, wallet.getUser(), 100);
         verifyCreatingTransaction(sendMoneyResponse);
     }
 
@@ -236,7 +236,7 @@ public class TestAccounts extends TestBaseNew {
     public void setAccountInfo(Wallet wallet) throws IOException {
         String accountName = "Account " + new Date().getTime();
         String accountDesc = "Decription " + new Date().getTime();
-        CreateTransactionResponse setAccountInfo = setAccountInfo(wallet, accountName, accountDesc);
+        CreateTransactionResponse setAccountInfo = STEPS.ACCOUNT_STEPS.setAccountInfo(wallet, accountName, accountDesc);
         verifyCreatingTransaction(setAccountInfo);
         verifyTransactionInBlock(setAccountInfo.getTransactionJSON().getTransaction());
     }
@@ -246,7 +246,7 @@ public class TestAccounts extends TestBaseNew {
     @Test
     public void setAccountProperty() throws IOException {
         String property = "Property " + new Date().getTime();
-        CreateTransactionResponse setAccountInfo = setAccountProperty(getTestConfiguration().getStandartWallet(), property);
+        CreateTransactionResponse setAccountInfo = STEPS.ACCOUNT_STEPS.setAccountProperty(getTestConfiguration().getStandartWallet(), property);
         verifyCreatingTransaction(setAccountInfo);
     }
 
@@ -256,7 +256,7 @@ public class TestAccounts extends TestBaseNew {
     @ArgumentsSource(WalletProvider.class)
     public void getAccountPropertyTest(Wallet wallet){
         String property = "Property " + new Date().getTime();
-        CreateTransactionResponse setAccountInfo = setAccountProperty(wallet, property);
+        CreateTransactionResponse setAccountInfo = STEPS.ACCOUNT_STEPS.setAccountProperty(wallet, property);
         verifyTransactionInBlock(setAccountInfo.getTransaction());
         AccountPropertiesResponse propertyResponse = getAccountProperties(wallet.getUser());
         assertTrue(propertyResponse.getProperties().size() > 0);
@@ -267,10 +267,10 @@ public class TestAccounts extends TestBaseNew {
     @ArgumentsSource(WalletProvider.class)
     public void deleteAccountProperty(Wallet wallet) {
         String property = "Property " + new Date().getTime();
-        CreateTransactionResponse setAccountInfo = setAccountProperty(wallet, property);
-        verifyTransactionInBlock(setAccountInfo.getTransaction());
+        CreateTransactionResponse setAccountInfo = STEPS.ACCOUNT_STEPS.setAccountProperty(wallet, property);
+        STEPS.ACCOUNT_STEPS.verifyTransactionInBlock(setAccountInfo.getTransaction());
         CreateTransactionResponse transaction = deleteAccountProperty(wallet, getAccountProperties(wallet.getUser()).getProperties().stream().findFirst().get().getProperty());
-        verifyCreatingTransaction(transaction);
+        STEPS.ASSERT_STEPS.verifyCreatingTransaction(transaction);
     }
 
     @DisplayName("Generate Account")
@@ -299,14 +299,14 @@ public class TestAccounts extends TestBaseNew {
        if (accountDTO.getEffectiveBalanceAPL() > 1000L) {
             startForging(wallet);
             response =  leaseBalance(firstleaseWallet.getUser(),wallet);
-            verifyTransactionInBlock(response.getTransaction());
+           STEPS.ACCOUNT_STEPS.verifyTransactionInBlock(response.getTransaction());
         }
 
 
         accountDTO = getAccount(firstleaseWallet.getUser());
         if (accountDTO.getEffectiveBalanceAPL() > 1000L) {
             startForging(firstleaseWallet);
-            response =  leaseBalance(secondtleaseWallet.getUser(),firstleaseWallet);
+            response =  STEPS.ACCOUNT_STEPS.leaseBalance(secondtleaseWallet.getUser(),firstleaseWallet);
             verifyTransactionInBlock(response.getTransaction());
         }
        startForging(secondtleaseWallet);

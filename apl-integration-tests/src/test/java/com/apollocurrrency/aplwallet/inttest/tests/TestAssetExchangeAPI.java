@@ -16,7 +16,7 @@ import com.apollocurrency.aplwallet.api.response.AssetsResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrency.aplwallet.api.response.ExpectedAssetDeletes;
 import com.apollocurrrency.aplwallet.inttest.helper.providers.WalletProvider;
-import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
+import com.apollocurrrency.aplwallet.inttest.model.TestBase;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -39,15 +39,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("Asset")
 @Epic(value = "Asset")
-public class TestAssetExchangeAPI extends TestBaseNew {
+public class TestAssetExchangeAPI extends TestBase {
       // TODO:  Neeed imp full Exchange
     //SMOKE API TESTING (STATUS CODE 200)
     @DisplayName("issueAsset")
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void issueAsset(Wallet wallet) throws IOException {
-        CreateTransactionResponse issueAsset = issueAsset(wallet, "APIORDER11", "issueAssettestAPI", 11);
-        verifyCreatingTransaction(issueAsset);
+        CreateTransactionResponse issueAsset = STEPS.ASSET_STEPS.issueAsset(wallet, "APIORDER11", "issueAssettestAPI", 11);
+        STEPS.ASSERT_STEPS.verifyCreatingTransaction(issueAsset);
     }
 
 
@@ -56,11 +56,11 @@ public class TestAssetExchangeAPI extends TestBaseNew {
     @ArgumentsSource(WalletProvider.class)
     public void getAccountAssetsTest(Wallet wallet) throws IOException {
         String assetID;
-        CreateTransactionResponse issueAsset = issueAsset(wallet, "setAsset", "issueAssettestAPI", 11);
-        verifyCreatingTransaction(issueAsset);
+        CreateTransactionResponse issueAsset = STEPS.ASSET_STEPS.issueAsset(wallet, "setAsset", "issueAssettestAPI", 11);
+        STEPS.ASSERT_STEPS.verifyCreatingTransaction(issueAsset);
         assetID = issueAsset.getTransaction();
-        verifyTransactionInBlock(assetID);
-        AccountAssetsResponse getAccountAssets = getAccountAssets(wallet);
+        STEPS.ACCOUNT_STEPS.verifyTransactionInBlock(assetID);
+        AccountAssetsResponse getAccountAssets = STEPS.ASSET_STEPS.getAccountAssets(wallet);
         assertThat(getAccountAssets.getAccountAssets().size(),greaterThanOrEqualTo(1));
 
     }
