@@ -18,7 +18,7 @@ public interface AccountInfoService {
 
     AccountInfo getAccountInfo(Account account);
 
-    void updateAccountInfo(Account account, String name, String description);
+    void updateAccountInfo(Account account, String name, String description, int height);
 
     List<AccountInfo> searchAccounts(String query, int from, int to);
 }

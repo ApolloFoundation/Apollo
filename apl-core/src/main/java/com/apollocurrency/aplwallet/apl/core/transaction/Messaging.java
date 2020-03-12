@@ -123,7 +123,7 @@ public abstract class Messaging extends TransactionType {
             return false;
         }
     };
-    
+
     public static final TransactionType ALIAS_ASSIGNMENT = new Messaging() {
         private final Fee ALIAS_FEE = new Fee.SizeBasedFee(2 * Constants.ONE_APL, 2 * Constants.ONE_APL, 32) {
             @Override
@@ -785,7 +785,7 @@ public abstract class Messaging extends TransactionType {
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             MessagingAccountInfo attachment = (MessagingAccountInfo) transaction.getAttachment();
-            lookupAccountInfoService().updateAccountInfo(senderAccount, attachment.getName(), attachment.getDescription());
+            lookupAccountInfoService().updateAccountInfo(senderAccount, attachment.getName(), attachment.getDescription(), transaction.getHeight());
         }
 
         @Override
@@ -935,5 +935,5 @@ public abstract class Messaging extends TransactionType {
             return true;
         }
     };
-    
+
 }

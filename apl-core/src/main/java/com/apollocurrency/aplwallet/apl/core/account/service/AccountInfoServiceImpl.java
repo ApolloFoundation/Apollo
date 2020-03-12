@@ -10,6 +10,8 @@ import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountInfo;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -20,6 +22,7 @@ import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
 /**
  * @author andrew.zinchenko@gmail.com
  */
+@Slf4j
 @Singleton
 public class AccountInfoServiceImpl implements AccountInfoService {
 
@@ -47,16 +50,23 @@ public class AccountInfoServiceImpl implements AccountInfoService {
     }
 
     @Override
-    public void updateAccountInfo(Account account, String name, String description) {
+    public void updateAccountInfo(Account account, String name, String description, int height) {
         name = Convert.emptyToNull(name.trim());
         description = Convert.emptyToNull(description.trim());
         AccountInfo accountInfo = getAccountInfo(account);
+        if (blockchain.getHeight() != height) {
+            log.error("updateAccountInfo DIFF = {}\n\tacc={} , {}", blockchain.getHeight() - height,
+                account.getId(),
+                ThreadUtils.lastStacktrace(Thread.currentThread().getStackTrace()));
+        }
         if (accountInfo == null) {
-            accountInfo = new AccountInfo(account.getId(), name, description, blockchain.getHeight());
+//            accountInfo = new AccountInfo(account.getId(), name, description, blockchain.getHeight());
+            accountInfo = new AccountInfo(account.getId(), name, description, height);
         } else {
             accountInfo.setName(name);
             accountInfo.setDescription(description);
-            accountInfo.setHeight(blockchain.getHeight());
+//            accountInfo.setHeight(blockchain.getHeight());
+            accountInfo.setHeight(height);
         }
         update(accountInfo);
     }

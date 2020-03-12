@@ -41,7 +41,7 @@ class AccountInfoServiceTest {
         String newDescription = "ExpectedNewDescription";
 
         doReturn(testData.ACC_INFO_0).when(accountInfoTable).get(any());
-        accountInfoService.updateAccountInfo(testData.ACC_0, newName, newDescription);
+        accountInfoService.updateAccountInfo(testData.ACC_0, newName, newDescription, blockchain.getHeight());
         verify(accountInfoService).update(testData.ACC_INFO_0);
         assertEquals(newName, testData.ACC_INFO_0.getName());
         assertEquals(newDescription, testData.ACC_INFO_0.getDescription());
@@ -55,7 +55,7 @@ class AccountInfoServiceTest {
                 testData.ACC_1.getId(), newName, newDescription, blockchain.getHeight());
 
         doReturn(null).when(accountInfoTable).get(any());
-        accountInfoService.updateAccountInfo(testData.ACC_1, newName, newDescription);
+        accountInfoService.updateAccountInfo(testData.ACC_1, newName, newDescription, blockchain.getHeight());
         verify(accountInfoService).update(expectedAccountInfo);
     }
 
