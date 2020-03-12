@@ -52,12 +52,21 @@ your software versions using instructions from __"Preparation steps" section__
    match__,
    ___delete old version___, _setup
     variables_ (`JAVA_HOME`, `PATH`)_ and try again. __PATH should not contain few java bin directories!__
-   6. Open command line, change your current directory to this project root and execute: `mvnw -v`. 
+   6. Open command line, change your current directory to this project root and execute
    
+- for Linux:
+```shell script
+./mvnw -v
+```
+- for Windows cmd:
+```cmd
+mvnw -v
+```
+     
     Output example:
 <pre>
   Apache Maven 3.6.2 (40f52333136460af0dc0d7232c0dc0bcf0d9e117; 2019-08-27T18:06:16+03:00)<br>
-  Maven home: /usr/local/maven  Maven home: /usr/local/maven<br>
+  Maven home: /home/your_user_name/.m2/wrapper/dists/apache-maven-3.6.2-bin/795eh28tki48bv3l67maojf0ra/apache-maven-3.6.2<br>
   Java version: 11.0.2, vendor: Oracle Corporation, runtime: /usr/java/jdk-11.0.2<br>
   Default locale: en_US, platform encoding: UTF-8<br>
   OS name: "linux", version: "4.20.16-200.fc29.x86_64", arch: "amd64", family: "unix"<br>
