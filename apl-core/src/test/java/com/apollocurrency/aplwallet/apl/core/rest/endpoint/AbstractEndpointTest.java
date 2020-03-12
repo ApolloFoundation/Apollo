@@ -6,10 +6,12 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ClientErrorExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ConstraintViolationExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.DefaultGlobalExceptionMapper;
+import com.apollocurrency.aplwallet.apl.core.rest.exception.IllegalArgumentExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.validation.BlockchainHeightValidator;
 import com.apollocurrency.aplwallet.apl.core.rest.validation.CustomValidatorFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.jboss.resteasy.mock.MockDispatcherFactory;
 import org.jboss.resteasy.mock.MockHttpRequest;
@@ -32,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
+@Slf4j
 public class AbstractEndpointTest {
     public static final int CURRENT_HEIGHT = 650000;
     public static final int CODE_2FA = 123456;
@@ -62,6 +65,7 @@ public class AbstractEndpointTest {
             .register(DefaultGlobalExceptionMapper.class)
             .register(RestParameterExceptionMapper.class)
             .register(ConstraintViolationExceptionMapper.class)
+            .register(IllegalArgumentExceptionMapper.class)
             .register(ClientErrorExceptionMapper.class);
 
         doReturn(CURRENT_HEIGHT).when(blockchain).getHeight();
@@ -112,7 +116,7 @@ public class AbstractEndpointTest {
     }
 
     public static void print(String format, Object... args){
-        System.out.printf(format, args);
+        log.trace(format, args);
     }
 
 }

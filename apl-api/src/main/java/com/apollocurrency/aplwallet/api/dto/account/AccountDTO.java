@@ -44,7 +44,6 @@ public class AccountDTO extends BaseDTO {
     @JsonSerialize(using = ToStringSerializer.class)
     private Long unconfirmedBalanceATM;
     //effective balance
-    @JsonSerialize(using = ToStringSerializer.class)
     private Long effectiveBalanceAPL;
     @JsonSerialize(using = ToStringSerializer.class)
     private Long guaranteedBalanceATM;

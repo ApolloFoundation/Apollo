@@ -1,8 +1,10 @@
 package com.apollocurrency.aplwallet.apl.util.cert;
 
-import java.math.BigInteger;
 import org.bouncycastle.asn1.pkcs.Attribute;
 import org.bouncycastle.asn1.x500.X500Name;
+
+import java.math.BigInteger;
+import java.util.List;
 
 /**
  * PKCS#10 and X.509 attribute parser
@@ -20,7 +22,7 @@ public class CertAttributes {
     private String state = "";
     private String city = "";
     private String eMail = "";
-
+    private List<String> ipAddList = null;
     public CertAttributes() {
     }
 
@@ -34,7 +36,6 @@ public class CertAttributes {
     }
 
     public void setSubjectStr(String name) throws ApolloCertificateException {
-        System.out.println("NAME: " + name);
         String[] names = name.split(",");
         try {
             for (String name1 : names) {
@@ -137,6 +138,10 @@ public class CertAttributes {
 
     public void seteMail(String eMail) {
         this.eMail = eMail;
+    }
+
+    List<String> IpAddresses() {
+        return ipAddList;
     }
 
 }

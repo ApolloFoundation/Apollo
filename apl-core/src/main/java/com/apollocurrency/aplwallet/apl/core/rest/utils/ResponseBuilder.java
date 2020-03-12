@@ -98,6 +98,12 @@ public class ResponseBuilder {
         return this;
     }
 
+    public Response emptyResponse(){
+        this.dto = new BaseDTO();
+        this.response = null;
+        return this.build();
+    }
+
     public Response build(){
         if (dto == null && response == null){
             return Response.status(status).build();
