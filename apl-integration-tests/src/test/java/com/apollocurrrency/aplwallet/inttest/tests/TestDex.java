@@ -55,6 +55,7 @@ import static org.junit.jupiter.api.parallel.ExecutionMode.SAME_THREAD;
 @Epic(value = "Dex")
 @ExtendWith(DexPreconditionExtension.class)
 @Execution(CONCURRENT)
+@Disabled
 public class TestDex extends TestBaseNew {
 
 
