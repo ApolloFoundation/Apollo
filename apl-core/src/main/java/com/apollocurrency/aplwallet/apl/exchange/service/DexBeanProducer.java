@@ -16,41 +16,44 @@ import static org.web3j.tx.TransactionManager.DEFAULT_POLLING_ATTEMPTS_PER_TX_HA
 
 @Singleton
 public class DexBeanProducer {
-
-    private PropertiesHolder propertiesHolder;
-    private static Web3j web3j;
-    private static TransactionReceiptProcessor transactionReceiptProcessor;
+    private final PropertiesHolder propertiesHolder;
+    private static volatile Web3j web3j;
+    private static volatile TransactionReceiptProcessor transactionReceiptProcessor;
 
     @Inject
     public DexBeanProducer(PropertiesHolder propertiesHolder) {
         this.propertiesHolder = propertiesHolder;
     }
 
-    public synchronized Web3j web3j(){
-        if(web3j != null){
-            return web3j;
+    public Web3j web3j(){
+        if(web3j == null){
+            synchronized (this) {
+                if(web3j == null) {
+                    String ethNodeUrl = propertiesHolder.getStringProperty("apl.eth.node.url");
+                    String ethNodePort = propertiesHolder.getStringProperty("apl.eth.node.port");
+                    //TODO move HttpService config to config files.
+                    String fullUrl = ethNodeUrl;
+
+                    if (!StringUtils.isBlank(ethNodePort)) {
+                        fullUrl = fullUrl.concat(":" + ethNodePort);
+                    }
+
+                    Web3j web3 = Web3j.build(new HttpService(fullUrl));  // defaults to http://localhost:8545/
+                    web3j = web3;
+                }
+            }
         }
-
-        String ethNodeUrl = propertiesHolder.getStringProperty("apl.eth.node.url");
-        String ethNodePort = propertiesHolder.getStringProperty("apl.eth.node.port");
-        //TODO move HttpService config to config files.
-        String fullUrl = ethNodeUrl;
-
-        if(!StringUtils.isBlank(ethNodePort)) {
-            fullUrl = fullUrl.concat(":" + ethNodePort);
-        }
-
-        Web3j web3 = Web3j.build(new HttpService(fullUrl));  // defaults to http://localhost:8545/
-        web3j = web3;
-        return web3;
+        return web3j;
     }
 
-    public synchronized TransactionReceiptProcessor receiptProcessor() {
-        if(transactionReceiptProcessor != null){
-            return transactionReceiptProcessor;
+    public TransactionReceiptProcessor receiptProcessor() {
+        if(transactionReceiptProcessor == null) {
+            synchronized (this) {
+                if (transactionReceiptProcessor == null) {
+                    transactionReceiptProcessor = new PollingTransactionReceiptProcessor(web3j(), DEFAULT_BLOCK_TIME, DEFAULT_POLLING_ATTEMPTS_PER_TX_HASH);
+                }
+            }
         }
-
-        transactionReceiptProcessor = new PollingTransactionReceiptProcessor(web3j(), DEFAULT_BLOCK_TIME, DEFAULT_POLLING_ATTEMPTS_PER_TX_HASH);
         return transactionReceiptProcessor;
     }
 }

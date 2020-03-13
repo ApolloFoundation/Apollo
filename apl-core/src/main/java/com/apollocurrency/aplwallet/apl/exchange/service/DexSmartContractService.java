@@ -76,16 +76,14 @@ public class DexSmartContractService {
     private static final int LOCK_MAP_CLEANER_DELAY = 60 * 1000; // 1 min in ms
     private static final String ACCOUNT_TO_READ_DATA = "1234";
 
-    private static final Logger LOG = LoggerFactory.getLogger(DexSmartContractService.class);
-
-    private String smartContractAddress;
-    private String paxContractAddress;
-    private KeyStoreService keyStoreService;
-    private DexEthService dexEthService;
-    private EthereumWalletService ethereumWalletService;
-    private DexTransactionDao dexTransactionDao;
-    private DexBeanProducer dexBeanProducer;
-    private TaskDispatchManager taskManager;
+    private final String smartContractAddress;
+    private final String paxContractAddress;
+    private final KeyStoreService keyStoreService;
+    private final DexEthService dexEthService;
+    private final EthereumWalletService ethereumWalletService;
+    private final DexTransactionDao dexTransactionDao;
+    private final DexBeanProducer dexBeanProducer;
+    private final TaskDispatchManager taskManager;
 
     private Map<String, Object> idLocks = Collections.synchronizedMap(new HashMap<>());
     private Set<String> locksToRemoveLater = ConcurrentHashMap.newKeySet();
@@ -366,7 +364,7 @@ public class DexSmartContractService {
                         txHash = dexContract.deposit(orderIdUnsign, weiValue, token);
                     }
                 } catch (Exception e) {
-                    LOG.error(e.getMessage(), e);
+                    log.error(e.getMessage(), e);
                 }
             }
             locksToRemoveLater.add(identifier);
@@ -499,7 +497,7 @@ public class DexSmartContractService {
         try {
             return DepositedOrderDetailsMapper.map(dexContract.getOrderDetails(new BigInteger(Long.toUnsignedString(orderId)), address).sendAsync().get());
         } catch (Exception e) {
-            LOG.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
         return null;
     }
@@ -521,7 +519,7 @@ public class DexSmartContractService {
         try {
             gasPrice = dexEthService.getEthPriceInfo().getFastSpeedPrice();
         } catch (ExecutionException e) {
-            LOG.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             throw new AplException.ExecutiveProcessException("Third service is not available, try later.");
         }
 

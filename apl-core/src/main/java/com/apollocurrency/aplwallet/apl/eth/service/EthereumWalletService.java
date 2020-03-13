@@ -17,8 +17,8 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.ethereum.util.blockchain.EtherUtil;
-import org.slf4j.Logger;
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.FunctionReturnDecoder;
 import org.web3j.abi.TypeEncoder;
@@ -62,19 +62,17 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 @Singleton
+@Slf4j
 public class EthereumWalletService {
-    private static final Logger log = getLogger(EthereumWalletService.class);
+
+    private final KeyStoreService keyStoreService;
+    private final DexEthService dexEthService;
+    private final UserErrorMessageDao userErrorMessageDao;
+    private final DexBeanProducer dexBeanProducer;
+    public final String PAX_CONTRACT_ADDRESS;
 
     private Web3j web3j;
-    private KeyStoreService keyStoreService;
-    private DexEthService dexEthService;
-    private UserErrorMessageDao userErrorMessageDao;
-    private DexBeanProducer dexBeanProducer;
-
-    public String PAX_CONTRACT_ADDRESS;
 
     @Inject
     public EthereumWalletService(PropertiesHolder propertiesHolder, KeyStoreService keyStoreService, DexEthService dexEthService, UserErrorMessageDao userErrorMessageDao,
