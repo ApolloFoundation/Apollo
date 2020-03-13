@@ -2,9 +2,9 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.api.dto;
+package com.apollocurrency.aplwallet.api.dto.account;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
+import com.apollocurrency.aplwallet.api.dto.account.Account2FADTO;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
@@ -20,9 +20,7 @@ import lombok.ToString;
 @ToString
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Account2FADTO extends BaseDTO {
-    private String account;
-    private String accountRS;
-    @JsonAlias("errorDescription")
-    private Status2FA status;
+public class Account2FADetailsDTO extends Account2FADTO {
+    private String qrCodeUrl;
+    private String secret;
 }

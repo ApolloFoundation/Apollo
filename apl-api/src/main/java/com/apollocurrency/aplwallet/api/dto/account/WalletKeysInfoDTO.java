@@ -2,8 +2,11 @@
  * Copyright © 2018-2019 Apollo Foundation.
  */
 
-package com.apollocurrency.aplwallet.api.dto;
+package com.apollocurrency.aplwallet.api.dto.account;
 
+import com.apollocurrency.aplwallet.api.dto.AplWalletDTO;
+import com.apollocurrency.aplwallet.api.dto.BaseDTO;
+import com.apollocurrency.aplwallet.api.dto.EthWalletKeyDTO;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;

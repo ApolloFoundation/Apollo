@@ -41,6 +41,7 @@ import java.util.EnumSet;
 import java.util.List;
 import javax.enterprise.inject.Vetoed;
 
+@Deprecated
 @Vetoed
 public final class GetPlugins extends AbstractAPIRequestHandler {
 
@@ -78,7 +79,7 @@ public final class GetPlugins extends AbstractAPIRequestHandler {
     protected boolean requireBlockchain() {
         return false;
     }
-    
+
 @Vetoed
     private static class PluginDirListing extends SimpleFileVisitor<Path> {
 
