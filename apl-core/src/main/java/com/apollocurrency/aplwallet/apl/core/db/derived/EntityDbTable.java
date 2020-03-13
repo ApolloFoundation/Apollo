@@ -26,12 +26,11 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+import lombok.Getter;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -43,8 +42,8 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> implements Entity
     private static final Logger log = getLogger(EntityDbTable.class);
 
     private final String defaultSort;
+    @Getter
     private final String fullTextSearchColumns;
-    private FullTextSearchService fullText;
 
     protected EntityDbTable(String table, KeyFactory<T> dbKeyFactory) {
         this(table, dbKeyFactory, false, null);
@@ -392,18 +391,6 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> implements Entity
             save(con, t);
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
-        }
-    }
-
-
-    @Override
-    public final void createSearchIndex(Connection con) throws SQLException {
-        if (fullTextSearchColumns != null) {
-            log.debug("Creating search index on " + table + " (" + fullTextSearchColumns + ")");
-            if (fullText == null) {
-                fullText = CDI.current().select(FullTextSearchService.class).get();
-            }
-            fullText.createIndex(con, "PUBLIC", table.toUpperCase(), fullTextSearchColumns.toUpperCase());
         }
     }
 }
