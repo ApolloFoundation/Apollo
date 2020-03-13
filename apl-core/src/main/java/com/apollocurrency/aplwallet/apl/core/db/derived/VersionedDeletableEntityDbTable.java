@@ -35,6 +35,11 @@ public abstract class VersionedDeletableEntityDbTable<T> extends EntityDbTable<T
     }
 
     @Override
+    public boolean supportDelete() {
+        return true;
+    }
+
+    @Override
     public boolean deleteAtHeight(T t, int height) {
         return delete(t, false, height);
     }
@@ -60,7 +65,7 @@ public abstract class VersionedDeletableEntityDbTable<T> extends EntityDbTable<T
                     try (
                             @DatabaseSpecificDml(DmlMarker.UPDATE_WITH_LIMIT)
                             PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
-                            + " SET latest = FALSE " + keyFactory.getPKClause() + " AND latest = TRUE LIMIT 1")
+                            + " SET latest = FALSE, deleted = TRUE " + keyFactory.getPKClause() + " AND latest = TRUE LIMIT 1")
                     ) {
                         dbKey.setPK(pstmt);
                         pstmt.executeUpdate();

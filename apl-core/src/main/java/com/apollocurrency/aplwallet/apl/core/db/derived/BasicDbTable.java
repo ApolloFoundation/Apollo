@@ -186,8 +186,10 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
                 LOG.trace("Delete time {} for table {}: stm - {}, deleted - {}", System.currentTimeMillis() - startDeleteTime, table,
                         deleteStm, deleted);
                 long startDeleteDeletedTime = System.currentTimeMillis();
-                int totalDeleteDeleted = deleteDeletedNewAlgo(height);
-                LOG.trace("Delete deleted time for table {} is: {}, deleted - {}", table, System.currentTimeMillis() - startDeleteDeletedTime, totalDeleteDeleted);
+                if (supportDelete()) {
+                    int totalDeleteDeleted = deleteDeletedBasedOnDeletedColumn(height);
+                    LOG.trace("Delete deleted time for table {} is: {}, deleted - {}", table, System.currentTimeMillis() - startDeleteDeletedTime, totalDeleteDeleted);
+                }
             }
             long trimTime = System.currentTimeMillis() - startTime;
             if (trimTime > 1000) {
@@ -239,6 +241,32 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
                             if (++deleted % 100 == 0) {
                                 dataSource.commit(false);
                             }
+                        }
+                    }
+                }
+            }
+        }
+        dataSource.commit(false);
+        return deleted;
+    }
+
+    private int deleteDeletedBasedOnDeletedColumn(int height) throws SQLException {
+        int deleted = 0;
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection()) {
+            try (
+                PreparedStatement pstmtSelectDeleteCandidates =
+                    con.prepareStatement("SELECT DB_ID FROM " + table + " WHERE height < ? AND deleted = true ")) {
+                pstmtSelectDeleteCandidates.setInt(1, height);
+
+                try (ResultSet deletedRs = pstmtSelectDeleteCandidates.executeQuery();
+                     PreparedStatement pstmtDeleteByDbId =
+                         con.prepareStatement("DELETE FROM " + table + " WHERE db_id = ?")) {
+                    while (deletedRs.next()) {
+                        long dbId = deletedRs.getLong(1);
+                        deleteByDbId(pstmtDeleteByDbId, dbId);
+                        if (++deleted % 100 == 0) {
+                            dataSource.commit(false);
                         }
                     }
                 }

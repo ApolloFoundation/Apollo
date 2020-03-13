@@ -9,23 +9,23 @@ DELETE FROM PUBLIC.ACCOUNT_LEASE;
 
 
 INSERT INTO PUBLIC.ACCOUNT
-(DB_ID  ,ID  	                        ,BALANCE  	             ,UNCONFIRMED_BALANCE  	    ,HAS_CONTROL_PHASING  	,FORGED_BALANCE  	,ACTIVE_LESSEE_ID  	,HEIGHT  	 ,LATEST) values
-(1       ,1739068987193023818           ,999990000000000     ,999990000000000       ,false                  ,0                  ,null               ,0           ,true),
-(10      ,50                            ,555500000000         ,105500000000           ,false                  ,0                  ,null               ,100000     ,true),
-(20      ,100                           ,100000000             ,100000000               ,false                  ,0                  ,50                 ,104595     ,true ),
-(30      ,200                           ,250000000             ,200000000               ,false                  ,0                  ,null               ,104670     ,true ),
-(40      ,7821792282123976600     ,15025000000000      ,14725000000000        ,false                  ,0                  ,null               ,105000     ,true ),
-(50      ,9211698109297098287     ,25100000000000      ,22700000000000        ,false                  ,0                  ,null               ,106000     ,true ),
-(60     ,500                            ,77182383705332315  ,77182383705332315    ,false                  ,0                  ,50                 ,141839     ,false),
-(70     ,500                            ,77216366305332315  ,77216366305332315    ,false                  ,0                  ,50                 ,141844     ,false),
-(80     ,500                            ,77798522705332315  ,77798522705332315    ,false                  ,0                  ,null               ,141853     ,true),
-(90     ,600                            ,40767800000000      ,40767800000000        ,false                  ,0                  ,null               ,141855     ,false),
-(100    ,600                            ,41167700000000      ,41167700000000        ,false                  ,0                  ,null               ,141858     ,true),
-(110    ,700                            ,2424711969422000   ,2424711969422000     ,false                  ,1150030000000  ,null               ,141860     ,true),
-(120    ,800                            ,2424711869422000   ,2424711869422000     ,false                  ,1150030000000  ,null               ,141862     ,false),
-(130    ,800                            ,2424711769422000   ,2424711769422000     ,false                  ,1150030000000  ,null               ,141864     ,false),
-(140    ,800                            ,77200915499807515  ,77200915499807515    ,false                  ,0                  ,null               ,141866     ,false),
-(150    ,800                            ,40367900000000      ,40367900000000        ,false                  ,0                  ,null               ,141868     ,false)
+(DB_ID  ,ID  	                        ,BALANCE  	             ,UNCONFIRMED_BALANCE  	    ,HAS_CONTROL_PHASING  	,FORGED_BALANCE  	,ACTIVE_LESSEE_ID  	,HEIGHT  	 ,LATEST, DELETED) values
+(1       ,1739068987193023818           ,999990000000000     ,999990000000000       ,false                  ,0                  ,null               ,0           ,true, false),
+(10      ,50                            ,555500000000         ,105500000000           ,false                  ,0                  ,null               ,100000     ,true, false),
+(20      ,100                           ,100000000             ,100000000               ,false                  ,0                  ,50                 ,104595     ,true, false ),
+(30      ,200                           ,250000000             ,200000000               ,false                  ,0                  ,null               ,104670     ,true , false),
+(40      ,7821792282123976600     ,15025000000000      ,14725000000000        ,false                  ,0                  ,null               ,105000     ,true , false),
+(50      ,9211698109297098287     ,25100000000000      ,22700000000000        ,false                  ,0                  ,null               ,106000     ,true , false),
+(60     ,500                            ,77182383705332315  ,77182383705332315    ,false                  ,0                  ,50                 ,141839     ,false, false),
+(70     ,500                            ,77216366305332315  ,77216366305332315    ,false                  ,0                  ,50                 ,141844     ,false, false),
+(80     ,500                            ,77798522705332315  ,77798522705332315    ,false                  ,0                  ,null               ,141853     ,true, false),
+(90     ,600                            ,40767800000000      ,40767800000000        ,false                  ,0                  ,null               ,141855     ,false, false),
+(100    ,600                            ,41167700000000      ,41167700000000        ,false                  ,0                  ,null               ,141858     ,true, false),
+(110    ,700                            ,2424711969422000   ,2424711969422000     ,false                  ,1150030000000  ,null               ,141860     ,true, false),
+(120    ,800                            ,2424711869422000   ,2424711869422000     ,false                  ,1150030000000  ,null               ,141862     ,false, true),
+(130    ,800                            ,2424711769422000   ,2424711769422000     ,false                  ,1150030000000  ,null               ,141864     ,false, true),
+(140    ,800                            ,77200915499807515  ,77200915499807515    ,false                  ,0                  ,null               ,141866     ,false, true),
+(150    ,800                            ,40367900000000      ,40367900000000        ,false                  ,0                  ,null               ,141868     ,false, true)
 ;
 
 INSERT INTO PUBLIC.ACCOUNT_ASSET
@@ -109,11 +109,11 @@ INSERT INTO PUBLIC.ACCOUNT_PROPERTY
 (10, 90, 100, null, 'mine', null, 134152, true);
 
 INSERT INTO PUBLIC.ACCOUNT_LEASE
-(DB_ID,ID,   LESSOR_ID,  CURRENT_LEASING_HEIGHT_FROM, CURRENT_LEASING_HEIGHT_TO, CURRENT_LESSEE_ID, NEXT_LEASING_HEIGHT_FROM, NEXT_LEASING_HEIGHT_TO, NEXT_LESSEE_ID, HEIGHT, LATEST) VALUES
-(1,    1000,  100,        10000,                       11000,                     10,                0,                       0,                      0,              10000,  true),
-(2,    1100,  110,        10000,                       11000,                     10,                0,                       0,                      0,              10000,  true),
-(3,    1200,  120,        10000,                       11000,                     20,                0,                       0,                      0,              10000,  true),
-(4,    1300,  130,        8000,                        10000,                     30,                0,                       0,                      0,              8000,   true),
-(5,    1400,  140,        8000,                        9000,                      40,                0,                       0,                      0,              7000,   false),
-(6,    1400,  140,        9440,                        12440,                      50,                0,                       0,                      0,              8000,   true),
-(7,    1500,  150,        9440,                        12440,                      50,                0,                       0,                      0,              8000,   true);
+(DB_ID, LESSOR_ID,  CURRENT_LEASING_HEIGHT_FROM, CURRENT_LEASING_HEIGHT_TO, CURRENT_LESSEE_ID, NEXT_LEASING_HEIGHT_FROM, NEXT_LEASING_HEIGHT_TO, NEXT_LESSEE_ID, HEIGHT, LATEST) VALUES
+(1,      100,        10000,                       11000,                     10,                0,                       0,                      0,              10000,  true),
+(2,      110,        10000,                       11000,                     10,                0,                       0,                      0,              10000,  true),
+(3,      120,        10000,                       11000,                     20,                0,                       0,                      0,              10000,  true),
+(4,      130,        8000,                        10000,                     30,                0,                       0,                      0,              8000,   true),
+(5,      140,        8000,                        9000,                      40,                0,                       0,                      0,              7000,   false),
+(6,      140,        9440,                        12440,                      50,                0,                       0,                      0,              8000,   true),
+(7,      150,        9440,                        12440,                      50,                0,                       0,                      0,              8000,   true);

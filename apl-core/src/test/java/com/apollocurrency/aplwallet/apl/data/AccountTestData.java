@@ -40,10 +40,10 @@ public class AccountTestData {
     public final Account ACC_8 = createAccount(90     ,600L       ,40767800000000L     ,40767800000000L        ,false ,0               ,0 ,141855 ,false);
     public final Account ACC_9 = createAccount(100    ,600L       ,41167700000000L     ,41167700000000L        ,false ,0               ,0 ,141858 ,true);
     public final Account ACC_10= createAccount(110    ,700L       ,2424711969422000L   ,2424711969422000L      ,false ,1150030000000L  ,0 ,141860 ,true);
-    public final Account ACC_11= createAccount(120    ,800L       ,2424711869422000L   ,2424711869422000L      ,false ,1150030000000L  ,0 ,141862 ,false);
-    public final Account ACC_12= createAccount(130    ,800L       ,2424711769422000L   ,2424711769422000L      ,false ,1150030000000L  ,0 ,141864 ,false);
-    public final Account ACC_13= createAccount(140    ,800L       ,77200915499807515L  ,77200915499807515L     ,false ,0               ,0 ,141866 ,false);
-    public final Account ACC_14= createAccount(150    ,800L       ,40367900000000L     ,40367900000000L        ,false ,0               ,0 ,141868 ,false);
+    public final Account ACC_11= createAccount(120    ,800L       ,2424711869422000L   ,2424711869422000L      ,false ,1150030000000L  ,0 ,141862 ,false, true);
+    public final Account ACC_12= createAccount(130    ,800L       ,2424711769422000L   ,2424711769422000L      ,false ,1150030000000L  ,0 ,141864 ,false, true);
+    public final Account ACC_13= createAccount(140    ,800L       ,77200915499807515L  ,77200915499807515L     ,false ,0               ,0 ,141866 ,false, true);
+    public final Account ACC_14= createAccount(150    ,800L       ,40367900000000L     ,40367900000000L        ,false ,0               ,0 ,141868 ,false, true);
 
     public final int ACC_BLOCKCHAIN_HEIGHT = ACC_14.getHeight();
     public final int ACC_BLOCKCHAIN_WRONG_HEIGHT = ACC_14.getHeight()+1;
@@ -148,16 +148,16 @@ public class AccountTestData {
     public AccountProperty newProperty = new AccountProperty(ACC_PROP_8.getId()+1, ACC_PROP_8.getRecipientId()+1, ACC_PROP_8.getSetterId(), "Chocoladka", "100g", ACC_PROP_8.getHeight()+1);
 
     /* AccountLease */
-    public final AccountLease ACC_LEAS_0 = createLease(1, 1000, 100, 10,10000,11000, 0, 0, 0, 10000, true);
-    public final AccountLease ACC_LEAS_1 = createLease(2, 1100, 110, 10,10000,11000, 0, 0, 0, 10000, true);
-    public final AccountLease ACC_LEAS_2 = createLease(3, 1200, 120, 20,10000,11000, 0, 0, 0, 10000, true);
-    public final AccountLease ACC_LEAS_3 = createLease(4, 1300, 130, 30,8000, 10000, 0, 0, 0, 8000,  true);
-    public final AccountLease ACC_LEAS_4 = createLease(5, 1400, 140, 40,8000, 9000,  0, 0, 0, 7000,  false);
-    public final AccountLease ACC_LEAS_5 = createLease(6, 1400, 140, 50,9440, 12440,  0, 0, 0, 8000,  true);
-    public final AccountLease ACC_LEAS_6 = createLease(7, 1500, 150, 50,9440, 12440,  0, 0, 0, 8000,  true);
+    public final AccountLease ACC_LEAS_0 = createLease(1, 100, 10,10000,11000, 0, 0, 0, 10000, true);
+    public final AccountLease ACC_LEAS_1 = createLease(2, 110, 10,10000,11000, 0, 0, 0, 10000, true);
+    public final AccountLease ACC_LEAS_2 = createLease(3, 120, 20,10000,11000, 0, 0, 0, 10000, true);
+    public final AccountLease ACC_LEAS_3 = createLease(4, 130, 30,8000, 10000, 0, 0, 0, 8000,  true);
+    public final AccountLease ACC_LEAS_4 = createLease(5, 140, 40,8000, 9000,  0, 0, 0, 7000,  false);
+    public final AccountLease ACC_LEAS_5 = createLease(6, 140, 50,9440, 12440,  0, 0, 0, 8000,  true);
+    public final AccountLease ACC_LEAS_6 = createLease(7, 150, 50,9440, 12440,  0, 0, 0, 8000,  true);
 
     public List<AccountLease> ALL_LEASE = List.of(ACC_LEAS_0, ACC_LEAS_1, ACC_LEAS_2, ACC_LEAS_3, ACC_LEAS_4, ACC_LEAS_5, ACC_LEAS_6);
-    public AccountLease newLease = new AccountLease(1, ACC_LEAS_2.getLessorId()+1, ACC_LEAS_2.getCurrentLeasingHeightFrom()+100, ACC_LEAS_2.getCurrentLeasingHeightTo()+100, ACC_LEAS_2.getCurrentLesseeId()+1, ACC_LEAS_2.getHeight());
+    public AccountLease newLease = new AccountLease(ACC_LEAS_2.getLessorId()+1, ACC_LEAS_2.getCurrentLeasingHeightFrom()+100, ACC_LEAS_2.getCurrentLeasingHeightTo()+100, ACC_LEAS_2.getCurrentLesseeId()+1, ACC_LEAS_2.getHeight());
 
     /* PublicKey */
     public PublicKey PUBLIC_KEY1 = new PublicKey(-2509437615322027040L, PUBLIC_KEY_STR.getBytes(),10000);
@@ -185,8 +185,8 @@ public class AccountTestData {
         return balance;
     }
 
-    public AccountLease createLease( long dbId, long txId, long lessorId,  long currentLesseeId, int currentLeasingHeightFrom, int currentLeasingHeightTo, long nextLesseeId, int nextLeasingHeightFrom, int nextLeasingHeightTo, int height, boolean latest){
-        AccountLease lease = new AccountLease(txId, lessorId, currentLeasingHeightFrom, currentLeasingHeightTo, currentLesseeId, height);
+    public AccountLease createLease( long dbId, long lessorId,  long currentLesseeId, int currentLeasingHeightFrom, int currentLeasingHeightTo, long nextLesseeId, int nextLeasingHeightFrom, int nextLeasingHeightTo, int height, boolean latest){
+        AccountLease lease = new AccountLease(lessorId, currentLeasingHeightFrom, currentLeasingHeightTo, currentLesseeId, height);
         lease.setDbId(dbId);
         lease.setLatest(latest);
         lease.setNextLeasingHeightFrom(nextLeasingHeightFrom);
@@ -218,14 +218,18 @@ public class AccountTestData {
         return info;
     }
 
-    public Account createAccount(long dbId, long accountId, long balance, long unconfirmedBalance, boolean isControlPhasing, long forgedBalance, long activeLessId, int height, boolean latest){
+    public Account createAccount(long dbId, long accountId, long balance, long unconfirmedBalance, boolean isControlPhasing, long forgedBalance, long activeLessId, int height, boolean latest, boolean deleted){
         Account acc = new Account(accountId, balance, unconfirmedBalance, forgedBalance, activeLessId, height);
         if (isControlPhasing) {
             acc.setControls(Collections.unmodifiableSet(EnumSet.of(AccountControlType.PHASING_ONLY)));
         }
         acc.setDbId(dbId);
         acc.setLatest(latest);
+        acc.setDeleted(deleted);
         return acc;
+    }
+    public Account createAccount(long dbId, long accountId, long balance, long unconfirmedBalance, boolean isControlPhasing, long forgedBalance, long activeLessId, int height, boolean latest){
+        return createAccount(dbId, accountId, balance, unconfirmedBalance, isControlPhasing, forgedBalance, activeLessId, height, latest, false);
     }
 
     public AccountAsset createAsset(long dbId, long accountId, long assetId, long quantity, long unconfirmedQuantity, int height, boolean latest){

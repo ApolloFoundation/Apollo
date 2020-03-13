@@ -4,7 +4,6 @@
 package com.apollocurrency.aplwallet.apl.core.account.dao;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountLease;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
@@ -30,11 +29,11 @@ import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
 @Slf4j
 @Singleton
 public class AccountLeaseTable extends VersionedDeletableEntityDbTable<AccountLease> {
-    private static final LongKeyFactory<AccountLease> accountLeaseDbKeyFactory = new LongKeyFactory<AccountLease>("id") {
+    private static final LongKeyFactory<AccountLease> accountLeaseDbKeyFactory = new LongKeyFactory<AccountLease>("lessor_id") {
         @Override
         public DbKey newKey(AccountLease accountLease) {
             if(accountLease.getDbKey() == null){
-                accountLease.setDbKey(super.newKey(accountLease.getId()));
+                accountLease.setDbKey(super.newKey(accountLease.getLessorId()));
             }
             return accountLease.getDbKey();
         }
@@ -53,10 +52,6 @@ public class AccountLeaseTable extends VersionedDeletableEntityDbTable<AccountLe
         return new AccountLease(rs, dbKey);
     }
 
-    public AccountLease getByAccount(long id) {
-        return getBy(new DbClause.LongClause("lessor_id", id));
-    }
-
     @Override
     public void save(Connection con, AccountLease accountLease) throws SQLException {
         if (log.isTraceEnabled()){
@@ -65,12 +60,11 @@ public class AccountLeaseTable extends VersionedDeletableEntityDbTable<AccountLe
         try (
                 @DatabaseSpecificDml(DmlMarker.MERGE)
                 final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_lease " +
-                    "(id, lessor_id, current_leasing_height_from, current_leasing_height_to, current_lessee_id, " +
-                    "next_leasing_height_from, next_leasing_height_to, next_lessee_id, height, latest) " +
-                    "KEY (lessor_id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")
+                    "(lessor_id, current_leasing_height_from, current_leasing_height_to, current_lessee_id, " +
+                    "next_leasing_height_from, next_leasing_height_to, next_lessee_id, height, latest, deleted) " +
+                    "KEY (lessor_id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)")
         ) {
             int i = 0;
-            pstmt.setLong(++i, accountLease.getId());
             pstmt.setLong(++i, accountLease.getLessorId());
             DbUtils.setIntZeroToNull(pstmt, ++i, accountLease.getCurrentLeasingHeightFrom());
             DbUtils.setIntZeroToNull(pstmt, ++i, accountLease.getCurrentLeasingHeightTo());

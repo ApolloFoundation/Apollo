@@ -20,19 +20,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import javax.enterprise.inject.spi.CDI;
-
-import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasAssignment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasSell;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasAssignment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasSell;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -67,7 +66,7 @@ public final class Alias {
             try (
                     @DatabaseSpecificDml(DmlMarker.MERGE)
                     PreparedStatement pstmt = con.prepareStatement("MERGE INTO alias_offer (id, price, buyer_id, "
-                    + "height) KEY (id, height) VALUES (?, ?, ?, ?)")
+                    + "height, latest, deleted) KEY (id, height) VALUES (?, ?, ?, ?, TRUE, FALSE)")
             ) {
                 int i = 0;
                 pstmt.setLong(++i, this.aliasId);
@@ -267,8 +266,8 @@ public final class Alias {
                 @DatabaseSpecificDml(DmlMarker.MERGE)
                 @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
                 PreparedStatement pstmt = con.prepareStatement("MERGE INTO alias (id, account_id, alias_name, "
-                + "alias_uri, timestamp, height) KEY (id, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?)")
+                + "alias_uri, timestamp, height, latest, deleted) KEY (id, height) "
+                + "VALUES (?, ?, ?, ?, ?, ?, TRUE, FALSE)")
         ) {
             int i = 0;
             pstmt.setLong(++i, this.id);
