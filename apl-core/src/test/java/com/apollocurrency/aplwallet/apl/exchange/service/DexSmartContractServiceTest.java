@@ -62,6 +62,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class DexSmartContractServiceTest {
@@ -81,7 +82,7 @@ class DexSmartContractServiceTest {
     @Mock
     private TransactionReceiptProcessor receiptProcessor;
     @Mock
-    private ReceiptProcessorProducer receiptProcessorProducer;
+    private DexBeanProducer dexBeanProducer;
 
     private DexSmartContractService service;
     private static final long ALICE_ID = 100;
@@ -105,7 +106,7 @@ class DexSmartContractServiceTest {
         props.setProperty("apl.eth.pax.contract.address", PAX_ETH_ADDRESS);
         PropertiesHolder holder = new PropertiesHolder();
         holder.init(props);
-        service = spy(new DexSmartContractService(web3j, holder, keyStoreService, dexEthService, ethereumWalletService, dexTransactionDao, receiptProcessor, receiptProcessorProducer, null));
+        service = spy(new DexSmartContractService(holder, keyStoreService, dexEthService, ethereumWalletService, dexTransactionDao, dexBeanProducer, null));
         aliceWalletKey = new EthWalletKey(Credentials.create(ECKeyPair.create(Crypto.getPrivateKey(Convert.parseHexString(ALICE_PRIV_KEY)))));
         ApolloFbWallet apolloFbWallet = new ApolloFbWallet();
         apolloFbWallet.addAplKey(new AplWalletKey(Convert.parseHexString(ALICE_PRIV_KEY)));
@@ -180,7 +181,7 @@ class DexSmartContractServiceTest {
 
         TransactionReceiptProcessor transactionReceiptProcessor = Mockito.mock(TransactionReceiptProcessor.class);
         doReturn(new TransactionReceipt()).when(transactionReceiptProcessor).waitForTransactionReceipt(any());
-        doReturn(transactionReceiptProcessor).when(receiptProcessorProducer).receiptProcessor();
+        doReturn(transactionReceiptProcessor).when(dexBeanProducer).receiptProcessor();
 
         String hash = service.deposit(ALICE_PASS, 100L, ALICE_ID, ALICE_ETH_ADDRESS, amount, null, DexCurrency.PAX);
 
@@ -322,6 +323,7 @@ class DexSmartContractServiceTest {
         String empty32Bytes = Numeric.toHexString(new byte[32]);
         doReturn(Optional.empty()).when(service).getTxByHash(empty32Bytes);
         mockEthSendTransactionCorrectResponse(empty32EncodedBytes, empty32EncodedBytes);
+        when(dexBeanProducer.web3j()).thenReturn(web3j);
 
         String hash = service.deposit(ALICE_PASS, 100L, ALICE_ID, ALICE_ETH_ADDRESS, BigInteger.TEN, 10L, DexCurrency.ETH);
 
@@ -351,6 +353,7 @@ class DexSmartContractServiceTest {
         String empty32Bytes = Numeric.toHexString(new byte[32]);
         doReturn(Optional.empty()).when(service).getTxByHash(empty32Bytes);
         mockEthSendTransactionWithErrorResponse(empty32EncodedBytes);
+        when(dexBeanProducer.web3j()).thenReturn(web3j);
 
         String hash = service.deposit(ALICE_PASS, 100L, ALICE_ID, ALICE_ETH_ADDRESS, BigInteger.TEN, 10L, DexCurrency.ETH);
 
@@ -383,6 +386,8 @@ class DexSmartContractServiceTest {
 
     @Test
     void testRefundSendExistingRawTransactionWithConfirmation() throws AplException.ExecutiveProcessException, IOException, TransactionException {
+        when(dexBeanProducer.web3j()).thenReturn(web3j);
+        when(dexBeanProducer.receiptProcessor()).thenReturn(receiptProcessor);
         mockExistingTransactionSendingWithReceipt(empty32EncodedBytes);
 
         boolean r = service.refundAndWithdraw(secretHash, ALICE_PASS, ALICE_ETH_ADDRESS, ALICE_ID, true) != null;
@@ -394,6 +399,8 @@ class DexSmartContractServiceTest {
 
     @Test
     void testRefundSendExistingRawTransactionWithConfirmationWhenHashesNotMatch() throws IOException, TransactionException {
+        when(dexBeanProducer.web3j()).thenReturn(web3j);
+        when(dexBeanProducer.receiptProcessor()).thenReturn(receiptProcessor);
         mockExistingTransactionSendingWithReceipt("");
 
         assertThrows(AplException.DEXProcessingException.class, () -> service.refundAndWithdraw(secretHash, ALICE_PASS, ALICE_ETH_ADDRESS, ALICE_ID, true));
@@ -403,6 +410,8 @@ class DexSmartContractServiceTest {
 
     @Test
     void testRefundSendExistingRawTransactionWithConfirmationWhenTransactionExceptionThrown() throws IOException, TransactionException {
+        when(dexBeanProducer.web3j()).thenReturn(web3j);
+        when(dexBeanProducer.receiptProcessor()).thenReturn(receiptProcessor);
         mockExistingTransactionSendingWithoutReceipt(empty32EncodedBytes);
         doThrow(new TransactionException("Test tx exception")).when(receiptProcessor).waitForTransactionReceipt(empty32EncodedBytes);
 
