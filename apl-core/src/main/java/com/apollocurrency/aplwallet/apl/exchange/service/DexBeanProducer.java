@@ -17,8 +17,8 @@ import static org.web3j.tx.TransactionManager.DEFAULT_POLLING_ATTEMPTS_PER_TX_HA
 @Singleton
 public class DexBeanProducer {
     private final PropertiesHolder propertiesHolder;
-    private static volatile Web3j web3j;
-    private static volatile TransactionReceiptProcessor transactionReceiptProcessor;
+    private volatile Web3j web3j;
+    private volatile TransactionReceiptProcessor transactionReceiptProcessor;
 
     @Inject
     public DexBeanProducer(PropertiesHolder propertiesHolder) {
