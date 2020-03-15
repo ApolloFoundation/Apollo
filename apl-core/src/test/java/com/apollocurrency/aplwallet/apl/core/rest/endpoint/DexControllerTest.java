@@ -46,16 +46,12 @@ public class DexControllerTest {
     private DexEthService dexEthService;
     @Mock
     private EthereumWalletService walletService;
-    @Mock
-    private DexSmartContractService smartContractService;
-    @Mock
-    private AccountService accountService;
     private DexTestData td;
 
     @BeforeEach
     void setup() {
         dispatcher = MockDispatcherFactory.createDispatcher();
-        DexController dexController = new DexController(service, dexOrderTransactionCreator, timeService, dexEthService, walletService, smartContractService, accountService);
+        DexController dexController = new DexController(service, dexOrderTransactionCreator, timeService, dexEthService, walletService);
         dispatcher.getRegistry().addSingletonResource(dexController);
         td = new DexTestData();
     }

@@ -41,8 +41,6 @@ public interface DerivedTableInterface<T> {
      */
     void trim(int height, boolean isSharding);
 
-    void createSearchIndex(Connection con) throws SQLException;
-
     void prune(int time);
 
     void insert(T t);
@@ -85,4 +83,14 @@ public interface DerivedTableInterface<T> {
      * @return table db name
      */
     String getName();
+
+    /**
+     * Gets null as full text search columns only for those tables that do not have
+     * the EntityDbTable ancestor.
+     *
+     * @return null
+     */
+    default String getFullTextSearchColumns() {
+        return null;
+    }
 }

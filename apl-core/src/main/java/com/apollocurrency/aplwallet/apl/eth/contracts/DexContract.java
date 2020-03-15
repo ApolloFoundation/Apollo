@@ -762,40 +762,13 @@ public class DexContract extends Contract {
         return assetWithdrawalEventFlowable(filter);
     }
 
-    @Deprecated
-    public static DexContract load(String contractAddress, Web3j web3j, Credentials credentials, BigInteger gasPrice, BigInteger gasLimit) {
-        return new DexContract(contractAddress, web3j, credentials, gasPrice, gasLimit);
-    }
-
-    @Deprecated
-    public static DexContract load(String contractAddress, Web3j web3j, TransactionManager transactionManager, BigInteger gasPrice, BigInteger gasLimit) {
-        return new DexContract(contractAddress, web3j, transactionManager, gasPrice, gasLimit);
-    }
-
-    public static DexContract load(String contractAddress, Web3j web3j, Credentials credentials, ContractGasProvider contractGasProvider) {
-        return new DexContract(contractAddress, web3j, credentials, contractGasProvider);
-    }
-
-    public static DexContract load(String contractAddress, Web3j web3j, TransactionManager transactionManager, ContractGasProvider contractGasProvider, EthereumWalletService ethereumWalletService) {
-        return new DexContract(contractAddress, web3j, transactionManager, contractGasProvider, ethereumWalletService);
-    }
 
     public static RemoteCall<DexContract> deploy(Web3j web3j, Credentials credentials, ContractGasProvider contractGasProvider) {
         return deployRemoteCall(DexContract.class, web3j, credentials, contractGasProvider, BINARY, "");
     }
 
-    @Deprecated
-    public static RemoteCall<DexContract> deploy(Web3j web3j, Credentials credentials, BigInteger gasPrice, BigInteger gasLimit) {
-        return deployRemoteCall(DexContract.class, web3j, credentials, gasPrice, gasLimit, BINARY, "");
-    }
-
     public static RemoteCall<DexContract> deploy(Web3j web3j, TransactionManager transactionManager, ContractGasProvider contractGasProvider) {
         return deployRemoteCall(DexContract.class, web3j, transactionManager, contractGasProvider, BINARY, "");
-    }
-
-    @Deprecated
-    public static RemoteCall<DexContract> deploy(Web3j web3j, TransactionManager transactionManager, BigInteger gasPrice, BigInteger gasLimit) {
-        return deployRemoteCall(DexContract.class, web3j, transactionManager, gasPrice, gasLimit, BINARY, "");
     }
 
     public static class InitiatedEventResponse {

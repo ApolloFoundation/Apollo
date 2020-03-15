@@ -1,6 +1,6 @@
 package com.apollocurrrency.aplwallet.inttest.tests;
 
-import com.apollocurrency.aplwallet.api.dto.AccountAssetDTO;
+import com.apollocurrency.aplwallet.api.dto.account.AccountAssetDTO;
 import com.apollocurrency.aplwallet.api.dto.AccountAssetOrderDTO;
 import com.apollocurrency.aplwallet.api.response.AccountAssetsCountResponse;
 import com.apollocurrency.aplwallet.api.response.AccountAssetsIdsResponse;

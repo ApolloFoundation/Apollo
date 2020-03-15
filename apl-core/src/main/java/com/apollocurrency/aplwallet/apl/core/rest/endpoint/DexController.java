@@ -98,28 +98,24 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class DexController {
     private static final Logger log = getLogger(DexController.class);
 
-    private AccountService accountService;
     private DexService service;
     private DexOrderTransactionCreator dexOrderTransactionCreator;
     private TimeService timeService;
     private DexEthService dexEthService;
     private EthereumWalletService ethereumWalletService;
-    private Integer DEFAULT_DEADLINE_MIN = 60*2;
-    private String TX_DEADLINE = "1440";
+    private static final Integer DEFAULT_DEADLINE_MIN = 60*2;
+    private static final String TX_DEADLINE = "1440";
     private ObjectMapper mapper = new ObjectMapper();
-    private DexSmartContractService dexSmartContractService;
     private ExchangeContractToDTOConverter contractConverter = new ExchangeContractToDTOConverter();
 
 
     @Inject
-    public DexController(DexService service, DexOrderTransactionCreator dexOrderTransactionCreator, TimeService timeService, DexEthService dexEthService,
-                         EthereumWalletService ethereumWalletService, DexSmartContractService dexSmartContractService, AccountService accountService) {
+    public DexController(DexService service, DexOrderTransactionCreator dexOrderTransactionCreator, TimeService timeService, DexEthService dexEthService, EthereumWalletService ethereumWalletService) {
         this.service = Objects.requireNonNull(service, "DexService is null");
         this.dexOrderTransactionCreator = Objects.requireNonNull(dexOrderTransactionCreator, "DexOfferTransactionCreator is null");
         this.timeService = Objects.requireNonNull(timeService, "EpochTime is null");
         this.dexEthService = Objects.requireNonNull(dexEthService, "DexEthService is null");
         this.ethereumWalletService = Objects.requireNonNull(ethereumWalletService, "Ethereum Wallet Service");
-        this.accountService = Objects.requireNonNull( accountService, "accountService is null");
     }
 
     //For DI

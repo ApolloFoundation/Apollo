@@ -15,9 +15,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.List;
 import java.util.Set;
-import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -40,47 +38,6 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
         this.ftl = ftl;
         this.indexTables = indexTables;
         this.schemaName = schemaName;
-    }
-    /**
-     * Create the fulltext index for a table
-     *
-     * @param   conn                SQL connection
-     * @param   schema              Schema name
-     * @param   table               Table name
-     * @param   columnList          Indexed column names separated by commas
-     * @throws  SQLException        Unable to create fulltext index
-     */
-    public void createIndex(Connection conn, String schema, String table, String columnList)
-            throws SQLException {
-        String upperSchema = schema.toUpperCase();
-        String upperTable = table.toUpperCase();
-        String tableName = upperSchema + "." + upperTable;
-        //
-        // Drop an existing index and the associated database trigger
-        //
-            dropIndex(conn, schema, table);
-        //
-        // Update our schema and create a new database trigger.  Note that the trigger
-        // will be initialized when it is created.
-        //
-        try (Statement stmt = conn.createStatement()) {
-            stmt.execute(String.format("INSERT INTO FTL.INDEXES (schema, \"TABLE\", columns) "
-                            + "VALUES('%s', '%s', '%s')",
-                    upperSchema, upperTable, columnList.toUpperCase()));
-            stmt.execute(String.format("CREATE TRIGGER FTL_%s AFTER INSERT,UPDATE,DELETE ON %s "
-                            + "FOR EACH ROW CALL \"%s\"",
-                    upperTable, tableName, FullTextTrigger.class.getName()));
-        }
-        //
-        // Index the table
-        //
-        try {
-                reindex(conn, upperTable, schemaName);
-                LOG.info("Lucene search index created for table " + tableName);
-            } catch (SQLException exc) {
-                LOG.error("Unable to create Lucene search index for table " + tableName);
-                throw new SQLException("Unable to create Lucene search index for table " + tableName, exc);
-            }
     }
 
     /**
@@ -311,5 +268,56 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             throw new SQLException("Unable to rebuild the Lucene index", exc);
         }
         LOG.info("Rebuilding Lucene search index DONE in '{}' ms", System.currentTimeMillis() - start);
+    }
+
+
+    /**
+     * Creates a new index for table to support fulltext search.
+     * Note that a schema is always PUBLIC.
+     *
+     * @param con       DB connection
+     * @param table      name of table for indexing
+     * @param fullTextSearchColumns list of columns for indexing separated by comma
+     * @throws SQLException when unable to create index
+     */
+    @Override
+    public final void createSearchIndex(
+        final Connection con,
+        final String table,
+        final String fullTextSearchColumns
+    ) throws SQLException {
+        if (fullTextSearchColumns != null) {
+            LOG.debug("Creating search index on {} ({})", table, fullTextSearchColumns);
+            String table1 = table.toUpperCase();
+            String upperSchema = schemaName.toUpperCase();
+            String upperTable = table1.toUpperCase();
+            String tableName = upperSchema + "." + upperTable;
+            //
+            // Drop an existing index and the associated database trigger
+            //
+            dropIndex(con, schemaName, table1);
+            //
+            // Update our schema and create a new database trigger.  Note that the trigger
+            // will be initialized when it is created.
+            //
+            try (Statement stmt = con.createStatement()) {
+                stmt.execute(String.format("INSERT INTO FTL.INDEXES (schema, \"TABLE\", columns) "
+                                + "VALUES('%s', '%s', '%s')",
+                        upperSchema, upperTable, fullTextSearchColumns.toUpperCase().toUpperCase()));
+                stmt.execute(String.format("CREATE TRIGGER FTL_%s AFTER INSERT,UPDATE,DELETE ON %s "
+                                + "FOR EACH ROW CALL \"%s\"",
+                        upperTable, tableName, FullTextTrigger.class.getName()));
+            }
+            //
+            // Index the table
+            //
+            try {
+                    reindex(con, upperTable, schemaName);
+                    LOG.info("Lucene search index created for table " + tableName);
+                } catch (SQLException exc) {
+                    LOG.error("Unable to create Lucene search index for table " + tableName);
+                    throw new SQLException("Unable to create Lucene search index for table " + tableName, exc);
+                }
+        }
     }
 }

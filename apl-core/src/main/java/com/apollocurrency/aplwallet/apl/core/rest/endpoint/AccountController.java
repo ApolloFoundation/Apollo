@@ -1,16 +1,17 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
-import com.apollocurrency.aplwallet.api.dto.Account2FADTO;
-import com.apollocurrency.aplwallet.api.dto.Account2FADetailsDTO;
-import com.apollocurrency.aplwallet.api.dto.AccountAssetDTO;
-import com.apollocurrency.aplwallet.api.dto.AccountCurrencyDTO;
-import com.apollocurrency.aplwallet.api.dto.AccountDTO;
-import com.apollocurrency.aplwallet.api.dto.AccountKeyDTO;
-import com.apollocurrency.aplwallet.api.dto.WalletKeysInfoDTO;
+import com.apollocurrency.aplwallet.api.dto.account.Account2FADTO;
+import com.apollocurrency.aplwallet.api.dto.account.Account2FADetailsDTO;
+import com.apollocurrency.aplwallet.api.dto.account.AccountAssetDTO;
+import com.apollocurrency.aplwallet.api.dto.account.AccountCurrencyDTO;
+import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
+import com.apollocurrency.aplwallet.api.dto.account.AccountKeyDTO;
+import com.apollocurrency.aplwallet.api.dto.account.AccountsCountDto;
+import com.apollocurrency.aplwallet.api.dto.account.WalletKeysInfoDTO;
 import com.apollocurrency.aplwallet.api.response.AccountAssetsCountResponse;
 import com.apollocurrency.aplwallet.api.response.AccountAssetsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountBlockIdsResponse;
@@ -48,6 +49,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountCurrencyConve
 import com.apollocurrency.aplwallet.apl.core.rest.converter.WalletKeysConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FA;
 import com.apollocurrency.aplwallet.apl.core.rest.parameter.AccountIdParameter;
+import com.apollocurrency.aplwallet.apl.core.rest.service.AccountStatisticsService;
 import com.apollocurrency.aplwallet.apl.core.rest.parameter.LongParameter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.OrderService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
@@ -56,6 +58,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.core.rest.validation.ValidBlockchainHeight;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -129,6 +132,8 @@ public class AccountController {
     private OrderService orderService;
     @Inject @Setter
     private FirstLastIndexParser indexParser;
+    @Inject @Setter
+    private AccountStatisticsService accountStatisticsService;
 
     public AccountController(Blockchain blockchain,
                              Account2FAHelper account2FAHelper,
@@ -144,7 +149,8 @@ public class AccountController {
                              Account2FADetailsConverter faDetailsConverter,
                              Account2FAConverter faConverter,
                              OrderService orderService,
-                             FirstLastIndexParser indexParser) {
+                             FirstLastIndexParser indexParser,
+                             AccountStatisticsService accountStatisticsService) {
 
         this.blockchain = blockchain;
         this.account2FAHelper = account2FAHelper;
@@ -161,6 +167,7 @@ public class AccountController {
         this.faConverter = faConverter;
         this.orderService = orderService;
         this.indexParser = indexParser;
+        this.accountStatisticsService = accountStatisticsService;
     }
 
     @Path("/account")
@@ -738,5 +745,35 @@ public class AccountController {
 
         return response.bind(dto).build();
     }
+
+    @Path("/statistic")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+        summary = "Returns statistics Account information",
+        description = "Returns statistics information about specified count of account",
+        tags = {"accounts"},
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Successful execution",
+                content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = AccountsCountDto.class)))
+        }
+    )
+    @PermitAll
+    public Response counts(
+        @Parameter(name = "numberOfAccounts", description = "number Of returned Accounts, optional, minimal value = 50, maximum = 500", allowEmptyValue = true)
+        @QueryParam("numberOfAccounts") String numberOfAccountsStr
+    ) {
+        log.trace("Started counts : \t'numberOfAccounts' = {}", numberOfAccountsStr);
+        ResponseBuilder response = ResponseBuilder.startTiming();
+        int numberOfAccounts = RestParametersParser.parseInt(numberOfAccountsStr, "numberOfAccounts",
+            Constants.MIN_TOP_ACCOUNTS_NUMBER, Constants.MAX_TOP_ACCOUNTS_NUMBER, false);
+        int numberOfAccountsMax = Math.max(numberOfAccounts, Constants.MIN_TOP_ACCOUNTS_NUMBER);
+
+        AccountsCountDto dto = accountStatisticsService.getAccountsStatistic(numberOfAccountsMax);
+        log.trace("counts result : {}", dto);
+        return response.bind(dto).build();
+    }
+
 
 }
