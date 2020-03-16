@@ -41,10 +41,10 @@ public abstract class VersionedDeletableEntityDbTable<T> extends EntityDbTable<T
 
     @Override
     public boolean deleteAtHeight(T t, int height) {
-        return delete(t, false, height);
+        return delete(t, height);
     }
 
-    public boolean delete(T t, boolean keepInCache, int height) {
+    public boolean delete(T t, int height) {
         if (t == null) {
             return false;
         }

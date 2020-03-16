@@ -38,9 +38,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -127,6 +127,43 @@ class AccountDaoTest  {
     void getTotalSupply() {
         long total = table.getTotalSupply(testData.CREATOR_ID);
         assertEquals(999990000000000L, total);
+    }
+
+    @Test
+    void testDeleteAndTrim() throws SQLException {
+        DbUtils.inTransaction(dbExtension, (con)-> {
+            testData.ACC_10.setHeight(testData.ACC_10.getHeight() + 1);
+            boolean deleted = table.deleteAtHeight(testData.ACC_10, testData.ACC_10.getHeight() + 1);
+            assertTrue(deleted);
+        });
+
+        List<Account> accounts = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
+        int numberOfAccounts = accounts.size();
+        assertEquals(17, numberOfAccounts);
+        Account account = accounts.get(16);
+        testData.ACC_10.setDeleted(true);
+        testData.ACC_10.setLatest(false);
+        testData.ACC_10.setDbId(testData.ACC_14.getDbId() + 1);
+
+        assertEquals(testData.ACC_10, account);
+        Account deletedPreviousAcc = accounts.get(11);
+        assertEquals(deletedPreviousAcc.getId(), testData.ACC_10.getId());
+        assertTrue(deletedPreviousAcc.isDeleted());
+        assertFalse(deletedPreviousAcc.isLatest());
+
+        // Trim latest=false + one deleted record
+        DbUtils.inTransaction(dbExtension, (con)-> table.trim(testData.ACC_10.getHeight()));
+
+        int afterTrimSize = table.getRowCount();
+        assertEquals(13, afterTrimSize); // 1 updated 1 deleted for id=700, 2 updated for id=500
+
+        // Trim another deleted record for ACC_10
+        DbUtils.inTransaction(dbExtension, (con)-> {
+            table.trim(testData.ACC_10.getHeight() + 1); // delete 'deleted' record
+        });
+
+        int afterDeleteTrimSize = table.getRowCount();
+        assertEquals(12, afterDeleteTrimSize);
     }
 
     @Test

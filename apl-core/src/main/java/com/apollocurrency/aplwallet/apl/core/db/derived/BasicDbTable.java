@@ -60,7 +60,7 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
         }
         long startTime = System.currentTimeMillis();
         String sql = "UPDATE " + table
-                + " SET latest = TRUE " + keyFactory.getPKClause() + " AND height ="
+                + " SET latest = TRUE " + (supportDelete() ? ", deleted = FALSE " : "") + keyFactory.getPKClause() + " AND height ="
                 + " (SELECT MAX(height) FROM " + table + keyFactory.getPKClause() + ")";
         LOG.trace(sql);
         try (Connection con = dataSource.getConnection();
