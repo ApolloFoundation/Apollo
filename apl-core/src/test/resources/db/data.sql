@@ -82,22 +82,22 @@ INSERT INTO PUBLIC.UPDATE_STATUS (transaction_id, updated) VALUES (
 );
 
 insert into account
-(DB_ID  	,ID  	                        ,BALANCE  	        ,UNCONFIRMED_BALANCE  	,HAS_CONTROL_PHASING  	,FORGED_BALANCE  	,ACTIVE_LESSEE_ID  	,HEIGHT  	,LATEST) values
-(10          ,50                            ,555500000000       ,105500000000           ,false                  , 0                 ,null               ,100000     ,TRUE),
-(20          ,100                           ,100000000          , 100000000             ,false                  ,0                  ,null               ,104595     ,true ),
-(30          ,200                           , 250000000         , 200000000             ,false                  ,0                  , null              ,104670     ,true ),
-(40          ,7821792282123976600           , 15025000000000    , 14725000000000        ,false                  ,0                  , null              ,105000     ,true ),
-(50          ,9211698109297098287           , 25100000000000    , 22700000000000        ,false                  ,0                  , null              ,106000     ,true ),
-(60          ,500                    ,77182383705332315  ,77182383705332315      ,false                  ,0                  ,null               ,141839     ,false),
-(70          ,500                    ,77216366305332315  ,77216366305332315      ,false                  ,0                  ,null               ,141844     ,false),
-(80          ,500                    ,77798522705332315  ,77798522705332315      ,false                  ,0                  ,null               ,141853     ,true),
-(90          ,600                    ,40767800000000     ,40767800000000         ,false                  ,0                  ,null               ,141855     ,false),
-(100         ,600                    ,41167700000000     ,41167700000000         ,false                  ,0                  ,null               ,141858     ,true),
-(110         ,700                    ,2424711969422000   ,2424711969422000       ,false                  ,1150030000000      ,null               ,141860     ,true),
-(120         ,800                    ,2424711869422000   ,2424711869422000       ,false                  ,1150030000000      ,null               ,141862     ,false),
-(130         ,800                    ,2424711769422000   ,2424711769422000       ,false                  ,1150030000000      ,null               ,141864     ,false),
-(140         ,800                    ,77200915499807515  ,77200915499807515      ,false                  ,0                  ,null               ,141866     ,false),
-(150         ,800                    ,40367900000000     ,40367900000000         ,false                  ,0                  ,null               ,141868     ,false)
+(DB_ID  	,ID  	                        ,BALANCE  	        ,UNCONFIRMED_BALANCE  	,HAS_CONTROL_PHASING  	,FORGED_BALANCE  	,ACTIVE_LESSEE_ID  	,HEIGHT  	,LATEST, DELETED) values
+(10          ,50                            ,555500000000       ,105500000000           ,false                  , 0                 ,null               ,100000     ,TRUE     , false),
+(20          ,100                           ,100000000          , 100000000             ,false                  ,0                  ,null               ,104595     ,true     , false),
+(30          ,200                           , 250000000         , 200000000             ,false                  ,0                  , null              ,104670     ,true     , false),
+(40          ,7821792282123976600           , 15025000000000    , 14725000000000        ,false                  ,0                  , null              ,105000     ,true     , false),
+(50          ,9211698109297098287           , 25100000000000    , 22700000000000        ,false                  ,0                  , null              ,106000     ,true     , false),
+(60          ,500                           ,77182383705332315  ,77182383705332315      ,false                  ,0                  ,null               ,141839     ,false    , false),
+(70          ,500                           ,77216366305332315  ,77216366305332315      ,false                  ,0                  ,null               ,141844     ,false    , false),
+(80          ,500                           ,77798522705332315  ,77798522705332315      ,false                  ,0                  ,null               ,141853     ,true     , false),
+(90          ,600                           ,40767800000000     ,40767800000000         ,false                  ,0                  ,null               ,141855     ,false    , false),
+(100         ,600                           ,41167700000000     ,41167700000000         ,false                  ,0                  ,null               ,141858     ,true     , false),
+(110         ,700                           ,2424711969422000   ,2424711969422000       ,false                  ,1150030000000      ,null               ,141860     ,true     , false),
+(120         ,800                           ,2424711869422000   ,2424711869422000       ,false                  ,1150030000000      ,null               ,141862     ,false    , false),
+(130         ,800                           ,2424711769422000   ,2424711769422000       ,false                  ,1150030000000      ,null               ,141864     ,false    , false),
+(140         ,800                           ,77200915499807515  ,77200915499807515      ,false                  ,0                  ,null               ,141866     ,false    , true ),
+(150         ,800                           ,40367900000000     ,40367900000000         ,false                  ,0                  ,null               ,141868     ,false    , true )
 ;
 
 INSERT INTO PUBLIC.TWO_FACTOR_AUTH (account, secret, confirmed) VALUES

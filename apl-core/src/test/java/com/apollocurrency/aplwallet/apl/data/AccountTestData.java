@@ -40,8 +40,8 @@ public class AccountTestData {
     public final Account ACC_8 = createAccount(90     ,600L       ,40767800000000L     ,40767800000000L        ,false ,0               ,0 ,141855 ,false);
     public final Account ACC_9 = createAccount(100    ,600L       ,41167700000000L     ,41167700000000L        ,false ,0               ,0 ,141858 ,true);
     public final Account ACC_10= createAccount(110    ,700L       ,2424711969422000L   ,2424711969422000L      ,false ,1150030000000L  ,0 ,141860 ,true);
-    public final Account ACC_11= createAccount(120    ,800L       ,2424711869422000L   ,2424711869422000L      ,false ,1150030000000L  ,0 ,141862 ,false, true);
-    public final Account ACC_12= createAccount(130    ,800L       ,2424711769422000L   ,2424711769422000L      ,false ,1150030000000L  ,0 ,141864 ,false, true);
+    public final Account ACC_11= createAccount(120    ,800L       ,2424711869422000L   ,2424711869422000L      ,false ,1150030000000L  ,0 ,141862 ,false, false);
+    public final Account ACC_12= createAccount(130    ,800L       ,2424711769422000L   ,2424711769422000L      ,false ,1150030000000L  ,0 ,141864 ,false, false);
     public final Account ACC_13= createAccount(140    ,800L       ,77200915499807515L  ,77200915499807515L     ,false ,0               ,0 ,141866 ,false, true);
     public final Account ACC_14= createAccount(150    ,800L       ,40367900000000L     ,40367900000000L        ,false ,0               ,0 ,141868 ,false, true);
 
