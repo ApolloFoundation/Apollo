@@ -11,8 +11,10 @@ import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTableInterface;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -23,6 +25,7 @@ import java.util.Objects;
 /**
  * @author al
  */
+@Slf4j
 public class PublicKeyTable extends EntityDbTable<PublicKey> implements EntityDbTableInterface<PublicKey> {
 
     private final Blockchain blockchain;
@@ -60,6 +63,9 @@ public class PublicKeyTable extends EntityDbTable<PublicKey> implements EntityDb
         ) {
             int i = 0;
             pstmt.setLong(++i, publicKey.getAccountId());
+            if (publicKey.getPublicKey() == null || publicKey.getPublicKey().length == 0) {
+                log.debug("SAVE NULL PUBLIC KEY = {}, table.SAVE = {}", publicKey,  ThreadUtils.lastStacktrace());
+            }
             DbUtils.setBytes(pstmt, ++i, publicKey.getPublicKey());
             pstmt.setInt(++i, publicKey.getHeight());
             pstmt.executeUpdate();

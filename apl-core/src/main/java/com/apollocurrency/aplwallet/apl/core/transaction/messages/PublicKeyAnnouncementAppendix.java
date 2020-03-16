@@ -15,10 +15,12 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 
 import javax.enterprise.inject.spi.CDI;
-
+@Slf4j
 public class PublicKeyAnnouncementAppendix extends AbstractAppendix {
 
     private static final String appendixName = "PublicKeyAnnouncement";
@@ -95,6 +97,11 @@ public class PublicKeyAnnouncementAppendix extends AbstractAppendix {
 
     @Override
     public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        if (publicKey == null || publicKey.length == 0) {
+            log.debug("SAVE NULL PUBLIC KEY = {}, applyAppendix = {}", publicKey, ThreadUtils.lastStacktrace());
+            log.debug("SAVE NULL PUBLIC KEY, applyAppendix, senderAccount = {}, recipientAccount = {}, trId = {}",
+                senderAccount, recipientAccount, transaction.getId());
+        }
         if (lookupAccountPublickKeyService().setOrVerifyPublicKey(recipientAccount.getId(), publicKey)) {
             lookupAccountPublickKeyService().apply(recipientAccount, this.publicKey);
         }

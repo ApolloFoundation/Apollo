@@ -46,6 +46,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Filter;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -425,6 +426,10 @@ public class TransactionImpl implements Transaction {
     public byte[] getSenderPublicKey() {
         if (senderPublicKey == null) {
             senderPublicKey = lookupAndInjectAccountService().getPublicKeyByteArray(senderId);
+            if (senderPublicKey == null || senderPublicKey.length == 0) {
+                LOG.debug("SAVE NULL PUBLIC KEY = {}, getSenderPublicKey = {}", senderPublicKey, ThreadUtils.lastStacktrace());
+                LOG.debug("SAVE NULL PUBLIC KEY, getSenderPublicKey, transaction = \t{}", this);
+            }
         }
         return senderPublicKey;
     }

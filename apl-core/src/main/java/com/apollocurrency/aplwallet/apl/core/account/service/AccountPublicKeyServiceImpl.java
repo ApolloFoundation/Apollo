@@ -18,6 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.dgs.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.core.db.service.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.shard.DbHotSwapConfig;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.google.common.cache.Cache;
@@ -219,6 +220,10 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
             publicKey = new PublicKey(((LongKey) dbKey).getId(), null, blockChainInfoService.getHeight());
         }
         if (publicKey.getPublicKey() == null) {
+            if (key == null || key.length == 0) {
+                log.debug("SAVE NULL PUBLIC KEY = {}, empty Key? setOrVerifyPublicKey = {}",  key, ThreadUtils.lastStacktrace());
+                log.debug("SAVE NULL PUBLIC KEY, setOrVerifyPublicKey dbKey = {}, height = {}", dbKey, height);
+            }
             publicKey.setPublicKey(key);
             publicKey.setHeight(height);
             putInCache(dbKey, publicKey);
@@ -239,6 +244,9 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
             publicKey = new PublicKey(account.getId(), null, blockChainInfoService.getHeight());
         }
         if (publicKey.getPublicKey() == null) {
+            if (key == null) {
+                log.debug("SAVE NULL PUBLIC KEY = {}, empty KEY? apply.2 = {}", publicKey, ThreadUtils.lastStacktrace());
+            }
             publicKey.setPublicKey(key);
             insertPublicKey(publicKey, isGenesis);
         } else if (!Arrays.equals(publicKey.getPublicKey(), key)) {

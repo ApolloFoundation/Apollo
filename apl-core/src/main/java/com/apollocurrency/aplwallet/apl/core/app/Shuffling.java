@@ -54,6 +54,7 @@ import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 
 import javax.enterprise.event.Observes;
@@ -73,6 +74,7 @@ import java.util.Set;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+@Slf4j
 public final class Shuffling {
     /**
      * Cache, which contains all active shufflings required for processing on each block push
@@ -750,6 +752,11 @@ public final class Shuffling {
         lookupAccountService();
         for (byte[] recipientPublicKey : recipientPublicKeys) {
             long recipientId = AccountService.getId(recipientPublicKey);
+            if (recipientPublicKey == null || recipientPublicKey.length == 0) {
+                log.debug("SAVE NULL PUBLIC KEY = {}, updateRecipients = {}", recipientPublicKeys, ThreadUtils.lastStacktrace());
+                log.debug("SAVE NULL PUBLIC KEY, updateRecipients, senderID = {}, recipientId = {}, shufflingId={}",
+                    participantId, recipientId, this.id);
+            }
             if (lookupAccountPublickKeyService().setOrVerifyPublicKey(recipientId, recipientPublicKey)) {
                 Account account = accountService.addOrGetAccount(recipientId);
                 lookupAccountPublickKeyService().apply(account, recipientPublicKey);
@@ -814,6 +821,11 @@ public final class Shuffling {
         for (byte[] recipientPublicKey : recipientPublicKeys) {
             long recipientId = AccountService.getId(recipientPublicKey);
             Account recipientAccount = accountService.addOrGetAccount(recipientId);
+            if (recipientPublicKey == null || recipientPublicKey.length == 0) {
+                log.debug("SAVE NULL PUBLIC KEY = {}, distribute = {}", recipientPublicKeys, ThreadUtils.lastStacktrace());
+                log.debug("SAVE NULL PUBLIC KEY, distribute, recipientAccount = {}, recipientId = {}, shufflingId={}",
+                    recipientAccount, recipientId, this.id);
+            }
             lookupAccountPublickKeyService().apply(recipientAccount, recipientPublicKey);
             holdingType.addToBalanceAndUnconfirmedBalance(recipientAccount, event, this.id, this.holdingId, amount);
             if (holdingType != HoldingType.APL) {
