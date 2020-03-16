@@ -155,7 +155,7 @@ class AccountDaoTest  {
         DbUtils.inTransaction(dbExtension, (con)-> table.trim(td.ACC_10.getHeight()));
 
         int afterTrimSize = table.getRowCount();
-        assertEquals(13, afterTrimSize); // 1 updated 1 deleted for id=700, 2 updated for id=500
+        assertEquals(14, afterTrimSize); // 1 updated id=700, 2 updated for id=500
 
         // Trim another deleted record for ACC_10
         DbUtils.inTransaction(dbExtension, (con)-> {

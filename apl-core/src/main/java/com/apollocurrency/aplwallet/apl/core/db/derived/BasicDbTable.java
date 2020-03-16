@@ -14,9 +14,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -156,7 +159,7 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
         try (Connection con = dataSource.getConnection();
              //find acc and max_height of last written record (accounts with one record will be omitted)
              PreparedStatement pstmtSelect = con.prepareStatement("SELECT " + keyFactory.getPKColumns() + ", MAX(height) AS max_height"
-                     + " FROM " + table + " WHERE height < ? GROUP BY " + keyFactory.getPKColumns() + " HAVING COUNT(DISTINCT height) > 1")) {
+                     + " FROM " + table + " WHERE height < ? AND GROUP BY " + keyFactory.getPKColumns() + " HAVING COUNT(DISTINCT height) > 1")) {
             pstmtSelect.setInt(1, height);
             long startDeleteTime;
             long deleted = 0L;
@@ -166,7 +169,7 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
                  PreparedStatement pstmtDeleteById =
                          con.prepareStatement("DELETE FROM " + table + " WHERE db_id = ?");
                  PreparedStatement selectDbIdStatement =
-                         con.prepareStatement("SELECT db_id, height FROM " + table + " " + keyFactory.getPKClause())) {
+                         con.prepareStatement("SELECT db_id, height FROM " + table + " " + keyFactory.getPKClause() + " AND deleted = false")) {
                 LOG.trace("Select {} time: {}", table, System.currentTimeMillis() - startSelectTime);
                 startDeleteTime = System.currentTimeMillis();
                 while (rs.next()) {
@@ -253,17 +256,18 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
     private int deleteDeletedBasedOnDeletedColumn(int height) throws SQLException {
         int deleted = 0;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try (Connection con = dataSource.getConnection()) {
-            try (
-                PreparedStatement pstmtSelectDeleteCandidates =
-                    con.prepareStatement("SELECT DB_ID FROM " + table + " WHERE height < ? AND deleted = true ")) {
-                pstmtSelectDeleteCandidates.setInt(1, height);
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement pstmtSelectDeleteCandidates =
+                 con.prepareStatement("SELECT DB_ID, " + keyFactory.getPKColumns() + " FROM " + table + " WHERE height < ? AND deleted = true");
+             PreparedStatement pstmtDeleteByDbId =
+                 con.prepareStatement("DELETE FROM " + table + " WHERE db_id = ?")
+        ) {
+            pstmtSelectDeleteCandidates.setInt(1, height);
 
-                try (ResultSet deletedRs = pstmtSelectDeleteCandidates.executeQuery();
-                     PreparedStatement pstmtDeleteByDbId =
-                         con.prepareStatement("DELETE FROM " + table + " WHERE db_id = ?")) {
-                    while (deletedRs.next()) {
-                        long dbId = deletedRs.getLong(1);
+            try (ResultSet deletedRs = pstmtSelectDeleteCandidates.executeQuery()) {
+                Map<DbKey, List<Long>> dbIdsToRemove = collectDeletedCandidates(deletedRs);
+                for (List<Long> ids : dbIdsToRemove.values()) {
+                    for (Long dbId : ids) {
                         deleteByDbId(pstmtDeleteByDbId, dbId);
                         if (++deleted % 100 == 0) {
                             dataSource.commit(false);
@@ -274,6 +278,31 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
         }
         dataSource.commit(false);
         return deleted;
+    }
+
+    private Map<DbKey, List<Long>> collectDeletedCandidates(ResultSet deletedRs) throws SQLException {
+        HashMap<DbKey, List<Long>> dbKeyIdsMap = new HashMap<>();
+        while (deletedRs.next()) {
+            dbKeyIdsMap.compute(keyFactory.newKey(deletedRs), (dbKey, dbIds) -> {
+                long dbId;
+                try {
+                    dbId = deletedRs.getLong("DB_ID");
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+                if (dbIds == null) {
+                    ArrayList<Long> dbIdsAccumulator = new ArrayList<>();
+                    dbIdsAccumulator.add(dbId);
+                    return dbIdsAccumulator;
+                } else {
+                    dbIds.add(dbId);
+                    return dbIds;
+                }
+            });
+        }
+        Set<DbKey> keysToRemove = dbKeyIdsMap.entrySet().stream().filter(e -> e.getValue().size() > 1).map(Map.Entry::getKey).collect(Collectors.toSet());
+        keysToRemove.forEach(dbKeyIdsMap::remove);
+        return dbKeyIdsMap;
     }
 
     private int deleteByDbId(PreparedStatement pstmtDeleteByDbId, long dbId) throws SQLException {
