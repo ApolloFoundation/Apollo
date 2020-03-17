@@ -193,8 +193,11 @@ class AccountAssetDaoTest {
         assertEquals(rowCount + 1, table.getRowCount());
         assertNull(table.get(td.ACC_ASSET_2.getDbKey()));
 
-        DbUtils.inTransaction(dbExtension, (con)-> table.trim(td.ACC_ASSET_2.getHeight() + 1));
+        DbUtils.inTransaction(dbExtension, (con)-> table.trim(td.ACC_ASSET_2.getHeight()));
 
+        assertEquals(rowCount + 1, table.getRowCount());
+
+        DbUtils.inTransaction(dbExtension, (con)-> table.trim(td.ACC_ASSET_2.getHeight() + 1));
         assertEquals(rowCount - 1, table.getRowCount());
         assertNull(table.get(td.ACC_ASSET_2.getDbKey()));
     }

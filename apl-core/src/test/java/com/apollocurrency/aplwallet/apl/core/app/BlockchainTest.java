@@ -173,8 +173,6 @@ class BlockchainTest {
         Transaction transaction = blockchain.findTransaction(txd.TRANSACTION_1.getId(), Integer.MAX_VALUE);
         assertNotNull(transaction);
         assertEquals(txd.TRANSACTION_1.getId(), transaction.getId());
-        System.out.println(Long.parseUnsignedLong("9528188102786005229"));
-        System.out.println(Long.parseUnsignedLong("9279966175139683577"));
     }
 
     @Test
