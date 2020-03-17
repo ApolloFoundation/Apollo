@@ -30,12 +30,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import javax.inject.Inject;
+import java.sql.SQLException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -215,6 +217,31 @@ class AccountAssetDaoTest {
         assertEquals(3, table.getRowCount());
         td.ACC_ASSET_2.setHeight(td.ACC_ASSET_2.getHeight() - 1);
         assertEquals(td.ACC_ASSET_2, table.get(td.ACC_ASSET_2.getDbKey()));
+    }
+
+    @Test
+    void testDeleteInsertedRecord_on_same_height() throws SQLException {
+        td.ACC_ASSET_14.setHeight(td.ACC_ASSET_14.getHeight() + 2);
+        td.ACC_ASSET_14.setQuantityATU(100_000_000_000L);
+        DbUtils.inTransaction(dbExtension, (con)-> table.insert(td.ACC_ASSET_14));
+
+        AccountAsset newEntity = table.get(td.ACC_ASSET_14.getDbKey());
+        assertEquals(newEntity.getQuantityATU(), td.ACC_ASSET_14.getQuantityATU());
+
+        DbUtils.inTransaction(dbExtension, (con)-> table.deleteAtHeight(td.ACC_ASSET_14, td.ACC_ASSET_14.getHeight()));
+
+        AccountAsset deletedEntity = table.get(td.ACC_ASSET_14.getDbKey(), td.ACC_ASSET_14.getHeight() - 1);
+        assertTrue(deletedEntity.isDeleted());
+        assertFalse(deletedEntity.isLatest());
+        assertEquals(deletedEntity.getHeight(), td.ACC_ASSET_14.getHeight() - 2);
+
+        AccountAsset nullAsset = table.get(td.ACC_ASSET_14.getDbKey());
+        assertNull(nullAsset);
+        AccountAsset recentDeleteRecord = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues().get(15);
+
+        assertTrue(recentDeleteRecord.isDeleted());
+        assertFalse(recentDeleteRecord.isLatest());
+        assertEquals(td.ACC_ASSET_14.getHeight(), recentDeleteRecord.getHeight());
     }
 
     @Test
