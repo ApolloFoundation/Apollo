@@ -20,7 +20,7 @@ chains.json provides list of chains, which you can use to switch to different ch
  4. Do not forget to add at least one item to "blockchainProperties" array, which set to "0" height. In other case apl-blockchain will not work
  5. Activate your chain as described in "Activate another chain" section above
 
- =========Configure data migrator===============
+ =========Configure data migrator ===============
 
  1. Open apl-blockchain.properties file
  2. Find "MIGRATION section
@@ -57,3 +57,25 @@ To notify apl-blockchain application about your custom config, follow next steps
    can easily remove unnecessary config values from your config => default values will be used
    instead. When your config does not allow apl-blockchain app to work correctly -> just
    remove your config and restart apl-blockchain.
+
+
+=== HOW to DOWNLOAD specific, existing shard archive from existing TestNet ===
+
+Preconditions:
+TestNet should run with sharding enabled at least 6 nodes (one node can be without sharding).
+Those 6 nodes should have 'SHARDing turned ON', shards are exist in network, and they are equal (by hash returned on URL - /rest/shards)
+
+You'll should specify following params for importing shard archive:
+--no-shards-import false --no-shards-create false
+
+If you have about 6 nodes with 'equal shard hash' on them, you can try to 'force' download/importing specific shard archive into your local EMPTY node.
+
+-DAPOLLO_DOWNLOAD_SHARD_ID=3
+param forces downloading + importing shard archive #3, but shard archive 'hash checking procedure' can FAIL (not enough nodes, hashes are not equal), so downloading can FAIL potentially
+
+-DAPOLLO_FORCE_IMPORT_SHARD_ID=3
+param forces shard archive #3 importing ONLY, but shard archive should EXIST locally in a folder, so NO downloading is done, because you should download archive #3 manually
+after manual download put it into specific folder for TestNet like /apl-blockchain-db/2f2b61/apl-blockchain-export-data/
+
+Example running node with params:
+java -Xms312m -Xmx1524m -DAPOLLO_DOWNLOAD_SHARD_ID=3 -DAPOLLO_FORCE_IMPORT_SHARD_ID=3 -jar apl-exec-1.42.1.jar -s -d 3 --net 2 --no-shards-import false --no-shards-create false
