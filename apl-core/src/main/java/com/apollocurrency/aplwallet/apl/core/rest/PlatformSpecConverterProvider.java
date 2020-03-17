@@ -1,9 +1,9 @@
 package com.apollocurrency.aplwallet.apl.core.rest;
 
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.PlatformSpec;
-import com.apollocurrency.aplwallet.apl.util.Architecture;
-import com.apollocurrency.aplwallet.apl.util.Platform;
+import com.apollocurrency.aplwallet.apl.util.env.PlatformSpec;
+import com.apollocurrency.aplwallet.apl.util.env.Architecture;
+import com.apollocurrency.aplwallet.apl.util.env.Platform;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import lombok.AllArgsConstructor;
 

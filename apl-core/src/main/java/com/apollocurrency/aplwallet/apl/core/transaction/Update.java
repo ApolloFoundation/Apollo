@@ -10,7 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.CriticalUpdate;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.ImportantUpdate;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.MinorUpdate;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.PlatformSpec;
+import com.apollocurrency.aplwallet.apl.util.env.PlatformSpec;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateV2Attachment;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;

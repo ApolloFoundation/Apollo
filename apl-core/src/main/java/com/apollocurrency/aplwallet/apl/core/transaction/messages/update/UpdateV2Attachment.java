@@ -7,9 +7,10 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.Architecture;
-import com.apollocurrency.aplwallet.apl.util.Platform;
+import com.apollocurrency.aplwallet.apl.util.env.Architecture;
+import com.apollocurrency.aplwallet.apl.util.env.Platform;
 import com.apollocurrency.aplwallet.apl.util.Version;
+import com.apollocurrency.aplwallet.apl.util.env.PlatformSpec;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
@@ -70,8 +71,8 @@ public class UpdateV2Attachment extends AbstractAttachment {
         buffer.put(updateLevel.code);
         buffer.put((byte) platforms.size());
         for (PlatformSpec platformSpec : platforms) {
-            buffer.put(platformSpec.platform.code);
-            buffer.put(platformSpec.architecture.code);
+            buffer.put(platformSpec.getPlatform().code);
+            buffer.put(platformSpec.getArchitecture().code);
         }
         buffer.putShort((short) releaseVersion.getMajorVersion());
         buffer.putShort((short) releaseVersion.getIntermediateVersion());
@@ -131,7 +132,7 @@ public class UpdateV2Attachment extends AbstractAttachment {
         attachment.put("level", updateLevel.code);
         JSONArray platformArray = new JSONArray();
         for (PlatformSpec platformSpec : this.platforms) {
-            platformArray.add(new JSONObject(Map.of("platform", platformSpec.platform.code, "architecture", platformSpec.architecture.code)));
+            platformArray.add(new JSONObject(Map.of("platform", platformSpec.getPlatform().code, "architecture", platformSpec.getArchitecture().code)));
         }
         attachment.put("platforms", platformArray);
         attachment.put("version", releaseVersion.toString());

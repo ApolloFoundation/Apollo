@@ -1,6 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.rest;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.PlatformSpec;
+import com.apollocurrency.aplwallet.apl.util.env.PlatformSpec;
 import lombok.Getter;
 import lombok.ToString;
 
