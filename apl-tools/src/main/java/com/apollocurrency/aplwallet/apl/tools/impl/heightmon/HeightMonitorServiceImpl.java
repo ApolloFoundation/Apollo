@@ -215,7 +215,7 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
 
     private String getShardHashFormatted(ShardDTO shardDTO) {
         String prunableZipHash = shardDTO.getPrunableZipHash();
-        return shardDTO.getCoreZipHash().substring(0, 6) + " " + (prunableZipHash != null ? prunableZipHash.substring(0, 6) : "");
+        return shardDTO.getCoreZipHash().substring(0, 6) + ":" + (prunableZipHash != null ? prunableZipHash.substring(0, 6) : "");
     }
 
     private String getShardsStatus(PeerMonitoringResult targetMonitoringResult, PeerMonitoringResult comparedMonitoringResult) {
@@ -326,7 +326,7 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
         Version res = DEFAULT_VERSION;
         Request request = client.newRequest(peerUrl + "/apl")
                 .method(HttpMethod.GET)
-                .param("requestType", "getState");
+                .param("requestType", "getBlockchainStatus");
         ContentResponse response = null;
         try {
             response = request.send();
