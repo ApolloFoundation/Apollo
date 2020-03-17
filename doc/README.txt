@@ -75,7 +75,9 @@ param forces downloading + importing shard archive #3, but shard archive 'hash c
 
 -DAPOLLO_FORCE_IMPORT_SHARD_ID=3
 param forces shard archive #3 importing ONLY, but shard archive should EXIST locally in a folder, so NO downloading is done, because you should download archive #3 manually
-after manual download put it into specific folder for TestNet like /apl-blockchain-db/2f2b61/apl-blockchain-export-data/
+after manual download put it into specific folder for TestNet like:
+/apl-blockchain-db/2f2b61/apl-blockchain-export-data/apl-blockchain-shard-3-chain-2f2b6149-d29e-41ca-8c0d-f3343f5540c6.zip
 
 Example running node with params:
-java -Xms312m -Xmx1524m -DAPOLLO_DOWNLOAD_SHARD_ID=3 -DAPOLLO_FORCE_IMPORT_SHARD_ID=3 -jar apl-exec-1.42.1.jar -s -d 3 --net 2 --no-shards-import false --no-shards-create false
+java -Xms312m -Xmx1524m -DAPOLLO_DOWNLOAD_SHARD_ID=3 -jar apl-exec-1.42.1.jar -s -d 3 --net 2 --no-shards-import false --no-shards-create false
+java -Xms312m -Xmx1524m -DAPOLLO_FORCE_IMPORT_SHARD_ID=3 -jar apl-exec-1.42.1.jar -s -d 3 --net 2 --no-shards-import false --no-shards-create false
