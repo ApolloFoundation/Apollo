@@ -151,7 +151,7 @@ class AccountDaoTest  {
         assertTrue(deletedPreviousAcc.isDeleted());
         assertFalse(deletedPreviousAcc.isLatest());
 
-        // Trim latest=false + one deleted record
+        // Trim latest=false none of deleted record
         DbUtils.inTransaction(dbExtension, (con)-> table.trim(td.ACC_10.getHeight()));
 
         int afterTrimSize = table.getRowCount();

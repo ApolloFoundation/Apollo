@@ -7,6 +7,8 @@ package com.apollocurrency.aplwallet.apl.core.db.derived;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import org.slf4j.Logger;
 
 import java.sql.Connection;
@@ -159,40 +161,40 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
         try (Connection con = dataSource.getConnection();
              //find acc and max_height of last written record (accounts with one record will be omitted)
              PreparedStatement pstmtSelect = con.prepareStatement("SELECT " + keyFactory.getPKColumns() + ", MAX(height) AS max_height"
-                     + " FROM " + table + " WHERE height < ? AND GROUP BY " + keyFactory.getPKColumns() + " HAVING COUNT(DISTINCT height) > 1")) {
+                     + " FROM " + table + " WHERE height < ? GROUP BY " + keyFactory.getPKColumns() + " HAVING COUNT(DISTINCT height) > 1")) {
             pstmtSelect.setInt(1, height);
-            long startDeleteTime;
-            long deleted = 0L;
-            long deleteStm = 0L;
-            long startSelectTime = System.currentTimeMillis();
+            long startDeleteTime, deleted = 0L, deleteStm = 0L, startSelectTime = System.currentTimeMillis();
             try (ResultSet rs = pstmtSelect.executeQuery();
                  PreparedStatement pstmtDeleteById =
                          con.prepareStatement("DELETE FROM " + table + " WHERE db_id = ?");
                  PreparedStatement selectDbIdStatement =
-                         con.prepareStatement("SELECT db_id, height FROM " + table + " " + keyFactory.getPKClause() + " AND deleted = false")) {
+                         con.prepareStatement("SELECT db_id, height" + (supportDelete() ? ", deleted ": "")  + " FROM " + table + " " + keyFactory.getPKClause())) {
                 LOG.trace("Select {} time: {}", table, System.currentTimeMillis() - startSelectTime);
                 startDeleteTime = System.currentTimeMillis();
+
                 while (rs.next()) {
-                    List<Long> keys = selectDbIds(selectDbIdStatement, rs);
+                    EntityDeleteSpec deleteSpec = selectDbIds(selectDbIdStatement, rs);
                     // TODO migrate to PreparedStatement.addBatch for another db
-                    for (Long dbId :keys) {
-                        pstmtDeleteById.setLong(1, dbId);
-                        pstmtDeleteById.executeUpdate();
+                    for (Long id :deleteSpec.keys) {
+                        deleteByDbId(pstmtDeleteById, id);
                         deleted++;
                         deleteStm++;
                         if (deleted % 100 == 0) {
                             dataSource.commit(false);
                         }
                     }
+                    if (deleteSpec.lastDbId != 0) {
+                        deleteByDbId(pstmtDeleteById, deleteSpec.lastDbId);
+                    }
                 }
                 dataSource.commit(false);
                 LOG.trace("Delete time {} for table {}: stm - {}, deleted - {}", System.currentTimeMillis() - startDeleteTime, table,
                         deleteStm, deleted);
-                long startDeleteDeletedTime = System.currentTimeMillis();
-                if (supportDelete()) {
-                    int totalDeleteDeleted = deleteDeletedBasedOnDeletedColumn(height);
-                    LOG.trace("Delete deleted time for table {} is: {}, deleted - {}", table, System.currentTimeMillis() - startDeleteDeletedTime, totalDeleteDeleted);
-                }
+//                long startDeleteDeletedTime = System.currentTimeMillis();
+//                if (supportDelete()) {
+//                    int totalDeleteDeleted = deleteDeletedBasedOnDeletedColumn(height);
+//                    LOG.trace("Delete deleted time for table {} is: {}, deleted - {}", table, System.currentTimeMillis() - startDeleteDeletedTime, totalDeleteDeleted);
+//                }
             }
             long trimTime = System.currentTimeMillis() - startTime;
             if (trimTime > 1000) {
@@ -204,20 +206,44 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
         }
     }
 
-    private  List<Long> selectDbIds(PreparedStatement selectDbIdStatement, ResultSet rs) throws SQLException {
+    private  EntityDeleteSpec selectDbIds(PreparedStatement selectDbIdStatement, ResultSet rs) throws SQLException {
         DbKey dbKey = keyFactory.newKey(rs);
         dbKey.setPK(selectDbIdStatement);
-        List<Long> keys = new ArrayList<>();
+        Set<Long> keys = new HashSet<>();
         int maxHeight = rs.getInt("max_height");
+        boolean lastDeleted = false;
+        long lastDbId = 0;
+        int maxDeletedHeight = -1, overallMaxHeight = -1;
         try (ResultSet dbIdsSet = selectDbIdStatement.executeQuery()) {
             while (dbIdsSet.next()) {
                 int currentHeight = dbIdsSet.getInt(2);
-                if (currentHeight < maxHeight && currentHeight >= 0) {
-                    keys.add(dbIdsSet.getLong(1));
+                boolean entryDeleted = supportDelete() && dbIdsSet.getBoolean(3);
+                long dbId = dbIdsSet.getLong(1);
+                if (currentHeight == maxHeight) {
+                    lastDeleted = entryDeleted;
+                    lastDbId = dbId;
+                } else if (currentHeight < maxHeight && currentHeight >= 0) {
+                    if (overallMaxHeight < currentHeight) {
+                        overallMaxHeight = currentHeight;
+                    }
+                    if (entryDeleted && maxDeletedHeight < currentHeight) {
+                        maxDeletedHeight = currentHeight;
+                    }
+                    keys.add(dbId);
                 }
             }
         }
-        return keys;
+        if (maxDeletedHeight != overallMaxHeight || !lastDeleted) {
+            lastDbId = 0;
+        }
+        return new EntityDeleteSpec(lastDbId, keys);
+    }
+
+    @Data
+    @AllArgsConstructor
+    private static class EntityDeleteSpec {
+        private long lastDbId;
+        private Set<Long> keys = new HashSet<>();
     }
 
     // changed algo - select all dbkeys from query and insert to hashset, create index for height and latest and select db_key and
