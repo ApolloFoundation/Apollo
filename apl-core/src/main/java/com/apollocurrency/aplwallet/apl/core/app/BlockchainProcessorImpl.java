@@ -1585,7 +1585,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     for (DerivedTableInterface table : derivedTables) {
                         aplAppStatus.durableTaskUpdate(scanTaskId,
                                 "Create full text search index for table " + table.toString(), percentsPerTableIndex);
-                        table.createSearchIndex(con);
+                        lookupFullTextSearchProvider().createSearchIndex(con, table.getName(), table.getFullTextSearchColumns());
                     }
                 }
 

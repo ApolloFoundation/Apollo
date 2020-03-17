@@ -11,13 +11,14 @@ import com.apollocurrency.aplwallet.apl.exchange.exception.NotValidTransactionEx
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.UserErrorMessage;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexBeanProducer;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexEthService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.ethereum.util.blockchain.EtherUtil;
-import org.slf4j.Logger;
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.FunctionReturnDecoder;
 import org.web3j.abi.TypeEncoder;
@@ -47,6 +48,7 @@ import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.utils.Numeric;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
@@ -60,27 +62,32 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 @Singleton
+@Slf4j
 public class EthereumWalletService {
-    private static final Logger log = getLogger(EthereumWalletService.class);
+
+    private final KeyStoreService keyStoreService;
+    private final DexEthService dexEthService;
+    private final UserErrorMessageDao userErrorMessageDao;
+    private final DexBeanProducer dexBeanProducer;
+    public final String PAX_CONTRACT_ADDRESS;
 
     private Web3j web3j;
-    private KeyStoreService keyStoreService;
-    private DexEthService dexEthService;
-    private UserErrorMessageDao userErrorMessageDao;
-
-    public String PAX_CONTRACT_ADDRESS;
 
     @Inject
-    public EthereumWalletService(Web3j web3j, PropertiesHolder propertiesHolder, KeyStoreService keyStoreService, DexEthService dexEthService, UserErrorMessageDao userErrorMessageDao) {
-        this.web3j = web3j;
+    public EthereumWalletService(PropertiesHolder propertiesHolder, KeyStoreService keyStoreService, DexEthService dexEthService, UserErrorMessageDao userErrorMessageDao,
+                                 DexBeanProducer dexBeanProducer) {
+        this.dexBeanProducer = dexBeanProducer;
         this.keyStoreService = keyStoreService;
         this.dexEthService = dexEthService;
         this.userErrorMessageDao = userErrorMessageDao;
 
         this.PAX_CONTRACT_ADDRESS = propertiesHolder.getStringProperty("apl.eth.pax.contract.address");
+    }
+
+    @PostConstruct
+    public void init() {
+        this.web3j = dexBeanProducer.web3j();
     }
 
     /**
