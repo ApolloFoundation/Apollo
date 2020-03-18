@@ -55,7 +55,7 @@ public class AccountLeaseServiceImpl implements AccountLeaseService {
 
     @Override
     public AccountLease getAccountLease(Account account) {
-        return accountLeaseTable.getByAccount(account.getId());
+        return accountLeaseTable.get(AccountLeaseTable.newKey(account.getId()));
     }
 
     @Override
@@ -87,12 +87,12 @@ public class AccountLeaseServiceImpl implements AccountLeaseService {
     }
 
     @Override
-    public void leaseEffectiveBalance(long id, Account account, long lesseeId, int period) {
+    public void leaseEffectiveBalance(Account account, long lesseeId, int period) {
         int height = blockchain.getHeight();
         AccountLease accountLease = getAccountLease(account);
         int leasingDelay = blockchainConfig.getLeasingDelay();
         if (accountLease == null) {
-            accountLease = new AccountLease(id, account.getId(),
+            accountLease = new AccountLease(account.getId(),
                     height + leasingDelay,
                     height + leasingDelay + period,
                 lesseeId, blockchain.getHeight());

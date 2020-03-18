@@ -423,9 +423,9 @@ public final class Shuffling {
                 @DatabaseSpecificDml(DmlMarker.SET_ARRAY)
                 PreparedStatement pstmt = con.prepareStatement("MERGE INTO shuffling (id, holding_id, holding_type, "
                 + "issuer_id, amount, participant_count, blocks_remaining, stage, assignee_account_id, "
-                + "recipient_public_keys, registrant_count, height, latest) "
+                + "recipient_public_keys, registrant_count, height, latest, deleted) "
                 + "KEY (id, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)")
         ) {
             int i = 0;
             pstmt.setLong(++i, this.id);

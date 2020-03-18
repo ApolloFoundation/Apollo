@@ -197,7 +197,7 @@ public class AccountServiceImpl implements AccountService {
                 && account.getForgedBalanceATM() == 0
                 && account.getActiveLesseeId() == 0
                 && account.getControls().isEmpty()) {
-            accountTable.delete(account, true, blockChainInfoService.getHeight());
+            accountTable.delete(account, blockChainInfoService.getHeight());
         } else {
             accountTable.insert(account);
         }

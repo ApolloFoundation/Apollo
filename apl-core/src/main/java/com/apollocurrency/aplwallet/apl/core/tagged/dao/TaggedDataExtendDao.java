@@ -4,6 +4,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.tagged.dao;
 
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.LongKey;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.derived.ValuesDbTable;
+import com.apollocurrency.aplwallet.apl.core.tagged.mapper.TaggedDataExtendDataMapper;
+import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtend;
+
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -12,21 +20,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.LongKey;
-import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableValuesDbTable;
-import com.apollocurrency.aplwallet.apl.core.tagged.mapper.TaggedDataExtendDataMapper;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtend;
-
 @Singleton
-public class TaggedDataExtendDao extends VersionedDeletableValuesDbTable<TaggedDataExtend> {
+public class TaggedDataExtendDao extends ValuesDbTable<TaggedDataExtend> {
 
     protected DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
-    private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     private static final String DB_TABLE = "tagged_data_extend";
     private static final TaggedDataExtendDataMapper MAPPER = new TaggedDataExtendDataMapper();
@@ -43,7 +40,7 @@ public class TaggedDataExtendDao extends VersionedDeletableValuesDbTable<TaggedD
 
 
     public TaggedDataExtendDao() {
-        super(DB_TABLE, taggedDataKeyFactory);
+        super(DB_TABLE, false, taggedDataKeyFactory, true);
     }
 
     public List<TaggedDataExtend> getExtendTransactionIds(long taggedDataId) {

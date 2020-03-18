@@ -16,10 +16,11 @@ import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedValuesDbTableTest;
+import com.apollocurrency.aplwallet.apl.core.db.ValuesDbTableTest;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSFeedback;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
@@ -37,11 +38,12 @@ import org.junit.jupiter.api.BeforeEach;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.mockito.Mockito.mock;
 
 @EnableWeld
-public class DGSFeedbackTableTest extends VersionedValuesDbTableTest<DGSFeedback> {
+public class DGSFeedbackTableTest extends ValuesDbTableTest<DGSFeedback> {
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
@@ -91,5 +93,10 @@ public class DGSFeedbackTableTest extends VersionedValuesDbTableTest<DGSFeedback
     @Override
     protected List<DGSFeedback> getAll() {
         return List.of(dtd.FEEDBACK_0, dtd.FEEDBACK_1, dtd.FEEDBACK_2, dtd.FEEDBACK_3, dtd.FEEDBACK_4, dtd.FEEDBACK_5, dtd.FEEDBACK_6, dtd.FEEDBACK_7, dtd.FEEDBACK_8, dtd.FEEDBACK_9, dtd.FEEDBACK_10, dtd.FEEDBACK_11);
+    }
+
+    @Override
+    protected List<DGSFeedback> getAllLatest() {
+        return getAll().stream().filter(VersionedDerivedEntity::isLatest).collect(Collectors.toList());
     }
 }

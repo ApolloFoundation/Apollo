@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
@@ -38,9 +39,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -71,34 +72,34 @@ class AccountDaoTest  {
     @Inject
     AccountTable table;
 
-    AccountTestData testData;
+    AccountTestData td;
 
     @BeforeEach
     void setUp() {
-        testData = new AccountTestData();
+        td = new AccountTestData();
     }
 
     @Test
     void testLoad() {
-        Account account = table.get(table.getDbKeyFactory().newKey(testData.ACC_0));
+        Account account = table.get(table.getDbKeyFactory().newKey(td.ACC_0));
         assertNotNull(account);
-        assertEquals(testData.ACC_0, account);
+        assertEquals(td.ACC_0, account);
     }
 
     @Test
     void testLoad_ifNotExist_thenReturnNull() {
-        Account account = table.get(table.getDbKeyFactory().newKey(testData.newAccount));
+        Account account = table.get(table.getDbKeyFactory().newKey(td.newAccount));
         assertNull(account);
     }
 
     @Test
     void testSave() {
-        DbUtils.inTransaction(dbExtension, (con) -> table.insert(testData.newAccount));
-        Account actual = table.get(table.getDbKeyFactory().newKey(testData.newAccount));
+        DbUtils.inTransaction(dbExtension, (con) -> table.insert(td.newAccount));
+        Account actual = table.get(table.getDbKeyFactory().newKey(td.newAccount));
         assertNotNull(actual);
         assertTrue(actual.getDbId() != 0);
-        assertEquals(testData.newAccount.getId(), actual.getId());
-        assertEquals(testData.newAccount.getBalanceATM(), actual.getBalanceATM());
+        assertEquals(td.newAccount.getId(), actual.getId());
+        assertEquals(td.newAccount.getBalanceATM(), actual.getBalanceATM());
     }
 
     @Test
@@ -106,7 +107,7 @@ class AccountDaoTest  {
         doReturn(1440).when(blockchainConfig).getGuaranteedBalanceConfirmations();
         DbUtils.inTransaction(dbExtension, (con) -> table.trim(0));
 
-        List<Account> expected = testData.ALL_ACCOUNTS;
+        List<Account> expected = td.ALL_ACCOUNTS;
         List<Account> all = table.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
 
         assertEquals(expected, all);
@@ -117,7 +118,7 @@ class AccountDaoTest  {
         doReturn(1440).when(blockchainConfig).getGuaranteedBalanceConfirmations();
         DbUtils.inTransaction(dbExtension, (con) -> table.trim(Integer.MAX_VALUE));
 
-        List<Account> expected = testData.ALL_ACCOUNTS.stream().filter(VersionedDerivedEntity::isLatest).collect(Collectors.toList());
+        List<Account> expected = td.ALL_ACCOUNTS.stream().filter(VersionedDerivedEntity::isLatest).collect(Collectors.toList());
         List<Account> all = table.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
 
         assertEquals(expected, all);
@@ -125,13 +126,59 @@ class AccountDaoTest  {
 
     @Test
     void getTotalSupply() {
-        long total = table.getTotalSupply(testData.CREATOR_ID);
+        long total = table.getTotalSupply(td.CREATOR_ID);
         assertEquals(999990000000000L, total);
     }
 
     @Test
+    void testDeleteAndTrim() throws SQLException {
+        DbUtils.inTransaction(dbExtension, (con)-> {
+            td.ACC_10.setHeight(td.ACC_10.getHeight() + 1);
+            boolean deleted = table.deleteAtHeight(td.ACC_10, td.ACC_10.getHeight() + 1);
+            assertTrue(deleted);
+        });
+
+        List<Account> accounts = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
+        int numberOfAccounts = accounts.size();
+        assertEquals(17, numberOfAccounts);
+        Account account = accounts.get(16);
+
+        assertEquals(td.ACC_10.getId(), account.getId());
+        assertTrue(account.isDeleted());
+        assertFalse(account.isLatest());
+        Account deletedPreviousAcc = accounts.get(11);
+        assertEquals(deletedPreviousAcc.getId(), td.ACC_10.getId());
+        assertTrue(deletedPreviousAcc.isDeleted());
+        assertFalse(deletedPreviousAcc.isLatest());
+
+        // Trim latest=false none of deleted record
+        DbUtils.inTransaction(dbExtension, (con)-> table.trim(td.ACC_10.getHeight()));
+
+        int afterTrimSize = table.getRowCount();
+        assertEquals(14, afterTrimSize); // 1 updated id=700, 2 updated for id=500
+
+        // Trim another deleted record for ACC_10
+        DbUtils.inTransaction(dbExtension, (con)-> {
+            table.trim(td.ACC_10.getHeight() + 1); // delete 'deleted' record
+        });
+
+        int afterDeleteTrimSize = table.getRowCount();
+        assertEquals(12, afterDeleteTrimSize);
+    }
+
+    @Test
+    void testRollbackDeleted() {
+        DbUtils.inTransaction(dbExtension, (con) -> table.rollback(td.ACC_13.getHeight()));
+
+        Account account = table.get(new LongKey(td.ACC_13.getId()));
+        td.ACC_13.setLatest(true);
+        td.ACC_13.setDeleted(false);
+        assertEquals(td.ACC_13, account);
+    }
+
+    @Test
     void getTopHolders() {
-        List<Account> expected = testData.ALL_ACCOUNTS.stream().filter(VersionedDerivedEntity::isLatest).collect(Collectors.toList());
+        List<Account> expected = td.ALL_ACCOUNTS.stream().filter(VersionedDerivedEntity::isLatest).collect(Collectors.toList());
         List<Account> result = table.getTopHolders(100);
         assertEquals(expected.size(), result.size());
         assertEquals(expected, result.stream().sorted(Comparator.reverseOrder()).collect(Collectors.toList()));
@@ -139,14 +186,14 @@ class AccountDaoTest  {
 
     @Test
     void getTotalAmountOnTopAccounts() {
-        long expected = testData.ALL_ACCOUNTS.stream().filter(VersionedDerivedEntity::isLatest).mapToLong(Account::getBalanceATM).sum();
+        long expected = td.ALL_ACCOUNTS.stream().filter(VersionedDerivedEntity::isLatest).mapToLong(Account::getBalanceATM).sum();
         long result = table.getTotalAmountOnTopAccounts(100);
         assertEquals(expected, result);
     }
 
     @Test
     void getTotalNumberOfAccounts() throws SQLException {
-        long expected = testData.ALL_ACCOUNTS.stream().filter(VersionedDerivedEntity::isLatest).count();
+        long expected = td.ALL_ACCOUNTS.stream().filter(VersionedDerivedEntity::isLatest).count();
         long result = table.getTotalNumberOfAccounts();
         assertEquals(expected, result);
     }
