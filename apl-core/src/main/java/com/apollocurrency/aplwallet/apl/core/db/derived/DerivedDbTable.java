@@ -121,11 +121,6 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
     }
 
     @Override
-    public void createSearchIndex(Connection con) throws SQLException {
-
-    }
-
-    @Override
     public void truncate() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {

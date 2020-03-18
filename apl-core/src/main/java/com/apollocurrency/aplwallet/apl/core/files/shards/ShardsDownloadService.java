@@ -72,15 +72,19 @@ public class ShardsDownloadService {
             return false;
         }
         shardInfoDownloader.processAllPeersShardingInfo();
-        shardInfoDownloader.getSortedByIdShards().keySet().forEach((sId) ->
-        {
+        Set<Long> shardIds = shardInfoDownloader.getSortedByIdShards().keySet();
+        for(Long sId: shardIds){
             ShardInfo si = shardInfoDownloader.getShardInfo(sId);
+            if(si==null){
+                //very strange situation, but it could happend
+                continue;
+            }
             Set<String> shardFiles = new HashSet<>();
             shardFiles.add(shardNameHelper.getFullShardId(sId, myChainId));
             shardFiles.addAll(si.additionalFiles);
             ShardDownloadStatus st = new ShardDownloadStatus(shardFiles);
             shardDownloadStatuses.put(sId, st);
-        });
+        }
         return shardInfoByPeers.size() >= MIN_SHARDING_PEERS;
     }
 

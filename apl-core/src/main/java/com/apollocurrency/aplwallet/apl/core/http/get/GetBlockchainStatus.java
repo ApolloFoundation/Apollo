@@ -36,6 +36,8 @@ import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+
+@Deprecated
 @Vetoed
 public final class GetBlockchainStatus extends AbstractAPIRequestHandler {
 

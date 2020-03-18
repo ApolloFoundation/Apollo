@@ -14,6 +14,8 @@ import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
+
+@Deprecated
 @Vetoed
 public class GetAccounts extends AbstractAPIRequestHandler {
     public GetAccounts() {
