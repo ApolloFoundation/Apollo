@@ -245,6 +245,35 @@ class AccountAssetDaoTest {
     }
 
     @Test
+    void testSequentialDeleteWithTrim() throws SQLException {
+        td.ACC_ASSET_14.setHeight(td.ACC_ASSET_14.getHeight() + 1);
+        td.ACC_ASSET_14.setQuantityATU(19999999);
+        DbUtils.inTransaction(dbExtension, (con)-> table.insert(td.ACC_ASSET_14)); // update
+
+        td.ACC_ASSET_14.setHeight(td.ACC_ASSET_14.getHeight() + 1); // delete
+        DbUtils.inTransaction(dbExtension, (con)-> table.deleteAtHeight(td.ACC_ASSET_14, td.ACC_ASSET_14.getHeight()));
+
+        td.ACC_ASSET_14.setHeight(td.ACC_ASSET_14.getHeight() + 1); // insert new
+        DbUtils.inTransaction(dbExtension, (con)-> table.insert(td.ACC_ASSET_14));
+
+        td.ACC_ASSET_14.setHeight(td.ACC_ASSET_14.getHeight() + 1); // delete new
+        DbUtils.inTransaction(dbExtension, (con)-> table.deleteAtHeight(td.ACC_ASSET_14, td.ACC_ASSET_14.getHeight()));
+
+
+        AccountAsset deleted = table.get(td.ACC_ASSET_14.getDbKey());
+        assertNull(deleted);
+        DbUtils.inTransaction(dbExtension, (con)-> table.trim(td.ACC_ASSET_14.getHeight())); // try trim inside a gap of deleted records
+
+
+        List<AccountAsset> existing = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
+        assertEquals(16, existing.size());
+        assertEquals(td.ACC_ASSET_14.getHeight(), existing.get(15).getHeight());
+        assertTrue(existing.get(15).isDeleted());
+        assertEquals(td.ACC_ASSET_14.getHeight() - 1, existing.get(14).getHeight());
+        assertTrue(existing.get(14).isDeleted());
+    }
+
+    @Test
     void testGetAssetAccounts_on_Height() {
         doReturn(td.ASS_BLOCKCHAIN_HEIGHT).when(blockchain).getHeight();
         List<AccountAsset> actual = table.getByAssetId(td.ACC_ASSET_6.getAssetId(), td.ACC_ASSET_6.getHeight(), 0, Integer.MAX_VALUE);

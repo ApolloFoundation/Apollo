@@ -4,7 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.account.model;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDeletableEntity;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -15,7 +15,7 @@ import java.sql.SQLException;
 
 @ToString(callSuper = true)
 @Getter @Setter
-public final class AccountLease extends VersionedDerivedEntity {
+public final class AccountLease extends VersionedDeletableEntity {
 
     private final long lessorId;
 

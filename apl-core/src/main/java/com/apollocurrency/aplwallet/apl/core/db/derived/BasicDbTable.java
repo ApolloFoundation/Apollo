@@ -7,8 +7,6 @@ package com.apollocurrency.aplwallet.apl.core.db.derived;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import org.slf4j.Logger;
 
 import java.sql.Connection;
@@ -170,18 +168,15 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
                 startDeleteTime = System.currentTimeMillis();
 
                 while (rs.next()) {
-                    EntityDeleteSpec deleteSpec = selectDbIds(selectDbIdStatement, rs);
+                    Set<Long> keysToDelete = selectDbIds(selectDbIdStatement, rs);
                     // TODO migrate to PreparedStatement.addBatch for another db
-                    for (Long id :deleteSpec.keys) {
+                    for (Long id : keysToDelete) {
                         deleteByDbId(pstmtDeleteById, id);
                         deleted++;
                         deleteStm++;
                         if (deleted % 100 == 0) {
                             dataSource.commit(false);
                         }
-                    }
-                    if (deleteSpec.lastDbId != 0) {
-                        deleteByDbId(pstmtDeleteById, deleteSpec.lastDbId);
                     }
                 }
                 dataSource.commit(false);
@@ -205,14 +200,14 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
         return supportDelete() ? ", deleted = " + deleted + " ": "";
     }
 
-    private  EntityDeleteSpec selectDbIds(PreparedStatement selectDbIdStatement, ResultSet rs) throws SQLException {
+    private Set<Long> selectDbIds(PreparedStatement selectDbIdStatement, ResultSet rs) throws SQLException {
         DbKey dbKey = keyFactory.newKey(rs);
         dbKey.setPK(selectDbIdStatement);
         Set<Long> keys = new HashSet<>();
         int maxHeight = rs.getInt("max_height");
         boolean lastDeleted = false;
-        long lastDbId = 0;
-        int maxDeletedHeight = -1, overallMaxHeight = -1;
+        Set<Integer> deleteHeights = new HashSet<>();
+        Set<Long> lastDbIds = new HashSet<>();
         try (ResultSet dbIdsSet = selectDbIdStatement.executeQuery()) {
             while (dbIdsSet.next()) {
                 int currentHeight = dbIdsSet.getInt(2);
@@ -220,29 +215,20 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
                 long dbId = dbIdsSet.getLong(1);
                 if (currentHeight == maxHeight) {
                     lastDeleted = entryDeleted;
-                    lastDbId = dbId;
+                    lastDbIds.add(dbId);
                 } else if (currentHeight < maxHeight && currentHeight >= 0) {
-                    if (overallMaxHeight < currentHeight) {
-                        overallMaxHeight = currentHeight;
-                    }
-                    if (entryDeleted && maxDeletedHeight < currentHeight) {
-                        maxDeletedHeight = currentHeight;
+                    if (entryDeleted) {
+                        deleteHeights.add(currentHeight);
                     }
                     keys.add(dbId);
                 }
             }
         }
-        if (maxDeletedHeight != overallMaxHeight || !lastDeleted) {
-            lastDbId = 0;
+        // last existing record should be 'deleted' and paired with previously deleted records
+        if (deleteHeights.size() % 2 != 0 && lastDeleted) {
+            keys.addAll(lastDbIds);
         }
-        return new EntityDeleteSpec(lastDbId, keys);
-    }
-
-    @Data
-    @AllArgsConstructor
-    private static class EntityDeleteSpec {
-        private long lastDbId;
-        private Set<Long> keys;
+        return keys;
     }
 
     private void deleteByDbId(PreparedStatement pstmtDeleteByDbId, long dbId) throws SQLException {
