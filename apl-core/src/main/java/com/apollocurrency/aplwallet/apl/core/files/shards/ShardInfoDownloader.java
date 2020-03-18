@@ -81,7 +81,6 @@ public class ShardInfoDownloader {
         this.shardsPeers = new ConcurrentHashMap();
         this.shardInfoByPeers = new ConcurrentHashMap();
         this.peers = Objects.requireNonNull(peers, "peersService is NULL");
-        ;
         this.myChainId = peers.getBlockchainConfig().getChain().getChainId();
     }
 
@@ -135,7 +134,7 @@ public class ShardInfoDownloader {
                         Set<ShardInfo> rs = sortedByIdShards.get(s.shardId);
                         if (rs == null) {
                             rs = new HashSet<>();
-                            sortedByIdShards.putIfAbsent(s.shardId, rs);
+                            sortedByIdShards.put(s.shardId, rs);
                         }
                         rs.add(s);
                     }
@@ -358,7 +357,11 @@ public class ShardInfoDownloader {
         if(goodPeersMap.isEmpty()){ //forced shard import
             return res;
         }
-        PeerFileHashSum pfhs = goodPeersMap.get(shardId).iterator().next();
+        Set<PeerFileHashSum> goodShardPeers = goodPeersMap.get(shardId);
+        if(goodShardPeers==null || goodShardPeers.isEmpty()){
+            return res;
+        }
+        PeerFileHashSum pfhs = goodShardPeers.iterator().next();
         if (pfhs == null) {
             return res;
         }

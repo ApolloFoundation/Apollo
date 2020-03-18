@@ -20,9 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import com.apollocurrency.aplwallet.api.dto.AccountAssetDTO;
-import com.apollocurrency.aplwallet.api.dto.AccountCurrencyDTO;
-import com.apollocurrency.aplwallet.api.dto.AccountDTO;
+import com.apollocurrency.aplwallet.api.dto.account.AccountAssetDTO;
+import com.apollocurrency.aplwallet.api.dto.account.AccountCurrencyDTO;
+import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockDTO;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerHolding;
 import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
@@ -429,6 +429,7 @@ public final class JSONData {
         return result;
     }
 
+    @Deprecated
     public static JSONObject getAccountsStatistic(int numberOfAccounts) {
         long totalSupply = accountService.getTotalSupply();
         long totalAccounts = accountService.getTotalNumberOfAccounts();

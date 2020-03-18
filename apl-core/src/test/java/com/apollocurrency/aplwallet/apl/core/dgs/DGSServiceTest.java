@@ -1261,12 +1261,12 @@ public class DGSServiceTest {
 
     @Test
     void testGoodsCount() {
-        assertEquals(8, service.getGoodsCount());
+        assertEquals(9, service.getGoodsCount());
     }
 
     @Test
     void testCountGoodsInStock() {
-        assertEquals(3, service.getGoodsCountInStock());
+        assertEquals(4, service.getGoodsCountInStock());
     }
 
     @Test
@@ -1278,7 +1278,7 @@ public class DGSServiceTest {
     @Test
     void testGetAllGoods() {
         List<DGSGoods> dgsGoods = CollectionUtil.toList(service.getAllGoods(0, Integer.MAX_VALUE));
-        assertEquals(List.of(dtd.GOODS_12, dtd.GOODS_4, dtd.GOODS_2,  dtd.GOODS_5, dtd.GOODS_10, dtd.GOODS_8,dtd.GOODS_9, dtd.GOODS_11 ), dgsGoods);
+        assertEquals(List.of(dtd.GOODS_12, dtd.GOODS_4, dtd.GOODS_2,  dtd.GOODS_5, dtd.GOODS_10, dtd.GOODS_8,dtd.GOODS_9, dtd.GOODS_11, dtd.GOODS_13 ), dgsGoods);
     }
 
     @Test
@@ -1290,7 +1290,7 @@ public class DGSServiceTest {
     @Test
     void testGetGoodsInStock() {
         List<DGSGoods> dgsGoods = CollectionUtil.toList(service.getGoodsInStock(0, Integer.MAX_VALUE));
-        assertEquals(List.of(dtd.GOODS_12, dtd.GOODS_10, dtd.GOODS_11 ), dgsGoods);
+        assertEquals(List.of(dtd.GOODS_12, dtd.GOODS_10, dtd.GOODS_11, dtd.GOODS_13 ), dgsGoods);
     }
 
     @Test

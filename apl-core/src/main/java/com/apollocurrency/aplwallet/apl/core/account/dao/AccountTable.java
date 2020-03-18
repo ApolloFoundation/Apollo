@@ -72,8 +72,8 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
                 @DatabaseSpecificDml(DmlMarker.MERGE)
                 final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account (id, "
                     + "balance, unconfirmed_balance, forged_balance, "
-                    + "active_lessee_id, has_control_phasing, height, latest) "
-                    + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, TRUE)")
+                    + "active_lessee_id, has_control_phasing, height, latest, deleted) "
+                    + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)")
         ) {
             int i = 0;
             pstmt.setLong(++i, account.getId());

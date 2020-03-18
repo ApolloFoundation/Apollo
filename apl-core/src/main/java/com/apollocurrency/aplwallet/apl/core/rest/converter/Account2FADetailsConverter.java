@@ -4,11 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
-import com.apollocurrency.aplwallet.api.dto.Account2FADetailsDTO;
+import com.apollocurrency.aplwallet.api.dto.account.Account2FADetailsDTO;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
-
-import java.util.Random;
 
 public class Account2FADetailsConverter implements Converter<TwoFactorAuthDetails, Account2FADetailsDTO> {
 

@@ -76,38 +76,30 @@ public class DexSmartContractService {
     private static final int LOCK_MAP_CLEANER_DELAY = 60 * 1000; // 1 min in ms
     private static final String ACCOUNT_TO_READ_DATA = "1234";
 
-    private static final Logger LOG = LoggerFactory.getLogger(DexSmartContractService.class);
-
-    private Web3j web3j;
-    private String smartContractAddress;
-    private String paxContractAddress;
-    private KeyStoreService keyStoreService;
-    private DexEthService dexEthService;
-    private EthereumWalletService ethereumWalletService;
-    private DexTransactionDao dexTransactionDao;
-    private TransactionReceiptProcessor receiptProcessor;
-    private ReceiptProcessorProducer receiptProcessorProducer;
-    private TaskDispatchManager taskManager;
+    private final String smartContractAddress;
+    private final String paxContractAddress;
+    private final KeyStoreService keyStoreService;
+    private final DexEthService dexEthService;
+    private final EthereumWalletService ethereumWalletService;
+    private final DexTransactionDao dexTransactionDao;
+    private final DexBeanProducer dexBeanProducer;
+    private final TaskDispatchManager taskManager;
 
     private Map<String, Object> idLocks = Collections.synchronizedMap(new HashMap<>());
     private Set<String> locksToRemoveLater = ConcurrentHashMap.newKeySet();
 
-
-
     @Inject
-    public DexSmartContractService(Web3j web3j, PropertiesHolder propertiesHolder, KeyStoreService keyStoreService, DexEthService dexEthService,
-                                   EthereumWalletService ethereumWalletService, DexTransactionDao dexTransactionDao, TransactionReceiptProcessor receiptProcessor,
-                                   ReceiptProcessorProducer receiptProcessorProducer, TaskDispatchManager taskDispatchManager) {
-        this.web3j = web3j;
+    public DexSmartContractService(PropertiesHolder propertiesHolder, KeyStoreService keyStoreService, DexEthService dexEthService,
+                                   EthereumWalletService ethereumWalletService, DexTransactionDao dexTransactionDao,
+                                   DexBeanProducer dexBeanProducer,TaskDispatchManager taskDispatchManager) {
         this.keyStoreService = keyStoreService;
         this.smartContractAddress = propertiesHolder.getStringProperty("apl.eth.swap.proxy.contract.address");
         this.paxContractAddress   = propertiesHolder.getStringProperty("apl.eth.pax.contract.address");
         this.dexEthService = dexEthService;
         this.ethereumWalletService = ethereumWalletService;
         this.dexTransactionDao = dexTransactionDao;
-        this.receiptProcessor = receiptProcessor;
-        this.receiptProcessorProducer = receiptProcessorProducer;
         this.taskManager = taskDispatchManager;
+        this.dexBeanProducer = dexBeanProducer;
     }
 
     @PostConstruct
@@ -159,7 +151,7 @@ public class DexSmartContractService {
                         throw new AplException.ExecutiveProcessException("Approved tx wasn't send for PAX. OrderIs: " + offerId);
                     }
 
-                    receiptProcessorProducer.receiptProcessor().waitForTransactionReceipt(approvedTx);
+                    dexBeanProducer.receiptProcessor().waitForTransactionReceipt(approvedTx);
                 }
             } catch (IOException | TransactionException e) {
                 throw new RuntimeException(e);
@@ -251,7 +243,7 @@ public class DexSmartContractService {
     }
 
     public SwapDataInfo getSwapData(Credentials credentials, byte[] secretHash) throws AplException.ExecutiveProcessException {
-        DexContract  dexContract = new DexContractImpl(smartContractAddress, web3j, credentials, null);
+        DexContract  dexContract = new DexContractImpl(smartContractAddress, dexBeanProducer.web3j(), credentials, null);
         try {
             SwapDataInfo swapDataInfo = SwapDataInfoMapper.map(dexContract.getSwapData(secretHash).sendAsync().get());
             return swapDataInfo;
@@ -261,13 +253,13 @@ public class DexSmartContractService {
     }
 
     public String getHashForAtomicSwapTransaction(long orderId) throws NoSuchElementException {
-        DexContract dexContract = new DexContractImpl(smartContractAddress, web3j, Credentials.create(ACCOUNT_TO_READ_DATA), null);
+        DexContract dexContract = new DexContractImpl(smartContractAddress, dexBeanProducer.web3j(), Credentials.create(ACCOUNT_TO_READ_DATA), null);
         return dexContract.initiatedEventFlowable(orderId).toObservable().blockingFirst().log.getTransactionHash();
     }
 
 
     public EthDepositsWithOffset getUserActiveDeposits(String user, long offset, long limit) throws AplException.ExecutiveProcessException {
-        DexContract dexContract = new DexContractImpl(smartContractAddress, web3j, Credentials.create(ACCOUNT_TO_READ_DATA), null);
+        DexContract dexContract = new DexContractImpl(smartContractAddress, dexBeanProducer.web3j(), Credentials.create(ACCOUNT_TO_READ_DATA), null);
         try {
             RemoteCall<Tuple4<List<BigInteger>, List<BigInteger>, List<BigInteger>, BigInteger>> call = dexContract.getUserActiveDeposits(user, offset, limit);
             Tuple4<List<BigInteger>, List<BigInteger>, List<BigInteger>, BigInteger> callResponse = call.send();
@@ -278,7 +270,7 @@ public class DexSmartContractService {
     }
 
     public EthDepositsWithOffset getUserFilledOrders(String user, long offset, long limit) throws AplException.ExecutiveProcessException {
-        DexContract dexContract = new DexContractImpl(smartContractAddress, web3j, Credentials.create(ACCOUNT_TO_READ_DATA), null);
+        DexContract dexContract = new DexContractImpl(smartContractAddress, dexBeanProducer.web3j(), Credentials.create(ACCOUNT_TO_READ_DATA), null);
         try {
             return UserEthDepositInfoMapper.map(dexContract.getUserFilledOrders(user, offset, limit).sendAsync().get());
         } catch (Exception e) {
@@ -288,7 +280,7 @@ public class DexSmartContractService {
     }
 
     public List<ExpiredSwap> getExpiredSwaps(String user) throws AplException.ExecutiveProcessException {
-        DexContract dexContract = new DexContractImpl(smartContractAddress, web3j, Credentials.create(ACCOUNT_TO_READ_DATA), null);
+        DexContract dexContract = new DexContractImpl(smartContractAddress, dexBeanProducer.web3j(), Credentials.create(ACCOUNT_TO_READ_DATA), null);
         try {
             return ExpiredSwapMapper.map(dexContract.getExpiredSwaps(user).sendAsync().get());
         } catch (Exception e) {
@@ -297,7 +289,7 @@ public class DexSmartContractService {
     }
 
     public UserAddressesWithOffset getUserAddresses(long offset, long limit) throws AplException.ExecutiveProcessException {
-        DexContract dexContract = new DexContractImpl(smartContractAddress, web3j, Credentials.create(ACCOUNT_TO_READ_DATA), null);
+        DexContract dexContract = new DexContractImpl(smartContractAddress, dexBeanProducer.web3j(), Credentials.create(ACCOUNT_TO_READ_DATA), null);
         try {
             return UserAddressesMapper.map(dexContract.getUsersList(offset, limit).sendAsync().get());
         } catch (Exception e) {
@@ -345,7 +337,7 @@ public class DexSmartContractService {
     }
 
     private TransactionManager createTransactionManager(DexTransaction dexTransaction, Credentials credentials) {
-        return new DefaultRawTransactionManager(web3j, credentials, ChainId.NONE, dexTransaction, dexTransactionDao);
+        return new DefaultRawTransactionManager(dexBeanProducer.web3j(), credentials, ChainId.NONE, dexTransaction, dexTransactionDao);
     }
 
     /**
@@ -372,7 +364,7 @@ public class DexSmartContractService {
                         txHash = dexContract.deposit(orderIdUnsign, weiValue, token);
                     }
                 } catch (Exception e) {
-                    LOG.error(e.getMessage(), e);
+                    log.error(e.getMessage(), e);
                 }
             }
             locksToRemoveLater.add(identifier);
@@ -381,7 +373,7 @@ public class DexSmartContractService {
     }
 
     DexContract createDexContract(ContractGasProvider gasProvider, DexTransaction dexTransaction, Credentials credentials) {
-       return new DexContractImpl(smartContractAddress, web3j, createTransactionManager(dexTransaction, credentials), gasProvider, ethereumWalletService);
+       return new DexContractImpl(smartContractAddress, dexBeanProducer.web3j(), createTransactionManager(dexTransaction, credentials), gasProvider, ethereumWalletService);
     }
 
     private String checkExistingTx(DexTransaction tx) {
@@ -428,15 +420,15 @@ public class DexSmartContractService {
     }
     // set of methods to allow mocking of web3j interactions
     Optional<Transaction> getTxByHash(String hash) throws IOException {
-        return  web3j.ethGetTransactionByHash(hash).send().getTransaction();
+        return  dexBeanProducer.web3j().ethGetTransactionByHash(hash).send().getTransaction();
     }
 
     Optional<TransactionReceipt> getTxReceipt(String hash) throws IOException {
-        return  web3j.ethGetTransactionReceipt(hash).send().getTransactionReceipt();
+        return  dexBeanProducer.web3j().ethGetTransactionReceipt(hash).send().getTransactionReceipt();
     }
 
     String sendRawTransaction(String encodedTx, boolean waitConfirmation) throws IOException, NotValidTransactionException {
-        EthSendTransaction response = web3j.ethSendRawTransaction(encodedTx).send();
+        EthSendTransaction response = dexBeanProducer.web3j().ethSendRawTransaction(encodedTx).send();
         if (response != null) {
             if (response.hasError()) {
                 throw new NotValidTransactionException(response.getError().getMessage() + ", data - " + response.getError().getData() + ", tx: " + encodedTx);
@@ -447,7 +439,7 @@ public class DexSmartContractService {
         String transactionHash = response.getTransactionHash();
         if (waitConfirmation) {
             try {
-                TransactionReceipt receipt = receiptProcessor.waitForTransactionReceipt(transactionHash);
+                TransactionReceipt receipt = dexBeanProducer.receiptProcessor().waitForTransactionReceipt(transactionHash);
                 if (!transactionHash.equals(receipt.getTransactionHash())) {
                     throw new AplException.DEXProcessingException("Transaction with hash - " + transactionHash + " was mined with another hash" + receipt.getTransactionHash());
                 }
@@ -500,12 +492,12 @@ public class DexSmartContractService {
     }
 
     public DepositedOrderDetails getDepositedOrderDetails(String address, Long orderId) {
-        TransactionManager transactionManager = new ClientTransactionManager(web3j, address);
-        DexContract  dexContract = new DexContractImpl(smartContractAddress, web3j, transactionManager, null, null);
+        TransactionManager transactionManager = new ClientTransactionManager(dexBeanProducer.web3j(), address);
+        DexContract  dexContract = new DexContractImpl(smartContractAddress, dexBeanProducer.web3j(), transactionManager, null, null);
         try {
             return DepositedOrderDetailsMapper.map(dexContract.getOrderDetails(new BigInteger(Long.toUnsignedString(orderId)), address).sendAsync().get());
         } catch (Exception e) {
-            LOG.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
         return null;
     }
@@ -527,7 +519,7 @@ public class DexSmartContractService {
         try {
             gasPrice = dexEthService.getEthPriceInfo().getFastSpeedPrice();
         } catch (ExecutionException e) {
-            LOG.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             throw new AplException.ExecutiveProcessException("Third service is not available, try later.");
         }
 

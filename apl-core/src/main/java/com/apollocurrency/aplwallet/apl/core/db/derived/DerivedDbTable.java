@@ -121,11 +121,6 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
     }
 
     @Override
-    public void createSearchIndex(Connection con) throws SQLException {
-
-    }
-
-    @Override
     public void truncate() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
@@ -194,6 +189,11 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
         } catch (SQLException e) {
             throw e;
         }
+    }
+
+    @Override
+    public boolean supportDelete() {
+        return false;
     }
 
     /**

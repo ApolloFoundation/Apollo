@@ -30,7 +30,7 @@ Java 11 is required to run the desktop clients.
 
 # Build instruction #
 
-If you have already installed ___jdk 11___ and ___maven___, you can skip __"Preparation steps" section__, but its recommended to __review__ 
+If you have already installed ___jdk 11___, you can skip __"Preparation steps" section__, but its recommended to __review__ 
 your software versions using instructions from __"Preparation steps" section__
 
 ## Preparation steps ##
@@ -52,21 +52,26 @@ your software versions using instructions from __"Preparation steps" section__
    match__,
    ___delete old version___, _setup
     variables_ (`JAVA_HOME`, `PATH`)_ and try again. __PATH should not contain few java bin directories!__
-   6. Download build tool for project - [maven](http://maven.apache.org/download.cgi) from official site
-   7. Unpack maven binaries into convenient folder
-   8. Create `M2_HOME` variable or update existing to point to unpacked maven folder
-   9. Add to `PATH` variable path to maven binaries __M2_HOME/bin__
-   10. Open command line and execute: `mvn -v`. 
+   6. Open command line, change your current directory to this project root and execute
    
+- for Linux:
+```shell script
+./mvnw -v
+```
+- for Windows cmd:
+```cmd
+mvnw -v
+```
+     
     Output example:
 <pre>
-  Apache Maven 3.6.0 (97c98ec64a1fdfee7767ce5ffb20918da4f719f3; 2018-10-24T21:41:47+03:00)<br>
-  Maven home: /usr/local/maven  Maven home: /usr/local/maven<br>
+  Apache Maven 3.6.2 (40f52333136460af0dc0d7232c0dc0bcf0d9e117; 2019-08-27T18:06:16+03:00)<br>
+  Maven home: /home/your_user_name/.m2/wrapper/dists/apache-maven-3.6.2-bin/795eh28tki48bv3l67maojf0ra/apache-maven-3.6.2<br>
   Java version: 11.0.2, vendor: Oracle Corporation, runtime: /usr/java/jdk-11.0.2<br>
   Default locale: en_US, platform encoding: UTF-8<br>
   OS name: "linux", version: "4.20.16-200.fc29.x86_64", arch: "amd64", family: "unix"<br>
 </pre>
-   11. If ___maven version, javaHome and java_version___ __matches__ your downloaded java and maven -> your maven was __installed successfully__ and
+   7. If ___maven version, javaHome and java_version___ __matches__ your downloaded java then
    you are able to __build and run wallet__! Just choose your OS from the list below and perform specified steps.
 
 ## Linux/MacOS

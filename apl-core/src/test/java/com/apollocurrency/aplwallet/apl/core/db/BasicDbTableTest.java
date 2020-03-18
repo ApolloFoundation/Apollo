@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import com.apollocurrency.aplwallet.apl.core.db.derived.BasicDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
@@ -20,6 +18,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public abstract class BasicDbTableTest<T extends DerivedEntity> extends DerivedDbTableTest<T> {
     BasicDbTable<T> table;
@@ -81,7 +81,7 @@ public abstract class BasicDbTableTest<T extends DerivedEntity> extends DerivedD
 
     @Test
     public void testTrimAllDeleted() throws SQLException {
-        if (table.isMultiversion()) {
+        if (table.isMultiversion() && table.supportDelete()) {
             List<T> deleted = getDeletedMultiversionRecord();
             int height = deleted.get(deleted.size() - 1).getHeight() + 1;
             testMultiversionTrim(height, Integer.MAX_VALUE);
@@ -90,7 +90,7 @@ public abstract class BasicDbTableTest<T extends DerivedEntity> extends DerivedD
 
     @Test
     public void testTrimDeletedEqualAtLastDeletedHeight() throws SQLException {
-        if (table.isMultiversion()) {
+        if (table.isMultiversion() && table.supportDelete()) {
             List<T> deleted = getDeletedMultiversionRecord();
             int height = deleted.get(deleted.size() - 1).getHeight();
             testMultiversionTrim(height, Integer.MAX_VALUE);
@@ -98,7 +98,7 @@ public abstract class BasicDbTableTest<T extends DerivedEntity> extends DerivedD
     }
     @Test
     public void testTrimDeletedAtHeightLessThanLastDeletedRecord() throws SQLException {
-        if (table.isMultiversion()) {
+        if (table.isMultiversion() && table.supportDelete()) {
             List<T> deleted = getDeletedMultiversionRecord();
             int height = deleted.get(deleted.size() - 1).getHeight() - 1;
             testMultiversionTrim(height, Integer.MAX_VALUE);
@@ -151,7 +151,7 @@ public abstract class BasicDbTableTest<T extends DerivedEntity> extends DerivedD
 
     @Test
     public void testRollbackDeletedEntries() throws SQLException {
-        if (table.isMultiversion()) {
+        if (table.isMultiversion() && table.supportDelete()) {
             List<T> deleted = getDeletedMultiversionRecord();
             int height = deleted.get(deleted.size() - 1).getHeight() - 1;
             testOrdinaryOrMultiversionRollback(height);
@@ -220,7 +220,7 @@ public abstract class BasicDbTableTest<T extends DerivedEntity> extends DerivedD
         dbKeyListMap.forEach(((key, value) -> {
             List<T> list = value.stream().filter(t -> t.getHeight() < height).collect(Collectors.toList());
             if (list.size() != 0) {
-                if (list.stream().noneMatch(e-> ((VersionedDerivedEntity) e).isLatest()) && value.size() == list.size()) { //delete deleted
+                if (table.supportDelete() && list.stream().noneMatch(e-> ((VersionedDerivedEntity) e).isLatest()) && value.size() == list.size()) { //delete deleted
                     trimmed.addAll(list);
                 } else {
                     Integer maxHeight = list.stream().map(DerivedEntity::getHeight).max(Comparator.naturalOrder()).get(); //delete all not latest duplicates

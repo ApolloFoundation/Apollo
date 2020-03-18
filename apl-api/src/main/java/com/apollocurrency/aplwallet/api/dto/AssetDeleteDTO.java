@@ -1,5 +1,6 @@
 package com.apollocurrency.aplwallet.api.dto;
 
+import com.apollocurrency.aplwallet.api.dto.account.AccountAssetDTO;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
