@@ -172,7 +172,6 @@ class DerivedDbTableListingTest {
         AccountCurrencyTable accountCurrencyTable = new AccountCurrencyTable();
         accountCurrencyTable.init();
         //Account.init(extension.getDatabaseManager(), propertiesHolder, null, null, blockchain, null, null, accountTable, null);
-        Alias.init();
         AccountAssetTable accountAssetTable = new AccountAssetTable();
         accountAssetTable.init();
         GenesisPublicKeyTable genesisPublicKeyTable = new GenesisPublicKeyTable(blockchain);

@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.phasing.dao;
 
+import com.apollocurrency.aplwallet.apl.core.account.service.AliasService;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
@@ -68,6 +69,7 @@ public class PhasingResultTableTest extends EntityDbTableTest<PhasingPollResult>
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
             .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
+            .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
             .build();
     @Inject
     PhasingPollResultTable table;

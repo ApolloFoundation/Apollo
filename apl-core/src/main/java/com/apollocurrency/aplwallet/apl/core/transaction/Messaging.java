@@ -6,7 +6,9 @@ package com.apollocurrency.aplwallet.apl.core.transaction;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountProperty;
+import com.apollocurrency.aplwallet.apl.core.account.service.AliasService;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
+import com.apollocurrency.aplwallet.apl.core.app.AliasOffer;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.Poll;
@@ -51,6 +53,7 @@ public abstract class Messaging extends TransactionType {
     private static final Logger log = getLogger(Messaging.class);
 
     private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
+    private static final AliasService ALIAS_SERVICE = CDI.current().select(AliasService.class).get();
     private Messaging() {
     }
 
@@ -123,7 +126,7 @@ public abstract class Messaging extends TransactionType {
             return false;
         }
     };
-    
+
     public static final TransactionType ALIAS_ASSIGNMENT = new Messaging() {
         private final Fee ALIAS_FEE = new Fee.SizeBasedFee(2 * Constants.ONE_APL, 2 * Constants.ONE_APL, 32) {
             @Override
@@ -166,7 +169,7 @@ public abstract class Messaging extends TransactionType {
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             MessagingAliasAssignment attachment = (MessagingAliasAssignment) transaction.getAttachment();
-            Alias.addOrUpdateAlias(transaction, attachment);
+            ALIAS_SERVICE.addOrUpdateAlias(transaction, attachment);
         }
 
         @Override
@@ -177,7 +180,7 @@ public abstract class Messaging extends TransactionType {
 
         @Override
         public boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
-            return Alias.getAlias(((MessagingAliasAssignment) transaction.getAttachment()).getAliasName()) == null && isDuplicate(Messaging.ALIAS_ASSIGNMENT, "", duplicates, true);
+            return ALIAS_SERVICE.getAlias(((MessagingAliasAssignment) transaction.getAttachment()).getAliasName()) == null && isDuplicate(Messaging.ALIAS_ASSIGNMENT, "", duplicates, true);
         }
 
         @Override
@@ -192,7 +195,7 @@ public abstract class Messaging extends TransactionType {
                     throw new AplException.NotValidException("Invalid alias name: " + normalizedAlias);
                 }
             }
-            Alias alias = Alias.getAlias(normalizedAlias);
+            Alias alias = ALIAS_SERVICE.getAlias(normalizedAlias);
             if (alias != null && alias.getAccountId() != transaction.getSenderId()) {
                 throw new AplException.NotCurrentlyValidException("Alias already owned by another account: " + normalizedAlias);
             }
@@ -237,7 +240,7 @@ public abstract class Messaging extends TransactionType {
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             MessagingAliasSell attachment = (MessagingAliasSell) transaction.getAttachment();
-            Alias.sellAlias(transaction, attachment);
+            ALIAS_SERVICE.sellAlias(transaction, attachment);
         }
 
         @Override
@@ -268,7 +271,7 @@ public abstract class Messaging extends TransactionType {
                     throw new AplException.NotValidException("Missing alias transfer recipient");
                 }
             }
-            final Alias alias = Alias.getAlias(aliasName);
+            final Alias alias = ALIAS_SERVICE.getAlias(aliasName);
             if (alias == null) {
                 throw new AplException.NotCurrentlyValidException("No such alias: " + aliasName);
             } else if (alias.getAccountId() != transaction.getSenderId()) {
@@ -324,7 +327,7 @@ public abstract class Messaging extends TransactionType {
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             final MessagingAliasBuy attachment = (MessagingAliasBuy) transaction.getAttachment();
             final String aliasName = attachment.getAliasName();
-            Alias.changeOwner(transaction.getSenderId(), aliasName);
+            ALIAS_SERVICE.changeOwner(transaction.getSenderId(), aliasName);
         }
 
         @Override
@@ -338,13 +341,13 @@ public abstract class Messaging extends TransactionType {
         public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
             final MessagingAliasBuy attachment = (MessagingAliasBuy) transaction.getAttachment();
             final String aliasName = attachment.getAliasName();
-            final Alias alias = Alias.getAlias(aliasName);
+            final Alias alias = ALIAS_SERVICE.getAlias(aliasName);
             if (alias == null) {
                 throw new AplException.NotCurrentlyValidException("No such alias: " + aliasName);
             } else if (alias.getAccountId() != transaction.getRecipientId()) {
                 throw new AplException.NotCurrentlyValidException("Alias is owned by account other than recipient: " + Long.toUnsignedString(alias.getAccountId()));
             }
-            Alias.Offer offer = Alias.getOffer(alias);
+            AliasOffer offer = ALIAS_SERVICE.getOffer(alias);
             if (offer == null) {
                 throw new AplException.NotCurrentlyValidException("Alias is not for sale: " + aliasName);
             }
@@ -396,7 +399,7 @@ public abstract class Messaging extends TransactionType {
         @Override
         public void applyAttachment(final Transaction transaction, final Account senderAccount, final Account recipientAccount) {
             final MessagingAliasDelete attachment = (MessagingAliasDelete) transaction.getAttachment();
-            Alias.deleteAlias(attachment.getAliasName());
+            ALIAS_SERVICE.deleteAlias(attachment.getAliasName());
         }
 
         @Override
@@ -413,7 +416,7 @@ public abstract class Messaging extends TransactionType {
             if (aliasName == null || aliasName.length() == 0) {
                 throw new AplException.NotValidException("Missing alias name");
             }
-            final Alias alias = Alias.getAlias(aliasName);
+            final Alias alias = ALIAS_SERVICE.getAlias(aliasName);
             if (alias == null) {
                 throw new AplException.NotCurrentlyValidException("No such alias: " + aliasName);
             } else if (alias.getAccountId() != transaction.getSenderId()) {
@@ -935,5 +938,5 @@ public abstract class Messaging extends TransactionType {
             return true;
         }
     };
-    
+
 }

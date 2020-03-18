@@ -37,6 +37,7 @@ public class BlockEventSourceProcessor implements Runnable {
     private AccountInfoService accountInfoService = CDI.current().select(AccountInfoServiceImpl.class).get();
     private AccountAssetService accountAssetService = CDI.current().select(AccountAssetServiceImpl.class).get();
     private AccountCurrencyService accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
+    private final AliasService aliasService = CDI.current().select(AliasService.class).get();
 
     public BlockEventSourceProcessor(BlockEventSource eventSource, long accountId) {
         this.eventSource = eventSource;
@@ -86,7 +87,7 @@ public class BlockEventSourceProcessor implements Runnable {
             }
         }
         int sellerPurchaseCount = service.getSellerPurchaseCount(accountId, false, false);
-        int aliasCount = Alias.getAccountAliasCount(accountId);
+        int aliasCount = aliasService.getAccountAliasCount(accountId);
         JSONArray assetJson = new JSONArray();
         List<AccountAsset> accountAssets = accountAssetService.getAssetsByAccount(accountId, -1, 0, 2);
         accountAssets.forEach(accountAsset -> assetJson.add(JSONData.accountAsset(accountAsset, false, true)));

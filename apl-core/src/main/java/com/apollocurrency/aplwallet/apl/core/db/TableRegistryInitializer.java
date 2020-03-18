@@ -9,7 +9,8 @@ import com.apollocurrency.aplwallet.apl.core.account.dao.AccountLeaseTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountLedgerTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountPropertyTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
-import com.apollocurrency.aplwallet.apl.core.app.Alias;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AliasOfferTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AliasTable;
 import com.apollocurrency.aplwallet.apl.core.app.Order;
 import com.apollocurrency.aplwallet.apl.core.app.Poll;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
@@ -117,12 +118,15 @@ public class TableRegistryInitializer {
     private AccountPropertyTable accountPropertyTable;
     @Inject
     private AccountInfoTable accountInfoTable;
+    @Inject
+    private AliasTable aliasTable;
+    @Inject
+    private AliasOfferTable aliasOfferTable;
 
     @PostConstruct
     public void init() {
         transactionProcessor.init();
 
-        Alias.init();
         Asset.init();
         Order.init();
         Poll.init();

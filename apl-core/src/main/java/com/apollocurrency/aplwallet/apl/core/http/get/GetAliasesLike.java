@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
+import com.apollocurrency.aplwallet.apl.core.account.service.AliasService;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
@@ -34,13 +35,16 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class GetAliasesLike extends AbstractAPIRequestHandler {
+    private final AliasService aliasService;
 
     public GetAliasesLike() {
         super(new APITag[] {APITag.ALIASES, APITag.SEARCH}, "aliasPrefix", "firstIndex", "lastIndex");
+        this.aliasService = CDI.current().select(AliasService.class).get();
     }
 
     @Override
@@ -58,7 +62,7 @@ public final class GetAliasesLike extends AbstractAPIRequestHandler {
         JSONObject response = new JSONObject();
         JSONArray aliasJSON = new JSONArray();
         response.put("aliases", aliasJSON);
-        try (DbIterator<Alias> aliases = Alias.getAliasesLike(prefix, firstIndex, lastIndex)) {
+        try (DbIterator<Alias> aliases = aliasService.getAliasesLike(prefix, firstIndex, lastIndex)) {
             while (aliases.hasNext()) {
                 aliasJSON.add(JSONData.alias(aliases.next()));
             }
