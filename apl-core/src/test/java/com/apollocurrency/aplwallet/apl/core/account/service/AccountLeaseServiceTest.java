@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountLease;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,7 +22,7 @@ import javax.enterprise.event.Event;
 
 import static com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEventBinding.literal;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -89,7 +90,7 @@ class AccountLeaseServiceTest {
 
         if(accountLeaseFromTable == null){
             lesseeId = account.getId();
-            accountLease = new AccountLease(txId, account.getId(),
+            accountLease = new AccountLease(account.getId(),
                     height + leasingDelay,
                     height + leasingDelay + period,
                     lesseeId, height);
@@ -107,20 +108,18 @@ class AccountLeaseServiceTest {
         doReturn(height).when(blockchain).getHeight();
         doReturn(leasingDelay).when(blockchainConfig).getLeasingDelay();
         doReturn(firedEvent).when(leaseEvent).select(literal(AccountEventType.LEASE_SCHEDULED));
-        doReturn(accountLeaseFromTable).when(accountLeaseTable).getByAccount(anyLong());
+        doReturn(accountLeaseFromTable).when(accountLeaseTable).get(any(DbKey.class));
 
-        accountLeaseService.leaseEffectiveBalance(txId, account, lesseeId, period);
+        accountLeaseService.leaseEffectiveBalance(account, lesseeId, period);
 
         if (accountLeaseFromTable == null){
             assertEquals(expectedFrom, accountLease.getCurrentLeasingHeightFrom());
             assertEquals(expectedTo, accountLease.getCurrentLeasingHeightTo());
             assertEquals(lesseeId, accountLease.getCurrentLesseeId());
-            assertEquals(txId, accountLease.getId());
         }else {
             assertEquals(expectedFrom, accountLease.getNextLeasingHeightFrom());
             assertEquals(expectedTo, accountLease.getNextLeasingHeightTo());
             assertEquals(lesseeId, accountLease.getNextLesseeId());
-            assertEquals(accountLeaseFromTable.getId(), accountLease.getId());
         }
         verify(accountLeaseTable).insert(accountLease);
         verify(firedEvent).fire(accountLease);

@@ -60,7 +60,7 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
         }
         long startTime = System.currentTimeMillis();
         String sql = "UPDATE " + table
-                + " SET latest = TRUE " + keyFactory.getPKClause() + " AND height ="
+                + " SET latest = TRUE " + (getDeletedSetStatementIfSupported(false)) + keyFactory.getPKClause() + " AND height ="
                 + " (SELECT MAX(height) FROM " + table + keyFactory.getPKClause() + ")";
         LOG.trace(sql);
         try (Connection con = dataSource.getConnection();
@@ -158,23 +158,20 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
              PreparedStatement pstmtSelect = con.prepareStatement("SELECT " + keyFactory.getPKColumns() + ", MAX(height) AS max_height"
                      + " FROM " + table + " WHERE height < ? GROUP BY " + keyFactory.getPKColumns() + " HAVING COUNT(DISTINCT height) > 1")) {
             pstmtSelect.setInt(1, height);
-            long startDeleteTime;
-            long deleted = 0L;
-            long deleteStm = 0L;
-            long startSelectTime = System.currentTimeMillis();
+            long startDeleteTime, deleted = 0L, deleteStm = 0L, startSelectTime = System.currentTimeMillis();
             try (ResultSet rs = pstmtSelect.executeQuery();
                  PreparedStatement pstmtDeleteById =
                          con.prepareStatement("DELETE FROM " + table + " WHERE db_id = ?");
                  PreparedStatement selectDbIdStatement =
-                         con.prepareStatement("SELECT db_id, height FROM " + table + " " + keyFactory.getPKClause())) {
+                         con.prepareStatement("SELECT db_id, height " + getDeletedColumnIfSupported() + " FROM " + table + " " + keyFactory.getPKClause())) {
                 LOG.trace("Select {} time: {}", table, System.currentTimeMillis() - startSelectTime);
                 startDeleteTime = System.currentTimeMillis();
+
                 while (rs.next()) {
-                    List<Long> keys = selectDbIds(selectDbIdStatement, rs);
+                    Set<Long> keysToDelete = selectDbIds(selectDbIdStatement, rs);
                     // TODO migrate to PreparedStatement.addBatch for another db
-                    for (Long dbId :keys) {
-                        pstmtDeleteById.setLong(1, dbId);
-                        pstmtDeleteById.executeUpdate();
+                    for (Long id : keysToDelete) {
+                        deleteByDbId(pstmtDeleteById, id);
                         deleted++;
                         deleteStm++;
                         if (deleted % 100 == 0) {
@@ -185,9 +182,6 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
                 dataSource.commit(false);
                 LOG.trace("Delete time {} for table {}: stm - {}, deleted - {}", System.currentTimeMillis() - startDeleteTime, table,
                         deleteStm, deleted);
-                long startDeleteDeletedTime = System.currentTimeMillis();
-                int totalDeleteDeleted = deleteDeletedNewAlgo(height);
-                LOG.trace("Delete deleted time for table {} is: {}, deleted - {}", table, System.currentTimeMillis() - startDeleteDeletedTime, totalDeleteDeleted);
             }
             long trimTime = System.currentTimeMillis() - startTime;
             if (trimTime > 1000) {
@@ -199,71 +193,47 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
         }
     }
 
-    private  List<Long> selectDbIds(PreparedStatement selectDbIdStatement, ResultSet rs) throws SQLException {
+    private String getDeletedColumnIfSupported() {
+        return supportDelete() ? ", deleted" : "";
+    }
+    private String getDeletedSetStatementIfSupported(boolean deleted) {
+        return supportDelete() ? ", deleted = " + deleted + " ": "";
+    }
+
+    private Set<Long> selectDbIds(PreparedStatement selectDbIdStatement, ResultSet rs) throws SQLException {
         DbKey dbKey = keyFactory.newKey(rs);
         dbKey.setPK(selectDbIdStatement);
-        List<Long> keys = new ArrayList<>();
+        Set<Long> keys = new HashSet<>();
         int maxHeight = rs.getInt("max_height");
+        boolean lastDeleted = false;
+        Set<Integer> deleteHeights = new HashSet<>();
+        Set<Long> lastDbIds = new HashSet<>();
         try (ResultSet dbIdsSet = selectDbIdStatement.executeQuery()) {
             while (dbIdsSet.next()) {
                 int currentHeight = dbIdsSet.getInt(2);
-                if (currentHeight < maxHeight && currentHeight >= 0) {
-                    keys.add(dbIdsSet.getLong(1));
+                boolean entryDeleted = supportDelete() && dbIdsSet.getBoolean(3);
+                long dbId = dbIdsSet.getLong(1);
+                if (currentHeight == maxHeight) {
+                    lastDeleted = entryDeleted;
+                    lastDbIds.add(dbId);
+                } else if (currentHeight < maxHeight && currentHeight >= 0) {
+                    if (entryDeleted) {
+                        deleteHeights.add(currentHeight);
+                    }
+                    keys.add(dbId);
                 }
             }
+        }
+        // last existing record should be 'deleted' and paired with previously deleted records
+        if (deleteHeights.size() % 2 != 0 && lastDeleted) {
+            keys.addAll(lastDbIds);
         }
         return keys;
     }
 
-    // changed algo - select all dbkeys from query and insert to hashset, create index for height and latest and select db_key and
-    // db_id from table using index. Next filter each account_id from set and delete it.
-    private int deleteDeletedNewAlgo(int height) throws SQLException {
-        int deleted = 0;
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try (Connection con = dataSource.getConnection()) {
-            Set<DbKey> dbKeys = selectExistingDbKeys(con, height);
-            try (
-                    PreparedStatement pstmtSelectDeleteCandidates =
-                            con.prepareStatement("SELECT DB_ID, " + keyFactory.getPKColumns() + " FROM " + table + " WHERE height < ? AND height >= 0 " +
-                                    "AND latest = FALSE ")) {
-                pstmtSelectDeleteCandidates.setInt(1, height);
-
-                try (ResultSet candidatesRs = pstmtSelectDeleteCandidates.executeQuery();
-                     PreparedStatement pstmtDeleteByDbId =
-                             con.prepareStatement("DELETE FROM " + table + " WHERE db_id = ?")) {
-                    while (candidatesRs.next()) {
-                        DbKey dbKey = keyFactory.newKey(candidatesRs);
-                        if (!dbKeys.contains(dbKey)) {
-                            long dbId = candidatesRs.getLong(1);
-                            deleteByDbId(pstmtDeleteByDbId, dbId);
-                            if (++deleted % 100 == 0) {
-                                dataSource.commit(false);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        dataSource.commit(false);
-        return deleted;
-    }
-
-    private int deleteByDbId(PreparedStatement pstmtDeleteByDbId, long dbId) throws SQLException {
+    private void deleteByDbId(PreparedStatement pstmtDeleteByDbId, long dbId) throws SQLException {
         pstmtDeleteByDbId.setLong(1, dbId);
-        return pstmtDeleteByDbId.executeUpdate();
+        pstmtDeleteByDbId.executeUpdate();
 
-    }
-
-    private Set<DbKey> selectExistingDbKeys(Connection con, int height) throws SQLException {
-        Set<DbKey> dbKeys = new HashSet<>();
-        try (PreparedStatement pstmtSelectExistingIds = con.prepareStatement("SELECT " + keyFactory.getPKColumns() + " FROM " + table + " WHERE height >= ?")) {
-            pstmtSelectExistingIds.setInt(1, height);
-            try (ResultSet idsRs = pstmtSelectExistingIds.executeQuery()) {
-                while (idsRs.next()) {
-                    dbKeys.add(keyFactory.newKey(idsRs));
-                }
-            }
-        }
-        return dbKeys;
     }
 }
