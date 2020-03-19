@@ -15,9 +15,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -35,12 +37,15 @@ public class SecureStorageServiceImpl implements SecureStorageService {
     private static final String SECURE_STORE_FILE_COPY_NAME = "secure_store_copy";
 
     private Map<Long, String> store = new ConcurrentHashMap<>();
-    private OptionDAO optionDAO;
-    private boolean isEnabled;
+    private final OptionDAO optionDAO;
+    private final PropertyStorageService propertyStorageService;
+    private final boolean isEnabled;
 
     @Inject
-    public SecureStorageServiceImpl(@Named("secureStoreDirPath") Path secureStorageDirPath, PropertiesHolder propertiesHolder, OptionDAO optionDAO) {
+    public SecureStorageServiceImpl(@Named("secureStoreDirPath") Path secureStorageDirPath, PropertiesHolder propertiesHolder, OptionDAO optionDAO,
+                                    PropertyStorageService propertyStorageService) {
         this.optionDAO = optionDAO;
+        this.propertyStorageService = propertyStorageService;
 
         isEnabled = propertiesHolder.getBooleanProperty("apl.secureStorage.restore.isEnabled");
 
@@ -102,13 +107,7 @@ public class SecureStorageServiceImpl implements SecureStorageService {
 
 
     public boolean storeSecretStorage(String keyName, Path secureStoragePath) {
-        String privateKey = optionDAO.get(keyName);
-
-        if(privateKey == null){
-            optionDAO.set(keyName, createPrivateKeyForStorage());
-        }
-        privateKey = optionDAO.get(keyName);
-
+        String privateKey = getPK(keyName);
         SecureStorage secureStore;
         try {
             secureStore = collectAllDataToTempStore();
@@ -126,7 +125,7 @@ public class SecureStorageServiceImpl implements SecureStorageService {
      */
     @Override
     public boolean restoreSecretStorage(Path file) {
-        String privateKey = optionDAO.get(SECURE_STORE_KEY);
+        String privateKey = getPK(SECURE_STORE_KEY);
         if(privateKey == null){
             return false;
         }
@@ -159,9 +158,7 @@ public class SecureStorageServiceImpl implements SecureStorageService {
         byte [] secretBytes = new byte[32];
         Random random = new Random();
         random.nextBytes(secretBytes);
-        String privateKey = Convert.toHexString(secretBytes);
-
-        return privateKey;
+        return Convert.toHexString(secretBytes);
     }
 
 
@@ -218,5 +215,30 @@ public class SecureStorageServiceImpl implements SecureStorageService {
     @Override
     public boolean isEnabled() {
         return isEnabled;
+    }
+
+
+    private String getPK(String keyName){
+        String privateKey;
+
+        if(propertyStorageService.isExist()){
+            Properties properties = propertyStorageService.loadProperties();
+            privateKey = (String) properties.get(new String(Base64.getDecoder().decode(PropertyStorageService.PHASH_KEY_NAME)));
+
+            if(privateKey == null){
+                String pk = createPrivateKeyForStorage();
+                properties.put(new String(Base64.getDecoder().decode(PropertyStorageService.PHASH_KEY_NAME)), pk);
+                return propertyStorageService.storeProperties(properties) ? pk : null;
+            }
+        } else {
+            // For users with old version.
+            privateKey = optionDAO.get(keyName);
+            if(privateKey == null){
+                optionDAO.set(keyName, createPrivateKeyForStorage());
+            }
+            return optionDAO.get(keyName);
+        }
+
+        return privateKey;
     }
 }
