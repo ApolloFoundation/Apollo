@@ -34,6 +34,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAlias
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 @Singleton
@@ -55,7 +56,7 @@ public class AliasServiceImpl implements AliasService {
         final AliasTable aliasTable,
         final AliasOfferTable offerTable,
         final Blockchain blockchain,
-        final IteratorToStreamConverter converter
+        final IteratorToStreamConverter<Alias> converter
     ) {
         this.aliasTable = aliasTable;
         this.offerTable = offerTable;
@@ -96,11 +97,15 @@ public class AliasServiceImpl implements AliasService {
 
     @Override
     public Alias getAliasByName(String aliasName) {
+        verifyAliasName(aliasName);
+
         return aliasTable.getBy(new DbClause.StringClause("alias_name_lower", aliasName.toLowerCase()));
     }
 
     @Override
     public Stream<Alias> getAliasesByNamePattern(String aliasName, int from, int to) {
+        verifyAliasName(aliasName);
+
         final DbIterator<Alias> aliasIterator = aliasTable.getManyBy(
             new DbClause.LikeClause("alias_name_lower", aliasName.toLowerCase()), from, to
         );
@@ -115,6 +120,8 @@ public class AliasServiceImpl implements AliasService {
 
     @Override
     public void deleteAlias(final String aliasName) {
+        verifyAliasName(aliasName);
+
         final Alias alias = getAliasByName(aliasName);
         final AliasOffer offer = offerTable.getOffer(alias);
         final int height = blockchain.getHeight();
@@ -128,7 +135,13 @@ public class AliasServiceImpl implements AliasService {
     }
 
     @Override
-    public void addOrUpdateAlias(Transaction transaction, MessagingAliasAssignment attachment) {
+    public void addOrUpdateAlias(
+        final Transaction transaction,
+        final MessagingAliasAssignment attachment
+    ) {
+        verifyTransaction(transaction);
+        Objects.requireNonNull(attachment, "attachment is not supposed to be null");
+
         Alias alias = getAliasByName(attachment.getAliasName());
         if (alias == null) {
             alias = new Alias(transaction, attachment, blockchain.getHeight(), blockchain.getLastBlockTimestamp());
@@ -142,7 +155,13 @@ public class AliasServiceImpl implements AliasService {
     }
 
     @Override
-    public void sellAlias(Transaction transaction, MessagingAliasSell attachment) {
+    public void sellAlias(
+        final Transaction transaction,
+        final MessagingAliasSell attachment
+    ) {
+        verifyTransaction(transaction);
+        Objects.requireNonNull(attachment, "attachment is not supposed to be null");
+
         final String aliasName = attachment.getAliasName();
         final long priceATM = attachment.getPriceATM();
         final long buyerId = transaction.getRecipientId();
@@ -164,6 +183,8 @@ public class AliasServiceImpl implements AliasService {
 
     @Override
     public void changeOwner(long newOwnerId, String aliasName) {
+        verifyAliasName(aliasName);
+
         Alias alias = getAliasByName(aliasName);
         alias.setHeight(blockchain.getHeight());
         alias.setAccountId(newOwnerId);
@@ -179,6 +200,16 @@ public class AliasServiceImpl implements AliasService {
 
     @Override
     public AliasOffer getOffer(Alias alias) {
+        Objects.requireNonNull(alias, "alias is not supposed to be null");
+
         return offerTable.getBy(new DbClause.LongClause("id", alias.getId()).and(new DbClause.LongClause("price", DbClause.Op.NE, Long.MAX_VALUE)));
+    }
+
+    private void verifyTransaction(Transaction transaction) {
+        Objects.requireNonNull(transaction, "transaction is not supposed to be null");
+    }
+
+    private void verifyAliasName(String aliasName) {
+        Objects.requireNonNull(aliasName, "aliasName is not supposed to be null");
     }
 }
