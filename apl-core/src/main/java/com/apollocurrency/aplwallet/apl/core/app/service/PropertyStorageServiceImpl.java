@@ -1,3 +1,7 @@
+/*
+ * Copyright © 2018-2020 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.app.service;
 
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
