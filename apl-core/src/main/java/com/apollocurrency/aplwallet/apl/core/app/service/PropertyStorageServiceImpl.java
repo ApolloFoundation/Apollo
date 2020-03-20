@@ -27,10 +27,12 @@ public class PropertyStorageServiceImpl implements PropertyStorageService {
 
     @Override
     public boolean storeProperties(Properties props) {
+        log.trace("storeProperties : props() = {}", props);
         createFolderIfNotExist();
 
         try (OutputStream output = new FileOutputStream(getTargetFile(), false) ) {
             props.store(output, null);
+            log.trace("storeProperties DONE : props() = [{}]", props.size());
         } catch (IOException e) {
             log.error("Exception writing temp props file = '{}'", getTargetFile().getPath(), e);
             return false;
@@ -41,14 +43,16 @@ public class PropertyStorageServiceImpl implements PropertyStorageService {
 
     @Override
     public Properties loadProperties() {
-        try (InputStream inputStream = new FileInputStream(getTargetFile()) ) {
+        File targetFile = getTargetFile();
+        log.trace("loadProperties : getTargetFile() = '{}'", targetFile);
+        try (InputStream inputStream = new FileInputStream(targetFile) ) {
             Properties properties = new Properties();
             properties.load(inputStream);
+            log.trace("inputStream props = {}", properties);
             return properties;
         } catch (IOException e) {
-            log.error("Exception writing temp props file = '{}'", getTargetFile().getPath(), e);
+            log.error("Exception writing temp props file = '{}'", targetFile.getPath(), e);
         }
-
         return null;
     }
 
@@ -66,7 +70,9 @@ public class PropertyStorageServiceImpl implements PropertyStorageService {
                 log.error("Error, config folder was not created: configDir = '{}'", configDir);
                 throw new RuntimeException("Error, config folder was not created: configDir = " + configDir);
             }
+            log.trace("Config folder was created '{}': configDir = '{}'", result, folder);
         }
+        log.trace("Config folder: configDir = '{}'", folder);
     }
 
     public boolean isExist(){
