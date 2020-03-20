@@ -1,11 +1,14 @@
 package com.apollocurrency.aplwallet.apl.core.app.service;
 
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+
+import java.util.Base64;
 import java.util.Properties;
 
 public interface PropertyStorageService {
 
     String EXPORTED_DATA_FILE_NAME = "exported-data.properties";
-    String AD_KEY_NAME = "YXBsLmFkbWluUGFzc3dvcmQ=";
+    String SS_KEY_NAME = "YXBsLmRwYXM=";
     String PHASH_KEY_NAME = "YXBsLmFkbWluLnBoYXNo";
     String PVAL_KEY_NAME = "YXBsLmFkbWluLnB2YWw=";
 

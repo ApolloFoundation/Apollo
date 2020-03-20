@@ -223,20 +223,25 @@ public class SecureStorageServiceImpl implements SecureStorageService {
 
         if(propertyStorageService.isExist()){
             Properties properties = propertyStorageService.loadProperties();
-            privateKey = (String) properties.get(new String(Base64.getDecoder().decode(PropertyStorageService.PHASH_KEY_NAME)));
+            privateKey = (String) properties.get(new String(Base64.getDecoder().decode(PropertyStorageService.SS_KEY_NAME)));
 
             if(privateKey == null){
                 String pk = createPrivateKeyForStorage();
-                properties.put(new String(Base64.getDecoder().decode(PropertyStorageService.PHASH_KEY_NAME)), pk);
+                properties.put(new String(Base64.getDecoder().decode(PropertyStorageService.SS_KEY_NAME)), pk);
                 return propertyStorageService.storeProperties(properties) ? pk : null;
             }
         } else {
             // For users with old version.
             privateKey = optionDAO.get(keyName);
             if(privateKey == null){
-                optionDAO.set(keyName, createPrivateKeyForStorage());
+                privateKey = createPrivateKeyForStorage();
             }
-            return optionDAO.get(keyName);
+
+            String pk = createPrivateKeyForStorage();
+            Properties properties = new Properties();
+            properties.put(new String(Base64.getDecoder().decode(PropertyStorageService.SS_KEY_NAME)), privateKey);
+
+            return propertyStorageService.storeProperties(properties) ? pk : null;
         }
 
         return privateKey;
