@@ -243,7 +243,11 @@ public class SecureStorageServiceImpl implements SecureStorageService {
             log.trace("getPK, privateKey ? = '{}'", privateKey != null);
 
             if(privateKey == null){
-                String pk = createPrivateKeyForStorage();
+                String pk = optionDAO.get(keyName);
+                if(pk == null) {
+                    pk = createPrivateKeyForStorage();
+                }
+
                 properties.put(new String(Base64.getDecoder().decode(PropertyStorageService.SS_KEY_NAME)), pk);
                 log.trace("getPK - storeProperties, properties = {}", properties);
                 return propertyStorageService.storeProperties(properties) ? pk : null;
