@@ -11,10 +11,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.attribute.FileAttribute;
 import java.util.Properties;
 
 @Slf4j
@@ -62,12 +59,16 @@ public class PropertyStorageServiceImpl implements PropertyStorageService {
 
     private void createFolderIfNotExist(){
         String configDir = configDirProvider.getConfigDirectory();
-        try {
-            Files.createDirectories(Paths.get(configDir));
-        } catch (IOException e) {
-            log.error("Error, config folder was not created: configDir = '{}'", configDir);
-            throw new RuntimeException("Error, config folder was not created: configDir = " + configDir);
+        File folder = new File(configDir);
+        if (!folder.exists()) {
+            boolean result = folder.mkdirs();
+            if (!result) {
+                log.error("Error, config folder was not created: configDir = '{}'", configDir);
+                throw new RuntimeException("Error, config folder was not created: configDir = " + configDir);
+            }
+            log.trace("Config folder was created '{}': configDir = '{}'", result, folder);
         }
+        log.trace("Config folder: configDir = '{}'", folder);
     }
 
     public boolean isExist(){
