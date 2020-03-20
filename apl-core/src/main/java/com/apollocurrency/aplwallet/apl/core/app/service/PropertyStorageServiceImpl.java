@@ -58,17 +58,24 @@ public class PropertyStorageServiceImpl implements PropertyStorageService {
     }
 
     private void createFolderIfNotExist(){
-        String configDir = configDirProvider.getConfigDirectory();
-        File folder = new File(configDir);
-        if (!folder.exists()) {
-            boolean result = folder.mkdirs();
-            if (!result) {
-                log.error("Error, config folder was not created: configDir = '{}'", configDir);
-                throw new RuntimeException("Error, config folder was not created: configDir = " + configDir);
+        String[] configDirList = new String[]{configDirProvider.getConfigDirectory(), configDirProvider.getInstallationConfigDirectory()};
+        for (String configDir : configDirList) {
+            File folder = new File(configDir);
+            if (!folder.exists()) {
+                boolean result = folder.mkdirs();
+                if (!result) {
+                    log.error("Error, config folder does not exist: configDir = '{}', GO to NEXT DIR...", configDir);
+                } else {
+                    log.debug("Config folder CREATED '{}': configDir = '{}'", result, folder);
+                    return;
+                }
+            } else {
+                log.debug("Config folder FOUND: configDir = '{}'", folder);
+                return;
             }
-            log.trace("Config folder was created '{}': configDir = '{}'", result, folder);
         }
-        log.trace("Config folder: configDir = '{}'", folder);
+        log.error("Error, NO config folder was found in list...");
+        throw new RuntimeException("Error, NO config folder was found in list...");
     }
 
     public boolean isExist(){
