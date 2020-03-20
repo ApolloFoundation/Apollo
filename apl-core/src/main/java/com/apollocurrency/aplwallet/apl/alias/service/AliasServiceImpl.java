@@ -18,19 +18,19 @@
  * Copyright © 2018-2020 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.account.service;
+package com.apollocurrency.aplwallet.apl.alias.service;
 
-import com.apollocurrency.aplwallet.apl.core.account.dao.AliasOfferTable;
-import com.apollocurrency.aplwallet.apl.core.account.dao.AliasTable;
-import com.apollocurrency.aplwallet.apl.core.app.Alias;
-import com.apollocurrency.aplwallet.apl.core.app.AliasOffer;
+import com.apollocurrency.aplwallet.apl.alias.converter.IteratorToStreamConverter;
+import com.apollocurrency.aplwallet.apl.alias.dao.AliasOfferTable;
+import com.apollocurrency.aplwallet.apl.alias.dao.AliasTable;
+import com.apollocurrency.aplwallet.apl.alias.entity.Alias;
+import com.apollocurrency.aplwallet.apl.alias.entity.AliasOffer;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasAssignment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasSell;
-import com.apollocurrency.aplwallet.apl.core.utils.StreamUtils;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -41,6 +41,27 @@ public class AliasServiceImpl implements AliasService {
     private final AliasTable aliasTable;
     private final AliasOfferTable offerTable;
     private final Blockchain blockchain;
+    private final IteratorToStreamConverter<Alias> converter;
+
+    /**
+     * Constrictor for unit tests.
+     *
+     * @param aliasTable
+     * @param offerTable
+     * @param blockchain
+     * @param converter
+     */
+    public AliasServiceImpl(
+        final AliasTable aliasTable,
+        final AliasOfferTable offerTable,
+        final Blockchain blockchain,
+        final IteratorToStreamConverter converter
+    ) {
+        this.aliasTable = aliasTable;
+        this.offerTable = offerTable;
+        this.blockchain = blockchain;
+        this.converter = converter;
+    }
 
     @Inject
     public AliasServiceImpl(
@@ -51,6 +72,7 @@ public class AliasServiceImpl implements AliasService {
         this.aliasTable = aliasTable;
         this.offerTable = offerTable;
         this.blockchain = blockchain;
+        this.converter = new IteratorToStreamConverter<>();
     }
 
     @Override
@@ -69,31 +91,31 @@ public class AliasServiceImpl implements AliasService {
             new DbClause.LongClause("account_id", accountId), from, to
         );
 
-        return StreamUtils.getStreamFromIterator(aliasIterator);
+        return converter.convert(aliasIterator);
     }
 
     @Override
-    public Alias getAlias(String aliasName) {
+    public Alias getAliasByName(String aliasName) {
         return aliasTable.getBy(new DbClause.StringClause("alias_name_lower", aliasName.toLowerCase()));
     }
 
     @Override
-    public Stream<Alias> getAliasesLike(String aliasName, int from, int to) {
+    public Stream<Alias> getAliasesByNamePattern(String aliasName, int from, int to) {
         final DbIterator<Alias> aliasIterator = aliasTable.getManyBy(
             new DbClause.LikeClause("alias_name_lower", aliasName.toLowerCase()), from, to
         );
 
-        return StreamUtils.getStreamFromIterator(aliasIterator);
+        return converter.convert(aliasIterator);
     }
 
     @Override
-    public Alias getAlias(long id) {
+    public Alias getAliasById(long id) {
         return aliasTable.getAlias(id);
     }
 
     @Override
     public void deleteAlias(final String aliasName) {
-        final Alias alias = getAlias(aliasName);
+        final Alias alias = getAliasByName(aliasName);
         final AliasOffer offer = offerTable.getOffer(alias);
         final int height = blockchain.getHeight();
         if (offer != null) {
@@ -107,7 +129,7 @@ public class AliasServiceImpl implements AliasService {
 
     @Override
     public void addOrUpdateAlias(Transaction transaction, MessagingAliasAssignment attachment) {
-        Alias alias = getAlias(attachment.getAliasName());
+        Alias alias = getAliasByName(attachment.getAliasName());
         if (alias == null) {
             alias = new Alias(transaction, attachment, blockchain.getHeight(), blockchain.getLastBlockTimestamp());
         } else {
@@ -125,7 +147,7 @@ public class AliasServiceImpl implements AliasService {
         final long priceATM = attachment.getPriceATM();
         final long buyerId = transaction.getRecipientId();
         if (priceATM > 0) {
-            Alias alias = getAlias(aliasName);
+            Alias alias = getAliasByName(aliasName);
             AliasOffer offer = offerTable.getOffer(alias);
             if (offer == null) {
                 offerTable.insert(new AliasOffer(alias.getId(), priceATM, buyerId, blockchain.getHeight()));
@@ -142,7 +164,7 @@ public class AliasServiceImpl implements AliasService {
 
     @Override
     public void changeOwner(long newOwnerId, String aliasName) {
-        Alias alias = getAlias(aliasName);
+        Alias alias = getAliasByName(aliasName);
         alias.setHeight(blockchain.getHeight());
         alias.setAccountId(newOwnerId);
         alias.setTimestamp(blockchain.getLastBlockTimestamp());

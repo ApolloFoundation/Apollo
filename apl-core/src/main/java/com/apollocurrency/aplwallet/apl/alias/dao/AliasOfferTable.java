@@ -18,10 +18,10 @@
  * Copyright © 2018-2020 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.account.dao;
+package com.apollocurrency.aplwallet.apl.alias.dao;
 
-import com.apollocurrency.aplwallet.apl.core.app.Alias;
-import com.apollocurrency.aplwallet.apl.core.app.AliasOffer;
+import com.apollocurrency.aplwallet.apl.alias.entity.Alias;
+import com.apollocurrency.aplwallet.apl.alias.entity.AliasOffer;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;

@@ -1,25 +1,27 @@
 package com.apollocurrency.aplwallet.apl.core.account.service;
 
-import com.apollocurrency.aplwallet.apl.core.account.dao.AliasOfferTable;
-import com.apollocurrency.aplwallet.apl.core.account.dao.AliasTable;
-import com.apollocurrency.aplwallet.apl.core.app.Alias;
-import com.apollocurrency.aplwallet.apl.core.app.AliasOffer;
+import com.apollocurrency.aplwallet.apl.alias.converter.IteratorToStreamConverter;
+import com.apollocurrency.aplwallet.apl.alias.service.AliasServiceImpl;
+import com.apollocurrency.aplwallet.apl.alias.dao.AliasOfferTable;
+import com.apollocurrency.aplwallet.apl.alias.dao.AliasTable;
+import com.apollocurrency.aplwallet.apl.alias.entity.Alias;
+import com.apollocurrency.aplwallet.apl.alias.entity.AliasOffer;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasAssignment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasSell;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -35,9 +37,17 @@ class AliasServiceImplTest {
     private AliasOfferTable offerTable;
     @Mock
     private Blockchain blockchain;
-    @InjectMocks
-    @Spy
     private AliasServiceImpl aliasService;
+
+    @BeforeEach
+    void setUp() {
+        this.aliasService = spy(new AliasServiceImpl(
+            aliasTable,
+            offerTable,
+            blockchain,
+            mock(IteratorToStreamConverter.class)
+        ));
+    }
 
     @Test
     void shouldGetCount() {
@@ -77,26 +87,26 @@ class AliasServiceImplTest {
     }
 
     @Test
-    void shouldGetAliasByString() {
+    void shouldGetAliasByName() {
         //GIVEN
         final String aliasName = "AS1561618989348";
 
         //WHEN
-        aliasService.getAlias(aliasName);
+        aliasService.getAliasByName(aliasName);
 
         //THEN
         verify(aliasTable, times(1)).getBy(any(DbClause.StringClause.class));
     }
 
     @Test
-    void shouldGetAliasesLike() {
+    void shouldGetAliasesByNamePattern() {
         //GIVEN
         final String aliasName = "AS1561618989348";
         final int from = 1;
         final int to = 2;
 
         //WHEN
-        aliasService.getAliasesLike(aliasName, from, to);
+        aliasService.getAliasesByNamePattern(aliasName, from, to);
 
         //THEN
         verify(aliasTable, times(1))
@@ -109,7 +119,7 @@ class AliasServiceImplTest {
         final long id = 1815781403495190811L;
 
         //WHEN
-        aliasService.getAlias(id);
+        aliasService.getAliasById(id);
 
         //THEN
         verify(aliasTable, times(1)).getAlias(id);
@@ -133,7 +143,7 @@ class AliasServiceImplTest {
     }
 
     @Test
-    void shouldDeleteOnlyAliasAndOffer() {
+    void shouldDeleteAliasAndOffer() {
         //GIVEN
         final String aliasName = "AS1561618989348";
         final Alias alias = mock(Alias.class);

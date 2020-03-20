@@ -18,10 +18,10 @@
  * Copyright © 2018-2020 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.account.service;
+package com.apollocurrency.aplwallet.apl.alias.service;
 
-import com.apollocurrency.aplwallet.apl.core.app.Alias;
-import com.apollocurrency.aplwallet.apl.core.app.AliasOffer;
+import com.apollocurrency.aplwallet.apl.alias.entity.Alias;
+import com.apollocurrency.aplwallet.apl.alias.entity.AliasOffer;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasAssignment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasSell;
@@ -35,11 +35,11 @@ public interface AliasService {
 
     Stream<Alias> getAliasesByOwner(long accountId, int from, int to);
 
-    Alias getAlias(String aliasName);
+    Alias getAliasByName(String aliasName);
 
-    Stream<Alias> getAliasesLike(String aliasName, int from, int to);
+    Stream<Alias> getAliasesByNamePattern(String aliasName, int from, int to);
 
-    Alias getAlias(long id);
+    Alias getAliasById(long id);
 
     void deleteAlias(final String aliasName);
 

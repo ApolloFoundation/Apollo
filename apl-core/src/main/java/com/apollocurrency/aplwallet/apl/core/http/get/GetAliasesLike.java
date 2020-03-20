@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.account.service.AliasService;
+import com.apollocurrency.aplwallet.apl.alias.service.AliasService;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -60,7 +60,7 @@ public final class GetAliasesLike extends AbstractAPIRequestHandler {
         JSONObject response = new JSONObject();
         final JSONArray aliasJSON = new JSONArray();
 
-        aliasService.getAliasesLike(prefix, firstIndex, lastIndex)
+        aliasService.getAliasesByNamePattern(prefix, firstIndex, lastIndex)
             .map(JSONData::alias)
             .forEach(aliasJSON::add);
 

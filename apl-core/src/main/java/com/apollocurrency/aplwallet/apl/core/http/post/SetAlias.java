@@ -22,8 +22,8 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 
 
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.account.service.AliasService;
-import com.apollocurrency.aplwallet.apl.core.app.Alias;
+import com.apollocurrency.aplwallet.apl.alias.service.AliasService;
+import com.apollocurrency.aplwallet.apl.alias.entity.Alias;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasAssignment;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -80,7 +80,7 @@ public final class SetAlias extends CreateTransaction {
 
         Account account = HttpParameterParserUtil.getSenderAccount(req);
 
-        Alias alias = aliasService.getAlias(normalizedAlias);
+        Alias alias = aliasService.getAliasByName(normalizedAlias);
         if (alias != null && alias.getAccountId() != account.getId()) {
             JSONObject response = new JSONObject();
             response.put("errorCode", 8);
