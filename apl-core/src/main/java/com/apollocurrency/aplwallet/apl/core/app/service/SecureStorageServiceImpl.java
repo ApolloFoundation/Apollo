@@ -257,12 +257,11 @@ public class SecureStorageServiceImpl implements SecureStorageService {
                 log.trace("getPK - createPrivateKeyForStorage, privateKey ? = {}", privateKey != null);
             }
 
-            String pk = createPrivateKeyForStorage();
             Properties properties = new Properties();
             properties.put(new String(Base64.getDecoder().decode(PropertyStorageService.SS_KEY_NAME)), privateKey);
-            log.trace("getPK - createPrivateKeyForStorage, privateKey ? = {}, pk = {}", privateKey != null, pk);
+            log.trace("getPK - createPrivateKeyForStorage, privateKey ? = {}, pk = {}", privateKey != null, privateKey);
 
-            return propertyStorageService.storeProperties(properties) ? pk : null;
+            return propertyStorageService.storeProperties(properties) ? privateKey : null;
         }
 
         return privateKey;
