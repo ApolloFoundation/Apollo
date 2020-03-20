@@ -19,63 +19,68 @@ import java.util.Properties;
 public class PropertyStorageServiceImpl implements PropertyStorageService {
 
     private ConfigDirProvider configDirProvider;
+    private String realConfigDir;
 
     @Inject
     public PropertyStorageServiceImpl(ConfigDirProvider configDirProvider) {
         this.configDirProvider = configDirProvider;
+        this.realConfigDir = configDirProvider.getConfigDirectory();
     }
 
     @Override
     public boolean storeProperties(Properties props) {
-        createFolderIfNotExist();
+        validateAndCreateIfNotExist(true);
 
         try (OutputStream output = new FileOutputStream(getTargetFile(), false) ) {
             props.store(output, null);
         } catch (IOException e) {
-            log.error("Exception writing temp props file = '{}'", getTargetFile().getPath(), e);
+            log.error("Exception writing props file = '{}'", getTargetFile().getPath(), e);
             return false;
         }
-
         return true;
     }
 
     @Override
     public Properties loadProperties() {
+        validateAndCreateIfNotExist(false);
+
         try (InputStream inputStream = new FileInputStream(getTargetFile()) ) {
             Properties properties = new Properties();
             properties.load(inputStream);
             return properties;
         } catch (IOException e) {
-            log.error("Exception writing temp props file = '{}'", getTargetFile().getPath(), e);
+            log.error("Exception read props file = '{}'", getTargetFile().getPath(), e);
         }
 
         return null;
     }
 
     private File getTargetFile(){
-        String configDir = createFolderIfNotExist();
-        return Path.of(configDir, EXPORTED_DATA_FILE_NAME).toFile(); // full target file
+        return Path.of(this.realConfigDir, EXPORTED_DATA_FILE_NAME).toFile(); // full target file
     }
 
-    private String createFolderIfNotExist(){
+    private void validateAndCreateIfNotExist(boolean isCreate) {
         String[] configDirList = new String[]{configDirProvider.getConfigDirectory(), configDirProvider.getInstallationConfigDirectory()};
         for (String configDir : configDirList) {
             File folder = new File(configDir);
             if (!folder.exists()) {
-                boolean result = folder.mkdirs();
-                if (!result) {
-                    log.error("Error, config folder does not exist: configDir = '{}', GO to NEXT DIR...", configDir);
-                } else {
-                    log.debug("Config folder CREATED '{}': configDir = '{}'", result, folder);
-                    return configDir;
+                if (isCreate) {
+                    boolean result = folder.mkdirs();
+                    if (!result) {
+                        log.error("Error, config folder does not exist: configDir = '{}', GO to NEXT DIR...", configDir);
+                    } else {
+                        this.realConfigDir = configDir;
+                        log.debug("Config folder CREATED '{}': configDir = '{}'", result, this.realConfigDir);
+                        return;
+                    }
                 }
             } else {
-                log.debug("Config folder FOUND: configDir = '{}'", folder);
-                return configDir;
+                this.realConfigDir = configDir;
+                log.debug("Config folder FOUND: configDir = '{}'", this.realConfigDir);
+                return;
             }
         }
-        log.error("Error, NO config folder was found in list...");
-        throw new RuntimeException("Error, NO config folder was found in list...");
+
     }
 
     public boolean isExist(){
