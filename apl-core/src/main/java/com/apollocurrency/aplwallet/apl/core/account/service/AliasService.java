@@ -23,20 +23,21 @@ package com.apollocurrency.aplwallet.apl.core.account.service;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.app.AliasOffer;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasAssignment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasSell;
+
+import java.util.stream.Stream;
 
 public interface AliasService {
     int getCount();
 
     int getAccountAliasCount(long accountId);
 
-    DbIterator<Alias> getAliasesByOwner(long accountId, int from, int to);
+    Stream<Alias> getAliasesByOwner(long accountId, int from, int to);
 
     Alias getAlias(String aliasName);
 
-    DbIterator<Alias> getAliasesLike(String aliasName, int from, int to);
+    Stream<Alias> getAliasesLike(String aliasName, int from, int to);
 
     Alias getAlias(long id);
 

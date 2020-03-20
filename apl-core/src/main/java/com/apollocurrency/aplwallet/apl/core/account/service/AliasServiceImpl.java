@@ -30,9 +30,11 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasAssignment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasSell;
+import com.apollocurrency.aplwallet.apl.core.utils.StreamUtils;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.stream.Stream;
 
 @Singleton
 public class AliasServiceImpl implements AliasService {
@@ -62,8 +64,12 @@ public class AliasServiceImpl implements AliasService {
     }
 
     @Override
-    public DbIterator<Alias> getAliasesByOwner(long accountId, int from, int to) {
-        return aliasTable.getManyBy(new DbClause.LongClause("account_id", accountId), from, to);
+    public Stream<Alias> getAliasesByOwner(long accountId, int from, int to) {
+        final DbIterator<Alias> aliasIterator = aliasTable.getManyBy(
+            new DbClause.LongClause("account_id", accountId), from, to
+        );
+
+        return StreamUtils.getStreamFromIterator(aliasIterator);
     }
 
     @Override
@@ -72,8 +78,12 @@ public class AliasServiceImpl implements AliasService {
     }
 
     @Override
-    public DbIterator<Alias> getAliasesLike(String aliasName, int from, int to) {
-        return aliasTable.getManyBy(new DbClause.LikeClause("alias_name_lower", aliasName.toLowerCase()), from, to);
+    public Stream<Alias> getAliasesLike(String aliasName, int from, int to) {
+        final DbIterator<Alias> aliasIterator = aliasTable.getManyBy(
+            new DbClause.LikeClause("alias_name_lower", aliasName.toLowerCase()), from, to
+        );
+
+        return StreamUtils.getStreamFromIterator(aliasIterator);
     }
 
     @Override

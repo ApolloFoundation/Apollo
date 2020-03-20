@@ -21,14 +21,12 @@
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.account.service.AliasService;
-import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
@@ -60,13 +58,13 @@ public final class GetAliasesLike extends AbstractAPIRequestHandler {
         }
 
         JSONObject response = new JSONObject();
-        JSONArray aliasJSON = new JSONArray();
+        final JSONArray aliasJSON = new JSONArray();
+
+        aliasService.getAliasesLike(prefix, firstIndex, lastIndex)
+            .map(JSONData::alias)
+            .forEach(aliasJSON::add);
+
         response.put("aliases", aliasJSON);
-        try (DbIterator<Alias> aliases = aliasService.getAliasesLike(prefix, firstIndex, lastIndex)) {
-            while (aliases.hasNext()) {
-                aliasJSON.add(JSONData.alias(aliases.next()));
-            }
-        }
         return response;
     }
 
