@@ -53,11 +53,11 @@ public class PropertyStorageServiceImpl implements PropertyStorageService {
     }
 
     private File getTargetFile(){
-        String configDir = configDirProvider.getConfigDirectory();
+        String configDir = createFolderIfNotExist();
         return Path.of(configDir, EXPORTED_DATA_FILE_NAME).toFile(); // full target file
     }
 
-    private void createFolderIfNotExist(){
+    private String createFolderIfNotExist(){
         String[] configDirList = new String[]{configDirProvider.getConfigDirectory(), configDirProvider.getInstallationConfigDirectory()};
         for (String configDir : configDirList) {
             File folder = new File(configDir);
@@ -67,11 +67,11 @@ public class PropertyStorageServiceImpl implements PropertyStorageService {
                     log.error("Error, config folder does not exist: configDir = '{}', GO to NEXT DIR...", configDir);
                 } else {
                     log.debug("Config folder CREATED '{}': configDir = '{}'", result, folder);
-                    return;
+                    return configDir;
                 }
             } else {
                 log.debug("Config folder FOUND: configDir = '{}'", folder);
-                return;
+                return configDir;
             }
         }
         log.error("Error, NO config folder was found in list...");
