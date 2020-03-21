@@ -4,15 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
@@ -21,7 +12,6 @@ import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.Filter;
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,11 +19,19 @@ import org.junit.jupiter.api.Test;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDbTableTest<T> {
 
     private DbKey THROWING_DB_KEY = createThrowingKey();
@@ -156,11 +154,13 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
             actual = table.get(entries.getKey(), first.getHeight());
             assertEquals(first, actual);
 
-            T deleted = getDeletedMultiversionRecord().get(0);
+            if (table.supportDelete()) {
+                T deleted = getDeletedMultiversionRecord().get(0);
+                actual = table.get(table.getDbKeyFactory().newKey(deleted), deleted.getHeight());
+                assertNull(actual);
+            }
 
-            actual = table.get(table.getDbKeyFactory().newKey(deleted), deleted.getHeight());
 
-            assertNull(actual);
 
             entries = getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 1, true);
 
@@ -236,7 +236,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
 
     public long getIncorrectDbId() {
         long incorrectDbId;
-        if (table.isMultiversion()) {
+        if (table.isMultiversion() && table.supportDelete()) {
             incorrectDbId = getDeletedMultiversionRecord().get(0).getDbId();
         } else {
             incorrectDbId = Long.MAX_VALUE;

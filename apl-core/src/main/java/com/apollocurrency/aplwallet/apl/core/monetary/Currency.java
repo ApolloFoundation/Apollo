@@ -118,8 +118,8 @@ public final class Currency {
             try (
                     @DatabaseSpecificDml(DmlMarker.MERGE)
                     PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency_supply (id, current_supply, "
-                    + "current_reserve_per_unit_atm, height, latest) "
-                    + "KEY (id, height) VALUES (?, ?, ?, ?, TRUE)")
+                    + "current_reserve_per_unit_atm, height, latest, deleted) "
+                    + "KEY (id, height) VALUES (?, ?, ?, ?, TRUE, FALSE)")
             ) {
                 int i = 0;
                 pstmt.setLong(++i, this.currencyId);
@@ -316,8 +316,8 @@ public final class Currency {
                 @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
                 PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency (id, account_id, name, code, "
                         + "description, type, initial_supply, reserve_supply, max_supply, creation_height, issuance_height, min_reserve_per_unit_atm, "
-                        + "min_difficulty, max_difficulty, ruleset, algorithm, decimals, height, latest) "
-                        + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")
+                        + "min_difficulty, max_difficulty, ruleset, algorithm, decimals, height, latest, deleted) "
+                        + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)")
         ) {
             int i = 0;
             pstmt.setLong(++i, this.currencyId);

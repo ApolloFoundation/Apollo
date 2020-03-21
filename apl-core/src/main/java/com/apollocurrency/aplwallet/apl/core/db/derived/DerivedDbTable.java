@@ -191,6 +191,11 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
         }
     }
 
+    @Override
+    public boolean supportDelete() {
+        return false;
+    }
+
     /**
      * {@inheritDoc}
      */

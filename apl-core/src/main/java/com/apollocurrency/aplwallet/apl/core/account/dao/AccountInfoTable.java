@@ -55,7 +55,7 @@ public class AccountInfoTable extends VersionedDeletableEntityDbTable<AccountInf
         try (
                 @DatabaseSpecificDml(DmlMarker.MERGE)
                 @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
-                final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_info " + "(account_id, name, description, height, latest) " + "KEY (account_id, height) VALUES (?, ?, ?, ?, TRUE)")
+                final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_info " + "(account_id, name, description, height, latest, deleted) " + "KEY (account_id, height) VALUES (?, ?, ?, ?, TRUE, FALSE)")
         ) {
             int i = 0;
             pstmt.setLong(++i, accountInfo.getAccountId());
