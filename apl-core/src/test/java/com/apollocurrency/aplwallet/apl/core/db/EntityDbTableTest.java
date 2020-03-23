@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import com.apollocurrency.aplwallet.apl.alias.converter.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
@@ -22,11 +23,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Spliterator;
-import java.util.Spliterators;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -297,10 +295,9 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
             }
         }
 
-        final List<T> actual = StreamSupport.stream(
-            Spliterators.spliteratorUnknownSize(
-                table.getManyBy(DbClause.EMPTY_CLAUSE, 0, Integer.MAX_VALUE).iterator(), Spliterator.ORDERED
-            ), false
+        final IteratorToStreamConverter<T> converter = new IteratorToStreamConverter<>();
+        final ArrayList<T> actual = converter.convert(
+            table.getManyBy(DbClause.EMPTY_CLAUSE, 0, Integer.MAX_VALUE)
         ).skip(from).limit(maxSize).collect(Collectors.toCollection(ArrayList::new));
 
         //THEN
