@@ -203,6 +203,26 @@ public class TestBaseNew extends TestBase {
             .getObject("", AccountDTO.class);
     }
 
+
+    @Step
+    public Wallet getNewWallet(String secretPhrase) {
+        HashMap<String, String> param = new HashMap();
+        param.put(ReqType.REQUEST_TYPE, ReqType.GET_ACCOUNT_ID);
+        param.put(ReqParam.SECRET_PHRASE, secretPhrase);
+
+        AccountDTO accountDTO = given().log().all()
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .get(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", AccountDTO.class);
+        return new Wallet(accountDTO.getAccountRS(),secretPhrase,false);
+    }
+
     @Step
     public AccountLedgerResponse getAccountLedger(Wallet wallet) {
         HashMap<String, String> param = new HashMap();
@@ -357,7 +377,7 @@ public class TestBaseNew extends TestBase {
         param.put(ReqType.REQUEST_TYPE, ReqType.SEND_MONEY);
         param.put(ReqParam.AMOUNT_ATM, moneyAmount +  "00000000");
         param.put(ReqParam.RECIPIENT, recipient);
-        param.put(ReqParam.FEE, "100000000000");
+        param.put(ReqParam.FEE, "100000000");
         param.put(ReqParam.DEADLINE, "1440");
 
         return given().log().all()

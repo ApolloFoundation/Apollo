@@ -206,15 +206,24 @@ public class TestAccounts extends TestBaseNew {
     @ArgumentsSource(WalletProvider.class)
     public void testSendMoney(Wallet wallet) throws Exception {
         Set<String> transactions = new HashSet<>();
+        Set<Wallet> wallets = new HashSet<>();
+
         int countOfTransactions = 50;
-        for (int i = 0; i < countOfTransactions; i++) {
-            CreateTransactionResponse sendMoneyResponse = sendMoney(wallet, wallet.getUser(), 10);
+        for (int i = 10000; i < countOfTransactions+10000; i++) {
+            Wallet new_wallet = getNewWallet(String.valueOf(i));
+            wallets.add(new_wallet);
+            CreateTransactionResponse sendMoneyResponse = sendMoney(wallet, new_wallet.getUser(), 10);
             verifyCreatingTransaction(sendMoneyResponse);
             transactions.add(sendMoneyResponse.getTransaction());
         }
-        waitForHeight(getBlock().getHeight() + 10);
+
         for (String trx : transactions) {
             verifyTransactionInBlock(trx);
+        }
+
+        for (Wallet wl : wallets) {
+            int allBalance = (int)((getBalance(wl).getBalanceATM() - 100000000L) / 100000000) ;
+            sendMoney(wl, wallet.getUser(), allBalance);
         }
     }
 
@@ -294,7 +303,7 @@ public class TestAccounts extends TestBaseNew {
 
         Wallet firstleaseWallet = new Wallet(getAccountId(firstLeaseWalletPass).getAccountRS(), firstLeaseWalletPass);
         Wallet secondtleaseWallet = new Wallet(getAccountId(secondtLeaseWalletPass).getAccountRS(), secondtLeaseWalletPass);
-        
+
         GetAccountResponse accountDTO = getAccount(wallet.getUser());
        if (accountDTO.getEffectiveBalanceAPL() > 1000L) {
             startForging(wallet);

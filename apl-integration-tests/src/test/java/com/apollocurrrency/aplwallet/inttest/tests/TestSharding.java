@@ -59,13 +59,6 @@ public class TestSharding extends TestBaseNew {
                         pair.getValue().stream().findFirst().get().getShardId()))
             );
 
-        /*shards.entrySet().stream().filter(pair -> peersOnCurrentHeight.contains(pair.getKey()))
-                .filter(pair -> pair.getValue().size() > 0)
-                .forEach(pair ->
-                        assertEquals("Shards count on: " + pair.getKey(),
-                        finalMaxShardsList.stream().findFirst().get().getShardId(),
-                        pair.getValue().stream().findFirst().get().getShardId()));*/
-
         for (Map.Entry<String, List<ShardDTO>> shard : shards.entrySet()) {
             if (shard.getValue().size() >= finalMaxShardsList.size()) {
                 assertIterableEquals(maxShardsList, shard.getValue(), "Assert CoreZip Hash on " + shard.getKey());

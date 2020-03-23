@@ -260,9 +260,7 @@ public abstract class TestBase {
 
 
             if (peersIp != null && peersIp.size() > 0) {
-
                 boolean isForgingEnableOnGen = false;
-
                     log.info("Check Forging on peers");
                     for (String ip : peersIp) {
                     log.info("Check Forging on: " + ip);
@@ -315,7 +313,7 @@ public abstract class TestBase {
                            .getObject("",ForgingDetails.class);
                     }
                 } catch (Exception ex) {
-                    log.warn("FAILED: Start Forging. " + ex.getMessage());
+                    log.warn("FAILED: Check Forging on peers. " + ex.getMessage());
                 }
             }
         }
