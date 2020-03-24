@@ -87,11 +87,19 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
             if (deletedRecordsCount > 0) {
                 LOG.trace("Rollback table {} deleting {} records", table, deletedRecordsCount);
             }
-
+            if (supportDelete()) { // do not 'setLatest' for deleted entities
+                try (PreparedStatement pstmtSelectDeletedCount = con.prepareStatement("SELECT " + keyFactory.getPKColumns() + " FROM " + table + " WHERE height <= ? AND deleted = true GROUP BY " + keyFactory.getPKColumns() + " HAVING COUNT(DISTINCT HEIGHT) % 2 = 0")) {
+                    pstmtSelectDeletedCount.setInt(1, height);
+                    try (ResultSet rs = pstmtSelectDeletedCount.executeQuery()) {
+                        while (rs.next()) {
+                            dbKeys.remove(keyFactory.newKey(rs));
+                        }
+                    }
+                }
+            }
             for (DbKey dbKey : dbKeys) {
-                int i = 1;
-                i = dbKey.setPK(pstmtSetLatest, i);
-                i = dbKey.setPK(pstmtSetLatest, i);
+                int i = dbKey.setPK(pstmtSetLatest, 1);
+                dbKey.setPK(pstmtSetLatest, i);
                 pstmtSetLatest.executeUpdate();
             }
         }

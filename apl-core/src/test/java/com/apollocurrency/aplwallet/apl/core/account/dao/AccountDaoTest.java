@@ -175,6 +175,21 @@ class AccountDaoTest  {
         td.ACC_13.setDeleted(false);
         assertEquals(td.ACC_13, account);
     }
+    @Test
+    void testRollback_deleted_no_updated() throws SQLException {
+        td.ACC_14.setHeight(td.ACC_14.getHeight() + 1);
+        td.ACC_14.setBalanceATM(td.ACC_14.getBalanceATM() - 100);
+        DbUtils.inTransaction(dbExtension, (con)-> table.insert(td.ACC_14));
+        DbUtils.inTransaction(dbExtension, (con) -> table.rollback(td.ACC_14.getHeight() - 1));
+
+        Account account = table.get(new LongKey(td.ACC_14.getId()));
+        assertNull(account);
+        List<Account> existing = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
+        td.ACC_14.setHeight(td.ACC_14.getHeight() - 1);
+        td.ACC_14.setBalanceATM(td.ACC_14.getBalanceATM() + 100);
+        assertEquals(td.ALL_ACCOUNTS, existing);
+    }
+
 
     @Test
     void getTopHolders() {

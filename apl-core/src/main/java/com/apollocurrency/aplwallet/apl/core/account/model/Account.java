@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDeletableEntity;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -41,6 +42,7 @@ import java.util.Set;
 @Slf4j
 @Getter
 @ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
 public class Account extends VersionedDeletableEntity {
 
     private long id;
