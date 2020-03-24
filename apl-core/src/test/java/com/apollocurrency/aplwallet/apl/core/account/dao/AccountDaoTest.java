@@ -34,6 +34,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 import javax.inject.Inject;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -188,6 +189,26 @@ class AccountDaoTest  {
         td.ACC_14.setHeight(td.ACC_14.getHeight() - 1);
         td.ACC_14.setBalanceATM(td.ACC_14.getBalanceATM() + 100);
         assertEquals(td.ALL_ACCOUNTS, existing);
+    }
+
+    @Test
+    void testRollback_update_latest_for_prev_not_deleted() throws SQLException {
+        Account newAcc1 = new Account(td.ACC_14.getId(), td.ACC_14.getBalanceATM() - 100, td.ACC_14.getUnconfirmedBalanceATM(), 0, 0, td.ACC_14.getHeight() + 1);
+        newAcc1.setDbId(td.ACC_14.getDbId() + 1);
+        DbUtils.inTransaction(dbExtension, (con)-> table.insert(newAcc1));
+
+        Account newAcc2 = new Account(td.ACC_14.getId(), td.ACC_14.getBalanceATM() - 100, td.ACC_14.getUnconfirmedBalanceATM(), 0, 0, td.ACC_14.getHeight() + 2);
+        newAcc2.setDbId(td.ACC_14.getDbId() + 2);
+        DbUtils.inTransaction(dbExtension, (con)-> table.insert(newAcc2));
+
+        DbUtils.inTransaction(dbExtension, (con) -> table.rollback(newAcc2.getHeight() - 1));
+
+        Account account = table.get(new LongKey(td.ACC_14.getId()));
+        assertEquals(newAcc1, account);
+        List<Account> existing = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
+        ArrayList<Account> expected = new ArrayList<>(td.ALL_ACCOUNTS);
+        expected.add(newAcc1);
+        assertEquals(expected, existing);
     }
 
 

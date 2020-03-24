@@ -87,12 +87,23 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
             if (deletedRecordsCount > 0) {
                 LOG.trace("Rollback table {} deleting {} records", table, deletedRecordsCount);
             }
-            if (supportDelete()) { // do not 'setLatest' for deleted entities
-                try (PreparedStatement pstmtSelectDeletedCount = con.prepareStatement("SELECT " + keyFactory.getPKColumns() + " FROM " + table + " WHERE height <= ? AND deleted = true GROUP BY " + keyFactory.getPKColumns() + " HAVING COUNT(DISTINCT HEIGHT) % 2 = 0")) {
+            if (supportDelete()) { // do not 'setLatest' for deleted entities ( if last entity below given height was deleted 'deleted=true')
+                try (PreparedStatement pstmtSelectDeletedCount = con.prepareStatement("SELECT " + keyFactory.getPKColumns() + " FROM " + table + " WHERE height <= ? AND deleted = true GROUP BY " + keyFactory.getPKColumns() + " HAVING COUNT(DISTINCT HEIGHT) % 2 = 0");
+                     PreparedStatement pstmtGetLatestDeleted = con.prepareStatement("SELECT deleted FROM " + table + keyFactory.getPKClause() + " AND height <=? ORDER BY db_id DESC LIMIT 1")) {
                     pstmtSelectDeletedCount.setInt(1, height);
                     try (ResultSet rs = pstmtSelectDeletedCount.executeQuery()) {
                         while (rs.next()) {
-                            dbKeys.remove(keyFactory.newKey(rs));
+                            DbKey candidateToRemove = keyFactory.newKey(rs);
+                            int index = candidateToRemove.setPK(pstmtGetLatestDeleted, 1);
+                            pstmtGetLatestDeleted.setInt(index, height);
+                            try (ResultSet latestDeleted = pstmtGetLatestDeleted.executeQuery()) {
+                                if (latestDeleted.next()) {
+                                    boolean del = latestDeleted.getBoolean(1);
+                                    if (del) {
+                                        dbKeys.remove(candidateToRemove);
+                                    }
+                                }
+                            }
                         }
                     }
                 }
