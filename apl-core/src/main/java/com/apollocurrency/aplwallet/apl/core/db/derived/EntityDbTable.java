@@ -449,7 +449,8 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> implements Entity
                         thisExistsAndDeleted.setInt(index, maxHeight);
                         try (ResultSet rs = thisExistsAndDeleted.executeQuery()) {
                             if (rs.next()) { // our entity exists and was deleted - compensation required (point of no return)
-                                try (PreparedStatement selectPrevDeleted = con.prepareStatement("SELECT db_id FROM " + table + keyFactory.getPKClause() + " AND height < ? ORDER BY db_id DESC LIMIT 1"); // find db_id of the most recent previous record (deleted=true)
+                                try (PreparedStatement selectPrevDeleted = con.prepareStatement("SELECT db_id FROM " + table + keyFactory.getPKClause() +
+                                    " AND height < ? AND deleted=true ORDER BY db_id DESC LIMIT 1"); // find db_id of the most recent previous record (deleted=true)
                                      PreparedStatement updatePrevDeleted = con.prepareStatement("UPDATE " + table + " SET deleted = false WHERE db_id = ?")) { // perform compensation
                                     int selectPrevIndex = dbKey.setPK(selectPrevDeleted, 1);
                                     selectPrevDeleted.setInt(selectPrevIndex, maxHeight);
