@@ -438,8 +438,8 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> implements Entity
     private void restoreDeletedColumnIfSupported(Connection con, DbKey dbKey) throws SQLException {
         if (supportDelete()) {
             // TODO replace 'height' selection from db by entity height when refactoring will be done
-            try (PreparedStatement maxHeightStatement = con.prepareStatement("SELECT MAX(height) from block");
-                 PreparedStatement thisExistsAndDeleted = con.prepareStatement("SELECT 1 from " + table + keyFactory.getPKClause() + " AND height = ? AND deleted = true")) {
+            try (PreparedStatement maxHeightStatement = con.prepareStatement("SELECT MAX(height) from block"); // getting blockchain height without CDI
+                 PreparedStatement thisExistsAndDeleted = con.prepareStatement("SELECT 1 from " + table + keyFactory.getPKClause() + " AND height = ? AND deleted = true")) { // checking our entity existence on current blockchain height in 'deleted=true' state
 
                 try (ResultSet maxHeightRs = maxHeightStatement.executeQuery()) {
                     if (maxHeightRs.next()) {
@@ -448,9 +448,9 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> implements Entity
                         int maxHeight = maxHeightRs.getInt(1);
                         thisExistsAndDeleted.setInt(index, maxHeight);
                         try (ResultSet rs = thisExistsAndDeleted.executeQuery()) {
-                            if (rs.next()) {
-                                try (PreparedStatement selectPrevDeleted = con.prepareStatement("SELECT db_id FROM " + table + keyFactory.getPKClause() + " AND height < ? ORDER BY db_id DESC LIMIT 1");
-                                     PreparedStatement updatePrevDeleted = con.prepareStatement("UPDATE " + table + " SET deleted = false WHERE db_id = ?")) {
+                            if (rs.next()) { // our entity exists and was deleted - compensation required (point of no return)
+                                try (PreparedStatement selectPrevDeleted = con.prepareStatement("SELECT db_id FROM " + table + keyFactory.getPKClause() + " AND height < ? ORDER BY db_id DESC LIMIT 1"); // find db_id of the most recent previous record (deleted=true)
+                                     PreparedStatement updatePrevDeleted = con.prepareStatement("UPDATE " + table + " SET deleted = false WHERE db_id = ?")) { // perform compensation
                                     int selectPrevIndex = dbKey.setPK(selectPrevDeleted, 1);
                                     selectPrevDeleted.setInt(selectPrevIndex, maxHeight);
                                     try (ResultSet prevDeletedRs = selectPrevDeleted.executeQuery()) {
