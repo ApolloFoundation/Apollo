@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.derived;
 
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -396,45 +397,80 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> implements Entity
                     pstmt.executeUpdate();
                 }
             }
-            if (supportDelete()) {
-                // TODO replace 'height' selection from db by entity height when refactoring will be done
-                try (PreparedStatement maxHeightStatement = con.prepareStatement("SELECT MAX(height) from block");
-                    PreparedStatement thisExistsAndDeleted = con.prepareStatement("SELECT 1 from " + table + keyFactory.getPKClause() + " AND height = ? AND deleted = true")) {
+            restoreDeletedColumnIfSupported(con, dbKey);
+            save(con, t);
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
 
-                    try (ResultSet maxHeightRs = maxHeightStatement.executeQuery()) {
-                        if (maxHeightRs.next()) {
+    /**
+     * If 'delete' operation supported for the table and 'deleted=true' entity for {@code dbKey} exists on the
+     * current blockchain height, then will restore deleted=false column value for entity specified by {@code dbKey},
+     * which exists on height less than current blockchain height.
+     * It is a compensation action applied to 'delete' operation on same height
+     * Example
+     * <pre>
+     *     GIVEN
+     *     account table content:
+     *     db_id   id    balance  height  latest  deleted
+     *     10      1     25        1       false   true
+     *     20      1     0         2       false   true
+     * {@link Blockchain#getHeight()} return 2 (block table MAX(height) = 2)
+     *     WHEN
+     *     Account restoredAccount = Account.builder()
+     *                              .id(1)
+     *                              .balance(10)
+     *                              .height(2)
+     *                              .latest(true)
+     *                              .deleted(false)
+     *                              .build();
+     *     accountTable.insert(restoredAccount);
+     *     THEN
+     *     db_id   id    balance  height  latest  deleted
+     *     10      1     25        1       false  false  --- restored 'deleted' column value to 'false' (deletion compensation)
+     *     20      1     10        2       true   false  --- record was merged on same height
+     * </pre>
+     * @param con db connection under transaction running
+     * @param dbKey unique key for entity identifying
+     * @throws SQLException if any db error occurred
+     */
+    private void restoreDeletedColumnIfSupported(Connection con, DbKey dbKey) throws SQLException {
+        if (supportDelete()) {
+            // TODO replace 'height' selection from db by entity height when refactoring will be done
+            try (PreparedStatement maxHeightStatement = con.prepareStatement("SELECT MAX(height) from block");
+                 PreparedStatement thisExistsAndDeleted = con.prepareStatement("SELECT 1 from " + table + keyFactory.getPKClause() + " AND height = ? AND deleted = true")) {
 
-                            int index = dbKey.setPK(thisExistsAndDeleted, 1);
-                            int maxHeight = maxHeightRs.getInt(1);
-                            thisExistsAndDeleted.setInt(index, maxHeight);
-                            try (ResultSet rs = thisExistsAndDeleted.executeQuery()) {
-                                if (rs.next()) {
-                                    try (PreparedStatement selectPrevDeleted = con.prepareStatement("SELECT db_id FROM " + table + keyFactory.getPKClause() + " AND height < ? ORDER BY db_id DESC LIMIT 1");
-                                         PreparedStatement updatePrevDeleted = con.prepareStatement("UPDATE " + table + " SET deleted = false WHERE db_id = ?")) {
-                                        int selectPrevIndex = dbKey.setPK(selectPrevDeleted, 1);
-                                        selectPrevDeleted.setInt(selectPrevIndex, maxHeight);
-                                        try (ResultSet prevDeletedRs = selectPrevDeleted.executeQuery()) {
-                                            if (prevDeletedRs.next()) {
-                                                long prevDbId = prevDeletedRs.getLong(1);
-                                                updatePrevDeleted.setLong(1, prevDbId);
-                                                updatePrevDeleted.executeUpdate();
-                                            } else {
-                                                throw new IllegalStateException("Unable to find previous record for entity " + t + ", inconsistent database state (maybe 'delete' flow is broken)");
-                                            }
+                try (ResultSet maxHeightRs = maxHeightStatement.executeQuery()) {
+                    if (maxHeightRs.next()) {
+
+                        int index = dbKey.setPK(thisExistsAndDeleted, 1);
+                        int maxHeight = maxHeightRs.getInt(1);
+                        thisExistsAndDeleted.setInt(index, maxHeight);
+                        try (ResultSet rs = thisExistsAndDeleted.executeQuery()) {
+                            if (rs.next()) {
+                                try (PreparedStatement selectPrevDeleted = con.prepareStatement("SELECT db_id FROM " + table + keyFactory.getPKClause() + " AND height < ? ORDER BY db_id DESC LIMIT 1");
+                                     PreparedStatement updatePrevDeleted = con.prepareStatement("UPDATE " + table + " SET deleted = false WHERE db_id = ?")) {
+                                    int selectPrevIndex = dbKey.setPK(selectPrevDeleted, 1);
+                                    selectPrevDeleted.setInt(selectPrevIndex, maxHeight);
+                                    try (ResultSet prevDeletedRs = selectPrevDeleted.executeQuery()) {
+                                        if (prevDeletedRs.next()) {
+                                            long prevDbId = prevDeletedRs.getLong(1);
+                                            updatePrevDeleted.setLong(1, prevDbId);
+                                            updatePrevDeleted.executeUpdate();
+                                        } else {
+                                            throw new IllegalStateException("Unable to find previous record for dbKey " + dbKey + ", inconsistent database state (maybe 'delete' flow is broken)");
                                         }
                                     }
                                 }
                             }
-                        } else {
-                            throw new IllegalStateException("No blocks found for getting max height. Genesis should be present before pushing derived entities");
                         }
+                    } else {
+                        throw new IllegalStateException("No blocks found for getting max height. Genesis should be present before pushing derived entities");
                     }
-
                 }
+
             }
-            save(con, t);
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
         }
     }
 }
