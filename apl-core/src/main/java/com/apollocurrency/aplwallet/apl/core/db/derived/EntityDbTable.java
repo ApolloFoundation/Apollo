@@ -67,6 +67,14 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> implements Entity
         this(table, dbKeyFactory, multiversion, fullTextSearchColumns, true);
     }
 
+    /***
+     * Persist new entitity into db
+     * Warning!
+     * This method must support MERGE for already existing entities with same height and dbKey (when it is possible to have such entities by business logic)
+     * @param con db connection, usually opened under block accepting procedure
+     * @param entity entity object ro save
+     * @throws SQLException if any db error occurred.
+     */
     public abstract void save(Connection con, T entity) throws SQLException;
 
     @Override
@@ -386,6 +394,42 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> implements Entity
                 ) {
                     dbKey.setPK(pstmt);
                     pstmt.executeUpdate();
+                }
+            }
+            if (supportDelete()) {
+                // TODO replace 'height' selection from db by entity height when refactoring will be done
+                try (PreparedStatement maxHeightStatement = con.prepareStatement("SELECT MAX(height) from block");
+                    PreparedStatement thisExistsAndDeleted = con.prepareStatement("SELECT 1 from " + table + keyFactory.getPKClause() + " AND height = ? AND deleted = true")) {
+
+                    try (ResultSet maxHeightRs = maxHeightStatement.executeQuery()) {
+                        if (maxHeightRs.next()) {
+
+                            int index = dbKey.setPK(thisExistsAndDeleted, 1);
+                            int maxHeight = maxHeightRs.getInt(1);
+                            thisExistsAndDeleted.setInt(index, maxHeight);
+                            try (ResultSet rs = thisExistsAndDeleted.executeQuery()) {
+                                if (rs.next()) {
+                                    try (PreparedStatement selectPrevDeleted = con.prepareStatement("SELECT db_id FROM " + table + keyFactory.getPKClause() + " AND height < ? ORDER BY db_id DESC LIMIT 1");
+                                         PreparedStatement updatePrevDeleted = con.prepareStatement("UPDATE " + table + " SET deleted = false WHERE db_id = ?")) {
+                                        int selectPrevIndex = dbKey.setPK(selectPrevDeleted, 1);
+                                        selectPrevDeleted.setInt(selectPrevIndex, maxHeight);
+                                        try (ResultSet prevDeletedRs = selectPrevDeleted.executeQuery()) {
+                                            if (prevDeletedRs.next()) {
+                                                long prevDbId = prevDeletedRs.getLong(1);
+                                                updatePrevDeleted.setLong(1, prevDbId);
+                                                updatePrevDeleted.executeUpdate();
+                                            } else {
+                                                throw new IllegalStateException("Unable to find previous record for entity " + t + ", inconsistent database state (maybe 'delete' flow is broken)");
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            throw new IllegalStateException("No blocks found for getting max height. Genesis should be present before pushing derived entities");
+                        }
+                    }
+
                 }
             }
             save(con, t);
