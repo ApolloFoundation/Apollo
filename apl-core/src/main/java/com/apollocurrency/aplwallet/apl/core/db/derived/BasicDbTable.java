@@ -115,35 +115,42 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
 
     /**
      * <p>Delete old data from db before target height. Leave last actual entry for each entity to allow rollback to target height</p>
-     * <p>Also will delete blockchain 'deleted' entries with latest=false which not exist at height greater than target height</p>
+     * <p>Also will completely delete blockchain 'deleted' entries with latest=false & deleted=true (applies only for paired 'deleted' records to ensure rollback availability)</p>
      * <p>WARNING! Do not trim to your current blockchain height! It will delete all history data and you will not be able to rollback and switch to another fork</p>
      * @param height       target height of blockchain for trimming, should be less or equal to minRollbackHeight to allow rollback to such height
      * <p>Example:</p>
      *                     <pre>{@code
-     *                     db_id     account   balance    height    latest
-     *                     0         00         10        0         true
-     *                     1         000        10        100       false
-     *                     2         200        25        100       false
-     *                     3         200        50        125       false
-     *                     4         100        5         175       false
-     *                     5         200        125       200       false
-     *                     6         100        5         200       false
-     *                     7         200        6         200       true
-     *                     8         200        6         220       true
-     *                     9         100        80        230       true
-     *                     10        500        100       240       true
+     *                     db_id     account   balance    height    latest deleted
+     *                     10         1          10         0       true   false
+     *                     11         2          10         1       false  false
+     *                     11         2          10         2       false  true
+     *                     15         2           0         3       false  true
+     *                     30         3          50         3       false  false
+     *                     40         3           5         4       true   false
+     *                     42         2          11         4       false  false
+     *                     44         2          12         5       false  true
+     *                     50         4         125         5       false  false
+     *                     70         6           6         5       false  false
+     *                     80         6           6         6       true   false
+     *                     81         5           5         6       false  false
+     *                     82         2           0         6       false   true
+     *                     90         5          80         7       true   false
+     *                     100        4         100         7       true   false
      *                     }</pre>
      * <p>
-     *                     Trim to height 201 will result in
+     *                     Trim to height 6 will result in
      *                     <pre>{@code
-     *                     db_id     account   balance    height    latest
-     *                     0         00         10        0         true
-     *                     4         100        5         175       false
-     *                     5         200        125       200       false
-     *                     7         200        6         210       false
-     *                     8         200        6         220       true
-     *                     9         100        80        230       true
-     *                     10        500        100       240       true
+     *                     db_id     account   balance    height    latest deleted
+     *                     10         1           10        0       true   false
+     *                     40         3            5        4       true   false
+     *                     44         2           12        5       false  true
+     *                     50         4          125        5       false  false
+     *                     70         6            6        5       false  false
+     *                     80         6            6        6       true   false
+     *                     81         5            5        6       false  false
+     *                     82         2            0        6       false  true
+     *                     90         5           80        7       true   false
+     *                     100        4          100        7       true   false
      *                     }</pre>
      * </p>
      */
