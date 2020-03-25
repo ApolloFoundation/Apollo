@@ -90,7 +90,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
 
     public List<Account> selectAllForKey(Long id) throws SQLException {
         try (Connection con = getDatabaseManager().getDataSource().getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT * from account where id = ? order by db_id")) {
+             PreparedStatement pstmt = con.prepareStatement("SELECT * from account where id = ? order by db_id DESC")) {
             pstmt.setLong(1, id);
             return CollectionUtil.toList(getManyBy(con, pstmt, false));
         }
