@@ -194,7 +194,6 @@ class AccountDaoTest  {
     @Test
     void testRollback_update_latest_for_prev_not_deleted() throws SQLException {
         Account newAcc1 = new Account(td.ACC_14.getId(), td.ACC_14.getBalanceATM() - 100, td.ACC_14.getUnconfirmedBalanceATM(), 0, 0, td.ACC_14.getHeight() + 1);
-        newAcc1.setDbId(td.ACC_14.getDbId() + 1);
         DbUtils.inTransaction(dbExtension, (con)-> table.insert(newAcc1));
 
         Account newAcc2 = new Account(td.ACC_14.getId(), td.ACC_14.getBalanceATM() - 100, td.ACC_14.getUnconfirmedBalanceATM(), 0, 0, td.ACC_14.getHeight() + 2);
@@ -204,10 +203,12 @@ class AccountDaoTest  {
         DbUtils.inTransaction(dbExtension, (con) -> table.rollback(newAcc2.getHeight() - 1));
 
         Account account = table.get(new LongKey(td.ACC_14.getId()));
+        account.setDbId(0);
         assertEquals(newAcc1, account);
         List<Account> existing = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
         ArrayList<Account> expected = new ArrayList<>(td.ALL_ACCOUNTS);
         expected.add(newAcc1);
+        existing.get(16).setDbId(0);
         assertEquals(expected, existing);
     }
 
