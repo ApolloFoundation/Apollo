@@ -221,15 +221,7 @@ class AccountAssetDaoTest {
 
     @Test
     void testDeleteInsertedRecord_on_same_height() throws SQLException {
-        DbUtils.inTransaction(dbExtension, (con)-> {
-            try {
-                con.createStatement().executeUpdate("INSERT INTO PUBLIC.BLOCK\n" +
-                    "(DB_ID,         ID,                HEIGHT,      VERSION,   \"TIMESTAMP\",  PREVIOUS_BLOCK_ID,  TOTAL_AMOUNT,        TOTAL_FEE,   PAYLOAD_LENGTH,   PREVIOUS_BLOCK_HASH,                                                   CUMULATIVE_DIFFICULTY,  BASE_TARGET,    NEXT_BLOCK_ID,               GENERATION_SIGNATURE,                                                   BLOCK_SIGNATURE,                                                                                                                        PAYLOAD_HASH,                                   GENERATOR_ID,       TIMEOUT) VALUES\n" +
-                    "(1\t        ,-107868771406622438   ,163944\t        ,-1         ,0\t        , null                  ,0\t            ,0\t                ,0          ,X'0000000000000000000000000000000000000000000000000000000000000000'\t,X'00'\t                ,5124095\t    , 8235640967557025109\t\t,X'bc26bb638c9991f88fa52365591e00e22d3e9f9ad721ca4fe1683c8795a037e5'\t,X'00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'\t,X'0000000000000000000000000000000000000000000000000000000000000000'\t, 1739068987193023818\t,0   )");
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        });
+        doReturn(td.ACC_ASSET_14.getHeight() + 2).when(blockchain).getHeight();
         td.ACC_ASSET_14.setHeight(td.ACC_ASSET_14.getHeight() + 2);
         td.ACC_ASSET_14.setQuantityATU(100_000_000_000L);
         DbUtils.inTransaction(dbExtension, (con)-> table.insert(td.ACC_ASSET_14));
