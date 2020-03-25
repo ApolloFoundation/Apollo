@@ -205,7 +205,7 @@ public class AccountServiceImpl implements AccountService {
         }
 //        if (account.getId() == -8464800771782059376L) {
             try {
-                log.debug("Account entities {}", accountTable.selectAllForKey(account.getId()).stream().map(this::stringAcount).collect(Collectors.joining("-----")));
+                log.debug("Account entities {}", accountTable.selectAllForKey(account.getId()).stream().map(this::stringAcount).limit(3).collect(Collectors.joining("-----")));
                 log.debug("Account id {} - {}",account.getId(), ThreadUtils.last5Stacktrace());
             } catch (SQLException ignored) {}
 //        }
