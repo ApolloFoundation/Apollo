@@ -42,6 +42,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 public abstract class EntityDbTable<T> extends BasicDbTable<T> implements EntityDbTableInterface<T> {
     private static final Logger log = getLogger(EntityDbTable.class);
+    private Blockchain blockchain;
 
     private final String defaultSort;
     @Getter
@@ -442,7 +443,7 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> implements Entity
      */
     private void restoreDeletedColumnIfSupported(Connection con, DbKey dbKey) throws SQLException {
         if (supportDelete()) {
-            Blockchain blockchain  = CDI.current().select(Blockchain.class).get();
+            Blockchain blockchain  = lookupBlockchain();
             // TODO replace 'height' receiving from CDI Blockchain by entity field 'height' when refactoring will be done
             int height = blockchain.getHeight();
             try (PreparedStatement thisExistsAndDeleted = con.prepareStatement("SELECT 1 from " + table + keyFactory.getPKClause() + " AND height = ? AND deleted = true")) { // checking our entity existence on current blockchain height in 'deleted=true' state
@@ -469,5 +470,12 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> implements Entity
                 }
             }
         }
+    }
+
+    private Blockchain lookupBlockchain() {
+        if (blockchain == null) {
+            blockchain = CDI.current().select(Blockchain.class).get();
+        }
+        return blockchain;
     }
 }
