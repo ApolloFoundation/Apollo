@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.account.dao;
 import com.apollocurrency.aplwallet.apl.core.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
@@ -15,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxValue;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -29,26 +31,26 @@ import java.util.Objects;
 import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
 
 /**
- *
  * @author al
  */
 @Singleton
+@Slf4j
 public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
     private static final LongKeyFactory<Account> accountDbKeyFactory = new LongKeyFactory<Account>("id") {
         @Override
         public DbKey newKey(Account account) {
-            if(account.getDbKey() == null){
+            if (account.getDbKey() == null) {
                 account.setDbKey(super.newKey(account.getId()));
             }
-            return  account.getDbKey();
+            return account.getDbKey();
         }
     };
 
-    public static DbKey newKey(long id){
+    public static DbKey newKey(long id) {
         return accountDbKeyFactory.newKey(id);
     }
 
-    public static DbKey newKey(Account a){
+    public static DbKey newKey(Account a) {
         return accountDbKeyFactory.newKey(a);
     }
 
@@ -69,11 +71,10 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
     @Override
     public void save(Connection con, Account account) throws SQLException {
         try (
-                @DatabaseSpecificDml(DmlMarker.MERGE)
-                final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account (id, "
-                    + "balance, unconfirmed_balance, forged_balance, "
-                    + "active_lessee_id, has_control_phasing, height, latest, deleted) "
-                    + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)")
+            @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account (id, "
+                + "balance, unconfirmed_balance, forged_balance, "
+                + "active_lessee_id, has_control_phasing, height, latest, deleted) "
+                + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)")
         ) {
             int i = 0;
             pstmt.setLong(++i, account.getId());
@@ -87,6 +88,15 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
         }
     }
 
+    public List<Account> selectAllForKey(Long id) throws SQLException {
+        try (Connection con = getDatabaseManager().getDataSource().getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT * from account where id = ? order by db_id")) {
+            pstmt.setLong(1, id);
+            return CollectionUtil.toList(getManyBy(con, pstmt, false));
+        }
+    }
+
+
     @Override
     public void trim(int height) {
         if (height <= blockchainConfig.getGuaranteedBalanceConfirmations()) {
@@ -97,8 +107,8 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
 
     public long getTotalSupply(long creatorId) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try(Connection con = dataSource.getConnection();
-            PreparedStatement pstmt =con.prepareStatement("SELECT ABS(balance) AS total_supply FROM account WHERE id = ?")
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT ABS(balance) AS total_supply FROM account WHERE id = ?")
         ) {
             int i = 0;
             pstmt.setLong(++i, creatorId);
@@ -116,10 +126,10 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
 
     public List<Account> getTopHolders(int numberOfTopAccounts) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try(Connection con = dataSource.getConnection();
-            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM account WHERE balance > 0 AND latest = true " +
-                            " ORDER BY balance desc "+ DbUtils.limitsClause(0, numberOfTopAccounts - 1))
-        ){
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM account WHERE balance > 0 AND latest = true " +
+                 " ORDER BY balance desc " + DbUtils.limitsClause(0, numberOfTopAccounts - 1))
+        ) {
             int i = 0;
             DbUtils.setLimits(++i, pstmt, 0, numberOfTopAccounts - 1);
             return toList(getManyBy(con, pstmt, false));
@@ -130,11 +140,11 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
 
     public long getTotalAmountOnTopAccounts(int numberOfTopAccounts) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try(Connection con = dataSource.getConnection();
-                @DatabaseSpecificDml(DmlMarker.NAMED_SUB_SELECT)
-                PreparedStatement pstmt =
-                        con.prepareStatement("SELECT sum(balance) as total_amount FROM (select balance from account WHERE balance > 0 AND latest = true" +
-                                " ORDER BY balance desc "+ DbUtils.limitsClause(0, numberOfTopAccounts - 1)+")") ) {
+        try (Connection con = dataSource.getConnection();
+             @DatabaseSpecificDml(DmlMarker.NAMED_SUB_SELECT)
+             PreparedStatement pstmt =
+                 con.prepareStatement("SELECT sum(balance) as total_amount FROM (select balance from account WHERE balance > 0 AND latest = true" +
+                     " ORDER BY balance desc " + DbUtils.limitsClause(0, numberOfTopAccounts - 1) + ")")) {
             int i = 0;
             DbUtils.setLimits(++i, pstmt, 0, numberOfTopAccounts - 1);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -151,10 +161,10 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
 
     public long getTotalNumberOfAccounts() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try(Connection con = dataSource.getConnection();
-            Statement stmt =con.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT COUNT(*) AS number_of_accounts FROM account WHERE balance > 0 AND latest = true ")
-        ){
+        try (Connection con = dataSource.getConnection();
+             Statement stmt = con.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT COUNT(*) AS number_of_accounts FROM account WHERE balance > 0 AND latest = true ")
+        ) {
             if (rs.next()) {
                 return rs.getLong("number_of_accounts");
             } else {
