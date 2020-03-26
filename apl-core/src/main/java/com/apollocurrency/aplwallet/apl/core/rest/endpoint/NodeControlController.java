@@ -104,7 +104,7 @@ public class NodeControlController {
     @Path("/health-full")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Returns node health info.",
+    @Operation(summary = "Returns node health info. Protected with admin password",
             description = "Returns complete information about node health "
                     + "including DB, P2P, hardware and resource usage",
             tags = {"status"},
