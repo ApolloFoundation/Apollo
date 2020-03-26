@@ -544,7 +544,7 @@ public class UtilsController {
             schema = @Schema(implementation = org.slf4j.event.Level.class)) @FormParam("logLevel") org.slf4j.event.Level logLevel,
         @Parameter(description = "The full java package or logger name", required = true,
             schema = @Schema(implementation = java.lang.String.class)) @FormParam("packageName") @NotEmpty String packageName,
-        @Parameter(description = "The admin password.", required = true,
+        @Parameter(description = "The admin password.",
             schema = @Schema(implementation = java.lang.String.class)) @FormParam("adminPassword") String adminPassword
     ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
