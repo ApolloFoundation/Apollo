@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
- import org.slf4j.Logger;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Singleton;
@@ -21,12 +21,14 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
- import java.util.ArrayList;
- import java.util.Comparator;
- import java.util.List;
- import java.util.Objects;
- import java.util.stream.Collectors;
- import java.util.zip.ZipEntry;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
@@ -126,6 +128,18 @@ public class ZipImpl implements Zip {
         } else {
             return new ChunkedFileOps("");
         }
+    }
+
+    @Override
+    public long uncompressedSize(String zipFile) throws IOException {
+        ZipFile file = new ZipFile(Paths.get(zipFile).toFile());
+        Enumeration<? extends ZipEntry> e = file.entries();
+        long uncompressedSize = 0;
+        while (e.hasMoreElements()) {
+            ZipEntry ze = e.nextElement();
+            uncompressedSize += ze.getSize();
+        }
+        return uncompressedSize;
     }
 
     /**

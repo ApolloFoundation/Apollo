@@ -109,6 +109,13 @@ class ZipTest {
     }
 
     @Test
+    void testCalculateArchiveSize() throws IOException, URISyntaxException {
+        long uncompressedSize = zipComponent.uncompressedSize(new File(getClass().getClassLoader().getResource("another-archive-1.zip").toURI()).toString());
+
+        assertEquals(78_900, uncompressedSize);
+    }
+
+    @Test
     void tryToCompressEmptyFolder() throws IOException {
         Path folderNoCsvInside = Files.createTempDirectory("csvFolder");
         Path zipDir = Files.createTempDirectory("tempZipDir");

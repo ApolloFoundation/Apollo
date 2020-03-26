@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.util;
 
 import java.io.FilenameFilter;
+import java.io.IOException;
 
 public interface Zip {
 
@@ -24,7 +25,13 @@ public interface Zip {
      */
     ChunkedFileOps compressAndHash(String zipFile, String inputFolder, Long filesTimeFromEpoch, FilenameFilter filenameFilter, boolean  recursive);
 
-
+    /**
+     * Calculate total uncompressed size of the zip file
+     * @param zipFile path to zip archive
+     * @return uncompressed zip size in bytes
+     * @throws IOException when file not exist, file is not a zip, etc
+     */
+    long uncompressedSize(String zipFile) throws IOException;
     /**
      * Compress all filtered files in directory into ZIP file, change file timestamp to be predefined.Return computed CRC/hash for created ZIP as byte array.
      *
