@@ -129,8 +129,8 @@ public class NodeControlController {
     @Path("/health")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Returns node health info.",
-            description = "Returns information about node health P2P, resource usage info",
+    @Operation(summary = "Returns shorted node health without status info.",
+            description = "Returns shorted information node P2P health usage info mainly",
             tags = {"status"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
