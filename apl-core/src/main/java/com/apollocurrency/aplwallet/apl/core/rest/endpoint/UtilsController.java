@@ -4,6 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
 import com.apollocurrency.aplwallet.api.dto.utils.DetectMimeTypeDto;
 import com.apollocurrency.aplwallet.api.dto.utils.FullHashToIdDto;
 import com.apollocurrency.aplwallet.api.dto.utils.HashDto;
@@ -11,6 +14,7 @@ import com.apollocurrency.aplwallet.api.dto.utils.HexConvertDto;
 import com.apollocurrency.aplwallet.api.dto.utils.QrDecodeDto;
 import com.apollocurrency.aplwallet.api.dto.utils.QrEncodeDto;
 import com.apollocurrency.aplwallet.api.dto.utils.RsConvertDto;
+import com.apollocurrency.aplwallet.api.dto.utils.SetLogLevelDTO;
 import com.apollocurrency.aplwallet.api.request.DecodeQRCodeRequestForm;
 import com.apollocurrency.aplwallet.api.request.DetectMimeTypeUploadForm;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
@@ -51,8 +55,10 @@ import org.jboss.resteasy.annotations.Form;
 import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
 import org.jboss.resteasy.plugins.providers.multipart.InputPart;
 import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataInput;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.imageio.ImageIO;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -489,8 +495,7 @@ public class UtilsController {
         tags = {"utility"},
         responses = {
             @ApiResponse(responseCode = "200", description = "Successful execution",
-                content = @Content(mediaType = "application/json"/*,
-                    schema = @Schema(implementation = HashDto.class)*/))
+                content = @Content(mediaType = "application/json"))
         })
     public Response hashByAlgorithm(
         @Parameter(name = "hashAlgorithm", description = "Valid Algorithm from available list", required = true,
@@ -515,6 +520,55 @@ public class UtilsController {
             log.warn(errorMessage, e);
             return response.error(ApiErrors.INCORRECT_PARAM_VALUE, errorMessage).build();
         }
+        return response.bind(dto).build();
+    }
+
+    @Path("/setlog/level")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Operation(
+        summary = "Set necessary logging level for specified package or logger",
+        description = "Set specified and correct LogLevel (required) to package or logger (required) with admin password (required)",
+        tags = {"utility"},
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Successful execution",
+                content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = SetLogLevelDTO.class)))
+        }
+    )
+    @RolesAllowed("admin")
+    public Response setLoggingLevel(
+        @Parameter(name = "logLevel", description = "Valid log level from available list", required = true,
+            schema = @Schema(implementation = org.slf4j.event.Level.class))
+        @FormParam("logLevel") org.slf4j.event.Level logLevel,
+        @Parameter(description = "The full java package or logger name", required = true) @FormParam("packageName") String packageName,
+        @Parameter(description = "The admin password.") @FormParam("adminPassword") String adminPassword
+    ) {
+        ResponseBuilder response = ResponseBuilder.startTiming();
+        log.debug("Started setLoggingLevel: packageName = '{}', level = '{}'", packageName, logLevel);
+        SetLogLevelDTO dto = new SetLogLevelDTO();
+        if (packageName == null || packageName.isEmpty()) {
+            log.warn("Package is EMPTY = {}", packageName);
+            return response.error(ApiErrors.INCORRECT_VALUE, "packageName", packageName).build();
+        }
+        if (logLevel == null) {
+            log.warn("Log level is EMPTY = {}", logLevel);
+            return response.error(ApiErrors.INCORRECT_VALUE, "logLevel", logLevel).build();
+        }
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        if (loggerContext != null) {
+            Logger reconfigureLogger = loggerContext.getLogger(packageName);
+            if (reconfigureLogger != null) {
+                Level newLevelValue = Level.valueOf(logLevel.name());
+                reconfigureLogger.setLevel(newLevelValue);
+                dto.packageName = packageName;
+                dto.logLevel = logLevel.toString();
+                dto.success = true;
+                log.info("SUCCESS setup LoggingLevel: '{}' on package/logger = '{}'", dto.logLevel, dto.packageName);
+            }
+        }
+        log.debug("setLoggingLevel result : {}", dto);
         return response.bind(dto).build();
     }
 
