@@ -203,12 +203,12 @@ public class AccountServiceImpl implements AccountService {
         } else {
             accountTable.insert(account);
         }
-//        if (account.getId() == -8464800771782059376L) {
+        if (log.isTraceEnabled()) {
             try {
-                log.debug("Account entities {}", accountTable.selectAllForKey(account.getId()).stream().map(this::stringAcount).limit(3).collect(Collectors.joining("-----")));
-                log.debug("Account id {} - {}",account.getId(), ThreadUtils.last5Stacktrace());
+                log.trace("Account entities {}", accountTable.selectAllForKey(account.getId()).stream().map(this::stringAcount).limit(3).collect(Collectors.joining("-----")));
+                log.trace("Account id {} - {}",account.getId(), ThreadUtils.last5Stacktrace());
             } catch (SQLException ignored) {}
-//        }
+        }
     }
 
     public String stringAcount(Account acc) {
