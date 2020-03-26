@@ -529,7 +529,8 @@ public class UtilsController {
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Operation(
         summary = "Set necessary logging level for specified package or logger",
-        description = "Set specified and correct LogLevel (required) to package or logger (required) with admin password (required)",
+        description = "Set specified and correct LogLevel (required) to package or logger (required) with admin password (required). " +
+            "Correct log level values are : ERROR, WARN, INFO, DEBUG, TRACE",
         tags = {"utility"},
         responses = {
             @ApiResponse(responseCode = "200", description = "Successful execution",
@@ -540,22 +541,15 @@ public class UtilsController {
     @RolesAllowed("admin")
     public Response setLoggingLevel(
         @Parameter(name = "logLevel", description = "Valid log level from available list", required = true,
-            schema = @Schema(implementation = org.slf4j.event.Level.class))
-        @FormParam("logLevel") org.slf4j.event.Level logLevel,
-        @Parameter(description = "The full java package or logger name", required = true) @FormParam("packageName") String packageName,
-        @Parameter(description = "The admin password.") @FormParam("adminPassword") String adminPassword
+            schema = @Schema(implementation = org.slf4j.event.Level.class)) @FormParam("logLevel") org.slf4j.event.Level logLevel,
+        @Parameter(description = "The full java package or logger name", required = true,
+            schema = @Schema(implementation = java.lang.String.class)) @FormParam("packageName") @NotEmpty String packageName,
+        @Parameter(description = "The admin password.", required = true,
+            schema = @Schema(implementation = java.lang.String.class)) @FormParam("adminPassword") String adminPassword
     ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         log.debug("Started setLoggingLevel: packageName = '{}', level = '{}'", packageName, logLevel);
         SetLogLevelDTO dto = new SetLogLevelDTO();
-        if (packageName == null || packageName.isEmpty()) {
-            log.warn("Package is EMPTY = {}", packageName);
-            return response.error(ApiErrors.INCORRECT_VALUE, "packageName", packageName).build();
-        }
-        if (logLevel == null) {
-            log.warn("Log level is EMPTY = {}", logLevel);
-            return response.error(ApiErrors.INCORRECT_VALUE, "logLevel", logLevel).build();
-        }
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
         if (loggerContext != null) {
             Logger reconfigureLogger = loggerContext.getLogger(packageName);
