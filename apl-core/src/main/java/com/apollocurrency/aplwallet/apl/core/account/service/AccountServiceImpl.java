@@ -28,12 +28,14 @@ import com.apollocurrency.aplwallet.apl.core.model.Balances;
 import com.apollocurrency.aplwallet.apl.core.utils.AccountGeneratorUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -201,6 +203,16 @@ public class AccountServiceImpl implements AccountService {
         } else {
             accountTable.insert(account);
         }
+        if (log.isTraceEnabled()) {
+            try {
+                log.trace("Account entities {}", accountTable.selectAllForKey(account.getId()).stream().map(this::stringAcount).limit(3).collect(Collectors.joining("-----")));
+                log.trace("Account id {} - {}",account.getId(), ThreadUtils.last5Stacktrace());
+            } catch (SQLException ignored) {}
+        }
+    }
+
+    public String stringAcount(Account acc) {
+        return "{id=" + acc.getId() + ",balance=" + acc.getBalanceATM() + ",uncbalance=" + acc.getUnconfirmedBalanceATM() + ",height=" + acc.getHeight() + ",dbId=" + acc.getDbId() + ",latest=" + acc.isLatest() + ",deleted=" + acc.isDeleted() + "}";
     }
 
     @Override
