@@ -43,12 +43,16 @@ import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeIn;
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Encoding;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.resteasy.annotations.Form;
@@ -97,8 +101,8 @@ import java.util.Objects;
 @Slf4j
 @Path("/utils")
 @OpenAPIDefinition(info = @Info(description = "Provide several utility methods"))
+@SecurityScheme(type = SecuritySchemeType.APIKEY, name = "admin_api_key", in = SecuritySchemeIn.QUERY, paramName = "adminPassword")
 @Singleton
-@PermitAll
 public class UtilsController {
 
     private BlockchainConfig blockchainConfig;
@@ -338,6 +342,7 @@ public class UtilsController {
                 content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = FullHashToIdDto.class)))
         })
+    @PermitAll
     public Response fullHashToId(
         @Parameter(name = "fullHash", description = "full hash data as string", required = true)
             @QueryParam("fullHash") @NotBlank String fullHash) {
@@ -371,6 +376,7 @@ public class UtilsController {
                 content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = HexConvertDto.class)))
         })
+    @PermitAll
     public Response getHexConvert(
         @Parameter(name = "string", description = "correct HEX data as string representation", required = true)
             @QueryParam("string") @NotBlank String stringHash) {
@@ -407,6 +413,7 @@ public class UtilsController {
                 content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = FullHashToIdDto.class)))
         })
+    @PermitAll
     public Response longConvert(
         @Parameter(name = "id", description = "valid Id data as string representation", required = true)
             @QueryParam("id") @NotBlank String stringId) {
@@ -459,6 +466,7 @@ public class UtilsController {
                 content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = RsConvertDto.class)))
         })
+    @PermitAll
     public Response rcConvert(
         @Parameter(name = "account", description = "existing, valid account Id", required = true)
             @QueryParam("account") @NotBlank String accountIdString) {
@@ -497,6 +505,7 @@ public class UtilsController {
             @ApiResponse(responseCode = "200", description = "Successful execution",
                 content = @Content(mediaType = "application/json"))
         })
+    @PermitAll
     public Response hashByAlgorithm(
         @Parameter(name = "hashAlgorithm", description = "Valid Algorithm from available list", required = true,
             schema = @Schema(implementation = HashFunction.class))
@@ -531,6 +540,7 @@ public class UtilsController {
         summary = "Set necessary logging level for specified package or logger",
         description = "Set specified and correct LogLevel (required) to package or logger (required) with admin password (required). " +
             "Correct log level values are : ERROR, WARN, INFO, DEBUG, TRACE",
+        security = @SecurityRequirement(name = "admin_api_key"),
         tags = {"utility"},
         responses = {
             @ApiResponse(responseCode = "200", description = "Successful execution",
@@ -543,9 +553,7 @@ public class UtilsController {
         @Parameter(name = "logLevel", description = "Valid log level from available list", required = true,
             schema = @Schema(implementation = org.slf4j.event.Level.class)) @FormParam("logLevel") org.slf4j.event.Level logLevel,
         @Parameter(description = "The full java package or logger name", required = true,
-            schema = @Schema(implementation = java.lang.String.class)) @FormParam("packageName") @NotEmpty String packageName,
-        @Parameter(description = "The admin password.",
-            schema = @Schema(implementation = java.lang.String.class)) @FormParam("adminPassword") String adminPassword
+            schema = @Schema(implementation = java.lang.String.class)) @FormParam("packageName") @NotEmpty String packageName
     ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         log.debug("Started setLoggingLevel: packageName = '{}', level = '{}'", packageName, logLevel);
