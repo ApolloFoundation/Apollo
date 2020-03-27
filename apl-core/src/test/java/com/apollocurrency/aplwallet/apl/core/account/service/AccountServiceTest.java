@@ -91,6 +91,7 @@ class AccountServiceTest {
         long accountId = testData.PUBLIC_KEY1.getAccountId();
         DbKey dbKey = AccountTable.newKey(accountId);
         Account newAccount = new Account(accountId, height);
+        newAccount.setPublicKey(testData.PUBLIC_KEY1);
         Account account = accountService.getAccount(accountId, height);
         assertNull(account);
 

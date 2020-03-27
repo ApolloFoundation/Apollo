@@ -56,7 +56,7 @@ public abstract class VersionedDeletableEntityDbTable<T> extends EntityDbTable<T
         DbKey dbKey = keyFactory.newKey(t);
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmtCount = con.prepareStatement("SELECT db_id FROM " + table
-                     + keyFactory.getPKClause() + " AND height < ? LIMIT 1");
+                     + keyFactory.getPKClause() + " AND height < ? ORDER BY db_id DESC LIMIT 1");
              ) {
             int i = dbKey.setPK(pstmtCount);
             pstmtCount.setInt(i, height);

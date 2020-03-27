@@ -221,6 +221,7 @@ class AccountAssetDaoTest {
 
     @Test
     void testDeleteInsertedRecord_on_same_height() throws SQLException {
+        doReturn(td.ACC_ASSET_14.getHeight() + 2).when(blockchain).getHeight();
         td.ACC_ASSET_14.setHeight(td.ACC_ASSET_14.getHeight() + 2);
         td.ACC_ASSET_14.setQuantityATU(100_000_000_000L);
         DbUtils.inTransaction(dbExtension, (con)-> table.insert(td.ACC_ASSET_14));
@@ -242,6 +243,16 @@ class AccountAssetDaoTest {
         assertTrue(recentDeleteRecord.isDeleted());
         assertFalse(recentDeleteRecord.isLatest());
         assertEquals(td.ACC_ASSET_14.getHeight(), recentDeleteRecord.getHeight());
+        // update deleted record by new record on the same height
+        DbUtils.inTransaction(dbExtension, (con) -> table.insert(td.ACC_ASSET_14));
+
+        AccountAsset newEntityAtDeletedHeight = table.get(td.ACC_ASSET_14.getDbKey());
+        assertFalse(newEntityAtDeletedHeight.isDeleted());
+        assertTrue(newEntityAtDeletedHeight.isLatest());
+//        should has deleted=false
+        AccountAsset initialAsset = table.get(td.ACC_ASSET_14.getDbKey(), td.ACC_ASSET_14.getHeight() - 1);
+        assertFalse(initialAsset.isDeleted());
+        assertFalse(initialAsset.isLatest());
     }
 
     @Test
@@ -252,6 +263,15 @@ class AccountAssetDaoTest {
 
         td.ACC_ASSET_14.setHeight(td.ACC_ASSET_14.getHeight() + 1); // delete
         DbUtils.inTransaction(dbExtension, (con)-> table.deleteAtHeight(td.ACC_ASSET_14, td.ACC_ASSET_14.getHeight()));
+        List<AccountAsset> afterFirstDelete = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
+
+        assertEquals(17, afterFirstDelete.size());
+//        Last 3 entries corresponds the same db key
+        assertEquals(table.getDbKeyFactory().newKey(afterFirstDelete.get(14)), table.getDbKeyFactory().newKey(afterFirstDelete.get(15)));
+        assertEquals(table.getDbKeyFactory().newKey(afterFirstDelete.get(15)), table.getDbKeyFactory().newKey(afterFirstDelete.get(16)));
+        assertFalse(afterFirstDelete.get(14).isDeleted());
+        assertTrue(afterFirstDelete.get(15).isDeleted());
+        assertTrue(afterFirstDelete.get(16).isDeleted());
 
         td.ACC_ASSET_14.setHeight(td.ACC_ASSET_14.getHeight() + 1); // insert new
         DbUtils.inTransaction(dbExtension, (con)-> table.insert(td.ACC_ASSET_14));
