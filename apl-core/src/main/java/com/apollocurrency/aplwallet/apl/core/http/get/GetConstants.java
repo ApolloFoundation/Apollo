@@ -82,8 +82,11 @@ public final class GetConstants extends AbstractAPIRequestHandler {
                 response.put("projectName", blockchainConfig.getProjectName());
 
                 response.put("maxImportSecretFileLength", propertiesLoader.getIntProperty("apl.maxKeyStoreFileSize"));
+                // Exchange
                 response.put("gasLimitEth", Constants.GAS_LIMIT_ETHER_TX);
                 response.put("gasLimitERC20", Constants.GAS_LIMIT_FOR_ERC20);
+                // Mixer
+                response.put("mixerUrl", propertiesLoader.getStringProperty("apl.mixer.url"));
 
                 JSONObject transactionJSON = new JSONObject();
                 JSONObject transactionSubTypesJSON = new JSONObject();
