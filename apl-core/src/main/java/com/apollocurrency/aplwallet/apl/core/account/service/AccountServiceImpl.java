@@ -204,7 +204,7 @@ public class AccountServiceImpl implements AccountService {
         }
         if (log.isTraceEnabled()) {
             try {
-                log.trace("Account entities {}", accountTable.selectAllForKey(account.getId()).stream().map(this::stringAcount).collect(Collectors.joining("-----")));
+                log.trace("Account entities {}", accountTable.selectAllForKey(account.getId()).stream().map(this::stringAcount).limit(3).collect(Collectors.joining("-----")));
                 log.trace("Account id {} - {}",account.getId(), ThreadUtils.last5Stacktrace());
             } catch (SQLException ignored) {}
         }

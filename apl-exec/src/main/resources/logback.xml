@@ -69,7 +69,7 @@
     <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
       <fileNamePattern>${LOGDIR}/account_%i.log.zip</fileNamePattern>
       <minIndex>1</minIndex>
-      <maxIndex>15</maxIndex>
+      <maxIndex>100</maxIndex>
     </rollingPolicy>
 
     <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
