@@ -38,6 +38,19 @@
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
         </encoder>
     </appender>
+  <appender name="account-forged-file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${LOGDIR}/apl-forged.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+      <!-- rollover daily -->
+      <fileNamePattern>${LOGDIR}/apl-forged-%d{yyyy-MM-dd}_%i.gz</fileNamePattern>
+      <maxHistory>30</maxHistory>
+      <maxFileSize>100MB</maxFileSize>
+      <totalSizeCap>3GB</totalSizeCap>
+    </rollingPolicy>
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
+    </encoder>
+  </appender>
     <logger name="com.apollocurrency.aplwallet" level="INFO"/>
     <!--<logger name="com.apollocurrency.aplwallet.apl.core.peer" level="TRACE"/>-->
     <!--Uncomment next line to enable trim duration logging-->
@@ -46,11 +59,14 @@
     <logger name="javax.servlet.level" level="off" additivity="false"/>
     <logger name="com.apollocurrency.aplwallet.apl.core.http.APIProxyServlet" level="info" additivity="false"/>
     <!--    <logger name="com.apollocurrency.aplwallet.apl.core.account.Account" level="trace"/> -->
-    <logger name="com.apollocurrency.aplwallet.apl.core.app.Shuffling" level="trace" additivity="false">
-        <appender-ref ref="shuffling-file"/>
-    </logger>
-    <logger name="com.apollocurrency.aplwallet.apl.core.app.Shuffler" level="trace" additivity="false">
-        <appender-ref ref="shuffling-file"/>
+<!--    <logger name="com.apollocurrency.aplwallet.apl.core.app.Shuffling" level="trace" additivity="false">-->
+<!--        <appender-ref ref="shuffling-file"/>-->
+<!--    </logger>-->
+<!--    <logger name="com.apollocurrency.aplwallet.apl.core.app.Shuffler" level="trace" additivity="false">-->
+<!--        <appender-ref ref="shuffling-file"/>-->
+<!--    </logger>-->
+    <logger name="com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl" level="trace" additivity="false">
+      <appender-ref ref="account-forged-file"/>
     </logger>
     <logger name="jdbc" level="off" additivity="false"/>
     <logger name="jdbc.connection" level="info" additivity="false"/>

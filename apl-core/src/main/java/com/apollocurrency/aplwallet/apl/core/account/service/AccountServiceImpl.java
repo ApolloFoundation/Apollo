@@ -28,14 +28,12 @@ import com.apollocurrency.aplwallet.apl.core.model.Balances;
 import com.apollocurrency.aplwallet.apl.core.utils.AccountGeneratorUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +41,6 @@ import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEventBinding.literal;
 import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
-import static com.apollocurrency.aplwallet.apl.util.ThreadUtils.last3Stacktrace;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -203,16 +200,16 @@ public class AccountServiceImpl implements AccountService {
         } else {
             accountTable.insert(account);
         }
-        if (log.isTraceEnabled()) {
-            try {
-                log.trace("Account entities {}", accountTable.selectAllForKey(account.getId()).stream().map(this::stringAcount).limit(3).collect(Collectors.joining("-----")));
-                log.trace("Account id {} - {}",account.getId(), ThreadUtils.last5Stacktrace());
-            } catch (SQLException ignored) {}
-        }
+//        if (log.isTraceEnabled()) {
+//            try {
+//                log.trace("Account entities {}", accountTable.selectAllForKey(account.getId()).stream().map(this::stringAcount).collect(Collectors.joining("-----")));
+//                log.trace("Account id {} - {}",account.getId(), ThreadUtils.last5Stacktrace());
+//            } catch (SQLException ignored) {}
+//        }
     }
 
     public String stringAcount(Account acc) {
-        return "{id=" + acc.getId() + ",balance=" + acc.getBalanceATM() + ",uncbalance=" + acc.getUnconfirmedBalanceATM() + ",height=" + acc.getHeight() + ",dbId=" + acc.getDbId() + ",latest=" + acc.isLatest() + ",deleted=" + acc.isDeleted() + "}";
+        return "{id=" + acc.getId() + ",balance=" + acc.getBalanceATM()+",fb=" +acc.getForgedBalanceATM() + ",uncbalance=" + acc.getUnconfirmedBalanceATM() + ",height=" + acc.getHeight() + ",dbId=" + acc.getDbId() + ",latest=" + acc.isLatest() + ",deleted=" + acc.isDeleted() + "}";
     }
 
     @Override
@@ -378,6 +375,9 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public void addToForgedBalanceATM(Account account, long amountATM){
         if (account.addToForgedBalanceATM(amountATM)){
+            if (log.isTraceEnabled()) {
+                log.trace("Forged balance change height - {} , acc {}",blockChainInfoService.getHeight(), stringAcount(account));
+            }
             update(account);
         }
     }
@@ -387,27 +387,18 @@ public class AccountServiceImpl implements AccountService {
         if (amountATM == 0 && feeATM == 0) {
             return;
         }
-        if (feeATM != 0 && log.isTraceEnabled()){
-            log.trace("Add c balance for {} from {} , amount - {}, total conf- {}, height- {}",
-                    account.getId(), last3Stacktrace(),
-                    amountATM, amountATM + account.getBalanceATM(), blockChainInfoService.getHeight());
-        }
         long totalAmountATM = Math.addExact(amountATM, feeATM);
         account.setBalanceATM(Math.addExact(account.getBalanceATM(), totalAmountATM));
         accountGuaranteedBalanceTable.addToGuaranteedBalanceATM(account.getId(), totalAmountATM, blockChainInfoService.getHeight());
         AccountService.checkBalance(account.getId(), account.getBalanceATM(), account.getUnconfirmedBalanceATM());
         update(account);
 
-        log.trace("Fire event {} account={}", AccountEventType.BALANCE, account);
         accountEvent.select(literal(AccountEventType.BALANCE)).fire(account);
         logEntryConfirmed(account, event, eventId, amountATM, feeATM);
     }
 
     @Override
     public  void addToBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM) {
-        if(log.isTraceEnabled()) {
-            log.trace("Add c balance for {} from {} , amount - {}, total conf- {}, height -{}", account.getId(), last3Stacktrace(), amountATM, amountATM + account.getBalanceATM(), blockChainInfoService.getHeight());
-        }
         addToBalanceATM(account, event, eventId, amountATM, 0);
     }
 
@@ -416,11 +407,6 @@ public class AccountServiceImpl implements AccountService {
         if (amountATM == 0 && feeATM == 0) {
             return;
         }
-        if (feeATM != 0 && log.isTraceEnabled()){
-            log.trace("Add u balance for {} from {} , amount - {}, total unc {}, height - {}",
-                    account.getId(), last3Stacktrace(),
-                    amountATM, amountATM + account.getUnconfirmedBalanceATM(), blockChainInfoService.getHeight());
-        }
         long totalAmountATM = Math.addExact(amountATM, feeATM);
         account.setBalanceATM(Math.addExact(account.getBalanceATM(), totalAmountATM));
         account.setUnconfirmedBalanceATM(Math.addExact(account.getUnconfirmedBalanceATM(), totalAmountATM));
@@ -428,9 +414,7 @@ public class AccountServiceImpl implements AccountService {
         AccountService.checkBalance(account.getId(), account.getBalanceATM(), account.getUnconfirmedBalanceATM());
         update(account);
 
-        log.trace("Fire event {} account={}", AccountEventType.BALANCE, account);
         accountEvent.select(literal(AccountEventType.BALANCE)).fire(account);
-        log.trace("Fire event {} account={}", AccountEventType.UNCONFIRMED_BALANCE, account);
         accountEvent.select(literal(AccountEventType.UNCONFIRMED_BALANCE)).fire(account);
 
         if (event == null) {
@@ -442,11 +426,6 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public void addToBalanceAndUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM) {
-        if (log.isTraceEnabled()){
-            log.trace("Add c and  u balance for {} from {} , amount - {}, total conf- {}, total unc {}, height {}",
-                    account.getId(), last3Stacktrace(),
-                    amountATM, amountATM + account.getBalanceATM(), amountATM + account.getUnconfirmedBalanceATM(), blockChainInfoService.getHeight());
-        }
         addToBalanceAndUnconfirmedBalanceATM(account, event, eventId, amountATM, 0);
     }
 
@@ -455,17 +434,11 @@ public class AccountServiceImpl implements AccountService {
         if (amountATM == 0 && feeATM == 0) {
             return;
         }
-        if (feeATM!=0 && log.isTraceEnabled()){
-            log.trace("Add u balance for {} from {} , amount - {}, total unc {}, height - {}",
-                    account.getId(), last3Stacktrace(),
-                    amountATM, amountATM + account.getUnconfirmedBalanceATM(), blockChainInfoService.getHeight());
-        }
         long totalAmountATM = Math.addExact(amountATM, feeATM);
         account.setUnconfirmedBalanceATM(Math.addExact(account.getUnconfirmedBalanceATM(), totalAmountATM));
         AccountService.checkBalance(account.getId(), account.getBalanceATM(), account.getUnconfirmedBalanceATM());
         update(account);
 
-        log.trace("Fire event {} account={}", AccountEventType.UNCONFIRMED_BALANCE, account);
         accountEvent.select(literal(AccountEventType.UNCONFIRMED_BALANCE)).fire(account);
 
         if (event == null) {
@@ -476,11 +449,6 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public void addToUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM) {
-        if (log.isTraceEnabled()){
-            log.trace("Add u balance for {} from {} , amount - {}, total unc {}, height - {}",
-                    account.getId(), last3Stacktrace(),
-                    amountATM, amountATM + account.getUnconfirmedBalanceATM(), blockChainInfoService.getHeight());
-        }
         addToUnconfirmedBalanceATM(account, event, eventId, amountATM, 0);
     }
 
