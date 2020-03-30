@@ -24,16 +24,30 @@
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
         </encoder>
     </appender>
+<!--
     <appender name="shuffling-file" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOGDIR}/apl-shuffling.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <!-- rollover daily -->
+            &lt;!&ndash; rollover daily &ndash;&gt;
             <fileNamePattern>${LOGDIR}/apl-shuffling-%d{yyyy-MM-dd}_%i.gz</fileNamePattern>
             <maxHistory>30</maxHistory>
             <maxFileSize>100MB</maxFileSize>
             <totalSizeCap>3GB</totalSizeCap>
         </rollingPolicy>
-
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
+        </encoder>
+    </appender>
+-->
+    <appender name="poll-file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOGDIR}/apl-poll.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!-- rollover daily -->
+            <fileNamePattern>${LOGDIR}/apl-poll-%d{yyyy-MM-dd}_%i.gz</fileNamePattern>
+            <maxHistory>30</maxHistory>
+            <maxFileSize>100MB</maxFileSize>
+            <totalSizeCap>3GB</totalSizeCap>
+        </rollingPolicy>
         <encoder>
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
         </encoder>
@@ -62,9 +76,9 @@
 <!--    <logger name="com.apollocurrency.aplwallet.apl.core.app.Shuffling" level="trace" additivity="false">-->
 <!--        <appender-ref ref="shuffling-file"/>-->
 <!--    </logger>-->
-<!--    <logger name="com.apollocurrency.aplwallet.apl.core.app.Shuffler" level="trace" additivity="false">-->
-<!--        <appender-ref ref="shuffling-file"/>-->
-<!--    </logger>-->
+    <logger name="com.apollocurrency.aplwallet.apl.core.app.Poll" level="trace" additivity="false">
+        <appender-ref ref="poll-file"/>
+    </logger>
     <logger name="com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl" level="trace" additivity="false">
       <appender-ref ref="account-forged-file"/>
     </logger>

@@ -122,7 +122,9 @@ public final class Poll extends AbstractPoll {
                     pstmt.setNull(++i, Types.BIGINT);
                     pstmt.setLong(++i, 0);
                 }
-                pstmt.setInt(++i, lookupBlockchain().getHeight());
+                int height = lookupBlockchain().getHeight();
+                pstmt.setInt(++i, height);
+                LOG.trace("PollResult save = {} at height = {}", optionResult, height);
                 pstmt.executeUpdate();
             }
         }
@@ -218,8 +220,7 @@ public final class Poll extends AbstractPoll {
                 return pollTable.getManyBy(connection, pollStatement, false);
             }
 
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             DbUtils.close(connection);
             throw new RuntimeException(e.toString(), e);
         }
@@ -237,6 +238,7 @@ public final class Poll extends AbstractPoll {
 
     public static void addPoll(Transaction transaction, MessagingPollCreation attachment) {
         Poll poll = new Poll(transaction, attachment);
+        LOG.trace("addPoll = {}, height = {}, blockId={}", poll, transaction.getHeight(), transaction.getBlockId());
         pollTable.insert(poll);
     }
 
@@ -247,24 +249,26 @@ public final class Poll extends AbstractPoll {
     @Singleton
     public static class PollObserver {
         public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
-            LOG.trace(":accept:PollObserver: START onBlockApplied AFTER_BLOCK_APPLY. block={}", block.getHeight());
             int height = block.getHeight();
+            LOG.trace(":accept:PollObserver: START onBlockApplied AFTER_BLOCK_APPLY. height={}", height);
             Poll.checkPolls(height);
-            LOG.trace(":accept:PollObserver: END onBlockApplied AFTER_BLOCK_APPLY. block={}", block.getHeight());
+            LOG.trace(":accept:PollObserver: END onBlockApplied AFTER_BLOCK_APPLY. height={}", height);
         }
     }
 
     private static void checkPolls(int currentHeight) {
         // select all Polls where 'finish_height' is EQUAL (DbClause.Op.EQ) then specified height value
         try (DbIterator<Poll> polls = getPollsFinishingAtHeight(currentHeight)) {
+            int index = 0;
             for (Poll poll : polls) {
                 try {
                     List<PollOptionResult> results = poll.countResults(poll.getVoteWeighting(), currentHeight);
-                    LOG.trace("Poll = {} has PollOptionResult = {}", poll.getId(), results);
+                    LOG.trace("checkPolls: height = {}, [{}] PollId = {} has = {}", currentHeight, index, poll.getId(), results.size());
                     pollResultsTable.insert(results);
-                    LOG.trace("Poll = {} has been finished : {}", poll.getId(), poll);
+                    LOG.trace("checkPolls: height = {}, [{}] PollId = {} checked : {}", currentHeight, index, poll.getId(), results);
+                    index++;
                 } catch (RuntimeException e) {
-                    LOG.error("Couldn't count votes for poll " + Long.toUnsignedString(poll.getId()), e);
+                    LOG.error("Couldn't count RollResult for poll {} at height = {}", poll.getId(), currentHeight, e);
                 }
             }
         }
@@ -401,6 +405,8 @@ public final class Poll extends AbstractPoll {
 
     private List<PollOptionResult> countResults(VoteWeighting voteWeighting, int height) {
         final PollOptionResult[] result = new PollOptionResult[options.length];
+        LOG.trace("count RollResult: START h={}, pollId={}, accountId = {}, {}, voteList = [{}]",
+            height, id, accountId, voteWeighting, options.length);
         for (int i = 0; i < result.length; i++) {
             result[i] = new PollOptionResult(this.getId());
         }
@@ -409,11 +415,12 @@ public final class Poll extends AbstractPoll {
             List<Vote> voteList = CollectionUtil.toList(votes);
             if (voteList.size() <= 0) {
                 // stop further processing because there are no votes found
+                LOG.trace("count RollResult: END 1. pollId={}, accountId={} PollOptionResult = {}", id, accountId, result);
                 return Arrays.asList(result);
             }
-            LOG.trace("count Vote result: h={}, votingModel='{}', pollId={}, voteList = [{}]",
-                height, votingModel, this.getId(), voteList.size());
-            LOG.trace("count Vote result: pollId={}, voteList = \n{}", this.getId(), voteList);
+            LOG.trace("count RollResult: h={}, pollId={}, votingModel={}, voteList = [{}]",
+                height, id, votingModel, voteList.size());
+//            LOG.trace("count RollResult: pollId={}, voteList = \n{}", id, voteList);
             for (Vote vote : voteList) {
                 long weight = votingModel.calcWeight(voteWeighting, vote.getVoterId(), height);
                 if (weight <= 0) {
@@ -430,8 +437,8 @@ public final class Poll extends AbstractPoll {
                     }
                 }
             }
-            LOG.trace("count Vote : pollId={} PollOptionResult = {}", this.getId(), result);
         }
+        LOG.trace("count RollResult: END 2. pollId={}, accountId={} PollOptionResult = {}", id, accountId, result);
         return Arrays.asList(result);
     }
 
@@ -454,7 +461,15 @@ public final class Poll extends AbstractPoll {
         sb.append("id=").append(id);
         sb.append(", name='").append(name).append('\'');
         sb.append(", accountId=").append(accountId);
+        sb.append(", ").append(voteWeighting);
         sb.append(", finishHeight=").append(finishHeight);
+        sb.append(", options=").append(options == null ? "null" : Arrays.asList(options).toString());
+        sb.append(", description='").append(description).append('\'');
+        sb.append(", minNumberOfOptions=").append(minNumberOfOptions);
+        sb.append(", maxNumberOfOptions=").append(maxNumberOfOptions);
+        sb.append(", minRangeValue=").append(minRangeValue);
+        sb.append(", maxRangeValue=").append(maxRangeValue);
+        sb.append(", timestamp=").append(timestamp);
         sb.append('}');
         return sb.toString();
     }
