@@ -1,3 +1,6 @@
+/*
+ * Copyright © 2018-2020 Apollo Foundation
+ */
 package com.apollocurrency.aplwallet.apl.core.model;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;

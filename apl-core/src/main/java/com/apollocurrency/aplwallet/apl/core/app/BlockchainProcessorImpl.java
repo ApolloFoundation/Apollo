@@ -799,8 +799,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 dataSource.commit(false);
                 log.trace("committed block on = {}, id = '{}'", block.getHeight(), block.getId());
             } catch (Exception e) {
-                dataSource.rollback(false); // do not close current transaction
                 log.error("PushBlock, error:", e);
+                try {
+                    dataSource.rollback(false); // do not close current transaction
+                } catch (Exception ex) {
+                    log.error("Unable to rollback db changes on block height " + block.getHeight() + " id " + block.getId(), ex);
+                }
                 popOffToCommonBlock(previousLastBlock); // do in current transaction
                 blockchain.setLastBlock(previousLastBlock);
                 throw e;

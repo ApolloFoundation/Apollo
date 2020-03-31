@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
@@ -108,7 +109,7 @@ class AccountLeaseDaoTest {
 
     @Test
     void getLeaseByLessor() {
-        AccountLease actual = table.getByAccount(testData.ACC_LEAS_4.getLessorId());
+        AccountLease actual = table.get(new LongKey(testData.ACC_LEAS_4.getLessorId()));
         assertEquals(testData.ACC_LEAS_5, actual);
     }
 

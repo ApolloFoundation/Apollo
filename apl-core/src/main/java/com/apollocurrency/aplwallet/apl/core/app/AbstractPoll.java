@@ -82,5 +82,16 @@ public abstract class AbstractPoll extends DerivedEntity {
     public final VoteWeighting getVoteWeighting() {
         return voteWeighting;
     }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("AbstractPoll{");
+        sb.append("id=").append(id);
+        sb.append(", voteWeighting=").append(voteWeighting);
+        sb.append(", accountId=").append(accountId);
+        sb.append(", finishHeight=").append(finishHeight);
+        sb.append('}');
+        return sb.toString();
+    }
 }
 

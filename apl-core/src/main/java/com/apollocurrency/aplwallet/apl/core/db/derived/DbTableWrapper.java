@@ -191,6 +191,11 @@ public class DbTableWrapper<T extends DerivedEntity> implements EntityDbTableInt
     }
 
     @Override
+    public boolean supportDelete() {
+        return table.supportDelete();
+    }
+
+    @Override
     public void prune(int time) {
         table.prune(time);
     }

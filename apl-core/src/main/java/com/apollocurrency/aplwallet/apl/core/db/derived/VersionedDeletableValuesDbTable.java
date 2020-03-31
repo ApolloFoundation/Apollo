@@ -40,6 +40,11 @@ public abstract class VersionedDeletableValuesDbTable<T extends VersionedDerived
         super(table, init, dbKeyFactory, true);
     }
 
+    @Override
+    public boolean supportDelete() {
+        return true;
+    }
+
     public boolean delete(T t, int height) {
 
         if (t == null) {
@@ -58,7 +63,7 @@ public abstract class VersionedDeletableValuesDbTable<T extends VersionedDerived
             try (ResultSet rs = pstmtCount.executeQuery()) {
                 if (rs.next()) {
                     try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
-                            + " SET latest = FALSE " + getDbKeyFactory().getPKClause() + " AND height = ? AND latest = TRUE")) {
+                            + " SET latest = FALSE, deleted = TRUE " + getDbKeyFactory().getPKClause() + " AND height = ? AND latest = TRUE")) {
                         int j = dbKey.setPK(pstmt);
                         pstmt.setInt(j, height);
                         if (pstmt.executeUpdate() > 0) {
@@ -74,7 +79,7 @@ public abstract class VersionedDeletableValuesDbTable<T extends VersionedDerived
                         save(con, v);
                     }
                     try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
-                            + " SET latest = FALSE " + getDbKeyFactory().getPKClause() + " AND latest = TRUE")) {
+                            + " SET latest = FALSE, deleted = TRUE " + getDbKeyFactory().getPKClause() + " AND latest = TRUE")) {
                         dbKey.setPK(pstmt);
                         if (pstmt.executeUpdate() == 0) {
                             throw new RuntimeException(); // should not happen
@@ -92,5 +97,5 @@ public abstract class VersionedDeletableValuesDbTable<T extends VersionedDerived
             throw new RuntimeException(e.toString(), e);
         }
     }
-    
+
 }

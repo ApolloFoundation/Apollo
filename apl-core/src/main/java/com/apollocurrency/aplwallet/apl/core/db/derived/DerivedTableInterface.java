@@ -80,6 +80,11 @@ public interface DerivedTableInterface<T> {
     MinMaxValue getMinMaxValue(int height);
 
     /**
+     * @return true, if Table support delete operations (soft remove for entities), otherwise - false
+     */
+    boolean supportDelete();
+
+    /**
      * @return table db name
      */
     String getName();

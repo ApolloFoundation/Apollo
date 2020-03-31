@@ -26,7 +26,6 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.yaml.snakeyaml.reader.StreamReader;
 
 import javax.enterprise.event.Event;
 import java.util.HashMap;
@@ -42,7 +41,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -93,6 +91,7 @@ class AccountServiceTest {
         long accountId = testData.PUBLIC_KEY1.getAccountId();
         DbKey dbKey = AccountTable.newKey(accountId);
         Account newAccount = new Account(accountId, height);
+        newAccount.setPublicKey(testData.PUBLIC_KEY1);
         Account account = accountService.getAccount(accountId, height);
         assertNull(account);
 
@@ -149,7 +148,7 @@ class AccountServiceTest {
         newAccount.setBalanceATM(10000L);
         accountService.update(newAccount);
         verify(accountTable, times(1)).insert(newAccount);
-        verify(accountTable, never()).delete(any(Account.class), eq(true), eq(height));
+        verify(accountTable, never()).delete(any(Account.class), eq(height));
     }
 
     @Test
@@ -157,7 +156,7 @@ class AccountServiceTest {
         int height = 1000;
         doReturn(height).when(blockChainInfoService).getHeight();
         accountService.update(testData.newAccount);
-        verify(accountTable, times(1)).delete(eq(testData.newAccount), eq(true), eq(height));
+        verify(accountTable, times(1)).delete(eq(testData.newAccount), eq(height));
         verify(accountTable, never()).insert(any(Account.class));
     }
 
