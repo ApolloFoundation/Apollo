@@ -90,12 +90,14 @@
 <!--    <logger name="com.apollocurrency.aplwallet.apl.core.app.Shuffling" level="trace" additivity="false">-->
 <!--        <appender-ref ref="shuffling-file"/>-->
 <!--    </logger>-->
+<!--
     <logger name="com.apollocurrency.aplwallet.apl.core.app.Poll" level="trace" additivity="false">
         <appender-ref ref="poll-file"/>
     </logger>
     <logger name="com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl" level="trace" additivity="false">
       <appender-ref ref="account-file"/>
     </logger>
+-->
     <logger name="jdbc" level="off" additivity="false"/>
     <logger name="jdbc.connection" level="info" additivity="false"/>
     <logger name="jdbc.sqltiming" level="info" additivity="false"/>
