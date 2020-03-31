@@ -1,7 +1,9 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
-import com.apollocurrency.aplwallet.api.dto.AccountDTO;
+import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
+import com.apollocurrency.aplwallet.api.dto.account.AccountEffectiveBalanceDto;
+import com.apollocurrency.aplwallet.api.dto.account.AccountsCountDto;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
@@ -28,10 +30,14 @@ import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountCurrencyConve
 import com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.WalletKeysConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.service.AccountStatisticsService;
 import com.apollocurrency.aplwallet.apl.core.rest.service.OrderService;
+import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
 import com.apollocurrency.aplwallet.apl.core.utils.AccountGeneratorUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.jboss.resteasy.mock.MockHttpRequest;
 import org.jboss.resteasy.mock.MockHttpResponse;
@@ -43,6 +49,8 @@ import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
@@ -83,6 +91,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -127,6 +137,8 @@ class AccountControllerTest extends AbstractEndpointTest{
     private Account2FAHelper account2FAHelper;
 
     private FirstLastIndexParser indexParser = new FirstLastIndexParser(100);
+    @Mock
+    private AccountStatisticsService accountStatisticsService = Mockito.mock(AccountStatisticsService.class);
 
     private Block GENESIS_BLOCK, LAST_BLOCK, NEW_BLOCK;
     private Block BLOCK_0, BLOCK_1, BLOCK_2, BLOCK_3;
@@ -151,7 +163,8 @@ class AccountControllerTest extends AbstractEndpointTest{
                 new Account2FADetailsConverter(),
                 new Account2FAConverter(),
                 orderService,
-                indexParser
+                indexParser,
+                accountStatisticsService
                 );
 
         dispatcher.getRegistry().addSingletonResource(endpoint);
@@ -206,6 +219,9 @@ class AccountControllerTest extends AbstractEndpointTest{
         assertFalse(result.containsKey("newErrorCode"), "Unexpected error code:"+result.get("newErrorCode"));
         assertEquals(Long.toUnsignedString(ACCOUNT_ID), result.get("account"));
         assertEquals(ACCOUNT_RS, result.get("accountRS"));
+        //verify
+        verify(accountConverter, times(1)).convert(account);
+        verify(accountService, times(1)).getAccount(ACCOUNT_ID);
     }
 
     @ParameterizedTest
@@ -225,6 +241,8 @@ class AccountControllerTest extends AbstractEndpointTest{
         assertNotNull(result.get("account"));
         assertNotNull(result.get("accountRS"));
         assertNotNull(result.get("publicKey"));
+        //verify
+        verify(account2FAHelper, times(1)).generateUserWallet(pass);
     }
 
     @Test
@@ -233,6 +251,7 @@ class AccountControllerTest extends AbstractEndpointTest{
         MockHttpResponse response = sendPostRequest("/accounts/enable2fa", "wrong=value");
 
         checkMandatoryParameterMissingErrorCode(response, 2002);
+        verify(account2FAHelper, times(1)).create2FAParameters(null, null,null);
     }
 
     @Test
@@ -241,6 +260,7 @@ class AccountControllerTest extends AbstractEndpointTest{
         MockHttpResponse response = sendPostRequest("/accounts/enable2fa", "passphrase="+PASSPHRASE+"&secretPhrase="+SECRET);
 
         checkMandatoryParameterMissingErrorCode(response, 2011);
+        verify(account2FAHelper, times(1)).create2FAParameters(null, PASSPHRASE, SECRET);
     }
 
     @Test
@@ -249,6 +269,7 @@ class AccountControllerTest extends AbstractEndpointTest{
         MockHttpResponse response = sendPostRequest("/accounts/enable2fa", "passphrase="+PASSPHRASE);
 
         checkMandatoryParameterMissingErrorCode(response, 2003);
+        verify(account2FAHelper, times(1)).create2FAParameters(null, PASSPHRASE, null);
     }
 
     @Test
@@ -271,6 +292,8 @@ class AccountControllerTest extends AbstractEndpointTest{
         assertEquals(ACCOUNT_RS, result.get("accountRS"));
         assertEquals(QR_CODE_URL, result.get("qrCodeUrl"));
         assertEquals(SECRET, result.get("secret"));
+        verify(account2FAHelper, times(1)).create2FAParameters(ACCOUNT_RS, PASSPHRASE, null);
+        verify(account2FAHelper, times(1)).enable2FA(params2FA);
     }
 
     @Test
@@ -293,6 +316,8 @@ class AccountControllerTest extends AbstractEndpointTest{
         assertEquals(ACCOUNT_RS, result.get("accountRS"));
         assertEquals(QR_CODE_URL, result.get("qrCodeUrl"));
         assertEquals(SECRET, result.get("secret"));
+        verify(account2FAHelper, times(1)).create2FAParameters(null, null, SECRET);
+        verify(account2FAHelper, times(1)).enable2FA(params2FA);
     }
 
     @Test
@@ -301,9 +326,9 @@ class AccountControllerTest extends AbstractEndpointTest{
         TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(ACCOUNT_ID, PASSPHRASE, null);
         twoFactorAuthParameters.setCode2FA(CODE_2FA);
 
-
         doReturn(Status2FA.OK).when(account2FAHelper).disable2FA(twoFactorAuthParameters);
         check2FA_withPassPhraseAndAccountAndCode2FA(uri, twoFactorAuthParameters);
+        verify(account2FAHelper, times(1)).disable2FA(twoFactorAuthParameters);
     }
 
     @Test
@@ -314,6 +339,7 @@ class AccountControllerTest extends AbstractEndpointTest{
 
         doReturn(Status2FA.OK).when(account2FAHelper).disable2FA(twoFactorAuthParameters);
         check2FA_withSecretPhraseAndCode2FA(uri, twoFactorAuthParameters);
+        verify(account2FAHelper, times(1)).disable2FA(twoFactorAuthParameters);
     }
 
     @Test
@@ -322,9 +348,9 @@ class AccountControllerTest extends AbstractEndpointTest{
         TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(ACCOUNT_ID, PASSPHRASE, null);
         twoFactorAuthParameters.setCode2FA(CODE_2FA);
 
-
         doReturn(Status2FA.OK).when(account2FAHelper).confirm2FA(twoFactorAuthParameters);
         check2FA_withPassPhraseAndAccountAndCode2FA(uri, twoFactorAuthParameters);
+        verify(account2FAHelper, times(1)).confirm2FA(twoFactorAuthParameters);
     }
 
     @Test
@@ -335,6 +361,7 @@ class AccountControllerTest extends AbstractEndpointTest{
 
         doReturn(Status2FA.OK).when(account2FAHelper).confirm2FA(twoFactorAuthParameters);
         check2FA_withSecretPhraseAndCode2FA(uri, twoFactorAuthParameters);
+        verify(account2FAHelper, times(1)).confirm2FA(twoFactorAuthParameters);
     }
 
     @Test
@@ -343,10 +370,9 @@ class AccountControllerTest extends AbstractEndpointTest{
         TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(ACCOUNT_ID, PASSPHRASE, null);
         twoFactorAuthParameters.setCode2FA(CODE_2FA);
 
-        doReturn(KeyStoreService.Status.OK).when(account2FAHelper).deleteAccount(twoFactorAuthParameters.getAccountId(),
-                                                                                twoFactorAuthParameters.getPassphrase(),
-                                                                                twoFactorAuthParameters.getCode2FA());
+        doReturn(KeyStoreService.Status.OK).when(account2FAHelper).deleteAccount(twoFactorAuthParameters);
         check2FA_withPassPhraseAndAccountAndCode2FA(uri, twoFactorAuthParameters);
+        verify(account2FAHelper, times(1)).deleteAccount(twoFactorAuthParameters);
     }
 
     @ParameterizedTest
@@ -375,6 +401,8 @@ class AccountControllerTest extends AbstractEndpointTest{
 
         doReturn(secretBytes).when(account2FAHelper).findAplSecretBytes(twoFactorAuthParameters);
         check2FA_withPassPhraseAndAccountAndCode2FA(uri, twoFactorAuthParameters);
+        verify(account2FAHelper, times(1)).create2FAParameters(ACCOUNT_RS, PASSPHRASE, null);
+        verify(account2FAHelper, times(1)).findAplSecretBytes(twoFactorAuthParameters);
     }
 
     @Test
@@ -406,6 +434,7 @@ class AccountControllerTest extends AbstractEndpointTest{
         assertFalse(result.containsKey("newErrorCode"), "Unexpected error code:"+result.get("newErrorCode"));
 
         assertEquals(count, result.get("numberOfAssets"));
+        verify(accountAssetService, times(1)).getCountByAccount(ACCOUNT_ID, -1);
     }
 
     @Test
@@ -422,6 +451,7 @@ class AccountControllerTest extends AbstractEndpointTest{
         assertFalse(result.containsKey("newErrorCode"), "Unexpected error code:"+result.get("newErrorCode"));
 
         assertEquals(count, result.get("numberOfAssets"));
+        verify(accountAssetService, times(1)).getCountByAccount(ACCOUNT_ID, CURRENT_HEIGHT);
     }
 
     @Test
@@ -439,10 +469,10 @@ class AccountControllerTest extends AbstractEndpointTest{
     }
 
     @Test
-    void getAccountAssets_whenCallwithWrongAsset_thenGetError_2012() throws URISyntaxException, IOException {
+    void getAccountAssets_whenCallwithWrongAsset_thenGetError_2001() throws URISyntaxException, IOException {
         MockHttpResponse response = sendGetRequest("/accounts/assets?account="+ACCOUNT_ID+"&asset=AS123&height="+(CURRENT_HEIGHT+10));
 
-        checkMandatoryParameterMissingErrorCode(response, 2012);
+        checkMandatoryParameterMissingErrorCode(response, 2001);
     }
 
     @Test
@@ -463,6 +493,7 @@ class AccountControllerTest extends AbstractEndpointTest{
         JsonNode root = mapper.readTree(content);
         assertTrue(root.get("accountAssets").isArray());
         assertEquals(Long.toUnsignedString(ASSET_ID), root.withArray("accountAssets").get(0).get("asset").asText());
+        verify(accountAssetService, times(1)).getAssetsByAccount(ACCOUNT_ID, CURRENT_HEIGHT, 0, 99);
     }
 
     @Test
@@ -481,6 +512,7 @@ class AccountControllerTest extends AbstractEndpointTest{
         Map result = mapper.readValue(content, Map.class);
         assertFalse(result.containsKey("newErrorCode"), "Unexpected error code:"+result.get("newErrorCode"));
         assertEquals(Long.toUnsignedString(ASSET_ID), result.get("asset"));
+        verify(accountAssetService, times(1)).getAsset(ACCOUNT_ID, ASSET_ID, CURRENT_HEIGHT);
     }
 
     @Test
@@ -512,6 +544,7 @@ class AccountControllerTest extends AbstractEndpointTest{
         assertFalse(result.containsKey("newErrorCode"), "Unexpected error code:"+result.get("newErrorCode"));
 
         assertEquals(count, result.get("numberOfCurrencies"));
+        verify(accountCurrencyService, times(1)).getCountByAccount(ACCOUNT_ID, CURRENT_HEIGHT);
     }
 
     @Test
@@ -529,17 +562,17 @@ class AccountControllerTest extends AbstractEndpointTest{
     }
 
     @Test
-    void getAccountCurrencies_whenCallwithWrongCurrencyId_thenGetError_2012() throws URISyntaxException, IOException {
+    void getAccountCurrencies_whenCallwithWrongCurrencyId_thenGetError_2001() throws URISyntaxException, IOException {
         MockHttpResponse response = sendGetRequest("/accounts/currencies?account="+ACCOUNT_ID+"&currency=AS123&height="+(CURRENT_HEIGHT+10));
 
-        checkMandatoryParameterMissingErrorCode(response, 2012);
+        checkMandatoryParameterMissingErrorCode(response, 2001);
         NotFoundException exception;
     }
 
     @Test
     void getAccountCurrencies_getList() throws URISyntaxException, IOException {
         endpoint.setAccountCurrencyConverter(new AccountCurrencyConverter());
-        doReturn(List.of(accountCurrency)).when(accountCurrencyService).getCurrenciesByAccount(ACCOUNT_ID, CURRENT_HEIGHT, 0, -1);
+        doReturn(List.of(accountCurrency)).when(accountCurrencyService).getCurrenciesByAccount(ACCOUNT_ID, CURRENT_HEIGHT, 0, 99);
 
         MockHttpResponse response = sendGetRequest("/accounts/currencies?account="+ACCOUNT_ID+"&height="+CURRENT_HEIGHT);
 
@@ -554,6 +587,7 @@ class AccountControllerTest extends AbstractEndpointTest{
         JsonNode root = mapper.readTree(content);
         assertTrue(root.get("accountCurrencies").isArray());
         assertEquals(Long.toUnsignedString(CURRENCY_ID), root.withArray("accountCurrencies").get(0).get("currency").asText());
+        verify(accountCurrencyService, times(1)).getCurrenciesByAccount(ACCOUNT_ID, CURRENT_HEIGHT, 0, 99);
     }
 
     @Test
@@ -572,6 +606,7 @@ class AccountControllerTest extends AbstractEndpointTest{
         Map result = mapper.readValue(content, Map.class);
         assertFalse(result.containsKey("newErrorCode"), "Unexpected error code:"+result.get("newErrorCode"));
         assertEquals(Long.toUnsignedString(CURRENCY_ID), result.get("currency"));
+        verify(accountCurrencyService, times(1)).getAccountCurrency(ACCOUNT_ID, CURRENCY_ID, CURRENT_HEIGHT);
     }
 
     @Test
@@ -602,6 +637,7 @@ class AccountControllerTest extends AbstractEndpointTest{
         assertFalse(result.containsKey("newErrorCode"), "Unexpected error code:"+result.get("newErrorCode"));
 
         assertEquals(count, result.get("numberOfBlocks"));
+        verify(blockchain, times(1)).getBlockCount(ACCOUNT_ID);
     }
 
     @Test
@@ -622,7 +658,7 @@ class AccountControllerTest extends AbstractEndpointTest{
     void getAccountBlockIds() throws URISyntaxException, IOException {
         int timestamp = (int) (System.currentTimeMillis()/1000);
         int from = 0;
-        int to = 100;
+        int to = 99;
 
         doReturn(BLOCKS).when(accountService).getAccountBlocks(ACCOUNT_ID, timestamp, from, to);
 
@@ -642,7 +678,7 @@ class AccountControllerTest extends AbstractEndpointTest{
         JsonNode root = mapper.readTree(content);
         assertTrue(root.get("blockIds").isArray());
         assertEquals(BLOCKS.size(), root.withArray("blockIds").size());
-
+        verify(accountService, times(1)).getAccountBlocks(ACCOUNT_ID, timestamp, from, to);
     }
 
     @Test
@@ -663,9 +699,9 @@ class AccountControllerTest extends AbstractEndpointTest{
     void getAccountBlocks() throws URISyntaxException, IOException {
         int timestamp = (int) (System.currentTimeMillis()/1000);
         int from = 0;
-        int to = 100;
+        int to = 200;
 
-        doReturn(BLOCKS).when(accountService).getAccountBlocks(ACCOUNT_ID, timestamp, from, to);
+        doReturn(BLOCKS).when(accountService).getAccountBlocks(ACCOUNT_ID, timestamp, from, 99);
 
         MockHttpResponse response = sendGetRequest("/accounts/blocks?account="+ACCOUNT_ID
                 +"&timestamp="+timestamp
@@ -684,6 +720,7 @@ class AccountControllerTest extends AbstractEndpointTest{
         assertTrue(root.get("blocks").isArray());
         assertEquals(BLOCKS.size(), root.withArray("blocks").size());
         assertEquals(Long.toUnsignedString(BLOCK_0.getGeneratorId()), root.withArray("blocks").get(1).get("generator").asText());
+        verify(accountService, times(1)).getAccountBlocks(ACCOUNT_ID, timestamp, from, 99);
     }
 
     @ParameterizedTest(name = "{index} url={arguments}")
@@ -693,6 +730,38 @@ class AccountControllerTest extends AbstractEndpointTest{
 
         checkMandatoryParameterMissingErrorCode(response, 2001);
     }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "?numberOfAccounts=" + Constants.MIN_TOP_ACCOUNTS_NUMBER, "?numberOfAccounts=" })
+    void counts_SUCCESS(String numberOfAccounts) throws URISyntaxException, IOException {
+        String accountCountUri = "/accounts/statistic";
+
+        // prepare data
+        AccountsCountDto dto = new AccountsCountDto(112L, 113L, 1, 124L);
+        AccountEffectiveBalanceDto balanceDto = new AccountEffectiveBalanceDto(
+            100L, 200L, 100L, 200L, 200L, "123", "RS-ADVB");
+        dto.topHolders.add(balanceDto);
+        doReturn(dto).when(accountStatisticsService).getAccountsStatistic(Constants.MIN_TOP_ACCOUNTS_NUMBER);
+        // init mocks
+//        ServerInfoController controller = new ServerInfoController(serverInfoService);
+        dispatcher.getRegistry().addSingletonResource(endpoint);
+        // call
+        String uri = accountCountUri + numberOfAccounts;
+        MockHttpRequest request = MockHttpRequest.get(uri);
+        MockHttpResponse response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+        // check
+        assertEquals(200, response.getStatus());
+        String respondJson = response.getContentAsString();
+        AccountsCountDto dtoResult = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(dtoResult.topHolders);
+        assertEquals(112L, dtoResult.totalSupply);
+        assertEquals(1, dtoResult.topHolders.size());
+
+        // verify
+        verify(accountStatisticsService, times(1)).getAccountsStatistic(Constants.MIN_TOP_ACCOUNTS_NUMBER);
+    }
+
 
     private void check2FA_withPassPhraseAndAccountAndCode2FA(String uri, TwoFactorAuthParameters twoFactorAuthParameters) throws URISyntaxException, IOException {
         //doCallRealMethod().when(account2FAHelper).validate2FAParameters(twoFactorAuthParameters);

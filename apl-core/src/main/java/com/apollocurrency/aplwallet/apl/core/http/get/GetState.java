@@ -48,6 +48,8 @@ import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 import java.net.InetAddress;
+
+@Deprecated
 @Vetoed
 public final class GetState extends AbstractAPIRequestHandler {
     private UPnP upnp = CDI.current().select(UPnP.class).get();

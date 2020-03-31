@@ -1,1 +1,1 @@
-mvn clean verify -P integration-test
+./mvnw clean verify -P integration-test

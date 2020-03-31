@@ -11,7 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.ExchangeContractMapper;
-import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +30,7 @@ import java.util.List;
  */
 @Slf4j
 @Singleton
-public class DexContractTable  extends VersionedDeletableEntityDbTable<ExchangeContract> {
+public class DexContractTable  extends EntityDbTable<ExchangeContract> {
 
     static final LongKeyFactory<ExchangeContract> KEY_FACTORY = new LongKeyFactory<>("id") {
         @Override
@@ -44,7 +44,7 @@ public class DexContractTable  extends VersionedDeletableEntityDbTable<ExchangeC
 
     @Inject
     public DexContractTable() {
-        super(TABLE_NAME, KEY_FACTORY, false);
+        super(TABLE_NAME, KEY_FACTORY, true,  null, false);
     }
 
     @Override

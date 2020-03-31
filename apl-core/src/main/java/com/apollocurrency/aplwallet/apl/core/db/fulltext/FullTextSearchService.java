@@ -32,18 +32,6 @@ public interface FullTextSearchService {
     void reindexAll(Connection conn) throws SQLException;
 
     /**
-     * Create new index for table to support fulltext search
-     *
-     * @param conn       DB connection
-     * @param schema     db schema of table for indexing
-     * @param table      name of table for indexing
-     * @param columnList list of columns for indexing separated by comma
-     * @throws SQLException when unable to create index
-     */
-    void createIndex(Connection conn, String schema, String table, String columnList) throws SQLException;
-
-
-    /**
      * Drop the fulltext index for a table
      *
      * @param conn   SQL connection
@@ -86,4 +74,15 @@ public interface FullTextSearchService {
      */
     void shutdown();
 
+    /**
+     * Creates a new index for table to support fulltext search.
+     * Note that a schema is always PUBLIC.
+     *
+     * @param con       DB connection
+     * @param table      name of table for indexing
+     * @param fullTextSearchColumns list of columns for indexing separated by comma
+     * @throws SQLException when unable to create index
+     */
+    void createSearchIndex(final Connection con, String table, final String fullTextSearchColumns)
+        throws SQLException;
 }

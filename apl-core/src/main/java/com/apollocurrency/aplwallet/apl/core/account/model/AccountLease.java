@@ -4,7 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.account.model;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDeletableEntity;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -15,9 +15,8 @@ import java.sql.SQLException;
 
 @ToString(callSuper = true)
 @Getter @Setter
-public final class AccountLease extends VersionedDerivedEntity {
+public final class AccountLease extends VersionedDeletableEntity {
 
-    private long id;
     private final long lessorId;
 
     private long currentLesseeId;
@@ -27,9 +26,8 @@ public final class AccountLease extends VersionedDerivedEntity {
     private int nextLeasingHeightFrom;
     private int nextLeasingHeightTo;
 
-    public AccountLease(long txId, long lessorId, int currentLeasingHeightFrom, int currentLeasingHeightTo, long currentLesseeId, int height) {
+    public AccountLease(long lessorId, int currentLeasingHeightFrom, int currentLeasingHeightTo, long currentLesseeId, int height) {
         super(null, height);
-        this.id = txId;
         this.lessorId = lessorId;
         this.currentLeasingHeightFrom = currentLeasingHeightFrom;
         this.currentLeasingHeightTo = currentLeasingHeightTo;
@@ -38,7 +36,6 @@ public final class AccountLease extends VersionedDerivedEntity {
 
     public AccountLease(ResultSet rs, DbKey dbKey) throws SQLException {
         super(rs);
-        this.id = rs.getLong("id");
         this.lessorId = rs.getLong("lessor_id");
         this.currentLeasingHeightFrom = rs.getInt("current_leasing_height_from");
         this.currentLeasingHeightTo = rs.getInt("current_leasing_height_to");

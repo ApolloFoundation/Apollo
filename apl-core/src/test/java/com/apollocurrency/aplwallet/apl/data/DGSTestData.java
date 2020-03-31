@@ -110,11 +110,11 @@ public class DGSTestData {
     public final DGSGoods GOODS_10 = createGoods(64,	8788482956389726350L	    ,SELLER_0_ID	,"test"	            ,"test"	                        ,new String[]{"test"}	                ,true	,"test"	                    ,38189627	,2	        ,100000000	    ,false	    ,542721	    ,true );
     public final DGSGoods GOODS_11 = createGoods(65,	4948091426407579194L	    ,SELLER_0_ID	,"qwe"	            ,"qwe"	                            ,new String[]{"qwe"}	                ,true	,"qwe"	                        ,38039976	,12	        ,100000000  	,false	    ,542725	    ,true );
     public final DGSGoods GOODS_12 = createGoods(66,	    GOODS_3_ID	            ,SELLER_0_ID	,"Another product"	,"Just another produc"	            ,new String[]{"tag","batman"}	        ,true	,"tag batman"	                ,41824604	,3	        ,150000000000L	,false	    ,542828	    ,true );
-    public final DGSGoods GOODS_13 = createGoods(67,	-9001112213900824483L	,BUYER_0_ID    ,"asdffasdf"	        ,"asdf"	                        ,new String[]{"asdf"}	                ,true	,"asdf"	                    ,37965044	,2	        ,500000000	    ,false	    ,542860	    ,false );
+    public final DGSGoods GOODS_13 = createGoods(67,	-9001112213900824483L	,BUYER_0_ID    ,"asdffasdf"	        ,"asdf"	                        ,new String[]{"asdf"}	                ,true	,"asdf"	                    ,37965044	,2	        ,500000000	    ,false	    ,542860	    ,true );
 
     public final DGSGoods NEW_GOODS = createGoods(GOODS_13.getDbId() + 1,	100	    ,200	,"New product"	,"New product description"	            ,new String[]{"new","product"}	        ,true	,"tag batman"	                ,500	,8	        ,19000000000L	,false	    ,GOODS_13.getHeight() + 1	    ,true );
 
-    
+
     public final DGSTag TAG_0  = createTag(36	        ,"product"	,2	                ,4	            ,541839	,false    );
     public final DGSTag TAG_1  = createTag(37	        ,"some"	    ,1	                ,1	            ,541839	,false    );
     public final DGSTag TAG_2  = createTag(38	        ,"ptd"	    ,1	                ,1	            ,541839	,false    );

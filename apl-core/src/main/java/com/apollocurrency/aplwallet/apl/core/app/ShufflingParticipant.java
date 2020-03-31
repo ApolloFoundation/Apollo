@@ -225,9 +225,9 @@ public final class ShufflingParticipant {
         try (
                 @DatabaseSpecificDml(DmlMarker.MERGE)
                 PreparedStatement pstmt = con.prepareStatement("MERGE INTO shuffling_participant (shuffling_id, "
-                + "account_id, next_account_id, participant_index, state, blame_data, key_seeds, data_transaction_full_hash, data_hash, height, latest) "
+                + "account_id, next_account_id, participant_index, state, blame_data, key_seeds, data_transaction_full_hash, data_hash, height, latest, deleted) "
                 + "KEY (shuffling_id, account_id, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)")
         ) {
             int i = 0;
             pstmt.setLong(++i, this.shufflingId);

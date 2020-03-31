@@ -286,7 +286,8 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
     }
 
     private boolean isCacheEnabled() {
-        return cacheEnabled;
+//        return cacheEnabled;
+        return false; // temporary IGNORE that cache without considering config property value
     }
 
     private void clearCache() {

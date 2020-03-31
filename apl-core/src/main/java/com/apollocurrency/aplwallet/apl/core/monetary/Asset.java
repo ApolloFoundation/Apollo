@@ -145,9 +145,9 @@ public final class Asset {
                 @DatabaseSpecificDml(DmlMarker.MERGE)
                 @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
                 PreparedStatement pstmt = con.prepareStatement("MERGE INTO asset "
-                + "(id, account_id, name, description, initial_quantity, quantity, decimals, height, latest) "
+                + "(id, account_id, name, description, initial_quantity, quantity, decimals, height, latest, deleted) "
                 + "KEY(id, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE)")
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)")
         ) {
             int i = 0;
             pstmt.setLong(++i, this.assetId);

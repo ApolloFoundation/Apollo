@@ -145,11 +145,20 @@ public class PropertiesHolder {
     }
 
     public String dumpAllProperties() {
-        final StringBuilder sb = new StringBuilder("PropertiesHolder_DUMP :");
-        properties.forEach((k, v) ->
-            sb.append("\n").append('\'').append(k).append("' <- ").append(v)
+        final StringBuilder sb = new StringBuilder("PropertiesHolder_DUMP : \n");
+        properties.forEach((k, v) -> {
+                if (!k.equals("adminPassword")) {
+                    sb.append("\t'").append(k).append("' <- ").append(v).append(", ");
+                } else {
+                    sb.append("\t'").append(k).append("' <- ").append("***").append(", ");
+                }
+            }
         );
         sb.append('\n');
         return sb.toString();
+    }
+
+    public Properties getProperties() {
+        return properties;
     }
 }

@@ -151,6 +151,11 @@ public class DbTableWrapper<T extends DerivedEntity> implements EntityDbTableInt
     }
 
     @Override
+    public String getFullTextSearchColumns() {
+        return table.getFullTextSearchColumns();
+    }
+
+    @Override
     public DbIterator<T> getAll(int from, int to) {
         return table.getAll(from, to);
     }
@@ -171,11 +176,6 @@ public class DbTableWrapper<T extends DerivedEntity> implements EntityDbTableInt
     }
 
     @Override
-    public void createSearchIndex(Connection con) throws SQLException {
-        table.createSearchIndex(con);
-    }
-
-    @Override
     public DerivedTableData<T> getAllByDbId(long from, int limit, long dbIdLimit) throws SQLException {
         return table.getAllByDbId(from, limit, dbIdLimit);
     }
@@ -188,6 +188,11 @@ public class DbTableWrapper<T extends DerivedEntity> implements EntityDbTableInt
     @Override
     public MinMaxValue getMinMaxValue(int height) {
         return table.getMinMaxValue(height);
+    }
+
+    @Override
+    public boolean supportDelete() {
+        return table.supportDelete();
     }
 
     @Override
