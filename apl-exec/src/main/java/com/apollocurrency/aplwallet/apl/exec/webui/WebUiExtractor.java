@@ -1,5 +1,9 @@
 package com.apollocurrency.aplwallet.apl.exec.webui;
 
+import com.apollocurrency.aplwallet.apl.util.Zip;
+import com.apollocurrency.aplwallet.apl.util.ZipImpl;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
+
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileNotFoundException;
@@ -8,10 +12,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
-
-import com.apollocurrency.aplwallet.apl.util.Zip;
-import com.apollocurrency.aplwallet.apl.util.ZipImpl;
-import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 
 /**
  * Class for handling zip of WebUI
@@ -27,7 +27,7 @@ public class WebUiExtractor implements Callable<Boolean>{
     public WebUiExtractor(DirProvider dirProvider) {
         this.dirProvider = dirProvider;
     }
-    
+
     private File findWebUiZip() throws FileNotFoundException{
       File res = null;
       File dir = new File(DirProvider.getBinDir().toAbsolutePath()+File.separator+"lib");
@@ -50,10 +50,10 @@ public class WebUiExtractor implements Callable<Boolean>{
                   break;
                 }
             }
-        }  
+        }
       return res;
     }
-    
+
     private File findTestUiZip() throws FileNotFoundException{
       File res = null;
       File dir = new File(DirProvider.getBinDir().toAbsolutePath()+File.separator+"lib");
@@ -76,15 +76,15 @@ public class WebUiExtractor implements Callable<Boolean>{
                   break;
                 }
             }
-        }  
+        }
       return res;
     }
-    
+
     private File findDest(){
         Path res = dirProvider.getAppBaseDir().resolve(WEB_UI_DIR);
         return res.toFile();
     }
-    
+
     public boolean checkInstalled() throws FileNotFoundException {
         boolean res;
         File zip = findWebUiZip();
@@ -99,7 +99,7 @@ public class WebUiExtractor implements Callable<Boolean>{
         }
         return res;
     }
-    
+
     public void removeDir(String path){
         try {
             Files.walk(Paths.get(path))
@@ -109,7 +109,7 @@ public class WebUiExtractor implements Callable<Boolean>{
         } catch (IOException ex) {
         }
     }
-    
+
     public boolean install() throws FileNotFoundException, IOException {
         boolean res=true;
         Zip zip = new ZipImpl();
@@ -118,14 +118,14 @@ public class WebUiExtractor implements Callable<Boolean>{
             if(dest.exists()){
               removeDir(dest.getAbsolutePath());
             }
-            res=zip.extract(findWebUiZip().getAbsolutePath(), dest.getAbsolutePath());
-            res=res&zip.extract(findTestUiZip().getAbsolutePath(), dest.getAbsolutePath());
+            res=zip.extract(findWebUiZip().getAbsolutePath(), dest.getAbsolutePath(), true);
+            res=res&zip.extract(findTestUiZip().getAbsolutePath(), dest.getAbsolutePath(), true);
         }
         return res;
     }
 
     @Override
     public Boolean call() throws Exception {
-       return install(); 
+       return install();
     }
 }

@@ -9,9 +9,10 @@ public interface Zip {
      * Extract zip file into directory
      * @param zipFile zip file
      * @param outputFolder output directory
+     * @param keepZip if set to true - will not delete zip file after unzip operation
      * @return true if success
      */
-    boolean extract(String zipFile, String outputFolder);
+    boolean extract(String zipFile, String outputFolder, boolean keepZip);
 
     /**
      * Compress all filtered files in directory into ZIP file, change file timestamp to be predefined.Return computed CRC/hash for created ZIP as byte array.

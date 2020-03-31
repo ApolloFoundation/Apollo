@@ -722,7 +722,7 @@ class ShardEngineTest {
     void verifyZip(Path path, String... files) throws IOException {
         assertTrue(Files.exists(path));
         Path output = dataExportDirPath.resolve("output-" + path.getFileName());
-        zip.extract(path.toAbsolutePath().toString(), output.toAbsolutePath().toString());
+        zip.extract(path.toAbsolutePath().toString(), output.toAbsolutePath().toString(), true);
         assertEquals(files.length, FileUtils.countElementsOfDirectory(output));
         for (String file : files) {
             Files.exists(output.resolve(file));

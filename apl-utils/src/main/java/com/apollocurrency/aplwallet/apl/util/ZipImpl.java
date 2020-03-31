@@ -8,16 +8,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Singleton;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
@@ -29,7 +31,6 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 /**
@@ -53,7 +54,7 @@ public class ZipImpl implements Zip {
      * {@inheritDoc}
      */
     @Override
-    public boolean extract(String zipFile, String outputFolder) {
+    public boolean extract(String zipFile, String outputFolder, boolean keepZip) {
         Objects.requireNonNull(zipFile, "zipFile is NULL");
         Objects.requireNonNull(outputFolder, "outputFolder is NULL");
         StringValidator.requireNonBlank(zipFile);
@@ -61,47 +62,36 @@ public class ZipImpl implements Zip {
 
         log.trace("Extracting file '{}' from outputFolder '{}'", zipFile, outputFolder);
         boolean res = true;
-        byte[] buffer = new byte[BUF_SIZE];
-
         try {
 
             //create output directory is not exists
-            File folder = new File(outputFolder);
-            if (!folder.exists()) {
-                folder.mkdirs();
-            }
+            Path target = Paths.get(outputFolder);
+            Files.createDirectories(target);
 
-            //get the zipped file list entry
-            try ( //get the zip file content
-                ZipInputStream zis = new ZipInputStream(new FileInputStream(zipFile))) {
-                //get the zipped file list entry
-                ZipEntry ze = zis.getNextEntry();
-
-                while (ze != null) {
-
-                    String fileName = ze.getName();
-                    File newFile = new File(outputFolder + File.separator + fileName);
-
-                    //create all non exists folders
-                    //else you will hit FileNotFoundException for compressed folder
-                    new File(newFile.getParent()).mkdirs();
-
-                    if (ze.isDirectory()) {
-                        newFile.mkdirs();
-                    } else {
-                        try (FileOutputStream fos = new FileOutputStream(newFile)) {
-                            int len;
-                            while ((len = zis.read(buffer)) > 0) {
-                                fos.write(buffer, 0, len);
-                            }
-                        }
+            Path zipFilePath = Paths.get(zipFile);
+            try (FileSystem zipFs = FileSystems.newFileSystem(zipFilePath, getClass().getClassLoader())) {
+                Files.walkFileTree(zipFs.getPath("/"), new SimpleFileVisitor<>() {
+                    @Override
+                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                        Files.createDirectories(target.resolve(dir.toAbsolutePath().toString().substring(1)));
+                        return super.preVisitDirectory(dir, attrs);
                     }
-                    ze = zis.getNextEntry();
-                }
 
-                zis.closeEntry();
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        Path targetFile = target.resolve(file.toAbsolutePath().toString().substring(1));
+                        if (keepZip) {
+                            Files.copy(file, targetFile, StandardCopyOption.REPLACE_EXISTING);
+                        } else {
+                            Files.move(file, targetFile, StandardCopyOption.REPLACE_EXISTING);
+                        }
+                        return super.visitFile(file, attrs);
+                    }
+                });
             }
-
+            if (!keepZip) {
+                Files.delete(zipFilePath);
+            }
         } catch (IOException ex) {
             log.error("Error extracting zip file: {}", zipFile, ex);
             res = false;
