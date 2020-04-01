@@ -135,7 +135,11 @@ public class ServerInfoService {
         List<Generator> forgers = Generator.getSortedForgers();
         for (Generator g : forgers) {
             GeneratorInfo gi = new GeneratorInfo();
-            gi.setAccount(Convert.defaultRsAccount(g.getAccountId()));
+            gi.setAccount(
+                Convert.parseAccountId(
+                    Convert.defaultRsAccount(g.getAccountId())
+                )
+            );
             gi.setDeadline(g.getDeadline());
             gi.setHitTime(g.getHitTime());
             if (showBallances) {

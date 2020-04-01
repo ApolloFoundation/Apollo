@@ -26,8 +26,8 @@ public class BasicAccount extends BaseDTO {
     protected long id;
     public String accountRS;
 
-    public BasicAccount(String account) {
-        this.id = Convert.parseAccountId(account);
+    BasicAccount(long decodedAccount) {
+        this.id = decodedAccount;
     }
 
 }

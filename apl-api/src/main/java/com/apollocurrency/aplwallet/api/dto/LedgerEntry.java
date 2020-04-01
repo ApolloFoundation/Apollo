@@ -91,10 +91,6 @@ public class LedgerEntry {
         return account;
     }
 
-    public void setAccount(String account) {
-        this.account = new BasicAccount(account);
-    }
-
     public Long getHeight() {
         return height;
     }
