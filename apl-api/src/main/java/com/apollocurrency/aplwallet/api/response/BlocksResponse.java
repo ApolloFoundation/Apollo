@@ -17,6 +17,6 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-public class AccountBlocksResponse extends ResponseBase {
+public class BlocksResponse extends ResponseBase {
     private List<BlockDTO> blocks;
 }

@@ -62,7 +62,7 @@ public class NewApiRegistry {
         apis.put("rsConvert", "/rest/utils/convert/rs"); //GET
         apis.put("hash", "/rest/utils/hash"); //GET
 
-        apis.put("getBlockchainStatus", "/rest/server/blockchain/status"); //GET
+        apis.put("getBlockchainStatus", "/rest/server/blockchain/status"); //GET + POST
 //        apis.put("getConstants", "/rest/server/blockchain/constants"); //GET // respond format has changed
         apis.put("getState", "/rest/server/blockchain/state"); //GET // admin password is needed now
         apis.put("getTime", "/rest/server/blockchain/time"); //GET

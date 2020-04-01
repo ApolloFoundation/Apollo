@@ -18,14 +18,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class AccountBlockConverter implements Converter<Block, BlockDTO> {
+public class BlockConverter implements Converter<Block, BlockDTO> {
 
     private final Blockchain blockchain;
     private final TransactionConverter transactionConverter;
     private final PhasingPollService phasingPollService;
 
     @Inject
-    public AccountBlockConverter(Blockchain blockchain, TransactionConverter transactionConverter, PhasingPollService phasingPollService) {
+    public BlockConverter(Blockchain blockchain, TransactionConverter transactionConverter, PhasingPollService phasingPollService) {
         this.blockchain = blockchain;
         this.transactionConverter = transactionConverter;
         this.phasingPollService = phasingPollService;

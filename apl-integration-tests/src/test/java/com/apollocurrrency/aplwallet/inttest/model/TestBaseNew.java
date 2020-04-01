@@ -26,7 +26,7 @@ import com.apollocurrency.aplwallet.api.response.AccountAssetsCountResponse;
 import com.apollocurrency.aplwallet.api.response.AccountAssetsIdsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountAssetsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountBlockIdsResponse;
-import com.apollocurrency.aplwallet.api.response.AccountBlocksResponse;
+import com.apollocurrency.aplwallet.api.response.BlocksResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCountAliasesResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrencyResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetAskOrderIdsResponse;
@@ -609,7 +609,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
-    public AccountBlocksResponse getBlocks() {
+    public BlocksResponse getBlocks() {
         throw new NotImplementedException("Not implemented");
     }
 
