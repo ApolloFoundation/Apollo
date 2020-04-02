@@ -5,6 +5,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -20,7 +21,7 @@ import org.json.simple.JSONObject;
  * @author al
  */
 class CCCoinsDividentPayment extends ColoredCoins {
-    
+
     public CCCoinsDividentPayment() {
     }
 
@@ -88,6 +89,7 @@ class CCCoinsDividentPayment extends ColoredCoins {
     @Override
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
         ColoredCoinsDividendPayment attachment = (ColoredCoinsDividendPayment) transaction.getAttachment();
+        Blockchain blockchain = lookupBlockchain();
         if (attachment.getHeight() > blockchain.getHeight()) {
             throw new AplException.NotCurrentlyValidException("Invalid dividend payment height: " + attachment.getHeight() + ", must not exceed current blockchain height " + blockchain.getHeight());
         }
@@ -122,5 +124,5 @@ class CCCoinsDividentPayment extends ColoredCoins {
     public boolean isPhasingSafe() {
         return false;
     }
-    
+
 }

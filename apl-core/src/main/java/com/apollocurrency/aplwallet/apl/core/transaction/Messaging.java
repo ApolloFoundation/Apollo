@@ -50,7 +50,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 public abstract class Messaging extends TransactionType {
     private static final Logger log = getLogger(Messaging.class);
 
-    private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
     private Messaging() {
     }
 
@@ -123,7 +122,7 @@ public abstract class Messaging extends TransactionType {
             return false;
         }
     };
-    
+
     public static final TransactionType ALIAS_ASSIGNMENT = new Messaging() {
         private final Fee ALIAS_FEE = new Fee.SizeBasedFee(2 * Constants.ONE_APL, 2 * Constants.ONE_APL, 32) {
             @Override
@@ -258,7 +257,7 @@ public abstract class Messaging extends TransactionType {
                 throw new AplException.NotValidException("Missing alias name");
             }
             long priceATM = attachment.getPriceATM();
-            if (priceATM < 0 || priceATM > blockchainConfig.getCurrentConfig().getMaxBalanceATM()) {
+            if (priceATM < 0 || priceATM > lookupBlockchainConfig().getCurrentConfig().getMaxBalanceATM()) {
                 throw new AplException.NotValidException("Invalid alias sell price: " + priceATM);
             }
             if (priceATM == 0) {
@@ -674,6 +673,7 @@ public abstract class Messaging extends TransactionType {
                 if (phasedTransactionId == 0) {
                     throw new AplException.NotValidException("Invalid phased transactionFullHash " + Convert.toHexString(hash));
                 }
+                PhasingPollService phasingPollService = lookupPhasingPollService();
                 PhasingPollResult result = phasingPollService.getResult(phasedTransactionId);
                 if (result != null) {
                     throw new AplException.NotCurrentlyValidException("Phasing poll " + phasedTransactionId + " is already finished");
@@ -726,7 +726,7 @@ public abstract class Messaging extends TransactionType {
             MessagingPhasingVoteCasting attachment = (MessagingPhasingVoteCasting) transaction.getAttachment();
             List<byte[]> hashes = attachment.getTransactionFullHashes();
             for (byte[] hash : hashes) {
-                phasingPollService.addVote(transaction, senderAccount, Convert.fullHashToId(hash));
+                lookupPhasingPollService().addVote(transaction, senderAccount, Convert.fullHashToId(hash));
             }
         }
 
@@ -849,7 +849,7 @@ public abstract class Messaging extends TransactionType {
                 throw new AplException.NotValidException("Invalid account property: " + attachment.getJSONObject());
             }
             if (transaction.getAmountATM() != 0) {
-                throw new AplException.NotValidException("Account property transaction cannot be used to send " + blockchainConfig.getCoinSymbol());
+                throw new AplException.NotValidException("Account property transaction cannot be used to send " + lookupBlockchainConfig().getCoinSymbol());
             }
             if (transaction.getRecipientId() == GenesisImporter.CREATOR_ID) {
                 throw new AplException.NotValidException("Setting Genesis account properties not allowed");
@@ -912,7 +912,7 @@ public abstract class Messaging extends TransactionType {
                 throw new AplException.NotValidException("Account property " + Long.toUnsignedString(attachment.getPropertyId()) + " does not belong to " + Long.toUnsignedString(transaction.getRecipientId()));
             }
             if (transaction.getAmountATM() != 0) {
-                throw new AplException.NotValidException("Account property transaction cannot be used to send " + blockchainConfig.getCoinSymbol());
+                throw new AplException.NotValidException("Account property transaction cannot be used to send " + lookupBlockchainConfig().getCoinSymbol());
             }
             if (transaction.getRecipientId() == GenesisImporter.CREATOR_ID) {
                 throw new AplException.NotValidException("Deleting Genesis account properties not allowed");
@@ -935,5 +935,5 @@ public abstract class Messaging extends TransactionType {
             return true;
         }
     };
-    
+
 }

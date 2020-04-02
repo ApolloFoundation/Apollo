@@ -42,6 +42,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
@@ -119,9 +120,11 @@ public abstract class TransactionType {
     public static final byte SUBTYPE_DEX_CLOSE_ORDER = 4;
 
 
-    public static final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    protected static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
-    public static  TimeService timeService = CDI.current().select(TimeService.class).get();
+    public static BlockchainConfig blockchainConfig;// = CDI.current().select(BlockchainConfig.class).get();
+    protected static Blockchain blockchain;// = CDI.current().select(Blockchain.class).get();
+    public static TimeService timeService;// = CDI.current().select(TimeService.class).get();
+    private static PhasingPollService phasingPollService;// = CDI.current().select(PhasingPollService.class).get();
+
     @Setter
     private static AccountService accountService;
     private static AccountCurrencyService accountCurrencyService;
@@ -170,6 +173,34 @@ public abstract class TransactionType {
             accountInfoService = CDI.current().select(AccountInfoServiceImpl.class).get();
         }
         return accountInfoService;
+    }
+
+    public static BlockchainConfig lookupBlockchainConfig(){
+        if ( blockchainConfig == null) {
+            blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+        }
+        return blockchainConfig;
+    }
+
+    public static Blockchain lookupBlockchain(){
+        if ( blockchain == null) {
+            blockchain = CDI.current().select(Blockchain.class).get();
+        }
+        return blockchain;
+    }
+
+    public static TimeService lookupTimeService(){
+        if ( timeService == null) {
+            timeService = CDI.current().select(TimeService.class).get();
+        }
+        return timeService;
+    }
+
+    public static PhasingPollService lookupPhasingPollService(){
+        if ( phasingPollService == null) {
+            phasingPollService = CDI.current().select(PhasingPollService.class).get();
+        }
+        return phasingPollService;
     }
 
     public static TransactionType findTransactionType(byte type, byte subtype) {
@@ -328,7 +359,7 @@ public abstract class TransactionType {
         long amountATM = transaction.getAmountATM();
         long feeATM = transaction.getFeeATM();
         if (transaction.referencedTransactionFullHash() != null) {
-            feeATM = Math.addExact(feeATM, blockchainConfig.getUnconfirmedPoolDepositAtm());
+            feeATM = Math.addExact(feeATM, lookupBlockchainConfig().getUnconfirmedPoolDepositAtm());
         }
         long totalAmountATM = Math.addExact(amountATM, feeATM);
         if (senderAccount.getUnconfirmedBalanceATM() < totalAmountATM) {
@@ -370,7 +401,7 @@ public abstract class TransactionType {
                 transaction.getAmountATM(), transaction.getFeeATM());
         if (transaction.referencedTransactionFullHash() != null) {
             accountService.addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), 0,
-                    blockchainConfig.getUnconfirmedPoolDepositAtm());
+                lookupBlockchainConfig().getUnconfirmedPoolDepositAtm());
         }
     }
 

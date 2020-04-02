@@ -4,11 +4,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
+import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 
@@ -16,6 +23,12 @@ import org.json.simple.JSONObject;
  *
  */
 public abstract class AbstractAppendix implements Appendix {
+
+    private static Blockchain blockchain;// = CDI.current().select(Blockchain.class).get();
+    private static PhasingPollService phasingPollService;// = CDI.current().select(PhasingPollService.class).get();
+    private static BlockchainConfig blockchainConfig;// = CDI.current().select(BlockchainConfig.class).get();
+    private static volatile TimeService timeService;// = CDI.current().select(TimeService.class).get();
+    private static PrunableMessageService messageService;// = CDI.current().select(PrunableMessageService.class).get();
 
     private final byte version;
 
@@ -122,6 +135,41 @@ public abstract class AbstractAppendix implements Appendix {
     @Override
     public final boolean isPhased(Transaction transaction) {
         return isPhasable() && transaction.getPhasing() != null;
+    }
+
+    Blockchain lookupBlockchain() {
+        if (blockchain == null) {
+            blockchain = CDI.current().select(BlockchainImpl.class).get();
+        }
+        return blockchain;
+    }
+
+    public BlockchainConfig lookupBlockchainConfig(){
+        if ( blockchainConfig == null) {
+            blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+        }
+        return blockchainConfig;
+    }
+
+    public static PhasingPollService lookupPhasingPollService(){
+        if ( phasingPollService == null) {
+            phasingPollService = CDI.current().select(PhasingPollService.class).get();
+        }
+        return phasingPollService;
+    }
+
+    public static TimeService lookupTimeService(){
+        if ( timeService == null) {
+            timeService = CDI.current().select(TimeService.class).get();
+        }
+        return timeService;
+    }
+
+    public static PrunableMessageService lookupMessageService(){
+        if ( messageService == null) {
+            messageService = CDI.current().select(PrunableMessageService.class).get();
+        }
+        return messageService;
     }
 
 }

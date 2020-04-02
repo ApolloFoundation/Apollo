@@ -1,23 +1,15 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
-
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
-import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -30,13 +22,9 @@ import org.slf4j.Logger;
 import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.Set;
-import javax.enterprise.inject.spi.CDI;
 
 public class PhasingAppendix extends AbstractAppendix {
     private static final Logger LOG = getLogger(PhasingAppendix.class);
-    private static Blockchain blockchain;// = CDI.current().select(Blockchain.class).get();
-    private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
-    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
 
     private static final Fee PHASING_FEE = (transaction, appendage) -> {
         long fee = 0;
@@ -174,9 +162,7 @@ public class PhasingAppendix extends AbstractAppendix {
     public void generalValidation(Transaction transaction) throws AplException.ValidationException{
         params.validate();
 
-        lookupBlockchain();
-
-        int currentHeight = blockchain.getHeight();
+        int currentHeight = lookupBlockchain().getHeight();
         if (params.getVoteWeighting().getVotingModel() == VoteWeighting.VotingModel.TRANSACTION) {
             if (linkedFullHashes.length == 0 || linkedFullHashes.length > Constants.MAX_PHASING_LINKED_TRANSACTIONS) {
                 throw new AplException.NotValidException("Invalid number of linkedFullHashes " + linkedFullHashes.length);
@@ -222,8 +208,7 @@ public class PhasingAppendix extends AbstractAppendix {
     }
 
     public void validateFinishHeight(Integer finishHeight) throws AplException.NotCurrentlyValidException{
-        lookupBlockchain();
-        Block lastBlock = blockchain.getLastBlock();
+        Block lastBlock = lookupBlockchain().getLastBlock();
         int currentHeight = lastBlock.getHeight();
 
         if (this.finishHeight <= currentHeight + (params.getVoteWeighting().acceptsVotes() ? 2 : 1)
@@ -239,11 +224,9 @@ public class PhasingAppendix extends AbstractAppendix {
             throw new AplException.NotCurrentlyValidException("Only one parameter should be filled 'phasingFinishHeight or phasingFinishTime'");
         }
 
-        lookupBlockchain();
-        TimeService timeService = CDI.current().select(TimeService.class).get();
-        Block lastBlock = blockchain.getLastBlock();
+        Block lastBlock = lookupBlockchain().getLastBlock();
         int lastBlockHeight = lastBlock.getHeight();
-        int currentTime = timeService.getEpochTime();
+        int currentTime = lookupTimeService().getEpochTime();
 
         if (time == -1 &&
                 (this.finishHeight <= lastBlockHeight + (params.getVoteWeighting().acceptsVotes() ? 2 : 1) ||
@@ -262,10 +245,10 @@ public class PhasingAppendix extends AbstractAppendix {
         Integer txHeight = lookupBlockchain().getTransactionHeight(hash, currentHeight);
         if (txHeight != null) {
 
-            if (transactionHeight - txHeight > blockchainConfig.getCurrentConfig().getReferencedTransactionHeightSpan()) {
+            if (transactionHeight - txHeight > lookupBlockchainConfig().getCurrentConfig().getReferencedTransactionHeightSpan()) {
                 throw new AplException.NotValidException("Linked transaction cannot be more than 60 days older than the phased transaction");
             }
-            if (phasingPollService.isTransactionPhased(Convert.fullHashToId(hash))) {
+            if (lookupPhasingPollService().isTransactionPhased(Convert.fullHashToId(hash))) {
                 throw new AplException.NotCurrentlyValidException("Cannot link to an already existing phased transaction");
             }
         }
@@ -278,7 +261,7 @@ public class PhasingAppendix extends AbstractAppendix {
 
     @Override
     public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        phasingPollService.addPoll(transaction, this);
+        lookupPhasingPollService().addPoll(transaction, this);
     }
 
     @Override
@@ -323,11 +306,5 @@ public class PhasingAppendix extends AbstractAppendix {
         return params;
     }
 
-    private Blockchain lookupBlockchain() {
-        if (blockchain == null) {
-            blockchain = CDI.current().select(BlockchainImpl.class).get();
-        }
-        return blockchain;
-    }
 
 }

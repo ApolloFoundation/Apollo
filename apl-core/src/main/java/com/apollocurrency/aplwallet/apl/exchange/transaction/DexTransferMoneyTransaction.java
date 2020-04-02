@@ -1,3 +1,6 @@
+/*
+ * Copyright © 2018-2020 Apollo Foundation
+ */
 package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
@@ -16,15 +19,11 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 
-import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
 @Slf4j
 public class DexTransferMoneyTransaction extends DEX {
-
-    private DexService dexService = CDI.current().select(DexService.class).get();
-
 
     @Override
     public byte getSubtype() {
@@ -50,6 +49,7 @@ public class DexTransferMoneyTransaction extends DEX {
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
         // IMPORTANT! Validation should restrict sending this transaction without money freezing and out of the dex scope
         DexControlOfFrozenMoneyAttachment attachment = (DexControlOfFrozenMoneyAttachment) transaction.getAttachment();
+        DexService dexService = lookupDexService();
         ExchangeContract dexContract = dexService.getDexContractById(attachment.getContractId());
 
         if (dexContract == null) {
@@ -98,6 +98,7 @@ public class DexTransferMoneyTransaction extends DEX {
         lookupAccountService().addToBalanceATM(sender, getLedgerEvent(), tx.getId(), -attachment.getOfferAmount()); // reduce only balanceATM, assume that unconfirmed balance was reduced earlier and was not recovered yet
         lookupAccountService().addToBalanceAndUnconfirmedBalanceATM(recipient, getLedgerEvent(), tx.getId(), attachment.getOfferAmount());
 
+        DexService dexService = lookupDexService();
         ExchangeContract dexContract = dexService.getDexContractById(attachment.getContractId());
 
         long orderToClose = dexContract.getSender() == sender.getId() ? dexContract.getCounterOrderId() : dexContract.getOrderId(); // close order which was approved

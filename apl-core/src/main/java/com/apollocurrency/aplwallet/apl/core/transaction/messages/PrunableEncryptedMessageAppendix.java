@@ -6,11 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
-import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessage;
-import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
@@ -20,14 +17,11 @@ import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
-import javax.enterprise.inject.spi.CDI;
 
 public class PrunableEncryptedMessageAppendix extends AbstractAppendix implements Prunable {
 
     private static final String appendixName = "PrunableEncryptedMessage";
-    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static volatile TimeService timeService = CDI.current().select(TimeService.class).get();
-    private static PrunableMessageService messageService = CDI.current().select(PrunableMessageService.class).get();
+
     private static final Fee PRUNABLE_ENCRYPTED_DATA_FEE = new Fee.SizeBasedFee(Constants.ONE_APL/10) {
         @Override
         public int getSize(Transaction transaction, Appendix appendix) {
@@ -138,7 +132,7 @@ public class PrunableEncryptedMessageAppendix extends AbstractAppendix implement
             throw new AplException.NotValidException("Cannot have both encrypted and prunable encrypted message attachments");
         }
         EncryptedData ed = getEncryptedData();
-        if (ed == null && timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMinPrunableLifetime()) {
+        if (ed == null && lookupTimeService().getEpochTime() - transaction.getTimestamp() < lookupBlockchainConfig().getMinPrunableLifetime()) {
             throw new AplException.NotCurrentlyValidException("Encrypted message has been pruned prematurely");
         }
         if (ed != null) {
@@ -158,8 +152,8 @@ public class PrunableEncryptedMessageAppendix extends AbstractAppendix implement
 
     @Override
     public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        if (timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMaxPrunableLifetime()) {
-            messageService.add(transaction, this);
+        if (lookupTimeService().getEpochTime() - transaction.getTimestamp() < lookupBlockchainConfig().getMaxPrunableLifetime()) {
+            lookupMessageService().add(transaction, this);
         }
     }
 
@@ -208,7 +202,7 @@ public class PrunableEncryptedMessageAppendix extends AbstractAppendix implement
     @Override
     public void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
         if (!hasPrunableData() && shouldLoadPrunable(transaction, includeExpiredPrunable)) {
-            PrunableMessage prunableMessage = messageService.get(transaction.getId());
+            PrunableMessage prunableMessage = lookupMessageService().get(transaction.getId());
             if (prunableMessage != null && prunableMessage.getEncryptedData() != null) {
                 this.prunableMessage = prunableMessage;
             }
@@ -227,7 +221,7 @@ public class PrunableEncryptedMessageAppendix extends AbstractAppendix implement
 
     @Override
     public void restorePrunableData(Transaction transaction, int blockTimestamp, int height) {
-        messageService.add(transaction, this, blockTimestamp, height);
+        lookupMessageService().add(transaction, this, blockTimestamp, height);
     }
 
 }

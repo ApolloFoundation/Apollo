@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
@@ -8,7 +8,6 @@ import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION
 
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.rest.service.DexOrderAttachmentFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
@@ -19,7 +18,6 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
-import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -28,14 +26,10 @@ import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
-import javax.enterprise.inject.spi.CDI;
 import javax.inject.Singleton;
 
 @Singleton
 public class DexOrderTransaction extends DEX {
-
-    private DexService dexService = CDI.current().select(DexService.class).get();
-    private TimeService timeService = CDI.current().select(TimeService.class).get();
 
     @Override
     public byte getSubtype() {
@@ -90,7 +84,7 @@ public class DexOrderTransaction extends DEX {
             }
         }
 
-        int currentTime = timeService.getEpochTime();
+        int currentTime = lookupTimeService().getEpochTime();
         if (attachment.getFinishTime() <= 0 || attachment.getFinishTime() - currentTime > MAX_ORDER_DURATION_SEC) {
             throw new AplException.NotCurrentlyValidException(JSON.toString(incorrect("amountOfTime", String.format("value %d not in range [%d-%d]", attachment.getFinishTime(), 0, MAX_ORDER_DURATION_SEC))));
         }
@@ -120,7 +114,7 @@ public class DexOrderTransaction extends DEX {
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         DexOrderAttachment attachment = (DexOrderAttachment) transaction.getAttachment();
 
-        dexService.saveOrder(new DexOrder(transaction, attachment));
+        lookupDexService().saveOrder(new DexOrder(transaction, attachment));
     }
 
     @Override
