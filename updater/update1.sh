@@ -206,8 +206,7 @@ then
 	then
 	    bash ./update3.sh $1 $2 $3 true ${NETID}
 	fi
-    elif [ $4 == false ]
-    then
+    else
 	bash ./update3.sh $1 $2 $3 $4 $5
     fi
 
