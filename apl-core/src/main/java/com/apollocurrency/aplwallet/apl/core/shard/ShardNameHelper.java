@@ -28,7 +28,7 @@ public class ShardNameHelper {
     private final static String SHARD_PRUN_ID_PATTERN = "shardprun::%d;chain::%s";
     public ShardNameHelper() {
     }
-    
+
     public String getShardNameByShardId(Long shardId, UUID chainId) {
         if (shardId == null || shardId < 0) {
             throw new IllegalArgumentException("'shardId' should have positive value, but " + shardId + " was supplied");

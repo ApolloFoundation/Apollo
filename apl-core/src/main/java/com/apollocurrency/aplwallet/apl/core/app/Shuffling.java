@@ -20,8 +20,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -47,6 +51,8 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
@@ -169,6 +175,8 @@ public final class Shuffling {
     private static ShardDao shardDao = CDI.current().select(ShardDao.class).get();
     private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
     private static DatabaseManager databaseManager;
+    private static AccountService accountService;
+    private static AccountPublicKeyService accountPublicKeyService;
 
     private static TransactionalDataSource lookupDataSource() {
         if (databaseManager == null) {
@@ -295,7 +303,7 @@ public final class Shuffling {
             throw new RuntimeException(e.toString(), e);
         }
     }
-    
+
     public static DbIterator<Shuffling> getAssignedShufflings(long assigneeAccountId, int from, int to) {
         return shufflingTable.getManyBy(new DbClause.LongClause("assignee_account_id", assigneeAccountId)
                         .and(new DbClause.ByteClause("stage", Stage.PROCESSING.getCode())), from, to,
@@ -309,7 +317,7 @@ public final class Shuffling {
         listeners.notify(shuffling, Event.SHUFFLING_CREATED);
     }
 
-    static void init() {
+    public static void init() {
 
     }
 
@@ -410,11 +418,15 @@ public final class Shuffling {
     }
 
     private void save(Connection con) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO shuffling (id, holding_id, holding_type, "
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                @DatabaseSpecificDml(DmlMarker.SET_ARRAY)
+                PreparedStatement pstmt = con.prepareStatement("MERGE INTO shuffling (id, holding_id, holding_type, "
                 + "issuer_id, amount, participant_count, blocks_remaining, stage, assignee_account_id, "
-                + "recipient_public_keys, registrant_count, height, latest) "
+                + "recipient_public_keys, registrant_count, height, latest, deleted) "
                 + "KEY (id, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)")
+        ) {
             int i = 0;
             pstmt.setLong(++i, this.id);
             DbUtils.setLongZeroToNull(pstmt, ++i, this.holdingId);
@@ -585,7 +597,7 @@ public final class Shuffling {
         byte[] nonce = Convert.toBytes(this.id);
         for (int i = shufflingParticipants.size() - 1; i > participantIndex; i--) {
             ShufflingParticipant participant = shufflingParticipants.get(i);
-            byte[] participantPublicKey = Account.getPublicKey(participant.getAccountId());
+            byte[] participantPublicKey = lookupAccountService().getPublicKeyByteArray(participant.getAccountId());
             AnonymouslyEncryptedData encryptedData = AnonymouslyEncryptedData.encrypt(bytesToEncrypt, secretBytes, participantPublicKey, nonce);
             bytesToEncrypt = encryptedData.getBytes();
         }
@@ -595,7 +607,7 @@ public final class Shuffling {
         if (isLast) {
             Set<Long> recipientAccounts = new HashSet<>(participantCount);
             for (byte[] publicKey : outputDataList) {
-                if (!Crypto.isCanonicalPublicKey(publicKey) || !recipientAccounts.add(Account.getId(publicKey))) {
+                if (!Crypto.isCanonicalPublicKey(publicKey) || !recipientAccounts.add(AccountService.getId(publicKey))) {
                     // duplicate or invalid recipient public key
                     LOG.debug("Invalid recipient public key " + Convert.toHexString(publicKey));
                     return new ShufflingRecipientsAttachment(this.id, Convert.EMPTY_BYTES, shufflingStateHash);
@@ -632,7 +644,7 @@ public final class Shuffling {
             if (shufflingStateHash == null || !Arrays.equals(shufflingStateHash, getStateHash())) {
                 throw new RuntimeException("Current shuffling state hash does not match");
             }
-            long accountId = Account.getId(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)));
+            long accountId = AccountService.getId(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)));
             byte[][] data = null;
             while (participants.hasNext()) {
                 ShufflingParticipant participant = participants.next();
@@ -649,7 +661,7 @@ public final class Shuffling {
             }
             final byte[] nonce = Convert.toBytes(this.id);
             final List<byte[]> keySeeds = new ArrayList<>();
-            byte[] nextParticipantPublicKey = Account.getPublicKey(participants.next().getAccountId());
+            byte[] nextParticipantPublicKey = lookupAccountService().getPublicKeyByteArray(participants.next().getAccountId());
             byte[] keySeed = Crypto.getKeySeed(secretBytes, nextParticipantPublicKey, nonce);
             keySeeds.add(keySeed);
             byte[] publicKey = Crypto.getPublicKey(keySeed);
@@ -669,7 +681,7 @@ public final class Shuffling {
             }
             // decrypt all iteratively, adding the key seeds to the result
             while (participants.hasNext()) {
-                nextParticipantPublicKey = Account.getPublicKey(participants.next().getAccountId());
+                nextParticipantPublicKey = accountService.getPublicKeyByteArray(participants.next().getAccountId());
                 keySeed = Crypto.getKeySeed(secretBytes, nextParticipantPublicKey, nonce);
                 keySeeds.add(keySeed);
                 AnonymouslyEncryptedData encryptedData = AnonymouslyEncryptedData.readEncryptedData(decryptedBytes);
@@ -735,10 +747,12 @@ public final class Shuffling {
         }
         participant.verify();
         // last participant announces all valid recipient public keys
+        lookupAccountService();
         for (byte[] recipientPublicKey : recipientPublicKeys) {
-            long recipientId = Account.getId(recipientPublicKey);
-            if (Account.setOrVerify(recipientId, recipientPublicKey)) {
-                Account.addOrGetAccount(recipientId).apply(recipientPublicKey);
+            long recipientId = AccountService.getId(recipientPublicKey);
+            if (lookupAccountPublickKeyService().setOrVerifyPublicKey(recipientId, recipientPublicKey)) {
+                Account account = accountService.addOrGetAccount(recipientId);
+                lookupAccountPublickKeyService().apply(account, recipientPublicKey);
             }
         }
         setStage(Stage.VERIFICATION, 0, (short)(blockchainConfig.getShufflingProcessingDeadline() + participantCount));
@@ -778,8 +792,9 @@ public final class Shuffling {
             cancelBy(getLastParticipant());
             return;
         }
+        lookupAccountService();
         for (byte[] recipientPublicKey : recipientPublicKeys) {
-            byte[] publicKey = Account.getPublicKey(Account.getId(recipientPublicKey));
+            byte[] publicKey = accountService.getPublicKeyByteArray(AccountService.getId(recipientPublicKey));
             if (publicKey != null && !Arrays.equals(publicKey, recipientPublicKey)) {
                 // distribution not possible, do a cancellation on behalf of last participant instead
                 cancelBy(getLastParticipant());
@@ -789,20 +804,20 @@ public final class Shuffling {
         LedgerEvent event = LedgerEvent.SHUFFLING_DISTRIBUTION;
         try (DbIterator<ShufflingParticipant> participants = ShufflingParticipant.getParticipants(id)) {
             for (ShufflingParticipant participant : participants) {
-                Account participantAccount = Account.getAccount(participant.getAccountId());
+                Account participantAccount = accountService.getAccount(participant.getAccountId());
                 holdingType.addToBalance(participantAccount, event, this.id, this.holdingId, -amount);
                 if (holdingType != HoldingType.APL) {
-                    participantAccount.addToBalanceATM(event, this.id, -blockchainConfig.getShufflingDepositAtm());
+                    accountService.addToBalanceATM(participantAccount, event, this.id, -blockchainConfig.getShufflingDepositAtm());
                 }
             }
         }
         for (byte[] recipientPublicKey : recipientPublicKeys) {
-            long recipientId = Account.getId(recipientPublicKey);
-            Account recipientAccount = Account.addOrGetAccount(recipientId);
-            recipientAccount.apply(recipientPublicKey);
+            long recipientId = AccountService.getId(recipientPublicKey);
+            Account recipientAccount = accountService.addOrGetAccount(recipientId);
+            lookupAccountPublickKeyService().apply(recipientAccount, recipientPublicKey);
             holdingType.addToBalanceAndUnconfirmedBalance(recipientAccount, event, this.id, this.holdingId, amount);
             if (holdingType != HoldingType.APL) {
-                recipientAccount.addToBalanceAndUnconfirmedBalanceATM(event, this.id, blockchainConfig.getShufflingDepositAtm());
+                accountService.addToBalanceAndUnconfirmedBalanceATM(recipientAccount, event, this.id, blockchainConfig.getShufflingDepositAtm());
             }
         }
         setStage(Stage.DONE, 0, (short)0);
@@ -820,19 +835,20 @@ public final class Shuffling {
     private void cancel(Block block) {
         LedgerEvent event = LedgerEvent.SHUFFLING_CANCELLATION;
         long blamedAccountId = blame();
+        lookupAccountService();
         try (DbIterator<ShufflingParticipant> participants = ShufflingParticipant.getParticipants(id)) {
             for (ShufflingParticipant participant : participants) {
-                Account participantAccount = Account.getAccount(participant.getAccountId());
+                Account participantAccount = accountService.getAccount(participant.getAccountId());
                 holdingType.addToUnconfirmedBalance(participantAccount, event, this.id, this.holdingId, this.amount);
                 if (participantAccount.getId() != blamedAccountId) {
                     if (holdingType != HoldingType.APL) {
-                        participantAccount.addToUnconfirmedBalanceATM(event, this.id, blockchainConfig.getShufflingDepositAtm());
+                        accountService.addToUnconfirmedBalanceATM(participantAccount, event, this.id, blockchainConfig.getShufflingDepositAtm());
                     }
                 } else {
                     if (holdingType == HoldingType.APL) {
-                        participantAccount.addToUnconfirmedBalanceATM(event, this.id, -blockchainConfig.getShufflingDepositAtm());
+                        accountService.addToUnconfirmedBalanceATM(participantAccount, event, this.id, -blockchainConfig.getShufflingDepositAtm());
                     }
-                    participantAccount.addToBalanceATM(event, this.id, -blockchainConfig.getShufflingDepositAtm());
+                    accountService.addToBalanceATM(participantAccount, event, this.id, -blockchainConfig.getShufflingDepositAtm());
                 }
             }
         }
@@ -850,19 +866,19 @@ public final class Shuffling {
                 Account previousGeneratorAccount;
                 if (shardHeight > blockHeight) {
                     int diff = shardHeight - blockHeight - 1;
-                    previousGeneratorAccount = Account.getAccount(generators[diff]);
+                    previousGeneratorAccount = accountService.getAccount(generators[diff]);
                 } else {
-                    previousGeneratorAccount = Account.getAccount(blockchain.getBlockAtHeight(blockHeight).getGeneratorId());
+                    previousGeneratorAccount = accountService.getAccount(blockchain.getBlockAtHeight(blockHeight).getGeneratorId());
                 }
-                previousGeneratorAccount.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.BLOCK_GENERATED, block.getId(), fee);
-                previousGeneratorAccount.addToForgedBalanceATM(fee);
+                accountService.addToBalanceAndUnconfirmedBalanceATM(previousGeneratorAccount, LedgerEvent.BLOCK_GENERATED, block.getId(), fee);
+                accountService.addToForgedBalanceATM(previousGeneratorAccount, fee);
                 LOG.debug("Shuffling penalty {} {} awarded to forger at height {}", ((double)fee) / Constants.ONE_APL, blockchainConfig.getCoinSymbol(),
                         block.getHeight() - i - 1);
             }
             fee = blockchainConfig.getShufflingDepositAtm() - 3 * fee;
-            Account blockGeneratorAccount = Account.getAccount(block.getGeneratorId());
-            blockGeneratorAccount.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.BLOCK_GENERATED, block.getId(), fee);
-            blockGeneratorAccount.addToForgedBalanceATM(fee);
+            Account blockGeneratorAccount = accountService.getAccount(block.getGeneratorId());
+            accountService.addToBalanceAndUnconfirmedBalanceATM(blockGeneratorAccount, LedgerEvent.BLOCK_GENERATED, block.getId(), fee);
+            accountService.addToForgedBalanceATM(blockGeneratorAccount, fee);
             LOG.debug("Shuffling penalty {} {} awarded to forger at height {}", ((double)fee) / Constants.ONE_APL, blockchainConfig.getCoinSymbol(),
                     block.getHeight());
         }
@@ -904,6 +920,7 @@ public final class Shuffling {
             throw new RuntimeException("All participants submitted data and verifications, blame phase should not have been entered");
         }
         Set<Long> recipientAccounts = new HashSet<>(participantCount);
+        lookupAccountService();
         // start from issuer and verify all data up, skipping last participant
         for (int i = 0; i < participantCount - 1; i++) {
             ShufflingParticipant participant = participants.get(i);
@@ -929,7 +946,7 @@ public final class Shuffling {
             }
             for (int k = i + 1; k < participantCount; k++) {
                 ShufflingParticipant nextParticipant = participants.get(k);
-                byte[] nextParticipantPublicKey = Account.getPublicKey(nextParticipant.getAccountId());
+                byte[] nextParticipantPublicKey = accountService.getPublicKeyByteArray(nextParticipant.getAccountId());
                 byte[] keySeed = keySeeds[k - i - 1];
                 byte[] participantBytes;
                 try {
@@ -948,12 +965,12 @@ public final class Shuffling {
                         return participant.getAccountId();
                     }
                     // check for collisions and assume they are intentional
-                    byte[] currentPublicKey = Account.getPublicKey(Account.getId(participantBytes));
+                    byte[] currentPublicKey = accountService.getPublicKeyByteArray(AccountService.getId(participantBytes));
                     if (currentPublicKey != null && !Arrays.equals(currentPublicKey, participantBytes)) {
                         LOG.debug("Participant {} submitted colliding recipient public key", Long.toUnsignedString(participant.getAccountId()));
                         return participant.getAccountId();
                     }
-                    if (!recipientAccounts.add(Account.getId(participantBytes))) {
+                    if (!recipientAccounts.add(AccountService.getId(participantBytes))) {
                         LOG.debug("Participant {} submitted duplicate recipient public key", Long.toUnsignedString(participant.getAccountId()));
                         return participant.getAccountId();
                     }
@@ -987,7 +1004,7 @@ public final class Shuffling {
                 participant.delete();
             }
         }
-        shufflingTable.delete(this);
+        shufflingTable.deleteAtHeight(this, blockchain.getHeight());
         LOG.debug("DELETED Shuffling {} entered stage {}, assignee {}, remaining blocks {}",
                 Long.toUnsignedString(id), this.stage, Long.toUnsignedString(this.assigneeAccountId), this.blocksRemaining);
 
@@ -1009,4 +1026,16 @@ public final class Shuffling {
         return digest.digest();
     }
 
+    private AccountService lookupAccountService(){
+        if ( accountService == null) {
+            accountService = CDI.current().select(AccountServiceImpl.class).get();
+        }
+        return accountService;
+    }
+    private AccountPublicKeyService lookupAccountPublickKeyService(){
+        if ( accountPublicKeyService == null) {
+            accountPublicKeyService = CDI.current().select(AccountPublicKeyServiceImpl.class).get();
+        }
+        return accountPublicKeyService;
+    }
 }

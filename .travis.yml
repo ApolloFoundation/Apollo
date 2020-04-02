@@ -1,0 +1,12 @@
+language: java
+jdk: oraclejdk11
+
+script:
+  - ./mvnw clean install
+
+before_install:
+  - chmod +x mvnw
+
+cache:
+  directories:
+    - $HOME/.m2/repository/

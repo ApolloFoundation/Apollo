@@ -20,17 +20,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import javax.enterprise.inject.spi.CDI;
-
-import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasAssignment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasSell;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasAssignment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasSell;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -62,8 +63,11 @@ public final class Alias {
         }
 
         private void save(Connection con) throws SQLException {
-            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO alias_offer (id, price, buyer_id, "
-                    + "height) KEY (id, height) VALUES (?, ?, ?, ?)")) {
+            try (
+                    @DatabaseSpecificDml(DmlMarker.MERGE)
+                    PreparedStatement pstmt = con.prepareStatement("MERGE INTO alias_offer (id, price, buyer_id, "
+                    + "height, latest, deleted) KEY (id, height) VALUES (?, ?, ?, ?, TRUE, FALSE)")
+            ) {
                 int i = 0;
                 pstmt.setLong(++i, this.aliasId);
                 pstmt.setLong(++i, this.priceATM);
@@ -118,7 +122,7 @@ public final class Alias {
         }
 
         @Override
-        protected String defaultSort() {
+        public String defaultSort() {
             return " ORDER BY alias_name_lower ";
         }
 
@@ -180,9 +184,9 @@ public final class Alias {
         final Offer offer = Alias.getOffer(alias);
         if (offer != null) {
             offer.priceATM = Long.MAX_VALUE;
-            offerTable.delete(offer);
+            offerTable.deleteAtHeight(offer, blockchain.getHeight());
         }
-        aliasTable.delete(alias);
+        aliasTable.deleteAtHeight(alias, blockchain.getHeight());
     }
 
     public static void addOrUpdateAlias(Transaction transaction, MessagingAliasAssignment attachment) {
@@ -225,7 +229,7 @@ public final class Alias {
         Offer offer = getOffer(alias);
         if (offer != null) {
             offer.priceATM = Long.MAX_VALUE;
-            offerTable.delete(offer);
+            offerTable.deleteAtHeight(offer, blockchain.getHeight());
         }
     }
 
@@ -258,9 +262,13 @@ public final class Alias {
     }
 
     private void save(Connection con) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO alias (id, account_id, alias_name, "
-                + "alias_uri, timestamp, height) KEY (id, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?)")) {
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
+                PreparedStatement pstmt = con.prepareStatement("MERGE INTO alias (id, account_id, alias_name, "
+                + "alias_uri, timestamp, height, latest, deleted) KEY (id, height) "
+                + "VALUES (?, ?, ?, ?, ?, ?, TRUE, FALSE)")
+        ) {
             int i = 0;
             pstmt.setLong(++i, this.id);
             pstmt.setLong(++i, this.accountId);

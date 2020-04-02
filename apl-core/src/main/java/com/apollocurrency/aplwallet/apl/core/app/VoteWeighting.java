@@ -20,12 +20,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.account.service.*;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
-import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+
+import javax.enterprise.inject.spi.CDI;
 
 public final class VoteWeighting {
 
@@ -57,7 +57,7 @@ public final class VoteWeighting {
         ATM(1) {
             @Override
             public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
-                long atmBalance = Account.getAccount(voterId, height).getBalanceATM();
+                long atmBalance = lookupAccountService().getAccount(voterId, height).getBalanceATM();
                 return atmBalance >= voteWeighting.minBalance ? atmBalance : 0;
             }
             @Override
@@ -68,7 +68,7 @@ public final class VoteWeighting {
         ASSET(2) {
             @Override
             public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
-                long atuBalance = AccountAssetTable.getInstance().getAssetBalanceATU(voterId, voteWeighting.holdingId, height);
+                long atuBalance = lookupAccountAssetService().getAssetBalanceATU(voterId, voteWeighting.holdingId, height);
                 return atuBalance >= voteWeighting.minBalance ? atuBalance : 0;
             }
             @Override
@@ -79,7 +79,7 @@ public final class VoteWeighting {
         CURRENCY(3) {
             @Override
             public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
-                long units = AccountCurrencyTable.getCurrencyUnits(voterId, voteWeighting.holdingId, height);
+                long units = lookupAccountCurrencyService().getCurrencyUnits(voterId, voteWeighting.holdingId, height);
                 return units >= voteWeighting.minBalance ? units : 0;
             }
             @Override
@@ -150,19 +150,19 @@ public final class VoteWeighting {
         ATM(1) {
             @Override
             public final long getBalance(VoteWeighting voteWeighting, long voterId, int height) {
-                return Account.getAccount(voterId, height).getBalanceATM();
+                return lookupAccountService().getAccount(voterId, height).getBalanceATM();
             }
         },
         ASSET(2) {
             @Override
             public final long getBalance(VoteWeighting voteWeighting, long voterId, int height) {
-                return AccountAssetTable.getAssetBalanceATU(voterId, voteWeighting.holdingId, height);
+                return lookupAccountAssetService().getAssetBalanceATU(voterId, voteWeighting.holdingId, height);
             }
         },
         CURRENCY(3) {
             @Override
             public final long getBalance(VoteWeighting voteWeighting, long voterId, int height) {
-                return AccountCurrencyTable.getCurrencyUnits(voterId, voteWeighting.holdingId, height);
+                return lookupAccountCurrencyService().getCurrencyUnits(voterId, voteWeighting.holdingId, height);
             }
         };
 
@@ -186,6 +186,32 @@ public final class VoteWeighting {
             }
             throw new IllegalArgumentException("Invalid minBalanceModel " + code);
         }
+    }
+    private static AccountService accountService;
+
+    private static AccountService lookupAccountService(){
+        if ( accountService == null) {
+            accountService = CDI.current().select(AccountServiceImpl.class).get();
+        }
+        return accountService;
+    }
+
+    private static AccountAssetService accountAssetService;
+
+    private static AccountAssetService lookupAccountAssetService(){
+        if ( accountAssetService == null) {
+            accountAssetService = CDI.current().select(AccountAssetServiceImpl.class).get();
+        }
+        return accountAssetService;
+    }
+
+    private static AccountCurrencyService accountCurrencyService;
+
+    private static AccountCurrencyService lookupAccountCurrencyService(){
+        if (accountCurrencyService == null){
+            accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
+        }
+        return accountCurrencyService;
     }
 
     private final VotingModel votingModel;
@@ -301,4 +327,14 @@ public final class VoteWeighting {
         return hashCode;
     }
 
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("VoteWeighting{");
+        sb.append("votingModel=").append(votingModel);
+        sb.append(", holdingId=").append(holdingId);
+        sb.append(", minBalance=").append(minBalance);
+        sb.append(", minBalanceModel=").append(minBalanceModel);
+        sb.append('}');
+        return sb.toString();
+    }
 }

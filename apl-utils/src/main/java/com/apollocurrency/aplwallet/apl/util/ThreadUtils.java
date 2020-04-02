@@ -32,6 +32,10 @@ public class ThreadUtils {
         StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
         return String.join("->", getStacktraceSpec(stackTraceElements[5]), getStacktraceSpec(stackTraceElements[4]), getStacktraceSpec(stackTraceElements[3]));
     }
+    public static String last5Stacktrace() {
+        StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+        return String.join("->", getStacktraceSpec(stackTraceElements[7]),getStacktraceSpec(stackTraceElements[6]), getStacktraceSpec(stackTraceElements[5]), getStacktraceSpec(stackTraceElements[4]), getStacktraceSpec(stackTraceElements[3]));
+    }
 
     public static String lastStacktrace() {
         return lastStacktrace(Thread.currentThread().getStackTrace());

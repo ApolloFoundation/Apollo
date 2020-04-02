@@ -20,8 +20,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.monetary;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -31,6 +35,8 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Observes;
@@ -43,9 +49,12 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 public abstract class CurrencyExchangeOffer {
 
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
+    private static AccountCurrencyService accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
 
     public static final class AvailableOffers {
 
@@ -143,7 +152,7 @@ public abstract class CurrencyExchangeOffer {
 
     static void exchangeCurrencyForAPL(Transaction transaction, Account account, final long currencyId, final long rateATM, final long units) {
         List<CurrencyExchangeOffer> currencyBuyOffers = getAvailableBuyOffers(currencyId, rateATM);
-
+        log.trace("account === 0 exchangeCurrencyForAPL account={}, currencyId={}, rateATM={}, units={}", account, currencyId, rateATM, units);
         long totalAmountATM = 0;
         long remainingUnits = units;
         for (CurrencyExchangeOffer offer : currencyBuyOffers) {
@@ -159,17 +168,22 @@ public abstract class CurrencyExchangeOffer {
             offer.decreaseLimitAndSupply(curUnits);
             long excess = offer.getCounterOffer().increaseSupply(curUnits);
 
-            Account counterAccount = Account.getAccount(offer.getAccountId());
-            counterAccount.addToBalanceATM(LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), -curAmountATM);
-            counterAccount.addToCurrencyUnits(LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), currencyId, curUnits);
-            counterAccount.addToUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), currencyId, excess);
+            Account counterAccount = accountService.getAccount(offer.getAccountId());
+            log.trace("account === 1 exchangeCurrencyForAPL account={}", counterAccount);
+            accountService.addToBalanceATM(counterAccount, LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), -curAmountATM);
+            accountCurrencyService.addToCurrencyUnits(counterAccount, LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), currencyId, curUnits);
+            accountCurrencyService.addToUnconfirmedCurrencyUnits(counterAccount, LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), currencyId, excess);
+            log.trace("account === 2 exchangeCurrencyForAPL account={}", counterAccount);
             Exchange.addExchange(transaction, currencyId, offer, account.getId(),
                     offer.getAccountId(), curUnits, blockchain.getLastBlock());
         }
         long transactionId = transaction.getId();
-        account.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.CURRENCY_EXCHANGE, transactionId, totalAmountATM);
-        account.addToCurrencyUnits(LedgerEvent.CURRENCY_EXCHANGE, transactionId, currencyId, -(units - remainingUnits));
-        account.addToUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_EXCHANGE, transactionId, currencyId, remainingUnits);
+        account = accountService.getAccount(account);
+        log.trace("account === 3 exchangeCurrencyForAPL account={}", account);
+        accountService.addToBalanceAndUnconfirmedBalanceATM(account, LedgerEvent.CURRENCY_EXCHANGE, transactionId, totalAmountATM);
+        accountCurrencyService.addToCurrencyUnits(account, LedgerEvent.CURRENCY_EXCHANGE, transactionId, currencyId, -(units - remainingUnits));
+        accountCurrencyService.addToUnconfirmedCurrencyUnits(account, LedgerEvent.CURRENCY_EXCHANGE, transactionId, currencyId, remainingUnits);
+        log.trace("account === 4 exchangeCurrencyForAPL account={}", account);
     }
 
     public static AvailableOffers getAvailableToBuy(final long currencyId, final long units) {
@@ -195,7 +209,7 @@ public abstract class CurrencyExchangeOffer {
         List<CurrencyExchangeOffer> currencySellOffers = getAvailableSellOffers(currencyId, rateATM);
         long totalAmountATM = 0;
         long remainingUnits = units;
-
+        log.trace("account === 0 exchangeAPLForCurrency account={}, currencyId={}, rateATM={}, units={}", account, currencyId, rateATM, units);
         for (CurrencyExchangeOffer offer : currencySellOffers) {
             if (remainingUnits == 0) {
                 break;
@@ -209,23 +223,28 @@ public abstract class CurrencyExchangeOffer {
             offer.decreaseLimitAndSupply(curUnits);
             long excess = offer.getCounterOffer().increaseSupply(curUnits);
 
-            Account counterAccount = Account.getAccount(offer.getAccountId());
-            counterAccount.addToBalanceATM(LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), curAmountATM);
-            counterAccount.addToUnconfirmedBalanceATM(LedgerEvent.CURRENCY_EXCHANGE, offer.getId(),
+            Account counterAccount = accountService.getAccount(offer.getAccountId());
+            log.trace("account === 1 exchangeAPLForCurrency account={}", counterAccount);
+            accountService.addToBalanceATM(counterAccount, LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), curAmountATM);
+            accountService.addToUnconfirmedBalanceATM(counterAccount, LedgerEvent.CURRENCY_EXCHANGE, offer.getId(),
                     Math.addExact(
                             Math.multiplyExact(curUnits - excess, offer.getRateATM() - offer.getCounterOffer().getRateATM()),
                             Math.multiplyExact(excess, offer.getRateATM())
                     )
             );
-            counterAccount.addToCurrencyUnits(LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), currencyId, -curUnits);
+            accountCurrencyService.addToCurrencyUnits(counterAccount, LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), currencyId, -curUnits);
+            log.trace("account === 2 exchangeAPLForCurrency account={}", counterAccount);
             Exchange.addExchange(transaction, currencyId, offer, offer.getAccountId(),
                     account.getId(), curUnits, blockchain.getLastBlock());
         }
         long transactionId = transaction.getId();
-        account.addToCurrencyAndUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_EXCHANGE, transactionId,
+        account = accountService.getAccount(account);
+        log.trace("account === 3 exchangeAPLForCurrency account={}", account);
+        accountCurrencyService.addToCurrencyAndUnconfirmedCurrencyUnits(account, LedgerEvent.CURRENCY_EXCHANGE, transactionId,
                 currencyId, Math.subtractExact(units, remainingUnits));
-        account.addToBalanceATM(LedgerEvent.CURRENCY_EXCHANGE, transactionId, -totalAmountATM);
-        account.addToUnconfirmedBalanceATM(LedgerEvent.CURRENCY_EXCHANGE, transactionId, Math.multiplyExact(units, rateATM) - totalAmountATM);
+        accountService.addToBalanceATM(account, LedgerEvent.CURRENCY_EXCHANGE, transactionId, -totalAmountATM);
+        accountService.addToUnconfirmedBalanceATM(account, LedgerEvent.CURRENCY_EXCHANGE, transactionId, Math.multiplyExact(units, rateATM) - totalAmountATM);
+        log.trace("account === 4 exchangeAPLForCurrency account={}", account);
     }
 
     static void removeOffer(LedgerEvent event, CurrencyBuyOffer buyOffer) {
@@ -234,9 +253,9 @@ public abstract class CurrencyExchangeOffer {
         CurrencyBuyOffer.remove(buyOffer);
         CurrencySellOffer.remove(sellOffer);
 
-        Account account = Account.getAccount(buyOffer.getAccountId());
-        account.addToUnconfirmedBalanceATM(event, buyOffer.getId(), Math.multiplyExact(buyOffer.getSupply(), buyOffer.getRateATM()));
-        account.addToUnconfirmedCurrencyUnits(event, buyOffer.getId(), buyOffer.getCurrencyId(), sellOffer.getSupply());
+        Account account = accountService.getAccount(buyOffer.getAccountId());
+        accountService.addToUnconfirmedBalanceATM(account, event, buyOffer.getId(), Math.multiplyExact(buyOffer.getSupply(), buyOffer.getRateATM()));
+        accountCurrencyService.addToUnconfirmedCurrencyUnits(account, event, buyOffer.getId(), buyOffer.getCurrencyId(), sellOffer.getSupply());
     }
 
 
@@ -279,9 +298,12 @@ public abstract class CurrencyExchangeOffer {
     }
 
     void save(Connection con, String table) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (id, currency_id, account_id, "
-                + "rate, unit_limit, supply, expiration_height, creation_height, transaction_index, transaction_height, height, latest) "
-                + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (id, currency_id, account_id, "
+                + "rate, unit_limit, supply, expiration_height, creation_height, transaction_index, transaction_height, height, latest, deleted) "
+                + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)")
+        ) {
             int i = 0;
             pstmt.setLong(++i, this.id);
             pstmt.setLong(++i, this.currencyId);

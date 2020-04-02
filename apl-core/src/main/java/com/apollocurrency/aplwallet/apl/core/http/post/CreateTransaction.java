@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -112,7 +112,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
 
     public TransactionResponse createTransaction(HttpServletRequest req, Account senderAccount, long recipientId, long amountATM, Attachment attachment, boolean broadcast) throws AplException.ValidationException, ParameterException {
         CreateTransactionRequest createTransactionRequest = HttpRequestToCreateTransactionRequestConverter
-                .convert(req, senderAccount, recipientId, amountATM, attachment, broadcast);
+                .convert(req, senderAccount, recipientId, amountATM, attachment, broadcast, lookupAccountService());
 
 
         JSONObject response = new JSONObject();

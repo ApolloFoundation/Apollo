@@ -4,25 +4,27 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.api.dto.Status2FA;
+import com.apollocurrency.aplwallet.apl.core.config.Property;
+import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthEntity;
+import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepository;
+import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
+import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Base32;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.Random;
 
-import com.apollocurrency.aplwallet.api.dto.Status2FA;
-import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthEntity;
-import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepository;
-import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.binary.Base32;
-import org.slf4j.Logger;
-
 @Slf4j
+@Singleton
 public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
-    private static final Logger LOG = getLogger(TwoFactorAuthServiceImpl.class);
     private static final Base32 BASE_32 = new Base32();
     private static final String ISSUER_URL_TEMPLATE = "&issuer=Apollo-%s-%d";
     private static final int SECRET_LENGTH = 32;
@@ -34,15 +36,17 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
     private final Random random;
     private final String issuerSuffix;
 
-    public TwoFactorAuthServiceImpl(TwoFactorAuthRepository repository, String issuerSuffix,
-                                    TwoFactorAuthRepository targetFileRepository) {
+    @Inject
+    public TwoFactorAuthServiceImpl(@Named("DBRepository") TwoFactorAuthRepository repository,
+                                    @Property("apl.issuerSuffix2FA") String issuerSuffix,
+                                    @Named("FSRepository")TwoFactorAuthRepository targetFileRepository) {
         this(repository, issuerSuffix, new Random(), targetFileRepository);
     }
 
     public TwoFactorAuthServiceImpl(TwoFactorAuthRepository repository, String issuerSuffix, Random random,
                                     TwoFactorAuthRepository targetFileRepository) {
         if (issuerSuffix == null || issuerSuffix.trim().isEmpty()) {
-            throw new IllegalArgumentException("issuerSuffix cannot be null or empty");
+            issuerSuffix = RuntimeEnvironment.getInstance().isDesktopApplicationEnabled() ? "desktop" : "web";
         }
         this.repository = repository; // database repo
         this.random = random;
@@ -54,7 +58,6 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
 //    transaction management required
     public TwoFactorAuthDetails enable(long accountId) {
 //        check existing and not confirmed 2fa
-//        TwoFactorAuthEntity entity = repository.get(accountId);
         TwoFactorAuthEntity entity = targetFileRepository.get(accountId); // switched to File storage
         if (entity != null) {
             if (!entity.isConfirmed()) {
@@ -69,7 +72,6 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
 
         String base32Secret = TimeBasedOneTimePasswordUtil.generateBase32Secret(SECRET_LENGTH);
         byte[] base32Bytes = BASE_32.decode(base32Secret);
-//        boolean saved = repository.add(new TwoFactorAuthEntity(accountId, base32Bytes, false));
         boolean saved = targetFileRepository.add(new TwoFactorAuthEntity(accountId, base32Bytes, false)); // switched to File storage
         if (!saved) {
             return new TwoFactorAuthDetails(null, null, Status2FA.INTERNAL_ERROR);
@@ -92,26 +94,22 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
 
     @Override
     public Status2FA disable(long accountId, int authCode) {
-//        TwoFactorAuthEntity entity = repository.get(accountId);
         TwoFactorAuthEntity entity = targetFileRepository.get(accountId); // switched to File storage
         Status2FA status2Fa = process2FAEntity(entity, true, authCode);
         if (status2Fa != Status2FA.OK) {
             return status2Fa;
         }
-//        return repository.delete(accountId) ? Status2FA.OK : Status2FA.INTERNAL_ERROR;
         return targetFileRepository.delete(accountId) ? Status2FA.OK : Status2FA.INTERNAL_ERROR; // switched to File storage
     }
 
     @Override
     public boolean isEnabled(long accountId) {
-//        TwoFactorAuthEntity entity = repository.get(accountId);
         TwoFactorAuthEntity entity = targetFileRepository.get(accountId); // switched to File storage
         return entity != null && entity.isConfirmed() && entity.getSecret() != null;
     }
 
     @Override
     public Status2FA tryAuth(long accountId, int authCode) {
-//        TwoFactorAuthEntity entity = repository.get(accountId);
         TwoFactorAuthEntity entity = targetFileRepository.get(accountId); // switched to File storage
         return process2FAEntity(entity, true, authCode);
     }
@@ -128,21 +126,19 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
             }
         }
         catch (GeneralSecurityException e) {
-            LOG.error("Unable to create temporal code", e);
+            log.error("Unable to create temporal code", e);
         }
         return success;
     }
 
     @Override
     public Status2FA confirm(long accountId, int authCode) {
-//        TwoFactorAuthEntity entity = repository.get(accountId);
         TwoFactorAuthEntity entity = targetFileRepository.get(accountId); // switched to File storage
         Status2FA analyzedStatus = process2FAEntity(entity, false, authCode);
         if (analyzedStatus != Status2FA.OK) {
             return analyzedStatus;
         }
         entity.setConfirmed(true);
-//        boolean updated = repository.update(entity);
         boolean updated = targetFileRepository.update(entity); // switched to File storage
         if (!updated) {
             return Status2FA.INTERNAL_ERROR;

@@ -78,43 +78,11 @@ public abstract class ValuesDbTableTest<T extends DerivedEntity> extends BasicDb
         List<T> toInsert = dataToInsert();
         DbUtils.inTransaction(extension, (con) -> {
             table.insert(toInsert);
-            //check cache in transaction
-            assertInCache(toInsert);
         });
         //check db
-        assertNotInCache(toInsert);
         List<T> retrievedData = table.get(table.getDbKeyFactory().newKey(toInsert.get(0)));
         assertEquals(toInsert, retrievedData);
     }
-
-    @Test
-    public void testGetInCached() {
-        Map.Entry<DbKey, List<T>> entry = getEntryWithListOfSize(getAllLatest(), table.getDbKeyFactory(), 2);
-        List<T> values = sortByHeightAsc(entry.getValue());
-        DbKey dbKey = entry.getKey();
-        DbUtils.inTransaction(extension, con -> {
-            List<T> actual = table.get(dbKey);
-            assertInCache(values);
-            assertEquals(values, actual);
-        });
-        assertNotInCache(values);
-    }
-
-    @Test
-    public void testGetFromDeletedCache() {
-        Map.Entry<DbKey, List<T>> entry = getEntryWithListOfSize(getAllLatest(), table.getDbKeyFactory(), 2);
-        List<T> values = sortByHeightAsc(entry.getValue());
-        DbKey dbKey = entry.getKey();
-        DbUtils.inTransaction(extension, con -> {
-            List<T> actual = table.get(dbKey);
-            assertInCache(values);
-            assertEquals(values, actual);
-            removeFromCache(values);
-            assertNotInCache(values);
-        });
-        assertNotInCache(values);
-    }
-
 
     @Test
     public void testInsertNotInTransaction() {
@@ -127,37 +95,6 @@ public abstract class ValuesDbTableTest<T extends DerivedEntity> extends BasicDb
         T t = dataToInsert.get(0);
         t.setDbKey(INCORRECT_DB_KEY);
         assertThrows(IllegalArgumentException.class, () -> DbUtils.inTransaction(extension, (con) -> table.insert(dataToInsert)));
-    }
-
-
-    public void assertInCache(List<T> values) {
-        List<T> cachedValues = getCache(table.getDbKeyFactory().newKey(values.get(0)));
-        assertEquals(values, cachedValues);
-    }
-
-    public void assertNotInCache(List<T> values) {
-        List<T> cachedValues = getCache(table.getDbKeyFactory().newKey(values.get(0)));
-        assertNotEquals(values, cachedValues);
-    }
-
-    public  List<T> getCache(DbKey dbKey) {
-        if (!extension.getDatabaseManager().getDataSource().isInTransaction()) {
-            return DbUtils.getInTransaction(extension, (con) -> getCacheInTransaction(dbKey));
-        } else {
-            return getCacheInTransaction(dbKey);
-        }
-    }
-
-    public List<T> getCacheInTransaction(DbKey dbKey) {
-        Map<DbKey, Object> cache = extension.getDatabaseManager().getDataSource().getCache(derivedDbTable.getTableName());
-        return (List<T>) cache.get(dbKey);
-    }
-
-
-    public void removeFromCache(List<T> values) {
-        DbKey dbKey = table.getDbKeyFactory().newKey(values.get(0));
-        Map<DbKey, Object> cache = extension.getDatabaseManager().getDataSource().getCache(derivedDbTable.getTableName());
-        cache.remove(dbKey);
     }
 
     protected abstract List<T> dataToInsert();

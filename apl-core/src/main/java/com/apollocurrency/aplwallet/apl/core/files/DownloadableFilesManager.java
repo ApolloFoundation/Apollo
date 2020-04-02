@@ -51,7 +51,7 @@ public class DownloadableFilesManager {
     public static final String MOD_CHAINID="chainid";
     public static final Map<String, Integer> LOCATION_MODIFIERS = Map.of(MOD_CHAINID, 0);
 
-    
+
     private final ShardNameHelper shardNameHelper;
     private final DirProvider dirProvider;
     private final BlockchainConfig blockchainConfig;
@@ -71,7 +71,7 @@ public class DownloadableFilesManager {
         this.shardNameHelper = shardNameHelper;
         this.blockchainConfig = blockchainConfig;
     }
-    
+
     public void onAnyFileChangedEvent(@ObservesAsync @FileChangedEvent ChunkedFileOps fileData) {
         FileDownloadInfo downloadInfo = fillFileDownloadInfo(fileData);
         if (fileData == null) {
@@ -92,7 +92,7 @@ public class DownloadableFilesManager {
             );
         }
     }
-    
+
     public FileInfo getFileInfo(String fileId) {
         Objects.requireNonNull(fileId, "fileId is NULL");
         FileInfo fi;
@@ -100,12 +100,12 @@ public class DownloadableFilesManager {
         fi = fdi.fileInfo;
         return fi;
     }
-    
+
     public FileDownloadInfo updateFileDownloadInfo(String fileId){
         fdiCache.remove(fileId);
         return  getFileDownloadInfo(fileId);
     }
-    
+
     public FileDownloadInfo getFileDownloadInfo(String fileId) {
         Objects.requireNonNull(fileId, "fileId is NULL");
         FileDownloadInfo fdi = fdiCache.get(fileId);
@@ -115,7 +115,7 @@ public class DownloadableFilesManager {
         }
         return fdi;
     }
-    
+
     private FileDownloadInfo fillFileDownloadInfo(ChunkedFileOps fops){
         FileDownloadInfo downloadInfo = new FileDownloadInfo();
         Path fpath = fops.getAbsPath();
@@ -146,7 +146,7 @@ public class DownloadableFilesManager {
         }
         return downloadInfo;
     }
-    
+
     private FileDownloadInfo createFileDownloadInfo(String fileId) {
         log.debug("createing FileDownloadInfo {} ", fileId);
         Objects.requireNonNull(fileId, "fileId is NULL");
@@ -205,7 +205,7 @@ public class DownloadableFilesManager {
         }
         return chainId;
     }
-    
+
     /**
      * Find the real ZIP file in folder by specified fileId.
      *

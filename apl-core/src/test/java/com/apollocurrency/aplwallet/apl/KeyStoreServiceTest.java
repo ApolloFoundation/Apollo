@@ -22,6 +22,7 @@ import com.apollocurrency.aplwallet.apl.core.app.VaultKeyStoreServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import org.jboss.weld.junit.MockBean;
@@ -40,6 +41,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Random;
+import java.util.stream.Stream;
 //TODO implement tests.
 
 @EnableWeld
@@ -89,15 +91,16 @@ public class KeyStoreServiceTest {
 
     @AfterEach
     void tearDown() throws Exception {
-        Files.list(tempDirectory).forEach(tempFilePath -> {
-            try {
-                Files.delete(tempFilePath);
-            }
-            catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        Files.delete(tempDirectory);
+        try (Stream<Path> pathStream = Files.list(tempDirectory)) {
+            pathStream.forEach(tempFilePath -> {
+                try {
+                    Files.delete(tempFilePath);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+            Files.delete(tempDirectory);
+        }
     }
 
     @Test
@@ -110,20 +113,21 @@ public class KeyStoreServiceTest {
         verify(keyStoreSpy, times(1)).storeJSONSecretBytes(any(Path.class), any(EncryptedSecretBytesDetails.class));
         verify(keyStoreSpy, times(1)).findKeyStorePathWithLatestVersion(anyLong());
 
-        assertEquals(2, Files.list(tempDirectory).count());
+        assertEquals(2, FileUtils.countElementsOfDirectory(tempDirectory));
 
         String rsAcc = Convert.defaultRsAccount(Convert.getId(Crypto.getPublicKey(Crypto.getKeySeed(Convert.parseHexString(SECRET_BYTES_2)))));
 
-        Path encryptedKeyPath =
-                Files.list(tempDirectory).filter(path -> path.getFileName().toString().endsWith(rsAcc)).findFirst().orElseThrow(()->new RuntimeException("No encrypted key found for " + rsAcc  + " account"));
+        try (Stream<Path> paths = Files.list(tempDirectory)) {
+            Path encryptedKeyPath = paths.filter(path -> path.getFileName().toString().endsWith(rsAcc)).findFirst().orElseThrow(() -> new RuntimeException("No encrypted key found for " + rsAcc + " account"));
 
-        EncryptedSecretBytesDetails KeyDetails = JSON.getMapper().readValue(encryptedKeyPath.toFile(), EncryptedSecretBytesDetails.class);
+            EncryptedSecretBytesDetails KeyDetails = JSON.getMapper().readValue(encryptedKeyPath.toFile(), EncryptedSecretBytesDetails.class);
 
-        byte[] actualKey = Crypto.aesDecrypt(KeyDetails.getEncryptedSecretBytes(), Crypto.getKeySeed(PASSPHRASE,
+            byte[] actualKey = Crypto.aesDecrypt(KeyDetails.getEncryptedSecretBytes(), Crypto.getKeySeed(PASSPHRASE,
                 KeyDetails.getNonce(), Convert.longToBytes(KeyDetails.getTimestamp())));
 
-        assertEquals(SECRET_BYTES_2, Convert.toHexString(actualKey));
-        assertEquals(ACCOUNT2, rsAcc);
+            assertEquals(SECRET_BYTES_2, Convert.toHexString(actualKey));
+            assertEquals(ACCOUNT2, rsAcc);
+        }
     }
 
 
@@ -142,9 +146,12 @@ public class KeyStoreServiceTest {
 
         verify(keyStoreSpy, times(1)).findKeyStorePathWithLatestVersion(accountId);
 
-        assertEquals(1, Files.list(tempDirectory).count());
-        Path encryptedKeyPath = Files.list(tempDirectory).findFirst().get();
-        assertTrue(encryptedKeyPath.getFileName().toString().endsWith(rsAcc));
+        assertEquals(1, FileUtils.countElementsOfDirectory(tempDirectory));
+
+        try (Stream<Path> pathStream = Files.list(tempDirectory)) {
+            Path encryptedKeyPath = pathStream.findFirst().get();
+            assertTrue(encryptedKeyPath.getFileName().toString().endsWith(rsAcc));
+        }
 
         assertEquals(SECRET_BYTES_1, Convert.toHexString(actualKey));
 

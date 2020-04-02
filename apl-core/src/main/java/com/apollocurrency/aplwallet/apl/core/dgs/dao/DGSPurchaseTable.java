@@ -7,19 +7,21 @@ package com.apollocurrency.aplwallet.apl.core.dgs.dao;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.core.dgs.mapper.DGSPurchaseMapper;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import javax.inject.Singleton;
 
 @Singleton
-public class DGSPurchaseTable extends VersionedDeletableEntityDbTable<DGSPurchase> {
+public class DGSPurchaseTable extends EntityDbTable<DGSPurchase> {
     private static final LongKeyFactory<DGSPurchase> KEY_FACTORY = new LongKeyFactory<DGSPurchase>("id") {
         @Override
         public DbKey newKey(DGSPurchase purchase) {
@@ -34,7 +36,7 @@ public class DGSPurchaseTable extends VersionedDeletableEntityDbTable<DGSPurchas
     private static final String TABLE = "purchase";
 
     public DGSPurchaseTable() {
-        super(TABLE, KEY_FACTORY, false);
+        super(TABLE, KEY_FACTORY, true, null, false);
     }
 
     @Override
@@ -46,10 +48,14 @@ public class DGSPurchaseTable extends VersionedDeletableEntityDbTable<DGSPurchas
 
     @Override
     public void save(Connection con, DGSPurchase purchase) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO purchase (id, buyer_id, goods_id, seller_id, "
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
+                PreparedStatement pstmt = con.prepareStatement("MERGE INTO purchase (id, buyer_id, goods_id, seller_id, "
                 + "quantity, price, deadline, note, nonce, timestamp, pending, goods, goods_nonce, goods_is_text, refund_note, "
                 + "refund_nonce, has_feedback_notes, has_public_feedbacks, discount, refund, height, latest) KEY (id, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")
+        ) {
             int i = 0;
             pstmt.setLong(++i, purchase.getId());
             pstmt.setLong(++i, purchase.getBuyerId());
@@ -78,7 +84,8 @@ public class DGSPurchaseTable extends VersionedDeletableEntityDbTable<DGSPurchas
     }
 
     @Override
-    protected String defaultSort() {
+    @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
+    public String defaultSort() {
         return " ORDER BY timestamp DESC, id ASC ";
     }
 

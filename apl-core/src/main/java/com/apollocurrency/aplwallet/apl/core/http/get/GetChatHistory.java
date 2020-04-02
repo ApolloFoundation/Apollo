@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Chat;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -26,10 +26,10 @@ public class GetChatHistory extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
-        long account1 = ParameterParser.getAccountId(request,"account1", true);
-        long account2 = ParameterParser.getAccountId(request,"account2", true);
-        int firstIndex = ParameterParser.getFirstIndex(request);
-        int lastIndex = ParameterParser.getLastIndex(request);
+        long account1 = HttpParameterParserUtil.getAccountId(request,"account1", true);
+        long account2 = HttpParameterParserUtil.getAccountId(request,"account2", true);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(request);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(request);
         JSONObject response = new JSONObject();
         JSONArray chatJsonArray = new JSONArray();
         try (DbIterator<? extends Transaction> iter = Chat.getChatHistory(account1, account2, firstIndex, lastIndex)) {

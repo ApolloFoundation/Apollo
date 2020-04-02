@@ -20,7 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.http.HttpServletRequest;
+
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerService;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -33,9 +37,7 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
+@Deprecated
 @Vetoed
 public final class GetBlockchainStatus extends AbstractAPIRequestHandler {
 
@@ -76,7 +78,7 @@ public final class GetBlockchainStatus extends AbstractAPIRequestHandler {
         response.put("maxPrunableLifetime", blockchainConfig.getMaxPrunableLifetime());
         response.put("includeExpiredPrunable", propertiesHolder.INCLUDE_EXPIRED_PRUNABLE());
         response.put("correctInvalidFees", propertiesHolder.correctInvalidFees());
-        response.put("ledgerTrimKeep", AccountLedger.trimKeep);
+        response.put("ledgerTrimKeep", lookupAccountLedgerService().getTrimKeep());
         response.put("chainId", blockchainConfig.getChain().getChainId());
         response.put("chainName", blockchainConfig.getChain().getName());
         response.put("chainDescription", blockchainConfig.getChain().getDescription());

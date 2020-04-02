@@ -385,7 +385,7 @@ public final class Crypto {
 
             String M1_X = aesKey.substring(0, 131);
             String M1_Y = aesKey.substring(131, 262);
-//            org.bouncycastle.math.ec.ECPoint.Fp _M1 =
+//            org.bouncycastle.math.ec.ECPoint _M1 =
             org.bouncycastle.math.ec.ECPoint _M1 =
             instanceOfAlice.extrapolateECPoint(
                     new BigInteger(M1_X, 16),

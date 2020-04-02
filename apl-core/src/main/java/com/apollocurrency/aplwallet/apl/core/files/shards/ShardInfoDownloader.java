@@ -81,7 +81,6 @@ public class ShardInfoDownloader {
         this.shardsPeers = new ConcurrentHashMap();
         this.shardInfoByPeers = new ConcurrentHashMap();
         this.peers = Objects.requireNonNull(peers, "peersService is NULL");
-        ;
         this.myChainId = peers.getBlockchainConfig().getChain().getChainId();
     }
 
@@ -101,7 +100,7 @@ public class ShardInfoDownloader {
         shardInfoByPeers = testData;
 
     }
-    
+
     public void processAllPeersShardingInfo(){
         //remove not-sharding peers
         shardInfoByPeers.entrySet().removeIf(
@@ -135,7 +134,7 @@ public class ShardInfoDownloader {
                         Set<ShardInfo> rs = sortedByIdShards.get(s.shardId);
                         if (rs == null) {
                             rs = new HashSet<>();
-                            sortedByIdShards.putIfAbsent(s.shardId, rs);
+                            sortedByIdShards.put(s.shardId, rs);
                         }
                         rs.add(s);
                     }
@@ -189,7 +188,7 @@ public class ShardInfoDownloader {
              }
          }else{
              log.debug("Can not create peer: {}", addr);
-         }  
+         }
          return res;
     }
 
@@ -198,10 +197,10 @@ public class ShardInfoDownloader {
         Collections.shuffle(sl);
         return sl;
     }
-    
+
     public Map<String,ShardingInfo> getShardInfoFromPeers() {
         log.debug(">> Requesting ShardingInfo from Peers...");
-        int counterTotal = 0;        
+        int counterTotal = 0;
 
         Set<Peer> kp = peers.getAllConnectedPeers();
         Set<String> knownPeers = new HashSet<>();
@@ -358,7 +357,11 @@ public class ShardInfoDownloader {
         if(goodPeersMap.isEmpty()){ //forced shard import
             return res;
         }
-        PeerFileHashSum pfhs = goodPeersMap.get(shardId).iterator().next();
+        Set<PeerFileHashSum> goodShardPeers = goodPeersMap.get(shardId);
+        if(goodShardPeers==null || goodShardPeers.isEmpty()){
+            return res;
+        }
+        PeerFileHashSum pfhs = goodShardPeers.iterator().next();
         if (pfhs == null) {
             return res;
         }
@@ -415,7 +418,7 @@ public class ShardInfoDownloader {
      * Weight is less for older shard
      *
      * @return map of relative weight of each shard.
-  */   
+  */
     public Map<Long, Double> getShardRelativeWeights() {
         Map<Long,Double> res = new HashMap<>();
         if(sortedByIdShards.isEmpty()){

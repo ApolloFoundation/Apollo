@@ -15,6 +15,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import com.apollocurrency.aplwallet.apl.core.config.Property;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import org.h2.jdbcx.JdbcConnectionPool;
 
 /**
@@ -22,7 +23,6 @@ import org.h2.jdbcx.JdbcConnectionPool;
  */
 public class H2DbInfoExtractor implements DbInfoExtractor {
     private static final String DB_TYPE = "h2";
-    private static final String DB_SUFFIX = ".h2.db";
     private String user;
     private String password;
 
@@ -34,11 +34,11 @@ public class H2DbInfoExtractor implements DbInfoExtractor {
     }
 
     private static String createDbUrl(String dbPath, String type) {
-        return String.format("jdbc:%s:%s;MV_STORE=FALSE", type, dbPath);
+        return String.format("jdbc:%s:%s;MV_STORE=TRUE", type, dbPath);
     }
 
     private Path createDbPath(String dbPath) {
-        return Paths.get(dbPath + DB_SUFFIX);
+        return Paths.get(dbPath + DbProperties.DB_EXTENSION_WITH_DOT);
     }
     @Override
     public int getHeight(String dbPath) {

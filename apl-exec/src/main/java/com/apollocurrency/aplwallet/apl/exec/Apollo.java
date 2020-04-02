@@ -7,6 +7,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import com.apollocurrency.aplwallet.apl.conf.ConfPlaceholder;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
+import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
@@ -17,6 +18,7 @@ import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.cdi.AplContainer;
+import com.apollocurrency.aplwallet.apl.util.cdi.AplContainerBuilder;
 import com.apollocurrency.aplwallet.apl.util.env.EnvironmentVariables;
 import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
@@ -254,19 +256,27 @@ public class Apollo {
             System.exit(PosixExitCodes.EX_CANTCREAT.exitCode());
         }
 
-        //init CDI container
-        container = AplContainer.builder().containerId("MAIN-APL-CDI")
+        //Configure CDI Container builder
+        AplContainerBuilder aplContainerBuilder = AplContainer.builder().containerId("MAIN-APL-CDI")
             // do not use recursive scan because it violates the restriction to
             // deploy one bean for all deployment archives
             // Recursive scan will trigger base synthetic archive to load JdbiTransactionalInterceptor, which was already loaded by apl-core archive
             // See https://docs.jboss.org/cdi/spec/2.0.EDR2/cdi-spec.html#se_bootstrap for more details
-// we already have it in beans.xml in core
-                .annotatedDiscoveryMode()
-                //TODO:  turn it on periodically in development process to check CDI errors
-                // Enable for development only, see http://weld.cdi-spec.org/news/2015/11/10/weld-probe-jmx/
-                // run with ./bin/apl-run-jmx.sh
-                //.devMode()
-                .build();
+            // we already have it in beans.xml in core
+            .annotatedDiscoveryMode();
+            //TODO:  turn it on periodically in development process to check CDI errors
+            // Enable for development only, see http://weld.cdi-spec.org/news/2015/11/10/weld-probe-jmx/
+            // run with ./bin/apl-run-jmx.sh
+            //.devMode()
+        if(args.disableWeldConcurrentDeployment) {
+            //It's very helpful when the application is stuck during the Weld Container building.
+            log.info("The concurrent deployment of Weld container is disabled.");
+            aplContainerBuilder.disableConcurrentDeployment();
+        }
+
+        //init CDI container
+        container = aplContainerBuilder.build();
+
         log.debug("Weld CDI container build done");
         // init config holders
         app.propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
@@ -282,18 +292,15 @@ public class Apollo {
         // init secureStorageService instance via CDI for 'ShutdownHook' constructor below
         SecureStorageService secureStorageService = CDI.current().select(SecureStorageService.class).get();
         aplCoreRuntime = CDI.current().select(AplCoreRuntime.class).get();
-        aplCoreRuntime.init(runtimeMode, CDI.current().select(BlockchainConfig.class).get(), app.propertiesHolder, app.taskDispatchManager);
+        BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+        aplCoreRuntime.init(runtimeMode, blockchainConfig, app.propertiesHolder, app.taskDispatchManager);
+        Convert2.init(blockchainConfig);
 
         try {
             // updated shutdown hook explicitly created with instances
             Runtime.getRuntime().addShutdownHook(new ShutdownHook(aplCoreRuntime));
-//            Runtime.getRuntime().addShutdownHook(new Thread(Apollo::shutdown, "ShutdownHookThread:"));
             aplCoreRuntime.addCoreAndInit();
             app.initUpdater(args.updateAttachmentFile, args.debugUpdater);
-            /*            if(unzipRes.get()!=true){
-                System.err.println("Error! WebUI is not installed!");
-            }
-             */
             if (args.startMint) {
                 aplCoreRuntime.startMinter();
             }

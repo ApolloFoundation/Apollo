@@ -21,13 +21,18 @@
 package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.core.rest.exception.ClientErrorExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ConstraintViolationExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.DefaultGlobalExceptionMapper;
+import com.apollocurrency.aplwallet.apl.core.rest.exception.IllegalArgumentExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.LegacyParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiProtectionFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
+import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FAInterceptor;
+import com.apollocurrency.aplwallet.apl.core.rest.filters.SecurityInterceptor;
+import com.apollocurrency.aplwallet.apl.core.rest.filters.CharsetRequestFilter;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
@@ -82,7 +87,7 @@ public final class API {
     static PropertiesHolder propertiesHolder;
 
     private static final String[] DISABLED_HTTP_METHODS = {"TRACE", "OPTIONS", "HEAD"};
-  
+
     public static int openAPIPort;
     public static int openAPISSLPort;
     public static boolean isOpenAPI;
@@ -100,7 +105,7 @@ public final class API {
 
     private static URI welcomePageUri;
     private static URI serverRootUri;
-    private static List<Integer> externalPorts=new ArrayList<>(); 
+    private static List<Integer> externalPorts=new ArrayList<>();
     private final UPnP upnp;
     private final JettyConnectorCreator jettyConnectorCreator;
     final int port;
@@ -171,10 +176,10 @@ public final class API {
             openAPISSLPort = !propertiesHolder.isLightClient() && "0.0.0.0".equals(host) && allowedBotHosts == null && enableSSL ? sslPort : 0;
             isOpenAPI = openAPIPort > 0 || openAPISSLPort > 0;
     }
-    
+
     public static String findWebUiDir(){
         String dir = DirProvider.getBinDir()+ File.separator+WEB_UI_DIR;
-        dir=dir+File.separator+"build";
+        dir=dir+ File.separator+"build";
         File res = new File(dir);
         if(!res.exists()){ //we are in develop IDE or tests
             dir=DirProvider.getBinDir()+"/apl-exec/target/"+WEB_UI_DIR+"/build";
@@ -182,18 +187,18 @@ public final class API {
         }
         return res.getAbsolutePath();
     }
-    
+
     public final void start() {
 
 
         if (enableAPIServer) {
-            
+
             org.eclipse.jetty.util.thread.QueuedThreadPool threadPool = new org.eclipse.jetty.util.thread.QueuedThreadPool();
             threadPool.setMaxThreads(Math.max(maxThreadPoolSize, 200));
             threadPool.setMinThreads(Math.max(minThreadPoolSize, 8));
             threadPool.setName("APIThreadPool");
             apiServer = new Server(threadPool);
-            
+
             //
             // Create the HTTP connector
             //
@@ -278,15 +283,20 @@ public final class API {
             ServletHolder restEasyServletHolder = new ServletHolder(new HttpServletDispatcher());
             restEasyServletHolder.setInitParameter("resteasy.servlet.mapping.prefix", "/rest");
             restEasyServletHolder.setInitParameter("resteasy.injector.factory", "org.jboss.resteasy.cdi.CdiInjectorFactory");
+            //restEasyServletHolder.setInitParameter("resteasy.role.based.security", "true");
 
             restEasyServletHolder.setInitParameter(ResteasyContextParameters.RESTEASY_PROVIDERS,
                     new StringJoiner(",")
                             .add(ConstraintViolationExceptionMapper.class.getName())
+                            .add(ClientErrorExceptionMapper.class.getName())
                             .add(ParameterExceptionMapper.class.getName())
                             .add(LegacyParameterExceptionMapper.class.getName())
                             .add(SecurityInterceptor.class.getName())
+                            .add(Secured2FAInterceptor.class.getName())
                             .add(RestParameterExceptionMapper.class.getName())
                             .add(DefaultGlobalExceptionMapper.class.getName())
+                            .add(CharsetRequestFilter.class.getName())
+                            .add(IllegalArgumentExceptionMapper.class.getName())
                             .toString()
             );
 

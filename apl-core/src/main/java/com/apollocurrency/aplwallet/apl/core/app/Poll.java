@@ -37,6 +37,8 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPollC
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteCasting;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import org.slf4j.Logger;
 
 import javax.enterprise.event.Observes;
@@ -63,8 +65,8 @@ public final class Poll extends AbstractPoll {
 
     // TODO: YL remove static instance later
 
-    private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static BlockchainProcessor blockchainProcessor;
+    private static Blockchain blockchain;
     private static DatabaseManager databaseManager;
 
     private static final LongKeyFactory<Poll> pollDbKeyFactory = new LongKeyFactory<Poll>("id") {
@@ -97,7 +99,6 @@ public final class Poll extends AbstractPoll {
         }
     };
 
-//    private static final ValuesDbTable<Poll, PollOptionResult> pollResultsTable = new ValuesDbTable<Poll, PollOptionResult>("poll_result", pollResultsDbKeyFactory) {
     private static final ValuesDbTable<PollOptionResult> pollResultsTable = new ValuesDbTable<PollOptionResult>("poll_result", pollResultsDbKeyFactory) {
 
         @Override
@@ -121,7 +122,9 @@ public final class Poll extends AbstractPoll {
                     pstmt.setNull(++i, Types.BIGINT);
                     pstmt.setLong(++i, 0);
                 }
-                pstmt.setInt(++i, blockchain.getHeight());
+                int height = lookupBlockchain().getHeight();
+                pstmt.setInt(++i, height);
+                LOG.trace("PollResult save = {} at height = {}", optionResult, height);
                 pstmt.executeUpdate();
             }
         }
@@ -140,20 +143,25 @@ public final class Poll extends AbstractPoll {
         return pollTable.getManyBy(new DbClause.IntClause("finish_height", DbClause.Op.LT, height), from, to);
     }
 
+    public static DbIterator<Poll> getPollsFinishingAtHeight(int height) {
+        // EXACT matching to Poll finish height
+        return pollTable.getManyBy(new DbClause.IntClause("finish_height", height), 0, Integer.MAX_VALUE);
+    }
+
     public static DbIterator<Poll> getAllPolls(int from, int to) {
         return pollTable.getAll(from, to);
     }
 
     public static DbIterator<Poll> getActivePolls(int from, int to) {
-        return pollTable.getManyBy(new DbClause.IntClause("finish_height", DbClause.Op.GT, blockchain.getHeight()), from, to);
+        return pollTable.getManyBy(new DbClause.IntClause("finish_height", DbClause.Op.GT, lookupBlockchain().getHeight()), from, to);
     }
 
     public static DbIterator<Poll> getPollsByAccount(long accountId, boolean includeFinished, boolean finishedOnly, int from, int to) {
         DbClause dbClause = new DbClause.LongClause("account_id", accountId);
         if (finishedOnly) {
-            dbClause = dbClause.and(new DbClause.IntClause("finish_height", DbClause.Op.LTE, blockchain.getHeight()));
+            dbClause = dbClause.and(new DbClause.IntClause("finish_height", DbClause.Op.LTE, lookupBlockchain().getHeight()));
         } else if (!includeFinished) {
-            dbClause = dbClause.and(new DbClause.IntClause("finish_height", DbClause.Op.GT, blockchain.getHeight()));
+            dbClause = dbClause.and(new DbClause.IntClause("finish_height", DbClause.Op.GT, lookupBlockchain().getHeight()));
         }
         return pollTable.getManyBy(dbClause, from, to);
     }
@@ -163,6 +171,20 @@ public final class Poll extends AbstractPoll {
             databaseManager = CDI.current().select(DatabaseManager.class).get();
         }
         return databaseManager.getDataSource();
+    }
+
+    private static Blockchain lookupBlockchain() {
+        if (blockchain == null) {
+            blockchain = CDI.current().select(Blockchain.class).get();
+        }
+        return blockchain;
+    }
+
+    private static BlockchainProcessor lookupProcessor() {
+        if (blockchainProcessor == null) {
+            blockchainProcessor = CDI.current().select(BlockchainProcessor.class).get();
+        }
+        return blockchainProcessor;
     }
 
     public static DbIterator<Poll> getVotedPollsByAccount(long accountId, int from, int to) throws AplException.NotValidException {
@@ -198,20 +220,15 @@ public final class Poll extends AbstractPoll {
                 return pollTable.getManyBy(connection, pollStatement, false);
             }
 
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             DbUtils.close(connection);
             throw new RuntimeException(e.toString(), e);
         }
     }
 
-        public static DbIterator<Poll> getPollsFinishingBelowHeight(int height) {
-        return pollTable.getManyBy(new DbClause.IntClause("finish_height", height), 0, Integer.MAX_VALUE);
-    }
-
     public static DbIterator<Poll> searchPolls(String query, boolean includeFinished, int from, int to) {
         DbClause dbClause = includeFinished ? DbClause.EMPTY_CLAUSE : new DbClause.IntClause("finish_height",
-                DbClause.Op.GT, blockchain.getHeight());
+                DbClause.Op.GT, lookupBlockchain().getHeight());
         return pollTable.search(query, dbClause, from, to, " ORDER BY ft.score DESC, poll.height DESC, poll.db_id DESC ");
     }
 
@@ -221,6 +238,7 @@ public final class Poll extends AbstractPoll {
 
     public static void addPoll(Transaction transaction, MessagingPollCreation attachment) {
         Poll poll = new Poll(transaction, attachment);
+        LOG.trace("addPoll = {}, height = {}, blockId={}", poll, transaction.getHeight(), transaction.getBlockId());
         pollTable.insert(poll);
     }
 
@@ -231,24 +249,26 @@ public final class Poll extends AbstractPoll {
     @Singleton
     public static class PollObserver {
         public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
-            LOG.trace(":accept:PollObserver: START onBlockApplied AFTER_BLOCK_APPLY. block={}", block.getHeight());
             int height = block.getHeight();
+            LOG.trace(":accept:PollObserver: START onBlockApplied AFTER_BLOCK_APPLY. height={}", height);
             Poll.checkPolls(height);
-            LOG.trace(":accept:PollObserver: END onBlockApplied AFTER_BLOCK_APPLY. block={}", block.getHeight());
+            LOG.trace(":accept:PollObserver: END onBlockApplied AFTER_BLOCK_APPLY. height={}", height);
         }
     }
 
     private static void checkPolls(int currentHeight) {
-        // select all Polls where 'finish_height' is LESS (DbClause.Op.LT) then specified height value
-        try (DbIterator<Poll> polls = getPollsFinishingBelowHeight(currentHeight)) {
+        // select all Polls where 'finish_height' is EQUAL (DbClause.Op.EQ) then specified height value
+        try (DbIterator<Poll> polls = getPollsFinishingAtHeight(currentHeight)) {
+            int index = 0;
             for (Poll poll : polls) {
                 try {
                     List<PollOptionResult> results = poll.countResults(poll.getVoteWeighting(), currentHeight);
-                    LOG.trace("Poll = {} has PollOptionResult = {}", poll.getId(), results);
+                    LOG.trace("checkPolls: height = {}, [{}] PollId = {} has = {}", currentHeight, index, poll.getId(), results.size());
                     pollResultsTable.insert(results);
-                    LOG.trace("Poll = {} has been finished : {}", poll.getId(), poll);
+                    LOG.trace("checkPolls: height = {}, [{}] PollId = {} checked : {}", currentHeight, index, poll.getId(), results);
+                    index++;
                 } catch (RuntimeException e) {
-                    LOG.error("Couldn't count votes for poll " + Long.toUnsignedString(poll.getId()), e);
+                    LOG.error("Couldn't count RollResult for poll {} at height = {}", poll.getId(), currentHeight, e);
                 }
             }
         }
@@ -273,7 +293,7 @@ public final class Poll extends AbstractPoll {
         this.maxNumberOfOptions = attachment.getMaxNumberOfOptions();
         this.minRangeValue = attachment.getMinRangeValue();
         this.maxRangeValue = attachment.getMaxRangeValue();
-        this.timestamp = blockchain.getLastBlockTimestamp();
+        this.timestamp = lookupBlockchain().getLastBlockTimestamp();
     }
 
     public Poll(ResultSet rs, DbKey dbKey) throws SQLException {
@@ -290,10 +310,13 @@ public final class Poll extends AbstractPoll {
     }
 
     private void save(Connection con) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO poll (id, account_id, "
+        try (
+                @DatabaseSpecificDml(DmlMarker.SET_ARRAY)
+                PreparedStatement pstmt = con.prepareStatement("INSERT INTO poll (id, account_id, "
                 + "name, description, options, finish_height, voting_model, min_balance, min_balance_model, "
                 + "holding_id, min_num_options, max_num_options, min_range_value, max_range_value, timestamp, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+        ) {
             int i = 0;
             pstmt.setLong(++i, id);
             pstmt.setLong(++i, accountId);
@@ -310,7 +333,7 @@ public final class Poll extends AbstractPoll {
             pstmt.setByte(++i, minRangeValue);
             pstmt.setByte(++i, maxRangeValue);
             pstmt.setInt(++i, timestamp);
-            pstmt.setInt(++i, blockchain.getHeight());
+            pstmt.setInt(++i, lookupBlockchain().getHeight());
             pstmt.executeUpdate();
         }
     }
@@ -369,12 +392,12 @@ public final class Poll extends AbstractPoll {
     }
 
     public boolean isFinished() {
-        return finishHeight <= blockchain.getHeight();
+        return finishHeight <= lookupBlockchain().getHeight();
     }
 
     private List<PollOptionResult> countResults(VoteWeighting voteWeighting) {
-        int countHeight = Math.min(finishHeight, blockchain.getHeight());
-        if (countHeight < blockchainProcessor.getMinRollbackHeight()) {
+        int countHeight = Math.min(finishHeight, lookupBlockchain().getHeight());
+        if (countHeight < lookupProcessor().getMinRollbackHeight()) {
             return null;
         }
         return countResults(voteWeighting, countHeight);
@@ -382,14 +405,22 @@ public final class Poll extends AbstractPoll {
 
     private List<PollOptionResult> countResults(VoteWeighting voteWeighting, int height) {
         final PollOptionResult[] result = new PollOptionResult[options.length];
+        LOG.trace("count RollResult: START h={}, pollId={}, accountId = {}, {}, voteList = [{}]",
+            height, id, accountId, voteWeighting, options.length);
         for (int i = 0; i < result.length; i++) {
             result[i] = new PollOptionResult(this.getId());
         }
         VoteWeighting.VotingModel votingModel = voteWeighting.getVotingModel();
         try (DbIterator<Vote> votes = Vote.getVotes(this.getId(), 0, -1)) {
             List<Vote> voteList = CollectionUtil.toList(votes);
-            LOG.trace("count Vote result (h={}, votingModel='{}'): voteList = [{}]", height, votingModel, voteList.size());
-            LOG.trace("count Vote result: (pollId={}) voteList = \n{}", this.getId(), voteList);
+            if (voteList.size() <= 0) {
+                // stop further processing because there are no votes found
+                LOG.trace("count RollResult: END 1. pollId={}, accountId={} PollOptionResult = {}", id, accountId, result);
+                return Arrays.asList(result);
+            }
+            LOG.trace("count RollResult: h={}, pollId={}, votingModel={}, voteList = [{}]",
+                height, id, votingModel, voteList.size());
+//            LOG.trace("count RollResult: pollId={}, voteList = \n{}", id, voteList);
             for (Vote vote : voteList) {
                 long weight = votingModel.calcWeight(voteWeighting, vote.getVoterId(), height);
                 if (weight <= 0) {
@@ -406,8 +437,8 @@ public final class Poll extends AbstractPoll {
                     }
                 }
             }
-            LOG.trace("count Vote : pollId={} PollOptionResult = {}", this.getId(), result);
         }
+        LOG.trace("count RollResult: END 2. pollId={}, accountId={} PollOptionResult = {}", id, accountId, result);
         return Arrays.asList(result);
     }
 
@@ -430,7 +461,15 @@ public final class Poll extends AbstractPoll {
         sb.append("id=").append(id);
         sb.append(", name='").append(name).append('\'');
         sb.append(", accountId=").append(accountId);
+        sb.append(", ").append(voteWeighting);
         sb.append(", finishHeight=").append(finishHeight);
+        sb.append(", options=").append(options == null ? "null" : Arrays.asList(options).toString());
+        sb.append(", description='").append(description).append('\'');
+        sb.append(", minNumberOfOptions=").append(minNumberOfOptions);
+        sb.append(", maxNumberOfOptions=").append(maxNumberOfOptions);
+        sb.append(", minRangeValue=").append(minRangeValue);
+        sb.append(", maxRangeValue=").append(maxRangeValue);
+        sb.append(", timestamp=").append(timestamp);
         sb.append('}');
         return sb.toString();
     }

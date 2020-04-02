@@ -20,35 +20,33 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.derived;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+import lombok.Getter;
 import org.slf4j.Logger;
 
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import javax.enterprise.inject.spi.CDI;
 
-public abstract class EntityDbTable<T> extends BasicDbTable<T> {
+import static org.slf4j.LoggerFactory.getLogger;
+
+public abstract class EntityDbTable<T> extends BasicDbTable<T> implements EntityDbTableInterface<T> {
     private static final Logger log = getLogger(EntityDbTable.class);
+    private Blockchain blockchain;
 
     private final String defaultSort;
+    @Getter
     private final String fullTextSearchColumns;
-    private  Blockchain blockchain;
-    private BlockchainProcessor blockchainProcessor;
-    private FullTextSearchService fullText;
 
     protected EntityDbTable(String table, KeyFactory<T> dbKeyFactory) {
         this(table, dbKeyFactory, false, null);
@@ -72,86 +70,55 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
         this(table, dbKeyFactory, multiversion, fullTextSearchColumns, true);
     }
 
+    /***
+     * Persist new entitity into db
+     * Warning!
+     * This method must support MERGE for already existing entities with same height and dbKey (when it is possible to have such entities by business logic)
+     * @param con db connection, usually opened under block accepting procedure
+     * @param entity entity object ro save
+     * @throws SQLException if any db error occurred.
+     */
     public abstract void save(Connection con, T entity) throws SQLException;
 
-    protected String defaultSort() {
+    @Override
+    public String defaultSort() {
         return defaultSort;
     }
 
-    protected void clearCache() {
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        dataSource.clearCache(table);
-    }
-
-    public void checkAvailable(int height) {
-        if (multiversion) {
-            if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-            int minRollBackHeight = blockchainProcessor.getMinRollbackHeight();
-            if (height < minRollBackHeight) {
-                throw new IllegalArgumentException("Historical data as of height " + height + " not available.");
-            }
-        }
-        if (blockchain == null) blockchain = CDI.current().select(BlockchainImpl.class).get();
-        if (height > blockchain.getHeight()) {
-            throw new IllegalArgumentException("Height " + height + " exceeds blockchain height " + blockchain.getHeight());
-        }
-    }
-
-
-    /**
-     * Create new entity or return existing from cache in transaction
-     * Current use case: caching complex entity, incremental entity update from multiple methods in one transaction
-     * Should be removed asap
-     */
-    @Deprecated
-    public final T newEntity(DbKey dbKey) {
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        boolean cache = dataSource.isInTransaction();
-        if (cache) {
-            T t = (T) dataSource.getCache(table).get(dbKey);
-            if (t != null) {
-                return t;
-            }
-        }
-        T t = keyFactory.newEntity(dbKey);
-        if (cache) {
-            dataSource.getCache(table).put(dbKey, t);
-        }
-        return t;
-    }
-
-    public final T get(DbKey dbKey) {
+    @Override
+    public T get(DbKey dbKey) {
         return get(dbKey, true);
     }
 
-    public final T get(DbKey dbKey, boolean cache) {
+    @Override
+    public T get(DbKey dbKey, boolean createDbKey) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        if (cache && dataSource.isInTransaction()) {
-            T t = (T) dataSource.getCache(table).get(dbKey);
-            if (t != null) {
-                return t;
-            }
-        }
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + keyFactory.getPKClause()
-             + (multiversion ? " AND latest = TRUE LIMIT 1" : ""))) {
+                 + (multiversion ? " AND latest = TRUE LIMIT 1" : ""))) {
             dbKey.setPK(pstmt);
-            return get(con, pstmt, cache);
+            return get(con, pstmt, createDbKey);
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
 
-    public final T get(DbKey dbKey, int height) {
-        if (height < 0 || doesNotExceed(height)) {
-            return get(dbKey);
-        }
-        checkAvailable(height);
+    /**
+     * Gets an entity.
+     * <p>
+     * Note that validation happens at service level.
+     *
+     * @param dbKey
+     * @param height
+     * @return
+     */
+    @Override
+    public T get(DbKey dbKey, int height) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + keyFactory.getPKClause()
-                     + " AND height <= ?" + (multiversion ? " AND (latest = TRUE OR EXISTS ("
-                     + "SELECT 1 FROM " + table + keyFactory.getPKClause() + " AND height > ?)) ORDER BY height DESC LIMIT 1" : ""))) {
+                 + " AND height <= ?" + (multiversion ? " AND (latest = TRUE OR EXISTS ("
+                 + "SELECT 1 FROM " + table + keyFactory.getPKClause() + " AND height > ?)) ORDER BY height DESC LIMIT 1" : ""))) {
             int i = dbKey.setPK(pstmt);
             pstmt.setInt(i, height);
             if (multiversion) {
@@ -164,11 +131,12 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
         }
     }
 
+    @Override
     public final T getBy(DbClause dbClause) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table
-                     + " WHERE " + dbClause.getClause() + (multiversion ? " AND latest = TRUE LIMIT 1" : ""))) {
+                 + " WHERE " + dbClause.getClause() + (multiversion ? " AND latest = TRUE LIMIT 1" : ""))) {
             dbClause.set(pstmt, 1);
             return get(con, pstmt, true);
         } catch (SQLException e) {
@@ -176,69 +144,39 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
         }
     }
 
-    public final T getBy(DbClause dbClause, int height) {
-        if (height < 0 || doesNotExceed(height)) {
-            return getBy(dbClause);
-        }
-        checkAvailable(height);
+    @Override
+    public T get(Connection con, PreparedStatement pstmt, boolean createDbKey) throws SQLException {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + " AS a WHERE " + dbClause.getClause()
-                     + " AND height <= ?" + (multiversion ? " AND (latest = TRUE OR EXISTS ("
-                     + "SELECT 1 FROM " + table + " AS b WHERE " + keyFactory.getSelfJoinClause()
-                     + " AND b.height > ?)) ORDER BY height DESC LIMIT 1" : ""))) {
-            int i = 0;
-            i = dbClause.set(pstmt, ++i);
-            pstmt.setInt(i, height);
-            if (multiversion) {
-                pstmt.setInt(++i, height);
-            }
-            return get(con, pstmt, false);
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
-
-    protected T get(Connection con, PreparedStatement pstmt, boolean cache) throws SQLException {
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        final boolean doCache = cache && dataSource.isInTransaction();
         try (ResultSet rs = pstmt.executeQuery()) {
             if (!rs.next()) {
                 return null;
             }
-            T t = null;
-
-            DbKey dbKey = null;
-            if (doCache) {
-                dbKey = keyFactory.newKey(rs);
-                t = (T) dataSource.getCache(table).get(dbKey);
-            }
-            if (t == null) {
-                t = (T)load(con, rs, dbKey);
-                if (doCache) {
-                    dataSource.getCache(table).put(dbKey, t);
-                }
-            }
-            if (rs.next() && dbKey!=null) {
-              log.debug("Multiple records found. Table: {} Key: {}", table, dbKey.toString());
-              throw new RuntimeException("Multiple records found. Table: "+table+" Key: "+dbKey.toString());
+            DbKey dbKey = createDbKey && dataSource.isInTransaction()
+                ? keyFactory.newKey(rs)
+                : null;
+            T t = load(con, rs, dbKey);
+            if (rs.next() && dbKey != null) {
+                log.debug("Multiple records found. Table: {} Key: {}", table, dbKey.toString());
+                throw new RuntimeException("Multiple records found. Table: " + table + " Key: " + dbKey.toString());
             }
             return t;
         }
     }
 
+    @Override
     public final DbIterator<T> getManyBy(DbClause dbClause, int from, int to) {
         return getManyBy(dbClause, from, to, defaultSort());
     }
 
+    @Override
     public final DbIterator<T> getManyBy(DbClause dbClause, int from, int to, String sort) {
         Connection con = null;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try {
             con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table
-                    + " WHERE " + dbClause.getClause() + (multiversion ? " AND latest = TRUE " : " ") + sort
-                    + DbUtils.limitsClause(from, to));
+                + " WHERE " + dbClause.getClause() + (multiversion ? " AND latest = TRUE " : " ") + sort
+                + DbUtils.limitsClause(from, to));
             int i = 0;
             i = dbClause.set(pstmt, ++i);
             i = DbUtils.setLimits(i, pstmt, from, to);
@@ -249,26 +187,36 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
         }
     }
 
+    @Override
     public final DbIterator<T> getManyBy(DbClause dbClause, int height, int from, int to) {
         return getManyBy(dbClause, height, from, to, defaultSort());
     }
 
+    /**
+     * Gets an iterator on entities.
+     * <p>
+     * Note that validation happens at service level.
+     *
+     * @param dbClause
+     * @param height
+     * @param from
+     * @param to
+     * @param sort
+     * @return
+     */
+    @Override
     public final DbIterator<T> getManyBy(DbClause dbClause, int height, int from, int to, String sort) {
-        if (height < 0 || doesNotExceed(height)) {
-            return getManyBy(dbClause, from, to, sort);
-        }
-        checkAvailable(height);
         Connection con = null;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try {
             con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + " AS a WHERE " + dbClause.getClause()
-                    + " AND a.height <= ?" + (multiversion ? " AND (a.latest = TRUE OR (a.latest = FALSE "
-                    + " AND EXISTS (SELECT 1 FROM " + table + " AS b WHERE " + keyFactory.getSelfJoinClause() + " AND b.height > ?) "
-                    + " AND NOT EXISTS (SELECT 1 FROM " + table + " AS b WHERE " + keyFactory.getSelfJoinClause()
-                    + " AND b.height <= ? AND b.height > a.height))) "
-                    : " ") + sort
-                    + DbUtils.limitsClause(from, to));
+                + " AND a.height <= ?" + (multiversion ? " AND (a.latest = TRUE OR (a.latest = FALSE "
+                + " AND EXISTS (SELECT 1 FROM " + table + " AS b WHERE " + keyFactory.getSelfJoinClause() + " AND b.height > ?) "
+                + " AND NOT EXISTS (SELECT 1 FROM " + table + " AS b WHERE " + keyFactory.getSelfJoinClause()
+                + " AND b.height <= ? AND b.height > a.height))) "
+                : " ") + sort
+                + DbUtils.limitsClause(from, to));
             int i = 0;
             i = dbClause.set(pstmt, ++i);
             pstmt.setInt(i, height);
@@ -284,6 +232,7 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
         }
     }
 
+    @Override
     public final DbIterator<T> getManyBy(Connection con, PreparedStatement pstmt, boolean cache) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         final boolean doCache = cache && dataSource.isInTransaction();
@@ -292,33 +241,32 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
             DbKey dbKey = null;
             if (doCache) {
                 dbKey = keyFactory.newKey(rs);
-                t = (T) dataSource.getCache(table).get(dbKey);
             }
             if (t == null) {
                 t = (T) load(connection, rs, dbKey);
-                if (doCache) {
-                    dataSource.getCache(table).put(dbKey, t);
-                }
             }
             return t;
         });
     }
 
+    @Override
     public final DbIterator<T> search(String query, DbClause dbClause, int from, int to) {
         return search(query, dbClause, from, to, " ORDER BY ft.score DESC ");
     }
 
+    @Override
     public final DbIterator<T> search(String query, DbClause dbClause, int from, int to, String sort) {
         Connection con = null;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try {
             con = dataSource.getConnection();
+            @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
             PreparedStatement pstmt = con.prepareStatement("SELECT " + table + ".*, ft.score FROM " + table +
-                    ", ftl_search('PUBLIC', '" + table + "', ?, 2147483647, 0) ft "
-                    + " WHERE " + table + ".db_id = ft.keys[0] "
-                    + (multiversion ? " AND " + table + ".latest = TRUE " : " ")
-                    + " AND " + dbClause.getClause() + sort
-                    + DbUtils.limitsClause(from, to));
+                ", ftl_search('PUBLIC', '" + table + "', ?, 2147483647, 0) ft "
+                + " WHERE " + table + ".db_id = ft.keys[1] "
+                + (multiversion ? " AND " + table + ".latest = TRUE " : " ")
+                + " AND " + dbClause.getClause() + sort
+                + DbUtils.limitsClause(from, to));
             int i = 0;
             pstmt.setString(++i, query);
             i = dbClause.set(pstmt, ++i);
@@ -330,18 +278,20 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
         }
     }
 
+    @Override
     public DbIterator<T> getAll(int from, int to) {
         return getAll(from, to, defaultSort());
     }
 
+    @Override
     public final DbIterator<T> getAll(int from, int to, String sort) {
         Connection con = null;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try {
             con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table
-                     + (multiversion ? " WHERE latest = TRUE " : " ") + sort
-                    + DbUtils.limitsClause(from, to));
+                + (multiversion ? " WHERE latest = TRUE " : " ") + sort
+                + DbUtils.limitsClause(from, to));
             DbUtils.setLimits(1, pstmt, from, to);
             return getManyBy(con, pstmt, true);
         } catch (SQLException e) {
@@ -350,44 +300,12 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
         }
     }
 
-    public final DbIterator<T> getAll(int height, int from, int to) {
-        return getAll(height, from, to, defaultSort());
-    }
-
-    public final DbIterator<T> getAll(int height, int from, int to, String sort) {
-        if (height < 0 || doesNotExceed(height)) {
-            return getAll(from, to, sort);
-        }
-        checkAvailable(height);
-        Connection con = null;
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try {
-            con = dataSource.getConnection();
-            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + " AS a WHERE height <= ?"
-                    + (multiversion ? " AND (latest = TRUE OR (latest = FALSE "
-                    + "AND EXISTS (SELECT 1 FROM " + table + " AS b WHERE b.height > ? AND " + keyFactory.getSelfJoinClause()
-                    + ") AND NOT EXISTS (SELECT 1 FROM " + table + " AS b WHERE b.height <= ? AND " + keyFactory.getSelfJoinClause()
-                    + " AND b.height > a.height))) " : " ") + sort
-                    + DbUtils.limitsClause(from, to));
-            int i = 0;
-            pstmt.setInt(++i, height);
-            if (multiversion) {
-                pstmt.setInt(++i, height);
-                pstmt.setInt(++i, height);
-            }
-            i = DbUtils.setLimits(++i, pstmt, from, to);
-            return getManyBy(con, pstmt, false);
-        } catch (SQLException e) {
-            DbUtils.close(con);
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
-
+    @Override
     public int getCount() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM " + table
-                     + (multiversion ? " WHERE latest = TRUE" : ""))) {
+                 + (multiversion ? " WHERE latest = TRUE" : ""))) {
             return getCount(pstmt);
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -398,7 +316,7 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM " + table
-                     + " WHERE " + dbClause.getClause() + (multiversion ? " AND latest = TRUE" : ""))) {
+                 + " WHERE " + dbClause.getClause() + (multiversion ? " AND latest = TRUE" : ""))) {
             dbClause.set(pstmt, 1);
             return getCount(pstmt);
         } catch (SQLException e) {
@@ -406,21 +324,27 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
         }
     }
 
+    /**
+     * Gets entity count.
+     * <p>
+     * Note that validation happens at service level.
+     *
+     * @param dbClause
+     * @param height
+     * @return
+     */
+    @Override
     public final int getCount(DbClause dbClause, int height) {
-        if (height < 0 || doesNotExceed(height)) {
-            return getCount(dbClause);
-        }
-        checkAvailable(height);
         Connection con = null;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try {
             con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM " + table + " AS a WHERE " + dbClause.getClause()
-                    + "AND a.height <= ?" + (multiversion ? " AND (a.latest = TRUE OR (a.latest = FALSE "
-                    + "AND EXISTS (SELECT 1 FROM " + table + " AS b WHERE " + keyFactory.getSelfJoinClause() + " AND b.height > ?) "
-                    + "AND NOT EXISTS (SELECT 1 FROM " + table + " AS b WHERE " + keyFactory.getSelfJoinClause()
-                    + " AND b.height <= ? AND b.height > a.height))) "
-                    : " "));
+                + "AND a.height <= ?" + (multiversion ? " AND (a.latest = TRUE OR (a.latest = FALSE "
+                + "AND EXISTS (SELECT 1 FROM " + table + " AS b WHERE " + keyFactory.getSelfJoinClause() + " AND b.height > ?) "
+                + "AND NOT EXISTS (SELECT 1 FROM " + table + " AS b WHERE " + keyFactory.getSelfJoinClause()
+                + " AND b.height <= ? AND b.height > a.height))) "
+                : " "));
             int i = 0;
             i = dbClause.set(pstmt, ++i);
             pstmt.setInt(i, height);
@@ -430,13 +354,14 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
             }
             return getCount(pstmt);
         } catch (SQLException e) {
-            DbUtils.close(con);            
+            DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
-        }finally{
-            DbUtils.close(con);            
+        } finally {
+            DbUtils.close(con);
         }
     }
 
+    @Override
     public final int getRowCount() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
@@ -447,7 +372,8 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
         }
     }
 
-    protected int getCount(PreparedStatement pstmt) throws SQLException {
+    @Override
+    public int getCount(PreparedStatement pstmt) throws SQLException {
         try (ResultSet rs = pstmt.executeQuery()) {
             rs.next();
             return rs.getInt(1);
@@ -465,44 +391,91 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
         if (dbKey == null) {
             throw new RuntimeException("DbKey not set");
         }
-        T cachedT = (T) dataSource.getCache(table).get(dbKey);
-        if (cachedT == null) {
-            dataSource.getCache(table).put(dbKey, t);
-        } else if (t != cachedT) { // not a bug
-            log.debug("In cache : " + cachedT.toString() + ", inserting " + t.toString());
-            throw new IllegalStateException("Different instance found in DatabaseManager cache, perhaps trying to save an object "
-                    + "that was read outside the current transaction");
-        }
         try (Connection con = dataSource.getConnection()) {
             if (multiversion) {
-                try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
-                        + " SET latest = FALSE " + keyFactory.getPKClause() + " AND latest = TRUE LIMIT 1")) {
+                try (
+                    @DatabaseSpecificDml(DmlMarker.UPDATE_WITH_LIMIT)
+                    PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
+                        + " SET latest = FALSE " + keyFactory.getPKClause() + " AND latest = TRUE LIMIT 1")
+                ) {
                     dbKey.setPK(pstmt);
                     pstmt.executeUpdate();
                 }
             }
+            restoreDeletedColumnIfSupported(con, dbKey);
             save(con, t);
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
 
-
-    @Override
-    public final void createSearchIndex(Connection con) throws SQLException {
-        if (fullTextSearchColumns != null) {
-            log.debug("Creating search index on " + table + " (" + fullTextSearchColumns + ")");
-            if (fullText == null) {
-                fullText = CDI.current().select(FullTextSearchService.class).get();
+    /**
+     * If 'delete' operation supported for the table and 'deleted=true' entity for {@code dbKey} exists on the
+     * current blockchain height, then will restore deleted=false column value for entity specified by {@code dbKey},
+     * which exists on height less than current blockchain height.
+     * It is a compensation action applied to 'delete' operation on same height
+     * Example
+     * <pre>
+     *     GIVEN
+     *     account table content:
+     *     db_id   id    balance  height  latest  deleted
+     *     10      1     25        1       false   true
+     *     20      1     0         2       false   true
+     * {@link Blockchain#getHeight()} return 2 (block table MAX(height) = 2)
+     *     WHEN
+     *     Account restoredAccount = Account.builder()
+     *                              .id(1)
+     *                              .balance(10)
+     *                              .height(2)
+     *                              .latest(true)
+     *                              .deleted(false)
+     *                              .build();
+     *     accountTable.insert(restoredAccount);
+     *     THEN
+     *     db_id   id    balance  height  latest  deleted
+     *     10      1     25        1       false  false  --- restored 'deleted' column value to 'false' (deletion compensation)
+     *     20      1     10        2       true   false  --- record was merged on same height
+     * </pre>
+     *
+     * @param con   db connection under transaction running
+     * @param dbKey unique key for entity identifying
+     * @throws SQLException if any db error occurred
+     */
+    private void restoreDeletedColumnIfSupported(Connection con, DbKey dbKey) throws SQLException {
+        if (supportDelete()) {
+            Blockchain blockchain  = lookupBlockchain();
+            // TODO replace 'height' receiving from CDI Blockchain by entity field 'height' when refactoring will be done
+            int height = blockchain.getHeight();
+            try (PreparedStatement thisExistsAndDeleted = con.prepareStatement("SELECT 1 from " + table + keyFactory.getPKClause() + " AND height = ? AND deleted = true")) { // checking our entity existence on current blockchain height in 'deleted=true' state
+                int index = dbKey.setPK(thisExistsAndDeleted, 1);
+                thisExistsAndDeleted.setInt(index, height);
+                try (ResultSet rs = thisExistsAndDeleted.executeQuery()) {
+                    if (rs.next()) { // our entity exists and was deleted - compensation required (point of no return)
+                        try (PreparedStatement selectPrevDeleted = con.prepareStatement("SELECT db_id FROM " + table + keyFactory.getPKClause() +
+                            " AND height < ? AND deleted=true ORDER BY db_id DESC LIMIT 1"); // find db_id of the most recent previous record (deleted=true)
+                             PreparedStatement updatePrevDeleted = con.prepareStatement("UPDATE " + table + " SET deleted = false WHERE db_id = ?")) { // perform compensation
+                            int selectPrevIndex = dbKey.setPK(selectPrevDeleted, 1);
+                            selectPrevDeleted.setInt(selectPrevIndex, height);
+                            try (ResultSet prevDeletedRs = selectPrevDeleted.executeQuery()) {
+                                if (prevDeletedRs.next()) {
+                                    long prevDbId = prevDeletedRs.getLong(1);
+                                    updatePrevDeleted.setLong(1, prevDbId);
+                                    updatePrevDeleted.executeUpdate();
+                                } else {
+                                    throw new IllegalStateException("Unable to find previous record for dbKey " + dbKey + ", inconsistent database state (maybe 'delete' flow is broken)");
+                                }
+                            }
+                        }
+                    }
+                }
             }
-            fullText.createIndex(con, "PUBLIC", table.toUpperCase(), fullTextSearchColumns.toUpperCase());
         }
     }
 
-    private boolean doesNotExceed(int height) {
-        if (blockchain == null) blockchain = CDI.current().select(BlockchainImpl.class).get();
-        if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-        return blockchain.getHeight() <= height;
+    private Blockchain lookupBlockchain() {
+        if (blockchain == null) {
+            blockchain = CDI.current().select(Blockchain.class).get();
+        }
+        return blockchain;
     }
-
 }

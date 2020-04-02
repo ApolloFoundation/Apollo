@@ -6,18 +6,20 @@ package com.apollocurrency.aplwallet.apl.core.dgs.dao;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.StringKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.mapper.DGSTagMapper;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSTag;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import javax.inject.Singleton;
 
 @Singleton
-public class DGSTagTable extends VersionedDeletableEntityDbTable<DGSTag> {
+public class DGSTagTable extends EntityDbTable<DGSTag> {
     private static final StringKeyFactory<DGSTag> KEY_FACTORY = new StringKeyFactory<DGSTag>("tag") {
         @Override
         public DbKey newKey(DGSTag tag) {
@@ -32,7 +34,7 @@ public class DGSTagTable extends VersionedDeletableEntityDbTable<DGSTag> {
 
 
     public DGSTagTable() {
-        super(TABLE_NAME, KEY_FACTORY, false);
+        super(TABLE_NAME, KEY_FACTORY, true, null, false);
     }
 
     @Override
@@ -44,8 +46,11 @@ public class DGSTagTable extends VersionedDeletableEntityDbTable<DGSTag> {
 
     @Override
     public void save(Connection con, DGSTag tag) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO tag (tag, in_stock_count, total_count, height, latest) "
-                + "KEY (tag, height) VALUES (?, ?, ?, ?, TRUE)")) {
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                PreparedStatement pstmt = con.prepareStatement("MERGE INTO tag (tag, in_stock_count, total_count, height, latest) "
+                + "KEY (tag, height) VALUES (?, ?, ?, ?, TRUE)")
+        ) {
             int i = 0;
             pstmt.setString(++i, tag.getTag());
             pstmt.setInt(++i, tag.getInStockCount());

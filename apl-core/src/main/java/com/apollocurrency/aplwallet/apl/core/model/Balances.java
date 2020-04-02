@@ -1,5 +1,11 @@
+/*
+ * Copyright © 2018-2020 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.model;
 
+import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
 import org.json.simple.JSONObject;
@@ -15,11 +21,6 @@ public class Balances {
     private long forgedBalanceATM;
     private long effectiveBalanceAPL;
     private long guaranteedBalanceATM;
-
-
-//    private BigInteger balanceETH = null;
-//    private BigInteger balancePAX = null;
-//    private BigInteger balanceBTC = null;
 
     /**
      * Account RS
@@ -126,6 +127,10 @@ public class Balances {
     }
 
 
+    /**
+     * Use {@link com.apollocurrency.aplwallet.apl.core.rest.converter.AccountConverter#addEffectiveBalances(AccountDTO, Account)}
+     */
+    @Deprecated
     public JSONObject balanceToJson() {
         JSONObject json = new JSONObject();
 

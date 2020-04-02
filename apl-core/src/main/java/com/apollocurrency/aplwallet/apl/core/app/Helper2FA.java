@@ -4,16 +4,16 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthFileSystemRepository;
 import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepositoryImpl;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.core.http.TwoFactorAuthParameters;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
-import com.apollocurrency.aplwallet.apl.core.rest.service.AccountService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
@@ -29,9 +29,11 @@ import javax.servlet.http.HttpServletRequest;
 /**
  * This class is just static helper for 2FA. It should be removed later
  * and replaced by properly used CDI
+ * @deprecated Use {@link com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper} class instead of this one.
  * @author al
  */
 @Slf4j
+@Deprecated
 public class Helper2FA {
    private static TwoFactorAuthService service2FA;
    private static final Logger LOG = LoggerFactory.getLogger(Helper2FA.class);
@@ -96,11 +98,11 @@ public class Helper2FA {
 
 
     public static void verify2FA(HttpServletRequest req, String accountName) throws ParameterException {
-        TwoFactorAuthParameters params2FA = ParameterParser.parse2FARequest(req, accountName, false);
+        TwoFactorAuthParameters params2FA = HttpParameterParserUtil.parse2FARequest(req, accountName, false);
 
         if (isEnabled2FA(params2FA.getAccountId())) {
-            TwoFactorAuthParameters.requireSecretPhraseOrPassphrase(params2FA);
-            int code = ParameterParser.getInt(req,"code2FA", Integer.MIN_VALUE, Integer.MAX_VALUE, true);
+            requireSecretPhraseOrPassphrase(params2FA);
+            int code = HttpParameterParserUtil.getInt(req,"code2FA", Integer.MIN_VALUE, Integer.MAX_VALUE, true);
             Status2FA status2FA;
             long accountId;
             if (params2FA.isPassphrasePresent()) {
@@ -111,6 +113,12 @@ public class Helper2FA {
                 accountId = Convert.getId(Crypto.getPublicKey(params2FA.getSecretPhrase()));
             }
             validate2FAStatus(status2FA, accountId);
+        }
+    }
+
+    public static void requireSecretPhraseOrPassphrase(TwoFactorAuthParameters params2FA) throws ParameterException {
+        if (!params2FA.isPassphrasePresent() && !params2FA.isSecretPhrasePresent()) {
+            throw new ParameterException(JSONResponses.either("secretPhrase", "passphrase"));
         }
     }
 

@@ -48,7 +48,7 @@ public class DbUtils {
     private static List<Integer> getIndexColumns(Connection con, List<String> columnNames, List<Integer> columnTypes, String schema, String table) {
         List<Integer> indexColumns = new ArrayList<>();
         try (ResultSet rs = con.createStatement().executeQuery(String.format(
-                "SELECT COLUMNS FROM FTL.INDEXES WHERE SCHEMA = '%s' AND TABLE = '%s'", schema.toUpperCase(), table.toUpperCase()))) {
+                "SELECT COLUMNS FROM FTL.INDEXES WHERE SCHEMA = '%s' AND \"TABLE\" = '%s'", schema.toUpperCase(), table.toUpperCase()))) {
             if (rs.next()) {
                 String[] columns = rs.getString(1).split(",");
                 for (String column : columns) {

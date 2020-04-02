@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.api.dto.ExchangeContractDTO;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.ExchangeContractToDTOConverter;
 import com.apollocurrency.aplwallet.apl.data.DexTestData;
@@ -45,14 +46,12 @@ public class DexControllerTest {
     private DexEthService dexEthService;
     @Mock
     private EthereumWalletService walletService;
-    @Mock
-    private DexSmartContractService smartContractService;
     private DexTestData td;
 
     @BeforeEach
     void setup() {
         dispatcher = MockDispatcherFactory.createDispatcher();
-        DexController dexController = new DexController(service, dexOrderTransactionCreator, timeService, dexEthService, walletService, smartContractService);
+        DexController dexController = new DexController(service, dexOrderTransactionCreator, timeService, dexEthService, walletService);
         dispatcher.getRegistry().addSingletonResource(dexController);
         td = new DexTestData();
     }

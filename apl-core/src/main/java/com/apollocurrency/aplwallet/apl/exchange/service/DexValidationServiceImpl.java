@@ -4,7 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -59,17 +60,24 @@ public class DexValidationServiceImpl implements IDexValidator {
     private DexSmartContractService dexSmartContractService;
     private EthereumWalletService ethereumWalletService;
     private EthGasStationInfoDao ethGasStationInfoDao;
+    private AccountService accountService;
     private TimeService timeService;
     private PhasingPollService phasingPollService;
     private Blockchain blockchain;
     private DexConfig dexConfig;
 
     @Inject
-    DexValidationServiceImpl(DexSmartContractService dexSmartContractService, EthereumWalletService ethereumWalletService, EthGasStationInfoDao ethGasStationInfoDao, TimeService timeService,
-                             PhasingPollService phasingPollService, Blockchain blockchain, DexConfig dexConfig) {
+    DexValidationServiceImpl(DexSmartContractService dexSmartContractService, EthereumWalletService ethereumWalletService, EthGasStationInfoDao ethGasStationInfoDao,
+                             AccountService accountService,
+                             TimeService timeService,
+                             PhasingPollService phasingPollService,
+                             Blockchain blockchain,
+                             DexConfig dexConfig
+                             ) {
         this.dexSmartContractService = Objects.requireNonNull(dexSmartContractService, "dexSmartContractService is null");
         this.ethereumWalletService = Objects.requireNonNull(ethereumWalletService, "ethereumWalletService is null");
-        this.ethGasStationInfoDao = Objects.requireNonNull(ethGasStationInfoDao, "ethGasStationInfoDao is null");
+        this.ethGasStationInfoDao = Objects.requireNonNull( ethGasStationInfoDao, "ethGasStationInfoDao is null");
+        this.accountService = Objects.requireNonNull(accountService, "accountService is null");
         this.timeService = Objects.requireNonNull(timeService, "timeService is null");
         this.phasingPollService = Objects.requireNonNull(phasingPollService, "phasingPollService is null");
         this.blockchain = Objects.requireNonNull(blockchain, "blockchain is null");
@@ -77,13 +85,13 @@ public class DexValidationServiceImpl implements IDexValidator {
     }
 
     Long getAplUnconfirmedBalance(Long hisAccountID) {
-        Account hisAccount = Account.getAccount(hisAccountID);
+        Account hisAccount = accountService.getAccount(hisAccountID);
         long hisUnconfirmedAplBalance = hisAccount.getUnconfirmedBalanceATM();
         return hisUnconfirmedAplBalance;
     }
 
     Long getAplBalanceAtm(Long hisAccountID) {
-        Account hisAccount = Account.getAccount(hisAccountID);
+        Account hisAccount = accountService.getAccount(hisAccountID);
         Long hisAplBalance = hisAccount.getBalanceATM();
         return hisAplBalance;
     }

@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporter;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaper;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
+import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.ZipImpl;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
@@ -120,7 +121,7 @@ class PrunableArchiveMigratorTest {
         assertArrayEquals(new byte[32], shard.getPrunableZipHash());
         Path extractPath = extension.newFolder().toPath();
         zip.extract(path.toAbsolutePath().toString(), extractPath.toAbsolutePath().toString());
-        assertEquals(2, Files.list(extractPath).count());
+        assertEquals(2, FileUtils.countElementsOfDirectory(extractPath));
         assertTrue(Files.exists(extractPath.resolve("not-prunable.csv")));
         assertTrue(Files.exists(extractPath.resolve("shard.csv")));
         assertEquals(List.of("shard1"), Files.readAllLines(extractPath.resolve("shard.csv")));

@@ -58,6 +58,7 @@ import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.COMPLETED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.CSV_EXPORT_FINISHED;
@@ -445,9 +446,11 @@ public class ShardEngineImpl implements ShardEngine {
         try {
             int pruningTime = trimDerivedTables(paramInfo.getSnapshotBlockHeight() + 1);
             if (StringUtils.isBlank(recovery.getProcessedObject())) {
-                Files.list(csvExporter.getDataExportPath())
-                        .filter(p-> !Files.isDirectory(p) && p.toString().endsWith(CsvAbstractBase.CSV_FILE_EXTENSION))
+                try(Stream<Path> files = Files.list(csvExporter.getDataExportPath())) {
+                    files
+                        .filter(p -> !Files.isDirectory(p) && p.toString().endsWith(CsvAbstractBase.CSV_FILE_EXTENSION))
                         .forEach(FileUtils::deleteFileIfExistsQuietly);
+                }
             }
             for (TableInfo tableInfo : allTables) {
                 exportTableWithRecovery(recovery, tableInfo.getName(), () -> {
@@ -463,14 +466,14 @@ public class ShardEngineImpl implements ShardEngine {
                         case ShardConstants.TRANSACTION_TABLE_NAME:
                             return csvExporter.exportTransactions(paramInfo.getExcludeInfo().getExportDbIds(), paramInfo.getSnapshotBlockHeight());
                         case ShardConstants.ACCOUNT_TABLE_NAME:
-                            return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID", "LATEST", "HEIGHT"), pruningTime, null);
+                            return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID", "LATEST", "HEIGHT", "DELETED"), pruningTime, null);
 //                        case ShardConstants.DEX_ORDER_TABLE_NAME: // now it's returned back to usual export for derived tables
                         // this is en example how to export using specified columns + index on it
 //                            return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID", "LATEST"), -1, "HEIGHT");
                         case ShardConstants.ACCOUNT_CURRENCY_TABLE_NAME:
-                            return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID", "LATEST", "HEIGHT"), pruningTime, " account_id, currency_id");
+                            return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID", "LATEST", "HEIGHT", "DELETED"), pruningTime, " account_id, currency_id");
                         case ShardConstants.ACCOUNT_ASSET_TABLE_NAME:
-                            return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID", "LATEST", "HEIGHT"), pruningTime, " account_id, asset_id");
+                            return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID", "LATEST", "HEIGHT", "DELETED"), pruningTime, " account_id, asset_id");
 
                         default:
                             return exportDerivedTable(tableInfo, paramInfo, pruningTime);

@@ -20,19 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NO_MESSAGE;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.PRUNED_TRANSACTION;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_TRANSACTION;
-import static org.slf4j.LoggerFactory.getLogger;
-
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.dgs.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
@@ -45,10 +40,15 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
-import java.util.Arrays;
 import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
+import java.util.Arrays;
+
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NO_MESSAGE;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.PRUNED_TRANSACTION;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_TRANSACTION;
+import static org.slf4j.LoggerFactory.getLogger;
 
 @Vetoed
 public final class ReadMessage extends AbstractAPIRequestHandler {
@@ -62,7 +62,7 @@ public final class ReadMessage extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
-        long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
+        long transactionId = HttpParameterParserUtil.getUnsignedLong(req, "transaction", true);
         boolean retrieve = "true".equalsIgnoreCase(req.getParameter("retrieve"));
         Transaction transaction = lookupBlockchain().getTransaction(transactionId);
         if (transaction == null) {
@@ -90,10 +90,10 @@ public final class ReadMessage extends AbstractAPIRequestHandler {
             response.put("message", Convert.toString(prunableMessage.getMessage(), prunableMessage.messageIsText()));
             response.put("messageIsPrunable", true);
         }
-        long accountId = ParameterParser.getAccountId(req, false);
+        long accountId = HttpParameterParserUtil.getAccountId(req, false);
 
-        byte[] keySeed = ParameterParser.getKeySeed(req, accountId, false);
-        byte[] sharedKey = ParameterParser.getBytes(req, "sharedKey", false);
+        byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, accountId, false);
+        byte[] sharedKey = HttpParameterParserUtil.getBytes(req, "sharedKey", false);
         if (sharedKey.length != 0 && keySeed != null) {
             return JSONResponses.either("secretPhrase", "sharedKey");
         }
@@ -117,11 +117,11 @@ public final class ReadMessage extends AbstractAPIRequestHandler {
                     byte[] decrypted = null;
                     if (keySeed != null) {
                         byte[] readerPublicKey = Crypto.getPublicKey(keySeed);
-                        byte[] senderPublicKey = Account.getPublicKey(transaction.getSenderId());
-                        byte[] recipientPublicKey = Account.getPublicKey(transaction.getRecipientId());
+                        byte[] senderPublicKey = lookupAccountService().getPublicKeyByteArray(transaction.getSenderId());
+                        byte[] recipientPublicKey = lookupAccountService().getPublicKeyByteArray(transaction.getRecipientId());
                         byte[] publicKey = Arrays.equals(senderPublicKey, readerPublicKey) ? recipientPublicKey : senderPublicKey;
                         if (publicKey != null) {
-                            decrypted = Account.decryptFrom(publicKey, encryptedData, keySeed, uncompress);
+                            decrypted = EncryptedDataUtil.decryptFrom(publicKey, encryptedData, keySeed, uncompress);
                         }
                     } else {
                         decrypted = Crypto.aesDecrypt(encryptedData.getData(), sharedKey);
@@ -138,7 +138,7 @@ public final class ReadMessage extends AbstractAPIRequestHandler {
             if (encryptToSelfMessage != null && keySeed != null) {
                 byte[] publicKey = Crypto.getPublicKey(keySeed);
                 try {
-                    byte[] decrypted = Account.decryptFrom(publicKey, encryptToSelfMessage.getEncryptedData(), keySeed,
+                    byte[] decrypted = EncryptedDataUtil.decryptFrom(publicKey, encryptToSelfMessage.getEncryptedData(), keySeed,
                             encryptToSelfMessage.isCompressed());
                     response.put("decryptedMessageToSelf", Convert.toString(decrypted, encryptToSelfMessage.isText()));
                 } catch (RuntimeException e) {

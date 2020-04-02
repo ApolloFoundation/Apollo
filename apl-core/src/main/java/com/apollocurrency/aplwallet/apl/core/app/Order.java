@@ -20,21 +20,26 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import javax.enterprise.inject.spi.CDI;
-
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderPlacementAttachment;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -42,7 +47,9 @@ import java.sql.SQLException;
 
 public abstract class Order {
 
-    private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
+    private static AccountAssetService accountAssetService = CDI.current().select(AccountAssetServiceImpl.class).get();
     private static DatabaseManager databaseManager;
 
     private final long id;
@@ -90,24 +97,24 @@ public abstract class Order {
             Trade trade = Trade.addTrade(assetId, askOrder, bidOrder);
 
             askOrder.updateQuantityATU(Math.subtractExact(askOrder.getQuantityATU(), trade.getQuantityATU()));
-            Account askAccount = Account.getAccount(askOrder.getAccountId());
-            askAccount.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.ASSET_TRADE, askOrder.getId(),
+            Account askAccount = accountService.getAccount(askOrder.getAccountId());
+            accountService.addToBalanceAndUnconfirmedBalanceATM(askAccount, LedgerEvent.ASSET_TRADE, askOrder.getId(),
                     Math.multiplyExact(trade.getQuantityATU(), trade.getPriceATM()));
-            askAccount.addToAssetBalanceATU(LedgerEvent.ASSET_TRADE, askOrder.getId(), assetId, -trade.getQuantityATU());
+            accountAssetService.addToAssetBalanceATU(askAccount, LedgerEvent.ASSET_TRADE, askOrder.getId(), assetId, -trade.getQuantityATU());
 
             bidOrder.updateQuantityATU(Math.subtractExact(bidOrder.getQuantityATU(), trade.getQuantityATU()));
-            Account bidAccount = Account.getAccount(bidOrder.getAccountId());
-            bidAccount.addToAssetAndUnconfirmedAssetBalanceATU(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
+            Account bidAccount = accountService.getAccount(bidOrder.getAccountId());
+            accountAssetService.addToAssetAndUnconfirmedAssetBalanceATU(bidAccount, LedgerEvent.ASSET_TRADE, bidOrder.getId(),
                     assetId, trade.getQuantityATU());
-            bidAccount.addToBalanceATM(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
+            accountService.addToBalanceATM(bidAccount, LedgerEvent.ASSET_TRADE, bidOrder.getId(),
                     -Math.multiplyExact(trade.getQuantityATU(), trade.getPriceATM()));
-            bidAccount.addToUnconfirmedBalanceATM(LedgerEvent.ASSET_TRADE, bidOrder.getId(),
+            accountService.addToUnconfirmedBalanceATM(bidAccount, LedgerEvent.ASSET_TRADE, bidOrder.getId(),
                     Math.multiplyExact(trade.getQuantityATU(), (bidOrder.getPriceATM() - trade.getPriceATM())));
         }
 
     }
 
-    static void init() {
+    public static void init() {
         Ask.init();
         Bid.init();
     }
@@ -134,7 +141,7 @@ public abstract class Order {
         if (quantityATU > 0) {
             table.insert(order);
         } else if (quantityATU == 0) {
-            table.delete(order);
+            table.deleteAtHeight(order, blockchain.getHeight());
         } else {
             throw new IllegalArgumentException("Negative quantity: " + quantityATU
                     + " for order: " + Long.toUnsignedString(order.getId()));
@@ -142,8 +149,11 @@ public abstract class Order {
     }
 
     private void save(Connection con, String table) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (id, account_id, asset_id, "
-                + "price, quantity, creation_height, transaction_index, transaction_height, height, latest) KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (id, account_id, asset_id, "
+                + "price, quantity, creation_height, transaction_index, transaction_height, height, latest, deleted) KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)")
+        ) {
             int i = 0;
             pstmt.setLong(++i, this.id);
             pstmt.setLong(++i, this.accountId);
@@ -232,7 +242,7 @@ public abstract class Order {
             }
 
             @Override
-            protected String defaultSort() {
+            public String defaultSort() {
                 return " ORDER BY creation_height DESC ";
             }
 
@@ -300,7 +310,7 @@ public abstract class Order {
         }
 
         public static void removeOrder(long orderId) {
-            askOrderTable.delete(getAskOrder(orderId));
+            askOrderTable.deleteAtHeight(getAskOrder(orderId), blockchain.getHeight());
         }
 
         public static void init() {}
@@ -353,7 +363,7 @@ public abstract class Order {
             }
 
             @Override
-            protected String defaultSort() {
+            public String defaultSort() {
                 return " ORDER BY creation_height DESC ";
             }
 
@@ -421,7 +431,7 @@ public abstract class Order {
         }
 
         public static void removeOrder(long orderId) {
-            bidOrderTable.delete(getBidOrder(orderId));
+            bidOrderTable.deleteAtHeight(getBidOrder(orderId), blockchain.getHeight());
         }
 
         public static void init() {}

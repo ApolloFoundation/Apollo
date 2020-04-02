@@ -32,6 +32,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.math.BigInteger;
 import javax.enterprise.inject.Vetoed;
 
+@Deprecated
 @Vetoed
 public final class LongConvert extends AbstractAPIRequestHandler {
 

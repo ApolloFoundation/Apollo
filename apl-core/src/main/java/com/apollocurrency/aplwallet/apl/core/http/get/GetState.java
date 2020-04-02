@@ -20,8 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountLeaseTable;
 import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
@@ -50,6 +48,8 @@ import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 import java.net.InetAddress;
+
+@Deprecated
 @Vetoed
 public final class GetState extends AbstractAPIRequestHandler {
     private UPnP upnp = CDI.current().select(UPnP.class).get();
@@ -68,7 +68,7 @@ public final class GetState extends AbstractAPIRequestHandler {
 
         if ("true".equalsIgnoreCase(req.getParameter("includeCounts")) && apw.checkPassword(req)) {
             response.put("numberOfTransactions", lookupBlockchain().getTransactionCount());
-            response.put("numberOfAccounts", Account.getCount());
+            response.put("numberOfAccounts", lookupAccountPublickKeyService().getCount());
             response.put("numberOfAssets", Asset.getCount());
             int askCount = Order.Ask.getCount();
             int bidCount = Order.Bid.getCount();
@@ -91,8 +91,8 @@ public final class GetState extends AbstractAPIRequestHandler {
             response.put("numberOfPrunableMessages", prunableMessageService.getCount());
             response.put("numberOfTaggedData", taggedDataService.getTaggedDataCount());
             response.put("numberOfDataTags", taggedDataService.getDataTagCount());
-            response.put("numberOfAccountLeases", AccountLeaseTable.getAccountLeaseCount());
-            response.put("numberOfActiveAccountLeases", Account.getActiveLeaseCount());
+            response.put("numberOfAccountLeases", lookupAccountLeaseService().getAccountLeaseCount());
+            response.put("numberOfActiveAccountLeases", lookupAccountService().getActiveLeaseCount());
             response.put("numberOfShufflings", Shuffling.getCount());
             response.put("numberOfActiveShufflings", Shuffling.getActiveCount());
             response.put("numberOfPhasingOnlyAccounts", PhasingOnly.getCount());
@@ -106,7 +106,7 @@ public final class GetState extends AbstractAPIRequestHandler {
         response.put("freeMemory", Runtime.getRuntime().freeMemory());
         response.put("peerPort", lookupPeersService().myPort);
         response.put("isOffline", propertiesHolder.isOffline());
-        response.put("needsAdminPassword", !apw.disableAdminPassword);
+        response.put("needsAdminPassword", !apw.isDisabledAdminPassword());
         response.put("customLoginWarning", propertiesHolder.customLoginWarning());
         InetAddress externalAddress = upnp.getExternalAddress();
         if (externalAddress != null) {

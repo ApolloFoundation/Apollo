@@ -15,10 +15,10 @@ move /Y %WALLETDIR:~0,-1%\ApolloWallet-%VERSION%-libs\*" %WALLETDIR:~0,-1%\lib"
 del /S /F /Q %1\ApolloWallet-%VERSION%-libs*
 mkdir %1\tmpdir
 
-rem curl --retry 100 -o %1\tmpdir\b5d7b6.zip -k https://s3.amazonaws.com/updates.apollowallet.org/database/b5d7b6.zip
-rem del /S /F /Q %userprofile%\.apl-blockchain\apl-blockchain-db\b5d7b6
-rem unzip -o %1\tmpdir\b5d7b6.zip -d %userprofile%\.apl-blockchain\apl-blockchain-db\
-rem del /S /F /Q %1\tmpdir\b5d7b6.zip
+curl --retry 100 -o %1\tmpdir\%2.zip -k https://s3.amazonaws.com/updates.apollowallet.org/database/%2-2020-q1.zip
+del /S /F /Q %userprofile%\.apl-blockchain\apl-blockchain-db\%2
+unzip -o %1\tmpdir\b5d7b6.zip -d %userprofile%\.apl-blockchain\apl-blockchain-db\
+del /S /F /Q %1\tmpdir\%2.zip
 
 
 

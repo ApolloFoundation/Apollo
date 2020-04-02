@@ -20,7 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventBinding;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
@@ -72,6 +73,7 @@ import com.apollocurrency.aplwallet.apl.util.Filter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
@@ -148,6 +150,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 //    private final Listeners<Block, Event> blockListeners = new Listeners<>();
     private volatile Peer lastBlockchainFeeder;
     private final javax.enterprise.event.Event<Block> blockEvent;
+    private final javax.enterprise.event.Event<AccountLedgerEventType> ledgerEvent;
     private final javax.enterprise.event.Event<List<Transaction>> txEvent;
     private final javax.enterprise.event.Event<BlockchainConfig> blockchainEvent;
     private final GlobalSync globalSync;
@@ -297,7 +300,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     @Inject
-    public BlockchainProcessorImpl(BlockValidator validator, Event<Block> blockEvent,
+    public BlockchainProcessorImpl(BlockValidator validator, Event<Block> blockEvent, Event<AccountLedgerEventType> ledgerEvent,
                                    GlobalSync globalSync, DerivedTablesRegistry dbTables,
                                    ReferencedTransactionService referencedTransactionService, PhasingPollService phasingPollService,
                                    TransactionValidator transactionValidator,
@@ -311,6 +314,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    ShardDao shardDao) {
         this.validator = validator;
         this.blockEvent = blockEvent;
+        this.ledgerEvent = ledgerEvent;
         this.globalSync = globalSync;
         this.dbTables = dbTables;
         this.trimService = trimService;
@@ -511,7 +515,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     DirProvider dirProvider = RuntimeEnvironment.getInstance().getDirProvider();
                     Path dataExportDir = dirProvider.getDataExportDir();
                     FileUtils.clearDirectorySilently(dataExportDir);
-                    FileUtils.deleteFilesByPattern(dirProvider.getDbDir(), new String[]{".zip", ".h2.db"}, new String[]{"-shard-"});
+                    FileUtils.deleteFilesByPattern(dirProvider.getDbDir(), new String[]{".zip", DbProperties.DB_EXTENSION_WITH_DOT}, new String[]{"-shard-"});
                     dataSource.commit(false);
                     lookupBlockhainConfigUpdater().rollback(0);
                 }
@@ -795,8 +799,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 dataSource.commit(false);
                 log.trace("committed block on = {}, id = '{}'", block.getHeight(), block.getId());
             } catch (Exception e) {
-                dataSource.rollback(false); // do not close current transaction
                 log.error("PushBlock, error:", e);
+                try {
+                    dataSource.rollback(false); // do not close current transaction
+                } catch (Exception ex) {
+                    log.error("Unable to rollback db changes on block height " + block.getHeight() + " id " + block.getId(), ex);
+                }
                 popOffToCommonBlock(previousLastBlock); // do in current transaction
                 blockchain.setLastBlock(previousLastBlock);
                 throw e;
@@ -1060,12 +1068,13 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             if (block.getOrLoadTransactions().size() > 0) {
                 txEvent.select(TxEventType.literal(TxEventType.ADDED_CONFIRMED_TRANSACTIONS)).fire(block.getOrLoadTransactions());
             }
-            log.trace(":accept: Account ledger commit.");
-            AccountLedger.commitEntries();
+            log.trace(":accept: Fire event COMMIT_ENTRIES");
+            ledgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.COMMIT_ENTRIES)).fire(AccountLedgerEventType.COMMIT_ENTRIES);
             log.trace(":accept: that's it.");
         } finally {
             isProcessingBlock = false;
-            AccountLedger.clearEntries();
+            log.trace("Fire event CLEAR_ENTRIES");
+            ledgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.CLEAR_ENTRIES)).fire(AccountLedgerEventType.CLEAR_ENTRIES);
             log.trace("Accepting block DONE: {} height: {} processing time ms: {}", block.getId(), block.getHeight(), System.currentTimeMillis() - start);
         }
     }
@@ -1148,14 +1157,18 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }
             long rollbackStartTime = System.currentTimeMillis();
             log.debug("Start rollback for tables=[{}]", dbTables.getDerivedTables().size());
+            if (log.isTraceEnabled()){
+                log.trace("popOffToInTransaction rollback: {}", dbTables.toString());
+            }
             for (DerivedTableInterface table : dbTables.getDerivedTables()) {
                 long start = System.currentTimeMillis();
                 table.rollback(commonBlockHeight);
-                log.trace("rollback for table={} to commonBlockHeight={} in {} ms", table.getName(),
+                if (log.isTraceEnabled()) {
+                    log.trace("rollback for table={} to commonBlockHeight={} in {} ms", table.getName(),
                         commonBlockHeight, System.currentTimeMillis() - start);
+                }
             }
             log.debug("Total rollback time: {} ms", System.currentTimeMillis() - rollbackStartTime);
-            dataSource.clearCache();
             dataSource.commit(false); // should happen definitely otherwise
             log.debug("<< popOffToInTransaction() blocks=[{}] at commonBlockHeight={}", poppedOffBlocks.size(), commonBlockHeight);
         }
@@ -1467,7 +1480,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     }
                     aplAppStatus.durableTaskUpdate(scanTaskId, "Rollback finished for table \'" + table.toString() + "\' to height " + height, percentsPerTable);
                 }
-                dataSource.clearCache();
                 dataSource.commit(false);
                 aplAppStatus.durableTaskUpdate(scanTaskId, 20.0, "Rolled back " + derivedTables.size() + " derived tables");
                 Block currentBlock = blockchain.getBlockAtHeight(height);
@@ -1543,7 +1555,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                     blockEvent.select(literal(BlockEventType.BEFORE_BLOCK_ACCEPT)).fire(currentBlock);
                                     blockchain.setLastBlock(currentBlock);
                                     accept(currentBlock, validPhasedTransactions, invalidPhasedTransactions, duplicates);
-                                    dataSource.clearCache();
                                     dataSource.commit(false);
                                     blockEvent.select(literal(BlockEventType.AFTER_BLOCK_ACCEPT)).fire(currentBlock);
                                 }
@@ -1578,7 +1589,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     for (DerivedTableInterface table : derivedTables) {
                         aplAppStatus.durableTaskUpdate(scanTaskId,
                                 "Create full text search index for table " + table.toString(), percentsPerTableIndex);
-                        table.createSearchIndex(con);
+                        lookupFullTextSearchProvider().createSearchIndex(con, table.getName(), table.getFullTextSearchColumns());
                     }
                 }
 

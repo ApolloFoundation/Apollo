@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.derived;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
@@ -19,6 +17,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Provide rollback and trim multiversion implementations and hold common parameters such as multiversion and keyfactory
@@ -44,22 +44,23 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
     }
 
     @Override
-    public void rollback(int height) {
+    public int rollback(int height) {
         if (multiversion) {
-            doMultiversionRollback(height);
+            return doMultiversionRollback(height);
         } else {
-            super.rollback(height);
+            return super.rollback(height);
         }
     }
 
-    private void doMultiversionRollback(int height) {
+    private int doMultiversionRollback(int height) {
+        int deletedRecordsCount;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
         long startTime = System.currentTimeMillis();
         String sql = "UPDATE " + table
-                + " SET latest = TRUE " + keyFactory.getPKClause() + " AND height ="
+                + " SET latest = TRUE " + (getDeletedSetStatementIfSupported(false)) + keyFactory.getPKClause() + " AND height ="
                 + " (SELECT MAX(height) FROM " + table + keyFactory.getPKClause() + ")";
         LOG.trace(sql);
         try (Connection con = dataSource.getConnection();
@@ -81,18 +82,36 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
             }
 
             pstmtDelete.setInt(1, height);
-            int deletedRecordsCount = pstmtDelete.executeUpdate();
+            deletedRecordsCount = pstmtDelete.executeUpdate();
 
             if (deletedRecordsCount > 0) {
                 LOG.trace("Rollback table {} deleting {} records", table, deletedRecordsCount);
             }
-
+            if (supportDelete()) { // do not 'setLatest' for deleted entities ( if last entity below given height was deleted 'deleted=true')
+                try (PreparedStatement pstmtSelectDeletedCount = con.prepareStatement("SELECT " + keyFactory.getPKColumns() + " FROM " + table + " WHERE height <= ? AND deleted = true GROUP BY " + keyFactory.getPKColumns() + " HAVING COUNT(DISTINCT HEIGHT) % 2 = 0");
+                     PreparedStatement pstmtGetLatestDeleted = con.prepareStatement("SELECT deleted FROM " + table + keyFactory.getPKClause() + " AND height <=? ORDER BY db_id DESC LIMIT 1")) {
+                    pstmtSelectDeletedCount.setInt(1, height);
+                    try (ResultSet rs = pstmtSelectDeletedCount.executeQuery()) {
+                        while (rs.next()) {
+                            DbKey candidateToRemove = keyFactory.newKey(rs);
+                            int index = candidateToRemove.setPK(pstmtGetLatestDeleted, 1);
+                            pstmtGetLatestDeleted.setInt(index, height);
+                            try (ResultSet latestDeleted = pstmtGetLatestDeleted.executeQuery()) {
+                                if (latestDeleted.next()) {
+                                    boolean del = latestDeleted.getBoolean(1);
+                                    if (del) {
+                                        dbKeys.remove(candidateToRemove);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             for (DbKey dbKey : dbKeys) {
-                int i = 1;
-                i = dbKey.setPK(pstmtSetLatest, i);
-                i = dbKey.setPK(pstmtSetLatest, i);
+                int i = dbKey.setPK(pstmtSetLatest, 1);
+                dbKey.setPK(pstmtSetLatest, i);
                 pstmtSetLatest.executeUpdate();
-                dataSource.getCache(table).remove(dbKey);
             }
         }
         catch (SQLException e) {
@@ -100,6 +119,7 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
             throw new RuntimeException(e.toString(), e);
         }
         LOG.trace("Rollback for table {} took {} ms", table, System.currentTimeMillis() - startTime);
+        return deletedRecordsCount;
     }
 
 
@@ -114,35 +134,42 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
 
     /**
      * <p>Delete old data from db before target height. Leave last actual entry for each entity to allow rollback to target height</p>
-     * <p>Also will delete blockchain 'deleted' entries with latest=false which not exist at height greater than target height</p>
+     * <p>Also will completely delete blockchain 'deleted' entries with latest=false & deleted=true (applies only for paired 'deleted' records to ensure rollback availability)</p>
      * <p>WARNING! Do not trim to your current blockchain height! It will delete all history data and you will not be able to rollback and switch to another fork</p>
      * @param height       target height of blockchain for trimming, should be less or equal to minRollbackHeight to allow rollback to such height
      * <p>Example:</p>
      *                     <pre>{@code
-     *                     db_id     account   balance    height    latest
-     *                     0         00         10        0         true
-     *                     1         000        10        100       false
-     *                     2         200        25        100       false
-     *                     3         200        50        125       false
-     *                     4         100        5         175       false
-     *                     5         200        125       200       false
-     *                     6         100        5         200       false
-     *                     7         200        6         200       true
-     *                     8         200        6         220       true
-     *                     9         100        80        230       true
-     *                     10        500        100       240       true
+     *                     db_id     account   balance    height    latest deleted
+     *                     10         1          10         0       true   false
+     *                     11         2          10         1       false  false
+     *                     11         2          10         2       false  true
+     *                     15         2           0         3       false  true
+     *                     30         3          50         3       false  false
+     *                     40         3           5         4       true   false
+     *                     42         2          11         4       false  false
+     *                     44         2          12         5       false  true
+     *                     50         4         125         5       false  false
+     *                     70         6           6         5       false  false
+     *                     80         6           6         6       true   false
+     *                     81         5           5         6       false  false
+     *                     82         2           0         6       false   true
+     *                     90         5          80         7       true   false
+     *                     100        4         100         7       true   false
      *                     }</pre>
      * <p>
-     *                     Trim to height 201 will result in
+     *                     Trim to height 6 will result in
      *                     <pre>{@code
-     *                     db_id     account   balance    height    latest
-     *                     0         00         10        0         true
-     *                     4         100        5         175       false
-     *                     5         200        125       200       false
-     *                     7         200        6         210       false
-     *                     8         200        6         220       true
-     *                     9         100        80        230       true
-     *                     10        500        100       240       true
+     *                     db_id     account   balance    height    latest deleted
+     *                     10         1           10        0       true   false
+     *                     40         3            5        4       true   false
+     *                     44         2           12        5       false  true
+     *                     50         4          125        5       false  false
+     *                     70         6            6        5       false  false
+     *                     80         6            6        6       true   false
+     *                     81         5            5        6       false  false
+     *                     82         2            0        6       false  true
+     *                     90         5           80        7       true   false
+     *                     100        4          100        7       true   false
      *                     }</pre>
      * </p>
      */
@@ -157,23 +184,20 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
              PreparedStatement pstmtSelect = con.prepareStatement("SELECT " + keyFactory.getPKColumns() + ", MAX(height) AS max_height"
                      + " FROM " + table + " WHERE height < ? GROUP BY " + keyFactory.getPKColumns() + " HAVING COUNT(DISTINCT height) > 1")) {
             pstmtSelect.setInt(1, height);
-            long startDeleteTime;
-            long deleted = 0L;
-            long deleteStm = 0L;
-            long startSelectTime = System.currentTimeMillis();
+            long startDeleteTime, deleted = 0L, deleteStm = 0L, startSelectTime = System.currentTimeMillis();
             try (ResultSet rs = pstmtSelect.executeQuery();
                  PreparedStatement pstmtDeleteById =
                          con.prepareStatement("DELETE FROM " + table + " WHERE db_id = ?");
                  PreparedStatement selectDbIdStatement =
-                         con.prepareStatement("SELECT db_id, height FROM " + table + " " + keyFactory.getPKClause())) {
+                         con.prepareStatement("SELECT db_id, height " + getDeletedColumnIfSupported() + " FROM " + table + " " + keyFactory.getPKClause())) {
                 LOG.trace("Select {} time: {}", table, System.currentTimeMillis() - startSelectTime);
                 startDeleteTime = System.currentTimeMillis();
+
                 while (rs.next()) {
-                    List<Long> keys = selectDbIds(selectDbIdStatement, rs);
+                    Set<Long> keysToDelete = selectDbIds(selectDbIdStatement, rs);
                     // TODO migrate to PreparedStatement.addBatch for another db
-                    for (Long dbId :keys) {
-                        pstmtDeleteById.setLong(1, dbId);
-                        pstmtDeleteById.executeUpdate();
+                    for (Long id : keysToDelete) {
+                        deleteByDbId(pstmtDeleteById, id);
                         deleted++;
                         deleteStm++;
                         if (deleted % 100 == 0) {
@@ -184,9 +208,6 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
                 dataSource.commit(false);
                 LOG.trace("Delete time {} for table {}: stm - {}, deleted - {}", System.currentTimeMillis() - startDeleteTime, table,
                         deleteStm, deleted);
-                long startDeleteDeletedTime = System.currentTimeMillis();
-                int totalDeleteDeleted = deleteDeletedNewAlgo(height);
-                LOG.trace("Delete deleted time for table {} is: {}, deleted - {}", table, System.currentTimeMillis() - startDeleteDeletedTime, totalDeleteDeleted);
             }
             long trimTime = System.currentTimeMillis() - startTime;
             if (trimTime > 1000) {
@@ -198,76 +219,47 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
         }
     }
 
-    private  List<Long> selectDbIds(PreparedStatement selectDbIdStatement, ResultSet rs) throws SQLException {
+    private String getDeletedColumnIfSupported() {
+        return supportDelete() ? ", deleted" : "";
+    }
+    private String getDeletedSetStatementIfSupported(boolean deleted) {
+        return supportDelete() ? ", deleted = " + deleted + " ": "";
+    }
+
+    private Set<Long> selectDbIds(PreparedStatement selectDbIdStatement, ResultSet rs) throws SQLException {
         DbKey dbKey = keyFactory.newKey(rs);
         dbKey.setPK(selectDbIdStatement);
-        List<Long> keys = new ArrayList<>();
+        Set<Long> keys = new HashSet<>();
         int maxHeight = rs.getInt("max_height");
+        boolean lastDeleted = false;
+        Set<Integer> deleteHeights = new HashSet<>();
+        Set<Long> lastDbIds = new HashSet<>();
         try (ResultSet dbIdsSet = selectDbIdStatement.executeQuery()) {
             while (dbIdsSet.next()) {
                 int currentHeight = dbIdsSet.getInt(2);
-                if (currentHeight < maxHeight && currentHeight >= 0) {
-                    keys.add(dbIdsSet.getLong(1));
+                boolean entryDeleted = supportDelete() && dbIdsSet.getBoolean(3);
+                long dbId = dbIdsSet.getLong(1);
+                if (currentHeight == maxHeight) {
+                    lastDeleted = entryDeleted;
+                    lastDbIds.add(dbId);
+                } else if (currentHeight < maxHeight && currentHeight >= 0) {
+                    if (entryDeleted) {
+                        deleteHeights.add(currentHeight);
+                    }
+                    keys.add(dbId);
                 }
             }
+        }
+        // last existing record should be 'deleted' and paired with previously deleted records
+        if (deleteHeights.size() % 2 != 0 && lastDeleted) {
+            keys.addAll(lastDbIds);
         }
         return keys;
     }
 
-    // changed algo - select all dbkeys from query and insert to hashset, create index for height and latest and select db_key and
-    // db_id from table using index. Next filter each account_id from set and delete it.
-    private int deleteDeletedNewAlgo(int height) throws SQLException {
-        int deleted = 0;
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try (Connection con = dataSource.getConnection()) {
-            Set<DbKey> dbKeys = selectExistingDbKeys(con, height);
-            try (
-                    PreparedStatement pstmtSelectDeleteCandidates =
-                            con.prepareStatement("SELECT DB_ID, " + keyFactory.getPKColumns() + " FROM " + table + " WHERE height < ? AND height >= 0 " +
-                                    "AND latest = FALSE ")) {
-                pstmtSelectDeleteCandidates.setInt(1, height);
-
-                try (ResultSet candidatesRs = pstmtSelectDeleteCandidates.executeQuery();
-                     PreparedStatement pstmtDeleteByDbId =
-                             con.prepareStatement("DELETE FROM " + table + " WHERE db_id = ?")) {
-                    while (candidatesRs.next()) {
-                        DbKey dbKey = keyFactory.newKey(candidatesRs);
-                        if (!dbKeys.contains(dbKey)) {
-                            long dbId = candidatesRs.getLong(1);
-                            deleteByDbId(pstmtDeleteByDbId, dbId);
-                            if (++deleted % 100 == 0) {
-                                dataSource.commit(false);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        dataSource.commit(false);
-        return deleted;
-    }
-
-    private int deleteByDbId(PreparedStatement pstmtDeleteByDbId, long dbId) throws SQLException {
+    private void deleteByDbId(PreparedStatement pstmtDeleteByDbId, long dbId) throws SQLException {
         pstmtDeleteByDbId.setLong(1, dbId);
-        return pstmtDeleteByDbId.executeUpdate();
+        pstmtDeleteByDbId.executeUpdate();
 
-    }
-
-    private Set<DbKey> selectExistingDbKeys(Connection con, int height) throws SQLException {
-        Set<DbKey> dbKeys = new HashSet<>();
-        try (PreparedStatement pstmtSelectExistingIds = con.prepareStatement("SELECT " + keyFactory.getPKColumns() + " FROM " + table + " WHERE height >= ?")) {
-            pstmtSelectExistingIds.setInt(1, height);
-            try (ResultSet idsRs = pstmtSelectExistingIds.executeQuery()) {
-                while (idsRs.next()) {
-                    dbKeys.add(keyFactory.newKey(idsRs));
-                }
-            }
-        }
-        return dbKeys;
-    }
-
-    protected void clearCache() {
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        dataSource.clearCache(table);
     }
 }

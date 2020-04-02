@@ -25,6 +25,8 @@ import javax.inject.Singleton;
 
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -128,6 +130,7 @@ public class PeerDb {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         dataSource.begin();   
         try (Connection con = dataSource.getConnection();
+             @DatabaseSpecificDml(DmlMarker.MERGE)
              PreparedStatement pstmt = con.prepareStatement("MERGE INTO peer "
                         + "(address, services, last_updated) KEY(address) VALUES(?, ?, ?)")) {
             for (Entry peer : peers) {
@@ -147,6 +150,7 @@ public class PeerDb {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         dataSource.begin();        
         try (Connection con = dataSource.getConnection();
+             @DatabaseSpecificDml(DmlMarker.MERGE)
              PreparedStatement pstmt = con.prepareStatement("MERGE INTO peer "
                         + "(address, services, last_updated) KEY(address) VALUES(?, ?, ?)")) {
             pstmt.setString(1, peer.getAnnouncedAddress());

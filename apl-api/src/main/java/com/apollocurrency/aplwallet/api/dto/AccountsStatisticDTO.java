@@ -6,6 +6,8 @@ package com.apollocurrency.aplwallet.api.dto;
 
 import java.util.List;
 
+import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
+
 public class AccountsStatisticDTO {
     private long totalSupply;
     private long totalAmountOnTopAccounts;

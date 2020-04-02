@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
+import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -45,7 +46,8 @@ public class TransportInteractionController {
                             content = @Content(mediaType = "application/json",
                                     schema = @Schema(implementation = TransportStatusResponse.class)))
             }
-    )    
+    )
+    @PermitAll
     public TransportStatusResponse getTransportStatusResponse(){                                
         TransportStatusResponse transportStatusResponse = tiService.getTransportStatusResponse();                
         return transportStatusResponse;        
@@ -62,8 +64,9 @@ public class TransportInteractionController {
                             content = @Content(mediaType = "application/json",
                                     schema = @Schema(implementation = ResponseDone.class)))
             }
-    ) 
-    public ResponseDone startSecureTransport(  ) {       
+    )
+    @PermitAll
+    public ResponseDone startSecureTransport(  ) {
         ResponseDone response = new ResponseDone();
         tiService.startSecureTransport();
         response.setDone(Boolean.TRUE);        
@@ -81,8 +84,8 @@ public class TransportInteractionController {
                             content = @Content(mediaType = "application/json",
                                     schema = @Schema(implementation = ResponseDone.class)))
             }
-    ) 
-    
+    )
+    @PermitAll
     public ResponseDone stopSecureTransport(  ) {        
         ResponseDone response = new ResponseDone();
         tiService.stopSecureTransport();
