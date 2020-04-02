@@ -31,6 +31,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.core.rest.validation.ValidBlockchainHeight;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -40,7 +41,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jboss.resteasy.annotations.jaxrs.FormParam;
+import javax.ws.rs.FormParam;
 
 @NoArgsConstructor
 @Slf4j
@@ -100,17 +101,21 @@ public class BlockController {
         })
     @PermitAll
     public Response getBlockPost(
-        @Parameter(description = "Block id (optional, default is last block)", schema = @Schema(implementation = String.class))
+        @Parameter(description = "Block id (optional, default is last block)",
+            schema = @Schema(implementation = String.class, description="Block id (optional, default is last block"))
             @FormParam("block") String blockIdStr,
-        @Parameter(description = "The block height (optional, default is last block).", schema = @Schema(implementation = String.class))
+        @Parameter(description = "The block height (optional, default is last block)",
+            schema = @Schema(implementation = String.class, description="The block height (optional, default is last block)"))
             @FormParam("height") String heightStr,
-        @Parameter(description = "The earliest block (in seconds since the genesis block) to retrieve (optional).", schema = @Schema(implementation = String.class))
+        @Parameter(description = "The earliest block (in seconds since the genesis block) to retrieve (optional)",
+            schema = @Schema(implementation = String.class, description="The block height (optional, default is last block)"))
             @FormParam("timestamp") String timestampStr,
-        @Parameter(description = "Include transactions detail info", schema = @Schema(implementation = Boolean.class))
+        @Parameter(description = "Include transactions detail info",
+            schema = @Schema(implementation = String.class, description="Include transactions detail info"))
             @FormParam("includeTransactions") @DefaultValue("false") boolean includeTransactions,
-        @Parameter(description = "Include phased transactions detail info", schema = @Schema(implementation = Boolean.class))
+        @Parameter(description = "Include phased transactions detail info",
+            schema = @Schema(implementation = String.class, description="Include phased transactions detail info"))
             @FormParam("includeExecutedPhased") @DefaultValue("false") boolean includeExecutedPhased
-
     ) {
         return getBlockResponse(blockIdStr, heightStr, timestampStr, includeTransactions, includeExecutedPhased);
     }
@@ -121,7 +126,7 @@ public class BlockController {
         log.trace("Started getBlock : \t blockId = {}, height={}, timestamp={}, includeTransactions={}, includeExecutedPhased={}",
             blockIdStr, heightStr, timestampStr, includeTransactions, includeExecutedPhased);
         Block blockData;
-        if (blockIdStr != null) {
+        if (StringUtils.isNotBlank(blockIdStr)) {
             try {
                 long blockId = Convert.fullHashToId(Convert.parseHexString(blockIdStr));
                 blockData = blockchain.getBlock(blockId);
@@ -130,7 +135,7 @@ public class BlockController {
                 log.warn(errorMessage, e);
                 return response.error(ApiErrors.INCORRECT_PARAM, "blockId", blockIdStr).build();
             }
-        } else if (heightStr != null) {
+        } else if (StringUtils.isNotBlank(heightStr)) {
             try {
                 int height = Integer.parseInt(heightStr);
                 if (height < 0 || height > blockchain.getHeight()) {
@@ -144,7 +149,7 @@ public class BlockController {
                 log.warn(errorMessage, e);
                 return response.error(ApiErrors.INCORRECT_PARAM, "height", heightStr).build();
             }
-        } else if (timestampStr != null) {
+        } else if (StringUtils.isNotBlank(timestampStr)) {
             try {
                 int timestamp = Integer.parseInt(timestampStr);
                 if (timestamp < 0) {
@@ -164,6 +169,8 @@ public class BlockController {
         if (blockData == null) {
             return response.error(ApiErrors.UNKNOWN_VALUE, "'block not found'", blockData).build();
         }
+        blockConverter.setAddTransactions(includeTransactions);
+        blockConverter.setAddPhasedTransactions(includeExecutedPhased);
         BlockDTO dto = blockConverter.convert(blockData);
         log.trace("getBlock result: {}", dto);
         return response.bind(dto).build();

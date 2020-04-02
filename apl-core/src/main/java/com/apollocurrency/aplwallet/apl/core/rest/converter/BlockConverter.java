@@ -23,6 +23,8 @@ public class BlockConverter implements Converter<Block, BlockDTO> {
     private final Blockchain blockchain;
     private final TransactionConverter transactionConverter;
     private final PhasingPollService phasingPollService;
+    private boolean isAddTransactions = false;
+    private boolean isAddPhasedTransactions = false;
 
     @Inject
     public BlockConverter(Blockchain blockchain, TransactionConverter transactionConverter, PhasingPollService phasingPollService) {
@@ -61,7 +63,12 @@ public class BlockConverter implements Converter<Block, BlockDTO> {
         dto.setTransactions(Collections.emptyList());
         dto.setTotalAmountATM(String.valueOf(
                 model.getOrLoadTransactions().stream().mapToLong(Transaction::getAmountATM).sum()));
-
+        if (this.isAddTransactions) {
+            this.addPhasedTransactions(dto, model);
+        }
+        if (this.isAddPhasedTransactions) {
+            this.addPhasedTransactions(dto, model);
+        }
         return dto;
     }
 
@@ -96,5 +103,27 @@ public class BlockConverter implements Converter<Block, BlockDTO> {
             o.setExecutedPhasedTransactions(transactionList);
         }
     }
+
+    public boolean isAddTransactions() {
+        return isAddTransactions;
+    }
+
+    public void setAddTransactions(boolean addTransactions) {
+        isAddTransactions = addTransactions;
+    }
+
+    public boolean isAddPhasedTransactions() {
+        return isAddPhasedTransactions;
+    }
+
+    public void setAddPhasedTransactions(boolean addPhasedTransactions) {
+        isAddPhasedTransactions = addPhasedTransactions;
+    }
+
+    public void reset() {
+        isAddTransactions = false;
+        isAddPhasedTransactions = false;
+    }
+
 
 }
