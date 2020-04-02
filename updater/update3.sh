@@ -4,7 +4,13 @@
 echo Downloading shards...
 
 DOWNLOAD_PATH=https://s3.amazonaws.com/updates.apollowallet.org/database/
+
 DB_POSTFIX=-2020-q1
+if [ $4 == 'false' ]
+then
+    DB_POSTFIX=${DB_POSTFIX}-noshards
+fi
+
 cd $1
 mkdir tmpdir
 cd tmpdir
