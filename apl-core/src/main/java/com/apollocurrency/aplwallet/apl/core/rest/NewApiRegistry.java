@@ -68,6 +68,9 @@ public class NewApiRegistry {
         apis.put("getTime", "/rest/server/blockchain/time"); //GET
         apis.put("getTotalSupply", "/rest/server/blockchain/supply"); //GET
 
+//        apis.put("getBlock", "/rest/block/"); //GET
+//        apis.put("getBlockId", "/rest/block/id"); //GET
+
         //TODO: add new implemented endpoints
     }
     public static String getRestPath(String rqType) {

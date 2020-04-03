@@ -35,6 +35,8 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TIMESTAMP;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_BLOCK;
 import javax.enterprise.inject.Vetoed;
+
+@Deprecated
 @Vetoed
 public final class GetBlock extends AbstractAPIRequestHandler {
     public GetBlock() {

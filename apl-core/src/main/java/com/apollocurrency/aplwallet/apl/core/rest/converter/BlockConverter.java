@@ -64,7 +64,7 @@ public class BlockConverter implements Converter<Block, BlockDTO> {
         dto.setTotalAmountATM(String.valueOf(
                 model.getOrLoadTransactions().stream().mapToLong(Transaction::getAmountATM).sum()));
         if (this.isAddTransactions) {
-            this.addPhasedTransactions(dto, model);
+            this.addTransactions(dto, model);
         }
         if (this.isAddPhasedTransactions) {
             this.addPhasedTransactions(dto, model);
@@ -84,8 +84,8 @@ public class BlockConverter implements Converter<Block, BlockDTO> {
     public void addPhasedTransactions(BlockDTO o, Block model){
         if ( o != null && model != null){
             List<TransactionDTO> transactionDTOList = new ArrayList<>();
-            List<Long> transactrionIdList = phasingPollService.getApprovedTransactionIds(model.getHeight());
-            transactrionIdList
+            List<Long> transactionIdList = phasingPollService.getApprovedTransactionIds(model.getHeight());
+            transactionIdList
                     .forEach( trId -> transactionDTOList
                             .add(transactionConverter.convert(blockchain.getTransaction(trId))));
 

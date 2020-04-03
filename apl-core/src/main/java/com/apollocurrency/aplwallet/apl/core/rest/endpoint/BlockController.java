@@ -8,10 +8,8 @@ import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.validation.constraints.PositiveOrZero;
-import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
-import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
@@ -28,10 +26,11 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.parameter.LongParameter;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.core.rest.validation.ValidBlockchainHeight;
+import com.apollocurrency.aplwallet.apl.core.rest.validation.ValidTimestamp;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -41,13 +40,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import javax.ws.rs.FormParam;
 
 @NoArgsConstructor
 @Slf4j
 @OpenAPIDefinition(info = @Info(description = "Provide several block retrieving methods"))
 @Singleton
-@Path("/")
+@Path("/block")
 public class BlockController {
     private Blockchain blockchain;
     private BlockConverter blockConverter;
@@ -58,7 +56,7 @@ public class BlockController {
         this.blockConverter = Objects.requireNonNull(blockConverter);
     }
 
-    @Path("/block")
+    @Path("/")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
@@ -71,108 +69,81 @@ public class BlockController {
                     schema = @Schema(implementation = BlockDTO.class)))
         })
     @PermitAll
-    public Response getBlockGet(
-        @Parameter(description = "Block id (optional, default is last block)") @QueryParam("block") String blockIdStr,
+    public Response getBlock(
+        @Parameter(description = "Block id (optional, default is last block)",
+            schema = @Schema(implementation = Long.class, description="Block id (optional, default is last block"))
+            @QueryParam("block") LongParameter blockId,
         @Parameter(description = "The block height (optional, default is last block).")
-            @QueryParam("height") String heightStr,
+            @QueryParam("height") @DefaultValue("-1") @ValidBlockchainHeight int height,
         @Parameter(description = "The earliest block (in seconds since the genesis block) to retrieve (optional)." )
-            @QueryParam("timestamp") String timestampStr,
+            @QueryParam("timestamp") @DefaultValue("-1") @ValidTimestamp int timestamp,
         @Parameter(description = "Include transactions detail info" )
             @QueryParam("includeTransactions") @DefaultValue("false") boolean includeTransactions,
         @Parameter(description = "Include phased transactions detail info" )
             @QueryParam("includeExecutedPhased") @DefaultValue("false") boolean includeExecutedPhased
-
     ) {
-        return getBlockResponse(blockIdStr, heightStr, timestampStr, includeTransactions, includeExecutedPhased);
-    }
-
-    @Path("/block")
-    @POST
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    @Operation(
-        summary = "The API returns Block information",
-        description = "The API returns Block information with transaction info depending on specified params",
-        tags = {"block"},
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Successful execution",
-                content = @Content(mediaType = "application/json",
-                    schema = @Schema(implementation = BlockDTO.class)))
-        })
-    @PermitAll
-    public Response getBlockPost(
-        @Parameter(description = "Block id (optional, default is last block)",
-            schema = @Schema(implementation = String.class, description="Block id (optional, default is last block"))
-            @FormParam("block") String blockIdStr,
-        @Parameter(description = "The block height (optional, default is last block)",
-            schema = @Schema(implementation = String.class, description="The block height (optional, default is last block)"))
-            @FormParam("height") String heightStr,
-        @Parameter(description = "The earliest block (in seconds since the genesis block) to retrieve (optional)",
-            schema = @Schema(implementation = String.class, description="The block height (optional, default is last block)"))
-            @FormParam("timestamp") String timestampStr,
-        @Parameter(description = "Include transactions detail info",
-            schema = @Schema(implementation = String.class, description="Include transactions detail info"))
-            @FormParam("includeTransactions") @DefaultValue("false") boolean includeTransactions,
-        @Parameter(description = "Include phased transactions detail info",
-            schema = @Schema(implementation = String.class, description="Include phased transactions detail info"))
-            @FormParam("includeExecutedPhased") @DefaultValue("false") boolean includeExecutedPhased
-    ) {
-        return getBlockResponse(blockIdStr, heightStr, timestampStr, includeTransactions, includeExecutedPhased);
-    }
-
-    private Response getBlockResponse(
-        String blockIdStr, String heightStr, String timestampStr, boolean includeTransactions, boolean includeExecutedPhased) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         log.trace("Started getBlock : \t blockId = {}, height={}, timestamp={}, includeTransactions={}, includeExecutedPhased={}",
-            blockIdStr, heightStr, timestampStr, includeTransactions, includeExecutedPhased);
+            blockId, height, timestamp, includeTransactions, includeExecutedPhased);
         Block blockData;
-        if (StringUtils.isNotBlank(blockIdStr)) {
-            try {
-                long blockId = Convert.fullHashToId(Convert.parseHexString(blockIdStr));
-                blockData = blockchain.getBlock(blockId);
-            } catch (NumberFormatException e) {
-                String errorMessage = String.format("Error converting block ID: %s, e = %s", blockIdStr, e.getMessage());
-                log.warn(errorMessage, e);
-                return response.error(ApiErrors.INCORRECT_PARAM, "blockId", blockIdStr).build();
-            }
-        } else if (StringUtils.isNotBlank(heightStr)) {
-            try {
-                int height = Integer.parseInt(heightStr);
-                if (height < 0 || height > blockchain.getHeight()) {
-                    String errorMessage = String.format("Error converting height: %s", heightStr);
-                    log.warn(errorMessage);
-                    return response.error(ApiErrors.INCORRECT_PARAM, "height", blockIdStr).build();
-                }
-                blockData = blockchain.getBlockAtHeight(height);
-            } catch (RuntimeException e) {
-                String errorMessage = String.format("Error converting heightStr: %s, e = %s", heightStr, e.getMessage());
-                log.warn(errorMessage, e);
-                return response.error(ApiErrors.INCORRECT_PARAM, "height", heightStr).build();
-            }
-        } else if (StringUtils.isNotBlank(timestampStr)) {
-            try {
-                int timestamp = Integer.parseInt(timestampStr);
-                if (timestamp < 0) {
-                    String errorMessage = String.format("Error converting timestamp: %s", timestampStr);
-                    log.warn(errorMessage);
-                    return response.error(ApiErrors.INCORRECT_PARAM, "timestamp", blockIdStr).build();
-                }
-                blockData = blockchain.getLastBlock(timestamp);
-            } catch (RuntimeException e) {
-                String errorMessage = String.format("Error converting timestamp: %s", timestampStr);
+        if (blockId != null && blockId.get() != 0) {
+            blockData = blockchain.getBlock(blockId.get());
+        } else if (height > 0) {
+            if (height > blockchain.getHeight()) {
+                String errorMessage = String.format("Requested height in bigger when actual height: %s", height);
                 log.warn(errorMessage);
-                return response.error(ApiErrors.INCORRECT_PARAM, "timestamp", blockIdStr).build();
+                return response.error(ApiErrors.INCORRECT_PARAM, "height", height).build();
             }
+            blockData = blockchain.getBlockAtHeight(height);
+        } else if (timestamp > 0) {
+            blockData = blockchain.getLastBlock(timestamp);
         } else {
             blockData = blockchain.getLastBlock();
         }
         if (blockData == null) {
-            return response.error(ApiErrors.UNKNOWN_VALUE, "'block not found'", blockData).build();
+            return response.error(ApiErrors.UNKNOWN_VALUE, "block", blockData).build();
         }
         blockConverter.setAddTransactions(includeTransactions);
         blockConverter.setAddPhasedTransactions(includeExecutedPhased);
         BlockDTO dto = blockConverter.convert(blockData);
         log.trace("getBlock result: {}", dto);
+        return response.bind(dto).build();
+    }
+
+    @Path("/id")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+        summary = "The API returns Block ID by height",
+        description = "The API returns Block ID only by specified height",
+        tags = {"block"},
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Successful execution",
+                content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = BlockDTO.class))) // ONLY ONE field is returned actually !!
+        })
+    @PermitAll
+    public Response getBlockId(
+        @Parameter(description = "The block height, mandatory", required = true)
+            @QueryParam("height") @ValidBlockchainHeight int height
+    ) {
+        ResponseBuilder response = ResponseBuilder.startTiming();
+        log.trace("Started getBlockId : \t height={}", height);
+        Long blockId = null;
+        if (height > 0) {
+            if (height > blockchain.getHeight()) {
+                String errorMessage = String.format("Requested height in bigger when actual height: %s", height);
+                log.warn(errorMessage);
+                return response.error(ApiErrors.INCORRECT_PARAM, "height", height).build();
+            }
+            blockId = blockchain.getBlockIdAtHeight(height);
+        }
+        if (blockId == null) {
+            return response.error(ApiErrors.UNKNOWN_VALUE, "blockId by height", height).build();
+        }
+        BlockDTO dto = new BlockDTO();
+        dto.setBlock(blockId.toString());
+        log.trace("getBlockId result: {}", dto);
         return response.bind(dto).build();
     }
 

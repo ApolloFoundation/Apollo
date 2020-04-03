@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.exception.IllegalArgumentExcep
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.validation.BlockchainHeightValidator;
 import com.apollocurrency.aplwallet.apl.core.rest.validation.CustomValidatorFactory;
+import com.apollocurrency.aplwallet.apl.core.rest.validation.TimestampValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -48,8 +49,12 @@ public class AbstractEndpointTest {
     Blockchain blockchain = mock(Blockchain.class);
     ValidatorFactory validatorFactory = Validation.byDefaultProvider()
         .configure()
-        .constraintValidatorFactory( new CustomValidatorFactory(
-                       Map.of( BlockchainHeightValidator.class, new BlockchainHeightValidator(blockchain) )) )
+        .constraintValidatorFactory(
+            new CustomValidatorFactory(
+                Map.of( BlockchainHeightValidator.class, new BlockchainHeightValidator(blockchain),
+                    TimestampValidator.class, new TimestampValidator()
+                ))
+        )
         .buildValidatorFactory();
     Validator validator = validatorFactory.getValidator();
 

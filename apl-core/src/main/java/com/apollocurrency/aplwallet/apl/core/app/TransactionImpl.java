@@ -411,7 +411,7 @@ public class TransactionImpl implements Transaction {
 
     private AccountPublicKeyService lookupAndInjectAccountService() {
         if (accountPublicKeyService == null) {
-            accountPublicKeyService = CDI.current().select(AccountPublicKeyServiceImpl.class).get();
+            accountPublicKeyService = CDI.current().select(AccountPublicKeyService.class).get();
         }
         return accountPublicKeyService;
     }
