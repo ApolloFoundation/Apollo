@@ -17,7 +17,7 @@ mkdir %1\tmpdir
 
 curl --retry 100 -o %1\tmpdir\%2.zip -k https://s3.amazonaws.com/updates.apollowallet.org/database/%2-2020-q1.zip
 del /S /F /Q %userprofile%\.apl-blockchain\apl-blockchain-db\%2
-unzip -o %1\tmpdir\b5d7b6.zip -d %userprofile%\.apl-blockchain\apl-blockchain-db\
+unzip -o %1\tmpdir\%2.zip -d %userprofile%\.apl-blockchain\apl-blockchain-db\
 del /S /F /Q %1\tmpdir\%2.zip
 
 
