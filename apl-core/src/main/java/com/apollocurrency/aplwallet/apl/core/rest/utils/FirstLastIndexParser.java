@@ -37,5 +37,11 @@ public class FirstLastIndexParser {
             this.firstIndex = firstIndex;
             this.lastIndex = lastIndex;
         }
+
+        // for unit tests only !
+        public FirstLastIndex(Integer firstIndex, Integer lastIndex) {
+            this.firstIndex = firstIndex;
+            this.lastIndex = lastIndex;
+        }
     }
 }

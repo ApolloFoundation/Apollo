@@ -136,7 +136,7 @@ class BlockDaoTest {
 
     @Test
     void getBlocksRange() {
-        List<Block> result = CollectionUtil.toList(blockDao.getBlocks(BLOCK_7_HEIGHT, BLOCK_0_HEIGHT));
+        List<Block> result = CollectionUtil.toList(blockDao.getBlocks(null, BLOCK_7_HEIGHT, BLOCK_0_HEIGHT));
         assertNotNull(result);
         assertEquals(8, result.size());
     }
@@ -177,7 +177,7 @@ class BlockDaoTest {
         Block lastBlock = blockDao.findLastBlock();
         assertEquals(td.BLOCK_5, lastBlock);
 
-        List<Block> blocks = CollectionUtil.toList(blockDao.getBlocks(Integer.MAX_VALUE, 0));
+        List<Block> blocks = CollectionUtil.toList(blockDao.getBlocks(null, Integer.MAX_VALUE, 0));
         assertEquals(List.of(td.BLOCK_5, td.BLOCK_4, td.BLOCK_3, td.BLOCK_2, td.BLOCK_1, td.BLOCK_0, td.GENESIS_BLOCK), blocks);
 
         List<Transaction> transactions = transactionDao.getTransactions(0, Integer.MAX_VALUE);
@@ -188,7 +188,7 @@ class BlockDaoTest {
     void testDeleteAll() {
         blockDao.deleteAll();
 
-        List<Block> blocks = CollectionUtil.toList(blockDao.getBlocks(Integer.MAX_VALUE, 0));
+        List<Block> blocks = CollectionUtil.toList(blockDao.getBlocks(null, Integer.MAX_VALUE, 0));
         assertEquals(0, blocks.size());
 
         List<Transaction> transactions = transactionDao.getTransactions(0, Integer.MAX_VALUE);
@@ -202,7 +202,7 @@ class BlockDaoTest {
         Block lastBlock = blockDao.findLastBlock();
         assertEquals(td.BLOCK_3, lastBlock);
 
-        List<Block> blocks = CollectionUtil.toList(blockDao.getBlocks(Integer.MAX_VALUE, 0));
+        List<Block> blocks = CollectionUtil.toList(blockDao.getBlocks(null, Integer.MAX_VALUE, 0));
         assertEquals(List.of(td.BLOCK_3, td.BLOCK_2, td.BLOCK_1, td.BLOCK_0, td.GENESIS_BLOCK), blocks);
 
         List<Transaction> transactions = transactionDao.getTransactions(0, Integer.MAX_VALUE);

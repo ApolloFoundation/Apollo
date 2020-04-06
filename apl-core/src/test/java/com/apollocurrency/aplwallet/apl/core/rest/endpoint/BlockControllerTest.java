@@ -4,11 +4,16 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.api.dto.BlockDTO;
+import com.apollocurrency.aplwallet.api.dto.ECBlockDTO;
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
+import com.apollocurrency.aplwallet.api.response.BlocksResponse;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
+import com.apollocurrency.aplwallet.apl.core.app.EcBlockData;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.utils.FirstLastIndexParser;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -36,17 +41,10 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class BlockControllerTest extends AbstractEndpointTest {
 
-//    private BlockchainConfig blockchainConfig = Mockito.mock(BlockchainConfig.class);
-//    private TimeService timeService = mock(TimeService.class);
-//    private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
-//    private PhasingPollService phasingPollService = mock(PhasingPollService.class);
-//    private AccountService accountService = mock(AccountService.class);
-
     private BlockController endpoint;
-//    private TransactionConverter transactionConverter = new TransactionConverter(blockchain, new UnconfirmedTransactionConverter());
-//    private TransactionConverter transactionConverter = mock(TransactionConverter.class);
-//    private BlockConverter blockConverter = new BlockConverter(blockchain, transactionConverter, phasingPollService);
     private BlockConverter blockConverter = mock(BlockConverter.class);
+    private FirstLastIndexParser indexParser = mock(FirstLastIndexParser.class);
+    private TimeService timeService = mock(TimeService.class);
 
 //    private TransactionTestData txd;
     private BlockTestData btd;
@@ -55,7 +53,7 @@ class BlockControllerTest extends AbstractEndpointTest {
     @BeforeEach
     void setUp() {
         super.setUp();
-        endpoint = new BlockController(blockchain, blockConverter);
+        endpoint = new BlockController(blockchain, blockConverter, indexParser, timeService);
         dispatcher.getRegistry().addSingletonResource(endpoint);
 //        txd = new TransactionTestData();
         btd = new BlockTestData();
@@ -183,7 +181,66 @@ class BlockControllerTest extends AbstractEndpointTest {
     }
 
     @Test
-    void getBlocks() {
+    void getBlocks_OK() throws URISyntaxException, IOException {
+        doReturn(btd.BLOCK_13).when(blockchain).getLastBlock();
+        FirstLastIndexParser.FirstLastIndex index = new FirstLastIndexParser.FirstLastIndex(0, 99);
+        doReturn(index).when(indexParser).adjustIndexes(0, -1);
+        doReturn( List.of( btd.BLOCK_10 )).when(blockchain).getBlocks(0, 99); // fix
+
+        blockDTO = createBlockDTO(btd.BLOCK_10, true, false);
+        doReturn(blockDTO).when(blockConverter).convert(btd.BLOCK_10);
+
+        MockHttpResponse response = super.sendGetRequest("/block/list");
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+        String respondJson = response.getContentAsString();
+        assertNotNull(respondJson);
+        assertFalse(respondJson.contains("Error"), "Error from API : " + respondJson);
+
+        BlocksResponse dtoResult = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(dtoResult);
+//        assertEquals(String.valueOf(btd.BLOCK_10.getId()), dtoResult.getBlock());
+        //verify
+        verify(blockchain, times(1)).getBlockIdAtHeight(btd.BLOCK_10.getHeight());
+    }
+
+    @Test
+    void getBlockEC_OK() throws URISyntaxException, IOException {
+        EcBlockData ecBlockData = new EcBlockData(btd.BLOCK_10.getId(), btd.BLOCK_10.getHeight());
+        doReturn(ecBlockData).when(blockchain).getECBlock(btd.BLOCK_10.getTimestamp());
+        doReturn(btd.BLOCK_10.getTimestamp()).when(timeService).getEpochTime();
+
+        MockHttpResponse response = super.sendGetRequest("/block/ec?timestamp=-1");
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+        String respondJson = response.getContentAsString();
+        assertNotNull(respondJson);
+        assertFalse(respondJson.contains("Error"), "Error from API : " + respondJson);
+
+        ECBlockDTO dtoResult = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(dtoResult);
+        assertEquals(Long.valueOf(btd.BLOCK_10.getId()).longValue(), dtoResult.getId());
+        assertEquals(btd.BLOCK_10.getTimestamp(), dtoResult.getTimestamp());
+        //verify
+        verify(blockchain, times(1)).getECBlock(btd.BLOCK_10.getTimestamp());
+    }
+
+    @Test
+    void getBlockEC_OK_EMPTY() throws URISyntaxException, IOException {
+        EcBlockData ecBlockData = new EcBlockData(btd.BLOCK_10.getId(), btd.BLOCK_10.getHeight());
+        doReturn(ecBlockData).when(blockchain).getECBlock(btd.BLOCK_10.getTimestamp());
+        doReturn(btd.BLOCK_10.getTimestamp()).when(timeService).getEpochTime();
+
+        MockHttpResponse response = super.sendGetRequest("/block/ec");
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+        String respondJson = response.getContentAsString();
+        assertNotNull(respondJson);
+        assertFalse(respondJson.contains("Error"), "Error from API : " + respondJson);
+
+        ECBlockDTO dtoResult = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(dtoResult);
+        assertEquals(Long.valueOf(btd.BLOCK_10.getId()).longValue(), dtoResult.getId());
+        assertEquals(btd.BLOCK_10.getTimestamp(), dtoResult.getTimestamp());
+        //verify
+        verify(blockchain, times(1)).getECBlock(btd.BLOCK_10.getTimestamp());
     }
 
     private BlockDTO createBlockDTO(Block model, boolean includeTrs, boolean includePhased) {

@@ -16,21 +16,26 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 import com.apollocurrency.aplwallet.api.dto.BlockDTO;
+import com.apollocurrency.aplwallet.api.dto.ECBlockDTO;
 import com.apollocurrency.aplwallet.api.response.BlocksResponse;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
+import com.apollocurrency.aplwallet.apl.core.app.EcBlockData;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.parameter.LongParameter;
+import com.apollocurrency.aplwallet.apl.core.rest.utils.FirstLastIndexParser;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.core.rest.validation.ValidBlockchainHeight;
 import com.apollocurrency.aplwallet.apl.core.rest.validation.ValidTimestamp;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -49,11 +54,16 @@ import lombok.extern.slf4j.Slf4j;
 public class BlockController {
     private Blockchain blockchain;
     private BlockConverter blockConverter;
+    private FirstLastIndexParser indexParser;
+    private TimeService timeService;
 
     @Inject
-    public BlockController(Blockchain blockchain, BlockConverter blockConverter) {
+    public BlockController(Blockchain blockchain, BlockConverter blockConverter,
+                           FirstLastIndexParser indexParser, TimeService timeService) {
         this.blockchain = Objects.requireNonNull(blockchain);
         this.blockConverter = Objects.requireNonNull(blockConverter);
+        this.indexParser = Objects.requireNonNull(indexParser);
+        this.timeService = Objects.requireNonNull(timeService);
     }
 
     @Path("/")
@@ -83,7 +93,7 @@ public class BlockController {
             @QueryParam("includeExecutedPhased") @DefaultValue("false") boolean includeExecutedPhased
     ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
-        log.trace("Started getBlock : \t blockId = {}, height={}, timestamp={}, includeTransactions={}, includeExecutedPhased={}",
+        log.trace("Started getBlock : \t blockId={}, height={}, timestamp={}, includeTransactions={}, includeExecutedPhased={}",
             blockId, height, timestamp, includeTransactions, includeExecutedPhased);
         Block blockData;
         if (blockId != null && blockId.get() != 0) {
@@ -147,12 +157,13 @@ public class BlockController {
         return response.bind(dto).build();
     }
 
-    @Path("/blocks")
+    @Path("/list")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-        summary = "The API returns List of Block information",
-        description = "The API returns List of Block information with transaction info depending on specified params",
+        summary = "The API returns List of Block information using first/last indexes",
+        description = "The API returns List of Block information with transaction info depending on specified params."
+            + " first/last index specifies height limits, blocks are selected for timestamp bigger then specified 'timestamp'",
         tags = {"block"},
         responses = {
             @ApiResponse(responseCode = "200", description = "Successful execution",
@@ -161,11 +172,12 @@ public class BlockController {
         })
     @PermitAll
     public Response getBlocks(
-        @Parameter(description = "Block id (optional, default is last block)") @QueryParam("block") String blockIdStr,
-        @Parameter(description = "The height of the blockchain to determine the currency count (optional, default is last block).")
-            @QueryParam("height") @ValidBlockchainHeight int height,
+        @Parameter(description = "A zero-based index to the 'first height' to retrieve (optional)." )
+            @QueryParam("firstIndex") @DefaultValue("0") @PositiveOrZero int firstIndex,
+        @Parameter(description = "A zero-based index to the 'last height' to retrieve (optional)." )
+            @QueryParam("lastIndex") @DefaultValue("-1") int lastIndex,
         @Parameter(description = "The earliest block (in seconds since the genesis block) to retrieve (optional)." )
-            @QueryParam("timestamp") @PositiveOrZero int timestamp,
+            @QueryParam("timestamp") @DefaultValue("-1") @ValidTimestamp int timestamp,
         @Parameter(description = "Include transactions detail info" )
             @QueryParam("includeTransactions") @DefaultValue("false") boolean includeTransactions,
         @Parameter(description = "Include phased transactions detail info" )
@@ -173,21 +185,69 @@ public class BlockController {
 
     ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
-        log.trace("Started getBlock : \t 'block' = {}, height={}, timestamp={}, includeTransactions={}, includeExecutedPhased={}",
-            blockIdStr, height, timestamp, includeTransactions, includeExecutedPhased);
-        List<Block> blockDataList;
-        Long blockId;
+        log.trace("Started getBlocks : \t firstIndex={}, lastIndex={}, timestamp={}, includeTransactions={}, includeExecutedPhased={}",
+            firstIndex, lastIndex, timestamp, includeTransactions, includeExecutedPhased);
         BlocksResponse dto = new BlocksResponse();
-        try {
-            blockId = Convert.fullHashToId(Convert.parseHexString(blockIdStr));
-            blockDataList = CollectionUtil.toList( blockchain.getBlocks(1, 10) );
-        } catch (NumberFormatException e) {
-            String errorMessage = String.format("Error converting block ID: %s, e = %s", blockIdStr, e.getMessage());
-            log.warn(errorMessage, e);
-            return response.error(ApiErrors.INCORRECT_PARAM, "blockId", blockIdStr).build();
+        List<BlockDTO> blockDataList = new ArrayList<>();
+        Block lastBlock = blockchain.getLastBlock();
+        if (lastBlock != null) {
+            FirstLastIndexParser.FirstLastIndex flIndex = indexParser.adjustIndexes(firstIndex, lastIndex);
+            blockConverter.setAddTransactions(includeTransactions);
+            blockConverter.setAddPhasedTransactions(includeExecutedPhased);
+            log.trace("getBlocks indexes: \t firstIndex={}, lastIndex={}, timestamp={}, includeTransactions={}, includeExecutedPhased={}",
+                flIndex.getFirstIndex(), flIndex.getLastIndex(), timestamp, includeTransactions, includeExecutedPhased);
+            try (DbIterator<? extends Block> iterator = blockchain.getBlocks(flIndex.getFirstIndex(), flIndex.getLastIndex())) {
+                while (iterator.hasNext()) {
+                    Block block = iterator.next();
+                    if (block.getTimestamp() < timestamp) {
+                        break;
+                    }
+                    blockDataList.add(blockConverter.convert(block));
+                }
+            }
+            dto.setBlocks(blockDataList);
+        } else {
+            log.warn("There are no blocks in db...");
+            dto.setBlocks(Collections.emptyList());
         }
-        dto.setBlocks(blockConverter.convert(blockDataList));
-        log.trace("getBlock result: {}", dto);
+        log.trace("getBlocks result: {}", dto);
+        return response.bind(dto).build();
+    }
+
+    @Path("/ec")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+        summary = "The API returns ECBlock info by timestamp",
+        description = "The API returns ECBlockDTO by specified timestamp",
+        tags = {"block"},
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Successful execution",
+                content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = ECBlockDTO.class)))
+        })
+    @PermitAll
+    public Response getECBlock(
+        @Parameter(description = "The earliest block (in seconds since the genesis block) to retrieve (optional)." )
+            @QueryParam("timestamp") @DefaultValue("-1") @ValidTimestamp int timestamp
+    ) {
+        ResponseBuilder response = ResponseBuilder.startTiming();
+        log.trace("Started getECBlock : \t timestamp={}", timestamp);
+        if (timestamp <= 0) {
+            timestamp = timeService.getEpochTime();
+        }
+        EcBlockData ecBlock = blockchain.getECBlock(timestamp);
+
+        if (ecBlock == null) {
+            return response.error(ApiErrors.UNKNOWN_VALUE, "blockId by timestamp", timestamp).build();
+        }
+        ECBlockDTO dto = new ECBlockDTO();
+        dto.setId(ecBlock.getId());
+        dto.setEcBlockId(String.valueOf(ecBlock.getId()));
+        dto.setEcBlockId(Long.toUnsignedString(ecBlock.getId()));
+        dto.setEcBlockHeight(ecBlock.getHeight());
+        dto.setTimestamp(timestamp);
+        log.trace("getECBlock result: {}", dto);
         return response.bind(dto).build();
     }
 

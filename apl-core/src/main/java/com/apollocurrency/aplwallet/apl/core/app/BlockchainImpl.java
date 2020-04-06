@@ -162,7 +162,7 @@ public class BlockchainImpl implements Blockchain {
         int blockchainHeight = getHeight();
         int calculatedFrom = blockchainHeight - from;
         int calculatedTo = blockchainHeight - to;
-        return blockDao.getBlocks(calculatedFrom, calculatedTo);
+        return blockDao.getBlocks(null, calculatedFrom, calculatedTo);
     }
 
     @Transactional

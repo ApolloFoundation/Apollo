@@ -42,7 +42,7 @@ public interface BlockDao {
 
     DbIterator<Block> getBlocks(long accountId, int timestamp, int from, int to);
 
-    DbIterator<Block> getBlocks(int from, int to);
+    DbIterator<Block> getBlocks(TransactionalDataSource dataSource, int from, int to);
 
     Long getBlockCount(int from, int to);
 

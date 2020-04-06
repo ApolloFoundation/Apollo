@@ -70,6 +70,8 @@ public class NewApiRegistry {
 
 //        apis.put("getBlock", "/rest/block/"); //GET
 //        apis.put("getBlockId", "/rest/block/id"); //GET
+//        apis.put("getBlocks", "/rest/blocks"); //GET
+//        apis.put("getECBlock", "/rest/blocks/ec"); //GET
 
         //TODO: add new implemented endpoints
     }

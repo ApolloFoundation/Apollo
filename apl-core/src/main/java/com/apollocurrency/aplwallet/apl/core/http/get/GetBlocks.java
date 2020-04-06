@@ -36,6 +36,7 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Deprecated
 @Slf4j
 @Vetoed
 public final class GetBlocks extends AbstractAPIRequestHandler {
