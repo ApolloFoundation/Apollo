@@ -103,4 +103,21 @@ public interface ShardDao {
     @RegisterRowMapper(ShardRowMapper.class)
     List<Shard> getAllCompletedOrArchivedShards();
 
+    /**
+     * Should select NONE, ONE or TWO shard records by specified lower and upper height limits.
+     * Records should go one after another with increasing height and SHARD_STATE = 50 (shard from archive) / 100 (full shard).
+     * The method has some limitations because of assumption for consecutive shard records and correct SHARD_STATE.
+     * If records are not consecutive with increasing height and with STATE NOT = 100 when it gives incorrect result.
+     * We can't have NONE consecutive records in a database usually.
+     *
+     * @param heightFrom lower block's limit to search for correct shard it stored in
+     * @param heightTo upper block's limit to search for correct shard it stored in
+     * @return NONE, ONE or TWO consecutive shard records.
+     */
+    @Transactional(readOnly = true)
+    @SqlQuery("(select * from SHARD where SHARD_STATE = 100 and SHARD_HEIGHT < :heightFrom limit 1) UNION ALL" +
+        " (select * from SHARD where SHARD_STATE = 100 and SHARD_HEIGHT between :heightFrom AND :heightTo order by SHARD_HEIGHT limit 1)")
+    @RegisterRowMapper(ShardRowMapper.class)
+    List<Shard> getCompletedBetweenBlockHeight(@Bind("heightFrom") long heightFrom, @Bind("heightTo") long heightTo);
+
 }
