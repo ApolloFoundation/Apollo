@@ -138,7 +138,6 @@ public final class AplCore {
             blockchainProcessor.shutdown();
             log.info("blockchainProcessor Shutdown...");
         }
-        peers.shutdown();
         fullTextSearchService.shutdown();
         log.info("full text service shutdown...");
 
@@ -152,7 +151,7 @@ public final class AplCore {
             transportInteractionService.stop();
         }
 
-
+        peers.shutdown();
         log.info(Constants.APPLICATION + " server " + Constants.VERSION + " stopped.");
 
         AplCore.shutdown = true;
