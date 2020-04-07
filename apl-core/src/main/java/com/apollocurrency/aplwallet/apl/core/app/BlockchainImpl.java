@@ -36,6 +36,7 @@ import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
+import com.apollocurrency.aplwallet.apl.core.utils.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -56,6 +57,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Singleton
 @Slf4j
@@ -74,6 +76,7 @@ public class BlockchainImpl implements Blockchain {
     private final DatabaseManager databaseManager;
     private final ShardDao shardDao;
     private final ShardRecoveryDao shardRecoveryDao;
+    private final IteratorToStreamConverter<Block> blockConverter = new IteratorToStreamConverter<>();
 
     private final AtomicReference<Block> lastBlock;
     private final AtomicReference<Block> shardInitialBlock;
@@ -92,8 +95,8 @@ public class BlockchainImpl implements Blockchain {
         this.databaseManager = databaseManager;
         this.shardDao = shardDao;
         this.shardRecoveryDao = shardRecoveryDao;
-        lastBlock = new AtomicReference<>();
-        shardInitialBlock = new AtomicReference<>();
+        this.lastBlock = new AtomicReference<>();
+        this.shardInitialBlock = new AtomicReference<>();
     }
 
     @Override
@@ -158,11 +161,63 @@ public class BlockchainImpl implements Blockchain {
 
     @Transactional(readOnly = true)
     @Override
-    public DbIterator<Block> getBlocks(int from, int to) {
+    public DbIterator<Block> getBlocks(int from, int to, int timestamp) {
         int blockchainHeight = getHeight();
         int calculatedFrom = blockchainHeight - from;
         int calculatedTo = blockchainHeight - to;
-        return blockDao.getBlocks(null, calculatedFrom, calculatedTo);
+        return blockDao.getBlocks(null, calculatedFrom, calculatedTo, timestamp);
+    }
+
+    /**
+     * Retrieve records from correct shard or main datatabse.
+     *
+     * @param from height index
+     * @param to height index
+     * @param timestamp optional block timestamp
+     * @return composed block stream
+     */
+    @Transactional(readOnly = true)
+    @Override
+    public Stream<Block> getBlocksStream(int from, int to, int timestamp) {
+        int blockchainHeight = getHeight();
+        int calculatedFrom = blockchainHeight - from;
+        int calculatedTo = blockchainHeight - to;
+        log.debug("start getBlocksStream( from={} / {}, to={} / {}, timestamp={} ): , currentHeight={}",
+            from, calculatedFrom, to, calculatedTo, timestamp, blockchainHeight);
+        Stream<Block> allSourcesStream = null; // complete stream from all sources
+        // select possibly - none, one, two shard's records by specified height range
+        List<Shard> foundShards = shardDao.getCompletedBetweenBlockHeight(calculatedFrom, calculatedTo);
+        log.debug("getBlocksStream( from={}, to={} ): foundShards=[{}] / shardIds={}, currentHeight={}",
+            calculatedFrom, calculatedTo, foundShards.size(), foundShards.stream().map(Shard::getShardId).collect(Collectors.toList()), blockchainHeight);
+        if (foundShards.size() == 0) {
+            // select blocks from main database only
+            DbIterator<Block> iterator = blockDao.getBlocks(null, calculatedFrom, calculatedTo, timestamp);
+            allSourcesStream = blockConverter.apply(iterator);
+        } else {
+            // loop over all available shards
+            for (Shard shard: foundShards) {
+                // get shard data source trying to fetch records
+                TransactionalDataSource dataSource =
+                    ((ShardManagement) databaseManager).getOrInitFullShardDataSourceById(shard.getShardId());
+                // make select on blocks from shard
+                log.debug("getBlocksStream -> getBlocks( from={}, to={} ): shardIds={}",
+                    calculatedFrom, calculatedTo, dataSource.getDbIdentity());
+                DbIterator<Block> iterator = blockDao.getBlocks(dataSource, calculatedFrom, calculatedTo, timestamp);
+                Stream<Block> toCompose = blockConverter.apply(iterator); // create a stream from list
+                if (allSourcesStream == null) {
+                    allSourcesStream = toCompose; // assign first stream
+                } else {
+                    // compose next stream with previous one
+                    allSourcesStream = Stream.concat(allSourcesStream, toCompose);
+                }
+            }
+            // add possible blocks from main database
+            DbIterator<Block> iterator = blockDao.getBlocks(null, calculatedFrom, calculatedTo, timestamp);
+            allSourcesStream = Stream.concat(allSourcesStream, blockConverter.apply(iterator));
+        }
+        log.debug("DONE getBlocksStream( from={}, to={} ): foundShards=[{}] / shardIds={}, currentHeight={}",
+            calculatedFrom, calculatedTo, foundShards.size(), foundShards.stream().map(Shard::getShardId).collect(Collectors.toList()), blockchainHeight);
+        return allSourcesStream;
     }
 
     @Transactional
@@ -173,7 +228,7 @@ public class BlockchainImpl implements Blockchain {
 
     @Transactional(readOnly = true)
     @Override
-    public DbIterator<Block> getBlocks(long accountId, int timestamp, int from, int to) {
+    public DbIterator<Block> getBlocksByAccount(long accountId, int timestamp, int from, int to) {
         return blockDao.getBlocks(accountId, timestamp, from, to);
     }
 

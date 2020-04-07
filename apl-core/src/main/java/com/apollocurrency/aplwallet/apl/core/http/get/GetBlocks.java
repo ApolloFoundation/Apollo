@@ -57,10 +57,10 @@ public final class GetBlocks extends AbstractAPIRequestHandler {
         JSONArray blocks = new JSONArray();
         Block lastBlock = lookupBlockchain().getLastBlock();
         if (lastBlock != null) {
-            try (DbIterator<? extends Block> iterator = lookupBlockchain().getBlocks(firstIndex, lastIndex)) {
+            try (DbIterator<? extends Block> iterator = lookupBlockchain().getBlocks(firstIndex, lastIndex, timestamp)) {
                 while (iterator.hasNext()) {
                     Block block = iterator.next();
-                    if (block.getTimestamp() < timestamp) {
+                    if (block.getTimestamp() < timestamp) { // not needed after 'timestamp' is added as SQL param above
                         break;
                     }
                     blocks.add(JSONData.block(block, includeTransactions, includeExecutedPhased));

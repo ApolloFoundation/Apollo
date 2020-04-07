@@ -261,16 +261,19 @@ public class BlockDaoImpl implements BlockDao {
     }
 
     @Override
-    public DbIterator<Block> getBlocks(TransactionalDataSource dataSource, int from, int to) {
+    public DbIterator<Block> getBlocks(TransactionalDataSource dataSource, int from, int to, int timestamp) {
+        LOG.debug("start getBlocks DbIter( from={}, to={}, timestamp={} )...", from, to, timestamp);
         Connection con = null;
         if (dataSource == null) {
-            dataSource = databaseManager.getDataSource(); // TODO: YL implement partial fetch from main + shard db
+            dataSource = databaseManager.getDataSource();
         }
         try {
             con = dataSource.getConnection();
-            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE height <= ? AND height >= ? ORDER BY height DESC");
+            PreparedStatement pstmt = con.prepareStatement(
+                "SELECT * FROM block WHERE height <= ? AND height >= ? and timestamp >= ? ORDER BY height DESC");
             pstmt.setInt(1, from);
             pstmt.setInt(2, to);
+            pstmt.setInt(3, timestamp);
             return getBlocks(con, pstmt);
         }
         catch (SQLException e) {

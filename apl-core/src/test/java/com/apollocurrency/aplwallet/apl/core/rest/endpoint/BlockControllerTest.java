@@ -29,6 +29,8 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -185,10 +187,13 @@ class BlockControllerTest extends AbstractEndpointTest {
         doReturn(btd.BLOCK_13).when(blockchain).getLastBlock();
         FirstLastIndexParser.FirstLastIndex index = new FirstLastIndexParser.FirstLastIndex(0, 99);
         doReturn(index).when(indexParser).adjustIndexes(0, -1);
-        doReturn( List.of( btd.BLOCK_10 )).when(blockchain).getBlocks(0, 99); // fix
+        Stream<Block> blockStream = Stream.of( btd.BLOCK_1, btd.BLOCK_2, btd.BLOCK_3, btd.BLOCK_4, btd.BLOCK_5, btd.BLOCK_6, btd.BLOCK_10 );
+        List<Block> blockList = List.of( btd.BLOCK_1, btd.BLOCK_2, btd.BLOCK_3, btd.BLOCK_4, btd.BLOCK_5, btd.BLOCK_6, btd.BLOCK_10 );
+        Stream<Block> blockStream3 = Stream.of( btd.BLOCK_1, btd.BLOCK_2, btd.BLOCK_3, btd.BLOCK_4, btd.BLOCK_5, btd.BLOCK_6, btd.BLOCK_10 );
+        doReturn(blockStream).when(blockchain).getBlocksStream(0, 99, -1); // fix
 
-        blockDTO = createBlockDTO(btd.BLOCK_10, true, false);
-        doReturn(blockDTO).when(blockConverter).convert(btd.BLOCK_10);
+        List<BlockDTO> blockDTOList = createDtoList(blockStream3);
+        doReturn(blockDTOList).when(blockConverter).convert(blockList);
 
         MockHttpResponse response = super.sendGetRequest("/block/list");
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
@@ -198,9 +203,10 @@ class BlockControllerTest extends AbstractEndpointTest {
 
         BlocksResponse dtoResult = mapper.readValue(respondJson, new TypeReference<>(){});
         assertNotNull(dtoResult);
-//        assertEquals(String.valueOf(btd.BLOCK_10.getId()), dtoResult.getBlock());
+        assertEquals(blockList.size(), blockDTOList.size());
         //verify
-        verify(blockchain, times(1)).getBlockIdAtHeight(btd.BLOCK_10.getHeight());
+        verify(blockConverter, times(1)).convert(blockList);
+        verify(blockchain, times(1)).getBlocksStream(0, 99, -1);
     }
 
     @Test
@@ -241,6 +247,10 @@ class BlockControllerTest extends AbstractEndpointTest {
         assertEquals(btd.BLOCK_10.getTimestamp(), dtoResult.getTimestamp());
         //verify
         verify(blockchain, times(1)).getECBlock(btd.BLOCK_10.getTimestamp());
+    }
+
+    private List<BlockDTO> createDtoList(Stream<Block> source) {
+        return source.map(item -> createBlockDTO(item, true, true)).collect(Collectors.toList());
     }
 
     private BlockDTO createBlockDTO(Block model, boolean includeTrs, boolean includePhased) {

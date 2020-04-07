@@ -20,6 +20,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.apollocurrency.aplwallet.api.dto.BlockDTO;
 import com.apollocurrency.aplwallet.api.dto.ECBlockDTO;
@@ -28,7 +30,6 @@ import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.EcBlockData;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.parameter.LongParameter;
@@ -185,7 +186,7 @@ public class BlockController {
 
     ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
-        log.trace("Started getBlocks : \t firstIndex={}, lastIndex={}, timestamp={}, includeTransactions={}, includeExecutedPhased={}",
+        log.debug("Started getBlocks : \t firstIndex={}, lastIndex={}, timestamp={}, includeTransactions={}, includeExecutedPhased={}",
             firstIndex, lastIndex, timestamp, includeTransactions, includeExecutedPhased);
         BlocksResponse dto = new BlocksResponse();
         List<BlockDTO> blockDataList = new ArrayList<>();
@@ -194,23 +195,17 @@ public class BlockController {
             FirstLastIndexParser.FirstLastIndex flIndex = indexParser.adjustIndexes(firstIndex, lastIndex);
             blockConverter.setAddTransactions(includeTransactions);
             blockConverter.setAddPhasedTransactions(includeExecutedPhased);
-            log.trace("getBlocks indexes: \t firstIndex={}, lastIndex={}, timestamp={}, includeTransactions={}, includeExecutedPhased={}",
+            log.debug("getBlocks indexes: \t firstIndex={}, lastIndex={}, timestamp={}, includeTransactions={}, includeExecutedPhased={}",
                 flIndex.getFirstIndex(), flIndex.getLastIndex(), timestamp, includeTransactions, includeExecutedPhased);
-            try (DbIterator<? extends Block> iterator = blockchain.getBlocks(flIndex.getFirstIndex(), flIndex.getLastIndex())) {
-                while (iterator.hasNext()) {
-                    Block block = iterator.next();
-                    if (block.getTimestamp() < timestamp) {
-                        break;
-                    }
-                    blockDataList.add(blockConverter.convert(block));
-                }
-            }
-            dto.setBlocks(blockDataList);
+            Stream<Block> steam = blockchain.getBlocksStream(flIndex.getFirstIndex(), flIndex.getLastIndex(), timestamp);
+            List<Block> result = steam.collect(Collectors.toList());
+            blockDataList = blockConverter.convert(result);
+            dto.setBlocks( blockDataList);
         } else {
             log.warn("There are no blocks in db...");
             dto.setBlocks(Collections.emptyList());
         }
-        log.trace("getBlocks result: {}", dto);
+        log.debug("getBlocks result: {}", dto);
         return response.bind(dto).build();
     }
 
