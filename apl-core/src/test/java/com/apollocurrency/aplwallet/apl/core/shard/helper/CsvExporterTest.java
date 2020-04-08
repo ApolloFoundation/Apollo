@@ -11,13 +11,12 @@ import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanc
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountInfoTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountLedgerTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
-import com.apollocurrency.aplwallet.apl.core.account.dao.GenesisPublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.app.Alias;
+import com.apollocurrency.aplwallet.apl.alias.service.AliasService;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -217,6 +216,7 @@ class CsvExporterTest {
             .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyServiceImpl.class, AccountPublicKeyService.class))
             .addBeans(MockBean.of(mock(AccountTable.class), AccountTable.class))
             .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
+            .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
             .build();
     @Inject
     ShardDao shardDao;
@@ -273,7 +273,6 @@ class CsvExporterTest {
         //Account.init(extension.getDatabaseManager(), propertiesHolder, null, null, blockchain, null, null, accountTable, null);
         AccountInfoTable accountInfoTable = new AccountInfoTable();
         accountInfoTable.init();
-        Alias.init();
         PhasingOnly.get(7995581942006468815L); // works OK!
         PhasingOnly.get(2728325718715804811L); // check 1
         PhasingOnly.get(-8446384352342482748L); // check 2

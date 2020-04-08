@@ -4,12 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
+import com.apollocurrency.aplwallet.apl.alias.service.AliasService;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountInfo;
 import com.apollocurrency.aplwallet.apl.core.account.service.*;
-import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -37,6 +37,7 @@ public class BlockEventSourceProcessor implements Runnable {
     private AccountInfoService accountInfoService = CDI.current().select(AccountInfoServiceImpl.class).get();
     private AccountAssetService accountAssetService = CDI.current().select(AccountAssetServiceImpl.class).get();
     private AccountCurrencyService accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
+    private final AliasService aliasService = CDI.current().select(AliasService.class).get();
 
     public BlockEventSourceProcessor(BlockEventSource eventSource, long accountId) {
         this.eventSource = eventSource;
@@ -86,7 +87,7 @@ public class BlockEventSourceProcessor implements Runnable {
             }
         }
         int sellerPurchaseCount = service.getSellerPurchaseCount(accountId, false, false);
-        int aliasCount = Alias.getAccountAliasCount(accountId);
+        int aliasCount = aliasService.getAccountAliasCount(accountId);
         JSONArray assetJson = new JSONArray();
         List<AccountAsset> accountAssets = accountAssetService.getAssetsByAccount(accountId, -1, 0, 2);
         accountAssets.forEach(accountAsset -> assetJson.add(JSONData.accountAsset(accountAsset, false, true)));

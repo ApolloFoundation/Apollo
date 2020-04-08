@@ -11,7 +11,6 @@ import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeySer
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -172,7 +171,6 @@ class DerivedDbTableListingTest {
         AccountCurrencyTable accountCurrencyTable = new AccountCurrencyTable();
         accountCurrencyTable.init();
         //Account.init(extension.getDatabaseManager(), propertiesHolder, null, null, blockchain, null, null, accountTable, null);
-        Alias.init();
         AccountAssetTable accountAssetTable = new AccountAssetTable();
         accountAssetTable.init();
         GenesisPublicKeyTable genesisPublicKeyTable = new GenesisPublicKeyTable(blockchain);

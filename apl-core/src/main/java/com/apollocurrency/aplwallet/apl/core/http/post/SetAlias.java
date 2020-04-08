@@ -22,7 +22,8 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 
 
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Alias;
+import com.apollocurrency.aplwallet.apl.alias.service.AliasService;
+import com.apollocurrency.aplwallet.apl.alias.entity.Alias;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasAssignment;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -33,6 +34,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ALIAS_LENGTH;
@@ -43,9 +45,11 @@ import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public final class SetAlias extends CreateTransaction {
+    private final AliasService aliasService;
 
     public SetAlias() {
         super(new APITag[] {APITag.ALIASES, APITag.CREATE_TRANSACTION}, "aliasName", "aliasURI");
+        this.aliasService = CDI.current().select(AliasService.class).get();
     }
 
     @Override
@@ -76,7 +80,7 @@ public final class SetAlias extends CreateTransaction {
 
         Account account = HttpParameterParserUtil.getSenderAccount(req);
 
-        Alias alias = Alias.getAlias(normalizedAlias);
+        Alias alias = aliasService.getAliasByName(normalizedAlias);
         if (alias != null && alias.getAccountId() != account.getId()) {
             JSONObject response = new JSONObject();
             response.put("errorCode", 8);

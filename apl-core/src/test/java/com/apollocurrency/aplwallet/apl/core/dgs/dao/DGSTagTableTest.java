@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.dgs.dao;
 
 import com.apollocurrency.aplwallet.apl.core.account.dao.GenesisPublicKeyTable;
+import com.apollocurrency.aplwallet.apl.alias.service.AliasService;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
@@ -69,6 +70,7 @@ public class DGSTagTableTest extends EntityDbTableTest<DGSTag> {
             .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
             .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
             .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
+            .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
             .build();
     @Inject
     DGSTagTable table;

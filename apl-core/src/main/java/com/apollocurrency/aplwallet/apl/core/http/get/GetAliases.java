@@ -20,25 +20,27 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Alias;
+import com.apollocurrency.aplwallet.apl.alias.service.AliasService;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
 import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class GetAliases extends AbstractAPIRequestHandler {
+    private final AliasService aliasService;
 
     public GetAliases() {
         super(new APITag[] {APITag.ALIASES}, "timestamp", "account", "firstIndex", "lastIndex");
+        this.aliasService = CDI.current().select(AliasService.class).get();
     }
 
     @Override
@@ -49,12 +51,15 @@ public final class GetAliases extends AbstractAPIRequestHandler {
         int lastIndex = HttpParameterParserUtil.getLastIndex(req);
 
         JSONArray aliases = new JSONArray();
-        try (FilteringIterator<Alias> aliasIterator = new FilteringIterator<>(Alias.getAliasesByOwner(accountId, 0, -1),
-                alias -> alias.getTimestamp() >= timestamp, firstIndex, lastIndex)) {
-            while(aliasIterator.hasNext()) {
-                aliases.add(JSONData.alias(aliasIterator.next()));
-            }
-        }
+
+        //proven by shouldTestFilteringIterator test
+        final int maxSize = lastIndex - firstIndex + 1;
+        aliasService.getAliasesByOwner(accountId, 0, -1)
+            .filter(alias -> alias.getTimestamp() >= timestamp)
+            .map(JSONData::alias)
+            .skip(firstIndex)
+            .limit(maxSize)
+            .forEach(aliases::add);
 
         JSONObject response = new JSONObject();
         response.put("aliases", aliases);

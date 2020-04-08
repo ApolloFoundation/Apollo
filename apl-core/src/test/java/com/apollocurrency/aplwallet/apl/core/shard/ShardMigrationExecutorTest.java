@@ -30,6 +30,7 @@ import static org.mockito.Mockito.mock;
 
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
+import com.apollocurrency.aplwallet.apl.alias.service.AliasService;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -177,6 +178,7 @@ class ShardMigrationExecutorTest {
             .addBeans(MockBean.of(taskDispatchManager, TaskDispatchManager.class))
             .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
             .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
+            .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
             .build();
     @Inject
     private ShardEngine shardEngine;

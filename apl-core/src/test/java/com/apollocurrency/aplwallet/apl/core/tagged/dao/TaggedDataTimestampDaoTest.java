@@ -1,5 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.tagged.dao;
 
+import com.apollocurrency.aplwallet.apl.alias.service.AliasService;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
@@ -67,6 +68,7 @@ class TaggedDataTimestampDaoTest {
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
             .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
+            .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
             .build();
 
     @Inject

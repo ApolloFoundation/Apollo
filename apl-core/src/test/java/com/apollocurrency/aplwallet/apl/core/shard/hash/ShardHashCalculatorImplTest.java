@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.hash;
 
+import com.apollocurrency.aplwallet.apl.alias.service.AliasService;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -77,7 +78,8 @@ public class ShardHashCalculatorImplTest {
                     MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class),
                     MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class),
                     MockBean.of(mock(NtpTime.class), NtpTime.class),
-                    MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class)
+                    MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class),
+                    MockBean.of(mock(AliasService.class), AliasService.class)
             ).build();
 
     @Inject
