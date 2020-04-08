@@ -186,26 +186,26 @@ public class BlockController {
 
     ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
-        log.debug("Started getBlocks : \t firstIndex={}, lastIndex={}, timestamp={}, includeTransactions={}, includeExecutedPhased={}",
+        log.trace("Started getBlocks : \t firstIndex={}, lastIndex={}, timestamp={}, includeTransactions={}, includeExecutedPhased={}",
             firstIndex, lastIndex, timestamp, includeTransactions, includeExecutedPhased);
         BlocksResponse dto = new BlocksResponse();
-        List<BlockDTO> blockDataList = new ArrayList<>();
+        List<BlockDTO> blockDataList;
         Block lastBlock = blockchain.getLastBlock();
         if (lastBlock != null) {
             FirstLastIndexParser.FirstLastIndex flIndex = indexParser.adjustIndexes(firstIndex, lastIndex);
             blockConverter.setAddTransactions(includeTransactions);
             blockConverter.setAddPhasedTransactions(includeExecutedPhased);
-            log.debug("getBlocks indexes: \t firstIndex={}, lastIndex={}, timestamp={}, includeTransactions={}, includeExecutedPhased={}",
-                flIndex.getFirstIndex(), flIndex.getLastIndex(), timestamp, includeTransactions, includeExecutedPhased);
             Stream<Block> steam = blockchain.getBlocksStream(flIndex.getFirstIndex(), flIndex.getLastIndex(), timestamp);
             List<Block> result = steam.collect(Collectors.toList());
+            log.trace("getBlocks result [{}]: \t firstIndex={}, lastIndex={}, timestamp={}, includeTransactions={}, includeExecutedPhased={}",
+                result.size(), flIndex.getFirstIndex(), flIndex.getLastIndex(), timestamp, includeTransactions, includeExecutedPhased);
             blockDataList = blockConverter.convert(result);
-            dto.setBlocks( blockDataList);
+            dto.setBlocks(blockDataList);
         } else {
             log.warn("There are no blocks in db...");
             dto.setBlocks(Collections.emptyList());
         }
-        log.debug("getBlocks result: {}", dto);
+        log.trace("getBlocks result: {}", dto);
         return response.bind(dto).build();
     }
 
