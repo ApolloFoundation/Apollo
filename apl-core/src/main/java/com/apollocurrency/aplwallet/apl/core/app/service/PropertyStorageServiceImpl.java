@@ -3,6 +3,7 @@ package com.apollocurrency.aplwallet.apl.core.app.service;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.File;
@@ -27,6 +28,11 @@ public class PropertyStorageServiceImpl implements PropertyStorageService {
         this.realConfigDir = configDirProvider.getConfigDirectory();
     }
 
+    @PostConstruct
+    public void init(){
+        validateAndCreateIfNotExist(false);
+    }
+
     @Override
     public boolean storeProperties(Properties props) {
         validateAndCreateIfNotExist(true);
@@ -42,8 +48,6 @@ public class PropertyStorageServiceImpl implements PropertyStorageService {
 
     @Override
     public Properties loadProperties() {
-        validateAndCreateIfNotExist(false);
-
         try (InputStream inputStream = new FileInputStream(getTargetFile()) ) {
             Properties properties = new Properties();
             properties.load(inputStream);
