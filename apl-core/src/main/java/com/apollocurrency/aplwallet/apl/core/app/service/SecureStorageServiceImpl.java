@@ -117,7 +117,7 @@ public class SecureStorageServiceImpl implements SecureStorageService {
 
     public boolean storeSecretStorage(String keyName, Path secureStoragePath) {
         log.trace("storeSecretStorage 1, keyName='{}', secureStoragePathCopy = '{}'", keyName, secureStoragePathCopy);
-        String privateKey = getPK(keyName);
+        String privateKey = getKeyOrCreateIfNotExist(keyName);
         SecureStorage secureStore;
         try {
             secureStore = collectAllDataToTempStore();
@@ -135,7 +135,7 @@ public class SecureStorageServiceImpl implements SecureStorageService {
      */
     @Override
     public boolean restoreSecretStorage(Path file) {
-        String privateKey = getPK(SECURE_STORE_KEY);
+        String privateKey = getKeyOrCreateIfNotExist(SECURE_STORE_KEY);
         log.trace("restoreSecretStorage, file='{}', privateKey not empty = '{}'", file, privateKey != null);
         if(privateKey == null){
             return false;
@@ -233,7 +233,7 @@ public class SecureStorageServiceImpl implements SecureStorageService {
     }
 
 
-    private String getPK(String keyName){
+    private String getKeyOrCreateIfNotExist(String keyName){
         String privateKey;
 
         if(propertyStorageService.isExist()){
