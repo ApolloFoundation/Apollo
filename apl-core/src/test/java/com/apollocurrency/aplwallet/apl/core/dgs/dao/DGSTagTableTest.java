@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.dgs.dao;
 
 import com.apollocurrency.aplwallet.apl.core.account.dao.GenesisPublicKeyTable;
-import com.apollocurrency.aplwallet.apl.alias.service.AliasService;
+import com.apollocurrency.aplwallet.apl.core.alias.service.AliasService;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;

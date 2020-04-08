@@ -18,13 +18,13 @@
  * Copyright © 2018-2020 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.alias.service;
+package com.apollocurrency.aplwallet.apl.core.alias.service;
 
-import com.apollocurrency.aplwallet.apl.alias.converter.IteratorToStreamConverter;
-import com.apollocurrency.aplwallet.apl.alias.dao.AliasOfferTable;
-import com.apollocurrency.aplwallet.apl.alias.dao.AliasTable;
-import com.apollocurrency.aplwallet.apl.alias.entity.Alias;
-import com.apollocurrency.aplwallet.apl.alias.entity.AliasOffer;
+import com.apollocurrency.aplwallet.apl.core.alias.converter.IteratorToStreamConverter;
+import com.apollocurrency.aplwallet.apl.core.alias.dao.AliasOfferTable;
+import com.apollocurrency.aplwallet.apl.core.alias.dao.AliasTable;
+import com.apollocurrency.aplwallet.apl.core.alias.entity.Alias;
+import com.apollocurrency.aplwallet.apl.core.alias.entity.AliasOffer;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;

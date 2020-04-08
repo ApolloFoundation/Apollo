@@ -21,8 +21,8 @@
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.alias.service.AliasService;
-import com.apollocurrency.aplwallet.apl.alias.entity.Alias;
+import com.apollocurrency.aplwallet.apl.core.alias.service.AliasService;
+import com.apollocurrency.aplwallet.apl.core.alias.entity.Alias;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasBuy;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
