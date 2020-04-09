@@ -251,7 +251,7 @@ class AccountControllerTest extends AbstractEndpointTest{
         MockHttpResponse response = sendPostRequest("/accounts/enable2fa", "wrong=value");
 
         checkMandatoryParameterMissingErrorCode(response, 2002);
-        verify(account2FAHelper, times(1)).create2FAParameters(null, null,null);
+        verify(account2FAHelper, times(1)).create2FAParameters(null, null,null,null);
     }
 
     @Test
@@ -260,7 +260,7 @@ class AccountControllerTest extends AbstractEndpointTest{
         MockHttpResponse response = sendPostRequest("/accounts/enable2fa", "passphrase="+PASSPHRASE+"&secretPhrase="+SECRET);
 
         checkMandatoryParameterMissingErrorCode(response, 2011);
-        verify(account2FAHelper, times(1)).create2FAParameters(null, PASSPHRASE, SECRET);
+        verify(account2FAHelper, times(1)).create2FAParameters(null, PASSPHRASE, SECRET,null);
     }
 
     @Test
@@ -269,7 +269,7 @@ class AccountControllerTest extends AbstractEndpointTest{
         MockHttpResponse response = sendPostRequest("/accounts/enable2fa", "passphrase="+PASSPHRASE);
 
         checkMandatoryParameterMissingErrorCode(response, 2003);
-        verify(account2FAHelper, times(1)).create2FAParameters(null, PASSPHRASE, null);
+        verify(account2FAHelper, times(1)).create2FAParameters(null, PASSPHRASE, null,null);
     }
 
     @Test
@@ -292,7 +292,7 @@ class AccountControllerTest extends AbstractEndpointTest{
         assertEquals(ACCOUNT_RS, result.get("accountRS"));
         assertEquals(QR_CODE_URL, result.get("qrCodeUrl"));
         assertEquals(SECRET, result.get("secret"));
-        verify(account2FAHelper, times(1)).create2FAParameters(ACCOUNT_RS, PASSPHRASE, null);
+        verify(account2FAHelper, times(1)).create2FAParameters(ACCOUNT_RS, PASSPHRASE, null,null);
         verify(account2FAHelper, times(1)).enable2FA(params2FA);
     }
 
@@ -316,7 +316,7 @@ class AccountControllerTest extends AbstractEndpointTest{
         assertEquals(ACCOUNT_RS, result.get("accountRS"));
         assertEquals(QR_CODE_URL, result.get("qrCodeUrl"));
         assertEquals(SECRET, result.get("secret"));
-        verify(account2FAHelper, times(1)).create2FAParameters(null, null, SECRET);
+        verify(account2FAHelper, times(1)).create2FAParameters(null, null, SECRET,null);
         verify(account2FAHelper, times(1)).enable2FA(params2FA);
     }
 
@@ -401,7 +401,7 @@ class AccountControllerTest extends AbstractEndpointTest{
 
         doReturn(secretBytes).when(account2FAHelper).findAplSecretBytes(twoFactorAuthParameters);
         check2FA_withPassPhraseAndAccountAndCode2FA(uri, twoFactorAuthParameters);
-        verify(account2FAHelper, times(1)).create2FAParameters(ACCOUNT_RS, PASSPHRASE, null);
+        verify(account2FAHelper, times(1)).create2FAParameters(ACCOUNT_RS, PASSPHRASE, null,null);
         verify(account2FAHelper, times(1)).findAplSecretBytes(twoFactorAuthParameters);
     }
 

@@ -27,6 +27,8 @@ import java.util.Map;
 
 import static com.apollocurrency.aplwallet.apl.core.rest.ApiErrors.INCORRECT_VALUE;
 import static com.apollocurrency.aplwallet.apl.core.rest.ApiErrors.MISSING_PARAM_LIST;
+import static com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper.TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME;
+
 @Singleton
 public class AccountParametersParser {
     public static final String SENDER_PARAM_NAME ="sender";
@@ -57,7 +59,7 @@ public class AccountParametersParser {
     }
 
     public static TwoFactorAuthParameters get2FARequestAttribute(org.jboss.resteasy.spi.HttpRequest request) {
-        TwoFactorAuthParameters params2FA = (TwoFactorAuthParameters) request.getAttribute(RestParametersParser.TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME);
+        TwoFactorAuthParameters params2FA = (TwoFactorAuthParameters) request.getAttribute(TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME);
         if(params2FA == null){
             throw new RestParameterException(ApiErrors.INTERNAL_SERVER_EXCEPTION, "Can't locate the 2FA request attribute.");
         }
