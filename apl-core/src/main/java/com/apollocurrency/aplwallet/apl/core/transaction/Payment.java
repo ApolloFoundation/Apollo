@@ -82,7 +82,7 @@ public abstract class Payment extends TransactionType {
 
         @Override
         public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-            if (transaction.getAmountATM() <= 0 || transaction.getAmountATM() >= blockchainConfig.getCurrentConfig().getMaxBalanceATM()) {
+            if (transaction.getAmountATM() <= 0 || transaction.getAmountATM() >= lookupBlockchainConfig().getCurrentConfig().getMaxBalanceATM()) {
                 throw new AplException.NotValidException("Invalid ordinary payment");
             }
         }
@@ -115,10 +115,10 @@ public abstract class Payment extends TransactionType {
 
         @Override
         public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-            if (transaction.getAmountATM() <= 0 || transaction.getAmountATM() >= blockchainConfig.getCurrentConfig().getMaxBalanceATM()) {
+            if (transaction.getAmountATM() <= 0 || transaction.getAmountATM() >= lookupBlockchainConfig().getCurrentConfig().getMaxBalanceATM()) {
                 throw new AplException.NotValidException("Invalid private payment");
             }
         }
     };
-    
+
 }

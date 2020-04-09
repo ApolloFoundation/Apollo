@@ -7,7 +7,6 @@ import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtendAttachment;
@@ -18,8 +17,8 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 
-import java.nio.ByteBuffer;
 import javax.enterprise.inject.spi.CDI;
+import java.nio.ByteBuffer;
 
 /**
  *
@@ -105,7 +104,7 @@ public abstract class Data extends TransactionType {
         @Override
         public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
             TaggedDataUploadAttachment attachment = (TaggedDataUploadAttachment) transaction.getAttachment();
-            if (attachment.getData() == null && timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMinPrunableLifetime()) {
+            if (attachment.getData() == null && Data.lookupTimeService().getEpochTime() - transaction.getTimestamp() < Data.lookupBlockchainConfig().getMinPrunableLifetime()) {
                 throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
             }
             if (attachment.getData() != null) {
@@ -175,14 +174,14 @@ public abstract class Data extends TransactionType {
         @Override
         public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
             TaggedDataExtendAttachment attachment = (TaggedDataExtendAttachment) transaction.getAttachment();
-            if ((attachment.jsonIsPruned() || attachment.getData() == null) && timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMinPrunableLifetime()) {
+            if ((attachment.jsonIsPruned() || attachment.getData() == null) && Data.lookupTimeService().getEpochTime() - transaction.getTimestamp() < Data.lookupBlockchainConfig().getMinPrunableLifetime()) {
                 throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
             }
-            if (!blockchain.hasTransaction(attachment.getTaggedDataId(), blockchain.getHeight())) {
+            if (!lookupBlockchain().hasTransaction(attachment.getTaggedDataId(), lookupBlockchain().getHeight())) {
                 throw new AplException.NotCurrentlyValidException("No such tagged data upload " + Long.toUnsignedString(attachment.getTaggedDataId()));
             }
             TaggedData taggedData = lookupTaggedDataService().getData(attachment.getTaggedDataId());
-            if (taggedData != null && taggedData.getTransactionTimestamp() > timeService.getEpochTime() + 6 * blockchainConfig.getMinPrunableLifetime()) {
+            if (taggedData != null && taggedData.getTransactionTimestamp() > Data.lookupTimeService().getEpochTime() + 6 * lookupBlockchainConfig().getMinPrunableLifetime()) {
                 throw new AplException.NotCurrentlyValidException("Data already extended, timestamp is " + taggedData.getTransactionTimestamp());
             }
         }

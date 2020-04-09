@@ -5,22 +5,23 @@ package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import org.json.simple.JSONObject;
+
 import java.nio.ByteBuffer;
 import java.util.Map;
-import org.json.simple.JSONObject;
 
 /**
  *
  * @author al
  */
 class CCCoinsDividentPayment extends ColoredCoins {
-    
+
     public CCCoinsDividentPayment() {
     }
 
@@ -88,8 +89,8 @@ class CCCoinsDividentPayment extends ColoredCoins {
     @Override
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
         ColoredCoinsDividendPayment attachment = (ColoredCoinsDividendPayment) transaction.getAttachment();
-        if (attachment.getHeight() > blockchain.getHeight()) {
-            throw new AplException.NotCurrentlyValidException("Invalid dividend payment height: " + attachment.getHeight() + ", must not exceed current blockchain height " + blockchain.getHeight());
+        if (attachment.getHeight() > lookupBlockchain().getHeight()) {
+            throw new AplException.NotCurrentlyValidException("Invalid dividend payment height: " + attachment.getHeight() + ", must not exceed current blockchain height " + lookupBlockchain().getHeight());
         }
         if (attachment.getHeight() <= attachment.getFinishValidationHeight(transaction) - Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK) {
             throw new AplException.NotCurrentlyValidException("Invalid dividend payment height: " + attachment.getHeight() + ", must be less than " + Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK + " blocks before " + attachment.getFinishValidationHeight(transaction));
@@ -102,8 +103,8 @@ class CCCoinsDividentPayment extends ColoredCoins {
             throw new AplException.NotValidException("Invalid dividend payment sender or amount " + attachment.getJSONObject());
         }
         AssetDividend lastDividend = AssetDividend.getLastDividend(attachment.getAssetId());
-        if (lastDividend != null && lastDividend.getHeight() > blockchain.getHeight() - 60) {
-            throw new AplException.NotCurrentlyValidException("Last dividend payment for asset " + Long.toUnsignedString(attachment.getAssetId()) + " was less than 60 blocks ago at " + lastDividend.getHeight() + ", current height is " + blockchain.getHeight() + ", limit is one dividend per 60 blocks");
+        if (lastDividend != null && lastDividend.getHeight() > lookupBlockchain().getHeight() - 60) {
+            throw new AplException.NotCurrentlyValidException("Last dividend payment for asset " + Long.toUnsignedString(attachment.getAssetId()) + " was less than 60 blocks ago at " + lastDividend.getHeight() + ", current height is " + lookupBlockchain().getHeight() + ", limit is one dividend per 60 blocks");
         }
     }
 
@@ -122,5 +123,5 @@ class CCCoinsDividentPayment extends ColoredCoins {
     public boolean isPhasingSafe() {
         return false;
     }
-    
+
 }

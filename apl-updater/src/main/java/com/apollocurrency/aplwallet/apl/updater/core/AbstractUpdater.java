@@ -4,9 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.updater.core;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.UpdateAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateAttachment;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateData;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateInfo;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
@@ -16,12 +14,14 @@ import com.apollocurrency.aplwallet.apl.updater.pdu.PlatformDependentUpdater;
 import com.apollocurrency.aplwallet.apl.updater.pdu.PlatformDependentUpdaterFactory;
 import com.apollocurrency.aplwallet.apl.updater.pdu.PlatformDependentUpdaterFactoryImpl;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterService;
-import com.apollocurrency.aplwallet.apl.util.Platform;
+import com.apollocurrency.aplwallet.apl.util.env.Platform;
 import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 public abstract class AbstractUpdater implements Updater {
     private static final Logger LOG = getLogger(AbstractUpdater.class);

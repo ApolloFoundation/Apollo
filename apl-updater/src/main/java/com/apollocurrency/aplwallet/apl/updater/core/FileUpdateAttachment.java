@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.updater.core;
 
-import com.apollocurrency.aplwallet.apl.util.Architecture;
-import com.apollocurrency.aplwallet.apl.util.Platform;
+import com.apollocurrency.aplwallet.apl.util.env.Architecture;
+import com.apollocurrency.aplwallet.apl.util.env.Platform;
 
 import java.util.Objects;
 

@@ -111,6 +111,7 @@ public abstract class TransactionType {
     public static final byte SUBTYPE_UPDATE_CRITICAL = 0;
     public static final byte SUBTYPE_UPDATE_IMPORTANT = 1;
     public static final byte SUBTYPE_UPDATE_MINOR = 2;
+    public static final byte SUBTYPE_UPDATE_V2 = 3;
 
     public static final byte SUBTYPE_DEX_ORDER = 0;
     public static final byte SUBTYPE_DEX_ORDER_CANCEL = 1;
@@ -119,9 +120,9 @@ public abstract class TransactionType {
     public static final byte SUBTYPE_DEX_CLOSE_ORDER = 4;
 
 
-    public static final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    protected static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
-    public static  TimeService timeService = CDI.current().select(TimeService.class).get();
+    public static BlockchainConfig blockchainConfig;
+    protected static Blockchain blockchain;
+    public static TimeService timeService;
     @Setter
     private static AccountService accountService;
     private static AccountCurrencyService accountCurrencyService;
@@ -170,6 +171,24 @@ public abstract class TransactionType {
             accountInfoService = CDI.current().select(AccountInfoServiceImpl.class).get();
         }
         return accountInfoService;
+    }
+    public static synchronized Blockchain lookupBlockchain() {
+        if ( blockchain == null) {
+            blockchain = CDI.current().select(Blockchain.class).get();
+        }
+        return blockchain;
+    }
+    public static synchronized TimeService lookupTimeService(){
+        if ( timeService == null) {
+            timeService = CDI.current().select(TimeService.class).get();
+        }
+        return timeService;
+    }
+    public static synchronized BlockchainConfig lookupBlockchainConfig(){
+        if ( blockchainConfig == null) {
+            blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+        }
+        return blockchainConfig;
     }
 
     public static TransactionType findTransactionType(byte type, byte subtype) {
@@ -284,6 +303,8 @@ public abstract class TransactionType {
                         return Update.IMPORTANT;
                     case SUBTYPE_UPDATE_MINOR:
                         return Update.MINOR;
+                    case SUBTYPE_UPDATE_V2:
+                        return Update.UPDATE_V2;
                     default:
                         return null;
                 }
@@ -328,7 +349,7 @@ public abstract class TransactionType {
         long amountATM = transaction.getAmountATM();
         long feeATM = transaction.getFeeATM();
         if (transaction.referencedTransactionFullHash() != null) {
-            feeATM = Math.addExact(feeATM, blockchainConfig.getUnconfirmedPoolDepositAtm());
+            feeATM = Math.addExact(feeATM, lookupBlockchainConfig().getUnconfirmedPoolDepositAtm());
         }
         long totalAmountATM = Math.addExact(amountATM, feeATM);
         if (senderAccount.getUnconfirmedBalanceATM() < totalAmountATM) {
@@ -370,7 +391,7 @@ public abstract class TransactionType {
                 transaction.getAmountATM(), transaction.getFeeATM());
         if (transaction.referencedTransactionFullHash() != null) {
             accountService.addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), 0,
-                    blockchainConfig.getUnconfirmedPoolDepositAtm());
+                    lookupBlockchainConfig().getUnconfirmedPoolDepositAtm());
         }
     }
 

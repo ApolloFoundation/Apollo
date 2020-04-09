@@ -9,8 +9,8 @@ import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterExcepti
 
 public class AccountIdParameter extends AbstractRestParameter<Long> {
 
-    public AccountIdParameter(String rawData) {
-        super(rawData);
+    public AccountIdParameter(String account) {
+        super(account);
     }
 
     @Override

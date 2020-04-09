@@ -151,7 +151,7 @@ public class ShardService {
                             return false;
                         }
                     });
-                    zip.extract(backupZip.toAbsolutePath().toString(), dbDir.toAbsolutePath().toString());
+                    zip.extract(backupZip.toAbsolutePath().toString(), dbDir.toAbsolutePath().toString(), true);
                     databaseManager.setAvailable(true);
                     databaseManager.getDataSource(); // force init
                     blockchain.update();

@@ -112,6 +112,7 @@
 
     <!--Tests-->
     <json-simple.version>1.1.1</json-simple.version>
+      <jsonassert.version>1.5.0</jsonassert.version>
     <json-unit.version>1.20.0</json-unit.version>
     <okhttp-eventsource.version>1.8.0</okhttp-eventsource.version>
     <okhttp.version>2.7.5</okhttp.version>
@@ -560,6 +561,12 @@
         <scope>import</scope>
       </dependency>
       <dependency>
+        <groupId>org.skyscreamer</groupId>
+        <artifactId>jsonassert</artifactId>
+        <version>${jsonassert.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
         <groupId>org.junit.jupiter</groupId>
         <artifactId>junit-jupiter-params</artifactId>
         <version>${junit5-bom.version}</version>
@@ -569,16 +576,19 @@
         <groupId>org.mockito</groupId>
         <artifactId>mockito-core</artifactId>
         <version>${mockito.version}</version>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-inline</artifactId>
         <version>${mockito.version}</version>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-junit-jupiter</artifactId>
         <version>${mockito.version}</version>
+        <scope>test</scope>
       </dependency>
       <!-- RESTEasy Validator Provider -->
       <dependency>

@@ -113,7 +113,7 @@ class ShardPrunableZipHashCalculatorTest {
 
         assertFalse(Files.exists(secondZipPath));
         assertTrue(Files.exists(thirdZipPath));
-        zip.extract(thirdZipPath.toAbsolutePath().toString(), dataExportDir.toAbsolutePath().toString());
+        zip.extract(thirdZipPath.toAbsolutePath().toString(), dataExportDir.toAbsolutePath().toString(), true);
         assertEquals(2, FileUtils.countElementsOfDirectory(dataExportDir));
         assertTrue(Files.exists(dataExportDir.resolve("prunable_message.csv")));
         assertNull(shard2.getPrunableZipHash());

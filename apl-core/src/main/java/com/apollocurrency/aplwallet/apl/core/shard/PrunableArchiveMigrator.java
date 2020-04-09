@@ -79,7 +79,7 @@ public class PrunableArchiveMigrator {
                     Path shardArchivePath = dirProvider.getDataExportDir().resolve(shardNameHelper.getCoreShardArchiveNameByShardId(shard.getShardId(), chainId));
 
                     String tempDirectoryString = tempDirectory.toAbsolutePath().toString();
-                    zip.extract(shardArchivePath.toAbsolutePath().toString(), tempDirectoryString);
+                    zip.extract(shardArchivePath.toAbsolutePath().toString(), tempDirectoryString, true);
                     CsvExporter csvExporter = createExporter(tempDirectory);
                     csvExporter.exportShardTableIgnoringLastZipHashes(shard.getShardHeight(), 100);
                     String zipName = "shard-" + shard.getShardId() + ".zip";
