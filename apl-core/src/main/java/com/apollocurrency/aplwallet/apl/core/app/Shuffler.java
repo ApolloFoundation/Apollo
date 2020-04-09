@@ -315,7 +315,7 @@ public final class Shuffler {
             log.trace(":accept:ShufflerObserver: END onBlockApplaid AFTER_BLOCK_APPLY, block={}", block.getHeight());
         }
         public void onBlockAccepted(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_ACCEPT) Block block) {
-            log.debug(":accept:ShufflerObserver: START onAfterBlockAccept AFTER_BLOCK_ACCEPT, block height={}, shufflingsMap=[{}]",
+            log.trace(":accept:ShufflerObserver: START onAfterBlockAccept AFTER_BLOCK_ACCEPT, block height={}, shufflingsMap=[{}]",
                     block.getHeight(), shufflingsMap.size());
             shufflingsMap.values().forEach(shufflerMap -> shufflerMap.values().forEach(shuffler -> {
                 if (shuffler.failedTransaction != null) {

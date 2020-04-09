@@ -86,7 +86,7 @@ public abstract class AccountControl extends TransactionType {
             if (transaction.getAmountATM() != 0) {
                 throw new AplException.NotValidException("Transaction amount must be 0 for effective balance leasing");
             }
-            if (attachment.getPeriod() < blockchainConfig.getLeasingDelay() || attachment.getPeriod() > 65535) {
+            if (attachment.getPeriod() < lookupBlockchainConfig().getLeasingDelay() || attachment.getPeriod() > 65535) {
                 throw new AplException.NotValidException("Invalid effective balance leasing period: " + attachment.getPeriod());
             }
             byte[] recipientPublicKey = lookupAccountService().getPublicKeyByteArray(transaction.getRecipientId());

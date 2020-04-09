@@ -120,7 +120,7 @@ class PrunableArchiveMigratorTest {
         assertArrayEquals(newHash, shard.getCoreZipHash());
         assertArrayEquals(new byte[32], shard.getPrunableZipHash());
         Path extractPath = extension.newFolder().toPath();
-        zip.extract(path.toAbsolutePath().toString(), extractPath.toAbsolutePath().toString());
+        zip.extract(path.toAbsolutePath().toString(), extractPath.toAbsolutePath().toString(), true);
         assertEquals(2, FileUtils.countElementsOfDirectory(extractPath));
         assertTrue(Files.exists(extractPath.resolve("not-prunable.csv")));
         assertTrue(Files.exists(extractPath.resolve("shard.csv")));

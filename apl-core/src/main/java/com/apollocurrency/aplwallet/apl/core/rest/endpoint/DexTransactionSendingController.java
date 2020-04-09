@@ -1,5 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
+import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import com.apollocurrency.aplwallet.api.dto.TransactionHash;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
@@ -77,7 +78,7 @@ public class DexTransactionSendingController {
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Operation(tags = {"dex"}, summary = "Send apl dex order transaction", description = "Create, validate and conditionally broadcast Apollo DexOrderTransaction, depending on specified parameters ",
             responses = @ApiResponse(description = "Transaction in json format", responseCode = "200",
-                    content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = Transaction.class))))
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = TransactionDTO.class))))
     public Response sendOrder(
             @Parameter(description = "APL account id of sender (RS, signed or unsigned int64/long)", required = true) @FormParam("sender") @NotBlank String accountString,
             @Parameter(description = "Passphrase for the vault account", required = true) @FormParam("passphrase") @NotBlank String passphrase,
@@ -159,7 +160,7 @@ public class DexTransactionSendingController {
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Operation(tags = {"dex"}, summary = "Create STEP1 contract ", description = "Will send APL transaction to create new offering contract for PENDING (sender) order and another OPEN order.",
             responses = @ApiResponse(description = "Apl transaction in JSON format", responseCode = "200",
-                    content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = Transaction.class))))
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = TransactionDTO.class))))
     public Response sendContractStep1(@Parameter(description = "APL account id of sender (RS, signed or unsigned int64/long)", required = true) @FormParam("sender") @NotBlank String accountString,
                                       @Parameter(description = "Passphrase for the vault account", required = true) @FormParam("passphrase") @NotBlank String passphrase,
                                       @Parameter(description = "Two factor authentication code, if 2fa is enabled") @DefaultValue("0") @FormParam("code2FA") @Min(0) @Max(999999) int code2FA,
@@ -189,7 +190,7 @@ public class DexTransactionSendingController {
     @Operation(tags = {"dex"}, summary = "Create STEP2 contract ", description = "Will send APL contract transaction to update existing STEP1 contract specified by id and fill it with secretHash, encryptedSecret, timeToReply and counterTransferTx data." +
             "Can be sent only by account, owning counterOrder specified in the contract",
             responses = @ApiResponse(description = "Apl transaction in JSON format", responseCode = "200",
-                    content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = Transaction.class))))
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = TransactionDTO.class))))
     public Response sendContractStep2(@Parameter(description = "APL account id of sender (RS, signed or unsigned int64/long)", required = true) @FormParam("sender") @NotBlank String accountString,
                                       @Parameter(description = "Passphrase for the vault account", required = true) @FormParam("passphrase") @NotBlank String passphrase,
                                       @Parameter(description = "Two factor authentication code, if 2fa is enabled") @FormParam("code2FA") @DefaultValue("0") @Min(0) @Max(999999) int code2FA,
@@ -237,7 +238,7 @@ public class DexTransactionSendingController {
     @Operation(tags = {"dex"}, summary = "Create STEP3 contract ", description = "Will send APL contract transaction to update existing STEP2 contract specified by id and fill it with timeToReply and transferTx data." +
             "Can be sent only by account, owning order specified in the contract (account, who originally created contract with STEP1)",
             responses = @ApiResponse(description = "Apl transaction in JSON format", responseCode = "200",
-                    content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = Transaction.class))))
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = TransactionDTO.class))))
     public Response sendContractStep3(@Parameter(description = "APL account id of sender (RS, signed or unsigned int64/long)", required = true) @FormParam("sender") @NotBlank String accountString,
                                       @Parameter(description = "Passphrase for the vault account", required = true) @FormParam("passphrase") @NotBlank String passphrase,
                                       @Parameter(description = "Two factor authentication code, if 2fa is enabled") @FormParam("code2FA") @DefaultValue("0") @Min(0) @Max(999999) int code2FA,
@@ -273,7 +274,7 @@ public class DexTransactionSendingController {
             "Can be sent only by account, owning SELL order specified in the contract. IMPORTANT: created transaction will not be broadcasted because it require existence of the contract in STEP2/STEP3 but to make such contract" +
             " by sending appropriate transaction, you require hash of transfer transaction, which you can obtain only by creating, but not sending TransferMoney transaction. When contract transaction will be confirmed, you should broadcast your TransferMoney transaction. ",
             responses = @ApiResponse(description = "Apl transaction in JSON format", responseCode = "200",
-                    content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = Transaction.class))))
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = TransactionDTO.class))))
     public Response transferMoneyWithApproval(
             @Parameter(description = "APL account id of sender (RS, signed or unsigned int64/long)", required = true) @FormParam("sender") @NotBlank String accountString,
             @Parameter(description = "Passphrase for the vault account", required = true) @FormParam("passphrase") @NotBlank String passphrase,

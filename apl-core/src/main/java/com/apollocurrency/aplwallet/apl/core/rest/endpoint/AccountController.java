@@ -602,7 +602,7 @@ public class AccountController {
     ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         accountIdParameter.get();
-        TwoFactorAuthParameters params2FA = account2FAHelper.create2FAParameters(accountIdParameter.getRawData(), passphrase, null);
+        TwoFactorAuthParameters params2FA = account2FAHelper.create2FAParameters(accountIdParameter.getRawData(), passphrase, null, null);
 
         byte [] secretBytes = account2FAHelper.findAplSecretBytes(params2FA);
 
@@ -736,7 +736,7 @@ public class AccountController {
             ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
-        TwoFactorAuthParameters params2FA = account2FAHelper.create2FAParameters(accountStr, passphraseParam, secretPhraseParam);
+        TwoFactorAuthParameters params2FA = account2FAHelper.create2FAParameters(accountStr, passphraseParam, secretPhraseParam, null);
 
         TwoFactorAuthDetails twoFactorAuthDetails = account2FAHelper.enable2FA(params2FA);
 

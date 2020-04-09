@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.shard;
 
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.alias.service.AliasService;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -185,6 +186,7 @@ class ShardEngineTest {
             .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
             .addBeans(MockBean.of(translator, CsvEscaperImpl.class))
 //            .addBeans(MockBean.of(baseDbProperties, DbProperties.class)) // YL  DO NOT REMOVE THAT PLEASE, it can be used for manual testing
+            .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
             .build();
 
     @Inject
@@ -721,7 +723,7 @@ class ShardEngineTest {
     void verifyZip(Path path, String... files) throws IOException {
         assertTrue(Files.exists(path));
         Path output = dataExportDirPath.resolve("output-" + path.getFileName());
-        zip.extract(path.toAbsolutePath().toString(), output.toAbsolutePath().toString());
+        zip.extract(path.toAbsolutePath().toString(), output.toAbsolutePath().toString(), true);
         assertEquals(files.length, FileUtils.countElementsOfDirectory(output));
         for (String file : files) {
             Files.exists(output.resolve(file));

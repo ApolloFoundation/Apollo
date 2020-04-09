@@ -41,6 +41,7 @@ public class AbstractEndpointTest {
     public static final int CODE_2FA = 123456;
     public static final String PASSPHRASE = "123456";
     public static final String SECRET = "SuperSecretPhrase"; //accountId=-3831750337430207973
+    public static final String PUBLIC_KEY_SECRET = "ce2466ca75ba9703be43f24a9d638e0cc5005b41df72383cbf85093233c17e21"; //accountId=-3831750337430207973
     public static final long ACCOUNT_ID_WITH_SECRET = -3831750337430207973L;
 
     static ObjectMapper mapper = new ObjectMapper();
@@ -103,7 +104,7 @@ public class AbstractEndpointTest {
     }
 
     MockHttpResponse sendPostRequest(MockHttpRequest request, String body) throws URISyntaxException{
-        request.accept(MediaType.TEXT_HTML);
+//        request.accept(MediaType.TEXT_HTML);
         request.contentType(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
         request.setAttribute(Validator.class.getName(), validator);
         if (StringUtils.isNoneEmpty(body)) {

@@ -94,7 +94,7 @@ class ShardImporterTest {
     @Mock
     private Zip zipComponent;
     @Mock
-    private ChunkedFileOps fopsComponent;    
+    private ChunkedFileOps fopsComponent;
     @Mock
     private GenesisImporter genesisImporter;
     @WeldSetup
@@ -216,7 +216,7 @@ class ShardImporterTest {
     @Test
     void testImportShardWhenLastShardWasNotSaved() throws Exception {
         doReturn(Paths.get("")).when(downloadableFilesManager).mapFileIdToLocalPath("fileId");
-        doReturn(true).when(zipComponent).extract(Paths.get("").toAbsolutePath().toString(), csvImporter.getDataExportPath().toAbsolutePath().toString());
+        doReturn(true).when(zipComponent).extract(Paths.get("").toAbsolutePath().toString(), csvImporter.getDataExportPath().toAbsolutePath().toString(), true);
         doNothing().when(genesisImporter).importGenesisJson(true);
 
         assertThrows(IllegalStateException.class, () -> shardImporter.importShard(
@@ -229,7 +229,7 @@ class ShardImporterTest {
     @Test
     void testImportShardWhenExceptionOccurredDuringImport() {
         doReturn(Paths.get("")).when(downloadableFilesManager).mapFileIdToLocalPath("fileId");
-        doReturn(true).when(zipComponent).extract(Paths.get("").toAbsolutePath().toString(), csvImporter.getDataExportPath().toAbsolutePath().toString());
+        doReturn(true).when(zipComponent).extract(Paths.get("").toAbsolutePath().toString(), csvImporter.getDataExportPath().toAbsolutePath().toString(), true);
         doNothing().when(genesisImporter).importGenesisJson(true);
         doReturn(null).when(aplAppStatus).durableTaskUpdate(null, 50.0, "Public keys were imported");
         doThrow(new IllegalArgumentException()).when(aplAppStatus).durableTaskUpdate(null, "Loading 'shard'", 0.6);
@@ -243,7 +243,7 @@ class ShardImporterTest {
     @Test
     void testImportShardWhenShardTableWasExcluded() {
         doReturn(Paths.get("")).when(downloadableFilesManager).mapFileIdToLocalPath("fileId");
-        doReturn(true).when(zipComponent).extract(Paths.get("").toAbsolutePath().toString(), csvImporter.getDataExportPath().toAbsolutePath().toString());
+        doReturn(true).when(zipComponent).extract(Paths.get("").toAbsolutePath().toString(), csvImporter.getDataExportPath().toAbsolutePath().toString(), true);
         doNothing().when(genesisImporter).importGenesisJson(true);
         doReturn(List.of()).when(derivedTablesRegistry).getDerivedTables();
 
@@ -256,7 +256,7 @@ class ShardImporterTest {
     @Test
     void testImportShardWhenLastShardExist() {
         doReturn(Paths.get("")).when(downloadableFilesManager).mapFileIdToLocalPath("fileId");
-        doReturn(true).when(zipComponent).extract(Paths.get("").toAbsolutePath().toString(), csvImporter.getDataExportPath().toAbsolutePath().toString());
+        doReturn(true).when(zipComponent).extract(Paths.get("").toAbsolutePath().toString(), csvImporter.getDataExportPath().toAbsolutePath().toString(), true);
         doNothing().when(genesisImporter).importGenesisJson(true);
         doReturn(List.of()).when(derivedTablesRegistry).getDerivedTableNames();
         Shard lastShard = new Shard();
@@ -278,7 +278,7 @@ class ShardImporterTest {
     @Test
     void testImportAccountTaggedDataWithDataTags() throws IOException {
         doReturn(Paths.get("")).when(downloadableFilesManager).mapFileIdToLocalPath("fileId");
-        doReturn(true).when(zipComponent).extract(Paths.get("").toAbsolutePath().toString(), csvImporter.getDataExportPath().toAbsolutePath().toString());
+        doReturn(true).when(zipComponent).extract(Paths.get("").toAbsolutePath().toString(), csvImporter.getDataExportPath().toAbsolutePath().toString(), true);
         doNothing().when(genesisImporter).importGenesisJson(true);
         doReturn(List.of(ShardConstants.GOODS_TABLE_NAME, ShardConstants.ACCOUNT_TABLE_NAME, ShardConstants.TAGGED_DATA_TABLE_NAME)).when(derivedTablesRegistry).getDerivedTableNames();
 
@@ -326,7 +326,7 @@ class ShardImporterTest {
     @Test
     void testImportShardDerivedTablesWithException() {
         doReturn(Paths.get("")).when(downloadableFilesManager).mapFileIdToLocalPath("fileId");
-        doReturn(true).when(zipComponent).extract(Paths.get("").toAbsolutePath().toString(), csvImporter.getDataExportPath().toAbsolutePath().toString());
+        doReturn(true).when(zipComponent).extract(Paths.get("").toAbsolutePath().toString(), csvImporter.getDataExportPath().toAbsolutePath().toString(), true);
         doNothing().when(genesisImporter).importGenesisJson(true);
         ArrayList<String> derivedTableNames = new ArrayList<>();
         derivedTableNames.add(null);
@@ -342,7 +342,7 @@ class ShardImporterTest {
     @Test
     void testImportByFileId() {
         doReturn(Paths.get("")).when(downloadableFilesManager).mapFileIdToLocalPath("fileId");
-        doReturn(true).when(zipComponent).extract(Paths.get("").toAbsolutePath().toString(), csvImporter.getDataExportPath().toAbsolutePath().toString());
+        doReturn(true).when(zipComponent).extract(Paths.get("").toAbsolutePath().toString(), csvImporter.getDataExportPath().toAbsolutePath().toString(), true);
         doNothing().when(genesisImporter).importGenesisJson(true);
         doReturn(List.of()).when(derivedTablesRegistry).getDerivedTableNames();
         doReturn(mock(Shard.class)).when(shardDao).getLastShard();
@@ -367,7 +367,7 @@ class ShardImporterTest {
     @Test
     void testImportLastShard() {
         doReturn(Paths.get("")).when(downloadableFilesManager).mapFileIdToLocalPath("shard::1;chain::" + chainId);
-        doReturn(true).when(zipComponent).extract(Paths.get("").toAbsolutePath().toString(), csvImporter.getDataExportPath().toAbsolutePath().toString());
+        doReturn(true).when(zipComponent).extract(Paths.get("").toAbsolutePath().toString(), csvImporter.getDataExportPath().toAbsolutePath().toString(), true);
         doNothing().when(genesisImporter).importGenesisJson(true);
         doReturn(List.of(ShardConstants.GOODS_TABLE_NAME, ShardConstants.PHASING_POLL_TABLE_NAME, ShardConstants.TAGGED_DATA_TABLE_NAME)).when(derivedTablesRegistry).getDerivedTableNames();
         Shard lastShard = new Shard(1, 100);

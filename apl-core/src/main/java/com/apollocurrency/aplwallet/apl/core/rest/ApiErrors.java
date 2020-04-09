@@ -35,7 +35,12 @@ public enum ApiErrors implements ErrorInfo {
     OUT_OF_RANGE_NAME_VALUE(4, 2022, "param ''{0}'' with value ''{1}'' is not within range [{2}..{3}]"),
     REST_API_SERVER_ERROR(1, 2023, "REST API error: ''%s'', see server's log for details"),
     OVERFLOW(11, 2024, "Overflow for value ''{0}''"),
-    OVERFLOW_PARAM(11, 2025, "Overflow in param name ''{0}'' for value ''{1}''");
+    OVERFLOW_PARAM(11, 2025, "Overflow in param name ''{0}'' for value ''{1}''"),
+    BAD_CREDENTIALS(4, 2026, "Unable to extract valid account credentials, '{0}'"),
+    FEATURE_NOT_ENABLED(9, 2027, "Feature not available, '{0}'"),
+    NOT_ENOUGH_FUNDS(6, 2028, "Not enough %s funds"),
+    TX_VALIDATION_FAILED(-1, 2029, "Failed to validate tx: %s"),
+    ;
 
     private int oldErrorCode;
     private int errorCode;

@@ -34,6 +34,7 @@ import com.apollocurrency.aplwallet.apl.core.account.service.AccountPropertyServ
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPropertyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.alias.service.AliasService;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
@@ -112,6 +113,7 @@ public abstract class TransactionType {
     public static final byte SUBTYPE_UPDATE_CRITICAL = 0;
     public static final byte SUBTYPE_UPDATE_IMPORTANT = 1;
     public static final byte SUBTYPE_UPDATE_MINOR = 2;
+    public static final byte SUBTYPE_UPDATE_V2 = 3;
 
     public static final byte SUBTYPE_DEX_ORDER = 0;
     public static final byte SUBTYPE_DEX_ORDER_CANCEL = 1;
@@ -120,10 +122,11 @@ public abstract class TransactionType {
     public static final byte SUBTYPE_DEX_CLOSE_ORDER = 4;
 
 
-    public static BlockchainConfig blockchainConfig;// = CDI.current().select(BlockchainConfig.class).get();
-    protected static Blockchain blockchain;// = CDI.current().select(Blockchain.class).get();
-    public static TimeService timeService;// = CDI.current().select(TimeService.class).get();
-    private static PhasingPollService phasingPollService;// = CDI.current().select(PhasingPollService.class).get();
+    public static BlockchainConfig blockchainConfig;
+    protected static Blockchain blockchain;
+    public static TimeService timeService;
+    private static PhasingPollService phasingPollService;
+    private static volatile AliasService ALIAS_SERVICE;
 
     @Setter
     private static AccountService accountService;
@@ -133,74 +136,88 @@ public abstract class TransactionType {
     private static AccountPropertyService accountPropertyService;
     private static AccountInfoService accountInfoService;
 
-    public static AccountService lookupAccountService(){
+    public static synchronized AccountService lookupAccountService(){
         if ( accountService == null) {
             accountService = CDI.current().select(AccountServiceImpl.class).get();
         }
         return accountService;
     }
 
-    public static AccountCurrencyService lookupAccountCurrencyService(){
+    public static synchronized AccountCurrencyService lookupAccountCurrencyService(){
         if ( accountCurrencyService == null) {
             accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
         }
         return accountCurrencyService;
     }
 
-    public static AccountLeaseService lookupAccountLeaseService(){
+    public static synchronized AccountLeaseService lookupAccountLeaseService(){
         if ( accountLeaseService == null) {
             accountLeaseService = CDI.current().select(AccountLeaseServiceImpl.class).get();
         }
         return accountLeaseService;
     }
 
-    public static AccountAssetService lookupAccountAssetService(){
+    public static synchronized AccountAssetService lookupAccountAssetService(){
         if ( accountAssetService == null) {
             accountAssetService = CDI.current().select(AccountAssetServiceImpl.class).get();
         }
         return accountAssetService;
     }
 
-    public static AccountPropertyService lookupAccountPropertyService(){
+    public static synchronized AccountPropertyService lookupAccountPropertyService(){
         if ( accountPropertyService == null) {
             accountPropertyService = CDI.current().select(AccountPropertyServiceImpl.class).get();
         }
         return accountPropertyService;
     }
 
-    public static AccountInfoService lookupAccountInfoService(){
+    public static synchronized AccountInfoService lookupAccountInfoService(){
         if ( accountInfoService == null) {
             accountInfoService = CDI.current().select(AccountInfoServiceImpl.class).get();
         }
         return accountInfoService;
     }
-
-    public static BlockchainConfig lookupBlockchainConfig(){
+    public static synchronized Blockchain lookupBlockchain() {
+        if ( blockchain == null) {
+            blockchain = CDI.current().select(Blockchain.class).get();
+        }
+        return blockchain;
+    }
+    public static synchronized TimeService lookupTimeService(){
+        if ( timeService == null) {
+            timeService = CDI.current().select(TimeService.class).get();
+        }
+        return timeService;
+    }
+    public static synchronized BlockchainConfig lookupBlockchainConfig(){
         if ( blockchainConfig == null) {
             blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
         }
         return blockchainConfig;
     }
 
-    public static Blockchain lookupBlockchain(){
-        if ( blockchain == null) {
-            blockchain = CDI.current().select(Blockchain.class).get();
-        }
-        return blockchain;
-    }
-
-    public static TimeService lookupTimeService(){
-        if ( timeService == null) {
-            timeService = CDI.current().select(TimeService.class).get();
-        }
-        return timeService;
-    }
-
-    public static PhasingPollService lookupPhasingPollService(){
+    public static synchronized PhasingPollService lookupPhasingPollService(){
         if ( phasingPollService == null) {
             phasingPollService = CDI.current().select(PhasingPollService.class).get();
         }
         return phasingPollService;
+    }
+
+    /**
+     * Looks up AliasService lazily using SafeDCLFactory
+     * adjusted to a static field.
+     *
+     * @return AliasService
+     */
+    protected static synchronized AliasService lookupAliasService() {
+        if (ALIAS_SERVICE == null) {
+            synchronized(Messaging.class) {
+                if (ALIAS_SERVICE == null) {
+                    ALIAS_SERVICE = CDI.current().select(AliasService.class).get();
+                }
+            }
+        }
+        return ALIAS_SERVICE;
     }
 
     public static TransactionType findTransactionType(byte type, byte subtype) {
@@ -315,6 +332,8 @@ public abstract class TransactionType {
                         return Update.IMPORTANT;
                     case SUBTYPE_UPDATE_MINOR:
                         return Update.MINOR;
+                    case SUBTYPE_UPDATE_V2:
+                        return Update.UPDATE_V2;
                     default:
                         return null;
                 }

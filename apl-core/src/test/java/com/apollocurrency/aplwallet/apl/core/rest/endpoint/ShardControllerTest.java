@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.api.dto.ShardDTO;
+import com.apollocurrency.aplwallet.apl.core.rest.utils.FirstLastIndexParser;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
 import com.apollocurrency.aplwallet.apl.data.ShardTestData;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -31,12 +32,14 @@ class ShardControllerTest {
     private static ObjectMapper mapper = new ObjectMapper();
     private Dispatcher dispatcher;
     private ShardService shardService;
+    private FirstLastIndexParser indexParser;
 
     @BeforeEach
     void setup(){
         dispatcher = MockDispatcherFactory.createDispatcher();
         shardService = mock(ShardService.class);
-        ShardController controller = new ShardController(shardService);
+        indexParser = mock(FirstLastIndexParser.class);
+        ShardController controller = new ShardController(shardService, indexParser);
         dispatcher.getRegistry().addSingletonResource(controller);
     }
 

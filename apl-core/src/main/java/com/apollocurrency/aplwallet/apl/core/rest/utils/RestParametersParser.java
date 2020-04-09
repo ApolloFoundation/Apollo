@@ -17,14 +17,13 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper.TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME;
+
 @Slf4j
 public class RestParametersParser {
-    public static final String TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME = "twoFactorAuthParameters";
 
-    public static final String HEIGHT_PARAM_NAME = "height";
-    public static final String PASSPHRASE_PARAM_NAME="passphrase";
-    public static final String SECRET_PHRASE_PARAM_NAME ="secretPhrase";
-    public static final String CODE2FA_PARAM_NAME="code2FA";
+    private RestParametersParser() {
+    }
 
     public static Map<String, String> parseRequestParameters(ContainerRequestContext requestContext, String ... params){
         Map<String, String> parsedParams = new HashMap<>();
@@ -38,7 +37,7 @@ public class RestParametersParser {
     }
 
     public static TwoFactorAuthParameters get2FARequestAttribute(org.jboss.resteasy.spi.HttpRequest request) {
-        TwoFactorAuthParameters params2FA = (TwoFactorAuthParameters) request.getAttribute(RestParametersParser.TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME);
+        TwoFactorAuthParameters params2FA = (TwoFactorAuthParameters) request.getAttribute(TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME);
         if(params2FA == null){
             throw new RestParameterException(ApiErrors.INTERNAL_SERVER_EXCEPTION, "Can't locate the 2FA request attribute.");
         }

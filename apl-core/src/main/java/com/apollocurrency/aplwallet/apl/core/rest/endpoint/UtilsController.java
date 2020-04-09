@@ -4,6 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
 import com.apollocurrency.aplwallet.api.dto.utils.DetectMimeTypeDto;
 import com.apollocurrency.aplwallet.api.dto.utils.FullHashToIdDto;
 import com.apollocurrency.aplwallet.api.dto.utils.HashDto;
@@ -11,6 +14,7 @@ import com.apollocurrency.aplwallet.api.dto.utils.HexConvertDto;
 import com.apollocurrency.aplwallet.api.dto.utils.QrDecodeDto;
 import com.apollocurrency.aplwallet.api.dto.utils.QrEncodeDto;
 import com.apollocurrency.aplwallet.api.dto.utils.RsConvertDto;
+import com.apollocurrency.aplwallet.api.dto.utils.SetLogLevelDTO;
 import com.apollocurrency.aplwallet.api.request.DecodeQRCodeRequestForm;
 import com.apollocurrency.aplwallet.api.request.DetectMimeTypeUploadForm;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
@@ -39,20 +43,26 @@ import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeIn;
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Encoding;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.resteasy.annotations.Form;
 import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
 import org.jboss.resteasy.plugins.providers.multipart.InputPart;
 import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataInput;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.imageio.ImageIO;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -91,8 +101,8 @@ import java.util.Objects;
 @Slf4j
 @Path("/utils")
 @OpenAPIDefinition(info = @Info(description = "Provide several utility methods"))
+@SecurityScheme(type = SecuritySchemeType.APIKEY, name = "admin_api_key", in = SecuritySchemeIn.QUERY, paramName = "adminPassword")
 @Singleton
-@PermitAll
 public class UtilsController {
 
     private BlockchainConfig blockchainConfig;
@@ -332,6 +342,7 @@ public class UtilsController {
                 content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = FullHashToIdDto.class)))
         })
+    @PermitAll
     public Response fullHashToId(
         @Parameter(name = "fullHash", description = "full hash data as string", required = true)
             @QueryParam("fullHash") @NotBlank String fullHash) {
@@ -365,6 +376,7 @@ public class UtilsController {
                 content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = HexConvertDto.class)))
         })
+    @PermitAll
     public Response getHexConvert(
         @Parameter(name = "string", description = "correct HEX data as string representation", required = true)
             @QueryParam("string") @NotBlank String stringHash) {
@@ -401,6 +413,7 @@ public class UtilsController {
                 content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = FullHashToIdDto.class)))
         })
+    @PermitAll
     public Response longConvert(
         @Parameter(name = "id", description = "valid Id data as string representation", required = true)
             @QueryParam("id") @NotBlank String stringId) {
@@ -453,6 +466,7 @@ public class UtilsController {
                 content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = RsConvertDto.class)))
         })
+    @PermitAll
     public Response rcConvert(
         @Parameter(name = "account", description = "existing, valid account Id", required = true)
             @QueryParam("account") @NotBlank String accountIdString) {
@@ -489,9 +503,9 @@ public class UtilsController {
         tags = {"utility"},
         responses = {
             @ApiResponse(responseCode = "200", description = "Successful execution",
-                content = @Content(mediaType = "application/json"/*,
-                    schema = @Schema(implementation = HashDto.class)*/))
+                content = @Content(mediaType = "application/json"))
         })
+    @PermitAll
     public Response hashByAlgorithm(
         @Parameter(name = "hashAlgorithm", description = "Valid Algorithm from available list", required = true,
             schema = @Schema(implementation = HashFunction.class))
@@ -515,6 +529,48 @@ public class UtilsController {
             log.warn(errorMessage, e);
             return response.error(ApiErrors.INCORRECT_PARAM_VALUE, errorMessage).build();
         }
+        return response.bind(dto).build();
+    }
+
+    @Path("/setlog/level")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Operation(
+        summary = "Set necessary logging level for specified package or logger",
+        description = "Set specified and correct LogLevel (required) to package or logger (required) with admin password (required). " +
+            "Correct log level values are : ERROR, WARN, INFO, DEBUG, TRACE",
+        security = @SecurityRequirement(name = "admin_api_key"),
+        tags = {"utility"},
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Successful execution",
+                content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = SetLogLevelDTO.class)))
+        }
+    )
+    @RolesAllowed("admin")
+    public Response setLoggingLevel(
+        @Parameter(name = "logLevel", description = "Valid log level from available list", required = true,
+            schema = @Schema(implementation = org.slf4j.event.Level.class)) @FormParam("logLevel") org.slf4j.event.Level logLevel,
+        @Parameter(description = "The full java package or logger name", required = true,
+            schema = @Schema(implementation = java.lang.String.class)) @FormParam("packageName") @NotEmpty String packageName
+    ) {
+        ResponseBuilder response = ResponseBuilder.startTiming();
+        log.debug("Started setLoggingLevel: packageName = '{}', level = '{}'", packageName, logLevel);
+        SetLogLevelDTO dto = new SetLogLevelDTO();
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        if (loggerContext != null) {
+            Logger reconfigureLogger = loggerContext.getLogger(packageName);
+            if (reconfigureLogger != null) {
+                Level newLevelValue = Level.valueOf(logLevel.name());
+                reconfigureLogger.setLevel(newLevelValue);
+                dto.packageName = packageName;
+                dto.logLevel = logLevel.toString();
+                dto.success = true;
+                log.info("SUCCESS setup LoggingLevel: '{}' on package/logger = '{}'", dto.logLevel, dto.packageName);
+            }
+        }
+        log.debug("setLoggingLevel result : {}", dto);
         return response.bind(dto).build();
     }
 

@@ -6,15 +6,16 @@ package com.apollocurrency.aplwallet.apl.core.transaction;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import org.json.simple.JSONObject;
+
 import java.nio.ByteBuffer;
 import java.util.Map;
-import org.json.simple.JSONObject;
 
 /**
  *
@@ -105,7 +106,7 @@ class CCCoinsDividentPayment extends ColoredCoins {
         }
         AssetDividend lastDividend = AssetDividend.getLastDividend(attachment.getAssetId());
         if (lastDividend != null && lastDividend.getHeight() > blockchain.getHeight() - 60) {
-            throw new AplException.NotCurrentlyValidException("Last dividend payment for asset " + Long.toUnsignedString(attachment.getAssetId()) + " was less than 60 blocks ago at " + lastDividend.getHeight() + ", current height is " + blockchain.getHeight() + ", limit is one dividend per 60 blocks");
+            throw new AplException.NotCurrentlyValidException("Last dividend payment for asset " + Long.toUnsignedString(attachment.getAssetId()) + " was less than 60 blocks ago at " + lastDividend.getHeight() + ", current height is " + lookupBlockchain().getHeight() + ", limit is one dividend per 60 blocks");
         }
     }
 

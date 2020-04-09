@@ -85,7 +85,7 @@ class ZipTest {
         // zip file was copied into another folder
         String anotherZipToExtract = anotherFolderExtract + File.separator + zipFileName;
 
-        boolean isExtracted = zipComponent.extract(anotherZipToExtract, anotherFolderExtract);
+        boolean isExtracted = zipComponent.extract(anotherZipToExtract, anotherFolderExtract, true);
         assertTrue(isExtracted, "CSV files were NOT extracted from ZIP!!");
 
         int csvFilesNumber = 0;
@@ -109,6 +109,13 @@ class ZipTest {
     }
 
     @Test
+    void testCalculateArchiveSize() throws IOException, URISyntaxException {
+        long uncompressedSize = zipComponent.uncompressedSize(new File(getClass().getClassLoader().getResource("another-archive-1.zip").toURI()).toString());
+
+        assertEquals(78_900, uncompressedSize);
+    }
+
+    @Test
     void tryToCompressEmptyFolder() throws IOException {
         Path folderNoCsvInside = Files.createTempDirectory("csvFolder");
         Path zipDir = Files.createTempDirectory("tempZipDir");
@@ -128,7 +135,47 @@ class ZipTest {
 
     @Test
     void testCompressExtractRecursive(@TempDir Path tempDir) throws IOException {
+        doTestCompressExtractRecursive(tempDir, true);
+    }
+
+    @Test
+    void testCompressExtractRecursive_delete_zip(@TempDir Path tempDir) throws IOException {
+        doTestCompressExtractRecursive(tempDir, false);
+        Path zip = tempDir.resolve("target.zip");
+        assertFalse(Files.exists(zip));
+    }
+
+    void doTestCompressExtractRecursive(Path tempDir, boolean keepZip) throws IOException {
         Path dir = tempDir.resolve("dirToZip");
+        List<Path> filesToCompress = prepareFiles(dir);
+
+        Path extractDir = tempDir.resolve("extractDir");
+        Path zipFile = tempDir.resolve("target.zip");
+
+        boolean compress = zipComponent.compress(zipFile.toAbsolutePath().toString(), dir.toAbsolutePath().toString(), null, null, true);
+
+        assertTrue(compress);
+        assertTrue(Files.exists(zipFile));
+
+        boolean extracted = zipComponent.extract(zipFile.toAbsolutePath().toString(), extractDir.toAbsolutePath().toString(), keepZip);
+
+        verifyExtraction(extracted, filesToCompress, extractDir);
+    }
+
+    private void verifyExtraction(boolean extracted, List<Path> filesToCompress, Path extractDir) {
+        assertTrue(extracted);
+        filesToCompress.forEach(f -> {
+            Path extractedFile = extractDir.resolve(extractDir.relativize(f));
+            assertTrue(Files.exists(extractedFile));
+            try {
+                assertEquals(Files.readAllLines(f), Files.readAllLines(extractedFile));
+            } catch (IOException e) {
+                fail(e);
+            }
+        });
+    }
+
+    private List<Path> prepareFiles(Path dir) throws IOException {
         Path file1 = dir.resolve("dir/1.txt");
         Files.createDirectories(file1.getParent());
         Files.write(file1, "Content 1".getBytes());
@@ -142,35 +189,7 @@ class ZipTest {
         Path file5 = dir.resolve("dd/dd1/5.txt");
         Files.createDirectories(file5.getParent());
         Files.write(file5, "Content 5".getBytes());
-        List<Path> filesToCompress = List.of(file1, file2, file3, file4, file5);
-
-
-        Path toDir = tempDir.resolve("toDir");
-        Path extractDir = tempDir.resolve("extractDir");
-        Path zipFile = toDir.resolve("target.zip");
-        Files.createDirectories(extractDir);
-        Files.createDirectories(toDir);
-
-        boolean compress = zipComponent.compress(zipFile.toAbsolutePath().toString(), dir.toAbsolutePath().toString(), null, null, true);
-
-        assertTrue(compress);
-        assertTrue(Files.exists(zipFile));
-
-        boolean extracted = zipComponent.extract(zipFile.toAbsolutePath().toString(), extractDir.toAbsolutePath().toString());
-        assertTrue(extracted);
-
-        filesToCompress.forEach(f-> {
-            Path extractedFile = extractDir.resolve(extractDir.relativize(f));
-            assertTrue(Files.exists(extractedFile));
-            try {
-                assertEquals(Files.readAllLines(f), Files.readAllLines(extractedFile));
-            } catch (IOException e) {
-                fail(e);
-            }
-        });
-
-
-
+        return List.of(file1, file2, file3, file4, file5);
     }
 
     @Test
@@ -199,12 +218,12 @@ class ZipTest {
         assertThrows(IllegalArgumentException.class, () -> zipComponent.compress(
                 csvResourcesPath.toAbsolutePath().toString(), "", null, null,false));
 
-        assertThrows(NullPointerException.class, () -> zipComponent.extract(null, ""));
+        assertThrows(NullPointerException.class, () -> zipComponent.extract(null, "", true));
 
-        assertThrows(NullPointerException.class, () -> zipComponent.extract("", null));
+        assertThrows(NullPointerException.class, () -> zipComponent.extract("", null, false));
 
-        assertThrows(IllegalArgumentException.class, () -> zipComponent.extract("", csvResourcesPath.toAbsolutePath().toString()));
+        assertThrows(IllegalArgumentException.class, () -> zipComponent.extract("", csvResourcesPath.toAbsolutePath().toString(), true));
 
-        assertThrows(IllegalArgumentException.class, () -> zipComponent.extract(csvResourcesPath.toAbsolutePath().toString(), ""));
+        assertThrows(IllegalArgumentException.class, () -> zipComponent.extract(csvResourcesPath.toAbsolutePath().toString(), "", true));
     }
 }

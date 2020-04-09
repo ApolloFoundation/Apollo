@@ -173,9 +173,9 @@ public abstract class ShufflingTransaction extends TransactionType {
             if (holdingType != HoldingType.APL) {
                 BlockchainConfig blockchainConfig = lookupBlockchainConfig();
                 if (holdingType.getUnconfirmedBalance(senderAccount, attachment.getHoldingId()) >= attachment.getAmount()
-                        && senderAccount.getUnconfirmedBalanceATM() >= blockchainConfig.getShufflingDepositAtm()) {
+                        && senderAccount.getUnconfirmedBalanceATM() >= lookupBlockchainConfig().getShufflingDepositAtm()) {
                     holdingType.addToUnconfirmedBalance(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getHoldingId(), -attachment.getAmount());
-                    lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -blockchainConfig.getShufflingDepositAtm());
+                    lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -lookupBlockchainConfig().getShufflingDepositAtm());
                     return true;
                 }
             } else {
@@ -291,9 +291,9 @@ public abstract class ShufflingTransaction extends TransactionType {
             if (holdingType != HoldingType.APL) {
                 BlockchainConfig blockchainConfig = lookupBlockchainConfig();
                 if (holdingType.getUnconfirmedBalance(senderAccount, shuffling.getHoldingId()) >= shuffling.getAmount()
-                        && senderAccount.getUnconfirmedBalanceATM() >= blockchainConfig.getShufflingDepositAtm()) {
+                        && senderAccount.getUnconfirmedBalanceATM() >= lookupBlockchainConfig().getShufflingDepositAtm()) {
                     holdingType.addToUnconfirmedBalance(senderAccount, getLedgerEvent(), transaction.getId(), shuffling.getHoldingId(), -shuffling.getAmount());
-                    lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -blockchainConfig.getShufflingDepositAtm());
+                    lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -lookupBlockchainConfig().getShufflingDepositAtm());
                     return true;
                 }
             } else {

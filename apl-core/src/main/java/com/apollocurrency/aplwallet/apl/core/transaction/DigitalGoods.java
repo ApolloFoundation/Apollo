@@ -23,15 +23,16 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainM
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.UnencryptedDigitalGoodsDelivery;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import java.nio.ByteBuffer;
-import java.util.Map;
 import org.apache.tika.Tika;
 import org.apache.tika.mime.MediaType;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
-import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.enterprise.inject.spi.CDI;
+import java.nio.ByteBuffer;
+import java.util.Map;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 public abstract class DigitalGoods extends TransactionType {
 
