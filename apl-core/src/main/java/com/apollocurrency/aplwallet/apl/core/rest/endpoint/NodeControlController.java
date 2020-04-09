@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
@@ -18,8 +18,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -41,22 +40,17 @@ import java.util.List;
  *
  * @author alukin@gmail.com
  */
+@Slf4j
 @Singleton
 @Path("/control")
 public class NodeControlController {
-    private static final Logger log = LoggerFactory.getLogger(NodeControlController.class);
-
     private BackendControlService bcService;
-
     private InMemoryCacheManager cacheManager;
-
     private Converter<CacheStats, CacheStatsDTO> statsConverter;
 
     /**
-     * Empty constructor re quired by REstEasy
+     * Empty constructor required by RestEasy
      */
-
-
     public NodeControlController() {
        log.debug("Empty BackendControlEndpoint created");
     }
@@ -107,28 +101,53 @@ public class NodeControlController {
         return Response.status(Response.Status.OK).entity(threadsResponse).build();
     }
 
-    @Path("/health")
+    @Path("/health-full")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Returns node health info. Protected with admin password",
-            description = "Returns complete information about node health"
-                    + "includind DB, P2P, hardware and resource usage",
+            description = "Returns complete information about node health "
+                    + "including DB, P2P, hardware and resource usage",
             tags = {"status"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
                             content = @Content(mediaType = "application/json",
-                                    schema = @Schema(implementation = ApolloX509Response.class)))
+                                    schema = @Schema(implementation = NodeHealthResponse.class)))
             }
     )
     @RolesAllowed("admin")
-    public Response getHealthInfo(@QueryParam("adminPassword") @DefaultValue("") String adminPassword) {
+    public Response getHealthInfoFull(@QueryParam("adminPassword") @DefaultValue("") String adminPassword) {
+        ResponseBuilder response = ResponseBuilder.startTiming();
         NodeHealthResponse infoResponse = new NodeHealthResponse();
         infoResponse.healthInfo = bcService.getNodeHealth();
         infoResponse.statusInfo = bcService.getNodeStatus();
         infoResponse.networkingInfo = bcService.getNetworkingInfo();
         infoResponse.healthInfo.needReboot = !infoResponse.healthInfo.dbOK
                     || (infoResponse.networkingInfo.inboundPeers==0 && infoResponse.networkingInfo.outboundPeers==0);
-        return Response.status(Response.Status.OK).entity(infoResponse).build();
+        return response.bind(infoResponse).build();
+    }
+
+    @Path("/health")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Returns shorted node health without status info.",
+            description = "Returns shorted information node P2P health usage info mainly",
+            tags = {"status"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Successful execution",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = NodeHealthResponse.class)))
+            }
+    )
+    @PermitAll
+    public Response getHealthInfo() {
+        ResponseBuilder response = ResponseBuilder.startTiming();
+        NodeHealthResponse infoResponse = new NodeHealthResponse();
+        infoResponse.healthInfo = bcService.getNodeHealth();
+        infoResponse.healthInfo.usedDbConnections = null; // remove info
+        infoResponse.networkingInfo = bcService.getNetworkingInfo();
+        infoResponse.healthInfo.needReboot = !infoResponse.healthInfo.dbOK
+                    || (infoResponse.networkingInfo.inboundPeers==0 && infoResponse.networkingInfo.outboundPeers==0);
+        return response.bind(infoResponse).build();
     }
 
     @Path("/cache")
@@ -150,6 +169,7 @@ public class NodeControlController {
                                     schema = @Schema(implementation = CacheStatsResponse.class)))
             }
     )
+    @PermitAll
     public Response getCacheStats(@QueryParam("name") @DefaultValue("All") String cache) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         List<CacheStatsDTO> result = new ArrayList<>();
