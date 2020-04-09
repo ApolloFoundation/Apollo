@@ -21,7 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
-import com.apollocurrency.aplwallet.apl.core.app.Alias;
+import com.apollocurrency.aplwallet.apl.core.alias.service.AliasService;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.app.Order;
 import com.apollocurrency.aplwallet.apl.core.app.Poll;
@@ -56,6 +56,7 @@ public final class GetState extends AbstractAPIRequestHandler {
     private DGSService service = CDI.current().select(DGSService.class).get();
     private TaggedDataService taggedDataService = CDI.current().select(TaggedDataService.class).get();
     private PrunableMessageService prunableMessageService = CDI.current().select(PrunableMessageService.class).get();
+    private final AliasService aliasService = CDI.current().select(AliasService.class).get();
 
     public GetState() {
         super(new APITag[] {APITag.INFO}, "includeCounts", "adminPassword");
@@ -82,7 +83,7 @@ public final class GetState extends AbstractAPIRequestHandler {
             response.put("numberOfExchangeRequests", ExchangeRequest.getCount());
         	response.put("numberOfExchanges", Exchange.getCount());
         	response.put("numberOfCurrencyTransfers", CurrencyTransfer.getCount());
-            response.put("numberOfAliases", Alias.getCount());
+            response.put("numberOfAliases", aliasService.getCount());
             response.put("numberOfGoods", service.getGoodsCount());
             response.put("numberOfPurchases", service.getPurchaseCount());
             response.put("numberOfTags", service.getTagsCount());

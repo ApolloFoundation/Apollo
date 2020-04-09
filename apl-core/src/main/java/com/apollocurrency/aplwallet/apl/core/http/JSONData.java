@@ -35,7 +35,9 @@ import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountLeaseService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.app.Alias;
+import com.apollocurrency.aplwallet.apl.core.alias.service.AliasService;
+import com.apollocurrency.aplwallet.apl.core.alias.entity.Alias;
+import com.apollocurrency.aplwallet.apl.core.alias.entity.AliasOffer;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
@@ -122,6 +124,7 @@ public final class JSONData {
     private static AccountLeaseService accountLeaseService = CDI.current().select(AccountLeaseService.class).get();
     private static AccountAssetService accountAssetService = CDI.current().select(AccountAssetService.class).get();
     private static DGSService dgsService = CDI.current().select(DGSService.class).get();
+    private static final AliasService ALIAS_SERVICE = CDI.current().select(AliasService.class).get();
 
     private JSONData() {} // never
 
@@ -132,7 +135,7 @@ public final class JSONData {
         json.put("aliasURI", alias.getAliasURI());
         json.put("timestamp", alias.getTimestamp());
         json.put("alias", Long.toUnsignedString(alias.getId()));
-        Alias.Offer offer = Alias.getOffer(alias);
+        AliasOffer offer = ALIAS_SERVICE.getOffer(alias);
         if (offer != null) {
             json.put("priceATM", String.valueOf(offer.getPriceATM()));
             if (offer.getBuyerId() != 0) {

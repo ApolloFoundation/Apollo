@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import com.apollocurrency.aplwallet.apl.core.converter.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.Test;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -272,12 +274,34 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
         assertEquals(expected, all);
     }
 
+    /**
+     * Even though FilteringIterator is a separate class,
+     * this test is here so that not to create a DB with a schema one more time.
+     */
     @Test
-    public void testGetManyByEmptyClauseWithLimitAndOffset() {
-        List<T> allExpectedData = getAllLatest();
-        List<T> all = CollectionUtil.toList(table.getManyBy(DbClause.EMPTY_CLAUSE, 1, allExpectedData.size() - 2));
-        List<T> expected = allExpectedData.stream().sorted(getDefaultComparator()).skip(1).limit(allExpectedData.size() - 2).collect(Collectors.toList());
-        assertEquals(expected, all);
+    void shouldTestFilteringIterator() {
+        //GIVEN
+        final int from = 3;
+        final int to = 7;
+        final List<T> expected = new ArrayList<>();
+        final int maxSize = to - from + 1;
+
+        //WHEN
+        try (FilteringIterator<T> iterator = new FilteringIterator<>(
+            table.getManyBy(DbClause.EMPTY_CLAUSE, 0, Integer.MAX_VALUE), e -> true, from, to
+        )) {
+            while (iterator.hasNext()) {
+                expected.add(iterator.next());
+            }
+        }
+
+        final IteratorToStreamConverter<T> converter = new IteratorToStreamConverter<>();
+        final ArrayList<T> actual = converter.convert(
+            table.getManyBy(DbClause.EMPTY_CLAUSE, 0, Integer.MAX_VALUE)
+        ).skip(from).limit(maxSize).collect(Collectors.toCollection(ArrayList::new));
+
+        //THEN
+        assertEquals(expected, actual);
     }
 
     @Test

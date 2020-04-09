@@ -23,7 +23,8 @@ package com.apollocurrency.aplwallet.apl.core.http;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.app.Alias;
+import com.apollocurrency.aplwallet.apl.core.alias.service.AliasService;
+import com.apollocurrency.aplwallet.apl.core.alias.entity.Alias;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.Poll;
@@ -132,6 +133,8 @@ public final class HttpParameterParserUtil {
 
     private static AccountService accountService = CDI.current().select(AccountService.class).get();
     private static AccountPublicKeyService accountPublicKeyService = CDI.current().select(AccountPublicKeyService.class).get();
+    private static final AliasService ALIAS_SERVICE = CDI.current().select(AliasService.class).get();
+
 
     private static final int DEFAULT_LAST_INDEX = 250;
 
@@ -330,9 +333,9 @@ public final class HttpParameterParserUtil {
         String aliasName = Convert.emptyToNull(req.getParameter("aliasName"));
         Alias alias;
         if (aliasId != 0) {
-            alias = Alias.getAlias(aliasId);
+            alias = ALIAS_SERVICE.getAliasById(aliasId);
         } else if (aliasName != null) {
-            alias = Alias.getAlias(aliasName);
+            alias = ALIAS_SERVICE.getAliasByName(aliasName);
         } else {
             throw new ParameterException(MISSING_ALIAS_OR_ALIAS_NAME);
         }

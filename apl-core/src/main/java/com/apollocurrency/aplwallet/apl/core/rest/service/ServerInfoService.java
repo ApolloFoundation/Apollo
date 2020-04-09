@@ -18,7 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.account.service.AccountLeaseService
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.app.Alias;
+import com.apollocurrency.aplwallet.apl.core.alias.service.AliasService;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
@@ -77,21 +77,22 @@ import java.util.Objects;
 @Slf4j
 @Singleton
 public class ServerInfoService {
-    private BlockchainConfig blockchainConfig;
-    private Blockchain blockchain;
-    private PropertiesHolder propertiesHolder;
-    private BlockchainProcessor blockchainProcessor;
-    private PeersService peersService;
-    private TimeService timeService;
-    private AccountService accountService;
-    private AccountLedgerService accountLedgerService;
-    private AccountPublicKeyService accountPublicKeyService;
-    private DGSService dgsService;
-    private PrunableMessageService prunableMessageService;
-    private TaggedDataService taggedDataService;
-    private AccountLeaseService accountLeaseService;
-    private AdminPasswordVerifier apw;
-    private UPnP upnp;
+    private final BlockchainConfig blockchainConfig;
+    private final Blockchain blockchain;
+    private final PropertiesHolder propertiesHolder;
+    private final BlockchainProcessor blockchainProcessor;
+    private final PeersService peersService;
+    private final TimeService timeService;
+    private final AccountService accountService;
+    private final AccountLedgerService accountLedgerService;
+    private final AccountPublicKeyService accountPublicKeyService;
+    private final DGSService dgsService;
+    private final PrunableMessageService prunableMessageService;
+    private final TaggedDataService taggedDataService;
+    private final AccountLeaseService accountLeaseService;
+    private final AdminPasswordVerifier apw;
+    private final UPnP upnp;
+    private final AliasService aliasService;
 
     @Inject
     public ServerInfoService(BlockchainConfig blockchainConfig, Blockchain blockchain,
@@ -105,7 +106,7 @@ public class ServerInfoService {
                              TaggedDataService taggedDataService,
                              AccountLeaseService accountLeaseService,
                              AdminPasswordVerifier apw,
-                             UPnP upnp) {
+                             UPnP upnp, AliasService aliasService) {
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
         this.blockchain = Objects.requireNonNull(blockchain, "blockchain is NULL");
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder,"propertiesHolder is NULL");
@@ -121,6 +122,7 @@ public class ServerInfoService {
         this.accountLeaseService = Objects.requireNonNull(accountLeaseService,"accountLeaseService is NULL");
         this.apw = Objects.requireNonNull(apw,"adminPasswordVerifier is NULL");
         this.upnp = Objects.requireNonNull(upnp,"upnp is NULL");
+        this.aliasService = aliasService;
     }
 
     public ApolloX509Info getX509Info(){
@@ -313,7 +315,7 @@ public class ServerInfoService {
             dto.numberOfExchangeRequests = ExchangeRequest.getCount();
             dto.numberOfExchanges = Exchange.getCount();
             dto.numberOfCurrencyTransfers = CurrencyTransfer.getCount();
-            dto.numberOfAliases = Alias.getCount();
+            dto.numberOfAliases = aliasService.getCount();
             dto.numberOfGoods = dgsService.getGoodsCount();
             dto.numberOfPurchases = dgsService.getPurchaseCount();
             dto.numberOfTags = dgsService.getTagsCount();
