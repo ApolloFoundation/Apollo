@@ -19,7 +19,7 @@ public class Messages {
     }
 
     public static String format(final String format, final Object... args) {
-        if (args == null || args.length == 0){
+        if (args == null || args.length == 0) {
             return format(format);
         }
         if (!format.contains("%")) {

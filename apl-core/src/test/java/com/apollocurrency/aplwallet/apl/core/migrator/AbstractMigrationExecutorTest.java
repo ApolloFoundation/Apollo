@@ -32,22 +32,21 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public abstract class AbstractMigrationExecutorTest {
+    private static PropertiesHolder propertiesHolder = new PropertiesHolder();
+    private static Properties properties = new Properties();
     private final String deleteProp;
     private final String migrationProp;
     private final String path;
     private final String pathProp;
     private TemporaryFolderExtension folder;
-    public AbstractMigrationExecutorTest(String deleteProp, String migrationProp, String path, String pathProp ) {
+    private DatabaseManager databaseManager;
+
+    public AbstractMigrationExecutorTest(String deleteProp, String migrationProp, String path, String pathProp) {
         this.deleteProp = deleteProp;
         this.migrationProp = migrationProp;
         this.path = path;
         this.pathProp = pathProp;
     }
-
-    private static PropertiesHolder propertiesHolder  = new PropertiesHolder();
-    private static Properties properties = new Properties();
-    private DatabaseManager databaseManager;
-
 
     @BeforeEach
     public void setUp() throws IOException {
@@ -63,6 +62,7 @@ public abstract class AbstractMigrationExecutorTest {
     public abstract MigrationExecutor getExecutor(DatabaseManager databaseManager, PropertiesHolder propertiesHolder);
 
     public abstract TemporaryFolderExtension getTempFolder();
+
     @Test
     public void testMigrationDirectories() {
         initProperties(true);
@@ -93,7 +93,7 @@ public abstract class AbstractMigrationExecutorTest {
 
         File destDir = folder.newFolder();
         MigrationExecutor executor = Mockito.spy(getExecutor(databaseManager,
-                propertiesHolder));
+            propertiesHolder));
         Mockito.doReturn(Arrays.asList(srcFolder.toPath())).when(executor).getSrcPaths();
         executor.performMigration(destDir.toPath());
         OptionDAO optionDAO = new OptionDAO(databaseManager);
@@ -117,7 +117,7 @@ public abstract class AbstractMigrationExecutorTest {
 
         File destDir = srcFolder;
         MigrationExecutor executor = Mockito.spy(getExecutor(databaseManager,
-                propertiesHolder));
+            propertiesHolder));
         Mockito.doReturn(Arrays.asList(srcFolder.toPath())).when(executor).getSrcPaths();
         executor.performMigration(destDir.toPath());
         OptionDAO optionDAO = new OptionDAO(databaseManager);
@@ -140,7 +140,7 @@ public abstract class AbstractMigrationExecutorTest {
         Files.createFile(srcFolder.toPath().resolve("2"));
         File destDir = srcFolder.toPath().resolve("dest").toFile();
         MigrationExecutor executor = Mockito.spy(getExecutor(databaseManager,
-                propertiesHolder));
+            propertiesHolder));
         Mockito.doReturn(Arrays.asList(srcFolder.toPath())).when(executor).getSrcPaths();
         executor.performMigration(destDir.toPath());
         OptionDAO optionDAO = new OptionDAO(databaseManager);
@@ -166,7 +166,7 @@ public abstract class AbstractMigrationExecutorTest {
 
         File destDir = folder.newFolder();
         MigrationExecutor executor = Mockito.spy(getExecutor(databaseManager,
-                propertiesHolder));
+            propertiesHolder));
         Mockito.doReturn(Arrays.asList(srcFolder.toPath())).when(executor).getSrcPaths();
         executor.performMigration(destDir.toPath());
         OptionDAO optionDAO = new OptionDAO(databaseManager);
@@ -179,6 +179,7 @@ public abstract class AbstractMigrationExecutorTest {
         expected.add(srcFolder.toPath());
         Assertions.assertEquals(expected, paths.collect(Collectors.toSet()));
     }
+
     @Test
     public void testMigrateNothing() throws IOException {
         initProperties(false);
@@ -186,7 +187,7 @@ public abstract class AbstractMigrationExecutorTest {
         File srcFolder = folder.newFolder();
         File destDir = folder.newFolder();
         MigrationExecutor executor = Mockito.spy(getExecutor(databaseManager,
-                propertiesHolder));
+            propertiesHolder));
         Mockito.doReturn(Arrays.asList(srcFolder.toPath())).when(executor).getSrcPaths();
         executor.performMigration(destDir.toPath());
         OptionDAO optionDAO = new OptionDAO(databaseManager);

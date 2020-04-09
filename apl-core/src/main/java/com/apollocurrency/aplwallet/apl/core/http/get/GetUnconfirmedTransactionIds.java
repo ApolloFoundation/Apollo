@@ -25,22 +25,22 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Set;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public final class GetUnconfirmedTransactionIds extends AbstractAPIRequestHandler {
 
     public GetUnconfirmedTransactionIds() {
-        super(new APITag[] {APITag.TRANSACTIONS, APITag.ACCOUNTS}, "account", "account", "account", "firstIndex", "lastIndex");
+        super(new APITag[]{APITag.TRANSACTIONS, APITag.ACCOUNTS}, "account", "account", "account", "firstIndex", "lastIndex");
     }
 
     @Override
@@ -59,10 +59,10 @@ public final class GetUnconfirmedTransactionIds extends AbstractAPIRequestHandle
                 }
             }
         } else {
-            try (FilteringIterator<? extends Transaction> transactionsIterator = new FilteringIterator<> (
-                    lookupTransactionProcessor().getAllUnconfirmedTransactions(0, -1),
-                    transaction -> accountIds.contains(transaction.getSenderId()) || accountIds.contains(transaction.getRecipientId()),
-                    firstIndex, lastIndex)) {
+            try (FilteringIterator<? extends Transaction> transactionsIterator = new FilteringIterator<>(
+                lookupTransactionProcessor().getAllUnconfirmedTransactions(0, -1),
+                transaction -> accountIds.contains(transaction.getSenderId()) || accountIds.contains(transaction.getRecipientId()),
+                firstIndex, lastIndex)) {
                 while (transactionsIterator.hasNext()) {
                     Transaction transaction = transactionsIterator.next();
                     transactionIds.add(transaction.getStringId());

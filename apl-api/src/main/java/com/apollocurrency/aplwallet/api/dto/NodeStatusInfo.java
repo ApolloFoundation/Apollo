@@ -11,29 +11,30 @@ import lombok.Setter;
 import lombok.ToString;
 
 /**
- *
  * @author alukin@gmail.com
  */
 
 @Schema(name = "NodeStatueInfo", description = "Information about backend state")
-@Getter @Setter @ToString
+@Getter
+@Setter
+@ToString
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class NodeStatusInfo {
-    @Schema(name="Number of CPU", description="Number of active CPUs")
+    @Schema(name = "Number of CPU", description = "Number of active CPUs")
     public Integer cpuCount;
-    @Schema(name="Average CPU load", description="Current average CPU load for all cores")
+    @Schema(name = "Average CPU load", description = "Current average CPU load for all cores")
     public Double cpuLoad;
-    @Schema(name="Active threads", description="Threads currently running in application")
+    @Schema(name = "Active threads", description = "Threads currently running in application")
     public Integer threadsRunning;
     @Schema(name = "DB connections", description = "DB connections currently running in application")
     public Integer dbConnections;
-    @Schema(name="Total memory", description="Total memory in bytes")
+    @Schema(name = "Total memory", description = "Total memory in bytes")
     public Long memoryTotal;
-    @Schema(name="Free memory", description="Free memory available for this application")
+    @Schema(name = "Free memory", description = "Free memory available for this application")
     public Long memoryFree;
-    @Schema(name="Free disk space", description="Free disk space available to application")
+    @Schema(name = "Free disk space", description = "Free disk space available to application")
     public Long diskFree;
-    @Schema(name="Node OS", description="Operating system of node")
+    @Schema(name = "Node OS", description = "Operating system of node")
     public String operatingSystem;
 }

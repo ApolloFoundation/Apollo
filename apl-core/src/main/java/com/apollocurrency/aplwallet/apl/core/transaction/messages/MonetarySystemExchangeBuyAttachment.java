@@ -5,15 +5,15 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-import java.nio.ByteBuffer;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+
 /**
- *
  * @author al
  */
 public final class MonetarySystemExchangeBuyAttachment extends MonetarySystemExchangeAttachment {
-    
+
     public MonetarySystemExchangeBuyAttachment(ByteBuffer buffer) {
         super(buffer);
     }
@@ -30,5 +30,5 @@ public final class MonetarySystemExchangeBuyAttachment extends MonetarySystemExc
     public TransactionType getTransactionType() {
         return MonetarySystem.EXCHANGE_BUY;
     }
-    
+
 }

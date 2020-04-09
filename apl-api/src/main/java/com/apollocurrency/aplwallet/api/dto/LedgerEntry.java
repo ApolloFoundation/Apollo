@@ -13,15 +13,18 @@ public class LedgerEntry {
     private Long ledgerId;
     private boolean isTransactionEvent;
     private Long balance;
- //   private AccountLedger.LedgerHolding holdingType;
+    //   private AccountLedger.LedgerHolding holdingType;
     private Long change;
     private String block;
-//    private AccountLedger.LedgerEvent eventType;
+    //    private AccountLedger.LedgerEvent eventType;
     private String event;
     private BasicAccount account;
     private Long height;
     private Long timestamp;
     private JSONTransaction transaction;
+
+    public LedgerEntry() {
+    }
 
     public Long getLedgerId() {
         return ledgerId;
@@ -43,10 +46,6 @@ public class LedgerEntry {
         return balance;
     }
 
-    public void setBalance(Long balance) {
-        this.balance = balance;
-    }
-
 //    public AccountLedger.LedgerHolding getHoldingType() {
 //        return holdingType;
 //    }
@@ -54,6 +53,10 @@ public class LedgerEntry {
 //    public void setHoldingType(AccountLedger.LedgerHolding holdingType) {
 //        this.holdingType = holdingType;
 //    }
+
+    public void setBalance(Long balance) {
+        this.balance = balance;
+    }
 
     public Long getChange() {
         return change;
@@ -66,10 +69,6 @@ public class LedgerEntry {
     public String getBlock() {
         return block;
     }
-
-    public void setBlock(String block) {
-        this.block = block;
-    }
 //
 //    public AccountLedger.LedgerEvent getEventType() {
 //        return eventType;
@@ -78,6 +77,10 @@ public class LedgerEntry {
 //    public void setEventType(AccountLedger.LedgerEvent eventType) {
 //        this.eventType = eventType;
 //    }
+
+    public void setBlock(String block) {
+        this.block = block;
+    }
 
     public String getEvent() {
         return event;
@@ -103,25 +106,6 @@ public class LedgerEntry {
         return timestamp;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof LedgerEntry)) return false;
-        LedgerEntry that = (LedgerEntry) o;
-        return isTransactionEvent() == that.isTransactionEvent() &&
-                Objects.equals(getLedgerId(), that.getLedgerId()) &&
-                Objects.equals(getBalance(), that.getBalance()) &&
-  //              getHoldingType() == that.getHoldingType() &&
-                Objects.equals(getChange(), that.getChange()) &&
-                Objects.equals(getBlock(), that.getBlock()) &&
- //               getEventType() == that.getEventType() &&
-                Objects.equals(getEvent(), that.getEvent()) &&
-                Objects.equals(getAccount(), that.getAccount()) &&
-                Objects.equals(getHeight(), that.getHeight()) &&
-                Objects.equals(getTimestamp(), that.getTimestamp()) &&
-                Objects.equals(getTransaction(), that.getTransaction());
-    }
-
 //    @Override
 //    public int hashCode() {
 //
@@ -132,6 +116,25 @@ public class LedgerEntry {
         this.timestamp = timestamp;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof LedgerEntry)) return false;
+        LedgerEntry that = (LedgerEntry) o;
+        return isTransactionEvent() == that.isTransactionEvent() &&
+            Objects.equals(getLedgerId(), that.getLedgerId()) &&
+            Objects.equals(getBalance(), that.getBalance()) &&
+            //              getHoldingType() == that.getHoldingType() &&
+            Objects.equals(getChange(), that.getChange()) &&
+            Objects.equals(getBlock(), that.getBlock()) &&
+            //               getEventType() == that.getEventType() &&
+            Objects.equals(getEvent(), that.getEvent()) &&
+            Objects.equals(getAccount(), that.getAccount()) &&
+            Objects.equals(getHeight(), that.getHeight()) &&
+            Objects.equals(getTimestamp(), that.getTimestamp()) &&
+            Objects.equals(getTransaction(), that.getTransaction());
+    }
+
     public JSONTransaction getTransaction() {
         return transaction;
     }
@@ -140,18 +143,15 @@ public class LedgerEntry {
         this.transaction = transaction;
     }
 
-    public LedgerEntry() {
-    }
-
     @Override
     public String toString() {
         return "LedgerEntry{" +
-                "balance=" + balance +
+            "balance=" + balance +
 //                ", holdingType=" + holdingType +
-                ", change=" + change +
+            ", change=" + change +
 //                ", eventType=" + eventType +
-                ", transaction=" + transaction +
-                '}';
+            ", transaction=" + transaction +
+            '}';
     }
 
 //    public boolean isPrivate() {

@@ -9,15 +9,15 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import java.nio.ByteBuffer;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+
 /**
- *
  * @author al
  */
 public final class MessagingAccountProperty extends AbstractAttachment {
-    
+
     final String property;
     final String value;
 
@@ -75,5 +75,5 @@ public final class MessagingAccountProperty extends AbstractAttachment {
     public String getValue() {
         return value;
     }
-    
+
 }

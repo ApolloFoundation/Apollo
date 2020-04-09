@@ -23,8 +23,8 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -38,7 +38,7 @@ import java.util.List;
 public final class GetCurrencyAccounts extends AbstractAPIRequestHandler {
 
     public GetCurrencyAccounts() {
-        super(new APITag[] {APITag.MS}, "currency", "height", "firstIndex", "lastIndex");
+        super(new APITag[]{APITag.MS}, "currency", "height", "firstIndex", "lastIndex");
     }
 
     @Override
@@ -50,7 +50,7 @@ public final class GetCurrencyAccounts extends AbstractAPIRequestHandler {
         int height = HttpParameterParserUtil.getHeight(req);
 
         JSONArray accountCurrencies = new JSONArray();
-        List<AccountCurrency>  accounts = lookupAccountCurrencyService().getCurrenciesByCurrency(currencyId, height, firstIndex, lastIndex);
+        List<AccountCurrency> accounts = lookupAccountCurrencyService().getCurrenciesByCurrency(currencyId, height, firstIndex, lastIndex);
         accounts.forEach(accountCurrency -> accountCurrencies.add(JSONData.accountCurrency(accountCurrency, true, false)));
 
         JSONObject response = new JSONObject();

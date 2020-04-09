@@ -30,11 +30,11 @@ public class UpdaterFactoryImpl implements UpdaterFactory {
     public Updater getUpdater(UpdateData updateDataHolder) {
         Level level = ((Update) updateDataHolder.getAttachment().getTransactionType()).getLevel();
         switch (level) {
-            case CRITICAL :
+            case CRITICAL:
                 return new CriticalUpdater(updateDataHolder, updaterMediator, updaterService, 3, 200, updateInfo);
             case IMPORTANT:
                 return new ImportantUpdater(updateDataHolder, updaterService, updaterMediator, UpdaterConstants.MIN_BLOCKS_DELAY,
-                        UpdaterConstants.MAX_BLOCKS_DELAY, updateInfo);
+                    UpdaterConstants.MAX_BLOCKS_DELAY, updateInfo);
             case MINOR:
                 return new MinorUpdater(updateDataHolder, updaterService, updaterMediator, updateInfo);
             default:

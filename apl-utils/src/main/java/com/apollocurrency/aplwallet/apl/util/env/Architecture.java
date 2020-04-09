@@ -19,9 +19,9 @@ public enum Architecture {
         String osArch = SystemUtils.OS_ARCH.toLowerCase();
         switch (osArch) {
             case "x86_64":
-            case "amd64" :
+            case "amd64":
                 return AMD64;
-            case "x86" :
+            case "x86":
                 return X86;
         }
         if (osArch.startsWith("arm") || osArch.startsWith("aarch64")) {

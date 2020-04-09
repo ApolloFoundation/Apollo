@@ -53,6 +53,36 @@ public class AccountConverter implements Converter<Account, AccountDTO> {
         this.accountCurrencyConverter = accountCurrencyConverter;
     }
 
+    private static void addAccountInfo(AccountDTO o, AccountInfo model) {
+        if (o != null && model != null) {
+            o.setName(model.getName());
+            o.setDescription(model.getDescription());
+        }
+    }
+
+    private static void addAccountLease(AccountDTO o, AccountLease model) {
+        if (o != null && model != null) {
+            o.setCurrentLessee(Long.toUnsignedString(model.getCurrentLesseeId()));
+            o.setCurrentLeasingHeightFrom(model.getCurrentLeasingHeightFrom());
+            o.setCurrentLeasingHeightTo(model.getCurrentLeasingHeightTo());
+            if (model.getNextLesseeId() != 0) {
+                o.setNextLessee(Long.toUnsignedString(model.getNextLesseeId()));
+                o.setNextLeasingHeightFrom(model.getNextLeasingHeightFrom());
+                o.setNextLeasingHeightTo(model.getNextLeasingHeightTo());
+            }
+        }
+    }
+
+    public static long anonymizeAccount() {
+        Random random = new Random();
+        return random.nextLong();
+    }
+
+    public static long anonymizeBalance() {
+        Random random = new Random();
+        return 100_000_000L * (random.nextInt(10_000_000) + 1);
+    }
+
     @Override
     public AccountDTO apply(Account account) {
         AccountDTO dto = new AccountDTO();
@@ -60,7 +90,7 @@ public class AccountConverter implements Converter<Account, AccountDTO> {
         dto.setAccountRS(Convert2.rsAccount(account.getId()));
         dto.set2FA(twoFactorAuthService.isEnabled(account.getId()));
         PublicKey pk = account.getPublicKey();
-        if ( pk != null) {
+        if (pk != null) {
             byte[] publicKey = pk.getPublicKey();
             if (publicKey != null) {
                 dto.setPublicKey(Convert.toHexString(publicKey));
@@ -72,55 +102,55 @@ public class AccountConverter implements Converter<Account, AccountDTO> {
 
         if (!account.getControls().isEmpty()) {
             dto.setAccountControls(account.getControls().stream()
-                    .map(Enum::name)
-                    .collect(Collectors.toSet()));
+                .map(Enum::name)
+                .collect(Collectors.toSet()));
         }
 
         AccountInfo accountInfo = accountInfoService.getAccountInfo(account);
-        if ( accountInfo != null){
+        if (accountInfo != null) {
             addAccountInfo(dto, accountInfo);
         }
 
         AccountLease accountLease = accountLeaseService.getAccountLease(account);
-        if (accountLease != null){
+        if (accountLease != null) {
             addAccountLease(dto, accountLease);
         }
 
         return dto;
     }
 
-    public void addEffectiveBalances(AccountDTO o, Account account){
+    public void addEffectiveBalances(AccountDTO o, Account account) {
         if (o != null && account != null) {
             o.setEffectiveBalanceAPL(accountService.getEffectiveBalanceAPL(account, blockchain.getHeight(), true));
             o.setGuaranteedBalanceATM(accountService.getGuaranteedBalanceATM(account));
         }
     }
 
-    public void addAccountLessors(AccountDTO o, List<Account> model, boolean includeEffectiveBalance){
+    public void addAccountLessors(AccountDTO o, List<Account> model, boolean includeEffectiveBalance) {
         if (o != null && model != null) {
             List<AccountLeaseDTO> lessors = model.stream()
-                    .map(lessor -> {
-                        AccountLeaseDTO dto = new AccountLeaseDTO();
-                        dto.setAccount(Long.toUnsignedString(lessor.getId()));
-                        dto.setAccountRS(Convert2.rsAccount(lessor.getId()));
-                        AccountLease accountLease = accountLeaseService.getAccountLease(lessor);
-                        if (accountLease.getCurrentLesseeId() != 0) {
-                            dto.setCurrentLessee(Long.toUnsignedString(accountLease.getCurrentLesseeId()));
-                            dto.setCurrentLesseeRS(Convert2.rsAccount(accountLease.getCurrentLesseeId()));
-                            dto.setCurrentHeightFrom(accountLease.getCurrentLeasingHeightFrom());
-                            dto.setCurrentHeightTo(accountLease.getCurrentLeasingHeightTo());
-                            if (includeEffectiveBalance) {
-                                dto.setEffectiveBalanceAPL(accountService.getGuaranteedBalanceATM(lessor) / Constants.ONE_APL);
-                            }
+                .map(lessor -> {
+                    AccountLeaseDTO dto = new AccountLeaseDTO();
+                    dto.setAccount(Long.toUnsignedString(lessor.getId()));
+                    dto.setAccountRS(Convert2.rsAccount(lessor.getId()));
+                    AccountLease accountLease = accountLeaseService.getAccountLease(lessor);
+                    if (accountLease.getCurrentLesseeId() != 0) {
+                        dto.setCurrentLessee(Long.toUnsignedString(accountLease.getCurrentLesseeId()));
+                        dto.setCurrentLesseeRS(Convert2.rsAccount(accountLease.getCurrentLesseeId()));
+                        dto.setCurrentHeightFrom(accountLease.getCurrentLeasingHeightFrom());
+                        dto.setCurrentHeightTo(accountLease.getCurrentLeasingHeightTo());
+                        if (includeEffectiveBalance) {
+                            dto.setEffectiveBalanceAPL(accountService.getGuaranteedBalanceATM(lessor) / Constants.ONE_APL);
                         }
-                        if (accountLease.getNextLesseeId() != 0) {
-                            dto.setNextLessee(Long.toUnsignedString(accountLease.getNextLesseeId()));
-                            dto.setNextLesseeRS(Convert2.rsAccount(accountLease.getNextLesseeId()));
-                            dto.setNextHeightFrom(accountLease.getNextLeasingHeightFrom());
-                            dto.setNextHeightTo(accountLease.getNextLeasingHeightTo());
-                        }
-                        return dto;
-                    }).collect(Collectors.toList());
+                    }
+                    if (accountLease.getNextLesseeId() != 0) {
+                        dto.setNextLessee(Long.toUnsignedString(accountLease.getNextLesseeId()));
+                        dto.setNextLesseeRS(Convert2.rsAccount(accountLease.getNextLesseeId()));
+                        dto.setNextHeightFrom(accountLease.getNextLeasingHeightFrom());
+                        dto.setNextHeightTo(accountLease.getNextLeasingHeightTo());
+                    }
+                    return dto;
+                }).collect(Collectors.toList());
 
             if (!lessors.isEmpty()) {
                 List<String> lessorIds = new LinkedList<>();
@@ -138,7 +168,7 @@ public class AccountConverter implements Converter<Account, AccountDTO> {
         }
     }
 
-    public void addAccountAssets(AccountDTO o, List<AccountAsset> model){
+    public void addAccountAssets(AccountDTO o, List<AccountAsset> model) {
         if (o != null && model != null) {
             List<AccountAssetBalanceDTO> assetBalanceList = new LinkedList<>();
             List<AccountAssetUnconfirmedBalanceDTO> assetUnconfirmedBalanceList = new LinkedList<>();
@@ -165,49 +195,19 @@ public class AccountConverter implements Converter<Account, AccountDTO> {
         }
     }
 
-    public void addAccountCurrencies(AccountDTO o, List<AccountCurrency> model){
+    public void addAccountCurrencies(AccountDTO o, List<AccountCurrency> model) {
         if (o != null && model != null) {
             List<AccountCurrencyDTO> currencies = model.stream()
-                    .map(accountCurrency -> {
-                        AccountCurrencyDTO dto = accountCurrencyConverter.convert(accountCurrency);
-                        accountCurrencyConverter.addCurrency(dto, Currency.getCurrency(accountCurrency.getCurrencyId()));
-                        return dto;
-                    }).collect(Collectors.toList());
+                .map(accountCurrency -> {
+                    AccountCurrencyDTO dto = accountCurrencyConverter.convert(accountCurrency);
+                    accountCurrencyConverter.addCurrency(dto, Currency.getCurrency(accountCurrency.getCurrencyId()));
+                    return dto;
+                }).collect(Collectors.toList());
 
             if (!currencies.isEmpty()) {
                 o.setAccountCurrencies(currencies);
             }
         }
-    }
-
-    private static void addAccountInfo(AccountDTO o, AccountInfo model){
-        if (o != null && model != null) {
-            o.setName(model.getName());
-            o.setDescription(model.getDescription());
-        }
-    }
-
-    private static void addAccountLease(AccountDTO o, AccountLease model){
-        if (o != null && model != null) {
-            o.setCurrentLessee(Long.toUnsignedString(model.getCurrentLesseeId()));
-            o.setCurrentLeasingHeightFrom(model.getCurrentLeasingHeightFrom());
-            o.setCurrentLeasingHeightTo(model.getCurrentLeasingHeightTo());
-            if ( model.getNextLesseeId() != 0 ){
-                o.setNextLessee(Long.toUnsignedString(model.getNextLesseeId()));
-                o.setNextLeasingHeightFrom(model.getNextLeasingHeightFrom());
-                o.setNextLeasingHeightTo(model.getNextLeasingHeightTo());
-            }
-        }
-    }
-
-    public static long anonymizeAccount(){
-        Random random = new Random();
-        return random.nextLong();
-    }
-
-    public static long anonymizeBalance(){
-        Random random = new Random();
-        return 100_000_000L * (random.nextInt(10_000_000) + 1);
     }
 
 }

@@ -75,12 +75,13 @@ import java.util.List;
 @Vetoed
 public final class GetNextBlockGeneratorsTemp extends AbstractAPIRequestHandler {
 
-    public GetNextBlockGeneratorsTemp() {
-        super(new APITag[] {APITag.FORGING}, "limit");
-    }
-
     private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
     private static ActiveGenerators activeGenerators = CDI.current().select(ActiveGenerators.class).get();
+
+    public GetNextBlockGeneratorsTemp() {
+        super(new APITag[]{APITag.FORGING}, "limit");
+    }
+
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         JSONObject response = new JSONObject();
@@ -103,7 +104,7 @@ public final class GetNextBlockGeneratorsTemp extends AbstractAPIRequestHandler 
                 JSONData.putAccount(resp, "account", generator.getAccountId());
                 resp.put("effectiveBalanceAPL", generator.getEffectiveBalance());
                 resp.put("hitTime", generator.getHitTime());
-                resp.put("deadline", (int)generator.getHitTime() - lastBlock.getTimestamp());
+                resp.put("deadline", (int) generator.getHitTime() - lastBlock.getTimestamp());
                 generators.add(resp);
                 if (generators.size() == limit) {
                     break;
@@ -119,7 +120,7 @@ public final class GetNextBlockGeneratorsTemp extends AbstractAPIRequestHandler 
     /**
      * No required block parameters
      *
-     * @return                      FALSE to disable the required block parameters
+     * @return FALSE to disable the required block parameters
      */
     @Override
     protected boolean allowRequiredBlockParameters() {

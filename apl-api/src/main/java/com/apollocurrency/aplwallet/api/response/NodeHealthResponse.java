@@ -14,7 +14,6 @@ import lombok.NoArgsConstructor;
 
 
 /**
- *
  * @author alukin@gmail.com
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -23,8 +22,8 @@ import lombok.NoArgsConstructor;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class NodeHealthResponse extends ResponseBase {
-    Boolean rebootRequired = false;
     public NodeHealthInfo healthInfo;
     public NodeStatusInfo statusInfo;
     public NodeNetworkingInfo networkingInfo;
+    Boolean rebootRequired = false;
 }

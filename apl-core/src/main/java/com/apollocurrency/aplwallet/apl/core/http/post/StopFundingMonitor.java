@@ -20,20 +20,20 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import javax.servlet.http.HttpServletRequest;
-
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.FundingMonitor;
-import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+
+import javax.enterprise.inject.Vetoed;
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * Stop a funding monitor
@@ -54,15 +54,16 @@ import org.json.simple.JSONStreamAware;
 public class StopFundingMonitor extends AbstractAPIRequestHandler {
 
     public StopFundingMonitor() {
-        super(new APITag[] {APITag.ACCOUNTS}, "holdingType", "holding", "property", "secretPhrase",
-                "account", "adminPassword", "passphrase");
+        super(new APITag[]{APITag.ACCOUNTS}, "holdingType", "holding", "property", "secretPhrase",
+            "account", "adminPassword", "passphrase");
     }
+
     /**
      * Process the request
      *
-     * @param   req                 Client request
-     * @return                      Client response
-     * @throws ParameterException        Unable to process request
+     * @param req Client request
+     * @return Client response
+     * @throws ParameterException Unable to process request
      */
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {

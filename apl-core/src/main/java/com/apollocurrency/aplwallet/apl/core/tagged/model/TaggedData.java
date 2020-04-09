@@ -4,16 +4,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.tagged.model;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Objects;
-
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.util.Search;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Objects;
 
 public class TaggedData extends VersionedDerivedEntity {
 
@@ -132,12 +132,12 @@ public class TaggedData extends VersionedDerivedEntity {
         return transactionTimestamp;
     }
 
-    public int getBlockTimestamp() {
-        return blockTimestamp;
-    }
-
     public void setTransactionTimestamp(int transactionTimestamp) {
         this.transactionTimestamp = transactionTimestamp;
+    }
+
+    public int getBlockTimestamp() {
+        return blockTimestamp;
     }
 
     public void setBlockTimestamp(int blockTimestamp) {
@@ -150,20 +150,20 @@ public class TaggedData extends VersionedDerivedEntity {
         if (o == null || getClass() != o.getClass()) return false;
         TaggedData that = (TaggedData) o;
         return id == that.id &&
-                accountId == that.accountId &&
-                isText == that.isText &&
-                transactionTimestamp == that.transactionTimestamp &&
-                blockTimestamp == that.blockTimestamp &&
-                getHeight() == that.getHeight() &&
-                Objects.equals(this.getDbKey(), that.getDbKey()) &&
-                Objects.equals(name, that.name) &&
-                Objects.equals(description, that.description) &&
-                Objects.equals(tags, that.tags) &&
-                Arrays.equals(parsedTags, that.parsedTags) &&
-                Arrays.equals(data, that.data) &&
-                Objects.equals(type, that.type) &&
-                Objects.equals(channel, that.channel) &&
-                Objects.equals(filename, that.filename);
+            accountId == that.accountId &&
+            isText == that.isText &&
+            transactionTimestamp == that.transactionTimestamp &&
+            blockTimestamp == that.blockTimestamp &&
+            getHeight() == that.getHeight() &&
+            Objects.equals(this.getDbKey(), that.getDbKey()) &&
+            Objects.equals(name, that.name) &&
+            Objects.equals(description, that.description) &&
+            Objects.equals(tags, that.tags) &&
+            Arrays.equals(parsedTags, that.parsedTags) &&
+            Arrays.equals(data, that.data) &&
+            Objects.equals(type, that.type) &&
+            Objects.equals(channel, that.channel) &&
+            Objects.equals(filename, that.filename);
     }
 
     @Override

@@ -15,7 +15,7 @@ import java.util.stream.StreamSupport;
 
 /**
  * Converts an iterator to a Stream.
- *
+ * <p>
  * Note that it cannot be a singleton cdi bean because
  * every injection requires a properly set type T in
  * a IteratorToStreamConverter instance.

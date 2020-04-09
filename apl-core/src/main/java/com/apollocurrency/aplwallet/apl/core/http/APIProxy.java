@@ -27,7 +27,6 @@ import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
-import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.Vetoed;
@@ -46,55 +45,19 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 @Vetoed
 public class APIProxy {
+    public static final Set<String> NOT_FORWARDED_REQUESTS;
     private static final Logger LOG = getLogger(APIProxy.class);
     private static final String BACKGROUND_SERVICE_NAME = "APIProxyService";
-
-    public static final Set<String> NOT_FORWARDED_REQUESTS;
-    
-    @Vetoed
-    private static class APIProxyHolder {
-        private static final APIProxy INSTANCE = new APIProxy();
-    }
-    
     // TODO: YL remove static instance later
     private static final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    static final boolean enableAPIProxy = propertiesHolder.isLightClient() ||
+        (propertiesHolder.getBooleanProperty("apl.enableAPIProxy") && !API.isOpenAPI);
+    static final String forcedServerURL = propertiesHolder.getStringProperty("apl.forceAPIProxyServerURL", "");
     private static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessor.class).get();
+    private static final int blacklistingPeriod = propertiesHolder.getIntProperty("apl.apiProxyBlacklistingPeriod") / 1000;
     private static TimeService timeService = CDI.current().select(TimeService.class).get();
     private static TaskDispatchManager taskDispatchManager = CDI.current().select(TaskDispatchManager.class).get();
-    private static PeersService peers = CDI.current().select(PeersService.class).get(); 
-
-    public static APIProxy getInstance() {
-        return APIProxyHolder.INSTANCE;
-    }
-
-    static final boolean enableAPIProxy = propertiesHolder.isLightClient() ||
-            (propertiesHolder.getBooleanProperty("apl.enableAPIProxy") && ! API.isOpenAPI);
-    private static final int blacklistingPeriod = propertiesHolder.getIntProperty("apl.apiProxyBlacklistingPeriod") / 1000;
-    static final String forcedServerURL = propertiesHolder.getStringProperty("apl.forceAPIProxyServerURL", "");
-
-    private volatile String forcedPeerHost;
-    private volatile List<String> peersHosts = Collections.emptyList();
-    private volatile String mainPeerAnnouncedAddress;
-
-    private final Map<String, Integer> blacklistedPeers = new ConcurrentHashMap<>();
-
-    static {
-        Set<String> requests = new HashSet<>();
-        requests.add("getBlockchainStatus");
-        requests.add("getState");
-
-        final EnumSet<APITag> notForwardedTags = EnumSet.of(APITag.DEBUG, APITag.NETWORK);
-
-        for (APIEnum api : APIEnum.values()) {
-            AbstractAPIRequestHandler handler = api.getHandler();
-            if (handler.requireBlockchain() && !Collections.disjoint(handler.getAPITags(), notForwardedTags)) {
-                requests.add(api.getName());
-            }
-        }
-
-        NOT_FORWARDED_REQUESTS = Collections.unmodifiableSet(requests);
-    }
-
+    private static PeersService peers = CDI.current().select(PeersService.class).get();
     private static final Runnable peersUpdateThread = () -> {
         int curTime = timeService.getEpochTime();
         getInstance().blacklistedPeers.entrySet().removeIf((entry) -> {
@@ -116,21 +79,52 @@ public class APIProxy {
     };
 
     static {
+        Set<String> requests = new HashSet<>();
+        requests.add("getBlockchainStatus");
+        requests.add("getState");
+
+        final EnumSet<APITag> notForwardedTags = EnumSet.of(APITag.DEBUG, APITag.NETWORK);
+
+        for (APIEnum api : APIEnum.values()) {
+            AbstractAPIRequestHandler handler = api.getHandler();
+            if (handler.requireBlockchain() && !Collections.disjoint(handler.getAPITags(), notForwardedTags)) {
+                requests.add(api.getName());
+            }
+        }
+
+        NOT_FORWARDED_REQUESTS = Collections.unmodifiableSet(requests);
+    }
+
+    static {
         if (!propertiesHolder.isOffline() && enableAPIProxy) {
             taskDispatchManager.newBackgroundDispatcher(BACKGROUND_SERVICE_NAME)
-                    .schedule(Task.builder()
-                            .name("APIProxyPeersUpdate")
-                            .delay(60000)
-                            .task(peersUpdateThread)
-                            .build());
+                .schedule(Task.builder()
+                    .name("APIProxyPeersUpdate")
+                    .delay(60000)
+                    .task(peersUpdateThread)
+                    .build());
         }
     }
+
+    private final Map<String, Integer> blacklistedPeers = new ConcurrentHashMap<>();
+    private volatile String forcedPeerHost;
+    private volatile List<String> peersHosts = Collections.emptyList();
+    private volatile String mainPeerAnnouncedAddress;
 
     private APIProxy() {
 
     }
 
-    public static void init() {}
+    public static APIProxy getInstance() {
+        return APIProxyHolder.INSTANCE;
+    }
+
+    public static void init() {
+    }
+
+    public static boolean isActivated() {
+        return propertiesHolder.isLightClient() || (enableAPIProxy && blockchainProcessor.isDownloading());
+    }
 
     Peer getServingPeer(String requestType) {
         if (forcedPeerHost != null) {
@@ -209,10 +203,6 @@ public class APIProxy {
         return mainPeerAnnouncedAddress;
     }
 
-    public static boolean isActivated() {
-        return propertiesHolder.isLightClient() || (enableAPIProxy && blockchainProcessor.isDownloading());
-    }
-
     public boolean blacklistHost(String host) {
         if (blacklistedPeers.size() > 1000) {
             LOG.info("Too many blacklisted peers");
@@ -232,5 +222,10 @@ public class APIProxy {
         }
         int index = ThreadLocalRandom.current().nextInt(peers.size());
         return peers.remove(index);
+    }
+
+    @Vetoed
+    private static class APIProxyHolder {
+        private static final APIProxy INSTANCE = new APIProxy();
     }
 }

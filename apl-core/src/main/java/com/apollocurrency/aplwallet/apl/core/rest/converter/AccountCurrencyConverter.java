@@ -24,8 +24,8 @@ public class AccountCurrencyConverter implements Converter<AccountCurrency, Acco
         return dto;
     }
 
-    public void addCurrency(AccountCurrencyDTO o, Currency model){
-        if(o != null && model != null){
+    public void addCurrency(AccountCurrencyDTO o, Currency model) {
+        if (o != null && model != null) {
             o.setName(model.getName());
             o.setCode(model.getCode());
             o.setType(model.getType());

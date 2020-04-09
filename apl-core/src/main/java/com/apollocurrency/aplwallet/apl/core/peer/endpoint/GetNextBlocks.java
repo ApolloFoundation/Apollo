@@ -47,7 +47,8 @@ public final class GetNextBlocks extends PeerRequestHandler {
         NO_BLOCK_ID_LIST = JSON.prepare(noBlockIdListResponse);
     }
 
-    public GetNextBlocks() {}
+    public GetNextBlocks() {
+    }
 
 
     @Override

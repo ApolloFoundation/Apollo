@@ -4,15 +4,15 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import java.nio.ByteBuffer;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+
 /**
- *
  * @author al
  */
 public abstract class ColoredCoinsOrderPlacementAttachment extends AbstractAttachment {
-    
+
     final long assetId;
     final long quantityATU;
     final long priceATM;
@@ -67,5 +67,5 @@ public abstract class ColoredCoinsOrderPlacementAttachment extends AbstractAttac
     public long getPriceATM() {
         return priceATM;
     }
-    
+
 }

@@ -14,7 +14,6 @@ import org.json.simple.JSONObject;
 import java.nio.ByteBuffer;
 
 /**
- *
  * @author al
  */
 class CCAskOrderCancellation extends ColoredCoinsOrderCancellation {
@@ -68,5 +67,5 @@ class CCAskOrderCancellation extends ColoredCoinsOrderCancellation {
             throw new AplException.NotValidException("Order " + Long.toUnsignedString(attachment.getOrderId()) + " was created by account " + Long.toUnsignedString(ask.getAccountId()));
         }
     }
-    
+
 }

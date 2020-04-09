@@ -4,12 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-
 import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
@@ -24,10 +18,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import javax.inject.Inject;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
-import javax.inject.Inject;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 
 @EnableWeld
 class ShardRecoveryDaoJdbcTest {
@@ -37,10 +37,10 @@ class ShardRecoveryDaoJdbcTest {
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class, ShardRecoveryDaoJdbcImpl.class, TimeServiceImpl.class)
-            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
-            .build();
+        PropertiesHolder.class, ShardRecoveryDaoJdbcImpl.class, TimeServiceImpl.class)
+        .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
+        .build();
 
     private Connection connection;
 
@@ -102,8 +102,8 @@ class ShardRecoveryDaoJdbcTest {
     void saveShardRecovery() {
         assertNotNull(daoJdbc);
         ShardRecovery recovery = new ShardRecovery(
-                MigrateState.COMPLETED, "Object1", "DB_ID", 100L,
-                "BLOCK");
+            MigrateState.COMPLETED, "Object1", "DB_ID", 100L,
+            "BLOCK");
         long result = daoJdbc.saveShardRecovery(connection, recovery);
         assertTrue(result > 1);
 
@@ -126,8 +126,8 @@ class ShardRecoveryDaoJdbcTest {
     void saveShardRecoveryDataSource() {
         assertNotNull(daoJdbc);
         ShardRecovery recovery = new ShardRecovery(
-                MigrateState.COMPLETED, "Object1", "DB_ID", 100L,
-                "BLOCK");
+            MigrateState.COMPLETED, "Object1", "DB_ID", 100L,
+            "BLOCK");
         long result = daoJdbc.saveShardRecovery(extension.getDatabaseManager().getDataSource(), recovery);
         assertTrue(result > 1);
 
@@ -178,7 +178,7 @@ class ShardRecoveryDaoJdbcTest {
     @Test
     void hardDeleteShardRecovery() throws SQLException {
         ShardRecovery recovery = new ShardRecovery(MigrateState.COMPLETED, "Object1",
-                "DB_ID", 100L, "TRANSACTION");
+            "DB_ID", 100L, "TRANSACTION");
         long saveResult = daoJdbc.saveShardRecovery(connection, recovery);
         assertTrue(saveResult > 1);
         List<ShardRecovery> allResult = daoJdbc.getAllShardRecovery(connection);

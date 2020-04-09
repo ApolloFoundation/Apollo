@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 public class ShardController {
 
     private ShardService shardService;
-//    @Inject @Setter
+    //    @Inject @Setter
     private ShardToDtoConverter shardConverter = new ShardToDtoConverter();
 
     @Inject
@@ -48,14 +48,14 @@ public class ShardController {
         description = "Get all 'completed' shard entries from database",
         tags = {"shards"},
         responses = {
-        @ApiResponse(responseCode = "200", description = "Successful execution",
-            content = @Content(mediaType = "application/json",
-                schema = @Schema(implementation = ShardDTO.class)))
-    }    )
+            @ApiResponse(responseCode = "200", description = "Successful execution",
+                content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = ShardDTO.class)))
+        })
     @PermitAll
     public Response getAllShards() {
         List<ShardDTO> allCompletedShards = shardService.getAllCompletedShards().stream()
-                .map(shard -> shardConverter.convert(shard)).collect(Collectors.toList());
+            .map(shard -> shardConverter.convert(shard)).collect(Collectors.toList());
         return Response.ok(allCompletedShards).build();
     }
 

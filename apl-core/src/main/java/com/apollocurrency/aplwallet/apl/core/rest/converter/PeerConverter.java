@@ -27,7 +27,7 @@ public class PeerConverter implements Converter<Peer, PeerDTO> {
         dto.setDownloadedVolume(peer.getDownloadedVolume());
         dto.setUploadedVolume(peer.getUploadedVolume());
         dto.setApplication(peer.getApplication());
-        dto.setVersion(peer.getVersion() == null?null:peer.getVersion().toString());
+        dto.setVersion(peer.getVersion() == null ? null : peer.getVersion().toString());
         dto.setPlatform(peer.getPlatform());
         if (peer.getApiPort() != 0) {
             dto.setApiPort(peer.getApiPort());
@@ -51,12 +51,12 @@ public class PeerConverter implements Converter<Peer, PeerDTO> {
                 availableServices.add(service.name());
             }
         }
-        if (!availableServices.isEmpty()){
+        if (!availableServices.isEmpty()) {
             dto.setServices(availableServices);
         }
 
         dto.setBlockchainState(peer.getBlockchainState().name());
-        dto.setChainId(peer.getChainId()==null?null:peer.getChainId().toString());
+        dto.setChainId(peer.getChainId() == null ? null : peer.getChainId().toString());
         return dto;
 
     }

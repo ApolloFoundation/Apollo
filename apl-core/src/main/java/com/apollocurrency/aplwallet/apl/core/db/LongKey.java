@@ -7,11 +7,10 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 /**
- *
  * @author al
  */
 public final class LongKey implements DbKey {
-    
+
     private final long id;
 
     public LongKey(long id) {

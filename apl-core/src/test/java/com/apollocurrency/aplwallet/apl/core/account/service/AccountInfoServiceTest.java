@@ -23,11 +23,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 class AccountInfoServiceTest {
-    private Blockchain blockchain = mock(BlockchainImpl.class);
-    private AccountInfoTable accountInfoTable = mock(AccountInfoTable.class);
-
     AccountInfoService accountInfoService;
     AccountTestData testData;
+    private Blockchain blockchain = mock(BlockchainImpl.class);
+    private AccountInfoTable accountInfoTable = mock(AccountInfoTable.class);
 
     @BeforeEach
     void setUp() {
@@ -52,7 +51,7 @@ class AccountInfoServiceTest {
         String newName = "Expected new name";
         String newDescription = "ExpectedNewDescription";
         AccountInfo expectedAccountInfo = new AccountInfo(
-                testData.ACC_1.getId(), newName, newDescription, blockchain.getHeight());
+            testData.ACC_1.getId(), newName, newDescription, blockchain.getHeight());
 
         doReturn(null).when(accountInfoTable).get(any());
         accountInfoService.updateAccountInfo(testData.ACC_1, newName, newDescription);
@@ -62,8 +61,8 @@ class AccountInfoServiceTest {
     @Test
     void testUpdate_as_insert() {
         AccountInfo newInfo = new AccountInfo(
-                testData.newInfo.getAccountId(), testData.newInfo.getName(),
-                testData.newInfo.getDescription(), testData.INFO_BLOCKCHAIN_HEIGHT);
+            testData.newInfo.getAccountId(), testData.newInfo.getName(),
+            testData.newInfo.getDescription(), testData.INFO_BLOCKCHAIN_HEIGHT);
         accountInfoService.update(newInfo);
         verify(accountInfoTable, times(1)).insert(newInfo);
         verify(accountInfoTable, never()).deleteAtHeight(any(AccountInfo.class), anyInt());
@@ -72,7 +71,7 @@ class AccountInfoServiceTest {
     @Test
     void testUpdate_as_delete() {
         AccountInfo deletedAccountInfo = new AccountInfo(
-                testData.ACC_1.getId(), null, null, blockchain.getHeight());
+            testData.ACC_1.getId(), null, null, blockchain.getHeight());
         accountInfoService.update(deletedAccountInfo);
         verify(accountInfoTable, times(1)).deleteAtHeight(deletedAccountInfo, blockchain.getHeight());
         verify(accountInfoTable, never()).insert(any(AccountInfo.class));

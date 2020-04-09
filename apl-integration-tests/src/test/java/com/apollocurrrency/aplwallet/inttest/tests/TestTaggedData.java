@@ -24,11 +24,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @Epic(value = "TaggedData")
 public class TestTaggedData extends TestBaseOld {
 
+    private final File image = TestConfiguration.getTestConfiguration().getDefaultImage();
     private String Name;
     private String description;
     private String tag;
     private String channel;
-    private final File image = TestConfiguration.getTestConfiguration().getDefaultImage();
 
     @BeforeEach
     @Override

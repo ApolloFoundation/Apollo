@@ -4,16 +4,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import javax.enterprise.inject.spi.CDI;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
+
+import javax.enterprise.inject.spi.CDI;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 
 public class Chat {
     private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
@@ -31,14 +31,14 @@ public class Chat {
         try {
             con = lookupDataSource().getConnection();
             PreparedStatement stmt = con.prepareStatement(
-                    "select account, max(timestamp) as timestamp from "
-                            + "((SELECT recipient_id as account, timestamp from transaction "
-                            + "where type = ? and subtype = ? and sender_id =?) "
-                            + "union "
-                            + "(SELECT sender_id as account, timestamp from transaction "
-                            + "where type = ? and subtype = ? and recipient_id = ?)) "
-                            + "group by account order by timestamp desc "
-                            + DbUtils.limitsClause(from, to)
+                "select account, max(timestamp) as timestamp from "
+                    + "((SELECT recipient_id as account, timestamp from transaction "
+                    + "where type = ? and subtype = ? and sender_id =?) "
+                    + "union "
+                    + "(SELECT sender_id as account, timestamp from transaction "
+                    + "where type = ? and subtype = ? and recipient_id = ?)) "
+                    + "group by account order by timestamp desc "
+                    + DbUtils.limitsClause(from, to)
             );
             int i = 0;
             stmt.setByte(++i, Messaging.ARBITRARY_MESSAGE.getType());
@@ -53,8 +53,7 @@ public class Chat {
                 long timestamp = rs.getLong("timestamp");
                 return new ChatInfo(account, timestamp);
             });
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
         }
@@ -65,10 +64,10 @@ public class Chat {
         try {
             con = lookupDataSource().getConnection();
             PreparedStatement stmt = con.prepareStatement(
-                    "SELECT * from transaction "
-                            + "where type = ? and subtype = ? and ((sender_id =? and recipient_id = ?) or  (sender_id =? and recipient_id = ?)) " +
-                            "order by timestamp desc"
-                            + DbUtils.limitsClause(from, to)
+                "SELECT * from transaction "
+                    + "where type = ? and subtype = ? and ((sender_id =? and recipient_id = ?) or  (sender_id =? and recipient_id = ?)) " +
+                    "order by timestamp desc"
+                    + DbUtils.limitsClause(from, to)
             );
             int i = 0;
             stmt.setByte(++i, Messaging.ARBITRARY_MESSAGE.getType());
@@ -79,8 +78,7 @@ public class Chat {
             stmt.setLong(++i, account1);
             DbUtils.setLimits(++i, stmt, from, to);
             return blockchain.getTransactions(con, stmt);
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
         }
@@ -96,15 +94,15 @@ public class Chat {
             this.lastMessageTime = lastMessageTime;
         }
 
+        public ChatInfo() {
+        }
+
         public long getAccount() {
             return account;
         }
 
         public long getLastMessageTime() {
             return lastMessageTime;
-        }
-
-        public ChatInfo() {
         }
     }
 

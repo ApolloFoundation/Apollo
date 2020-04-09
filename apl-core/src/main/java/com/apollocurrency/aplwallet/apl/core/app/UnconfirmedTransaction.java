@@ -37,6 +37,7 @@ import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -44,14 +45,13 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.List;
 import java.util.Map;
-import javax.enterprise.inject.spi.CDI;
 
 public class UnconfirmedTransaction implements Transaction {
 
+    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private final Transaction transaction;
     private final long arrivalTimestamp;
     private final long feePerByte;
-    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     UnconfirmedTransaction(Transaction transaction, long arrivalTimestamp) {
         this.transaction = transaction;
@@ -79,8 +79,8 @@ public class UnconfirmedTransaction implements Transaction {
 
     void save(Connection con) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO unconfirmed_transaction (id, transaction_height, "
-                + "fee_per_byte, expiration, transaction_bytes, prunable_json, arrival_timestamp, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
+            + "fee_per_byte, expiration, transaction_bytes, prunable_json, arrival_timestamp, height) "
+            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, transaction.getId());
             pstmt.setInt(++i, transaction.getHeight());
@@ -113,7 +113,7 @@ public class UnconfirmedTransaction implements Transaction {
 
     @Override
     public boolean equals(Object o) {
-        return o instanceof UnconfirmedTransaction && transaction.equals(((UnconfirmedTransaction)o).getTransaction());
+        return o instanceof UnconfirmedTransaction && transaction.equals(((UnconfirmedTransaction) o).getTransaction());
     }
 
     @Override
@@ -124,16 +124,6 @@ public class UnconfirmedTransaction implements Transaction {
     @Override
     public boolean isUnconfirmedDuplicate(Map<TransactionType, Map<String, Integer>> unconfirmedDuplicates) {
         return transaction.isUnconfirmedDuplicate(unconfirmedDuplicates);
-    }
-
-    @Override
-    public void setFeeATM(long feeATM) {
-        if (transaction.getSignature() != null) {
-            throw new UnsupportedOperationException("Unable to set fee for already signed transaction");
-        } else {
-            transaction.setFeeATM(feeATM);
-        }
-
     }
 
     @Override
@@ -231,6 +221,16 @@ public class UnconfirmedTransaction implements Transaction {
     @Override
     public long getFeeATM() {
         return transaction.getFeeATM();
+    }
+
+    @Override
+    public void setFeeATM(long feeATM) {
+        if (transaction.getSignature() != null) {
+            throw new UnsupportedOperationException("Unable to set fee for already signed transaction");
+        } else {
+            transaction.setFeeATM(feeATM);
+        }
+
     }
 
     @Override
@@ -410,9 +410,9 @@ public class UnconfirmedTransaction implements Transaction {
     @Override
     public String toString() {
         return "UnconfirmedTransaction{" +
-                "transaction=" + transaction +
-                ", arrivalTimestamp=" + arrivalTimestamp +
-                ", feePerByte=" + feePerByte +
-                '}';
+            "transaction=" + transaction +
+            ", arrivalTimestamp=" + arrivalTimestamp +
+            ", feePerByte=" + feePerByte +
+            '}';
     }
 }

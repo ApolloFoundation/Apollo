@@ -4,13 +4,12 @@
 package com.apollocurrency.aplwallet.apl.core.account;
 
 /**
- *
  * @author al
  */
 public class DoubleSpendingException extends RuntimeException {
-    
+
     public DoubleSpendingException(String message, long accountId, long confirmed, long unconfirmed) {
         super(message + " account: " + Long.toUnsignedString(accountId) + " confirmed: " + confirmed + " unconfirmed: " + unconfirmed);
     }
-    
+
 }

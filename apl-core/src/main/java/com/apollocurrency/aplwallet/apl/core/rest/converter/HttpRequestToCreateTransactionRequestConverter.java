@@ -6,8 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -26,34 +26,34 @@ public class HttpRequestToCreateTransactionRequestConverter {
         Boolean isPhased = Boolean.valueOf(req.getParameter("phased"));
 
         CreateTransactionRequest createTransactionRequest = CreateTransactionRequest.builder()
-                .broadcast(!"false".equalsIgnoreCase(req.getParameter("broadcast")) && broadcast && (secretPhrase != null || passphrase != null))
-                .secretPhrase(secretPhrase)
-                .passphrase(passphrase)
-                .deadlineValue(req.getParameter("deadline"))
-                .referencedTransactionFullHash(Convert.emptyToNull(req.getParameter("referencedTransactionFullHash")))
-                .publicKeyValue(Convert.emptyToNull(req.getParameter("publicKey")))
-                .publicKey(HttpParameterParserUtil.getPublicKey(req, senderAccount.getId()))
-                .keySeed(HttpParameterParserUtil.getKeySeed(req, senderAccount.getId(), false))
+            .broadcast(!"false".equalsIgnoreCase(req.getParameter("broadcast")) && broadcast && (secretPhrase != null || passphrase != null))
+            .secretPhrase(secretPhrase)
+            .passphrase(passphrase)
+            .deadlineValue(req.getParameter("deadline"))
+            .referencedTransactionFullHash(Convert.emptyToNull(req.getParameter("referencedTransactionFullHash")))
+            .publicKeyValue(Convert.emptyToNull(req.getParameter("publicKey")))
+            .publicKey(HttpParameterParserUtil.getPublicKey(req, senderAccount.getId()))
+            .keySeed(HttpParameterParserUtil.getKeySeed(req, senderAccount.getId(), false))
 
-                .amountATM(amountATM)
-                .feeATM(feeATM)
-                .senderAccount(senderAccount)
-                .recipientId(recipientId)
-                .recipientPublicKey(Convert.emptyToNull(req.getParameter("recipientPublicKey")))
-                .phased(isPhased)
-                .phasing(isPhased ? HttpParameterParserUtil.parsePhasing(req) : null)
+            .amountATM(amountATM)
+            .feeATM(feeATM)
+            .senderAccount(senderAccount)
+            .recipientId(recipientId)
+            .recipientPublicKey(Convert.emptyToNull(req.getParameter("recipientPublicKey")))
+            .phased(isPhased)
+            .phasing(isPhased ? HttpParameterParserUtil.parsePhasing(req) : null)
 
-                .attachment(attachment)
-                .encryptToSelfMessage(HttpParameterParserUtil.getEncryptToSelfMessage(req, senderAccount.getId()))
-                .encryptedMessageIsPrunable(encryptedMessageIsPrunable)
-                .appendix(HttpParameterParserUtil.getEncryptedMessage(req, recipientAccount, senderAccount.getId(), encryptedMessageIsPrunable))
-                .messageIsPrunable(messageIsPrunable)
-                .message(HttpParameterParserUtil.getPlainMessage(req, messageIsPrunable))
+            .attachment(attachment)
+            .encryptToSelfMessage(HttpParameterParserUtil.getEncryptToSelfMessage(req, senderAccount.getId()))
+            .encryptedMessageIsPrunable(encryptedMessageIsPrunable)
+            .appendix(HttpParameterParserUtil.getEncryptedMessage(req, recipientAccount, senderAccount.getId(), encryptedMessageIsPrunable))
+            .messageIsPrunable(messageIsPrunable)
+            .message(HttpParameterParserUtil.getPlainMessage(req, messageIsPrunable))
 
-                .ecBlockHeight(HttpParameterParserUtil.getInt(req, "ecBlockHeight", 0, Integer.MAX_VALUE, false))
-                .ecBlockId(Convert.parseUnsignedLong(req.getParameter("ecBlockId")))
+            .ecBlockHeight(HttpParameterParserUtil.getInt(req, "ecBlockHeight", 0, Integer.MAX_VALUE, false))
+            .ecBlockId(Convert.parseUnsignedLong(req.getParameter("ecBlockId")))
 
-                .build();
+            .build();
 
         return createTransactionRequest;
     }
@@ -68,6 +68,7 @@ public class HttpRequestToCreateTransactionRequestConverter {
         }
         return convert(req, senderAccount, recipient, recipientId, amountATM, HttpParameterParserUtil.getFeeATM(req), attachment, broadcast);
     }
+
     public static CreateTransactionRequest convert(HttpServletRequest req, Account senderAccount, long recipientId, long amountATM,
                                                    Attachment attachment, boolean broadcast, long feeATM) throws ParameterException {
         return convert(req, senderAccount, null, recipientId, amountATM, feeATM, attachment, broadcast);

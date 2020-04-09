@@ -20,9 +20,9 @@ import com.apollocurrency.aplwallet.api.request.DetectMimeTypeUploadForm;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
-import com.apollocurrency.aplwallet.apl.core.rest.utils.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
+import com.apollocurrency.aplwallet.apl.core.rest.utils.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import com.apollocurrency.aplwallet.apl.util.Search;
@@ -127,12 +127,15 @@ public class UtilsController {
         })
     @PermitAll
     public Response encodeQRCode(
-        @Parameter(name = "qrCodeData", description = "QR code data", required = true) // works on UI without good description
-            @FormParam("qrCodeData") @NotEmpty String qrCodeData,
-        @Parameter(name = "width", description = "QR code image width, optional") // works on UI without good description
-            @FormParam("width") @DefaultValue("0") String widthStr,
-        @Parameter(name = "height", description = "QR code image height, optional") // works on UI without good description
-            @FormParam("height") @DefaultValue("0") String heightStr
+        @Parameter(name = "qrCodeData", description = "QR code data", required = true)
+        // works on UI without good description
+        @FormParam("qrCodeData") @NotEmpty String qrCodeData,
+        @Parameter(name = "width", description = "QR code image width, optional")
+        // works on UI without good description
+        @FormParam("width") @DefaultValue("0") String widthStr,
+        @Parameter(name = "height", description = "QR code image height, optional")
+        // works on UI without good description
+        @FormParam("height") @DefaultValue("0") String heightStr
     ) {
         log.debug("Started encodeQRCode: \n\t\twidthStr={}, heightStr={}, qrCodeData={}", widthStr, heightStr, qrCodeData);
         ResponseBuilder response = ResponseBuilder.startTiming();
@@ -176,7 +179,7 @@ public class UtilsController {
             String base64 = Base64.getEncoder().encodeToString(bytes);
             log.debug("base64 = {}", base64);
             dto.qrCodeBase64 = base64;
-        } catch(WriterException | NullPointerException ex) {
+        } catch (WriterException | NullPointerException ex) {
             String errorMessage = String.format("Error creating QR from qrCodeData: %s, ex = %s", qrCodeData, ex.getMessage());
             log.warn(errorMessage, ex);
             return response.error(ApiErrors.INTERNAL_SERVER_EXCEPTION, errorMessage).build();
@@ -223,11 +226,11 @@ public class UtilsController {
             Result qrCodeData = new MultiFormatReader().decode(binaryBitmap, hints);
             dto.qrCodeData = qrCodeData.getText();
             log.debug("qrCodeData = {}", qrCodeData);
-        } catch(IOException | NullPointerException | IllegalArgumentException e) {
+        } catch (IOException | NullPointerException | IllegalArgumentException e) {
             String errorMessage = String.format("Error reading base64 byte stream, incorrect base64 encoding or else: e = %s", e.getMessage());
             log.warn(errorMessage, e);
             return response.error(ApiErrors.INTERNAL_SERVER_EXCEPTION, errorMessage).build();
-        } catch(NotFoundException e) {
+        } catch (NotFoundException e) {
             String errorMessage = String.format("Error creating QR from qrCodeData: e = %s", e.getMessage());
             log.warn(errorMessage, e); // return DTO for backward compatibility
         }
@@ -273,11 +276,11 @@ public class UtilsController {
         if (uploadForm.containsKey("file")) {
             List<InputPart> inputParts = uploadForm.get("file");
             for (InputPart inputPart : inputParts) {
-                    MultivaluedMap<String, String> header = inputPart.getHeaders();
-                    uploadedFileName = extractFileNameFromUploadHeader(header);
+                MultivaluedMap<String, String> header = inputPart.getHeaders();
+                uploadedFileName = extractFileNameFromUploadHeader(header);
                 //convert the uploaded file to input stream
-                try (InputStream inputStream = inputPart.getBody(InputStream.class,null);
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                try (InputStream inputStream = inputPart.getBody(InputStream.class, null);
+                     ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
                     int nRead;
                     byte[] bytes = new byte[1024];
                     while ((nRead = inputStream.read(bytes, 0, bytes.length)) != -1) {
@@ -297,7 +300,7 @@ public class UtilsController {
             List<InputPart> inputParts = uploadForm.get("data");
             for (InputPart inputPart : inputParts) {
                 try {
-                    String inputString = inputPart.getBody(String.class,null);
+                    String inputString = inputPart.getBody(String.class, null);
                     if (inputString != null && !inputString.isEmpty()) {
                         data = Convert.toBytes(inputString);
                         log.debug("Read 'data' content [{}]", data.length);
@@ -345,7 +348,7 @@ public class UtilsController {
     @PermitAll
     public Response fullHashToId(
         @Parameter(name = "fullHash", description = "full hash data as string", required = true)
-            @QueryParam("fullHash") @NotBlank String fullHash) {
+        @QueryParam("fullHash") @NotBlank String fullHash) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         log.debug("Started getFullHashToId : \t 'fullHash' = {}", fullHash);
         long longId = 0;
@@ -379,7 +382,7 @@ public class UtilsController {
     @PermitAll
     public Response getHexConvert(
         @Parameter(name = "string", description = "correct HEX data as string representation", required = true)
-            @QueryParam("string") @NotBlank String stringHash) {
+        @QueryParam("string") @NotBlank String stringHash) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         log.debug("Started getHexConvert : \t 'stringHash' = {}", stringHash);
         HexConvertDto dto = new HexConvertDto();
@@ -390,13 +393,15 @@ public class UtilsController {
                 log.debug("parsedHex = '{}'", parsedHex);
                 dto.text = parsedHex;
             }
-        } catch (RuntimeException ignore) {}
+        } catch (RuntimeException ignore) {
+        }
         try {
             byte[] asText = Convert.toBytes(stringHash);
             String bytesAsString = Convert.toHexString(asText);
             log.debug("bytesAsString = '{}'", bytesAsString);
             dto.binary = bytesAsString;
-        } catch (RuntimeException ignore) {}
+        } catch (RuntimeException ignore) {
+        }
         log.debug("getHexConvert result: {}", dto);
         return response.bind(dto).build();
     }
@@ -416,7 +421,7 @@ public class UtilsController {
     @PermitAll
     public Response longConvert(
         @Parameter(name = "id", description = "valid Id data as string representation", required = true)
-            @QueryParam("id") @NotBlank String stringId) {
+        @QueryParam("id") @NotBlank String stringId) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         log.debug("Started getLongConvert : \t 'stringId' = {}", stringId);
         FullHashToIdDto dto = new FullHashToIdDto();
@@ -469,7 +474,7 @@ public class UtilsController {
     @PermitAll
     public Response rcConvert(
         @Parameter(name = "account", description = "existing, valid account Id", required = true)
-            @QueryParam("account") @NotBlank String accountIdString) {
+        @QueryParam("account") @NotBlank String accountIdString) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         log.debug("Started getLongConvert : \t 'accountIdString' = {}", accountIdString);
         RsConvertDto dto = new RsConvertDto();
@@ -509,11 +514,11 @@ public class UtilsController {
     public Response hashByAlgorithm(
         @Parameter(name = "hashAlgorithm", description = "Valid Algorithm from available list", required = true,
             schema = @Schema(implementation = HashFunction.class))
-            @QueryParam("hashAlgorithm") HashFunction hashAlgorithm,
+        @QueryParam("hashAlgorithm") HashFunction hashAlgorithm,
         @Parameter(name = "secretIsText", description = "false (default) is HEX string, true if data is plain Text")
-            @QueryParam("secretIsText") @DefaultValue("false") Boolean secretIsText,
+        @QueryParam("secretIsText") @DefaultValue("false") Boolean secretIsText,
         @Parameter(name = "secret", description = "text or data to be hashed by selected algorithm", required = true)
-            @QueryParam("secret") @NotBlank String secret
+        @QueryParam("secret") @NotBlank String secret
     ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         log.debug("Started hashByAlgorithm : \t 'hashAlgorithm' = {}", hashAlgorithm);

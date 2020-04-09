@@ -20,10 +20,9 @@ import static com.apollocurrency.aplwallet.apl.util.task.DefaultTaskDispatcher.D
 @Singleton
 public class TaskDispatchManager {
 
-    private PropertiesHolder propertiesHolder;
-
-    private Map<String, TaskDispatcher> dispatchers;
     private final Object dispatchersMonitor = new Object();
+    private PropertiesHolder propertiesHolder;
+    private Map<String, TaskDispatcher> dispatchers;
 
     @Inject
     public TaskDispatchManager(PropertiesHolder propertiesHolder) {
@@ -31,7 +30,7 @@ public class TaskDispatchManager {
         dispatchers = new HashMap<>();
     }
 
-    public TaskDispatcher newScheduledDispatcher(String serviceName){
+    public TaskDispatcher newScheduledDispatcher(String serviceName) {
         Objects.requireNonNull(serviceName, "serviceName is NULL");
         TaskDispatcher dispatcher = TaskDispatcherFactory.newScheduledDispatcher(serviceName);
         registerDispatcher(dispatcher, serviceName);
@@ -39,7 +38,7 @@ public class TaskDispatchManager {
         return dispatcher;
     }
 
-    public TaskDispatcher newBackgroundDispatcher(String serviceName){
+    public TaskDispatcher newBackgroundDispatcher(String serviceName) {
         Objects.requireNonNull(serviceName, "serviceName is NULL");
         TaskDispatcher dispatcher = TaskDispatcherFactory.newBackgroundDispatcher(serviceName);
         registerDispatcher(dispatcher, serviceName);
@@ -47,9 +46,9 @@ public class TaskDispatchManager {
         return dispatcher;
     }
 
-    public void dispatch(){
+    public void dispatch() {
         log.debug("Starting all registered dispatchers ...");
-        if(log.isTraceEnabled()){
+        if (log.isTraceEnabled()) {
             dispatchers.values().forEach(dispatcher -> log.trace(dispatcher.info()));
         }
         synchronized (dispatchersMonitor) {
@@ -57,7 +56,7 @@ public class TaskDispatchManager {
         }
     }
 
-    public void shutdown(){
+    public void shutdown() {
         log.debug("Shutdown all registered dispatchers ...");
         synchronized (dispatchersMonitor) {
             dispatchers.values().forEach(TaskDispatcher::shutdown);
@@ -65,7 +64,7 @@ public class TaskDispatchManager {
         }
     }
 
-    private void registerDispatcher(TaskDispatcher dispatcher, String name){
+    private void registerDispatcher(TaskDispatcher dispatcher, String name) {
         log.trace("Register {} service ", name);
         synchronized (dispatchersMonitor) {
             dispatchers.put(name, dispatcher);
@@ -74,13 +73,14 @@ public class TaskDispatchManager {
 
     /**
      * Remove and shutdown the dispatcher
+     *
      * @param dispatcher
      */
-    public void removeDispatcher(TaskDispatcher dispatcher){
+    public void removeDispatcher(TaskDispatcher dispatcher) {
         removeDispatcher(dispatcher, true);
     }
 
-    public void removeDispatcher(TaskDispatcher dispatcher, boolean shutdown){
+    public void removeDispatcher(TaskDispatcher dispatcher, boolean shutdown) {
         boolean found = false;
         synchronized (dispatchersMonitor) {
             if (dispatchers.containsValue(dispatcher)) {
@@ -94,23 +94,24 @@ public class TaskDispatchManager {
 
     /**
      * Remove and shutdown dispatcher by name
+     *
      * @param name a dispatcher name
      */
-    public void removeDispatcher(String name){
+    public void removeDispatcher(String name) {
         removeDispatcher(name, true);
     }
 
-    public void removeDispatcher(String name, boolean shutdown){
+    public void removeDispatcher(String name, boolean shutdown) {
         TaskDispatcher dispatcher;
         synchronized (dispatchersMonitor) {
             dispatcher = dispatchers.remove(name);
         }
-        if (dispatcher!=null && shutdown) {
+        if (dispatcher != null && shutdown) {
             dispatcher.shutdown();
         }
     }
 
-    public TaskDispatcher getDispatcher(String serviceName){
+    public TaskDispatcher getDispatcher(String serviceName) {
         synchronized (dispatchersMonitor) {
             return dispatchers.get(serviceName);
         }

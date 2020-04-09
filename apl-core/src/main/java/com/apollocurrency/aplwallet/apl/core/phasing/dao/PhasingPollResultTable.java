@@ -10,11 +10,11 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.mapper.PhasingPollResultMapper;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import javax.inject.Singleton;
 
 @Singleton
 public class PhasingPollResultTable extends EntityDbTable<PhasingPollResult> {
@@ -37,7 +37,6 @@ public class PhasingPollResultTable extends EntityDbTable<PhasingPollResult> {
     }
 
 
-
     @Override
     public PhasingPollResult load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         return MAPPER.map(rs, null);
@@ -50,7 +49,7 @@ public class PhasingPollResultTable extends EntityDbTable<PhasingPollResult> {
     @Override
     public void save(Connection con, PhasingPollResult phasingPollResult) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_poll_result (id, "
-                + "result, approved, height) VALUES (?, ?, ?, ?)")) {
+            + "result, approved, height) VALUES (?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, phasingPollResult.getId());
             pstmt.setLong(++i, phasingPollResult.getResult());

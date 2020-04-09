@@ -23,8 +23,8 @@ package com.apollocurrency.aplwallet.apl.core.http;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.alias.service.AliasService;
 import com.apollocurrency.aplwallet.apl.core.alias.entity.Alias;
+import com.apollocurrency.aplwallet.apl.core.alias.service.AliasService;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.Poll;
@@ -120,23 +120,24 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * This class is just a static helper for parameters. It should be removed later cause it uses the CDI static methods.
+ *
  * @deprecated Use {@link RestParametersParser} class instead of this one.
  */
 @Deprecated
 public final class HttpParameterParserUtil {
     private static final Logger LOG = getLogger(HttpParameterParserUtil.class);
-    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
-    protected  static AdminPasswordVerifier apw =  CDI.current().select(AdminPasswordVerifier.class).get();
+    private static final AliasService ALIAS_SERVICE = CDI.current().select(AliasService.class).get();
+    private static final int DEFAULT_LAST_INDEX = 250;
+    protected static AdminPasswordVerifier apw = CDI.current().select(AdminPasswordVerifier.class).get();
     protected static ElGamalEncryptor elGamal = CDI.current().select(ElGamalEncryptor.class).get();
     protected static TimeService timeService = CDI.current().select(TimeService.class).get();
-
+    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
     private static AccountService accountService = CDI.current().select(AccountService.class).get();
     private static AccountPublicKeyService accountPublicKeyService = CDI.current().select(AccountPublicKeyService.class).get();
-    private static final AliasService ALIAS_SERVICE = CDI.current().select(AliasService.class).get();
 
-
-    private static final int DEFAULT_LAST_INDEX = 250;
+    private HttpParameterParserUtil() {
+    } // never
 
     public static byte getByte(HttpServletRequest req, String name, byte min, byte max, boolean isMandatory, byte defaultValue) throws ParameterException {
         String paramValue = Convert.emptyToNull(req.getParameter(name));
@@ -181,7 +182,7 @@ public final class HttpParameterParserUtil {
     }
 
     public static long getLong(HttpServletRequest req, String name, long min, long max,
-                        boolean isMandatory) throws ParameterException {
+                               boolean isMandatory) throws ParameterException {
         String paramValue = Convert.emptyToNull(req.getParameter(name));
         if (paramValue == null) {
             if (isMandatory) {
@@ -252,6 +253,7 @@ public final class HttpParameterParserUtil {
         }
         return Convert.parseHexString(paramValue);
     }
+
     public static byte getByteOrNegative(HttpServletRequest req, String name, boolean isMandatory) throws ParameterException {
         return getByte(req, name, Byte.MIN_VALUE, Byte.MAX_VALUE, isMandatory, (byte) -1);
     }
@@ -500,6 +502,7 @@ public final class HttpParameterParserUtil {
         byte[] secretBytes = getSecretBytes(req, senderId, isMandatory);
         return secretBytes == null ? null : Crypto.getKeySeed(secretBytes);
     }
+
     public static byte[] getSecretBytes(HttpServletRequest req, long senderId, boolean isMandatory) throws ParameterException {
         String secretPhrase = getSecretPhrase(req, false);
         if (secretPhrase != null) {
@@ -511,7 +514,7 @@ public final class HttpParameterParserUtil {
         }
         if (isMandatory) {
             throw new ParameterException("Secret phrase or valid passphrase + accountId required", null, incorrect("secretPhrase",
-                    "passphrase"));
+                "passphrase"));
         }
         return null;
     }
@@ -527,6 +530,7 @@ public final class HttpParameterParserUtil {
     public static String getSecretPhrase(HttpServletRequest req, boolean isMandatory) throws ParameterException {
         return getSecretPhrase(req, null, isMandatory);
     }
+
     public static String getSecretPhrase(HttpServletRequest req, String secretPhraseParamName, boolean isMandatory) throws ParameterException {
         if (StringUtils.isBlank(secretPhraseParamName)) {
             secretPhraseParamName = "secretPhrase";
@@ -538,8 +542,6 @@ public final class HttpParameterParserUtil {
         return elGamal.elGamalDecrypt(secretPhrase);
 
     }
-
-
 
     public static byte[] getPublicKey(HttpServletRequest req) throws ParameterException {
         return getPublicKey(req, null);
@@ -556,6 +558,7 @@ public final class HttpParameterParserUtil {
     public static byte[] getPublicKey(HttpServletRequest request, String prefix, long accountId) throws ParameterException {
         return getPublicKey(request, prefix, accountId, true);
     }
+
     public static byte[] getPublicKey(HttpServletRequest req, String prefix, long accountId, boolean isMandatory) throws ParameterException {
         String secretPhraseParam = prefix == null ? "secretPhrase" : (prefix + "SecretPhrase");
         String publicKeyParam = prefix == null ? "publicKey" : (prefix + "PublicKey");
@@ -565,7 +568,7 @@ public final class HttpParameterParserUtil {
             try {
                 byte[] publicKey = Convert.parseHexString(Convert.emptyToNull(req.getParameter(publicKeyParam)));
                 if (publicKey == null) {
-                    String passphrase = Convert.emptyToNull(HttpParameterParserUtil.getPassphrase(req, passphraseParam,false));
+                    String passphrase = Convert.emptyToNull(HttpParameterParserUtil.getPassphrase(req, passphraseParam, false));
                     if (accountId == 0 || passphrase == null) {
                         if (isMandatory) {
                             throw new ParameterException(missing(secretPhraseParam, publicKeyParam, passphraseParam));
@@ -600,7 +603,6 @@ public final class HttpParameterParserUtil {
         return getPublicKey(request, null, 0, isMandatory);
     }
 
-
     public static Account getSenderAccount(HttpServletRequest req, String accountName) throws ParameterException {
         String accountParam = accountName == null ? "sender" : accountName;
         long accountId = HttpParameterParserUtil.getAccountId(req, accountParam, false);
@@ -614,9 +616,11 @@ public final class HttpParameterParserUtil {
         }
         return account;
     }
+
     public static Account getSenderAccount(HttpServletRequest req) throws ParameterException {
         return getSenderAccount(req, null);
     }
+
     public static Account getAccount(HttpServletRequest req) throws ParameterException {
         return getAccount(req, true);
     }
@@ -625,6 +629,7 @@ public final class HttpParameterParserUtil {
         long accountId = getAccountId(req, "account", isMandatory);
         return validateAccount(accountId, isMandatory);
     }
+
     private static Account validateAccount(long accountId, boolean isMandatory) throws ParameterException {
         if (accountId == 0 && !isMandatory) {
             return null;
@@ -653,6 +658,7 @@ public final class HttpParameterParserUtil {
         String secretPhrase = getStringParameter(req, "passphrase", isMandatory);
         return elGamal.elGamalDecrypt(secretPhrase);
     }
+
     public static String getPassphrase(String passphrase, boolean isMandatory) throws ParameterException {
         if (StringUtils.isBlank(passphrase) && isMandatory) {
             throw new ParameterException(missing("passphrase"));
@@ -660,7 +666,7 @@ public final class HttpParameterParserUtil {
         return elGamal.elGamalDecrypt(passphrase);
     }
 
-    public static String getPassphrase(HttpServletRequest req,String parameterName, boolean isMandatory) throws ParameterException {
+    public static String getPassphrase(HttpServletRequest req, String parameterName, boolean isMandatory) throws ParameterException {
         String secretPhrase = getStringParameter(req, parameterName, isMandatory);
         return elGamal.elGamalDecrypt(secretPhrase);
     }
@@ -723,7 +729,8 @@ public final class HttpParameterParserUtil {
             if (lastIndex < 0) {
                 lastIndex = DEFAULT_LAST_INDEX;
             }
-        } catch (NumberFormatException ignored) {}
+        } catch (NumberFormatException ignored) {
+        }
         if (!apw.checkPassword(req)) {
             int firstIndex = Math.min(getFirstIndex(req), Integer.MAX_VALUE - API.maxRecords + 1);
             lastIndex = Math.min(lastIndex, firstIndex + API.maxRecords - 1);
@@ -762,7 +769,7 @@ public final class HttpParameterParserUtil {
         long holdingId = HttpParameterParserUtil.getUnsignedLong(req, "holding", holdingType != HoldingType.APL);
         if (holdingType == HoldingType.APL && holdingId != 0) {
             throw new ParameterException(incorrect("holding",
-                    "holding id should not be specified if holdingType is " + blockchainConfig.getCoinSymbol()));
+                "holding id should not be specified if holdingType is " + blockchainConfig.getCoinSymbol()));
         }
         return holdingId;
     }
@@ -805,7 +812,7 @@ public final class HttpParameterParserUtil {
             try {
                 JSONObject json = (JSONObject) JSONValue.parseWithException(transactionJSON);
                 return Transaction.newTransactionBuilder(json);
-            } catch (AplException.ValidationException |RuntimeException | ParseException e) {
+            } catch (AplException.ValidationException | RuntimeException | ParseException e) {
                 LOG.debug(e.getMessage(), e);
                 JSONObject response = new JSONObject();
                 JSONData.putException(response, e, "Incorrect transactionJSON");
@@ -814,9 +821,9 @@ public final class HttpParameterParserUtil {
         } else {
             try {
                 byte[] bytes = Convert.parseHexString(transactionBytes);
-                JSONObject prunableAttachments = prunableAttachmentJSON == null ? null : (JSONObject)JSONValue.parseWithException(prunableAttachmentJSON);
+                JSONObject prunableAttachments = prunableAttachmentJSON == null ? null : (JSONObject) JSONValue.parseWithException(prunableAttachmentJSON);
                 return Transaction.newTransactionBuilder(bytes, prunableAttachments);
-            } catch (AplException.ValidationException |RuntimeException | ParseException e) {
+            } catch (AplException.ValidationException | RuntimeException | ParseException e) {
                 LOG.debug(e.getMessage(), e);
                 JSONObject response = new JSONObject();
                 JSONData.putException(response, e, "Incorrect transactionBytes");
@@ -1046,7 +1053,7 @@ public final class HttpParameterParserUtil {
         long accountId = 0;
         if (passphrase != null) {
             accountId = HttpParameterParserUtil.getAccountId(req, accountName, true);
-        } else if (secretPhrase != null){
+        } else if (secretPhrase != null) {
             accountId = Convert.getId(Crypto.getPublicKey(secretPhrase));
         }
         return new TwoFactorAuthParameters(accountId, passphrase, secretPhrase);
@@ -1056,24 +1063,24 @@ public final class HttpParameterParserUtil {
     public static PhasingAppendixV2 parsePhasing(HttpServletRequest req) throws ParameterException {
         int phasingTimeLockDuration = -1;
         int phasingFinishHeight = HttpParameterParserUtil.getInt(req, "phasingFinishHeight",
-                -1, blockchain.getHeight() + Constants.MAX_PHASING_DURATION + 1, true);
+            -1, blockchain.getHeight() + Constants.MAX_PHASING_DURATION + 1, true);
 
-        if(req.getParameter("phasingFinishTime") != null){
+        if (req.getParameter("phasingFinishTime") != null) {
             phasingTimeLockDuration = HttpParameterParserUtil.getInt(req, "phasingFinishTime",
-                    -1, Constants.MAX_PHASING_TIME_DURATION_SEC, false);
+                -1, Constants.MAX_PHASING_TIME_DURATION_SEC, false);
         }
 
-        if(phasingFinishHeight != -1 && phasingTimeLockDuration != -1){
+        if (phasingFinishHeight != -1 && phasingTimeLockDuration != -1) {
             throw new ParameterException(
-                    incorrect("Only one parameter should be filled 'phasingFinishHeight or phasingFinishTime'"));
+                incorrect("Only one parameter should be filled 'phasingFinishHeight or phasingFinishTime'"));
         }
 
         int phasingFinishTime = -1;
-        if(phasingTimeLockDuration == -1) {
+        if (phasingTimeLockDuration == -1) {
             phasingFinishHeight = HttpParameterParserUtil.getInt(req, "phasingFinishHeight",
-                    blockchain.getHeight() + 1,
-                    blockchain.getHeight() + Constants.MAX_PHASING_DURATION + 1,
-                    true);
+                blockchain.getHeight() + 1,
+                blockchain.getHeight() + Constants.MAX_PHASING_DURATION + 1,
+                true);
         } else {
             phasingFinishTime = timeService.getEpochTime() + phasingTimeLockDuration;
         }
@@ -1099,10 +1106,10 @@ public final class HttpParameterParserUtil {
     }
 
     public static PhasingParams parsePhasingParams(HttpServletRequest req, String parameterPrefix) throws ParameterException {
-        byte votingModel = HttpParameterParserUtil.getByte(req, parameterPrefix + "VotingModel", (byte)-1, (byte)5, true);
+        byte votingModel = HttpParameterParserUtil.getByte(req, parameterPrefix + "VotingModel", (byte) -1, (byte) 5, true);
         long quorum = HttpParameterParserUtil.getLong(req, parameterPrefix + "Quorum", 0, Long.MAX_VALUE, false);
         long minBalance = HttpParameterParserUtil.getLong(req, parameterPrefix + "MinBalance", 0, Long.MAX_VALUE, false);
-        byte minBalanceModel = HttpParameterParserUtil.getByte(req, parameterPrefix + "MinBalanceModel", (byte)0, (byte)3, false);
+        byte minBalanceModel = HttpParameterParserUtil.getByte(req, parameterPrefix + "MinBalanceModel", (byte) 0, (byte) 3, false);
         long holdingId = HttpParameterParserUtil.getUnsignedLong(req, parameterPrefix + "Holding", false);
         long[] whitelist = null;
         String[] whitelistValues = req.getParameterValues(parameterPrefix + "Whitelisted");
@@ -1122,8 +1129,6 @@ public final class HttpParameterParserUtil {
         return parse2FARequest(req, "account", true);
 
     }
-
-    private HttpParameterParserUtil() {} // never
 
     public static class PrivateTransactionsAPIData {
         private boolean encrypt;

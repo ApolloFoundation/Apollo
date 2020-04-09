@@ -25,13 +25,13 @@ public class PeerObserver {
         this.peersService = peersService;
     }
 
-    public void onAccountBalance(@Observes @AccountEvent(AccountEventType.BALANCE) Account account){
-            log.trace("Catch event {} accaount={}" ,AccountEventType.BALANCE, account);
-            peersService.getAllConnectablePeers().forEach(peer -> {
-                if (peer.getHallmark() != null && peer.getHallmark().getAccountId() == account.getId()) {
-                    peersService.notifyListeners(peer, PeersService.Event.WEIGHT);
-                }
-            });
-        }
+    public void onAccountBalance(@Observes @AccountEvent(AccountEventType.BALANCE) Account account) {
+        log.trace("Catch event {} accaount={}", AccountEventType.BALANCE, account);
+        peersService.getAllConnectablePeers().forEach(peer -> {
+            if (peer.getHallmark() != null && peer.getHallmark().getAccountId() == account.getId()) {
+                peersService.notifyListeners(peer, PeersService.Event.WEIGHT);
+            }
+        });
+    }
 
 }

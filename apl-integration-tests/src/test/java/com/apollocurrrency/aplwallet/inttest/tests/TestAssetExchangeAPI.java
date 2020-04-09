@@ -1,7 +1,7 @@
 package com.apollocurrrency.aplwallet.inttest.tests;
 
-import com.apollocurrency.aplwallet.api.dto.account.AccountAssetDTO;
 import com.apollocurrency.aplwallet.api.dto.AccountAssetOrderDTO;
+import com.apollocurrency.aplwallet.api.dto.account.AccountAssetDTO;
 import com.apollocurrency.aplwallet.api.response.AccountAssetsCountResponse;
 import com.apollocurrency.aplwallet.api.response.AccountAssetsIdsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountAssetsResponse;
@@ -241,7 +241,6 @@ public class TestAssetExchangeAPI extends TestBaseOld {
         AssetTradeResponse getAllTrades = getAllTrades();
         assertTrue(getAllTrades.getTrades().size() >= 0);
     }
-
 
 
     @DisplayName("getAskOrder + getAskOrderIds")

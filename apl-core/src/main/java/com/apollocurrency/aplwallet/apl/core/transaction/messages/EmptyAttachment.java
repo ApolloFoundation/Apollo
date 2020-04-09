@@ -3,15 +3,15 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import java.nio.ByteBuffer;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+
 /**
- *
  * @author al
  */
 public abstract class EmptyAttachment extends AbstractAttachment {
-    
+
     public EmptyAttachment() {
         super(0);
     }
@@ -33,5 +33,5 @@ public abstract class EmptyAttachment extends AbstractAttachment {
     public boolean verifyVersion() {
         return getVersion() == 0;
     }
-    
+
 }

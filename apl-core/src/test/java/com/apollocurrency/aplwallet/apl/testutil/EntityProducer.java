@@ -25,12 +25,8 @@ import java.util.UUID;
 
 public class EntityProducer {
 
-    @Produces @Named("CREATOR_ID")
-    public long getCreatorId(){ //only for tests, instead of using the GenesisImporter component.
-        return AccountTestData.CREATOR_ID;
-    }
-    public static Peer createPeer(final String host, final String announcedAddress, boolean active, final long supportServices){
-        final PeerState state = active ? PeerState.CONNECTED: PeerState.NON_CONNECTED;
+    public static Peer createPeer(final String host, final String announcedAddress, boolean active, final long supportServices) {
+        final PeerState state = active ? PeerState.CONNECTED : PeerState.NON_CONNECTED;
 
         Peer peer = new Peer() {
             @Override
@@ -70,7 +66,7 @@ public class EntityProducer {
 
             @Override
             public Version getVersion() {
-                return new Version(1,30,17);
+                return new Version(1, 30, 17);
             }
 
             @Override
@@ -252,10 +248,16 @@ public class EntityProducer {
         return peer;
     }
 
-    public static AccountAsset createAccountAsset(long accountId, long assetId, long quantityATU, long unconfirmedQuantityATU, int height){
+    public static AccountAsset createAccountAsset(long accountId, long assetId, long quantityATU, long unconfirmedQuantityATU, int height) {
         AccountAsset accountAsset = new AccountAsset(accountId, assetId, quantityATU, unconfirmedQuantityATU, height);
 
         return accountAsset;
+    }
+
+    @Produces
+    @Named("CREATOR_ID")
+    public long getCreatorId() { //only for tests, instead of using the GenesisImporter component.
+        return AccountTestData.CREATOR_ID;
     }
 
 }

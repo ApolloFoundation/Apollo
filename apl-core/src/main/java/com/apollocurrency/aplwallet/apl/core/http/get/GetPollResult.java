@@ -21,22 +21,22 @@
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
 
+import com.apollocurrency.aplwallet.apl.core.app.Poll;
 import com.apollocurrency.aplwallet.apl.core.app.PollOptionResult;
+import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Poll;
-import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
+import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.POLL_RESULTS_NOT_AVAILABLE;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public class GetPollResult extends AbstractAPIRequestHandler {
@@ -54,10 +54,10 @@ public class GetPollResult extends AbstractAPIRequestHandler {
             pollResults = poll.getResults();
             voteWeighting = poll.getVoteWeighting();
         } else {
-            byte votingModel = HttpParameterParserUtil.getByte(req, "votingModel", (byte)0, (byte)3, true);
+            byte votingModel = HttpParameterParserUtil.getByte(req, "votingModel", (byte) 0, (byte) 3, true);
             long holdingId = HttpParameterParserUtil.getLong(req, "holding", Long.MIN_VALUE, Long.MAX_VALUE, false);
             long minBalance = HttpParameterParserUtil.getLong(req, "minBalance", 0, Long.MAX_VALUE, false);
-            byte minBalanceModel = HttpParameterParserUtil.getByte(req, "minBalanceModel", (byte)0, (byte)3, false);
+            byte minBalanceModel = HttpParameterParserUtil.getByte(req, "minBalanceModel", (byte) 0, (byte) 3, false);
             voteWeighting = new VoteWeighting(votingModel, holdingId, minBalance, minBalanceModel);
             voteWeighting.validate();
             pollResults = poll.getResults(voteWeighting);

@@ -15,7 +15,7 @@ import org.json.simple.JSONObject;
 
 import java.util.Map;
 
-public class UnconfirmedTransactionConverter implements Converter<Transaction, UnconfirmedTransactionDTO>{
+public class UnconfirmedTransactionConverter implements Converter<Transaction, UnconfirmedTransactionDTO> {
     @Override
     public UnconfirmedTransactionDTO apply(Transaction model) {
         UnconfirmedTransactionDTO dto = new UnconfirmedTransactionDTO();
@@ -25,20 +25,20 @@ public class UnconfirmedTransactionConverter implements Converter<Transaction, U
         dto.setTimestamp(model.getTimestamp());
         dto.setDeadline(model.getDeadline());
         dto.setSenderPublicKey(Convert.toHexString(model.getSenderPublicKey()));
-        if(model.getRecipientId() != 0 ){
+        if (model.getRecipientId() != 0) {
             long recipientId;
-            if(model.getType() == Payment.PRIVATE){
+            if (model.getType() == Payment.PRIVATE) {
                 recipientId = AccountConverter.anonymizeAccount();
-            }else {
+            } else {
                 recipientId = model.getRecipientId();
             }
             dto.setRecipient(Long.toUnsignedString(recipientId));
             dto.setRecipientRS(Convert2.rsAccount(recipientId));
         }
         long amountATM;
-        if(model.getType() == Payment.PRIVATE){
+        if (model.getType() == Payment.PRIVATE) {
             amountATM = AccountConverter.anonymizeBalance();
-        }else{
+        } else {
             amountATM = model.getAmountATM();
         }
         dto.setAmountATM(String.valueOf(amountATM));
@@ -64,9 +64,9 @@ public class UnconfirmedTransactionConverter implements Converter<Transaction, U
             dto.setAttachment(attachmentJSON);
         }
         long senderId;
-        if(model.getType() == Payment.PRIVATE){
+        if (model.getType() == Payment.PRIVATE) {
             senderId = AccountConverter.anonymizeAccount();
-        }else {
+        } else {
             senderId = model.getSenderId();
         }
         dto.setSender(Long.toUnsignedString(senderId));

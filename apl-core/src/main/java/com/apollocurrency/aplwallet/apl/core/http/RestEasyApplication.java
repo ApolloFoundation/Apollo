@@ -30,10 +30,11 @@ import java.util.Set;
 
 /**
  * REST and Swagger configuration and fire-up
+ *
  * @author alukin@gmail.com
  */
 @ApplicationPath("/rest")
-public class RestEasyApplication extends Application  {
+public class RestEasyApplication extends Application {
 
     @Override
     public Set<Class<?>> getClasses() {

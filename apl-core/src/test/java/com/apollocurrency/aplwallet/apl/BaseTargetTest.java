@@ -20,7 +20,10 @@
 
 package com.apollocurrency.aplwallet.apl;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
+import org.slf4j.Logger;
 
 import java.math.BigInteger;
 import java.sql.Connection;
@@ -30,41 +33,37 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 //TODO: this is not a real test, just moved from apl-tools because
 // it really it belongs here. May be we'll make test from it later
 
-public  class BaseTargetTest {
+public class BaseTargetTest {
     private static final Logger LOG = getLogger(BaseTargetTest.class);
-    private static BlockchainConfig blockchainConfig;
-    private static long MIN_BASE_TARGET;
-    private static long MAX_BASE_TARGET;
-
-    private static int MIN_BLOCKTIME_LIMIT;
-    private static int MAX_BLOCKTIME_LIMIT;
-
     private static final int GAMMA = 64;
-
     private static final int START_HEIGHT = 20;
-
     private static final boolean USE_EWMA = false;
     private static final int EWMA_N = 8;
     private static final int SMA_N = 3;
     private static final int FREQUENCY = 2;
     private static final int HEIGHT = 47;
+    private static BlockchainConfig blockchainConfig;
+    private static long MIN_BASE_TARGET;
+    private static long MAX_BASE_TARGET;
+    private static int MIN_BLOCKTIME_LIMIT;
+    private static int MAX_BLOCKTIME_LIMIT;
 
     public BaseTargetTest(BlockchainConfig blockchainConfig) {
         this.blockchainConfig = blockchainConfig;
         MIN_BASE_TARGET = blockchainConfig.getCurrentConfig().getInitialBaseTarget() * 9 / 10;
-        MAX_BASE_TARGET = blockchainConfig.getCurrentConfig().getInitialBaseTarget() *  50;
+        MAX_BASE_TARGET = blockchainConfig.getCurrentConfig().getInitialBaseTarget() * 50;
         MIN_BLOCKTIME_LIMIT = blockchainConfig.getCurrentConfig().getBlockTime() - 7;
         MAX_BLOCKTIME_LIMIT = blockchainConfig.getCurrentConfig().getBlockTime() + 7;
     }
 
+    public static boolean checkHeight(int currentHeight) {
+        return currentHeight != HEIGHT;
+    }
 
     private long calculateBaseTarget(long previousBaseTarget, long blocktimeEMA) {
         long baseTarget;
@@ -73,7 +72,7 @@ public  class BaseTargetTest {
             baseTarget = (previousBaseTarget * Math.min(blocktimeEMA, MAX_BLOCKTIME_LIMIT)) / blockTime;
         } else {
             baseTarget =
-                    previousBaseTarget - previousBaseTarget * GAMMA * (blockTime - Math.max(blocktimeEMA, MIN_BLOCKTIME_LIMIT)) / (100 * blockTime);
+                previousBaseTarget - previousBaseTarget * GAMMA * (blockTime - Math.max(blocktimeEMA, MIN_BLOCKTIME_LIMIT)) / (100 * blockTime);
         }
         if (baseTarget < 0 || baseTarget > MAX_BASE_TARGET) {
             baseTarget = MAX_BASE_TARGET;
@@ -146,7 +145,7 @@ public  class BaseTargetTest {
                         continue;
                     }
 
-                    int testBlocktime = (int)((previousBaseTarget * (timestamp - previousTimestamp - 1)) / previousTestBaseTarget) + 1;
+                    int testBlocktime = (int) ((previousBaseTarget * (timestamp - previousTimestamp - 1)) / previousTestBaseTarget) + 1;
                     if (testBlocktimeEMA == 0) {
                         testBlocktimeEMA = testBlocktime;
                     } else {
@@ -215,13 +214,13 @@ public  class BaseTargetTest {
             LOG.info("Cumulative difficulty " + cumulativeDifficulty.toString());
             LOG.info("Test cumulative difficulty " + testCumulativeDifficulty.toString());
             LOG.info("Cumulative difficulty difference " + (testCumulativeDifficulty.subtract(cumulativeDifficulty))
-                    .multiply(BigInteger.valueOf(100)).divide(cumulativeDifficulty).toString());
+                .multiply(BigInteger.valueOf(100)).divide(cumulativeDifficulty).toString());
             LOG.info("Max blocktime " + maxBlocktime);
             LOG.info("Max test blocktime " + maxTestBlocktime);
             LOG.info("Min blocktime " + minBlocktime);
             LOG.info("Min test blocktime " + minTestBlocktime);
-            LOG.info("Average blocktime " + ((double)totalBlocktime) / count);
-            LOG.info("Average test blocktime " + ((double)totalTestBlocktime) / count);
+            LOG.info("Average blocktime " + ((double) totalBlocktime) / count);
+            LOG.info("Average test blocktime " + ((double) totalTestBlocktime) / count);
             LOG.info("Standard deviation of blocktime " + Math.sqrt(S / count));
             LOG.info("Standard deviation of test blocktime " + Math.sqrt(testS / count));
 
@@ -230,10 +229,6 @@ public  class BaseTargetTest {
             return PosixExitCodes.EX_GENERAL.exitCode();
         }
         return PosixExitCodes.OK.exitCode();
-    }
-
-    public static boolean checkHeight(int currentHeight) {
-        return currentHeight != HEIGHT;
     }
 
 }

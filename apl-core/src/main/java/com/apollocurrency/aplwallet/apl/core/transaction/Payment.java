@@ -15,44 +15,9 @@ import org.json.simple.JSONObject;
 import java.nio.ByteBuffer;
 
 /**
- *
  * @author al
  */
 public abstract class Payment extends TransactionType {
-
-    private Payment() {
-    }
-
-    @Override
-    public final byte getType() {
-        return TransactionType.TYPE_PAYMENT;
-    }
-
-    @Override
-    public final boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        return true;
-    }
-
-    @Override
-    public final void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        if (recipientAccount == null) {
-            lookupAccountService().addToBalanceAndUnconfirmedBalanceATM(lookupAccountService().getAccount(GenesisImporter.CREATOR_ID), getLedgerEvent(), transaction.getId(), transaction.getAmountATM());
-        }
-    }
-
-    @Override
-    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-    }
-
-    @Override
-    public final boolean canHaveRecipient() {
-        return true;
-    }
-
-    @Override
-    public final boolean isPhasingSafe() {
-        return true;
-    }
 
     public static final TransactionType ORDINARY = new Payment() {
         @Override
@@ -120,5 +85,39 @@ public abstract class Payment extends TransactionType {
             }
         }
     };
+
+    private Payment() {
+    }
+
+    @Override
+    public final byte getType() {
+        return TransactionType.TYPE_PAYMENT;
+    }
+
+    @Override
+    public final boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        return true;
+    }
+
+    @Override
+    public final void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        if (recipientAccount == null) {
+            lookupAccountService().addToBalanceAndUnconfirmedBalanceATM(lookupAccountService().getAccount(GenesisImporter.CREATOR_ID), getLedgerEvent(), transaction.getId(), transaction.getAmountATM());
+        }
+    }
+
+    @Override
+    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+    }
+
+    @Override
+    public final boolean canHaveRecipient() {
+        return true;
+    }
+
+    @Override
+    public final boolean isPhasingSafe() {
+        return true;
+    }
 
 }

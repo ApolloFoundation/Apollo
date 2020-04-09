@@ -51,9 +51,9 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 @EnableWeld
-class AccountEndpointTest extends AbstractEndpointTest{
+class AccountEndpointTest extends AbstractEndpointTest {
 
-    private static final String PASSPHRASE="123456";
+    private static final String PASSPHRASE = "123456";
 
     ElGamalEncryptor elGamal = new ElGamalEncryptor(mock(TaskDispatchManager.class));
 
@@ -66,7 +66,7 @@ class AccountEndpointTest extends AbstractEndpointTest{
         AccountController.class,
         Secured2FAInterceptor.class,
         FirstLastIndexParser.class
-        )
+    )
         .addBeans(MockBean.of(blockchain, Blockchain.class))
         .addBeans(MockBean.of(elGamal, ElGamalEncryptor.class))
         .addBeans(MockBean.of(twoFactorAuthService, TwoFactorAuthService.class, TwoFactorAuthServiceImpl.class))
@@ -88,7 +88,8 @@ class AccountEndpointTest extends AbstractEndpointTest{
         .addBeans(MockBean.of(mock(AccountStatisticsService.class), AccountStatisticsService.class))
         .build();
 
-    @Inject @Setter
+    @Inject
+    @Setter
     private AccountController endpoint;
 
     @Inject
@@ -108,29 +109,29 @@ class AccountEndpointTest extends AbstractEndpointTest{
     }
 
     @ParameterizedTest(name = "{index} url={arguments}")
-    @ValueSource(strings = {"/accounts/disable2fa","/accounts/confirm2fa","/accounts/delete-key"})
+    @ValueSource(strings = {"/accounts/disable2fa", "/accounts/confirm2fa", "/accounts/delete-key"})
     public void check2FA_withoutMandatoryParameters_thenGetError_2002(String uri) throws URISyntaxException, IOException {
         MockHttpRequest request = post(uri);
-        MockHttpResponse response = sendPostRequest(request,"wrong=value");
+        MockHttpResponse response = sendPostRequest(request, "wrong=value");
 
         checkMandatoryParameterMissingErrorCode(response, 2002);
     }
 
     @ParameterizedTest(name = "{index} url={arguments}")
-    @ValueSource(strings = {"/accounts/disable2fa","/accounts/confirm2fa"})
+    @ValueSource(strings = {"/accounts/disable2fa", "/accounts/confirm2fa"})
     public void check2FA_withBothSecretPhraseAndPassPhrase_thenGetError_2011(String uri) throws URISyntaxException, IOException {
         MockHttpRequest request = post(uri);
-        MockHttpResponse response = sendPostRequest(request,"passphrase="+PASSPHRASE+"&secretPhrase="+SECRET+"&code2FA="+CODE_2FA);
+        MockHttpResponse response = sendPostRequest(request, "passphrase=" + PASSPHRASE + "&secretPhrase=" + SECRET + "&code2FA=" + CODE_2FA);
 
         checkMandatoryParameterMissingErrorCode(response, 2011);
     }
 
     @ParameterizedTest(name = "{index} url={arguments}")
-    @ValueSource(strings = {"/accounts/disable2fa","/accounts/confirm2fa","/accounts/delete-key"})
+    @ValueSource(strings = {"/accounts/disable2fa", "/accounts/confirm2fa", "/accounts/delete-key"})
     public void check2FA_withoutMandatoryParameter_Code2FA_thenGetError_2003(String uri) throws URISyntaxException, IOException {
         doReturn(true).when(twoFactorAuthService).isEnabled(ACCOUNT_ID_WITH_SECRET);
         MockHttpRequest request = post(uri);
-        MockHttpResponse response = sendPostRequest(request,"secretPhrase="+SECRET);
+        MockHttpResponse response = sendPostRequest(request, "secretPhrase=" + SECRET);
 
         checkMandatoryParameterMissingErrorCode(response, 2003);
     }

@@ -147,11 +147,11 @@ public class AccountServiceImpl implements AccountService {
             account.setPublicKey(accountPublicKeyService.getPublicKey(AccountTable.newKey(account)));
         }
         if (account.getPublicKey() == null || account.getPublicKey().getPublicKey() == null
-                || Arrays.equals(account.getPublicKey().getPublicKey(), publicKey)) {
+            || Arrays.equals(account.getPublicKey().getPublicKey(), publicKey)) {
             return account;
         }
         throw new RuntimeException("DUPLICATE KEY for account " + Long.toUnsignedString(accountId)
-                + " existing key " + Convert.toHexString(account.getPublicKey().getPublicKey()) + " new key " + Convert.toHexString(publicKey));
+            + " existing key " + Convert.toHexString(account.getPublicKey().getPublicKey()) + " new key " + Convert.toHexString(publicKey));
     }
 
     @Override
@@ -167,21 +167,22 @@ public class AccountServiceImpl implements AccountService {
     /**
      * Create a new account. This account is not saved into the database but the public key of that one is saved.
      * This account will be saved during further operation of the balance changing. (The set of 'add to balance' operation).
-     * @param id account id
+     *
+     * @param id        account id
      * @param isGenesis true if this account is a genesis account
      * @return new account
      */
     private Account addAccount(long id, boolean isGenesis) {
-        Preconditions.checkArgument( id != 0, "Invalid accountId 0");
+        Preconditions.checkArgument(id != 0, "Invalid accountId 0");
         DbKey dbKey = AccountTable.newKey(id);
         Account account = accountTable.get(dbKey);
         if (account == null) {
             account = new Account(id, dbKey);
             PublicKey publicKey = accountPublicKeyService.getPublicKey(dbKey);
             if (publicKey == null) {
-                if(isGenesis){
+                if (isGenesis) {
                     publicKey = accountPublicKeyService.insertGenesisPublicKey(dbKey);
-                }else {
+                } else {
                     publicKey = accountPublicKeyService.insertNewPublicKey(dbKey);
                 }
             }
@@ -194,10 +195,10 @@ public class AccountServiceImpl implements AccountService {
     public void update(Account account) {
         account.setHeight(blockChainInfoService.getHeight());
         if (account.getBalanceATM() == 0
-                && account.getUnconfirmedBalanceATM() == 0
-                && account.getForgedBalanceATM() == 0
-                && account.getActiveLesseeId() == 0
-                && account.getControls().isEmpty()) {
+            && account.getUnconfirmedBalanceATM() == 0
+            && account.getForgedBalanceATM() == 0
+            && account.getActiveLesseeId() == 0
+            && account.getControls().isEmpty()) {
             accountTable.delete(account, blockChainInfoService.getHeight());
         } else {
             accountTable.insert(account);
@@ -205,17 +206,18 @@ public class AccountServiceImpl implements AccountService {
         if (log.isTraceEnabled()) {
             try {
                 log.trace("Account entities {}", accountTable.selectAllForKey(account.getId()).stream().map(this::stringAcount).limit(3).collect(Collectors.joining("-----")));
-                log.trace("Account id {} - {}",account.getId(), ThreadUtils.last5Stacktrace());
-            } catch (SQLException ignored) {}
+                log.trace("Account id {} - {}", account.getId(), ThreadUtils.last5Stacktrace());
+            } catch (SQLException ignored) {
+            }
         }
     }
 
     public String stringAcount(Account acc) {
-        return "{id=" + acc.getId() + ",balance=" + acc.getBalanceATM()+",fb=" +acc.getForgedBalanceATM() + ",uncbalance=" + acc.getUnconfirmedBalanceATM() + ",height=" + acc.getHeight() + ",dbId=" + acc.getDbId() + ",latest=" + acc.isLatest() + ",deleted=" + acc.isDeleted() + "}";
+        return "{id=" + acc.getId() + ",balance=" + acc.getBalanceATM() + ",fb=" + acc.getForgedBalanceATM() + ",uncbalance=" + acc.getUnconfirmedBalanceATM() + ",height=" + acc.getHeight() + ",dbId=" + acc.getDbId() + ",latest=" + acc.isLatest() + ",deleted=" + acc.isDeleted() + "}";
     }
 
     @Override
-    public List<Block> getAccountBlocks(long accountId, int timestamp, int from, int to){
+    public List<Block> getAccountBlocks(long accountId, int timestamp, int from, int to) {
         return toList(blockChainInfoService.getBlocks(accountId, timestamp, from, to));
     }
 
@@ -236,12 +238,12 @@ public class AccountServiceImpl implements AccountService {
             account.setPublicKey(accountPublicKeyService.getPublicKey(AccountTable.newKey(account.getId())));
         }
         if (account.getPublicKey() == null || account.getPublicKey().getPublicKey() == null || height - account.getPublicKey().getHeight() <= EFFECTIVE_BALANCE_CONFIRMATIONS) {
-            if(log.isTraceEnabled()) {
+            if (log.isTraceEnabled()) {
                 log.trace(" height '{}' - this.publicKey.getHeight() '{}' ('{}') <= EFFECTIVE_BALANCE_CONFIRMATIONS '{}'",
-                        height,
-                        account.getPublicKey()!=null?account.getPublicKey().getHeight():null,
-                        height - (account.getPublicKey()!=null?account.getPublicKey().getHeight():0),
-                        EFFECTIVE_BALANCE_CONFIRMATIONS);
+                    height,
+                    account.getPublicKey() != null ? account.getPublicKey().getHeight() : null,
+                    height - (account.getPublicKey() != null ? account.getPublicKey().getHeight() : 0),
+                    EFFECTIVE_BALANCE_CONFIRMATIONS);
             }
             return 0; // cfb: Accounts with the public key revealed less than 1440 blocks ago are not allowed to generate blocks
         }
@@ -254,8 +256,7 @@ public class AccountServiceImpl implements AccountService {
                 effectiveBalanceATM += getGuaranteedBalanceATM(account, blockchainConfig.getGuaranteedBalanceConfirmations(), height);
             }
             return effectiveBalanceATM < Constants.MIN_FORGING_BALANCE_ATM ? 0 : effectiveBalanceATM / Constants.ONE_APL;
-        }
-        finally {
+        } finally {
             if (lock) {
                 sync.readUnlock();
             }
@@ -277,22 +278,21 @@ public class AccountServiceImpl implements AccountService {
         try {
             int height = currentHeight - numberOfConfirmations;
             if (height + blockchainConfig.getGuaranteedBalanceConfirmations() < blockChainInfoService.getMinRollbackHeight()
-                    || height > blockChainInfoService.getHeight()) {
-                if(log.isDebugEnabled()) {
+                || height > blockChainInfoService.getHeight()) {
+                if (log.isDebugEnabled()) {
                     log.debug("GuaranteedBalance Restriction: if ({} < {} || {} > {}) throw ex.",
                         height + blockchainConfig.getGuaranteedBalanceConfirmations(), blockChainInfoService.getMinRollbackHeight(),
                         height, blockChainInfoService.getHeight());
                 }
                 throw new IllegalArgumentException("Height " + height +
-                        " not available for guaranteed balance calculation, blockchain.Height="+ blockChainInfoService.getHeight());
+                    " not available for guaranteed balance calculation, blockchain.Height=" + blockChainInfoService.getHeight());
             }
             Long sum = accountGuaranteedBalanceTable.getSumOfAdditions(account.getId(), height, currentHeight);
             if (sum == null) {
                 return account.getBalanceATM();
             }
             return Math.max(Math.subtractExact(account.getBalanceATM(), sum), 0);
-        }
-        finally {
+        } finally {
             sync.readUnlock();
         }
     }
@@ -302,14 +302,14 @@ public class AccountServiceImpl implements AccountService {
         List<Account> lessors = getLessors(account, height);
         long total = 0L;
         Map<Long, Long> lessorsAdditions = accountGuaranteedBalanceTable.getLessorsAdditions(
-                lessors.stream().map(Account::getId).collect(Collectors.toList()),
-                height, blockChainInfoService.getHeight());
+            lessors.stream().map(Account::getId).collect(Collectors.toList()),
+            height, blockChainInfoService.getHeight());
         for (Account lessor : lessors) {
             long balance = lessor.getBalanceATM();
             Long additions = lessorsAdditions.get(lessor.getId());
             if (additions != null) {
                 total += Math.max(balance - additions, 0);
-            }else{
+            } else {
                 total += balance;
             }
         }
@@ -350,12 +350,12 @@ public class AccountServiceImpl implements AccountService {
         LedgerEntry entry;
         if (feeATM != 0) {
             entry = new LedgerEntry(LedgerEvent.TRANSACTION_FEE, eventId, account.getId(),
-                        LedgerHolding.APL_BALANCE, null, feeATM, account.getBalanceATM() - amountATM, blockChainInfoService.getLastBlock());
+                LedgerHolding.APL_BALANCE, null, feeATM, account.getBalanceATM() - amountATM, blockChainInfoService.getLastBlock());
             logLedgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_ENTRY)).fire(entry);
         }
         if (amountATM != 0) {
             entry = new LedgerEntry(event, eventId, account.getId(),
-                        LedgerHolding.APL_BALANCE, null, amountATM, account.getBalanceATM(), blockChainInfoService.getLastBlock());
+                LedgerHolding.APL_BALANCE, null, amountATM, account.getBalanceATM(), blockChainInfoService.getLastBlock());
             logLedgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_ENTRY)).fire(entry);
         }
     }
@@ -364,19 +364,19 @@ public class AccountServiceImpl implements AccountService {
         LedgerEntry entry;
         if (feeATM != 0) {
             entry = new LedgerEntry(LedgerEvent.TRANSACTION_FEE, eventId, account.getId(),
-                        LedgerHolding.UNCONFIRMED_APL_BALANCE, null, feeATM, account.getUnconfirmedBalanceATM() - amountATM, blockChainInfoService.getLastBlock());
+                LedgerHolding.UNCONFIRMED_APL_BALANCE, null, feeATM, account.getUnconfirmedBalanceATM() - amountATM, blockChainInfoService.getLastBlock());
             logLedgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_UNCONFIRMED_ENTRY)).fire(entry);
         }
         if (amountATM != 0) {
             entry = new LedgerEntry(event, eventId, account.getId(),
-                        LedgerHolding.UNCONFIRMED_APL_BALANCE, null, amountATM, account.getUnconfirmedBalanceATM(), blockChainInfoService.getLastBlock());
+                LedgerHolding.UNCONFIRMED_APL_BALANCE, null, amountATM, account.getUnconfirmedBalanceATM(), blockChainInfoService.getLastBlock());
             logLedgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_UNCONFIRMED_ENTRY)).fire(entry);
         }
     }
 
     @Override
-    public void addToForgedBalanceATM(Account account, long amountATM){
-        if (account.addToForgedBalanceATM(amountATM)){
+    public void addToForgedBalanceATM(Account account, long amountATM) {
+        if (account.addToForgedBalanceATM(amountATM)) {
             update(account);
         }
     }
@@ -397,7 +397,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public  void addToBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM) {
+    public void addToBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM) {
         addToBalanceATM(account, event, eventId, amountATM, 0);
     }
 
@@ -483,13 +483,13 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public Balances getAccountBalances(Account account, boolean includeEffectiveBalance){
+    public Balances getAccountBalances(Account account, boolean includeEffectiveBalance) {
         return getAccountBalances(account, includeEffectiveBalance, blockChainInfoService.getHeight());
     }
 
     @Override
     public Balances getAccountBalances(Account account, boolean includeEffectiveBalance, int height) {
-        if(account == null){
+        if (account == null) {
             return null;
         }
         Balances balances = new Balances();

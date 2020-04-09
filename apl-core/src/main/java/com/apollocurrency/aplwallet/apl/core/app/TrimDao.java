@@ -6,13 +6,13 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 public class TrimDao {
@@ -35,8 +35,8 @@ public class TrimDao {
                 }
             } else {
                 try (PreparedStatement pstm = con.prepareStatement(
-                        "INSERT INTO trim (height, done) VALUES (?, ?) ",
-                        Statement.RETURN_GENERATED_KEYS
+                    "INSERT INTO trim (height, done) VALUES (?, ?) ",
+                    Statement.RETURN_GENERATED_KEYS
                 )) {
                     pstm.setInt(1, trimEntry.getHeight());
                     pstm.setBoolean(2, trimEntry.isDone());
@@ -57,9 +57,9 @@ public class TrimDao {
     }
 
     public TrimEntry get() {
-        try(Connection con = databaseManager.getDataSource().getConnection();
-        PreparedStatement pstmt = con.prepareStatement("SELECT * FROM trim");
-            ResultSet rs = pstmt.executeQuery()) {
+        try (Connection con = databaseManager.getDataSource().getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM trim");
+             ResultSet rs = pstmt.executeQuery()) {
             if (rs.next()) {
                 return new TrimEntry(rs.getLong("db_id"), rs.getInt("height"), rs.getBoolean("done"));
             } else {
@@ -71,9 +71,9 @@ public class TrimDao {
     }
 
     public void clear() {
-        try(Connection con = databaseManager.getDataSource().getConnection();
-            PreparedStatement pstmt = con.prepareStatement("DELETE FROM trim");
-            ) {
+        try (Connection con = databaseManager.getDataSource().getConnection();
+             PreparedStatement pstmt = con.prepareStatement("DELETE FROM trim");
+        ) {
             pstmt.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -81,9 +81,9 @@ public class TrimDao {
     }
 
     public int count() {
-        try(Connection con = databaseManager.getDataSource().getConnection();
-            PreparedStatement pstmt = con.prepareStatement("SELECT count(*) FROM trim");
-            ResultSet rs = pstmt.executeQuery()
+        try (Connection con = databaseManager.getDataSource().getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT count(*) FROM trim");
+             ResultSet rs = pstmt.executeQuery()
         ) {
             rs.next();
             return rs.getInt(1);

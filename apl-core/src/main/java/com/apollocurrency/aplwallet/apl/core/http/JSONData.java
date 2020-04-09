@@ -20,10 +20,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
+import com.apollocurrency.aplwallet.api.dto.BlockDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountAssetDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountCurrencyDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
-import com.apollocurrency.aplwallet.api.dto.BlockDTO;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerHolding;
 import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
@@ -35,9 +35,9 @@ import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountLeaseService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.alias.service.AliasService;
 import com.apollocurrency.aplwallet.apl.core.alias.entity.Alias;
 import com.apollocurrency.aplwallet.apl.core.alias.entity.AliasOffer;
+import com.apollocurrency.aplwallet.apl.core.alias.service.AliasService;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
@@ -116,6 +116,7 @@ import java.util.Random;
 
 @Vetoed
 public final class JSONData {
+    private static final AliasService ALIAS_SERVICE = CDI.current().select(AliasService.class).get();
     private static Logger LOG = LoggerFactory.getLogger(JSONData.class);
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
@@ -124,9 +125,9 @@ public final class JSONData {
     private static AccountLeaseService accountLeaseService = CDI.current().select(AccountLeaseService.class).get();
     private static AccountAssetService accountAssetService = CDI.current().select(AccountAssetService.class).get();
     private static DGSService dgsService = CDI.current().select(DGSService.class).get();
-    private static final AliasService ALIAS_SERVICE = CDI.current().select(AliasService.class).get();
 
-    private JSONData() {} // never
+    private JSONData() {
+    } // never
 
     public static JSONObject alias(Alias alias) {
         JSONObject json = new JSONObject();
@@ -190,7 +191,7 @@ public final class JSONData {
     public static JSONObject lessor(Account account, boolean includeEffectiveBalance) {
         JSONObject json = new JSONObject();
         AccountLease accountLease = accountLeaseService.getAccountLease(account);
-        if(accountLease != null) {
+        if (accountLease != null) {
             if (accountLease.getCurrentLesseeId() != 0) {
                 putAccount(json, "currentLessee", accountLease.getCurrentLesseeId());
                 json.put("currentHeightFrom", String.valueOf(accountLease.getCurrentLeasingHeightFrom()));
@@ -449,7 +450,7 @@ public final class JSONData {
             JSONObject accountJson = JSONData.accountBalance(account, false);
             JSONData.putAccount(accountJson, "account", account.getId());
             holders.add(accountJson);
-            });
+        });
         result.put("topHolders", holders);
         return result;
     }
@@ -802,7 +803,7 @@ public final class JSONData {
             json.put("result", String.valueOf(phasingPollResult.getResult()));
             json.put("executionHeight", phasingPollResult.getHeight());
         } else if (countVotes) {
-            json.put("result", String.valueOf( phasingPollService.countVotes(poll)));
+            json.put("result", String.valueOf(phasingPollService.countVotes(poll)));
         }
         return json;
     }
@@ -850,7 +851,7 @@ public final class JSONData {
         return json;
     }
 
-//    public static JSONObject purchase(DigitalGoodsStore.Purchase purchase) {
+    //    public static JSONObject purchase(DigitalGoodsStore.Purchase purchase) {
     public static JSONObject purchase(DGSService service, DGSPurchase purchase) {
         JSONObject json = new JSONObject();
         json.put("purchase", Long.toUnsignedString(purchase.getId()));
@@ -1230,8 +1231,7 @@ public final class JSONData {
                 if (decrypted != null) {
                     json.put("decryptedMessage", Convert.toString(decrypted, prunableMessage.encryptedMessageIsText()));
                 }
-            }
-            catch (RuntimeException e) {
+            } catch (RuntimeException e) {
                 putException(json, e, "Decryption failed");
             }
             json.put("isCompressed", prunableMessage.isCompressed());
@@ -1242,7 +1242,6 @@ public final class JSONData {
         }
         return json;
     }
-
 
 
     public static JSONObject taggedData(TaggedData taggedData, boolean includeData) {
@@ -1324,6 +1323,7 @@ public final class JSONData {
     public static void putAccount(JSONObject json, String name, long accountId) {
         putAccount(json, name, accountId, false);
     }
+
     static void putPrivateAccount(JSONObject json, String name, long accountId) {
         putAccount(json, name, accountId, true);
     }
@@ -1351,11 +1351,11 @@ public final class JSONData {
     @Deprecated
     private static void putAssetInfo(JSONObject json, long assetId) {
         Asset asset = Asset.getAsset(assetId);
-        if(asset!=null){
-          json.put("name", asset.getName());
-          json.put("decimals", asset.getDecimals());
-        }else{
-            LOG.error("Can not get Asset with id: {}",assetId);
+        if (asset != null) {
+            json.put("name", asset.getName());
+            json.put("decimals", asset.getDecimals());
+        } else {
+            LOG.error("Can not get Asset with id: {}", assetId);
         }
     }
 
@@ -1388,11 +1388,11 @@ public final class JSONData {
             if (includeHoldingInfo) {
                 JSONObject holdingJson = null;
                 if (ledgerHolding == LedgerHolding.ASSET_BALANCE
-                        || ledgerHolding == LedgerHolding.UNCONFIRMED_ASSET_BALANCE) {
+                    || ledgerHolding == LedgerHolding.UNCONFIRMED_ASSET_BALANCE) {
                     holdingJson = new JSONObject();
                     putAssetInfo(holdingJson, entry.getHoldingId());
                 } else if (ledgerHolding == LedgerHolding.CURRENCY_BALANCE
-                        || ledgerHolding == LedgerHolding.UNCONFIRMED_CURRENCY_BALANCE) {
+                    || ledgerHolding == LedgerHolding.UNCONFIRMED_CURRENCY_BALANCE) {
                     holdingJson = new JSONObject();
                     putCurrencyInfo(holdingJson, entry.getHoldingId());
                 }

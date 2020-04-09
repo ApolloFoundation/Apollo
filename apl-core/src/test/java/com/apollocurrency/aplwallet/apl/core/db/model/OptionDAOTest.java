@@ -4,15 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.model;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import javax.inject.Inject;
-import java.util.List;
-
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +14,14 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import javax.inject.Inject;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 @Slf4j
 @EnableWeld
 class OptionDAOTest {
@@ -32,8 +31,8 @@ class OptionDAOTest {
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(OptionDAO.class)
-            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-            .build();
+        .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+        .build();
 
 
     @Inject
@@ -88,7 +87,7 @@ class OptionDAOTest {
         isInserted = optionDAO.set(key1, "value2"); // put another value2
         assertTrue(isInserted);
         String value3 = optionDAO.get(key1);
-        assertEquals( "value2", value3);
+        assertEquals("value2", value3);
 
         isInserted = optionDAO.set(key1, ""); // put empty
         assertTrue(isInserted);

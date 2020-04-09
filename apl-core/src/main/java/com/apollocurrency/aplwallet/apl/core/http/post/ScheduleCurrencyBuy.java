@@ -20,17 +20,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionSchedulerService;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
@@ -51,19 +49,20 @@ import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 
 @Vetoed
 public final class ScheduleCurrencyBuy extends CreateTransaction {
     private static final Logger LOG = getLogger(ScheduleCurrencyBuy.class);
     private static TransactionValidator validator = CDI.current().select(TransactionValidator.class).get();
-
-    private final TransactionSchedulerService transactionSchedulerService = CDI.current().select(TransactionSchedulerService.class).get();
     private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
+    private final TransactionSchedulerService transactionSchedulerService = CDI.current().select(TransactionSchedulerService.class).get();
 
     public ScheduleCurrencyBuy() {
 
-        super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "rateATM", "units", "offerIssuer",
-                "transactionJSON", "transactionBytes", "prunableAttachmentJSON", "adminPassword");
+        super(new APITag[]{APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "rateATM", "units", "offerIssuer",
+            "transactionJSON", "transactionBytes", "prunableAttachmentJSON", "adminPassword");
     }
 
     @Override
@@ -87,7 +86,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                 Account account = HttpParameterParserUtil.getSenderAccount(req);
                 byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, account.getId(), false);
                 Attachment attachment = new MonetarySystemExchangeBuyAttachment(currency.getId(), rateATM, units);
-                response = (JSONObject)JSONValue.parse(JSON.toString(createTransaction(req, account, attachment)));
+                response = (JSONObject) JSONValue.parse(JSON.toString(createTransaction(req, account, attachment)));
                 if (keySeed == null || "true".equalsIgnoreCase(req.getParameter("calculateFee"))) {
                     response.put("scheduled", false);
                     return response;
@@ -100,14 +99,15 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                 response.put("transactionJSON", json);
                 try {
                     response.put("unsignedTransactionBytes", Convert.toHexString(transaction.getUnsignedBytes()));
-                } catch (AplException.NotYetEncryptedException ignore) {}
+                } catch (AplException.NotYetEncryptedException ignore) {
+                }
                 response.put("transactionBytes", Convert.toHexString(transaction.getBytes()));
                 response.put("signatureHash", json.get("signatureHash"));
                 response.put("transaction", transaction.getStringId());
                 response.put("fullHash", transaction.getFullHashString());
             }
 
-            MonetarySystemExchangeBuyAttachment attachment = (MonetarySystemExchangeBuyAttachment)transaction.getAttachment();
+            MonetarySystemExchangeBuyAttachment attachment = (MonetarySystemExchangeBuyAttachment) transaction.getAttachment();
             Filter<Transaction> filter = new ExchangeOfferFilter(offerIssuerId, attachment.getCurrencyId(), attachment.getRateATM());
 
             globalSync.updateLock();
@@ -136,7 +136,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                     response.put("scheduled", true);
                 } else {
                     return JSONResponses.error("No sell offer is currently available. Please try again when there is an open sell offer. " +
-                            "(To schedule a buy order even in the absence of a sell offer, on a node protected by admin password, please first specify the admin password in the account settings.)");
+                        "(To schedule a buy order even in the absence of a sell offer, on a node protected by admin password, please first specify the admin password in the account settings.)");
                 }
             } finally {
                 globalSync.updateUnlock();
@@ -168,11 +168,11 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
         @Override
         public boolean test(Transaction transaction) {
             if (transaction.getSenderId() != senderId
-                    || transaction.getType() != MonetarySystem.PUBLISH_EXCHANGE_OFFER
-                    || transaction.getPhasing() != null) {
+                || transaction.getType() != MonetarySystem.PUBLISH_EXCHANGE_OFFER
+                || transaction.getPhasing() != null) {
                 return false;
             }
-            MonetarySystemPublishExchangeOffer attachment = (MonetarySystemPublishExchangeOffer)transaction.getAttachment();
+            MonetarySystemPublishExchangeOffer attachment = (MonetarySystemPublishExchangeOffer) transaction.getAttachment();
             if (attachment.getCurrencyId() != currencyId || attachment.getSellRateATM() > rateATM) {
                 return false;
             }

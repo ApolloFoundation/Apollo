@@ -26,8 +26,8 @@ import java.io.InputStream;
 
 public class CountingInputStream extends FilterInputStream {
 
-    private long count;
     private final long limit;
+    private long count;
 
     public CountingInputStream(InputStream in, long limit) {
         super(in);

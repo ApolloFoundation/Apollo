@@ -21,27 +21,9 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 
 /**
- *
  * @author al
  */
 public abstract class AccountControl extends TransactionType {
-
-    private AccountControl() {
-    }
-
-    @Override
-    public final byte getType() {
-        return TransactionType.TYPE_ACCOUNT_CONTROL;
-    }
-
-    @Override
-    public final boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        return true;
-    }
-
-    @Override
-    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-    }
 
     public static final TransactionType EFFECTIVE_BALANCE_LEASING = new AccountControl() {
         @Override
@@ -185,5 +167,22 @@ public abstract class AccountControl extends TransactionType {
             return false;
         }
     };
+
+    private AccountControl() {
+    }
+
+    @Override
+    public final byte getType() {
+        return TransactionType.TYPE_ACCOUNT_CONTROL;
+    }
+
+    @Override
+    public final boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        return true;
+    }
+
+    @Override
+    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+    }
 
 }

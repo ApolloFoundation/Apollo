@@ -4,13 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import java.nio.ByteBuffer;
-
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
+
+import java.nio.ByteBuffer;
 
 /**
  *
@@ -115,7 +115,8 @@ public abstract class AbstractAppendix implements Appendix {
         loadPrunable(transaction, false);
     }
 
-    public void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {}
+    public void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
+    }
 
     public abstract boolean isPhasable();
 

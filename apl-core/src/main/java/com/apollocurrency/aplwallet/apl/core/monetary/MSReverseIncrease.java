@@ -13,15 +13,14 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystem
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 
-import java.nio.ByteBuffer;
 import javax.enterprise.inject.spi.CDI;
+import java.nio.ByteBuffer;
 
 /**
- *
  * @author al
  */
 class MSReverseIncrease extends MonetarySystem {
-    
+
     public MSReverseIncrease() {
     }
 
@@ -99,5 +98,5 @@ class MSReverseIncrease extends MonetarySystem {
     public boolean canHaveRecipient() {
         return false;
     }
-    
+
 }

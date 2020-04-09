@@ -23,14 +23,14 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.post.SetPhasingOnlyControl;
 import com.apollocurrency.aplwallet.apl.util.JSON;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 /**
@@ -51,15 +51,13 @@ import javax.servlet.http.HttpServletRequest;
  * <li>account - the account for which the phasing control is queried</li>
  * </ul>
  *
- *
  * @see SetPhasingOnlyControl
- *
  */
 @Vetoed
 public final class GetPhasingOnlyControl extends AbstractAPIRequestHandler {
 
     public GetPhasingOnlyControl() {
-        super(new APITag[] {APITag.ACCOUNT_CONTROL}, "account");
+        super(new APITag[]{APITag.ACCOUNT_CONTROL}, "account");
     }
 
     @Override

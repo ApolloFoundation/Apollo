@@ -29,7 +29,7 @@ public class PropertyStorageServiceImpl implements PropertyStorageService {
     }
 
     @PostConstruct
-    public void init(){
+    public void init() {
         validateAndCreateIfNotExist(false);
     }
 
@@ -37,7 +37,7 @@ public class PropertyStorageServiceImpl implements PropertyStorageService {
     public boolean storeProperties(Properties props) {
         validateAndCreateIfNotExist(true);
 
-        try (OutputStream output = new FileOutputStream(getTargetFile(), false) ) {
+        try (OutputStream output = new FileOutputStream(getTargetFile(), false)) {
             props.store(output, null);
         } catch (IOException e) {
             log.error("Exception writing props file = '{}'", getTargetFile().getPath(), e);
@@ -48,7 +48,7 @@ public class PropertyStorageServiceImpl implements PropertyStorageService {
 
     @Override
     public Properties loadProperties() {
-        try (InputStream inputStream = new FileInputStream(getTargetFile()) ) {
+        try (InputStream inputStream = new FileInputStream(getTargetFile())) {
             Properties properties = new Properties();
             properties.load(inputStream);
             return properties;
@@ -59,7 +59,7 @@ public class PropertyStorageServiceImpl implements PropertyStorageService {
         return null;
     }
 
-    private File getTargetFile(){
+    private File getTargetFile() {
         return Path.of(this.realConfigDir, EXPORTED_DATA_FILE_NAME).toFile(); // full target file
     }
 
@@ -87,7 +87,7 @@ public class PropertyStorageServiceImpl implements PropertyStorageService {
 
     }
 
-    public boolean isExist(){
+    public boolean isExist() {
         return getTargetFile().exists();
     }
 }

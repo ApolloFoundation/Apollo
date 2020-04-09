@@ -25,7 +25,7 @@ public class TransactionConverter implements Converter<Transaction, TransactionD
     public TransactionDTO apply(Transaction model) {
         TransactionDTO dto = new TransactionDTO(unconfirmedTransactionConverter.convert(model));
         dto.setBlock(Long.toUnsignedString(model.getBlockId()));
-        dto.setConfirmations(blockchain.getHeight()-model.getHeight());
+        dto.setConfirmations(blockchain.getHeight() - model.getHeight());
         dto.setBlockTimestamp(model.getBlockTimestamp());
         dto.setTransactionIndex(model.getIndex());
         return dto;

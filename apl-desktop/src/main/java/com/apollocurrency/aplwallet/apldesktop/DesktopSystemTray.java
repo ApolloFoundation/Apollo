@@ -41,18 +41,16 @@ import java.util.Locale;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class DesktopSystemTray {
-    private static final Logger LOG = getLogger(DesktopSystemTray.class);
-
     public static final int DELAY = 1000;
+    private static final Logger LOG = getLogger(DesktopSystemTray.class);
     //private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     //private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     //private static volatile Time.EpochTime timeService = CDI.current().select(Time.EpochTime.class).get();
-    //private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
-
-
-    private SystemTray tray;
+    //private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private final JFrame wrapper = new JFrame();
+    private final DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM, Locale.getDefault());
+    private SystemTray tray;
     private JDialog statusDialog;
     private JPanel statusPanel;
     private ImageIcon imageIcon;
@@ -60,7 +58,16 @@ public class DesktopSystemTray {
     private MenuItem openWalletInBrowser;
     private MenuItem viewLog;
     private SystemTrayDataProvider dataProvider;
-    private final DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT,DateFormat.MEDIUM, Locale.getDefault());
+
+    public static String humanReadableByteCount(long bytes) {
+        int unit = 1000;
+        if (bytes < unit) {
+            return bytes + " B";
+        }
+        int exp = (int) (Math.log(bytes) / Math.log(unit));
+        String pre = "" + ("KMGTPE").charAt(exp - 1);
+        return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre);
+    }
 
     void createAndShowGUI() {
         if (!SystemTray.isSupported()) {
@@ -145,10 +152,10 @@ public class DesktopSystemTray {
         status.addActionListener(e -> displayStatus());
 
         shutdown.addActionListener(e -> {
-            if(JOptionPane.showConfirmDialog (null,
-                    "Sure you want to shutdown " + Constants.APPLICATION + "?\n\nIf you do, this will stop forging, shufflers and account monitors.\n\n",
-                    "Shutdown",
-                    JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+            if (JOptionPane.showConfirmDialog(null,
+                "Sure you want to shutdown " + Constants.APPLICATION + "?\n\nIf you do, this will stop forging, shufflers and account monitors.\n\n",
+                "Shutdown",
+                JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
                 LOG.info("Shutdown requested by System Tray");
                 System.exit(0); // Implicitly invokes shutdown using the shutdown hook
             }
@@ -193,7 +200,7 @@ public class DesktopSystemTray {
         addDataRow(statusPanel, "Network", "Apollo default");
 
         //addDataRow(statusPanel, "Working offline", "" + propertiesHolder.isOffline());
-        addDataRow(statusPanel, "Working offline", "" + "false");        
+        addDataRow(statusPanel, "Working offline", "" + "false");
         addDataRow(statusPanel, "Wallet", String.valueOf(API.getWelcomePageUri()));
 //        addDataRow(statusPanel, "Peer port", String.valueOf(Peers.getDefaultPeerPort()));
         addDataRow(statusPanel, "Program folder", String.valueOf(Paths.get(".").toAbsolutePath().getParent()));
@@ -217,7 +224,7 @@ public class DesktopSystemTray {
 */
         addEmptyRow(statusPanel);
         addLabelRow(statusPanel, "Environment");
-//TODO: inject Peers        
+//TODO: inject Peers
 //        addDataRow(statusPanel, "Number of peers", String.valueOf(peers.getAllPeers().size()));
         addDataRow(statusPanel, "Available processors", String.valueOf(Runtime.getRuntime().availableProcessors()));
         addDataRow(statusPanel, "Max memory", humanReadableByteCount(Runtime.getRuntime().maxMemory()));
@@ -277,7 +284,7 @@ public class DesktopSystemTray {
 
     void setToolTip(final SystemTrayDataProvider dataProvider) {
         SwingUtilities.invokeLater(() -> {
-             trayIcon.setToolTip(dataProvider.getToolTip());
+            trayIcon.setToolTip(dataProvider.getToolTip());
             openWalletInBrowser.setEnabled(dataProvider.getWallet() != null && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE));
             viewLog.setEnabled(dataProvider.getWallet() != null);
             DesktopSystemTray.this.dataProvider = dataProvider;
@@ -286,16 +293,6 @@ public class DesktopSystemTray {
 
     void shutdown() {
         SwingUtilities.invokeLater(() -> tray.remove(trayIcon));
-    }
-
-    public static String humanReadableByteCount(long bytes) {
-        int unit = 1000;
-        if (bytes < unit) {
-            return bytes + " B";
-        }
-        int exp = (int) (Math.log(bytes) / Math.log(unit));
-        String pre = "" + ("KMGTPE").charAt(exp-1);
-        return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre);
     }
 
     void alert(String message) {

@@ -49,7 +49,8 @@ public class ChainsConfigLoader extends AbstractConfigLoader<Map<UUID, Chain>> {
 
     @Override
     protected Map<UUID, Chain> read(InputStream is) throws IOException {
-        List<Chain> chains = MAPPER.readValue(is, new TypeReference<List<Chain>>() {});
+        List<Chain> chains = MAPPER.readValue(is, new TypeReference<List<Chain>>() {
+        });
         return listToMap(chains);
     }
 

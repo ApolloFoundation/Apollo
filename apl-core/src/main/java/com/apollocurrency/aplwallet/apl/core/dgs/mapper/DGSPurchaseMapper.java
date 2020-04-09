@@ -40,7 +40,7 @@ public class DGSPurchaseMapper extends VersionedDerivedEntityMapper<DGSPurchase>
         long discountATM = rs.getLong("discount");
         long refundATM = rs.getLong("refund");
         boolean goodsIsText = rs.getBoolean("goods_is_text");
-        return new DGSPurchase(null, null, id, buyerId, goodsId, sellerId, quantity, priceATM,  deadline, note, timestamp, isPending, encryptedGoods, goodsIsText, refundNote, hasPublicFeedbacks, hasFeedbacks, null, null, discountATM, refundATM);
+        return new DGSPurchase(null, null, id, buyerId, goodsId, sellerId, quantity, priceATM, deadline, note, timestamp, isPending, encryptedGoods, goodsIsText, refundNote, hasPublicFeedbacks, hasFeedbacks, null, null, discountATM, refundATM);
 
     }
 }

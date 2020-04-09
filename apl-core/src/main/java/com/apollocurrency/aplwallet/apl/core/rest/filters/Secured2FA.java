@@ -13,9 +13,10 @@ import java.lang.annotation.Target;
 @NameBinding
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface  Secured2FA {
+public @interface Secured2FA {
     /**
      * Vault Account Name
+     *
      * @return the vault account name, default value is "account"
      */
     String value() default "account";

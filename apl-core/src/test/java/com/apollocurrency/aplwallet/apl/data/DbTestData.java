@@ -14,24 +14,24 @@ import java.util.UUID;
 public class DbTestData {
     private static final Random random = new Random();
     private static final DbProperties DB_PROPERTIES = new DbProperties()
-            .dbPassword("sa")
-            .dbUsername("sa")
-            .maxConnections(10)
-            .dbType("h2")
-            .chainId(UUID.fromString("b5d7b697-f359-4ce5-a619-fa34b6fb01a5"))
-            .dbParams("")
-            .loginTimeout(10)
-            .maxMemoryRows(100000)
-            .defaultLockTimeout(10 * 1000);
+        .dbPassword("sa")
+        .dbUsername("sa")
+        .maxConnections(10)
+        .dbType("h2")
+        .chainId(UUID.fromString("b5d7b697-f359-4ce5-a619-fa34b6fb01a5"))
+        .dbParams("")
+        .loginTimeout(10)
+        .maxMemoryRows(100000)
+        .defaultLockTimeout(10 * 1000);
 
     public static DbProperties getInMemDbProps() {
         return getDbUrlProps("jdbc:h2:mem:tempDb" + random.nextLong() + ";MV_STORE=TRUE;CACHE_SIZE=16000");
     }
 
     private static DbProperties getDbUrlProps(String url) {
-            DbProperties dbProperties = DB_PROPERTIES.deepCopy();
-            dbProperties.dbUrl(url);
-            return dbProperties;
+        DbProperties dbProperties = DB_PROPERTIES.deepCopy();
+        dbProperties.dbUrl(url);
+        return dbProperties;
     }
 
     public static DbProperties getDbFileProperties(String fileName) {

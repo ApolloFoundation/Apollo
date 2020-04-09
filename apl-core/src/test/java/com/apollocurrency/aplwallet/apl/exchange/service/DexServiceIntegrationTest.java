@@ -97,15 +97,6 @@ class DexServiceIntegrationTest {
 
     }
 
-    @Singleton
-    static class CacheProducer {
-        @Produces
-        private LoadingCache<Long, OrderFreezing> createCache() {
-            return CacheBuilder.newBuilder().build(CacheLoader.from(ord -> new OrderFreezing(1, true)));
-        }
-
-    }
-
     @Test
     void testTriggerPhasingForDifferentEvent() {
         Transaction phasedTx = mock(Transaction.class);
@@ -123,5 +114,14 @@ class DexServiceIntegrationTest {
         txEvent.select(TxEventType.literal(TxEventType.RELEASE_PHASED_TRANSACTION)).fire(phasedTx);
 
         verifyZeroInteractions(phasingPollService, approvedResultTable);
+    }
+
+    @Singleton
+    static class CacheProducer {
+        @Produces
+        private LoadingCache<Long, OrderFreezing> createCache() {
+            return CacheBuilder.newBuilder().build(CacheLoader.from(ord -> new OrderFreezing(1, true)));
+        }
+
     }
 }

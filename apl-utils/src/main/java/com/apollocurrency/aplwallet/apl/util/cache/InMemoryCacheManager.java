@@ -39,6 +39,13 @@ public class InMemoryCacheManager {
         allocateAllCaches(configurator);
     }
 
+    /**
+     * Return new instance of memory calculator
+     */
+    public static MemoryUsageCalculator newCalc() {
+        return new MemoryUsageCalculator().startObject();
+    }
+
     @Produces
     @CacheProducer
     public <K, V> Cache<K, V> acquireCache(InjectionPoint injectionPoint) {
@@ -58,7 +65,7 @@ public class InMemoryCacheManager {
 
     private void validateConfigurations(InMemoryCacheConfigurator cfg) {
         Preconditions.checkState(cfg.getAvailableMemory() >= MIN_MEMORY_SIZE_FOR_CACHES
-                , "The available memory is less than %s bytes.", MIN_MEMORY_SIZE_FOR_CACHES);
+            , "The available memory is less than %s bytes.", MIN_MEMORY_SIZE_FOR_CACHES);
 
         cfg.getConfiguredCaches().stream().forEach(cacheConfiguration -> {
             Preconditions.checkArgument(StringUtils.isNotEmpty(cacheConfiguration.getCacheName()), "Cache name cant be empty.");
@@ -106,13 +113,6 @@ public class InMemoryCacheManager {
             stats = cache.stats();
         }
         return stats;
-    }
-
-    /**
-     * Return new instance of memory calculator
-     */
-    public static MemoryUsageCalculator newCalc() {
-        return new MemoryUsageCalculator().startObject();
     }
 
     /**

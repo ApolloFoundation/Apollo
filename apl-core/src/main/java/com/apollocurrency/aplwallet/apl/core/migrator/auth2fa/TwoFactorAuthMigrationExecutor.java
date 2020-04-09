@@ -11,12 +11,14 @@ import com.apollocurrency.aplwallet.apl.core.migrator.Migrator;
 import com.apollocurrency.aplwallet.apl.core.migrator.MigratorUtil;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
+import javax.inject.Inject;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import javax.inject.Inject;
+
 /**
  * Provide 2fa specific components for migration
+ *
  * @see MigrationExecutor
  * @see DefaultDirectoryMigrator
  */
@@ -26,7 +28,7 @@ public class TwoFactorAuthMigrationExecutor extends MigrationExecutor {
 
     @Inject
     public TwoFactorAuthMigrationExecutor(DatabaseManager databaseManager, PropertiesHolder holder) {
-        super(holder,  databaseManager, "2fa", true);
+        super(holder, databaseManager, "2fa", true);
     }
 
     @Override

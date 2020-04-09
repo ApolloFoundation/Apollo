@@ -16,7 +16,8 @@ import java.util.Objects;
 @NoArgsConstructor
 public class BlockchainHeightValidator implements ConstraintValidator<ValidBlockchainHeight, Integer> {
 
-    @Inject @Setter
+    @Inject
+    @Setter
     private Blockchain blockchain;
 
     public BlockchainHeightValidator(Blockchain blockchain) {

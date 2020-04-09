@@ -110,11 +110,11 @@ public class TestDex extends TestBaseNew {
 
         //TODO: add assertion and getEthGasFee to include it into tests and validation on balances
         WithdrawResponse withdrawEth = dexWidthraw(TestConfiguration.getTestConfiguration().getVaultWallet().getEthAddress(),
-                TestConfiguration.getTestConfiguration().getVaultWallet(),
-                TestConfiguration.getTestConfiguration().getVaultWallet().getEthAddress(),
-                "0.5",
-                String.valueOf(averageGas),
-                true);
+            TestConfiguration.getTestConfiguration().getVaultWallet(),
+            TestConfiguration.getTestConfiguration().getVaultWallet().getEthAddress(),
+            "0.5",
+            String.valueOf(averageGas),
+            true);
         assertNotNull(withdrawEth.transactionAddress);
         //TODO: add transaction validation is accepted in ETH blockchain
         double newEthBalance = ethBalance - (21000 * 0.000000001 * averageGas);
@@ -123,11 +123,11 @@ public class TestDex extends TestBaseNew {
         //assertEquals(newEthBalance, balanceValidationEth.getEth().get(0).getBalances().getEth(), "balances are different");
 
         WithdrawResponse withdrawPax = dexWidthraw(TestConfiguration.getTestConfiguration().getVaultWallet().getEthAddress(),
-                TestConfiguration.getTestConfiguration().getVaultWallet(),
-                TestConfiguration.getTestConfiguration().getVaultWallet().getEthAddress(),
-                "100",
-                String.valueOf(fastGas),
-                false);
+            TestConfiguration.getTestConfiguration().getVaultWallet(),
+            TestConfiguration.getTestConfiguration().getVaultWallet().getEthAddress(),
+            "100",
+            String.valueOf(fastGas),
+            false);
         assertNotNull(withdrawPax.transactionAddress);
         Account2FAResponse balanceValidationPax = getDexBalances(TestConfiguration.getTestConfiguration().getVaultWallet().getEthAddress());
         //PAX balances are the same. All transaction fee is in ETH

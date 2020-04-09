@@ -15,15 +15,15 @@ public class PublicKeyCacheConfig extends CacheConfigurator {
 
     public PublicKeyCacheConfig(int priority) {
         super(PUBLIC_KEY_CACHE_NAME,
-                InMemoryCacheManager.newCalc()
-                        .addLongPrimitive() // accountId
-                        .addArrayExtra(32) //publickey byte array
-                        .addBooleanPrimitive() //latest
-                        .addLongPrimitive() //dbId
-                        .addInt() //height
-                        .addAggregation(LONG_SIZE) //dbKey object
-                        .calc(),
-                priority);
+            InMemoryCacheManager.newCalc()
+                .addLongPrimitive() // accountId
+                .addArrayExtra(32) //publickey byte array
+                .addBooleanPrimitive() //latest
+                .addLongPrimitive() //dbId
+                .addInt() //height
+                .addAggregation(LONG_SIZE) //dbKey object
+                .calc(),
+            priority);
 
         cacheBuilder().initialCapacity(16);
     }

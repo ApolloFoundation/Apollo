@@ -4,12 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -27,20 +22,18 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 
+import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.Set;
-import javax.enterprise.inject.spi.CDI;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 public class PhasingAppendix extends AbstractAppendix {
     private static final Logger LOG = getLogger(PhasingAppendix.class);
-    private static Blockchain blockchain;// = CDI.current().select(Blockchain.class).get();
-    private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
-    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-
     private static final Fee PHASING_FEE = (transaction, appendage) -> {
         long fee = 0;
-        PhasingAppendix phasing = (PhasingAppendix)appendage;
+        PhasingAppendix phasing = (PhasingAppendix) appendage;
         if (!phasing.params.getVoteWeighting().isBalanceIndependent()) {
             fee += 20 * Constants.ONE_APL;
         } else {
@@ -52,7 +45,9 @@ public class PhasingAppendix extends AbstractAppendix {
         fee += Constants.ONE_APL * phasing.linkedFullHashes.length;
         return fee;
     };
-
+    private static Blockchain blockchain;// = CDI.current().select(Blockchain.class).get();
+    private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
+    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private final int finishHeight;
     private final PhasingParams params;
     private final byte[][] linkedFullHashes;
@@ -99,7 +94,7 @@ public class PhasingAppendix extends AbstractAppendix {
         } else {
             linkedFullHashes = Convert.EMPTY_BYTES;
         }
-        String hashedSecret = Convert.emptyToNull((String)attachmentData.get("phasingHashedSecret"));
+        String hashedSecret = Convert.emptyToNull((String) attachmentData.get("phasingHashedSecret"));
         if (hashedSecret != null) {
             this.hashedSecret = Convert.parseHexString(hashedSecret);
             this.algorithm = ((Long) attachmentData.get("phasingHashedSecretAlgorithm")).byteValue();
@@ -142,7 +137,7 @@ public class PhasingAppendix extends AbstractAppendix {
         for (byte[] hash : linkedFullHashes) {
             buffer.put(hash);
         }
-        buffer.put((byte)hashedSecret.length);
+        buffer.put((byte) hashedSecret.length);
         buffer.put(hashedSecret);
         buffer.put(algorithm);
     }
@@ -171,7 +166,7 @@ public class PhasingAppendix extends AbstractAppendix {
         validateFinishHeight(this.finishHeight);
     }
 
-    public void generalValidation(Transaction transaction) throws AplException.ValidationException{
+    public void generalValidation(Transaction transaction) throws AplException.ValidationException {
         params.validate();
 
         lookupBlockchain();
@@ -193,7 +188,7 @@ public class PhasingAppendix extends AbstractAppendix {
             }
             if (params.getQuorum() > linkedFullHashes.length) {
                 throw new AplException.NotValidException("Quorum of " + params.getQuorum() + " cannot be achieved in by-transaction voting with "
-                        + linkedFullHashes.length + " linked full hashes only");
+                    + linkedFullHashes.length + " linked full hashes only");
             }
         } else {
             if (linkedFullHashes.length != 0) {
@@ -221,13 +216,13 @@ public class PhasingAppendix extends AbstractAppendix {
         }
     }
 
-    public void validateFinishHeight(Integer finishHeight) throws AplException.NotCurrentlyValidException{
+    public void validateFinishHeight(Integer finishHeight) throws AplException.NotCurrentlyValidException {
         lookupBlockchain();
         Block lastBlock = blockchain.getLastBlock();
         int currentHeight = lastBlock.getHeight();
 
         if (this.finishHeight <= currentHeight + (params.getVoteWeighting().acceptsVotes() ? 2 : 1)
-                || this.finishHeight >= currentHeight + Constants.MAX_PHASING_DURATION) {
+            || this.finishHeight >= currentHeight + Constants.MAX_PHASING_DURATION) {
             throw new AplException.NotCurrentlyValidException("Invalid finish height " + finishHeight);
         }
 
@@ -235,7 +230,7 @@ public class PhasingAppendix extends AbstractAppendix {
 
     public void validateFinishHeightAndTime(Integer height, Integer time) throws AplException.NotCurrentlyValidException {
 
-        if((this.finishHeight != -1 && time != -1) || (this.finishHeight == -1 && time == -1)){
+        if ((this.finishHeight != -1 && time != -1) || (this.finishHeight == -1 && time == -1)) {
             throw new AplException.NotCurrentlyValidException("Only one parameter should be filled 'phasingFinishHeight or phasingFinishTime'");
         }
 
@@ -246,14 +241,14 @@ public class PhasingAppendix extends AbstractAppendix {
         int currentTime = timeService.getEpochTime();
 
         if (time == -1 &&
-                (this.finishHeight <= lastBlockHeight + (params.getVoteWeighting().acceptsVotes() ? 2 : 1) ||
-                        this.finishHeight >= lastBlockHeight + Constants.MAX_PHASING_DURATION)) {
+            (this.finishHeight <= lastBlockHeight + (params.getVoteWeighting().acceptsVotes() ? 2 : 1) ||
+                this.finishHeight >= lastBlockHeight + Constants.MAX_PHASING_DURATION)) {
             throw new AplException.NotCurrentlyValidException("Invalid finish height " + height);
         }
 
 
-        if (this.finishHeight == -1 && time >= currentTime + Constants.MAX_PHASING_TIME_DURATION_SEC){
-                throw new AplException.NotCurrentlyValidException("Invalid finish time " + time);
+        if (this.finishHeight == -1 && time >= currentTime + Constants.MAX_PHASING_TIME_DURATION_SEC) {
+            throw new AplException.NotCurrentlyValidException("Invalid finish time " + time);
         }
 
     }

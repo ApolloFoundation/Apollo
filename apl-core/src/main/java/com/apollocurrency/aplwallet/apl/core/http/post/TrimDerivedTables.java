@@ -33,11 +33,12 @@ import javax.servlet.http.HttpServletRequest;
 @Vetoed
 public final class TrimDerivedTables extends AbstractAPIRequestHandler {
 
+    private TrimService trimService = CDI.current().select(TrimService.class).get();
+
     public TrimDerivedTables() {
-        super(new APITag[] {APITag.DEBUG});
+        super(new APITag[]{APITag.DEBUG});
     }
 
-    private TrimService trimService = CDI.current().select(TrimService.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) {
         JSONObject response = new JSONObject();

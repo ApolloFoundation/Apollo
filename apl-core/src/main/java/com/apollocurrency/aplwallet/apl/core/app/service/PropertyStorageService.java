@@ -1,8 +1,5 @@
 package com.apollocurrency.aplwallet.apl.core.app.service;
 
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-
-import java.util.Base64;
 import java.util.Properties;
 
 public interface PropertyStorageService {
@@ -14,6 +11,7 @@ public interface PropertyStorageService {
 
     /**
      * Save properties in to store.
+     *
      * @return true - if properties were saved successfully, otherwise returned false
      */
     boolean storeProperties(Properties props);
@@ -25,6 +23,7 @@ public interface PropertyStorageService {
 
     /**
      * Is properties store exist.
+     *
      * @return true - if properties store exist, otherwise returned false
      */
     boolean isExist();

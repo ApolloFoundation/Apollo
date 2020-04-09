@@ -14,11 +14,10 @@ import org.json.simple.JSONStreamAware;
 import javax.inject.Inject;
 
 /**
- *
  * @author alukin@gmail.com
  */
 @Slf4j
-public class GetFileDownloadInfo extends PeerRequestHandler{
+public class GetFileDownloadInfo extends PeerRequestHandler {
 
     private DownloadableFilesManager downloadableFilesManager;
 
@@ -34,8 +33,8 @@ public class GetFileDownloadInfo extends PeerRequestHandler{
         log.debug("GetFileDownloadInfo request = {}", rq);
 
         res.downloadInfo = downloadableFilesManager.getFileDownloadInfo(rq.fileId);
-        if(res.downloadInfo == null || !res.downloadInfo.fileInfo.isPresent) {
-            res.errorCode=-2;
+        if (res.downloadInfo == null || !res.downloadInfo.fileInfo.isPresent) {
+            res.errorCode = -2;
             log.debug("FileID: {} is not present", rq.fileId);
         }
         JSONObject response = mapper.convertValue(res, JSONObject.class);
@@ -45,7 +44,7 @@ public class GetFileDownloadInfo extends PeerRequestHandler{
 
     @Override
     public boolean rejectWhileDownloading() {
-       return false;
+        return false;
     }
 
 }

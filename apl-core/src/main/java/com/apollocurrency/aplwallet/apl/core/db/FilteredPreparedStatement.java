@@ -40,7 +40,7 @@ import java.util.Calendar;
 
 /**
  * Wrapper for a SQL PreparedStatement
- *
+ * <p>
  * The wrapper forwards all methods to the wrapped prepared statement
  */
 public class FilteredPreparedStatement extends FilteredStatement implements PreparedStatement {
@@ -179,22 +179,22 @@ public class FilteredPreparedStatement extends FilteredStatement implements Prep
     }
 
     @Override
-    public void setRef (int parameterIndex, Ref x) throws SQLException {
+    public void setRef(int parameterIndex, Ref x) throws SQLException {
         stmt.setRef(parameterIndex, x);
     }
 
     @Override
-    public void setBlob (int parameterIndex, Blob x) throws SQLException {
+    public void setBlob(int parameterIndex, Blob x) throws SQLException {
         stmt.setBlob(parameterIndex, x);
     }
 
     @Override
-    public void setClob (int parameterIndex, Clob x) throws SQLException {
+    public void setClob(int parameterIndex, Clob x) throws SQLException {
         stmt.setClob(parameterIndex, x);
     }
 
     @Override
-    public void setArray (int parameterIndex, Array x) throws SQLException {
+    public void setArray(int parameterIndex, Array x) throws SQLException {
         stmt.setArray(parameterIndex, x);
     }
 
@@ -219,7 +219,7 @@ public class FilteredPreparedStatement extends FilteredStatement implements Prep
     }
 
     @Override
-    public void setNull (int parameterIndex, int sqlType, String typeName) throws SQLException {
+    public void setNull(int parameterIndex, int sqlType, String typeName) throws SQLException {
         stmt.setNull(parameterIndex, sqlType, typeName);
     }
 

@@ -12,16 +12,16 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import java.nio.ByteBuffer;
-import java.util.Map;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+import java.util.Map;
+
 /**
- *
  * @author al
  */
 class MSCurrencyMinting extends MonetarySystem {
-    
+
     public MSCurrencyMinting() {
     }
 
@@ -104,5 +104,5 @@ class MSCurrencyMinting extends MonetarySystem {
     public boolean canHaveRecipient() {
         return false;
     }
-    
+
 }

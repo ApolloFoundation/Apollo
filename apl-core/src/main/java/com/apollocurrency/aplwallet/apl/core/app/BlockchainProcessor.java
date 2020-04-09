@@ -57,7 +57,7 @@ public interface BlockchainProcessor {
     void generateBlock(byte[] keySeed, int blockTimestamp, int timeout, int blockVersion) throws BlockNotAcceptedException;
 
     SortedSet<UnconfirmedTransaction> selectUnconfirmedTransactions(
-            Map<TransactionType, Map<String, Integer>> duplicates, Block previousBlock, int blockTimestamp, int limit);
+        Map<TransactionType, Map<String, Integer>> duplicates, Block previousBlock, int blockTimestamp, int limit);
 
     void scan(int height, boolean validate);
 
@@ -74,6 +74,14 @@ public interface BlockchainProcessor {
     Transaction restorePrunedTransaction(long transactionId);
 
     void waitUntilBlockchainDownloadingStops();
+
+    void suspendBlockchainDownloading();
+
+    void resumeBlockchainDownloading();
+
+    void shutdown();
+
+    void scheduleOneScan();
 
     class BlockNotAcceptedException extends AplException {
 
@@ -126,9 +134,9 @@ public interface BlockchainProcessor {
             super(message, block);
         }
 
-	}
+    }
 
-	class InvalidTransactionException extends BlockNotAcceptedException {
+    class InvalidTransactionException extends BlockNotAcceptedException {
 
         InvalidTransactionException(String message, Block block) {
             super(message, block);
@@ -142,12 +150,4 @@ public interface BlockchainProcessor {
             super(message, null);
         }
     }
-
-    void suspendBlockchainDownloading();
-
-    void resumeBlockchainDownloading();
-
-    void shutdown();
-
-    void scheduleOneScan();
 }

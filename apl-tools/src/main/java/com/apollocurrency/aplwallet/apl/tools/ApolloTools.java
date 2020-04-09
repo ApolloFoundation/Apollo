@@ -62,7 +62,6 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public class ApolloTools {
     private final static String[] VALID_LOG_LEVELS = {"ERROR", "WARN", "INFO", "DEBUG", "TRACE"};
-    private static Logger log;
     private static final CmdLineArgs args = new CmdLineArgs();
     private static final CompactDbCmd compactDb = new CompactDbCmd();
     private static final HeightMonitorCmd heightMonitorCmd = new HeightMonitorCmd();
@@ -70,44 +69,100 @@ public class ApolloTools {
     private static final SignTxCmd signtx = new SignTxCmd();
     private static final UpdaterUrlCmd urlcmd = new UpdaterUrlCmd();
     private static final ConstantsCmd constcmd = new ConstantsCmd();
-    
+    private static final List<String> SYSTEM_PROPERTY_NAMES = Arrays.asList(
+        "socksProxyHost",
+        "socksProxyPort",
+        "apl.enablePeerUPnP");
+    private static Logger log;
     private static ApolloTools toolsApp;
     private Chain activeChain;
     private Map<UUID, Chain> chains;
     private PredefinedDirLocations dirLocations;
-
     private PropertiesHolder propertiesHolder;
     private DirProvider dirProvider;
 
-    private static final List<String> SYSTEM_PROPERTY_NAMES = Arrays.asList(
-            "socksProxyHost",
-            "socksProxyPort",
-            "apl.enablePeerUPnP");
-
     private static void setLogLevel(int logLevel) {
         String packageName = "com.apollocurrency.aplwallet.apl";
-        if (logLevel > VALID_LOG_LEVELS.length - 1 || logLevel<0) {
+        if (logLevel > VALID_LOG_LEVELS.length - 1 || logLevel < 0) {
             logLevel = VALID_LOG_LEVELS.length - 1;
         }
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
 
         ch.qos.logback.classic.Logger logger = loggerContext.getLogger(packageName);
         System.out.println(packageName + " current logger level: " + logger.getLevel()
-                + " New level: " + VALID_LOG_LEVELS[logLevel]);
+            + " New level: " + VALID_LOG_LEVELS[logLevel]);
 
         logger.setLevel(Level.toLevel(VALID_LOG_LEVELS[logLevel]));
     }
 
     public static PredefinedDirLocations merge(CmdLineArgs args, EnvironmentVariables vars) {
         return new PredefinedDirLocations(
-                StringUtils.isBlank(args.dbDir) ? vars.dbDir : args.dbDir,
-                StringUtils.isBlank(args.logDir) ? vars.logDir : args.logDir,
-                StringUtils.isBlank(args.vaultKeystoreDir) ? vars.vaultKeystoreDir : args.vaultKeystoreDir,
-                "",
-                "",
-                "",
-                StringUtils.isBlank(args.dexKeystoreDir) ? vars.dexKeystoreDir : args.dexKeystoreDir
+            StringUtils.isBlank(args.dbDir) ? vars.dbDir : args.dbDir,
+            StringUtils.isBlank(args.logDir) ? vars.logDir : args.logDir,
+            StringUtils.isBlank(args.vaultKeystoreDir) ? vars.vaultKeystoreDir : args.vaultKeystoreDir,
+            "",
+            "",
+            "",
+            StringUtils.isBlank(args.dexKeystoreDir) ? vars.dexKeystoreDir : args.dexKeystoreDir
         );
+    }
+
+    public static String join(Collection collection, String delimiter) {
+        String res = collection.stream()
+            .map(Object::toString)
+            .collect(Collectors.joining(delimiter)).toString();
+        return res;
+    }
+
+    public static String readFile(String path) throws IOException {
+        String res = new String(Files.readAllBytes(Paths.get(path)));
+        return res;
+    }
+
+    public static void main(String[] argv) {
+        log = getLogger(ApolloTools.class);
+        toolsApp = new ApolloTools();
+        JCommander jc = JCommander.newBuilder()
+            .addObject(args)
+            .addCommand(CompactDbCmd.CMD, compactDb)
+            .addCommand(HeightMonitorCmd.CMD, heightMonitorCmd)
+            .addCommand(PubKeyCmd.CMD, pubkey)
+            .addCommand(SignTxCmd.CMD, signtx)
+            .addCommand(UpdaterUrlCmd.CMD, urlcmd)
+            .addCommand(ConstantsCmd.CMD, constcmd)
+            .build();
+        jc.setProgramName("apl-tools");
+        try {
+            jc.parse(argv);
+        } catch (RuntimeException ex) {
+            System.err.println("Error parsing command line arguments.");
+            System.err.println(ex.getMessage());
+            jc.usage();
+            System.exit(PosixExitCodes.EX_USAGE.exitCode());
+        }
+        if (args.help || argv.length == 0) {
+            jc.usage();
+            System.exit(PosixExitCodes.OK.exitCode());
+        }
+        setLogLevel(args.debug);
+        if (jc.getParsedCommand() == null) {
+            jc.usage();
+            System.exit(PosixExitCodes.OK.exitCode());
+        } else if (jc.getParsedCommand().equalsIgnoreCase(CompactDbCmd.CMD)) {
+            toolsApp.readConfigs(args.testnetIdx);
+            System.exit(toolsApp.compactDB());
+        } else if (jc.getParsedCommand().equalsIgnoreCase(HeightMonitorCmd.CMD)) {
+            toolsApp.heightMonitor();
+        } else if (jc.getParsedCommand().equalsIgnoreCase(PubKeyCmd.CMD)) {
+            System.exit(toolsApp.pubkey());
+        } else if (jc.getParsedCommand().equalsIgnoreCase(SignTxCmd.CMD)) {
+            System.exit(toolsApp.signtx());
+        } else if (jc.getParsedCommand().equalsIgnoreCase(UpdaterUrlCmd.CMD)) {
+            System.exit(toolsApp.updaterUrlOp());
+        } else if (jc.getParsedCommand().equalsIgnoreCase(ConstantsCmd.CMD)) {
+            System.exit(ConstantsExporter.export(constcmd.outfile));
+        }
+
     }
 
     private void readConfigs(int netIdx) {
@@ -117,15 +172,15 @@ public class ApolloTools {
         ConfigDirProvider configDirProvider = ConfigDirProviderFactory.getConfigDirProvider();
 
         PropertiesConfigLoader propertiesLoader = new PropertiesConfigLoader(
-                configDirProvider,
-                args.isResourceIgnored(),
-                StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir,
-                SYSTEM_PROPERTY_NAMES);
+            configDirProvider,
+            args.isResourceIgnored(),
+            StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir,
+            SYSTEM_PROPERTY_NAMES);
 
         ChainsConfigLoader chainsConfigLoader = new ChainsConfigLoader(
-                configDirProvider,
-                args.isResourceIgnored(),
-                StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir);
+            configDirProvider,
+            args.isResourceIgnored(),
+            StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir);
         chains = chainsConfigLoader.load();
         activeChain = ChainUtils.getActiveChain(chains);
         // dirProvider = createDirProvider(chains, merge(args, envVars), chainsConfigLoader.);
@@ -137,25 +192,13 @@ public class ApolloTools {
         RuntimeEnvironment.getInstance().setDirProvider(dirProvider);
     }
 
-    public static String join(Collection collection, String delimiter) {
-        String res = collection.stream()
-                .map(Object::toString)
-                .collect(Collectors.joining(delimiter)).toString();
-        return res;
-    }
-
-    public static String readFile(String path) throws IOException {
-        String res = new String(Files.readAllBytes(Paths.get(path)));
-        return res;
-    }
-
     private int compactDB() {
         if (!compactDb.chainID.isEmpty()) {
             try {
                 UUID blockchainId = UUID.fromString(compactDb.chainID);
                 Chain c = chains.get(blockchainId);
-                if(c==null){
-                    System.out.println("Chain not coonfigured: "+compactDb.chainID);
+                if (c == null) {
+                    System.out.println("Chain not coonfigured: " + compactDb.chainID);
                     return PosixExitCodes.EX_CONFIG.exitCode();
                 }
                 DirProviderFactory.setup(false, blockchainId, Constants.APPLICATION_DIR_NAME, dirLocations);
@@ -166,7 +209,7 @@ public class ApolloTools {
             }
         }
         CompactDatabase cdb = new CompactDatabase(propertiesHolder, dirProvider);
-        
+
         return cdb.compactDatabase();
 
     }
@@ -181,8 +224,7 @@ public class ApolloTools {
             HeightMonitorConfig config = new HeightMonitorConfig(peersConfig, heightMonitorCmd.intervals, heightMonitorCmd.port);
             hm.start(config);
             return 0;
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
@@ -220,52 +262,5 @@ public class ApolloTools {
             res = UpdaterUrlUtils.decrypt(urlcmd.keyfile, input, !urlcmd.useHex);
         }
         return res;
-    }
-
-
-    public static void main(String[] argv) {
-        log = getLogger(ApolloTools.class);
-        toolsApp = new ApolloTools();
-        JCommander jc = JCommander.newBuilder()
-                .addObject(args)
-                .addCommand(CompactDbCmd.CMD, compactDb)
-                .addCommand(HeightMonitorCmd.CMD, heightMonitorCmd)
-                .addCommand(PubKeyCmd.CMD, pubkey)
-                .addCommand(SignTxCmd.CMD, signtx)
-                .addCommand(UpdaterUrlCmd.CMD, urlcmd)
-                .addCommand(ConstantsCmd.CMD, constcmd)
-                .build();
-        jc.setProgramName("apl-tools");
-        try {
-            jc.parse(argv);
-        } catch (RuntimeException ex) {
-            System.err.println("Error parsing command line arguments.");
-            System.err.println(ex.getMessage());
-            jc.usage();
-            System.exit(PosixExitCodes.EX_USAGE.exitCode());
-        }
-        if (args.help || argv.length == 0) {
-            jc.usage();
-            System.exit(PosixExitCodes.OK.exitCode());
-        }
-        setLogLevel(args.debug);
-        if (jc.getParsedCommand() == null) {
-            jc.usage();
-            System.exit(PosixExitCodes.OK.exitCode());
-        } else if (jc.getParsedCommand().equalsIgnoreCase(CompactDbCmd.CMD)) {
-            toolsApp.readConfigs(args.testnetIdx);
-            System.exit(toolsApp.compactDB());
-        } else if (jc.getParsedCommand().equalsIgnoreCase(HeightMonitorCmd.CMD)) {
-            toolsApp.heightMonitor();
-        } else if (jc.getParsedCommand().equalsIgnoreCase(PubKeyCmd.CMD)) {
-            System.exit(toolsApp.pubkey());
-        } else if (jc.getParsedCommand().equalsIgnoreCase(SignTxCmd.CMD)) {
-            System.exit(toolsApp.signtx());
-        } else if (jc.getParsedCommand().equalsIgnoreCase(UpdaterUrlCmd.CMD)) {
-            System.exit(toolsApp.updaterUrlOp());
-        } else if (jc.getParsedCommand().equalsIgnoreCase(ConstantsCmd.CMD)) {
-            System.exit(ConstantsExporter.export(constcmd.outfile));
-        }
-
     }
 }
