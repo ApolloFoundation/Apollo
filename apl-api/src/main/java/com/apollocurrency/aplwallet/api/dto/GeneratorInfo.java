@@ -12,13 +12,6 @@ public class GeneratorInfo {
     private Long hitTime;
     private BasicAccount account;
 
-    public GeneratorInfo(Long effectiveBalanceAPL, Long deadline, String account, Long hitTime) {
-        this.effectiveBalanceAPL = effectiveBalanceAPL;
-        this.deadline = deadline;
-        this.account = new BasicAccount(account);
-        this.hitTime = hitTime;
-    }
-
     public GeneratorInfo() {
     }
 
@@ -69,7 +62,7 @@ public class GeneratorInfo {
         return account;
     }
 
-    public void setAccount(String account) {
+    public void setAccount(long account) {
         this.account = new BasicAccount(account);
     }
 

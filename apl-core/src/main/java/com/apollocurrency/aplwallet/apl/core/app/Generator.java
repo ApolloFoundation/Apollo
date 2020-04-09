@@ -31,6 +31,7 @@ import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
+import lombok.Getter;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.spi.CDI;
@@ -305,6 +306,7 @@ public final class Generator implements Comparable<Generator> {
     private final byte[] publicKey;
     private volatile long hitTime;
     private volatile BigInteger hit;
+    @Getter
     private volatile BigInteger effectiveBalance;
     private volatile long deadline;
 

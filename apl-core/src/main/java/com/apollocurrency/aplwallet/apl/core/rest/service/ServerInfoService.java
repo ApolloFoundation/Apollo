@@ -55,7 +55,6 @@ import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
@@ -135,12 +134,15 @@ public class ServerInfoService {
         List<Generator> forgers = Generator.getSortedForgers();
         for (Generator g : forgers) {
             GeneratorInfo gi = new GeneratorInfo();
-            gi.setAccount(Convert.defaultRsAccount(g.getAccountId()));
+            gi.setAccount(g.getAccountId());
             gi.setDeadline(g.getDeadline());
             gi.setHitTime(g.getHitTime());
             if (showBallances) {
+                gi.setEffectiveBalanceAPL(g.getEffectiveBalance().longValue());
+            } else {
                 gi.setEffectiveBalanceAPL(0L);
             }
+            res.add(gi);
         }
         return res;
     }
