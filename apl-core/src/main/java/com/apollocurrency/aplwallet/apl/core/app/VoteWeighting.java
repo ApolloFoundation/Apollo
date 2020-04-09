@@ -327,4 +327,14 @@ public final class VoteWeighting {
         return hashCode;
     }
 
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("VoteWeighting{");
+        sb.append("votingModel=").append(votingModel);
+        sb.append(", holdingId=").append(holdingId);
+        sb.append(", minBalance=").append(minBalance);
+        sb.append(", minBalanceModel=").append(minBalanceModel);
+        sb.append('}');
+        return sb.toString();
+    }
 }
