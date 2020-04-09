@@ -44,20 +44,24 @@ public class AbstractEndpointTest {
     public static final long ACCOUNT_ID_WITH_SECRET = -3831750337430207973L;
 
     static ObjectMapper mapper = new ObjectMapper();
-    Dispatcher dispatcher;
 
-    Blockchain blockchain = mock(Blockchain.class);
-    ValidatorFactory validatorFactory = Validation.byDefaultProvider()
-        .configure()
-        .constraintValidatorFactory( new CustomValidatorFactory(
-                       Map.of( BlockchainHeightValidator.class, new BlockchainHeightValidator(blockchain) )) )
-        .buildValidatorFactory();
-    Validator validator = validatorFactory.getValidator();
-
-    static{
+    static {
         BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
         doReturn("APL").when(blockchainConfig).getAccountPrefix();
         Convert2.init(blockchainConfig);
+    }
+
+    Dispatcher dispatcher;
+    Blockchain blockchain = mock(Blockchain.class);
+    ValidatorFactory validatorFactory = Validation.byDefaultProvider()
+        .configure()
+        .constraintValidatorFactory(new CustomValidatorFactory(
+            Map.of(BlockchainHeightValidator.class, new BlockchainHeightValidator(blockchain))))
+        .buildValidatorFactory();
+    Validator validator = validatorFactory.getValidator();
+
+    public static void print(String format, Object... args) {
+        log.trace(format, args);
     }
 
     void setUp() {
@@ -78,7 +82,7 @@ public class AbstractEndpointTest {
         String content = response.getContentAsString();
         print(content);
         Map result = mapper.readValue(content, Map.class);
-        assertTrue(result.containsKey("newErrorCode"),"Missing expected field [newErrorCode], it's an issue.");
+        assertTrue(result.containsKey("newErrorCode"), "Missing expected field [newErrorCode], it's an issue.");
         assertEquals(expectedErrorCode, result.get("newErrorCode"));
     }
 
@@ -93,12 +97,12 @@ public class AbstractEndpointTest {
         return sendHttpRequest(request, response);
     }
 
-    MockHttpResponse sendPostRequest(String uri, String body) throws URISyntaxException{
+    MockHttpResponse sendPostRequest(String uri, String body) throws URISyntaxException {
         MockHttpRequest request = post(uri);
         return sendPostRequest(request, body);
     }
 
-    MockHttpResponse sendPostRequest(MockHttpRequest request, String body) throws URISyntaxException{
+    MockHttpResponse sendPostRequest(MockHttpRequest request, String body) throws URISyntaxException {
 //        request.accept(MediaType.TEXT_HTML);
         request.contentType(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
         request.setAttribute(Validator.class.getName(), validator);
@@ -114,10 +118,6 @@ public class AbstractEndpointTest {
     MockHttpResponse sendHttpRequest(MockHttpRequest request, MockHttpResponse response) {
         dispatcher.invoke(request, response);
         return response;
-    }
-
-    public static void print(String format, Object... args){
-        log.trace(format, args);
     }
 
 }

@@ -9,15 +9,15 @@ import com.apollocurrency.aplwallet.apl.core.app.Order;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderCancellation;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import java.nio.ByteBuffer;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+
 /**
- *
  * @author al
  */
 class CCBidOrderCancellation extends ColoredCoinsOrderCancellation {
-    
+
     public CCBidOrderCancellation() {
     }
 
@@ -67,5 +67,5 @@ class CCBidOrderCancellation extends ColoredCoinsOrderCancellation {
             throw new AplException.NotValidException("Order " + Long.toUnsignedString(attachment.getOrderId()) + " was created by account " + Long.toUnsignedString(bid.getAccountId()));
         }
     }
-    
+
 }

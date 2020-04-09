@@ -22,6 +22,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.doReturn;
+
 @ExtendWith(MockitoExtension.class)
 public class UserErrorMessageControllerTest {
     private static ObjectMapper mapper = new ObjectMapper();
@@ -31,7 +32,7 @@ public class UserErrorMessageControllerTest {
     private UserErrorMessageTestData td;
 
     @BeforeEach
-    void setup(){
+    void setup() {
         dispatcher = MockDispatcherFactory.createDispatcher();
         UserErrorMessageController controller = new UserErrorMessageController(service);
         dispatcher.getRegistry().addSingletonResource(controller);
@@ -50,7 +51,8 @@ public class UserErrorMessageControllerTest {
         assertEquals(200, response.getStatus());
 
         String errorJson = response.getContentAsString();
-        List<UserErrorMessage> responseErrors = mapper.readValue(errorJson, new TypeReference<List<UserErrorMessage>>(){});
+        List<UserErrorMessage> responseErrors = mapper.readValue(errorJson, new TypeReference<List<UserErrorMessage>>() {
+        });
         assertEquals(errors, responseErrors);
     }
 
@@ -67,7 +69,8 @@ public class UserErrorMessageControllerTest {
         assertEquals(200, response.getStatus());
 
         String errorJson = response.getContentAsString();
-        List<UserErrorMessage> responseErrors = mapper.readValue(errorJson, new TypeReference<List<UserErrorMessage>>(){});
+        List<UserErrorMessage> responseErrors = mapper.readValue(errorJson, new TypeReference<List<UserErrorMessage>>() {
+        });
         assertEquals(errors, responseErrors);
     }
 
@@ -83,7 +86,8 @@ public class UserErrorMessageControllerTest {
         assertEquals(200, response.getStatus());
 
         String errorJson = response.getContentAsString();
-        List<UserErrorMessage> responseErrors = mapper.readValue(errorJson, new TypeReference<List<UserErrorMessage>>(){});
+        List<UserErrorMessage> responseErrors = mapper.readValue(errorJson, new TypeReference<List<UserErrorMessage>>() {
+        });
         assertEquals(errors, responseErrors);
     }
 
@@ -99,7 +103,8 @@ public class UserErrorMessageControllerTest {
         assertEquals(200, response.getStatus());
 
         String errorJson = response.getContentAsString();
-        List<UserErrorMessage> responseErrors = mapper.readValue(errorJson, new TypeReference<List<UserErrorMessage>>(){});
+        List<UserErrorMessage> responseErrors = mapper.readValue(errorJson, new TypeReference<List<UserErrorMessage>>() {
+        });
         assertEquals(errors, responseErrors);
     }
 
@@ -115,7 +120,8 @@ public class UserErrorMessageControllerTest {
         assertEquals(200, response.getStatus());
 
         String errorJson = response.getContentAsString();
-        List<UserErrorMessage> responseErrors = mapper.readValue(errorJson, new TypeReference<List<UserErrorMessage>>(){});
+        List<UserErrorMessage> responseErrors = mapper.readValue(errorJson, new TypeReference<List<UserErrorMessage>>() {
+        });
         assertEquals(errors, responseErrors);
     }
 

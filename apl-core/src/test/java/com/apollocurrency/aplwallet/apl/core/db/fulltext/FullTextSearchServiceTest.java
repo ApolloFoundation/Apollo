@@ -41,38 +41,35 @@ import static org.mockito.Mockito.mock;
 class FullTextSearchServiceTest {
 
     @RegisterExtension
-    DbExtension extension = new DbExtension(Map.of("currency", List.of("code","name", "description"), "tagged_data", List.of("name","description","tags")));
+    DbExtension extension = new DbExtension(Map.of("currency", List.of("code", "name", "description"), "tagged_data", List.of("name", "description", "tags")));
+    @Inject
+    FullTextSearchService ftl;
     private NtpTime time = mock(NtpTime.class);
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
-            TaggedDataServiceImpl.class,
-            GlobalSyncImpl.class,
-            TaggedDataDao.class,
-            DataTagDao.class,
-            KeyFactoryProducer.class,
-            TaggedDataTimestampDao.class,
-            TaggedDataExtendDao.class,
-            FullTextConfigImpl.class,
-            DerivedDbTablesRegistryImpl.class,
-            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
-            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
-            .addBeans(MockBean.of(time, NtpTime.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
-            .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
-            .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
-            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
-            .build();
+        PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
+        TaggedDataServiceImpl.class,
+        GlobalSyncImpl.class,
+        TaggedDataDao.class,
+        DataTagDao.class,
+        KeyFactoryProducer.class,
+        TaggedDataTimestampDao.class,
+        TaggedDataExtendDao.class,
+        FullTextConfigImpl.class,
+        DerivedDbTablesRegistryImpl.class,
+        TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
+        .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+        .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
+        .addBeans(MockBean.of(time, NtpTime.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
+        .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
+        .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
+        .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
+        .build();
 
-    @Inject
-    FullTextSearchService ftl;
-
-    public FullTextSearchServiceTest() throws IOException {}
-
-
-
+    public FullTextSearchServiceTest() throws IOException {
+    }
 
 
     @Test

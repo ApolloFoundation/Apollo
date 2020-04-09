@@ -16,6 +16,7 @@ public interface DataMigrateOperation {
 
     /**
      * Execute sharding operations
+     *
      * @return migration result state enum value
      */
     MigrateState execute();

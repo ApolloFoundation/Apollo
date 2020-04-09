@@ -19,10 +19,10 @@ import com.apollocurrency.aplwallet.apl.updater.core.UpdaterFactory;
 import com.apollocurrency.aplwallet.apl.updater.export.event.UpdateEventData;
 import com.apollocurrency.aplwallet.apl.updater.pdu.PlatformDependentUpdater;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterService;
-import com.apollocurrency.aplwallet.apl.util.env.Architecture;
 import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
-import com.apollocurrency.aplwallet.apl.util.env.Platform;
 import com.apollocurrency.aplwallet.apl.util.Version;
+import com.apollocurrency.aplwallet.apl.util.env.Architecture;
+import com.apollocurrency.aplwallet.apl.util.env.Platform;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,8 +53,10 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class UpdaterCoreTest {
 
+    private final String decryptedUrl = "http://apollocurrency/ApolloWallet.jar";
+    @Mock
+    UpdaterMediator updaterMediator;
     private UpdateAttachment attachment;
-
     @Mock
     private PropertiesHolder propertiesHolder;
     @Mock
@@ -68,22 +70,18 @@ public class UpdaterCoreTest {
     @Mock
     private UpdateTransactionVerifier transactionVerifier;
     @Mock
-    UpdaterMediator updaterMediator;
-    @Mock
     private Event<UpdateEventData> startUpdateEvent;
-
-    private final String decryptedUrl = "http://apollocurrency/ApolloWallet.jar";
 
     @BeforeEach
     public void setUp() throws Exception {
         doReturn(new TransactionalDataSource(new DbProperties(), propertiesHolder)).when(updaterMediator).getDataSource();
         attachment = UpdateAttachment.getAttachment(
-                Platform.current(),
-                Architecture.current(),
-                new DoubleByteArrayTuple(new byte[0], new byte[0]),
-                new Version("1.0.8"),
-                new byte[0],
-                (byte) 0);
+            Platform.current(),
+            Architecture.current(),
+            new DoubleByteArrayTuple(new byte[0], new byte[0]),
+            new Version("1.0.8"),
+            new byte[0],
+            (byte) 0);
 
     }
 
@@ -227,7 +225,7 @@ public class UpdaterCoreTest {
         UpdateData updateData = new UpdateData(attachment, mockTransaction.getId(), decryptedUrl);
         UpdateInfo updateInfo = new UpdateInfo();
         UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance,
-                transactionVerifier, updateInfo, startUpdateEvent);
+            transactionVerifier, updateInfo, startUpdateEvent);
         doReturn(new UpdateTransaction(mockTransaction.getId(), false)).when(updaterService).getLast();
         doReturn(updateData).when(transactionVerifier).process(mockTransaction);
         UpdaterCore spy = spy(updaterCore);
@@ -248,7 +246,7 @@ public class UpdaterCoreTest {
         Random random = new Random();
         for (int i = 0; i < numberOfTransactions; i++) {
             Transaction transaction = new SimpleTransaction(random.nextLong(), TransactionType.findTransactionType((byte) random.nextInt(8),
-                    (byte) 0));
+                (byte) 0));
             transactions.add(transaction);
         }
         return transactions;

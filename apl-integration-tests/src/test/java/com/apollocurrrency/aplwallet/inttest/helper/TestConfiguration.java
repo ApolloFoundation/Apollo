@@ -18,8 +18,8 @@ import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.mapper;
 
 
 public class TestConfiguration {
-    private JSONParser parser;
     private static TestConfiguration testConfig;
+    private JSONParser parser;
     private String host;
     private String port;
     private Wallet standartWallet;
@@ -103,6 +103,7 @@ public class TestConfiguration {
         });
         return this.peers;
     }
+
     public Wallet getGenesisWallet() {
         return genesisWallet;
     }

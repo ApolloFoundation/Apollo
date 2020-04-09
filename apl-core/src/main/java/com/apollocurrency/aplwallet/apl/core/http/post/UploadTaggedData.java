@@ -34,8 +34,8 @@ import javax.servlet.http.HttpServletRequest;
 public final class UploadTaggedData extends CreateTransaction {
 
     public UploadTaggedData() {
-        super("file", new APITag[] {APITag.DATA, APITag.CREATE_TRANSACTION},
-                "name", "description", "tags", "type", "channel", "isText", "filename", "data");
+        super("file", new APITag[]{APITag.DATA, APITag.CREATE_TRANSACTION},
+            "name", "description", "tags", "type", "channel", "isText", "filename", "data");
     }
 
     @Override

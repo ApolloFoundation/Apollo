@@ -20,27 +20,27 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class GetBuyOffers extends AbstractAPIRequestHandler {
 
     public GetBuyOffers() {
-        super(new APITag[] {APITag.MS}, "currency", "account", "availableOnly", "firstIndex", "lastIndex");
+        super(new APITag[]{APITag.MS}, "currency", "account", "availableOnly", "firstIndex", "lastIndex");
     }
 
     @Override
@@ -60,7 +60,7 @@ public final class GetBuyOffers extends AbstractAPIRequestHandler {
         JSONArray offerData = new JSONArray();
         response.put("offers", offerData);
 
-        DbIterator<CurrencyBuyOffer> offers= null;
+        DbIterator<CurrencyBuyOffer> offers = null;
         try {
             if (accountId == 0) {
                 offers = CurrencyBuyOffer.getCurrencyOffers(currencyId, availableOnly, firstIndex, lastIndex);

@@ -54,22 +54,22 @@ class TaggedDataTimestampDaoTest {
     DbExtension extension = new DbExtension();
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
-            GlobalSyncImpl.class,
-            TaggedDataTimestampDao.class,
-            FullTextConfigImpl.class,
-            DerivedDbTablesRegistryImpl.class,
-            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
-            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
-            .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
-            .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
-            .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
-            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
-            .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
-            .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
-            .build();
+        PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
+        GlobalSyncImpl.class,
+        TaggedDataTimestampDao.class,
+        FullTextConfigImpl.class,
+        DerivedDbTablesRegistryImpl.class,
+        TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
+        .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
+        .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
+        .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
+        .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
+        .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
+        .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
+        .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
+        .build();
 
     @Inject
     TaggedDataTimestampDao dataTimestampDao;
@@ -107,7 +107,7 @@ class TaggedDataTimestampDaoTest {
 
     @Test
     void testTruncate() throws SQLException {
-        DbUtils.inTransaction(extension, (con)-> dataTimestampDao.truncate());
+        DbUtils.inTransaction(extension, (con) -> dataTimestampDao.truncate());
         assertTrue(dataTimestampDao.getAllByDbId(0, 100, Long.MAX_VALUE).getValues().isEmpty(), "Table should not have any entries after truncating");
     }
 
@@ -115,7 +115,7 @@ class TaggedDataTimestampDaoTest {
     void testRollback() throws SQLException {
         DbUtils.inTransaction(extension, (con) -> dataTimestampDao.rollback(tagtd.TagDTsmp_1.getHeight()));
         assertEquals(List.of(tagtd.TagDTsmp_1),
-                dataTimestampDao.getAllByDbId(0, 100, Long.MAX_VALUE).getValues());
+            dataTimestampDao.getAllByDbId(0, 100, Long.MAX_VALUE).getValues());
     }
 
 }

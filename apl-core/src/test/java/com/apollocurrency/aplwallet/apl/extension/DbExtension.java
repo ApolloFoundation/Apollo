@@ -4,15 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.extension;
 
-import static org.mockito.Mockito.mock;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.sql.SQLException;
-import java.util.List;
-import java.util.Map;
-
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchServiceImpl;
@@ -31,6 +22,15 @@ import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
+
+import static org.mockito.Mockito.mock;
 
 public class DbExtension implements BeforeEachCallback, AfterEachCallback, AfterAllCallback, BeforeAllCallback {
     private static final Logger log = LoggerFactory.getLogger(DbExtension.class);
@@ -51,21 +51,12 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
     }
 
 
-
     public DbExtension(Map<String, List<String>> tableWithColumns) {
         this();
         if (!tableWithColumns.isEmpty()) {
             this.tableWithColumns = tableWithColumns;
             createFtl();
         }
-    }
-
-    public FullTextSearchService getFtl() {
-        return ftl;
-    }
-
-    public LuceneFullTextSearchEngine getLuceneFullTextSearchEngine() {
-        return luceneFullTextSearchEngine;
     }
 
     public DbExtension(DbProperties dbProperties, PropertiesHolder propertiesHolder, String schemaScriptPath, String dataScriptPath) {
@@ -79,6 +70,14 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
 
     public DbExtension() {
         manipulator = new DbManipulator(DbTestData.getInMemDbProps());
+    }
+
+    public FullTextSearchService getFtl() {
+        return ftl;
+    }
+
+    public LuceneFullTextSearchEngine getLuceneFullTextSearchEngine() {
+        return luceneFullTextSearchEngine;
     }
 
     public DatabaseManager getDatabaseManager() {
@@ -119,8 +118,7 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
             this.indexDir = Files.createTempDirectory("indexDir");
             this.luceneFullTextSearchEngine = new LuceneFullTextSearchEngine(mock(NtpTime.class), indexDir);
             this.ftl = new FullTextSearchServiceImpl(manipulator.getDatabaseManager(), luceneFullTextSearchEngine, tableWithColumns.keySet(), "PUBLIC");
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException("Unable to init ftl", e);
         }
     }
@@ -130,8 +128,7 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
         tableWithColumns.forEach((table, columns) -> DbUtils.inTransaction(getDatabaseManager(), (con) -> {
             try {
                 ftl.createSearchIndex(con, table, String.join(",", columns));
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 throw new RuntimeException("Unable to create index for table " + table, e);
             }
         }));

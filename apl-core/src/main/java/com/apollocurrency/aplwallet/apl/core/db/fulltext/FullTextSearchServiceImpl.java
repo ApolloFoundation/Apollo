@@ -10,15 +10,15 @@ import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 
 @Singleton
 @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
@@ -43,10 +43,10 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
     /**
      * Drop the fulltext index for a table
      *
-     * @param   conn                SQL connection
-     * @param   schema              Schema name
-     * @param   table               Table name
-     * @throws  SQLException        Unable to drop fulltext index
+     * @param conn   SQL connection
+     * @param schema Schema name
+     * @param table  Table name
+     * @throws SQLException Unable to drop fulltext index
      */
     public void dropIndex(Connection conn, String schema, String table) throws SQLException {
         String upperSchema = schema.toUpperCase();
@@ -58,12 +58,12 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
         try (Statement qstmt = conn.createStatement();
              Statement stmt = conn.createStatement()) {
             try (ResultSet rs = qstmt.executeQuery(String.format(
-                    "SELECT COLUMNS FROM FTL.INDEXES WHERE SCHEMA = '%s' AND \"TABLE\" = '%s'",
-                    upperSchema, upperTable))) {
+                "SELECT COLUMNS FROM FTL.INDEXES WHERE SCHEMA = '%s' AND \"TABLE\" = '%s'",
+                upperSchema, upperTable))) {
                 if (rs.next()) {
                     stmt.execute("DROP TRIGGER IF EXISTS FTL_" + upperTable);
                     stmt.execute(String.format("DELETE FROM FTL.INDEXES WHERE SCHEMA = '%s' AND \"TABLE\" = '%s'",
-                            upperSchema, upperTable));
+                        upperSchema, upperTable));
                     reindex = true;
                 }
             }
@@ -72,13 +72,13 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
         // Rebuild the Lucene index
         //
         if (reindex) {
-                reindexAll(conn, indexTables, schema);
+            reindexAll(conn, indexTables, schema);
         }
     }
 
     /**
      * Initialize the fulltext support for a new database
-     *
+     * <p>
      * This method should be called from AplDbVersion when performing the database version update
      * that enables fulltext search support
      */
@@ -98,7 +98,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             boolean alreadyInitialized = true;
             boolean triggersExist = false;
             try (ResultSet rs = qstmt.executeQuery("SELECT JAVA_CLASS FROM INFORMATION_SCHEMA.TRIGGERS "
-                    + "WHERE SUBSTRING(TRIGGER_NAME, 0, 4) = 'FTL_'")) {
+                + "WHERE SUBSTRING(TRIGGER_NAME, 0, 4) = 'FTL_'")) {
                 while (rs.next()) {
                     triggersExist = true;
                     if (!rs.getString(1).startsWith(triggerClassName)) {
@@ -138,7 +138,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             //
             stmt.execute("CREATE SCHEMA IF NOT EXISTS FTL");
             stmt.execute("CREATE TABLE IF NOT EXISTS FTL.INDEXES "
-                    + "(SCHEMA VARCHAR, \"TABLE\" VARCHAR, COLUMNS VARCHAR, PRIMARY KEY(SCHEMA, \"TABLE\"))");
+                + "(SCHEMA VARCHAR, \"TABLE\" VARCHAR, COLUMNS VARCHAR, PRIMARY KEY(SCHEMA, \"TABLE\"))");
             LOG.info(" fulltext schema created");
             //
             // Drop existing triggers and create our triggers.  H2 will initialize the trigger
@@ -147,13 +147,13 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             // Lucene V5, so we are able to open the database using the Lucene V5 library files.
             //
             try (ResultSet rs = qstmt.executeQuery("SELECT * FROM FTL.INDEXES")) {
-                while(rs.next()) {
+                while (rs.next()) {
                     String schema = rs.getString("SCHEMA");
                     String table = rs.getString("TABLE");
                     stmt.execute("DROP TRIGGER IF EXISTS FTL_" + table);
                     stmt.execute(String.format("CREATE TRIGGER FTL_%s AFTER INSERT,UPDATE,DELETE ON %s.%s "
-                                    + "FOR EACH ROW CALL \"%s\"",
-                            table, schema, table, triggerClassName));
+                            + "FOR EACH ROW CALL \"%s\"",
+                        table, schema, table, triggerClassName));
                 }
             }
             //
@@ -170,11 +170,12 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             throw new RuntimeException(exc.toString(), exc);
         }
     }
+
     /**
      * Drop all fulltext indexes
      *
-     * @param   conn                SQL connection
-     * @throws  SQLException        Unable to drop fulltext indexes
+     * @param conn SQL connection
+     * @throws SQLException Unable to drop fulltext indexes
      */
     public void dropAll(Connection conn) throws SQLException {
         //
@@ -183,7 +184,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
         try (Statement qstmt = conn.createStatement();
              Statement stmt = conn.createStatement();
              ResultSet rs = qstmt.executeQuery("SELECT \"TABLE\" FROM FTL.INDEXES")) {
-            while(rs.next()) {
+            while (rs.next()) {
                 String table = rs.getString(1);
                 stmt.execute("DROP TRIGGER IF EXISTS FTL_" + table);
             }
@@ -194,8 +195,9 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
         //
         ftl.clearIndex();
     }
+
     public ResultSet search(String schema, String table, String queryText, int limit, int offset)
-            throws SQLException {
+        throws SQLException {
         return ftl.search(schema, table, queryText, limit, offset);
     }
 
@@ -247,6 +249,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
     public void reindexAll(Connection conn) throws SQLException {
         reindexAll(conn, indexTables, schemaName);
     }
+
     private void reindexAll(Connection conn, Set<String> tables, String schema) throws SQLException {
         long start = System.currentTimeMillis();
         LOG.info("Rebuilding Lucene search index");
@@ -275,8 +278,8 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
      * Creates a new index for table to support fulltext search.
      * Note that a schema is always PUBLIC.
      *
-     * @param con       DB connection
-     * @param table      name of table for indexing
+     * @param con                   DB connection
+     * @param table                 name of table for indexing
      * @param fullTextSearchColumns list of columns for indexing separated by comma
      * @throws SQLException when unable to create index
      */
@@ -302,22 +305,22 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             //
             try (Statement stmt = con.createStatement()) {
                 stmt.execute(String.format("INSERT INTO FTL.INDEXES (schema, \"TABLE\", columns) "
-                                + "VALUES('%s', '%s', '%s')",
-                        upperSchema, upperTable, fullTextSearchColumns.toUpperCase().toUpperCase()));
+                        + "VALUES('%s', '%s', '%s')",
+                    upperSchema, upperTable, fullTextSearchColumns.toUpperCase().toUpperCase()));
                 stmt.execute(String.format("CREATE TRIGGER FTL_%s AFTER INSERT,UPDATE,DELETE ON %s "
-                                + "FOR EACH ROW CALL \"%s\"",
-                        upperTable, tableName, FullTextTrigger.class.getName()));
+                        + "FOR EACH ROW CALL \"%s\"",
+                    upperTable, tableName, FullTextTrigger.class.getName()));
             }
             //
             // Index the table
             //
             try {
-                    reindex(con, upperTable, schemaName);
-                    LOG.info("Lucene search index created for table " + tableName);
-                } catch (SQLException exc) {
-                    LOG.error("Unable to create Lucene search index for table " + tableName);
-                    throw new SQLException("Unable to create Lucene search index for table " + tableName, exc);
-                }
+                reindex(con, upperTable, schemaName);
+                LOG.info("Lucene search index created for table " + tableName);
+            } catch (SQLException exc) {
+                LOG.error("Unable to create Lucene search index for table " + tableName);
+                throw new SQLException("Unable to create Lucene search index for table " + tableName, exc);
+            }
         }
     }
 }

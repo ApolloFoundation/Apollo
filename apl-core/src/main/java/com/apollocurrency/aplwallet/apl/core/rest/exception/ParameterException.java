@@ -50,8 +50,8 @@ public final class ParameterException extends AplException {
     @Override
     public String toString() {
         return "ParameterException{" +
-                "errorResponse=" + errorResponse +
-                ", errorResponseNode=" + errorResponseNode +
-                '}';
+            "errorResponse=" + errorResponse +
+            ", errorResponseNode=" + errorResponseNode +
+            '}';
     }
 }

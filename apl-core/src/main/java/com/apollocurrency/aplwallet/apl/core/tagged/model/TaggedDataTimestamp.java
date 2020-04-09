@@ -65,12 +65,12 @@ public class TaggedDataTimestamp extends VersionedDerivedEntity {
     @Override
     public String toString() {
         return "TaggedDataTimestamp{" +
-                "id=" + id +
-                ", dbKey=" + this.getDbKey() +
-                ", timestamp=" + timestamp +
-                ", height=" + getHeight() +
-                ", latest=" + isLatest() +
-                '}';
+            "id=" + id +
+            ", dbKey=" + this.getDbKey() +
+            ", timestamp=" + timestamp +
+            ", height=" + getHeight() +
+            ", latest=" + isLatest() +
+            '}';
     }
 
     @Override

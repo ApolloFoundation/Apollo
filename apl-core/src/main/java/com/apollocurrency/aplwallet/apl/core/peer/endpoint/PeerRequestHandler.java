@@ -37,15 +37,11 @@ import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 
 /**
- *
  * @author al
  */
 public abstract class PeerRequestHandler {
-    
-    public abstract JSONStreamAware processRequest(JSONObject request, Peer peer);
 
-    public abstract boolean rejectWhileDownloading();
-
+    protected ObjectMapper mapper = new ObjectMapper();
     @Inject
     private Blockchain blockchain;
     @Inject
@@ -55,12 +51,14 @@ public abstract class PeerRequestHandler {
     @Inject
     private PeersService peers;
 
-    protected ObjectMapper mapper = new ObjectMapper();
-    
-    public PeerRequestHandler(){
+    public PeerRequestHandler() {
         mapper.registerModule(new JsonOrgModule());
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
+
+    public abstract JSONStreamAware processRequest(JSONObject request, Peer peer);
+
+    public abstract boolean rejectWhileDownloading();
 
     protected PeersService lookupPeersService() {
         if (peers == null) peers = CDI.current().select(PeersService.class).get();
@@ -87,5 +85,5 @@ public abstract class PeerRequestHandler {
         }
         return transactionProcessor;
     }
-    
+
 }

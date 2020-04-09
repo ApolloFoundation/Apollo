@@ -22,7 +22,7 @@ public class DexOrderAttachmentV2 extends DexOrderAttachment {
 
     public DexOrderAttachmentV2(ByteBuffer buffer) throws AplException.NotValidException {
         super(buffer);
-        try{
+        try {
             this.fromAddress = Convert.readString(buffer, buffer.getShort(), Constants.MAX_ADDRESS_LENGTH);
             this.toAddress = Convert.readString(buffer, buffer.getShort(), Constants.MAX_ADDRESS_LENGTH);
         } catch (NotValidException ex) {

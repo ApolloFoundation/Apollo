@@ -29,8 +29,8 @@ public interface CsvReader extends AutoCloseable {
      * case sensitive (that means they need to be quoted when accessed).
      *
      * @param inputFileName the file name, not NULL
-     * @param colNames or null if the column names should be read from the CSV file
-     * @param charset the charset or null to use the system default charset (see system property file.encoding)
+     * @param colNames      or null if the column names should be read from the CSV file
+     * @param charset       the charset or null to use the system default charset (see system property file.encoding)
      * @return the result set
      */
     ResultSet read(String inputFileName, String[] colNames, String charset) throws SQLException;
@@ -40,16 +40,16 @@ public interface CsvReader extends AutoCloseable {
      * result set are created on demand, that means the reader is kept open
      * until all rows are read or the result set is closed.
      *
-     * @param reader the reader
+     * @param reader   the reader
      * @param colNames or null if the column names should be read from the CSV
-     *            file
+     *                 file
      * @return the result set
      */
     ResultSet read(Reader reader, String[] colNames) throws IOException;
 
     /**
      * TODO: refactor that method to using another configuration approach (properties or similar)
-     *
+     * <p>
      * Set String for Option values as 'key='value'. Possible parameters with default values are following:
      * escape='\"'
      * fieldDelimiter='\"'
@@ -66,6 +66,7 @@ public interface CsvReader extends AutoCloseable {
 
     /**
      * UnEscape the fieldDelimiter character that already escaped with the escape character.
+     *
      * @param data source escaped string
      * @return unescaped string
      */

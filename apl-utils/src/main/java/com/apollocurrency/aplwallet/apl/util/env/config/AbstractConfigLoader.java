@@ -29,11 +29,11 @@ public abstract class AbstractConfigLoader<T> implements ConfigLoader<T> {
         StringValidator.requireNonBlank(resourceName, "Resource name is blank or empty");
         this.ignoreUserConfig = dirProvider == null && StringUtils.isBlank(configDir);
         if (ignoreUserConfig && ignoreResources) {
-                throw new IllegalArgumentException("No locations for config loading provided. Resources and user defined configs ignored");
+            throw new IllegalArgumentException("No locations for config loading provided. Resources and user defined configs ignored");
         }
         this.dirProvider = dirProvider;
         this.ignoreResources = ignoreResources;
-        if(!StringUtils.isBlank(configDir)){
+        if (!StringUtils.isBlank(configDir)) {
             this.configDir = configDir;
         }
         this.resourceName = resourceName;
@@ -70,14 +70,13 @@ public abstract class AbstractConfigLoader<T> implements ConfigLoader<T> {
         String fn = (dirProvider == null ? DEFAULT_CONF_DIR : dirProvider.getConfigDirectoryName()) + "/" + resourceName;
         ClassLoader classloader = Thread.currentThread().getContextClassLoader();
         try (InputStream is = classloader.getResourceAsStream(fn)) {
-            if (is == null){
+            if (is == null) {
                 System.err.println("The resource could not be found: " + fn);
             } else {
                 T defaultConfig = read(is);
                 config = merge(config, defaultConfig);
             }
-        }
-        catch (IOException|IllegalArgumentException e) {
+        } catch (IOException | IllegalArgumentException e) {
             System.err.println("Can not load resource: " + fn);
             e.printStackTrace();
         }
@@ -97,11 +96,9 @@ public abstract class AbstractConfigLoader<T> implements ConfigLoader<T> {
             try (FileInputStream is = new FileInputStream(p)) {
                 T userConfig = read(is);
                 config = merge(config, userConfig);
-            }
-            catch (FileNotFoundException ignored) {
+            } catch (FileNotFoundException ignored) {
                 System.err.println("File not found: " + p); // do not use logger (we should init it before using)
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 System.err.println("Config IO error " + e.toString());
             }
         }

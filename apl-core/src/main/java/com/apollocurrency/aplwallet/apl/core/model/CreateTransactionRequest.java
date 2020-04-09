@@ -53,5 +53,4 @@ public class CreateTransactionRequest {
     private Attachment attachment;
 
 
-
 }

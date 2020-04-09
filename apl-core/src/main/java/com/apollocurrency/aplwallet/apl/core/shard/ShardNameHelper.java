@@ -26,6 +26,7 @@ public class ShardNameHelper {
     private final static String SHARD_PRUNABLE_ARCHIVE_NAME_PATTERN = APPLICATION_DIR_NAME + "-shardprun-%d-chain-%s.zip";
     private final static String SHARD_ID_PATTERN = "shard::%d;chain::%s";
     private final static String SHARD_PRUN_ID_PATTERN = "shardprun::%d;chain::%s";
+
     public ShardNameHelper() {
     }
 
@@ -39,15 +40,16 @@ public class ShardNameHelper {
         return result;
     }
 
-    public String getFullShardId(Long shardId, UUID chainId){
-       String result = String.format(SHARD_ID_PATTERN, shardId, chainId.toString());
-       return result;
+    public String getFullShardId(Long shardId, UUID chainId) {
+        String result = String.format(SHARD_ID_PATTERN, shardId, chainId.toString());
+        return result;
     }
 
     public String getFullShardPrunId(Long shardId, UUID chainId) {
         String result = String.format(SHARD_PRUN_ID_PATTERN, shardId, chainId.toString());
         return result;
     }
+
     public String getCoreShardArchiveNameByShardId(Long shardId, UUID chainId) {
         return getShardArchiveNameByShardId(SHARD_CORE_ARCHIVE_NAME_PATTERN, shardId, chainId);
     }

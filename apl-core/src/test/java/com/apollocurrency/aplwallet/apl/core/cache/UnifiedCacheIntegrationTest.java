@@ -20,7 +20,9 @@ import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
 import static com.apollocurrency.aplwallet.apl.core.cache.PublicKeyCacheConfig.PUBLIC_KEY_CACHE_NAME;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
 
 @EnableWeld
@@ -62,6 +64,7 @@ public class UnifiedCacheIntegrationTest {
         value = publicKeyCache.getIfPresent("second");
         assertNull(value);
     }
+
     private static class CacheLoaderProducer {
         @Produces
         public CacheLoader<Long, OrderFreezing> loader() {

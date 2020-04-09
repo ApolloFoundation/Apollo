@@ -13,8 +13,17 @@ import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.phasing.dao.*;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.*;
+import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollLinkedTransactionTable;
+import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
+import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
+import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollVoterTable;
+import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingVoteTable;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingCreator;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollLinkedTransaction;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollVoter;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -25,7 +34,12 @@ import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -63,14 +77,14 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     @Override
     public DbIterator<PhasingPollResult> getApproved(int height) {
         return resultTable.getManyBy(new DbClause.IntClause("height", height).and(new DbClause.BooleanClause("approved", true)),
-                0, -1, " ORDER BY db_id ASC ");
+            0, -1, " ORDER BY db_id ASC ");
     }
 
     @Override
     public List<Long> getApprovedTransactionIds(int height) {
         List<Long> transactionIdList = new ArrayList<>();
-        try(DbIterator<PhasingPollResult> result = resultTable.getManyBy(new DbClause.IntClause("height", height).and(new DbClause.BooleanClause("approved", true)),
-                0, -1, " ORDER BY db_id ASC ")) {
+        try (DbIterator<PhasingPollResult> result = resultTable.getManyBy(new DbClause.IntClause("height", height).and(new DbClause.BooleanClause("approved", true)),
+            0, -1, " ORDER BY db_id ASC ")) {
             result.forEach(phasingPollResult -> transactionIdList.add(phasingPollResult.getId()));
         }
         return transactionIdList;
@@ -86,9 +100,9 @@ public class PhasingPollServiceImpl implements PhasingPollService {
             phasingPoll.setFullHash(fullHash);
             if (phasingPoll.getWhitelist() == null) {
                 List<Long> voteIds = voterTable.get(phasingPollId)
-                        .stream()
-                        .map(PhasingPollVoter::getVoterId)
-                        .collect(Collectors.toList());
+                    .stream()
+                    .map(PhasingPollVoter::getVoterId)
+                    .collect(Collectors.toList());
                 phasingPoll.setWhitelist(Convert.toArray(voteIds));
             }
         }
@@ -109,8 +123,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     public DbIterator<Transaction> getVoterPhasedTransactions(long voterId, int from, int to) {
         try {
             return voterTable.getVoterPhasedTransactions(voterId, from, to);
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -120,8 +133,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
                                                                 long accountId, boolean withoutWhitelist, int from, int to) {
         try {
             return phasingPollTable.getHoldingPhasedTransactions(holdingId, votingModel, accountId, withoutWhitelist, from, to, blockchain.getHeight());
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -130,8 +142,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     public DbIterator<Transaction> getAccountPhasedTransactions(long accountId, int from, int to) {
         try {
             return phasingPollTable.getAccountPhasedTransactions(accountId, from, to, blockchain.getHeight());
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -140,8 +151,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     public int getAccountPhasedTransactionCount(long accountId) {
         try {
             return phasingPollTable.getAccountPhasedTransactionCount(accountId, blockchain.getHeight());
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -150,8 +160,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     public List<Transaction> getLinkedPhasedTransactions(byte[] linkedTransactionFullHash) {
         try {
             return linkedTransactionTable.getLinkedPhasedTransactions(linkedTransactionFullHash);
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -161,8 +170,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     public long getSenderPhasedTransactionFees(long accountId) {
         try {
             return phasingPollTable.getSenderPhasedTransactionFees(accountId, blockchain.getHeight());
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -174,18 +182,18 @@ public class PhasingPollServiceImpl implements PhasingPollService {
         long[] voters = poll.getWhitelist();
         if (voters.length > 0) {
             List<PhasingPollVoter> voterList = Convert.toList(voters)
-                    .stream()
-                    .map(v -> new PhasingPollVoter(null, poll.getHeight(), poll.getId(),  v))
-                    .collect(Collectors.toList());
+                .stream()
+                .map(v -> new PhasingPollVoter(null, poll.getHeight(), poll.getId(), v))
+                .collect(Collectors.toList());
             voterTable.insert(voterList);
         }
         if (appendix.getLinkedFullHashes().length > 0) {
             List<byte[]> linkedFullHashes = new ArrayList<>();
             Collections.addAll(linkedFullHashes, appendix.getLinkedFullHashes());
             List<PhasingPollLinkedTransaction> phasingPollLinkedTransactions = linkedFullHashes
-                    .stream()
-                    .map(fullHash -> new PhasingPollLinkedTransaction(null, poll.getHeight(), poll.getId(), Convert.fullHashToId(fullHash), fullHash))
-                    .collect(Collectors.toList());
+                .stream()
+                .map(fullHash -> new PhasingPollLinkedTransaction(null, poll.getHeight(), poll.getId(), Convert.fullHashToId(fullHash), fullHash))
+                .collect(Collectors.toList());
             linkedTransactionTable.insert(phasingPollLinkedTransactions);
         }
     }
@@ -225,7 +233,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
         Account senderAccount = accountService.getAccount(transaction.getSenderId());
         transaction.getType().undoAttachmentUnconfirmed(transaction, senderAccount);
         accountService.addToUnconfirmedBalanceATM(senderAccount, LedgerEvent.REJECT_PHASED_TRANSACTION, transaction.getId(),
-                transaction.getAmountATM());
+            transaction.getAmountATM());
         event.select(TxEventType.literal(TxEventType.REJECT_PHASED_TRANSACTION)).fire(transaction);
         log.trace("Phased transaction " + transaction.getStringId() + " has been rejected");
     }
@@ -265,11 +273,11 @@ public class PhasingPollServiceImpl implements PhasingPollService {
                 }
             } else {
                 log.debug("At height " + blockchain.getHeight() + " phased transaction " + transaction.getStringId()
-                        + " is duplicate, cannot finish early");
+                    + " is duplicate, cannot finish early");
             }
         } else {
             log.debug("At height " + blockchain.getHeight() + " phased transaction " + transaction.getStringId()
-                    + " does not yet meet quorum, cannot finish early");
+                + " does not yet meet quorum, cannot finish early");
         }
     }
 
@@ -321,8 +329,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     public List<TransactionDbInfo> getActivePhasedTransactionDbInfoAtHeight(int height) {
         try {
             return phasingPollTable.getActivePhasedTransactionDbIds(height);
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -341,7 +348,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     public void addVote(Transaction transaction, Account voter, long phasedTransactionId) {
         PhasingVote phasingVote = phasingVoteTable.get(phasedTransactionId, voter.getId());
         if (phasingVote == null) {
-            phasingVote =  new PhasingVote(null, transaction.getHeight(),phasedTransactionId, voter.getId(), transaction.getId());
+            phasingVote = new PhasingVote(null, transaction.getHeight(), phasedTransactionId, voter.getId(), transaction.getId());
             phasingVoteTable.insert(phasingVote);
         }
     }
@@ -351,18 +358,16 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     public int getAllPhasedTransactionsCount() {
         try {
             return phasingPollTable.getAllPhasedTransactionsCount();
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
 
     @Override
-    public boolean isTransactionPhased(long id){
+    public boolean isTransactionPhased(long id) {
         try {
             return phasingPollTable.isTransactionPhased(id);
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }

@@ -15,9 +15,9 @@ import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.updater.repository.UpdaterDbRepository;
 import com.apollocurrency.aplwallet.apl.updater.repository.UpdaterRepository;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.util.env.Architecture;
 import com.apollocurrency.aplwallet.apl.util.env.Platform;
-import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,15 +44,15 @@ import static org.mockito.Mockito.when;
 @Disabled
 @ExtendWith(MockitoExtension.class)
 public class UpdaterDbTest {
-       private static final DbManipulator manipulator = new DbManipulator();
+    private static final DbManipulator manipulator = new DbManipulator();
     protected static final DataSource dataSource = manipulator.getDataSource();
+    @Mock
+    UpdaterMediator updaterMediator;
     private UpdaterRepository repository;
     @Mock
     private PropertiesHolder propertiesHolder;
     @Mock
     private DbProperties dbProperties;
-    @Mock
-    UpdaterMediator updaterMediator;
 
     @BeforeEach
     void setUp() {
@@ -70,7 +70,7 @@ public class UpdaterDbTest {
         assertEquals(((UpdateAttachment) transaction.getAttachment()).getArchitecture(), Architecture.X86);
         assertEquals(((UpdateAttachment) transaction.getAttachment()).getPlatform(), Platform.LINUX);
         assertEquals(Convert.toHexString(((UpdateAttachment) transaction.getAttachment()).getHash()), (
-                "a2c1e47afd4b25035a025091ec3c33ec1992d09e7f3c05875d79e660139220a4"));
+            "a2c1e47afd4b25035a025091ec3c33ec1992d09e7f3c05875d79e660139220a4"));
         assertTrue(updateTransaction.isUpdated());
     }
 
@@ -110,7 +110,7 @@ public class UpdaterDbTest {
     @Test
     public void testSaveTwoUpdateTransactions() {
         repository.save(new UpdateTransaction(-4081443370478530685L, false));
-        assertThrows(RuntimeException.class, () ->  {
+        assertThrows(RuntimeException.class, () -> {
             UpdateTransaction last = repository.getLast();
         });
     }
@@ -136,8 +136,7 @@ public class UpdaterDbTest {
                 SimpleTransaction simpleTransaction = new SimpleTransaction(id, transactionType, height);
                 simpleTransaction.setAttachment(attachment);
                 return simpleTransaction;
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 e.printStackTrace();
             }
             return null;
@@ -160,8 +159,7 @@ public class UpdaterDbTest {
                         connection = dataSource.getConnection();
                         connection.setAutoCommit(false);
                         return connection;
-                    }
-                    catch (SQLException e) {
+                    } catch (SQLException e) {
                         throw new RuntimeException(e.toString(), e);
                     }
                 }
@@ -171,8 +169,7 @@ public class UpdaterDbTest {
                     if (connection != null) {
                         try {
                             connection.rollback();
-                        }
-                        catch (SQLException e) {
+                        } catch (SQLException e) {
                             throw new RuntimeException(e.toString(), e);
                         }
                     }
@@ -183,14 +180,13 @@ public class UpdaterDbTest {
                     try {
                         connection.commit();
                         connection.setAutoCommit(true);
-                    }
-                    catch (SQLException e) {
+                    } catch (SQLException e) {
                         throw new RuntimeException(e.toString(), e);
                     }
                 }
-        };}
-
-
-
+            };
         }
+
+
     }
+}

@@ -26,7 +26,7 @@ public class DGSPublicFeedback extends VersionedDerivedEntity {
         if (!super.equals(o)) return false;
         DGSPublicFeedback that = (DGSPublicFeedback) o;
         return Objects.equals(feedback, that.feedback) &&
-                Objects.equals(id, that.id);
+            Objects.equals(id, that.id);
     }
 
     @Override
@@ -53,8 +53,8 @@ public class DGSPublicFeedback extends VersionedDerivedEntity {
     @Override
     public String toString() {
         return "DGSPublicFeedback{" +
-                "feedback='" + feedback + '\'' +
-                ", id=" + id +
-                '}';
+            "feedback='" + feedback + '\'' +
+            ", id=" + id +
+            '}';
     }
 }

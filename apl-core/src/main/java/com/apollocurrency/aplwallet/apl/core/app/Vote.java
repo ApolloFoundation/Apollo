@@ -20,12 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import javax.enterprise.inject.spi.CDI;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -33,6 +27,12 @@ import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteCasting;
 import lombok.extern.slf4j.Slf4j;
+
+import javax.enterprise.inject.spi.CDI;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 @Slf4j
 public final class Vote {
@@ -89,6 +89,36 @@ public final class Vote {
             }
         }
     };
+    private final long id;
+    private final DbKey dbKey;
+    private final long pollId;
+    private final long voterId;
+    private final byte[] voteBytes;
+
+    private Vote(Transaction transaction, MessagingVoteCasting attachment) {
+        this.id = transaction.getId();
+        this.dbKey = voteDbKeyFactory.newKey(this.id);
+        this.pollId = attachment.getPollId();
+        this.voterId = transaction.getSenderId();
+        this.voteBytes = attachment.getPollVote();
+    }
+
+    private Vote(ResultSet rs, DbKey dbKey) throws SQLException {
+        this.id = rs.getLong("id");
+        this.dbKey = dbKey;
+        this.pollId = rs.getLong("poll_id");
+        this.voterId = rs.getLong("voter_id");
+        this.voteBytes = rs.getBytes("vote_bytes");
+    }
+
+
+    private Vote(long id, DbKey dbKey, long pollId, long voterId, byte[] voteBytes) {
+        this.id = id;
+        this.dbKey = dbKey;
+        this.pollId = pollId;
+        this.voterId = voterId;
+        this.voteBytes = voteBytes;
+    }
 
     private static void commonTrim(int height, boolean isSharding, DbIterator<Poll> polls, PreparedStatement pstmt) throws SQLException {
         log.trace("Vote trim common: isSharding={}, height = {}", isSharding, height);
@@ -121,7 +151,7 @@ public final class Vote {
         return voteTable.getManyBy(new DbClause.LongClause("poll_id", pollId), from, to);
     }
 
-    public static Vote getVote(long pollId, long voterId){
+    public static Vote getVote(long pollId, long voterId) {
         DbClause clause = new DbClause.LongClause("poll_id", pollId).and(new DbClause.LongClause("voter_id", voterId));
         return voteTable.getBy(clause);
     }
@@ -132,43 +162,13 @@ public final class Vote {
         return vote;
     }
 
-    public static void init() {}
-
-
-    private final long id;
-    private final DbKey dbKey;
-    private final long pollId;
-    private final long voterId;
-    private final byte[] voteBytes;
-
-    private Vote(Transaction transaction, MessagingVoteCasting attachment) {
-        this.id = transaction.getId();
-        this.dbKey = voteDbKeyFactory.newKey(this.id);
-        this.pollId = attachment.getPollId();
-        this.voterId = transaction.getSenderId();
-        this.voteBytes = attachment.getPollVote();
-    }
-
-    private Vote(ResultSet rs, DbKey dbKey) throws SQLException {
-        this.id = rs.getLong("id");
-        this.dbKey = dbKey;
-        this.pollId = rs.getLong("poll_id");
-        this.voterId = rs.getLong("voter_id");
-        this.voteBytes = rs.getBytes("vote_bytes");
-    }
-
-    private Vote(long id, DbKey dbKey, long pollId, long voterId, byte[] voteBytes) {
-        this.id = id;
-        this.dbKey = dbKey;
-        this.pollId = pollId;
-        this.voterId = voterId;
-        this.voteBytes = voteBytes;
+    public static void init() {
     }
 
     private void save(Connection con) throws SQLException {
         Blockchain blockchain = CDI.current().select(Blockchain.class).get();
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO vote (id, poll_id, voter_id, "
-                + "vote_bytes, height) VALUES (?, ?, ?, ?, ?)")) {
+            + "vote_bytes, height) VALUES (?, ?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, this.id);
             pstmt.setLong(++i, this.pollId);

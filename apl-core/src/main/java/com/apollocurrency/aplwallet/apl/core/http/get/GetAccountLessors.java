@@ -24,8 +24,8 @@ import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -38,7 +38,7 @@ import javax.servlet.http.HttpServletRequest;
 public final class GetAccountLessors extends AbstractAPIRequestHandler {
 
     public GetAccountLessors() {
-        super(new APITag[] {APITag.ACCOUNTS}, "account", "height");
+        super(new APITag[]{APITag.ACCOUNTS}, "account", "height");
     }
 
     @Override
@@ -55,16 +55,16 @@ public final class GetAccountLessors extends AbstractAPIRequestHandler {
         response.put("height", height);
         JSONArray lessorsJSON = new JSONArray();
 
-        try (DbIterator<Account> lessors = lookupAccountService().getLessorsIterator(account,height)) {
+        try (DbIterator<Account> lessors = lookupAccountService().getLessorsIterator(account, height)) {
             if (lessors.hasNext()) {
                 while (lessors.hasNext()) {
                     Account lessor = lessors.next();
                     JSONObject lessorJSON = new JSONObject();
                     JSONData.putAccount(lessorJSON, "lessor", lessor.getId());
                     lessorJSON.put("guaranteedBalanceATM"
-                            , String.valueOf(lookupAccountService().getGuaranteedBalanceATM(lessor,
-                                    lookupBlockchainConfig().getGuaranteedBalanceConfirmations(),
-                                    height)));
+                        , String.valueOf(lookupAccountService().getGuaranteedBalanceATM(lessor,
+                            lookupBlockchainConfig().getGuaranteedBalanceConfirmations(),
+                            height)));
                     lessorsJSON.add(lessorJSON);
                 }
             }

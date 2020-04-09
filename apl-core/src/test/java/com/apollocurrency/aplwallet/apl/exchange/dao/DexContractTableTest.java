@@ -48,17 +48,17 @@ public class DexContractTableTest {
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
-            JdbiHandleFactory.class,
-            FullTextConfigImpl.class,
-            DexContractTable.class,
-            DerivedDbTablesRegistryImpl.class,
-            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
-            BlockIndexServiceImpl.class, NullCacheProducerForTests.class)
-            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
-            .build();
+        PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
+        JdbiHandleFactory.class,
+        FullTextConfigImpl.class,
+        DexContractTable.class,
+        DerivedDbTablesRegistryImpl.class,
+        TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
+        BlockIndexServiceImpl.class, NullCacheProducerForTests.class)
+        .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+        .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
+        .build();
     @Inject
     DexContractTable table;
     DexTestData dtd;

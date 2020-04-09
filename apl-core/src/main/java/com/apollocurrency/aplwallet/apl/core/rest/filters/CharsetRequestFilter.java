@@ -4,12 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.filters;
 
+import org.jboss.resteasy.plugins.providers.multipart.InputPart;
+
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.ext.Provider;
 import java.io.IOException;
-
-import org.jboss.resteasy.plugins.providers.multipart.InputPart;
 
 @Provider
 public class CharsetRequestFilter implements ContainerRequestFilter {

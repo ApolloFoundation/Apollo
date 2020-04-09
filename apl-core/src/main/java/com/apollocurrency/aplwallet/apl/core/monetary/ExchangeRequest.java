@@ -24,17 +24,16 @@ import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import javax.enterprise.inject.spi.CDI;
-
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeBuyAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeSell;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeBuyAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeSell;
 
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -64,44 +63,6 @@ public final class ExchangeRequest {
         }
 
     };
-
-    public static DbIterator<ExchangeRequest> getAllExchangeRequests(int from, int to) {
-        return exchangeRequestTable.getAll(from, to);
-    }
-
-    public static int getCount() {
-        return exchangeRequestTable.getCount();
-    }
-
-    public static ExchangeRequest getExchangeRequest(long transactionId) {
-        return exchangeRequestTable.get(exchangeRequestDbKeyFactory.newKey(transactionId));
-    }
-
-    public static DbIterator<ExchangeRequest> getCurrencyExchangeRequests(long currencyId, int from, int to) {
-        return exchangeRequestTable.getManyBy(new DbClause.LongClause("currency_id", currencyId), from, to);
-    }
-
-    public static DbIterator<ExchangeRequest> getAccountExchangeRequests(long accountId, int from, int to) {
-        return exchangeRequestTable.getManyBy(new DbClause.LongClause("account_id", accountId), from, to);
-    }
-
-    public static DbIterator<ExchangeRequest> getAccountCurrencyExchangeRequests(long accountId, long currencyId, int from, int to) {
-        return exchangeRequestTable.getManyBy(new DbClause.LongClause("account_id", accountId).and(new DbClause.LongClause("currency_id", currencyId)), from, to);
-    }
-
-    static void addExchangeRequest(Transaction transaction, MonetarySystemExchangeBuyAttachment attachment) {
-        ExchangeRequest exchangeRequest = new ExchangeRequest(transaction, attachment);
-        exchangeRequestTable.insert(exchangeRequest);
-    }
-
-    static void addExchangeRequest(Transaction transaction, MonetarySystemExchangeSell attachment) {
-        ExchangeRequest exchangeRequest = new ExchangeRequest(transaction, attachment);
-        exchangeRequestTable.insert(exchangeRequest);
-    }
-
-    public static void init() {}
-
-
     private final long id;
     private final long accountId;
     private final long currencyId;
@@ -111,6 +72,7 @@ public final class ExchangeRequest {
     private final long units;
     private final long rate;
     private final boolean isBuy;
+
 
     private ExchangeRequest(Transaction transaction, MonetarySystemExchangeBuyAttachment attachment) {
         this(transaction, attachment, true);
@@ -158,9 +120,46 @@ public final class ExchangeRequest {
         this.isBuy = isBuy;
     }
 
+    public static DbIterator<ExchangeRequest> getAllExchangeRequests(int from, int to) {
+        return exchangeRequestTable.getAll(from, to);
+    }
+
+    public static int getCount() {
+        return exchangeRequestTable.getCount();
+    }
+
+    public static ExchangeRequest getExchangeRequest(long transactionId) {
+        return exchangeRequestTable.get(exchangeRequestDbKeyFactory.newKey(transactionId));
+    }
+
+    public static DbIterator<ExchangeRequest> getCurrencyExchangeRequests(long currencyId, int from, int to) {
+        return exchangeRequestTable.getManyBy(new DbClause.LongClause("currency_id", currencyId), from, to);
+    }
+
+    public static DbIterator<ExchangeRequest> getAccountExchangeRequests(long accountId, int from, int to) {
+        return exchangeRequestTable.getManyBy(new DbClause.LongClause("account_id", accountId), from, to);
+    }
+
+    public static DbIterator<ExchangeRequest> getAccountCurrencyExchangeRequests(long accountId, long currencyId, int from, int to) {
+        return exchangeRequestTable.getManyBy(new DbClause.LongClause("account_id", accountId).and(new DbClause.LongClause("currency_id", currencyId)), from, to);
+    }
+
+    static void addExchangeRequest(Transaction transaction, MonetarySystemExchangeBuyAttachment attachment) {
+        ExchangeRequest exchangeRequest = new ExchangeRequest(transaction, attachment);
+        exchangeRequestTable.insert(exchangeRequest);
+    }
+
+    static void addExchangeRequest(Transaction transaction, MonetarySystemExchangeSell attachment) {
+        ExchangeRequest exchangeRequest = new ExchangeRequest(transaction, attachment);
+        exchangeRequestTable.insert(exchangeRequest);
+    }
+
+    public static void init() {
+    }
+
     private void save(Connection con) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO exchange_request (id, account_id, currency_id, "
-                + "units, rate, is_buy, timestamp, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
+            + "units, rate, is_buy, timestamp, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, this.id);
             pstmt.setLong(++i, this.accountId);

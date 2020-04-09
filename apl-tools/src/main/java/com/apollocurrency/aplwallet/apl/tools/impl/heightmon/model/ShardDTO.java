@@ -71,11 +71,11 @@ public class ShardDTO {
         if (!(o instanceof ShardDTO)) return false;
         ShardDTO shardDTO = (ShardDTO) o;
         return shardId == shardDTO.shardId &&
-                shardHeight == shardDTO.shardHeight &&
-                shardState == shardDTO.shardState &&
-                Objects.equals(shardHash, shardDTO.shardHash) &&
-                Objects.equals(coreZipHash, shardDTO.coreZipHash) &&
-                Objects.equals(prunableZipHash, shardDTO.prunableZipHash);
+            shardHeight == shardDTO.shardHeight &&
+            shardState == shardDTO.shardState &&
+            Objects.equals(shardHash, shardDTO.shardHash) &&
+            Objects.equals(coreZipHash, shardDTO.coreZipHash) &&
+            Objects.equals(prunableZipHash, shardDTO.prunableZipHash);
     }
 
     @Override

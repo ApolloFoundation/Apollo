@@ -18,15 +18,15 @@ public class RestHelper {
 
     public RestHelper() {
         spec = new RequestSpecBuilder()
-                .setContentType(ContentType.JSON)
-                .setBaseUri(String.format("http://%s:%s", host, port))
-                .addFilter(new AllureRestAssured())
-                .build();
+            .setContentType(ContentType.JSON)
+            .setBaseUri(String.format("http://%s:%s", host, port))
+            .addFilter(new AllureRestAssured())
+            .build();
 
         preconditionSpec = new RequestSpecBuilder()
-                .setContentType(ContentType.JSON)
-                .setBaseUri(String.format("http://%s:%s", host, port))
-                .build();
+            .setContentType(ContentType.JSON)
+            .setBaseUri(String.format("http://%s:%s", host, port))
+            .build();
     }
 
     public RequestSpecification getSpec() {

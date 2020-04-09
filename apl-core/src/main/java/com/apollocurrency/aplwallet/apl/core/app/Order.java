@@ -60,6 +60,7 @@ public abstract class Order {
     private final short transactionIndex;
     private final int transactionHeight;
     private long quantityATU;
+
     private Order(Transaction transaction, ColoredCoinsOrderPlacementAttachment attachment) {
         this.id = transaction.getId();
         this.accountId = transaction.getSenderId();
@@ -88,7 +89,7 @@ public abstract class Order {
         Order.Bid bidOrder;
 
         while ((askOrder = Ask.getNextOrder(assetId)) != null
-                && (bidOrder = Bid.getNextOrder(assetId)) != null) {
+            && (bidOrder = Bid.getNextOrder(assetId)) != null) {
 
             if (askOrder.getPriceATM() > bidOrder.getPriceATM()) {
                 break;
@@ -99,17 +100,17 @@ public abstract class Order {
             askOrder.updateQuantityATU(Math.subtractExact(askOrder.getQuantityATU(), trade.getQuantityATU()));
             Account askAccount = accountService.getAccount(askOrder.getAccountId());
             accountService.addToBalanceAndUnconfirmedBalanceATM(askAccount, LedgerEvent.ASSET_TRADE, askOrder.getId(),
-                    Math.multiplyExact(trade.getQuantityATU(), trade.getPriceATM()));
+                Math.multiplyExact(trade.getQuantityATU(), trade.getPriceATM()));
             accountAssetService.addToAssetBalanceATU(askAccount, LedgerEvent.ASSET_TRADE, askOrder.getId(), assetId, -trade.getQuantityATU());
 
             bidOrder.updateQuantityATU(Math.subtractExact(bidOrder.getQuantityATU(), trade.getQuantityATU()));
             Account bidAccount = accountService.getAccount(bidOrder.getAccountId());
             accountAssetService.addToAssetAndUnconfirmedAssetBalanceATU(bidAccount, LedgerEvent.ASSET_TRADE, bidOrder.getId(),
-                    assetId, trade.getQuantityATU());
+                assetId, trade.getQuantityATU());
             accountService.addToBalanceATM(bidAccount, LedgerEvent.ASSET_TRADE, bidOrder.getId(),
-                    -Math.multiplyExact(trade.getQuantityATU(), trade.getPriceATM()));
+                -Math.multiplyExact(trade.getQuantityATU(), trade.getPriceATM()));
             accountService.addToUnconfirmedBalanceATM(bidAccount, LedgerEvent.ASSET_TRADE, bidOrder.getId(),
-                    Math.multiplyExact(trade.getQuantityATU(), (bidOrder.getPriceATM() - trade.getPriceATM())));
+                Math.multiplyExact(trade.getQuantityATU(), (bidOrder.getPriceATM() - trade.getPriceATM())));
         }
 
     }
@@ -144,14 +145,21 @@ public abstract class Order {
             table.deleteAtHeight(order, blockchain.getHeight());
         } else {
             throw new IllegalArgumentException("Negative quantity: " + quantityATU
-                    + " for order: " + Long.toUnsignedString(order.getId()));
+                + " for order: " + Long.toUnsignedString(order.getId()));
         }
+    }
+
+    private static TransactionalDataSource lookupDataSource() {
+        if (databaseManager == null) {
+            databaseManager = CDI.current().select(DatabaseManager.class).get();
+        }
+        return databaseManager.getDataSource();
     }
 
     private void save(Connection con, String table) throws SQLException {
         try (
-                @DatabaseSpecificDml(DmlMarker.MERGE)
-                PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (id, account_id, asset_id, "
+            @DatabaseSpecificDml(DmlMarker.MERGE)
+            PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (id, account_id, asset_id, "
                 + "price, quantity, creation_height, transaction_index, transaction_height, height, latest, deleted) KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)")
         ) {
             int i = 0;
@@ -207,15 +215,8 @@ public abstract class Order {
     @Override
     public String toString() {
         return getClass().getSimpleName() + " id: " + Long.toUnsignedString(id) + " account: " + Long.toUnsignedString(accountId)
-                + " asset: " + Long.toUnsignedString(assetId) + " price: " + priceATM + " quantity: " + quantityATU
-                + " height: " + creationHeight + " transactionIndex: " + transactionIndex + " transactionHeight: " + transactionHeight;
-    }
-
-    private static TransactionalDataSource lookupDataSource() {
-        if (databaseManager == null) {
-            databaseManager = CDI.current().select(DatabaseManager.class).get();
-        }
-        return databaseManager.getDataSource();
+            + " asset: " + Long.toUnsignedString(assetId) + " price: " + priceATM + " quantity: " + quantityATU
+            + " height: " + creationHeight + " transactionIndex: " + transactionIndex + " transactionHeight: " + transactionHeight;
     }
 
     public static final class Ask extends Order {
@@ -286,19 +287,18 @@ public abstract class Order {
 
         public static DbIterator<Ask> getSortedOrders(long assetId, int from, int to) {
             return askOrderTable.getManyBy(new DbClause.LongClause("asset_id", assetId), from, to,
-                    " ORDER BY price ASC, creation_height ASC, transaction_height ASC, transaction_index ASC ");
+                " ORDER BY price ASC, creation_height ASC, transaction_height ASC, transaction_index ASC ");
         }
 
         private static Ask getNextOrder(long assetId) {
             try (Connection con = lookupDataSource().getConnection();
                  PreparedStatement pstmt = con.prepareStatement("SELECT * FROM ask_order WHERE asset_id = ? "
-                         + "AND latest = TRUE ORDER BY price ASC, creation_height ASC, transaction_height ASC, transaction_index ASC LIMIT 1")) {
+                     + "AND latest = TRUE ORDER BY price ASC, creation_height ASC, transaction_height ASC, transaction_index ASC LIMIT 1")) {
                 pstmt.setLong(1, assetId);
                 try (DbIterator<Ask> askOrders = askOrderTable.getManyBy(con, pstmt, true)) {
                     return askOrders.hasNext() ? askOrders.next() : null;
                 }
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
             }
         }
@@ -313,7 +313,8 @@ public abstract class Order {
             askOrderTable.deleteAtHeight(getAskOrder(orderId), blockchain.getHeight());
         }
 
-        public static void init() {}
+        public static void init() {
+        }
 
         private void save(Connection con, String table) throws SQLException {
             super.save(con, table);
@@ -407,19 +408,18 @@ public abstract class Order {
 
         public static DbIterator<Bid> getSortedOrders(long assetId, int from, int to) {
             return bidOrderTable.getManyBy(new DbClause.LongClause("asset_id", assetId), from, to,
-                    " ORDER BY price DESC, creation_height ASC, transaction_height ASC, transaction_index ASC ");
+                " ORDER BY price DESC, creation_height ASC, transaction_height ASC, transaction_index ASC ");
         }
 
         private static Bid getNextOrder(long assetId) {
             try (Connection con = lookupDataSource().getConnection();
                  PreparedStatement pstmt = con.prepareStatement("SELECT * FROM bid_order WHERE asset_id = ? "
-                         + "AND latest = TRUE ORDER BY price DESC, creation_height ASC, transaction_height ASC, transaction_index ASC LIMIT 1")) {
+                     + "AND latest = TRUE ORDER BY price DESC, creation_height ASC, transaction_height ASC, transaction_index ASC LIMIT 1")) {
                 pstmt.setLong(1, assetId);
                 try (DbIterator<Bid> bidOrders = bidOrderTable.getManyBy(con, pstmt, true)) {
                     return bidOrders.hasNext() ? bidOrders.next() : null;
                 }
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
             }
         }
@@ -434,7 +434,8 @@ public abstract class Order {
             bidOrderTable.deleteAtHeight(getBidOrder(orderId), blockchain.getHeight());
         }
 
-        public static void init() {}
+        public static void init() {
+        }
 
         private void save(Connection con, String table) throws SQLException {
             super.save(con, table);

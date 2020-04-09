@@ -6,15 +6,15 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 import com.apollocurrency.aplwallet.apl.core.transaction.DigitalGoods;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import java.nio.ByteBuffer;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+
 /**
- *
  * @author al
  */
 public final class DigitalGoodsRefund extends AbstractAttachment {
-    
+
     final long purchaseId;
     final long refundATM;
 
@@ -64,5 +64,5 @@ public final class DigitalGoodsRefund extends AbstractAttachment {
     public long getRefundATM() {
         return refundATM;
     }
-    
+
 }

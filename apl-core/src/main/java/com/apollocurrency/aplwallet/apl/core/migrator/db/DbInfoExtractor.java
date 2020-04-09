@@ -13,6 +13,7 @@ public interface DbInfoExtractor {
 
     /**
      * Extract height of the blockchain from the db specified by dbPath
+     *
      * @param dbPath path to the target db
      * @return height of the blockchain in the target db or 0 when no blocks in db or when any db error occurred
      */
@@ -20,6 +21,7 @@ public interface DbInfoExtractor {
 
     /**
      * Get actual file path of db
+     *
      * @param dbPath path to db in url
      * @return actual file path
      */

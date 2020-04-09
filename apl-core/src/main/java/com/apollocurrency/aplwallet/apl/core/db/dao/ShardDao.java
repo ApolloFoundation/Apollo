@@ -46,16 +46,16 @@ public interface ShardDao {
 
     @Transactional
     @SqlUpdate("INSERT INTO shard(shard_id, shard_hash, shard_state, shard_height, zip_hash_crc, prunable_zip_hash, generator_ids, block_timeouts, block_timestamps) " +
-            "VALUES (:shardId, :shardHash, :shardState, :shardHeight, :coreZipHash, :prunableZipHash, :generatorIds, " +
-            ":blockTimeouts, :blockTimestamps)")
+        "VALUES (:shardId, :shardHash, :shardState, :shardHeight, :coreZipHash, :prunableZipHash, :generatorIds, " +
+        ":blockTimeouts, :blockTimestamps)")
     @RegisterRowMapper(ShardRowMapper.class)
     @RegisterArgumentFactory(LongArrayArgumentFactory.class)
     void saveShard(@BindBean Shard shard);
 
     @Transactional
     @SqlUpdate("UPDATE shard SET shard_hash =:shardHash, shard_state =:shardState, shard_height =:shardHeight, " +
-            "zip_hash_crc =:coreZipHash, prunable_zip_hash =:prunableZipHash, generator_ids =:generatorIds, block_timeouts =:blockTimeouts, block_timestamps =:blockTimestamps " +
-            "where shard_id =:shardId")
+        "zip_hash_crc =:coreZipHash, prunable_zip_hash =:prunableZipHash, generator_ids =:generatorIds, block_timeouts =:blockTimeouts, block_timestamps =:blockTimestamps " +
+        "where shard_id =:shardId")
     @RegisterRowMapper(ShardRowMapper.class)
     @RegisterArgumentFactory(LongArrayArgumentFactory.class)
     int updateShard(@BindBean Shard shard);

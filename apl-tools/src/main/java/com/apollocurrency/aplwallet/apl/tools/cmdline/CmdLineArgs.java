@@ -8,21 +8,22 @@ import com.beust.jcommander.Parameter;
 
 /**
  * Command line arguments for cryptoutils
+ *
  * @author alukin@gmail.com
  * @see http://jcommander.org/
  */
 public class CmdLineArgs {
-    
+
     //Main parameter
-    @Parameter(description = "[command arguments]")    
+    @Parameter(description = "[command arguments]")
     public String command;
-    
+
     @Parameter(names = {"--debug", "-d"}, description = "Debug level [0-4]")
     public int debug = 2;
     @Parameter(names = {"--verbose", "-v"}, description = "Verbosity level 0-9")
     public Integer verbose = 1;
     @Parameter(names = "--help", help = true, description = "Print help message")
-    public boolean help;   
+    public boolean help;
     @Parameter(names = {"--ignore-resources"}, description = "Ignore resources bundled with application jar. Default is false")
     public boolean ingnoreResources = false;
     @Parameter(names = {"--resources-path", "-r"}, description = "Load all resources from specified path. Sytem resources ignored.")
@@ -38,8 +39,9 @@ public class CmdLineArgs {
     @Parameter(names = {"--dex-key-dir"}, description = "Load/Save dex keys to/form specified keystore directory.")
     public String dexKeystoreDir = "";
     @Parameter(names = {"--testnet", "-t"}, help = true, description = "Connect to testent [1-3] instead of mainnet")
-    public int testnetIdx=0;     
+    public int testnetIdx = 0;
+
     public boolean isResourceIgnored() {
         return !resourcesPath.isEmpty() || ingnoreResources;
-    }    
+    }
 }

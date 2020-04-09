@@ -51,9 +51,9 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 @EnableWeld
 class TransactionCreatorTest {
+    private static CustomTransactionType transactionType = new CustomTransactionType();
     @Mock
     TransactionValidator validator;
-
     Blockchain blockchain = mock(Blockchain.class);
     @Mock
     TimeService timeService;
@@ -64,13 +64,12 @@ class TransactionCreatorTest {
     @Mock
     FeeCalculator calculator;
     TransactionCreator txCreator;
-    private String accountRS = "APL-XR8C-K97J-QDZC-3YXHE";
-    private String publicKey = "d52a07dc6fdf9f5c6b547ccb11444ce7bba73a99014eb9ac647b6971bee9263c";
-    private String secretPhrase = "here we go again";
-    Account sender = new Account(Convert.parseAccountId(accountRS), 1000 * Constants.ONE_APL, 100 * Constants.ONE_APL, 0L, 0L,  0);
     @WeldSetup
     WeldInitiator weldInitiator = WeldInitiator.from().addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class)).build();
-    private static CustomTransactionType transactionType = new CustomTransactionType();
+    private String accountRS = "APL-XR8C-K97J-QDZC-3YXHE";
+    Account sender = new Account(Convert.parseAccountId(accountRS), 1000 * Constants.ONE_APL, 100 * Constants.ONE_APL, 0L, 0L, 0);
+    private String publicKey = "d52a07dc6fdf9f5c6b547ccb11444ce7bba73a99014eb9ac647b6971bee9263c";
+    private String secretPhrase = "here we go again";
 
     @BeforeEach
     void setUp() {
@@ -351,7 +350,7 @@ class TransactionCreatorTest {
         }
     }
 
-        private static class CustomTransactionType extends TransactionType {
+    private static class CustomTransactionType extends TransactionType {
 
         @Override
         public byte getType() {

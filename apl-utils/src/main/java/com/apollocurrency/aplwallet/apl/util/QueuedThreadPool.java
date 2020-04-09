@@ -39,20 +39,24 @@ import java.util.concurrent.TimeUnit;
  */
 public class QueuedThreadPool extends ThreadPoolExecutor {
 
-    /** Core pool size */
-    private int coreSize;
-
-    /** Maximum pool size */
-    private int maxSize;
-
-    /** Pending task queue */
+    /**
+     * Pending task queue
+     */
     private final LinkedBlockingQueue<Runnable> pendingQueue = new LinkedBlockingQueue<>();
+    /**
+     * Core pool size
+     */
+    private int coreSize;
+    /**
+     * Maximum pool size
+     */
+    private int maxSize;
 
     /**
      * Create the queued thread pool
      *
-     * @param   coreSize                Core pool size
-     * @param   maxSize                 Maximum pool size
+     * @param coreSize Core pool size
+     * @param maxSize  Maximum pool size
      */
     public QueuedThreadPool(int coreSize, int maxSize, String poolName) {
         super(coreSize, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<>(), new NamedThreadFactory(poolName));
@@ -63,7 +67,7 @@ public class QueuedThreadPool extends ThreadPoolExecutor {
     /**
      * Return the core pool size
      *
-     * @return                          Core pool size
+     * @return Core pool size
      */
     @Override
     public int getCorePoolSize() {
@@ -73,7 +77,7 @@ public class QueuedThreadPool extends ThreadPoolExecutor {
     /**
      * Set the core pool size
      *
-     * @param   coreSize                Core pool size
+     * @param coreSize Core pool size
      */
     @Override
     public void setCorePoolSize(int coreSize) {
@@ -84,7 +88,7 @@ public class QueuedThreadPool extends ThreadPoolExecutor {
     /**
      * Return the maximum pool size
      *
-     * @return                          Maximum pool size
+     * @return Maximum pool size
      */
     @Override
     public int getMaximumPoolSize() {
@@ -94,7 +98,7 @@ public class QueuedThreadPool extends ThreadPoolExecutor {
     /**
      * Set the maximum pool size
      *
-     * @param   maxSize                 Maximum pool size
+     * @param maxSize Maximum pool size
      */
     @Override
     public void setMaximumPoolSize(int maxSize) {
@@ -104,8 +108,8 @@ public class QueuedThreadPool extends ThreadPoolExecutor {
     /**
      * Execute a task
      *
-     * @param   task                            Task
-     * @throws  RejectedExecutionException      Unable to execute task
+     * @param task Task
+     * @throws RejectedExecutionException Unable to execute task
      */
     @Override
     public void execute(Runnable task) throws RejectedExecutionException {
@@ -125,9 +129,9 @@ public class QueuedThreadPool extends ThreadPoolExecutor {
     /**
      * Submit a task for execution
      *
-     * @param   task                            Runnable task
-     * @return                                  Future representing the task
-     * @throws  RejectedExecutionException      Unable to execute task
+     * @param task Runnable task
+     * @return Future representing the task
+     * @throws RejectedExecutionException Unable to execute task
      */
     @Override
     public Future<?> submit(Runnable task) throws RejectedExecutionException {
@@ -141,11 +145,11 @@ public class QueuedThreadPool extends ThreadPoolExecutor {
     /**
      * Submit a task for execution
      *
-     * @param   <T>                             Result type
-     * @param   task                            Runnable task
-     * @param   result                          Result returned when task completes
-     * @return                                  Future representing the task result
-     * @throws  RejectedExecutionException      Unable to execute task
+     * @param <T>    Result type
+     * @param task   Runnable task
+     * @param result Result returned when task completes
+     * @return Future representing the task result
+     * @throws RejectedExecutionException Unable to execute task
      */
     @Override
     public <T> Future<T> submit(Runnable task, T result) throws RejectedExecutionException {
@@ -159,10 +163,10 @@ public class QueuedThreadPool extends ThreadPoolExecutor {
     /**
      * Submit a task for execution
      *
-     * @param   <T>                             Result type
-     * @param   callable                        Callable task
-     * @return                                  Future representing the task
-     * @throws  RejectedExecutionException      Unable to execute task
+     * @param <T>      Result type
+     * @param callable Callable task
+     * @return Future representing the task
+     * @throws RejectedExecutionException Unable to execute task
      */
     @Override
     public <T> Future<T> submit(Callable<T> callable) throws RejectedExecutionException {
@@ -176,8 +180,8 @@ public class QueuedThreadPool extends ThreadPoolExecutor {
     /**
      * Process task completion
      *
-     * @param   task                    Runnable task
-     * @param   exc                     Thrown exception
+     * @param task Runnable task
+     * @param exc  Thrown exception
      */
     @Override
     protected void afterExecute(Runnable task, Throwable exc) {

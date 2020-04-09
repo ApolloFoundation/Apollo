@@ -20,6 +20,7 @@ import java.sql.SQLException;
 
 @Singleton
 public class DGSTagTable extends EntityDbTable<DGSTag> {
+    public static final String TABLE_NAME = "tag";
     private static final StringKeyFactory<DGSTag> KEY_FACTORY = new StringKeyFactory<DGSTag>("tag") {
         @Override
         public DbKey newKey(DGSTag tag) {
@@ -30,7 +31,6 @@ public class DGSTagTable extends EntityDbTable<DGSTag> {
         }
     };
     private static final DGSTagMapper MAPPER = new DGSTagMapper(KEY_FACTORY);
-    public static final String TABLE_NAME = "tag";
 
 
     public DGSTagTable() {
@@ -47,8 +47,8 @@ public class DGSTagTable extends EntityDbTable<DGSTag> {
     @Override
     public void save(Connection con, DGSTag tag) throws SQLException {
         try (
-                @DatabaseSpecificDml(DmlMarker.MERGE)
-                PreparedStatement pstmt = con.prepareStatement("MERGE INTO tag (tag, in_stock_count, total_count, height, latest) "
+            @DatabaseSpecificDml(DmlMarker.MERGE)
+            PreparedStatement pstmt = con.prepareStatement("MERGE INTO tag (tag, in_stock_count, total_count, height, latest) "
                 + "KEY (tag, height) VALUES (?, ?, ?, ?, TRUE)")
         ) {
             int i = 0;

@@ -8,16 +8,17 @@ import java.util.zip.Checksum;
 
 /**
  * SImple wrapper to CRC32 checksum
+ *
  * @author alukin@gmail.com
  */
 public class CheckSum {
     private Checksum cs = new CRC32();
 
-    public void update(byte[] bytes){
+    public void update(byte[] bytes) {
         cs.update(bytes);
     }
 
-    public long finish(){
+    public long finish() {
         return cs.getValue();
     }
 

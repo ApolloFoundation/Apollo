@@ -43,9 +43,9 @@ public class ZipImpl implements Zip {
     private static final Logger log = LoggerFactory.getLogger(ZipImpl.class);
 
     // magic constant copied from DownloadableFilesManager class
-    private final static int BUF_SIZE= 1024 * 16; // 16 Kb
+    private final static int BUF_SIZE = 1024 * 16; // 16 Kb
+    private static final int ZIP_COMPRESSION_LEVEL = 9;
     public static Instant DEFAULT_BACK_TO_1970 = Instant.EPOCH; // in past
-    private static final int ZIP_COMPRESSION_LEVEL=9;
 
     public ZipImpl() {
     }
@@ -104,7 +104,7 @@ public class ZipImpl implements Zip {
      */
     @Override
     public ChunkedFileOps compressAndHash(String zipFile, String inputFolder, Long filesTimeFromEpoch,
-                            FilenameFilter filenameFilter, boolean recursive) {
+                                          FilenameFilter filenameFilter, boolean recursive) {
         long start = System.currentTimeMillis();
         boolean compressed = compress(zipFile, inputFolder, filesTimeFromEpoch, filenameFilter, recursive);
         if (compressed) {
@@ -113,7 +113,7 @@ public class ZipImpl implements Zip {
             byte[] zipCrcHash = chunkedFileOps.getFileHashSums();
 
             log.debug("Created archive '{}', CRC/hash = [{}] within {} sec",
-                    zipFile, zipCrcHash.length, (System.currentTimeMillis() - start) / 1000);
+                zipFile, zipCrcHash.length, (System.currentTimeMillis() - start) / 1000);
             return chunkedFileOps;
         } else {
             return new ChunkedFileOps("");
@@ -177,7 +177,7 @@ public class ZipImpl implements Zip {
         }
     }
 
-    List<Path> collectFiles(Path input,FilenameFilter filter, boolean recursive) throws IOException {
+    List<Path> collectFiles(Path input, FilenameFilter filter, boolean recursive) throws IOException {
         List<Path> files = new ArrayList<>();
         if (recursive) {
             Files.walkFileTree(input, new SimpleFileVisitor<>() {

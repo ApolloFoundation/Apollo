@@ -164,21 +164,21 @@ public final class DbProperties implements Cloneable {
     @Override
     public String toString() {
         return "DbProperties{" +
-                "maxCacheSize=" + maxCacheSize +
-                ", dbUrl='" + dbUrl + '\'' +
-                ", dbType='" + dbType + '\'' +
-                ", dbDir='" + dbDir + '\'' +
-                ", dbFileName='" + dbFileName + '\'' +
-                ", dbParams='" + dbParams + '\'' +
-                ", dbUsername='" + dbUsername + '\'' +
-                ", dbPassword='" + dbPassword + '\'' +
-                ", chainId=" + chainId +
-                ", maxConnections=" + maxConnections +
-                ", loginTimeout=" + loginTimeout +
-                ", defaultLockTimeout=" + defaultLockTimeout +
-                ", maxMemoryRows=" + maxMemoryRows +
-                ", dbIdentity=" + dbIdentity +
-                '}';
+            "maxCacheSize=" + maxCacheSize +
+            ", dbUrl='" + dbUrl + '\'' +
+            ", dbType='" + dbType + '\'' +
+            ", dbDir='" + dbDir + '\'' +
+            ", dbFileName='" + dbFileName + '\'' +
+            ", dbParams='" + dbParams + '\'' +
+            ", dbUsername='" + dbUsername + '\'' +
+            ", dbPassword='" + dbPassword + '\'' +
+            ", chainId=" + chainId +
+            ", maxConnections=" + maxConnections +
+            ", loginTimeout=" + loginTimeout +
+            ", defaultLockTimeout=" + defaultLockTimeout +
+            ", maxMemoryRows=" + maxMemoryRows +
+            ", dbIdentity=" + dbIdentity +
+            '}';
     }
 
     public UUID getChainId() {

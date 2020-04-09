@@ -26,18 +26,17 @@ import static org.mockito.Mockito.times;
 
 @EnableWeld
 public class ShardObserverIntegrationTest {
+    static final int DEFAULT_SHARDING_FREQUENCY = 100;
+    private final ShardService shardService = mock(ShardService.class);
     BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     HeightConfig heightConfig = mock(HeightConfig.class);
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
-    static final int DEFAULT_SHARDING_FREQUENCY = 100;
-
-    private final ShardService shardService = mock(ShardService.class);
     @WeldSetup
     WeldInitiator weldInitiator = WeldInitiator.from(ShardObserver.class)
-            .addBeans(MockBean.of(shardService, ShardService.class))
-            .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
-            .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
-            .build();
+        .addBeans(MockBean.of(shardService, ShardService.class))
+        .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
+        .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
+        .build();
     @Inject
     Event<TrimData> trimEvent;
     @Inject

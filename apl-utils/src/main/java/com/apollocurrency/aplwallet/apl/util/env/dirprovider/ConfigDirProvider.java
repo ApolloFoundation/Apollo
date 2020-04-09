@@ -10,6 +10,7 @@ package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
 public interface ConfigDirProvider {
     /**
      * Path to directory where main executable jar file is placed
+     *
      * @return File denoting path to directory with main executable jar
      */
 
@@ -17,6 +18,7 @@ public interface ConfigDirProvider {
 
     /**
      * Path to system config directory, depends on OS
+     *
      * @return Path to system config directory
      */
     public String getSysConfigDirectory();
@@ -24,14 +26,18 @@ public interface ConfigDirProvider {
 
     /**
      * Path to user's config directory, depends on OS
+     *
      * @return Path to user's config directory
      */
     public String getUserConfigDirectory();
+
     /**
      * Just name of config directory depending of initialization of implementation
-     * @return 
+     *
+     * @return
      */
     public String getConfigDirectoryName();
+
     /**
      * Gets config directory depending on run mode. In user mode it is getUserConfigDirectory()
      * In service mode it is getSysConfigDirectory()

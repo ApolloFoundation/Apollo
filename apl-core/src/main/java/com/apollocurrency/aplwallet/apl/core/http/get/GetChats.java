@@ -22,7 +22,7 @@ import javax.servlet.http.HttpServletRequest;
 public class GetChats extends AbstractAPIRequestHandler {
 
     public GetChats() {
-        super(new APITag[] {APITag.MESSAGES, APITag.ACCOUNTS}, "account", "firstIndex", "lastIndex");
+        super(new APITag[]{APITag.MESSAGES, APITag.ACCOUNTS}, "account", "firstIndex", "lastIndex");
     }
 
     @Override

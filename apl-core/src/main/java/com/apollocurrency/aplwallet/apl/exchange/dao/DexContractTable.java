@@ -30,7 +30,7 @@ import java.util.List;
  */
 @Slf4j
 @Singleton
-public class DexContractTable  extends EntityDbTable<ExchangeContract> {
+public class DexContractTable extends EntityDbTable<ExchangeContract> {
 
     static final LongKeyFactory<ExchangeContract> KEY_FACTORY = new LongKeyFactory<>("id") {
         @Override
@@ -44,7 +44,15 @@ public class DexContractTable  extends EntityDbTable<ExchangeContract> {
 
     @Inject
     public DexContractTable() {
-        super(TABLE_NAME, KEY_FACTORY, true,  null, false);
+        super(TABLE_NAME, KEY_FACTORY, true, null, false);
+    }
+
+    private static ExchangeContract getFirstOrNull(List<ExchangeContract> contracts) {
+        if (contracts.size() > 0) {
+            return contracts.get(0);
+        } else {
+            return null;
+        }
     }
 
     @Override
@@ -55,7 +63,7 @@ public class DexContractTable  extends EntityDbTable<ExchangeContract> {
     @Override
     public void save(Connection con, ExchangeContract entity) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO dex_contract (id, offer_id, counter_offer_id, " +
-                "sender, recipient, secret_hash, encrypted_secret, transfer_tx_id, counter_transfer_tx_id, deadline_to_reply, status, height, latest) " +
+            "sender, recipient, secret_hash, encrypted_secret, transfer_tx_id, counter_transfer_tx_id, deadline_to_reply, status, height, latest) " +
             "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
             int i = 0;
             pstmt.setLong(++i, entity.getId());
@@ -83,12 +91,12 @@ public class DexContractTable  extends EntityDbTable<ExchangeContract> {
         return getAllByLongParameterFromStatus(counterOrderId, "counter_offer_id", 0);
     }
 
-    private List<ExchangeContract> getAllByLongParameterFromStatusHeightSorted(Long parameterValue, String parameterName,  int fromStatus) {
+    private List<ExchangeContract> getAllByLongParameterFromStatusHeightSorted(Long parameterValue, String parameterName, int fromStatus) {
         DbIterator<ExchangeContract> dbIterator = getManyBy(new DbClause.LongClause(parameterName, parameterValue).and(new DbClause.ByteClause("status", DbClause.Op.GTE, (byte) fromStatus)), 0, -1, " ORDER BY height DESC, db_id DESC");
         return CollectionUtil.toList(dbIterator);
     }
 
-    private List<ExchangeContract> getAllByLongParameterFromStatus(Long parameterValue, String parameterName,  int fromStatus) {
+    private List<ExchangeContract> getAllByLongParameterFromStatus(Long parameterValue, String parameterName, int fromStatus) {
         DbIterator<ExchangeContract> dbIterator = getManyBy(new DbClause.LongClause(parameterName, parameterValue).and(new DbClause.ByteClause("status", DbClause.Op.GTE, (byte) fromStatus)), 0, -1);
         return CollectionUtil.toList(dbIterator);
     }
@@ -115,14 +123,6 @@ public class DexContractTable  extends EntityDbTable<ExchangeContract> {
         return getFirstOrNull(allByOrder);
     }
 
-    private static ExchangeContract getFirstOrNull(List<ExchangeContract> contracts) {
-        if (contracts.size() > 0) {
-            return contracts.get(0);
-        } else {
-            return null;
-        }
-    }
-
     public ExchangeContract getLastByCounterOrder(Long orderId) {
         List<ExchangeContract> allByOrder = getAllByLongParameterFromStatusHeightSorted(orderId, "counter_offer_id", 1);
         return getFirstOrNull(allByOrder);
@@ -140,6 +140,7 @@ public class DexContractTable  extends EntityDbTable<ExchangeContract> {
 
         return getOverdueContracts(deadlineToReply, sql);
     }
+
     public List<ExchangeContract> getOverdueContractsStep1_2_3(int deadlineToReply) throws AplException.ExecutiveProcessException {
         String sql = "SELECT * FROM dex_contract  where latest = true " +
             "AND status IN (0,1,2) AND deadline_to_reply < ?";
@@ -150,7 +151,7 @@ public class DexContractTable  extends EntityDbTable<ExchangeContract> {
     private List<ExchangeContract> getOverdueContracts(int deadlineToReply, String sql) throws AplException.ExecutiveProcessException {
         try (Connection con = getDatabaseManager().getDataSource().getConnection();
              PreparedStatement pstmt = con
-                     .prepareStatement(sql)
+                 .prepareStatement(sql)
         ) {
             int i = 0;
             pstmt.setLong(++i, deadlineToReply);

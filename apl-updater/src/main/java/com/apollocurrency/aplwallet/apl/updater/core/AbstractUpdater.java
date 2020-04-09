@@ -25,8 +25,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 public abstract class AbstractUpdater implements Updater {
     private static final Logger LOG = getLogger(AbstractUpdater.class);
-    protected UpdateData updateData;
     protected final UpdateInfo updateInfo;
+    protected UpdateData updateData;
     protected UpdaterMediator updaterMediator;
     protected UpdaterService updaterService;
     protected int blocksWait;
@@ -88,8 +88,7 @@ public abstract class AbstractUpdater implements Updater {
                     PlatformDependentUpdater pdu = pduFactory.createInstance(Platform.current(), updateInfo);
                     pdu.start(unpackedDirPath);
                     return true;
-                }
-                catch (IOException e) {
+                } catch (IOException e) {
                     LOG.error("Cannot unpack file: " + path.toString());
                 }
             } else {
@@ -108,8 +107,7 @@ public abstract class AbstractUpdater implements Updater {
                 TimeUnit.SECONDS.sleep(1);
                 timeSpent++;
                 currentHeight = updaterMediator.getBlockchainHeight();
-            }
-            catch (InterruptedException e) {
+            } catch (InterruptedException e) {
                 LOG.error(e.getMessage(), e);
             }
         }

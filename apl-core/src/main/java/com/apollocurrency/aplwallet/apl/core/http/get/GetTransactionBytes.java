@@ -29,18 +29,18 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TRANSACTION;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_TRANSACTION;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_TRANSACTION;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public final class GetTransactionBytes extends AbstractAPIRequestHandler {
 
     public GetTransactionBytes() {
-        super(new APITag[] {APITag.TRANSACTIONS}, "transaction");
+        super(new APITag[]{APITag.TRANSACTIONS}, "transaction");
     }
 
     @Override

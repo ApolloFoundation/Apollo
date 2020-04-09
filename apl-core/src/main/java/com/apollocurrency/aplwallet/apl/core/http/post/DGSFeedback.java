@@ -20,9 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.GOODS_NOT_DELIVERED;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_PURCHASE;
-
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
@@ -37,14 +34,17 @@ import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.GOODS_NOT_DELIVERED;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_PURCHASE;
+
 @Vetoed
 public final class DGSFeedback extends CreateTransaction {
 
     private DGSService service = CDI.current().select(DGSService.class).get();
 
     public DGSFeedback() {
-        super(new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION},
-                "purchase");
+        super(new APITag[]{APITag.DGS, APITag.CREATE_TRANSACTION},
+            "purchase");
     }
 
     @Override

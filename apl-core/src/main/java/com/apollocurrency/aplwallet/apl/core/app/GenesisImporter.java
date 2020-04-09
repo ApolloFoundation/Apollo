@@ -74,10 +74,10 @@ public class GenesisImporter {
     private final BlockchainConfigUpdater blockchainConfigUpdater;
     private final BlockchainConfig blockchainConfig;
     private final AplAppStatus aplAppStatus;
-    private AccountService accountService;
-    private AccountPublicKeyService accountPublicKeyService;
     private final DatabaseManager databaseManager;
     private final String genesisParametersLocation;
+    private AccountService accountService;
+    private AccountPublicKeyService accountPublicKeyService;
     private byte[] CREATOR_PUBLIC_KEY;
     private String genesisTaskId;
     private byte[] computedDigest;
@@ -86,22 +86,22 @@ public class GenesisImporter {
 
     @Inject
     public GenesisImporter(
-            BlockchainConfig blockchainConfig,
-            BlockchainConfigUpdater blockchainConfigUpdater,
-            DatabaseManager databaseManager,
-            AplAppStatus aplAppStatus,
-            GenesisImporterProducer genesisImporterProducer,
-            AccountGuaranteedBalanceTable accountGuaranteedBalanceTable,
-            AccountTable accountTable,
-            ApplicationJsonFactory jsonFactory,
-            PropertiesHolder propertiesHolder,
-            AccountService accountService,
-            AccountPublicKeyService accountPublicKeyService
+        BlockchainConfig blockchainConfig,
+        BlockchainConfigUpdater blockchainConfigUpdater,
+        DatabaseManager databaseManager,
+        AplAppStatus aplAppStatus,
+        GenesisImporterProducer genesisImporterProducer,
+        AccountGuaranteedBalanceTable accountGuaranteedBalanceTable,
+        AccountTable accountTable,
+        ApplicationJsonFactory jsonFactory,
+        PropertiesHolder propertiesHolder,
+        AccountService accountService,
+        AccountPublicKeyService accountPublicKeyService
     ) {
         this.blockchainConfig =
-                Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
+            Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
         this.blockchainConfigUpdater =
-                Objects.requireNonNull(blockchainConfigUpdater, "blockchainConfigUpdater is NULL");
+            Objects.requireNonNull(blockchainConfigUpdater, "blockchainConfigUpdater is NULL");
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.aplAppStatus = Objects.requireNonNull(aplAppStatus, "aplAppStatus is NULL");
         this.genesisParametersLocation = getGenesisParametersLocation(genesisImporterProducer);
@@ -110,17 +110,17 @@ public class GenesisImporter {
         this.accountPublicKeyService = Objects.requireNonNull(accountPublicKeyService, "accountPublicKeyService is NULL");
         Objects.requireNonNull(propertiesHolder, "propertiesHolder is NULL");
         this.publicKeyNumberTotal =
-                propertiesHolder.getIntProperty(PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME);
+            propertiesHolder.getIntProperty(PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME);
         this.balanceNumberTotal =
-                propertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME);
+            propertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME);
         this.accountGuaranteedBalanceTable = Objects.requireNonNull(accountGuaranteedBalanceTable, "accountGuaranteedBalanceTable is NULL");
         this.accountTable = Objects.requireNonNull(accountTable, "accountTable is NULL");
     }
 
     private String getGenesisParametersLocation(GenesisImporterProducer genesisImporterProducer) {
         return Optional.ofNullable(genesisImporterProducer)
-                .map(GenesisImporterProducer::genesisParametersLocation)
-                .orElseThrow(() -> new NullPointerException("genesisParametersLocation is NULL"));
+            .map(GenesisImporterProducer::genesisParametersLocation)
+            .orElseThrow(() -> new NullPointerException("genesisParametersLocation is NULL"));
     }
 
     private void cleanUpGenesisData() {
@@ -134,9 +134,9 @@ public class GenesisImporter {
     public void loadGenesisDataFromResources() {
         if (CREATOR_PUBLIC_KEY == null) {
             try (
-                    final InputStream is =
-                            ClassLoader.getSystemResourceAsStream(genesisParametersLocation);
-                    final JsonParser jsonParser = jsonFactory.createParser(is)
+                final InputStream is =
+                    ClassLoader.getSystemResourceAsStream(genesisParametersLocation);
+                final JsonParser jsonParser = jsonFactory.createParser(is)
             ) {
                 while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
                     final String currentName = jsonParser.getCurrentName();
@@ -172,10 +172,10 @@ public class GenesisImporter {
         int balanceCount = 0;
         int publicKeyCount = 0;
         try (
-                final InputStream filteredIs =
-                        new FilterCarriageReturnCharacterInputStream(ClassLoader.getSystemResourceAsStream(path));
-                final InputStream digestIs = new DigestInputStream(filteredIs, digest);
-                final JsonParser jsonParser = jsonFactory.createParser(digestIs)
+            final InputStream filteredIs =
+                new FilterCarriageReturnCharacterInputStream(ClassLoader.getSystemResourceAsStream(path));
+            final InputStream digestIs = new DigestInputStream(filteredIs, digest);
+            final JsonParser jsonParser = jsonFactory.createParser(digestIs)
         ) {
             boolean isBalancesProcessingOn = false;
             boolean isPublicKeysProcessingOn = false;
@@ -221,7 +221,7 @@ public class GenesisImporter {
 
         final Long usedBytes = null; //Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory(); // to measure in unit tests
         log.debug("Digest is computed in {} milliSec, used {} Kb", System.currentTimeMillis() - start,
-                usedBytes != null ? usedBytes / 1024 : "not calculated");
+            usedBytes != null ? usedBytes / 1024 : "not calculated");
 
         return this.computedDigest;
     }
@@ -267,7 +267,7 @@ public class GenesisImporter {
         dataSource.commit(false);
         if (loadOnlyPublicKeys) {
             log.debug("Public Keys were saved in {} ms. The rest of GENESIS is skipped, shard info will be loaded...",
-                    (System.currentTimeMillis() - start) / 1000);
+                (System.currentTimeMillis() - start) / 1000);
             return;
         }
         // load 'balances' from JSON only
@@ -285,12 +285,12 @@ public class GenesisImporter {
         accountService.addToBalanceAndUnconfirmedBalanceATM(creatorAccount, null, 0, -total);
         aplAppStatus.durableTaskFinished(genesisTaskId, false, message);
         log.debug("Public Keys [{}] + Balances [{}] were saved in {} ms", publicKeyNumber, balanceNumber,
-                (System.currentTimeMillis() - start) / 1000);
+            (System.currentTimeMillis() - start) / 1000);
         this.genesisTaskId = null;
 
         final Long usedBytes = null; //Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory(); // to measure in unit tests
         log.debug("ImportGenesisJson is computed in {} milliSec, used {} Kb", System.currentTimeMillis() - start,
-                usedBytes != null ? usedBytes / 1024 : "not calculated");
+            usedBytes != null ? usedBytes / 1024 : "not calculated");
     }
 
     @SneakyThrows(value = {JsonParseException.class, IOException.class})
@@ -303,10 +303,10 @@ public class GenesisImporter {
 
         final MessageDigest digest = Crypto.sha256();
         try (
-                final InputStream filteredIs =
-                        new FilterCarriageReturnCharacterInputStream(ClassLoader.getSystemResourceAsStream(path));
-                final InputStream digestedIs = new DigestInputStream(filteredIs, digest);
-                final JsonParser jsonParser = jsonFactory.createParser(digestedIs)
+            final InputStream filteredIs =
+                new FilterCarriageReturnCharacterInputStream(ClassLoader.getSystemResourceAsStream(path));
+            final InputStream digestedIs = new DigestInputStream(filteredIs, digest);
+            final JsonParser jsonParser = jsonFactory.createParser(digestedIs)
         ) {
             boolean isPublicKeysProcessingOn = false;
             while (!jsonParser.isClosed()) {
@@ -367,8 +367,8 @@ public class GenesisImporter {
         log.trace("Saved public keys, start saving Balances...");
         aplAppStatus.durableTaskUpdate(genesisTaskId, 50 + 0.1, "Loading genesis balance amounts");
         try (
-                final InputStream is = ClassLoader.getSystemResourceAsStream(path);
-                final JsonParser jsonParser = jsonFactory.createParser(is)
+            final InputStream is = ClassLoader.getSystemResourceAsStream(path);
+            final JsonParser jsonParser = jsonFactory.createParser(is)
         ) {
             boolean isBalancesProcessingStarted = false;
             while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
@@ -397,9 +397,9 @@ public class GenesisImporter {
         }
 
         log.debug(
-                "Saved [{}] balances in {} sec, total balance amount = {}",
-                count,
-                (System.currentTimeMillis() - start) / 1000, totalAmount
+            "Saved [{}] balances in {} sec, total balance amount = {}",
+            count,
+            (System.currentTimeMillis() - start) / 1000, totalAmount
         );
 
         validateBalanceNumber(count);
@@ -412,10 +412,10 @@ public class GenesisImporter {
         log.debug("Genesis accounts json resource path = " + path);
 
         final Queue<Map.Entry<String, Long>> sortedEntries =
-                new PriorityQueue<>((o1, o2) -> Long.compare(o2.getValue(), o1.getValue()));
+            new PriorityQueue<>((o1, o2) -> Long.compare(o2.getValue(), o1.getValue()));
         try (
-                final InputStream is = ClassLoader.getSystemResourceAsStream(path);
-                final JsonParser jsonParser = jsonFactory.createParser(is)
+            final InputStream is = ClassLoader.getSystemResourceAsStream(path);
+            final JsonParser jsonParser = jsonFactory.createParser(is)
         ) {
             boolean isBalancesProcessingStarted = false;
             while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
@@ -437,8 +437,8 @@ public class GenesisImporter {
         validateBalanceNumber(balanceNumber);
 
         return sortedEntries.stream()
-                .skip(1) //skip first account to collect only genesis accounts
-                .collect(Collectors.toList());
+            .skip(1) //skip first account to collect only genesis accounts
+            .collect(Collectors.toList());
     }
 
     /**
@@ -449,10 +449,10 @@ public class GenesisImporter {
     private void validatePublicKeyNumber(int publicKeyCount) {
         if (publicKeyNumberTotal != publicKeyCount) {
             throw new IllegalStateException(
-                    String.format(
-                            "A hardcoded public key total number: %d is different to a calculated value: %d",
-                            publicKeyNumberTotal, publicKeyCount
-                    )
+                String.format(
+                    "A hardcoded public key total number: %d is different to a calculated value: %d",
+                    publicKeyNumberTotal, publicKeyCount
+                )
             );
         }
     }
@@ -465,10 +465,10 @@ public class GenesisImporter {
     private void validateBalanceNumber(int balanceCount) {
         if (balanceNumberTotal != balanceCount) {
             throw new IllegalStateException(
-                    String.format(
-                            "A hardcoded balance total number: %d is different to a calculated value: %d",
-                            balanceNumberTotal, balanceCount
-                    )
+                String.format(
+                    "A hardcoded balance total number: %d is different to a calculated value: %d",
+                    balanceNumberTotal, balanceCount
+                )
             );
         }
     }

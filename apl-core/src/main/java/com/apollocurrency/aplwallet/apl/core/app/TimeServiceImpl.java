@@ -10,13 +10,12 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 /**
- *
  * @author al
  */
 @Slf4j
 @Singleton
 public class TimeServiceImpl implements TimeService {
-    
+
     private final NtpTime ntpTime;
 
     @Inject
@@ -25,7 +24,8 @@ public class TimeServiceImpl implements TimeService {
     }
 
     /**
-     *  Time since genesis block.
+     * Time since genesis block.
+     *
      * @return int (time in seconds).
      */
     public int getEpochTime() {

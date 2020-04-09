@@ -14,11 +14,11 @@ import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
 @Singleton
 public class OrderService {
 
-    public List<Order.Ask> getAskOrdersByAccount(long accountId, int from, int to){
+    public List<Order.Ask> getAskOrdersByAccount(long accountId, int from, int to) {
         return toList(Order.Ask.getAskOrdersByAccount(accountId, from, to));
     }
 
-    public List<Order.Ask> getAskOrdersByAccountAsset(long accountId, long assetId, int from, int to){
+    public List<Order.Ask> getAskOrdersByAccountAsset(long accountId, long assetId, int from, int to) {
         return toList(Order.Ask.getAskOrdersByAccountAsset(accountId, assetId, from, to));
     }
 }

@@ -33,7 +33,7 @@ class ShardControllerTest {
     private ShardService shardService;
 
     @BeforeEach
-    void setup(){
+    void setup() {
         dispatcher = MockDispatcherFactory.createDispatcher();
         shardService = mock(ShardService.class);
         ShardController controller = new ShardController(shardService);
@@ -51,7 +51,8 @@ class ShardControllerTest {
         assertEquals(200, response.getStatus());
 
         String shardJson = response.getContentAsString();
-        List<ShardDTO> shards = mapper.readValue(shardJson, new TypeReference<List<ShardDTO>>(){});
+        List<ShardDTO> shards = mapper.readValue(shardJson, new TypeReference<List<ShardDTO>>() {
+        });
         assertEquals(ShardTestData.SHARD_DTO_LIST, shards);
     }
 

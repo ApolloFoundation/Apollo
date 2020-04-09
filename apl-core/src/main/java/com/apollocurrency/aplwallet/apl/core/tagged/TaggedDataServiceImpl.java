@@ -24,17 +24,18 @@ import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataTimestamp;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.List;
-import java.util.stream.Collectors;
 import javax.enterprise.inject.spi.CDI;
 import javax.enterprise.util.TypeLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Singleton
 public class TaggedDataServiceImpl implements TaggedDataService {
 
+    private static LongKeyFactory<UnconfirmedTransaction> keyFactory;// = CDI.current().select(new TypeLiteral<LongKeyFactory<UnconfirmedTransaction>>(){}).get();
     private BlockchainConfig blockchainConfig;
     private Blockchain blockchain;
     private TaggedDataDao taggedDataDao;
@@ -42,8 +43,6 @@ public class TaggedDataServiceImpl implements TaggedDataService {
     private TaggedDataTimestampDao taggedDataTimestampDao;
     private TaggedDataExtendDao taggedDataExtendDao;
     private TimeService timeService;
-
-    private static LongKeyFactory<UnconfirmedTransaction> keyFactory;// = CDI.current().select(new TypeLiteral<LongKeyFactory<UnconfirmedTransaction>>(){}).get();
 
     @Inject
     public TaggedDataServiceImpl(TaggedDataDao taggedDataDao, DataTagDao dataTagDao,
@@ -65,7 +64,8 @@ public class TaggedDataServiceImpl implements TaggedDataService {
             transaction.getId(), transaction.getBlockId(), blockchainHeight, attachment);
         if (timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMaxPrunableLifetime() && attachment.getData() != null) {
             if (keyFactory == null) {
-                keyFactory = CDI.current().select(new TypeLiteral<LongKeyFactory<UnconfirmedTransaction>>(){}).get();
+                keyFactory = CDI.current().select(new TypeLiteral<LongKeyFactory<UnconfirmedTransaction>>() {
+                }).get();
             }
             DbKey dbKey = keyFactory.newKey(transaction.getId());
             log.trace("add TaggedDataUpload: dbKey = {}", dbKey);
@@ -73,7 +73,7 @@ public class TaggedDataServiceImpl implements TaggedDataService {
             log.trace("add TaggedDataUpload: isFound = {}", taggedData);
             if (taggedData == null) {
                 taggedData = new TaggedData(transaction, attachment,
-                        blockchain.getLastBlockTimestamp(), blockchainHeight);
+                    blockchain.getLastBlockTimestamp(), blockchainHeight);
                 log.trace("add TaggedDataUpload: insert new = {}", taggedData);
                 taggedDataDao.insert(taggedData);
                 dataTagDao.add(taggedData);
@@ -101,21 +101,21 @@ public class TaggedDataServiceImpl implements TaggedDataService {
         log.trace("extend TaggedData: timestamp cond ? = '{}' (trTs={}, minPrunableLifetime={}, timestampInRecord={})",
             transaction.getTimestamp() - minPrunableLifetime > timestampInRecord,
             transaction.getTimestamp(), minPrunableLifetime, timestampInRecord
-            );
+        );
         if (transaction.getTimestamp() - minPrunableLifetime > timestampInRecord) {
-            timestamp.setTimestamp(transaction.getTimestamp() );
+            timestamp.setTimestamp(transaction.getTimestamp());
         } else {
             timestamp.setTimestamp(timestampInRecord
-                    + Math.min(minPrunableLifetime, Integer.MAX_VALUE - timestampInRecord));
+                + Math.min(minPrunableLifetime, Integer.MAX_VALUE - timestampInRecord));
         }
         timestamp.setHeight(blockchainHeight);
         log.trace("extend TaggedData: insert timestamp = {}", timestamp);
         taggedDataTimestampDao.insert(timestamp);
 
         List<TaggedDataExtend> taggedDataExtendList = taggedDataExtendDao.get(dbKey)
-                .stream()
-                .peek(e-> e.setHeight(blockchainHeight))
-                .collect(Collectors.toList());
+            .stream()
+            .peek(e -> e.setHeight(blockchainHeight))
+            .collect(Collectors.toList());
         log.trace("extend TaggedData: taggedDataExtendList = [{}]", taggedDataExtendList.size());
         taggedDataExtendList.add(new TaggedDataExtend(null, blockchainHeight, taggedDataId, transaction.getId()));
         log.trace("extend TaggedData: insert taggedDataExtendList = {}", taggedDataExtendList);

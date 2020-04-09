@@ -4,15 +4,15 @@
 
 package com.apollocurrency.aplwallet.apl.updater.downloader;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-import com.apollocurrency.aplwallet.apl.updater.ConsistencyVerifier;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.DownloadInfo;
+import com.apollocurrency.aplwallet.apl.updater.ConsistencyVerifier;
 import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 public class DownloaderImpl implements Downloader {
     private static final Logger LOG = getLogger(DownloaderImpl.class);
@@ -22,7 +22,7 @@ public class DownloaderImpl implements Downloader {
     private int timeout;
     private int maxAttempts;
     private ConsistencyVerifier consistencyVerifier;
-    
+
     public DownloaderImpl(DownloadInfo downloadInfo, int timeout, int maxAttempts, ConsistencyVerifier consistencyVerifier, DownloadExecutor downloadExecutor) {
         this.info = downloadInfo;
         this.timeout = timeout;
@@ -30,14 +30,16 @@ public class DownloaderImpl implements Downloader {
         this.consistencyVerifier = consistencyVerifier;
         this.defaultDownloadExecutor = downloadExecutor == null ? this.defaultDownloadExecutor : downloadExecutor;
     }
+
     public DownloaderImpl(DownloadInfo downloadInfo, int timeout, int maxAttempts, ConsistencyVerifier consistencyVerifier) {
         this(downloadInfo, timeout, maxAttempts, consistencyVerifier, new DefaultDownloadExecutor("apl-update", "update-package"));
     }
 
     /**
      * Download file from uri and return Path to downloaded file
-     * @param uri - path from which resource will be downloaded
-     * @param hash - expected hash of downloaded resource
+     *
+     * @param uri              - path from which resource will be downloaded
+     * @param hash             - expected hash of downloaded resource
      * @param downloadExecutor - configurable download executor
      * @return path to downloaded resource or null if downloading was failed or downloaded resource did not pass hash verification
      */
@@ -59,13 +61,11 @@ public class DownloaderImpl implements Downloader {
                 }
                 info.setDownloadState(DownloadInfo.DownloadState.TIMEOUT);
                 TimeUnit.SECONDS.sleep(timeout);
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 LOG.error("Unable to download update from: " + uri, e);
                 info.setDownloadState(DownloadInfo.DownloadState.TIMEOUT);
                 info.setDownloadStatus(DownloadInfo.DownloadStatus.CONNECTION_FAILURE);
-            }
-            catch (InterruptedException e) {
+            } catch (InterruptedException e) {
                 LOG.error("Downloader was awakened", e);
             }
         }
@@ -77,9 +77,11 @@ public class DownloaderImpl implements Downloader {
     public DownloadInfo getDownloadInfo() {
         return info;
     }
+
     /**
      * Download file from url and return Path to downloaded file
      * Uses default DownloadExecutor
+     *
      * @param uri
      * @param hash
      * @return

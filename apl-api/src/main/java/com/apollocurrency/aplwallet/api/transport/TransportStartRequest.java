@@ -6,7 +6,6 @@ package com.apollocurrency.aplwallet.api.transport;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- *
  * @author Serhiy Lymar
  */
 public class TransportStartRequest {
@@ -19,9 +18,9 @@ public class TransportStartRequest {
     @JsonProperty("shuffle")
     public boolean shuffle;
     @JsonProperty("uniqueport")
-    public int uniqueport;    
+    public int uniqueport;
     @JsonProperty("logpath")
-    public String logpath;    
+    public String logpath;
     @JsonProperty("id")
-    public int id;    
+    public int id;
 }

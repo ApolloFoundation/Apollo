@@ -30,8 +30,8 @@ public class PhasingPollLinkedTransaction extends DerivedEntity {
         if (!super.equals(o)) return false;
         PhasingPollLinkedTransaction that = (PhasingPollLinkedTransaction) o;
         return Objects.equals(pollId, that.pollId) &&
-                Objects.equals(transactionId, that.transactionId) &&
-                Arrays.equals(fullHash, that.fullHash);
+            Objects.equals(transactionId, that.transactionId) &&
+            Arrays.equals(fullHash, that.fullHash);
     }
 
     @Override

@@ -41,7 +41,7 @@ class ZipTest {
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(ZipImpl.class)
-            .build();
+        .build();
 
     @Inject
     private Zip zipComponent;
@@ -218,16 +218,16 @@ class ZipTest {
     @Test
     void incorrectParamsCall() {
         assertThrows(NullPointerException.class, () -> zipComponent.compress(
-                null, "", -1L, null,false));
+            null, "", -1L, null, false));
 
         assertThrows(NullPointerException.class, () -> zipComponent.compress(
-                "", null, -1L, null,false));
+            "", null, -1L, null, false));
 
         assertThrows(IllegalArgumentException.class, () -> zipComponent.compress(
-                "", csvResourcesPath.toAbsolutePath().toString(), null, null, false));
+            "", csvResourcesPath.toAbsolutePath().toString(), null, null, false));
 
         assertThrows(IllegalArgumentException.class, () -> zipComponent.compress(
-                csvResourcesPath.toAbsolutePath().toString(), "", null, null,false));
+            csvResourcesPath.toAbsolutePath().toString(), "", null, null, false));
 
         assertThrows(NullPointerException.class, () -> zipComponent.extract(null, "", true));
 

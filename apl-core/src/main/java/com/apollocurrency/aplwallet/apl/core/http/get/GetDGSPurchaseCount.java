@@ -25,10 +25,10 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
@@ -38,7 +38,7 @@ public final class GetDGSPurchaseCount extends AbstractAPIRequestHandler {
     private DGSService service = CDI.current().select(DGSService.class).get();
 
     public GetDGSPurchaseCount() {
-        super(new APITag[] {APITag.DGS}, "seller", "buyer", "withPublicFeedbacksOnly", "completed");
+        super(new APITag[]{APITag.DGS}, "seller", "buyer", "withPublicFeedbacksOnly", "completed");
     }
 
     @Override

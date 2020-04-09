@@ -1,26 +1,27 @@
 package com.apollocurrency.aplwallet.apl.util.cert;
 
 import io.firstbridge.cryptolib.FBCryptoParams;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.util.Date;
 import java.util.List;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
-import org.slf4j.LoggerFactory;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- *
  * @author alukin@gmail.com
  */
 
 public class ApolloCertificateTest {
 
     private static final FBCryptoParams params = FBCryptoParams.createDefault();
-    static ApolloCertificate acert;
     private static final org.slf4j.Logger log = LoggerFactory.getLogger(ApolloCertificateTest.class);
+    static ApolloCertificate acert;
 
     public ApolloCertificateTest() {
     }
@@ -42,7 +43,7 @@ public class ApolloCertificateTest {
     @Test
     public void testGetAuthorityId() {
         AuthorityID result = acert.getAuthorityId();
-        assertEquals(5139, result.getActorType()); 
+        assertEquals(5139, result.getActorType());
     }
 
     /**
@@ -173,10 +174,10 @@ public class ApolloCertificateTest {
         BigInteger expResult = BigInteger.valueOf(1582313240538L);
         assertEquals(expResult, result);
     }
-    
+
     @Test
     public void testGetIssuerAttributes() {
-        CertAttributes cert_attr = acert.getIssuerAttrinutes();        
+        CertAttributes cert_attr = acert.getIssuerAttrinutes();
         assertEquals("al.cn.ua", cert_attr.getCn());
         assertEquals("FirstBridge", cert_attr.getO());
     }

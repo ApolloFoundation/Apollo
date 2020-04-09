@@ -21,20 +21,10 @@ import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 
 /**
- *
  * @author al
  */
 @Slf4j
 public abstract class Data extends TransactionType {
-
-    private static TaggedDataService taggedDataService;
-
-    private static TaggedDataService lookupTaggedDataService() {
-        if (taggedDataService == null) {
-            taggedDataService = CDI.current().select(TaggedDataService.class).get();
-        }
-        return taggedDataService;
-    }
 
     private static final Fee TAGGED_DATA_FEE = new Fee.SizeBasedFee(Constants.ONE_APL, Constants.ONE_APL / 10) {
         @Override
@@ -42,44 +32,7 @@ public abstract class Data extends TransactionType {
             return appendix.getFullSize();
         }
     };
-
-    private Data() {
-    }
-
-    @Override
-    public final byte getType() {
-        return TransactionType.TYPE_DATA;
-    }
-
-    @Override
-    public Fee getBaselineFee(Transaction transaction) {
-        return TAGGED_DATA_FEE;
-    }
-
-    @Override
-    public final boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        return true;
-    }
-
-    @Override
-    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-    }
-
-    @Override
-    public final boolean canHaveRecipient() {
-        return false;
-    }
-
-    @Override
-    public final boolean isPhasingSafe() {
-        return false;
-    }
-
-    @Override
-    public final boolean isPhasable() {
-        return false;
-    }
-
+    private static TaggedDataService taggedDataService;
     public static final TransactionType TAGGED_DATA_UPLOAD = new Data() {
         @Override
         public byte getSubtype() {
@@ -149,7 +102,6 @@ public abstract class Data extends TransactionType {
             return lookupTaggedDataService().isPruned(transactionId);
         }
     };
-
     public static final TransactionType TAGGED_DATA_EXTEND = new Data() {
         @Override
         public byte getSubtype() {
@@ -203,5 +155,49 @@ public abstract class Data extends TransactionType {
             return false;
         }
     };
+
+    private Data() {
+    }
+
+    private static TaggedDataService lookupTaggedDataService() {
+        if (taggedDataService == null) {
+            taggedDataService = CDI.current().select(TaggedDataService.class).get();
+        }
+        return taggedDataService;
+    }
+
+    @Override
+    public final byte getType() {
+        return TransactionType.TYPE_DATA;
+    }
+
+    @Override
+    public Fee getBaselineFee(Transaction transaction) {
+        return TAGGED_DATA_FEE;
+    }
+
+    @Override
+    public final boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        return true;
+    }
+
+    @Override
+    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+    }
+
+    @Override
+    public final boolean canHaveRecipient() {
+        return false;
+    }
+
+    @Override
+    public final boolean isPhasingSafe() {
+        return false;
+    }
+
+    @Override
+    public final boolean isPhasable() {
+        return false;
+    }
 
 }

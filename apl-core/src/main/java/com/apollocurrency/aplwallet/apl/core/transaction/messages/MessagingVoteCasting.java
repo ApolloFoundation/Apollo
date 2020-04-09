@@ -8,16 +8,16 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import java.nio.ByteBuffer;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+
 /**
- *
  * @author al
  */
 public final class MessagingVoteCasting extends AbstractAttachment {
-    
+
     final long pollId;
     final byte[] pollVote;
 
@@ -83,5 +83,5 @@ public final class MessagingVoteCasting extends AbstractAttachment {
     public byte[] getPollVote() {
         return pollVote;
     }
-    
+
 }

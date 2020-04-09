@@ -10,14 +10,14 @@ import java.util.List;
 
 /**
  * Tests if the requested path matches the pattern.
- *
+ * <p>
  * Patterns may have formats: * , {@code *<uri> }, {@code <uri>*}, {@code <uri>}
  */
 public class UriPatternMatcher implements RequestUriMatcher {
 
     private List<String> patterns;
 
-    public UriPatternMatcher(String ... patterns) {
+    public UriPatternMatcher(String... patterns) {
         this(Arrays.asList(patterns));
     }
 
@@ -29,7 +29,7 @@ public class UriPatternMatcher implements RequestUriMatcher {
     public boolean matches(UriInfo uriInfo) {
         String path = uriInfo.getPath(true);
         for (String pattern : patterns) {
-            if (matchUriRequestPattern(pattern, path)){
+            if (matchUriRequestPattern(pattern, path)) {
                 return true;
             }
         }
@@ -40,11 +40,11 @@ public class UriPatternMatcher implements RequestUriMatcher {
         if (pattern.equals("*")) {
             return true;
         } else {
-            if ( pattern.endsWith("*") ){
+            if (pattern.endsWith("*")) {
                 return path.startsWith(pattern.substring(0, pattern.length() - 1));
-            } else if (pattern.startsWith("*") ){
+            } else if (pattern.startsWith("*")) {
                 return path.endsWith(pattern.substring(1));
-            } else{
+            } else {
                 return path.equals(pattern);
             }
         }

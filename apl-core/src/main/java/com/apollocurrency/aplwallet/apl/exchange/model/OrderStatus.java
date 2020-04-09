@@ -17,17 +17,19 @@ public enum OrderStatus {
         return OrderStatus.values()[ordinal];
     }
 
-    public boolean isOpen(){
+    public boolean isOpen() {
         return this == OrderStatus.OPEN;
     }
 
     public boolean isPending() {
         return this == OrderStatus.PENDING;
     }
-    public boolean isClosed(){
+
+    public boolean isClosed() {
         return this == OrderStatus.CLOSED;
     }
-    public boolean isWaitingForApproval(){
+
+    public boolean isWaitingForApproval() {
         return this == OrderStatus.WAITING_APPROVAL;
     }
 

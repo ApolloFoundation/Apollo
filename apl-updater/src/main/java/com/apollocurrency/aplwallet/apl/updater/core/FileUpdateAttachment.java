@@ -12,13 +12,23 @@ import java.util.Objects;
 public class FileUpdateAttachment {
     private Platform platform;
     private Architecture architecture;
-    private String  urlFirstPart;
-    private String  urlSecondPart;
+    private String urlFirstPart;
+    private String urlSecondPart;
     private String version;
     private String hash;
     private int level;
 
     public FileUpdateAttachment() {
+    }
+
+    public FileUpdateAttachment(Platform platform, Architecture architecture, String urlFirstPart, String urlSecondPart, String version, String hash, int level) {
+        this.platform = platform;
+        this.architecture = architecture;
+        this.urlFirstPart = urlFirstPart;
+        this.urlSecondPart = urlSecondPart;
+        this.version = version;
+        this.hash = hash;
+        this.level = level;
     }
 
     @Override
@@ -27,12 +37,12 @@ public class FileUpdateAttachment {
         if (!(o instanceof FileUpdateAttachment)) return false;
         FileUpdateAttachment that = (FileUpdateAttachment) o;
         return level == that.level &&
-                platform == that.platform &&
-                architecture == that.architecture &&
-                Objects.equals(urlFirstPart, that.urlFirstPart) &&
-                Objects.equals(urlSecondPart, that.urlSecondPart) &&
-                Objects.equals(version, that.version) &&
-                Objects.equals(hash, that.hash);
+            platform == that.platform &&
+            architecture == that.architecture &&
+            Objects.equals(urlFirstPart, that.urlFirstPart) &&
+            Objects.equals(urlSecondPart, that.urlSecondPart) &&
+            Objects.equals(version, that.version) &&
+            Objects.equals(hash, that.hash);
     }
 
     @Override
@@ -78,16 +88,6 @@ public class FileUpdateAttachment {
 
     public void setVersion(String version) {
         this.version = version;
-    }
-
-    public FileUpdateAttachment(Platform platform, Architecture architecture, String urlFirstPart, String urlSecondPart, String version, String hash, int level) {
-        this.platform = platform;
-        this.architecture = architecture;
-        this.urlFirstPart = urlFirstPart;
-        this.urlSecondPart = urlSecondPart;
-        this.version = version;
-        this.hash = hash;
-        this.level = level;
     }
 
     public String getHash() {

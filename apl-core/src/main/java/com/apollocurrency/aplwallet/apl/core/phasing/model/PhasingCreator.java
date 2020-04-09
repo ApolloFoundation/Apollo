@@ -17,28 +17,28 @@ public class PhasingCreator {
     public static PhasingPoll createPoll(Transaction transaction, PhasingAppendix appendix) {
         int finishTime = -1;
 
-        if(appendix instanceof PhasingAppendixV2) {
-            finishTime = ((PhasingAppendixV2)appendix).getFinishTime();
+        if (appendix instanceof PhasingAppendixV2) {
+            finishTime = ((PhasingAppendixV2) appendix).getFinishTime();
         }
 
         return new PhasingPoll(
-                null, transaction.getId(), transaction.getSenderId(), appendix.getWhitelist(),
-                transaction.getFullHash(), appendix.getFinishHeight(), finishTime, appendix.getQuorum(),
-                appendix.getVoteWeighting(), appendix.getHashedSecret(), appendix.getAlgorithm(),
-                appendix.getLinkedFullHashes(), transaction.getHeight());
+            null, transaction.getId(), transaction.getSenderId(), appendix.getWhitelist(),
+            transaction.getFullHash(), appendix.getFinishHeight(), finishTime, appendix.getQuorum(),
+            appendix.getVoteWeighting(), appendix.getHashedSecret(), appendix.getAlgorithm(),
+            appendix.getLinkedFullHashes(), transaction.getHeight());
     }
 
     public static PhasingPoll createPoll(long id, long accountId, byte whiteListSize, int finishHeight, int finishTime, byte votingModel, long quorum,
                                          long minBalance, long holdingId, byte minBalanceModel, byte[] hashedSecret, byte algorithm) {
         return new PhasingPoll(
-                null, id, accountId, whiteListSize == 0 ? EMPTY_WHITE_LIST : null, null, finishHeight, finishTime, quorum,
-                new VoteWeighting(votingModel, holdingId, minBalance, minBalanceModel), hashedSecret, algorithm, null, null);
+            null, id, accountId, whiteListSize == 0 ? EMPTY_WHITE_LIST : null, null, finishHeight, finishTime, quorum,
+            new VoteWeighting(votingModel, holdingId, minBalance, minBalanceModel), hashedSecret, algorithm, null, null);
     }
 
-    public static PhasingPoll createPoll(long dbId, long id, long accountId, long[] whitelist, byte[] fullHash, int finishHeight, int finishTime,  byte votingModel, long quorum,
+    public static PhasingPoll createPoll(long dbId, long id, long accountId, long[] whitelist, byte[] fullHash, int finishHeight, int finishTime, byte votingModel, long quorum,
                                          long minBalance, long holdingId, byte minBalanceModel, byte[] hashedSecret, byte algorithm, byte[][] linkedFullhashes, int height) {
         return new PhasingPoll(
-                dbId, id, accountId, whitelist == null ? EMPTY_WHITE_LIST : whitelist, fullHash, finishHeight, finishTime, quorum,
-                new VoteWeighting(votingModel, holdingId, minBalance, minBalanceModel), hashedSecret, algorithm, linkedFullhashes == null ? EMPTY_LINKED_HASHES : linkedFullhashes, height);
+            dbId, id, accountId, whitelist == null ? EMPTY_WHITE_LIST : whitelist, fullHash, finishHeight, finishTime, quorum,
+            new VoteWeighting(votingModel, holdingId, minBalance, minBalanceModel), hashedSecret, algorithm, linkedFullhashes == null ? EMPTY_LINKED_HASHES : linkedFullhashes, height);
     }
 }

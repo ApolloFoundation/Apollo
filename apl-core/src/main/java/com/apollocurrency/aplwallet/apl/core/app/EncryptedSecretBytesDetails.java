@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -35,6 +36,7 @@ public class EncryptedSecretBytesDetails {
     public EncryptedSecretBytesDetails(byte[] encryptedSecretBytes, long account, Integer version, byte[] nonce, long timestamp) {
         this(encryptedSecretBytes, Convert.defaultRsAccount(account), version, nonce, timestamp);
     }
+
     public EncryptedSecretBytesDetails(byte[] encryptedSecretBytes, String accountRS, Integer version, byte[] nonce, long timestamp) {
         this(encryptedSecretBytes, accountRS, Convert.parseAccountId(accountRS), version, nonce, timestamp);
     }
@@ -93,11 +95,11 @@ public class EncryptedSecretBytesDetails {
         if (!(o instanceof EncryptedSecretBytesDetails)) return false;
         EncryptedSecretBytesDetails that = (EncryptedSecretBytesDetails) o;
         return account == that.account &&
-                Objects.equals(version, that.version) &&
-                timestamp == that.timestamp &&
-                Arrays.equals(encryptedSecretBytes, that.encryptedSecretBytes) &&
-                Objects.equals(accountRS, that.accountRS) &&
-                Arrays.equals(nonce, that.nonce);
+            Objects.equals(version, that.version) &&
+            timestamp == that.timestamp &&
+            Arrays.equals(encryptedSecretBytes, that.encryptedSecretBytes) &&
+            Objects.equals(accountRS, that.accountRS) &&
+            Arrays.equals(nonce, that.nonce);
     }
 
     @Override

@@ -4,9 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.updater.pdu;
 
-import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.MAX_SHUTDOWN_TIMEOUT;
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateInfo;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
@@ -19,6 +16,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
+
+import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.MAX_SHUTDOWN_TIMEOUT;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public abstract class AbstractPlatformDependentUpdater implements PlatformDependentUpdater {
     private static final Logger LOG = getLogger(AbstractPlatformDependentUpdater.class);
@@ -49,8 +49,7 @@ public abstract class AbstractPlatformDependentUpdater implements PlatformDepend
                 while (updateInfo.getUpdateState() != UpdateInfo.UpdateState.FINISHED && secondsRemaining-- > 0) {
                     TimeUnit.SECONDS.sleep(1);
                 }
-            }
-            catch (InterruptedException e) {
+            } catch (InterruptedException e) {
                 LOG.error(e.toString(), e);
             }
             updaterMediator.shutdownApplication();
@@ -67,8 +66,7 @@ public abstract class AbstractPlatformDependentUpdater implements PlatformDepend
             while (!updaterMediator.isShutdown()) {
                 try {
                     TimeUnit.MILLISECONDS.sleep(100);
-                }
-                catch (InterruptedException e) {
+                } catch (InterruptedException e) {
                     LOG.debug(e.toString(), e);
                 }
             }
@@ -88,22 +86,21 @@ public abstract class AbstractPlatformDependentUpdater implements PlatformDepend
             PropertiesHolder ph = updaterMediator.getPropertyHolder();
 
             boolean isSharding = true; //node's sharding is on by default
-            if(ph!=null){
-               boolean isShardingOff = ph.getBooleanProperty("apl.noshardcreate", false);
-               isSharding = !isShardingOff;
-            }else{
-               LOG.warn("Can not access PeropertiesHolder");
+            if (ph != null) {
+                boolean isShardingOff = ph.getBooleanProperty("apl.noshardcreate", false);
+                isSharding = !isShardingOff;
+            } else {
+                LOG.warn("Can not access PeropertiesHolder");
             }
-            String chainId=updaterMediator.getChainId();
-            String chain="unknown";
-            if(chainId!=null && chainId.length()>=6){
-               chain = chainId.substring(0,6);
+            String chainId = updaterMediator.getChainId();
+            String chain = "unknown";
+            if (chainId != null && chainId.length() >= 6) {
+                chain = chainId.substring(0, 6);
             }
             runCommand(updateDir, Paths.get("").toAbsolutePath(), DirProvider.getBinDir(),
-                    !RuntimeEnvironment.getInstance().isServiceMode(), isSharding, chain);
+                !RuntimeEnvironment.getInstance().isServiceMode(), isSharding, chain);
             LOG.debug("Platform dependent script was started");
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             LOG.error("Cannot execute update script: ", e);
             System.exit(10);
         }

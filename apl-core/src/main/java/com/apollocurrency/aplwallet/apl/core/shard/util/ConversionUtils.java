@@ -11,7 +11,6 @@ package com.apollocurrency.aplwallet.apl.core.shard.util;
 
 import java.util.ArrayList;
 import java.util.Locale;
-import java.util.Properties;
 
 /**
  * Utility class with small caching abilities and another methods
@@ -44,7 +43,7 @@ public class ConversionUtils {
             }
         }
         String s2 = s.toUpperCase(Locale.ENGLISH);
-        e = new String[] { s, s2 };
+        e = new String[]{s, s2};
         TO_UPPER_CACHE[index] = e;
         return s2;
     }
@@ -54,9 +53,9 @@ public class ConversionUtils {
      * string will result in a null array, and an empty string in a zero element
      * array.
      *
-     * @param s the string to split
+     * @param s             the string to split
      * @param separatorChar the separator character
-     * @param trim whether each element should be trimmed
+     * @param trim          whether each element should be trimmed
      * @return the array list
      */
     public static String[] arraySplit(String s, char separatorChar, boolean trim) {
@@ -91,11 +90,11 @@ public class ConversionUtils {
     /**
      * Trim a character from a string.
      *
-     * @param s the string
-     * @param leading if leading characters should be removed
+     * @param s        the string
+     * @param leading  if leading characters should be removed
      * @param trailing if trailing characters should be removed
-     * @param sp what to remove (only the first character is used)
-     *      or null for a space
+     * @param sp       what to remove (only the first character is used)
+     *                 or null for a space
      * @return the trimmed string
      */
     public static String trim(String s, boolean leading, boolean trailing,

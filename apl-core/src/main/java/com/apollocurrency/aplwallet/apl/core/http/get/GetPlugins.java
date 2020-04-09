@@ -27,6 +27,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
@@ -39,17 +40,16 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
-import javax.enterprise.inject.Vetoed;
 
 @Deprecated
 @Vetoed
 public final class GetPlugins extends AbstractAPIRequestHandler {
 
-    public GetPlugins() {
-        super(new APITag[] {APITag.INFO});
-    }
-
     private static final Path PLUGINS_HOME = Paths.get("./html/www/plugins");
+
+    public GetPlugins() {
+        super(new APITag[]{APITag.INFO});
+    }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) {
@@ -80,13 +80,13 @@ public final class GetPlugins extends AbstractAPIRequestHandler {
         return false;
     }
 
-@Vetoed
+    @Vetoed
     private static class PluginDirListing extends SimpleFileVisitor<Path> {
+
+        private final List<Path> directories = new ArrayList<>();
 
         public PluginDirListing() {
         }
-
-        private final List<Path> directories = new ArrayList<>();
 
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attr) {

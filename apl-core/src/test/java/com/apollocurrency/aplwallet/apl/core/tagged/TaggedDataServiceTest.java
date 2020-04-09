@@ -4,10 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.tagged;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.mock;
-
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
@@ -59,45 +55,20 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
+import javax.inject.Inject;
 import java.util.List;
 import java.util.Map;
-import javax.inject.Inject;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.mock;
 
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
 class TaggedDataServiceTest {
 
-    private NtpTime time = mock(NtpTime.class);
     @RegisterExtension
-    DbExtension extension = new DbExtension(Map.of("tagged_data", List.of("name","description","tags")));
-    @WeldSetup
-    public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
-            TaggedDataServiceImpl.class,
-            GlobalSyncImpl.class,
-            TaggedDataDao.class,
-            DataTagDao.class,
-            KeyFactoryProducer.class,
-            TaggedDataTimestampDao.class,
-            TaggedDataExtendDao.class,
-            FullTextConfigImpl.class,
-            DerivedDbTablesRegistryImpl.class,
-            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
-            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
-            .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
-            .addBeans(MockBean.of(mock(ConfigDirProvider.class), ConfigDirProvider.class))
-            .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
-            .addBeans(MockBean.of(mock(AplAppStatus.class), AplAppStatus.class))
-            .addBeans(MockBean.of(time, NtpTime.class))
-            .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
-            .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
-            .addBeans(MockBean.of(mock(AccountService.class), AccountServiceImpl.class, AccountService.class))
-            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
-            .build();
-
+    DbExtension extension = new DbExtension(Map.of("tagged_data", List.of("name", "description", "tags")));
     @Inject
     TaggedDataService taggedDataService;
     @Inject
@@ -107,6 +78,35 @@ class TaggedDataServiceTest {
     BlockTestData btd;
     @Inject
     TaggedDataTimestampDao timestampDao;
+    private NtpTime time = mock(NtpTime.class);
+    @WeldSetup
+    public WeldInitiator weld = WeldInitiator.from(
+        PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
+        TaggedDataServiceImpl.class,
+        GlobalSyncImpl.class,
+        TaggedDataDao.class,
+        DataTagDao.class,
+        KeyFactoryProducer.class,
+        TaggedDataTimestampDao.class,
+        TaggedDataExtendDao.class,
+        FullTextConfigImpl.class,
+        DerivedDbTablesRegistryImpl.class,
+        TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
+        .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
+        .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
+        .addBeans(MockBean.of(mock(ConfigDirProvider.class), ConfigDirProvider.class))
+        .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
+        .addBeans(MockBean.of(mock(AplAppStatus.class), AplAppStatus.class))
+        .addBeans(MockBean.of(time, NtpTime.class))
+        .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
+        .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
+        .addBeans(MockBean.of(mock(AccountService.class), AccountServiceImpl.class, AccountService.class))
+        .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
+        .build();
+
     @BeforeEach
     void setUp() throws Exception {
         ttd = new TransactionTestData();
@@ -141,7 +141,7 @@ class TaggedDataServiceTest {
 
     @Test
     void getTagsLike() {
-        DbIterator<DataTag> result = taggedDataService.getTagsLike("trw",0, 1);
+        DbIterator<DataTag> result = taggedDataService.getTagsLike("trw", 0, 1);
         int count = 0;
         while (result.hasNext()) {
             DataTag dataTag = result.next();

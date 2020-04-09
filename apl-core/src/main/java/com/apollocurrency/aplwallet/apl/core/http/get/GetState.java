@@ -52,14 +52,14 @@ import java.net.InetAddress;
 @Deprecated
 @Vetoed
 public final class GetState extends AbstractAPIRequestHandler {
+    private final AliasService aliasService = CDI.current().select(AliasService.class).get();
     private UPnP upnp = CDI.current().select(UPnP.class).get();
     private DGSService service = CDI.current().select(DGSService.class).get();
     private TaggedDataService taggedDataService = CDI.current().select(TaggedDataService.class).get();
     private PrunableMessageService prunableMessageService = CDI.current().select(PrunableMessageService.class).get();
-    private final AliasService aliasService = CDI.current().select(AliasService.class).get();
 
     public GetState() {
-        super(new APITag[] {APITag.INFO}, "includeCounts", "adminPassword");
+        super(new APITag[]{APITag.INFO}, "includeCounts", "adminPassword");
     }
 
     @Override
@@ -78,11 +78,11 @@ public final class GetState extends AbstractAPIRequestHandler {
             response.put("numberOfBidOrders", bidCount);
             response.put("numberOfTrades", Trade.getCount());
             response.put("numberOfTransfers", AssetTransfer.getCount());
-	        response.put("numberOfCurrencies", Currency.getCount());
-    	    response.put("numberOfOffers", CurrencyBuyOffer.getCount());
+            response.put("numberOfCurrencies", Currency.getCount());
+            response.put("numberOfOffers", CurrencyBuyOffer.getCount());
             response.put("numberOfExchangeRequests", ExchangeRequest.getCount());
-        	response.put("numberOfExchanges", Exchange.getCount());
-        	response.put("numberOfCurrencyTransfers", CurrencyTransfer.getCount());
+            response.put("numberOfExchanges", Exchange.getCount());
+            response.put("numberOfCurrencyTransfers", CurrencyTransfer.getCount());
             response.put("numberOfAliases", aliasService.getCount());
             response.put("numberOfGoods", service.getGoodsCount());
             response.put("numberOfPurchases", service.getPurchaseCount());

@@ -24,5 +24,6 @@ public interface Listener<T> {
 
     void notify(T t);
 
-    default void interceptNotify() {}
+    default void interceptNotify() {
+    }
 }

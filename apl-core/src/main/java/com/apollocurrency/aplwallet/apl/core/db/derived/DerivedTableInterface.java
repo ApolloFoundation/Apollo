@@ -18,6 +18,7 @@ public interface DerivedTableInterface<T> {
 
     /**
      * Remove all records from the derived table above the height.
+     *
      * @param height the height
      * @return the number of removed records
      */
@@ -36,7 +37,8 @@ public interface DerivedTableInterface<T> {
 
     /**
      * Trim process can be different when it runs on usual way or in case sharding process
-     * @param height trim height
+     *
+     * @param height     trim height
      * @param isSharding true when called in sharding process, false otherwise (do the same as usual trim)
      */
     void trim(int height, boolean isSharding);
@@ -47,8 +49,9 @@ public interface DerivedTableInterface<T> {
 
     /**
      * Method is used by unit tests mainly
-     * @param from bottom column value (id or similar)
-     * @param limit top column value (id or similar)
+     *
+     * @param from      bottom column value (id or similar)
+     * @param limit     top column value (id or similar)
      * @param dbIdLimit batch value
      * @return table rows with lastDbId inside
      * @throws SQLException
@@ -60,10 +63,10 @@ public interface DerivedTableInterface<T> {
     /**
      * Retrieve sql result set partial table's data for later processing with pagination on current table
      *
-     * @param con sql connection to use for sql statement
-     * @param pstmt select sql to execute for selecting with pagination
+     * @param con         sql connection to use for sql statement
+     * @param pstmt       select sql to execute for selecting with pagination
      * @param minMaxValue object to keep track on latest ID during pagination
-     * @param limit batch pagination limit
+     * @param limit       batch pagination limit
      * @return sql result set
      * @throws SQLException
      */

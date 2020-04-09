@@ -83,33 +83,27 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 @Singleton
 public final class API {
+    public final static String WEB_UI_DIR = "webui";
     private static final Logger LOG = getLogger(API.class);
-    public final static String WEB_UI_DIR="webui";
-    //TODO: remove statics after switch to RestEasy handlers
-    static PropertiesHolder propertiesHolder;
-
     private static final String[] DISABLED_HTTP_METHODS = {"TRACE", "OPTIONS", "HEAD"};
-
     public static int openAPIPort;
     public static int openAPISSLPort;
     public static boolean isOpenAPI;
     public static List<String> disabledAPIs;
     public static List<APITag> disabledAPITags;
-
-    private static Set<String> allowedBotHosts;
-    private static List<NetworkAddress> allowedBotNets;
-    public static  int maxRecords;
-    static boolean enableAPIUPnP;
+    public static int maxRecords;
     public static int apiServerIdleTimeout;
     public static boolean apiServerCORS;
-
+    //TODO: remove statics after switch to RestEasy handlers
+    static PropertiesHolder propertiesHolder;
+    static boolean enableAPIUPnP;
+    private static Set<String> allowedBotHosts;
+    private static List<NetworkAddress> allowedBotNets;
     private static Server apiServer;
 
     private static URI welcomePageUri;
     private static URI serverRootUri;
-    private static List<Integer> externalPorts=new ArrayList<>();
-    private final UPnP upnp;
-    private final JettyConnectorCreator jettyConnectorCreator;
+    private static List<Integer> externalPorts = new ArrayList<>();
     final int port;
     final int sslPort;
     final String host;
@@ -117,12 +111,14 @@ public final class API {
     final int maxThreadPoolSize;
     final int minThreadPoolSize;
     final boolean enableSSL;
+    private final UPnP upnp;
+    private final JettyConnectorCreator jettyConnectorCreator;
 
     @Inject
-    public API(PropertiesHolder propertiesHolder,UPnP upnp, JettyConnectorCreator jettyConnectorCreator){
-        this.propertiesHolder=propertiesHolder;
-        this.upnp=upnp;
-        this.jettyConnectorCreator=jettyConnectorCreator;
+    public API(PropertiesHolder propertiesHolder, UPnP upnp, JettyConnectorCreator jettyConnectorCreator) {
+        this.propertiesHolder = propertiesHolder;
+        this.upnp = upnp;
+        this.jettyConnectorCreator = jettyConnectorCreator;
         maxRecords = propertiesHolder.getIntProperty("apl.maxAPIRecords");
         enableAPIUPnP = propertiesHolder.getBooleanProperty("apl.enableAPIUPnP");
         apiServerIdleTimeout = propertiesHolder.getIntProperty("apl.apiServerIdleTimeout");
@@ -137,7 +133,7 @@ public final class API {
         disabled.forEach(tagName -> apiTags.add(APITag.fromDisplayName(tagName)));
         disabledAPITags = Collections.unmodifiableList(apiTags);
         List<String> allowedBotHostsList = propertiesHolder.getStringListProperty("apl.allowedBotHosts");
-        if (! allowedBotHostsList.contains("*")) {
+        if (!allowedBotHostsList.contains("*")) {
             Set<String> hosts = new HashSet<>();
             List<NetworkAddress> nets = new ArrayList<>();
             for (String host : allowedBotHostsList) {
@@ -159,35 +155,58 @@ public final class API {
             allowedBotNets = null;
         }
 //
-            port = propertiesHolder.getIntProperty("apl.apiServerPort");
-            sslPort = propertiesHolder.getIntProperty("apl.apiServerSSLPort");
-            host = propertiesHolder.getStringProperty("apl.apiServerHost");
-            enableAPIServer = propertiesHolder.getBooleanProperty("apl.enableAPIServer");
-            maxThreadPoolSize = propertiesHolder.getIntProperty("apl.threadPoolMaxSize");
-            minThreadPoolSize = propertiesHolder.getIntProperty("apl.threadPoolMinSize");
-            enableSSL = propertiesHolder.getBooleanProperty("apl.apiSSL");
+        port = propertiesHolder.getIntProperty("apl.apiServerPort");
+        sslPort = propertiesHolder.getIntProperty("apl.apiServerSSLPort");
+        host = propertiesHolder.getStringProperty("apl.apiServerHost");
+        enableAPIServer = propertiesHolder.getBooleanProperty("apl.enableAPIServer");
+        maxThreadPoolSize = propertiesHolder.getIntProperty("apl.threadPoolMaxSize");
+        minThreadPoolSize = propertiesHolder.getIntProperty("apl.threadPoolMinSize");
+        enableSSL = propertiesHolder.getBooleanProperty("apl.apiSSL");
 //
-            String localhost = "0.0.0.0".equals(host) || "127.0.0.1".equals(host) ? "localhost" : host;
-            try {
-                welcomePageUri = new URI(enableSSL ? "https" : "http", null, localhost, enableSSL ? sslPort : port, "/", null, null);
-                serverRootUri = new URI(enableSSL ? "https" : "http", null, localhost, enableSSL ? sslPort : port, "", null, null);
-            } catch (URISyntaxException e) {
-                LOG.info("Cannot resolve browser URI", e);
-            }
-            openAPIPort = !propertiesHolder.isLightClient() && "0.0.0.0".equals(host) && allowedBotHosts == null && (!enableSSL || port != sslPort) ? port : 0;
-            openAPISSLPort = !propertiesHolder.isLightClient() && "0.0.0.0".equals(host) && allowedBotHosts == null && enableSSL ? sslPort : 0;
-            isOpenAPI = openAPIPort > 0 || openAPISSLPort > 0;
+        String localhost = "0.0.0.0".equals(host) || "127.0.0.1".equals(host) ? "localhost" : host;
+        try {
+            welcomePageUri = new URI(enableSSL ? "https" : "http", null, localhost, enableSSL ? sslPort : port, "/", null, null);
+            serverRootUri = new URI(enableSSL ? "https" : "http", null, localhost, enableSSL ? sslPort : port, "", null, null);
+        } catch (URISyntaxException e) {
+            LOG.info("Cannot resolve browser URI", e);
+        }
+        openAPIPort = !propertiesHolder.isLightClient() && "0.0.0.0".equals(host) && allowedBotHosts == null && (!enableSSL || port != sslPort) ? port : 0;
+        openAPISSLPort = !propertiesHolder.isLightClient() && "0.0.0.0".equals(host) && allowedBotHosts == null && enableSSL ? sslPort : 0;
+        isOpenAPI = openAPIPort > 0 || openAPISSLPort > 0;
     }
 
-    public static String findWebUiDir(){
-        String dir = DirProvider.getBinDir()+ File.separator+WEB_UI_DIR;
-        dir=dir+ File.separator+"build";
+    public static String findWebUiDir() {
+        String dir = DirProvider.getBinDir() + File.separator + WEB_UI_DIR;
+        dir = dir + File.separator + "build";
         File res = new File(dir);
-        if(!res.exists()){ //we are in develop IDE or tests
-            dir=DirProvider.getBinDir()+"/apl-exec/target/"+WEB_UI_DIR+"/build";
-            res=new File(dir);
+        if (!res.exists()) { //we are in develop IDE or tests
+            dir = DirProvider.getBinDir() + "/apl-exec/target/" + WEB_UI_DIR + "/build";
+            res = new File(dir);
         }
         return res.getAbsolutePath();
+    }
+
+    public static boolean isAllowed(String remoteHost) {
+        if (allowedBotHosts == null || allowedBotHosts.contains(remoteHost)) {
+            return true;
+        }
+        try {
+            BigInteger hostAddressToCheck = new BigInteger(InetAddress.getByName(remoteHost).getAddress());
+            for (NetworkAddress network : allowedBotNets) {
+                if (network.contains(hostAddressToCheck)) {
+                    return true;
+                }
+            }
+        } catch (UnknownHostException e) {
+            // can't resolve, disallow
+            LOG.info("Unknown remote host " + remoteHost);
+        }
+        return false;
+
+    }
+
+    public static URI getWelcomePageUri() {
+        return welcomePageUri;
     }
 
     public final void start() {
@@ -213,7 +232,7 @@ public final class API {
             //
 
             if (enableSSL) {
-                jettyConnectorCreator.addHttpSConnector(host, port, apiServer,apiServerIdleTimeout);
+                jettyConnectorCreator.addHttpSConnector(host, port, apiServer, apiServerIdleTimeout);
             }
 
             HandlerList apiHandlers = new HandlerList();
@@ -236,13 +255,13 @@ public final class API {
             apiHandler.addEventListener(new Listener());
             ServletHolder servletHolder = apiHandler.addServlet(APIServlet.class, "/apl");
             servletHolder.getRegistration().setMultipartConfig(new MultipartConfigElement(
-                    null, Math.max(propertiesHolder.getIntProperty("apl.maxUploadFileSize"), Constants.MAX_TAGGED_DATA_DATA_LENGTH), -1L, 0));
+                null, Math.max(propertiesHolder.getIntProperty("apl.maxUploadFileSize"), Constants.MAX_TAGGED_DATA_DATA_LENGTH), -1L, 0));
 
             servletHolder = apiHandler.addServlet(APIProxyServlet.class, "/apl-proxy");
             servletHolder.setInitParameters(Collections.singletonMap("idleTimeout",
-                    "" + Math.max(apiServerIdleTimeout - APIProxyServlet.PROXY_IDLE_TIMEOUT_DELTA, 0)));
+                "" + Math.max(apiServerIdleTimeout - APIProxyServlet.PROXY_IDLE_TIMEOUT_DELTA, 0)));
             servletHolder.getRegistration().setMultipartConfig(new MultipartConfigElement(
-                    null, Math.max(propertiesHolder.getIntProperty("apl.maxUploadFileSize"), Constants.MAX_TAGGED_DATA_DATA_LENGTH), -1L, 0));
+                null, Math.max(propertiesHolder.getIntProperty("apl.maxUploadFileSize"), Constants.MAX_TAGGED_DATA_DATA_LENGTH), -1L, 0));
 
             GzipHandler gzipHandler = new GzipHandler();
             if (!propertiesHolder.getBooleanProperty("apl.enableAPIServerGZIPFilter", isOpenAPI)) {
@@ -264,10 +283,10 @@ public final class API {
             apiHandler.addEventListener(new ApiContextListener());
             // Filter to forward requests to new API
             {
-              FilterHolder filterHolder = apiHandler.addFilter(ApiSplitFilter.class, "/*", null);
-              filterHolder.setAsyncSupported(true);
-              filterHolder = apiHandler.addFilter(ApiProtectionFilter.class, "/*", null);
-              filterHolder.setAsyncSupported(true);
+                FilterHolder filterHolder = apiHandler.addFilter(ApiSplitFilter.class, "/*", null);
+                filterHolder.setAsyncSupported(true);
+                filterHolder = apiHandler.addFilter(ApiProtectionFilter.class, "/*", null);
+                filterHolder.setAsyncSupported(true);
             }
             if (apiServerCORS) {
                 FilterHolder filterHolder = apiHandler.addFilter(CrossOriginFilter.class, "/*", null);
@@ -288,20 +307,20 @@ public final class API {
             //restEasyServletHolder.setInitParameter("resteasy.role.based.security", "true");
 
             restEasyServletHolder.setInitParameter(ResteasyContextParameters.RESTEASY_PROVIDERS,
-                    new StringJoiner(",")
-                            .add(ConstraintViolationExceptionMapper.class.getName())
-                            .add(ClientErrorExceptionMapper.class.getName())
-                            .add(ParameterExceptionMapper.class.getName())
-                            .add(LegacyParameterExceptionMapper.class.getName())
-                            .add(SecurityInterceptor.class.getName())
-                            .add(Secured2FAInterceptor.class.getName())
-                            .add(RestParameterExceptionMapper.class.getName())
-                            .add(DefaultGlobalExceptionMapper.class.getName())
-                            .add(CharsetRequestFilter.class.getName())
-                            .add(IllegalArgumentExceptionMapper.class.getName())
-                            .add(PlatformSpecConverterProvider.class.getName())
-                            .add(ByteArrayConverterProvider.class.getName())
-                            .toString()
+                new StringJoiner(",")
+                    .add(ConstraintViolationExceptionMapper.class.getName())
+                    .add(ClientErrorExceptionMapper.class.getName())
+                    .add(ParameterExceptionMapper.class.getName())
+                    .add(LegacyParameterExceptionMapper.class.getName())
+                    .add(SecurityInterceptor.class.getName())
+                    .add(Secured2FAInterceptor.class.getName())
+                    .add(RestParameterExceptionMapper.class.getName())
+                    .add(DefaultGlobalExceptionMapper.class.getName())
+                    .add(CharsetRequestFilter.class.getName())
+                    .add(IllegalArgumentExceptionMapper.class.getName())
+                    .add(PlatformSpecConverterProvider.class.getName())
+                    .add(ByteArrayConverterProvider.class.getName())
+                    .toString()
             );
 
             String restEasyAppClassName = RestEasyApplication.class.getName();
@@ -310,13 +329,13 @@ public final class API {
             // init Weld here
             apiHandler.addEventListener(new org.jboss.weld.module.web.servlet.WeldInitialListener());
             //need this listener to support scopes properly
-            apiHandler.addEventListener( new org.jboss.weld.environment.servlet.Listener());
+            apiHandler.addEventListener(new org.jboss.weld.environment.servlet.Listener());
 
             //--------- ADD swagger generated docs and API test page
             // Set the path to our static (Swagger UI) resources
 
-            URL su =  API.class.getResource("/swaggerui");
-            if(su!=null){
+            URL su = API.class.getResource("/swaggerui");
+            if (su != null) {
                 String resourceBasePath = su.toExternalForm();
                 ContextHandler contextHandler = new ContextHandler("/swagger");
                 ResourceHandler swFileHandler = new ResourceHandler();
@@ -325,7 +344,7 @@ public final class API {
                 swFileHandler.setResourceBase(resourceBasePath);
                 contextHandler.setHandler(swFileHandler);
                 apiHandlers.addHandler(contextHandler);
-            }else{
+            } else {
                 LOG.warn("Swagger html/js resources not found, swagger UI is off.");
             }
 
@@ -338,27 +357,27 @@ public final class API {
             apiServer.setStopAtShutdown(true);
 //            Log.getRootLogger().setDebugEnabled(true);
 
-                try {
+            try {
 
-                    if (enableAPIUPnP && upnp.isAvailable()) {
-                        Connector[] apiConnectors = apiServer.getConnectors();
-                        for (Connector apiConnector : apiConnectors) {
-                            if (apiConnector instanceof ServerConnector)
-                                externalPorts.add(upnp.addPort(((ServerConnector)apiConnector).getPort(),"API"));
-                        }
-                        if(!externalPorts.isEmpty()){
-                            openAPIPort=externalPorts.get(0);
-                        }
+                if (enableAPIUPnP && upnp.isAvailable()) {
+                    Connector[] apiConnectors = apiServer.getConnectors();
+                    for (Connector apiConnector : apiConnectors) {
+                        if (apiConnector instanceof ServerConnector)
+                            externalPorts.add(upnp.addPort(((ServerConnector) apiConnector).getPort(), "API"));
                     }
-
-                    apiServer.start();
-
-                    LOG.info("Started API server at " + host + ":" + port + (enableSSL && port != sslPort ? ", " + host + ":" + sslPort : ""));
-                } catch (Exception e) {
-                    LOG.error("Failed to start API server", e);
-                    throw new RuntimeException(e.toString(), e);
+                    if (!externalPorts.isEmpty()) {
+                        openAPIPort = externalPorts.get(0);
+                    }
                 }
-          //  }, true);
+
+                apiServer.start();
+
+                LOG.info("Started API server at " + host + ":" + port + (enableSSL && port != sslPort ? ", " + host + ":" + sslPort : ""));
+            } catch (Exception e) {
+                LOG.error("Failed to start API server", e);
+                throw new RuntimeException(e.toString(), e);
+            }
+            //  }, true);
 
         } else {
             apiServer = null;
@@ -374,33 +393,13 @@ public final class API {
         if (apiServer != null) {
             try {
                 apiServer.stop();
-                for (int extPort:externalPorts) {
-                       upnp.deletePort(extPort);
+                for (int extPort : externalPorts) {
+                    upnp.deletePort(extPort);
                 }
             } catch (Exception e) {
                 LOG.info("Failed to stop API server", e);
             }
         }
-    }
-
-
-    public static boolean isAllowed(String remoteHost) {
-        if (allowedBotHosts == null || allowedBotHosts.contains(remoteHost)) {
-            return true;
-        }
-        try {
-            BigInteger hostAddressToCheck = new BigInteger(InetAddress.getByName(remoteHost).getAddress());
-            for (NetworkAddress network : allowedBotNets) {
-                if (network.contains(hostAddressToCheck)) {
-                    return true;
-                }
-            }
-        } catch (UnknownHostException e) {
-            // can't resolve, disallow
-            LOG.info("Unknown remote host " + remoteHost);
-        }
-        return false;
-
     }
 
     private void disableHttpMethods(ServletContextHandler servletContext) {
@@ -437,12 +436,6 @@ public final class API {
         mapping.setPathSpec("/");
         mapping.setMethod(httpMethod);
         securityHandler.addConstraintMapping(mapping);
-    }
-
-
-
-    public static URI getWelcomePageUri() {
-        return welcomePageUri;
     }
 
     public URI getServerRootUri() {

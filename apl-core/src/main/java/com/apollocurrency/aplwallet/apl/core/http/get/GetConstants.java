@@ -20,8 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
@@ -49,16 +47,41 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
-import java.util.Collections;
-import java.util.Map;
 import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
+import java.util.Collections;
+import java.util.Map;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 @Deprecated
 @Vetoed
 public final class GetConstants extends AbstractAPIRequestHandler {
     private static final Logger LOG = getLogger(GetConstants.class);
+
+    public GetConstants() {
+        super(new APITag[]{APITag.INFO});
+    }
+
+    public static JSONStreamAware getConstants() {
+        return Holder.CONSTANTS;
+    }
+
+    @Override
+    public JSONStreamAware processRequest(HttpServletRequest req) {
+        return Holder.CONSTANTS;
+    }
+
+    @Override
+    protected boolean allowRequiredBlockParameters() {
+        return false;
+    }
+
+    @Override
+    protected boolean requireBlockchain() {
+        return false;
+    }
 
     private static final class Holder {
 
@@ -230,28 +253,5 @@ public final class GetConstants extends AbstractAPIRequestHandler {
                 throw e;
             }
         }
-    }
-
-    public GetConstants() {
-        super(new APITag[] {APITag.INFO});
-    }
-
-    @Override
-    public JSONStreamAware processRequest(HttpServletRequest req) {
-        return Holder.CONSTANTS;
-    }
-
-    @Override
-    protected boolean allowRequiredBlockParameters() {
-        return false;
-    }
-
-    @Override
-    protected boolean requireBlockchain() {
-        return false;
-    }
-
-    public static JSONStreamAware getConstants() {
-        return Holder.CONSTANTS;
     }
 }

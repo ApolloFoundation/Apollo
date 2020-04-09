@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.core.converter.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
+import com.apollocurrency.aplwallet.apl.core.converter.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
@@ -34,28 +34,27 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+
 public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDbTableTest<T> {
 
+    EntityDbTable<T> table;
     private DbKey THROWING_DB_KEY = createThrowingKey();
     private Comparator<T> DB_ID_HEIGHT_COMPARATOR = Comparator.comparing(T::getHeight).thenComparing(T::getDbId).reversed();
     private String DB_ID_HEIGHT_SORT = " ORDER BY height DESC, db_id DESC";
-
-    private DbKey createThrowingKey() {
-        DbKey throwingKey = mock(DbKey.class);
-        try {
-            doThrow(SQLException.class).when(throwingKey).setPK(any(PreparedStatement.class));
-        }
-        catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-        return throwingKey;
-    }
 
     public EntityDbTableTest(Class<T> clazz) {
         super(clazz);
     }
 
-    EntityDbTable<T> table;
+    private DbKey createThrowingKey() {
+        DbKey throwingKey = mock(DbKey.class);
+        try {
+            doThrow(SQLException.class).when(throwingKey).setPK(any(PreparedStatement.class));
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+        return throwingKey;
+    }
 
     @Override
     @BeforeEach
@@ -161,7 +160,6 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
                 actual = table.get(table.getDbKeyFactory().newKey(deleted), deleted.getHeight());
                 assertNull(actual);
             }
-
 
 
             entries = getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 1, true);
@@ -406,15 +404,14 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
     public void testGetManyOnConnectionWithoutCache() {
         List<T> allExpectedData = sortByHeightDesc(getAll());
         DbUtils.inTransaction(extension, (con) -> {
-                    try {
-                        PreparedStatement pstm = con.prepareStatement("select * from " + table.getTableName() + " order by height desc, db_id desc");
-                        List<T> all = CollectionUtil.toList(table.getManyBy(con, pstm, false));
-                        assertEquals(allExpectedData, all);
-                    }
-                    catch (SQLException e) {
-                        throw new RuntimeException(e.toString(), e);
-                    }
+                try {
+                    PreparedStatement pstm = con.prepareStatement("select * from " + table.getTableName() + " order by height desc, db_id desc");
+                    List<T> all = CollectionUtil.toList(table.getManyBy(con, pstm, false));
+                    assertEquals(allExpectedData, all);
+                } catch (SQLException e) {
+                    throw new RuntimeException(e.toString(), e);
                 }
+            }
         );
     }
 
@@ -430,21 +427,21 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
 
                 List<T> elements = dbKeyListMap.get(table.getDbKeyFactory().newKey(e));
                 boolean notDeleted = elements
-                        .stream()
-                        .anyMatch(el -> el.getHeight() > height);
+                    .stream()
+                    .anyMatch(el -> el.getHeight() > height);
                 boolean lastAtHeight = elements
-                        .stream()
-                        .noneMatch(el -> el.getHeight() <= height && el.getHeight() > e.getHeight());
+                    .stream()
+                    .noneMatch(el -> el.getHeight() <= height && el.getHeight() > e.getHeight());
                 return notDeleted && lastAtHeight;
 
             } else {
                 return false;
             }
         })
-                .sorted(comp)
-                .skip(from)
-                .limit(to - from)
-                .collect(Collectors.toList());
+            .sorted(comp)
+            .skip(from)
+            .limit(to - from)
+            .collect(Collectors.toList());
         return expected;
     }
 
@@ -537,7 +534,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
 
     public void testGetCountByDbClauseWithHeight(int index, int height) {
         List<T> allLatest = getAllLatest();
-        List<T> expected = getExpectedAtHeight(0, Integer.MAX_VALUE, height, (v1, v2) -> 0, (v)-> true);
+        List<T> expected = getExpectedAtHeight(0, Integer.MAX_VALUE, height, (v1, v2) -> 0, (v) -> true);
         assertEquals(expected.size(), table.getCount(DbClause.EMPTY_CLAUSE, height));
         for (DbClause.Op op : DbClause.Op.values()) {
             long dbId = allLatest.get(index).getDbId();

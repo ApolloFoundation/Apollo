@@ -34,7 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class ValuesDbTable<T> extends BasicDbTable<T> {
-        private static final Logger log = LoggerFactory.getLogger(ValuesDbTable.class);
+    private static final Logger log = LoggerFactory.getLogger(ValuesDbTable.class);
 
 
     public ValuesDbTable(String table, KeyFactory<T> dbKeyFactory) {
@@ -45,7 +45,7 @@ public abstract class ValuesDbTable<T> extends BasicDbTable<T> {
         super(table, dbKeyFactory, multiversion, true);
     }
 
-    public ValuesDbTable(String table, boolean init,  KeyFactory<T> dbKeyFactory, boolean multiversion) {
+    public ValuesDbTable(String table, boolean init, KeyFactory<T> dbKeyFactory, boolean multiversion) {
         super(table, dbKeyFactory, multiversion, init);
     }
 
@@ -54,7 +54,7 @@ public abstract class ValuesDbTable<T> extends BasicDbTable<T> {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + keyFactory.getPKClause()
-                     + (multiversion ? " AND latest = TRUE" : "") + " ORDER BY db_id")) {
+                 + (multiversion ? " AND latest = TRUE" : "") + " ORDER BY db_id")) {
             dbKey.setPK(pstmt);
             return get(con, pstmt);
         } catch (SQLException e) {
@@ -94,7 +94,7 @@ public abstract class ValuesDbTable<T> extends BasicDbTable<T> {
         try (Connection con = dataSource.getConnection()) {
             if (multiversion) {
                 try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
-                        + " SET latest = FALSE " + keyFactory.getPKClause() + " AND latest = TRUE")) {
+                    + " SET latest = FALSE " + keyFactory.getPKClause() + " AND latest = TRUE")) {
                     dbKey.setPK(pstmt);
                     pstmt.executeUpdate();
                 }
@@ -112,9 +112,9 @@ public abstract class ValuesDbTable<T> extends BasicDbTable<T> {
     private void checkKeys(DbKey key, List<T> values) {
 
         boolean match = values
-                .stream()
-                .map(keyFactory::newKey)
-                .allMatch(key::equals);
+            .stream()
+            .map(keyFactory::newKey)
+            .allMatch(key::equals);
         if (!match) {
             throw new IllegalArgumentException("DbKeys not match");
         }

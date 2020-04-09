@@ -22,6 +22,7 @@ public class UpdateData {
     public boolean isAutomaticUpdate() { // update is automatic for Important and Critical update types
         return !(attachment instanceof MinorUpdate);
     }
+
     public UpdateAttachment getAttachment() {
         return attachment;
     }

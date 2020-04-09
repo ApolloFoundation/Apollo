@@ -8,11 +8,11 @@ import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthFileSystemRepository;
 import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepositoryImpl;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
-import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
+import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -29,30 +29,31 @@ import javax.servlet.http.HttpServletRequest;
 /**
  * This class is just static helper for 2FA. It should be removed later
  * and replaced by properly used CDI
- * @deprecated Use {@link com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper} class instead of this one.
+ *
  * @author al
+ * @deprecated Use {@link com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper} class instead of this one.
  */
 @Slf4j
 @Deprecated
 public class Helper2FA {
-   private static TwoFactorAuthService service2FA;
-   private static final Logger LOG = LoggerFactory.getLogger(Helper2FA.class);
-   private static final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-   private static final DirProvider dirProvider = CDI.current().select(DirProvider.class).get();
-   private static final KeyStoreService KEYSTORE = CDI.current().select(KeyStoreService.class).get();
-   private static final AccountService accountService = CDI.current().select(AccountService.class).get();
-   private static final PassphraseGeneratorImpl passphraseGenerator = new PassphraseGeneratorImpl(10, 15);
-   private static boolean is2FaInFile;
+    private static final Logger LOG = LoggerFactory.getLogger(Helper2FA.class);
+    private static final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private static final DirProvider dirProvider = CDI.current().select(DirProvider.class).get();
+    private static final KeyStoreService KEYSTORE = CDI.current().select(KeyStoreService.class).get();
+    private static final AccountService accountService = CDI.current().select(AccountService.class).get();
+    private static final PassphraseGeneratorImpl passphraseGenerator = new PassphraseGeneratorImpl(10, 15);
+    private static TwoFactorAuthService service2FA;
+    private static boolean is2FaInFile;
 
-     public static void init(DatabaseManager databaseManagerParam) {
-         is2FaInFile = propertiesHolder.getBooleanProperty("apl.store2FAInFileSystem", false);
-         log.trace("is2FaInFile = {}", is2FaInFile);
-         service2FA = new TwoFactorAuthServiceImpl(
-             new TwoFactorAuthRepositoryImpl(databaseManagerParam.getDataSource()),
-             propertiesHolder.getStringProperty("apl.issuerSuffix2FA",
-                 RuntimeEnvironment.getInstance().isDesktopApplicationEnabled() ? "desktop" : "web"),
-             new TwoFactorAuthFileSystemRepository(dirProvider.get2FADir())
-         );
+    public static void init(DatabaseManager databaseManagerParam) {
+        is2FaInFile = propertiesHolder.getBooleanProperty("apl.store2FAInFileSystem", false);
+        log.trace("is2FaInFile = {}", is2FaInFile);
+        service2FA = new TwoFactorAuthServiceImpl(
+            new TwoFactorAuthRepositoryImpl(databaseManagerParam.getDataSource()),
+            propertiesHolder.getStringProperty("apl.issuerSuffix2FA",
+                RuntimeEnvironment.getInstance().isDesktopApplicationEnabled() ? "desktop" : "web"),
+            new TwoFactorAuthFileSystemRepository(dirProvider.get2FADir())
+        );
     }
 
     public static void attemptMoveDataFromDatabase() {
@@ -69,6 +70,7 @@ public class Helper2FA {
         log.trace("enable2FA, accountId = {}, res = {}", accountId, details);
         return details;
     }
+
     public static TwoFactorAuthDetails enable2FA(String secretPhrase) throws ParameterException {
         return service2FA.enable(Convert.getId(Crypto.getPublicKey(secretPhrase)));
     }
@@ -102,7 +104,7 @@ public class Helper2FA {
 
         if (isEnabled2FA(params2FA.getAccountId())) {
             requireSecretPhraseOrPassphrase(params2FA);
-            int code = HttpParameterParserUtil.getInt(req,"code2FA", Integer.MIN_VALUE, Integer.MAX_VALUE, true);
+            int code = HttpParameterParserUtil.getInt(req, "code2FA", Integer.MIN_VALUE, Integer.MAX_VALUE, true);
             Status2FA status2FA;
             long accountId;
             if (params2FA.isPassphrasePresent()) {
@@ -133,7 +135,7 @@ public class Helper2FA {
     public static byte[] findAplSecretBytes(long accountId, String passphrase) throws ParameterException {
         ApolloFbWallet fbWallet = KEYSTORE.getSecretStore(passphrase, accountId);
 
-        if(fbWallet == null){
+        if (fbWallet == null) {
             throw new ParameterException(JSONResponses.incorrect("account id or passphrase"));
         }
 
@@ -156,6 +158,7 @@ public class Helper2FA {
         validate2FAStatus(status2FA, accountId);
         return status2FA;
     }
+
     public static Status2FA confirm2FA(String secretPhrase, int code) throws ParameterException {
         long accountId = Convert.getId(Crypto.getPublicKey(secretPhrase));
         Status2FA status2FA = service2FA.confirm(accountId, code);
@@ -186,7 +189,7 @@ public class Helper2FA {
     }
 
     public static WalletKeysInfo generateUserWallet(String passphrase) throws ParameterException {
-         return generateUserWallet(passphrase, null);
+        return generateUserWallet(passphrase, null);
     }
 
     public static WalletKeysInfo generateUserWallet(String passphrase, byte[] secretApl) throws ParameterException {
@@ -211,9 +214,9 @@ public class Helper2FA {
 
     private static void validateKeyStoreStatus(long accountId, KeyStoreService.Status status, String notPerformedAction) throws ParameterException {
         if (status != KeyStoreService.Status.OK) {
-            LOG.debug( "Vault wallet not " + notPerformedAction + " {} - {}", Convert2.rsAccount(accountId), status);
+            LOG.debug("Vault wallet not " + notPerformedAction + " {} - {}", Convert2.rsAccount(accountId), status);
             throw new ParameterException("Unable to generate account", null, JSONResponses.vaultWalletError(accountId, notPerformedAction,
-                    status.message));
+                status.message));
         }
     }
 
@@ -225,7 +228,6 @@ public class Helper2FA {
         WalletKeysInfo walletKeysInfo = generateUserWallet(passphrase, secretBytes);
         return walletKeysInfo;
     }
-
 
 
 }

@@ -52,7 +52,7 @@ public class CsvImporterImpl implements CsvImporter {
     private final Path dataExportPath; // path to folder with CSV files
     private final DatabaseManager databaseManager;
     private final Set<String> excludeTables; // skipped tables,
-    private final  AplAppStatus aplAppStatus;
+    private final AplAppStatus aplAppStatus;
     private final ValueParser parser;
     private final CsvEscaper translator;
 
@@ -154,7 +154,7 @@ public class CsvImporterImpl implements CsvImporter {
         // file 'extension' should be checked on file instance actually
         String inputFileName = tableName + CsvAbstractBase.CSV_FILE_EXTENSION; // getFileNameExtension() would be better
         File file = new File(this.dataExportPath.toString(), inputFileName);
-        if(!file.exists()) {
+        if (!file.exists()) {
             log.warn("Table/File is not found/exist, skipping : {}", file);
             return -1;
         }
@@ -171,7 +171,7 @@ public class CsvImporterImpl implements CsvImporter {
         // open CSV Reader and db connection
         try (CsvReader csvReader = new CsvReaderImpl(this.dataExportPath, translator);
              ResultSet rs = csvReader.read(
-                inputFileName, null, null);
+                 inputFileName, null, null);
              Connection con = dataSource.isInTransaction() ? dataSource.getConnection() : dataSource.begin()) {
             csvReader.setOptions("fieldDelimiter="); // do not remove, setting = do not put "" around column/values
 
@@ -190,13 +190,13 @@ public class CsvImporterImpl implements CsvImporter {
                     log.trace("{}[{} : {}] = {}", columnName, i + 1, meta.getColumnTypeName(i + 1), object);
 
                     if (object != null && isBinaryColumn(meta, i)) {
-                        row.put(columnName.toLowerCase(), prepareBinaryObject( object, preparedInsertStatement, i+1, meta.getPrecision(i + 1)));
+                        row.put(columnName.toLowerCase(), prepareBinaryObject(object, preparedInsertStatement, i + 1, meta.getPrecision(i + 1)));
                     } else if (object != null && isArrayColumn(meta, i)) {
-                        row.put(columnName.toLowerCase(), prepareArrayObject(object, preparedInsertStatement, i+1));
+                        row.put(columnName.toLowerCase(), prepareArrayObject(object, preparedInsertStatement, i + 1));
                     } else if (object != null && isVarcharColumn(meta, i)) {
-                        row.put(columnName.toLowerCase(), prepareVarcharObject(object, preparedInsertStatement, i+1));
+                        row.put(columnName.toLowerCase(), prepareVarcharObject(object, preparedInsertStatement, i + 1));
                     } else {
-                        row.put(columnName.toLowerCase(), prepareObject(object, preparedInsertStatement, i+1));
+                        row.put(columnName.toLowerCase(), prepareObject(object, preparedInsertStatement, i + 1));
                     }
                 }
                 int i = columnsCount + 1;
@@ -222,7 +222,7 @@ public class CsvImporterImpl implements CsvImporter {
         } catch (Exception e) {
             dataSource.rollback(false);
             log.error("Imported so far={}, rsCounter={}, row={}", importedCount, rsCounter, row);
-            throw new CsvImportException("Error during importing '" + tableName + "'",e);
+            throw new CsvImportException("Error during importing '" + tableName + "'", e);
         } finally {
             if (preparedInsertStatement != null) {
                 DbUtils.close(preparedInsertStatement);
@@ -241,7 +241,7 @@ public class CsvImporterImpl implements CsvImporter {
         // create SQL insert statement
         sqlInsert.append("INSERT INTO ").append(tableName).append(" (");
         for (int i = 0; i < columnsCount; i++) {
-            columnNames.append( meta.getColumnLabel(i + 1));
+            columnNames.append(meta.getColumnLabel(i + 1));
             columnsValues.append("?");
             if (!defaultParams.isEmpty() || i != columnsCount - 1) {
                 columnNames.append(",");
@@ -268,7 +268,7 @@ public class CsvImporterImpl implements CsvImporter {
         }
     }
 
-    private Object prepareBinaryObject(Object object, PreparedStatement preparedInsertStatement, int index, int precision){
+    private Object prepareBinaryObject(Object object, PreparedStatement preparedInsertStatement, int index, int precision) {
         final byte[] decodedBytes = parser.parseBinaryObject(object);
         try (InputStream is = new ByteArrayInputStream(decodedBytes)) {
             preparedInsertStatement.setBinaryStream(index, is, precision);
@@ -279,7 +279,7 @@ public class CsvImporterImpl implements CsvImporter {
     }
 
     @SneakyThrows
-    private Object prepareArrayObject(Object object, PreparedStatement preparedInsertStatement, int index){
+    private Object prepareArrayObject(Object object, PreparedStatement preparedInsertStatement, int index) {
         Object[] actualArray = parser.parseArrayObject(object);
         SimpleResultSet.SimpleArray simpleArray = new SimpleResultSet.SimpleArray(actualArray);
         preparedInsertStatement.setArray(index, simpleArray);
@@ -287,14 +287,14 @@ public class CsvImporterImpl implements CsvImporter {
     }
 
     @SneakyThrows
-    private Object prepareVarcharObject(Object object, PreparedStatement preparedInsertStatement, int index){
+    private Object prepareVarcharObject(Object object, PreparedStatement preparedInsertStatement, int index) {
         String value = parser.parseStringObject(object);
         preparedInsertStatement.setString(index, value);
         return value;
     }
 
     @SneakyThrows
-    private Object prepareObject(Object object, PreparedStatement preparedInsertStatement, int index){
+    private Object prepareObject(Object object, PreparedStatement preparedInsertStatement, int index) {
         Object value = parser.parseObject(object);
         preparedInsertStatement.setObject(index, value);
         return value;

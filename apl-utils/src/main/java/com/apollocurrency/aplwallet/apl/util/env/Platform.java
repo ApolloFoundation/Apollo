@@ -17,14 +17,10 @@ public enum Platform {
 
     public static Platform current() {
         return
-               SystemUtils.IS_OS_WINDOWS ? Platform.WINDOWS : // Windows
-               SystemUtils.IS_OS_LINUX  ? Platform.LINUX   : // Linux
-               SystemUtils.IS_OS_MAC || SystemUtils.IS_OS_MAC_OSX ? Platform.MAC_OS : // Mac
-                                                                    null;              // Other
-    }
-
-    public boolean isAppropriate(Platform platform) {
-        return this == platform || platform == ALL;
+            SystemUtils.IS_OS_WINDOWS ? Platform.WINDOWS : // Windows
+                SystemUtils.IS_OS_LINUX ? Platform.LINUX : // Linux
+                    SystemUtils.IS_OS_MAC || SystemUtils.IS_OS_MAC_OSX ? Platform.MAC_OS : // Mac
+                        null;              // Other
     }
 
     public static Platform from(int code) {
@@ -34,5 +30,9 @@ public enum Platform {
             }
         }
         throw new IllegalArgumentException("Unable to find platform for code " + code);
+    }
+
+    public boolean isAppropriate(Platform platform) {
+        return this == platform || platform == ALL;
     }
 }

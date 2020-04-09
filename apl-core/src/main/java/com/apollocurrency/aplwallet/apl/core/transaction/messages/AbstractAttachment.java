@@ -11,11 +11,10 @@ import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 
-import java.nio.ByteBuffer;
 import javax.enterprise.inject.spi.CDI;
+import java.nio.ByteBuffer;
 
 /**
- *
  * @author al
  */
 public abstract class AbstractAttachment extends AbstractAppendix implements Attachment {
@@ -87,5 +86,5 @@ public abstract class AbstractAttachment extends AbstractAppendix implements Att
         }
         return blockchain;
     }
-    
+
 }

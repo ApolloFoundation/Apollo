@@ -48,13 +48,13 @@ public class AplContainerBuilder {
         return this;
     }
 
-    public AplContainerBuilder devMode(){
-        devMode=true;
+    public AplContainerBuilder devMode() {
+        devMode = true;
         System.setProperty("org.jboss.weld.probe.jmxSupport", "true");
         return this;
     }
 
-    public AplContainerBuilder disableConcurrentDeployment(){
+    public AplContainerBuilder disableConcurrentDeployment() {
         concurrentDeploymentDisabled = true;
         return this;
     }
@@ -93,11 +93,11 @@ public class AplContainerBuilder {
             interceptors.forEach(weld::addInterceptor);
         }
 
-        if(devMode){
-          weld.enableDevMode();
+        if (devMode) {
+            weld.enableDevMode();
         }
 
-        if(concurrentDeploymentDisabled){
+        if (concurrentDeploymentDisabled) {
             weld.property(ConfigurationKey.CONCURRENT_DEPLOYMENT.get(), "false");
         }
 

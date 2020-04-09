@@ -11,21 +11,22 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import java.nio.ByteBuffer;
-import java.util.Map;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+import java.util.Map;
+
 /**
- *
  * @author al
  */
 class MonetarySystemCurrIssuance extends MonetarySystem {
-    
-    public MonetarySystemCurrIssuance() {
-    }
+
     private final Fee FIVE_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(40 * Constants.ONE_APL);
     private final Fee FOUR_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(1000 * Constants.ONE_APL);
     private final Fee THREE_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(25000 * Constants.ONE_APL);
+
+    public MonetarySystemCurrIssuance() {
+    }
 
     @Override
     public byte getSubtype() {
@@ -147,5 +148,5 @@ class MonetarySystemCurrIssuance extends MonetarySystem {
     public boolean canHaveRecipient() {
         return false;
     }
-    
+
 }

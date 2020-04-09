@@ -7,9 +7,9 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.util.env.Architecture;
 import com.apollocurrency.aplwallet.apl.util.env.Platform;
-import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.util.env.PlatformSpec;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -58,6 +58,33 @@ public class UpdateV2Attachment extends AbstractAttachment {
         }
     }
 
+    public UpdateV2Attachment(JSONObject attachmentData) {
+        super(attachmentData);
+        this.manifestUrl = Convert.nullToEmpty((String) attachmentData.get("manifestUrl"));
+        this.updateLevel = Level.from(((Long) Convert.parseLong(attachmentData.get("level"))).intValue());
+        JSONArray platforms = (JSONArray) attachmentData.get("platforms");
+        for (Object platformObj : platforms) {
+            JSONObject platformJsonObj = (JSONObject) platformObj;
+            PlatformSpec platformSpec = new PlatformSpec(Platform.from(((Long) platformJsonObj.get("platform")).intValue()), Architecture.from(((Long) platformJsonObj.get("architecture")).intValue()));
+            this.platforms.add(platformSpec);
+        }
+        this.cn = (String) attachmentData.get("cn");
+        this.signature = Convert.parseHexString((String) attachmentData.get("signature"));
+        this.serialNumber = new BigInteger((String) attachmentData.get("serialNumber"));
+        this.releaseVersion = new Version((String) (attachmentData.get("version")));
+
+    }
+
+    public UpdateV2Attachment(String manifestUrl, Level updateLevel, Version releaseVersion, String cn, BigInteger serialNumber, byte[] signature, Set<PlatformSpec> platforms) {
+        this.manifestUrl = manifestUrl;
+        this.updateLevel = updateLevel;
+        this.releaseVersion = releaseVersion;
+        this.cn = cn;
+        this.serialNumber = serialNumber;
+        this.signature = signature;
+        this.platforms.addAll(platforms);
+    }
+
     public byte[] dataBytes() {
         ByteBuffer buff = ByteBuffer.allocate(getMySize() - signature.length - 2);
         putDataBytes(buff);
@@ -83,34 +110,6 @@ public class UpdateV2Attachment extends AbstractAttachment {
         byte[] snBytes = serialNumber.toByteArray();
         buffer.putShort((short) snBytes.length);
         buffer.put(snBytes);
-    }
-
-    public UpdateV2Attachment(JSONObject attachmentData) {
-        super(attachmentData);
-        this.manifestUrl =  Convert.nullToEmpty((String) attachmentData.get("manifestUrl"));
-        this.updateLevel = Level.from(((Long) Convert.parseLong(attachmentData.get("level"))).intValue());
-        JSONArray platforms = (JSONArray) attachmentData.get("platforms");
-        for (Object platformObj : platforms) {
-            JSONObject platformJsonObj = (JSONObject) platformObj;
-            PlatformSpec platformSpec = new PlatformSpec(Platform.from(((Long) platformJsonObj.get("platform")).intValue()), Architecture.from(((Long) platformJsonObj.get("architecture")).intValue()));
-            this.platforms.add(platformSpec);
-        }
-        this.cn = (String) attachmentData.get("cn");
-        this.signature = Convert.parseHexString((String) attachmentData.get("signature"));
-        this.serialNumber = new BigInteger((String) attachmentData.get("serialNumber"));
-        this.releaseVersion = new Version((String)(attachmentData.get("version")));
-
-    }
-
-
-    public UpdateV2Attachment(String manifestUrl, Level updateLevel, Version releaseVersion, String cn, BigInteger serialNumber, byte[] signature, Set<PlatformSpec> platforms) {
-        this.manifestUrl = manifestUrl;
-        this.updateLevel = updateLevel;
-        this.releaseVersion = releaseVersion;
-        this.cn = cn;
-        this.serialNumber = serialNumber;
-        this.signature = signature;
-        this.platforms.addAll(platforms);
     }
 
     @Override

@@ -27,6 +27,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+
 @ExtendWith(MockitoExtension.class)
 class AccountLeaseServiceTest {
 
@@ -48,36 +49,36 @@ class AccountLeaseServiceTest {
     void setUp() {
         testData = new AccountTestData();
         accountLeaseService = spy(new AccountLeaseServiceImpl(
-                accountLeaseTable,blockchain, blockchainConfig, leaseEvent));
+            accountLeaseTable, blockchain, blockchainConfig, leaseEvent));
     }
 
     @Test
     void leaseEffectiveBalance1() {
         check_leaseEffectiveBalance(1,
-                testData.ACC_1,
-                testData.ACC_LEAS_0,
-                testData.ACC_LEAS_0.getCurrentLeasingHeightTo()-leasingDelay-1,
-                1500
-                );
+            testData.ACC_1,
+            testData.ACC_LEAS_0,
+            testData.ACC_LEAS_0.getCurrentLeasingHeightTo() - leasingDelay - 1,
+            1500
+        );
     }
 
     @Test
     void leaseEffectiveBalance2() {
         check_leaseEffectiveBalance(2,
-                testData.ACC_1,
-                testData.ACC_LEAS_0,
-                testData.ACC_LEAS_0.getCurrentLeasingHeightTo() + 1,
-                1500
-                );
+            testData.ACC_1,
+            testData.ACC_LEAS_0,
+            testData.ACC_LEAS_0.getCurrentLeasingHeightTo() + 1,
+            1500
+        );
     }
 
     @Test
     void leaseEffectiveBalance_newLease() {
         check_leaseEffectiveBalance(2,
-                testData.ACC_1,
-                null,
-                testData.ACC_LEAS_0.getCurrentLeasingHeightTo() + 1,
-                1500
+            testData.ACC_1,
+            null,
+            testData.ACC_LEAS_0.getCurrentLeasingHeightTo() + 1,
+            1500
         );
     }
 
@@ -88,13 +89,13 @@ class AccountLeaseServiceTest {
         long expectedTo = expectedFrom + period;
         AccountLease accountLease = null;
 
-        if(accountLeaseFromTable == null){
+        if (accountLeaseFromTable == null) {
             lesseeId = account.getId();
             accountLease = new AccountLease(account.getId(),
-                    height + leasingDelay,
-                    height + leasingDelay + period,
-                    lesseeId, height);
-        }else {
+                height + leasingDelay,
+                height + leasingDelay + period,
+                lesseeId, height);
+        } else {
             accountLease = accountLeaseFromTable;
             lesseeId = accountLease.getCurrentLesseeId();
             if (expectedFrom < accountLease.getCurrentLeasingHeightTo()) {
@@ -112,11 +113,11 @@ class AccountLeaseServiceTest {
 
         accountLeaseService.leaseEffectiveBalance(account, lesseeId, period);
 
-        if (accountLeaseFromTable == null){
+        if (accountLeaseFromTable == null) {
             assertEquals(expectedFrom, accountLease.getCurrentLeasingHeightFrom());
             assertEquals(expectedTo, accountLease.getCurrentLeasingHeightTo());
             assertEquals(lesseeId, accountLease.getCurrentLesseeId());
-        }else {
+        } else {
             assertEquals(expectedFrom, accountLease.getNextLeasingHeightFrom());
             assertEquals(expectedTo, accountLease.getNextLeasingHeightTo());
             assertEquals(lesseeId, accountLease.getNextLesseeId());

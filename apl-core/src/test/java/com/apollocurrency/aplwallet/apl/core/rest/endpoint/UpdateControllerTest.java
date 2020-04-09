@@ -19,16 +19,16 @@ import com.apollocurrency.aplwallet.apl.core.rest.exception.LegacyParameterExcep
 import com.apollocurrency.aplwallet.apl.core.rest.utils.AccountParametersParser;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
-import com.apollocurrency.aplwallet.apl.util.env.PlatformSpec;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateV2Attachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.env.Architecture;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.env.Platform;
 import com.apollocurrency.aplwallet.apl.util.Version;
+import com.apollocurrency.aplwallet.apl.util.env.Architecture;
+import com.apollocurrency.aplwallet.apl.util.env.Platform;
+import com.apollocurrency.aplwallet.apl.util.env.PlatformSpec;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.resteasy.mock.MockHttpResponse;
 import org.jboss.weld.junit.MockBean;
@@ -59,7 +59,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-@EnableWeld // enable weld only to have an ability of creation Transaction since it require dynamic CDI injection TODO should be removed after refactoring
+@EnableWeld
+    // enable weld only to have an ability of creation Transaction since it require dynamic CDI injection TODO should be removed after refactoring
 class UpdateControllerTest extends AbstractEndpointTest {
     TransactionCreator transactionCreator;
     @Mock
@@ -140,7 +141,7 @@ class UpdateControllerTest extends AbstractEndpointTest {
             return "";
         }).when(req).getParameter(anyString());
 
-        MockHttpResponse response = sendPostRequest("/updates", "passphrase=" + SECRET + "&account=" + ACCOUNT_ID_WITH_SECRET +  "&manifestUrl=https://test.com&level=CRITICAL&platformSpec=WINDOWS-AMD64,ALL-ARM" +
+        MockHttpResponse response = sendPostRequest("/updates", "passphrase=" + SECRET + "&account=" + ACCOUNT_ID_WITH_SECRET + "&manifestUrl=https://test.com&level=CRITICAL&platformSpec=WINDOWS-AMD64,ALL-ARM" +
             "&version=1.23.4&cn=https://cn.com&serialNumber=1&signature=111100ff");
         String json = response.getContentAsString();
 
