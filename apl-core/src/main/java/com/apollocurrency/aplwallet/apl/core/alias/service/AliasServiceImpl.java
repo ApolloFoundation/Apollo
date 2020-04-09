@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.alias.service;
 
-import com.apollocurrency.aplwallet.apl.core.alias.converter.IteratorToStreamConverter;
+import com.apollocurrency.aplwallet.apl.core.converter.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.alias.dao.AliasOfferTable;
 import com.apollocurrency.aplwallet.apl.core.alias.dao.AliasTable;
 import com.apollocurrency.aplwallet.apl.core.alias.entity.Alias;
