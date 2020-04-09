@@ -68,7 +68,7 @@ public class NetworkControllerTest extends AbstractEndpointTest {
     void getPeer_whenCallWithUnknownPeer_thenGetError_2005() throws URISyntaxException, IOException {
         when(service.findPeerByAddress(WRONG_PEER_ADDRESS)).thenReturn(null);
 
-        MockHttpResponse response = sendGetRequest("/networking/peer?peer="+ WRONG_PEER_ADDRESS);
+        MockHttpResponse response = sendGetRequest("/networking/peer?peer=" + WRONG_PEER_ADDRESS);
 
         checkMandatoryParameterMissingErrorCode(response, 2005);
     }
@@ -77,7 +77,7 @@ public class NetworkControllerTest extends AbstractEndpointTest {
     void getPeer_whenCallWithParameter_thenGetPeer() throws URISyntaxException, IOException {
         when(service.findPeerByAddress(PEER_ADDRESS)).thenReturn(peer);
 
-        MockHttpResponse response = sendGetRequest("/networking/peer?peer="+ PEER_ADDRESS);
+        MockHttpResponse response = sendGetRequest("/networking/peer?peer=" + PEER_ADDRESS);
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
 
@@ -145,14 +145,14 @@ public class NetworkControllerTest extends AbstractEndpointTest {
     void addOrReplacePeer() throws URISyntaxException, IOException {
         when(service.findOrCreatePeerByAddress(PEER_ADDRESS)).thenReturn(peer);
 
-        MockHttpResponse response = sendPostRequest("/networking/peer", "peer="+PEER_ADDRESS);
+        MockHttpResponse response = sendPostRequest("/networking/peer", "peer=" + PEER_ADDRESS);
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
 
         String content = response.getContentAsString();
         print(content);
         Map result = mapper.readValue(content, Map.class);
-        assertFalse(result.containsKey("newErrorCode"), "Unexpected error code:"+result.get("newErrorCode"));
+        assertFalse(result.containsKey("newErrorCode"), "Unexpected error code:" + result.get("newErrorCode"));
 
         PeerDTO dto = mapper.readValue(content, PeerDTO.class);
         assertNotNull(dto);
@@ -171,7 +171,7 @@ public class NetworkControllerTest extends AbstractEndpointTest {
     void addOrReplacePeer_whenCallWithWrongPeer_thenGetError_2008() throws URISyntaxException, IOException {
         when(service.findOrCreatePeerByAddress(WRONG_PEER_ADDRESS)).thenReturn(null);
 
-        MockHttpResponse response = sendPostRequest("/networking/peer", "peer="+WRONG_PEER_ADDRESS);
+        MockHttpResponse response = sendPostRequest("/networking/peer", "peer=" + WRONG_PEER_ADDRESS);
 
         checkMandatoryParameterMissingErrorCode(response, 2009);
     }
@@ -210,7 +210,7 @@ public class NetworkControllerTest extends AbstractEndpointTest {
     void addPeerInBlackList() throws URISyntaxException, IOException {
         when(service.putPeerInBlackList(PEER_ADDRESS)).thenReturn(peer);
 
-        MockHttpResponse response = sendPostRequest("/networking/peer/blacklist", "peer="+PEER_ADDRESS);
+        MockHttpResponse response = sendPostRequest("/networking/peer/blacklist", "peer=" + PEER_ADDRESS);
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
 
@@ -233,7 +233,7 @@ public class NetworkControllerTest extends AbstractEndpointTest {
     void addAPIProxyPeerInBlackList() throws URISyntaxException, IOException {
         when(service.findOrCreatePeerByAddress(PEER_ADDRESS)).thenReturn(peer);
 
-        MockHttpResponse response = sendPostRequest("/networking/peer/proxyblacklist", "peer="+PEER_ADDRESS);
+        MockHttpResponse response = sendPostRequest("/networking/peer/proxyblacklist", "peer=" + PEER_ADDRESS);
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
 
@@ -255,7 +255,7 @@ public class NetworkControllerTest extends AbstractEndpointTest {
     void addAPIProxyPeerInBlackList_whenCallWithWrongPeer_thenGetError_2005() throws URISyntaxException, IOException {
         when(service.findOrCreatePeerByAddress(WRONG_PEER_ADDRESS)).thenReturn(null);
 
-        MockHttpResponse response = sendPostRequest("/networking/peer/proxyblacklist", "peer="+WRONG_PEER_ADDRESS);
+        MockHttpResponse response = sendPostRequest("/networking/peer/proxyblacklist", "peer=" + WRONG_PEER_ADDRESS);
 
         checkMandatoryParameterMissingErrorCode(response, 2005);
     }
@@ -264,14 +264,14 @@ public class NetworkControllerTest extends AbstractEndpointTest {
     void setAPIProxyPeer() throws URISyntaxException, IOException {
         when(service.findPeerByAddress(PEER_ADDRESS)).thenReturn(peer);
 
-        MockHttpResponse response = sendPostRequest("/networking/peer/setproxy", "peer="+PEER_ADDRESS);
+        MockHttpResponse response = sendPostRequest("/networking/peer/setproxy", "peer=" + PEER_ADDRESS);
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
 
         String content = response.getContentAsString();
         print(content);
         Map result = mapper.readValue(content, Map.class);
-        assertFalse(result.containsKey("newErrorCode"), "Unexpected error code:"+result.get("newErrorCode"));
+        assertFalse(result.containsKey("newErrorCode"), "Unexpected error code:" + result.get("newErrorCode"));
 
         PeerDTO dto = mapper.readValue(content, PeerDTO.class);
         assertNotNull(dto);

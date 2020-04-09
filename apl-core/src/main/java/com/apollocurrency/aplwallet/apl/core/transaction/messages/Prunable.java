@@ -23,9 +23,9 @@ public interface Prunable {
         TimeService timeService = CDI.current().select(TimeService.class).get();
         PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
         return timeService.getEpochTime() - transaction.getTimestamp() <
-                (includeExpiredPrunable && propertiesHolder.INCLUDE_EXPIRED_PRUNABLE() ?
-                        blockchainConfig.getMaxPrunableLifetime() :
-                        blockchainConfig.getMinPrunableLifetime());
+            (includeExpiredPrunable && propertiesHolder.INCLUDE_EXPIRED_PRUNABLE() ?
+                blockchainConfig.getMaxPrunableLifetime() :
+                blockchainConfig.getMinPrunableLifetime());
     }
 
 }

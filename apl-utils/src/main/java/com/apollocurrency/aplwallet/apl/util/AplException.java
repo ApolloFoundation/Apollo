@@ -28,10 +28,6 @@ public abstract class AplException extends Exception {
 
     private JSONStreamAware jsonResponce;
 
-    public JSONStreamAware getJsonResponce() {
-        return jsonResponce;
-    }
-
     protected AplException() {
         super();
     }
@@ -51,6 +47,10 @@ public abstract class AplException extends Exception {
 
     protected AplException(Throwable cause) {
         super(cause);
+    }
+
+    public JSONStreamAware getJsonResponce() {
+        return jsonResponce;
     }
 
     public static abstract class ValidationException extends AplException {
@@ -190,7 +190,8 @@ public abstract class AplException extends Exception {
             super(message, cause);
         }
     }
- public static final class PrivateLedgerEntryAccessDenied extends RuntimeException {
+
+    public static final class PrivateLedgerEntryAccessDenied extends RuntimeException {
         public PrivateLedgerEntryAccessDenied() {
             super();
         }

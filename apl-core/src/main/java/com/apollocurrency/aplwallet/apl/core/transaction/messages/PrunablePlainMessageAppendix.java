@@ -21,19 +21,12 @@ import static com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendi
 public class PrunablePlainMessageAppendix extends AbstractAppendix implements Prunable {
 
     private static final String appendixName = "PrunablePlainMessage";
-    private static final Fee PRUNABLE_MESSAGE_FEE = new Fee.SizeBasedFee(Constants.ONE_APL/10) {
+    private static final Fee PRUNABLE_MESSAGE_FEE = new Fee.SizeBasedFee(Constants.ONE_APL / 10) {
         @Override
         public int getSize(Transaction transaction, Appendix appendix) {
             return appendix.getFullSize();
         }
     };
-
-    public static PrunablePlainMessageAppendix parse(JSONObject attachmentData) {
-        if (!hasAppendix(appendixName, attachmentData)) {
-            return null;
-        }
-        return new PrunablePlainMessageAppendix(attachmentData);
-    }
 
     private byte[] hash;
     private byte[] message;
@@ -79,6 +72,13 @@ public class PrunablePlainMessageAppendix extends AbstractAppendix implements Pr
         this.message = message;
         this.isText = isText;
         this.hash = null;
+    }
+
+    public static PrunablePlainMessageAppendix parse(JSONObject attachmentData) {
+        if (!hasAppendix(appendixName, attachmentData)) {
+            return null;
+        }
+        return new PrunablePlainMessageAppendix(attachmentData);
     }
 
     @Override
@@ -159,7 +159,7 @@ public class PrunablePlainMessageAppendix extends AbstractAppendix implements Pr
             return hash;
         }
         MessageDigest digest = Crypto.sha256();
-        digest.update((byte)(isText ? 1 : 0));
+        digest.update((byte) (isText ? 1 : 0));
         digest.update(message);
         return digest.digest();
     }

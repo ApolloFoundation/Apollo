@@ -69,11 +69,11 @@ public class ShardController {
             @ApiResponse(responseCode = "200", description = "Successful execution",
                 content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = ShardDTO.class)))
-        }    )
+        })
     @PermitAll
     public Response getAllShards() {
         List<ShardDTO> allCompletedShards = shardService.getAllCompletedShards().stream()
-                .map(shard -> shardConverter.convert(shard)).collect(Collectors.toList());
+            .map(shard -> shardConverter.convert(shard)).collect(Collectors.toList());
         return Response.ok(allCompletedShards).build();
     }
 

@@ -20,10 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DELTA_QUANTITY;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_DELTA_QUANTITY;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_GOODS;
-
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
@@ -40,14 +36,19 @@ import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DELTA_QUANTITY;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_DELTA_QUANTITY;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_GOODS;
+
 @Vetoed
 public final class DGSQuantityChange extends CreateTransaction {
 
-    public DGSQuantityChange() {
-        super(new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION},
-                "goods", "deltaQuantity");
-    }
     private DGSService service = CDI.current().select(DGSService.class).get();
+
+    public DGSQuantityChange() {
+        super(new APITag[]{APITag.DGS, APITag.CREATE_TRANSACTION},
+            "goods", "deltaQuantity");
+    }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {

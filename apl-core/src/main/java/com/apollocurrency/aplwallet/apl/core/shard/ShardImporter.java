@@ -17,9 +17,7 @@ import com.apollocurrency.aplwallet.apl.core.files.DownloadableFilesManager;
 import com.apollocurrency.aplwallet.apl.core.files.shards.ShardPresentData;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvImporter;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
-
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
@@ -122,8 +120,8 @@ public class ShardImporter {
         aplAppStatus.durableTaskUpdate(genesisTaskId, 50.0, "Public keys were imported");
         // import additional tables
         List<String> tables = List.of(ShardConstants.SHARD_TABLE_NAME,
-                ShardConstants.BLOCK_TABLE_NAME, ShardConstants.TRANSACTION_TABLE_NAME,
-                ShardConstants.TRANSACTION_INDEX_TABLE_NAME, ShardConstants.BLOCK_INDEX_TABLE_NAME);
+            ShardConstants.BLOCK_TABLE_NAME, ShardConstants.TRANSACTION_TABLE_NAME,
+            ShardConstants.TRANSACTION_INDEX_TABLE_NAME, ShardConstants.BLOCK_INDEX_TABLE_NAME);
         log.debug("1. Will be imported [{}] tables...", tables.size());
         for (String table : tables) {
             if (excludedTables.contains(table)) {
@@ -167,9 +165,9 @@ public class ShardImporter {
                 long rowsImported;
                 if (ShardConstants.ACCOUNT_TABLE_NAME.equalsIgnoreCase(table) || ShardConstants.ACCOUNT_ASSET_TABLE_NAME.equalsIgnoreCase(table) || ShardConstants.ACCOUNT_CURRENCY_TABLE_NAME.equalsIgnoreCase(table)) {
                     rowsImported = csvImporter.importCsvWithDefaultParams(table, 100, true,
-                            Map.of("height", blockchain.findFirstBlock().getHeight()));
+                        Map.of("height", blockchain.findFirstBlock().getHeight()));
                 } else if (ShardConstants.TAGGED_DATA_TABLE_NAME.equalsIgnoreCase(table)) {
-                    rowsImported = csvImporter.importCsvWithRowHook(table, 100, true, (row)-> {
+                    rowsImported = csvImporter.importCsvWithRowHook(table, 100, true, (row) -> {
                         Object parsedTags = row.get("parsed_tags");
                         Object height = row.get("height");
                         if (parsedTags != null) {
@@ -196,7 +194,7 @@ public class ShardImporter {
     private Path unzipMainOptionalArchives(ShardPresentData shardPresentData, String genesisTaskId) {
         Path zipInFolder = downloadableFilesManager.mapFileIdToLocalPath(shardPresentData.getShardFileId()).toAbsolutePath();
         log.debug("Try unpack main shard file name '{}'", zipInFolder);
-        boolean unpackResult = zipComponent.extract(zipInFolder.toString(), csvImporter.getDataExportPath().toString(),true);
+        boolean unpackResult = zipComponent.extract(zipInFolder.toString(), csvImporter.getDataExportPath().toString(), true);
         log.debug("Main shard Zip is unpacked = {}", unpackResult);
         if (!unpackResult) {
             logErrorAndThrowException(shardPresentData, genesisTaskId, zipInFolder, unpackResult);
@@ -223,7 +221,7 @@ public class ShardImporter {
 
     private void logErrorAndThrowException(ShardPresentData shardPresentData, String genesisTaskId, Path zipInFolder, boolean unpackResult) {
         log.error("Node has encountered serious error and can't extract/import ZIP data by shard data = " + shardPresentData +
-                "\nSomethings wrong with zipped file =\n'{}'\n >>> STOPPING node process....", zipInFolder);
+            "\nSomethings wrong with zipped file =\n'{}'\n >>> STOPPING node process....", zipInFolder);
         aplAppStatus.durableTaskFinished(genesisTaskId, true, "Shard data import");
         throw new ShardArchiveProcessingException("Zip file can't be extracted, result = '" + unpackResult + "' : " + zipInFolder.toString());
     }

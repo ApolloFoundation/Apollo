@@ -22,20 +22,17 @@ package com.apollocurrency.aplwallet.apl.core.monetary;
 
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
-import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystemExchange;
 import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMinting;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveIncrease;
+import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+
 import javax.enterprise.inject.spi.CDI;
 import java.util.EnumSet;
 import java.util.Set;
-
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 
 /**
  * Define and validate currency capabilities
@@ -46,7 +43,6 @@ public enum CurrencyType {
      * Can be exchanged from/to APL<br>
      */
     EXCHANGEABLE(0x01) {
-
         @Override
         public void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
         }
@@ -68,11 +64,10 @@ public enum CurrencyType {
      * Only issuer account can publish exchange offer<br>
      */
     CONTROLLABLE(0x02) {
-
         @Override
         public void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
             if (transaction.getType() == MonetarySystem.CURRENCY_TRANSFER) {
-                if (currency == null ||  (currency.getAccountId() != transaction.getSenderId() && currency.getAccountId() != transaction.getRecipientId())) {
+                if (currency == null || (currency.getAccountId() != transaction.getSenderId() && currency.getAccountId() != transaction.getRecipientId())) {
                     throw new AplException.NotValidException("Controllable currency can only be transferred to/from issuer account");
                 }
             }
@@ -84,24 +79,24 @@ public enum CurrencyType {
         }
 
         @Override
-        public void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) {}
+        public void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) {
+        }
 
     },
     /**
      * Can be reserved before the currency is active, reserve is distributed to founders once the currency becomes active<br>
      */
     RESERVABLE(0x04) {
-
         @Override
         public void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException {
             if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
                 MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
                 int issuanceHeight = attachment.getIssuanceHeight();
                 int finishHeight = attachment.getFinishValidationHeight(transaction);
-                if  (issuanceHeight <= finishHeight) {
+                if (issuanceHeight <= finishHeight) {
                     throw new AplException.NotCurrentlyValidException(
                         String.format("Reservable currency activation height %d not higher than transaction apply height %d",
-                                issuanceHeight, finishHeight));
+                            issuanceHeight, finishHeight));
                 }
                 if (attachment.getMinReservePerUnitATM() <= 0) {
                     throw new AplException.NotValidException("Minimum reserve per unit must be > 0");
@@ -153,7 +148,6 @@ public enum CurrencyType {
      * Cannot be {@link #EXCHANGEABLE}
      */
     CLAIMABLE(0x08) {
-
         @Override
         public void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException {
             if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
@@ -196,13 +190,13 @@ public enum CurrencyType {
                         throw new AplException.NotValidException("Invalid minting algorithm " + hashFunction);
                     }
                 } catch (IllegalArgumentException e) {
-                    throw new AplException.NotValidException("Illegal algorithm code specified" , e);
+                    throw new AplException.NotValidException("Illegal algorithm code specified", e);
                 }
                 if (issuanceAttachment.getMinDifficulty() < 1 || issuanceAttachment.getMaxDifficulty() > 255 ||
-                        issuanceAttachment.getMaxDifficulty() < issuanceAttachment.getMinDifficulty()) {
+                    issuanceAttachment.getMaxDifficulty() < issuanceAttachment.getMinDifficulty()) {
                     throw new AplException.NotValidException(
-                            String.format("Invalid minting difficulties min %d max %d, difficulty must be between 1 and 255, max larger than min",
-                                    issuanceAttachment.getMinDifficulty(), issuanceAttachment.getMaxDifficulty()));
+                        String.format("Invalid minting difficulties min %d max %d, difficulty must be between 1 and 255, max larger than min",
+                            issuanceAttachment.getMinDifficulty(), issuanceAttachment.getMaxDifficulty()));
                 }
                 if (issuanceAttachment.getMaxSupply() <= issuanceAttachment.getReserveSupply()) {
                     throw new AplException.NotValidException("Max supply for mintable currency must exceed reserve supply");
@@ -215,8 +209,8 @@ public enum CurrencyType {
             if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
                 MonetarySystemCurrencyIssuance issuanceAttachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
                 if (issuanceAttachment.getMinDifficulty() != 0 ||
-                        issuanceAttachment.getMaxDifficulty() != 0 ||
-                        issuanceAttachment.getAlgorithm() != 0) {
+                    issuanceAttachment.getMaxDifficulty() != 0 ||
+                    issuanceAttachment.getAlgorithm() != 0) {
                     throw new AplException.NotValidException("Non mintable currency should not specify algorithm or difficulty");
                 }
             }
@@ -242,6 +236,7 @@ public enum CurrencyType {
         }
     };
 
+    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private final int code;
 
     CurrencyType(int code) {
@@ -251,14 +246,6 @@ public enum CurrencyType {
     CurrencyType() {
         code = 0;
     }
-
-    public int getCode() {
-        return code;
-    }
-
-    public abstract void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException;
-
-    public abstract void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException;
 
     public static CurrencyType get(int code) {
         for (CurrencyType currencyType : values()) {
@@ -308,9 +295,9 @@ public enum CurrencyType {
         String code = attachment.getCode();
         String description = attachment.getDescription();
         if (name.length() < Constants.MIN_CURRENCY_NAME_LENGTH || name.length() > Constants.MAX_CURRENCY_NAME_LENGTH
-                || name.length() < code.length()
-                || code.length() < Constants.MIN_CURRENCY_CODE_LENGTH || code.length() > Constants.MAX_CURRENCY_CODE_LENGTH
-                || description.length() > Constants.MAX_CURRENCY_DESCRIPTION_LENGTH) {
+            || name.length() < code.length()
+            || code.length() < Constants.MIN_CURRENCY_CODE_LENGTH || code.length() > Constants.MAX_CURRENCY_CODE_LENGTH
+            || description.length() > Constants.MAX_CURRENCY_DESCRIPTION_LENGTH) {
             throw new AplException.NotValidException(String.format("Invalid currency name %s code %s or description %s", name, code, description));
         }
         String normalizedName = name.toLowerCase();
@@ -328,19 +315,25 @@ public enum CurrencyType {
             throw new AplException.NotValidException("Currency name already used");
         }
         Currency currency;
-        if ((currency = Currency.getCurrencyByName(normalizedName)) != null && ! currency.canBeDeletedBy(issuerAccountId)) {
+        if ((currency = Currency.getCurrencyByName(normalizedName)) != null && !currency.canBeDeletedBy(issuerAccountId)) {
             throw new AplException.NotCurrentlyValidException("Currency name already used: " + normalizedName);
         }
-        if ((currency = Currency.getCurrencyByCode(name)) != null && ! currency.canBeDeletedBy(issuerAccountId)) {
+        if ((currency = Currency.getCurrencyByCode(name)) != null && !currency.canBeDeletedBy(issuerAccountId)) {
             throw new AplException.NotCurrentlyValidException("Currency name already used as code: " + normalizedName);
         }
-        if ((currency = Currency.getCurrencyByCode(code)) != null && ! currency.canBeDeletedBy(issuerAccountId)) {
+        if ((currency = Currency.getCurrencyByCode(code)) != null && !currency.canBeDeletedBy(issuerAccountId)) {
             throw new AplException.NotCurrentlyValidException("Currency code already used: " + code);
         }
-        if ((currency = Currency.getCurrencyByName(code)) != null && ! currency.canBeDeletedBy(issuerAccountId)) {
+        if ((currency = Currency.getCurrencyByName(code)) != null && !currency.canBeDeletedBy(issuerAccountId)) {
             throw new AplException.NotCurrentlyValidException("Currency code already used as name: " + code);
         }
     }
 
-    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    public int getCode() {
+        return code;
+    }
+
+    public abstract void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException;
+
+    public abstract void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException;
 }

@@ -7,11 +7,10 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 /**
- *
  * @author al
  */
 public final class LinkKey implements DbKey {
-    
+
     private final long idA;
     private final long idB;
 

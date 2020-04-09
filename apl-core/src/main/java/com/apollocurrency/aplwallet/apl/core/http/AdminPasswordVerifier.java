@@ -34,7 +34,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NO_PASSWO
 @Singleton
 public class AdminPasswordVerifier {
     public static final String ADMIN_ROLE = "admin";
-    public static final String ADMIN_PASSWORD_PARAMETER_NAME="adminPassword";
+    public static final String ADMIN_PASSWORD_PARAMETER_NAME = "adminPassword";
     private final Random random = new Random();
     private final String adminPassword;
     @Getter
@@ -53,7 +53,7 @@ public class AdminPasswordVerifier {
         forwardedForHeader = propertiesHolder.getStringProperty("apl.forwardedForHeader");
     }
 
-    public boolean isBlankAdminPassword(){
+    public boolean isBlankAdminPassword() {
         return adminPassword.isBlank();
     }
 
@@ -99,12 +99,6 @@ public class AdminPasswordVerifier {
     public boolean checkPassword(HttpServletRequest req) {
         Response response = verifyPasswordWithoutException(req);
         return response == null;
-    }
-
-    @Vetoed
-    private static class PasswordCount {
-        private int count;
-        private int time;
     }
 
     /**
@@ -161,11 +155,17 @@ public class AdminPasswordVerifier {
         return 0;
     }
 
-    private boolean isLocalHost(String host){
+    private boolean isLocalHost(String host) {
         return host != null && (host.equalsIgnoreCase("localhost")
             || host.equals("127.0.0.1")
             || host.endsWith("0:1")
             || host.endsWith("::1"));
+    }
+
+    @Vetoed
+    private static class PasswordCount {
+        private int count;
+        private int time;
     }
 
 }

@@ -8,11 +8,11 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttach
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.env.Architecture;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
-import com.apollocurrency.aplwallet.apl.util.env.Platform;
 import com.apollocurrency.aplwallet.apl.util.Version;
+import com.apollocurrency.aplwallet.apl.util.env.Architecture;
+import com.apollocurrency.aplwallet.apl.util.env.Platform;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -20,7 +20,6 @@ import java.util.Arrays;
 import java.util.Objects;
 
 /**
- *
  * @author al
  */
 public abstract class UpdateAttachment extends AbstractAttachment {
@@ -70,6 +69,17 @@ public abstract class UpdateAttachment extends AbstractAttachment {
         this.url = url;
         this.version = version;
         this.hash = hash;
+    }
+
+    public static UpdateAttachment getAttachment(Platform platform, Architecture architecture, DoubleByteArrayTuple url, Version version, byte[] hash, byte level) {
+        if (level == Update.CRITICAL.getSubtype()) {
+            return new CriticalUpdate(platform, architecture, url, version, hash);
+        } else if (level == Update.IMPORTANT.getSubtype()) {
+            return new ImportantUpdate(platform, architecture, url, version, hash);
+        } else if (level == Update.MINOR.getSubtype()) {
+            return new MinorUpdate(platform, architecture, url, version, hash);
+        }
+        return null;
     }
 
     @Override
@@ -145,17 +155,6 @@ public abstract class UpdateAttachment extends AbstractAttachment {
         int result = Objects.hash(platform, architecture, url, version);
         result = 31 * result + Arrays.hashCode(hash);
         return result;
-    }
-
-    public static UpdateAttachment getAttachment(Platform platform, Architecture architecture, DoubleByteArrayTuple url, Version version, byte[] hash, byte level) {
-        if (level == Update.CRITICAL.getSubtype()) {
-            return new CriticalUpdate(platform, architecture, url, version, hash);
-        } else if (level == Update.IMPORTANT.getSubtype()) {
-            return new ImportantUpdate(platform, architecture, url, version, hash);
-        } else if (level == Update.MINOR.getSubtype()) {
-            return new MinorUpdate(platform, architecture, url, version, hash);
-        }
-        return null;
     }
 
 }

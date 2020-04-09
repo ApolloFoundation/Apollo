@@ -26,15 +26,15 @@ public class ShardRowMapper implements RowMapper<Shard> {
         Integer[] blockTimeouts = DbUtils.getArray(rs, "block_timeouts", Integer[].class);
         Integer[] blockTimestamps = DbUtils.getArray(rs, "block_timestamps", Integer[].class);
         return Shard.builder()
-                .id(rs.getLong("shard_id"))
-                .shardHash(rs.getBytes("shard_hash"))
-                .shardState( ShardState.getType(rs.getLong("shard_state")) )
-                .shardHeight(rs.getInt("shard_height"))
-                .coreZipHash(rs.getBytes("zip_hash_crc"))
-                .generatorIds( generatorIds == null ? null : Convert.toArray(generatorIds)) // should not be empty
-                .blockTimeouts( blockTimeouts == null ? null : Convert.toArrayInt(blockTimeouts)) // should not be empty
-                .blockTimestamps( blockTimestamps == null ? null : Convert.toArrayInt(blockTimestamps)) // should not be empty
-                .prunableZipHash(rs.getBytes("prunable_zip_hash"))
-                .build();
+            .id(rs.getLong("shard_id"))
+            .shardHash(rs.getBytes("shard_hash"))
+            .shardState(ShardState.getType(rs.getLong("shard_state")))
+            .shardHeight(rs.getInt("shard_height"))
+            .coreZipHash(rs.getBytes("zip_hash_crc"))
+            .generatorIds(generatorIds == null ? null : Convert.toArray(generatorIds)) // should not be empty
+            .blockTimeouts(blockTimeouts == null ? null : Convert.toArrayInt(blockTimeouts)) // should not be empty
+            .blockTimestamps(blockTimestamps == null ? null : Convert.toArrayInt(blockTimestamps)) // should not be empty
+            .prunableZipHash(rs.getBytes("prunable_zip_hash"))
+            .build();
     }
 }

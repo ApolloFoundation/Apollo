@@ -23,6 +23,7 @@ public class CertAttributes {
     private String city = "";
     private String eMail = "";
     private List<String> ipAddList = null;
+
     public CertAttributes() {
     }
 
@@ -41,7 +42,7 @@ public class CertAttributes {
             for (String name1 : names) {
                 String[] nvs = name1.split("=");
                 String an = nvs[0].trim();
-                String av = nvs.length>1 ? nvs[1].trim():"";
+                String av = nvs.length > 1 ? nvs[1].trim() : "";
                 if (an.equalsIgnoreCase("CN")) {
                     cn = av;
                 } else if (an.equalsIgnoreCase("O")) {
@@ -59,7 +60,7 @@ public class CertAttributes {
                 } else if (an.trim().equalsIgnoreCase("UID")) {
                     apolloId = new BigInteger(av, 16);
                 } else if (an.equalsIgnoreCase("businessCategory")
-                        || an.equalsIgnoreCase("OID.2.5.4.15")) {
+                    || an.equalsIgnoreCase("OID.2.5.4.15")) {
                     apolloAuthorityId = new AuthorityID(new BigInteger(av, 16));
                 }
             }

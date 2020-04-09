@@ -5,9 +5,9 @@
 package com.apollocurrency.aplwallet.apl.core.utils;
 
 import com.apollocurrency.aplwallet.apl.core.model.AplWalletKey;
-import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import org.slf4j.Logger;
 
@@ -21,6 +21,7 @@ public class AccountGeneratorUtil {
 
     /**
      * Generate new account with random key.
+     *
      * @return AplWallet
      */
     public static AplWalletKey generateApl() {
@@ -35,6 +36,7 @@ public class AccountGeneratorUtil {
 
     /**
      * Generate new account with random key.
+     *
      * @return EthWallet
      */
     public static EthWalletKey generateEth() {

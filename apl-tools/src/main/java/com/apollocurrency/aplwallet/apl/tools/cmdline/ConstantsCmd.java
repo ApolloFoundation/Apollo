@@ -7,12 +7,11 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
 /**
- *
  * @author alukin@gmail.com
  */
 @Parameters(commandDescription = "Export Apollo constants to JSON")
 public class ConstantsCmd {
-    public static final String CMD="constants"; 
+    public static final String CMD = "constants";
     @Parameter(names = {"--out", "-o"}, description = "Output file")
-    public String outfile="constants.json";   
+    public String outfile = "constants.json";
 }

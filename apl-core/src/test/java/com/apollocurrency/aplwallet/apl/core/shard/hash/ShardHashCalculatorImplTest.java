@@ -54,33 +54,32 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 @EnableWeld
 public class ShardHashCalculatorImplTest {
-    private static final Logger log = getLogger(ShardHashCalculatorImplTest.class);
-
     static final String SHA_256 = "SHA-256";
-    static final byte[] PARTIAL_MERKLE_ROOT_2_6 =  Convert.parseHexString("57a86e3f4966f6751d661fbb537780b65d4b0edfc1b01f48780a360c4babdea7");
+    static final byte[] PARTIAL_MERKLE_ROOT_2_6 = Convert.parseHexString("57a86e3f4966f6751d661fbb537780b65d4b0edfc1b01f48780a360c4babdea7");
     static final byte[] PARTIAL_MERKLE_ROOT_7_12 = Convert.parseHexString("da5ad74821dc77fa9fb0f0ddd2e48284fe630fee9bf70f98d7aa38032ddc8f57");
-    static final byte[] PARTIAL_MERKLE_ROOT_1_8 =  Convert.parseHexString("3987b0f2fb15fdbe3e815cbdd1ff8f9527d4dc18989ae69bc446ca0b40759a6b");
+    static final byte[] PARTIAL_MERKLE_ROOT_1_8 = Convert.parseHexString("3987b0f2fb15fdbe3e815cbdd1ff8f9527d4dc18989ae69bc446ca0b40759a6b");
+    private static final Logger log = getLogger(ShardHashCalculatorImplTest.class);
+    @RegisterExtension
+    static DbExtension dbExtension = new DbExtension();
     BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     DatabaseManager databaseManager = mock(DatabaseManager.class);
     HeightConfig heightConfig = mock(HeightConfig.class);
-    @RegisterExtension
-    static DbExtension dbExtension = new DbExtension();
     @WeldSetup
     WeldInitiator weldInitiator = WeldInitiator.from(BlockchainImpl.class, ShardHashCalculatorImpl.class, BlockImpl.class, BlockDaoImpl.class, DerivedDbTablesRegistryImpl.class, TimeServiceImpl.class, GlobalSyncImpl.class, TransactionDaoImpl.class, DaoConfig.class)
-            .addBeans(
-                    MockBean.of(blockchainConfig, BlockchainConfig.class),
-                    MockBean.of(propertiesHolder, PropertiesHolder.class),
-                    MockBean.of(dbExtension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class),
-                    MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class),
-                    MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class),
-                    MockBean.of(mock(PhasingPollService.class), PhasingPollService.class),
-                    MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class),
-                    MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class),
-                    MockBean.of(mock(NtpTime.class), NtpTime.class),
-                    MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class),
-                    MockBean.of(mock(AliasService.class), AliasService.class)
-            ).build();
+        .addBeans(
+            MockBean.of(blockchainConfig, BlockchainConfig.class),
+            MockBean.of(propertiesHolder, PropertiesHolder.class),
+            MockBean.of(dbExtension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class),
+            MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class),
+            MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class),
+            MockBean.of(mock(PhasingPollService.class), PhasingPollService.class),
+            MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class),
+            MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class),
+            MockBean.of(mock(NtpTime.class), NtpTime.class),
+            MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class),
+            MockBean.of(mock(AliasService.class), AliasService.class)
+        ).build();
 
     @Inject
     ShardHashCalculator shardHashCalculator;
@@ -88,6 +87,7 @@ public class ShardHashCalculatorImplTest {
 
     @Inject
     Blockchain blockchain;
+
     @BeforeEach
     void setUp() {
         Mockito.doReturn(SHA_256).when(heightConfig).getShardingDigestAlgorithm();
@@ -114,11 +114,11 @@ public class ShardHashCalculatorImplTest {
             blocks.stream().map(Block::getBlockSignature).forEach(merkleTree::appendLeaf);
             merkleTree.appendLeaf(td.GENESIS_BLOCK.getGenerationSignature());
             return merkleTree.getRoot().getValue();
-        }
-        catch (NoSuchAlgorithmException e) {
+        } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
     }
+
     @Test
     void testCalculateHashWhenNoBlocks() throws IOException {
 
@@ -132,17 +132,20 @@ public class ShardHashCalculatorImplTest {
         byte[] merkleRoot = shardHashCalculator.calculateHash(td.BLOCK_1.getHeight(), td.BLOCK_5.getHeight());
         assertArrayEquals(PARTIAL_MERKLE_ROOT_2_6, merkleRoot);
     }
+
     @Test
     void testCalculateHashForFirstBlocks() throws IOException {
 
         byte[] merkleRoot = shardHashCalculator.calculateHash(0, td.BLOCK_8.getHeight());
         assertArrayEquals(PARTIAL_MERKLE_ROOT_1_8, merkleRoot);
     }
+
     @Test
     void testCalculateHashForLastBlocks() throws IOException {
         byte[] merkleRoot = shardHashCalculator.calculateHash(td.BLOCK_6.getHeight(), td.BLOCK_11.getHeight() + 1);
         assertArrayEquals(PARTIAL_MERKLE_ROOT_7_12, merkleRoot);
     }
+
     @Test
     void testCreateShardingHashCalculatorWithZeroBlockSelectLimit() throws IOException {
         Assertions.assertThrows(IllegalArgumentException.class, () -> new ShardHashCalculatorImpl(mock(Blockchain.class), mock(BlockchainConfig.class), mock(ShardDao.class), 0));

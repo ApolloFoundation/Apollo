@@ -42,7 +42,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_S
 public final class CalculateFullHash extends AbstractAPIRequestHandler {
 
     public CalculateFullHash() {
-        super(new APITag[] {APITag.TRANSACTIONS}, "unsignedTransactionBytes", "unsignedTransactionJSON", "signatureHash");
+        super(new APITag[]{APITag.TRANSACTIONS}, "unsignedTransactionBytes", "unsignedTransactionJSON", "signatureHash");
     }
 
     @Override

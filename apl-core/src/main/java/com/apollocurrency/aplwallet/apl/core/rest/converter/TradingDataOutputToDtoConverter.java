@@ -7,7 +7,6 @@ import com.apollocurrency.aplwallet.api.dto.TradingDataOutputDTO;
 import com.apollocurrency.aplwallet.api.trading.TradingDataOutput;
 
 /**
- *
  * @author Serhiy Lymar
  */
 public class TradingDataOutputToDtoConverter implements Converter<TradingDataOutput, TradingDataOutputDTO> {

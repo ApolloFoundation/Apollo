@@ -18,7 +18,6 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 
 /**
- *
  * @author al
  */
 class CCCoinsDividentPayment extends ColoredCoins {

@@ -123,8 +123,8 @@ public abstract class TransactionType {
 
 
     public static BlockchainConfig blockchainConfig;
-    protected static Blockchain blockchain;
     public static TimeService timeService;
+    protected static Blockchain blockchain;
     private static PhasingPollService phasingPollService;
     private static volatile AliasService ALIAS_SERVICE;
 
@@ -136,61 +136,67 @@ public abstract class TransactionType {
     private static AccountPropertyService accountPropertyService;
     private static AccountInfoService accountInfoService;
 
-    public static synchronized AccountService lookupAccountService(){
-        if ( accountService == null) {
+    public TransactionType() {
+    }
+
+    public static synchronized AccountService lookupAccountService() {
+        if (accountService == null) {
             accountService = CDI.current().select(AccountServiceImpl.class).get();
         }
         return accountService;
     }
 
-    public static synchronized AccountCurrencyService lookupAccountCurrencyService(){
-        if ( accountCurrencyService == null) {
+    public static synchronized AccountCurrencyService lookupAccountCurrencyService() {
+        if (accountCurrencyService == null) {
             accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
         }
         return accountCurrencyService;
     }
 
-    public static synchronized AccountLeaseService lookupAccountLeaseService(){
-        if ( accountLeaseService == null) {
+    public static synchronized AccountLeaseService lookupAccountLeaseService() {
+        if (accountLeaseService == null) {
             accountLeaseService = CDI.current().select(AccountLeaseServiceImpl.class).get();
         }
         return accountLeaseService;
     }
 
-    public static synchronized AccountAssetService lookupAccountAssetService(){
-        if ( accountAssetService == null) {
+    public static synchronized AccountAssetService lookupAccountAssetService() {
+        if (accountAssetService == null) {
             accountAssetService = CDI.current().select(AccountAssetServiceImpl.class).get();
         }
         return accountAssetService;
     }
 
-    public static synchronized AccountPropertyService lookupAccountPropertyService(){
-        if ( accountPropertyService == null) {
+    public static synchronized AccountPropertyService lookupAccountPropertyService() {
+        if (accountPropertyService == null) {
             accountPropertyService = CDI.current().select(AccountPropertyServiceImpl.class).get();
         }
         return accountPropertyService;
     }
 
-    public static synchronized AccountInfoService lookupAccountInfoService(){
-        if ( accountInfoService == null) {
+    public static synchronized AccountInfoService lookupAccountInfoService() {
+        if (accountInfoService == null) {
             accountInfoService = CDI.current().select(AccountInfoServiceImpl.class).get();
         }
         return accountInfoService;
     }
+
     public static synchronized Blockchain lookupBlockchain() {
-        if ( blockchain == null) {
+        if (blockchain == null) {
             blockchain = CDI.current().select(Blockchain.class).get();
         }
         return blockchain;
     }
-    public static synchronized TimeService lookupTimeService(){
-        if ( timeService == null) {
+
+    public static synchronized TimeService lookupTimeService() {
+        if (timeService == null) {
             timeService = CDI.current().select(TimeService.class).get();
         }
         return timeService;
     }
-    public static synchronized BlockchainConfig lookupBlockchainConfig(){
-        if ( blockchainConfig == null) {
+
+    public static synchronized BlockchainConfig lookupBlockchainConfig() {
+        if (blockchainConfig == null) {
             blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
         }
         return blockchainConfig;
@@ -227,7 +233,7 @@ public abstract class TransactionType {
                     case SUBTYPE_PAYMENT_ORDINARY_PAYMENT:
                         return Payment.ORDINARY;
                     case SUBTYPE_PAYMENT_PRIVATE_PAYMENT:
-                    	return Payment.PRIVATE;
+                        return Payment.PRIVATE;
                     default:
                         return null;
                 }
@@ -343,9 +349,9 @@ public abstract class TransactionType {
                         return DEX.DEX_ORDER_TRANSACTION;
                     case SUBTYPE_DEX_ORDER_CANCEL:
                         return DEX.DEX_CANCEL_ORDER_TRANSACTION;
-                    case SUBTYPE_DEX_CONTRACT :
+                    case SUBTYPE_DEX_CONTRACT:
                         return DEX.DEX_CONTRACT_TRANSACTION;
-                    case SUBTYPE_DEX_TRANSFER_MONEY :
+                    case SUBTYPE_DEX_TRANSFER_MONEY:
                         return DEX.DEX_TRANSFER_MONEY_TRANSACTION;
                     case SUBTYPE_DEX_CLOSE_ORDER:
                         return DEX.DEX_CLOSE_ORDER;
@@ -358,8 +364,30 @@ public abstract class TransactionType {
         }
     }
 
+    public static boolean isDuplicate(TransactionType uniqueType, String key, Map<TransactionType, Map<String, Integer>> duplicates, boolean exclusive) {
+        return isDuplicate(uniqueType, key, duplicates, exclusive ? 0 : Integer.MAX_VALUE);
+    }
 
-    public TransactionType() {}
+    public static boolean isDuplicate(TransactionType uniqueType, String key, Map<TransactionType, Map<String, Integer>> duplicates, int maxCount) {
+        Map<String, Integer> typeDuplicates = duplicates.get(uniqueType);
+        if (typeDuplicates == null) {
+            typeDuplicates = new HashMap<>();
+            duplicates.put(uniqueType, typeDuplicates);
+        }
+        Integer currentCount = typeDuplicates.get(key);
+        if (currentCount == null) {
+            typeDuplicates.put(key, maxCount > 0 ? 1 : 0);
+            return false;
+        }
+        if (currentCount == 0) {
+            return true;
+        }
+        if (currentCount < maxCount) {
+            typeDuplicates.put(key, currentCount + 1);
+            return false;
+        }
+        return true;
+    }
 
     public abstract byte getType();
 
@@ -404,7 +432,7 @@ public abstract class TransactionType {
         }
         if (recipientAccount != null) {
             //refresh balance in case a debit account is equal to a credit one
-            if (Objects.equals(senderAccount.getId(), recipientAccount.getId())){
+            if (Objects.equals(senderAccount.getId(), recipientAccount.getId())) {
                 recipientAccount.setBalanceATM(senderAccount.getBalanceATM());
             }
             accountService.addToBalanceAndUnconfirmedBalanceATM(recipientAccount, getLedgerEvent(), transactionId, amount);
@@ -417,7 +445,7 @@ public abstract class TransactionType {
     public final void undoUnconfirmed(Transaction transaction, Account senderAccount) {
         undoAttachmentUnconfirmed(transaction, senderAccount);
         lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(),
-                transaction.getAmountATM(), transaction.getFeeATM());
+            transaction.getAmountATM(), transaction.getFeeATM());
         if (transaction.referencedTransactionFullHash() != null) {
             accountService.addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), 0,
                 lookupBlockchainConfig().getUnconfirmedPoolDepositAtm());
@@ -437,31 +465,6 @@ public abstract class TransactionType {
 
     public boolean isUnconfirmedDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
         return false;
-    }
-
-    public static boolean isDuplicate(TransactionType uniqueType, String key, Map<TransactionType, Map<String, Integer>> duplicates, boolean exclusive) {
-        return isDuplicate(uniqueType, key, duplicates, exclusive ? 0 : Integer.MAX_VALUE);
-    }
-
-    public static boolean isDuplicate(TransactionType uniqueType, String key, Map<TransactionType, Map<String, Integer>> duplicates, int maxCount) {
-        Map<String,Integer> typeDuplicates = duplicates.get(uniqueType);
-        if (typeDuplicates == null) {
-            typeDuplicates = new HashMap<>();
-            duplicates.put(uniqueType, typeDuplicates);
-        }
-        Integer currentCount = typeDuplicates.get(key);
-        if (currentCount == null) {
-            typeDuplicates.put(key, maxCount > 0 ? 1 : 0);
-            return false;
-        }
-        if (currentCount == 0) {
-            return true;
-        }
-        if (currentCount < maxCount) {
-            typeDuplicates.put(key, currentCount + 1);
-            return false;
-        }
-        return true;
     }
 
     public boolean isPruned(long transactionId) {

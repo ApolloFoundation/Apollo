@@ -22,8 +22,8 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -31,17 +31,17 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import java.util.List;
 import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 @Vetoed
 public final class GetPrunableMessages extends AbstractAPIRequestHandler {
     private PrunableMessageService prunableMessageService = CDI.current().select(PrunableMessageService.class).get();
 
     public GetPrunableMessages() {
-        super(new APITag[] {APITag.MESSAGES}, "account", "otherAccount", "secretPhrase", "firstIndex", "lastIndex", "timestamp", "passphrase");
+        super(new APITag[]{APITag.MESSAGES}, "account", "otherAccount", "secretPhrase", "firstIndex", "lastIndex", "timestamp", "passphrase");
     }
 
     @Override
@@ -58,7 +58,7 @@ public final class GetPrunableMessages extends AbstractAPIRequestHandler {
         response.put("prunableMessages", jsonArray);
 
         List<PrunableMessage> messages = otherAccountId == 0 ? prunableMessageService.getAll(accountId, firstIndex, lastIndex)
-                : prunableMessageService.getAll(accountId, otherAccountId, firstIndex, lastIndex);
+            : prunableMessageService.getAll(accountId, otherAccountId, firstIndex, lastIndex);
         for (PrunableMessage message : messages) {
             if (message.getBlockTimestamp() < timestamp) {
                 break;

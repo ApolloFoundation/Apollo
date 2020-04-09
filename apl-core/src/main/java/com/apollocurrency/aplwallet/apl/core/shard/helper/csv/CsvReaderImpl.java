@@ -56,7 +56,7 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
             return readResultSet(colNames);
         } catch (IOException e) {
             throw new SQLException("Exception reading (or not found) file '"
-                    + inputFileName + "' in path = " + super.dataExportPath, e);
+                + inputFileName + "' in path = " + super.dataExportPath, e);
         }
     }
 
@@ -190,11 +190,11 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
         list.toArray(columnNames);
     }
 
-    private boolean isEOL(int ch){
+    private boolean isEOL(int ch) {
         return (ch == '\n' || ch < 0 || ch == '\r');
     }
 
-    private boolean isWhiteSpace(int ch){
+    private boolean isWhiteSpace(int ch) {
         return (ch == ' ' || ch == '\t');
     }
 
@@ -248,8 +248,8 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
 
     private String readQuotedTextValue() throws IOException {
         int ch;
-        int state=1;
-        boolean endLex=false;
+        int state = 1;
+        boolean endLex = false;
         while (!endLex) {
             ch = readChar();
             switch (state) {
@@ -269,10 +269,10 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
                     if (ch == textFieldCharacter) {
                         state = 1;
                     } else if (ch == fieldSeparatorRead) {
-                        state=3;//end state
+                        state = 3;//end state
                         endLex = true;
                     } else if (isEOL(ch)) {
-                        state=3;//end state
+                        state = 3;//end state
                         endLex = true;
                         endOfLine = true;
                     } else if (isWhiteSpace(ch)) {
@@ -513,6 +513,7 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
      *          // internal loop over columns values here
      *      }
      * }</pre>
+     *
      * @return
      * @throws SQLException
      */
@@ -574,6 +575,7 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
 
     /**
      * Extract meta data from CVS Header for one column in row
+     *
      * @param columnWithMetaData string with meta data like - ID(-5|7|2)
      * @return meta data instance
      */
@@ -588,7 +590,7 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
 
         if (typePrecisionScale.length != 3) {
             String error = "Incorrect type info was supplied from CSV file," +
-                    " not enough data, 3 is expected, but found " + typePrecisionScale.length;
+                " not enough data, 3 is expected, but found " + typePrecisionScale.length;
             log.error(error);
             throw new IllegalStateException(error);
         }
@@ -596,7 +598,7 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
         for (int j = 0; j < typePrecisionScale.length; j++) {
             String typeValueAsString = typePrecisionScale[j];
             String error = "Incorrect type VALUE was supplied from CSV file," +
-                    " found " + typeValueAsString;
+                " found " + typeValueAsString;
             if (typeValueAsString == null || typeValueAsString.isEmpty()) {
                 log.error(error);
                 throw new IllegalStateException(error);
@@ -604,10 +606,17 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
             try {
                 int parsedValue = Integer.parseInt(typeValueAsString);
                 switch (j) {
-                    case 0: sqlType = parsedValue; break;
-                    case 1: sqlPrecision = parsedValue; break;
-                    case 2: sqlScale = parsedValue; break;
-                    default: throw new IllegalStateException(error);
+                    case 0:
+                        sqlType = parsedValue;
+                        break;
+                    case 1:
+                        sqlPrecision = parsedValue;
+                        break;
+                    case 2:
+                        sqlScale = parsedValue;
+                        break;
+                    default:
+                        throw new IllegalStateException(error);
                 }
             } catch (Exception e) {
                 log.error("Incorrect number was supplied = " + typeValueAsString, e);

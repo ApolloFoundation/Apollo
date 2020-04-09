@@ -24,20 +24,20 @@ import com.apollocurrency.aplwallet.apl.core.app.Order;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class GetAllOpenBidOrders extends AbstractAPIRequestHandler {
 
     public GetAllOpenBidOrders() {
-        super(new APITag[] {APITag.AE}, "firstIndex", "lastIndex");
+        super(new APITag[]{APITag.AE}, "firstIndex", "lastIndex");
     }
 
     @Override

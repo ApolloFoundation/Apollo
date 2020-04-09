@@ -21,15 +21,11 @@
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_TRANSACTION_FULL_HASH;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.TOO_MANY_PHASING_VOTES;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_TRANSACTION_FULL_HASH;
-
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPhasingVoteCasting;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -37,21 +33,25 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONStreamAware;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_TRANSACTION_FULL_HASH;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.TOO_MANY_PHASING_VOTES;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_TRANSACTION_FULL_HASH;
 
 @Vetoed
 public class ApproveTransaction extends CreateTransaction {
 
+    private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
+
     public ApproveTransaction() {
         super(new APITag[]{APITag.CREATE_TRANSACTION, APITag.PHASING}, "transactionFullHash", "transactionFullHash", "transactionFullHash",
-                "revealedSecret", "revealedSecretIsText");
+            "revealedSecret", "revealedSecretIsText");
     }
-    private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {

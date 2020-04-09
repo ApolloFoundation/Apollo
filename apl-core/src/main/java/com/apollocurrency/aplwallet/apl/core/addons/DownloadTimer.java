@@ -21,29 +21,28 @@
 package com.apollocurrency.aplwallet.apl.core.addons;
 
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import org.slf4j.Logger;
 
+import javax.enterprise.event.ObservesAsync;
+import javax.enterprise.inject.Vetoed;
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.Map;
-import javax.enterprise.event.ObservesAsync;
-import javax.enterprise.inject.Vetoed;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 @Vetoed
 public final class DownloadTimer implements AddOn {
-        private static final Logger LOG = getLogger(DownloadTimer.class);
-
-    private PrintWriter writer = null;
+    private static final Logger LOG = getLogger(DownloadTimer.class);
     private final int interval = 10000;
     private final long startTime = System.currentTimeMillis();
+    private PrintWriter writer = null;
     private long previousTime = 0;
     private long transactions = 0;
     private long dtransactions = 0;
@@ -61,6 +60,7 @@ public final class DownloadTimer implements AddOn {
         }
 
     }
+
     public void onBlockPushed(@ObservesAsync @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
         int n = block.getOrLoadTransactions().size();
         transactions += n;

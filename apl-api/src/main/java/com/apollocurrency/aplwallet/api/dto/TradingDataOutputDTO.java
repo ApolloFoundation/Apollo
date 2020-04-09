@@ -12,7 +12,6 @@ import java.math.BigDecimal;
 import java.util.List;
 
 /**
- *
  * @author Serhiy Lymar
  */
 
@@ -20,20 +19,20 @@ import java.util.List;
 @JsonSerialize
 @Data
 public class TradingDataOutputDTO {
-    @Schema(name="t", description="timestamps")
+    @Schema(name = "t", description = "timestamps")
     public List<Integer> t;
-    @Schema(name="l", description="low values")
+    @Schema(name = "l", description = "low values")
     public List<BigDecimal> l;
-    @Schema(name="h", description="high values")
+    @Schema(name = "h", description = "high values")
     public List<BigDecimal> h;
-    @Schema(name="o", description="open values")
+    @Schema(name = "o", description = "open values")
     public List<BigDecimal> o;
-    @Schema(name="c", description="close values")
+    @Schema(name = "c", description = "close values")
     public List<BigDecimal> c;
-    @Schema(name="v", description="volumes")
+    @Schema(name = "v", description = "volumes")
     public List<BigDecimal> v;
-    @Schema(name="s", description="success")
+    @Schema(name = "s", description = "success")
     public String s;
-    @Schema(name="nextTime", description="next time value")
+    @Schema(name = "nextTime", description = "next time value")
     public Integer nextTime;
 }

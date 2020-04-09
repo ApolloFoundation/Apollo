@@ -56,7 +56,7 @@ public class DexCancelOrderTransaction extends DEX {
 
         if (!OrderStatus.OPEN.equals(order.getStatus())) {
             throw new AplException.NotCurrentlyValidException("Can cancel only Open orders. Order Id/Tx: " + order.getId() + "/" + Long.toUnsignedString(order.getId())
-                    + ", order status: " + order.getStatus() + " , Cancel Tx dbId:" + Long.toUnsignedString(transaction.getId()) + ", BlockId: " + Long.toUnsignedString(transaction.getECBlockId()));
+                + ", order status: " + order.getStatus() + " , Cancel Tx dbId:" + Long.toUnsignedString(transaction.getId()) + ", BlockId: " + Long.toUnsignedString(transaction.getECBlockId()));
         }
 
     }
@@ -92,7 +92,7 @@ public class DexCancelOrderTransaction extends DEX {
     public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
         DexOrderCancelAttachment attachment = (DexOrderCancelAttachment) transaction.getAttachment();
         return isDuplicate(DEX.DEX_CONTRACT_TRANSACTION, Long.toUnsignedString(attachment.getOrderId()), duplicates, true)
-                || isDuplicate(DEX.DEX_CANCEL_ORDER_TRANSACTION, Long.toUnsignedString(attachment.getOrderId()), duplicates, true);
+            || isDuplicate(DEX.DEX_CANCEL_ORDER_TRANSACTION, Long.toUnsignedString(attachment.getOrderId()), duplicates, true);
     }
 
     @Override

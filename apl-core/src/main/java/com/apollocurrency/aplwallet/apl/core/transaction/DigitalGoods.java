@@ -36,134 +36,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 public abstract class DigitalGoods extends TransactionType {
 
-    private static final Logger LOG = getLogger(DigitalGoods.class);
-    private DGSService service;
-
-    private DigitalGoods() {
-    }
-
-    public DGSService lookupDGService() {
-        if (service == null) {
-            service = CDI.current().select(DGSService.class).get();
-        }
-        return service;
-    }
-
-    @Override
-    public final byte getType() {
-        return TransactionType.TYPE_DIGITAL_GOODS;
-    }
-
-    @Override
-    public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        return true;
-    }
-
-    @Override
-    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-    }
-
-    @Override
-    public final void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-        if (transaction.getAmountATM() != 0) {
-            throw new AplException.NotValidException("Invalid digital goods transaction");
-        }
-        doValidateAttachment(transaction);
-    }
-
-    public abstract void doValidateAttachment(Transaction transaction) throws AplException.ValidationException;
-    public static final TransactionType LISTING = new DigitalGoods() {
-        private final Fee DGS_LISTING_FEE = new Fee.SizeBasedFee(2 * Constants.ONE_APL, 2 * Constants.ONE_APL, 32) {
-            @Override
-            public int getSize(Transaction transaction, Appendix appendage) {
-                DigitalGoodsListing attachment = (DigitalGoodsListing) transaction.getAttachment();
-                return attachment.getName().length() + attachment.getDescription().length();
-            }
-        };
-
-        @Override
-        public final byte getSubtype() {
-            return TransactionType.SUBTYPE_DIGITAL_GOODS_LISTING;
-        }
-
-        @Override
-        public LedgerEvent getLedgerEvent() {
-            return LedgerEvent.DIGITAL_GOODS_LISTING;
-        }
-
-        @Override
-        public String getName() {
-            return "DigitalGoodsListing";
-        }
-
-        @Override
-        public Fee getBaselineFee(Transaction transaction) {
-            return DGS_LISTING_FEE;
-        }
-
-        @Override
-        public DigitalGoodsListing parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-            return new DigitalGoodsListing(buffer);
-        }
-
-        @Override
-        public DigitalGoodsListing parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-            return new DigitalGoodsListing(attachmentData);
-        }
-
-        @Override
-        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            DigitalGoodsListing attachment = (DigitalGoodsListing) transaction.getAttachment();
-            lookupDGService().listGoods(transaction, attachment);
-        }
-
-        @Override
-        public void doValidateAttachment(Transaction transaction) throws AplException.ValidationException {
-            DigitalGoodsListing attachment = (DigitalGoodsListing) transaction.getAttachment();
-            if (attachment.getName().length() == 0
-                || attachment.getName().length() > Constants.MAX_DGS_LISTING_NAME_LENGTH
-                || attachment.getDescription().length() > Constants.MAX_DGS_LISTING_DESCRIPTION_LENGTH
-                || attachment.getTags().length() > Constants.MAX_DGS_LISTING_TAGS_LENGTH
-                || attachment.getQuantity() < 0
-                || attachment.getQuantity() > Constants.MAX_DGS_LISTING_QUANTITY
-                || attachment.getPriceATM() <= 0
-                || attachment.getPriceATM() > lookupBlockchainConfig().getCurrentConfig().getMaxBalanceATM()) {
-                throw new AplException.NotValidException("Invalid digital goods listing: " + attachment.getJSONObject());
-            }
-            PrunablePlainMessageAppendix prunablePlainMessage = transaction.getPrunablePlainMessage();
-            if (prunablePlainMessage != null) {
-                byte[] image = prunablePlainMessage.getMessage();
-                if (image != null) {
-                    Tika tika = new Tika();
-                    MediaType mediaType = null;
-                    try {
-                        String mediaTypeName = tika.detect(image);
-                        mediaType = MediaType.parse(mediaTypeName);
-                    } catch (NoClassDefFoundError e) {
-                        LOG.error("Error running Tika parsers", e);
-                    }
-                    if (mediaType == null || !"image".equals(mediaType.getType())) {
-                        throw new AplException.NotValidException("Only image attachments allowed for DGS listing, media type is " + mediaType);
-                    }
-                }
-            }
-        }
-
-        @Override
-        public boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
-            return isDuplicate(DigitalGoods.LISTING, getName(), duplicates, true);
-        }
-
-        @Override
-        public boolean canHaveRecipient() {
-            return false;
-        }
-
-        @Override
-        public boolean isPhasingSafe() {
-            return true;
-        }
-    };
     public static final TransactionType DELISTING = new DigitalGoods() {
         @Override
         public final byte getSubtype() {
@@ -671,5 +543,126 @@ public abstract class DigitalGoods extends TransactionType {
             return false;
         }
     };
+    private static final Logger LOG = getLogger(DigitalGoods.class);
+    public static final TransactionType LISTING = new DigitalGoods() {
+        private final Fee DGS_LISTING_FEE = new Fee.SizeBasedFee(2 * Constants.ONE_APL, 2 * Constants.ONE_APL, 32) {
+            @Override
+            public int getSize(Transaction transaction, Appendix appendage) {
+                DigitalGoodsListing attachment = (DigitalGoodsListing) transaction.getAttachment();
+                return attachment.getName().length() + attachment.getDescription().length();
+            }
+        };
+
+        @Override
+        public final byte getSubtype() {
+            return TransactionType.SUBTYPE_DIGITAL_GOODS_LISTING;
+        }
+
+        @Override
+        public LedgerEvent getLedgerEvent() {
+            return LedgerEvent.DIGITAL_GOODS_LISTING;
+        }
+
+        @Override
+        public String getName() {
+            return "DigitalGoodsListing";
+        }
+
+        @Override
+        public Fee getBaselineFee(Transaction transaction) {
+            return DGS_LISTING_FEE;
+        }
+
+        @Override
+        public DigitalGoodsListing parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            return new DigitalGoodsListing(buffer);
+        }
+
+        @Override
+        public DigitalGoodsListing parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            return new DigitalGoodsListing(attachmentData);
+        }
+
+        @Override
+        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            DigitalGoodsListing attachment = (DigitalGoodsListing) transaction.getAttachment();
+            lookupDGService().listGoods(transaction, attachment);
+        }
+
+        @Override
+        public void doValidateAttachment(Transaction transaction) throws AplException.ValidationException {
+            DigitalGoodsListing attachment = (DigitalGoodsListing) transaction.getAttachment();
+            if (attachment.getName().length() == 0 || attachment.getName().length() > Constants.MAX_DGS_LISTING_NAME_LENGTH || attachment.getDescription().length() > Constants.MAX_DGS_LISTING_DESCRIPTION_LENGTH || attachment.getTags().length() > Constants.MAX_DGS_LISTING_TAGS_LENGTH || attachment.getQuantity() < 0 || attachment.getQuantity() > Constants.MAX_DGS_LISTING_QUANTITY || attachment.getPriceATM() <= 0 || attachment.getPriceATM() > DigitalGoods.lookupBlockchainConfig().getCurrentConfig().getMaxBalanceATM()) {
+                throw new AplException.NotValidException("Invalid digital goods listing: " + attachment.getJSONObject());
+            }
+            PrunablePlainMessageAppendix prunablePlainMessage = transaction.getPrunablePlainMessage();
+            if (prunablePlainMessage != null) {
+                byte[] image = prunablePlainMessage.getMessage();
+                if (image != null) {
+                    Tika tika = new Tika();
+                    MediaType mediaType = null;
+                    try {
+                        String mediaTypeName = tika.detect(image);
+                        mediaType = MediaType.parse(mediaTypeName);
+                    } catch (NoClassDefFoundError e) {
+                        LOG.error("Error running Tika parsers", e);
+                    }
+                    if (mediaType == null || !"image".equals(mediaType.getType())) {
+                        throw new AplException.NotValidException("Only image attachments allowed for DGS listing, media type is " + mediaType);
+                    }
+                }
+            }
+        }
+
+        @Override
+        public boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+            return isDuplicate(DigitalGoods.LISTING, getName(), duplicates, true);
+        }
+
+        @Override
+        public boolean canHaveRecipient() {
+            return false;
+        }
+
+        @Override
+        public boolean isPhasingSafe() {
+            return true;
+        }
+    };
+    private DGSService service;
+
+    private DigitalGoods() {
+    }
+
+    public DGSService lookupDGService() {
+        if (service == null) {
+            service = CDI.current().select(DGSService.class).get();
+        }
+        return service;
+    }
+
+    @Override
+    public final byte getType() {
+        return TransactionType.TYPE_DIGITAL_GOODS;
+    }
+
+    @Override
+    public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        return true;
+    }
+
+    @Override
+    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+    }
+
+    @Override
+    public final void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+        if (transaction.getAmountATM() != 0) {
+            throw new AplException.NotValidException("Invalid digital goods transaction");
+        }
+        doValidateAttachment(transaction);
+    }
+
+    public abstract void doValidateAttachment(Transaction transaction) throws AplException.ValidationException;
 
 }

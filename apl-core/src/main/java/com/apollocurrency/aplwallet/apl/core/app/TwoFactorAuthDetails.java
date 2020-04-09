@@ -14,10 +14,11 @@ public class TwoFactorAuthDetails {
     private String qrCodeUrl;
     private String secret;
     private Status2FA status2FA;
+
     @JsonCreator
     public TwoFactorAuthDetails(@JsonProperty("qrCodeUrl") String qrCodeUrl, @JsonProperty("secret") String secret,
                                 @JsonProperty("status2FA") Status2FA
-                                status2FA) {
+                                    status2FA) {
         this.qrCodeUrl = qrCodeUrl;
         this.secret = secret;
         this.status2FA = status2FA;
@@ -56,12 +57,12 @@ public class TwoFactorAuthDetails {
         if (!(o instanceof TwoFactorAuthDetails)) return false;
         TwoFactorAuthDetails that = (TwoFactorAuthDetails) o;
         return Objects.equals(qrCodeUrl, that.qrCodeUrl) &&
-                Objects.equals(secret, that.secret) &&
-                Objects.equals(status2FA, that.status2FA);
+            Objects.equals(secret, that.secret) &&
+            Objects.equals(status2FA, that.status2FA);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(qrCodeUrl, secret,status2FA);
+        return Objects.hash(qrCodeUrl, secret, status2FA);
     }
 }

@@ -30,6 +30,11 @@ import java.security.NoSuchAlgorithmException;
 public class Scrypt {
 
     private final Mac mac;
+    private final byte[] H = new byte[32];
+    private final byte[] B = new byte[128 + 4];
+    private final int[] X = new int[32];
+    private final int[] V = new int[32 * 1024];
+
     {
         try {
             mac = Mac.getInstance("HmacSHA256");
@@ -37,10 +42,6 @@ public class Scrypt {
             throw new IllegalStateException(e);
         }
     }
-    private final byte[] H = new byte[32];
-    private final byte[] B = new byte[128 + 4];
-    private final int[] X = new int[32];
-    private final int[] V = new int[32 * 1024];
 
     public byte[] hash(final byte input[]) {
         int i, j, k;
@@ -64,9 +65,9 @@ public class Scrypt {
 
             for (j = 0; j < 8; j++) {
                 X[i * 8 + j] = (H[j * 4 + 0] & 0xff) << 0
-                        | (H[j * 4 + 1] & 0xff) << 8
-                        | (H[j * 4 + 2] & 0xff) << 16
-                        | (H[j * 4 + 3] & 0xff) << 24;
+                    | (H[j * 4 + 1] & 0xff) << 8
+                    | (H[j * 4 + 2] & 0xff) << 16
+                    | (H[j * 4 + 3] & 0xff) << 24;
             }
         }
 

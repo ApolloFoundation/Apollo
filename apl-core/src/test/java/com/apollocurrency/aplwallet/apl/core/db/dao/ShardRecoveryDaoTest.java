@@ -46,16 +46,16 @@ class ShardRecoveryDaoTest {
     static DbExtension extension = new DbExtension();
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(NtpTime.class,
-            PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class, ShardRecoveryDao.class,
-            GlobalSync.class,
-            GlobalSyncImpl.class,
-            DerivedDbTablesRegistryImpl.class,
-            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
-            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
-            .build();
+        PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class, ShardRecoveryDao.class,
+        GlobalSync.class,
+        GlobalSyncImpl.class,
+        DerivedDbTablesRegistryImpl.class,
+        TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
+        .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+        .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
+        .build();
 
     @Inject
     private ShardRecoveryDao dao;
@@ -89,7 +89,7 @@ class ShardRecoveryDaoTest {
     @Test
     void testInsert() {
         ShardRecovery recovery = new ShardRecovery(
-                MigrateState.INIT, "BLOCK", "DB_ID", 1L, "DB_ID");
+            MigrateState.INIT, "BLOCK", "DB_ID", 1L, "DB_ID");
 
         long insertedId = dao.saveShardRecovery(recovery);
         assertTrue(insertedId >= 1L);
@@ -114,7 +114,7 @@ class ShardRecoveryDaoTest {
     @Test
     void testUpdate() {
         ShardRecovery recovery = new ShardRecovery(
-                MigrateState.INIT, "BLOCK", "DB_ID", 1L, "DB_ID");
+            MigrateState.INIT, "BLOCK", "DB_ID", 1L, "DB_ID");
         long insertedId = dao.saveShardRecovery(recovery);
         assertTrue(insertedId > 1L);
 

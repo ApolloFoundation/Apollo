@@ -55,41 +55,6 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public final class CurrencyMint {
     private static final Logger LOG = getLogger(CurrencyMint.class);
-    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-
-    public enum Event {
-        CURRENCY_MINT
-    }
-
-    public static class Mint {
-
-        public final long accountId;
-        public final long currencyId;
-        public final long units;
-
-        private Mint(long accountId, long currencyId, long units) {
-            this.accountId = accountId;
-            this.currencyId = currencyId;
-            this.units = units;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof Mint)) return false;
-            Mint mint = (Mint) o;
-            return accountId == mint.accountId &&
-                    currencyId == mint.currencyId &&
-                    units == mint.units;
-        }
-
-        @Override
-        public int hashCode() {
-
-            return Objects.hash(accountId, currencyId, units);
-        }
-    }
-
     private static final LinkKeyFactory<CurrencyMint> currencyMintDbKeyFactory = new LinkKeyFactory<CurrencyMint>("currency_id", "account_id") {
 
         @Override
@@ -98,7 +63,6 @@ public final class CurrencyMint {
         }
 
     };
-
     private static final VersionedDeletableEntityDbTable<CurrencyMint> currencyMintTable = new VersionedDeletableEntityDbTable<CurrencyMint>("currency_mint", currencyMintDbKeyFactory) {
 
         @Override
@@ -112,28 +76,9 @@ public final class CurrencyMint {
         }
 
     };
-
+    private static final Listeners<Mint, Event> listeners = new Listeners<>();
+    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static AccountCurrencyService accountCurrencyService;
-    private static AccountCurrencyService lookupAccountCurrencyService(){
-        if ( accountCurrencyService == null) {
-            accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
-        }
-        return accountCurrencyService;
-    }
-
-    private static final Listeners<Mint,Event> listeners = new Listeners<>();
-
-    public static boolean addListener(Listener<Mint> listener, Event eventType) {
-        return listeners.addListener(listener, eventType);
-    }
-
-    public static boolean removeListener(Listener<Mint> listener, Event eventType) {
-        return listeners.removeListener(listener, eventType);
-    }
-
-
-    public static void init() {}
-
     private final DbKey dbKey;
     private final long currencyId;
     private final long accountId;
@@ -146,6 +91,7 @@ public final class CurrencyMint {
         this.counter = counter;
     }
 
+
     private CurrencyMint(ResultSet rs, DbKey dbKey) throws SQLException {
         this.currencyId = rs.getLong("currency_id");
         this.accountId = rs.getLong("account_id");
@@ -153,36 +99,26 @@ public final class CurrencyMint {
         this.counter = rs.getLong("counter");
     }
 
-    private void save(Connection con) throws SQLException {
-        Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-        try (
-                @DatabaseSpecificDml(DmlMarker.MERGE)
-                PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency_mint (currency_id, account_id, counter, height, latest, deleted) "
-                + "KEY (currency_id, account_id, height) VALUES (?, ?, ?, ?, TRUE, FALSE)")
-        ) {
-            int i = 0;
-            pstmt.setLong(++i, this.currencyId);
-            pstmt.setLong(++i, this.accountId);
-            pstmt.setLong(++i, this.counter);
-            pstmt.setInt(++i, blockchain.getHeight());
-            pstmt.executeUpdate();
+    private static AccountCurrencyService lookupAccountCurrencyService() {
+        if (accountCurrencyService == null) {
+            accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
         }
+        return accountCurrencyService;
     }
 
-    public long getCurrencyId() {
-        return currencyId;
+    public static boolean addListener(Listener<Mint> listener, Event eventType) {
+        return listeners.addListener(listener, eventType);
     }
 
-    public long getAccountId() {
-        return accountId;
+    public static boolean removeListener(Listener<Mint> listener, Event eventType) {
+        return listeners.removeListener(listener, eventType);
     }
 
-    public long getCounter() {
-        return counter;
+    public static void init() {
     }
 
     public static void mintCurrency(LedgerEvent event, long eventId, final Account account,
-                             final MonetarySystemCurrencyMinting attachment) {
+                                    final MonetarySystemCurrencyMinting attachment) {
         CurrencyMint currencyMint = currencyMintTable.get(currencyMintDbKeyFactory.newKey(attachment.getCurrencyId(), account.getId()));
         if (currencyMint != null && attachment.getCounter() <= currencyMint.getCounter()) {
             return;
@@ -220,7 +156,68 @@ public final class CurrencyMint {
                 currencyMints.add(mints.next());
             }
         }
-        currencyMints.forEach(c->currencyMintTable.deleteAtHeight(c, blockchain.getHeight()));
+        currencyMints.forEach(c -> currencyMintTable.deleteAtHeight(c, blockchain.getHeight()));
+    }
+
+    private void save(Connection con) throws SQLException {
+        Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+        try (
+            @DatabaseSpecificDml(DmlMarker.MERGE)
+            PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency_mint (currency_id, account_id, counter, height, latest, deleted) "
+                + "KEY (currency_id, account_id, height) VALUES (?, ?, ?, ?, TRUE, FALSE)")
+        ) {
+            int i = 0;
+            pstmt.setLong(++i, this.currencyId);
+            pstmt.setLong(++i, this.accountId);
+            pstmt.setLong(++i, this.counter);
+            pstmt.setInt(++i, blockchain.getHeight());
+            pstmt.executeUpdate();
+        }
+    }
+
+    public long getCurrencyId() {
+        return currencyId;
+    }
+
+    public long getAccountId() {
+        return accountId;
+    }
+
+    public long getCounter() {
+        return counter;
+    }
+
+    public enum Event {
+        CURRENCY_MINT
+    }
+
+    public static class Mint {
+
+        public final long accountId;
+        public final long currencyId;
+        public final long units;
+
+        private Mint(long accountId, long currencyId, long units) {
+            this.accountId = accountId;
+            this.currencyId = currencyId;
+            this.units = units;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Mint)) return false;
+            Mint mint = (Mint) o;
+            return accountId == mint.accountId &&
+                currencyId == mint.currencyId &&
+                units == mint.units;
+        }
+
+        @Override
+        public int hashCode() {
+
+            return Objects.hash(accountId, currencyId, units);
+        }
     }
 
 }

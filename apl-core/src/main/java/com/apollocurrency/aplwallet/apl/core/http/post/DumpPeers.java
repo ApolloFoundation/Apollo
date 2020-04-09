@@ -23,8 +23,8 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Version;
@@ -51,7 +51,7 @@ public final class DumpPeers extends AbstractAPIRequestHandler {
     private static final Logger LOG = getLogger(DumpPeers.class);
 
     public DumpPeers() {
-        super(new APITag[] {APITag.DEBUG}, "version", "weight", "connect", "adminPassword");
+        super(new APITag[]{APITag.DEBUG}, "version", "weight", "connect", "adminPassword");
     }
 
     @Override
@@ -60,7 +60,7 @@ public final class DumpPeers extends AbstractAPIRequestHandler {
         Version version = new Version(Convert.nullToEmpty(req.getParameter("version")));
 
         int weight =
-                HttpParameterParserUtil.getInt(req, "weight", 0, (int) CDI.current().select(BlockchainConfig.class).get().getCurrentConfig().getMaxBalanceAPL(),
+            HttpParameterParserUtil.getInt(req, "weight", 0, (int) CDI.current().select(BlockchainConfig.class).get().getCurrentConfig().getMaxBalanceAPL(),
                 false);
         boolean connect = "true".equalsIgnoreCase(req.getParameter("connect")) && apw.checkPassword(req);
         if (connect) {
@@ -78,14 +78,14 @@ public final class DumpPeers extends AbstractAPIRequestHandler {
         }
         Set<String> addresses = new HashSet<>();
         lookupPeersService().getAllPeers().forEach(peer -> {
-                    if (peer.getState() == PeerState.CONNECTED
-                            && peer.shareAddress()
-                            && !peer.isBlacklisted()
-                            && peer.getVersion() != null && peer.getVersion().equals(version)
-                            && (weight == 0 || peer.getWeight() > weight)) {
-                        addresses.add(peer.getAnnouncedAddress());
-                    }
-                });
+            if (peer.getState() == PeerState.CONNECTED
+                && peer.shareAddress()
+                && !peer.isBlacklisted()
+                && peer.getVersion() != null && peer.getVersion().equals(version)
+                && (weight == 0 || peer.getWeight() > weight)) {
+                addresses.add(peer.getAnnouncedAddress());
+            }
+        });
         StringBuilder buf = new StringBuilder();
         for (String address : addresses) {
             buf.append(address).append("; ");

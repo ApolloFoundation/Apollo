@@ -44,7 +44,7 @@ class ShardControllerTest {
     private ShardToDtoConverter shardConverter = mock(ShardToDtoConverter.class);
 
     @BeforeEach
-    void setup(){
+    void setup() {
         dispatcher = MockDispatcherFactory.createDispatcher();
         shardService = mock(ShardService.class);
         indexParser = mock(FirstLastIndexParser.class);
@@ -63,7 +63,8 @@ class ShardControllerTest {
         assertEquals(200, response.getStatus());
 
         String shardJson = response.getContentAsString();
-        List<ShardDTO> shards = mapper.readValue(shardJson, new TypeReference<List<ShardDTO>>(){});
+        List<ShardDTO> shards = mapper.readValue(shardJson, new TypeReference<List<ShardDTO>>() {
+        });
         assertEquals(ShardTestData.SHARD_DTO_LIST, shards);
     }
 

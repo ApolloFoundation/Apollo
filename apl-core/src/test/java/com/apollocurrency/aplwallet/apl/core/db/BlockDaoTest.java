@@ -1,5 +1,37 @@
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import com.apollocurrency.aplwallet.apl.core.alias.service.AliasService;
+import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.data.BlockTestData;
+import com.apollocurrency.aplwallet.apl.data.DbTestData;
+import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
+import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
+import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.jboss.weld.junit.MockBean;
+import org.jboss.weld.junit5.EnableWeld;
+import org.jboss.weld.junit5.WeldInitiator;
+import org.jboss.weld.junit5.WeldSetup;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_0_HEIGHT;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_0_ID;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_10_ID;
@@ -24,51 +56,24 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-
-import com.apollocurrency.aplwallet.apl.core.alias.service.AliasService;
-import com.apollocurrency.aplwallet.apl.core.app.*;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.data.BlockTestData;
-import com.apollocurrency.aplwallet.apl.data.DbTestData;
-import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
-import com.apollocurrency.aplwallet.apl.extension.DbExtension;
-import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
-import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.jboss.weld.junit.MockBean;
-import org.jboss.weld.junit5.EnableWeld;
-import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 @EnableWeld
 class BlockDaoTest {
 
     @RegisterExtension
-    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("blockDaoTestDb").toAbsolutePath().toString()));
-    @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
-
-
+    @RegisterExtension
+    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("blockDaoTestDb").toAbsolutePath().toString()));
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from()
-            .addBeans(MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class))
-            .addBeans(MockBean.of(mock(Blockchain.class), Blockchain.class, BlockchainImpl.class))
-            .addBeans(MockBean.of(mock(TimeService.class), TimeService.class))
-            .addBeans(MockBean.of(mock(PropertiesHolder.class), PropertiesHolder.class))
-            .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
-            .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
-            .build();
+        .addBeans(MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class))
+        .addBeans(MockBean.of(mock(Blockchain.class), Blockchain.class, BlockchainImpl.class))
+        .addBeans(MockBean.of(mock(TimeService.class), TimeService.class))
+        .addBeans(MockBean.of(mock(PropertiesHolder.class), PropertiesHolder.class))
+        .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
+        .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
+        .build();
 
     private BlockDao blockDao;
     private TransactionDaoImpl transactionDao;
@@ -78,8 +83,7 @@ class BlockDaoTest {
     private Path createPath(String fileName) {
         try {
             return temporaryFolderExtension.newFolder().toPath().resolve(fileName);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -91,7 +95,6 @@ class BlockDaoTest {
         blockDao = new BlockDaoImpl(extension.getDatabaseManager());
         transactionDao = new TransactionDaoImpl(extension.getDatabaseManager());
     }
-
 
 
     @Test
@@ -133,7 +136,7 @@ class BlockDaoTest {
     @Test
     void findBlockCountRange() {
         Long count = blockDao.getBlockCount(BLOCK_0_HEIGHT, BLOCK_7_HEIGHT);
-        assertEquals(7L , count.longValue());
+        assertEquals(7L, count.longValue());
     }
 
     @Test
@@ -159,7 +162,7 @@ class BlockDaoTest {
     void getGenerators() {
         Set<Long> count = blockDao.getBlockGenerators(BLOCK_0_HEIGHT, Integer.MAX_VALUE);
         assertNotNull(count);
-        assertEquals(2 , count.size());
+        assertEquals(2, count.size());
     }
 
     @Test
@@ -183,7 +186,7 @@ class BlockDaoTest {
         assertEquals(List.of(td.BLOCK_5, td.BLOCK_4, td.BLOCK_3, td.BLOCK_2, td.BLOCK_1, td.BLOCK_0, td.GENESIS_BLOCK), blocks);
 
         List<Transaction> transactions = transactionDao.getTransactions(0, Integer.MAX_VALUE);
-        assertEquals(List.of(txd.TRANSACTION_0, txd.TRANSACTION_1, txd.TRANSACTION_2, txd.TRANSACTION_3, txd.TRANSACTION_4,txd.TRANSACTION_5, txd.TRANSACTION_6), transactions);
+        assertEquals(List.of(txd.TRANSACTION_0, txd.TRANSACTION_1, txd.TRANSACTION_2, txd.TRANSACTION_3, txd.TRANSACTION_4, txd.TRANSACTION_5, txd.TRANSACTION_6), transactions);
     }
 
     @Test
@@ -318,7 +321,7 @@ class BlockDaoTest {
 
     @Test
     void testSaveBlock() {
-        DbUtils.inTransaction(extension, (con)-> {
+        DbUtils.inTransaction(extension, (con) -> {
             blockDao.saveBlock(con, td.NEW_BLOCK);
             blockDao.commit(td.NEW_BLOCK);
         });
@@ -330,7 +333,7 @@ class BlockDaoTest {
 
     @Test
     void testCommitBlock() {
-        DbUtils.inTransaction(extension, (con)-> blockDao.commit(td.BLOCK_5));
+        DbUtils.inTransaction(extension, (con) -> blockDao.commit(td.BLOCK_5));
         Block block = blockDao.findBlock(td.BLOCK_5.getId(), extension.getDatabaseManager().getDataSource());
         assertEquals(0, block.getNextBlockId());
     }

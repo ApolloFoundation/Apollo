@@ -26,18 +26,18 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_HEIGHT;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_HEIGHT;
-import javax.enterprise.inject.Vetoed;
 
 @Deprecated
 @Vetoed
 public final class GetBlockId extends AbstractAPIRequestHandler {
 
     public GetBlockId() {
-        super(new APITag[] {APITag.BLOCKS}, "height");
+        super(new APITag[]{APITag.BLOCKS}, "height");
     }
 
     @Override

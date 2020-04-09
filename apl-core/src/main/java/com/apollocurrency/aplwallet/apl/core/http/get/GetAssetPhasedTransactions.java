@@ -25,9 +25,9 @@ import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -56,7 +56,7 @@ public class GetAssetPhasedTransactions extends AbstractAPIRequestHandler {
 
         JSONArray transactions = new JSONArray();
         try (DbIterator<? extends Transaction> iterator = phasingPollService.getHoldingPhasedTransactions(assetId, VoteWeighting.VotingModel.ASSET,
-                accountId, withoutWhitelist, firstIndex, lastIndex)) {
+            accountId, withoutWhitelist, firstIndex, lastIndex)) {
             while (iterator.hasNext()) {
                 Transaction transaction = iterator.next();
                 transactions.add(JSONData.transaction(false, transaction));

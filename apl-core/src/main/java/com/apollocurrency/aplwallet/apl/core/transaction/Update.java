@@ -10,74 +10,22 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.CriticalUpdate;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.ImportantUpdate;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.MinorUpdate;
-import com.apollocurrency.aplwallet.apl.util.env.PlatformSpec;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateV2Attachment;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Version;
+import com.apollocurrency.aplwallet.apl.util.env.PlatformSpec;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
 
 /**
- *
  * @author al
  */
 public abstract class Update extends TransactionType {
 
-    private final Fee UPDATE_FEE = new Fee.ConstantFee(Constants.ONE_APL);
-
-    private Update() {
-    }
-
-    @Override
-    public final byte getType() {
-        return TransactionType.TYPE_UPDATE;
-    }
-
-    @Override
-    public final boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        return true;
-    }
-
-    @Override
-    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-    }
-
-    @Override
-    public final boolean canHaveRecipient() {
-        return false;
-    }
-
-    @Override
-    public final boolean isPhasingSafe() {
-        return true;
-    }
-
-    @Override
-    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-        UpdateAttachment attachment = (UpdateAttachment) transaction.getAttachment();
-        if (attachment.getUrl().getFirst().length != Constants.UPDATE_URL_PART_LENGTH || attachment.getUrl().getSecond().length != Constants.UPDATE_URL_PART_LENGTH || attachment.getHash().length > Constants.MAX_UPDATE_HASH_LENGTH) {
-            throw new AplException.NotValidException("Invalid update transaction attachment:" + attachment.getJSONObject());
-        }
-    }
-
-    public static boolean isUpdate(TransactionType transactionType) {
-        return transactionType.getType() == TYPE_UPDATE;
-    }
-
-    public abstract Level getLevel();
-
-    @Override
-    public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-    }
-
-    @Override
-    public Fee getBaselineFee(Transaction transaction) {
-        return UPDATE_FEE;
-    }
     public static final TransactionType CRITICAL = new Update() {
         @Override
         public Level getLevel() {
@@ -220,5 +168,56 @@ public abstract class Update extends TransactionType {
             return new UpdateV2Attachment(attachmentData);
         }
     };
+    private final Fee UPDATE_FEE = new Fee.ConstantFee(Constants.ONE_APL);
+
+    private Update() {
+    }
+
+    public static boolean isUpdate(TransactionType transactionType) {
+        return transactionType.getType() == TYPE_UPDATE;
+    }
+
+    @Override
+    public final byte getType() {
+        return TransactionType.TYPE_UPDATE;
+    }
+
+    @Override
+    public final boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        return true;
+    }
+
+    @Override
+    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+    }
+
+    @Override
+    public final boolean canHaveRecipient() {
+        return false;
+    }
+
+    @Override
+    public final boolean isPhasingSafe() {
+        return true;
+    }
+
+    @Override
+    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+        UpdateAttachment attachment = (UpdateAttachment) transaction.getAttachment();
+        if (attachment.getUrl().getFirst().length != Constants.UPDATE_URL_PART_LENGTH || attachment.getUrl().getSecond().length != Constants.UPDATE_URL_PART_LENGTH || attachment.getHash().length > Constants.MAX_UPDATE_HASH_LENGTH) {
+            throw new AplException.NotValidException("Invalid update transaction attachment:" + attachment.getJSONObject());
+        }
+    }
+
+    public abstract Level getLevel();
+
+    @Override
+    public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+    }
+
+    @Override
+    public Fee getBaselineFee(Transaction transaction) {
+        return UPDATE_FEE;
+    }
 
 }

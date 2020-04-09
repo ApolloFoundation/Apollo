@@ -6,13 +6,13 @@ public class PlatformSpec {
     private final Platform platform;
     private final Architecture architecture;
 
-    public static PlatformSpec current() {
-        return new PlatformSpec(Platform.current(), Architecture.current());
-    }
-
     public PlatformSpec(Platform platform, Architecture architecture) {
         this.platform = platform;
         this.architecture = architecture;
+    }
+
+    public static PlatformSpec current() {
+        return new PlatformSpec(Platform.current(), Architecture.current());
     }
 
     @Override

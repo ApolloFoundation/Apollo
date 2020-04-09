@@ -25,7 +25,7 @@ public class RestParametersParser {
     private RestParametersParser() {
     }
 
-    public static Map<String, String> parseRequestParameters(ContainerRequestContext requestContext, String ... params){
+    public static Map<String, String> parseRequestParameters(ContainerRequestContext requestContext, String... params) {
         Map<String, String> parsedParams = new HashMap<>();
         MultivaluedMap<String, String> requestParams;
         requestParams = ((PostMatchContainerRequestContext) requestContext).getHttpRequest().getDecodedFormParameters();
@@ -38,7 +38,7 @@ public class RestParametersParser {
 
     public static TwoFactorAuthParameters get2FARequestAttribute(org.jboss.resteasy.spi.HttpRequest request) {
         TwoFactorAuthParameters params2FA = (TwoFactorAuthParameters) request.getAttribute(TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME);
-        if(params2FA == null){
+        if (params2FA == null) {
             throw new RestParameterException(ApiErrors.INTERNAL_SERVER_EXCEPTION, "Can't locate the 2FA request attribute.");
         }
         return params2FA;
@@ -95,14 +95,14 @@ public class RestParametersParser {
     public static long parseAccountId(String account) throws RestParameterException {
         long accountId;
         if (account == null) {
-            throw new RestParameterException( ApiErrors.MISSING_PARAM, "account");
+            throw new RestParameterException(ApiErrors.MISSING_PARAM, "account");
         }
-        try{
+        try {
             accountId = Convert.parseAccountId(account);
-            if (accountId == 0){
+            if (accountId == 0) {
                 throw new NumberFormatException();
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             throw new RestParameterException(ApiErrors.UNKNOWN_VALUE, "account", account);
         }
         return accountId;

@@ -7,15 +7,15 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.Update;
-import com.apollocurrency.aplwallet.apl.util.env.PlatformSpec;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateV2Attachment;
 import com.apollocurrency.aplwallet.apl.testutil.WeldUtils;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.env.Architecture;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
-import com.apollocurrency.aplwallet.apl.util.env.Platform;
 import com.apollocurrency.aplwallet.apl.util.Version;
+import com.apollocurrency.aplwallet.apl.util.env.Architecture;
+import com.apollocurrency.aplwallet.apl.util.env.Platform;
+import com.apollocurrency.aplwallet.apl.util.env.PlatformSpec;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -39,6 +39,7 @@ public class UpdateTransactionTest {
     @WeldSetup
     WeldInitiator weld = WeldUtils.from(List.of(), List.of(BlockchainConfig.class, PropertiesHolder.class, Blockchain.class, BlockchainImpl.class, NtpTime.class, TimeService.class)).build();
     TransactionType type;
+
     @BeforeEach
     void setUp() {
         type = Update.UPDATE_V2;

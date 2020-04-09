@@ -3,9 +3,6 @@
  */
 package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
-import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
-
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -27,6 +24,11 @@ import org.json.simple.JSONObject;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import javax.inject.Singleton;
+import java.nio.ByteBuffer;
+import java.util.Map;
+
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
+import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
 
 @Singleton
 public class DexOrderTransaction extends DEX {

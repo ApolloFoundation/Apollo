@@ -11,10 +11,10 @@ import lombok.Setter;
 import lombok.ToString;
 
 /**
- *
  * @author alukin@gmail.com
  */
-@Getter @Setter
+@Getter
+@Setter
 @ToString
 @EqualsAndHashCode(callSuper = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)

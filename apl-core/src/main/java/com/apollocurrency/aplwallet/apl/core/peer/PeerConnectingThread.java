@@ -17,7 +17,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- *
  * @author al
  */
 class PeerConnectingThread implements Runnable {
@@ -27,7 +26,7 @@ class PeerConnectingThread implements Runnable {
     private final PeersService peers;
 
     public PeerConnectingThread(TimeService timeService, PeersService peers) {
-        this.timeService=timeService;
+        this.timeService = timeService;
         this.peers = peers;
     }
 
@@ -43,8 +42,8 @@ class PeerConnectingThread implements Runnable {
                 for (String wellKnownPeer : peers.wellKnownPeers) {
                     PeerImpl peer = peers.findOrCreatePeer(null, wellKnownPeer, true);
                     if (peer != null
-                            // && now - peer.getLastUpdated() > Constants.PEER_UPDATE_INTERVAL
-                            && now - peer.getLastConnectAttempt() > Constants.PEER_RECONNECT_ATTMEPT_DELAY) {
+                        // && now - peer.getLastUpdated() > Constants.PEER_UPDATE_INTERVAL
+                        && now - peer.getLastConnectAttempt() > Constants.PEER_RECONNECT_ATTMEPT_DELAY) {
 
                         peers.peersExecutorService.submit(() -> {
                             peers.addPeer(peer);
@@ -52,22 +51,21 @@ class PeerConnectingThread implements Runnable {
                         });
                     }
                 }
-                if (!peers.hasEnoughConnectedPublicPeers(PeersService.maxNumberOfConnectedPublicPeers))
-                {
+                if (!peers.hasEnoughConnectedPublicPeers(PeersService.maxNumberOfConnectedPublicPeers)) {
                     List<Future<?>> futures = new ArrayList<>();
                     List<Peer> hallmarkedPeers = peers.getPeers((peer) ->
-                            !peer.isBlacklisted()
-                          && peer.getAnnouncedAddress() != null
-                          && peer.getState() != PeerState.CONNECTED
-                          && now - peer.getLastConnectAttempt() > Constants.PEER_RECONNECT_ATTMEPT_DELAY
-                          && peer.providesService(Peer.Service.HALLMARK)
+                        !peer.isBlacklisted()
+                            && peer.getAnnouncedAddress() != null
+                            && peer.getState() != PeerState.CONNECTED
+                            && now - peer.getLastConnectAttempt() > Constants.PEER_RECONNECT_ATTMEPT_DELAY
+                            && peer.providesService(Peer.Service.HALLMARK)
                     );
                     List<Peer> nonhallmarkedPeers = peers.getPeers((peer) ->
-                            !peer.isBlacklisted()
-                          && peer.getAnnouncedAddress() != null
-                          && peer.getState() != PeerState.CONNECTED
-                          && now - peer.getLastConnectAttempt() > Constants.PEER_RECONNECT_ATTMEPT_DELAY
-                          && !peer.providesService(Peer.Service.HALLMARK)
+                        !peer.isBlacklisted()
+                            && peer.getAnnouncedAddress() != null
+                            && peer.getState() != PeerState.CONNECTED
+                            && now - peer.getLastConnectAttempt() > Constants.PEER_RECONNECT_ATTMEPT_DELAY
+                            && !peer.providesService(Peer.Service.HALLMARK)
                     );
                     if (!hallmarkedPeers.isEmpty() || !nonhallmarkedPeers.isEmpty()) {
                         Set<PeerImpl> connectSet = new HashSet<>();
@@ -89,10 +87,9 @@ class PeerConnectingThread implements Runnable {
                             }
                             peers.connectPeer(peer);
                             if (peer.getState() == PeerState.CONNECTED
-                                    && PeersService.enableHallmarkProtection
-                                    && peer.getWeight() == 0
-                                    && peers.hasTooManyOutboundConnections())
-                            {
+                                && PeersService.enableHallmarkProtection
+                                && peer.getWeight() == 0
+                                && peers.hasTooManyOutboundConnections()) {
                                 LOG.debug("Too many outbound connections, deactivating peer " + peer.getHost());
                                 peer.deactivate("Too many outbound connections");
                             }
@@ -104,18 +101,18 @@ class PeerConnectingThread implements Runnable {
                     }
                 }
                 peers.getPeers(peer ->
-                        peer.getState() != PeerState.CONNECTED
+                    peer.getState() != PeerState.CONNECTED
                         && now - peer.getLastUpdated() > Constants.PEER_UPDATE_INTERVAL
                         && now - peer.getLastConnectAttempt() > Constants.PEER_RECONNECT_ATTMEPT_DELAY
                 ).forEach((peer) -> {
-                        PeerAddress pa = new PeerAddress(peer.getPort(), peer.getHost());
+                    PeerAddress pa = new PeerAddress(peer.getPort(), peer.getHost());
                     if (!peers.isMyAddress(pa)) {
                         peers.peersExecutorService.submit(() -> peers.connectPeer(peer));
-                        }
+                    }
                 });
                 if (peers.hasTooManyKnownPeers() && peers.hasEnoughConnectedPublicPeers(peers.maxNumberOfConnectedPublicPeers)) {
                     for (Peer peer : peers.getPeers(peer -> now - peer.getLastUpdated() > Constants.ONE_DAY_SECS)) {
-                            peer.remove();
+                        peer.remove();
                         if (peers.hasTooFewKnownPeers()) {
                             break;
                         }

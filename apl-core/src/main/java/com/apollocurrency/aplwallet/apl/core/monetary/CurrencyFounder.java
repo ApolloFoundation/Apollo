@@ -73,9 +73,6 @@ public class CurrencyFounder {
         }
 
     };
-
-    public static void init() {}
-
     private final DbKey dbKey;
     private final long currencyId;
     private final long accountId;
@@ -95,41 +92,7 @@ public class CurrencyFounder {
         this.amountPerUnitATM = rs.getLong("amount");
     }
 
-    @Override
-    public String toString() {
-        return "CurrencyFounder{" +
-                "dbKey=" + dbKey +
-                ", currencyId=" + currencyId +
-                ", accountId=" + accountId +
-                ", amountPerUnitATM=" + amountPerUnitATM +
-                '}';
-    }
-
-    private void save(Connection con) throws SQLException {
-        try (
-                @DatabaseSpecificDml(DmlMarker.MERGE)
-                PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency_founder (currency_id, account_id, amount, height, latest, deleted) "
-                + "KEY (currency_id, account_id, height) VALUES (?, ?, ?, ?, TRUE, FALSE)")
-        ) {
-            int i = 0;
-            pstmt.setLong(++i, this.getCurrencyId());
-            pstmt.setLong(++i, this.getAccountId());
-            pstmt.setLong(++i, this.getAmountPerUnitATM());
-            pstmt.setInt(++i, BLOCK_CHAIN_INFO_SERVICE.getHeight());
-            pstmt.executeUpdate();
-        }
-    }
-
-    public long getCurrencyId() {
-        return currencyId;
-    }
-
-    public long getAccountId() {
-        return accountId;
-    }
-
-    public long getAmountPerUnitATM() {
-        return amountPerUnitATM;
+    public static void init() {
     }
 
     static void addOrUpdateFounder(long currencyId, long accountId, long amount) {
@@ -161,6 +124,43 @@ public class CurrencyFounder {
                 founders.add(founder);
             }
         }
-        founders.forEach(f->currencyFounderTable.deleteAtHeight(f, BLOCK_CHAIN_INFO_SERVICE.getHeight()));
+        founders.forEach(f -> currencyFounderTable.deleteAtHeight(f, BLOCK_CHAIN_INFO_SERVICE.getHeight()));
+    }
+
+    @Override
+    public String toString() {
+        return "CurrencyFounder{" +
+            "dbKey=" + dbKey +
+            ", currencyId=" + currencyId +
+            ", accountId=" + accountId +
+            ", amountPerUnitATM=" + amountPerUnitATM +
+            '}';
+    }
+
+    private void save(Connection con) throws SQLException {
+        try (
+            @DatabaseSpecificDml(DmlMarker.MERGE)
+            PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency_founder (currency_id, account_id, amount, height, latest, deleted) "
+                + "KEY (currency_id, account_id, height) VALUES (?, ?, ?, ?, TRUE, FALSE)")
+        ) {
+            int i = 0;
+            pstmt.setLong(++i, this.getCurrencyId());
+            pstmt.setLong(++i, this.getAccountId());
+            pstmt.setLong(++i, this.getAmountPerUnitATM());
+            pstmt.setInt(++i, BLOCK_CHAIN_INFO_SERVICE.getHeight());
+            pstmt.executeUpdate();
+        }
+    }
+
+    public long getCurrencyId() {
+        return currencyId;
+    }
+
+    public long getAccountId() {
+        return accountId;
+    }
+
+    public long getAmountPerUnitATM() {
+        return amountPerUnitATM;
     }
 }

@@ -34,8 +34,7 @@ public class LogDirPropertyDefiner extends PropertyDefinerBase {
                         logDirPath = p;
                         break;
                     }
-                }
-                catch (IOException e) {
+                } catch (IOException e) {
                     System.err.println(e.toString());
                 }
             }

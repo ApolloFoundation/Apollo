@@ -24,7 +24,7 @@ import java.util.Set;
 public interface PhasingPollService {
 
     Set<HashFunction> HASH_FUNCTIONS =
-            Collections.unmodifiableSet(EnumSet.of(HashFunction.SHA256, HashFunction.RIPEMD160, HashFunction.RIPEMD160_SHA256));
+        Collections.unmodifiableSet(EnumSet.of(HashFunction.SHA256, HashFunction.RIPEMD160, HashFunction.RIPEMD160_SHA256));
 
     static HashFunction getHashFunction(byte code) {
         try {
@@ -32,7 +32,8 @@ public interface PhasingPollService {
             if (HASH_FUNCTIONS.contains(hashFunction)) {
                 return hashFunction;
             }
-        } catch (IllegalArgumentException ignore) {}
+        } catch (IllegalArgumentException ignore) {
+        }
         return null;
     }
 
@@ -51,7 +52,7 @@ public interface PhasingPollService {
     DbIterator<Transaction> getVoterPhasedTransactions(long voterId, int from, int to);
 
     DbIterator<Transaction> getHoldingPhasedTransactions(long holdingId, VoteWeighting.VotingModel votingModel,
-                                                                       long accountId, boolean withoutWhitelist, int from, int to);
+                                                         long accountId, boolean withoutWhitelist, int from, int to);
 
     DbIterator<Transaction> getAccountPhasedTransactions(long accountId, int from, int to);
 

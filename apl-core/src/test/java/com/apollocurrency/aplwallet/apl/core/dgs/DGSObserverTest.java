@@ -71,36 +71,36 @@ public class DGSObserverTest {
     Blockchain blockchain = mock(Blockchain.class);
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class, BlockchainConfig.class, DaoConfig.class,
-            GlobalSyncImpl.class,
-            FullTextConfigImpl.class,
-            DGSPublicFeedbackTable.class,
-            DGSFeedbackTable.class,
-            DGSGoodsTable.class,
-            DGSTagTable.class,
-            DGSPurchaseTable.class,
-            DGSServiceImpl.class,
-            DGSObserver.class,
-            DerivedDbTablesRegistryImpl.class,
-            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
-            BlockChainInfoServiceImpl.class, AccountServiceImpl.class, AccountTable.class,
-            BlockchainConfig.class)
-            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
-            .addBeans(MockBean.of(blockchain, Blockchain.class))
+        PropertiesHolder.class, BlockchainConfig.class, DaoConfig.class,
+        GlobalSyncImpl.class,
+        FullTextConfigImpl.class,
+        DGSPublicFeedbackTable.class,
+        DGSFeedbackTable.class,
+        DGSGoodsTable.class,
+        DGSTagTable.class,
+        DGSPurchaseTable.class,
+        DGSServiceImpl.class,
+        DGSObserver.class,
+        DerivedDbTablesRegistryImpl.class,
+        TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
+        BlockChainInfoServiceImpl.class, AccountServiceImpl.class, AccountTable.class,
+        BlockchainConfig.class)
+        .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+        .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
+        .addBeans(MockBean.of(blockchain, Blockchain.class))
 //            .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
 //            .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
-            .addBeans(MockBean.of(mock(AccountGuaranteedBalanceTable.class), AccountGuaranteedBalanceTable.class))
-            .addBeans(MockBean.of(mock(ConfigDirProvider.class), ConfigDirProvider.class))
-            .addBeans(MockBean.of(mock(AplAppStatus.class), AplAppStatus.class))
-            .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
-            .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
-            .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
-            .addBeans(MockBean.of(mock(AccountLedgerService.class), AccountLedgerService.class, AccountLedgerServiceImpl.class))
-            .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyServiceImpl.class, AccountPublicKeyService.class))
-            .build();
+        .addBeans(MockBean.of(mock(AccountGuaranteedBalanceTable.class), AccountGuaranteedBalanceTable.class))
+        .addBeans(MockBean.of(mock(ConfigDirProvider.class), ConfigDirProvider.class))
+        .addBeans(MockBean.of(mock(AplAppStatus.class), AplAppStatus.class))
+        .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
+        .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
+        .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
+        .addBeans(MockBean.of(mock(AccountLedgerService.class), AccountLedgerService.class, AccountLedgerServiceImpl.class))
+        .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyServiceImpl.class, AccountPublicKeyService.class))
+        .build();
     @Inject
     DGSService service;
 
@@ -128,7 +128,7 @@ public class DGSObserverTest {
         doReturn(prevBlock).when(blockchain).getBlock(1L);
         doReturn(lastBlock).when(blockchain).getLastBlock();
         doReturn(1_000_000).when(lastBlock).getHeight();
-        DbUtils.inTransaction(extension, (con)-> {
+        DbUtils.inTransaction(extension, (con) -> {
             event.select(literal(BlockEventType.AFTER_BLOCK_APPLY)).fire(lastBlock);
         });
         verifyAccountBalance(dtd.PURCHASE_2.getBuyerId(), 14725500000000L, 15025000000000L);
@@ -146,7 +146,7 @@ public class DGSObserverTest {
 
     @Test
     void testFireEventOnBlockWithZeroHeight() {
-        DbUtils.inTransaction(extension, (con)-> {
+        DbUtils.inTransaction(extension, (con) -> {
             event.select(literal(BlockEventType.AFTER_BLOCK_APPLY)).fire(mock(Block.class));
         });
         verifyAccountBalance(dtd.PURCHASE_2.getBuyerId(), 14725000000000L, 15025000000000L);

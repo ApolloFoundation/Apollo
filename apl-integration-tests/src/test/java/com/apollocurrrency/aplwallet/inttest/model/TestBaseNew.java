@@ -1,9 +1,7 @@
 package com.apollocurrrency.aplwallet.inttest.model;
 
 import com.apollocurrency.aplwallet.api.dto.AccountAliasDTO;
-import com.apollocurrency.aplwallet.api.dto.account.AccountAssetDTO;
 import com.apollocurrency.aplwallet.api.dto.AccountAssetOrderDTO;
-import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
 import com.apollocurrency.aplwallet.api.dto.AccountMessageDTO;
 import com.apollocurrency.aplwallet.api.dto.BalanceDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockDTO;
@@ -19,6 +17,8 @@ import com.apollocurrency.aplwallet.api.dto.PollDTO;
 import com.apollocurrency.aplwallet.api.dto.ShardDTO;
 import com.apollocurrency.aplwallet.api.dto.TaggedDataDTO;
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
+import com.apollocurrency.aplwallet.api.dto.account.AccountAssetDTO;
+import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.api.response.Account2FAResponse;
 import com.apollocurrency.aplwallet.api.response.AccountAliasesResponse;
@@ -239,15 +239,15 @@ public class TestBaseNew extends TestBase {
         param.put(RequestType.requestType.toString(), RequestType.generateAccount.toString());
         String path = "/apl";
         return given().log().all()
-                .spec(restHelper.getSpec())
-                .contentType(ContentType.URLENC)
-                .formParams(param)
-                .when()
-                .post(path)
-                .then()
-                .assertThat().statusCode(200)
-                .extract().body().jsonPath()
-                .getObject("", Account2FAResponse.class);
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .post(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", Account2FAResponse.class);
     }
 
     @Override
@@ -260,15 +260,15 @@ public class TestBaseNew extends TestBase {
         param.put(Parameters.passphrase.toString(), wallet.getPass());
         String path = "/apl";
         return given().log().all()
-                .spec(restHelper.getSpec())
-                .contentType(ContentType.URLENC)
-                .formParams(param)
-                .when()
-                .post(path)
-                .then()
-                .assertThat().statusCode(200)
-                .extract().body().jsonPath()
-                .getObject("", Account2FAResponse.class);
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .post(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", Account2FAResponse.class);
     }
 
     @Override
@@ -280,11 +280,11 @@ public class TestBaseNew extends TestBase {
 
         String path = "/rest/keyStore/download";
         return given().log().all()
-                .spec(restHelper.getSpec())
-                .contentType(ContentType.URLENC)
-                .formParams(param)
-                .when()
-                .post(path).as(VaultWalletResponse.class);
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .post(path).as(VaultWalletResponse.class);
     }
 
     @Override
@@ -292,12 +292,12 @@ public class TestBaseNew extends TestBase {
     public boolean importSecretFile(String pathToSecretFile, String pass) {
         String path = "/rest/keyStore/upload";
         Response response = given().log().all()
-                .spec(restHelper.getSpec())
-                .header("Content-Type", "multipart/form-data")
-                .multiPart("keyStore", new File(pathToSecretFile))
-                .formParam("passPhrase", pass)
-                .when()
-                .post(path);
+            .spec(restHelper.getSpec())
+            .header("Content-Type", "multipart/form-data")
+            .multiPart("keyStore", new File(pathToSecretFile))
+            .formParam("passPhrase", pass)
+            .when()
+            .post(path);
         return !response.body().asString().contains("error");
     }
 
@@ -311,15 +311,15 @@ public class TestBaseNew extends TestBase {
 
         String path = "/apl";
         return given().log().all()
-                .spec(restHelper.getSpec())
-                .contentType(ContentType.URLENC)
-                .formParams(param)
-                .when()
-                .post(path)
-                .then()
-                .assertThat().statusCode(200)
-                .extract().body().jsonPath()
-                .getObject("", AccountDTO.class);
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .post(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", AccountDTO.class);
     }
 
     @Override
@@ -328,9 +328,9 @@ public class TestBaseNew extends TestBase {
     public List<String> getPeers() {
         String path = "/rest/networking/peer/all";
         return given().log().uri()
-                .spec(restHelper.getSpec())
-                .when()
-                .get(path).as(GetPeersIpResponse.class).getPeers();
+            .spec(restHelper.getSpec())
+            .when()
+            .get(path).as(GetPeersIpResponse.class).getPeers();
 
     }
 
@@ -340,9 +340,9 @@ public class TestBaseNew extends TestBase {
     public PeerDTO getPeer(String peer) {
         String path = String.format("/rest/networking/peer?peer=%s", peer);
         return given().log().uri()
-                .spec(restHelper.getSpec())
-                .when()
-                .get(path).as(PeerDTO.class);
+            .spec(restHelper.getSpec())
+            .when()
+            .get(path).as(PeerDTO.class);
     }
 
     @Override
@@ -355,9 +355,9 @@ public class TestBaseNew extends TestBase {
     public PeerInfo getMyInfo() {
         String path = "/rest/networking/peer/mypeerinfo";
         return given().log().uri()
-                .spec(restHelper.getSpec())
-                .when()
-                .get(path).as(PeerInfo.class);
+            .spec(restHelper.getSpec())
+            .when()
+            .get(path).as(PeerInfo.class);
     }
 
     @Override
@@ -368,15 +368,15 @@ public class TestBaseNew extends TestBase {
         param.put(RequestType.requestType.toString(), RequestType.getBlock.toString());
         String path = "/apl";
         return given().log().all()
-                .spec(restHelper.getSpec())
-                .contentType(ContentType.URLENC)
-                .formParams(param)
-                .when()
-                .post(path)
-                .then()
-                .assertThat().statusCode(200)
-                .extract().body().jsonPath()
-                .getObject("", BlockDTO.class);
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .post(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", BlockDTO.class);
     }
 
     @Step("Get Last Block")
@@ -386,15 +386,15 @@ public class TestBaseNew extends TestBase {
         param.put(RequestType.requestType.toString(), RequestType.getBlock.toString());
         String path = "/apl";
         return given()
-                .baseUri(String.format("http://%s:%s", peer, TestConfiguration.getTestConfiguration().getPort()))
-                .contentType(ContentType.URLENC)
-                .formParams(param)
-                .when()
-                .post(path)
-                .then()
-                .assertThat().statusCode(200)
-                .extract().body().jsonPath()
-                .getObject("", BlockDTO.class);
+            .baseUri(String.format("http://%s:%s", peer, TestConfiguration.getTestConfiguration().getPort()))
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .post(path)
+            .then()
+            .assertThat().statusCode(200)
+            .extract().body().jsonPath()
+            .getObject("", BlockDTO.class);
     }
 
     //TODO add: boolean isAvailableForNow, int minAskPrice, int maxBidPrice
@@ -409,11 +409,11 @@ public class TestBaseNew extends TestBase {
 
         String path = "/rest/dex/offers";
         return given().log().all()
-                .spec(restHelper.getSpec())
-                .formParams(param)
-                .when()
-                .get(path)
-                .getBody().jsonPath().getList("", DexOrderDto.class);
+            .spec(restHelper.getSpec())
+            .formParams(param)
+            .when()
+            .get(path)
+            .getBody().jsonPath().getList("", DexOrderDto.class);
     }
 
     @Override
@@ -424,11 +424,11 @@ public class TestBaseNew extends TestBase {
 
         String path = "/rest/dex/offers";
         return given().log().all()
-                .spec(restHelper.getSpec())
-                .formParams(param)
-                .when()
-                .get(path)
-                .getBody().jsonPath().getList("", DexOrderDto.class);
+            .spec(restHelper.getSpec())
+            .formParams(param)
+            .when()
+            .get(path)
+            .getBody().jsonPath().getList("", DexOrderDto.class);
     }
 
     @Override
@@ -436,10 +436,10 @@ public class TestBaseNew extends TestBase {
     public List<DexOrderDto> getDexOrders() {
         String path = "/rest/dex/offers";
         return given().log().all()
-                .spec(restHelper.getSpec())
-                .when()
-                .get(path)
-                .getBody().jsonPath().getList("", DexOrderDto.class);
+            .spec(restHelper.getSpec())
+            .when()
+            .get(path)
+            .getBody().jsonPath().getList("", DexOrderDto.class);
     }
 
 
@@ -453,11 +453,11 @@ public class TestBaseNew extends TestBase {
 
         String path = "/rest/dex/history";
         return given().log().all()
-                .spec(restHelper.getSpec())
-                .formParams(param)
-                .when()
-                .get(path)
-                .getBody().jsonPath().getList("", DexOrderDto.class);
+            .spec(restHelper.getSpec())
+            .formParams(param)
+            .when()
+            .get(path)
+            .getBody().jsonPath().getList("", DexOrderDto.class);
     }
 
     @Override
@@ -468,11 +468,11 @@ public class TestBaseNew extends TestBase {
 
         String path = "/rest/dex/history";
         return given().log().all()
-                .spec(restHelper.getSpec())
-                .formParams(param)
-                .when()
-                .get(path)
-                .getBody().jsonPath().getList("", DexOrderDto.class);
+            .spec(restHelper.getSpec())
+            .formParams(param)
+            .when()
+            .get(path)
+            .getBody().jsonPath().getList("", DexOrderDto.class);
     }
 
     @Override
@@ -480,9 +480,9 @@ public class TestBaseNew extends TestBase {
     public EthGasInfoResponse getEthGasInfo() {
         String path = "/rest/dex/ethInfo";
         return given().log().uri()
-                .spec(restHelper.getSpec())
-                .when()
-                .get(path).as(EthGasInfoResponse.class);
+            .spec(restHelper.getSpec())
+            .when()
+            .get(path).as(EthGasInfoResponse.class);
     }
 
     @Override
@@ -495,11 +495,11 @@ public class TestBaseNew extends TestBase {
 
         String path = "/rest/dex/tradeInfo";
         return given().log().all()
-                .spec(restHelper.getSpec())
-                .formParams(param)
-                .when()
-                .get(path)
-                .getBody().jsonPath().getList("", DexTradeInfoDto.class);
+            .spec(restHelper.getSpec())
+            .formParams(param)
+            .when()
+            .get(path)
+            .getBody().jsonPath().getList("", DexTradeInfoDto.class);
     }
 
     //TODO: edit to new RESPONSEDTO, not STRING
@@ -511,11 +511,11 @@ public class TestBaseNew extends TestBase {
 
         String path = "/rest/dex/balance";
         return given().log().all()
-                .spec(restHelper.getSpec())
-                .formParams(param)
-                .when()
-                .get(path)
-                .getBody().as(Account2FAResponse.class);
+            .spec(restHelper.getSpec())
+            .formParams(param)
+            .when()
+            .get(path)
+            .getBody().as(Account2FAResponse.class);
     }
 
     @Override
@@ -536,12 +536,12 @@ public class TestBaseNew extends TestBase {
 
         String path = "/rest/dex/withdraw";
         return given().log().all()
-                .spec(restHelper.getSpec())
-                .contentType(ContentType.URLENC)
-                .formParams(param)
-                .when()
-                .post(path)
-                .as(WithdrawResponse.class);
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .post(path)
+            .as(WithdrawResponse.class);
 
 
         //.post(path).as(WithdrawResponse.class);
@@ -559,11 +559,11 @@ public class TestBaseNew extends TestBase {
 
         String path = "/rest/dex/offer/cancel";
         return given().log().all()
-                .spec(restHelper.getSpec())
-                .contentType(ContentType.URLENC)
-                .formParams(param)
-                .when()
-                .post(path).as(CreateTransactionResponse.class);
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .post(path).as(CreateTransactionResponse.class);
     }
 
     //TODO: edit when NEW DTO will be added
@@ -591,11 +591,11 @@ public class TestBaseNew extends TestBase {
 
         String path = "/rest/dex/offer";
         return given().log().all()
-                .spec(restHelper.getSpec())
-                .contentType(ContentType.URLENC)
-                .formParams(param)
-                .when()
-                .post(path).body().asString();
+            .spec(restHelper.getSpec())
+            .contentType(ContentType.URLENC)
+            .formParams(param)
+            .when()
+            .post(path).body().asString();
     }
 
     @Override
@@ -779,9 +779,9 @@ public class TestBaseNew extends TestBase {
     public ForgingResponse getForging() {
         String path = "/rest/nodeinfo/forgers";
         return given().log().uri()
-                .spec(restHelper.getSpec())
-                .when()
-                .get(path).as(ForgingResponse.class);
+            .spec(restHelper.getSpec())
+            .when()
+            .get(path).as(ForgingResponse.class);
     }
 
     @Override
@@ -789,10 +789,10 @@ public class TestBaseNew extends TestBase {
     public List<ShardDTO> getShards(String ip) {
         String path = "/rest/shards";
         return given().log().uri()
-                .contentType(ContentType.JSON)
-                .baseUri(String.format("http://%s:%s", ip, 7876))
-                .when()
-                .get(path).getBody().jsonPath().getList("", ShardDTO.class);
+            .contentType(ContentType.JSON)
+            .baseUri(String.format("http://%s:%s", ip, 7876))
+            .when()
+            .get(path).getBody().jsonPath().getList("", ShardDTO.class);
     }
 
     @Override

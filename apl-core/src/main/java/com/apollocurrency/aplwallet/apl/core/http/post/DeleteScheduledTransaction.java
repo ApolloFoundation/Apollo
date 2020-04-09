@@ -37,11 +37,12 @@ import javax.servlet.http.HttpServletRequest;
 @Vetoed
 public final class DeleteScheduledTransaction extends AbstractAPIRequestHandler {
 
+    private TransactionSchedulerService schedulerService = CDI.current().select(TransactionSchedulerService.class).get();
+
     public DeleteScheduledTransaction() {
-        super(new APITag[] {APITag.TRANSACTIONS, APITag.ACCOUNTS}, "transaction");
+        super(new APITag[]{APITag.TRANSACTIONS, APITag.ACCOUNTS}, "transaction");
     }
 
-    private TransactionSchedulerService schedulerService = CDI.current().select(TransactionSchedulerService.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 

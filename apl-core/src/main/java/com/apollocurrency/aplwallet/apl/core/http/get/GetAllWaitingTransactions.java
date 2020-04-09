@@ -24,18 +24,18 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class GetAllWaitingTransactions extends AbstractAPIRequestHandler {
 
     public GetAllWaitingTransactions() {
-        super(new APITag[] {APITag.DEBUG});
+        super(new APITag[]{APITag.DEBUG});
     }
 
     @Override

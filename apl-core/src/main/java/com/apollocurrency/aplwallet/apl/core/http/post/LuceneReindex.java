@@ -27,18 +27,18 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
+import java.sql.Connection;
+import java.sql.SQLException;
 
 @Vetoed
 public final class LuceneReindex extends AbstractAPIRequestHandler {
     private final FullTextSearchService fullTextSearchProvider = CDI.current().select(FullTextSearchService.class).get();
 
     public LuceneReindex() {
-        super(new APITag[] {APITag.DEBUG});
+        super(new APITag[]{APITag.DEBUG});
     }
 
     @Override

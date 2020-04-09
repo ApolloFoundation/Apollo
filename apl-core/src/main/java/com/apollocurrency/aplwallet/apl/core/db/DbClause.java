@@ -26,21 +26,7 @@ import java.sql.Timestamp;
 
 public abstract class DbClause {
 
-    public enum Op {
-
-        LT("<"), LTE("<="), GT(">"), GTE(">="), NE("<>"), EQ("=");
-
-        private final String operator;
-
-        Op(String operator) {
-            this.operator = operator;
-        }
-
-        public String operator() {
-            return operator;
-        }
-    }
-
+    public static final DbClause EMPTY_CLAUSE = new FixedClause(" TRUE ");
     private final String clause;
 
     protected DbClause(String clause) {
@@ -64,7 +50,20 @@ public abstract class DbClause {
         };
     }
 
-    public static final DbClause EMPTY_CLAUSE = new FixedClause(" TRUE ");
+    public enum Op {
+
+        LT("<"), LTE("<="), GT(">"), GTE(">="), NE("<>"), EQ("=");
+
+        private final String operator;
+
+        Op(String operator) {
+            this.operator = operator;
+        }
+
+        public String operator() {
+            return operator;
+        }
+    }
 
     public static final class FixedClause extends DbClause {
 

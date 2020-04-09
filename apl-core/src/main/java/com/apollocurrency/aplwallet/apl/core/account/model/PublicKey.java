@@ -14,10 +14,10 @@ import java.util.Arrays;
 import java.util.Objects;
 
 /**
- *
  * @author al
  */
-@Getter @Setter
+@Getter
+@Setter
 public final class PublicKey extends VersionedDerivedEntity {
 
     private final long accountId;
@@ -43,7 +43,7 @@ public final class PublicKey extends VersionedDerivedEntity {
         if (!super.equals(o)) return false;
         PublicKey publicKey1 = (PublicKey) o;
         return accountId == publicKey1.accountId &&
-                Arrays.equals(publicKey, publicKey1.publicKey);
+            Arrays.equals(publicKey, publicKey1.publicKey);
     }
 
     @Override

@@ -37,11 +37,11 @@ public class ScanPerformer {
     public int doIteration(DexCurrency currency, int toHeight, int limit) {
         long fromDbId = getFromDbId(currency);
         List<DexOrder> orders = dexOrderDao.getClosedOrdersFromDbId(HeightDbIdRequest.builder()
-                .coin(currency)
-                .toHeight(toHeight)
-                .fromDbId(fromDbId)
-                .limit(limit)
-                .build());
+            .coin(currency)
+            .toHeight(toHeight)
+            .fromDbId(fromDbId)
+            .limit(limit)
+            .build());
         if (!orders.isEmpty()) {
             List<DexCandlestick> candlesticks = mapOrdersToCandlesticks(orders, currency);
             saveCandlesticks(candlesticks);
@@ -71,7 +71,7 @@ public class ScanPerformer {
     }
 
     private void saveCandlesticks(List<DexCandlestick> candlesticks) {
-        candlesticks.forEach(c-> {
+        candlesticks.forEach(c -> {
             DexCandlestick existingCandlestick = candlestickDao.getByTimestamp(c.getTimestamp(), c.getCoin());
             if (existingCandlestick != null) {
                 candlestickDao.update(c);
@@ -83,7 +83,7 @@ public class ScanPerformer {
 
     private List<DexCandlestick> mapOrdersToCandlesticks(List<DexOrder> orders, DexCurrency currency) {
         Map<Integer, DexCandlestick> candlesticks = new HashMap<>();
-        convertOrders(orders, candlesticks, TimeFrame.QUARTER, (time)-> candlestickDao.getByTimestamp(time, currency));
+        convertOrders(orders, candlesticks, TimeFrame.QUARTER, (time) -> candlestickDao.getByTimestamp(time, currency));
         return new ArrayList<>(candlesticks.values());
     }
 

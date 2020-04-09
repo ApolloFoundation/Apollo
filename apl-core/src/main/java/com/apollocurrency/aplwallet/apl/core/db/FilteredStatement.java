@@ -22,13 +22,17 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import org.slf4j.Logger;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.SQLWarning;
+import java.sql.Statement;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Wrapper for a SQL Statement
- *
+ * <p>
  * The wrapper forwards all methods to the wrapped statement
  */
 public class FilteredStatement implements Statement {
@@ -131,18 +135,13 @@ public class FilteredStatement implements Statement {
     }
 
     @Override
-    public void setFetchDirection(int direction) throws SQLException {
-        stmt.setFetchDirection(direction);
-    }
-
-    @Override
     public int getFetchDirection() throws SQLException {
         return stmt.getFetchDirection();
     }
 
     @Override
-    public void setFetchSize(int rows) throws SQLException {
-        stmt.setFetchSize(rows);
+    public void setFetchDirection(int direction) throws SQLException {
+        stmt.setFetchDirection(direction);
     }
 
     @Override
@@ -151,17 +150,22 @@ public class FilteredStatement implements Statement {
     }
 
     @Override
+    public void setFetchSize(int rows) throws SQLException {
+        stmt.setFetchSize(rows);
+    }
+
+    @Override
     public int getResultSetConcurrency() throws SQLException {
         return stmt.getResultSetConcurrency();
     }
 
     @Override
-    public int getResultSetType()  throws SQLException {
+    public int getResultSetType() throws SQLException {
         return stmt.getResultSetType();
     }
 
     @Override
-    public void addBatch( String sql ) throws SQLException {
+    public void addBatch(String sql) throws SQLException {
         stmt.addBatch(sql);
     }
 
@@ -176,7 +180,7 @@ public class FilteredStatement implements Statement {
     }
 
     @Override
-    public Connection getConnection()  throws SQLException {
+    public Connection getConnection() throws SQLException {
         return stmt.getConnection();
     }
 
@@ -231,13 +235,13 @@ public class FilteredStatement implements Statement {
     }
 
     @Override
-    public void setPoolable(boolean poolable) throws SQLException {
-        stmt.setPoolable(poolable);
+    public boolean isPoolable() throws SQLException {
+        return stmt.isPoolable();
     }
 
     @Override
-    public boolean isPoolable() throws SQLException {
-        return stmt.isPoolable();
+    public void setPoolable(boolean poolable) throws SQLException {
+        stmt.setPoolable(poolable);
     }
 
     @Override
@@ -256,13 +260,13 @@ public class FilteredStatement implements Statement {
     }
 
     @Override
-    public void setLargeMaxRows(long max) throws SQLException {
-        stmt.setLargeMaxRows(max);
+    public long getLargeMaxRows() throws SQLException {
+        return stmt.getLargeMaxRows();
     }
 
     @Override
-    public long getLargeMaxRows() throws SQLException {
-        return stmt.getLargeMaxRows();
+    public void setLargeMaxRows(long max) throws SQLException {
+        stmt.setLargeMaxRows(max);
     }
 
     @Override
@@ -303,8 +307,7 @@ public class FilteredStatement implements Statement {
     protected void cancelAndLogError() {
         try {
             cancel();
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             log.debug("Cannot cancel filtered statement", e);
         }
     }

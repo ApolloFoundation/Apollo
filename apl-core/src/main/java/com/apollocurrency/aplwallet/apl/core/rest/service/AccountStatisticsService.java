@@ -34,7 +34,7 @@ public class AccountStatisticsService {
                                     AccountService accountService) {
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
         this.blockchain = Objects.requireNonNull(blockchain, "blockchain is NULL");
-        this.accountService = Objects.requireNonNull(accountService,"accountService is NULL");
+        this.accountService = Objects.requireNonNull(accountService, "accountService is NULL");
     }
 
     public AccountsCountDto getAccountsStatistic(int numberOfAccounts) {
@@ -69,7 +69,7 @@ public class AccountStatisticsService {
             json.setUnconfirmedBalanceATM(account.getUnconfirmedBalanceATM());
             json.setForgedBalanceATM(account.getForgedBalanceATM());
             if (includeEffectiveBalance) {
-                json.effectiveBalanceAPL = accountService.getEffectiveBalanceAPL(account , height, false);
+                json.effectiveBalanceAPL = accountService.getEffectiveBalanceAPL(account, height, false);
                 json.setEffectiveBalanceAPL(accountService.getGuaranteedBalanceATM(account,
                     blockchainConfig.getGuaranteedBalanceConfirmations(), height));
             }

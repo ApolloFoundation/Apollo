@@ -21,24 +21,24 @@
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.app.Order;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Order;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderCancellation;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_ORDER;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public final class CancelBidOrder extends CreateTransaction {
 
     public CancelBidOrder() {
-        super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "order");
+        super(new APITag[]{APITag.AE, APITag.CREATE_TRANSACTION}, "order");
     }
 
     @Override

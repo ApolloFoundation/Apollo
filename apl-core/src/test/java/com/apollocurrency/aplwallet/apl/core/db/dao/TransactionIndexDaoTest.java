@@ -48,17 +48,17 @@ public class TransactionIndexDaoTest {
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(NtpTime.class,
-            PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
-            GlobalSync.class,
-            GlobalSyncImpl.class,
-            DerivedDbTablesRegistryImpl.class, BlockIndexDao.class, TransactionIndexDao.class,
-            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
-            .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
-            .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
-            .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
-            .build();
+        PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
+        GlobalSync.class,
+        GlobalSyncImpl.class,
+        DerivedDbTablesRegistryImpl.class, BlockIndexDao.class, TransactionIndexDao.class,
+        TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
+        .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
+        .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
+        .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
+        .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
+        .build();
 
     @Inject
     TransactionIndexDao dao;
@@ -76,6 +76,7 @@ public class TransactionIndexDaoTest {
         long count = dao.countTransactionIndexByBlockHeight(IndexTestData.BLOCK_INDEX_0.getBlockHeight());
         assertEquals(1L, count);
     }
+
     @Test
     void testGetCountByUnknownBlockId() {
         long count = dao.countTransactionIndexByBlockHeight(IndexTestData.NOT_SAVED_BLOCK_INDEX.getBlockHeight());
@@ -116,6 +117,7 @@ public class TransactionIndexDaoTest {
         assertNotNull(shardId);
         assertEquals(1, shardId);
     }
+
     @Test
     void testInsert() {
         dao.saveTransactionIndex(IndexTestData.NOT_SAVED_TRANSACTION_INDEX_0);
@@ -127,13 +129,13 @@ public class TransactionIndexDaoTest {
         Assertions.assertEquals(expectedByBlockid, result);
         List<TransactionIndex> all = dao.getAllTransactionIndex();
         List<TransactionIndex> expectedAll = Arrays.asList(
-                IndexTestData.TRANSACTION_INDEX_1,
-                IndexTestData.TRANSACTION_INDEX_2,
-                IndexTestData.TRANSACTION_INDEX_3,
-                IndexTestData.NOT_SAVED_TRANSACTION_INDEX_0,
-                IndexTestData.NOT_SAVED_TRANSACTION_INDEX_1,
-                IndexTestData.TRANSACTION_INDEX_0
-                );
+            IndexTestData.TRANSACTION_INDEX_1,
+            IndexTestData.TRANSACTION_INDEX_2,
+            IndexTestData.TRANSACTION_INDEX_3,
+            IndexTestData.NOT_SAVED_TRANSACTION_INDEX_0,
+            IndexTestData.NOT_SAVED_TRANSACTION_INDEX_1,
+            IndexTestData.TRANSACTION_INDEX_0
+        );
         Assertions.assertEquals(6, all.size());
         Assertions.assertEquals(expectedAll, all);
     }
@@ -167,6 +169,7 @@ public class TransactionIndexDaoTest {
         Integer height = dao.getTransactionHeightByTransactionId(IndexTestData.TRANSACTION_INDEX_0.getTransactionId());
         Assertions.assertEquals(IndexTestData.BLOCK_INDEX_0.getBlockHeight(), height);
     }
+
     @Test
     void testGetHeightForUnknownTransaction() {
         Integer height = dao.getTransactionHeightByTransactionId(IndexTestData.NOT_SAVED_TRANSACTION_INDEX_0.getTransactionId());

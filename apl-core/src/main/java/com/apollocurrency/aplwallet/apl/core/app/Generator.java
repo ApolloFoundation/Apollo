@@ -50,15 +50,15 @@ import static org.slf4j.LoggerFactory.getLogger;
 public final class Generator implements Comparable<Generator> {
     private static final Logger LOG = getLogger(Generator.class);
     private static final String BACKGROUND_SERVICE_NAME = "GeneratorService";
-
-
-    public enum Event {
-        GENERATION_DEADLINE, START_FORGING, STOP_FORGING
-    }
+    private static final byte[] fakeForgingPublicKey;
 
     // TODO: YL remove static instance later
-
+    private static final Listeners<Generator, Event> listeners = new Listeners<>();
+    private static final ConcurrentMap<Long, Generator> generators = new ConcurrentHashMap<>();
+    //TODO: OL remove or solve this
+    private static final Collection<Generator> allGenerators = Collections.unmodifiableCollection(generators.values());
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private static final int MAX_FORGERS = propertiesHolder.getIntProperty("apl.maxNumberOfForgers");
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
@@ -67,24 +67,10 @@ public final class Generator implements Comparable<Generator> {
     private static volatile TimeService timeService = CDI.current().select(TimeService.class).get();
     private static AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
     private static TaskDispatchManager taskDispatchManager = CDI.current().select(TaskDispatchManager.class).get();
-    private static final int MAX_FORGERS = propertiesHolder.getIntProperty("apl.maxNumberOfForgers");
-    private static final byte[] fakeForgingPublicKey;
     private static volatile boolean suspendForging = false;
-    private static final Listeners<Generator,Event> listeners = new Listeners<>();
-
-    private static final ConcurrentMap<Long, Generator> generators = new ConcurrentHashMap<>();
-    //TODO: OL remove or solve this
-    private static final Collection<Generator> allGenerators = Collections.unmodifiableCollection(generators.values());
     private static volatile List<Generator> sortedForgers = null;
     private static long lastBlockId;
     private static int delayTime = propertiesHolder.FORGING_DELAY();
-
-    static{
-
-        fakeForgingPublicKey = propertiesHolder.getBooleanProperty("apl.enableFakeForging") ?
-                accountService.getPublicKeyByteArray(Convert.parseAccountId(propertiesHolder.getStringProperty("apl.fakeForgingAccount"))) : null;
-    }
-
     private static final Runnable generateBlocksThread = new Runnable() {
 
         private volatile boolean logged;
@@ -166,14 +152,50 @@ public final class Generator implements Comparable<Generator> {
 
     };
 
+    static {
+
+        fakeForgingPublicKey = propertiesHolder.getBooleanProperty("apl.enableFakeForging") ?
+            accountService.getPublicKeyByteArray(Convert.parseAccountId(propertiesHolder.getStringProperty("apl.fakeForgingAccount"))) : null;
+    }
+
+    private final long accountId;
+    private final byte[] keySeed;
+    private final byte[] publicKey;
+    private volatile long hitTime;
+    private volatile BigInteger hit;
+    @Getter
+    private volatile BigInteger effectiveBalance;
+    private volatile long deadline;
+
+    public Generator(long accountId, byte[] keySeed, byte[] publicKey) {
+        this.accountId = accountId;
+        this.keySeed = keySeed;
+        this.publicKey = publicKey;
+    }
+
+    private Generator(byte[] keySeed) {
+        this.keySeed = keySeed;
+        this.publicKey = Crypto.getPublicKey(keySeed);
+        this.accountId = AccountService.getId(publicKey);
+        globalSync.updateLock();
+        try {
+            if (blockchain.getHeight() >= blockchainConfig.getLastKnownBlock()) {
+                setLastBlock(blockchain.getLastBlock());
+            }
+            sortedForgers = null;
+        } finally {
+            globalSync.updateUnlock();
+        }
+    }
+
     static void init() {
         if (!propertiesHolder.isLightClient()) {
             taskDispatchManager.newBackgroundDispatcher(BACKGROUND_SERVICE_NAME)
-                    .schedule(Task.builder()
-                            .name("GenerateBlocks")
-                            .delay(500)
-                            .task(generateBlocksThread)
-                            .build());
+                .schedule(Task.builder()
+                    .name("GenerateBlocks")
+                    .delay(500)
+                    .task(generateBlocksThread)
+                    .build());
         }
     }
 
@@ -279,11 +301,11 @@ public final class Generator implements Comparable<Generator> {
         BigInteger prevTarget = effectiveBaseTarget.multiply(BigInteger.valueOf(elapsedTime - 1));
         BigInteger target = prevTarget.add(effectiveBaseTarget);
         boolean ret = hit.compareTo(target) < 0
-                && (hit.compareTo(prevTarget) >= 0
-                || elapsedTime > 3600
-                || propertiesHolder.isOffline());
-        if(!ret){
-            LOG.warn("target: {}, hit: {}, verification failed!",target,hit);
+            && (hit.compareTo(prevTarget) >= 0
+            || elapsedTime > 3600
+            || propertiesHolder.isOffline());
+        if (!ret) {
+            LOG.warn("target: {}, hit: {}, verification failed!", target, hit);
         }
         return ret;
     }
@@ -292,42 +314,29 @@ public final class Generator implements Comparable<Generator> {
         MessageDigest digest = Crypto.sha256();
         digest.update(block.getGenerationSignature());
         byte[] generationSignatureHash = digest.digest(publicKey);
-        return new BigInteger(1, new byte[] {generationSignatureHash[7], generationSignatureHash[6], generationSignatureHash[5], generationSignatureHash[4], generationSignatureHash[3], generationSignatureHash[2], generationSignatureHash[1], generationSignatureHash[0]});
+        return new BigInteger(1, new byte[]{generationSignatureHash[7], generationSignatureHash[6], generationSignatureHash[5], generationSignatureHash[4], generationSignatureHash[3], generationSignatureHash[2], generationSignatureHash[1], generationSignatureHash[0]});
     }
 
     static long getHitTime(BigInteger effectiveBalance, BigInteger hit, Block block) {
         return block.getTimestamp()
-                + hit.divide(BigInteger.valueOf(block.getBaseTarget()).multiply(effectiveBalance)).longValue();
+            + hit.divide(BigInteger.valueOf(block.getBaseTarget()).multiply(effectiveBalance)).longValue();
     }
 
-
-    private final long accountId;
-    private final byte[] keySeed;
-    private final byte[] publicKey;
-    private volatile long hitTime;
-    private volatile BigInteger hit;
-    @Getter
-    private volatile BigInteger effectiveBalance;
-    private volatile long deadline;
-
-    public Generator(long accountId, byte[] keySeed, byte[] publicKey) {
-        this.accountId = accountId;
-        this.keySeed = keySeed;
-        this.publicKey = publicKey;
-    }
-
-    private Generator(byte[] keySeed) {
-        this.keySeed = keySeed;
-        this.publicKey = Crypto.getPublicKey(keySeed);
-        this.accountId = AccountService.getId(publicKey);
-        globalSync.updateLock();
-        try {
-            if (blockchain.getHeight() >= blockchainConfig.getLastKnownBlock()) {
-                setLastBlock(blockchain.getLastBlock());
-            }
-            sortedForgers = null;
-        } finally {
+    public static void suspendForging() {
+        if (!suspendForging) {
+            globalSync.updateLock();
+            suspendForging = true;
             globalSync.updateUnlock();
+            LOG.info("Block generation was suspended");
+        }
+    }
+
+    public static void resumeForging() {
+        if (suspendForging) {
+            globalSync.updateLock();
+            suspendForging = false;
+            globalSync.updateUnlock();
+            LOG.debug("Forging was resumed");
         }
     }
 
@@ -389,18 +398,17 @@ public final class Generator implements Comparable<Generator> {
         int timeout = timeoutAndVersion[0];
         if (!verifyHit(hit, effectiveBalance, lastBlock, timestamp)) {
             LOG.debug(this.toString() + " failed to forge at " + (timestamp + timeout) + " height " + lastBlock.getHeight() + " " +
-                    "last " +
-                    "timestamp " + lastBlock.getTimestamp());
+                "last " +
+                "timestamp " + lastBlock.getTimestamp());
             return false;
         }
         int start = timeService.getEpochTime();
         while (true) {
             try {
-                blockchainProcessor.generateBlock(keySeed, timestamp  + timeout, timeout, timeoutAndVersion[1]);
+                blockchainProcessor.generateBlock(keySeed, timestamp + timeout, timeout, timeoutAndVersion[1]);
                 setDelay(propertiesHolder.FORGING_DELAY());
                 return true;
-            }
-            catch (BlockchainProcessor.TransactionNotAcceptedException e) {
+            } catch (BlockchainProcessor.TransactionNotAcceptedException e) {
                 // the bad transaction has been expunged, try again
                 if (timeService.getEpochTime() - start > 10) { // give up after trying for 10 s
                     throw e;
@@ -411,9 +419,10 @@ public final class Generator implements Comparable<Generator> {
 
     /**
      * Return block timestamp shift
+     *
      * @return 0 - when adaptive forging is disabled or forging process should be continued
-     *         -1 - when adaptive forging is enabled and forging process should be terminated for current attempt
-     *         >0 - when adaptive forging is enabled and new block should be generated with timestamp = calculated timestamp + returned value
+     * -1 - when adaptive forging is enabled and forging process should be terminated for current attempt
+     * >0 - when adaptive forging is enabled and new block should be generated with timestamp = calculated timestamp + returned value
      */
     private int[] getBlockTimeoutAndVersion(int timestamp, int generationLimit, Block lastBlock) {
         boolean isAdaptiveForging = blockchainConfig.getCurrentConfig().isAdaptiveForgingEnabled();
@@ -426,8 +435,8 @@ public final class Generator implements Comparable<Generator> {
 //                noTransactionsAtGenerationLimit, noTransactionsAtTimestamp);
         int adaptiveBlockTime = blockchainConfig.getCurrentConfig().getAdaptiveBlockTime();
         if (isAdaptiveForging // try to calculate timeout only when adaptive forging enabled
-                && noTransactionsAtTimestamp   // means that if no timeout provided, block will be empty
-                && planedBlockTime < adaptiveBlockTime // calculate timeout only for faster than predefined empty block
+            && noTransactionsAtTimestamp   // means that if no timeout provided, block will be empty
+            && planedBlockTime < adaptiveBlockTime // calculate timeout only for faster than predefined empty block
         ) {
             int actualBlockTime = generationLimit - lastBlock.getTimestamp();
             LOG.trace("Act time:" + actualBlockTime);
@@ -447,33 +456,20 @@ public final class Generator implements Comparable<Generator> {
             }
             timeout = generationLimit - timestamp;
             LOG.trace("Timeout:" + timeout);
-            return new int[] {timeout, version};
+            return new int[]{timeout, version};
         }
         if (noTransactionsAtTimestamp) {
             version = Block.ADAPTIVE_BLOCK_VERSION;
         }
-        return new int[] {timeout, version};
+        return new int[]{timeout, version};
     }
 
     private int getTimestamp(int generationLimit) {
-        return (generationLimit - hitTime > 3600) ? generationLimit : (int)hitTime + 1;
+        return (generationLimit - hitTime > 3600) ? generationLimit : (int) hitTime + 1;
     }
 
-    public static void suspendForging() {
-        if (!suspendForging) {
-            globalSync.updateLock();
-            suspendForging = true;
-            globalSync.updateUnlock();
-            LOG.info("Block generation was suspended");
-        }
-    }
-    public static void resumeForging() {
-        if (suspendForging) {
-            globalSync.updateLock();
-            suspendForging = false;
-            globalSync.updateUnlock();
-            LOG.debug("Forging was resumed");
-        }
+    public enum Event {
+        GENERATION_DEADLINE, START_FORGING, STOP_FORGING
     }
 
 }

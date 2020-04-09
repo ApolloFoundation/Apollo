@@ -19,7 +19,7 @@ public class FirstLastIndexParser {
         this.maxAPIrecords = maxAPIrecords;
     }
 
-    public FirstLastIndex adjustIndexes(int firstIndexParam, int lastIndexParam){
+    public FirstLastIndex adjustIndexes(int firstIndexParam, int lastIndexParam) {
         int firstIndex = Math.min(firstIndexParam, Integer.MAX_VALUE - maxAPIrecords + 1);
         int lastIndex = Math.min(lastIndexParam, firstIndex + maxAPIrecords - 1);
         if (lastIndex < firstIndex) {
@@ -29,7 +29,7 @@ public class FirstLastIndexParser {
     }
 
     @Getter
-    public static class FirstLastIndex{
+    public static class FirstLastIndex {
         private final int firstIndex;
         private final int lastIndex;
 

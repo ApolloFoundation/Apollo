@@ -9,7 +9,6 @@ import java.util.concurrent.ExecutorService;
 /**
  * An {@link ExecutorService} that provides methods to manage the executor behavior
  * for suspending and resuming task execution.
- *
  */
 public interface PausableExecutorService extends ExecutorService {
 

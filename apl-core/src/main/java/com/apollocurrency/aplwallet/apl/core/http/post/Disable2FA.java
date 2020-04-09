@@ -22,7 +22,7 @@ import javax.servlet.http.HttpServletRequest;
 @Deprecated
 public class Disable2FA extends AbstractAPIRequestHandler {
     public Disable2FA() {
-        super(new APITag[] {APITag.ACCOUNTS, APITag.TWO_FACTOR_AUTH}, "secretPhrase");
+        super(new APITag[]{APITag.ACCOUNTS, APITag.TWO_FACTOR_AUTH}, "secretPhrase");
     }
 
     @Override

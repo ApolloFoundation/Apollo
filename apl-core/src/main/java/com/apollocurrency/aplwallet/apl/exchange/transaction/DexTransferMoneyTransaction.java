@@ -3,8 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
@@ -70,7 +70,7 @@ public class DexTransferMoneyTransaction extends DEX {
         if (transaction.getId() != transactionId) {
             throw new AplException.NotCurrentlyValidException("Transaction was not registered in the contract. ");
         }
-        long recipientOrderId =  isSender ? dexContract.getCounterOrderId() : dexContract.getOrderId();
+        long recipientOrderId = isSender ? dexContract.getCounterOrderId() : dexContract.getOrderId();
         DexOrder recipientOrder = dexService.getOrder(recipientOrderId);
         if (recipientOrder == null) {
             throw new AplException.NotCurrentlyValidException("Contract: " + dexContract.getId() + " refer to non-existent order: " + recipientOrderId);
@@ -106,7 +106,8 @@ public class DexTransferMoneyTransaction extends DEX {
     }
 
     @Override
-    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {}
+    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+    }
 
     @Override
     public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {

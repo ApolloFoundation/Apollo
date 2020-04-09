@@ -60,16 +60,23 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 @ExtendWith(MockitoExtension.class)
 @EnableWeld
 class PrunableArchiveMigratorTest {
-    @Mock ShardDao shardDao;
-    @Mock OptionDAO optionDAO;
-    @Mock DirProvider dirProvider;
-    @Mock BlockchainConfig blockchainConfig;
+    @Mock
+    ShardDao shardDao;
+    @Mock
+    OptionDAO optionDAO;
+    @Mock
+    DirProvider dirProvider;
+    @Mock
+    BlockchainConfig blockchainConfig;
     Zip zip = spy(new ZipImpl());
-    @Mock DerivedTablesRegistry registry;
-    @Mock CsvExporter csvExporter;
+    @Mock
+    DerivedTablesRegistry registry;
+    @Mock
+    CsvExporter csvExporter;
     @Mock
     CsvEscaper csvEscaper;
-    @Mock DatabaseManager databaseManager;
+    @Mock
+    DatabaseManager databaseManager;
     @RegisterExtension
     TemporaryFolderExtension extension = new TemporaryFolderExtension();
     @WeldSetup
@@ -183,14 +190,6 @@ class PrunableArchiveMigratorTest {
         }).when(csvExporter).exportShardTableIgnoringLastZipHashes(anyInt(), anyInt());
         return new MockData(hash1, hash2, firstZipPath, secondZipPath);
     }
-    @Data
-    @AllArgsConstructor
-    private static class MockData {
-        byte[] hash1;
-        byte[] hash2;
-        Path firstZipPath;
-        Path secondZipPath;
-    }
 
     @Test
     void testThrowExceptionDuringMigration() throws IOException {
@@ -215,6 +214,15 @@ class PrunableArchiveMigratorTest {
         Chain chain = mock(Chain.class);
         doReturn(chainId).when(chain).getChainId();
         doReturn(chain).when(blockchainConfig).getChain();
+    }
+
+    @Data
+    @AllArgsConstructor
+    private static class MockData {
+        byte[] hash1;
+        byte[] hash2;
+        Path firstZipPath;
+        Path secondZipPath;
     }
 
 }

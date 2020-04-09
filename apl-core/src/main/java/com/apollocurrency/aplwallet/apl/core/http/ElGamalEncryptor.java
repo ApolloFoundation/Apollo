@@ -7,14 +7,13 @@ package com.apollocurrency.aplwallet.apl.core.http;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
-import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
 import io.firstbridge.cryptolib.dataformat.FBElGamalKeyPair;
+
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 /**
- *
  * @author alukin@gmail.com
  */
 @Singleton
@@ -24,19 +23,20 @@ public class ElGamalEncryptor {
     private byte[] publicKey;
     private FBElGamalKeyPair elGamalKeyPair;
     private TaskDispatchManager taskDispatchManager;
+
     @Inject
     public ElGamalEncryptor(TaskDispatchManager dispatchManager) {
         taskDispatchManager = dispatchManager;
     }
-    
+
     @PostConstruct
     public final void init() {
         taskDispatchManager.newBackgroundDispatcher("KeyGenerator")
-                .schedule(Task.builder()
-                        .name("KeyGenerationTask")
-                        .delay(15 * 60 * 1000) // 15 min
-                        .task(this::generateKeys)
-                        .build());
+            .schedule(Task.builder()
+                .name("KeyGenerationTask")
+                .delay(15 * 60 * 1000) // 15 min
+                .task(this::generateKeys)
+                .build());
     }
 
     private synchronized void generateKeys() {

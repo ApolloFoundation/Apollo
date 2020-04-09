@@ -20,12 +20,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.http.JSONData;
+import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -35,7 +35,7 @@ import javax.servlet.http.HttpServletRequest;
 public final class GetAllCurrencies extends AbstractAPIRequestHandler {
 
     public GetAllCurrencies() {
-        super(new APITag[] {APITag.MS}, "firstIndex", "lastIndex", "includeCounts");
+        super(new APITag[]{APITag.MS}, "firstIndex", "lastIndex", "includeCounts");
     }
 
     @Override

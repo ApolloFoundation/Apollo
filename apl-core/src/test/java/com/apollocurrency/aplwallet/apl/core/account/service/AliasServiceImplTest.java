@@ -1,13 +1,13 @@
 package com.apollocurrency.aplwallet.apl.core.account.service;
 
-import com.apollocurrency.aplwallet.apl.core.converter.IteratorToStreamConverter;
-import com.apollocurrency.aplwallet.apl.core.alias.service.AliasServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.alias.dao.AliasOfferTable;
 import com.apollocurrency.aplwallet.apl.core.alias.dao.AliasTable;
 import com.apollocurrency.aplwallet.apl.core.alias.entity.Alias;
 import com.apollocurrency.aplwallet.apl.core.alias.entity.AliasOffer;
+import com.apollocurrency.aplwallet.apl.core.alias.service.AliasServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.converter.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasAssignment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasSell;

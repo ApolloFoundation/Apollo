@@ -20,10 +20,10 @@ public class TransactionIndexRowMapper implements RowMapper<TransactionIndex> {
     public TransactionIndex map(ResultSet rs, StatementContext ctx) throws SQLException {
 
         return TransactionIndex.builder()
-                .transactionId(rs.getLong("transaction_id"))
-                .partialTransactionHash(rs.getBytes("partial_transaction_hash"))
-                .height(rs.getInt("height"))
-                .transactinIndex(rs.getShort("transaction_index"))
-                .build();
+            .transactionId(rs.getLong("transaction_id"))
+            .partialTransactionHash(rs.getBytes("partial_transaction_hash"))
+            .height(rs.getInt("height"))
+            .transactinIndex(rs.getShort("transaction_index"))
+            .build();
     }
 }

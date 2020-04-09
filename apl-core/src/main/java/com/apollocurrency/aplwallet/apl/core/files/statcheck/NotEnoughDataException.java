@@ -4,7 +4,6 @@
 package com.apollocurrency.aplwallet.apl.core.files.statcheck;
 
 /**
- *
  * @author alukin@gmail.com
  */
 public class NotEnoughDataException extends Exception {

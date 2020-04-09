@@ -4,7 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
-import static org.mockito.Mockito.doReturn;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,13 +21,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import static org.mockito.Mockito.doReturn;
 
 @ExtendWith(MockitoExtension.class)
 public class DbMigratorTest {
@@ -57,6 +57,7 @@ public class DbMigratorTest {
         List<Path> migrated = dbMigrator.migrate(new ArrayList<>(), Paths.get(""));
         Assertions.assertEquals(0, migrated.size());
     }
+
     @Test
     public void testMigrateFirstDbInTheList() throws IOException {
         DbMigrator dbMigrator = new DbMigrator(dbInfoExtractor);
@@ -72,6 +73,7 @@ public class DbMigratorTest {
         Assertions.assertEquals(firstDbPath.getParent(), migrated.get(0));
         Assertions.assertArrayEquals(firstDbPayload, Files.readAllBytes(targetDbPath));
     }
+
     @Test
     public void testIncorrectMigration() throws IOException {
         DbMigrator dbMigrator = new DbMigrator(dbInfoExtractor);
@@ -100,9 +102,6 @@ public class DbMigratorTest {
         Assertions.assertEquals(secondDbPath.getParent(), migrated.get(0));
         Assertions.assertArrayEquals(secondDbPayload, Files.readAllBytes(targetDbPath));
     }
-
-
-
 
 
 }

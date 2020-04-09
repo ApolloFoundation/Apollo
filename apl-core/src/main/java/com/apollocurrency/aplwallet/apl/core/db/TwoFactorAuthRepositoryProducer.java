@@ -37,13 +37,15 @@ public class TwoFactorAuthRepositoryProducer {
         this.repositoryDB = new TwoFactorAuthRepositoryImpl(dataSource);
     }
 
-    @Produces @Named("FSRepository")
-    public TwoFactorAuthRepository getTwoFactorAuthFSRepository(){
+    @Produces
+    @Named("FSRepository")
+    public TwoFactorAuthRepository getTwoFactorAuthFSRepository() {
         return repositoryFS;
     }
 
-    @Produces @Named("DBRepository")
-    public TwoFactorAuthRepository getTwoFactorAuthDBRepository(){
+    @Produces
+    @Named("DBRepository")
+    public TwoFactorAuthRepository getTwoFactorAuthDBRepository() {
         return repositoryDB;
     }
 

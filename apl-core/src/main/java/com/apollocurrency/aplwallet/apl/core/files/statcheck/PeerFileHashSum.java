@@ -16,12 +16,12 @@ import org.spongycastle.util.Arrays;
 @ToString(exclude = {"hash"})
 public class PeerFileHashSum {
     @Getter
-    @Setter
-    private byte[] hash;
-    @Getter
     private final String peerId;
     @Getter
     private final String fileId;
+    @Getter
+    @Setter
+    private byte[] hash;
 
     public PeerFileHashSum(String peerId, String fileId) {
         this.peerId = peerId;

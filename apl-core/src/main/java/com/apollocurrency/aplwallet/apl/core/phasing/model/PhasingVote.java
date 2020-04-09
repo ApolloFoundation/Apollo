@@ -13,7 +13,6 @@ public class PhasingVote extends DerivedEntity {
     private final long voteId;
 
 
-
     public PhasingVote(Long dbId, Integer height, long phasedTransactionId, long voterId, long voteId) {
         super(dbId, height);
         this.phasedTransactionId = phasedTransactionId;

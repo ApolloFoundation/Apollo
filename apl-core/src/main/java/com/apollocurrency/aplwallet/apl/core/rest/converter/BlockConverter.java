@@ -54,7 +54,7 @@ public class BlockConverter implements Converter<Block, BlockDTO> {
             dto.setPreviousBlock(Long.toUnsignedString(model.getPreviousBlockId()));
         }
         dto.setPreviousBlockHash(Convert.toHexString(model.getPreviousBlockHash()));
-        if (model.getNextBlockId() != 0 ){
+        if (model.getNextBlockId() != 0) {
             dto.setNextBlock(Long.toUnsignedString(model.getNextBlockId()));
         }
         dto.setPayloadHash(Convert.toHexString(model.getPayloadHash()));
@@ -62,7 +62,7 @@ public class BlockConverter implements Converter<Block, BlockDTO> {
         dto.setBlockSignature(Convert.toHexString(model.getBlockSignature()));
         dto.setTransactions(Collections.emptyList());
         dto.setTotalAmountATM(String.valueOf(
-                model.getOrLoadTransactions().stream().mapToLong(Transaction::getAmountATM).sum()));
+            model.getOrLoadTransactions().stream().mapToLong(Transaction::getAmountATM).sum()));
         if (this.isAddTransactions) {
             this.addTransactions(dto, model);
         }
@@ -72,33 +72,33 @@ public class BlockConverter implements Converter<Block, BlockDTO> {
         return dto;
     }
 
-    public void addTransactions(BlockDTO o, Block model){
-        if ( o != null && model != null){
+    public void addTransactions(BlockDTO o, Block model) {
+        if (o != null && model != null) {
             List<TransactionDTO> transactionDTOList = new ArrayList<>();
             model.getTransactions()
-                    .forEach(t -> transactionDTOList.add(transactionConverter.convert(t)));
+                .forEach(t -> transactionDTOList.add(transactionConverter.convert(t)));
             o.setTransactions(transactionDTOList);
         }
     }
 
-    public void addPhasedTransactions(BlockDTO o, Block model){
-        if ( o != null && model != null){
+    public void addPhasedTransactions(BlockDTO o, Block model) {
+        if (o != null && model != null) {
             List<TransactionDTO> transactionDTOList = new ArrayList<>();
             List<Long> transactionIdList = phasingPollService.getApprovedTransactionIds(model.getHeight());
             transactionIdList
-                    .forEach( trId -> transactionDTOList
-                            .add(transactionConverter.convert(blockchain.getTransaction(trId))));
+                .forEach(trId -> transactionDTOList
+                    .add(transactionConverter.convert(blockchain.getTransaction(trId))));
 
             o.setExecutedPhasedTransactions(transactionDTOList);
         }
     }
 
-    public void addPhasedTransactionIds(BlockDTO o, Block model){
-        if ( o != null && model != null){
+    public void addPhasedTransactionIds(BlockDTO o, Block model) {
+        if (o != null && model != null) {
             List<String> transactionList = new ArrayList<>();
             List<Long> approvedTransactionIds = phasingPollService.getApprovedTransactionIds(model.getHeight());
             approvedTransactionIds
-                    .forEach( trId -> transactionList.add(Long.toUnsignedString(trId)));
+                .forEach(trId -> transactionList.add(Long.toUnsignedString(trId)));
 
             o.setExecutedPhasedTransactions(transactionList);
         }

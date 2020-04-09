@@ -16,6 +16,7 @@ public interface NetworkService {
 
     /**
      * Get peer by ip address.
+     *
      * @param peerAddress peer address
      * @return The peer or <i>null</i>
      */
@@ -23,6 +24,7 @@ public interface NetworkService {
 
     /**
      * Get peer by ip address.
+     *
      * @param peerAddress peer address
      * @return The peer or <code>null</code> if peer can't be created.
      */
@@ -30,7 +32,8 @@ public interface NetworkService {
 
     /**
      * Add the peer
-     * @param peer peer
+     *
+     * @param peer        peer
      * @param peerAddress peer address
      * @return <code>true</code> if peer was successfully added.
      */
@@ -38,8 +41,9 @@ public interface NetworkService {
 
     /**
      * Get peer list by proposed parameters.
-     * @param active include Active peers only
-     * @param state include peers with given state.
+     *
+     * @param active   include Active peers only
+     * @param state    include peers with given state.
      * @param services filter peers by services mask
      * @return The peers list or empty list if there aren't suitable by requirements peers.
      */
@@ -48,6 +52,7 @@ public interface NetworkService {
     /**
      * Returns a list of inbound peers.
      * An inbound peer is a peer that has sent a request to this peer within the previous 30 minutes.
+     *
      * @return The inbound peers list.
      */
     List<Peer> getInboundPeers();
@@ -55,6 +60,7 @@ public interface NetworkService {
 
     /**
      * Put the peer in the blacklist
+     *
      * @param peerAddress peer address
      * @return the peer corresponded the peerAddress.
      */
@@ -62,6 +68,7 @@ public interface NetworkService {
 
     /**
      * Put the peer in the API proxy blacklist
+     *
      * @param peer
      * @return
      */
@@ -69,6 +76,7 @@ public interface NetworkService {
 
     /**
      * Set the forced peer
+     *
      * @param peer peer
      * @return the forced peer
      */

@@ -42,7 +42,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_T
 public final class DecodeFileToken extends AbstractAPIRequestHandler {
 
     public DecodeFileToken() {
-        super("file", new APITag[] {APITag.TOKENS}, "token");
+        super("file", new APITag[]{APITag.TOKENS}, "token");
     }
 
     @Override

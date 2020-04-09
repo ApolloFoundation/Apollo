@@ -14,6 +14,6 @@ public class ShardExportDirProducer {
     @Produces
     @Named("dataExportDir")
     public Path getDataExportDir() {
-            return RuntimeEnvironment.getInstance().getDirProvider().getDataExportDir();
+        return RuntimeEnvironment.getInstance().getDirProvider().getDataExportDir();
     }
 }

@@ -20,16 +20,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 
 public interface Fee {
 
-    long getFee(Transaction transaction, Appendix appendage);
-
     Fee DEFAULT_FEE = new Fee.ConstantFee(Constants.ONE_APL);
-
     Fee NONE = new Fee.ConstantFee();
+
+    long getFee(Transaction transaction, Appendix appendage);
 
     final class ConstantFee implements Fee {
 

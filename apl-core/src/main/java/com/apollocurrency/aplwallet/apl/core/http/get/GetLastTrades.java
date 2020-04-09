@@ -23,22 +23,22 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.app.Trade;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public final class GetLastTrades extends AbstractAPIRequestHandler {
 
     public GetLastTrades() {
-        super(new APITag[] {APITag.AE}, "assets", "assets", "assets"); // limit to 3 for testing
+        super(new APITag[]{APITag.AE}, "assets", "assets", "assets"); // limit to 3 for testing
     }
 
     @Override

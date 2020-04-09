@@ -20,18 +20,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DELIVERY_DEADLINE_TIMESTAMP;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_PURCHASE_PRICE;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_PURCHASE_QUANTITY;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_DELIVERY_DEADLINE_TIMESTAMP;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_GOODS;
-
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPurchase;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -42,14 +36,22 @@ import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DELIVERY_DEADLINE_TIMESTAMP;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_PURCHASE_PRICE;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_PURCHASE_QUANTITY;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_DELIVERY_DEADLINE_TIMESTAMP;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_GOODS;
+
 @Vetoed
 public final class DGSPurchase extends CreateTransaction {
 
-    public DGSPurchase() {
-        super(new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION},
-                "goods", "priceATM", "quantity", "deliveryDeadlineTimestamp");
-    }
     private DGSService service = CDI.current().select(DGSService.class).get();
+
+    public DGSPurchase() {
+        super(new APITag[]{APITag.DGS, APITag.CREATE_TRANSACTION},
+            "goods", "priceATM", "quantity", "deliveryDeadlineTimestamp");
+    }
+
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
@@ -86,7 +88,7 @@ public final class DGSPurchase extends CreateTransaction {
         Account sellerAccount = lookupAccountService().getAccount(goods.getSellerId());
 
         Attachment attachment = new DigitalGoodsPurchase(goods.getId(), quantity, priceATM,
-                deliveryDeadline);
+            deliveryDeadline);
         try {
             return createTransaction(req, buyerAccount, sellerAccount.getId(), 0, attachment);
         } catch (AplException.InsufficientBalanceException e) {

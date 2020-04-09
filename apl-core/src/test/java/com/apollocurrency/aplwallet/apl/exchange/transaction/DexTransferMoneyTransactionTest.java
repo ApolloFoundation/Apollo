@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -52,26 +52,24 @@ import static org.mockito.Mockito.verify;
 class DexTransferMoneyTransactionTest {
     DexControlOfFrozenMoneyAttachment attachment = new DexControlOfFrozenMoneyAttachment(64, 100);
     ExchangeContract contract = new ExchangeContract(
-            1L, 64L, 200L, 300L, 1000L, 2000L,
-            ExchangeContractStatus.STEP_3, new byte[32], null, null,
-            new byte[32], 7200, 1, false);
+        1L, 64L, 200L, 300L, 1000L, 2000L,
+        ExchangeContractStatus.STEP_3, new byte[32], null, null,
+        new byte[32], 7200, 1, false);
     DexService dexService = mock(DexService.class);
-
+    DexTransferMoneyTransaction transactionType;
     private AccountService accountService = mock(AccountService.class);
-
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from()
-            .addBeans(
-                    MockBean.of(mock(DexConfig.class), DexConfig.class),
-                    MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class),
-                    MockBean.of(mock(BlockchainImpl.class), Blockchain.class, BlockchainImpl.class),
-                    MockBean.of(mock(PhasingPollService.class), PhasingPollService.class),
-                    MockBean.of(dexService, DexService.class),
-                    MockBean.of(mock(TimeService.class), TimeService.class),
-                    MockBean.of(accountService, AccountService.class, AccountServiceImpl.class)
-            ).build();
+        .addBeans(
+            MockBean.of(mock(DexConfig.class), DexConfig.class),
+            MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class),
+            MockBean.of(mock(BlockchainImpl.class), Blockchain.class, BlockchainImpl.class),
+            MockBean.of(mock(PhasingPollService.class), PhasingPollService.class),
+            MockBean.of(dexService, DexService.class),
+            MockBean.of(mock(TimeService.class), TimeService.class),
+            MockBean.of(accountService, AccountService.class, AccountServiceImpl.class)
+        ).build();
 
-    DexTransferMoneyTransaction transactionType;
     @BeforeEach
     void setUp() {
         transactionType = new DexTransferMoneyTransaction();
@@ -183,7 +181,7 @@ class DexTransferMoneyTransactionTest {
 
         verify(transactionType.lookupAccountService()).addToBalanceATM(sender, LedgerEvent.DEX_TRANSFER_MONEY, 0, -100);
         verify(transactionType.lookupAccountService()).addToBalanceAndUnconfirmedBalanceATM(recipient, LedgerEvent.DEX_TRANSFER_MONEY, 0, 100);
-        verify(dexService).closeOrder( 300);
+        verify(dexService).closeOrder(300);
     }
 
     @Test
@@ -200,7 +198,7 @@ class DexTransferMoneyTransactionTest {
 
         verify(transactionType.lookupAccountService()).addToBalanceATM(sender, LedgerEvent.DEX_TRANSFER_MONEY, 0, -100);
         verify(transactionType.lookupAccountService()).addToBalanceAndUnconfirmedBalanceATM(recipient, LedgerEvent.DEX_TRANSFER_MONEY, 0, 100);
-        verify(dexService).closeOrder( 200);
+        verify(dexService).closeOrder(200);
     }
 
     @Test

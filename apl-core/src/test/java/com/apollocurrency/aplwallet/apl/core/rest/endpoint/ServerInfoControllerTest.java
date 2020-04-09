@@ -3,23 +3,11 @@
  */
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.Map;
-
 import com.apollocurrency.aplwallet.api.dto.info.BlockchainConstantsDto;
 import com.apollocurrency.aplwallet.api.dto.info.BlockchainStateDto;
 import com.apollocurrency.aplwallet.api.dto.info.BlockchainStatusDto;
 import com.apollocurrency.aplwallet.api.dto.info.TimeDto;
 import com.apollocurrency.aplwallet.api.dto.info.TotalSupplyDto;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.peer.BlockchainState;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
@@ -34,25 +22,35 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 @Slf4j
 class ServerInfoControllerTest {
-    @Mock
-    private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
-    @Mock
-    private ServerInfoService serverInfoService = mock(ServerInfoService.class);
-
     private static ObjectMapper mapper = new ObjectMapper();
     private static Dispatcher dispatcher;
-
     private static String blockchainStatusUri = "/server/blockchain/status";
     private static String blockchainConstantsUri = "/server/blockchain/constants";
     private static String blockchainStateUri = "/server/blockchain/state";
     private static String timeUri = "/server/blockchain/time";
     private static String supplyUri = "/server/blockchain/supply";
     private static String propertiesUri = "/server/blockchain/properties";
+    @Mock
+    private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+    @Mock
+    private ServerInfoService serverInfoService = mock(ServerInfoService.class);
 
     @BeforeEach
-    void setup(){
+    void setup() {
         dispatcher = MockDispatcherFactory.createDispatcher();
         doReturn("APL").when(blockchainConfig).getAccountPrefix();
     }
@@ -73,7 +71,8 @@ class ServerInfoControllerTest {
         // check
         assertEquals(200, response.getStatus());
         String respondJson = response.getContentAsString();
-        BlockchainStatusDto dtoResult = mapper.readValue(respondJson, new TypeReference<>(){});
+        BlockchainStatusDto dtoResult = mapper.readValue(respondJson, new TypeReference<>() {
+        });
         assertNotNull(dtoResult.application);
         assertNotNull(dtoResult.version);
         // verify
@@ -96,7 +95,8 @@ class ServerInfoControllerTest {
         // check
         assertEquals(200, response.getStatus());
         String respondJson = response.getContentAsString();
-        BlockchainConstantsDto dtoResult = mapper.readValue(respondJson, new TypeReference<>(){});
+        BlockchainConstantsDto dtoResult = mapper.readValue(respondJson, new TypeReference<>() {
+        });
         assertNotNull(dtoResult.genesisAccountId);
         assertEquals(100L, dtoResult.epochBeginning);
         // verify
@@ -121,7 +121,8 @@ class ServerInfoControllerTest {
         // check
         assertEquals(200, response.getStatus());
         String respondJson = response.getContentAsString();
-        BlockchainStateDto dtoResult = mapper.readValue(respondJson, new TypeReference<>(){});
+        BlockchainStateDto dtoResult = mapper.readValue(respondJson, new TypeReference<>() {
+        });
         assertNotNull(dtoResult.application);
         assertNotNull(dtoResult.version);
         assertEquals(123, dtoResult.time);
@@ -146,7 +147,8 @@ class ServerInfoControllerTest {
         // check
         assertEquals(200, response.getStatus());
         String respondJson = response.getContentAsString();
-        TimeDto dtoResult = mapper.readValue(respondJson, new TypeReference<>(){});
+        TimeDto dtoResult = mapper.readValue(respondJson, new TypeReference<>() {
+        });
         assertEquals(100, dtoResult.time);
         // verify
         verify(serverInfoService, times(1)).getTime();
@@ -168,7 +170,8 @@ class ServerInfoControllerTest {
         // check
         assertEquals(200, response.getStatus());
         String respondJson = response.getContentAsString();
-        TotalSupplyDto dtoResult = mapper.readValue(respondJson, new TypeReference<>(){});
+        TotalSupplyDto dtoResult = mapper.readValue(respondJson, new TypeReference<>() {
+        });
         assertEquals(100, dtoResult.totalAmount);
         // verify
         verify(serverInfoService, times(1)).getTotalSupply();
@@ -191,7 +194,8 @@ class ServerInfoControllerTest {
         // check
         assertEquals(200, response.getStatus());
         String respondJson = response.getContentAsString();
-        Map<String, Object> dtoResult = mapper.readValue(respondJson, new TypeReference<>(){});
+        Map<String, Object> dtoResult = mapper.readValue(respondJson, new TypeReference<>() {
+        });
         assertEquals(1, dtoResult.size());
         assertEquals("testValue", dtoResult.get("testKey"));
         // verify

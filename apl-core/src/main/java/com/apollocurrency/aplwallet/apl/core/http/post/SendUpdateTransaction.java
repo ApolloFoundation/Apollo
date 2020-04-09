@@ -12,11 +12,11 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.env.Architecture;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
-import com.apollocurrency.aplwallet.apl.util.env.Platform;
 import com.apollocurrency.aplwallet.apl.util.Version;
+import com.apollocurrency.aplwallet.apl.util.env.Architecture;
+import com.apollocurrency.aplwallet.apl.util.env.Platform;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
@@ -27,9 +27,9 @@ import javax.servlet.http.HttpServletRequest;
 public final class SendUpdateTransaction extends CreateTransaction {
 
     public SendUpdateTransaction() {
-        super(new APITag[] {APITag.UPDATE, APITag.CREATE_TRANSACTION}, "architecture", "platform", "hash", "version", "urlFirstPart",
-                "urlSecondPart",
-                "level");
+        super(new APITag[]{APITag.UPDATE, APITag.CREATE_TRANSACTION}, "architecture", "platform", "hash", "version", "urlFirstPart",
+            "urlSecondPart",
+            "level");
     }
 
     @Override
@@ -40,7 +40,7 @@ public final class SendUpdateTransaction extends CreateTransaction {
         byte[] urlSecondPart = HttpParameterParserUtil.getBytes(req, "urlSecondPart", true);
         Version version = new Version(Convert.nullToEmpty(req.getParameter("version")).trim());
         byte[] hash = HttpParameterParserUtil.getBytes(req, "hash", true);
-        byte level = HttpParameterParserUtil.getByte(req, "level", (byte)0, Byte.MAX_VALUE, true);
+        byte level = HttpParameterParserUtil.getByte(req, "level", (byte) 0, Byte.MAX_VALUE, true);
         if (urlFirstPart.length != Constants.UPDATE_URL_PART_LENGTH) {
             return JSONResponses.INCORRECT_UPDATE_URL_FIRST_PART_LENGTH;
         }

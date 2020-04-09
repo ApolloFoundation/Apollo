@@ -22,7 +22,7 @@ class OrderScanDaoTest {
     @BeforeEach
     void setUp() {
         dao = JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(
-                extension.getDatabaseManager().getJdbiHandleFactory(), OrderScanDao.class);
+            extension.getDatabaseManager().getJdbiHandleFactory(), OrderScanDao.class);
     }
 
     @Test
@@ -40,7 +40,7 @@ class OrderScanDaoTest {
         dao.update(expected);
         OrderScan actual = dao.get(DexCurrency.PAX);
 
-        assertEquals(expected , actual);
+        assertEquals(expected, actual);
     }
 
     @Test

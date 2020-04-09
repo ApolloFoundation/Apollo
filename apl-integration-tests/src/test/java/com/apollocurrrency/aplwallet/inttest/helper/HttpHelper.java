@@ -25,11 +25,10 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 
 public class HttpHelper {
-    public static ObjectMapper mapper = new ObjectMapper();
     private static final String baseURL_API = "http://" +
-            TestConfiguration.getTestConfiguration().getBaseURL() + ":" +
-            TestConfiguration.getTestConfiguration().getPort() + "/apl?";
-
+        TestConfiguration.getTestConfiguration().getBaseURL() + ":" +
+        TestConfiguration.getTestConfiguration().getPort() + "/apl?";
+    public static ObjectMapper mapper = new ObjectMapper();
     private static HashMap<String, Object> reqestParam = new HashMap<>();
     private static OkHttpClient client;
 
@@ -42,17 +41,17 @@ public class HttpHelper {
 
     public static Response httpCallGet() throws IOException {
         Request request = new Request.Builder()
-                .url(buildGetReqestUrl())
-                .get()
-                .build();
+            .url(buildGetReqestUrl())
+            .get()
+            .build();
         return getClient().newCall(request).execute();
     }
 
     public static Response httpCallGet(String peerUrl) throws IOException {
         Request request = new Request.Builder()
-                .url(buildGetReqestUrl(peerUrl))
-                .get()
-                .build();
+            .url(buildGetReqestUrl(peerUrl))
+            .get()
+            .build();
         return getClient().newCall(request).execute();
     }
 
@@ -71,9 +70,9 @@ public class HttpHelper {
                     .build();*/
         }
         Request request = new Request.Builder()
-                .url(buildGetReqestUrl())
-                .post(body)
-                .build();
+            .url(buildGetReqestUrl())
+            .post(body)
+            .build();
         return getClient().newCall(request).execute();
     }
 
@@ -173,11 +172,11 @@ public class HttpHelper {
     private static RequestBody uploadImage(String param) {
         File file = (File) reqestParam.get(param);
         final MediaType MEDIA_TYPE = file.getName().endsWith("png") ?
-                MediaType.parse("image/png") : MediaType.parse("image/jpeg");
+            MediaType.parse("image/png") : MediaType.parse("image/jpeg");
         return new MultipartBody.Builder()
-                .setType(MultipartBody.FORM)
-                .addFormDataPart(param, file.getName(), RequestBody.create(MEDIA_TYPE, file))
-                .build();
+            .setType(MultipartBody.FORM)
+            .addFormDataPart(param, file.getName(), RequestBody.create(MEDIA_TYPE, file))
+            .build();
 
     }
 

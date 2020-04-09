@@ -71,7 +71,6 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- *
  * @author alukin@gmail.com
  */
 @Slf4j
@@ -109,23 +108,23 @@ public class ServerInfoService {
                              UPnP upnp, AliasService aliasService) {
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
         this.blockchain = Objects.requireNonNull(blockchain, "blockchain is NULL");
-        this.propertiesHolder = Objects.requireNonNull(propertiesHolder,"propertiesHolder is NULL");
-        this.blockchainProcessor = Objects.requireNonNull(blockchainProcessor,"blockchainProcessor is NULL");
-        this.peersService = Objects.requireNonNull(peersService,"peersService is NULL");
-        this.timeService = Objects.requireNonNull(timeService,"timeService is NULL");
-        this.accountService = Objects.requireNonNull(accountService,"accountService is NULL");
-        this.accountLedgerService = Objects.requireNonNull(accountLedgerService,"accountLedgerService is NULL");
-        this.accountPublicKeyService = Objects.requireNonNull(accountPublicKeyService,"accountPublicKeyService is NULL");
-        this.dgsService = Objects.requireNonNull(dgsService,"dgsService is NULL");
-        this.prunableMessageService = Objects.requireNonNull(prunableMessageService,"prunableMessageService is NULL");
-        this.taggedDataService = Objects.requireNonNull(taggedDataService,"taggedDataService is NULL");
-        this.accountLeaseService = Objects.requireNonNull(accountLeaseService,"accountLeaseService is NULL");
-        this.apw = Objects.requireNonNull(apw,"adminPasswordVerifier is NULL");
-        this.upnp = Objects.requireNonNull(upnp,"upnp is NULL");
+        this.propertiesHolder = Objects.requireNonNull(propertiesHolder, "propertiesHolder is NULL");
+        this.blockchainProcessor = Objects.requireNonNull(blockchainProcessor, "blockchainProcessor is NULL");
+        this.peersService = Objects.requireNonNull(peersService, "peersService is NULL");
+        this.timeService = Objects.requireNonNull(timeService, "timeService is NULL");
+        this.accountService = Objects.requireNonNull(accountService, "accountService is NULL");
+        this.accountLedgerService = Objects.requireNonNull(accountLedgerService, "accountLedgerService is NULL");
+        this.accountPublicKeyService = Objects.requireNonNull(accountPublicKeyService, "accountPublicKeyService is NULL");
+        this.dgsService = Objects.requireNonNull(dgsService, "dgsService is NULL");
+        this.prunableMessageService = Objects.requireNonNull(prunableMessageService, "prunableMessageService is NULL");
+        this.taggedDataService = Objects.requireNonNull(taggedDataService, "taggedDataService is NULL");
+        this.accountLeaseService = Objects.requireNonNull(accountLeaseService, "accountLeaseService is NULL");
+        this.apw = Objects.requireNonNull(apw, "adminPasswordVerifier is NULL");
+        this.upnp = Objects.requireNonNull(upnp, "upnp is NULL");
         this.aliasService = aliasService;
     }
 
-    public ApolloX509Info getX509Info(){
+    public ApolloX509Info getX509Info() {
         ApolloX509Info res = new ApolloX509Info();
         res.id = "No ID yet available";
         return res;
@@ -254,7 +253,7 @@ public class ServerInfoService {
         }
         // several types generated to JSON
         for (CurrencyType currencyType : CurrencyType.values()) {
-            dto.currencyTypes.add(new NameCodeTypeDto(currencyType.toString(), currencyType.getCode() ));
+            dto.currencyTypes.add(new NameCodeTypeDto(currencyType.toString(), currencyType.getCode()));
         }
         for (VoteWeighting.VotingModel votingModel : VoteWeighting.VotingModel.values()) {
             dto.votingModels.add(new NameCodeTypeDto(votingModel.toString(), votingModel.getCode()));
@@ -365,7 +364,7 @@ public class ServerInfoService {
         propertiesHolder.getProperties().forEach((k, v) -> {
                 if (k.equals("apl.adminPassword")
                     || k.equals("apl.dbPassword") || k.equals("apl.dbUsername")
-                    || k.equals("apl.testDbPassword") || k.equals("apl.testDbUsername") ) {
+                    || k.equals("apl.testDbPassword") || k.equals("apl.testDbUsername")) {
                     map.put(k.toString(), "***"); // password only
                 } else {
                     map.put(k.toString(), v);

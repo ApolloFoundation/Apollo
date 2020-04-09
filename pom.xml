@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
@@ -112,7 +112,7 @@
 
     <!--Tests-->
     <json-simple.version>1.1.1</json-simple.version>
-      <jsonassert.version>1.5.0</jsonassert.version>
+    <jsonassert.version>1.5.0</jsonassert.version>
     <json-unit.version>1.20.0</json-unit.version>
     <okhttp-eventsource.version>1.8.0</okhttp-eventsource.version>
     <okhttp.version>2.7.5</okhttp.version>
@@ -371,7 +371,7 @@
         <artifactId>resteasy-multipart-provider</artifactId>
         <version>${resteasy.version}</version>
       </dependency>
-<!--      Validation-->
+      <!--      Validation-->
       <dependency>
         <groupId>javax.validation</groupId>
         <artifactId>validation-api</artifactId>
@@ -763,14 +763,14 @@
             <useSystemClassLoader>false</useSystemClassLoader>
           </configuration>
           <dependencies>
-<!--
-                        JDK 11
-                        <dependency>
-                            <groupId>org.ow2.asm</groupId>
-                            <artifactId>asm</artifactId>
-                            <version>6.2</version>
-                        </dependency>
--->
+            <!--
+                                    JDK 11
+                                    <dependency>
+                                        <groupId>org.ow2.asm</groupId>
+                                        <artifactId>asm</artifactId>
+                                        <version>6.2</version>
+                                    </dependency>
+            -->
             <dependency>
               <groupId>org.apache.maven.wagon</groupId>
               <artifactId>wagon-webdav-jackrabbit</artifactId>

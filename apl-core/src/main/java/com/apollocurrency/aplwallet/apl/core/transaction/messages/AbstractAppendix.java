@@ -19,6 +19,8 @@ import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+
 /**
  *
  */
@@ -128,7 +130,8 @@ public abstract class AbstractAppendix implements Appendix {
         loadPrunable(transaction, false);
     }
 
-    public void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {}
+    public void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
+    }
 
     public abstract boolean isPhasable();
 

@@ -45,13 +45,13 @@ public class BlockIndexDaoTest {
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(NtpTime.class,
-            PropertiesHolder.class, BlockchainConfig.class, DaoConfig.class,
-            DerivedDbTablesRegistryImpl.class, BlockIndexDao.class,
-            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
-            .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
-            .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
-            .build();
+        PropertiesHolder.class, BlockchainConfig.class, DaoConfig.class,
+        DerivedDbTablesRegistryImpl.class, BlockIndexDao.class,
+        TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
+        .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
+        .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
+        .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
+        .build();
 
     @Inject
     private BlockIndexDao blockIndexDao;
@@ -218,17 +218,17 @@ public class BlockIndexDaoTest {
 
     @Test
     void testCountByShardId() {
-            long count = blockIndexDao.countBlockIndexByShard(3L);
+        long count = blockIndexDao.countBlockIndexByShard(3L);
 
-            assertEquals(1, count);
+        assertEquals(1, count);
 
-            count = blockIndexDao.countBlockIndexByShard(1L);
+        count = blockIndexDao.countBlockIndexByShard(1L);
 
-            assertEquals(1, count);
+        assertEquals(1, count);
 
-            count = blockIndexDao.countBlockIndexByShard(2L);
+        count = blockIndexDao.countBlockIndexByShard(2L);
 
-            assertEquals(1, count);
+        assertEquals(1, count);
     }
 
 }

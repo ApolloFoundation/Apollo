@@ -6,12 +6,12 @@ package com.apollocurrency.aplwallet.api.trading;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.util.List;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 /**
- *
  * @author Serhiy Lymar
  */
 
@@ -51,7 +51,7 @@ public class SymbolsOutput {
     @JsonProperty("minmov")
     Integer minmov2;
     @JsonProperty("pointvalue")
-    Integer pointvalue;    
+    Integer pointvalue;
     @JsonProperty("session")
     String session;
     @JsonProperty("has_intraday")
@@ -65,7 +65,7 @@ public class SymbolsOutput {
     @JsonProperty("supported_resolutions")
     List<String> supported_resolutions;
     @JsonProperty("pricescale")
-    Integer pricescale;  
+    Integer pricescale;
     @JsonProperty("ticker")
-    String ticker;    
+    String ticker;
 }

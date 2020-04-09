@@ -4,9 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.account.model;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
@@ -14,10 +11,14 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 /**
  * Account Guaranty Balance Entity class
  */
-@Setter @Getter
+@Setter
+@Getter
 @ToString(callSuper = true)
 public class AccountGuaranteedBalance extends DerivedEntity {
 

@@ -10,19 +10,9 @@ import java.util.Objects;
 
 public class DGSTag extends VersionedDerivedEntity {
 
-    public void setInStockCount(int inStockCount) {
-        this.inStockCount = inStockCount;
-    }
-
-    public void setTotalCount(int totalCount) {
-        this.totalCount = totalCount;
-    }
-
-
     private final String tag;
     private int inStockCount;
     private int totalCount;
-
 
     public DGSTag(String tag, int height) {
         super(null, height);
@@ -44,8 +34,16 @@ public class DGSTag extends VersionedDerivedEntity {
         return inStockCount;
     }
 
+    public void setInStockCount(int inStockCount) {
+        this.inStockCount = inStockCount;
+    }
+
     public int getTotalCount() {
         return totalCount;
+    }
+
+    public void setTotalCount(int totalCount) {
+        this.totalCount = totalCount;
     }
 
     @Override
@@ -55,8 +53,8 @@ public class DGSTag extends VersionedDerivedEntity {
         if (!super.equals(o)) return false;
         DGSTag dgsTag = (DGSTag) o;
         return inStockCount == dgsTag.inStockCount &&
-                totalCount == dgsTag.totalCount &&
-                Objects.equals(tag, dgsTag.tag);
+            totalCount == dgsTag.totalCount &&
+            Objects.equals(tag, dgsTag.tag);
     }
 
     @Override

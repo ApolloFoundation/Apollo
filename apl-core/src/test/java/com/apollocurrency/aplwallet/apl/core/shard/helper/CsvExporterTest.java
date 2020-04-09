@@ -131,120 +131,111 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Execution(ExecutionMode.CONCURRENT)
 class CsvExporterTest {
     private static final Logger log = getLogger(CsvExporterTest.class);
-
-    @RegisterExtension
-    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("csvExporterDb").toAbsolutePath().toString()));
     //    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("apl-blockchain").toAbsolutePath().toString())); // prod data test
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
-
-    private NtpTime time = mock(NtpTime.class);
-//    private LuceneFullTextSearchEngine ftlEngine = new LuceneFullTextSearchEngine(time, createPath("indexDirPath")); // prod data test
-//    private FullTextSearchService ftlService = new FullTextSearchServiceImpl(extension.getDatabaseManager(),
-//        ftlEngine, Set.of("tagged_data", "currency"), "PUBLIC"); // prod data test
-    private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(temporaryFolderExtension.newFolder("keystorePath").toPath(), time);
-//    private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(createPath("keystorePath"), time); // prod data test
-    private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
-    private HeightConfig config = Mockito.mock(HeightConfig.class);
-    private Chain chain = Mockito.mock(Chain.class);
-    private List<String> blockIndexExportContent = List.of("BLOCK_ID(-5|19|0),BLOCK_HEIGHT(4|10|0)", "1,1", "2,2", "3,30");
-    private List<String> transactionIndexExportContent = List.of(
-            "TRANSACTION_ID(-5|19|0),PARTIAL_TRANSACTION_HASH(-3|2147483647|0),TRANSACTION_INDEX(5|5|0),HEIGHT(4|10|0)",
-            "100,b'zG8XGTR3IJylgh0305HnCuZo3RwR3XmO',0,30",
-            "101,b'InCisA4/cPtdXY4No8eRnt1NM2gXbm8t',0,1",
-            "102,b'uW1en2TlHFl1E3F2ke7urxiiaoZANPYs',1,1",
-            "103,b'zKWh+CX5uRi+APNUBvcLEItmVrKZdVVY',2,1"
-          );
-    private List<String> transactionExportContent = List.of(
-            "ID(-5|19|0),DEADLINE(5|5|0),RECIPIENT_ID(-5|19|0),TRANSACTION_INDEX(5|5|0),AMOUNT(-5|19|0),FEE(-5|19|0),FULL_HASH(-3|32|0),HEIGHT(4|10|0),BLOCK_ID(-5|19|0),SIGNATURE(-3|64|0),TIMESTAMP(4|10|0),TYPE(-6|3|0),SUBTYPE(-6|3|0),SENDER_ID(-5|19|0),SENDER_PUBLIC_KEY(-3|32|0),BLOCK_TIMESTAMP(4|10|0),REFERENCED_TRANSACTION_FULL_HASH(-3|32|0),PHASED(16|1|0),ATTACHMENT_BYTES(-3|2147483647|0),VERSION(-6|3|0),HAS_MESSAGE(16|1|0),HAS_ENCRYPTED_MESSAGE(16|1|0),HAS_PUBLIC_KEY_ANNOUNCEMENT(16|1|0),EC_BLOCK_HEIGHT(4|10|0),EC_BLOCK_ID(-5|19|0),HAS_ENCRYPTTOSELF_MESSAGE(16|1|0),HAS_PRUNABLE_MESSAGE(16|1|0),HAS_PRUNABLE_ENCRYPTED_MESSAGE(16|1|0),HAS_PRUNABLE_ATTACHMENT(16|1|0)",
-            "3444674909301056677,1440,null,0,0,2500000000000,b'pSSXT5TxzS/MbxcZNHcgnKWCHTfTkecK5mjdHBHdeY4=',1000,-468651855371775066,b'N17xwFrlmifvJjNqWa/mkBTGi5v0Nk1bGy+k6+MCAgqGitNl818MqNPrrdxGns06fEnexeTS+tQfZyiXe3MzzA==',35073712,5,0,9211698109297098287,b'vwztBHLYuj354hgI6Y5hs0QEqtc34rrhd4zrxpi0Dzc=',9200,b'ZAAAAAAAAADMbxcZNHcgnKWCHTfTkecK5mjdHBHdeY4=',FALSE,b'AQVmc2RmcwNRRVIFAGZzZGZzAa4VAAAAAAAAAAAAAAAAAACuFQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB',1,FALSE,FALSE,FALSE,14399,-5416619518547901377,FALSE,FALSE,FALSE,FALSE",
-            "2402544248051582903,1440,null,1,0,1000000000000,b't8dFrkONVyEicKKwDj9w+11djg2jx5Ge3U0zaBduby0=',1000,-468651855371775066,b'/G8R85aqIHF8kZGh+yX6sGgVEsyXbJNdsVY4mKq62Q/8bO0o4bizOD1au1WSi7sSKmdNwGariwzFhbm0zb2PrA==',35075179,2,0,9211698109297098287,b'vwztBHLYuj354hgI6Y5hs0QEqtc34rrhd4zrxpi0Dzc=',9200,b'ZQAAAAAAAADMbxcZNHcgnKWCHTfTkecK5mjdHBHdeY4=',FALSE,b'AQdNWUFTU0VUCwBmZGZza2RmbGFscxAnAAAAAAAAAg==',1,FALSE,FALSE,FALSE,14405,-2297016555338476945,FALSE,FALSE,FALSE,FALSE",
-            "3444674909301056677,1440,null,0,0,2500000000000,b'pSSXT5TxzS/MbxcZNHcgnKWCHTfTkecK5mjdHBHdeY4=',1000,-468651855371775066,b'N17xwFrlmifvJjNqWa/mkBTGi5v0Nk1bGy+k6+MCAgqGitNl818MqNPrrdxGns06fEnexeTS+tQfZyiXe3MzzA==',35073712,5,0,9211698109297098287,b'vwztBHLYuj354hgI6Y5hs0QEqtc34rrhd4zrxpi0Dzc=',9200,b'ZAAAAAAAAADMbxcZNHcgnKWCHTfTkecK5mjdHBHdeY4=',FALSE,b'AQVmc2RmcwNRRVIFAGZzZGZzAa4VAAAAAAAAAAAAAAAAAACuFQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB',1,FALSE,FALSE,FALSE,14399,-5416619518547901377,FALSE,FALSE,FALSE,FALSE",
-            "5373370077664349170,1440,457571885748888948,0,100000000000000000,100000000,b'8ovlxZ0Lkkq5bV6fZOUcWXUTcXaR7u6vGKJqhkA09iw=',1500,-7242168411665692630,b'iv06kdDjAR5QXgNTsfcInA1AFnL47V0N3CEH4LEwqgvdF/A7LXXu2PzGRc2oi1yCrBtiHBQqutmxu5XfUXqnDA==',35078473,0,0,9211698109297098287,b'vwztBHLYuj354hgI6Y5hs0QEqtc34rrhd4zrxpi0Dzc=',13800,b't8dFrkONVyEicKKwDj9w+11djg2jx5Ge3U0zaBduby0=',FALSE,null,1,FALSE,FALSE,FALSE,14734,2621055931824266697,FALSE,FALSE,FALSE,FALSE"
-    );
-
-    private List<String> blockTransactionExportContent = List.of(
-            "ID(-5|19|0),DEADLINE(5|5|0),RECIPIENT_ID(-5|19|0),TRANSACTION_INDEX(5|5|0),AMOUNT(-5|19|0),FEE(-5|19|0),FULL_HASH(-3|32|0),HEIGHT(4|10|0),BLOCK_ID(-5|19|0),SIGNATURE(-3|64|0),TIMESTAMP(4|10|0),TYPE(-6|3|0),SUBTYPE(-6|3|0),SENDER_ID(-5|19|0),SENDER_PUBLIC_KEY(-3|32|0),BLOCK_TIMESTAMP(4|10|0),REFERENCED_TRANSACTION_FULL_HASH(-3|32|0),PHASED(16|1|0),ATTACHMENT_BYTES(-3|2147483647|0),VERSION(-6|3|0),HAS_MESSAGE(16|1|0),HAS_ENCRYPTED_MESSAGE(16|1|0),HAS_PUBLIC_KEY_ANNOUNCEMENT(16|1|0),EC_BLOCK_HEIGHT(4|10|0),EC_BLOCK_ID(-5|19|0),HAS_ENCRYPTTOSELF_MESSAGE(16|1|0),HAS_PRUNABLE_MESSAGE(16|1|0),HAS_PRUNABLE_ENCRYPTED_MESSAGE(16|1|0),HAS_PRUNABLE_ATTACHMENT(16|1|0)",
-            "2083198303623116770,1440,-1017037002638468431,0,100000000000000000,100000000,b'4vcm5NEB6Rxu5zXJ2g1Vr3EAxFJjoKagkgwlWg9ltE8=',8000,6438949995368593549,b'0kgRvEvixwMRlv0iBjnxiFyOFcludnIUbIjC7qJdigzU6TuOIyTiUi46/xT6oe+BH8Q6lx/b23H3rAtWFOcGyw==',35078473,0,0,9211698109297098287,b'vwztBHLYuj354hgI6Y5hs0QEqtc34rrhd4zrxpi0Dzc=',73600,b'9X/g0icw8EsBxaExtSCZNWyJmymt2wR22DXqLeXMVpE=',FALSE,null,1,FALSE,FALSE,FALSE,14734,2621055931824266697,FALSE,FALSE,FALSE,FALSE",
-            "808614188720864902,1440,-5803127966835594607,1,100000000000000000,100000000,b'hj4MB1LGOAvnY1S9hhvgcFcR4O4rwLhNnw1xtaQnGvY=',8000,6438949995368593549,b'OEhMYSiycHqB6m8MnxlmPbzVQ1jmRNVs+iszY18tVw97kcQYIPjRkj4K/KXLDleFx2wv2FnjVMh2qWQKdYgqog==',35078473,0,0,9211698109297098287,b'vwztBHLYuj354hgI6Y5hs0QEqtc34rrhd4zrxpi0Dzc=',73600,b'4vcm5NEB6Rxu5zXJ2g1Vr3EAxFJjoKagkgwlWg9ltE8=',FALSE,null,1,FALSE,FALSE,FALSE,14734,2621055931824266697,FALSE,FALSE,FALSE,FALSE"
-    );
-
-    private List<String> blockExportContent = List.of(
-            "ID(-5|19|0),VERSION(4|10|0),TIMESTAMP(4|10|0),PREVIOUS_BLOCK_ID(-5|19|0),TOTAL_AMOUNT(-5|19|0),TOTAL_FEE(-5|19|0),PAYLOAD_LENGTH(4|10|0),PREVIOUS_BLOCK_HASH(-3|32|0),CUMULATIVE_DIFFICULTY(-3|2147483647|0),BASE_TARGET(-5|19|0),NEXT_BLOCK_ID(-5|19|0),HEIGHT(4|10|0),GENERATION_SIGNATURE(-3|64|0),BLOCK_SIGNATURE(-3|64|0),PAYLOAD_HASH(-3|32|0),GENERATOR_ID(-5|19|0),TIMEOUT(4|10|0)",
-            "6438949995368593549,4,73600,-5580266015477525080,0,200000000,207,b'qBVH25/pjrIk083BIPcwXTuCnxYr6zv3GXUODPSNvp0=',b'At+1GWz0FbA=',23058430050,7551185434952726924,8000,b'Wxv0Y/IC7A1KtCqWNJdu1Ht3xGLR3iXj/qPo6qit2PY=',b'mS6suKw7y7fb2/y2NzGK2rGQ1IQ7ANqJYf0272Bxjw9azKRmLP3PhEfMUR1eNqtMMhwYU4LzV38BBsK/ufgO5g==',b'i9+Y+8TPzwtm36pojOfvkGP4sXSO4jjCPoIJ8HHPzuc=',6415509874415488619,0"
-    );
-
-    @WeldSetup
-    public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class, BlockchainImpl.class, DaoConfig.class,
-            PropertyProducer.class, TransactionApplier.class, ServiceModeDirProvider.class,
-            TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
-            GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
-            ReferencedTransactionDaoImpl.class,
-            TaggedDataDao.class, PropertyBasedFileConfig.class,
-            DataTagDao.class, KeyFactoryProducer.class, FeeCalculator.class,
-            DGSGoodsTable.class,
-            TaggedDataTimestampDao.class,
-            TaggedDataExtendDao.class,
-            FullTextConfigImpl.class,
-            DirProvider.class,
-            AplAppStatus.class, PrunableMessageTable.class,
-            PhasingPollResultTable.class,
-            PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class,
-            PhasingVoteTable.class, PhasingPollTable.class,
-            AccountLedgerTable.class, DGSPurchaseTable.class,
-            DerivedDbTablesRegistryImpl.class,
-            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
-            DexOrderTable.class,
-            CsvEscaperImpl.class)
-            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
-            .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
-            .addBeans(MockBean.of(mock(AccountGuaranteedBalanceTable.class), AccountGuaranteedBalanceTable.class))
-            .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
-            .addBeans(MockBean.of(time, NtpTime.class))
-            .addBeans(MockBean.of(mock(TrimService.class), TrimService.class))
-            .addBeans(MockBean.of(mock(DirProvider.class), DirProvider.class))
-            .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
-            .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessorImpl.class, BlockchainProcessor.class))
-//            .addBeans(MockBean.of(ftlEngine, FullTextSearchEngine.class)) // prod data test
-//            .addBeans(MockBean.of(ftlService, FullTextSearchService.class)) // prod data test
-            .addBeans(MockBean.of(keyStore, KeyStoreService.class))
-            .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
-            .addBeans(MockBean.of(mock(AccountService.class), AccountServiceImpl.class, AccountService.class))
-            .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyServiceImpl.class, AccountPublicKeyService.class))
-            .addBeans(MockBean.of(mock(AccountTable.class), AccountTable.class))
-            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
-            .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
-            .build();
+    @RegisterExtension
+    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("csvExporterDb").toAbsolutePath().toString()));
     @Inject
     ShardDao shardDao;
     @Inject
     AccountTable accountTable;
     @Inject
     AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
-
     @Inject
     PrunableMessageTable messageTable;
     @Inject
     TaggedDataDao taggedDataDao;
-
     @Inject
     PropertiesHolder propertiesHolder;
     @Inject
     DGSGoodsTable goodsTable;
     @Inject
-    private Blockchain blockchain;
-    @Inject
     DerivedTablesRegistry registry;
     @Inject
     DexOrderTable dexOrderTable;
-
     CsvExporter csvExporter;
     @Inject
     CsvEscaper translator;
-
+    private NtpTime time = mock(NtpTime.class);
+    //    private LuceneFullTextSearchEngine ftlEngine = new LuceneFullTextSearchEngine(time, createPath("indexDirPath")); // prod data test
+//    private FullTextSearchService ftlService = new FullTextSearchServiceImpl(extension.getDatabaseManager(),
+//        ftlEngine, Set.of("tagged_data", "currency"), "PUBLIC"); // prod data test
+    private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(temporaryFolderExtension.newFolder("keystorePath").toPath(), time);
+    //    private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(createPath("keystorePath"), time); // prod data test
+    private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+    @WeldSetup
+    public WeldInitiator weld = WeldInitiator.from(
+        PropertiesHolder.class, BlockchainImpl.class, DaoConfig.class,
+        PropertyProducer.class, TransactionApplier.class, ServiceModeDirProvider.class,
+        TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
+        GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
+        ReferencedTransactionDaoImpl.class,
+        TaggedDataDao.class, PropertyBasedFileConfig.class,
+        DataTagDao.class, KeyFactoryProducer.class, FeeCalculator.class,
+        DGSGoodsTable.class,
+        TaggedDataTimestampDao.class,
+        TaggedDataExtendDao.class,
+        FullTextConfigImpl.class,
+        DirProvider.class,
+        AplAppStatus.class, PrunableMessageTable.class,
+        PhasingPollResultTable.class,
+        PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class,
+        PhasingVoteTable.class, PhasingPollTable.class,
+        AccountLedgerTable.class, DGSPurchaseTable.class,
+        DerivedDbTablesRegistryImpl.class,
+        TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
+        DexOrderTable.class,
+        CsvEscaperImpl.class)
+        .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
+        .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
+        .addBeans(MockBean.of(mock(AccountGuaranteedBalanceTable.class), AccountGuaranteedBalanceTable.class))
+        .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
+        .addBeans(MockBean.of(time, NtpTime.class))
+        .addBeans(MockBean.of(mock(TrimService.class), TrimService.class))
+        .addBeans(MockBean.of(mock(DirProvider.class), DirProvider.class))
+        .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
+        .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessorImpl.class, BlockchainProcessor.class))
+//            .addBeans(MockBean.of(ftlEngine, FullTextSearchEngine.class)) // prod data test
+//            .addBeans(MockBean.of(ftlService, FullTextSearchService.class)) // prod data test
+        .addBeans(MockBean.of(keyStore, KeyStoreService.class))
+        .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
+        .addBeans(MockBean.of(mock(AccountService.class), AccountServiceImpl.class, AccountService.class))
+        .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyServiceImpl.class, AccountPublicKeyService.class))
+        .addBeans(MockBean.of(mock(AccountTable.class), AccountTable.class))
+        .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
+        .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
+        .build();
+    private HeightConfig config = Mockito.mock(HeightConfig.class);
+    private Chain chain = Mockito.mock(Chain.class);
+    private List<String> blockIndexExportContent = List.of("BLOCK_ID(-5|19|0),BLOCK_HEIGHT(4|10|0)", "1,1", "2,2", "3,30");
+    private List<String> transactionIndexExportContent = List.of(
+        "TRANSACTION_ID(-5|19|0),PARTIAL_TRANSACTION_HASH(-3|2147483647|0),TRANSACTION_INDEX(5|5|0),HEIGHT(4|10|0)",
+        "100,b'zG8XGTR3IJylgh0305HnCuZo3RwR3XmO',0,30",
+        "101,b'InCisA4/cPtdXY4No8eRnt1NM2gXbm8t',0,1",
+        "102,b'uW1en2TlHFl1E3F2ke7urxiiaoZANPYs',1,1",
+        "103,b'zKWh+CX5uRi+APNUBvcLEItmVrKZdVVY',2,1"
+    );
+    private List<String> transactionExportContent = List.of(
+        "ID(-5|19|0),DEADLINE(5|5|0),RECIPIENT_ID(-5|19|0),TRANSACTION_INDEX(5|5|0),AMOUNT(-5|19|0),FEE(-5|19|0),FULL_HASH(-3|32|0),HEIGHT(4|10|0),BLOCK_ID(-5|19|0),SIGNATURE(-3|64|0),TIMESTAMP(4|10|0),TYPE(-6|3|0),SUBTYPE(-6|3|0),SENDER_ID(-5|19|0),SENDER_PUBLIC_KEY(-3|32|0),BLOCK_TIMESTAMP(4|10|0),REFERENCED_TRANSACTION_FULL_HASH(-3|32|0),PHASED(16|1|0),ATTACHMENT_BYTES(-3|2147483647|0),VERSION(-6|3|0),HAS_MESSAGE(16|1|0),HAS_ENCRYPTED_MESSAGE(16|1|0),HAS_PUBLIC_KEY_ANNOUNCEMENT(16|1|0),EC_BLOCK_HEIGHT(4|10|0),EC_BLOCK_ID(-5|19|0),HAS_ENCRYPTTOSELF_MESSAGE(16|1|0),HAS_PRUNABLE_MESSAGE(16|1|0),HAS_PRUNABLE_ENCRYPTED_MESSAGE(16|1|0),HAS_PRUNABLE_ATTACHMENT(16|1|0)",
+        "3444674909301056677,1440,null,0,0,2500000000000,b'pSSXT5TxzS/MbxcZNHcgnKWCHTfTkecK5mjdHBHdeY4=',1000,-468651855371775066,b'N17xwFrlmifvJjNqWa/mkBTGi5v0Nk1bGy+k6+MCAgqGitNl818MqNPrrdxGns06fEnexeTS+tQfZyiXe3MzzA==',35073712,5,0,9211698109297098287,b'vwztBHLYuj354hgI6Y5hs0QEqtc34rrhd4zrxpi0Dzc=',9200,b'ZAAAAAAAAADMbxcZNHcgnKWCHTfTkecK5mjdHBHdeY4=',FALSE,b'AQVmc2RmcwNRRVIFAGZzZGZzAa4VAAAAAAAAAAAAAAAAAACuFQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB',1,FALSE,FALSE,FALSE,14399,-5416619518547901377,FALSE,FALSE,FALSE,FALSE",
+        "2402544248051582903,1440,null,1,0,1000000000000,b't8dFrkONVyEicKKwDj9w+11djg2jx5Ge3U0zaBduby0=',1000,-468651855371775066,b'/G8R85aqIHF8kZGh+yX6sGgVEsyXbJNdsVY4mKq62Q/8bO0o4bizOD1au1WSi7sSKmdNwGariwzFhbm0zb2PrA==',35075179,2,0,9211698109297098287,b'vwztBHLYuj354hgI6Y5hs0QEqtc34rrhd4zrxpi0Dzc=',9200,b'ZQAAAAAAAADMbxcZNHcgnKWCHTfTkecK5mjdHBHdeY4=',FALSE,b'AQdNWUFTU0VUCwBmZGZza2RmbGFscxAnAAAAAAAAAg==',1,FALSE,FALSE,FALSE,14405,-2297016555338476945,FALSE,FALSE,FALSE,FALSE",
+        "3444674909301056677,1440,null,0,0,2500000000000,b'pSSXT5TxzS/MbxcZNHcgnKWCHTfTkecK5mjdHBHdeY4=',1000,-468651855371775066,b'N17xwFrlmifvJjNqWa/mkBTGi5v0Nk1bGy+k6+MCAgqGitNl818MqNPrrdxGns06fEnexeTS+tQfZyiXe3MzzA==',35073712,5,0,9211698109297098287,b'vwztBHLYuj354hgI6Y5hs0QEqtc34rrhd4zrxpi0Dzc=',9200,b'ZAAAAAAAAADMbxcZNHcgnKWCHTfTkecK5mjdHBHdeY4=',FALSE,b'AQVmc2RmcwNRRVIFAGZzZGZzAa4VAAAAAAAAAAAAAAAAAACuFQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB',1,FALSE,FALSE,FALSE,14399,-5416619518547901377,FALSE,FALSE,FALSE,FALSE",
+        "5373370077664349170,1440,457571885748888948,0,100000000000000000,100000000,b'8ovlxZ0Lkkq5bV6fZOUcWXUTcXaR7u6vGKJqhkA09iw=',1500,-7242168411665692630,b'iv06kdDjAR5QXgNTsfcInA1AFnL47V0N3CEH4LEwqgvdF/A7LXXu2PzGRc2oi1yCrBtiHBQqutmxu5XfUXqnDA==',35078473,0,0,9211698109297098287,b'vwztBHLYuj354hgI6Y5hs0QEqtc34rrhd4zrxpi0Dzc=',13800,b't8dFrkONVyEicKKwDj9w+11djg2jx5Ge3U0zaBduby0=',FALSE,null,1,FALSE,FALSE,FALSE,14734,2621055931824266697,FALSE,FALSE,FALSE,FALSE"
+    );
+    private List<String> blockTransactionExportContent = List.of(
+        "ID(-5|19|0),DEADLINE(5|5|0),RECIPIENT_ID(-5|19|0),TRANSACTION_INDEX(5|5|0),AMOUNT(-5|19|0),FEE(-5|19|0),FULL_HASH(-3|32|0),HEIGHT(4|10|0),BLOCK_ID(-5|19|0),SIGNATURE(-3|64|0),TIMESTAMP(4|10|0),TYPE(-6|3|0),SUBTYPE(-6|3|0),SENDER_ID(-5|19|0),SENDER_PUBLIC_KEY(-3|32|0),BLOCK_TIMESTAMP(4|10|0),REFERENCED_TRANSACTION_FULL_HASH(-3|32|0),PHASED(16|1|0),ATTACHMENT_BYTES(-3|2147483647|0),VERSION(-6|3|0),HAS_MESSAGE(16|1|0),HAS_ENCRYPTED_MESSAGE(16|1|0),HAS_PUBLIC_KEY_ANNOUNCEMENT(16|1|0),EC_BLOCK_HEIGHT(4|10|0),EC_BLOCK_ID(-5|19|0),HAS_ENCRYPTTOSELF_MESSAGE(16|1|0),HAS_PRUNABLE_MESSAGE(16|1|0),HAS_PRUNABLE_ENCRYPTED_MESSAGE(16|1|0),HAS_PRUNABLE_ATTACHMENT(16|1|0)",
+        "2083198303623116770,1440,-1017037002638468431,0,100000000000000000,100000000,b'4vcm5NEB6Rxu5zXJ2g1Vr3EAxFJjoKagkgwlWg9ltE8=',8000,6438949995368593549,b'0kgRvEvixwMRlv0iBjnxiFyOFcludnIUbIjC7qJdigzU6TuOIyTiUi46/xT6oe+BH8Q6lx/b23H3rAtWFOcGyw==',35078473,0,0,9211698109297098287,b'vwztBHLYuj354hgI6Y5hs0QEqtc34rrhd4zrxpi0Dzc=',73600,b'9X/g0icw8EsBxaExtSCZNWyJmymt2wR22DXqLeXMVpE=',FALSE,null,1,FALSE,FALSE,FALSE,14734,2621055931824266697,FALSE,FALSE,FALSE,FALSE",
+        "808614188720864902,1440,-5803127966835594607,1,100000000000000000,100000000,b'hj4MB1LGOAvnY1S9hhvgcFcR4O4rwLhNnw1xtaQnGvY=',8000,6438949995368593549,b'OEhMYSiycHqB6m8MnxlmPbzVQ1jmRNVs+iszY18tVw97kcQYIPjRkj4K/KXLDleFx2wv2FnjVMh2qWQKdYgqog==',35078473,0,0,9211698109297098287,b'vwztBHLYuj354hgI6Y5hs0QEqtc34rrhd4zrxpi0Dzc=',73600,b'4vcm5NEB6Rxu5zXJ2g1Vr3EAxFJjoKagkgwlWg9ltE8=',FALSE,null,1,FALSE,FALSE,FALSE,14734,2621055931824266697,FALSE,FALSE,FALSE,FALSE"
+    );
+    private List<String> blockExportContent = List.of(
+        "ID(-5|19|0),VERSION(4|10|0),TIMESTAMP(4|10|0),PREVIOUS_BLOCK_ID(-5|19|0),TOTAL_AMOUNT(-5|19|0),TOTAL_FEE(-5|19|0),PAYLOAD_LENGTH(4|10|0),PREVIOUS_BLOCK_HASH(-3|32|0),CUMULATIVE_DIFFICULTY(-3|2147483647|0),BASE_TARGET(-5|19|0),NEXT_BLOCK_ID(-5|19|0),HEIGHT(4|10|0),GENERATION_SIGNATURE(-3|64|0),BLOCK_SIGNATURE(-3|64|0),PAYLOAD_HASH(-3|32|0),GENERATOR_ID(-5|19|0),TIMEOUT(4|10|0)",
+        "6438949995368593549,4,73600,-5580266015477525080,0,200000000,207,b'qBVH25/pjrIk083BIPcwXTuCnxYr6zv3GXUODPSNvp0=',b'At+1GWz0FbA=',23058430050,7551185434952726924,8000,b'Wxv0Y/IC7A1KtCqWNJdu1Ht3xGLR3iXj/qPo6qit2PY=',b'mS6suKw7y7fb2/y2NzGK2rGQ1IQ7ANqJYf0272Bxjw9azKRmLP3PhEfMUR1eNqtMMhwYU4LzV38BBsK/ufgO5g==',b'i9+Y+8TPzwtm36pojOfvkGP4sXSO4jjCPoIJ8HHPzuc=',6415509874415488619,0"
+    );
+    @Inject
+    private Blockchain blockchain;
     private Path dataExportPath;
 
     public CsvExporterTest() throws Exception {
@@ -344,7 +335,7 @@ class CsvExporterTest {
         Iterator iterator = filesInFolder.iterator();
         while (iterator.hasNext()) {
             Object next = iterator.next();
-            String fileName = ((File)next).getName();
+            String fileName = ((File) next).getName();
             log.trace("File in folder = {}", fileName);
             int readCount = importCsvAndCheckContent(fileName, dataExportPath);
             assertTrue(readCount > 0);
@@ -394,7 +385,7 @@ class CsvExporterTest {
     void testExportTransactions() throws IOException {
         TransactionTestData td = new TransactionTestData();
         long exported = csvExporter.exportTransactions( /*two rows exported*/ List.of(td.DB_ID_2, td.DB_ID_0),
-                /*more two rows exported*/ 1000);
+            /*more two rows exported*/ 1000);
         assertEquals(4, exported);
         List<String> transactionCsv = Files.readAllLines(dataExportPath.resolve("transaction.csv"));
         assertEquals(transactionExportContent, transactionCsv);
@@ -440,7 +431,7 @@ class CsvExporterTest {
 
     @Test
     void testExportBlockWhichNotExist() {
-        assertThrows(IllegalStateException.class, ()-> csvExporter.exportBlock(Integer.MAX_VALUE));
+        assertThrows(IllegalStateException.class, () -> csvExporter.exportBlock(Integer.MAX_VALUE));
     }
 
     @Test
@@ -482,7 +473,7 @@ class CsvExporterTest {
         Path shardExportedFile = dataExportPath.resolve("shard.csv");
         assertEquals(2, exportedRows);
 
-        try(Stream<Path> pathStream = Files.list(dataExportPath)){
+        try (Stream<Path> pathStream = Files.list(dataExportPath)) {
             assertEquals(1, pathStream.count());
         }
         assertTrue(Files.exists(shardExportedFile));
@@ -511,7 +502,7 @@ class CsvExporterTest {
         assertEquals(1, exportedRows);
 
         Path shardExportedFile = dataExportPath.resolve("shard.csv");
-        try(Stream<Path> pathStream = Files.list(dataExportPath)){
+        try (Stream<Path> pathStream = Files.list(dataExportPath)) {
             assertEquals(1, pathStream.count());
         }
         assertTrue(Files.exists(shardExportedFile));
@@ -527,7 +518,7 @@ class CsvExporterTest {
 
         // open CSV Reader and read data
         try (CsvReader csvReader = new CsvReaderImpl(dataExportDir, translator);
-             ResultSet rs = csvReader.read(itemName, null, null) ) {
+             ResultSet rs = csvReader.read(itemName, null, null)) {
             csvReader.setOptions("fieldDelimiter="); // do not put ""
 
             // get CSV meta data info
@@ -544,7 +535,7 @@ class CsvExporterTest {
             while (rs.next()) {
                 for (int j = 0; j < columnsCount; j++) {
                     Object object = rs.getObject(j + 1); // can be NULL sometimes
-                    log.trace("Row column [{}] value is {}", meta.getColumnLabel(j + 1) , object);
+                    log.trace("Row column [{}] value is {}", meta.getColumnLabel(j + 1), object);
                 }
                 readRowsFromFile++;
             }

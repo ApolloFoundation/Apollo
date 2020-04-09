@@ -9,7 +9,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- *
  * @author Serhiy Lymar
  */
 
@@ -21,7 +20,7 @@ public class DexOrderDBRequestForTrading {
     private Integer startInterval;
     private Integer endInterval;
     private byte pairCur;
-    private byte requestedType;    
+    private byte requestedType;
     private Integer offset;
     private Integer limit;
 }

@@ -11,19 +11,19 @@ import lombok.Setter;
 import lombok.ToString;
 
 /**
- *
  * @author alukin@gmail.com
  */
-@Getter @Setter
+@Getter
+@Setter
 @ToString
 @EqualsAndHashCode(callSuper = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ShardingInfoRequest  extends BaseP2PRequest{
+public class ShardingInfoRequest extends BaseP2PRequest {
     public boolean full;
 
     public ShardingInfoRequest() {
-        requestType="getShardingInfo";
+        requestType = "getShardingInfo";
     }
-    
+
 }

@@ -79,6 +79,7 @@ public interface BlockDao {
     /**
      * Assume, that all derived tables were already rolled back
      * This method will delete blocks and transactions at height greater than or equal to height of block specified by blockId
+     *
      * @param blockId id of the block, after which all blocks with transactions should be deleted inclusive
      * @return current last block in blockchain after deletion
      */

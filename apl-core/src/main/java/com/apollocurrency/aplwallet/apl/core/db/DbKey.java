@@ -26,6 +26,7 @@ import java.sql.SQLException;
 public interface DbKey {
 
     int setPK(PreparedStatement pstmt) throws SQLException;
+
     int setPK(PreparedStatement pstmt, int index) throws SQLException;
 
 }

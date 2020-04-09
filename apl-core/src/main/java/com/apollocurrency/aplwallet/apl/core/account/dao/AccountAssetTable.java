@@ -22,34 +22,19 @@ import java.util.List;
 import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
 
 /**
- *
  * @author al
  */
 @Singleton
 public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAsset> {
 
-    private static class AccountAssetDbKeyFactory extends LinkKeyFactory<AccountAsset> {
-
-        public AccountAssetDbKeyFactory() {
-            super("account_id", "asset_id");
-        }
-
-        @Override
-        public DbKey newKey(AccountAsset accountAsset) {
-            if (accountAsset.getDbKey() == null){
-                accountAsset.setDbKey(super.newKey(accountAsset.getAccountId(), accountAsset.getAssetId()));
-            }
-            return accountAsset.getDbKey();
-        }
-    }
     private static final LinkKeyFactory<AccountAsset> accountAssetDbKeyFactory = new AccountAssetDbKeyFactory();
 
-    public static DbKey newKey(long idA, long idB){
-        return accountAssetDbKeyFactory.newKey(idA,idB);
+    public AccountAssetTable() {
+        super("account_asset", accountAssetDbKeyFactory);
     }
 
-    public AccountAssetTable() {
-        super("account_asset",accountAssetDbKeyFactory);
+    public static DbKey newKey(long idA, long idB) {
+        return accountAssetDbKeyFactory.newKey(idA, idB);
     }
 
     @Override
@@ -59,12 +44,11 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
 
     @Override
     public void save(Connection con, AccountAsset accountAsset) throws SQLException {
-         try (
-             @DatabaseSpecificDml(DmlMarker.MERGE)
-             final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_asset "
-                 + "(account_id, asset_id, quantity, unconfirmed_quantity, height, latest, deleted) "
-                 + "KEY (account_id, asset_id, height) VALUES (?, ?, ?, ?, ?, TRUE, FALSE)")
-         ) {
+        try (
+            @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_asset "
+                + "(account_id, asset_id, quantity, unconfirmed_quantity, height, latest, deleted) "
+                + "KEY (account_id, asset_id, height) VALUES (?, ?, ?, ?, ?, TRUE, FALSE)")
+        ) {
             int i = 0;
             pstmt.setLong(++i, accountAsset.getAccountId());
             pstmt.setLong(++i, accountAsset.getAssetId());
@@ -110,6 +94,21 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
 
     public List<AccountAsset> getByAssetId(long assetId, int height, int from, int to) {
         return toList(getManyBy(new DbClause.LongClause("asset_id", assetId), height, from, to, " ORDER BY quantity DESC, account_id "));
+    }
+
+    private static class AccountAssetDbKeyFactory extends LinkKeyFactory<AccountAsset> {
+
+        public AccountAssetDbKeyFactory() {
+            super("account_id", "asset_id");
+        }
+
+        @Override
+        public DbKey newKey(AccountAsset accountAsset) {
+            if (accountAsset.getDbKey() == null) {
+                accountAsset.setDbKey(super.newKey(accountAsset.getAccountId(), accountAsset.getAssetId()));
+            }
+            return accountAsset.getDbKey();
+        }
     }
 
 }

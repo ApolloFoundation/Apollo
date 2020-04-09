@@ -41,8 +41,8 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_M
 public final class EncryptTo extends AbstractAPIRequestHandler {
 
     public EncryptTo() {
-        super(new APITag[] {APITag.MESSAGES}, "recipient", "messageToEncrypt", "messageToEncryptIsText", "compressMessageToEncrypt", "secretPhrase"
-                , "account", "passphrase");
+        super(new APITag[]{APITag.MESSAGES}, "recipient", "messageToEncrypt", "messageToEncryptIsText", "compressMessageToEncrypt", "secretPhrase"
+            , "account", "passphrase");
     }
 
     @Override

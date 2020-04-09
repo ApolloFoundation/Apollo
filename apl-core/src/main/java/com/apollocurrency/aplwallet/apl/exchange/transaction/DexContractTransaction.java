@@ -87,7 +87,7 @@ public class DexContractTransaction extends DEX {
                 throw new AplException.NotCurrentlyValidException("Unable to create contract for order in status " + order.getStatus() + ", expected PENDING");
             }
         }
-        if(attachment.getContractStatus().isStep2()) {
+        if (attachment.getContractStatus().isStep2()) {
 
             if (contract == null) {
                 throw new AplException.NotCurrentlyValidException("Don't find contract.");
@@ -170,10 +170,10 @@ public class DexContractTransaction extends DEX {
         // contract == null it means, that it's a first step.
         if (contract == null) {
             contract = new ExchangeContract(transaction.getId(),
-                    senderAccount.getId(),
-                    counterOrder.getAccountId(),
-                    transaction.getBlock().getTimestamp() + attachment.getTimeToReply(),
-                    attachment);
+                senderAccount.getId(),
+                counterOrder.getAccountId(),
+                transaction.getBlock().getTimestamp() + attachment.getTimeToReply(),
+                attachment);
 
             dexService.saveDexContract(contract);
         } else if (attachment.getContractStatus().isStep2() && contract.getContractStatus().isStep1()) {
@@ -235,8 +235,8 @@ public class DexContractTransaction extends DEX {
 
         //Exclude current contract.
         List<ExchangeContract> contractsForReopen = allContracts.stream()
-                .filter(c -> !c.getOrderId().equals(contract.getOrderId()))
-                .collect(Collectors.toList());
+            .filter(c -> !c.getOrderId().equals(contract.getOrderId()))
+            .collect(Collectors.toList());
 
         dexService.closeContractsReopenOrders(contractsForReopen);
     }

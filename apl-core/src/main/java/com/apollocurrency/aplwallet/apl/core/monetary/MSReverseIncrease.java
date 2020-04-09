@@ -14,7 +14,6 @@ import org.json.simple.JSONObject;
 import java.nio.ByteBuffer;
 
 /**
- *
  * @author al
  */
 class MSReverseIncrease extends MonetarySystem {

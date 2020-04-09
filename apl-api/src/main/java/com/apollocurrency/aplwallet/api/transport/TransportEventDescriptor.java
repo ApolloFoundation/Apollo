@@ -7,7 +7,6 @@ package com.apollocurrency.aplwallet.api.transport;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- *
  * @author Serhiy Lymar
  */
 public class TransportEventDescriptor {
@@ -18,8 +17,8 @@ public class TransportEventDescriptor {
     @JsonProperty("remoteport")
     public int remoteport;
     @JsonProperty("tunaddr")
-    public String tunaddr;    
+    public String tunaddr;
     @JsonProperty("tunnetmask")
-    public String tunnetmask;    
-    
+    public String tunnetmask;
+
 }

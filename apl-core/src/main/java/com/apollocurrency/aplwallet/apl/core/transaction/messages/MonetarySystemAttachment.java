@@ -4,11 +4,10 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 /**
- *
  * @author al
  */
 public interface MonetarySystemAttachment {
 
     long getCurrencyId();
-    
+
 }

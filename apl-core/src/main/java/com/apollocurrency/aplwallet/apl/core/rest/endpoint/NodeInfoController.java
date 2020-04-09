@@ -28,6 +28,7 @@ import javax.ws.rs.core.Response;
 
 /**
  * Apollo server info endpoint
+ *
  * @author alukin@gmail.com
  */
 
@@ -35,7 +36,7 @@ import javax.ws.rs.core.Response;
 @SecurityScheme(type = SecuritySchemeType.APIKEY, name = "admin_api_key", in = SecuritySchemeIn.QUERY, paramName = "adminPassword")
 public class NodeInfoController {
     private static final Logger log = LoggerFactory.getLogger(NodeInfoController.class);
-    private  ServerInfoService siService;
+    private ServerInfoService siService;
 
     @Inject
     public NodeInfoController(ServerInfoService siService) {
@@ -43,24 +44,24 @@ public class NodeInfoController {
     }
 
     public NodeInfoController() {
-      log.debug("Empty ServerInfoEndpoint created");
+        log.debug("Empty ServerInfoEndpoint created");
     }
 
     @Path("/x509")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Returns node certificate info",
-            description = "Returns block certicates info andcertificates in PEM format."
-                    + "Node may have several certificateswith different parameters but with the same VimanaID.",
-            tags = {"status"},
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Successful execution",
-                            content = @Content(mediaType = "application/json",
-                                    schema = @Schema(implementation = ApolloX509Response.class)))
-            }
+        description = "Returns block certicates info andcertificates in PEM format."
+            + "Node may have several certificateswith different parameters but with the same VimanaID.",
+        tags = {"status"},
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Successful execution",
+                content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = ApolloX509Response.class)))
+        }
     )
     @PermitAll
-    public Response getX509Info(){
+    public Response getX509Info() {
         ApolloX509Response infoResponse = new ApolloX509Response();
         infoResponse.info = siService.getX509Info();
         return Response.status(Response.Status.OK).entity(infoResponse).build();
@@ -71,14 +72,14 @@ public class NodeInfoController {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Returns node's active forgers",
-            description = "Returns node's active forgers with some parameters",
-            security = @SecurityRequirement(name = "admin_api_key"),
-            tags = {"status"},
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Successful execution",
-                            content = @Content(mediaType = "application/json",
-                                    schema = @Schema(implementation = NodeForgersResponse.class)))
-            }
+        description = "Returns node's active forgers with some parameters",
+        security = @SecurityRequirement(name = "admin_api_key"),
+        tags = {"status"},
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Successful execution",
+                content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = NodeForgersResponse.class)))
+        }
     )
     public Response getActiveForgers() {
         NodeForgersResponse resp = new NodeForgersResponse();

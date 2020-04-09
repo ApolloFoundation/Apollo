@@ -14,7 +14,7 @@ public class RestSecurityConfig {
 
     @Produces
     @Named("excludeProtection")
-    public RequestUriMatcher createExcludePathMatcher(){
+    public RequestUriMatcher createExcludePathMatcher() {
         return new UriPatternMatcher("*/openapi.json");
     }
 

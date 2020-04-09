@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
+
 import java.sql.Connection;
 import java.util.List;
-
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
 
 /**
  * Shard Recovery information management + retrieving interface.

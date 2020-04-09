@@ -26,11 +26,11 @@ public class UserErrorMessageDaoTest {
     DbExtension extension = new DbExtension();
 
     @WeldSetup
-    WeldInitiator weld =  WeldUtils.from(List.of(UserErrorMessageDao.class, DaoConfig.class), List.of())
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-            .build();
+    WeldInitiator weld = WeldUtils.from(List.of(UserErrorMessageDao.class, DaoConfig.class), List.of())
+        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+        .build();
 
     @Inject
     UserErrorMessageDao dao;

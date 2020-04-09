@@ -16,8 +16,8 @@ public class BlockIndexRowMapper implements RowMapper<BlockIndex> {
     public BlockIndex map(ResultSet rs, StatementContext ctx) throws SQLException {
 
         return BlockIndex.builder()
-                .blockId(rs.getLong("block_id"))
-                .blockHeight(rs.getInt("block_height"))
-                .build();
+            .blockId(rs.getLong("block_id"))
+            .blockHeight(rs.getInt("block_height"))
+            .build();
     }
 }

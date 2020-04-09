@@ -36,7 +36,7 @@ import javax.servlet.http.HttpServletRequest;
 public final class GetECBlock extends AbstractAPIRequestHandler {
 
     public GetECBlock() {
-        super(new APITag[] {APITag.BLOCKS}, "timestamp");
+        super(new APITag[]{APITag.BLOCKS}, "timestamp");
     }
 
     @Override

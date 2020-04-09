@@ -26,11 +26,11 @@ public class GeneratorInfo {
     @Override
     public String toString() {
         return "Generator{" +
-                "effectiveBalanceAPL=" + effectiveBalanceAPL +
-                ", deadline=" + deadline +
-                ", account='" + account + '\'' +
-                ", hitTime=" + hitTime +
-                '}';
+            "effectiveBalanceAPL=" + effectiveBalanceAPL +
+            ", deadline=" + deadline +
+            ", account='" + account + '\'' +
+            ", hitTime=" + hitTime +
+            '}';
     }
 
     @Override
@@ -39,9 +39,9 @@ public class GeneratorInfo {
         if (!(o instanceof GeneratorInfo)) return false;
         GeneratorInfo generator = (GeneratorInfo) o;
         return Objects.equals(effectiveBalanceAPL, generator.effectiveBalanceAPL) &&
-                Objects.equals(deadline, generator.deadline) &&
-                Objects.equals(account, generator.account) &&
-                Objects.equals(hitTime, generator.hitTime);
+            Objects.equals(deadline, generator.deadline) &&
+            Objects.equals(account, generator.account) &&
+            Objects.equals(hitTime, generator.hitTime);
     }
 
     @Override

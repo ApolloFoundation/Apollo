@@ -10,12 +10,11 @@ import com.beust.jcommander.Parameters;
 import java.util.List;
 
 /**
- *
  * @author alukin@gmail.com
  */
 @Parameters(commandDescription = "Run blockchain height monitor")
 public class HeightMonitorCmd {
-    public static final String CMD="heightmon";
+    public static final String CMD = "heightmon";
     @Parameter(names = {"--intervals", "-i"}, listConverter = IntegerListConverter.class, description = "Set intervals (hours) which should be monitored on max fork size. By default will be used intervals - 1, 2, 4, 6, 8, 12, 24, 48, 96 ")
     public List<Integer> intervals;
     @Parameter(names = {"--peers", "-pr"}, description = "Absolute path to peer ips, which should be monitored. By default will be used file 'peers.txt' in current working directory")

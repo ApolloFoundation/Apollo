@@ -28,10 +28,10 @@ import java.util.Objects;
 
 public abstract class AbstractPoll extends DerivedEntity {
 
-    final long id;
     protected final VoteWeighting voteWeighting;
-    final long accountId;
     protected final int finishHeight;
+    final long id;
+    final long accountId;
 
     public AbstractPoll(Long dbId, Integer height, long id, VoteWeighting voteWeighting, long accountId, int finishHeight) {
         super(dbId, height);
@@ -47,7 +47,7 @@ public abstract class AbstractPoll extends DerivedEntity {
         this.accountId = rs.getLong("account_id");
         this.finishHeight = rs.getInt("finish_height");
         this.voteWeighting = new VoteWeighting(rs.getByte("voting_model"), rs.getLong("holding_id"),
-                rs.getLong("min_balance"), rs.getByte("min_balance_model"));
+            rs.getLong("min_balance"), rs.getByte("min_balance_model"));
     }
 
     @Override
@@ -57,9 +57,9 @@ public abstract class AbstractPoll extends DerivedEntity {
         if (!super.equals(o)) return false;
         AbstractPoll that = (AbstractPoll) o;
         return id == that.id &&
-                accountId == that.accountId &&
-                finishHeight == that.finishHeight &&
-                Objects.equals(voteWeighting, that.voteWeighting);
+            accountId == that.accountId &&
+            finishHeight == that.finishHeight &&
+            Objects.equals(voteWeighting, that.voteWeighting);
     }
 
     @Override

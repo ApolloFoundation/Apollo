@@ -21,6 +21,7 @@ import lombok.Data;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+
 @Singleton
 public class TransactionCreator {
     private final TransactionValidator validator;
@@ -132,7 +133,7 @@ public class TransactionCreator {
 
             if (txRequest.isBroadcast()) {
                 processor.broadcast(transaction);
-            } else if (txRequest.isValidate()){
+            } else if (txRequest.isValidate()) {
                 validator.validate(transaction);
             }
             tcd.setTx(transaction);
@@ -183,6 +184,7 @@ public class TransactionCreator {
         public boolean hasError() {
             return errorType != null;
         }
+
         public enum ErrorType {
             INCORRECT_DEADLINE, MISSING_DEADLINE, MISSING_SECRET_PHRASE, INCORRECT_EC_BLOCK, FEATURE_NOT_AVAILABLE, NOT_ENOUGH_APL, INSUFFICIENT_BALANCE_ON_APPLY_UNCONFIRMED, VALIDATION_FAILED
         }

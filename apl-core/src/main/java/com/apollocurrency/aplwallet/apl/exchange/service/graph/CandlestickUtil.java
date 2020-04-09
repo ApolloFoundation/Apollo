@@ -14,6 +14,9 @@ import java.util.Map;
 public class CandlestickUtil {
     static final int BASE_TIME_INTERVAL = 15 * 60; // 15 minutes in seconds
 
+    private CandlestickUtil() {
+    }
+
     public static void convertOrders(List<DexOrder> orders, Map<Integer, DexCandlestick> candlesticks, TimeFrame frame, CandlestickLoader loader) {
         for (DexOrder order : orders) {
             int unixEpochSeconds = (int) (Convert2.fromEpochTime(order.getFinishTime()) / 1000);
@@ -49,9 +52,8 @@ public class CandlestickUtil {
             return thisCandlestick;
         } else {
             return new DexCandlestick(order.getPairCurrency(), order.getPairRate(), order.getPairRate(), order.getPairRate(),
-                    order.getPairRate(), aplAmount, order.getPairRate().multiply(aplAmount), candlestickTime, orderUnixFinishTime, orderUnixFinishTime);
+                order.getPairRate(), aplAmount, order.getPairRate().multiply(aplAmount), candlestickTime, orderUnixFinishTime, orderUnixFinishTime);
         }
     }
-    private CandlestickUtil() {}
 
 }

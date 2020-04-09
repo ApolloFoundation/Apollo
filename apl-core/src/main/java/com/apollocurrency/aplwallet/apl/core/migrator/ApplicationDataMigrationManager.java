@@ -12,9 +12,9 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
-import javax.inject.Inject;
 
 /**
  * Perform all application data migration
@@ -26,7 +26,7 @@ public class ApplicationDataMigrationManager {
     @Inject
     private VaultKeystoreMigrationExecutor vaultKeystoreMigrationExecutor;
     @Inject
-    private DbMigrationExecutor dbMigrationExecutor                      ;
+    private DbMigrationExecutor dbMigrationExecutor;
     @Inject
     private TwoFactorAuthMigrationExecutor twoFactorAuthMigrationExecutor;
     @Inject
@@ -36,7 +36,7 @@ public class ApplicationDataMigrationManager {
     @Inject
     private TransactionPublicKeyMigrator transactionPublicKeyMigrator;
     @Inject
-    private  DirProvider dirProvider;
+    private DirProvider dirProvider;
 
     public void executeDataMigration() {
         try {
@@ -64,8 +64,7 @@ public class ApplicationDataMigrationManager {
             publicKeyMigrator.migrate();
             referencedTransactionMigrator.migrate();
             transactionPublicKeyMigrator.migrate();
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             LOG.error("Fatal error. Cannot proceed data migration", e);
             System.exit(-1);
         }

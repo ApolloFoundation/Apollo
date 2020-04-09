@@ -13,7 +13,6 @@ import org.json.simple.JSONObject;
 import java.nio.ByteBuffer;
 
 /**
- *
  * @author al
  */
 public abstract class AbstractAttachment extends AbstractAppendix implements Attachment {
