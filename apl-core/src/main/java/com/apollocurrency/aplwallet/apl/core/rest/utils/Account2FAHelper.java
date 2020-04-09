@@ -24,6 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+
 /**
  * This class is just static helper for 2FA.
  * @author al
@@ -32,6 +33,11 @@ import javax.inject.Singleton;
 @Slf4j
 @Singleton
 public class Account2FAHelper {
+    public static final String TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME = "twoFactorAuthParameters";
+    public static final String PASSPHRASE_PARAM_NAME = "passphrase";
+    public static final String SECRET_PHRASE_PARAM_NAME = "secretPhrase";
+    public static final String CODE2FA_PARAM_NAME = "code2FA";
+    public static final String PUBLIC_KEY_PARAM_NAME = "publicKey";
 
     private final TwoFactorAuthService service2FA;
     private final PassphraseGeneratorImpl passphraseGenerator;
@@ -54,10 +60,11 @@ public class Account2FAHelper {
      * @param accountStr account id
      * @param passphraseParam pass phrase
      * @param secretPhraseParam secret phrase
+     * @param publicKeyParam public key
      * @return new instance of TwoFactorAuthParameters
      * @throws RestParameterException
      */
-    public TwoFactorAuthParameters create2FAParameters(String accountStr, String passphraseParam, String secretPhraseParam) throws RestParameterException{
+    public TwoFactorAuthParameters create2FAParameters(String accountStr, String passphraseParam, String secretPhraseParam, String publicKeyParam) throws RestParameterException{
         if (StringUtils.isBlank(passphraseParam) && StringUtils.isBlank(secretPhraseParam)){
             throw new RestParameterException(ApiErrors.MISSING_PARAM_LIST, "passphrase, secretPhrase");
         }
@@ -79,18 +86,26 @@ public class Account2FAHelper {
             secretPhrase = elGamal.elGamalDecrypt(secretPhraseParam);
         }
 
-        long accountId;
-
+        long accountId = 0;
+        byte[] publicKey = null;
         if (passphrase != null) {
             accountId = Convert.parseAccountId(accountStr);
         } else {
-            accountId = Convert.getId(Crypto.getPublicKey(secretPhrase));
+            if(secretPhrase != null) {
+                publicKey = Crypto.getPublicKey(secretPhrase);
+                accountId = Convert.getId(publicKey);
+            }else if (publicKeyParam != null ){
+                publicKey = Convert.parseHexString(Convert.emptyToNull(publicKeyParam));
+                if (Crypto.isCanonicalPublicKey(publicKey)) {
+                    accountId = Convert.getId(publicKey);
+                }
+            }
         }
         if (accountId == 0) {
             throw new RestParameterException( ApiErrors.INCORRECT_PARAM_VALUE, "account id or passphrase");
         }
 
-        return new TwoFactorAuthParameters(accountId, passphrase, secretPhrase);
+        return new TwoFactorAuthParameters(accountId, passphrase, secretPhrase, publicKey);
     }
 
     public TwoFactorAuthDetails enable2FA(TwoFactorAuthParameters params2FA){
@@ -130,8 +145,13 @@ public class Account2FAHelper {
         return status2FA;
     }
 
-    public TwoFactorAuthParameters verify2FA(String accountStr, String passphraseParam, String secretPhraseParam, Integer code2FA) throws RestParameterException {
-        TwoFactorAuthParameters params2FA = create2FAParameters(accountStr, passphraseParam, secretPhraseParam);
+    public TwoFactorAuthParameters verify2FA(String accountStr,
+                                             String passphraseParam,
+                                             String secretPhraseParam,
+                                             String publicKeyParam,
+                                             Integer code2FA) throws RestParameterException {
+        TwoFactorAuthParameters params2FA = create2FAParameters(accountStr,
+                                                    passphraseParam, secretPhraseParam, publicKeyParam);
         params2FA.setCode2FA(code2FA);
         if (isEnabled2FA(params2FA.getAccountId())) {
             Status2FA status2FA = verify2FA(params2FA);
