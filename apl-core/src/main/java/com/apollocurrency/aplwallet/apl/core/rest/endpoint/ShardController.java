@@ -66,10 +66,10 @@ public class ShardController {
         description = "Get all 'completed' shard entries from database",
         tags = {"shards"},
         responses = {
-        @ApiResponse(responseCode = "200", description = "Successful execution",
-            content = @Content(mediaType = "application/json",
-                schema = @Schema(implementation = ShardDTO.class)))
-    }    )
+            @ApiResponse(responseCode = "200", description = "Successful execution",
+                content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = ShardDTO.class)))
+        }    )
     @PermitAll
     public Response getAllShards() {
         List<ShardDTO> allCompletedShards = shardService.getAllCompletedShards().stream()
