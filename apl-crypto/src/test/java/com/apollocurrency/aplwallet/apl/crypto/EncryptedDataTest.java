@@ -5,7 +5,11 @@
  */
 package com.apollocurrency.aplwallet.apl.crypto;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -14,17 +18,39 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author alukin@gmail.com
  */
 public class EncryptedDataTest {
-    
+    private static final String PLAIN_FILE_TEXT = "../../testdata/input/lorem_ipsum.txt";
+    private static final String OUT_FILE_ENCRYPTED = "../../testdata/encrypted_data_test.bin";
+
     public EncryptedDataTest() {
     }
     
+    private static void writeToFile(ByteBuffer data, String fileName) throws IOException {
+        FileChannel out = new FileOutputStream(fileName).getChannel();
+        data.rewind();
+        out.write(data);
+        out.close();
+    }
 
+    private static ByteBuffer readFromFile(String fileName) throws IOException {
+        FileChannel fChan;
+        Long fSize;
+        ByteBuffer mBuf;
+        fChan = new FileInputStream(fileName).getChannel();
+        fSize = fChan.size();
+        mBuf = ByteBuffer.allocate(fSize.intValue());
+        fChan.read(mBuf);
+        fChan.close();
+        mBuf.rewind();
+        return mBuf;
+    }
+    
     /**
      * Test of encrypt method, of class EncryptedData.
      */
     @Test
-    public void testEncrypt() {
+    public void testEncrypt() throws IOException {
         System.out.println("encrypt");
+        ByteBuffer plain = readFromFile(PLAIN_FILE_TEXT);  
         byte[] plaintext = null;
         byte[] keySeed = null;
         byte[] theirPublicKey = null;
