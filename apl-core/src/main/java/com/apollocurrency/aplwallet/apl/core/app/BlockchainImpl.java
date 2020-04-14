@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.converter.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDao;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -56,6 +57,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Singleton
 @Slf4j
@@ -74,6 +76,7 @@ public class BlockchainImpl implements Blockchain {
     private final DatabaseManager databaseManager;
     private final ShardDao shardDao;
     private final ShardRecoveryDao shardRecoveryDao;
+    private final IteratorToStreamConverter<Block> blockConverter = new IteratorToStreamConverter<>();
 
     private final AtomicReference<Block> lastBlock;
     private final AtomicReference<Block> shardInitialBlock;
@@ -173,8 +176,39 @@ public class BlockchainImpl implements Blockchain {
 
     @Transactional(readOnly = true)
     @Override
-    public DbIterator<Block> getBlocks(long accountId, int timestamp, int from, int to) {
-        return blockDao.getBlocks(accountId, timestamp, from, to);
+    public DbIterator<Block> getBlocksByAccount(long accountId, int timestamp, int from, int to) {
+        return blockDao.getBlocks(null, accountId, timestamp, from, to);
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public Stream<Block> getBlocksByAccountStream(long accountId, int timestamp, int from, int to) {
+        long start = System.currentTimeMillis();
+        log.trace("start getBlocksByAccountStream, accountId = {}, timestamp={}, from={}, to={}",
+            accountId, timestamp, from, to);
+        DbIterator<Block> iterator = blockDao.getBlocks(null, accountId, timestamp, from, to); // fetch from main db
+        Stream<Block> allSourcesStream = blockConverter.apply(iterator); // create a stream from list
+        log.trace("getBlocksByAccountStream from main db, accountId = {}, timestamp={}, from={}, to={} in {} ms",
+            accountId, timestamp, from, to, System.currentTimeMillis() - start);
+        // fetch from other shards
+        List<Shard> foundShards = shardDao.getCompletedBetweenBlockHeight(from, to);
+        for (Shard shard : foundShards) {
+            long startShard = System.currentTimeMillis();
+            TransactionalDataSource dataSource = this.getShardDataSourceOrDefault(shard.getShardId());
+            iterator = blockDao.getBlocks(dataSource, accountId, timestamp, from, to);;
+            Stream<Block> toCompose = blockConverter.apply(iterator); // create a stream from list
+            if (allSourcesStream == null) {
+                allSourcesStream = toCompose; // assign first stream
+            } else {
+                // compose next stream with previous one
+                allSourcesStream = Stream.concat(allSourcesStream, toCompose);
+            }
+            log.trace("getBlocksByAccountStream from shard={}, accountId = {}, timestamp={}, from={}, to={} in {} ms",
+                dataSource.getDbIdentity(), accountId, timestamp, from, to, System.currentTimeMillis() - startShard);
+        }
+        log.trace("DONE getBlocksByAccountStream, accountId = {}, timestamp={}, from={}, to={} in {} ms",
+            accountId, timestamp, from, to, System.currentTimeMillis() - start);
+        return allSourcesStream;
     }
 
     @Transactional(readOnly = true)
@@ -215,7 +249,22 @@ public class BlockchainImpl implements Blockchain {
     @Transactional(readOnly = true)
     @Override
     public int getBlockCount(long accountId) {
-        return blockDao.getBlockCount(accountId);
+        long start = System.currentTimeMillis();
+        log.trace("start getBlockCount, accountId = {}", accountId);
+        int totalCount = blockDao.getBlockCount(null, accountId); // fetch count from main db
+        log.trace("getBlockCount, accountId = {} from main db = {} in {} ms", accountId, totalCount, (System.currentTimeMillis() - start) );
+        Iterator<TransactionalDataSource> fullDataSources = ((ShardManagement) databaseManager).getAllFullDataSourcesIterator();
+        // loop shards
+        while (fullDataSources.hasNext()) {
+            long startShard = System.currentTimeMillis();
+            TransactionalDataSource dataSource = fullDataSources.next();
+            int blockCountInShard = blockDao.getBlockCount(dataSource, accountId);
+            totalCount += blockCountInShard; // fetch more count values from shard db
+            log.trace("getBlockCount, accountId = {} from shard db[{}] = {} in {} ms", accountId, dataSource.getDbIdentity(),
+                blockCountInShard, (System.currentTimeMillis() - startShard) );
+        }
+        log.trace("DONE, accountId = {} from all dbs = {} in {} ms", accountId, totalCount, (System.currentTimeMillis() - start) );
+        return totalCount;
     }
 
     @Override

@@ -31,6 +31,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 public interface Blockchain {
 
@@ -62,7 +63,10 @@ public interface Blockchain {
 
     Block findFirstBlock();
 
-    DbIterator<Block> getBlocks(long accountId, int timestamp, int from, int to);
+    @Deprecated
+    DbIterator<Block> getBlocksByAccount(long accountId, int timestamp, int from, int to);
+
+    Stream<Block> getBlocksByAccountStream(long accountId, int timestamp, int from, int to);
 
     Block findLastBlock();
 

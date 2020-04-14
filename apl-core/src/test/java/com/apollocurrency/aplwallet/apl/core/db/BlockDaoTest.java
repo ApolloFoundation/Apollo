@@ -135,7 +135,7 @@ class BlockDaoTest {
 
     @Test
     void findBlockCountRange() {
-        Long count = blockDao.getBlockCount(BLOCK_0_HEIGHT, BLOCK_7_HEIGHT);
+        Long count = blockDao.getBlockCount(null, BLOCK_0_HEIGHT, BLOCK_7_HEIGHT);
         assertEquals(7L, count.longValue());
     }
 
@@ -148,7 +148,7 @@ class BlockDaoTest {
 
     @Test
     void getBlocksRangeAccountId() {
-        DbIterator<Block> result = blockDao.getBlocks(4363726829568989435L, GENESIS_BLOCK_TIMESTAMP, GENESIS_BLOCK_HEIGHT, BLOCK_7_HEIGHT);
+        DbIterator<Block> result = blockDao.getBlocks(null, 4363726829568989435L, GENESIS_BLOCK_TIMESTAMP, GENESIS_BLOCK_HEIGHT, BLOCK_7_HEIGHT);
         assertNotNull(result);
         int count = 0;
         while (result.hasNext()) {
@@ -167,7 +167,7 @@ class BlockDaoTest {
 
     @Test
     void countByHeight() {
-        long count = blockDao.getBlockCount(GENESIS_BLOCK_HEIGHT, BlockTestData.BLOCK_7_HEIGHT);
+        long count = blockDao.getBlockCount(null, GENESIS_BLOCK_HEIGHT, BlockTestData.BLOCK_7_HEIGHT);
         assertEquals(8, count);
 
         count = blockDao.getBlockCount(extension.getDatabaseManager().getDataSource(), BlockTestData.BLOCK_7_HEIGHT, BlockTestData.BLOCK_11_HEIGHT);
@@ -221,7 +221,7 @@ class BlockDaoTest {
         Block lastBlock = blockDao.findLastBlock();
         assertEquals(td.LAST_BLOCK, lastBlock);
 
-        Long blockCount = blockDao.getBlockCount(0, Integer.MAX_VALUE);
+        Long blockCount = blockDao.getBlockCount(null, 0, Integer.MAX_VALUE);
         assertEquals(15, blockCount);
     }
 
@@ -264,21 +264,21 @@ class BlockDaoTest {
 
     @Test
     void testGetBlockCountForGenerator() {
-        int blockCount = blockDao.getBlockCount(td.BLOCK_1.getGeneratorId());
+        int blockCount = blockDao.getBlockCount(null, td.BLOCK_1.getGeneratorId());
 
         assertEquals(3, blockCount);
     }
 
     @Test
     void testGetBlocksForAccount() {
-        List<Block> blocks = CollectionUtil.toList(blockDao.getBlocks(td.BLOCK_1.getGeneratorId(), 0, 0, 1));
+        List<Block> blocks = CollectionUtil.toList(blockDao.getBlocks(null, td.BLOCK_1.getGeneratorId(), 0, 0, 1));
 
         assertEquals(List.of(td.BLOCK_12, td.BLOCK_1), blocks);
     }
 
     @Test
     void testGetBlocksForAccountWithTimestamp() {
-        List<Block> blocks = CollectionUtil.toList(blockDao.getBlocks(td.BLOCK_1.getGeneratorId(), td.BLOCK_0.getTimestamp() + 1, 0, 3));
+        List<Block> blocks = CollectionUtil.toList(blockDao.getBlocks(null, td.BLOCK_1.getGeneratorId(), td.BLOCK_0.getTimestamp() + 1, 0, 3));
 
         assertEquals(List.of(td.BLOCK_12, td.BLOCK_1), blocks);
     }
