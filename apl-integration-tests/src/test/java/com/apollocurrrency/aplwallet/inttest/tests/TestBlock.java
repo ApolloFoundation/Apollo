@@ -4,7 +4,7 @@ import com.apollocurrency.aplwallet.api.dto.BlockDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockchainInfoDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockchainState;
 import com.apollocurrency.aplwallet.api.dto.ECBlockDTO;
-import com.apollocurrency.aplwallet.api.response.AccountBlocksResponse;
+import com.apollocurrency.aplwallet.api.response.BlocksResponse;
 import com.apollocurrency.aplwallet.api.response.GetBlockIdResponse;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import io.qameta.allure.Epic;
@@ -59,7 +59,7 @@ public class TestBlock extends TestBaseOld {
     @Test
     @DisplayName("Get All Bloks")
     public void getAllBlocks() throws IOException {
-        AccountBlocksResponse blockchainStatus = getBlocks();
+        BlocksResponse blockchainStatus = getBlocks();
         assertNotNull(blockchainStatus);
         assertNotNull(blockchainStatus.getBlocks());
         assertTrue(blockchainStatus.getBlocks().size() > 0);

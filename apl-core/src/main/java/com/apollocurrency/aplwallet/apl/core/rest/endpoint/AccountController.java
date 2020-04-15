@@ -16,7 +16,7 @@ import com.apollocurrency.aplwallet.api.response.AccountAssetsCountResponse;
 import com.apollocurrency.aplwallet.api.response.AccountAssetsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountBlockIdsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountBlocksCountResponse;
-import com.apollocurrency.aplwallet.api.response.AccountBlocksResponse;
+import com.apollocurrency.aplwallet.api.response.BlocksResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrencyCountResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrencyResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrentAskOrderIdsResponse;
@@ -43,7 +43,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FAConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FADetailsConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountAssetConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountBlockConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountCurrencyConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.WalletKeysConverter;
@@ -131,7 +131,7 @@ public class AccountController {
     private AccountConverter converter;
     @Inject
     @Setter
-    private AccountBlockConverter accountBlockConverter;
+    private BlockConverter blockConverter;
     @Inject
     @Setter
     private WalletKeysConverter walletKeysConverter;
@@ -160,7 +160,7 @@ public class AccountController {
                              AccountAssetConverter accountAssetConverter,
                              AccountCurrencyConverter accountCurrencyConverter,
                              AccountConverter converter,
-                             AccountBlockConverter accountBlockConverter,
+                             BlockConverter blockConverter,
                              WalletKeysConverter walletKeysConverter,
                              Account2FADetailsConverter faDetailsConverter,
                              Account2FAConverter faConverter,
@@ -177,7 +177,7 @@ public class AccountController {
         this.accountAssetConverter = accountAssetConverter;
         this.accountCurrencyConverter = accountCurrencyConverter;
         this.converter = converter;
-        this.accountBlockConverter = accountBlockConverter;
+        this.blockConverter = blockConverter;
         this.walletKeysConverter = walletKeysConverter;
         this.faDetailsConverter = faDetailsConverter;
         this.faConverter = faConverter;
@@ -427,7 +427,7 @@ public class AccountController {
         long accountId = accountIdParameter.get();
         FirstLastIndexParser.FirstLastIndex flIndex = indexParser.adjustIndexes(firstIndex, lastIndex);
 
-        List<Block> blocks = accountService.getAccountBlocks(accountId, timestamp, flIndex.getFirstIndex(), flIndex.getLastIndex());
+        List<Block> blocks = accountService.getAccountBlocks(accountId, flIndex.getFirstIndex(), flIndex.getLastIndex(), timestamp);
         List<String> blockIds = blocks.stream().map(Block::getStringId).collect(Collectors.toList());
 
         AccountBlockIdsResponse dto = new AccountBlockIdsResponse();
@@ -447,7 +447,7 @@ public class AccountController {
         responses = {
             @ApiResponse(responseCode = "200", description = "Successful execution",
                 content = @Content(mediaType = "application/json",
-                    schema = @Schema(implementation = AccountBlocksCountResponse.class)))
+                    schema = @Schema(implementation = BlocksResponse.class)))
         })
     @PermitAll
     public Response getAccountBlocks(
@@ -466,10 +466,10 @@ public class AccountController {
         long accountId = accountIdParameter.get();
         FirstLastIndexParser.FirstLastIndex flIndex = indexParser.adjustIndexes(firstIndex, lastIndex);
 
-        List<Block> blocks = accountService.getAccountBlocks(accountId, timestamp, flIndex.getFirstIndex(), flIndex.getLastIndex());
+        List<Block> blocks = accountService.getAccountBlocks(accountId, flIndex.getFirstIndex(), flIndex.getLastIndex(), timestamp);
 
-        AccountBlocksResponse dto = new AccountBlocksResponse();
-        dto.setBlocks(accountBlockConverter.convert(blocks));
+        BlocksResponse dto = new BlocksResponse();
+        dto.setBlocks(blockConverter.convert(blocks));
 
         return response.bind(dto).build();
     }

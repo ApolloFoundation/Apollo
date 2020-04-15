@@ -59,14 +59,17 @@ public interface Blockchain {
 
     boolean hasBlockInShards(long blockId);
 
-    DbIterator<Block> getBlocks(int from, int to);
+    @Deprecated
+    DbIterator<Block> getBlocks(int from, int to, int timestamp);
+
+    Stream<Block> getBlocksStream(int from, int to, int timestamp);
 
     Block findFirstBlock();
 
     @Deprecated
-    DbIterator<Block> getBlocksByAccount(long accountId, int timestamp, int from, int to);
+    DbIterator<Block> getBlocksByAccount(long accountId, int from, int to, int timestamp);
 
-    Stream<Block> getBlocksByAccountStream(long accountId, int timestamp, int from, int to);
+    Stream<Block> getBlocksByAccountStream(long accountId, int from, int to, int timestamp);
 
     Block findLastBlock();
 

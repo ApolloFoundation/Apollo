@@ -141,14 +141,14 @@ class BlockDaoTest {
 
     @Test
     void getBlocksRange() {
-        List<Block> result = CollectionUtil.toList(blockDao.getBlocks(BLOCK_7_HEIGHT, BLOCK_0_HEIGHT));
+        List<Block> result = CollectionUtil.toList(blockDao.getBlocks(null, BLOCK_7_HEIGHT, BLOCK_0_HEIGHT, 0));
         assertNotNull(result);
         assertEquals(8, result.size());
     }
 
     @Test
     void getBlocksRangeAccountId() {
-        DbIterator<Block> result = blockDao.getBlocks(null, 4363726829568989435L, GENESIS_BLOCK_TIMESTAMP, GENESIS_BLOCK_HEIGHT, BLOCK_7_HEIGHT);
+        DbIterator<Block> result = blockDao.getBlocksByAccount(null, 4363726829568989435L, GENESIS_BLOCK_HEIGHT, BLOCK_7_HEIGHT, GENESIS_BLOCK_TIMESTAMP);
         assertNotNull(result);
         int count = 0;
         while (result.hasNext()) {
@@ -182,7 +182,7 @@ class BlockDaoTest {
         Block lastBlock = blockDao.findLastBlock();
         assertEquals(td.BLOCK_5, lastBlock);
 
-        List<Block> blocks = CollectionUtil.toList(blockDao.getBlocks(Integer.MAX_VALUE, 0));
+        List<Block> blocks = CollectionUtil.toList(blockDao.getBlocks(null, Integer.MAX_VALUE, 0, 0));
         assertEquals(List.of(td.BLOCK_5, td.BLOCK_4, td.BLOCK_3, td.BLOCK_2, td.BLOCK_1, td.BLOCK_0, td.GENESIS_BLOCK), blocks);
 
         List<Transaction> transactions = transactionDao.getTransactions(0, Integer.MAX_VALUE);
@@ -193,7 +193,7 @@ class BlockDaoTest {
     void testDeleteAll() {
         blockDao.deleteAll();
 
-        List<Block> blocks = CollectionUtil.toList(blockDao.getBlocks(Integer.MAX_VALUE, 0));
+        List<Block> blocks = CollectionUtil.toList(blockDao.getBlocks(null, Integer.MAX_VALUE, 0, 0));
         assertEquals(0, blocks.size());
 
         List<Transaction> transactions = transactionDao.getTransactions(0, Integer.MAX_VALUE);
@@ -207,7 +207,7 @@ class BlockDaoTest {
         Block lastBlock = blockDao.findLastBlock();
         assertEquals(td.BLOCK_3, lastBlock);
 
-        List<Block> blocks = CollectionUtil.toList(blockDao.getBlocks(Integer.MAX_VALUE, 0));
+        List<Block> blocks = CollectionUtil.toList(blockDao.getBlocks(null, Integer.MAX_VALUE, 0, 0));
         assertEquals(List.of(td.BLOCK_3, td.BLOCK_2, td.BLOCK_1, td.BLOCK_0, td.GENESIS_BLOCK), blocks);
 
         List<Transaction> transactions = transactionDao.getTransactions(0, Integer.MAX_VALUE);
@@ -271,14 +271,14 @@ class BlockDaoTest {
 
     @Test
     void testGetBlocksForAccount() {
-        List<Block> blocks = CollectionUtil.toList(blockDao.getBlocks(null, td.BLOCK_1.getGeneratorId(), 0, 0, 1));
+        List<Block> blocks = CollectionUtil.toList(blockDao.getBlocksByAccount(null, td.BLOCK_1.getGeneratorId(), 0, 1, 0));
 
         assertEquals(List.of(td.BLOCK_12, td.BLOCK_1), blocks);
     }
 
     @Test
     void testGetBlocksForAccountWithTimestamp() {
-        List<Block> blocks = CollectionUtil.toList(blockDao.getBlocks(null, td.BLOCK_1.getGeneratorId(), td.BLOCK_0.getTimestamp() + 1, 0, 3));
+        List<Block> blocks = CollectionUtil.toList(blockDao.getBlocksByAccount(null, td.BLOCK_1.getGeneratorId(), 0, 3, td.BLOCK_0.getTimestamp() + 1));
 
         assertEquals(List.of(td.BLOCK_12, td.BLOCK_1), blocks);
     }

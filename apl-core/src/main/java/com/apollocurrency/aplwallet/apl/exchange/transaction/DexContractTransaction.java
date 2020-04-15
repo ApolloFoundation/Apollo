@@ -1,3 +1,6 @@
+/*
+ * Copyright © 2018-2020 Apollo Foundation
+ */
 package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
@@ -17,7 +20,6 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 
-import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
@@ -25,9 +27,6 @@ import java.util.stream.Collectors;
 
 @Slf4j
 public class DexContractTransaction extends DEX {
-
-    private DexService dexService = CDI.current().select(DexService.class).get();
-    private DexConfig dexConfig = CDI.current().select(DexConfig.class).get();
 
     @Override
     public byte getSubtype() {
@@ -53,6 +52,7 @@ public class DexContractTransaction extends DEX {
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
         DexContractAttachment attachment = (DexContractAttachment) transaction.getAttachment();
 
+        DexService dexService = lookupDexService();
         DexOrder order = dexService.getOrder(attachment.getOrderId());
         DexOrder counterOrder = dexService.getOrder(attachment.getCounterOrderId());
         if (order == null) {
@@ -145,7 +145,7 @@ public class DexContractTransaction extends DEX {
             }
         }
 
-        if (attachment.getTimeToReply() < dexConfig.getMinAtomicSwapDuration()) {
+        if (attachment.getTimeToReply() < lookupDexConfig().getMinAtomicSwapDuration()) {
             throw new AplException.NotValidException("Time to reply is less than minimal.");
         }
         if (attachment.getTimeToReply() > Constants.DEX_MAX_CONTRACT_TIME_WAITING_TO_REPLY) {
@@ -161,6 +161,7 @@ public class DexContractTransaction extends DEX {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         DexContractAttachment attachment = (DexContractAttachment) transaction.getAttachment();
+        DexService dexService = lookupDexService();
         DexOrder order = dexService.getOrder(attachment.getOrderId());
         DexOrder counterOrder = dexService.getOrder(attachment.getCounterOrderId());
 
@@ -229,6 +230,7 @@ public class DexContractTransaction extends DEX {
 
 
     private void reopenNotMatchedOrders(ExchangeContract contract) {
+        DexService dexService = lookupDexService();
         List<ExchangeContract> allContracts = dexService.getDexContractsByCounterOrderId(contract.getCounterOrderId());
 
         //Exclude current contract.

@@ -217,8 +217,8 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public List<Block> getAccountBlocks(long accountId, int timestamp, int from, int to) {
-        return blockChainInfoService.getBlocksByAccountStream(accountId, timestamp, from, to).collect(Collectors.toList());
+    public List<Block> getAccountBlocks(long accountId, int from, int to, int timestamp) {
+        return blockChainInfoService.getBlocksByAccountStream(accountId, from, to, timestamp).collect(Collectors.toList());
     }
 
     /**

@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.shard;
 
 
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
+import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
@@ -37,6 +38,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 @Singleton
 @Slf4j
@@ -302,6 +304,14 @@ public class ShardService {
 
     public Shard getLastShard() {
         return shardDao.getLastShard();
+    }
+
+    public List<Shard> getShardsByBlockHeightRange(int heightFrom, int heightTo) {
+        // select possibly - none, one, two shard's records by specified height range
+        List<Shard> foundShards = shardDao.getCompletedBetweenBlockHeight(heightFrom, heightTo); // reverse params
+        log.debug("getShardsByBlockHeightRange( from={}, to={} ): foundShards=[{}] / shardIds={}",
+            heightFrom, heightTo, foundShards.size(), foundShards.stream().map(Shard::getShardId).collect(Collectors.toList()));
+        return foundShards;
     }
 
 }

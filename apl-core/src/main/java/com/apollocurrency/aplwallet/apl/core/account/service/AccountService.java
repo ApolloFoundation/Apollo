@@ -58,7 +58,7 @@ public interface AccountService {
 
     void update(Account account);
 
-    List<Block> getAccountBlocks(long accountId, int timestamp, int from, int to);
+    List<Block> getAccountBlocks(long accountId, int from, int to, int timestamp);
 
     long getEffectiveBalanceAPL(Account account, int height, boolean lock);
 

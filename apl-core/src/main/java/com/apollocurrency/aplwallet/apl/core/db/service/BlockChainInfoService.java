@@ -26,7 +26,7 @@ public interface BlockChainInfoService {
     Block getLastBlock();
 
     @Deprecated
-    DbIterator<Block> getBlocks(long accountId, int timestamp, int from, int to);
+    DbIterator<Block> getBlocks(long accountId, int from, int to, int timestamp);
 
-    Stream<Block> getBlocksByAccountStream(long accountId, int timestamp, int from, int to);
+    Stream<Block> getBlocksByAccountStream(long accountId, int from, int to, int timestamp);
 }

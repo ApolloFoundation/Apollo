@@ -95,8 +95,8 @@ public class BlockchainImpl implements Blockchain {
         this.databaseManager = databaseManager;
         this.shardDao = shardDao;
         this.shardRecoveryDao = shardRecoveryDao;
-        lastBlock = new AtomicReference<>();
-        shardInitialBlock = new AtomicReference<>();
+        this.lastBlock = new AtomicReference<>();
+        this.shardInitialBlock = new AtomicReference<>();
     }
 
     @Override
@@ -161,11 +161,63 @@ public class BlockchainImpl implements Blockchain {
 
     @Transactional(readOnly = true)
     @Override
-    public DbIterator<Block> getBlocks(int from, int to) {
+    public DbIterator<Block> getBlocks(int from, int to, int timestamp) {
         int blockchainHeight = getHeight();
         int calculatedFrom = blockchainHeight - from;
         int calculatedTo = blockchainHeight - to;
-        return blockDao.getBlocks(calculatedFrom, calculatedTo);
+        return blockDao.getBlocks(null, calculatedFrom, calculatedTo, timestamp);
+    }
+
+    /**
+     * Retrieve records from correct shard AND main database.
+     *
+     * @param from height index
+     * @param to height index
+     * @param timestamp optional block timestamp
+     * @return composed block's stream
+     */
+    @Transactional(readOnly = true)
+    @Override
+    public Stream<Block> getBlocksStream(int from, int to, int timestamp) {
+        int blockchainHeight = getHeight();
+        int calculatedFrom = blockchainHeight - from;
+        int calculatedTo = blockchainHeight - to;
+        log.trace("start getBlocksStream( from={} / {}, to={} / {}, timestamp={} ): , currentHeight={}",
+            from, calculatedFrom, to, calculatedTo, timestamp, blockchainHeight);
+        Stream<Block> allSourcesStream = null; // complete stream from all sources
+        // select possibly - none, one, two shard's records by specified height range
+        List<Shard> foundShards = shardDao.getCompletedBetweenBlockHeight(calculatedTo, calculatedFrom); // reverse params
+        log.trace("getBlocksStream( from={}, to={} ): foundShards=[{}] / shardIds={}, currentHeight={}",
+            calculatedFrom, calculatedTo, foundShards.size(), foundShards.stream().map(Shard::getShardId).collect(Collectors.toList()), blockchainHeight);
+        if (foundShards.size() == 0) {
+            // select blocks from main database only
+            DbIterator<Block> iterator = blockDao.getBlocks(null, calculatedFrom, calculatedTo, timestamp);
+            allSourcesStream = blockConverter.apply(iterator);
+        } else {
+            // loop over ONE or SEVERAL available shards
+            for (Shard shard: foundShards) {
+                // get shard data source trying to fetch records
+                TransactionalDataSource dataSource =
+                    ((ShardManagement) databaseManager).getOrInitFullShardDataSourceById(shard.getShardId());
+                // make select on blocks from shard
+                log.trace("getBlocksStream -> getBlocks( from={}, to={} ): shardIds={}",
+                    calculatedFrom, calculatedTo, dataSource.getDbIdentity());
+                DbIterator<Block> iterator = blockDao.getBlocks(dataSource, calculatedFrom, calculatedTo, timestamp);
+                Stream<Block> toCompose = blockConverter.apply(iterator); // create a stream from list
+                if (allSourcesStream == null) {
+                    allSourcesStream = toCompose; // assign first stream
+                } else {
+                    // compose next stream with previous one
+                    allSourcesStream = Stream.concat(allSourcesStream, toCompose);
+                }
+            }
+            // add possible blocks from main database (if any)
+            DbIterator<Block> iterator = blockDao.getBlocks(null, calculatedFrom, calculatedTo, timestamp);
+            allSourcesStream = Stream.concat(allSourcesStream, blockConverter.apply(iterator));
+        }
+        log.trace("DONE getBlocksStream( from={}, to={} ): foundShards=[{}] / shardIds={}, currentHeight={}",
+            calculatedFrom, calculatedTo, foundShards.size(), foundShards.stream().map(Shard::getShardId).collect(Collectors.toList()), blockchainHeight);
+        return allSourcesStream;
     }
 
     @Transactional
@@ -176,17 +228,17 @@ public class BlockchainImpl implements Blockchain {
 
     @Transactional(readOnly = true)
     @Override
-    public DbIterator<Block> getBlocksByAccount(long accountId, int timestamp, int from, int to) {
-        return blockDao.getBlocks(null, accountId, timestamp, from, to);
+    public DbIterator<Block> getBlocksByAccount(long accountId, int from, int to, int timestamp) {
+        return blockDao.getBlocksByAccount(null, accountId, from, to, timestamp);
     }
 
     @Transactional(readOnly = true)
     @Override
-    public Stream<Block> getBlocksByAccountStream(long accountId, int timestamp, int from, int to) {
+    public Stream<Block> getBlocksByAccountStream(long accountId, int from, int to, int timestamp) {
         long start = System.currentTimeMillis();
         log.trace("start getBlocksByAccountStream, accountId = {}, timestamp={}, from={}, to={}",
             accountId, timestamp, from, to);
-        DbIterator<Block> iterator = blockDao.getBlocks(null, accountId, timestamp, from, to); // fetch from main db
+        DbIterator<Block> iterator = blockDao.getBlocksByAccount(null, accountId, from, to, timestamp); // fetch from main db
         Stream<Block> allSourcesStream = blockConverter.apply(iterator); // create a stream from list
         log.trace("getBlocksByAccountStream from main db, accountId = {}, timestamp={}, from={}, to={} in {} ms",
             accountId, timestamp, from, to, System.currentTimeMillis() - start);
@@ -195,7 +247,7 @@ public class BlockchainImpl implements Blockchain {
         for (Shard shard : foundShards) {
             long startShard = System.currentTimeMillis();
             TransactionalDataSource dataSource = this.getShardDataSourceOrDefault(shard.getShardId());
-            iterator = blockDao.getBlocks(dataSource, accountId, timestamp, from, to);;
+            iterator = blockDao.getBlocksByAccount(dataSource, accountId, from, to, timestamp);
             Stream<Block> toCompose = blockConverter.apply(iterator); // create a stream from list
             if (allSourcesStream == null) {
                 allSourcesStream = toCompose; // assign first stream

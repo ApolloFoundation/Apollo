@@ -22,7 +22,7 @@ import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FAConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FADetailsConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountAssetConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountBlockConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountCurrencyConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionConverter;
@@ -129,7 +129,7 @@ class AccountControllerTest extends AbstractEndpointTest {
     private OrderService orderService;
 
     private TransactionConverter transactionConverter = new TransactionConverter(blockchain, new UnconfirmedTransactionConverter());
-    private AccountBlockConverter accountBlockConverter = new AccountBlockConverter(blockchain, transactionConverter, mock(PhasingPollService.class));
+    private BlockConverter blockConverter = new BlockConverter(blockchain, transactionConverter, mock(PhasingPollService.class));
 
     @Mock
     private Account2FAHelper account2FAHelper;
@@ -156,7 +156,7 @@ class AccountControllerTest extends AbstractEndpointTest {
             accountAssetConverter,
             accountCurrencyConverter,
             accountConverter,
-            accountBlockConverter,
+            blockConverter,
             new WalletKeysConverter(),
             new Account2FADetailsConverter(),
             new Account2FAConverter(),
@@ -658,7 +658,7 @@ class AccountControllerTest extends AbstractEndpointTest {
         int from = 0;
         int to = 99;
 
-        doReturn(BLOCKS).when(accountService).getAccountBlocks(ACCOUNT_ID, timestamp, from, to);
+        doReturn(BLOCKS).when(accountService).getAccountBlocks(ACCOUNT_ID, from, to, timestamp);
 
         MockHttpResponse response = sendGetRequest("/accounts/block-ids?account=" + ACCOUNT_ID
             + "&timestamp=" + timestamp
@@ -676,7 +676,7 @@ class AccountControllerTest extends AbstractEndpointTest {
         JsonNode root = mapper.readTree(content);
         assertTrue(root.get("blockIds").isArray());
         assertEquals(BLOCKS.size(), root.withArray("blockIds").size());
-        verify(accountService, times(1)).getAccountBlocks(ACCOUNT_ID, timestamp, from, to);
+        verify(accountService, times(1)).getAccountBlocks(ACCOUNT_ID, from, to, timestamp);
     }
 
     @Test
@@ -699,7 +699,7 @@ class AccountControllerTest extends AbstractEndpointTest {
         int from = 0;
         int to = 200;
 
-        doReturn(BLOCKS).when(accountService).getAccountBlocks(ACCOUNT_ID, timestamp, from, 99);
+        doReturn(BLOCKS).when(accountService).getAccountBlocks(ACCOUNT_ID, from, 99, timestamp);
 
         MockHttpResponse response = sendGetRequest("/accounts/blocks?account=" + ACCOUNT_ID
             + "&timestamp=" + timestamp
@@ -718,7 +718,7 @@ class AccountControllerTest extends AbstractEndpointTest {
         assertTrue(root.get("blocks").isArray());
         assertEquals(BLOCKS.size(), root.withArray("blocks").size());
         assertEquals(Long.toUnsignedString(BLOCK_0.getGeneratorId()), root.withArray("blocks").get(1).get("generator").asText());
-        verify(accountService, times(1)).getAccountBlocks(ACCOUNT_ID, timestamp, from, 99);
+        verify(accountService, times(1)).getAccountBlocks(ACCOUNT_ID, from, 99, timestamp);
     }
 
     @ParameterizedTest(name = "{index} url={arguments}")

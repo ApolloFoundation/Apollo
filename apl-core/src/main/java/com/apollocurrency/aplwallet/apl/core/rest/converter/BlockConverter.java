@@ -18,14 +18,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class AccountBlockConverter implements Converter<Block, BlockDTO> {
+public class BlockConverter implements Converter<Block, BlockDTO> {
 
     private final Blockchain blockchain;
     private final TransactionConverter transactionConverter;
     private final PhasingPollService phasingPollService;
+    private boolean isAddTransactions = false;
+    private boolean isAddPhasedTransactions = false;
 
     @Inject
-    public AccountBlockConverter(Blockchain blockchain, TransactionConverter transactionConverter, PhasingPollService phasingPollService) {
+    public BlockConverter(Blockchain blockchain, TransactionConverter transactionConverter, PhasingPollService phasingPollService) {
         this.blockchain = blockchain;
         this.transactionConverter = transactionConverter;
         this.phasingPollService = phasingPollService;
@@ -61,7 +63,12 @@ public class AccountBlockConverter implements Converter<Block, BlockDTO> {
         dto.setTransactions(Collections.emptyList());
         dto.setTotalAmountATM(String.valueOf(
             model.getOrLoadTransactions().stream().mapToLong(Transaction::getAmountATM).sum()));
-
+        if (this.isAddTransactions) {
+            this.addTransactions(dto, model);
+        }
+        if (this.isAddPhasedTransactions) {
+            this.addPhasedTransactions(dto, model);
+        }
         return dto;
     }
 
@@ -77,8 +84,8 @@ public class AccountBlockConverter implements Converter<Block, BlockDTO> {
     public void addPhasedTransactions(BlockDTO o, Block model) {
         if (o != null && model != null) {
             List<TransactionDTO> transactionDTOList = new ArrayList<>();
-            List<Long> transactrionIdList = phasingPollService.getApprovedTransactionIds(model.getHeight());
-            transactrionIdList
+            List<Long> transactionIdList = phasingPollService.getApprovedTransactionIds(model.getHeight());
+            transactionIdList
                 .forEach(trId -> transactionDTOList
                     .add(transactionConverter.convert(blockchain.getTransaction(trId))));
 
@@ -96,5 +103,27 @@ public class AccountBlockConverter implements Converter<Block, BlockDTO> {
             o.setExecutedPhasedTransactions(transactionList);
         }
     }
+
+    public boolean isAddTransactions() {
+        return isAddTransactions;
+    }
+
+    public void setAddTransactions(boolean addTransactions) {
+        isAddTransactions = addTransactions;
+    }
+
+    public boolean isAddPhasedTransactions() {
+        return isAddPhasedTransactions;
+    }
+
+    public void setAddPhasedTransactions(boolean addPhasedTransactions) {
+        isAddPhasedTransactions = addPhasedTransactions;
+    }
+
+    public void reset() {
+        isAddTransactions = false;
+        isAddPhasedTransactions = false;
+    }
+
 
 }

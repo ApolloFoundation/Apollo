@@ -231,7 +231,9 @@ public class BlockDaoImpl implements BlockDao {
     }
 
     @Override
-    public DbIterator<Block> getBlocks(long accountId, int timestamp, int from, int to) {
+    public DbIterator<Block> getBlocksByAccount(long accountId, int from, int to, int timestamp) {
+        LOG.trace("start getBlocksByAccount DbIter(accountId={}, from={}, to={}, timestamp={} )...",
+            accountId, from, to, timestamp);
         Connection con = null;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try {
@@ -253,7 +255,9 @@ public class BlockDaoImpl implements BlockDao {
     }
 
     @Override
-    public DbIterator<Block> getBlocks(TransactionalDataSource dataSource, long accountId, int timestamp, int from, int to) {
+    public DbIterator<Block> getBlocksByAccount(TransactionalDataSource dataSource, long accountId, int from, int to, int timestamp) {
+        LOG.trace("start getBlocksByAccount DbIter(dataSource={}, accountId={}, from={}, to={}, timestamp={} )...",
+            dataSource != null ? dataSource.getDbIdentity() : null, accountId, from, to, timestamp);
         if (dataSource == null) {
             dataSource = databaseManager.getDataSource();
         }
@@ -277,14 +281,19 @@ public class BlockDaoImpl implements BlockDao {
     }
 
     @Override
-    public DbIterator<Block> getBlocks(int from, int to) {
+    public DbIterator<Block> getBlocks(TransactionalDataSource dataSource, int from, int to, int timestamp) {
+        LOG.debug("start getBlocks DbIter( from={}, to={}, timestamp={} )...", from, to, timestamp);
         Connection con = null;
-        TransactionalDataSource dataSource = databaseManager.getDataSource(); // TODO: YL implement partial fetch from main + shard db
+        if (dataSource == null) {
+            dataSource = databaseManager.getDataSource();
+        }
         try {
             con = dataSource.getConnection();
-            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE height <= ? AND height >= ? ORDER BY height DESC");
+            PreparedStatement pstmt = con.prepareStatement(
+                "SELECT * FROM block WHERE height <= ? AND height >= ? and timestamp >= ? ORDER BY height DESC");
             pstmt.setInt(1, from);
             pstmt.setInt(2, to);
+            pstmt.setInt(3, timestamp);
             return getBlocks(con, pstmt);
         } catch (SQLException e) {
             DbUtils.close(con);
