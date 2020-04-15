@@ -22,8 +22,8 @@ import org.junit.jupiter.api.BeforeAll;
  * @author alukin@gmail.com
  */
 public class CryptoTest {
-    private static final String TST_IN_DIR="testdata/input/";
-    private static final String TST_OUT_DIR="testdata/out/";
+    private static final String TST_IN_DIR="./testdata/input/";
+    private static final String TST_OUT_DIR="./testdata/out/";
             
     private static final String PLAIN_FILE_TEXT = "lorem_ipsum.txt";
     private static final String OUT_FILE_ENCRYPTED = "encrypt_test.bin";
@@ -71,13 +71,14 @@ public class CryptoTest {
     
     @BeforeAll
     public static void setUpClass() {
+        String inFile=TST_IN_DIR + PLAIN_FILE_TEXT;
+
         try {
 
             Path currentRelativePath = Paths.get("");
             String s = currentRelativePath.toAbsolutePath().toString();
             System.out.println("===== Current absolute path is: " + s+" ==========");
-
-            ByteBuffer pd = readFromFile(TST_IN_DIR + PLAIN_FILE_TEXT);
+            ByteBuffer pd = readFromFile(inFile);
             plain_data = pd.array();
             writeToFile(pd, TST_OUT_DIR + PLAIN_FILE_TEXT);
             for (Integer i = 0; i < 32; i++) {
@@ -85,7 +86,7 @@ public class CryptoTest {
                 nonce2[i] = new Integer(i + 32).byteValue();
             }
         } catch (IOException ex) {
-            fail("Can not read inout data file: " + TST_IN_DIR + PLAIN_FILE_TEXT);
+            fail("Can not read input data file: " + inFile);
         }
     }
 
@@ -323,7 +324,6 @@ public class CryptoTest {
      */
     @Test
     public void testIsCanonicalPublicKey() {
-        System.out.println("isCanonicalPublicKey");
         byte[] publicKey = Crypto.getPublicKey(secretPhraseA);
         boolean expResult = true;
         boolean result = Crypto.isCanonicalPublicKey(publicKey);
