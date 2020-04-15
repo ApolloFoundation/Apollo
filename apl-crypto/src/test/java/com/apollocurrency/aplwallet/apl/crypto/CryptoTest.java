@@ -182,19 +182,6 @@ public class CryptoTest {
            writeToFile(ByteBuffer.wrap(result), TST_OUT_DIR+OUT_FILE_PRIVKEY_S);
     }
 
-    /**
-     * Test of curve method, of class Crypto.
-     */
-    @Test
-    public void testCurve() {
-//        System.out.println("curve");
-//        byte[] Z = null;
-//        byte[] k = null;
-//        byte[] P = null;
-//        Crypto.curve(Z, k, P);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-    }
 
     /**
      * Test of sign method, of class Crypto.

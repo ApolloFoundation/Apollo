@@ -42,8 +42,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Arrays;
-import java.util.logging.Level;
-import org.bouncycastle.asn1.x509.ObjectDigestInfo;
 import org.bouncycastle.math.ec.ECFieldElement;
 
 import static org.slf4j.LoggerFactory.getLogger;
