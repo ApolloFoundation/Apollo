@@ -31,6 +31,8 @@ public class CryptoTest {
     private static final String OUT_FILE_PUBKEY_S = "pubkey_string_test.bin";    
     private static final String OUT_FILE_PRIVKEY_B = "privkey_string_b_test.bin";    
     private static final String OUT_FILE_PRIVKEY_S = "privkey_string_s_test.bin";    
+    private static final String OUT_FILE_SIGN_B = "sign_string_b_test.bin";    
+    private static final String OUT_FILE_SIGN_S = "sign_string_s_test.bin";    
     private static byte[] plain_data;
     private static final byte[] nonce1 = new byte[32]; //(0-31)
     private static final byte[] nonce2 = new byte[32]; //(32-63)
@@ -151,23 +153,20 @@ public class CryptoTest {
            byte[] keySeed =   Crypto.getKeySeed(secretPhrase.getBytes());
            byte[] expResult =  Convert.parseHexString("b0f12497c84af1ac2603f97d1fb804fc308e241d522fa5d21e900facbb92d66e");
            byte[] result = Crypto.getPrivateKey(keySeed);
-           System.out.println("PRIV "+Convert.toHexString(result));
            assertArrayEquals(expResult, result);
-           writeToFile(ByteBuffer.wrap(result), TST_OUT_DIR+OUT_FILE_PRIVKEY_S);
+           writeToFile(ByteBuffer.wrap(result), TST_OUT_DIR+OUT_FILE_PRIVKEY_B);
     }
 
     /**
      * Test of getPrivateKey method, of class Crypto.
      */
     @Test
-    public void testGetPrivateKey_String() {
-//        System.out.println("getPrivateKey");
-//        String secretPhrase = "";
-//        byte[] expResult = null;
-//        byte[] result = Crypto.getPrivateKey(secretPhrase);
-//        assertArrayEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
+    public void testGetPrivateKey_String() throws IOException {
+           byte[] keySeed =   Crypto.getKeySeed(secretPhrase);
+           byte[] expResult =  Convert.parseHexString("b0f12497c84af1ac2603f97d1fb804fc308e241d522fa5d21e900facbb92d66e");
+           byte[] result = Crypto.getPrivateKey(keySeed);          
+           assertArrayEquals(expResult, result);
+           writeToFile(ByteBuffer.wrap(result), TST_OUT_DIR+OUT_FILE_PRIVKEY_S);
     }
 
     /**
@@ -188,46 +187,38 @@ public class CryptoTest {
      * Test of sign method, of class Crypto.
      */
     @Test
-    public void testSign_byteArr_String() {
-//        System.out.println("sign");
-//        byte[] message = null;
-//        String secretPhrase = "";
-//        byte[] expResult = null;
-//        byte[] result = Crypto.sign(message, secretPhrase);
-//        assertArrayEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
+    public void testSign_byteArr_String() throws IOException {
+          byte[] message = readFromFile(TST_IN_DIR+PLAIN_FILE_TEXT).array();
+          byte[] expResult = Convert.parseHexString("f565212c53a668006fbdb12c512e51f7add8118e6573d5c7261e9f58944e5c0b0ae76275210b795915a3017852fe8bca1a3cd2d2b02b32a51e0e03b18e6335f8");
+          byte[] result = Crypto.sign(message, secretPhrase);          
+          assertArrayEquals(expResult, result);                     
+          writeToFile(ByteBuffer.wrap(result), TST_OUT_DIR+OUT_FILE_PRIVKEY_B);
+
     }
 
     /**
      * Test of sign method, of class Crypto.
      */
     @Test
-    public void testSign_byteArr_byteArr() {
-//        System.out.println("sign");
-//        byte[] message = null;
-//        byte[] keySeed = null;
-//        byte[] expResult = null;
-//        byte[] result = Crypto.sign(message, keySeed);
-//        assertArrayEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
+    public void testSign_byteArr_byteArr() throws IOException {
+          byte[] message = readFromFile(TST_IN_DIR+PLAIN_FILE_TEXT).array();
+          byte[] expResult = Convert.parseHexString("f565212c53a668006fbdb12c512e51f7add8118e6573d5c7261e9f58944e5c0b0ae76275210b795915a3017852fe8bca1a3cd2d2b02b32a51e0e03b18e6335f8");
+          byte[] result = Crypto.sign(message, Crypto.getKeySeed(secretPhrase));          
+          assertArrayEquals(expResult, result);                     
+          writeToFile(ByteBuffer.wrap(result), TST_OUT_DIR+OUT_FILE_PRIVKEY_B);
     }
 
     /**
      * Test of verify method, of class Crypto.
      */
     @Test
-    public void testVerify() {
-//        System.out.println("verify");
-//        byte[] signature = null;
-//        byte[] message = null;
-//        byte[] publicKey = null;
-//        boolean expResult = false;
-//        boolean result = Crypto.verify(signature, message, publicKey);
-//        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
+    public void testVerify() throws IOException {
+        byte[] signature = Convert.parseHexString("f565212c53a668006fbdb12c512e51f7add8118e6573d5c7261e9f58944e5c0b0ae76275210b795915a3017852fe8bca1a3cd2d2b02b32a51e0e03b18e6335f8");
+        byte[] message = readFromFile(TST_IN_DIR+PLAIN_FILE_TEXT).array();
+        byte[] publicKey = Crypto.getPublicKey(secretPhrase);
+        boolean expResult = true;
+        boolean result = Crypto.verify(signature, message, publicKey);
+        assertEquals(expResult, result);
     }
 
     /**
