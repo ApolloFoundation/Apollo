@@ -1,7 +1,5 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ *  Copyright © 2018-2019 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.crypto;
 
@@ -75,10 +73,6 @@ public class CryptoTest {
         String inFile=TST_IN_DIR + PLAIN_FILE_TEXT;
 
         try {
-
-            Path currentRelativePath = Paths.get("");
-            String s = currentRelativePath.toAbsolutePath().toString();
-            System.out.println("===== Current absolute path is: " + s+" ==========");
             ByteBuffer pd = readFromFile(inFile);
             plain_data = pd.array();
             File directory = new File(TST_OUT_DIR);
