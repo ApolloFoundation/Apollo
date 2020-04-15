@@ -10,6 +10,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -70,15 +72,20 @@ public class CryptoTest {
     @BeforeAll
     public static void setUpClass() {
         try {
-            ByteBuffer pd = readFromFile(TST_IN_DIR+PLAIN_FILE_TEXT);
-            plain_data=pd.array();
-            writeToFile(pd, TST_OUT_DIR+PLAIN_FILE_TEXT);
-            for(Integer i=0; i<32; i++){
-                nonce1[i]=i.byteValue();
-                nonce2[i]=new Integer(i+32).byteValue();
+
+            Path currentRelativePath = Paths.get("");
+            String s = currentRelativePath.toAbsolutePath().toString();
+            System.out.println("===== Current absolute path is: " + s+" ==========");
+
+            ByteBuffer pd = readFromFile(TST_IN_DIR + PLAIN_FILE_TEXT);
+            plain_data = pd.array();
+            writeToFile(pd, TST_OUT_DIR + PLAIN_FILE_TEXT);
+            for (Integer i = 0; i < 32; i++) {
+                nonce1[i] = i.byteValue();
+                nonce2[i] = new Integer(i + 32).byteValue();
             }
         } catch (IOException ex) {
-            fail("Can not read inout data file: "+TST_IN_DIR+PLAIN_FILE_TEXT);
+            fail("Can not read inout data file: " + TST_IN_DIR + PLAIN_FILE_TEXT);
         }
     }
 
