@@ -64,9 +64,9 @@ public final class Crypto {
         }
     });
 
-    private static FBElGamalEncryptedMessage encryptAsymmetric(ECFieldElement affineXCoord, ECFieldElement affineYCoord, String plainText) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
+//    private static FBElGamalEncryptedMessage encryptAsymmetric(ECFieldElement affineXCoord, ECFieldElement affineYCoord, String plainText) {
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//    }
 
 
     private Crypto() {
@@ -426,19 +426,27 @@ public final class Crypto {
     
     public static String elGamalEncrypt(String plainText, FBElGamalKeyPair keyPair) {
 
+        
         FBCryptoParams params = FBCryptoParams.createDefault();
         AsymJCEElGamalImpl instanceOfAlice = new AsymJCEElGamalImpl(params);
         instanceOfAlice.setCurveParameters();        
         org.bouncycastle.math.ec.ECPoint publicKey = keyPair.getPublicKey();
         // generating random 32-byte key
+
         SecureRandom random = new SecureRandom();
         byte[] randomAesKey = new byte[32];
         random.nextBytes(randomAesKey);        
-        String randomAesKeyStr = new BigInteger(randomAesKey).toString(16);
-        // encrypting random AES Key
-        FBElGamalEncryptedMessage encryptedAesKey = encryptAsymmetric(publicKey.getAffineXCoord(), publicKey.getAffineYCoord(), randomAesKeyStr);
-        // encrypt plaintext with one-time key
-                
+        
+        FBElGamalEncryptedMessage encryptedAesKey = null;
+        try {
+            encryptedAesKey = instanceOfAlice.encryptAsymmetric(
+                    publicKey.getAffineXCoord().toBigInteger(), publicKey.getAffineYCoord().toBigInteger(), new BigInteger(randomAesKey) );
+        } catch (CryptoNotValidException ex) {
+            java.util.logging.Logger.getLogger(Crypto.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        
+        // encrypt plaintext with one-time key                
         byte[] plainTextData = plainText.getBytes();
         byte[] encryptedPassPhrase = aesGCMEncrypt( plainTextData, randomAesKey);
         
@@ -464,7 +472,7 @@ public final class Crypto {
         byte[] hash = digest.digest(plainText.getBytes());
         
         cryptogram += normalizeByLen(Convert.toHexString(hash),64);        
-        return cryptogram;
+        return cryptogram;        
     }
         
 }
