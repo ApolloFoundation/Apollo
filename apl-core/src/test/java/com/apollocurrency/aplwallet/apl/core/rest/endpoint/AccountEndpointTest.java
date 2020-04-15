@@ -18,7 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.http.ElGamalEncryptor;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FAConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FADetailsConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountAssetConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountBlockConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountCurrencyConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.WalletKeysConverter;
@@ -80,7 +80,7 @@ class AccountEndpointTest extends AbstractEndpointTest {
         .addBeans(MockBean.of(mock(AccountAssetConverter.class), AccountAssetConverter.class))
         .addBeans(MockBean.of(mock(AccountCurrencyConverter.class), AccountCurrencyConverter.class))
         .addBeans(MockBean.of(mock(AccountConverter.class), AccountConverter.class))
-        .addBeans(MockBean.of(mock(AccountBlockConverter.class), AccountBlockConverter.class))
+        .addBeans(MockBean.of(mock(BlockConverter.class), BlockConverter.class))
         .addBeans(MockBean.of(mock(WalletKeysConverter.class), WalletKeysConverter.class))
         .addBeans(MockBean.of(mock(Account2FADetailsConverter.class), Account2FADetailsConverter.class))
         .addBeans(MockBean.of(mock(Account2FAConverter.class), Account2FAConverter.class))

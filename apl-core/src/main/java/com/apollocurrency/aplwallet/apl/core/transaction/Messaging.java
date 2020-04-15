@@ -550,6 +550,7 @@ public abstract class Messaging extends TransactionType {
                 if (phasedTransactionId == 0) {
                     throw new AplException.NotValidException("Invalid phased transactionFullHash " + Convert.toHexString(hash));
                 }
+                PhasingPollService phasingPollService = lookupPhasingPollService();
                 PhasingPollResult result = phasingPollService.getResult(phasedTransactionId);
                 if (result != null) {
                     throw new AplException.NotCurrentlyValidException("Phasing poll " + phasedTransactionId + " is already finished");
@@ -602,7 +603,7 @@ public abstract class Messaging extends TransactionType {
             MessagingPhasingVoteCasting attachment = (MessagingPhasingVoteCasting) transaction.getAttachment();
             List<byte[]> hashes = attachment.getTransactionFullHashes();
             for (byte[] hash : hashes) {
-                phasingPollService.addVote(transaction, senderAccount, Convert.fullHashToId(hash));
+                lookupPhasingPollService().addVote(transaction, senderAccount, Convert.fullHashToId(hash));
             }
         }
 
@@ -921,23 +922,6 @@ public abstract class Messaging extends TransactionType {
     };
 
     private Messaging() {
-    }
-
-    /**
-     * Looks up AliasService lazily using SafeDCLFactory
-     * adjusted to a static field.
-     *
-     * @return AliasService
-     */
-    private static AliasService lookupAliasService() {
-        if (ALIAS_SERVICE == null) {
-            synchronized (Messaging.class) {
-                if (ALIAS_SERVICE == null) {
-                    ALIAS_SERVICE = CDI.current().select(AliasService.class).get();
-                }
-            }
-        }
-        return ALIAS_SERVICE;
     }
 
     @Override

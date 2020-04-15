@@ -315,7 +315,8 @@ class BlockchainTest {
     void testGetBlocks() {
         blockchain.setLastBlock(btd.BLOCK_13);
 
-        List<Block> blocks = CollectionUtil.toList(blockchain.getBlocks(1, btd.BLOCK_13.getHeight() - btd.BLOCK_11.getHeight()));
+        List<Block> blocks = CollectionUtil.toList(blockchain.getBlocks(
+            1, btd.BLOCK_13.getHeight() - btd.BLOCK_11.getHeight(), 0));
 
         assertEquals(List.of(btd.BLOCK_12, btd.BLOCK_11), blocks);
 
@@ -323,7 +324,7 @@ class BlockchainTest {
 
     @Test
     void testGetAccountBlocks() {
-        List<Block> blocks = CollectionUtil.toList(blockchain.getBlocks(btd.BLOCK_12.getGeneratorId(), 0, 0, Integer.MAX_VALUE));
+        List<Block> blocks = CollectionUtil.toList(blockchain.getBlocksByAccount(btd.BLOCK_12.getGeneratorId(), 0, 0, Integer.MAX_VALUE));
 
         assertEquals(List.of(btd.BLOCK_13, btd.BLOCK_12), blocks);
     }
@@ -611,7 +612,7 @@ class BlockchainTest {
         assertEquals(btd.BLOCK_11, lastBlock);
 
         blockchain.setLastBlock(btd.BLOCK_13);
-        List<Block> blocks = CollectionUtil.toList(blockchain.getBlocks(0, Integer.MAX_VALUE));
+        List<Block> blocks = CollectionUtil.toList(blockchain.getBlocks(0, Integer.MAX_VALUE, 0));
         assertEquals(List.of(btd.BLOCK_11, btd.BLOCK_10), blocks);
     }
 
@@ -624,7 +625,7 @@ class BlockchainTest {
         assertEquals(btd.BLOCK_10, lastBlock);
 
         blockchain.setLastBlock(btd.BLOCK_13);
-        List<Block> blocks = CollectionUtil.toList(blockchain.getBlocks(0, Integer.MAX_VALUE));
+        List<Block> blocks = CollectionUtil.toList(blockchain.getBlocks(0, Integer.MAX_VALUE, 0));
         assertEquals(List.of(btd.BLOCK_10), blocks);
     }
 

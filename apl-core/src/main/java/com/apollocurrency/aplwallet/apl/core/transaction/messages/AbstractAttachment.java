@@ -4,22 +4,18 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 
-import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 
 /**
  * @author al
  */
 public abstract class AbstractAttachment extends AbstractAppendix implements Attachment {
-
-    protected Blockchain blockchain;
 
     public AbstractAttachment(ByteBuffer buffer) {
         super(buffer);
@@ -78,13 +74,6 @@ public abstract class AbstractAttachment extends AbstractAppendix implements Att
 
     public int getFinishValidationHeight(Transaction transaction) {
         return isPhased(transaction) ? transaction.getPhasing().getFinishHeight() - 1 : lookupBlockchain().getHeight();
-    }
-
-    private Blockchain lookupBlockchain() {
-        if (blockchain == null) {
-            blockchain = CDI.current().select(Blockchain.class).get();
-        }
-        return blockchain;
     }
 
 }

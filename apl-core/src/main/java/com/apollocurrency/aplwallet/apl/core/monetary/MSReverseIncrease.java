@@ -5,15 +5,12 @@ package com.apollocurrency.aplwallet.apl.core.monetary;
 
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveIncrease;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 
-import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 
 /**
@@ -80,8 +77,7 @@ class MSReverseIncrease extends MonetarySystem {
             // TODO: find better solution, maybe extend this attachment and add currency reserve supply
             // can occur, when new block apply transaction which deleted currency, but this transaction was not confirmed and we should restore unconfirmed balance
             // currency must have been deleted, get reserve supply from the original issuance transaction
-            Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-            Transaction currencyIssuance = blockchain.getTransaction(attachment.getCurrencyId());
+            Transaction currencyIssuance = lookupBlockchain().getTransaction(attachment.getCurrencyId());
             MonetarySystemCurrencyIssuance currencyIssuanceAttachment = (MonetarySystemCurrencyIssuance) currencyIssuance.getAttachment();
             reserveSupply = currencyIssuanceAttachment.getReserveSupply();
         }

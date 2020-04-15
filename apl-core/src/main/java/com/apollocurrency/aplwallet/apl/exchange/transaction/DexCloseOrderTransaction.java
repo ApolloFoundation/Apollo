@@ -1,3 +1,6 @@
+/*
+ * Copyright © 2018-2020 Apollo Foundation
+ */
 package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
@@ -18,7 +21,6 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 
-import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
@@ -26,10 +28,6 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect
 
 
 public class DexCloseOrderTransaction extends DEX {
-
-    private DexService dexService = CDI.current().select(DexService.class).get();
-    private PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
-    private Blockchain blockchain = CDI.current().select(Blockchain.class).get();
 
     @Override
     public byte getSubtype() {
@@ -54,6 +52,7 @@ public class DexCloseOrderTransaction extends DEX {
     @Override
     public void validateAttachment(Transaction tx) throws AplException.ValidationException {
         DexCloseOrderAttachment attachment = (DexCloseOrderAttachment) tx.getAttachment();
+        DexService dexService = lookupDexService();
         ExchangeContract dexContract = dexService.getDexContractById(attachment.getContractId());
         if (dexContract == null) {
             throw new AplException.NotCurrentlyValidException("Contract does not exists, id - " + attachment.getContractId());
@@ -80,7 +79,7 @@ public class DexCloseOrderTransaction extends DEX {
             throw new AplException.NotCurrentlyValidException(JSON.toString(incorrect("orderStatus", "You can close order in the status WaitingForApproval only, but got: " + order.getStatus().name())));
         }
         long transferId = Long.parseUnsignedLong(isSender ? dexContract.getTransferTxId() : dexContract.getCounterTransferTxId());
-        Transaction transferTx = blockchain.getTransaction(transferId);
+        Transaction transferTx = lookupBlockchain().getTransaction(transferId);
         if (transferTx == null) {
             throw new AplException.NotCurrentlyValidException("Transfer tx was not found: " + transferId);
         }
@@ -94,6 +93,7 @@ public class DexCloseOrderTransaction extends DEX {
         if (transferContractId != attachment.getContractId()) {
             throw new AplException.NotCurrentlyValidException("Trasfer tx " + transferId + " refers to another contract " + transferContractId + ", expected " + attachment.getContractId());
         }
+        PhasingPollService phasingPollService = lookupPhasingPollService();
         if (phasingPollService.getPoll(transferId) == null && phasingPollService.getResult(transferId) == null) {
             throw new AplException.NotCurrentlyValidException("Transfer tx " + transferId + " was not phased");
         }
@@ -108,6 +108,7 @@ public class DexCloseOrderTransaction extends DEX {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         DexCloseOrderAttachment attachment = (DexCloseOrderAttachment) transaction.getAttachment();
+        DexService dexService = lookupDexService();
         ExchangeContract contract = dexService.getDexContractById(attachment.getContractId());
         long orderId = senderAccount.getId() == contract.getSender() ? contract.getOrderId() : contract.getCounterOrderId();
         dexService.closeOrder(orderId);
