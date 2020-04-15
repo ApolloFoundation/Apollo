@@ -1,36 +1,92 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ *  Copyright © 2018-2019 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.crypto;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  *
  * @author alukin@gmail.com
  */
 public class AnonymouslyEncryptedDataTest {
+     private static final String TST_IN_DIR="testdata/input/";
+    private static final String TST_OUT_DIR="testdata/out/";
     
+    private static final String PLAIN_FILE_TEXT = "lorem_ipsum.txt";
+    private static final String OUT_FILE_ENCRYPTED = "anon_encrypted_data_test.bin";
+    private static byte[] plain_data;
+    private static final byte[] nonce1 = new byte[32]; //(0-31)
+    private static final byte[] nonce2 = new byte[32]; //(32-63)
+    private static final String secretPhraseA = "Red fox jumps over the Lazy dog";
+    private static final String secretPhraseB = "Red dog jumps over the Lazy fox";
+    
+    private static ByteBuffer readFromFile(String fileName) throws IOException {
+        
+        FileChannel fChan;
+        Long fSize;
+        ByteBuffer mBuf;
+        fChan = new FileInputStream(fileName).getChannel();
+        fSize = fChan.size();
+        mBuf = ByteBuffer.allocate(fSize.intValue());
+        fChan.read(mBuf);
+        fChan.close();
+        mBuf.rewind();
+        return mBuf;
+    } 
+      
+    private static void writeToFile(ByteBuffer data, String fileName) throws IOException {
+        FileChannel out = new FileOutputStream(fileName).getChannel();
+        data.rewind();
+        out.write(data);
+        out.close();
+    }
+    
+    @BeforeAll
+    public static void setUpClass() {
+        String inFile=TST_IN_DIR + PLAIN_FILE_TEXT;
+
+        try {
+            ByteBuffer pd = readFromFile(inFile);
+            plain_data = pd.array();
+            File directory = new File(TST_OUT_DIR);
+            if (! directory.exists()){
+                directory.mkdirs();
+            }
+    
+            writeToFile(pd, TST_OUT_DIR + PLAIN_FILE_TEXT);
+            for (Integer i = 0; i < 32; i++) {
+                nonce1[i] = i.byteValue();
+                nonce2[i] = new Integer(i + 32).byteValue();
+            }
+        } catch (IOException ex) {
+            fail("Can not read input data file: " + inFile);
+        }
+    }   
 
     /**
      * Test of encrypt method, of class AnonymouslyEncryptedData.
+     * @throws java.io.IOException
      */
     @Test
-    public void testEncrypt() {
-//        System.out.println("encrypt");
-//        byte[] plaintext = null;
-//        byte[] secretBytes = null;
-//        byte[] theirPublicKey = null;
-//        byte[] nonce = null;
-//        AnonymouslyEncryptedData expResult = null;
-//        AnonymouslyEncryptedData result = AnonymouslyEncryptedData.encrypt(plaintext, secretBytes, theirPublicKey, nonce);
-//        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
+    public void testEncrypt() throws IOException {
+        byte[] plaintext = plain_data;
+        byte[] theirPublicKey = Crypto.getPublicKey(secretPhraseB);
+        AnonymouslyEncryptedData result_enc = AnonymouslyEncryptedData.encrypt(plaintext, secretPhraseA.getBytes(), theirPublicKey, nonce1);        
+        
+        byte[] plain_res = result_enc.decrypt(secretPhraseB.getBytes());
+        assertArrayEquals(plaintext, plain_res);
+        writeToFile(ByteBuffer.wrap(result_enc.getBytes()), TST_OUT_DIR+OUT_FILE_ENCRYPTED);        
+
     }
 
     /**
@@ -38,15 +94,17 @@ public class AnonymouslyEncryptedDataTest {
      */
     @Test
     public void testReadEncryptedData_3args() throws Exception {
-//        System.out.println("readEncryptedData");
-//        ByteBuffer buffer = null;
-//        int length = 0;
-//        int maxLength = 0;
-//        AnonymouslyEncryptedData expResult = null;
-//        AnonymouslyEncryptedData result = AnonymouslyEncryptedData.readEncryptedData(buffer, length, maxLength);
-//        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
+        byte[] plaintext = plain_data;
+        byte[] theirPublicKey = Crypto.getPublicKey(secretPhraseB);
+        AnonymouslyEncryptedData result_enc = AnonymouslyEncryptedData.encrypt(plaintext, secretPhraseA.getBytes(), theirPublicKey, nonce1);        
+        
+        AnonymouslyEncryptedData result = AnonymouslyEncryptedData.readEncryptedData(
+                ByteBuffer.wrap(result_enc.getBytes()),
+                result_enc.getSize()-result_enc.getPublicKey().length,
+                result_enc.getSize()
+             );
+        byte[] plain_res = result_enc.decrypt(secretPhraseB.getBytes());
+        assertArrayEquals(plaintext, plain_res);
     }
 
     /**
@@ -54,114 +112,15 @@ public class AnonymouslyEncryptedDataTest {
      */
     @Test
     public void testReadEncryptedData_byteArr() {
-//        System.out.println("readEncryptedData");
-//        byte[] bytes = null;
-//        AnonymouslyEncryptedData expResult = null;
-//        AnonymouslyEncryptedData result = AnonymouslyEncryptedData.readEncryptedData(bytes);
-//        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
+        byte[] plaintext = plain_data;
+        byte[] theirPublicKey = Crypto.getPublicKey(secretPhraseB);
+        AnonymouslyEncryptedData result_enc = AnonymouslyEncryptedData.encrypt(plaintext, secretPhraseA.getBytes(), theirPublicKey, nonce1);        
+        
+        AnonymouslyEncryptedData result = AnonymouslyEncryptedData.readEncryptedData(
+                result_enc.getBytes()
+             );
+        byte[] plain_res = result_enc.decrypt(secretPhraseB.getBytes());
+        assertArrayEquals(plaintext, plain_res);
     }
 
-    /**
-     * Test of decrypt method, of class AnonymouslyEncryptedData.
-     */
-    @Test
-    public void testDecrypt_byteArr() {
-//        System.out.println("decrypt");
-//        byte[] secretBytes = null;
-//        AnonymouslyEncryptedData instance = null;
-//        byte[] expResult = null;
-//        byte[] result = instance.decrypt(secretBytes);
-//        assertArrayEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of decrypt method, of class AnonymouslyEncryptedData.
-     */
-    @Test
-    public void testDecrypt_byteArr_byteArr() {
-//        System.out.println("decrypt");
-//        byte[] keySeed = null;
-//        byte[] theirPublicKey = null;
-//        AnonymouslyEncryptedData instance = null;
-//        byte[] expResult = null;
-//        byte[] result = instance.decrypt(keySeed, theirPublicKey);
-//        assertArrayEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getData method, of class AnonymouslyEncryptedData.
-     */
-    @Test
-    public void testGetData() {
-//        System.out.println("getData");
-//        AnonymouslyEncryptedData instance = null;
-//        byte[] expResult = null;
-//        byte[] result = instance.getData();
-//        assertArrayEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getPublicKey method, of class AnonymouslyEncryptedData.
-     */
-    @Test
-    public void testGetPublicKey() {
-//        System.out.println("getPublicKey");
-//        AnonymouslyEncryptedData instance = null;
-//        byte[] expResult = null;
-//        byte[] result = instance.getPublicKey();
-//        assertArrayEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getSize method, of class AnonymouslyEncryptedData.
-     */
-    @Test
-    public void testGetSize() {
-//        System.out.println("getSize");
-//        AnonymouslyEncryptedData instance = null;
-//        int expResult = 0;
-//        int result = instance.getSize();
-//        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getBytes method, of class AnonymouslyEncryptedData.
-     */
-    @Test
-    public void testGetBytes() {
-//        System.out.println("getBytes");
-//        AnonymouslyEncryptedData instance = null;
-//        byte[] expResult = null;
-//        byte[] result = instance.getBytes();
-//        assertArrayEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of toString method, of class AnonymouslyEncryptedData.
-     */
-    @Test
-    public void testToString() {
-//        System.out.println("toString");
-//        AnonymouslyEncryptedData instance = null;
-//        String expResult = "";
-//        String result = instance.toString();
-//        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-    }
-    
 }

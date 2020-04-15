@@ -1,7 +1,5 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ *  Copyright © 2018-2019 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.crypto;
 
@@ -79,10 +77,6 @@ public class CryptoTest {
         String inFile=TST_IN_DIR + PLAIN_FILE_TEXT;
 
         try {
-
-            Path currentRelativePath = Paths.get("");
-            String s = currentRelativePath.toAbsolutePath().toString();
-            System.out.println("===== Current absolute path is: " + s+" ==========");
             ByteBuffer pd = readFromFile(inFile);
             plain_data = pd.array();
             File directory = new File(TST_OUT_DIR);
@@ -192,19 +186,6 @@ public class CryptoTest {
            writeToFile(ByteBuffer.wrap(result), TST_OUT_DIR+OUT_FILE_PRIVKEY_S);
     }
 
-    /**
-     * Test of curve method, of class Crypto.
-     */
-    @Test
-    public void testCurve() {
-//        System.out.println("curve");
-//        byte[] Z = null;
-//        byte[] k = null;
-//        byte[] P = null;
-//        Crypto.curve(Z, k, P);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-    }
 
     /**
      * Test of sign method, of class Crypto.

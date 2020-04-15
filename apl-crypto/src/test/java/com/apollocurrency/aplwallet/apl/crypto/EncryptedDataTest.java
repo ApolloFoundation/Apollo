@@ -1,10 +1,9 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ *  Copyright © 2018-2019 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.crypto;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -12,15 +11,24 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeAll;
 
 /**
  *
  * @author alukin@gmail.com
  */
 public class EncryptedDataTest {
-    private static final String PLAIN_FILE_TEXT = "../../testdata/input/lorem_ipsum.txt";
-    private static final String OUT_FILE_ENCRYPTED = "../../testdata/encrypted_data_test.bin";
-
+    private static final String TST_IN_DIR="testdata/input/";
+    private static final String TST_OUT_DIR="testdata/out/";
+    
+    private static final String PLAIN_FILE_TEXT = "lorem_ipsum.txt";
+    private static final String OUT_FILE_ENCRYPTED = "encrypted_data_test.bin";
+    private static byte[] plain_data;
+//    private static final byte[] nonce1 = new byte[32]; //(0-31)
+//    private static final byte[] nonce2 = new byte[32]; //(32-63)
+    private static final String secretPhraseA = "Red fox jumps over the Lazy dog";
+    private static final String secretPhraseB = "Red dog jumps over the Lazy fox";
+    
     public EncryptedDataTest() {
     }
     
@@ -30,7 +38,29 @@ public class EncryptedDataTest {
         out.write(data);
         out.close();
     }
+    
+    @BeforeAll
+    public static void setUpClass() {
+        String inFile=TST_IN_DIR + PLAIN_FILE_TEXT;
 
+        try {
+            ByteBuffer pd = readFromFile(inFile);
+            plain_data = pd.array();
+            File directory = new File(TST_OUT_DIR);
+            if (! directory.exists()){
+                directory.mkdirs();
+            }
+    
+            writeToFile(pd, TST_OUT_DIR + PLAIN_FILE_TEXT);
+//            for (Integer i = 0; i < 32; i++) {
+//                nonce1[i] = i.byteValue();
+//                nonce2[i] = new Integer(i + 32).byteValue();
+//            }
+        } catch (IOException ex) {
+            fail("Can not read input data file: " + inFile);
+        }
+    }
+    
     private static ByteBuffer readFromFile(String fileName) throws IOException {
         FileChannel fChan;
         Long fSize;
@@ -46,19 +76,17 @@ public class EncryptedDataTest {
     
     /**
      * Test of encrypt method, of class EncryptedData.
+     * @throws java.io.IOException
      */
     @Test
     public void testEncrypt() throws IOException {
-//        System.out.println("encrypt");
-//        ByteBuffer plain = readFromFile(PLAIN_FILE_TEXT);  
-//        byte[] plaintext = null;
-//        byte[] keySeed = null;
-//        byte[] theirPublicKey = null;
-//        EncryptedData expResult = null;
-//        EncryptedData result = EncryptedData.encrypt(plaintext, keySeed, theirPublicKey);
-//        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
+        byte[] plaintext = plain_data;
+        byte[] keySeed = Crypto.getKeySeed(secretPhraseA);
+        byte[] theirPublicKey = Crypto.getPublicKey(secretPhraseB);
+        EncryptedData result_enc = EncryptedData.encrypt(plaintext, keySeed, theirPublicKey);
+        byte[] plain_res = result_enc.decrypt(keySeed, theirPublicKey);
+        assertArrayEquals(plaintext, plain_res);
+        writeToFile(ByteBuffer.wrap(result_enc.getBytes()), TST_OUT_DIR+OUT_FILE_ENCRYPTED);
     }
 
     /**
@@ -66,15 +94,17 @@ public class EncryptedDataTest {
      */
     @Test
     public void testReadEncryptedData_3args() throws Exception {
-//        System.out.println("readEncryptedData");
-//        ByteBuffer buffer = null;
-//        int length = 0;
-//        int maxLength = 0;
-//        EncryptedData expResult = null;
-//        EncryptedData result = EncryptedData.readEncryptedData(buffer, length, maxLength);
-//        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
+        byte[] plaintext = plain_data;
+        byte[] keySeed = Crypto.getKeySeed(secretPhraseA);
+        byte[] theirPublicKey = Crypto.getPublicKey(secretPhraseB);
+        EncryptedData result_enc = EncryptedData.encrypt(plaintext, keySeed, theirPublicKey);
+        EncryptedData result = EncryptedData.readEncryptedData(
+                ByteBuffer.wrap(result_enc.getBytes()), 
+                result_enc.getSize()-result_enc.getNonce().length, 
+                result_enc.getSize()
+             );
+        byte[] plain_res = result_enc.decrypt(keySeed, theirPublicKey);
+        assertArrayEquals(plaintext, plain_res);       
     }
 
     /**
@@ -82,156 +112,15 @@ public class EncryptedDataTest {
      */
     @Test
     public void testReadEncryptedData_byteArr() {
-//        System.out.println("readEncryptedData");
-//        byte[] bytes = null;
-//        EncryptedData expResult = null;
-//        EncryptedData result = EncryptedData.readEncryptedData(bytes);
-//        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getEncryptedDataLength method, of class EncryptedData.
-     */
-    @Test
-    public void testGetEncryptedDataLength() {
-//        System.out.println("getEncryptedDataLength");
-//        byte[] plaintext = null;
-//        int expResult = 0;
-//        int result = EncryptedData.getEncryptedDataLength(plaintext);
-//        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getEncryptedSize method, of class EncryptedData.
-     */
-    @Test
-    public void testGetEncryptedSize() {
-//        System.out.println("getEncryptedSize");
-//        byte[] plaintext = null;
-//        int expResult = 0;
-//        int result = EncryptedData.getEncryptedSize(plaintext);
-//        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of decrypt method, of class EncryptedData.
-     */
-    @Test
-    public void testDecrypt() {
-//        System.out.println("decrypt");
-//        byte[] keySeed = null;
-//        byte[] theirPublicKey = null;
-//        EncryptedData instance = null;
-//        byte[] expResult = null;
-//        byte[] result = instance.decrypt(keySeed, theirPublicKey);
-//        assertArrayEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getData method, of class EncryptedData.
-     */
-    @Test
-    public void testGetData() {
-//        System.out.println("getData");
-//        EncryptedData instance = null;
-//        byte[] expResult = null;
-//        byte[] result = instance.getData();
-//        assertArrayEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getNonce method, of class EncryptedData.
-     */
-    @Test
-    public void testGetNonce() {
-//        System.out.println("getNonce");
-//        EncryptedData instance = null;
-//        byte[] expResult = null;
-//        byte[] result = instance.getNonce();
-//        assertArrayEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getSize method, of class EncryptedData.
-     */
-    @Test
-    public void testGetSize() {
-//        System.out.println("getSize");
-//        EncryptedData instance = null;
-//        int expResult = 0;
-//        int result = instance.getSize();
-//        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getBytes method, of class EncryptedData.
-     */
-    @Test
-    public void testGetBytes() {
-//        System.out.println("getBytes");
-//        EncryptedData instance = null;
-//        byte[] expResult = null;
-//        byte[] result = instance.getBytes();
-//        assertArrayEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of equals method, of class EncryptedData.
-     */
-    @Test
-    public void testEquals() {
-//        System.out.println("equals");
-//        Object o = null;
-//        EncryptedData instance = null;
-//        boolean expResult = false;
-//        boolean result = instance.equals(o);
-//        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of hashCode method, of class EncryptedData.
-     */
-    @Test
-    public void testHashCode() {
-//        System.out.println("hashCode");
-//        EncryptedData instance = null;
-//        int expResult = 0;
-//        int result = instance.hashCode();
-//        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of toString method, of class EncryptedData.
-     */
-    @Test
-    public void testToString() {
-//        System.out.println("toString");
-//        EncryptedData instance = null;
-//        String expResult = "";
-//        String result = instance.toString();
-//        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
+        byte[] plaintext = plain_data;
+        byte[] keySeed = Crypto.getKeySeed(secretPhraseA);
+        byte[] theirPublicKey = Crypto.getPublicKey(secretPhraseB);
+        EncryptedData result_enc = EncryptedData.encrypt(plaintext, keySeed, theirPublicKey);
+        EncryptedData result = EncryptedData.readEncryptedData(
+                result_enc.getBytes()
+             );
+        byte[] plain_res = result_enc.decrypt(keySeed, theirPublicKey);
+        assertArrayEquals(plaintext, plain_res);
     }
     
 }
