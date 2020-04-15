@@ -431,7 +431,7 @@ public final class Crypto {
         org.bouncycastle.math.ec.ECPoint publicKey = keyPair.getPublicKey();
         // generating random 32-byte key
 
-        SecureRandom random = new SecureRandom();
+        SecureRandom random = getSecureRandom();
         byte[] randomAesKey = new byte[CryptoConstants.AES_KEY_BYTES];
         random.nextBytes(randomAesKey);        
                         
