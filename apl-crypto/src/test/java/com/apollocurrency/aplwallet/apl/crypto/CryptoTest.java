@@ -339,7 +339,7 @@ public class CryptoTest {
      */
     @Test
     public void testElGamalDecrypt() throws CryptoNotValidException {
-        
+
         FBCryptoParams params = FBCryptoParams.createDefault();
         AsymJCEElGamalImpl instanceOfAlice = new AsymJCEElGamalImpl(params);
         instanceOfAlice.setCurveParameters();
@@ -349,7 +349,7 @@ public class CryptoTest {
         String cryptogram = Crypto.elGamalEncrypt(secretPhraseA, keyPair);        
         String decrypted = Crypto.elGamalDecrypt(cryptogram, keyPair);
         
-        assertEquals(decrypted,secretPhraseA);
+        assertEquals(secretPhraseA, decrypted);
         
     }
     

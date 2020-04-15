@@ -432,18 +432,18 @@ public final class Crypto {
         // generating random 32-byte key
 
         SecureRandom random = new SecureRandom();
-        byte[] randomAesKey = new byte[32];
+        byte[] randomAesKey = new byte[CryptoConstants.AES_KEY_BYTES];
         random.nextBytes(randomAesKey);        
-        
+                        
         FBElGamalEncryptedMessage encryptedAesKey = null;
         try {
             encryptedAesKey = instanceOfAlice.encryptAsymmetric(
-                    publicKey.getAffineXCoord().toBigInteger(), publicKey.getAffineYCoord().toBigInteger(), new BigInteger(randomAesKey) );
+                    publicKey.getAffineXCoord().toBigInteger(), publicKey.getAffineYCoord().toBigInteger(), new BigInteger(1,randomAesKey) );
         } catch (CryptoNotValidException e) {
             LOG.trace(e.getMessage());
+            return null;
         }
-        
-        
+                
         // encrypt plaintext with one-time key                
         byte[] plainTextData = plainText.getBytes();
         byte[] encryptedPassPhrase = aesGCMEncrypt( plainTextData, randomAesKey);
@@ -454,9 +454,9 @@ public final class Crypto {
         // cryptogram comes first
         String cryptogram = Convert.toHexString(encryptedPassPhrase);
         // m1.x follows
-        cryptogram += normalizeByLen( m1x.toString(16), 131);
-        cryptogram += normalizeByLen( m1y.toString(16), 131);
-        cryptogram += normalizeByLen( encryptedAesKey.getM2().toString(16), 131);
+        cryptogram += normalizeByLen( m1x.toString(CryptoConstants.HEX_RADIX), CryptoConstants.ELGAMAL_DISTANCE);
+        cryptogram += normalizeByLen( m1y.toString(CryptoConstants.HEX_RADIX), CryptoConstants.ELGAMAL_DISTANCE);
+        cryptogram += normalizeByLen( encryptedAesKey.getM2().toString(CryptoConstants.HEX_RADIX), CryptoConstants.ELGAMAL_DISTANCE);
         
         MessageDigest digest = null;
         
@@ -469,7 +469,7 @@ public final class Crypto {
         
         byte[] hash = digest.digest(plainText.getBytes());
         
-        cryptogram += normalizeByLen(Convert.toHexString(hash),64);        
+        cryptogram += normalizeByLen(Convert.toHexString(hash),CryptoConstants.SHA256_DIGEST_CHARACTERS);        
         return cryptogram;        
     }
         
