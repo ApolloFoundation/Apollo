@@ -192,7 +192,7 @@ public class CryptoTest {
           byte[] expResult = Convert.parseHexString("f565212c53a668006fbdb12c512e51f7add8118e6573d5c7261e9f58944e5c0b0ae76275210b795915a3017852fe8bca1a3cd2d2b02b32a51e0e03b18e6335f8");
           byte[] result = Crypto.sign(message, secretPhrase);          
           assertArrayEquals(expResult, result);                     
-          writeToFile(ByteBuffer.wrap(result), TST_OUT_DIR+OUT_FILE_PRIVKEY_B);
+          writeToFile(ByteBuffer.wrap(result), TST_OUT_DIR+OUT_FILE_SIGN_S);
 
     }
 
@@ -205,7 +205,7 @@ public class CryptoTest {
           byte[] expResult = Convert.parseHexString("f565212c53a668006fbdb12c512e51f7add8118e6573d5c7261e9f58944e5c0b0ae76275210b795915a3017852fe8bca1a3cd2d2b02b32a51e0e03b18e6335f8");
           byte[] result = Crypto.sign(message, Crypto.getKeySeed(secretPhrase));          
           assertArrayEquals(expResult, result);                     
-          writeToFile(ByteBuffer.wrap(result), TST_OUT_DIR+OUT_FILE_PRIVKEY_B);
+          writeToFile(ByteBuffer.wrap(result), TST_OUT_DIR+OUT_FILE_SIGN_B);
     }
 
     /**
