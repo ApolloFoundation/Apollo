@@ -33,10 +33,15 @@ public class CryptoTest {
     private static final String OUT_FILE_PRIVKEY_S = "privkey_string_s_test.bin";    
     private static final String OUT_FILE_SIGN_B = "sign_string_b_test.bin";    
     private static final String OUT_FILE_SIGN_S = "sign_string_s_test.bin";    
+    private static final String OUT_FILE_SHARED = "shared_key_test.bin";    
+    private static final String OUT_FILE_SHARED_NONCE = "shared_key_nonce_test.bin";    
+    private static final String OUT_FILE_AES = "aes_encrypt_test.bin";    
+    private static final String OUT_FILE_AES_GCM = "aes_gcm_encrypt_test.bin";    
     private static byte[] plain_data;
     private static final byte[] nonce1 = new byte[32]; //(0-31)
     private static final byte[] nonce2 = new byte[32]; //(32-63)
-    private static final String secretPhrase = "Red fox jumps over the Lazy dog";
+    private static final String secretPhraseA = "Red fox jumps over the Lazy dog";
+    private static final String secretPhraseB = "Red dog jumps over the Lazy fox";
     
     private static void writeToFile(ByteBuffer data, String fileName) throws IOException {
         FileChannel out = new FileOutputStream(fileName).getChannel();
@@ -106,7 +111,7 @@ public class CryptoTest {
      */
     @Test
     public void testGetKeySeed_String_byteArrArr() throws IOException {
-          byte[] result = Crypto.getKeySeed(secretPhrase, nonce1, nonce2);
+          byte[] result = Crypto.getKeySeed(secretPhraseA, nonce1, nonce2);
           byte[] expResult = Convert.parseHexString("b1702f2262274290d1428b04f2e55e5af3af413575c7659ac02ee5633c504c6f");
           assertArrayEquals(expResult, result);
           writeToFile(ByteBuffer.wrap(result), TST_OUT_DIR+OUT_FILE_KEYSEED_S2N);
@@ -117,7 +122,7 @@ public class CryptoTest {
      */
     @Test
     public void testGetKeySeed_byteArr_byteArrArr() throws IOException {
-          byte[] result = Crypto.getKeySeed(secretPhrase.getBytes(), nonce1, nonce2);
+          byte[] result = Crypto.getKeySeed(secretPhraseA.getBytes(), nonce1, nonce2);
           byte[] expResult = Convert.parseHexString("b1702f2262274290d1428b04f2e55e5af3af413575c7659ac02ee5633c504c6f");
           assertArrayEquals(expResult, result);
           writeToFile(ByteBuffer.wrap(result), TST_OUT_DIR+OUT_FILE_KEYSEED_B2N);
@@ -128,7 +133,7 @@ public class CryptoTest {
      */
     @Test
     public void testGetPublicKey_byteArr() throws IOException {
-          byte[] result = Crypto.getKeySeed(secretPhrase.getBytes());
+          byte[] result = Crypto.getKeySeed(secretPhraseA.getBytes());
           byte[] expResult = Convert.parseHexString("b0f12497c84af1ac2603f97d1fb804fc308e241d522fa5d21e900facbb92d6ee");
           assertArrayEquals(expResult, result);
           writeToFile(ByteBuffer.wrap(result), TST_OUT_DIR+OUT_FILE_PRIVKEY_B);
@@ -140,7 +145,7 @@ public class CryptoTest {
     @Test
     public void testGetPublicKey_String() throws IOException {
           byte[] expResult = Convert.parseHexString("1b93c9dd30b8fb288463b3fd004c555ceb635c085642ef25d733275fcc33a47b");
-          byte[] result = Crypto.getPublicKey(secretPhrase);
+          byte[] result = Crypto.getPublicKey(secretPhraseA);
           assertArrayEquals(expResult, result);
           writeToFile(ByteBuffer.wrap(result), TST_OUT_DIR+OUT_FILE_PUBKEY_S);
     }
@@ -150,7 +155,7 @@ public class CryptoTest {
      */
     @Test
     public void testGetPrivateKey_byteArr() throws IOException {
-           byte[] keySeed =   Crypto.getKeySeed(secretPhrase.getBytes());
+           byte[] keySeed =   Crypto.getKeySeed(secretPhraseA.getBytes());
            byte[] expResult =  Convert.parseHexString("b0f12497c84af1ac2603f97d1fb804fc308e241d522fa5d21e900facbb92d66e");
            byte[] result = Crypto.getPrivateKey(keySeed);
            assertArrayEquals(expResult, result);
@@ -162,7 +167,7 @@ public class CryptoTest {
      */
     @Test
     public void testGetPrivateKey_String() throws IOException {
-           byte[] keySeed =   Crypto.getKeySeed(secretPhrase);
+           byte[] keySeed =   Crypto.getKeySeed(secretPhraseA);
            byte[] expResult =  Convert.parseHexString("b0f12497c84af1ac2603f97d1fb804fc308e241d522fa5d21e900facbb92d66e");
            byte[] result = Crypto.getPrivateKey(keySeed);          
            assertArrayEquals(expResult, result);
@@ -188,9 +193,9 @@ public class CryptoTest {
      */
     @Test
     public void testSign_byteArr_String() throws IOException {
-          byte[] message = readFromFile(TST_IN_DIR+PLAIN_FILE_TEXT).array();
+          byte[] message = plain_data;
           byte[] expResult = Convert.parseHexString("f565212c53a668006fbdb12c512e51f7add8118e6573d5c7261e9f58944e5c0b0ae76275210b795915a3017852fe8bca1a3cd2d2b02b32a51e0e03b18e6335f8");
-          byte[] result = Crypto.sign(message, secretPhrase);          
+          byte[] result = Crypto.sign(message, secretPhraseA);          
           assertArrayEquals(expResult, result);                     
           writeToFile(ByteBuffer.wrap(result), TST_OUT_DIR+OUT_FILE_SIGN_S);
 
@@ -201,9 +206,9 @@ public class CryptoTest {
      */
     @Test
     public void testSign_byteArr_byteArr() throws IOException {
-          byte[] message = readFromFile(TST_IN_DIR+PLAIN_FILE_TEXT).array();
+          byte[] message = plain_data;
           byte[] expResult = Convert.parseHexString("f565212c53a668006fbdb12c512e51f7add8118e6573d5c7261e9f58944e5c0b0ae76275210b795915a3017852fe8bca1a3cd2d2b02b32a51e0e03b18e6335f8");
-          byte[] result = Crypto.sign(message, Crypto.getKeySeed(secretPhrase));          
+          byte[] result = Crypto.sign(message, Crypto.getKeySeed(secretPhraseA));          
           assertArrayEquals(expResult, result);                     
           writeToFile(ByteBuffer.wrap(result), TST_OUT_DIR+OUT_FILE_SIGN_B);
     }
@@ -214,8 +219,8 @@ public class CryptoTest {
     @Test
     public void testVerify() throws IOException {
         byte[] signature = Convert.parseHexString("f565212c53a668006fbdb12c512e51f7add8118e6573d5c7261e9f58944e5c0b0ae76275210b795915a3017852fe8bca1a3cd2d2b02b32a51e0e03b18e6335f8");
-        byte[] message = readFromFile(TST_IN_DIR+PLAIN_FILE_TEXT).array();
-        byte[] publicKey = Crypto.getPublicKey(secretPhrase);
+        byte[] message =plain_data;
+        byte[] publicKey = Crypto.getPublicKey(secretPhraseA);
         boolean expResult = true;
         boolean result = Crypto.verify(signature, message, publicKey);
         assertEquals(expResult, result);
@@ -225,91 +230,62 @@ public class CryptoTest {
      * Test of getSharedKey method, of class Crypto.
      */
     @Test
-    public void testGetSharedKey_byteArr_byteArr() {
-//        System.out.println("getSharedKey");
-//        byte[] myPrivateKey = null;
-//        byte[] theirPublicKey = null;
-//        byte[] expResult = null;
-//        byte[] result = Crypto.getSharedKey(myPrivateKey, theirPublicKey);
-//        assertArrayEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
+    public void testGetSharedKey_byteArr_byteArr() throws IOException {
+          byte[] myPrivateKey = Crypto.getPrivateKey(secretPhraseA);
+          byte[] theirPublicKey = Crypto.getPublicKey(secretPhraseB);
+          byte[] expResult =  Crypto.getSharedKey(myPrivateKey, theirPublicKey);
+          byte[] theirPrivateKey = Crypto.getPrivateKey(secretPhraseB);
+          byte[] myPublicKey = Crypto.getPublicKey(secretPhraseA);
+          byte[] result = Crypto.getSharedKey(theirPrivateKey, myPublicKey);
+          assertArrayEquals(expResult, result);
+          writeToFile(ByteBuffer.wrap(result), TST_OUT_DIR+OUT_FILE_SHARED);
     }
 
     /**
      * Test of getSharedKey method, of class Crypto.
      */
     @Test
-    public void testGetSharedKey_3args() {
-//        System.out.println("getSharedKey");
-//        byte[] myPrivateKey = null;
-//        byte[] theirPublicKey = null;
-//        byte[] nonce = null;
-//        byte[] expResult = null;
-//        byte[] result = Crypto.getSharedKey(myPrivateKey, theirPublicKey, nonce);
-//        assertArrayEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
+    public void testGetSharedKey_3args() throws IOException {
+          byte[] myPrivateKey = Crypto.getPrivateKey(secretPhraseA);
+          byte[] theirPublicKey = Crypto.getPublicKey(secretPhraseB);
+          byte[] expResult =  Crypto.getSharedKey(myPrivateKey, theirPublicKey, nonce1);
+          byte[] theirPrivateKey = Crypto.getPrivateKey(secretPhraseB);
+          byte[] myPublicKey = Crypto.getPublicKey(secretPhraseA);
+          byte[] result = Crypto.getSharedKey(theirPrivateKey, myPublicKey, nonce1);
+          assertArrayEquals(expResult, result);
+          writeToFile(ByteBuffer.wrap(result), TST_OUT_DIR+OUT_FILE_SHARED_NONCE);
     }
 
     /**
      * Test of aesEncrypt method, of class Crypto.
      */
     @Test
-    public void testAesEncrypt() {
-//        System.out.println("aesEncrypt");
-//        byte[] plaintext = null;
-//        byte[] key = null;
-//        byte[] expResult = null;
-//        byte[] result = Crypto.aesEncrypt(plaintext, key);
-//        assertArrayEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
+    public void testAesEncrypt() throws IOException {
+        byte[] plaintext =plain_data;
+        byte[] myPrivateKey = Crypto.getPrivateKey(secretPhraseA);
+        byte[] theirPublicKey = Crypto.getPublicKey(secretPhraseB);
+        byte[] key =  Crypto.getSharedKey(myPrivateKey, theirPublicKey);        
+        byte[] expResult = plaintext;
+        byte[] result_enc = Crypto.aesEncrypt(plaintext, key);
+        byte[] result = Crypto.aesDecrypt(result_enc, key);
+        assertArrayEquals(expResult, result);
+        writeToFile(ByteBuffer.wrap(result_enc), TST_OUT_DIR+OUT_FILE_AES);
     }
 
     /**
      * Test of aesGCMEncrypt method, of class Crypto.
      */
     @Test
-    public void testAesGCMEncrypt() {
-//        System.out.println("aesGCMEncrypt");
-//        byte[] plaintext = null;
-//        byte[] key = null;
-//        byte[] expResult = null;
-//        byte[] result = Crypto.aesGCMEncrypt(plaintext, key);
-//        assertArrayEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of aesDecrypt method, of class Crypto.
-     */
-    @Test
-    public void testAesDecrypt() {
-//        System.out.println("aesDecrypt");
-//        byte[] ivCiphertext = null;
-//        byte[] key = null;
-//        byte[] expResult = null;
-//        byte[] result = Crypto.aesDecrypt(ivCiphertext, key);
-//        assertArrayEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of aesGCMDecrypt method, of class Crypto.
-     */
-    @Test
-    public void testAesGCMDecrypt() {
-//        System.out.println("aesGCMDecrypt");
-//        byte[] ivCiphertext = null;
-//        byte[] key = null;
-//        byte[] expResult = null;
-//        byte[] result = Crypto.aesGCMDecrypt(ivCiphertext, key);
-//        assertArrayEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
+    public void testAesGCMEncrypt() throws IOException {
+        byte[] plaintext =plain_data;
+        byte[] myPrivateKey = Crypto.getPrivateKey(secretPhraseA);
+        byte[] theirPublicKey = Crypto.getPublicKey(secretPhraseB);
+        byte[] key =  Crypto.getSharedKey(myPrivateKey, theirPublicKey);        
+        byte[] expResult = plaintext;
+        byte[] result_enc = Crypto.aesGCMEncrypt(plaintext, key);
+        byte[] result = Crypto.aesGCMDecrypt(result_enc, key);
+        assertArrayEquals(expResult, result);
+        writeToFile(ByteBuffer.wrap(result_enc), TST_OUT_DIR+OUT_FILE_AES_GCM);
     }
 
     /**
@@ -317,13 +293,11 @@ public class CryptoTest {
      */
     @Test
     public void testRsEncode() {
-//        System.out.println("rsEncode");
-//        long id = 0L;
-//        String expResult = "";
-//        String result = Crypto.rsEncode(id);
-//        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
+
+        long id = 0L;
+        String expResult = "2222-2222-2222-22222";
+        String result = Crypto.rsEncode(id);
+        assertEquals(expResult, result);
     }
 
     /**
@@ -331,13 +305,10 @@ public class CryptoTest {
      */
     @Test
     public void testRsDecode() {
-//        System.out.println("rsDecode");
-//        String rsString = "";
-//        long expResult = 0L;
-//        long result = Crypto.rsDecode(rsString);
-//        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
+        String rsString = "2222-2222-2222-22222";
+        long expResult = 0L;
+        long result = Crypto.rsDecode(rsString);
+        assertEquals(expResult, result);
     }
 
     /**
@@ -345,13 +316,11 @@ public class CryptoTest {
      */
     @Test
     public void testIsCanonicalPublicKey() {
-//        System.out.println("isCanonicalPublicKey");
-//        byte[] publicKey = null;
-//        boolean expResult = false;
-//        boolean result = Crypto.isCanonicalPublicKey(publicKey);
-//        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
+        System.out.println("isCanonicalPublicKey");
+        byte[] publicKey = Crypto.getPublicKey(secretPhraseA);
+        boolean expResult = true;
+        boolean result = Crypto.isCanonicalPublicKey(publicKey);
+        assertEquals(expResult, result);
     }
 
     /**
@@ -359,41 +328,21 @@ public class CryptoTest {
      */
     @Test
     public void testIsCanonicalSignature() {
-//        System.out.println("isCanonicalSignature");
-//        byte[] signature = null;
-//        boolean expResult = false;
-//        boolean result = Crypto.isCanonicalSignature(signature);
-//        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
+        byte[] message = plain_data;
+        byte[] signature = Crypto.sign(message, Crypto.getKeySeed(secretPhraseA));       
+        boolean expResult = true;
+        boolean result = Crypto.isCanonicalSignature(signature);
+        assertEquals(expResult, result);
     }
 
-    /**
-     * Test of getElGamalKeyPair method, of class Crypto.
-     */
-    @Test
-    public void testGetElGamalKeyPair() {
-//        System.out.println("getElGamalKeyPair");
-//        FBElGamalKeyPair expResult = null;
-//        FBElGamalKeyPair result = Crypto.getElGamalKeyPair();
-//        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-    }
 
     /**
      * Test of elGamalDecrypt method, of class Crypto.
      */
     @Test
     public void testElGamalDecrypt() {
-//        System.out.println("elGamalDecrypt");
-//        String cryptogramm = "";
-//        FBElGamalKeyPair keyPair = null;
-//        String expResult = "";
-//        String result = Crypto.elGamalDecrypt(cryptogramm, keyPair);
-//        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
+//TODO:  test by encrypt and then decript plain_data
+
     }
     
 }
