@@ -439,8 +439,8 @@ public final class Crypto {
         try {
             encryptedAesKey = instanceOfAlice.encryptAsymmetric(
                     publicKey.getAffineXCoord().toBigInteger(), publicKey.getAffineYCoord().toBigInteger(), new BigInteger(randomAesKey) );
-        } catch (CryptoNotValidException ex) {
-            java.util.logging.Logger.getLogger(Crypto.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (CryptoNotValidException e) {
+            LOG.trace(e.getMessage());
         }
         
         
@@ -454,9 +454,9 @@ public final class Crypto {
         // cryptogram comes first
         String cryptogram = Convert.toHexString(encryptedPassPhrase);
         // m1.x follows
-        cryptogram += normalizeByLen( m1x.toString(16), 128);
-        cryptogram += normalizeByLen( m1y.toString(16), 128);
-        cryptogram += normalizeByLen( encryptedAesKey.getM2().toString(16), 128);
+        cryptogram += normalizeByLen( m1x.toString(16), 131);
+        cryptogram += normalizeByLen( m1y.toString(16), 131);
+        cryptogram += normalizeByLen( encryptedAesKey.getM2().toString(16), 131);
         
         MessageDigest digest = null;
         
