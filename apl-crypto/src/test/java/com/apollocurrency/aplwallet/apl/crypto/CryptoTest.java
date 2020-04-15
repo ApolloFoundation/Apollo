@@ -22,8 +22,8 @@ import org.junit.jupiter.api.BeforeAll;
  * @author alukin@gmail.com
  */
 public class CryptoTest {
-    private static final String TST_IN_DIR="./testdata/input/";
-    private static final String TST_OUT_DIR="./testdata/out/";
+    private static final String TST_IN_DIR="testdata/input/";
+    private static final String TST_OUT_DIR="testdata/out/";
             
     private static final String PLAIN_FILE_TEXT = "lorem_ipsum.txt";
     private static final String OUT_FILE_ENCRYPTED = "encrypt_test.bin";
@@ -80,6 +80,11 @@ public class CryptoTest {
             System.out.println("===== Current absolute path is: " + s+" ==========");
             ByteBuffer pd = readFromFile(inFile);
             plain_data = pd.array();
+            File directory = new File(TST_OUT_DIR);
+            if (! directory.exists()){
+                directory.mkdirs();
+            }
+    
             writeToFile(pd, TST_OUT_DIR + PLAIN_FILE_TEXT);
             for (Integer i = 0; i < 32; i++) {
                 nonce1[i] = i.byteValue();
