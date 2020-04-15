@@ -50,7 +50,7 @@ public final class GetAccountBlockIds extends AbstractAPIRequestHandler {
         int lastIndex = HttpParameterParserUtil.getLastIndex(req);
 
         JSONArray blockIds = new JSONArray();
-        try (DbIterator<? extends Block> iterator = lookupBlockchain().getBlocks(accountId, timestamp, firstIndex, lastIndex)) {
+        try (DbIterator<? extends Block> iterator = lookupBlockchain().getBlocksByAccount(accountId, timestamp, firstIndex, lastIndex)) {
             while (iterator.hasNext()) {
                 Block block = iterator.next();
                 blockIds.add(block.getStringId());

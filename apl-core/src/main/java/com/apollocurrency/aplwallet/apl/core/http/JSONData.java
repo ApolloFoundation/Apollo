@@ -84,6 +84,7 @@ import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.DataTag;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
@@ -527,7 +528,7 @@ public final class JSONData {
     }
 
     /**
-     * Use {@link com.apollocurrency.aplwallet.apl.core.rest.converter.AccountBlockConverter#convert(Object)}
+     * Use {@link com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter#convert(Object)}
      */
     @Deprecated
     public static JSONObject block(Block block, boolean includeTransactions, boolean includeExecutedPhased) {
@@ -1154,7 +1155,7 @@ public final class JSONData {
     }
 
     /**
-     * Use {@link com.apollocurrency.aplwallet.apl.core.rest.converter.AccountBlockConverter#addTransactions(BlockDTO, Block)}
+     * Use {@link com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter#addTransactions(BlockDTO, Block)}
      */
     @Deprecated
     public static JSONObject transaction(Transaction transaction, Filter<Appendix> filter, boolean isPrivate) {

@@ -23,7 +23,7 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BlockDTO extends BaseDTO {
     private String block; //block id
-    private int height;
+    private Integer height;
     private String generator;
     private String generatorRS;
     private String generatorPublicKey;

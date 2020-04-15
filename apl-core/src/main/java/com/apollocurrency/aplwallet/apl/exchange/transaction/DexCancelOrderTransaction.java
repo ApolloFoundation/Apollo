@@ -1,3 +1,6 @@
+/*
+ * Copyright © 2018-2020 Apollo Foundation
+ */
 package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
@@ -12,13 +15,10 @@ import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 
-import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
 public class DexCancelOrderTransaction extends DEX {
-
-    private DexService dexService = CDI.current().select(DexService.class).get();
 
     @Override
     public byte getSubtype() {
@@ -45,7 +45,7 @@ public class DexCancelOrderTransaction extends DEX {
         DexOrderCancelAttachment attachment = (DexOrderCancelAttachment) transaction.getAttachment();
         long orderTransactionId = attachment.getOrderId();
 
-        DexOrder order = dexService.getOrder(orderTransactionId);
+        DexOrder order = lookupDexService().getOrder(orderTransactionId);
         if (order == null) {
             throw new AplException.NotCurrentlyValidException("Order was not found. OrderId: " + orderTransactionId);
         }
@@ -69,6 +69,7 @@ public class DexCancelOrderTransaction extends DEX {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         DexOrderCancelAttachment attachment = (DexOrderCancelAttachment) transaction.getAttachment();
+        DexService dexService = lookupDexService();
         DexOrder order = dexService.getOrder(attachment.getOrderId());
 
         try {

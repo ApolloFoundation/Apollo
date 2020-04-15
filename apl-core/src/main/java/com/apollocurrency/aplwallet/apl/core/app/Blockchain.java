@@ -31,6 +31,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 public interface Blockchain {
 
@@ -58,11 +59,13 @@ public interface Blockchain {
 
     boolean hasBlockInShards(long blockId);
 
-    DbIterator<Block> getBlocks(int from, int to);
+    DbIterator<Block> getBlocks(int from, int to, int timestamp);
+
+    Stream<Block> getBlocksStream(int from, int to, int timestamp);
 
     Block findFirstBlock();
 
-    DbIterator<Block> getBlocks(long accountId, int timestamp, int from, int to);
+    DbIterator<Block> getBlocksByAccount(long accountId, int timestamp, int from, int to);
 
     Block findLastBlock();
 

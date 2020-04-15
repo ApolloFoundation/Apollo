@@ -192,7 +192,7 @@ public final class BlockImpl implements Block {
 
     private AccountService lookupAccountService() {
         if (accountService == null) {
-            accountService = CDI.current().select(AccountServiceImpl.class).get();
+            accountService = CDI.current().select(AccountService.class).get();
         }
         return accountService;
     }

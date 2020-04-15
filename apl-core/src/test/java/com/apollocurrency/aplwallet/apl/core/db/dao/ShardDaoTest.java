@@ -33,6 +33,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.data.ShardTestData.NOT_SAVED_SHARD;
@@ -199,5 +200,12 @@ class ShardDaoTest {
     void testGetLatestShardHeight() {
         int latestShardHeight = dao.getLatestShardHeight();
         assertEquals(SHARD_2.getShardHeight(), latestShardHeight);
+    }
+
+    @Test
+    void testGetCompletedBetweenBlockHeight() {
+        List<Shard> result = dao.getCompletedBetweenBlockHeight(2, 4);
+        assertEquals(1, result.size());
+        assertEquals(Collections.singletonList(SHARD_1), result);
     }
 }

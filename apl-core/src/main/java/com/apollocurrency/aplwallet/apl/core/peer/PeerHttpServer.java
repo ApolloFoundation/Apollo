@@ -198,12 +198,12 @@ public class PeerHttpServer {
     public void shutdown() {
         if (peerServer != null) {
             try {
-                peerServer.stop();
                 if (enablePeerUPnP) {
                     for (int extPort : externalPorts) {
                         upnp.deletePort(extPort);
                     }
                 }
+                peerServer.stop();
             } catch (Exception e) {
                 LOG.info("Failed to stop peer server", e);
             }

@@ -34,6 +34,7 @@ import com.apollocurrency.aplwallet.apl.core.account.service.AccountPropertyServ
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPropertyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.alias.service.AliasService;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
@@ -42,6 +43,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
@@ -123,6 +125,9 @@ public abstract class TransactionType {
     public static BlockchainConfig blockchainConfig;
     public static TimeService timeService;
     protected static Blockchain blockchain;
+    private static PhasingPollService phasingPollService;
+    private static volatile AliasService ALIAS_SERVICE;
+
     @Setter
     private static AccountService accountService;
     private static AccountCurrencyService accountCurrencyService;
@@ -134,42 +139,42 @@ public abstract class TransactionType {
     public TransactionType() {
     }
 
-    public static AccountService lookupAccountService() {
+    public static synchronized AccountService lookupAccountService() {
         if (accountService == null) {
             accountService = CDI.current().select(AccountServiceImpl.class).get();
         }
         return accountService;
     }
 
-    public static AccountCurrencyService lookupAccountCurrencyService() {
+    public static synchronized AccountCurrencyService lookupAccountCurrencyService() {
         if (accountCurrencyService == null) {
             accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
         }
         return accountCurrencyService;
     }
 
-    public static AccountLeaseService lookupAccountLeaseService() {
+    public static synchronized AccountLeaseService lookupAccountLeaseService() {
         if (accountLeaseService == null) {
             accountLeaseService = CDI.current().select(AccountLeaseServiceImpl.class).get();
         }
         return accountLeaseService;
     }
 
-    public static AccountAssetService lookupAccountAssetService() {
+    public static synchronized AccountAssetService lookupAccountAssetService() {
         if (accountAssetService == null) {
             accountAssetService = CDI.current().select(AccountAssetServiceImpl.class).get();
         }
         return accountAssetService;
     }
 
-    public static AccountPropertyService lookupAccountPropertyService() {
+    public static synchronized AccountPropertyService lookupAccountPropertyService() {
         if (accountPropertyService == null) {
             accountPropertyService = CDI.current().select(AccountPropertyServiceImpl.class).get();
         }
         return accountPropertyService;
     }
 
-    public static AccountInfoService lookupAccountInfoService() {
+    public static synchronized AccountInfoService lookupAccountInfoService() {
         if (accountInfoService == null) {
             accountInfoService = CDI.current().select(AccountInfoServiceImpl.class).get();
         }
@@ -195,6 +200,30 @@ public abstract class TransactionType {
             blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
         }
         return blockchainConfig;
+    }
+
+    public static synchronized PhasingPollService lookupPhasingPollService(){
+        if ( phasingPollService == null) {
+            phasingPollService = CDI.current().select(PhasingPollService.class).get();
+        }
+        return phasingPollService;
+    }
+
+    /**
+     * Looks up AliasService lazily using SafeDCLFactory
+     * adjusted to a static field.
+     *
+     * @return AliasService
+     */
+    protected static synchronized AliasService lookupAliasService() {
+        if (ALIAS_SERVICE == null) {
+            synchronized(Messaging.class) {
+                if (ALIAS_SERVICE == null) {
+                    ALIAS_SERVICE = CDI.current().select(AliasService.class).get();
+                }
+            }
+        }
+        return ALIAS_SERVICE;
     }
 
     public static TransactionType findTransactionType(byte type, byte subtype) {

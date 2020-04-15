@@ -21,6 +21,7 @@ import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
@@ -47,7 +48,7 @@ public class ServerInfoController {
     }
 
     @Path("/blockchain/status")
-    @GET
+    @GET // for backward compatibility
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
         summary = "Returns status information",
@@ -60,7 +61,29 @@ public class ServerInfoController {
         }
     )
     @PermitAll
-    public Response blockchainStatus() {
+    public Response blockchainStatusGet() {
+        return getResponseStatus();
+    }
+
+    @Path("/blockchain/status")
+    @POST // for backward compatibility
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+        summary = "Returns status information",
+        description = "Returns status information about node settings",
+        tags = {"info"},
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Successful execution",
+                content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = BlockchainStatusDto.class)))
+        }
+    )
+    @PermitAll
+    public Response blockchainStatusPost() {
+        return getResponseStatus();
+    }
+
+    private Response getResponseStatus() {
         log.trace("Started blockchain Status");
         ResponseBuilder response = ResponseBuilder.startTiming();
         BlockchainStatusDto dto = serverInfoService.getBlockchainStatus();

@@ -132,7 +132,9 @@ public abstract class DigitalGoods extends TransactionType {
         public void doValidateAttachment(Transaction transaction) throws AplException.ValidationException {
             DigitalGoodsPriceChange attachment = (DigitalGoodsPriceChange) transaction.getAttachment();
             DGSGoods goods = lookupDGService().getGoods(attachment.getGoodsId());
-            if (attachment.getPriceATM() <= 0 || attachment.getPriceATM() > DigitalGoods.lookupBlockchainConfig().getCurrentConfig().getMaxBalanceATM() || (goods != null && transaction.getSenderId() != goods.getSellerId())) {
+            if (attachment.getPriceATM() <= 0
+                || attachment.getPriceATM() > lookupBlockchainConfig().getCurrentConfig().getMaxBalanceATM()
+                || (goods != null && transaction.getSenderId() != goods.getSellerId())) {
                 throw new AplException.NotValidException("Invalid digital goods price change: " + attachment.getJSONObject());
             }
             if (goods == null || goods.isDelisted()) {
@@ -270,7 +272,11 @@ public abstract class DigitalGoods extends TransactionType {
         public void doValidateAttachment(Transaction transaction) throws AplException.ValidationException {
             DigitalGoodsPurchase attachment = (DigitalGoodsPurchase) transaction.getAttachment();
             DGSGoods goods = lookupDGService().getGoods(attachment.getGoodsId());
-            if (attachment.getQuantity() <= 0 || attachment.getQuantity() > Constants.MAX_DGS_LISTING_QUANTITY || attachment.getPriceATM() <= 0 || attachment.getPriceATM() > lookupBlockchainConfig().getCurrentConfig().getMaxBalanceATM() || (goods != null && goods.getSellerId() != transaction.getRecipientId())) {
+            if (attachment.getQuantity() <= 0
+                || attachment.getQuantity() > Constants.MAX_DGS_LISTING_QUANTITY
+                || attachment.getPriceATM() <= 0
+                || attachment.getPriceATM() > lookupBlockchainConfig().getCurrentConfig().getMaxBalanceATM()
+                || (goods != null && goods.getSellerId() != transaction.getRecipientId())) {
                 throw new AplException.NotValidException("Invalid digital goods purchase: " + attachment.getJSONObject());
             }
             if (transaction.getEncryptedMessage() != null && !transaction.getEncryptedMessage().isText()) {
@@ -364,7 +370,11 @@ public abstract class DigitalGoods extends TransactionType {
                     throw new AplException.NotValidException("Invalid digital goods delivery: " + attachment.getJSONObject());
                 }
             }
-            if (attachment.getDiscountATM() < 0 || attachment.getDiscountATM() > lookupBlockchainConfig().getCurrentConfig().getMaxBalanceATM() || (purchase != null && (purchase.getBuyerId() != transaction.getRecipientId() || transaction.getSenderId() != purchase.getSellerId() || attachment.getDiscountATM() > Math.multiplyExact(purchase.getPriceATM(), (long) purchase.getQuantity())))) {
+            if (attachment.getDiscountATM() < 0
+                || attachment.getDiscountATM() > lookupBlockchainConfig().getCurrentConfig().getMaxBalanceATM()
+                || (purchase != null && (purchase.getBuyerId() != transaction.getRecipientId()
+                || transaction.getSenderId() != purchase.getSellerId()
+                || attachment.getDiscountATM() > Math.multiplyExact(purchase.getPriceATM(), (long) purchase.getQuantity())))) {
                 throw new AplException.NotValidException("Invalid digital goods delivery: " + attachment.getJSONObject());
             }
             if (purchase == null || purchase.getEncryptedGoods() != null) {
@@ -503,7 +513,10 @@ public abstract class DigitalGoods extends TransactionType {
         public void doValidateAttachment(Transaction transaction) throws AplException.ValidationException {
             DigitalGoodsRefund attachment = (DigitalGoodsRefund) transaction.getAttachment();
             DGSPurchase purchase = lookupDGService().getPurchase(attachment.getPurchaseId());
-            if (attachment.getRefundATM() < 0 || attachment.getRefundATM() > lookupBlockchainConfig().getCurrentConfig().getMaxBalanceATM() || (purchase != null && (purchase.getBuyerId() != transaction.getRecipientId() || transaction.getSenderId() != purchase.getSellerId()))) {
+            if (attachment.getRefundATM() < 0
+                || attachment.getRefundATM() > lookupBlockchainConfig().getCurrentConfig().getMaxBalanceATM()
+                || (purchase != null && (purchase.getBuyerId() != transaction.getRecipientId()
+                || transaction.getSenderId() != purchase.getSellerId()))) {
                 throw new AplException.NotValidException("Invalid digital goods refund: " + attachment.getJSONObject());
             }
             if (transaction.getEncryptedMessage() != null && !transaction.getEncryptedMessage().isText()) {
