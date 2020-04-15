@@ -70,10 +70,10 @@ public class NewApiRegistry {
         apis.put("getTime", "/rest/server/blockchain/time"); //GET
         apis.put("getTotalSupply", "/rest/server/blockchain/supply"); //GET
 
-        apis.put("getBlock", "/rest/block/"); //GET
-        apis.put("getBlockId", "/rest/block/id"); //GET
-        apis.put("getBlocks", "/rest/blocks"); //GET
-        apis.put("getECBlock", "/rest/blocks/ec"); //GET
+//        apis.put("getBlock", "/rest/block/one"); //GET
+//        apis.put("getBlockId", "/rest/block/id"); //GET
+//        apis.put("getBlocks", "/rest/block/list"); //GET
+//        apis.put("getECBlock", "/rest/block/ec"); //GET
 
         //TODO: add new implemented endpoints
     }
