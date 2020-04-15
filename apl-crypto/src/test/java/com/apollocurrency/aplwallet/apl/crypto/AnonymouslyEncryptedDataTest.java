@@ -82,9 +82,9 @@ public class AnonymouslyEncryptedDataTest {
         byte[] plaintext = plain_data;
         byte[] theirPublicKey = Crypto.getPublicKey(secretPhraseB);
         AnonymouslyEncryptedData result_enc = AnonymouslyEncryptedData.encrypt(plaintext, secretPhraseA.getBytes(), theirPublicKey, nonce1);        
-
-       // byte[] plain_res = result_enc.decrypt(secretPhraseA.getBytes());
-       // assertArrayEquals(plaintext, plain_res);
+        
+        byte[] plain_res = result_enc.decrypt(secretPhraseB.getBytes());
+        assertArrayEquals(plaintext, plain_res);
         writeToFile(ByteBuffer.wrap(result_enc.getBytes()), TST_OUT_DIR+OUT_FILE_ENCRYPTED);        
 
     }
@@ -94,7 +94,17 @@ public class AnonymouslyEncryptedDataTest {
      */
     @Test
     public void testReadEncryptedData_3args() throws Exception {
-
+        byte[] plaintext = plain_data;
+        byte[] theirPublicKey = Crypto.getPublicKey(secretPhraseB);
+        AnonymouslyEncryptedData result_enc = AnonymouslyEncryptedData.encrypt(plaintext, secretPhraseA.getBytes(), theirPublicKey, nonce1);        
+        
+        AnonymouslyEncryptedData result = AnonymouslyEncryptedData.readEncryptedData(
+                ByteBuffer.wrap(result_enc.getBytes()),
+                result_enc.getSize()-result_enc.getPublicKey().length,
+                result_enc.getSize()
+             );
+        byte[] plain_res = result_enc.decrypt(secretPhraseB.getBytes());
+        assertArrayEquals(plaintext, plain_res);
     }
 
     /**
@@ -102,7 +112,15 @@ public class AnonymouslyEncryptedDataTest {
      */
     @Test
     public void testReadEncryptedData_byteArr() {
-
+        byte[] plaintext = plain_data;
+        byte[] theirPublicKey = Crypto.getPublicKey(secretPhraseB);
+        AnonymouslyEncryptedData result_enc = AnonymouslyEncryptedData.encrypt(plaintext, secretPhraseA.getBytes(), theirPublicKey, nonce1);        
+        
+        AnonymouslyEncryptedData result = AnonymouslyEncryptedData.readEncryptedData(
+                result_enc.getBytes()
+             );
+        byte[] plain_res = result_enc.decrypt(secretPhraseB.getBytes());
+        assertArrayEquals(plaintext, plain_res);
     }
 
 }
