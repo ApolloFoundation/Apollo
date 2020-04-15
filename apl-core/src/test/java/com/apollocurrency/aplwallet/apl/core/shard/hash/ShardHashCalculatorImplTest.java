@@ -22,9 +22,15 @@ import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
+import com.apollocurrency.aplwallet.apl.core.order.service.OrderMatchService;
+import com.apollocurrency.aplwallet.apl.core.order.service.impl.AskOrderServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.order.service.impl.BidOrderServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.AskOrderService;
+import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.BidOrderService;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.trade.service.TradeService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
@@ -78,7 +84,11 @@ public class ShardHashCalculatorImplTest {
             MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class),
             MockBean.of(mock(NtpTime.class), NtpTime.class),
             MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class),
-            MockBean.of(mock(AliasService.class), AliasService.class)
+            MockBean.of(mock(AliasService.class), AliasService.class),
+            MockBean.of(mock(TradeService.class), TradeService.class),
+            MockBean.of(mock(OrderMatchService.class), OrderMatchService.class),
+            MockBean.<AskOrderServiceImpl>builder().types(AskOrderServiceImpl.class).creating(mock(AskOrderServiceImpl.class)).addQualifier(AskOrderService.Literal.INSTANCE).build(),
+            MockBean.<BidOrderServiceImpl>builder().types(BidOrderServiceImpl.class).creating(mock(BidOrderServiceImpl.class)).addQualifier(BidOrderService.Literal.INSTANCE).build()
         ).build();
 
     @Inject

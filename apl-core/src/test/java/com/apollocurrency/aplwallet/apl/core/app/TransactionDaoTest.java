@@ -3,8 +3,14 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
+import com.apollocurrency.aplwallet.apl.core.order.service.OrderMatchService;
+import com.apollocurrency.aplwallet.apl.core.order.service.impl.AskOrderServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.order.service.impl.BidOrderServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.AskOrderService;
+import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.BidOrderService;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
+import com.apollocurrency.aplwallet.apl.core.trade.service.TradeService;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
@@ -44,11 +50,15 @@ class TransactionDaoTest {
     public WeldInitiator weld = WeldInitiator.from()
         .addBeans(MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class))
         .addBeans(MockBean.of(mock(Blockchain.class), Blockchain.class, BlockchainImpl.class))
-        .addBeans(MockBean.of(mock(TimeServiceImpl.class), TimeServiceImpl.class))
         .addBeans(MockBean.of(mock(PropertiesHolder.class), PropertiesHolder.class))
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
         .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
+        .addBeans(MockBean.of(mock(TimeService.class), TimeService.class))
+        .addBeans(MockBean.of(mock(TradeService.class), TradeService.class))
+        .addBeans(MockBean.of(mock(OrderMatchService.class), OrderMatchService.class))
+        .addBeans(MockBean.<AskOrderServiceImpl> builder().types(AskOrderServiceImpl.class).creating(mock(AskOrderServiceImpl.class)).addQualifier(AskOrderService.Literal.INSTANCE).build())
+        .addBeans(MockBean.<BidOrderServiceImpl> builder().types(BidOrderServiceImpl.class).creating(mock(BidOrderServiceImpl.class)).addQualifier(BidOrderService.Literal.INSTANCE).build())
         .build();
 
     private TransactionDao dao;

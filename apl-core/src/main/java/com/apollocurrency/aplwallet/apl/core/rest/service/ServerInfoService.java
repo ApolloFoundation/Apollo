@@ -24,12 +24,10 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
-import com.apollocurrency.aplwallet.apl.core.app.Order;
 import com.apollocurrency.aplwallet.apl.core.app.Poll;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
-import com.apollocurrency.aplwallet.apl.core.app.Trade;
 import com.apollocurrency.aplwallet.apl.core.app.Vote;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMinting;
@@ -49,12 +47,20 @@ import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.order.entity.AskOrder;
+import com.apollocurrency.aplwallet.apl.core.order.entity.BidOrder;
+import com.apollocurrency.aplwallet.apl.core.order.service.OrderService;
+import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.AskOrderService;
+import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.BidOrderService;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
+import com.apollocurrency.aplwallet.apl.core.trade.service.TradeService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
@@ -92,6 +98,9 @@ public class ServerInfoService {
     private final AdminPasswordVerifier apw;
     private final UPnP upnp;
     private final AliasService aliasService;
+    private final OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService;
+    private final OrderService<BidOrder, ColoredCoinsBidOrderPlacement> bidOrderService;
+    private final TradeService tradeService;
 
     @Inject
     public ServerInfoService(BlockchainConfig blockchainConfig, Blockchain blockchain,
@@ -105,7 +114,12 @@ public class ServerInfoService {
                              TaggedDataService taggedDataService,
                              AccountLeaseService accountLeaseService,
                              AdminPasswordVerifier apw,
-                             UPnP upnp, AliasService aliasService) {
+                             UPnP upnp,
+                             AliasService aliasService,
+                             @AskOrderService OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService,
+                             @BidOrderService OrderService<BidOrder, ColoredCoinsBidOrderPlacement> bidOrderService,
+                             TradeService tradeService
+    ) {
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
         this.blockchain = Objects.requireNonNull(blockchain, "blockchain is NULL");
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder, "propertiesHolder is NULL");
@@ -121,7 +135,10 @@ public class ServerInfoService {
         this.accountLeaseService = Objects.requireNonNull(accountLeaseService, "accountLeaseService is NULL");
         this.apw = Objects.requireNonNull(apw, "adminPasswordVerifier is NULL");
         this.upnp = Objects.requireNonNull(upnp, "upnp is NULL");
-        this.aliasService = aliasService;
+        this.aliasService = Objects.requireNonNull(aliasService, "aliasService is NULL");
+        this.askOrderService = Objects.requireNonNull(askOrderService, "askOrderService is NULL");
+        this.bidOrderService = Objects.requireNonNull(bidOrderService, "bidOrderService is NULL");
+        this.tradeService = Objects.requireNonNull(tradeService, "tradeService is NULL");
     }
 
     public ApolloX509Info getX509Info() {
@@ -302,12 +319,12 @@ public class ServerInfoService {
             dto.numberOfTransactions = blockchain.getTransactionCount();
             dto.numberOfAccounts = accountPublicKeyService.getCount();
             dto.numberOfAssets = Asset.getCount();
-            int askCount = Order.Ask.getCount();
-            int bidCount = Order.Bid.getCount();
+            int askCount = askOrderService.getCount();
+            int bidCount = bidOrderService.getCount();
             dto.numberOfOrders = askCount + bidCount;
             dto.numberOfAskOrders = askCount;
             dto.numberOfBidOrders = bidCount;
-            dto.numberOfTrades = Trade.getCount();
+            dto.numberOfTrades = tradeService.getCount();
             dto.numberOfTransfers = AssetTransfer.getCount();
             dto.numberOfCurrencies = Currency.getCount();
             dto.numberOfOffers = CurrencyBuyOffer.getCount();

@@ -16,10 +16,16 @@ import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactor
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.order.service.OrderMatchService;
+import com.apollocurrency.aplwallet.apl.core.order.service.impl.AskOrderServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.order.service.impl.BidOrderServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.AskOrderService;
+import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.BidOrderService;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataTimestamp;
+import com.apollocurrency.aplwallet.apl.core.trade.service.TradeService;
 import com.apollocurrency.aplwallet.apl.data.TaggedTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
@@ -69,6 +75,10 @@ class TaggedDataTimestampDaoTest {
         .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
         .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
         .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
+        .addBeans(MockBean.of(mock(TradeService.class), TradeService.class))
+        .addBeans(MockBean.of(mock(OrderMatchService.class), OrderMatchService.class))
+        .addBeans(MockBean.<AskOrderServiceImpl> builder().types(AskOrderServiceImpl.class).creating(mock(AskOrderServiceImpl.class)).addQualifier(AskOrderService.Literal.INSTANCE).build())
+        .addBeans(MockBean.<BidOrderServiceImpl> builder().types(BidOrderServiceImpl.class).creating(mock(BidOrderServiceImpl.class)).addQualifier(BidOrderService.Literal.INSTANCE).build())
         .build();
 
     @Inject

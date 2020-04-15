@@ -5,18 +5,21 @@ package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Order;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.order.service.OrderMatchService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 
+import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 
 /**
  * @author al
  */
 class CCBidOrderPlacement extends ColoredCoinsOrderPlacement {
+    private final OrderMatchService orderMatchService =
+        CDI.current().select(OrderMatchService.class).get();
 
     public CCBidOrderPlacement() {
     }
@@ -59,7 +62,7 @@ class CCBidOrderPlacement extends ColoredCoinsOrderPlacement {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         ColoredCoinsBidOrderPlacement attachment = (ColoredCoinsBidOrderPlacement) transaction.getAttachment();
-        Order.Bid.addOrder(transaction, attachment);
+        orderMatchService.addBidOrder(transaction, attachment);
     }
 
     @Override
