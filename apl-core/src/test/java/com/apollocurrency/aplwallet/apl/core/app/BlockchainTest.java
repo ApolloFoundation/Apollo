@@ -12,16 +12,9 @@ import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
-import com.apollocurrency.aplwallet.apl.core.order.service.OrderMatchService;
-import com.apollocurrency.aplwallet.apl.core.order.service.OrderService;
-import com.apollocurrency.aplwallet.apl.core.order.service.impl.AskOrderServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.order.service.impl.BidOrderServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.AskOrderService;
-import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.BidOrderService;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.trade.service.TradeService;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
@@ -114,10 +107,6 @@ class BlockchainTest {
         .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
         .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
         .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
-        .addBeans(MockBean.of(mock(TradeService.class), TradeService.class))
-        .addBeans(MockBean.of(mock(OrderMatchService.class), OrderMatchService.class))
-        .addBeans(MockBean.<AskOrderServiceImpl> builder().types(AskOrderServiceImpl.class).creating(mock(AskOrderServiceImpl.class)).addQualifier(AskOrderService.Literal.INSTANCE).build())
-        .addBeans(MockBean.<BidOrderServiceImpl> builder().types(BidOrderServiceImpl.class).creating(mock(BidOrderServiceImpl.class)).addQualifier(BidOrderService.Literal.INSTANCE).build())
         .build();
     @Inject
     private Blockchain blockchain;

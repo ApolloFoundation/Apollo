@@ -26,15 +26,9 @@ import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
-import com.apollocurrency.aplwallet.apl.core.order.service.OrderMatchService;
-import com.apollocurrency.aplwallet.apl.core.order.service.impl.AskOrderServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.order.service.impl.BidOrderServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.AskOrderService;
-import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.BidOrderService;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.trade.service.TradeService;
 import com.apollocurrency.aplwallet.apl.data.DGSTestData;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -74,10 +68,6 @@ public class DGSGoodsTableTest extends EntityDbTableTest<DGSGoods> {
         .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
         .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
         .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
-        .addBeans(MockBean.of(mock(TradeService.class), TradeService.class))
-        .addBeans(MockBean.of(mock(OrderMatchService.class), OrderMatchService.class))
-        .addBeans(MockBean.<AskOrderServiceImpl> builder().types(AskOrderServiceImpl.class).creating(mock(AskOrderServiceImpl.class)).addQualifier(AskOrderService.Literal.INSTANCE).build())
-        .addBeans(MockBean.<BidOrderServiceImpl> builder().types(BidOrderServiceImpl.class).creating(mock(BidOrderServiceImpl.class)).addQualifier(BidOrderService.Literal.INSTANCE).build())
         .build();
     @Inject
     DGSGoodsTable table;
