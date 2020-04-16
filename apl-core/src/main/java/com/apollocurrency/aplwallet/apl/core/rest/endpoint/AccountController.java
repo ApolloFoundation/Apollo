@@ -16,11 +16,11 @@ import com.apollocurrency.aplwallet.api.response.AccountAssetsCountResponse;
 import com.apollocurrency.aplwallet.api.response.AccountAssetsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountBlockIdsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountBlocksCountResponse;
-import com.apollocurrency.aplwallet.api.response.BlocksResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrencyCountResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrencyResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrentAskOrderIdsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountNotFoundResponse;
+import com.apollocurrency.aplwallet.api.response.BlocksResponse;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
@@ -33,30 +33,32 @@ import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
-import com.apollocurrency.aplwallet.apl.core.app.Order;
 import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.order.entity.AskOrder;
+import com.apollocurrency.aplwallet.apl.core.order.service.OrderService;
+import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.AskOrderService;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FAConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FADetailsConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountAssetConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountCurrencyConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.WalletKeysConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FA;
 import com.apollocurrency.aplwallet.apl.core.rest.parameter.AccountIdParameter;
 import com.apollocurrency.aplwallet.apl.core.rest.parameter.LongParameter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.AccountStatisticsService;
-import com.apollocurrency.aplwallet.apl.core.rest.service.OrderService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.FirstLastIndexParser;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.core.rest.validation.ValidBlockchainHeight;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
@@ -90,7 +92,9 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Apollo accounts endpoint
@@ -100,57 +104,42 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 @Slf4j
 @Path("/accounts")
+@Setter
 public class AccountController {
 
-    @Inject
-    @Setter
     private Blockchain blockchain;
-    @Inject
-    @Setter
+
     private Account2FAHelper account2FAHelper;
-    @Inject
-    @Setter
+
     private AccountService accountService;
-    @Inject
-    @Setter
+
     private AccountPublicKeyService accountPublicKeyService;
-    @Inject
-    @Setter
+
     private AccountAssetService accountAssetService;
-    @Inject
-    @Setter
+
     private AccountCurrencyService accountCurrencyService;
-    @Inject
-    @Setter
+
     private AccountAssetConverter accountAssetConverter;
-    @Inject
-    @Setter
+
     private AccountCurrencyConverter accountCurrencyConverter;
-    @Inject
-    @Setter
+
     private AccountConverter converter;
-    @Inject
-    @Setter
+
     private BlockConverter blockConverter;
-    @Inject
-    @Setter
+
     private WalletKeysConverter walletKeysConverter;
-    @Inject
-    @Setter
+
     private Account2FADetailsConverter faDetailsConverter;
-    @Inject
-    @Setter
+
     private Account2FAConverter faConverter;
-    @Inject
-    @Setter
-    private OrderService orderService;
-    @Inject
-    @Setter
+
+    private OrderService<AskOrder, ColoredCoinsAskOrderPlacement> orderService;
+
     private FirstLastIndexParser indexParser;
-    @Inject
-    @Setter
+
     private AccountStatisticsService accountStatisticsService;
 
+    @Inject
     public AccountController(Blockchain blockchain,
                              Account2FAHelper account2FAHelper,
                              AccountService accountService,
@@ -164,7 +153,7 @@ public class AccountController {
                              WalletKeysConverter walletKeysConverter,
                              Account2FADetailsConverter faDetailsConverter,
                              Account2FAConverter faConverter,
-                             OrderService orderService,
+                             @AskOrderService OrderService<AskOrder, ColoredCoinsAskOrderPlacement> orderService,
                              FirstLastIndexParser indexParser,
                              AccountStatisticsService accountStatisticsService) {
 
@@ -181,7 +170,7 @@ public class AccountController {
         this.walletKeysConverter = walletKeysConverter;
         this.faDetailsConverter = faDetailsConverter;
         this.faConverter = faConverter;
-        this.orderService = orderService;
+        this.orderService = Objects.requireNonNull(orderService, "orderService is NULL");
         this.indexParser = indexParser;
         this.accountStatisticsService = accountStatisticsService;
     }
@@ -585,13 +574,13 @@ public class AccountController {
         long accountId = accountIdParameter.get();
         FirstLastIndexParser.FirstLastIndex flIndex = indexParser.adjustIndexes(firstIndex, lastIndex);
 
-        List<Order.Ask> ordersByAccount;
+        Stream<AskOrder> ordersByAccount;
         if (assetId == null || assetId.get() == 0) {
-            ordersByAccount = orderService.getAskOrdersByAccount(accountId, flIndex.getFirstIndex(), flIndex.getLastIndex());
+            ordersByAccount = orderService.getOrdersByAccount(accountId, flIndex.getFirstIndex(), flIndex.getLastIndex());
         } else {
-            ordersByAccount = orderService.getAskOrdersByAccountAsset(accountId, assetId.get(), flIndex.getFirstIndex(), flIndex.getLastIndex());
+            ordersByAccount = orderService.getOrdersByAccountAsset(accountId, assetId.get(), flIndex.getFirstIndex(), flIndex.getLastIndex());
         }
-        List<String> ordersIdList = ordersByAccount.stream().map(ask -> Long.toUnsignedString(ask.getId())).collect(Collectors.toList());
+        List<String> ordersIdList = ordersByAccount.map(ask -> Long.toUnsignedString(ask.getId())).collect(Collectors.toList());
 
         return response.bind(new AccountCurrentAskOrderIdsResponse(ordersIdList)).build();
     }

@@ -25,22 +25,35 @@ public class UnconfirmedTransactionConverter implements Converter<Transaction, U
         dto.setTimestamp(model.getTimestamp());
         dto.setDeadline(model.getDeadline());
         dto.setSenderPublicKey(Convert.toHexString(model.getSenderPublicKey()));
-        if (model.getRecipientId() != 0) {
-            long recipientId;
-            if (model.getType() == Payment.PRIVATE) {
-                recipientId = AccountConverter.anonymizeAccount();
-            } else {
-                recipientId = model.getRecipientId();
-            }
+        
+        long recipientId;
+        long senderId;
+        long amountATM;
+        String senderPublicKey;
+        
+        if (model.getType() == Payment.PRIVATE){
+            recipientId = AccountConverter.anonymizeAccount();
+            senderId = AccountConverter.anonymizeAccount();
+            amountATM = AccountConverter.anonymizeBalance();
+            senderPublicKey = AccountConverter.anonymizePublicKey();
+            
             dto.setRecipient(Long.toUnsignedString(recipientId));
             dto.setRecipientRS(Convert2.rsAccount(recipientId));
-        }
-        long amountATM;
-        if (model.getType() == Payment.PRIVATE) {
-            amountATM = AccountConverter.anonymizeBalance();
+            
         } else {
+            senderPublicKey = Convert.toHexString(model.getSenderPublicKey());
             amountATM = model.getAmountATM();
+            senderId = model.getSenderId();
+            if (model.getRecipientId() != 0) {
+                recipientId = model.getRecipientId();
+                dto.setRecipient(Long.toUnsignedString(recipientId));
+                dto.setRecipientRS(Convert2.rsAccount(recipientId));
+            }    
         }
+        
+        dto.setSender(Long.toUnsignedString(senderId));
+        dto.setSenderRS(Convert2.rsAccount(senderId));
+        dto.setSenderPublicKey(senderPublicKey);
         dto.setAmountATM(String.valueOf(amountATM));
         dto.setFeeATM(String.valueOf(model.getFeeATM()));
         dto.setReferencedTransactionFullHash(model.getReferencedTransactionFullHash());
@@ -63,15 +76,8 @@ public class UnconfirmedTransactionConverter implements Converter<Transaction, U
             }
             dto.setAttachment(attachmentJSON);
         }
-        long senderId;
-        if (model.getType() == Payment.PRIVATE) {
-            senderId = AccountConverter.anonymizeAccount();
-        } else {
-            senderId = model.getSenderId();
-        }
-        dto.setSender(Long.toUnsignedString(senderId));
-        dto.setSenderRS(Convert2.rsAccount(senderId));
-
+        
+        
         dto.setHeight(model.getHeight());
         dto.setVersion(model.getVersion());
         dto.setEcBlockId(Long.toUnsignedString(model.getECBlockId()));

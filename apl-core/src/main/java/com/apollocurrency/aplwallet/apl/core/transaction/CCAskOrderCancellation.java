@@ -5,20 +5,36 @@ package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Order;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.order.entity.AskOrder;
+import com.apollocurrency.aplwallet.apl.core.order.service.OrderService;
+import com.apollocurrency.aplwallet.apl.core.order.service.impl.AskOrderServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.AskOrderService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderCancellation;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 
+import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 
 /**
  * @author al
  */
 class CCAskOrderCancellation extends ColoredCoinsOrderCancellation {
+    private OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService;
 
     public CCAskOrderCancellation() {
+    }
+
+    private OrderService<AskOrder, ColoredCoinsAskOrderPlacement> lookupAskOrderService() {
+        if (askOrderService == null) {
+            this.askOrderService = CDI.current().select(
+                AskOrderServiceImpl.class,
+                AskOrderService.Literal.INSTANCE
+            ).get();
+        }
+        return askOrderService;
     }
 
     @Override
@@ -49,8 +65,8 @@ class CCAskOrderCancellation extends ColoredCoinsOrderCancellation {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         ColoredCoinsAskOrderCancellation attachment = (ColoredCoinsAskOrderCancellation) transaction.getAttachment();
-        Order order = Order.Ask.getAskOrder(attachment.getOrderId());
-        Order.Ask.removeOrder(attachment.getOrderId());
+        AskOrder order = lookupAskOrderService().getOrder(attachment.getOrderId());
+        lookupAskOrderService().removeOrder(attachment.getOrderId());
         if (order != null) {
             lookupAccountAssetService().addToUnconfirmedAssetBalanceATU(senderAccount, getLedgerEvent(), transaction.getId(), order.getAssetId(), order.getQuantityATU());
         }
@@ -59,7 +75,7 @@ class CCAskOrderCancellation extends ColoredCoinsOrderCancellation {
     @Override
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
         ColoredCoinsAskOrderCancellation attachment = (ColoredCoinsAskOrderCancellation) transaction.getAttachment();
-        Order ask = Order.Ask.getAskOrder(attachment.getOrderId());
+        AskOrder ask = lookupAskOrderService().getOrder(attachment.getOrderId());
         if (ask == null) {
             throw new AplException.NotCurrentlyValidException("Invalid ask order: " + Long.toUnsignedString(attachment.getOrderId()));
         }

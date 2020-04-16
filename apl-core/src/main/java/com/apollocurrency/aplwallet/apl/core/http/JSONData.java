@@ -44,14 +44,12 @@ import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.FundingMonitor;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisAccounts;
-import com.apollocurrency.aplwallet.apl.core.app.Order;
 import com.apollocurrency.aplwallet.apl.core.app.Poll;
 import com.apollocurrency.aplwallet.apl.core.app.PollOptionResult;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffler;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.app.Token;
-import com.apollocurrency.aplwallet.apl.core.app.Trade;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.Vote;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
@@ -78,6 +76,9 @@ import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
+import com.apollocurrency.aplwallet.apl.core.order.entity.AskOrder;
+import com.apollocurrency.aplwallet.apl.core.order.entity.BidOrder;
+import com.apollocurrency.aplwallet.apl.core.order.entity.Order;
 import com.apollocurrency.aplwallet.apl.core.peer.Hallmark;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
@@ -87,6 +88,8 @@ import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.DataTag;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
+import com.apollocurrency.aplwallet.apl.core.trade.entity.Trade;
+import com.apollocurrency.aplwallet.apl.core.trade.service.TradeService;
 import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetDelete;
@@ -118,6 +121,7 @@ import java.util.Random;
 @Vetoed
 public final class JSONData {
     private static final AliasService ALIAS_SERVICE = CDI.current().select(AliasService.class).get();
+    private static final TradeService TRADE_SERVICE = CDI.current().select(TradeService.class).get();
     private static Logger LOG = LoggerFactory.getLogger(JSONData.class);
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
@@ -220,7 +224,7 @@ public final class JSONData {
         json.put("quantityATU", String.valueOf(asset.getQuantityATU()));
         json.put("asset", Long.toUnsignedString(asset.getId()));
         if (includeCounts) {
-            json.put("numberOfTrades", Trade.getTradeCount(asset.getId()));
+            json.put("numberOfTrades", TRADE_SERVICE.getTradeCount(asset.getId()));
             json.put("numberOfTransfers", AssetTransfer.getTransferCount(asset.getId()));
             json.put("numberOfAccounts", accountAssetService.getCountByAsset(asset.getId()));
         }
@@ -318,19 +322,19 @@ public final class JSONData {
         return json;
     }
 
-    public static JSONObject askOrder(Order.Ask order) {
+    public static JSONObject askOrder(AskOrder order) {
         JSONObject json = order(order);
         json.put("type", "ask");
         return json;
     }
 
-    public static JSONObject bidOrder(Order.Bid order) {
+    public static JSONObject bidOrder(BidOrder order) {
         JSONObject json = order(order);
         json.put("type", "bid");
         return json;
     }
 
-    public static JSONObject order(Order order) {
+    public static <T extends Order> JSONObject order(T order) {
         JSONObject json = new JSONObject();
         json.put("order", Long.toUnsignedString(order.getId()));
         json.put("asset", Long.toUnsignedString(order.getAssetId()));
@@ -1313,7 +1317,13 @@ public final class JSONData {
         if (isPrivate) {
             Random random = new Random();
             accountId = random.nextLong();
+            if (name.equals("sender")) {
+                byte[] b = new byte[32];
+                random.nextBytes(b);
+                json.put(name +"PublicKey", Convert.toHexString(b));
+            }
         }
+        json.put(name, accountId);
         json.put(name + "RS", Convert2.rsAccount(accountId));
     }
 

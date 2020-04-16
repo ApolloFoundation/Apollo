@@ -44,11 +44,11 @@ class TransactionDaoTest {
     public WeldInitiator weld = WeldInitiator.from()
         .addBeans(MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class))
         .addBeans(MockBean.of(mock(Blockchain.class), Blockchain.class, BlockchainImpl.class))
-        .addBeans(MockBean.of(mock(TimeServiceImpl.class), TimeServiceImpl.class))
         .addBeans(MockBean.of(mock(PropertiesHolder.class), PropertiesHolder.class))
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
         .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
+        .addBeans(MockBean.of(mock(TimeService.class), TimeService.class))
         .build();
 
     private TransactionDao dao;

@@ -42,6 +42,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import org.bouncycastle.math.ec.ECFieldElement;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -60,6 +61,10 @@ public final class Crypto {
             throw new RuntimeException(e.getMessage(), e);
         }
     });
+
+//    private static FBElGamalEncryptedMessage encryptAsymmetric(ECFieldElement affineXCoord, ECFieldElement affineYCoord, String plainText) {
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//    }
 
 
     private Crypto() {
@@ -384,7 +389,7 @@ public final class Crypto {
 
             String M1_X = aesKey.substring(0, 131);
             String M1_Y = aesKey.substring(131, 262);
-//            org.bouncycastle.math.ec.ECPoint _M1 =
+            
             org.bouncycastle.math.ec.ECPoint _M1 =
                 instanceOfAlice.extrapolateECPoint(
                     new BigInteger(M1_X, 16),
@@ -412,12 +417,61 @@ public final class Crypto {
             return new String(plain);
         } catch (Exception e) {
             LOG.trace(e.getMessage());
-
             return cryptogramm;
         }
-
-
     }
+    
+    
+    public static String elGamalEncrypt(String plainText, FBElGamalKeyPair keyPair) {
 
+        
+        FBCryptoParams params = FBCryptoParams.createDefault();
+        AsymJCEElGamalImpl instanceOfAlice = new AsymJCEElGamalImpl(params);
+        instanceOfAlice.setCurveParameters();        
+        org.bouncycastle.math.ec.ECPoint publicKey = keyPair.getPublicKey();
+        // generating random 32-byte key
+
+        SecureRandom random = getSecureRandom();
+        byte[] randomAesKey = new byte[CryptoConstants.AES_KEY_BYTES];
+        random.nextBytes(randomAesKey);        
+                        
+        FBElGamalEncryptedMessage encryptedAesKey = null;
+        try {
+            encryptedAesKey = instanceOfAlice.encryptAsymmetric(
+                    publicKey.getAffineXCoord().toBigInteger(), publicKey.getAffineYCoord().toBigInteger(), new BigInteger(1,randomAesKey) );
+        } catch (CryptoNotValidException e) {
+            LOG.trace(e.getMessage());
+            return null;
+        }
+                
+        // encrypt plaintext with one-time key                
+        byte[] plainTextData = plainText.getBytes();
+        byte[] encryptedPassPhrase = aesGCMEncrypt( plainTextData, randomAesKey);
+        
+        BigInteger m1x = encryptedAesKey.getM1().getAffineXCoord().toBigInteger();
+        BigInteger m1y = encryptedAesKey.getM1().getAffineYCoord().toBigInteger();
+        
+        // cryptogram comes first
+        String cryptogram = Convert.toHexString(encryptedPassPhrase);
+        // m1.x follows
+        cryptogram += normalizeByLen( m1x.toString(CryptoConstants.HEX_RADIX), CryptoConstants.ELGAMAL_DISTANCE);
+        cryptogram += normalizeByLen( m1y.toString(CryptoConstants.HEX_RADIX), CryptoConstants.ELGAMAL_DISTANCE);
+        cryptogram += normalizeByLen( encryptedAesKey.getM2().toString(CryptoConstants.HEX_RADIX), CryptoConstants.ELGAMAL_DISTANCE);
+        
+        MessageDigest digest = null;
+        
+        try {
+            digest = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+             LOG.trace(e.getMessage());
+             return null;
+        }
+        
+        byte[] hash = digest.digest(plainText.getBytes());
+        
+        cryptogram += normalizeByLen(Convert.toHexString(hash),CryptoConstants.SHA256_DIGEST_CHARACTERS);        
+        return cryptogram;        
+    }
+        
 }
 
