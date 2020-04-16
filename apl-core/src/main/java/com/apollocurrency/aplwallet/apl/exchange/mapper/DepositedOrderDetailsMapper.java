@@ -15,7 +15,7 @@ public class DepositedOrderDetailsMapper {
             .assetAddress(responce.component2())
             .amount(EthUtil.weiToEther(responce.component3()))
             .withdrawn(responce.component4())
-                .build();
+            .build();
     }
 
 

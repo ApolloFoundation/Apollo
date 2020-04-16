@@ -18,18 +18,18 @@ public enum ExchangeContractStatus {
      */
     STEP_4;     // 3
 
-    public static ExchangeContractStatus getType(int ordinal){
+    public static ExchangeContractStatus getType(int ordinal) {
         if (ordinal < 0 || ordinal > ExchangeContractStatus.values().length) {
             throw new IllegalArgumentException("Contract status does not exist for ordinal " + ordinal);
         }
         return ExchangeContractStatus.values()[ordinal];
     }
 
-    public boolean isStep1(){
+    public boolean isStep1() {
         return this == ExchangeContractStatus.STEP_1;
     }
 
-    public boolean isStep2(){
+    public boolean isStep2() {
         return this == ExchangeContractStatus.STEP_2;
     }
 

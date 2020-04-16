@@ -10,7 +10,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
-@Getter @Setter @AllArgsConstructor
+@Getter
+@Setter
+@AllArgsConstructor
 public class MyPeerInfoDTO extends BaseDTO {
     private String host;
     private String address;

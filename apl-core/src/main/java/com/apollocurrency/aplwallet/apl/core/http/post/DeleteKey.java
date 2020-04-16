@@ -4,24 +4,24 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import javax.servlet.http.HttpServletRequest;
-
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
+import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import javax.enterprise.inject.Vetoed;
-import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+
+import javax.enterprise.inject.Vetoed;
+import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
 @Deprecated
 public class DeleteKey extends AbstractAPIRequestHandler {
-   public DeleteKey() {
-        super(new APITag[] {APITag.ACCOUNTS});
+    public DeleteKey() {
+        super(new APITag[]{APITag.ACCOUNTS});
     }
 
     @Override

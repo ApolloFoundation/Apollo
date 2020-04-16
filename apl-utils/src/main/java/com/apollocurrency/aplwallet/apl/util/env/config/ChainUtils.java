@@ -1,7 +1,5 @@
 package com.apollocurrency.aplwallet.apl.util.env.config;
 
-import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;

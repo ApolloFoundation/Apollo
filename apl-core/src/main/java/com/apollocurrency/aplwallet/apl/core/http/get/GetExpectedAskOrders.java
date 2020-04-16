@@ -23,8 +23,8 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.transaction.ColoredCoins;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -33,23 +33,24 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
+import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import javax.enterprise.inject.Vetoed;
-import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class GetExpectedAskOrders extends AbstractAPIRequestHandler {
 
-    public GetExpectedAskOrders() {
-        super(new APITag[] {APITag.AE}, "asset", "sortByPrice");
-    }
     private final Comparator<Transaction> priceComparator = (o1, o2) -> {
-        ColoredCoinsOrderPlacementAttachment a1 = (ColoredCoinsOrderPlacementAttachment)o1.getAttachment();
-        ColoredCoinsOrderPlacementAttachment a2 = (ColoredCoinsOrderPlacementAttachment)o2.getAttachment();
+        ColoredCoinsOrderPlacementAttachment a1 = (ColoredCoinsOrderPlacementAttachment) o1.getAttachment();
+        ColoredCoinsOrderPlacementAttachment a2 = (ColoredCoinsOrderPlacementAttachment) o2.getAttachment();
         return Long.compare(a1.getPriceATM(), a2.getPriceATM());
     };
+
+    public GetExpectedAskOrders() {
+        super(new APITag[]{APITag.AE}, "asset", "sortByPrice");
+    }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
@@ -60,7 +61,7 @@ public final class GetExpectedAskOrders extends AbstractAPIRequestHandler {
             if (transaction.getType() != ColoredCoins.ASK_ORDER_PLACEMENT) {
                 return false;
             }
-            ColoredCoinsOrderPlacementAttachment attachment = (ColoredCoinsOrderPlacementAttachment)transaction.getAttachment();
+            ColoredCoinsOrderPlacementAttachment attachment = (ColoredCoinsOrderPlacementAttachment) transaction.getAttachment();
             return assetId == 0 || attachment.getAssetId() == assetId;
         };
 

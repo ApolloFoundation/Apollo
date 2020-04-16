@@ -181,15 +181,15 @@ public class GetAccountLedgerEntry extends AbstractAPIRequestHandler {
      * Create the GetAccountLedgerEntry instance
      */
     public GetAccountLedgerEntry() {
-        super(new APITag[] {APITag.ACCOUNTS}, "ledgerId", "includeTransaction", "includeHoldingInfo");
+        super(new APITag[]{APITag.ACCOUNTS}, "ledgerId", "includeTransaction", "includeHoldingInfo");
     }
 
     /**
      * Process the GetAccountLedgerEntry API request
      *
-     * @param   req                 API request
-     * @return                      API response
-     * @throws  AplException        Invalid request
+     * @param req API request
+     * @return API response
+     * @throws AplException Invalid request
      */
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
@@ -217,7 +217,7 @@ public class GetAccountLedgerEntry extends AbstractAPIRequestHandler {
     /**
      * No required block parameters
      *
-     * @return                      FALSE to disable the required block parameters
+     * @return FALSE to disable the required block parameters
      */
     @Override
     protected boolean allowRequiredBlockParameters() {

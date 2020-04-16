@@ -4,12 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.tagged.mapper;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class TaggedDataMapper implements RowMapper<TaggedData> {
 

@@ -37,7 +37,7 @@ import javax.servlet.http.HttpServletRequest;
 public final class GetSharedKey extends AbstractAPIRequestHandler {
 
     public GetSharedKey() {
-        super(new APITag[] {APITag.MESSAGES}, "account", "secretPhrase", "nonce", "passphrase", "participantAccount");
+        super(new APITag[]{APITag.MESSAGES}, "account", "secretPhrase", "nonce", "passphrase", "participantAccount");
     }
 
     @Override
@@ -45,7 +45,7 @@ public final class GetSharedKey extends AbstractAPIRequestHandler {
         long accountId = HttpParameterParserUtil.getAccountId(req, false);
         byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, accountId, false);
 
-        long participantAccountId = HttpParameterParserUtil.getAccountId(req,"participantAccount", true);
+        long participantAccountId = HttpParameterParserUtil.getAccountId(req, "participantAccount", true);
         byte[] nonce = HttpParameterParserUtil.getBytes(req, "nonce", true);
         byte[] publicKey = lookupAccountService().getPublicKeyByteArray(participantAccountId);
         if (publicKey == null) {

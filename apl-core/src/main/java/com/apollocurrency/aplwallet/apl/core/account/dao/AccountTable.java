@@ -45,15 +45,6 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
             return account.getDbKey();
         }
     };
-
-    public static DbKey newKey(long id) {
-        return accountDbKeyFactory.newKey(id);
-    }
-
-    public static DbKey newKey(Account a) {
-        return accountDbKeyFactory.newKey(a);
-    }
-
     private final BlockchainConfig blockchainConfig;
 
     @Inject
@@ -61,6 +52,14 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
     public AccountTable(Blockchain blockchain, BlockchainConfig blockchainConfig/*, @Named("CREATOR_ID")long creatorId*/) {
         super("account", accountDbKeyFactory, false);
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL.");
+    }
+
+    public static DbKey newKey(long id) {
+        return accountDbKeyFactory.newKey(id);
+    }
+
+    public static DbKey newKey(Account a) {
+        return accountDbKeyFactory.newKey(a);
     }
 
     @Override

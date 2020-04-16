@@ -6,6 +6,7 @@ public interface TransactionManagement {
 
     /**
      * Return TRUE if there is db connection in ThreadLocal
+     *
      * @return true if connection exists in ThreadLocal, false otherwise
      */
     boolean isInTransaction();
@@ -25,6 +26,7 @@ public interface TransactionManagement {
     /**
      * Commit/flash transaction data using existing underlying db connection.
      * It can be closed OR can be left opened.
+     *
      * @param closeConnection true if db connection should be closed, false otherwise
      */
     void commit(boolean closeConnection);
@@ -38,6 +40,7 @@ public interface TransactionManagement {
     /**
      * Rollback transaction data using existing underlying db connection.
      * It can be closed OR can be left opened.
+     *
      * @param closeConnection true if db connection should be closed, false otherwise
      */
     void rollback(boolean closeConnection);

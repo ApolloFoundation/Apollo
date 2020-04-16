@@ -23,8 +23,8 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONArray;
@@ -46,7 +46,7 @@ public final class GetAccountCurrencies extends AbstractAPIRequestHandler {
 //    }
 
     public GetAccountCurrencies() {
-        super(new APITag[] {APITag.ACCOUNTS, APITag.MS}, "account", "currency", "height", "includeCurrencyInfo");
+        super(new APITag[]{APITag.ACCOUNTS, APITag.MS}, "account", "currency", "height", "includeCurrencyInfo");
     }
 
     @Override

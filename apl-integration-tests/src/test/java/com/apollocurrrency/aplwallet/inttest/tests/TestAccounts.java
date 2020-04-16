@@ -1,8 +1,8 @@
 package com.apollocurrrency.aplwallet.inttest.tests;
 
-import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
 import com.apollocurrency.aplwallet.api.dto.BalanceDTO;
 import com.apollocurrency.aplwallet.api.dto.EntryDTO;
+import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
 import com.apollocurrency.aplwallet.api.response.Account2FAResponse;
 import com.apollocurrency.aplwallet.api.response.AccountBlockIdsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountLedgerResponse;
@@ -145,9 +145,9 @@ public class TestAccounts extends TestBaseOld {
     @DisplayName("Verify Unconfirmed Transactions Ids endpoint")
     public void testGetUnconfirmedTransactionsIds() throws IOException {
         RetryPolicy retryPolicy = new RetryPolicy()
-                .retryWhen(null)
-                .withMaxRetries(3)
-                .withDelay(5, TimeUnit.SECONDS);
+            .retryWhen(null)
+            .withMaxRetries(3)
+            .withDelay(5, TimeUnit.SECONDS);
         sendMoney(getTestConfiguration().getStandartWallet(), getTestConfiguration().getStandartWallet().getUser(), 2);
         AccountTransactionIdsResponse accountTransactionIdsResponse = Failsafe.with(retryPolicy).get(() -> getUnconfirmedTransactionIds(getTestConfiguration().getStandartWallet().getUser()));
         assertTrue(accountTransactionIdsResponse.getUnconfirmedTransactionIds().size() > 0);
@@ -219,8 +219,6 @@ public class TestAccounts extends TestBaseOld {
             verifyTransactionInBlock(trx);
         }
     }
-
-
 
 
     @DisplayName("Send Money Private")

@@ -10,6 +10,9 @@ import com.apollocurrency.aplwallet.apl.tools.ApolloTools;
 import com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil;
 import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
@@ -19,8 +22,6 @@ import java.security.cert.CertificateException;
 import java.security.interfaces.RSAPrivateKey;
 import java.util.Objects;
 import java.util.logging.Level;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Utilites for updater URL encryption/decryption

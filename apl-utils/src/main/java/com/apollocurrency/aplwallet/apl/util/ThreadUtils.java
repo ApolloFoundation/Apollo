@@ -12,6 +12,9 @@ import java.util.concurrent.TimeUnit;
 
 @Vetoed
 public class ThreadUtils {
+    private ThreadUtils() {
+    }
+
     public static void sleep(long millis) {
         try {
             TimeUnit.MILLISECONDS.sleep(millis);
@@ -32,9 +35,10 @@ public class ThreadUtils {
         StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
         return String.join("->", getStacktraceSpec(stackTraceElements[5]), getStacktraceSpec(stackTraceElements[4]), getStacktraceSpec(stackTraceElements[3]));
     }
+
     public static String last5Stacktrace() {
         StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
-        return String.join("->", getStacktraceSpec(stackTraceElements[7]),getStacktraceSpec(stackTraceElements[6]), getStacktraceSpec(stackTraceElements[5]), getStacktraceSpec(stackTraceElements[4]), getStacktraceSpec(stackTraceElements[3]));
+        return String.join("->", getStacktraceSpec(stackTraceElements[7]), getStacktraceSpec(stackTraceElements[6]), getStacktraceSpec(stackTraceElements[5]), getStacktraceSpec(stackTraceElements[4]), getStacktraceSpec(stackTraceElements[3]));
     }
 
     public static String lastStacktrace() {
@@ -73,15 +77,11 @@ public class ThreadUtils {
         }
     }
 
-
     public static String getStackTraceSilently(Throwable exception) {
         try {
             return getStackTrace(exception);
         } catch (IOException e) {
             return e.getMessage() + "(unable to extract stacktrace)";
         }
-    }
-
-    private ThreadUtils() {
     }
 }

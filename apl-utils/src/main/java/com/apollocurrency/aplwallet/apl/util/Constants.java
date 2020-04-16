@@ -14,7 +14,7 @@
  *
  */
 
- /*
+/*
  * Copyright © 2018 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.util;
@@ -24,7 +24,7 @@ import java.math.BigInteger;
 
 public final class Constants {
 
-    public static final Version VERSION = new Version("1.42.5");
+    public static final Version VERSION = new Version("1.43.0");
 
     public static final String APPLICATION = "Apollo";
     public static final String APPLICATION_DIR_NAME = "apl-blockchain";
@@ -133,7 +133,7 @@ public final class Constants {
     public static final int MAX_TAGGED_DATA_CHANNEL_LENGTH = 100;
     public static final int MAX_TAGGED_DATA_FILENAME_LENGTH = 100;
     public static final int MAX_TAGGED_DATA_DATA_LENGTH = 42 * 1024;
-//    Update
+    //    Update
     public static final int UPDATE_URL_PART_LENGTH = 512;
     public static final int MAX_UPDATE_PLATFORM_LENGTH = 10;
     public static final int MAX_UPDATE_ARCHITECTURE_LENGTH = 10;
@@ -167,29 +167,22 @@ public final class Constants {
     public static final BigInteger GAS_LIMIT_FOR_ERC20 = BigInteger.valueOf(300_000);
     public static final BigInteger GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT = BigInteger.valueOf(400_000);
     public static final Integer MAX_ADDRESS_LENGTH = 110;
-
+    //168h
+    public static final int DEX_MAX_CONTRACT_TIME_WAITING_TO_REPLY = 7 * 24 * 60 * 60;
+    public static final int DEX_NUMBER_OF_PENDING_ORDER_CONFIRMATIONS = 1000;
+    public static final int DEX_GRAPH_INTERVAL_MIN = 60;
+    public static final int DEX_GRAPH_INTERVAL_HOUR = 60 * 60;
+    public static final int DEX_GRAPH_INTERVAL_DAY = 60 * 60 * 24;
+    public static final int HEALTH_CHECK_INTERVAL = 30 * 1000; //milliseconds
     public static String ETH_DEFAULT_ADDRESS = "0x0000000000000000000000000000000000000000";
-
     //DEX
     public static String ETH_STATION_GAS_INFO_URL = "https://www.ethgasstation.info/json/ethgasAPI.json";
     public static String ETH_CHAIN_GAS_INFO_URL = "https://www.etherchain.org/api/gasPriceOracle";
     public static String ETH_GAS_INFO_URL = "https://ethgasstation.info/json/ethgasAPI.json";
-
     public static BigInteger ETH_MAX_POS_INT = new BigInteger("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
-
     //TODO calculate this value on the future.
     public static BigDecimal DEX_MIN_ETH_FEE = BigDecimal.valueOf(0.002);
 
-    //168h
-    public static final int DEX_MAX_CONTRACT_TIME_WAITING_TO_REPLY = 7 * 24 * 60 * 60;
-
-    public static final int DEX_NUMBER_OF_PENDING_ORDER_CONFIRMATIONS = 1000;
-
-    public static final int DEX_GRAPH_INTERVAL_MIN = 60;
-    public static final int DEX_GRAPH_INTERVAL_HOUR = 60 * 60;
-    public static final int DEX_GRAPH_INTERVAL_DAY = 60 * 60 * 24;
-
-    public static final int HEALTH_CHECK_INTERVAL = 30*1000; //milliseconds
     private Constants() {
     } // never
 

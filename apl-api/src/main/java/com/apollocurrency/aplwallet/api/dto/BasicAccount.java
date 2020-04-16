@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.api.dto;
 
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -13,7 +12,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- *
  * @author al
  */
 @Getter
@@ -21,13 +19,13 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BasicAccount extends BaseDTO {
+    public String accountRS;
     @JsonAlias({"account"}) // from json
     @JsonProperty("account") //to json
     protected long id;
-    public String accountRS;
 
-    public BasicAccount(String account) {
-        this.id = Convert.parseAccountId(account);
+    BasicAccount(long decodedAccount) {
+        this.id = decodedAccount;
     }
 
 }

@@ -24,7 +24,7 @@ public class FeaturesHeightRequirement {
         this.dexExpiredContractWithFinishedPhasingHeightAndStep3 = dexExpiredContractWithFinishedPhasingHeightAndStep3;
     }
 
-    public FeaturesHeightRequirement copy(){
+    public FeaturesHeightRequirement copy() {
         return new FeaturesHeightRequirement(dexReopenPendingOrdersHeight, dexExpiredContractWithFinishedPhasingHeightAndStep3);
     }
 }

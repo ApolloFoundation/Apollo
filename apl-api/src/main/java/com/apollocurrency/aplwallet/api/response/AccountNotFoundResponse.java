@@ -13,7 +13,8 @@ import lombok.ToString;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @NoArgsConstructor
-@Setter @Getter
+@Setter
+@Getter
 @ToString(callSuper = true)
 public class AccountNotFoundResponse extends ResponseBase {
     private String account;

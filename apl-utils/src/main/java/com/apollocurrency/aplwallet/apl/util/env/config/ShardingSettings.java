@@ -61,17 +61,17 @@ public class ShardingSettings {
         if (!(o instanceof ShardingSettings)) return false;
         ShardingSettings that = (ShardingSettings) o;
         return enabled == that.enabled &&
-                frequency == that.frequency &&
-                digestAlgorithm.equals(that.digestAlgorithm);
+            frequency == that.frequency &&
+            digestAlgorithm.equals(that.digestAlgorithm);
     }
 
     @Override
     public String toString() {
         return "ShardingSettings{" +
-                "enabled=" + enabled +
-                ", frequency=" + frequency +
-                ", digestAlgorithm='" + digestAlgorithm + '\'' +
-                '}';
+            "enabled=" + enabled +
+            ", frequency=" + frequency +
+            ", digestAlgorithm='" + digestAlgorithm + '\'' +
+            '}';
     }
 
     @Override

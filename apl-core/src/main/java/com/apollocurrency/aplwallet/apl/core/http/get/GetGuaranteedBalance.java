@@ -25,17 +25,17 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class GetGuaranteedBalance extends AbstractAPIRequestHandler {
 
     public GetGuaranteedBalance() {
-        super(new APITag[] {APITag.ACCOUNTS, APITag.FORGING}, "account", "numberOfConfirmations");
+        super(new APITag[]{APITag.ACCOUNTS, APITag.FORGING}, "account", "numberOfConfirmations");
     }
 
     @Override
@@ -49,8 +49,8 @@ public final class GetGuaranteedBalance extends AbstractAPIRequestHandler {
             response.put("guaranteedBalanceATM", "0");
         } else {
             response.put("guaranteedBalanceATM", String.valueOf(
-                    lookupAccountService().getGuaranteedBalanceATM(account, numberOfConfirmations,
-                            lookupBlockchain().getHeight())));
+                lookupAccountService().getGuaranteedBalanceATM(account, numberOfConfirmations,
+                    lookupBlockchain().getHeight())));
         }
 
         return response;

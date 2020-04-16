@@ -4,12 +4,20 @@
 
 package com.apollocurrency.aplwallet.apl.updater.export;
 
-import static com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService.SECURE_STORE_KEY;
+import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.updater.export.event.UpdateEvent;
+import com.apollocurrency.aplwallet.apl.updater.export.event.UpdateEventData;
+import com.apollocurrency.aplwallet.apl.updater.export.event.UpdateEventType;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -21,16 +29,7 @@ import java.util.Base64;
 import java.util.Objects;
 import java.util.Properties;
 
-import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.updater.export.event.UpdateEvent;
-import com.apollocurrency.aplwallet.apl.updater.export.event.UpdateEventData;
-import com.apollocurrency.aplwallet.apl.updater.export.event.UpdateEventType;
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
-import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import lombok.extern.slf4j.Slf4j;
+import static com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService.SECURE_STORE_KEY;
 
 /**
  * Class process sent event afer update is processed and not run script.
@@ -94,17 +93,17 @@ public class UpdateEventObserver {
         }
         log.debug("Before saving data to file in config dir = '{}'", targetFile);
         // read, prepare and write data
-        try (OutputStream output = new FileOutputStream(targetFile, false) ) {
+        try (OutputStream output = new FileOutputStream(targetFile, false)) {
             // set the properties value
             log.debug("START write props to file '{}'", targetFile);
             byte[] nameKeyHash;
             if (StringUtils.isNotBlank(propertyValue)) {
                 nameKeyHash = Crypto.sha256().digest(propertyValue.getBytes());
-                writeTempProps.setProperty(new String(Base64.getDecoder().decode("YXBsLmFkbWluLnBoYXNo")), Convert.toHexString(nameKeyHash) );
+                writeTempProps.setProperty(new String(Base64.getDecoder().decode("YXBsLmFkbWluLnBoYXNo")), Convert.toHexString(nameKeyHash));
                 writeTempProps.setProperty(new String(Base64.getDecoder().decode("YXBsLmFkbWluLnB2YWw=")), propertyValue);
             } else {
                 writeTempProps.setProperty(new String(Base64.getDecoder().decode("YXBsLmFkbWluLnB2YWw=")),
-                    new String(Base64.getDecoder().decode("YWRtaW5QYXNz")) );
+                    new String(Base64.getDecoder().decode("YWRtaW5QYXNz")));
                 nameKeyHash = Crypto.sha256().digest(Base64.getDecoder().decode("YWRtaW5QYXNz"));// default
                 writeTempProps.setProperty(new String(Base64.getDecoder().decode("YXBsLmFkbWluLnBoYXNo")), Convert.toHexString(nameKeyHash));
             }

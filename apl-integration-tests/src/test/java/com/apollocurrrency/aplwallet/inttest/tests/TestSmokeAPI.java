@@ -31,8 +31,8 @@ import static org.junit.Assert.assertTrue;
 @DisplayName("Disabled Test")
 public class TestSmokeAPI extends TestBaseOld {
 
-    private TestConfiguration testConfiguration;
     private static ObjectMapper mapper = new ObjectMapper();
+    private TestConfiguration testConfiguration;
 
     public TestSmokeAPI() {
         this.testConfiguration = TestConfiguration.getTestConfiguration();
@@ -43,9 +43,9 @@ public class TestSmokeAPI extends TestBaseOld {
     public void verifyCountOfActivePeers() throws IOException {
         long etalonPeerBlockHeight;
         RetryPolicy retryPolicy = new RetryPolicy()
-                .retryWhen(null)
-                .withMaxRetries(10)
-                .withDelay(5, TimeUnit.SECONDS);
+            .retryWhen(null)
+            .withMaxRetries(10)
+            .withDelay(5, TimeUnit.SECONDS);
 
         //Verify count of peers
         List<String> peers = getPeers();
@@ -69,9 +69,9 @@ public class TestSmokeAPI extends TestBaseOld {
         }
 
         RetryPolicy retryPolicy2 = new RetryPolicy()
-                .retryWhen(false)
-                .withMaxRetries(5)
-                .withDelay(5, TimeUnit.SECONDS);
+            .retryWhen(false)
+            .withMaxRetries(5)
+            .withDelay(5, TimeUnit.SECONDS);
         Failsafe.with(retryPolicy2).get(() -> getLastBlock(null) > etalonPeerBlockHeight);
 
         long newEtalonPeerBlockHeight = getLastBlock(null);

@@ -36,23 +36,23 @@ import static com.apollocurrency.aplwallet.apl.core.http.AdminPasswordVerifier.A
 public class SecurityInterceptor implements ContainerRequestFilter {
     private static final ServerResponse ACCESS_DENIED = new ServerResponse("Access denied for this resource", Response.Status.UNAUTHORIZED.getStatusCode(), new Headers<Object>());
     private static final ServerResponse ACCESS_FORBIDDEN = new ServerResponse("Nobody can access this resource", Response.Status.FORBIDDEN.getStatusCode(), new Headers<Object>());
-
-    @Context
-    private UriInfo uriInfo;
     @Context
     ResourceInfo info;
+    @Context
+    private UriInfo uriInfo;
     @Context
     private HttpServletRequest request;
 
     @Inject
     private AdminPasswordVerifier apw;
 
-    @Inject @Named("excludeProtection")
+    @Inject
+    @Named("excludeProtection")
     private RequestUriMatcher excludeProtectionUriMatcher;
 
     @Override
     public void filter(ContainerRequestContext requestContext) throws IOException {
-        if (excludeProtectionUriMatcher.matches(uriInfo)){ //resource is not protected
+        if (excludeProtectionUriMatcher.matches(uriInfo)) { //resource is not protected
             return;
         }
 
@@ -61,42 +61,42 @@ public class SecurityInterceptor implements ContainerRequestFilter {
         /*if (true){ return; }*/ // don't remove, use for debugging
 
         //Access allowed for all
-        if( resourceClass.isAnnotationPresent(PermitAll.class)) {
+        if (resourceClass.isAnnotationPresent(PermitAll.class)) {
             return;
         }
         //Access denied for all
-        if( resourceClass.isAnnotationPresent(DenyAll.class)) {
+        if (resourceClass.isAnnotationPresent(DenyAll.class)) {
             requestContext.abortWith(ACCESS_FORBIDDEN);
             return;
         }
 
         //Access allowed for all
-        if( method.isAnnotationPresent(PermitAll.class)) {
+        if (method.isAnnotationPresent(PermitAll.class)) {
             return;
         }
         //Access denied for all
-        if(method.isAnnotationPresent(DenyAll.class)) {
+        if (method.isAnnotationPresent(DenyAll.class)) {
             requestContext.abortWith(ACCESS_FORBIDDEN);
             return;
         }
 
-        if(apw.isDisabledAdminPassword()){
+        if (apw.isDisabledAdminPassword()) {
             //Access allowed for all
             return;
         }
 
         //Verify user access
-        if(method.isAnnotationPresent(RolesAllowed.class)){
+        if (method.isAnnotationPresent(RolesAllowed.class)) {
             RolesAllowed rolesAnnotation = method.getAnnotation(RolesAllowed.class);
             String[] roles = rolesAnnotation.value();
             Set<String> rolesSet = new HashSet<String>();
-            Arrays.stream(roles).forEach(role-> rolesSet.add(role.toLowerCase()));
+            Arrays.stream(roles).forEach(role -> rolesSet.add(role.toLowerCase()));
             Response response = apw.verifyPasswordWithoutException(request);
-            if (response != null){
+            if (response != null) {
                 requestContext.abortWith(response);
                 return;
             }
-            if ( !rolesSet.contains(ADMIN_ROLE) ) {
+            if (!rolesSet.contains(ADMIN_ROLE)) {
                 requestContext.abortWith(ACCESS_DENIED);
                 return;
             }

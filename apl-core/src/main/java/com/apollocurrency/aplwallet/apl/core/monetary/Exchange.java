@@ -21,20 +21,19 @@
 package com.apollocurrency.aplwallet.apl.core.monetary;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import javax.enterprise.inject.spi.CDI;
-
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -44,21 +43,7 @@ import java.util.List;
 
 public final class Exchange {
 
-    public enum Event {
-        EXCHANGE
-    }
-
-    private static DatabaseManager databaseManager;
-
-    private static TransactionalDataSource lookupDataSource() {
-        if (databaseManager == null) {
-            databaseManager = CDI.current().select(DatabaseManager.class).get();
-        }
-        return databaseManager.getDataSource();
-    }
-
-    private static final Listeners<Exchange,Event> listeners = new Listeners<>();
-
+    private static final Listeners<Exchange, Event> listeners = new Listeners<>();
     private static final LinkKeyFactory<Exchange> exchangeDbKeyFactory = new LinkKeyFactory<Exchange>("transaction_id", "offer_id") {
 
         @Override
@@ -67,7 +52,6 @@ public final class Exchange {
         }
 
     };
-
     private static final EntityDbTable<Exchange> exchangeTable = new EntityDbTable<Exchange>("exchange", exchangeDbKeyFactory) {
 
         @Override
@@ -81,6 +65,54 @@ public final class Exchange {
         }
 
     };
+    private static DatabaseManager databaseManager;
+    private final long transactionId;
+    private final int timestamp;
+    private final long currencyId;
+    private final long blockId;
+    private final int height;
+    private final long offerId;
+    private final long sellerId;
+    private final long buyerId;
+    private final DbKey dbKey;
+    private final long units;
+    private final long rate;
+
+    private Exchange(long transactionId, long currencyId, CurrencyExchangeOffer offer,
+                     long sellerId, long buyerId, long units, Block block) {
+        this.transactionId = transactionId;
+        this.blockId = block.getId();
+        this.height = block.getHeight();
+        this.currencyId = currencyId;
+        this.timestamp = block.getTimestamp();
+        this.offerId = offer.getId();
+        this.sellerId = sellerId;
+        this.buyerId = buyerId;
+        this.dbKey = exchangeDbKeyFactory.newKey(this.transactionId, this.offerId);
+        this.units = units;
+        this.rate = offer.getRateATM();
+    }
+
+    private Exchange(ResultSet rs, DbKey dbKey) throws SQLException {
+        this.transactionId = rs.getLong("transaction_id");
+        this.currencyId = rs.getLong("currency_id");
+        this.blockId = rs.getLong("block_id");
+        this.offerId = rs.getLong("offer_id");
+        this.sellerId = rs.getLong("seller_id");
+        this.buyerId = rs.getLong("buyer_id");
+        this.dbKey = dbKey;
+        this.units = rs.getLong("units");
+        this.rate = rs.getLong("rate");
+        this.timestamp = rs.getInt("timestamp");
+        this.height = rs.getInt("height");
+    }
+
+    private static TransactionalDataSource lookupDataSource() {
+        if (databaseManager == null) {
+            databaseManager = CDI.current().select(DatabaseManager.class).get();
+        }
+        return databaseManager.getDataSource();
+    }
 
     public static DbIterator<Exchange> getAllExchanges(int from, int to) {
         return exchangeTable.getAll(from, to);
@@ -133,8 +165,8 @@ public final class Exchange {
         try {
             con = lookupDataSource().getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM exchange WHERE seller_id = ?"
-                    + " UNION ALL SELECT * FROM exchange WHERE buyer_id = ? AND seller_id <> ? ORDER BY height DESC, db_id DESC"
-                    + DbUtils.limitsClause(from, to));
+                + " UNION ALL SELECT * FROM exchange WHERE buyer_id = ? AND seller_id <> ? ORDER BY height DESC, db_id DESC"
+                + DbUtils.limitsClause(from, to));
             int i = 0;
             pstmt.setLong(++i, accountId);
             pstmt.setLong(++i, accountId);
@@ -152,8 +184,8 @@ public final class Exchange {
         try {
             con = lookupDataSource().getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM exchange WHERE seller_id = ? AND currency_id = ?"
-                    + " UNION ALL SELECT * FROM exchange WHERE buyer_id = ? AND seller_id <> ? AND currency_id = ? ORDER BY height DESC, db_id DESC"
-                    + DbUtils.limitsClause(from, to));
+                + " UNION ALL SELECT * FROM exchange WHERE buyer_id = ? AND seller_id <> ? AND currency_id = ? ORDER BY height DESC, db_id DESC"
+                + DbUtils.limitsClause(from, to));
             int i = 0;
             pstmt.setLong(++i, accountId);
             pstmt.setLong(++i, currencyId);
@@ -189,53 +221,12 @@ public final class Exchange {
         return exchange;
     }
 
-    public static void init() {}
-
-
-    private final long transactionId;
-    private final int timestamp;
-    private final long currencyId;
-    private final long blockId;
-    private final int height;
-    private final long offerId;
-    private final long sellerId;
-    private final long buyerId;
-    private final DbKey dbKey;
-    private final long units;
-    private final long rate;
-
-    private Exchange(long transactionId, long currencyId, CurrencyExchangeOffer offer,
-                     long sellerId, long buyerId, long units, Block block) {
-        this.transactionId = transactionId;
-        this.blockId = block.getId();
-        this.height = block.getHeight();
-        this.currencyId = currencyId;
-        this.timestamp = block.getTimestamp();
-        this.offerId = offer.getId();
-        this.sellerId = sellerId;
-        this.buyerId = buyerId;
-        this.dbKey = exchangeDbKeyFactory.newKey(this.transactionId, this.offerId);
-        this.units = units;
-        this.rate = offer.getRateATM();
-    }
-
-    private Exchange(ResultSet rs, DbKey dbKey) throws SQLException {
-        this.transactionId = rs.getLong("transaction_id");
-        this.currencyId = rs.getLong("currency_id");
-        this.blockId = rs.getLong("block_id");
-        this.offerId = rs.getLong("offer_id");
-        this.sellerId = rs.getLong("seller_id");
-        this.buyerId = rs.getLong("buyer_id");
-        this.dbKey = dbKey;
-        this.units = rs.getLong("units");
-        this.rate = rs.getLong("rate");
-        this.timestamp = rs.getInt("timestamp");
-        this.height = rs.getInt("height");
+    public static void init() {
     }
 
     private void save(Connection con) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO exchange (transaction_id, currency_id, block_id, "
-                + "offer_id, seller_id, buyer_id, units, rate, timestamp, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+            + "offer_id, seller_id, buyer_id, units, rate, timestamp, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, this.transactionId);
             pstmt.setLong(++i, this.currencyId);
@@ -278,11 +269,11 @@ public final class Exchange {
     public long getRate() {
         return rate;
     }
-    
+
     public long getCurrencyId() {
         return currencyId;
     }
-    
+
     public int getTimestamp() {
         return timestamp;
     }
@@ -294,7 +285,11 @@ public final class Exchange {
     @Override
     public String toString() {
         return "Exchange currency: " + Long.toUnsignedString(currencyId) + " offer: " + Long.toUnsignedString(offerId)
-                + " rate: " + rate + " units: " + units + " height: " + height + " transaction: " + Long.toUnsignedString(transactionId);
+            + " rate: " + rate + " units: " + units + " height: " + height + " transaction: " + Long.toUnsignedString(transactionId);
+    }
+
+    public enum Event {
+        EXCHANGE
     }
 
 }

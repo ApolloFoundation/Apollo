@@ -14,6 +14,8 @@ import com.apollocurrency.aplwallet.apl.core.phasing.mapper.PhasingPollLinkedTra
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollLinkedTransaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -21,8 +23,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 public class PhasingPollLinkedTransactionTable extends ValuesDbTable<PhasingPollLinkedTransaction> {
@@ -57,7 +57,7 @@ public class PhasingPollLinkedTransactionTable extends ValuesDbTable<PhasingPoll
     @Override
     public void save(Connection con, PhasingPollLinkedTransaction linkedTransaction) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_poll_linked_transaction (transaction_id, "
-                + "linked_full_hash, linked_transaction_id, height) VALUES (?, ?, ?, ?)")) {
+            + "linked_full_hash, linked_transaction_id, height) VALUES (?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, linkedTransaction.getPollId());
             pstmt.setBytes(++i, linkedTransaction.getFullHash());
@@ -70,7 +70,7 @@ public class PhasingPollLinkedTransactionTable extends ValuesDbTable<PhasingPoll
     public List<Transaction> getLinkedPhasedTransactions(byte[] linkedTransactionFullHash) throws SQLException {
         try (Connection con = getDatabaseManager().getDataSource().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT transaction_id FROM phasing_poll_linked_transaction " +
-                     "WHERE linked_transaction_id = ? AND linked_full_hash = ?")) {
+                 "WHERE linked_transaction_id = ? AND linked_full_hash = ?")) {
             int i = 0;
             pstmt.setLong(++i, Convert.fullHashToId(linkedTransactionFullHash));
             pstmt.setBytes(++i, linkedTransactionFullHash);

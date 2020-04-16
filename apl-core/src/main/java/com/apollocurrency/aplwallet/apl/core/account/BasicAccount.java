@@ -25,11 +25,14 @@ public class BasicAccount {
         this.id = Convert.parseAccountId(account);
     }
 
+    public BasicAccount() {
+    }
+
     @Override
     public String toString() {
         return "BasicAccount{" +
-                Convert2.rsAccount(id) +
-                '}';
+            Convert2.rsAccount(id) +
+            '}';
     }
 
     @Override
@@ -48,15 +51,13 @@ public class BasicAccount {
     public long getId() {
         return id;
     }
-    public String getAccountRS() {
-        return Convert2.rsAccount(id);
-    }
 
     @JsonSetter
     public void setId(String account) {
         this.id = Convert.parseAccountId(account);
     }
 
-    public BasicAccount() {
+    public String getAccountRS() {
+        return Convert2.rsAccount(id);
     }
 }

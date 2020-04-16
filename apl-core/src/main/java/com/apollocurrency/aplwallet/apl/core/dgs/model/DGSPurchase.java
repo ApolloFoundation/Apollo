@@ -74,18 +74,16 @@ public class DGSPurchase extends VersionedDerivedEntity {
         this.dgsFeedbacks = dgsFeedbackList;
     }
 
-
-
-    public void setFeedbacks(List<DGSFeedback> dgsFeedbacks) {
-        this.dgsFeedbacks = dgsFeedbacks;
-    }
-
     public int getDeadline() {
         return deadline;
     }
 
     public boolean isGoodsIsText() {
         return goodsIsText;
+    }
+
+    public void setGoodsIsText(boolean goodsIsText) {
+        this.goodsIsText = goodsIsText;
     }
 
     public long getId() {
@@ -100,7 +98,9 @@ public class DGSPurchase extends VersionedDerivedEntity {
         return goodsId;
     }
 
-    public long getSellerId() { return sellerId; }
+    public long getSellerId() {
+        return sellerId;
+    }
 
     public int getQuantity() {
         return quantity;
@@ -134,6 +134,10 @@ public class DGSPurchase extends VersionedDerivedEntity {
         return encryptedGoods;
     }
 
+    public void setEncryptedGoods(EncryptedData encryptedGoods) {
+        this.encryptedGoods = encryptedGoods;
+    }
+
     public boolean goodsIsText() {
         return goodsIsText;
     }
@@ -163,6 +167,10 @@ public class DGSPurchase extends VersionedDerivedEntity {
         return dgsFeedbacks;
     }
 
+    public void setFeedbacks(List<DGSFeedback> dgsFeedbacks) {
+        this.dgsFeedbacks = dgsFeedbacks;
+    }
+
     public void addFeedback(DGSFeedback feedback) {
         dgsFeedbacks.add(feedback);
     }
@@ -177,6 +185,10 @@ public class DGSPurchase extends VersionedDerivedEntity {
         }
 //        publicFeedbacks = publicFeedbackTable.get(publicFeedbackDbKeyFactory.newKey(this));
         return publicFeedbacks;
+    }
+
+    public void setPublicFeedbacks(List<DGSPublicFeedback> publicFeedbacks) {
+        this.publicFeedbacks = publicFeedbacks;
     }
 
     public void addPublicFeedback(DGSPublicFeedback publicFeedback) {
@@ -199,24 +211,12 @@ public class DGSPurchase extends VersionedDerivedEntity {
         this.refundATM = refundATM;
     }
 
-    public void setGoodsIsText(boolean goodsIsText) {
-        this.goodsIsText = goodsIsText;
-    }
-
     public void setHasFeedbacks(boolean hasFeedbackNotes) {
         this.hasFeedbacks = hasFeedbackNotes;
     }
 
     public void setHasPublicFeedbacks(boolean hasPublicFeedbacks) {
         this.hasPublicFeedbacks = hasPublicFeedbacks;
-    }
-
-    public void setEncryptedGoods(EncryptedData encryptedGoods) {
-        this.encryptedGoods = encryptedGoods;
-    }
-
-    public void setPublicFeedbacks(List<DGSPublicFeedback> publicFeedbacks) {
-        this.publicFeedbacks = publicFeedbacks;
     }
 
     @Override
@@ -226,22 +226,22 @@ public class DGSPurchase extends VersionedDerivedEntity {
         if (!super.equals(o)) return false;
         DGSPurchase that = (DGSPurchase) o;
         return id == that.id &&
-                buyerId == that.buyerId &&
-                goodsId == that.goodsId &&
-                sellerId == that.sellerId &&
-                quantity == that.quantity &&
-                priceATM == that.priceATM &&
-                deadline == that.deadline &&
-                timestamp == that.timestamp &&
-                isPending == that.isPending &&
-                goodsIsText == that.goodsIsText &&
-                hasPublicFeedbacks == that.hasPublicFeedbacks &&
-                hasFeedbacks == that.hasFeedbacks &&
-                discountATM == that.discountATM &&
-                refundATM == that.refundATM &&
-                Objects.equals(note, that.note) &&
-                Objects.equals(encryptedGoods, that.encryptedGoods) &&
-                Objects.equals(refundNote, that.refundNote);
+            buyerId == that.buyerId &&
+            goodsId == that.goodsId &&
+            sellerId == that.sellerId &&
+            quantity == that.quantity &&
+            priceATM == that.priceATM &&
+            deadline == that.deadline &&
+            timestamp == that.timestamp &&
+            isPending == that.isPending &&
+            goodsIsText == that.goodsIsText &&
+            hasPublicFeedbacks == that.hasPublicFeedbacks &&
+            hasFeedbacks == that.hasFeedbacks &&
+            discountATM == that.discountATM &&
+            refundATM == that.refundATM &&
+            Objects.equals(note, that.note) &&
+            Objects.equals(encryptedGoods, that.encryptedGoods) &&
+            Objects.equals(refundNote, that.refundNote);
     }
 
     @Override

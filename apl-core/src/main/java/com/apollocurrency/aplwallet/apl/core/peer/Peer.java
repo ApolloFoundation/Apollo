@@ -30,25 +30,6 @@ import java.util.UUID;
 
 public interface Peer extends Comparable<Peer> {
 
-    enum Service {
-        HALLMARK(1),                    // Hallmarked node
-        PRUNABLE(2),                    // Stores expired prunable messages
-        API(4),                         // Provides open API access over http
-        API_SSL(8),                     // Provides open API access over https
-        CORS(16);                       // API CORS enabled
-
-        private final long code;        // Service code - must be a power of 2
-
-        Service(int code) {
-            this.code = code;
-        }
-
-        public long getCode() {
-            return code;
-        }
-    }
-
-
     boolean providesService(Service service);
 
     boolean providesServices(long services);
@@ -132,4 +113,22 @@ public interface Peer extends Comparable<Peer> {
     public PeerTrustLevel getTrustLevel();
 
     public long getServices();
+
+    enum Service {
+        HALLMARK(1),                    // Hallmarked node
+        PRUNABLE(2),                    // Stores expired prunable messages
+        API(4),                         // Provides open API access over http
+        API_SSL(8),                     // Provides open API access over https
+        CORS(16);                       // API CORS enabled
+
+        private final long code;        // Service code - must be a power of 2
+
+        Service(int code) {
+            this.code = code;
+        }
+
+        public long getCode() {
+            return code;
+        }
+    }
 }

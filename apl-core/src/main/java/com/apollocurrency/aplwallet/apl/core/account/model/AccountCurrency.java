@@ -14,15 +14,15 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
- *
  * @author al
  */
 @ToString(callSuper = true)
-@Getter @Setter
+@Getter
+@Setter
 public final class AccountCurrency extends VersionedDeletableEntity {
 
-    private long accountId;
     private final long currencyId;
+    private long accountId;
     private long units;
     private long unconfirmedUnits;
 

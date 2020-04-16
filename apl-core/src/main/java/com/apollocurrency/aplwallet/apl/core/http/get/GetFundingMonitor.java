@@ -59,15 +59,16 @@ import java.util.List;
 public class GetFundingMonitor extends AbstractAPIRequestHandler {
 
     public GetFundingMonitor() {
-        super(new APITag[] {APITag.ACCOUNTS}, "holdingType", "holding", "property", "secretPhrase",
-                "includeMonitoredAccounts", "account", "adminPassword", "account", "passphrase");
+        super(new APITag[]{APITag.ACCOUNTS}, "holdingType", "holding", "property", "secretPhrase",
+            "includeMonitoredAccounts", "account", "adminPassword", "account", "passphrase");
     }
+
     /**
      * Process the request
      *
-     * @param   req                 Client request
-     * @return                      Client response
-     * @throws ParameterException        Unable to process request
+     * @param req Client request
+     * @return Client response
+     * @throws ParameterException Unable to process request
      */
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
@@ -97,9 +98,9 @@ public class GetFundingMonitor extends AbstractAPIRequestHandler {
             long finalAccountId = accountId;
             if (property != null) {
                 filter = (monitor) -> monitor.getAccountId() == finalAccountId &&
-                        monitor.getProperty().equals(property) &&
-                        monitor.getHoldingType() == holdingType &&
-                        monitor.getHoldingId() == holdingId;
+                    monitor.getProperty().equals(property) &&
+                    monitor.getHoldingType() == holdingType &&
+                    monitor.getHoldingId() == holdingId;
             } else {
                 filter = (monitor) -> monitor.getAccountId() == finalAccountId;
             }

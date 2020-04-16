@@ -7,15 +7,15 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import javax.enterprise.inject.Vetoed;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 /**
@@ -25,7 +25,7 @@ import javax.servlet.http.HttpServletRequest;
 @Vetoed
 public class ImportKey extends AbstractAPIRequestHandler {
     public ImportKey() {
-        super(new APITag[] {APITag.ACCOUNT_CONTROL}, "secretBytes", "passphrase");
+        super(new APITag[]{APITag.ACCOUNT_CONTROL}, "secretBytes", "passphrase");
     }
 
     @Override
@@ -36,7 +36,7 @@ public class ImportKey extends AbstractAPIRequestHandler {
         try {
             WalletKeysInfo walletKeysInfo = Helper2FA.importSecretBytes(passphrase, secretBytes);
             return walletKeysInfo.toJSON();
-        } catch (ParameterException e){
+        } catch (ParameterException e) {
             return JSONResponses.vaultWalletError(0l, "import", e.getMessage());
         }
     }

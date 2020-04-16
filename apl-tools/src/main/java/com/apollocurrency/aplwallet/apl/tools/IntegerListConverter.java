@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 public class IntegerListConverter implements IStringConverter<List<Integer>> {
     @Override
     public List<Integer> convert(String files) {
-        String [] paths = files.split(",");
+        String[] paths = files.split(",");
         return Arrays.stream(paths).map(Integer::parseInt).collect(Collectors.toList());
     }
 }

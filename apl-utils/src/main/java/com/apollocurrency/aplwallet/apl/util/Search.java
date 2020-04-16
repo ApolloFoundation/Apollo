@@ -40,6 +40,9 @@ public final class Search {
 
     private static final Analyzer analyzer = new StandardAnalyzer();
 
+    private Search() {
+    }
+
     public static String[] parseTags(String tags, int minTagLength, int maxTagLength, int maxTagCount) {
         if (tags == null || tags.trim().length() == 0) {
             return Convert.EMPTY_STRING;
@@ -50,7 +53,7 @@ public final class Search {
             String tag;
             stream.reset();
             while (stream.incrementToken() && list.size() < maxTagCount &&
-                    (tag = attribute.toString()).length() <= maxTagLength && tag.length() >= minTagLength) {
+                (tag = attribute.toString()).length() <= maxTagLength && tag.length() >= minTagLength) {
                 if (!list.contains(tag)) {
                     list.add(tag);
                 }
@@ -62,7 +65,7 @@ public final class Search {
         return list.toArray(new String[0]);
     }
 
-//TODO: remove apache tika, use something lighter
+    //TODO: remove apache tika, use something lighter
     public static String detectMimeType(byte[] data, String filename) {
         Tika tika = new Tika();
         return tika.detect(data, filename);
@@ -80,10 +83,8 @@ public final class Search {
 
     protected static boolean parseIps(List<String> ips) {
         Pattern IP_PATTERN = Pattern.compile(
-                "^(([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.){3}([01]?\\d\\d?|2[0-4]\\d|25[0-5])$");
+            "^(([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.){3}([01]?\\d\\d?|2[0-4]\\d|25[0-5])$");
         return ips.stream().anyMatch(ip -> !IP_PATTERN.matcher(ip).matches());
     }
-
-    private Search() {}
 
 }

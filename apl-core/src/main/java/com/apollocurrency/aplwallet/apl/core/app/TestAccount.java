@@ -5,8 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.account.BasicAccount;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 
 public class TestAccount extends BasicAccount {
     private String secretPhrase;
@@ -15,6 +15,7 @@ public class TestAccount extends BasicAccount {
         super(account);
         this.secretPhrase = secretPhrase;
     }
+
     public TestAccount(String secretPhrase) {
         super(Convert.getId(Crypto.getPublicKey(secretPhrase)));
         this.secretPhrase = secretPhrase;

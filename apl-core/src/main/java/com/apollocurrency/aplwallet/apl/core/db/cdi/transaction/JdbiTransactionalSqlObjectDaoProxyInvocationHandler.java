@@ -22,7 +22,7 @@ public class JdbiTransactionalSqlObjectDaoProxyInvocationHandler<DAO> implements
     @SuppressWarnings("unchecked")
     public static <T> T createProxy(JdbiHandleFactory jdbiHandleFactory, Class<T> daoClass) {
         return (T) Proxy.newProxyInstance(daoClass.getClassLoader(), new Class[]{daoClass},
-                new JdbiTransactionalSqlObjectDaoProxyInvocationHandler<T>(jdbiHandleFactory, daoClass));
+            new JdbiTransactionalSqlObjectDaoProxyInvocationHandler<T>(jdbiHandleFactory, daoClass));
     }
 
     @Override

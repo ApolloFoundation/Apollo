@@ -19,7 +19,7 @@ public class BlockListInfoResponse extends ResponseBase {
     @Override
     public String toString() {
         return "BlockListInfoResponse{" +
-                "blocks=[" + (blocks != null ? blocks.size() : 0) +
-                "]}";
+            "blocks=[" + (blocks != null ? blocks.size() : 0) +
+            "]}";
     }
 }

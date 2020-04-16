@@ -1,7 +1,7 @@
 /*
  *
  *  Copyright © 2018-2019 Apollo Foundation
- *  
+ *
  */
 
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
@@ -29,7 +29,7 @@ class PeerConverterTest {
 
         PeerConverter converter = new PeerConverter();
 
-        PeerDTO dto  = converter.convert(peer);
+        PeerDTO dto = converter.convert(peer);
         assertNotNull(dto);
 
         checkNonNullInJson(dto);
@@ -49,7 +49,7 @@ class PeerConverterTest {
 
         String stringJSON = mapper.writeValueAsString(object);
 
-        assertFalse(stringJSON.contains("null"), String.format("Given value contains NULL: %s",stringJSON));
+        assertFalse(stringJSON.contains("null"), String.format("Given value contains NULL: %s", stringJSON));
     }
 
 }

@@ -20,7 +20,7 @@ public class ComparableStaticGasProvider extends StaticGasProvider {
         if (!(o instanceof StaticGasProvider)) return false;
         StaticGasProvider gasProvider = (StaticGasProvider) o;
         return Objects.equals(getGasLimit(), gasProvider.getGasLimit()) &&
-                Objects.equals(getGasPrice(), gasProvider.getGasPrice());
+            Objects.equals(getGasPrice(), gasProvider.getGasPrice());
     }
 
     @Override

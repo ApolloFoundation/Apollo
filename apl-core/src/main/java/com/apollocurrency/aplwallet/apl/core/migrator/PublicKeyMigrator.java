@@ -4,20 +4,20 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 @Singleton
 public class PublicKeyMigrator {
@@ -65,8 +65,8 @@ public class PublicKeyMigrator {
                     LOG.info("Copy genesis public keys");
                     // copy genesis public keys into the new table
                     try (PreparedStatement pstmt = con.prepareStatement(
-                            "INSERT INTO genesis_public_key (db_id, account_id, public_key, height, latest )" +
-                                    " select * FROM public_key where DB_ID between ? AND ?")) {
+                        "INSERT INTO genesis_public_key (db_id, account_id, public_key, height, latest )" +
+                            " select * FROM public_key where DB_ID between ? AND ?")) {
                         pstmt.setLong(1, minDbId);
                         pstmt.setLong(2, maxDbId);
                         pstmt.executeUpdate();
@@ -84,8 +84,7 @@ public class PublicKeyMigrator {
                 }
             }
             dataSource.commit(!isInTransaction);
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             dataSource.rollback(!isInTransaction);
             throw new RuntimeException(e.toString(), e);
         }

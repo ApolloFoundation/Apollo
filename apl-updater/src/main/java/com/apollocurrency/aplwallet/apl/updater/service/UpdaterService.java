@@ -14,7 +14,9 @@ import java.util.regex.Pattern;
 
 public interface UpdaterService {
     String extractUrl(byte[] encryptedUrlBytes, Pattern urlPattern);
+
     DownloadInfo getDownloadInfo();
+
     Path unpack(Path file) throws IOException;
 
     boolean verifyCertificates(String certificateDirectory);

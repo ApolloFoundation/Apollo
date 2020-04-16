@@ -9,9 +9,8 @@ import java.util.concurrent.RejectedExecutionException;
  * A dispatcher that provides methods to schedule the background {@link Task}.
  * There are four independent queues for background tasks - INIT, BEFORE, TASK and AFTER.
  * The TaskDispatcher executes all tasks in strong order.
- *
  */
-public interface TaskDispatcher extends TaskExecutorService, TaskDispatcherConfig{
+public interface TaskDispatcher extends TaskExecutorService, TaskDispatcherConfig {
 
     /**
      * Create the main executor to run the background tasks accordingly their order.
@@ -21,6 +20,7 @@ public interface TaskDispatcher extends TaskExecutorService, TaskDispatcherConfi
 
     /**
      * Submit a background task for execution as a background TASK (with fixed delay or at fixed rate).
+     *
      * @param task the task to execute
      * @return {@code true} if this task was put into a queue
      * @throws RejectedExecutionException if this dispatcher has been shut down
@@ -29,6 +29,7 @@ public interface TaskDispatcher extends TaskExecutorService, TaskDispatcherConfi
 
     /**
      * Submit a background task for execution. This task is put in queue and will be executed only once in order {@link TaskOrder} INIT
+     *
      * @param task the task to execute
      * @return {@code true} if the task is put into a queue
      * @throws RejectedExecutionException if this dispatcher has been shut down
@@ -37,6 +38,7 @@ public interface TaskDispatcher extends TaskExecutorService, TaskDispatcherConfi
 
     /**
      * Submit a background task for execution. This task is put in queue and will be executed only once in order {@link TaskOrder} AFTER
+     *
      * @param task the task to execute
      * @return {@code true} if the task is put into a queue
      * @throws RejectedExecutionException if this dispatcher has been shut down
@@ -45,6 +47,7 @@ public interface TaskDispatcher extends TaskExecutorService, TaskDispatcherConfi
 
     /**
      * Submit a background task for execution. This task is put in queue and will be executed only once in order {@link TaskOrder} BEFORE
+     *
      * @param task the task to execute
      * @return {@code true} if the task is put into a queue
      * @throws RejectedExecutionException if this dispatcher has been shut down

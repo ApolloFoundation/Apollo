@@ -56,12 +56,12 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
     private static final int BLOCKS_TO_RETRIEVE = 1000;
     private static final Version DEFAULT_VERSION = new Version("0.0.0");
     private static final String URL_FORMAT = "%s://%s:%d";
-    private final AtomicReference<NetworkStats> lastStats = new AtomicReference<>();
 
     static {
         objectMapper.configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
+    private final AtomicReference<NetworkStats> lastStats = new AtomicReference<>();
     private HttpClient client;
     private List<PeerInfo> peers;
     private List<MaxBlocksDiffCounter> maxBlocksDiffCounters;
@@ -69,7 +69,8 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
     private List<String> peerApiUrls;
     private ExecutorService executor;
 
-    public HeightMonitorServiceImpl() {}
+    public HeightMonitorServiceImpl() {
+    }
 
     @PostConstruct
     public void init() {
@@ -77,8 +78,7 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
         try {
             client.start();
             executor = Executors.newFixedThreadPool(30);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -131,8 +131,7 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
         try {
             client.stop();
             executor.shutdownNow();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -160,13 +159,16 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
         log.info("===========================================");
         Map<String, PeerMonitoringResult> peerBlocks = getPeersMonitoringResults();
         NetworkStats networkStats = new NetworkStats();
-        peerBlocks.forEach((peer, result)-> {
-            List<String> shardList = result.getShards().stream().map(this::getShardHashFormatted).collect(Collectors.toList());
-            log.info(String.format("%-16.16s - %8d - %s", peer, result.getHeight(), String.join("->", shardList)));
-            networkStats.getPeerHeight().put(peer, result.getHeight());
-            networkStats.getPeerShards().put(peer, shardList);
-        });
-        log.info(String.format("%5.5s %5.5s %-16.16s %-16.16s %9.9s %7.7s %7.7s %8.8s %8.8s %-13.13s %-13.13s %13.13s", "diff1", "diff2", "peer1", "peer2", "milestone", "height1", "height2", "version1", "version2", "shard1", "shard2", "shard-status"));
+        for (PeerInfo peer : peers) {
+            PeerMonitoringResult result = peerBlocks.get(peer.getHost());
+            if (result != null) {
+                List<String> shardList = result.getShards().stream().map(this::getShardHashFormatted).collect(Collectors.toList());
+                log.info(String.format("%-16.16s - %8d - %s", peer.getHost(), result.getHeight(), String.join("->", shardList)));
+                networkStats.getPeerHeight().put(peer.getHost(), result.getHeight());
+                networkStats.getPeerShards().put(peer.getHost(), shardList);
+            }
+        }
+        log.info(String.format("%7.7s %7.7s %-16.16s %-16.16s %9.9s %7.7s %7.7s %8.8s %8.8s %-13.13s %-13.13s %20.20s", "diff1", "diff2", "peer1", "peer2", "milestone", "height1", "height2", "version1", "version2", "shard1", "shard2", "shard-status"));
         int currentMaxBlocksDiff = -1;
         for (int i = 0; i < peers.size(); i++) {
             String host1 = peers.get(i).getHost();
@@ -183,7 +185,7 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
                 String shard1 = getShardOrNothing(targetMonitoringResult);
                 String shard2 = getShardOrNothing(comparedMonitoringResult);
                 currentMaxBlocksDiff = Math.max(blocksDiff1, currentMaxBlocksDiff);
-                log.info(String.format("%5d %5d %-16.16s %-16.16s %9d %7d %7d %8.8s %8.8s %-13.13s %-13.13s %13.13s", blocksDiff1, blocksDiff2, host1, host2, milestoneHeight, lastHeight, comparedMonitoringResult.getHeight(), targetMonitoringResult.getVersion(), comparedMonitoringResult.getVersion(), shard1, shard2, shardsStatus));
+                log.info(String.format("%7d %7d %-16.16s %-16.16s %9d %7d %7d %8.8s %8.8s %-13.13s %-13.13s %20.20s", blocksDiff1, blocksDiff2, host1, host2, milestoneHeight, lastHeight, comparedMonitoringResult.getHeight(), targetMonitoringResult.getVersion(), comparedMonitoringResult.getVersion(), shard1, shard2, shardsStatus));
                 networkStats.getPeerDiffStats().add(new PeerDiffStat(blocksDiff1, blocksDiff2, host1, host2, lastHeight, milestoneHeight, comparedMonitoringResult.getHeight(), targetMonitoringResult.getVersion(), comparedMonitoringResult.getVersion(), shard1, shard2, shardsStatus));
             }
         }
@@ -208,7 +210,7 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
 
     private String getShardHashFormatted(ShardDTO shardDTO) {
         String prunableZipHash = shardDTO.getPrunableZipHash();
-        return shardDTO.getCoreZipHash().substring(0, 6)  + (prunableZipHash != null ? ":" + prunableZipHash.substring(0, 6) : "");
+        return shardDTO.getCoreZipHash().substring(0, 6) + (prunableZipHash != null ? ":" + prunableZipHash.substring(0, 6) : "");
     }
 
     private String getShardsStatus(PeerMonitoringResult targetMonitoringResult, PeerMonitoringResult comparedMonitoringResult) {
@@ -217,10 +219,23 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
         String status = "OK";
         int comparedCounter = comparedShards.size() - 1;
         int targetCounter = targetShards.size() - 1;
-        while (targetCounter >= 0 && comparedCounter >= 0) {
-            if (!targetShards.get(targetCounter).equals(comparedShards.get(comparedCounter))) {
-                status = "DIFF FROM " + targetShards.get(targetCounter).getShardId();
-                break;
+        while (targetCounter >= 0 && comparedCounter >= 0 && status.equals("OK")) {
+            ShardDTO comparedShard = comparedShards.get(comparedCounter);
+            ShardDTO targetShard = targetShards.get(targetCounter);
+            if (comparedShard.getShardId() > targetShard.getShardId()) {
+                targetCounter--;
+                continue;
+            }
+            if (comparedShard.getShardId() < targetShard.getShardId()) {
+                comparedCounter--;
+                continue;
+            }
+            if (targetShard.getShardHeight() != comparedShard.getShardHeight()) {
+                status = "HEIGHT DIFF FROM " + targetShards.get(targetCounter).getShardId();
+            } else if (!targetShard.getCoreZipHash().equalsIgnoreCase(comparedShard.getCoreZipHash())) {
+                status = "CORE DIFF FROM " + targetShards.get(targetCounter).getShardId();
+            } else if (!Objects.equals(targetShard.getPrunableZipHash(), comparedShard.getPrunableZipHash())) {
+                status = "PRUN DIFF FROM " + targetShards.get(targetCounter).getShardId();
             }
             targetCounter--;
             comparedCounter--;
@@ -261,7 +276,7 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
                 }
                 Version version = getPeerVersion(peerUrl);
                 List<ShardDTO> shards = getShards(peerUrl);
-                return new PeerMonitoringResult(shards,height1, version, blocks);
+                return new PeerMonitoringResult(shards, height1, version, blocks);
             }, executor));
         }
         for (int i = 0; i < getBlocksRequests.size(); i++) {
@@ -278,7 +293,7 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
     private List<ShardDTO> getShards(String peerUrl) {
         List<ShardDTO> shards = new ArrayList<>();
         Request request = client.newRequest(peerUrl + "/rest/shards")
-                .method(HttpMethod.GET);
+            .method(HttpMethod.GET);
         ContentResponse response;
         try {
             response = request.send();
@@ -308,6 +323,7 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
         }
         return blockId;
     }
+
     private Block getPeerBlock(String peerUrl, int height) {
         JsonNode node = performRequest(peerUrl + "/apl", Map.of("requestType", "getBlock", "height", height));
         Block block = null;
@@ -325,7 +341,7 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
         JsonNode result = null;
         Request request = client.newRequest(url)
             .method(HttpMethod.GET);
-        params.forEach((name, value)-> request.param(name, value.toString()));
+        params.forEach((name, value) -> request.param(name, value.toString()));
 
         ContentResponse response;
         try {
@@ -351,19 +367,17 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
     private Version getPeerVersion(String peerUrl) {
         Version res = DEFAULT_VERSION;
         Request request = client.newRequest(peerUrl + "/apl")
-                .method(HttpMethod.GET)
-                .param("requestType", "getBlockchainStatus");
+            .method(HttpMethod.GET)
+            .param("requestType", "getBlockchainStatus");
         ContentResponse response = null;
         try {
             response = request.send();
-            JsonNode jsonNode  = objectMapper.readTree(response.getContentAsString());
+            JsonNode jsonNode = objectMapper.readTree(response.getContentAsString());
             res = new Version(jsonNode.get("version").asText());
-        }
-        catch (InterruptedException | TimeoutException | ExecutionException e) {
+        } catch (InterruptedException | TimeoutException | ExecutionException e) {
             log.error("Unable to get response from {} - {}", peerUrl, e.toString());
-        }
-        catch (IOException e) {
-            log.error("Unable to parse peer version from json for {} - {}",peerUrl, e.toString());
+        } catch (IOException e) {
+            log.error("Unable to parse peer version from json for {} - {}", peerUrl, e.toString());
         }
         return res;
     }

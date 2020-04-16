@@ -30,22 +30,27 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable {
     private static final String TABLE_NAME = "account_guaranteed_balance";
 
     private static final String ADDITIONS_COLUMN_NAME = "additions";
-
-    private final BlockchainConfig blockchainConfig;
-    private final int batchCommitSize;
-
     private static final LongKeyFactory<AccountGuaranteedBalance>
-            accountGuaranteedBalanceLongKeyFactory = new LongKeyFactory<>("account_id") {
+        accountGuaranteedBalanceLongKeyFactory = new LongKeyFactory<>("account_id") {
         @Override
         public DbKey newKey(AccountGuaranteedBalance accountGuaranteedBalance) {
-            if(accountGuaranteedBalance.getDbKey() == null){
+            if (accountGuaranteedBalance.getDbKey() == null) {
                 accountGuaranteedBalance.setDbKey(super.newKey(accountGuaranteedBalance.getAccountId()));
             }
             return accountGuaranteedBalance.getDbKey();
         }
     };
+    private final BlockchainConfig blockchainConfig;
+    private final int batchCommitSize;
 
-    public static DbKey newKey(long id){
+    @Inject
+    public AccountGuaranteedBalanceTable(BlockchainConfig blockchainConfig, PropertiesHolder propertiesHolder) {
+        super(TABLE_NAME, false);
+        this.blockchainConfig = blockchainConfig;
+        this.batchCommitSize = propertiesHolder.BATCH_COMMIT_SIZE();
+    }
+
+    public static DbKey newKey(long id) {
         return accountGuaranteedBalanceLongKeyFactory.newKey(id);
     }
 
@@ -55,15 +60,14 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable {
         try (Connection con = dataSource.getConnection();
              @DatabaseSpecificDml(DmlMarker.DELETE_WITH_LIMIT)
              PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM account_guaranteed_balance "
-                     + "WHERE height < ? AND height >= 0 LIMIT " + batchCommitSize)) {
+                 + "WHERE height < ? AND height >= 0 LIMIT " + batchCommitSize)) {
             pstmtDelete.setInt(1, height - blockchainConfig.getGuaranteedBalanceConfirmations());
             int count;
             do {
                 count = pstmtDelete.executeUpdate();
                 dataSource.commit(false);
             } while (count >= batchCommitSize);
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -76,7 +80,7 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable {
     public Long getSumOfAdditions(long accountId, int height, int currentHeight) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT SUM ("+ADDITIONS_COLUMN_NAME+") AS " + ADDITIONS_COLUMN_NAME + " "
+             PreparedStatement pstmt = con.prepareStatement("SELECT SUM (" + ADDITIONS_COLUMN_NAME + ") AS " + ADDITIONS_COLUMN_NAME + " "
                  + "FROM account_guaranteed_balance WHERE account_id = ? AND height > ? AND height <= ?")) {
             pstmt.setLong(1, accountId);
             pstmt.setInt(2, height);
@@ -92,8 +96,8 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable {
         }
     }
 
-    public Map<Long,Long> getLessorsAdditions(List<Long> lessors, int height, int blockchainHeight) {
-        Map<Long,Long> lessorsAdditions = new HashMap<>();
+    public Map<Long, Long> getLessorsAdditions(List<Long> lessors, int height, int blockchainHeight) {
+        Map<Long, Long> lessorsAdditions = new HashMap<>();
         Long[] lessorIds = lessors.toArray(new Long[]{});
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
@@ -114,8 +118,7 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable {
                     lessorsAdditions.put(accountId, sum);
                 }
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
         return lessorsAdditions;
@@ -144,16 +147,8 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable {
                 pstmtUpdate.setInt(3, blockchainHeight);
                 pstmtUpdate.executeUpdate();
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
-    }
-
-    @Inject
-    public AccountGuaranteedBalanceTable(BlockchainConfig blockchainConfig, PropertiesHolder propertiesHolder) {
-        super(TABLE_NAME, false);
-        this.blockchainConfig = blockchainConfig;
-        this.batchCommitSize = propertiesHolder.BATCH_COMMIT_SIZE();
     }
 }

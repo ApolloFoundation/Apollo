@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.commands;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardEngine;
@@ -16,6 +14,8 @@ import org.slf4j.Logger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Command copy block + transaction data from main into shard database.
@@ -45,13 +45,13 @@ public class CopyDataCommand implements DataMigrateOperation {
     }
 
     public CopyDataCommand(
-            long shardId,
-            ShardEngine shardEngine,
-            List<TableInfo> tableInfoList,
-            int commitBatchSize, int snapshotBlockHeight, ExcludeInfo excludeInfo) {
+        long shardId,
+        ShardEngine shardEngine,
+        List<TableInfo> tableInfoList,
+        int commitBatchSize, int snapshotBlockHeight, ExcludeInfo excludeInfo) {
         this.shardId = shardId;
         this.shardEngine = Objects.requireNonNull(shardEngine, "shardEngine is NULL");
-        this.tableNameList = tableInfoList == null ? new ArrayList<>() :tableInfoList;
+        this.tableNameList = tableInfoList == null ? new ArrayList<>() : tableInfoList;
         this.commitBatchSize = commitBatchSize;
         this.snapshotBlockHeight = snapshotBlockHeight;
         this.excludeInfo = excludeInfo;
@@ -65,12 +65,12 @@ public class CopyDataCommand implements DataMigrateOperation {
     public MigrateState execute() {
         log.debug("Copy Shard Data Command execute...");
         CommandParamInfo paramInfo = CommandParamInfo.builder()
-                .tableInfoList(this.tableNameList)
-                .commitBatchSize(this.commitBatchSize)
-                .snapshotBlockHeight(this.snapshotBlockHeight)
-                .excludeInfo(this.excludeInfo)
-                .shardId(shardId)
-                .build();
+            .tableInfoList(this.tableNameList)
+            .commitBatchSize(this.commitBatchSize)
+            .snapshotBlockHeight(this.snapshotBlockHeight)
+            .excludeInfo(this.excludeInfo)
+            .shardId(shardId)
+            .build();
         return shardEngine.copyDataToShard(paramInfo);
     }
 

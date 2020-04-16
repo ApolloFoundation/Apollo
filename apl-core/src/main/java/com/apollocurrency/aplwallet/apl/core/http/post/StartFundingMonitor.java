@@ -21,26 +21,26 @@
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.app.FundingMonitor;
-import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
+import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MONITOR_ALREADY_STARTED;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_ACCOUNT;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
-import javax.enterprise.inject.Vetoed;
 
 /**
  * Start a funding monitor
@@ -72,16 +72,16 @@ import javax.enterprise.inject.Vetoed;
 public final class StartFundingMonitor extends AbstractAPIRequestHandler {
 
     public StartFundingMonitor() {
-        super(new APITag[] {APITag.ACCOUNTS}, "holdingType", "holding", "property", "amount", "threshold",
-                "interval", "secretPhrase", "account", "passphrase");
+        super(new APITag[]{APITag.ACCOUNTS}, "holdingType", "holding", "property", "amount", "threshold",
+            "interval", "secretPhrase", "account", "passphrase");
     }
 
     /**
      * Process the request
      *
-     * @param   req                 Client request
-     * @return                      Client response
-     * @throws  AplException        Unable to process request
+     * @param req Client request
+     * @return Client response
+     * @throws AplException Unable to process request
      */
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {

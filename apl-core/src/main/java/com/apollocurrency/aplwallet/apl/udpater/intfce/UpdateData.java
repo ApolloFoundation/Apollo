@@ -4,8 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.udpater.intfce;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MinorUpdate;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.UpdateAttachment;
+
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.MinorUpdate;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateAttachment;
 
 public class UpdateData {
     private UpdateAttachment attachment;
@@ -21,6 +22,7 @@ public class UpdateData {
     public boolean isAutomaticUpdate() { // update is automatic for Important and Critical update types
         return !(attachment instanceof MinorUpdate);
     }
+
     public UpdateAttachment getAttachment() {
         return attachment;
     }

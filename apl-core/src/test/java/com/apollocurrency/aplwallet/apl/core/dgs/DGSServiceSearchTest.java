@@ -56,29 +56,29 @@ public class DGSServiceSearchTest {
     Blockchain blockchain = mock(Blockchain.class);
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-            FullTextConfigImpl.class,
-            DGSPublicFeedbackTable.class,
-            DGSFeedbackTable.class,
-            DGSGoodsTable.class,
-            DGSTagTable.class,
-            DGSPurchaseTable.class,
-            DGSServiceImpl.class,
-            DerivedDbTablesRegistryImpl.class,
-            BlockchainConfig.class,
-            PropertiesHolder.class,
-            BlockChainInfoServiceImpl.class, AccountServiceImpl.class, AccountTable.class
+        FullTextConfigImpl.class,
+        DGSPublicFeedbackTable.class,
+        DGSFeedbackTable.class,
+        DGSGoodsTable.class,
+        DGSTagTable.class,
+        DGSPurchaseTable.class,
+        DGSServiceImpl.class,
+        DerivedDbTablesRegistryImpl.class,
+        BlockchainConfig.class,
+        PropertiesHolder.class,
+        BlockChainInfoServiceImpl.class, AccountServiceImpl.class, AccountTable.class
     )
-            .addBeans(MockBean.of(mock(GlobalSync.class), GlobalSync.class, GlobalSyncImpl.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(blockchain, Blockchain.class))
-            .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
-            .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
-            .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
-            .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
-            .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyServiceImpl.class, AccountPublicKeyService.class))
-            .addBeans(MockBean.of(mock(AccountGuaranteedBalanceTable.class), AccountGuaranteedBalanceTable.class))
-            .build();
+        .addBeans(MockBean.of(mock(GlobalSync.class), GlobalSync.class, GlobalSyncImpl.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+        .addBeans(MockBean.of(blockchain, Blockchain.class))
+        .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
+        .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
+        .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
+        .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
+        .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyServiceImpl.class, AccountPublicKeyService.class))
+        .addBeans(MockBean.of(mock(AccountGuaranteedBalanceTable.class), AccountGuaranteedBalanceTable.class))
+        .build();
     @Inject
     DGSService service;
 

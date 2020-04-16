@@ -43,7 +43,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_A
 public final class GetForging extends AbstractAPIRequestHandler {
 
     public GetForging() {
-        super(new APITag[] {APITag.FORGING}, "secretPhrase", "adminPassword", "publicKey");
+        super(new APITag[]{APITag.FORGING}, "secretPhrase", "adminPassword", "publicKey");
     }
 
     @Override

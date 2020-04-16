@@ -8,15 +8,15 @@ import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveClaim;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import java.nio.ByteBuffer;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+
 /**
- *
  * @author al
  */
 class MSReverseClaim extends MonetarySystem {
-    
+
     public MSReverseClaim() {
     }
 
@@ -83,5 +83,5 @@ class MSReverseClaim extends MonetarySystem {
     public boolean canHaveRecipient() {
         return false;
     }
-    
+
 }

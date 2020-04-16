@@ -28,6 +28,13 @@ import java.util.Arrays;
 public final class EncryptedData {
 
     public static final EncryptedData EMPTY_DATA = new EncryptedData(new byte[0], new byte[0]);
+    private final byte[] data;
+    private final byte[] nonce;
+
+    public EncryptedData(byte[] data, byte[] nonce) {
+        this.data = data;
+        this.nonce = nonce;
+    }
 
     public static EncryptedData encrypt(byte[] plaintext, byte[] keySeed, byte[] theirPublicKey) {
         if (plaintext.length == 0) {
@@ -41,7 +48,7 @@ public final class EncryptedData {
     }
 
     public static EncryptedData readEncryptedData(ByteBuffer buffer, int length, int maxLength)
-            throws NotValidException {
+        throws NotValidException {
         if (length == 0) {
             return EMPTY_DATA;
         }
@@ -82,14 +89,6 @@ public final class EncryptedData {
         return getEncryptedDataLength(plaintext) + 32;
     }
 
-    private final byte[] data;
-    private final byte[] nonce;
-
-    public EncryptedData(byte[] data, byte[] nonce) {
-        this.data = data;
-        this.nonce = nonce;
-    }
-
     public byte[] decrypt(byte[] keySeed, byte[] theirPublicKey) {
         if (data.length == 0) {
             return data;
@@ -124,7 +123,7 @@ public final class EncryptedData {
         if (!(o instanceof EncryptedData)) return false;
         EncryptedData that = (EncryptedData) o;
         return Arrays.equals(data, that.data) &&
-                Arrays.equals(nonce, that.nonce);
+            Arrays.equals(nonce, that.nonce);
     }
 
     @Override

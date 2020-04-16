@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.exception.IllegalArgumentExcep
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.validation.BlockchainHeightValidator;
 import com.apollocurrency.aplwallet.apl.core.rest.validation.CustomValidatorFactory;
+import com.apollocurrency.aplwallet.apl.core.rest.validation.TimestampValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -40,23 +41,32 @@ public class AbstractEndpointTest {
     public static final int CODE_2FA = 123456;
     public static final String PASSPHRASE = "123456";
     public static final String SECRET = "SuperSecretPhrase"; //accountId=-3831750337430207973
+    public static final String PUBLIC_KEY_SECRET = "ce2466ca75ba9703be43f24a9d638e0cc5005b41df72383cbf85093233c17e21"; //accountId=-3831750337430207973
     public static final long ACCOUNT_ID_WITH_SECRET = -3831750337430207973L;
 
     static ObjectMapper mapper = new ObjectMapper();
-    Dispatcher dispatcher;
 
-    Blockchain blockchain = mock(Blockchain.class);
-    ValidatorFactory validatorFactory = Validation.byDefaultProvider()
-        .configure()
-        .constraintValidatorFactory( new CustomValidatorFactory(
-                       Map.of( BlockchainHeightValidator.class, new BlockchainHeightValidator(blockchain) )) )
-        .buildValidatorFactory();
-    Validator validator = validatorFactory.getValidator();
-
-    static{
+    static {
         BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
         doReturn("APL").when(blockchainConfig).getAccountPrefix();
         Convert2.init(blockchainConfig);
+    }
+
+    Dispatcher dispatcher;
+    Blockchain blockchain = mock(Blockchain.class);
+    ValidatorFactory validatorFactory = Validation.byDefaultProvider()
+        .configure()
+        .constraintValidatorFactory(
+            new CustomValidatorFactory(
+                Map.of( BlockchainHeightValidator.class, new BlockchainHeightValidator(blockchain),
+                    TimestampValidator.class, new TimestampValidator()
+                ))
+        )
+        .buildValidatorFactory();
+    Validator validator = validatorFactory.getValidator();
+
+    public static void print(String format, Object... args) {
+        log.trace(format, args);
     }
 
     void setUp() {
@@ -77,7 +87,7 @@ public class AbstractEndpointTest {
         String content = response.getContentAsString();
         print(content);
         Map result = mapper.readValue(content, Map.class);
-        assertTrue(result.containsKey("newErrorCode"),"Missing expected field [newErrorCode], it's an issue.");
+        assertTrue(result.containsKey("newErrorCode"), "Missing expected field [newErrorCode], it's an issue.");
         assertEquals(expectedErrorCode, result.get("newErrorCode"));
     }
 
@@ -92,13 +102,13 @@ public class AbstractEndpointTest {
         return sendHttpRequest(request, response);
     }
 
-    MockHttpResponse sendPostRequest(String uri, String body) throws URISyntaxException{
+    MockHttpResponse sendPostRequest(String uri, String body) throws URISyntaxException {
         MockHttpRequest request = post(uri);
         return sendPostRequest(request, body);
     }
 
-    MockHttpResponse sendPostRequest(MockHttpRequest request, String body) throws URISyntaxException{
-        request.accept(MediaType.TEXT_HTML);
+    MockHttpResponse sendPostRequest(MockHttpRequest request, String body) throws URISyntaxException {
+//        request.accept(MediaType.TEXT_HTML);
         request.contentType(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
         request.setAttribute(Validator.class.getName(), validator);
         if (StringUtils.isNoneEmpty(body)) {
@@ -113,10 +123,6 @@ public class AbstractEndpointTest {
     MockHttpResponse sendHttpRequest(MockHttpRequest request, MockHttpResponse response) {
         dispatcher.invoke(request, response);
         return response;
-    }
-
-    public static void print(String format, Object... args){
-        log.trace(format, args);
     }
 
 }

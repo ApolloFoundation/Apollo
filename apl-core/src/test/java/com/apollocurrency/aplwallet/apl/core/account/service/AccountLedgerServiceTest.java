@@ -45,12 +45,12 @@ class AccountLedgerServiceTest {
 
     private AccountLedgerService createLedgerServiceInstance() {
         return new AccountLedgerServiceImpl(
-                accountLedgerTable,
-                blockchain,
-                blockchainProcessor,
-                propertiesHolder,
-                blockchainConfig,
-                ledgerEvent
+            accountLedgerTable,
+            blockchain,
+            blockchainProcessor,
+            propertiesHolder,
+            blockchainConfig,
+            ledgerEvent
         );
     }
 
@@ -106,7 +106,7 @@ class AccountLedgerServiceTest {
     void logEntry() {
         doReturn(true).when(accountLedgerTable).isInTransaction();
         accountLedgerService.clearEntries();
-        List<LedgerEntry> pendingEntries = ((AccountLedgerServiceImpl)accountLedgerService).getPendingEntries();
+        List<LedgerEntry> pendingEntries = ((AccountLedgerServiceImpl) accountLedgerService).getPendingEntries();
         //2,5,6  - have the same accountId
         pendingEntries.addAll(testData.PENDING_LEDGERS);
         final LedgerEntry ledgerEntry = testData.ACC_LEDGER_ADD;
@@ -125,7 +125,7 @@ class AccountLedgerServiceTest {
     @Test
     void commitEntries() {
         int pendingCount = testData.PENDING_LEDGERS.size();
-        List<LedgerEntry> pendingEntries = ((AccountLedgerServiceImpl)accountLedgerService).getPendingEntries();
+        List<LedgerEntry> pendingEntries = ((AccountLedgerServiceImpl) accountLedgerService).getPendingEntries();
         pendingEntries.addAll(testData.PENDING_LEDGERS);
         Event firedEvent = mock(Event.class);
         doReturn(firedEvent).when(ledgerEvent).select(AccountLedgerEventBinding.literal(AccountLedgerEventType.ADD_ENTRY));
@@ -139,10 +139,10 @@ class AccountLedgerServiceTest {
 
     @Test
     void clearEntries() {
-        List<LedgerEntry> pendingEntries = ((AccountLedgerServiceImpl)accountLedgerService).getPendingEntries();
+        List<LedgerEntry> pendingEntries = ((AccountLedgerServiceImpl) accountLedgerService).getPendingEntries();
         pendingEntries.clear();
         pendingEntries.addAll(testData.PENDING_LEDGERS);
-        assertTrue(pendingEntries.size()>0);
+        assertTrue(pendingEntries.size() > 0);
         accountLedgerService.clearEntries();
         assertEquals(0, pendingEntries.size());
     }

@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
  * @author al
  */
 class PeerUnBlacklistingThread implements Runnable {
@@ -27,7 +26,7 @@ class PeerUnBlacklistingThread implements Runnable {
             try {
                 int curTime = timeService.getEpochTime();
                 for (Peer peer : peers.getAllPeers()) {
-                    ((PeerImpl)peer).updateBlacklistedStatus(curTime);
+                    ((PeerImpl) peer).updateBlacklistedStatus(curTime);
                 }
             } catch (Exception e) {
                 LOG.debug("Error un-blacklisting peer", e);
@@ -37,5 +36,5 @@ class PeerUnBlacklistingThread implements Runnable {
             System.exit(1);
         }
     }
-    
+
 }

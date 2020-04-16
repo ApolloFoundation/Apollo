@@ -15,14 +15,14 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.ValuesDbTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.mapper.PhasingPollVoterMapper;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollVoter;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 public class PhasingPollVoterTable extends ValuesDbTable<PhasingPollVoter> {
@@ -58,7 +58,7 @@ public class PhasingPollVoterTable extends ValuesDbTable<PhasingPollVoter> {
     @Override
     public void save(Connection con, PhasingPollVoter voter) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_poll_voter (transaction_id, "
-                + "voter_id, height) VALUES (?, ?, ?)")) {
+            + "voter_id, height) VALUES (?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, voter.getPollId());
             pstmt.setLong(++i, voter.getVoterId());
@@ -72,15 +72,15 @@ public class PhasingPollVoterTable extends ValuesDbTable<PhasingPollVoter> {
         try {
             con = getDatabaseManager().getDataSource().getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT transaction.* "
-                    + "FROM transaction, phasing_poll_voter, phasing_poll "
-                    + "LEFT JOIN phasing_poll_result ON phasing_poll.id = phasing_poll_result.id "
-                    + "WHERE transaction.id = phasing_poll.id AND "
-                    + "phasing_poll.finish_height > ? AND "
-                    + "phasing_poll.id = phasing_poll_voter.transaction_id "
-                    + "AND phasing_poll_voter.voter_id = ? "
-                    + "AND phasing_poll_result.id IS NULL "
-                    + "ORDER BY transaction.height DESC, transaction.transaction_index DESC "
-                    + DbUtils.limitsClause(from, to));
+                + "FROM transaction, phasing_poll_voter, phasing_poll "
+                + "LEFT JOIN phasing_poll_result ON phasing_poll.id = phasing_poll_result.id "
+                + "WHERE transaction.id = phasing_poll.id AND "
+                + "phasing_poll.finish_height > ? AND "
+                + "phasing_poll.id = phasing_poll_voter.transaction_id "
+                + "AND phasing_poll_voter.voter_id = ? "
+                + "AND phasing_poll_result.id IS NULL "
+                + "ORDER BY transaction.height DESC, transaction.transaction_index DESC "
+                + DbUtils.limitsClause(from, to));
             int i = 0;
             pstmt.setInt(++i, blockchain.getHeight());
             pstmt.setLong(++i, voterId);

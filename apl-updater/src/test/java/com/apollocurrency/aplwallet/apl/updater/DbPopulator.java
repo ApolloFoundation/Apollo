@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.updater;
 
 import org.slf4j.Logger;
 
+import javax.sql.DataSource;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -17,8 +18,6 @@ import java.sql.Statement;
 import java.util.StringTokenizer;
 
 import static org.slf4j.LoggerFactory.getLogger;
-
-import javax.sql.DataSource;
 
 public class DbPopulator {
     private static final Logger LOG = getLogger(DbPopulator.class);
@@ -37,8 +36,7 @@ public class DbPopulator {
         try {
             Path schemaDbPath = Paths.get(getClass().getClassLoader().getResource(schemaScriptPath).toURI());
             loadSqlAndExecute(schemaDbPath);
-        }
-        catch (URISyntaxException | IOException e) {
+        } catch (URISyntaxException | IOException e) {
             throw new RuntimeException("Unable to load sql commands", e);
         }
     }
@@ -52,8 +50,7 @@ public class DbPopulator {
                  Statement stm = con.createStatement()) {
                 stm.executeUpdate(sqlCommand);
                 con.commit();
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
             }
         }
@@ -64,8 +61,7 @@ public class DbPopulator {
         try {
             Path dataDbPath = Paths.get(getClass().getClassLoader().getResource(dataScriptPath).toURI());
             loadSqlAndExecute(dataDbPath);
-        }
-        catch (URISyntaxException | IOException e) {
+        } catch (URISyntaxException | IOException e) {
             throw new RuntimeException("Unable to load sql commands", e);
         }
     }

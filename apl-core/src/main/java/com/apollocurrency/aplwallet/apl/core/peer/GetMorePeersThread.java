@@ -20,7 +20,6 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- *
  * @author alukin@gmail.com
  */
 class GetMorePeersThread implements Runnable {
@@ -28,6 +27,8 @@ class GetMorePeersThread implements Runnable {
     private final TimeService timeService;
     private final PeersService peers;
     private final JSONStreamAware getPeersRequest;
+    private volatile boolean updatedPeer;
+
 
     public GetMorePeersThread(TimeService timeService, PeersService peers) {
         this.timeService = timeService;
@@ -37,9 +38,6 @@ class GetMorePeersThread implements Runnable {
         request.put("chainId", peers.blockchainConfig.getChain().getChainId());
         getPeersRequest = JSON.prepareRequest(request);
     }
-
-
-    private volatile boolean updatedPeer;
 
     @Override
     public void run() {
@@ -130,10 +128,10 @@ class GetMorePeersThread implements Runnable {
         Map<String, PeerDb.Entry> currentPeers = new HashMap<>();
         UUID chainId = peers.blockchainConfig.getChain().getChainId();
         peers.getPeers(
-                peer->peer.getAnnouncedAddress()!= null
-             && !peer.isBlacklisted()
-             && chainId.equals(peer.getChainId())
-             && now - peer.getLastUpdated() < 7 * 24 * 3600
+            peer -> peer.getAnnouncedAddress() != null
+                && !peer.isBlacklisted()
+                && chainId.equals(peer.getChainId())
+                && now - peer.getLastUpdated() < 7 * 24 * 3600
         ).forEach((peer) -> {
             currentPeers.put(peer.getAnnouncedAddress(), new PeerDb.Entry(peer.getAnnouncedAddress(), peer.getServices(), peer.getLastUpdated()));
         });

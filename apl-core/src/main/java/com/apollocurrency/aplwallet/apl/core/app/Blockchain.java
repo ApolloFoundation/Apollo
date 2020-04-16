@@ -31,18 +31,19 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 public interface Blockchain {
 
     Block getLastBlock();
+
+    void setLastBlock(Block block);
 
     /**
      * Update internal state of blockchain
      * Should be called, when database was created from scratch
      */
     void update();
-
-    void setLastBlock(Block block);
 
     Block getLastBlock(int timestamp);
 
@@ -58,11 +59,13 @@ public interface Blockchain {
 
     boolean hasBlockInShards(long blockId);
 
-    DbIterator<Block> getBlocks(int from, int to);
+    DbIterator<Block> getBlocks(int from, int to, int timestamp);
+
+    Stream<Block> getBlocksStream(int from, int to, int timestamp);
 
     Block findFirstBlock();
 
-    DbIterator<Block> getBlocks(long accountId, int timestamp, int from, int to);
+    DbIterator<Block> getBlocksByAccount(long accountId, int timestamp, int from, int to);
 
     Block findLastBlock();
 
@@ -120,7 +123,8 @@ public interface Blockchain {
     /**
      * <p>Get transaction height by using fullHash restricted it by heightLimit parameter.</p>
      * <p>This method will return height of transaction in blockchain, even if transaction currently not exist or not available</p>
-     * @param fullHash fullHash of transaction to retrieved
+     *
+     * @param fullHash    fullHash of transaction to retrieved
      * @param heightLimit upper bound which should not be crossed by returned transaction height
      * @return height of transaction or null when collision for hash occurred, transaction height greater than heightLimit or transaction with such hash not found
      */
@@ -135,8 +139,8 @@ public interface Blockchain {
     Long getTransactionCount(TransactionalDataSource dataSource, int from, int to);
 
     List<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
-                                                      int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
-                                                      int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate);
+                                      int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
+                                      int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate);
 
     List<Transaction> getBlockTransactions(long blockId);
 

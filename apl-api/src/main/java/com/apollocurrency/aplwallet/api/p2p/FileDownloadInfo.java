@@ -6,24 +6,24 @@ package com.apollocurrency.aplwallet.api.p2p;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- *
  * @author alukin@gmail.com
  */
-@Getter @Setter
+@Getter
+@Setter
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class FileDownloadInfo {
-    public FileInfo fileInfo=new FileInfo();    
+    public FileInfo fileInfo = new FileInfo();
     public List<FileChunkInfo> chunks = new ArrayList<>();
     @JsonIgnore
     /** record creation date, needed by cache */

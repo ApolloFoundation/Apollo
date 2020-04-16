@@ -10,14 +10,16 @@ public interface RestParameter<T> {
 
     /**
      * Return true if raw (not parsed) string parameter is null or empty
+     *
      * @return true if raw string parameter is null or empty
      */
-    default boolean isEmpty(){
+    default boolean isEmpty() {
         return null == getRawData() || getRawData().isEmpty();
     }
 
     /**
      * Get raw data
+     *
      * @return extracted from request value
      */
     String getRawData();
@@ -25,6 +27,7 @@ public interface RestParameter<T> {
     /**
      * Return parsed value or <code>null</code> if the raw string does not contain a parsable value. It's a silent Get.
      * Use for Optional parameters.
+     *
      * @return parsed value or <code>null</code> if the raw string does not contain a parsable value.
      */
     T getIfPresent();
@@ -32,6 +35,7 @@ public interface RestParameter<T> {
     /**
      * Get parsed value or throw exception if the raw string does not contain a parsable value.
      * Use for mandatory parameters.
+     *
      * @return parsed value
      * @throws RestParameterException - if the raw string does not contain a parsable value.
      */
@@ -39,6 +43,7 @@ public interface RestParameter<T> {
 
     /**
      * Parse the string REST parameter as a value of type <code>T</code>.
+     *
      * @return non null parsed value
      * @throws RestParameterException - if the raw string does not contain a parsable value.
      */

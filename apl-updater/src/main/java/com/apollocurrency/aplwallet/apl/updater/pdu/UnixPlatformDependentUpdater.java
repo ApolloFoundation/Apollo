@@ -23,8 +23,7 @@ public class UnixPlatformDependentUpdater extends DefaultPlatformDependentUpdate
         try {
             process.waitFor();
             return process;
-        }
-        catch (InterruptedException e) {
+        } catch (InterruptedException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }

@@ -4,7 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
-import com.apollocurrency.aplwallet.api.dto.*;
+import com.apollocurrency.aplwallet.api.dto.AplWalletDTO;
+import com.apollocurrency.aplwallet.api.dto.AplWalletKeyDTO;
+import com.apollocurrency.aplwallet.api.dto.EthWalletKeyDTO;
 import com.apollocurrency.aplwallet.api.dto.account.WalletKeysInfoDTO;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
@@ -21,13 +23,13 @@ public class WalletKeysConverter implements Converter<WalletKeysInfo, WalletKeys
         dto.setPassphrase(wallet.getPassphrase());
 
         AplWalletKeyDTO aplWalletKeyDTO = new AplWalletKeyDTO(
-                dto.getAccount(), dto.getAccountRS(),
-                dto.getPublicKey(), dto.getPassphrase());
+            dto.getAccount(), dto.getAccountRS(),
+            dto.getPublicKey(), dto.getPassphrase());
 
         dto.setApl(new AplWalletDTO(aplWalletKeyDTO));
         wallet.getEthWalletKeys().forEach(ethWalletKey -> dto.addEthWalletKey(
-                new EthWalletKeyDTO(ethWalletKey.getCredentials().getAddress(),
-                        ethWalletKey.getCredentials().getEcKeyPair().getPublicKey().toString(16))));
+            new EthWalletKeyDTO(ethWalletKey.getCredentials().getAddress(),
+                ethWalletKey.getCredentials().getEcKeyPair().getPublicKey().toString(16))));
         return dto;
     }
 

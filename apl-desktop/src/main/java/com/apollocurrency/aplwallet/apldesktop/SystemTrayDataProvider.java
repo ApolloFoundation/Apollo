@@ -50,9 +50,9 @@ public class SystemTrayDataProvider {
     @Override
     public String toString() {
         return "SystemTrayDataProvider{" +
-                "toolTip='" + toolTip + '\'' +
-                ", wallet=" + wallet +
-                ", logFile=" + logFile +
-                '}';
+            "toolTip='" + toolTip + '\'' +
+            ", wallet=" + wallet +
+            ", logFile=" + logFile +
+            '}';
     }
 }

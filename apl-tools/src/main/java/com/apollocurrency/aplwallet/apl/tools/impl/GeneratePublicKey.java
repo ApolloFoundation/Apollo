@@ -20,22 +20,23 @@
 
 package com.apollocurrency.aplwallet.apl.tools.impl;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import org.slf4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.Console;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
+
 //TODO: add vault wallets support
 public class GeneratePublicKey {
     private static final Logger log = getLogger(GeneratePublicKey.class);
 
 
-    public static void doInteractive(){
+    public static void doInteractive() {
 
         String secretPhrase;
         Console console = System.console();

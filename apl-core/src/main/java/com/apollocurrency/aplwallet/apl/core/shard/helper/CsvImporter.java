@@ -28,8 +28,8 @@ public interface CsvImporter {
      * The CSV file should exist in folder specified by implementation component.
      * If file was not found it's skipped from processing
      *
-     * @param tableName table to import from csv into database
-     * @param batchLimit rows in batch to process
+     * @param tableName   table to import from csv into database
+     * @param batchLimit  rows in batch to process
      * @param cleanTarget true if we want to cleanup target table
      * @return imported quantity
      */
@@ -40,8 +40,8 @@ public interface CsvImporter {
      * The CSV file should exist in folder specified by implementation component.
      * If file was not found it's skipped from processing
      *
-     * @param tableName table to import from csv into database
-     * @param batchLimit rows in batch to process
+     * @param tableName   table to import from csv into database
+     * @param batchLimit  rows in batch to process
      * @param cleanTarget true if we want to cleanup target table
      * @param rowDataHook function, which will be triggered on each imported row. Row represented by map of column name -> value.
      * @return imported quantity
@@ -50,9 +50,10 @@ public interface CsvImporter {
 
     /**
      * Import csv file for specified table into db. During import, default values will be also set into each executed statement
-     * @param tableName db table name to import
-     * @param batchLimit number of executed statement to commit
-     * @param cleanTarget clean target db table or not
+     *
+     * @param tableName     db table name to import
+     * @param batchLimit    number of executed statement to commit
+     * @param cleanTarget   clean target db table or not
      * @param defaultParams map of column name->value to set for each statement
      * @return number of imported rows
      */

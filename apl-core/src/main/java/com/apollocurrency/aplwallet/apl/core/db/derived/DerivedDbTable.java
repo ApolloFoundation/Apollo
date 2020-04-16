@@ -42,25 +42,10 @@ import java.util.Objects;
 
 public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
 
-    private FullTextConfig fullTextConfig;
-    private DerivedTablesRegistry derivedDbTablesRegistry;
-
-    public String getTableName() {
-        return table;
-    }
-
     protected final String table;
     protected DatabaseManager databaseManager;
-
-    //TODO: fix injects and remove
-    private void lookupCdi(){
-        if(fullTextConfig==null){
-            fullTextConfig =  CDI.current().select(FullTextConfig.class).get();
-        }
-        if(derivedDbTablesRegistry==null){
-            derivedDbTablesRegistry = CDI.current().select(DerivedTablesRegistry.class).get();
-        }
-    }
+    private FullTextConfig fullTextConfig;
+    private DerivedTablesRegistry derivedDbTablesRegistry;
 
     // We should find better place for table init
     protected DerivedDbTable(String table, boolean init) { // for CDI beans setUp 'false'
@@ -76,8 +61,23 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
         this(table, true);
     }
 
+    public String getTableName() {
+        return table;
+    }
+
+    //TODO: fix injects and remove
+    private void lookupCdi() {
+        if (fullTextConfig == null) {
+            fullTextConfig = CDI.current().select(FullTextConfig.class).get();
+        }
+        if (derivedDbTablesRegistry == null) {
+            derivedDbTablesRegistry = CDI.current().select(DerivedTablesRegistry.class).get();
+        }
+    }
+
     @Override
-    public void trim(int height) {}
+    public void trim(int height) {
+    }
 
     @Override
     public void trim(int height, boolean isSharding) {
@@ -135,14 +135,14 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
     }
 
 
-    public  DatabaseManager getDatabaseManager() {
+    public DatabaseManager getDatabaseManager() {
         return databaseManager;
     }
 
     /**
      * @see TransactionalDataSource#isInTransaction()
      */
-    public boolean isInTransaction(){
+    public boolean isInTransaction() {
         return databaseManager.getDataSource().isInTransaction();
     }
 
@@ -160,7 +160,7 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
             List<T> values = new ArrayList<>();
             long dbId = -1;
             try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()){
+                while (rs.next()) {
                     values.add(load(con, rs, null));
                     dbId = rs.getLong("db_id");
                 }
@@ -232,11 +232,11 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
                 long rowCount = rs.getLong("count");
                 int height = rs.getInt("max_height");
                 result = new MinMaxValue(
-                        min,
-                        max,
-                        null,
-                        rowCount,
-                        height
+                    min,
+                    max,
+                    null,
+                    rowCount,
+                    height
                 );
             }
         }
@@ -247,6 +247,7 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
     public boolean isScanSafe() {
         return true; // by default derived table can be safely rolled back to any height without block popOff
     }
+
     @Override
     public final String toString() {
         return getName();

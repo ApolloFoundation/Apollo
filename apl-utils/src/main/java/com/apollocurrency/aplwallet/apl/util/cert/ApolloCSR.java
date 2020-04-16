@@ -1,17 +1,11 @@
 package com.apollocurrency.aplwallet.apl.util.cert;
 
+import io.firstbridge.cryptolib.CryptoNotValidException;
 import io.firstbridge.cryptolib.FBCryptoParams;
 import io.firstbridge.cryptolib.KeyWriter;
 import io.firstbridge.cryptolib.csr.CertificateRequestData;
 import io.firstbridge.cryptolib.csr.KeyGenerator;
-import io.firstbridge.cryptolib.CryptoNotValidException;
 import io.firstbridge.cryptolib.impl.KeyWriterImpl;
-import java.io.FileReader;
-import java.io.IOException;
-import java.math.BigInteger;
-import java.security.KeyPair;
-import java.security.SecureRandom;
-import java.security.cert.X509Certificate;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
@@ -19,6 +13,13 @@ import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.bouncycastle.util.IPAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.FileReader;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.security.KeyPair;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 
 /**
  * Certificate signing request with Apollo-specific attributes
@@ -28,24 +29,33 @@ import org.slf4j.LoggerFactory;
 public class ApolloCSR extends CertBase {
 
     private static final Logger log = LoggerFactory.getLogger(ApolloCSR.class);
-    
-    public static ApolloCSR loadCSR(String path){
+    private final CertificateRequestData certData = new CertificateRequestData(CertificateRequestData.CSRType.HOST);
+    private boolean allowCertSign = false;
+    private String challengePassword = "";
+    private BigInteger apolloID;
+    private AuthorityID apolloAuthID = new AuthorityID();
+    private KeyWriter kw = new KeyWriterImpl();
+    public ApolloCSR() {
+        apolloID = new BigInteger(128, new SecureRandom());
+    }
+
+    public static ApolloCSR loadCSR(String path) {
         PKCS10CertificationRequest cr;
         ApolloCSR res = null;
         try (FileReader fr = new FileReader(path)) {
             PEMParser parser = new PEMParser(fr);
-            cr = (PKCS10CertificationRequest)parser.readObject();
-            res = ApolloCSR.fromPKCS10(cr);            
+            cr = (PKCS10CertificationRequest) parser.readObject();
+            res = ApolloCSR.fromPKCS10(cr);
         } catch (IOException ex) {
-            log.error("Can not read PKCS#10 file: "+path,ex);
+            log.error("Can not read PKCS#10 file: " + path, ex);
         }
         return res;
     }
-    
+
     public static ApolloCSR fromPKCS10(PKCS10CertificationRequest cr) {
         ApolloCSR res = new ApolloCSR();
         try {
-            CertAttributes va  = new CertAttributes();
+            CertAttributes va = new CertAttributes();
             va.setSubject(cr.getSubject());
             va.setAttributes(cr.getAttributes());
             res.setCN(va.getCn());
@@ -66,13 +76,6 @@ public class ApolloCSR extends CertBase {
         }
         return res;
     }
-
-    private final CertificateRequestData certData = new CertificateRequestData(CertificateRequestData.CSRType.HOST);
-    private boolean allowCertSign = false;
-    private String challengePassword = "";
-    private BigInteger apolloID;
-    private AuthorityID apolloAuthID = new AuthorityID();
-    private KeyWriter kw = new KeyWriterImpl();
 
     public static ApolloCSR fromCertificate(ApolloCertificate cert) {
         ApolloCSR res = new ApolloCSR();
@@ -96,8 +99,29 @@ public class ApolloCSR extends CertBase {
         return res;
     }
 
-    public ApolloCSR() {
-        apolloID = new BigInteger(128, new SecureRandom());
+    public static boolean isValidIPAddresList(String ipList) {
+        boolean res = true;
+        String[] addr = ipList.split(",");
+        for (String a : addr) {
+            res = IPAddress.isValid(a) || IPAddress.isValidWithNetMask(a);
+            if (!res) {
+                break;
+            }
+        }
+        return res;
+    }
+
+    public static boolean isVaidDNSNameList(String nameList) {
+        boolean res = true;
+        String[] names = nameList.split(",");
+        String pattern = "^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\\-]*[A-Za-z0-9])$";
+        for (String n : names) {
+            res = n.matches(pattern);
+            if (!res) {
+                break;
+            }
+        }
+        return res;
     }
 
     public BigInteger getApolloID() {
@@ -155,10 +179,6 @@ public class ApolloCSR extends CertBase {
         return certData.getExtendedAttribute("subjaltnames.ipaddress");
     }
 
-    public String getDNSNames() {
-        return certData.getExtendedAttribute("subjaltnames.dnsname");
-    }
-
     public void setIP(String ip) {
         if (ip != null && !ip.isEmpty()) {
             if (isValidIPAddresList(ip)) {
@@ -167,6 +187,10 @@ public class ApolloCSR extends CertBase {
                 throw new IllegalArgumentException("Invalid IP4 or IP6 addres: " + ip);
             }
         }
+    }
+
+    public String getDNSNames() {
+        return certData.getExtendedAttribute("subjaltnames.dnsname");
     }
 
     public void setDNSNames(String n) {
@@ -195,28 +219,28 @@ public class ApolloCSR extends CertBase {
         certData.setSubjectAttribute("O", o);
     }
 
-    public void setCountry(String c) {
-        certData.setSubjectAttribute("C", c);
-    }
-
     public String getCountry() {
         return certData.getSubjectAttribute("C");
     }
 
-    public void setState(String c) {
-        certData.setSubjectAttribute("ST", c);
+    public void setCountry(String c) {
+        certData.setSubjectAttribute("C", c);
     }
 
     public String getState() {
         return certData.getSubjectAttribute("ST");
     }
 
-    public void setCity(String c) {
-        certData.setSubjectAttribute("L", c);
+    public void setState(String c) {
+        certData.setSubjectAttribute("ST", c);
     }
 
     public String getCity() {
         return certData.getSubjectAttribute("L");
+    }
+
+    public void setCity(String c) {
+        certData.setSubjectAttribute("L", c);
     }
 
     public String getChallengePassword() {
@@ -273,39 +297,14 @@ public class ApolloCSR extends CertBase {
         return pem;
     }
 
-    public static boolean isValidIPAddresList(String ipList) {
-        boolean res = true;
-        String[] addr = ipList.split(",");
-        for (String a : addr) {
-            res = IPAddress.isValid(a) || IPAddress.isValidWithNetMask(a);
-            if (!res) {
-                break;
-            }
-        }
-        return res;
-    }
-
-    public static boolean isVaidDNSNameList(String nameList) {
-        boolean res = true;
-        String[] names = nameList.split(",");
-        String pattern = "^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\\-]*[A-Za-z0-9])$";
-        for (String n : names) {
-            res = n.matches(pattern);
-            if (!res) {
-                break;
-            }
-        }
-        return res;
-    }
-
     @Override
     public String toString() {
         String res = "X.509 Certificate:\n";
         res += "CN=" + getCN() + "\n"
-                + "ApolloID=" + getApolloID().toString(16) + "\n";
+            + "ApolloID=" + getApolloID().toString(16) + "\n";
         res += "emailAddress=" + getEmial() + "\n";
         res += "Country=" + getCountry() + " State/Province=" + getState()
-                + " City=" + getCity();
+            + " City=" + getCity();
         res += "Organization=" + getOrg() + " Org. Unit=" + getOrgUnit() + "\n";
         res += "IP address=" + getIP() + "\n";
         res += "DNS names=" + getDNSNames() + "\n";

@@ -4,16 +4,16 @@
 
 package com.apollocurrency.aplwallet.api.dto.info;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-
 import com.apollocurrency.aplwallet.api.dto.BaseDTO;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @NoArgsConstructor

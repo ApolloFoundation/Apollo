@@ -16,7 +16,7 @@ import java.util.List;
 @Getter
 @Setter
 @EqualsAndHashCode
-public class Currency  extends ResponseBase {
+public class Currency extends ResponseBase {
     private long accountId;
     private String name;
     private String code;

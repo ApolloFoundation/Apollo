@@ -17,15 +17,14 @@ import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 /**
  * We will not store files in transaction attachment, alternatively we will store it only in tagged_data table
@@ -34,20 +33,18 @@ import javax.inject.Singleton;
 @Singleton
 public class TaggedDataDao extends PrunableDbTable<TaggedData> {
 
-    private DataTagDao dataTagDao;
-    private BlockchainConfig blockchainConfig;
-    private TimeService timeService;
-
     private static final String DB_TABLE = "tagged_data";
     private static final String FULL_TEXT_SEARCH_COLUMNS = "name,description,tags";
-    private TaggedDataMapper MAPPER = new TaggedDataMapper();
-
     private static final LongKeyFactory<TaggedData> taggedDataKeyFactory = new LongKeyFactory<>("id") {
         @Override
         public DbKey newKey(TaggedData taggedData) {
             return newKey(taggedData.getId());
         }
     };
+    private DataTagDao dataTagDao;
+    private BlockchainConfig blockchainConfig;
+    private TimeService timeService;
+    private TaggedDataMapper MAPPER = new TaggedDataMapper();
 
     @Inject
     public TaggedDataDao(DataTagDao dataTagDao,
@@ -58,6 +55,17 @@ public class TaggedDataDao extends PrunableDbTable<TaggedData> {
         this.blockchainConfig = blockchainConfig;
     }
 
+    private static DbClause getDbClause(String channel, long accountId) {
+        DbClause dbClause = DbClause.EMPTY_CLAUSE;
+        if (channel != null) {
+            dbClause = new DbClause.StringClause("channel", channel);
+        }
+        if (accountId != 0) {
+            DbClause accountClause = new DbClause.LongClause("account_id", accountId);
+            dbClause = dbClause != DbClause.EMPTY_CLAUSE ? dbClause.and(accountClause) : accountClause;
+        }
+        return dbClause;
+    }
 
     @Override
     public TaggedData load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
@@ -80,16 +88,16 @@ public class TaggedDataDao extends PrunableDbTable<TaggedData> {
         if (blockchainConfig.isEnablePruning()) {
             try (Connection con = getDatabaseManager().getDataSource().getConnection();
                  PreparedStatement pstmtSelect = con.prepareStatement("SELECT parsed_tags "
-                         + "FROM tagged_data WHERE transaction_timestamp < ? AND latest = TRUE ")) {
+                     + "FROM tagged_data WHERE transaction_timestamp < ? AND latest = TRUE ")) {
                 int expiration = timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime();
                 pstmtSelect.setInt(1, expiration);
                 Map<String, Integer> expiredTags = new HashMap<>();
                 try (ResultSet rs = pstmtSelect.executeQuery()) {
                     while (rs.next()) {
-                        Object[] array = (Object[])rs.getArray("parsed_tags").getArray();
+                        Object[] array = (Object[]) rs.getArray("parsed_tags").getArray();
                         for (Object tag : array) {
                             Integer count = expiredTags.get(tag);
-                            expiredTags.put((String)tag, count != null ? count + 1 : 1);
+                            expiredTags.put((String) tag, count != null ? count + 1 : 1);
                         }
                     }
                 }
@@ -124,27 +132,15 @@ public class TaggedDataDao extends PrunableDbTable<TaggedData> {
 
     public DbIterator<TaggedData> searchData(String query, String channel, long accountId, int from, int to) {
         return super.search(query, getDbClause(channel, accountId), from, to,
-                " ORDER BY ft.score DESC, tagged_data.block_timestamp DESC, tagged_data.db_id DESC ");
-    }
-
-    private static DbClause getDbClause(String channel, long accountId) {
-        DbClause dbClause = DbClause.EMPTY_CLAUSE;
-        if (channel != null) {
-            dbClause = new DbClause.StringClause("channel", channel);
-        }
-        if (accountId != 0) {
-            DbClause accountClause = new DbClause.LongClause("account_id", accountId);
-            dbClause = dbClause != DbClause.EMPTY_CLAUSE ? dbClause.and(accountClause) : accountClause;
-        }
-        return dbClause;
+            " ORDER BY ft.score DESC, tagged_data.block_timestamp DESC, tagged_data.db_id DESC ");
     }
 
     @Override
     public void save(Connection con, TaggedData taggedData) throws SQLException {
         try (
-                @DatabaseSpecificDml(DmlMarker.MERGE)
-                @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
-                PreparedStatement pstmt = con.prepareStatement("MERGE INTO tagged_data (id, account_id, name, description, tags, parsed_tags, "
+            @DatabaseSpecificDml(DmlMarker.MERGE)
+            @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
+            PreparedStatement pstmt = con.prepareStatement("MERGE INTO tagged_data (id, account_id, name, description, tags, parsed_tags, "
                 + "type, channel, data, is_text, filename, block_timestamp, transaction_timestamp, height, latest) "
                 + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")
         ) {

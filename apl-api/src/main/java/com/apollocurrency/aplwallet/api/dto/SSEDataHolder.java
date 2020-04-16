@@ -12,7 +12,7 @@ import java.util.List;
 @Deprecated
 @Getter
 @Setter
-public class SSEDataHolder{
+public class SSEDataHolder {
     private List<JSONTransaction> transactions;
     private int aliasCount;
     private List<DGSPurchase> purchases;

@@ -4,16 +4,16 @@
 
 package com.apollocurrency.aplwallet.api.dto.info;
 
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.apollocurrency.aplwallet.api.dto.BaseDTO;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 
 //@JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -52,6 +52,7 @@ public class BlockchainConstantsDto extends BaseDTO {
 
     /**
      * Constructor Used for unit test
+     *
      * @param genesisBlockId
      * @param genesisAccountId
      * @param epochBeginning

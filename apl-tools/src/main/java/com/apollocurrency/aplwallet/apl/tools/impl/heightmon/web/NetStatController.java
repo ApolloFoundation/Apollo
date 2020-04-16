@@ -9,9 +9,6 @@ import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.NetworkStats;
 import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.PeerDiffStat;
 import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.PeerInfo;
 
-import java.net.UnknownHostException;
-import java.util.List;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.validation.constraints.NotNull;
@@ -23,6 +20,9 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.net.UnknownHostException;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Path("/netstat")
 @Singleton
@@ -30,13 +30,14 @@ public class NetStatController {
 
     @Inject
     private HeightMonitorService heightMonitorService;
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getStats() {
         NetworkStats last = heightMonitorService.getLastStats();
         if (last == null) {
             return Response.serverError()
-                    .entity("Network statistics is not ready yet").build();
+                .entity("Network statistics is not ready yet").build();
         }
         return Response.ok(last).build();
     }
@@ -47,6 +48,7 @@ public class NetStatController {
     public Response getAllPeers() {
         return Response.ok(heightMonitorService.getAllPeers()).build();
     }
+
     @POST
     @Path("/peers")
     @Produces(MediaType.APPLICATION_JSON)
@@ -60,8 +62,7 @@ public class NetStatController {
                 peerInfo.setPort(port);
             }
             return Response.ok(heightMonitorService.addPeer(peerInfo)).build();
-        }
-        catch (UnknownHostException e) {
+        } catch (UnknownHostException e) {
             return Response.status(422, e.getLocalizedMessage()).build();
         }
     }
@@ -71,11 +72,11 @@ public class NetStatController {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getPeerStats(@NotNull @PathParam("ip") String ip) {
         List<PeerDiffStat> diffStats = heightMonitorService.getLastStats()
-                .getPeerDiffStats()
-                .stream()
-                .filter(peerDiffStat -> peerDiffStat.getPeer1().equalsIgnoreCase(ip)
-                        || peerDiffStat.getPeer2().equalsIgnoreCase(ip))
-                .collect(Collectors.toList());
+            .getPeerDiffStats()
+            .stream()
+            .filter(peerDiffStat -> peerDiffStat.getPeer1().equalsIgnoreCase(ip)
+                || peerDiffStat.getPeer2().equalsIgnoreCase(ip))
+            .collect(Collectors.toList());
         if (diffStats.isEmpty()) {
             return Response.status(422, "No monitoring data found for peer " + ip).build();
         } else {

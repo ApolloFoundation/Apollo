@@ -26,6 +26,6 @@ public class BlockEventSourceServlet extends org.eclipse.jetty.servlets.EventSou
 
         }
         return new BlockEventSource((ThreadPoolExecutor) request
-                .getServletContext().getAttribute("executor"), accountId);
+            .getServletContext().getAttribute("executor"), accountId);
     }
 }

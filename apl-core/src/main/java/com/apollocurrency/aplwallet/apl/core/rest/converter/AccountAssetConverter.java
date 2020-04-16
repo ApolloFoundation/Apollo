@@ -22,7 +22,7 @@ public class AccountAssetConverter implements Converter<AccountAsset, AccountAss
         return dto;
     }
 
-    public void addAsset(AccountAssetDTO o, Asset model){
+    public void addAsset(AccountAssetDTO o, Asset model) {
         if (o != null && model != null) {
             o.setName(model.getName());
             o.setDecimals(model.getDecimals());
@@ -30,7 +30,7 @@ public class AccountAssetConverter implements Converter<AccountAsset, AccountAss
 
     }
 
-    public void addAssetInfo(AccountAssetDTO o, Asset model){
+    public void addAssetInfo(AccountAssetDTO o, Asset model) {
         if (o != null && model != null) {
             o.setName(model.getName());
             o.setDescription(model.getDescription());

@@ -47,7 +47,7 @@ public interface ShardManagement {
      * That is preferred way to retrieve cached shard data source or create it fully or partially initialized.
      * The initialization schema is specified by dbVersion implementation class.
      *
-     * @param shardId shard Id to be added, can be NULL then an next shardId is selected from 'SHARD' table
+     * @param shardId   shard Id to be added, can be NULL then an next shardId is selected from 'SHARD' table
      * @param dbVersion 'partial' or 'full' kind of 'schema script' implementation class can be supplied
      * @return shard database connection pool instance is put into internal cache
      */
@@ -81,7 +81,7 @@ public interface ShardManagement {
      * It opens existing shard file and adds it into cached shard data source list.
      * Partial schema is specified by dbVersion implementation
      *
-     * @param shardId shard Id to be added, can be NULL then an next shardId is selected from 'SHARD' table
+     * @param shardId   shard Id to be added, can be NULL then an next shardId is selected from 'SHARD' table
      * @param dbVersion 'partial' or 'full' kind of 'schema script' implementation class can be supplied
      * @return shard database connection pool instance is put into internal cache
      */
@@ -90,18 +90,21 @@ public interface ShardManagement {
 
     /**
      * Return list of data sources with state = FULL. Each datasource point to not empty shard db, which store blocks and transactions for specific shard
+     *
      * @return list of full shard data sources
      */
     List<TransactionalDataSource> getAllFullDataSources(Long numberOfShards);
 
     /**
      * Return Iterator of data sources with state = FULL. Each datasource point to not empty shard db, which store blocks and transactions for specific shard
+     *
      * @return list of full shard data sources
      */
     Iterator<TransactionalDataSource> getAllFullDataSourcesIterator();
 
     /**
      * Close all datasources related to shards, this method will close all opened datasources excluding current main datasource
+     *
      * @return number of closed datasources
      */
     long closeAllShardDataSources();

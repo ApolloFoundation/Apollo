@@ -32,6 +32,7 @@ public enum APITag {
     UTILS("Utils"), DEBUG("Debug"), ADDONS("Add-ons"), UPDATE("Update"), TWO_FACTOR_AUTH("2FA");
 
     private static final Map<String, APITag> apiTags = new HashMap<>();
+
     static {
         for (APITag apiTag : values()) {
             if (apiTags.put(apiTag.getDisplayName(), apiTag) != null) {
@@ -40,18 +41,18 @@ public enum APITag {
         }
     }
 
+    private final String displayName;
+
+    APITag(String displayName) {
+        this.displayName = displayName;
+    }
+
     public static APITag fromDisplayName(String displayName) {
         APITag apiTag = apiTags.get(displayName);
         if (apiTag == null) {
             throw new IllegalArgumentException("Invalid APITag name: " + displayName);
         }
         return apiTag;
-    }
-
-    private final String displayName;
-
-    APITag(String displayName) {
-        this.displayName = displayName;
     }
 
     public String getDisplayName() {

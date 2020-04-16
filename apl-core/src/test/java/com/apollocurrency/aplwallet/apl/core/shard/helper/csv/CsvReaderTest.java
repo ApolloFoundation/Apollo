@@ -4,18 +4,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper.csv;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import com.apollocurrency.aplwallet.apl.testutil.ResourceFileLoader;
+import lombok.extern.slf4j.Slf4j;
+import org.jboss.weld.junit5.EnableWeld;
+import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.util.List;
 
-import com.apollocurrency.aplwallet.apl.testutil.ResourceFileLoader;
-import lombok.extern.slf4j.Slf4j;
-import org.jboss.weld.junit5.EnableWeld;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
 @EnableWeld
@@ -46,7 +46,7 @@ class CsvReaderTest {
             while (rs.next()) {
                 for (int j = 0; j < columnsCount; j++) {
                     Object object = rs.getObject(j + 1); // can be NULL sometimes
-                    log.trace("Row column [{}] value is {}", meta.getColumnLabel(j + 1) , object);
+                    log.trace("Row column [{}] value is {}", meta.getColumnLabel(j + 1), object);
                 }
                 readRowsByCsvReader++;
             }
@@ -62,10 +62,10 @@ class CsvReaderTest {
     @Test
     void readSeveralCsvFiles() throws Exception {
         List<String> csvFileList = List.of("account_control_phasing.csv", "goods.csv", "goods2.csv",
-                "phasing_poll.csv", "public_key.csv", "purchase.csv", "shard.csv", "shuffling_data.csv");
+            "phasing_poll.csv", "public_key.csv", "purchase.csv", "shard.csv", "shuffling_data.csv");
 
         int processedTables = 0;
-        for (String itemName: csvFileList) {
+        for (String itemName : csvFileList) {
             int readRowsByCsvReader = 0;
 
             ResourceFileLoader resourceFileLoader = new ResourceFileLoader();
@@ -86,7 +86,7 @@ class CsvReaderTest {
                 while (rs.next()) {
                     for (int j = 0; j < columnsCount; j++) {
                         Object object = rs.getObject(j + 1); // can be NULL sometimes
-                        log.trace("Row column [{}] value is {}", meta.getColumnLabel(j + 1) , object);
+                        log.trace("Row column [{}] value is {}", meta.getColumnLabel(j + 1), object);
                     }
                     readRowsByCsvReader++;
                 }

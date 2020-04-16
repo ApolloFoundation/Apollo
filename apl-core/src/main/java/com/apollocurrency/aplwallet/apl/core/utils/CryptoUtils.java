@@ -11,6 +11,9 @@ import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public class CryptoUtils {
+    private CryptoUtils() {
+    }
+
     public static EncryptedData encryptTo(byte[] publicKey, byte[] data, byte[] keySeed, boolean compress) {
         if (compress && data.length > 0) {
             data = Convert.compress(data);
@@ -25,6 +28,4 @@ public class CryptoUtils {
         }
         return decrypted;
     }
-
-    private CryptoUtils() {}
 }

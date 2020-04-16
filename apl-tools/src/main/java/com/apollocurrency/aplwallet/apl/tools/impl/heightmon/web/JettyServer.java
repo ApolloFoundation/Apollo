@@ -44,7 +44,7 @@ public class JettyServer {
         // init Weld here
         servletHandler.addEventListener(new WeldInitialListener());
         //need this listener to support scopes properly
-        servletHandler.addEventListener( new Listener());
+        servletHandler.addEventListener(new Listener());
 
         server.setHandler(servletHandler);
     }
@@ -53,8 +53,7 @@ public class JettyServer {
     public void start() {
         try {
             server.start();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -63,8 +62,7 @@ public class JettyServer {
     public void shutdown() {
         try {
             server.stop();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException(e.toString(), e);
         }
     }

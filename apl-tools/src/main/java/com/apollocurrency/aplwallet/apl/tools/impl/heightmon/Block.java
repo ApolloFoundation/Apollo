@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.tools.impl.heightmon;
 
-import java.util.Objects;
-
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonSetter;
+
+import java.util.Objects;
 
 public class Block {
     private long id;
@@ -17,16 +17,28 @@ public class Block {
     private int version;
     private long generatorId;
 
+    public Block() {
+    }
+
+    public Block(long id, int height, int timestamp, int timeout, int version, long generatorId) {
+        this.id = id;
+        this.height = height;
+        this.timestamp = timestamp;
+        this.timeout = timeout;
+        this.version = version;
+        this.generatorId = generatorId;
+    }
+
     @Override
     public String toString() {
         return "Block{" +
-                "id=" + id +
-                ", height=" + height +
-                ", timestamp=" + timestamp +
-                ", timeout=" + timeout +
-                ", version=" + version +
-                ", generatorId=" + generatorId +
-                '}';
+            "id=" + id +
+            ", height=" + height +
+            ", timestamp=" + timestamp +
+            ", timeout=" + timeout +
+            ", version=" + version +
+            ", generatorId=" + generatorId +
+            '}';
     }
 
     @Override
@@ -35,11 +47,11 @@ public class Block {
         if (!(o instanceof Block)) return false;
         Block block = (Block) o;
         return id == block.id &&
-                height == block.height &&
-                timestamp == block.timestamp &&
-                timeout == block.timeout &&
-                version == block.version &&
-                generatorId == block.generatorId;
+            height == block.height &&
+            timestamp == block.timestamp &&
+            timeout == block.timeout &&
+            version == block.version &&
+            generatorId == block.generatorId;
     }
 
     @Override
@@ -94,18 +106,6 @@ public class Block {
     }
 
     public void setGeneratorId(long generatorId) {
-        this.generatorId = generatorId;
-    }
-
-    public Block() {
-    }
-
-    public Block(long id, int height, int timestamp, int timeout, int version, long generatorId) {
-        this.id = id;
-        this.height = height;
-        this.timestamp = timestamp;
-        this.timeout = timeout;
-        this.version = version;
         this.generatorId = generatorId;
     }
 }

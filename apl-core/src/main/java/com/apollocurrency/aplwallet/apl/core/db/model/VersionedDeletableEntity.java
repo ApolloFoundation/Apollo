@@ -7,6 +7,7 @@ import lombok.ToString;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 public class VersionedDeletableEntity extends VersionedDerivedEntity {

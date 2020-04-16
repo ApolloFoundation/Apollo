@@ -39,10 +39,12 @@ import java.util.List;
 @Vetoed
 public final class GetScheduledTransactions extends AbstractAPIRequestHandler {
 
-    public GetScheduledTransactions() {
-        super(new APITag[] {APITag.TRANSACTIONS, APITag.ACCOUNTS}, "account");
-    }
     private TransactionSchedulerService schedulerService = CDI.current().select(TransactionSchedulerService.class).get();
+
+    public GetScheduledTransactions() {
+        super(new APITag[]{APITag.TRANSACTIONS, APITag.ACCOUNTS}, "account");
+    }
+
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
