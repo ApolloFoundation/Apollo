@@ -1313,7 +1313,6 @@ public final class JSONData {
 
     @Deprecated
     static void putAccount(JSONObject json, String name, long accountId, boolean isPrivate) {
-        json.put(name, Long.toUnsignedString(accountId));
         if (isPrivate) {
             Random random = new Random();
             accountId = random.nextLong();
@@ -1323,6 +1322,8 @@ public final class JSONData {
                 json.put(name + "PublicKey", Convert.toHexString(b));
             }
         }
+
+        json.put(name, Long.toUnsignedString(accountId));
         json.put(name + "RS", Convert2.rsAccount(accountId));
     }
 
