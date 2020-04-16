@@ -18,10 +18,16 @@ import java.nio.ByteBuffer;
  * @author al
  */
 class CCAskOrderReplacement extends ColoredCoinsOrderPlacement {
-    private final OrderMatchService orderMatchService =
-        CDI.current().select(OrderMatchService.class).get();
+    private OrderMatchService orderMatchService;
 
     public CCAskOrderReplacement() {
+    }
+
+    private OrderMatchService lookupOrderMatchService() {
+        if (orderMatchService == null) {
+            this.orderMatchService = CDI.current().select(OrderMatchService.class).get();
+        }
+        return orderMatchService;
     }
 
     @Override
@@ -63,7 +69,7 @@ class CCAskOrderReplacement extends ColoredCoinsOrderPlacement {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         ColoredCoinsAskOrderPlacement attachment = (ColoredCoinsAskOrderPlacement) transaction.getAttachment();
-        orderMatchService.addAskOrder(transaction, attachment);
+        lookupOrderMatchService().addAskOrder(transaction, attachment);
     }
 
     @Override

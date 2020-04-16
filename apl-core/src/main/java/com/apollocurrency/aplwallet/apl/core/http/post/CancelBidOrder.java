@@ -24,9 +24,9 @@ import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.order.entity.BidOrder;
-import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.BidOrderService;
-import com.apollocurrency.aplwallet.apl.core.order.service.impl.BidOrderServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.order.service.OrderService;
+import com.apollocurrency.aplwallet.apl.core.order.service.impl.BidOrderServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.BidOrderService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderCancellation;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
@@ -41,18 +41,27 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_O
 
 @Vetoed
 public final class CancelBidOrder extends CreateTransaction {
-    private final OrderService<BidOrder, ColoredCoinsBidOrderPlacement> bidOrderService =
-        CDI.current().select(BidOrderServiceImpl.class, BidOrderService.Literal.INSTANCE).get();
+    private OrderService<BidOrder, ColoredCoinsBidOrderPlacement> bidOrderService;
 
     public CancelBidOrder() {
         super(new APITag[]{APITag.AE, APITag.CREATE_TRANSACTION}, "order");
+    }
+
+    private OrderService<BidOrder, ColoredCoinsBidOrderPlacement> lookupBidOrderService() {
+        if (bidOrderService == null) {
+            this.bidOrderService = CDI.current().select(
+                BidOrderServiceImpl.class,
+                BidOrderService.Literal.INSTANCE
+            ).get();
+        }
+        return bidOrderService;
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         long orderId = HttpParameterParserUtil.getUnsignedLong(req, "order", true);
         Account account = HttpParameterParserUtil.getSenderAccount(req);
-        BidOrder orderData = bidOrderService.getOrder(orderId);
+        BidOrder orderData = lookupBidOrderService().getOrder(orderId);
         if (orderData == null || orderData.getAccountId() != account.getId()) {
             return UNKNOWN_ORDER;
         }
