@@ -32,9 +32,9 @@ public class CmdLineArgs {
     public String vaultKeystoreDir = "";
     @Parameter(names = {"--dex-key-dir"}, description = "Load/Save dex keys to/form specified keystore directory.")
     public String dexKeystoreDir = "";
-    @Parameter(names = {"--no-shards-import"}, description = "Start from Genesis block, do not try to import last shard", arity = 1)
+    @Parameter(names = {"--no-shard-import"}, description = "Start from Genesis block, do not try to import last shard", arity = 1)
     public Boolean noShardImport = null;
-    @Parameter(names = {"--no-shards-create"}, description = "Do not create shards even if it configured to do so. Shards require much more resources", arity = 1)
+    @Parameter(names = {"--no-shard-create"}, description = "Do not create shards even if it configured to do so. Shards require much more resources", arity = 1)
     public Boolean noShardCreate = null;
 
     @Parameter(names = {"--update-attachment-file", "-u"}, description = "Full path to file which represent json of UpdateAttachment for local updates debug")
