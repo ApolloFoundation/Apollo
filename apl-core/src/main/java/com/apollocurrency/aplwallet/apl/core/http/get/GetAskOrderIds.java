@@ -20,21 +20,28 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Order;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.order.entity.AskOrder;
+import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.AskOrderService;
+import com.apollocurrency.aplwallet.apl.core.order.service.impl.AskOrderServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.order.service.OrderService;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectorUtils;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class GetAskOrderIds extends AbstractAPIRequestHandler {
+    private final OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService =
+        CDI.current().select(AskOrderServiceImpl.class, AskOrderService.Literal.INSTANCE).get();
 
     public GetAskOrderIds() {
         super(new APITag[]{APITag.AE}, "asset", "firstIndex", "lastIndex");
@@ -47,12 +54,9 @@ public final class GetAskOrderIds extends AbstractAPIRequestHandler {
         int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
         int lastIndex = HttpParameterParserUtil.getLastIndex(req);
 
-        JSONArray orderIds = new JSONArray();
-        try (DbIterator<Order.Ask> askOrders = Order.Ask.getSortedOrders(assetId, firstIndex, lastIndex)) {
-            while (askOrders.hasNext()) {
-                orderIds.add(Long.toUnsignedString(askOrders.next().getId()));
-            }
-        }
+        JSONArray orderIds = askOrderService.getSortedOrders(assetId, firstIndex, lastIndex)
+            .map(a -> Long.toUnsignedString(a.getId()))
+            .collect(CollectorUtils.jsonCollector());
 
         JSONObject response = new JSONObject();
         response.put("askOrderIds", orderIds);

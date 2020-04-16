@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.monetary;
 
-import com.apollocurrency.aplwallet.apl.core.app.Trade;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -189,13 +188,4 @@ public final class Asset {
     public byte getDecimals() {
         return decimals;
     }
-
-    public DbIterator<Trade> getTrades(int from, int to) {
-        return Trade.getAssetTrades(this.assetId, from, to);
-    }
-
-    public DbIterator<AssetTransfer> getAssetTransfers(int from, int to) {
-        return AssetTransfer.getAssetTransfers(this.assetId, from, to);
-    }
-
 }
