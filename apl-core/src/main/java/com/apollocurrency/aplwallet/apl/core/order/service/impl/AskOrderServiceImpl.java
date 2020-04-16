@@ -39,10 +39,31 @@ import java.util.stream.Stream;
 @Singleton
 @AskOrderService
 public class AskOrderServiceImpl implements OrderService<AskOrder, ColoredCoinsAskOrderPlacement> {
+    static final String ORDER = " ORDER BY price ASC, creation_height ASC, transaction_height ASC, transaction_index ASC ";
     private final DatabaseManager databaseManager;
     private final AskOrderTable askOrderTable;
     private final IteratorToStreamConverter<AskOrder> converter;
     private final Blockchain blockchain;
+
+    /**
+     * Constructor for unit tests
+     *
+     * @param databaseManager
+     * @param orderAskTable
+     * @param blockchain
+     * @param converter
+     */
+    public AskOrderServiceImpl(
+        final DatabaseManager databaseManager,
+        final AskOrderTable orderAskTable,
+        final Blockchain blockchain,
+        final IteratorToStreamConverter<AskOrder> converter
+    ) {
+        this.databaseManager = databaseManager;
+        this.askOrderTable = orderAskTable;
+        this.blockchain = blockchain;
+        this.converter = converter;
+    }
 
     @Inject
     public AskOrderServiceImpl(
@@ -97,7 +118,8 @@ public class AskOrderServiceImpl implements OrderService<AskOrder, ColoredCoinsA
                 new DbClause.LongClause("asset_id", assetId),
                 from,
                 to,
-                " ORDER BY price ASC, creation_height ASC, transaction_height ASC, transaction_index ASC ")
+                ORDER
+            )
         );
     }
 

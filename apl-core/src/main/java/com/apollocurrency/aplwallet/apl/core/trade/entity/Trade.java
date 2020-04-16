@@ -23,6 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.trade.entity;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.order.entity.AskOrder;
 import com.apollocurrency.aplwallet.apl.core.order.entity.BidOrder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -31,6 +32,7 @@ import java.sql.SQLException;
 
 @Getter
 @Setter
+@EqualsAndHashCode
 public class Trade {
     private final int timestamp;
     private final long assetId;

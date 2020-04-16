@@ -31,7 +31,7 @@ import com.apollocurrency.aplwallet.apl.core.order.entity.AskOrder;
 import com.apollocurrency.aplwallet.apl.core.order.entity.BidOrder;
 import com.apollocurrency.aplwallet.apl.core.trade.dao.TradeTable;
 import com.apollocurrency.aplwallet.apl.core.trade.entity.Trade;
-import com.apollocurrency.aplwallet.apl.core.trade.model.Event;
+import com.apollocurrency.aplwallet.apl.core.trade.model.TradeEvent;
 import com.apollocurrency.aplwallet.apl.core.trade.service.TradeService;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
@@ -47,7 +47,30 @@ public class TradeServiceImpl implements TradeService {
     private final Blockchain blockchain;
     private final IteratorToStreamConverter<Trade> converter;
     private final TradeTable tradeTable;
-    private final Listeners<Trade, Event> listeners;
+    private final Listeners<Trade, TradeEvent> listeners;
+
+    /**
+     * Constructor for unit tests.
+     *
+     * @param databaseManager
+     * @param blockchain
+     * @param tradeTable
+     * @param converter
+     * @param listeners
+     */
+    public TradeServiceImpl(
+        final DatabaseManager databaseManager,
+        final Blockchain blockchain,
+        final TradeTable tradeTable,
+        final  IteratorToStreamConverter<Trade> converter,
+        final Listeners<Trade, TradeEvent> listeners
+    ) {
+        this.databaseManager = databaseManager;
+        this.blockchain = blockchain;
+        this.tradeTable = tradeTable;
+        this.converter = converter;
+        this.listeners = listeners;
+    }
 
     @Inject
     public TradeServiceImpl(
@@ -73,12 +96,12 @@ public class TradeServiceImpl implements TradeService {
     }
 
     @Override
-    public boolean addListener(Listener<Trade> listener, Event eventType) {
+    public boolean addListener(Listener<Trade> listener, TradeEvent eventType) {
         return listeners.addListener(listener, eventType);
     }
 
     @Override
-    public boolean removeListener(Listener<Trade> listener, Event eventType) {
+    public boolean removeListener(Listener<Trade> listener, TradeEvent eventType) {
         return listeners.removeListener(listener, eventType);
     }
 
@@ -153,7 +176,7 @@ public class TradeServiceImpl implements TradeService {
             block.getTimestamp()
         );
         tradeTable.insert(trade);
-        listeners.notify(trade, Event.TRADE);
+        listeners.notify(trade, TradeEvent.TRADE);
         return trade;
     }
 }

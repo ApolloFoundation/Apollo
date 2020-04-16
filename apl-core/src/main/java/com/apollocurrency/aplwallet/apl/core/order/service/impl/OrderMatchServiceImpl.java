@@ -32,7 +32,7 @@ import com.apollocurrency.aplwallet.apl.core.order.service.OrderService;
 import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.AskOrderService;
 import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.BidOrderService;
 import com.apollocurrency.aplwallet.apl.core.trade.entity.Trade;
-import com.apollocurrency.aplwallet.apl.core.trade.service.impl.TradeServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.trade.service.TradeService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
 
@@ -48,7 +48,7 @@ public class OrderMatchServiceImpl implements OrderMatchService {
     private final AccountAssetService accountAssetService;
     private final OrderService<AskOrder, ColoredCoinsAskOrderPlacement> orderAskService;
     private final OrderService<BidOrder, ColoredCoinsBidOrderPlacement> orderBidService;
-    private final TradeServiceImpl tradeService;
+    private final TradeService tradeService;
 
     @Inject
     public OrderMatchServiceImpl(
@@ -56,7 +56,7 @@ public class OrderMatchServiceImpl implements OrderMatchService {
         final AccountAssetService accountAssetService,
         @AskOrderService final OrderService<AskOrder, ColoredCoinsAskOrderPlacement> orderAskService,
         @BidOrderService final OrderService<BidOrder, ColoredCoinsBidOrderPlacement> orderBidService,
-        final TradeServiceImpl tradeService
+        final TradeService tradeService
     ) {
         this.accountService = accountService;
         this.accountAssetService = accountAssetService;
@@ -65,7 +65,7 @@ public class OrderMatchServiceImpl implements OrderMatchService {
         this.tradeService = tradeService;
     }
 
-    private void matchOrders(long assetId) {
+    void matchOrders(long assetId) {
         AskOrder askOrder;
         BidOrder bidOrder;
 
@@ -95,11 +95,13 @@ public class OrderMatchServiceImpl implements OrderMatchService {
         }
     }
 
+    @Override
     public void addAskOrder(Transaction transaction, ColoredCoinsAskOrderPlacement attachment) {
         orderAskService.addOrder(transaction, attachment);
         matchOrders(attachment.getAssetId());
     }
 
+    @Override
     public void addBidOrder(Transaction transaction, ColoredCoinsBidOrderPlacement attachment) {
         orderBidService.addOrder(transaction, attachment);
         matchOrders(attachment.getAssetId());

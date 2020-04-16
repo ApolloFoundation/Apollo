@@ -58,7 +58,7 @@ public class BidOrderTable extends OrderTable<BidOrder> {
         return new BidOrder(rs, dbKey);
     }
 
-    public BidOrder getOrderBid(long orderId) {
+    public BidOrder getBidOrder(long orderId) {
         return get(bidOrderDbKeyFactory.newKey(orderId));
     }
 

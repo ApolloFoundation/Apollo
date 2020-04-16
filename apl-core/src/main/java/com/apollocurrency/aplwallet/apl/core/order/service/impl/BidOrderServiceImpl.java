@@ -39,10 +39,31 @@ import java.util.stream.Stream;
 @Singleton
 @BidOrderService
 public class BidOrderServiceImpl implements OrderService<BidOrder, ColoredCoinsBidOrderPlacement> {
+    static final String ORDER = " ORDER BY price DESC, creation_height ASC, transaction_height ASC, transaction_index ASC ";
     private final DatabaseManager databaseManager;
     private final BidOrderTable bidOrderTable;
     private final IteratorToStreamConverter<BidOrder> converter;
     private final Blockchain blockchain;
+
+    /**
+     * Constructor for unit tests
+     *
+     * @param databaseManager
+     * @param bidOrderTable
+     * @param blockchain
+     * @param converter
+     */
+    public BidOrderServiceImpl(
+        final DatabaseManager databaseManager,
+        final BidOrderTable bidOrderTable,
+        final Blockchain blockchain,
+        final IteratorToStreamConverter<BidOrder> converter
+    ) {
+        this.databaseManager = databaseManager;
+        this.bidOrderTable = bidOrderTable;
+        this.blockchain = blockchain;
+        this.converter = converter;
+    }
 
     @Inject
     public BidOrderServiceImpl(
@@ -63,7 +84,7 @@ public class BidOrderServiceImpl implements OrderService<BidOrder, ColoredCoinsB
 
     @Override
     public BidOrder getOrder(long orderId) {
-        return bidOrderTable.getOrderBid(orderId);
+        return bidOrderTable.getBidOrder(orderId);
     }
 
     @Override
@@ -96,7 +117,7 @@ public class BidOrderServiceImpl implements OrderService<BidOrder, ColoredCoinsB
             bidOrderTable.getManyBy(new DbClause.LongClause("asset_id", assetId),
                 from,
                 to,
-                " ORDER BY price DESC, creation_height ASC, transaction_height ASC, transaction_index ASC "
+                ORDER
             )
         );
     }

@@ -28,7 +28,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
- * @author Konstantin Silaev on 4/8/2020
+ * @author silaev-firstbridge on 4/8/2020
  */
 public class AskOrder extends Order {
 
