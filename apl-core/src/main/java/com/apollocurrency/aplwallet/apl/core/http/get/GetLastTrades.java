@@ -27,7 +27,6 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.trade.entity.Trade;
 import com.apollocurrency.aplwallet.apl.core.trade.service.TradeService;
-import com.apollocurrency.aplwallet.apl.core.trade.service.impl.TradeServiceImpl;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;

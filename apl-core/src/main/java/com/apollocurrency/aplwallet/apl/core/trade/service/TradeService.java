@@ -23,8 +23,6 @@ package com.apollocurrency.aplwallet.apl.core.trade.service;
 import com.apollocurrency.aplwallet.apl.core.order.entity.AskOrder;
 import com.apollocurrency.aplwallet.apl.core.order.entity.BidOrder;
 import com.apollocurrency.aplwallet.apl.core.trade.entity.Trade;
-import com.apollocurrency.aplwallet.apl.core.trade.model.TradeEvent;
-import com.apollocurrency.aplwallet.apl.util.Listener;
 
 import java.util.List;
 import java.util.stream.Stream;
@@ -34,10 +32,6 @@ public interface TradeService {
     Stream<Trade> getAllTrades(int from, int to);
 
     int getCount();
-
-    boolean addListener(Listener<Trade> listener, TradeEvent eventType);
-
-    boolean removeListener(Listener<Trade> listener, TradeEvent eventType);
 
     Trade getTrade(long askOrderId, long bidOrderId);
 

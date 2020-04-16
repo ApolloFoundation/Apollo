@@ -12,10 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.order.entity.AskOrder;
 import com.apollocurrency.aplwallet.apl.core.order.entity.BidOrder;
 import com.apollocurrency.aplwallet.apl.core.trade.dao.TradeTable;
 import com.apollocurrency.aplwallet.apl.core.trade.entity.Trade;
-import com.apollocurrency.aplwallet.apl.core.trade.model.TradeEvent;
 import com.apollocurrency.aplwallet.apl.core.trade.service.TradeService;
-import com.apollocurrency.aplwallet.apl.util.Listener;
-import com.apollocurrency.aplwallet.apl.util.Listeners;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,8 +47,6 @@ class TradeServiceImplTest {
     private TradeTable tradeTable;
 
     @Mock
-    private Listeners<Trade, TradeEvent> listeners;
-
     private TradeService tradeService;
 
     @BeforeEach
@@ -60,8 +55,7 @@ class TradeServiceImplTest {
             databaseManager,
             blockchain,
             tradeTable,
-            converter,
-            listeners
+            converter
         );
     }
 
@@ -94,36 +88,6 @@ class TradeServiceImplTest {
 
         //THEN
         assertEquals(count, countActual);
-    }
-
-    @Test
-    void shouldAddListener() {
-        //GIVEN
-        @SuppressWarnings("unchecked") final Listener<Trade> listener = mock(Listener.class);
-        final TradeEvent eventType = mock(TradeEvent.class);
-        final boolean res = true;
-        when(listeners.addListener(listener, eventType)).thenReturn(res);
-
-        //WHEN
-        final boolean resActual = tradeService.addListener(listener, eventType);
-
-        //THEN
-        assertEquals(res, resActual);
-    }
-
-    @Test
-    void shouldRemoveListener() {
-        //GIVEN
-        @SuppressWarnings("unchecked") final Listener<Trade> listener = mock(Listener.class);
-        final TradeEvent eventType = mock(TradeEvent.class);
-        final boolean res = true;
-        when(listeners.removeListener(listener, eventType)).thenReturn(res);
-
-        //WHEN
-        final boolean resActual = tradeService.removeListener(listener, eventType);
-
-        //THEN
-        assertEquals(res, resActual);
     }
 
     @Test
@@ -314,6 +278,5 @@ class TradeServiceImplTest {
 
         //THEN
         verify(tradeTable).insert(trade);
-        verify(listeners).notify(eq(trade), eq(TradeEvent.TRADE));
     }
 }
