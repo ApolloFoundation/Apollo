@@ -1,5 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.tagged.dao;
 
+import com.apollocurrency.aplwallet.apl.core.alias.service.AliasService;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
@@ -55,21 +56,22 @@ class DataTagDaoTest {
     DbExtension extension = new DbExtension();
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
-            GlobalSyncImpl.class,
-            TaggedDataTimestampDao.class,
-            FullTextConfigImpl.class, DataTagDao.class,
-            DerivedDbTablesRegistryImpl.class,
-            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
-            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
-            .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
-            .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
-            .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
-            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
-            .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
-            .build();
+        PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
+        GlobalSyncImpl.class,
+        TaggedDataTimestampDao.class,
+        FullTextConfigImpl.class, DataTagDao.class,
+        DerivedDbTablesRegistryImpl.class,
+        TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
+        .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
+        .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
+        .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
+        .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
+        .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
+        .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
+        .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
+        .build();
 
     @Inject
     DataTagDao dataTagDao;
@@ -109,7 +111,7 @@ class DataTagDaoTest {
     void testRollback() throws SQLException {
         DbUtils.inTransaction(extension, (con) -> dataTagDao.rollback(tagtd.dataTag_4.getHeight()));
         assertEquals(List.of(tagtd.dataTag_1, tagtd.dataTag_2, tagtd.dataTag_3, tagtd.dataTag_4),
-                dataTagDao.getAllByDbId(0, 100, Long.MAX_VALUE).getValues());
+            dataTagDao.getAllByDbId(0, 100, Long.MAX_VALUE).getValues());
     }
 
     @Test
@@ -132,9 +134,9 @@ class DataTagDaoTest {
         tagtd.dataTag_4.setDbId(40);
 
         List<DataTag> expected = List.of(
-                updatedDataTag,
-                newTag,
-                tagtd.dataTag_4
+            updatedDataTag,
+            newTag,
+            tagtd.dataTag_4
         );
 
         assertEquals(expected, dataTags);

@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.dgs.dao;
 
 import com.apollocurrency.aplwallet.apl.core.account.dao.GenesisPublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.alias.service.AliasService;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
@@ -53,23 +54,24 @@ import static org.mockito.Mockito.mock;
 public class DGSTagTableTest extends EntityDbTableTest<DGSTag> {
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
-            GlobalSyncImpl.class,
-            FullTextConfigImpl.class,
-            DGSTagTable.class,
-            DerivedDbTablesRegistryImpl.class,
-            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
-            GenesisPublicKeyTable.class)
-            .addBeans(MockBean.of(getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(getDatabaseManager().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
-            .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
-            .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
-            .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
-            .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
-            .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
-            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
-            .build();
+        PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
+        GlobalSyncImpl.class,
+        FullTextConfigImpl.class,
+        DGSTagTable.class,
+        DerivedDbTablesRegistryImpl.class,
+        TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
+        GenesisPublicKeyTable.class)
+        .addBeans(MockBean.of(getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(getDatabaseManager().getJdbi(), Jdbi.class))
+        .addBeans(MockBean.of(getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
+        .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
+        .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
+        .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
+        .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
+        .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
+        .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
+        .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
+        .build();
     @Inject
     DGSTagTable table;
     @Inject
@@ -81,7 +83,6 @@ public class DGSTagTableTest extends EntityDbTableTest<DGSTag> {
     public DGSTagTableTest() {
         super(DGSTag.class);
     }
-
 
 
     @BeforeEach

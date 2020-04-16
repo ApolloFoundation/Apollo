@@ -46,12 +46,12 @@ public class TestCurrencies extends TestBaseOld {
         int supply = RandomUtils.nextInt(0, 1000);
         for (Wallet wallet : wallets) {
             CreateTransactionResponse currency = issueCurrency(wallet, type,
-                    RandomStringUtils.randomAlphabetic(5),
-                    RandomStringUtils.randomAlphabetic(5),
-                    RandomStringUtils.randomAlphabetic(5).toUpperCase(),
-                    supply,
-                    supply,
-                    RandomUtils.nextInt(0, 8));
+                RandomStringUtils.randomAlphabetic(5),
+                RandomStringUtils.randomAlphabetic(5),
+                RandomStringUtils.randomAlphabetic(5).toUpperCase(),
+                supply,
+                supply,
+                RandomUtils.nextInt(0, 8));
             verifyCreatingTransaction(currency);
         }
     }
@@ -64,12 +64,12 @@ public class TestCurrencies extends TestBaseOld {
         int supply = RandomUtils.nextInt(1, 1000);
         for (Wallet wallet : wallets) {
             CreateTransactionResponse currency = issueCurrency(wallet, type,
-                    RandomStringUtils.randomAlphabetic(5),
-                    RandomStringUtils.randomAlphabetic(5),
-                    RandomStringUtils.randomAlphabetic(5).toUpperCase(),
-                    supply,
-                    supply,
-                    RandomUtils.nextInt(0, 8));
+                RandomStringUtils.randomAlphabetic(5),
+                RandomStringUtils.randomAlphabetic(5),
+                RandomStringUtils.randomAlphabetic(5).toUpperCase(),
+                supply,
+                supply,
+                RandomUtils.nextInt(0, 8));
             verifyCreatingTransaction(currency);
             verifyTransactionInBlock(currency.getTransaction());
             deleteCurrency(wallet, currency.getTransaction());
@@ -82,12 +82,12 @@ public class TestCurrencies extends TestBaseOld {
     public void deleteCurrency(Wallet wallet) {
         int supply = RandomUtils.nextInt(0, 1000);
         CreateTransactionResponse currency = issueCurrency(wallet, 1,
-                RandomStringUtils.randomAlphabetic(5),
-                RandomStringUtils.randomAlphabetic(5),
-                RandomStringUtils.randomAlphabetic(5).toUpperCase(),
-                supply,
-                supply,
-                RandomUtils.nextInt(0, 8));
+            RandomStringUtils.randomAlphabetic(5),
+            RandomStringUtils.randomAlphabetic(5),
+            RandomStringUtils.randomAlphabetic(5).toUpperCase(),
+            supply,
+            supply,
+            RandomUtils.nextInt(0, 8));
         verifyCreatingTransaction(currency);
         verifyTransactionInBlock(currency.getTransaction());
         assertEquals(wallet.getUser(), getCurrency(currency.getTransaction()).getAccountRS());
@@ -103,20 +103,20 @@ public class TestCurrencies extends TestBaseOld {
         int supply = RandomUtils.nextInt(0, 1000);
         for (Wallet wallet : wallets) {
             CreateTransactionResponse currency = issueCurrency(wallet, type,
-                    RandomStringUtils.randomAlphabetic(5),
-                    RandomStringUtils.randomAlphabetic(5),
-                    RandomStringUtils.randomAlphabetic(5).toUpperCase(),
-                    supply,
-                    supply,
-                    RandomUtils.nextInt(0, 8));
+                RandomStringUtils.randomAlphabetic(5),
+                RandomStringUtils.randomAlphabetic(5),
+                RandomStringUtils.randomAlphabetic(5).toUpperCase(),
+                supply,
+                supply,
+                RandomUtils.nextInt(0, 8));
             verifyCreatingTransaction(currency);
             verifyTransactionInBlock(currency.getTransaction());
             CreateTransactionResponse transaction = transferCurrency(TestConfiguration.getTestConfiguration().getGenesisWallet().getUser(), currency.getTransaction(), wallet, 1);
             verifyTransactionInBlock(transaction.getTransaction());
             assertTrue(getCurrencyAccounts(currency
-                    .getTransaction())
-                    .getAccountCurrencies().stream()
-                    .anyMatch(account -> account.getAccountRS().equals(TestConfiguration.getTestConfiguration().getGenesisWallet().getUser())));
+                .getTransaction())
+                .getAccountCurrencies().stream()
+                .anyMatch(account -> account.getAccountRS().equals(TestConfiguration.getTestConfiguration().getGenesisWallet().getUser())));
         }
     }
 
@@ -129,12 +129,12 @@ public class TestCurrencies extends TestBaseOld {
         int supply = RandomUtils.nextInt(100000000, 1000000000);
         for (Wallet wallet : wallets) {
             CreateTransactionResponse currency = issueCurrency(wallet, type,
-                    RandomStringUtils.randomAlphabetic(5),
-                    RandomStringUtils.randomAlphabetic(5),
-                    RandomStringUtils.randomAlphabetic(5).toUpperCase(),
-                    supply,
-                    supply,
-                    RandomUtils.nextInt(0, 8));
+                RandomStringUtils.randomAlphabetic(5),
+                RandomStringUtils.randomAlphabetic(5),
+                RandomStringUtils.randomAlphabetic(5).toUpperCase(),
+                supply,
+                supply,
+                RandomUtils.nextInt(0, 8));
             verifyCreatingTransaction(currency);
             verifyTransactionInBlock(currency.getTransaction());
             //TODO: Need implement Mint Worker
@@ -153,12 +153,12 @@ public class TestCurrencies extends TestBaseOld {
         for (Wallet wallet : wallets) {
             log.info("Issue Currencies type: {}", type);
             CreateTransactionResponse currency = issueCurrency(wallet, type,
-                    RandomStringUtils.randomAlphabetic(5),
-                    RandomStringUtils.randomAlphabetic(5),
-                    RandomStringUtils.randomAlphabetic(5).toUpperCase(),
-                    supply,
-                    supply,
-                    0);
+                RandomStringUtils.randomAlphabetic(5),
+                RandomStringUtils.randomAlphabetic(5),
+                RandomStringUtils.randomAlphabetic(5).toUpperCase(),
+                supply,
+                supply,
+                0);
             verifyCreatingTransaction(currency);
             verifyTransactionInBlock(currency.getTransaction());
             CreateTransactionResponse reserveTransaction = currencyReserveIncrease(currency.getTransaction(), wallet, supply + 10);
@@ -184,12 +184,12 @@ public class TestCurrencies extends TestBaseOld {
         int supply = RandomUtils.nextInt(1, 1000);
         for (Wallet wallet : wallets) {
             CreateTransactionResponse currency = issueCurrency(wallet, type,
-                    RandomStringUtils.randomAlphabetic(5),
-                    RandomStringUtils.randomAlphabetic(5),
-                    RandomStringUtils.randomAlphabetic(5).toUpperCase(),
-                    supply,
-                    supply,
-                    0);
+                RandomStringUtils.randomAlphabetic(5),
+                RandomStringUtils.randomAlphabetic(5),
+                RandomStringUtils.randomAlphabetic(5).toUpperCase(),
+                supply,
+                supply,
+                0);
             verifyCreatingTransaction(currency);
             verifyTransactionInBlock(currency.getTransaction());
             CreateTransactionResponse reserveTransaction = currencyReserveIncrease(currency.getTransaction(), wallet, supply + 1);
@@ -204,12 +204,12 @@ public class TestCurrencies extends TestBaseOld {
         int supply = RandomUtils.nextInt(1, 1000);
         for (Wallet wallet : wallets) {
             CreateTransactionResponse currency = issueCurrency(wallet, type,
-                    RandomStringUtils.randomAlphabetic(5),
-                    RandomStringUtils.randomAlphabetic(5),
-                    RandomStringUtils.randomAlphabetic(5).toUpperCase(),
-                    supply,
-                    supply,
-                    RandomUtils.nextInt(0, 8));
+                RandomStringUtils.randomAlphabetic(5),
+                RandomStringUtils.randomAlphabetic(5),
+                RandomStringUtils.randomAlphabetic(5).toUpperCase(),
+                supply,
+                supply,
+                RandomUtils.nextInt(0, 8));
             verifyCreatingTransaction(currency);
             exchange(currency, wallet);
 

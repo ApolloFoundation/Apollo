@@ -20,32 +20,40 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Order;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.http.JSONData;
+import com.apollocurrency.aplwallet.apl.core.order.entity.BidOrder;
+import com.apollocurrency.aplwallet.apl.core.order.service.OrderService;
+import com.apollocurrency.aplwallet.apl.core.order.service.impl.BidOrderServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.BidOrderService;
 import com.apollocurrency.aplwallet.apl.core.transaction.ColoredCoins;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderCancellationAttachment;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectorUtils;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.List;
-import javax.enterprise.inject.Vetoed;
-import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class GetBidOrders extends AbstractAPIRequestHandler {
+    private final OrderService<BidOrder, ColoredCoinsBidOrderPlacement> bidOrderService =
+        CDI.current().select(BidOrderServiceImpl.class, BidOrderService.Literal.INSTANCE).get();
 
     public GetBidOrders() {
-        super(new APITag[] {APITag.AE}, "asset", "firstIndex", "lastIndex", "showExpectedCancellations");
+        super(new APITag[]{APITag.AE}, "asset", "firstIndex", "lastIndex", "showExpectedCancellations");
     }
+
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
@@ -66,20 +74,21 @@ public final class GetBidOrders extends AbstractAPIRequestHandler {
             Arrays.sort(cancellations);
         }
 
-        JSONArray orders = new JSONArray();
-        try (DbIterator<Order.Bid> bidOrders = Order.Bid.getSortedOrders(assetId, firstIndex, lastIndex)) {
-            while (bidOrders.hasNext()) {
-                Order.Bid order = bidOrders.next();
-                JSONObject orderJSON = JSONData.bidOrder(order);
-                if (showExpectedCancellations && Arrays.binarySearch(cancellations, order.getId()) >= 0) {
-                    orderJSON.put("expectedCancellation", Boolean.TRUE);
-                }
-                orders.add(orderJSON);
-            }
-        }
+        long[] finalCancellations = cancellations;
+        JSONArray orders = bidOrderService.getSortedOrders(assetId, firstIndex, lastIndex)
+            .map(bidOrder -> getJsonObject(showExpectedCancellations, finalCancellations, bidOrder))
+            .collect(CollectorUtils.jsonCollector());
+
         JSONObject response = new JSONObject();
         response.put("bidOrders", orders);
         return response;
     }
 
+    private JSONObject getJsonObject(boolean showExpectedCancellations, long[] finalCancellations, BidOrder bidOrder) {
+        JSONObject orderJSON = JSONData.bidOrder(bidOrder);
+        if (showExpectedCancellations && Arrays.binarySearch(finalCancellations, bidOrder.getId()) >= 0) {
+            orderJSON.put("expectedCancellation", Boolean.TRUE);
+        }
+        return orderJSON;
+    }
 }

@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbc;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
@@ -23,13 +21,14 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 /**
  * Common fields and methods used by inherited classes.
  */
 public abstract class AbstractHelper implements BatchedPaginationOperation {
-    private static final Logger log = getLogger(AbstractHelper.class);
-
     protected static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+    private static final Logger log = getLogger(AbstractHelper.class);
     protected ShardRecoveryDaoJdbc shardRecoveryDao;
 
     String currentTableName; // processed table name
@@ -59,6 +58,22 @@ public abstract class AbstractHelper implements BatchedPaginationOperation {
     Long lowerBoundIdValue;
     ShardRecovery recoveryValue; // updated on every loop
 
+    /**
+     * Method to match existing table name as full name but not a substring
+     *
+     * @param sourceString source string to find in
+     * @param itemToFind   what to be found
+     * @return true if full separate itemToFind exists
+     */
+    public static boolean isContain(String sourceString, String itemToFind) {
+        if (sourceString == null || sourceString.isEmpty()) return false;
+        if (itemToFind == null || itemToFind.isEmpty()) return false;
+        String pattern = "\\b" + itemToFind + "\\b";
+        Pattern p = Pattern.compile(pattern);
+        Matcher m = p.matcher(sourceString);
+        return m.find();
+    }
+
     public void reset() {
         this.currentTableName = null;
         this.rsmd = null;
@@ -83,7 +98,8 @@ public abstract class AbstractHelper implements BatchedPaginationOperation {
 
     @Override
     public void setShardRecoveryDao(ShardRecoveryDaoJdbc dao) {
-        this.shardRecoveryDao = Objects.requireNonNull(dao, "shard Recovery Dao is NULL");;
+        this.shardRecoveryDao = Objects.requireNonNull(dao, "shard Recovery Dao is NULL");
+        ;
     }
 
     protected void checkMandatoryParameters(Connection sourceConnect, TableOperationParams operationParams) {
@@ -179,14 +195,14 @@ public abstract class AbstractHelper implements BatchedPaginationOperation {
             log.debug("START object '{}' from = {}", operationParams.tableName, recoveryValue);
 
         } else if (recoveryValue.getProcessedObject() != null && !recoveryValue.getProcessedObject().isEmpty()
-                && isContain(recoveryValue.getProcessedObject(), currentTableName)) {
+            && isContain(recoveryValue.getProcessedObject(), currentTableName)) {
             // skip current table
             log.debug("SKIP object '{}' by = {}", operationParams.tableName, recoveryValue);
             return true;
         } else {
             if (recoveryValue.getObjectName() != null
-                    && recoveryValue.getObjectName().equalsIgnoreCase(currentTableName)
-                    && !isContain(recoveryValue.getProcessedObject(), currentTableName)) {
+                && recoveryValue.getObjectName().equalsIgnoreCase(currentTableName)
+                && !isContain(recoveryValue.getProcessedObject(), currentTableName)) {
                 // process current table because it was not finished
                 this.lowerBoundIdValue = recoveryValue.getLastColumnValue(); // last saved/processed value
                 log.debug("RESTORED object '{}' from = {}", operationParams.tableName, recoveryValue);
@@ -197,21 +213,6 @@ public abstract class AbstractHelper implements BatchedPaginationOperation {
             }
         }
         return false;
-    }
-
-    /**
-     * Method to match existing table name as full name but not a substring
-     * @param sourceString source string to find in
-     * @param itemToFind what to be found
-     * @return true if full separate itemToFind exists
-     */
-    public static boolean isContain(String sourceString, String itemToFind){
-        if (sourceString == null || sourceString.isEmpty()) return false;
-        if (itemToFind == null || itemToFind.isEmpty()) return false;
-        String pattern = "\\b"+itemToFind+"\\b";
-        Pattern p = Pattern.compile(pattern);
-        Matcher m = p.matcher(sourceString);
-        return m.find();
     }
 
 }

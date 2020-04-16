@@ -50,10 +50,10 @@ public class TestSharding extends TestBaseNew {
         List<String> peersOnCurrentHeight = heights.entrySet().stream().filter(pair -> pair.getValue() > finalMaxHeight - 1000).map(Map.Entry::getKey).collect(Collectors.toList());
 
         shards.entrySet().stream().filter(pair -> peersOnCurrentHeight.contains(pair.getKey()))
-                .filter(pair -> pair.getValue().size() > 0)
-                .forEach(pair -> assertEquals("Shards count on: " + pair.getKey(),
-                        finalMaxShardsList.get(finalMaxShardsList.size() - 1).shardId,
-                        pair.getValue().get(pair.getValue().size() - 1).getShardId()));
+            .filter(pair -> pair.getValue().size() > 0)
+            .forEach(pair -> assertEquals("Shards count on: " + pair.getKey(),
+                finalMaxShardsList.get(finalMaxShardsList.size() - 1).shardId,
+                pair.getValue().get(pair.getValue().size() - 1).getShardId()));
 
         for (Map.Entry<String, List<ShardDTO>> shard : shards.entrySet()) {
             if (shard.getValue().size() >= finalMaxShardsList.size()) {

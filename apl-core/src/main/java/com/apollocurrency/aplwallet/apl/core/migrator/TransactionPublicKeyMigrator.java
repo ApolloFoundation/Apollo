@@ -4,21 +4,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
+import javax.inject.Inject;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
-import javax.inject.Inject;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 public class TransactionPublicKeyMigrator {
     public static final String REQUIRE_MIGRATION_PROPERTY_NAME = "requiredTransactionPublicKeyMigration";
@@ -51,7 +48,7 @@ public class TransactionPublicKeyMigrator {
                  PreparedStatement updateTxStmt = con.prepareStatement("update transaction set sender_public_key = ? where sender_id = ? and height = ? order by db_id")
             ) {
                 long updateCount = 0;
-                try(ResultSet rs = checkTxStmt.executeQuery()) {
+                try (ResultSet rs = checkTxStmt.executeQuery()) {
                     if (rs.next()) {
                         updateCount = rs.getLong(1);
                     }
@@ -98,8 +95,7 @@ public class TransactionPublicKeyMigrator {
             }
             optionDAO.set(REQUIRE_MIGRATION_PROPERTY_NAME, "false");
             dataSource.commit(!isInTransaction);
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             dataSource.rollback(!isInTransaction);
             throw new RuntimeException(e.toString(), e);
         }

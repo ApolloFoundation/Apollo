@@ -27,6 +27,21 @@ public interface AccountService {
         return Convert.fullHashToId(publicKeyHash);
     }
 
+    static void checkBalance(long accountId, long confirmed, long unconfirmed) {
+        if (accountId == GenesisImporter.CREATOR_ID) {
+            return;
+        }
+        if (confirmed < 0) {
+            throw new DoubleSpendingException("Negative balance or quantity: ", accountId, confirmed, unconfirmed);
+        }
+        if (unconfirmed < 0) {
+            throw new DoubleSpendingException("Negative unconfirmed balance or quantity: ", accountId, confirmed, unconfirmed);
+        }
+        if (unconfirmed > confirmed) {
+            throw new DoubleSpendingException("Unconfirmed exceeds confirmed balance or quantity: ", accountId, confirmed, unconfirmed);
+        }
+    }
+
     int getActiveLeaseCount();
 
     Account getAccount(long id);
@@ -61,24 +76,10 @@ public interface AccountService {
 
     List<Account> getLessors(Account account, int height);
 
-    static void checkBalance(long accountId, long confirmed, long unconfirmed) {
-        if (accountId == GenesisImporter.CREATOR_ID) {
-            return;
-        }
-        if (confirmed < 0) {
-            throw new DoubleSpendingException("Negative balance or quantity: ", accountId, confirmed, unconfirmed);
-        }
-        if (unconfirmed < 0) {
-            throw new DoubleSpendingException("Negative unconfirmed balance or quantity: ", accountId, confirmed, unconfirmed);
-        }
-        if (unconfirmed > confirmed) {
-            throw new DoubleSpendingException("Unconfirmed exceeds confirmed balance or quantity: ", accountId, confirmed, unconfirmed);
-        }
-    }
-
     /**
      * Change the forged balance value and save into the data base.
-     * @param account the account
+     *
+     * @param account   the account
      * @param amountATM the forged balance is increased on that value
      */
     void addToForgedBalanceATM(Account account, long amountATM);
@@ -115,5 +116,6 @@ public interface AccountService {
 
     //Delegated from  AccountPublicKeyService
     boolean setOrVerifyPublicKey(long accountId, byte[] key);
+
     byte[] getPublicKeyByteArray(long id);
 }

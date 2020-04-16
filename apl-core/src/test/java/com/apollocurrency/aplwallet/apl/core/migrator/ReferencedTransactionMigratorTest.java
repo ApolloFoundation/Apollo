@@ -4,16 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import javax.inject.Inject;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
@@ -38,20 +28,30 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
 
+import javax.inject.Inject;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 @EnableWeld
 public class ReferencedTransactionMigratorTest {
     @RegisterExtension
     DbExtension dbExtension = new DbExtension();
 
     @WeldSetup
-    WeldInitiator weld = WeldInitiator.from(ReferencedTransactionDaoImpl.class, 
-             BlockchainConfig.class, FullTextConfigImpl.class,
-             DerivedDbTablesRegistryImpl.class, PropertiesHolder.class,
-             ChainsConfigHolder.class)
-            .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(Mockito.mock(Blockchain.class), BlockchainImpl.class))
-            .addBeans(MockBean.of(Mockito.mock(TimeServiceImpl.class), TimeServiceImpl.class))
-            .build();
+    WeldInitiator weld = WeldInitiator.from(ReferencedTransactionDaoImpl.class,
+        BlockchainConfig.class, FullTextConfigImpl.class,
+        DerivedDbTablesRegistryImpl.class, PropertiesHolder.class,
+        ChainsConfigHolder.class)
+        .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(Mockito.mock(Blockchain.class), BlockchainImpl.class))
+        .addBeans(MockBean.of(Mockito.mock(TimeServiceImpl.class), TimeServiceImpl.class))
+        .build();
     @Inject
     ReferencedTransactionDaoImpl referencedTransactionDao;
 
@@ -72,7 +72,7 @@ public class ReferencedTransactionMigratorTest {
             stmt.executeUpdate("update referenced_transaction set height = -1 where db_id >= 40");
         }
         List<ReferencedTransaction> notMigrated = CollectionUtil.toList(referencedTransactionDao.getManyBy(new DbClause.LongClause("db_id", DbClause.Op.GTE, 40), 0, Integer.MAX_VALUE));
-        notMigrated.forEach(rtx-> assertEquals(-1, rtx.getHeight().intValue()));
+        notMigrated.forEach(rtx -> assertEquals(-1, rtx.getHeight().intValue()));
 
         migrator.migrate();
 
@@ -80,6 +80,7 @@ public class ReferencedTransactionMigratorTest {
         List<ReferencedTransaction> expected = td.REFERENCED_TRANSACTIONS.stream().sorted(Comparator.comparing(ReferencedTransaction::getHeight).thenComparing(ReferencedTransaction::getDbId).reversed()).collect(Collectors.toList());
         assertEquals(referencedTransactions, expected);
     }
+
     @Test
     void testMigrateNothing() {
         migrator.migrate();

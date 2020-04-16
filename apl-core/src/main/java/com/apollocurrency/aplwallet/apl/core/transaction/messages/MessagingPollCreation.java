@@ -10,60 +10,17 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import java.nio.ByteBuffer;
-import java.util.Collections;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+import java.util.Collections;
+
 /**
- *
  * @author al
  */
 public final class MessagingPollCreation extends AbstractAttachment {
-    
-    public static final class PollBuilder {
 
-        private final String pollName;
-        private final String pollDescription;
-        private final String[] pollOptions;
-        private final int finishHeight;
-        private final byte votingModel;
-        private long minBalance = 0;
-        private byte minBalanceModel;
-        private final byte minNumberOfOptions;
-        private final byte maxNumberOfOptions;
-        private final byte minRangeValue;
-        private final byte maxRangeValue;
-        private long holdingId;
-
-        public PollBuilder(final String pollName, final String pollDescription, final String[] pollOptions, final int finishHeight, final byte votingModel, byte minNumberOfOptions, byte maxNumberOfOptions, byte minRangeValue, byte maxRangeValue) {
-            this.pollName = pollName;
-            this.pollDescription = pollDescription;
-            this.pollOptions = pollOptions;
-            this.finishHeight = finishHeight;
-            this.votingModel = votingModel;
-            this.minNumberOfOptions = minNumberOfOptions;
-            this.maxNumberOfOptions = maxNumberOfOptions;
-            this.minRangeValue = minRangeValue;
-            this.maxRangeValue = maxRangeValue;
-            this.minBalanceModel = VoteWeighting.VotingModel.get(votingModel).getMinBalanceModel().getCode();
-        }
-
-        public PollBuilder minBalance(byte minBalanceModel, long minBalance) {
-            this.minBalanceModel = minBalanceModel;
-            this.minBalance = minBalance;
-            return this;
-        }
-
-        public PollBuilder holdingId(long holdingId) {
-            this.holdingId = holdingId;
-            return this;
-        }
-
-        public MessagingPollCreation build() {
-            return new MessagingPollCreation(this);
-        }
-    }
     final String pollName;
     final String pollDescription;
     final String[] pollOptions;
@@ -233,5 +190,49 @@ public final class MessagingPollCreation extends AbstractAttachment {
     public VoteWeighting getVoteWeighting() {
         return voteWeighting;
     }
-    
+
+    public static final class PollBuilder {
+
+        private final String pollName;
+        private final String pollDescription;
+        private final String[] pollOptions;
+        private final int finishHeight;
+        private final byte votingModel;
+        private final byte minNumberOfOptions;
+        private final byte maxNumberOfOptions;
+        private final byte minRangeValue;
+        private final byte maxRangeValue;
+        private long minBalance = 0;
+        private byte minBalanceModel;
+        private long holdingId;
+
+        public PollBuilder(final String pollName, final String pollDescription, final String[] pollOptions, final int finishHeight, final byte votingModel, byte minNumberOfOptions, byte maxNumberOfOptions, byte minRangeValue, byte maxRangeValue) {
+            this.pollName = pollName;
+            this.pollDescription = pollDescription;
+            this.pollOptions = pollOptions;
+            this.finishHeight = finishHeight;
+            this.votingModel = votingModel;
+            this.minNumberOfOptions = minNumberOfOptions;
+            this.maxNumberOfOptions = maxNumberOfOptions;
+            this.minRangeValue = minRangeValue;
+            this.maxRangeValue = maxRangeValue;
+            this.minBalanceModel = VoteWeighting.VotingModel.get(votingModel).getMinBalanceModel().getCode();
+        }
+
+        public PollBuilder minBalance(byte minBalanceModel, long minBalance) {
+            this.minBalanceModel = minBalanceModel;
+            this.minBalance = minBalance;
+            return this;
+        }
+
+        public PollBuilder holdingId(long holdingId) {
+            this.holdingId = holdingId;
+            return this;
+        }
+
+        public MessagingPollCreation build() {
+            return new MessagingPollCreation(this);
+        }
+    }
+
 }

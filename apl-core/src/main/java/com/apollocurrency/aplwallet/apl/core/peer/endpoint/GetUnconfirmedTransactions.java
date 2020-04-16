@@ -32,13 +32,14 @@ import java.util.SortedSet;
 
 public final class GetUnconfirmedTransactions extends PeerRequestHandler {
 
-    public GetUnconfirmedTransactions() {}
+    public GetUnconfirmedTransactions() {
+    }
 
 
     @Override
     public JSONStreamAware processRequest(JSONObject request, Peer peer) {
 
-        List<String> exclude = (List<String>)request.get("exclude");
+        List<String> exclude = (List<String>) request.get("exclude");
         if (exclude == null) {
             return JSON.emptyJSON;
         }

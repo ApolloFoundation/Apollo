@@ -1,7 +1,10 @@
+/*
+ * Copyright © 2018-2020 Apollo Foundation
+ */
 package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
@@ -16,15 +19,11 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 
-import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
 @Slf4j
 public class DexTransferMoneyTransaction extends DEX {
-
-    private DexService dexService = CDI.current().select(DexService.class).get();
-
 
     @Override
     public byte getSubtype() {
@@ -50,6 +49,7 @@ public class DexTransferMoneyTransaction extends DEX {
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
         // IMPORTANT! Validation should restrict sending this transaction without money freezing and out of the dex scope
         DexControlOfFrozenMoneyAttachment attachment = (DexControlOfFrozenMoneyAttachment) transaction.getAttachment();
+        DexService dexService = lookupDexService();
         ExchangeContract dexContract = dexService.getDexContractById(attachment.getContractId());
 
         if (dexContract == null) {
@@ -70,7 +70,7 @@ public class DexTransferMoneyTransaction extends DEX {
         if (transaction.getId() != transactionId) {
             throw new AplException.NotCurrentlyValidException("Transaction was not registered in the contract. ");
         }
-        long recipientOrderId =  isSender ? dexContract.getCounterOrderId() : dexContract.getOrderId();
+        long recipientOrderId = isSender ? dexContract.getCounterOrderId() : dexContract.getOrderId();
         DexOrder recipientOrder = dexService.getOrder(recipientOrderId);
         if (recipientOrder == null) {
             throw new AplException.NotCurrentlyValidException("Contract: " + dexContract.getId() + " refer to non-existent order: " + recipientOrderId);
@@ -98,6 +98,7 @@ public class DexTransferMoneyTransaction extends DEX {
         lookupAccountService().addToBalanceATM(sender, getLedgerEvent(), tx.getId(), -attachment.getOfferAmount()); // reduce only balanceATM, assume that unconfirmed balance was reduced earlier and was not recovered yet
         lookupAccountService().addToBalanceAndUnconfirmedBalanceATM(recipient, getLedgerEvent(), tx.getId(), attachment.getOfferAmount());
 
+        DexService dexService = lookupDexService();
         ExchangeContract dexContract = dexService.getDexContractById(attachment.getContractId());
 
         long orderToClose = dexContract.getSender() == sender.getId() ? dexContract.getCounterOrderId() : dexContract.getOrderId(); // close order which was approved
@@ -105,7 +106,8 @@ public class DexTransferMoneyTransaction extends DEX {
     }
 
     @Override
-    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {}
+    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+    }
 
     @Override
     public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {

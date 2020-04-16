@@ -48,6 +48,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doAnswer;
@@ -297,7 +298,7 @@ public class ShardServiceTest {
         verify(blockchainProcessor).suspendBlockchainDownloading();
         verify(blockchainProcessor).resumeBlockchainDownloading();
         verify(databaseManager).shutdown();
-        verify(zip).extract(anyString(), anyString());
+        verify(zip).extract(anyString(), anyString(), anyBoolean());
     }
 
     @Test

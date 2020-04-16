@@ -140,9 +140,9 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
 
     @Override
     public List<AccountCurrency> getCurrenciesByAccount(long accountId, int height, int from, int to) {
-        if( height < 0 ){
+        if (height < 0) {
             return toList(accountCurrencyTable.getByAccount(accountId, from, to));
-        }else {
+        } else {
             return toList(accountCurrencyTable.getByAccount(accountId, height, from, to));
         }
     }
@@ -154,9 +154,9 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
 
     @Override
     public List<AccountCurrency> getCurrenciesByCurrency(long currencyId, int height, int from, int to) {
-        if(height < 0) {
+        if (height < 0) {
             return toList(accountCurrencyTable.getByCurrency(currencyId, from, to));
-        }else {
+        } else {
             return toList(accountCurrencyTable.getByCurrency(currencyId, height, from, to));
         }
     }
@@ -176,6 +176,7 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
     public long getCurrencyUnits(Account account, long currencyId, int height) {
         return getCurrencyUnits(account.getId(), currencyId, height);
     }
+
     @Override
     public long getCurrencyUnits(long accountId, long currencyId, int height) {
         final AccountCurrency accountCurrency = getAccountCurrency(accountId, currencyId, height);
@@ -212,7 +213,7 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
         accountEvent.select(literal(AccountEventType.CURRENCY_BALANCE)).fire(account);
         accountCurrencyEvent.select(literal(AccountEventType.CURRENCY_BALANCE)).fire(accountCurrency);
         LedgerEntry entry = new LedgerEntry(event, eventId, account.getId(), LedgerHolding.CURRENCY_BALANCE, currencyId,
-                units, currencyUnits, blockChainInfoService.getLastBlock());
+            units, currencyUnits, blockChainInfoService.getLastBlock());
         logLedgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_ENTRY)).fire(entry);
     }
 
@@ -234,7 +235,7 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
         accountEvent.select(literal(AccountEventType.UNCONFIRMED_CURRENCY_BALANCE)).fire(account);
         accountCurrencyEvent.select(literal(AccountEventType.UNCONFIRMED_CURRENCY_BALANCE)).fire(accountCurrency);
         LedgerEntry entry = new LedgerEntry(event, eventId, account.getId(), LedgerHolding.UNCONFIRMED_CURRENCY_BALANCE, currencyId,
-                units, unconfirmedCurrencyUnits, blockChainInfoService.getLastBlock());
+            units, unconfirmedCurrencyUnits, blockChainInfoService.getLastBlock());
         logLedgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_UNCONFIRMED_ENTRY)).fire(entry);
     }
 
@@ -262,11 +263,11 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
         accountCurrencyEvent.select(literal(AccountEventType.CURRENCY_BALANCE)).fire(accountCurrency);
         accountCurrencyEvent.select(literal(AccountEventType.UNCONFIRMED_CURRENCY_BALANCE)).fire(accountCurrency);
         LedgerEntry entry = new LedgerEntry(event, eventId, account.getId(), LedgerHolding.UNCONFIRMED_CURRENCY_BALANCE, currencyId,
-                units, unconfirmedCurrencyUnits, blockChainInfoService.getLastBlock());
+            units, unconfirmedCurrencyUnits, blockChainInfoService.getLastBlock());
         logLedgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_UNCONFIRMED_ENTRY)).fire(entry);
 
         entry = new LedgerEntry(event, eventId, account.getId(), LedgerHolding.CURRENCY_BALANCE, currencyId,
-                units, currencyUnits, blockChainInfoService.getLastBlock());
+            units, currencyUnits, blockChainInfoService.getLastBlock());
         logLedgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_ENTRY)).fire(entry);
     }
 }

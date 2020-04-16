@@ -5,12 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.db;
 
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableValuesDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
@@ -22,13 +16,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+
 public abstract class VersionedValuesDbTableTest<T extends VersionedDerivedEntity> extends ValuesDbTableTest<T> {
+
+    VersionedDeletableValuesDbTable<T> table;
 
     public VersionedValuesDbTableTest(Class<T> clazz) {
         super(clazz);
     }
-
-    VersionedDeletableValuesDbTable<T> table;
 
     @BeforeEach
     public void setUp() {
@@ -56,8 +56,7 @@ public abstract class VersionedValuesDbTableTest<T extends VersionedDerivedEntit
             List<T> all;
             try {
                 all = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
             }
             assertFalse(all.containsAll(valuesToDelete.getValue()));
@@ -97,8 +96,7 @@ public abstract class VersionedValuesDbTableTest<T extends VersionedDerivedEntit
             List<T> all;
             try {
                 all = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
             }
             assertEquals(getAll().size(), all.size());
@@ -121,8 +119,7 @@ public abstract class VersionedValuesDbTableTest<T extends VersionedDerivedEntit
             List<T> all;
             try {
                 all = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
             }
             assertEquals(getAll().size() - 6, all.size());
@@ -144,14 +141,14 @@ public abstract class VersionedValuesDbTableTest<T extends VersionedDerivedEntit
     @Override
     public List<T> getDeletedMultiversionRecord() {
         return sortByHeightAsc(groupByDbKey()
-                .entrySet()
+            .entrySet()
+            .stream()
+            .filter(e -> e.getValue().size() >= 2
+                && !e.getValue()
                 .stream()
-                .filter(e -> e.getValue().size() >= 2
-                        && !e.getValue()
-                        .stream()
-                        .allMatch(VersionedDerivedEntity::isLatest))
-                .map(e -> e.getValue().get(0))
-                .collect(Collectors.toList()));
+                .allMatch(VersionedDerivedEntity::isLatest))
+            .map(e -> e.getValue().get(0))
+            .collect(Collectors.toList()));
     }
 
     @Test
@@ -163,7 +160,7 @@ public abstract class VersionedValuesDbTableTest<T extends VersionedDerivedEntit
             List<T> values = table.get(table.getDbKeyFactory().newKey(toInsert.get(0)));
 
             assertEquals(toInsert, values);
-            toInsert.forEach(t-> t.setHeight(t.getHeight() + 1));
+            toInsert.forEach(t -> t.setHeight(t.getHeight() + 1));
             table.insert(toInsert);
             //check cache in transaction
 

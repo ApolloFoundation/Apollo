@@ -5,20 +5,36 @@ package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Order;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.order.entity.BidOrder;
+import com.apollocurrency.aplwallet.apl.core.order.service.OrderService;
+import com.apollocurrency.aplwallet.apl.core.order.service.impl.BidOrderServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.BidOrderService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderCancellation;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import java.nio.ByteBuffer;
 import org.json.simple.JSONObject;
 
+import javax.enterprise.inject.spi.CDI;
+import java.nio.ByteBuffer;
+
 /**
- *
  * @author al
  */
 class CCBidOrderCancellation extends ColoredCoinsOrderCancellation {
-    
+    private OrderService<BidOrder, ColoredCoinsBidOrderPlacement> bidOrderService;
+
     public CCBidOrderCancellation() {
+    }
+
+    private OrderService<BidOrder, ColoredCoinsBidOrderPlacement> lookupBidOrderService() {
+        if (bidOrderService == null) {
+            this.bidOrderService = CDI.current().select(
+                BidOrderServiceImpl.class,
+                BidOrderService.Literal.INSTANCE
+            ).get();
+        }
+        return bidOrderService;
     }
 
     @Override
@@ -49,8 +65,8 @@ class CCBidOrderCancellation extends ColoredCoinsOrderCancellation {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         ColoredCoinsBidOrderCancellation attachment = (ColoredCoinsBidOrderCancellation) transaction.getAttachment();
-        Order order = Order.Bid.getBidOrder(attachment.getOrderId());
-        Order.Bid.removeOrder(attachment.getOrderId());
+        BidOrder order = lookupBidOrderService().getOrder(attachment.getOrderId());
+        lookupBidOrderService().removeOrder(attachment.getOrderId());
         if (order != null) {
             lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), Math.multiplyExact(order.getQuantityATU(), order.getPriceATM()));
         }
@@ -59,7 +75,7 @@ class CCBidOrderCancellation extends ColoredCoinsOrderCancellation {
     @Override
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
         ColoredCoinsBidOrderCancellation attachment = (ColoredCoinsBidOrderCancellation) transaction.getAttachment();
-        Order bid = Order.Bid.getBidOrder(attachment.getOrderId());
+        BidOrder bid = lookupBidOrderService().getOrder(attachment.getOrderId());
         if (bid == null) {
             throw new AplException.NotCurrentlyValidException("Invalid bid order: " + Long.toUnsignedString(attachment.getOrderId()));
         }
@@ -67,5 +83,5 @@ class CCBidOrderCancellation extends ColoredCoinsOrderCancellation {
             throw new AplException.NotValidException("Order " + Long.toUnsignedString(attachment.getOrderId()) + " was created by account " + Long.toUnsignedString(bid.getAccountId()));
         }
     }
-    
+
 }

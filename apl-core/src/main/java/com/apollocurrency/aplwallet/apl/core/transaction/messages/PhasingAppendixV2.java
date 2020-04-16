@@ -65,9 +65,9 @@ public class PhasingAppendixV2 extends PhasingAppendix {
 
     @Override
     public void validate(Transaction transaction, int blockHeight) throws AplException.ValidationException {
-       super.generalValidation(transaction);
+        super.generalValidation(transaction);
 
-       validateFinishHeightAndTime(blockHeight, this.getFinishTime());
+        validateFinishHeightAndTime(blockHeight, this.getFinishTime());
     }
 
     public int getFinishTime() {

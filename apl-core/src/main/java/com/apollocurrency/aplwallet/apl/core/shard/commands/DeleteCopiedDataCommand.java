@@ -4,18 +4,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.commands;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-import com.apollocurrency.aplwallet.apl.core.shard.model.ExcludeInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardEngine;
+import com.apollocurrency.aplwallet.apl.core.shard.model.ExcludeInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.model.TableInfo;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 public class DeleteCopiedDataCommand implements DataMigrateOperation {
     private static final Logger log = getLogger(DeleteCopiedDataCommand.class);
@@ -49,11 +49,11 @@ public class DeleteCopiedDataCommand implements DataMigrateOperation {
     public MigrateState execute() {
         log.debug("Delete Block/Transaction Data from main DB Command execute...");
         CommandParamInfo paramInfo = CommandParamInfo.builder()
-                .tableInfoList(this.tableNameList)
-                .commitBatchSize(this.commitBatchSize)
-                .snapshotBlockHeight(this.snapshotBlockHeight)
-                .excludeInfo(this.excludeInfo)
-                .build();
+            .tableInfoList(this.tableNameList)
+            .commitBatchSize(this.commitBatchSize)
+            .snapshotBlockHeight(this.snapshotBlockHeight)
+            .excludeInfo(this.excludeInfo)
+            .build();
         return shardEngine.deleteCopiedData(paramInfo);
     }
 

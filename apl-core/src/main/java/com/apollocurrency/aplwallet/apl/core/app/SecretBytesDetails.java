@@ -22,7 +22,7 @@ public class SecretBytesDetails {
         if (!(o instanceof SecretBytesDetails)) return false;
         SecretBytesDetails that = (SecretBytesDetails) o;
         return Arrays.equals(secretBytes, that.secretBytes) &&
-                extractStatus == that.extractStatus;
+            extractStatus == that.extractStatus;
     }
 
     public byte[] getSecretBytes() {

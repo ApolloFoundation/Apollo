@@ -45,6 +45,12 @@ public class DataTag extends VersionedDerivedEntity {
         this.count = rs.getInt("tag_count");
     }
 
+    public DataTag(Long dbId, Integer height, String tag, int count) {
+        super(dbId, height);
+        this.tag = tag;
+        this.count = count;
+    }
+
     public String getTag() {
         return tag;
     }
@@ -52,7 +58,6 @@ public class DataTag extends VersionedDerivedEntity {
     public void setTag(String tag) {
         this.tag = tag;
     }
-
 
     public Integer getCount() {
         return count;
@@ -66,12 +71,6 @@ public class DataTag extends VersionedDerivedEntity {
         this.count = count;
     }
 
-    public DataTag(Long dbId, Integer height, String tag, int count) {
-        super(dbId, height);
-        this.tag = tag;
-        this.count = count;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -79,7 +78,7 @@ public class DataTag extends VersionedDerivedEntity {
         if (!super.equals(o)) return false;
         DataTag dataTag = (DataTag) o;
         return count == dataTag.count &&
-                Objects.equals(tag, dataTag.tag);
+            Objects.equals(tag, dataTag.tag);
     }
 
     @Override
@@ -90,10 +89,10 @@ public class DataTag extends VersionedDerivedEntity {
     @Override
     public String toString() {
         return "DataTag{" +
-                "tag='" + tag + '\'' +
-                ", count=" + count +
-                ", height=" + getHeight() +
-                ", latest=" + isLatest() +
-                '}';
+            "tag='" + tag + '\'' +
+            ", count=" + count +
+            ", height=" + getHeight() +
+            ", latest=" + isLatest() +
+            '}';
     }
 }

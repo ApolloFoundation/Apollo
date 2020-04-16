@@ -4,28 +4,28 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import java.nio.ByteBuffer;
-import java.security.MessageDigest;
-import javax.enterprise.inject.spi.CDI;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import javax.enterprise.inject.spi.CDI;
+import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+
 /**
- *
  * @author al
  */
 public final class ShufflingCancellationAttachment extends AbstractShufflingAttachment {
-    
-    private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+
     final byte[][] blameData;
     final byte[][] keySeeds;
     final long cancellingAccountId;
+    private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
 
     public ShufflingCancellationAttachment(ByteBuffer buffer) throws AplException.NotValidException {
         super(buffer);
@@ -147,5 +147,5 @@ public final class ShufflingCancellationAttachment extends AbstractShufflingAtta
         }
         return digest.digest();
     }
-    
+
 }

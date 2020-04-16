@@ -52,54 +52,51 @@ import java.util.List;
 @Slf4j
 public abstract class CurrencyExchangeOffer {
 
+    static final DbClause availableOnlyDbClause = new DbClause.LongClause("unit_limit", DbClause.Op.NE, 0)
+        .and(new DbClause.LongClause("supply", DbClause.Op.NE, 0));
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
     private static AccountCurrencyService accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
+    final long id;
+    private final long currencyId;
+    private final long accountId;
+    private final long rateATM;
+    private final int expirationHeight;
+    private final int creationHeight;
+    private final short transactionIndex;
+    private final int transactionHeight;
+    private long limit; // limit on the total sum of units for this offer across transactions
+    private long supply; // total units supply for the offer
 
-    public static final class AvailableOffers {
-
-        private final long rateATM;
-        private final long units;
-        private final long amountATM;
-
-        private AvailableOffers(long rateATM, long units, long amountATM) {
-            this.rateATM = rateATM;
-            this.units = units;
-            this.amountATM = amountATM;
-        }
-
-        public long getRateATM() {
-            return rateATM;
-        }
-
-        public long getUnits() {
-            return units;
-        }
-
-        public long getAmountATM() {
-            return amountATM;
-        }
-
+    CurrencyExchangeOffer(long id, long currencyId, long accountId, long rateATM, long limit, long supply,
+                          int expirationHeight, int transactionHeight, short transactionIndex) {
+        this.id = id;
+        this.currencyId = currencyId;
+        this.accountId = accountId;
+        this.rateATM = rateATM;
+        this.limit = limit;
+        this.supply = supply;
+        this.expirationHeight = expirationHeight;
+        this.creationHeight = blockchain.getHeight();
+        this.transactionIndex = transactionIndex;
+        this.transactionHeight = transactionHeight;
     }
 
-//    static {
+    CurrencyExchangeOffer(ResultSet rs) throws SQLException {
+        this.id = rs.getLong("id");
+        this.currencyId = rs.getLong("currency_id");
+        this.accountId = rs.getLong("account_id");
+        this.rateATM = rs.getLong("rate");
+        this.limit = rs.getLong("unit_limit");
+        this.supply = rs.getLong("supply");
+        this.expirationHeight = rs.getInt("expiration_height");
+        this.creationHeight = rs.getInt("creation_height");
+        this.transactionIndex = rs.getShort("transaction_index");
+        this.transactionHeight = rs.getInt("transaction_height");
+    }
+
+    //    static {
     public static void init() {
-    }
-
-    @Singleton
-    @Slf4j
-    public static class CurrencyExchangeOfferObserver {
-        public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
-            log.trace(":accept:CurrencyExchangeOfferObserver: START onBlockApplaid AFTER_BLOCK_APPLY. block={}", block.getHeight());
-            List<CurrencyBuyOffer> expired = new ArrayList<>();
-            try (DbIterator<CurrencyBuyOffer> offers = CurrencyBuyOffer.getOffers(new DbClause.IntClause("expiration_height", block.getHeight()), 0, -1)) {
-                for (CurrencyBuyOffer offer : offers) {
-                    expired.add(offer);
-                }
-            }
-            expired.forEach((offer) -> CurrencyExchangeOffer.removeOffer(LedgerEvent.CURRENCY_OFFER_EXPIRED, offer));
-            log.trace(":accept:CurrencyExchangeOfferObserver: END onBlockApplaid AFTER_BLOCK_APPLY. block={}", block.getHeight());
-        }
     }
 
     static void publishOffer(Transaction transaction, MonetarySystemPublishExchangeOffer attachment) {
@@ -128,9 +125,6 @@ public abstract class CurrencyExchangeOffer {
         return new AvailableOffers(rateATM, Math.subtractExact(units, remainingUnits), totalAmountATM);
     }
 
-    static final DbClause availableOnlyDbClause = new DbClause.LongClause("unit_limit", DbClause.Op.NE, 0)
-            .and(new DbClause.LongClause("supply", DbClause.Op.NE, 0));
-
     public static AvailableOffers getAvailableToSell(final long currencyId, final long units) {
         return calculateTotal(getAvailableBuyOffers(currencyId, 0L), units);
     }
@@ -142,7 +136,7 @@ public abstract class CurrencyExchangeOffer {
             dbClause = dbClause.and(new DbClause.LongClause("rate", DbClause.Op.GTE, minRateATM));
         }
         try (DbIterator<CurrencyBuyOffer> offers = CurrencyBuyOffer.getOffers(dbClause, 0, -1,
-                " ORDER BY rate DESC, creation_height ASC, transaction_height ASC, transaction_index ASC ")) {
+            " ORDER BY rate DESC, creation_height ASC, transaction_height ASC, transaction_index ASC ")) {
             for (CurrencyBuyOffer offer : offers) {
                 currencyExchangeOffers.add(offer);
             }
@@ -175,7 +169,7 @@ public abstract class CurrencyExchangeOffer {
             accountCurrencyService.addToUnconfirmedCurrencyUnits(counterAccount, LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), currencyId, excess);
             log.trace("account === 2 exchangeCurrencyForAPL account={}", counterAccount);
             Exchange.addExchange(transaction, currencyId, offer, account.getId(),
-                    offer.getAccountId(), curUnits, blockchain.getLastBlock());
+                offer.getAccountId(), curUnits, blockchain.getLastBlock());
         }
         long transactionId = transaction.getId();
         account = accountService.getAccount(account);
@@ -197,7 +191,7 @@ public abstract class CurrencyExchangeOffer {
             dbClause = dbClause.and(new DbClause.LongClause("rate", DbClause.Op.LTE, maxRateATM));
         }
         try (DbIterator<CurrencySellOffer> offers = CurrencySellOffer.getOffers(dbClause, 0, -1,
-                " ORDER BY rate ASC, creation_height ASC, transaction_height ASC, transaction_index ASC ")) {
+            " ORDER BY rate ASC, creation_height ASC, transaction_height ASC, transaction_index ASC ")) {
             for (CurrencySellOffer offer : offers) {
                 currencySellOffers.add(offer);
             }
@@ -227,21 +221,21 @@ public abstract class CurrencyExchangeOffer {
             log.trace("account === 1 exchangeAPLForCurrency account={}", counterAccount);
             accountService.addToBalanceATM(counterAccount, LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), curAmountATM);
             accountService.addToUnconfirmedBalanceATM(counterAccount, LedgerEvent.CURRENCY_EXCHANGE, offer.getId(),
-                    Math.addExact(
-                            Math.multiplyExact(curUnits - excess, offer.getRateATM() - offer.getCounterOffer().getRateATM()),
-                            Math.multiplyExact(excess, offer.getRateATM())
-                    )
+                Math.addExact(
+                    Math.multiplyExact(curUnits - excess, offer.getRateATM() - offer.getCounterOffer().getRateATM()),
+                    Math.multiplyExact(excess, offer.getRateATM())
+                )
             );
             accountCurrencyService.addToCurrencyUnits(counterAccount, LedgerEvent.CURRENCY_EXCHANGE, offer.getId(), currencyId, -curUnits);
             log.trace("account === 2 exchangeAPLForCurrency account={}", counterAccount);
             Exchange.addExchange(transaction, currencyId, offer, offer.getAccountId(),
-                    account.getId(), curUnits, blockchain.getLastBlock());
+                account.getId(), curUnits, blockchain.getLastBlock());
         }
         long transactionId = transaction.getId();
         account = accountService.getAccount(account);
         log.trace("account === 3 exchangeAPLForCurrency account={}", account);
         accountCurrencyService.addToCurrencyAndUnconfirmedCurrencyUnits(account, LedgerEvent.CURRENCY_EXCHANGE, transactionId,
-                currencyId, Math.subtractExact(units, remainingUnits));
+            currencyId, Math.subtractExact(units, remainingUnits));
         accountService.addToBalanceATM(account, LedgerEvent.CURRENCY_EXCHANGE, transactionId, -totalAmountATM);
         accountService.addToUnconfirmedBalanceATM(account, LedgerEvent.CURRENCY_EXCHANGE, transactionId, Math.multiplyExact(units, rateATM) - totalAmountATM);
         log.trace("account === 4 exchangeAPLForCurrency account={}", account);
@@ -258,49 +252,10 @@ public abstract class CurrencyExchangeOffer {
         accountCurrencyService.addToUnconfirmedCurrencyUnits(account, event, buyOffer.getId(), buyOffer.getCurrencyId(), sellOffer.getSupply());
     }
 
-
-    final long id;
-    private final long currencyId;
-    private final long accountId;
-    private final long rateATM;
-    private long limit; // limit on the total sum of units for this offer across transactions
-    private long supply; // total units supply for the offer
-    private final int expirationHeight;
-    private final int creationHeight;
-    private final short transactionIndex;
-    private final int transactionHeight;
-
-    CurrencyExchangeOffer(long id, long currencyId, long accountId, long rateATM, long limit, long supply,
-                          int expirationHeight, int transactionHeight, short transactionIndex) {
-        this.id = id;
-        this.currencyId = currencyId;
-        this.accountId = accountId;
-        this.rateATM = rateATM;
-        this.limit = limit;
-        this.supply = supply;
-        this.expirationHeight = expirationHeight;
-        this.creationHeight = blockchain.getHeight();
-        this.transactionIndex = transactionIndex;
-        this.transactionHeight = transactionHeight;
-    }
-
-    CurrencyExchangeOffer(ResultSet rs) throws SQLException {
-        this.id = rs.getLong("id");
-        this.currencyId = rs.getLong("currency_id");
-        this.accountId = rs.getLong("account_id");
-        this.rateATM = rs.getLong("rate");
-        this.limit = rs.getLong("unit_limit");
-        this.supply = rs.getLong("supply");
-        this.expirationHeight = rs.getInt("expiration_height");
-        this.creationHeight = rs.getInt("creation_height");
-        this.transactionIndex = rs.getShort("transaction_index");
-        this.transactionHeight = rs.getInt("transaction_height");
-    }
-
     void save(Connection con, String table) throws SQLException {
         try (
-                @DatabaseSpecificDml(DmlMarker.MERGE)
-                PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (id, currency_id, account_id, "
+            @DatabaseSpecificDml(DmlMarker.MERGE)
+            PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (id, currency_id, account_id, "
                 + "rate, unit_limit, supply, expiration_height, creation_height, transaction_index, transaction_height, height, latest, deleted) "
                 + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)")
         ) {
@@ -368,16 +323,58 @@ public abstract class CurrencyExchangeOffer {
     @Override
     public String toString() {
         return "CurrencyExchangeOffer{" +
-                "id=" + id +
-                ", currencyId=" + currencyId +
-                ", accountId=" + accountId +
-                ", rateATM=" + rateATM +
-                ", limit=" + limit +
-                ", supply=" + supply +
-                ", expirationHeight=" + expirationHeight +
-                ", creationHeight=" + creationHeight +
-                ", transactionIndex=" + transactionIndex +
-                ", transactionHeight=" + transactionHeight +
-                '}';
+            "id=" + id +
+            ", currencyId=" + currencyId +
+            ", accountId=" + accountId +
+            ", rateATM=" + rateATM +
+            ", limit=" + limit +
+            ", supply=" + supply +
+            ", expirationHeight=" + expirationHeight +
+            ", creationHeight=" + creationHeight +
+            ", transactionIndex=" + transactionIndex +
+            ", transactionHeight=" + transactionHeight +
+            '}';
+    }
+
+    public static final class AvailableOffers {
+
+        private final long rateATM;
+        private final long units;
+        private final long amountATM;
+
+        private AvailableOffers(long rateATM, long units, long amountATM) {
+            this.rateATM = rateATM;
+            this.units = units;
+            this.amountATM = amountATM;
+        }
+
+        public long getRateATM() {
+            return rateATM;
+        }
+
+        public long getUnits() {
+            return units;
+        }
+
+        public long getAmountATM() {
+            return amountATM;
+        }
+
+    }
+
+    @Singleton
+    @Slf4j
+    public static class CurrencyExchangeOfferObserver {
+        public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
+            log.trace(":accept:CurrencyExchangeOfferObserver: START onBlockApplaid AFTER_BLOCK_APPLY. block={}", block.getHeight());
+            List<CurrencyBuyOffer> expired = new ArrayList<>();
+            try (DbIterator<CurrencyBuyOffer> offers = CurrencyBuyOffer.getOffers(new DbClause.IntClause("expiration_height", block.getHeight()), 0, -1)) {
+                for (CurrencyBuyOffer offer : offers) {
+                    expired.add(offer);
+                }
+            }
+            expired.forEach((offer) -> CurrencyExchangeOffer.removeOffer(LedgerEvent.CURRENCY_OFFER_EXPIRED, offer));
+            log.trace(":accept:CurrencyExchangeOfferObserver: END onBlockApplaid AFTER_BLOCK_APPLY. block={}", block.getHeight());
+        }
     }
 }

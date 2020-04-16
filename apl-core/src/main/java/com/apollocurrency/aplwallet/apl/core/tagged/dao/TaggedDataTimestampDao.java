@@ -52,11 +52,11 @@ public class TaggedDataTimestampDao extends EntityDbTable<TaggedDataTimestamp> {
 
     public void save(Connection con, TaggedDataTimestamp dataTimestamp) throws SQLException {
         try (
-                @DatabaseSpecificDml(DmlMarker.MERGE)
-                @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
-                PreparedStatement pstmt = con.prepareStatement(
+            @DatabaseSpecificDml(DmlMarker.MERGE)
+            @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
+            PreparedStatement pstmt = con.prepareStatement(
                 "MERGE INTO tagged_data_timestamp (id, timestamp, height, latest) "
-                        + "KEY (id, height) VALUES (?, ?, ?, TRUE)")
+                    + "KEY (id, height) VALUES (?, ?, ?, TRUE)")
         ) {
             int i = 0;
             pstmt.setLong(++i, dataTimestamp.getId());

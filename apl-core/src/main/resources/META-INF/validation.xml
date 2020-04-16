@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <validation-config
-  xmlns="http://xmlns.jcp.org/xml/ns/validation/configuration"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://xmlns.jcp.org/xml/ns/validation/configuration"
   xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/validation/configuration"
   version="2.0">
-  <parameter-name-provider>org.hibernate.validator.parameternameprovider.ParanamerParameterNameProvider</parameter-name-provider>
+  <parameter-name-provider>org.hibernate.validator.parameternameprovider.ParanamerParameterNameProvider
+  </parameter-name-provider>
 </validation-config>

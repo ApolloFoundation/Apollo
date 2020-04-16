@@ -21,16 +21,16 @@
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
@@ -38,7 +38,7 @@ import javax.servlet.http.HttpServletRequest;
 public final class GetAccountBlockIds extends AbstractAPIRequestHandler {
 
     public GetAccountBlockIds() {
-        super(new APITag[] {APITag.ACCOUNTS}, "account", "timestamp", "firstIndex", "lastIndex");
+        super(new APITag[]{APITag.ACCOUNTS}, "account", "timestamp", "firstIndex", "lastIndex");
     }
 
     @Override
@@ -50,7 +50,7 @@ public final class GetAccountBlockIds extends AbstractAPIRequestHandler {
         int lastIndex = HttpParameterParserUtil.getLastIndex(req);
 
         JSONArray blockIds = new JSONArray();
-        try (DbIterator<? extends Block> iterator = lookupBlockchain().getBlocks(accountId, timestamp, firstIndex, lastIndex)) {
+        try (DbIterator<? extends Block> iterator = lookupBlockchain().getBlocksByAccount(accountId, timestamp, firstIndex, lastIndex)) {
             while (iterator.hasNext()) {
                 Block block = iterator.next();
                 blockIds.add(block.getStringId());

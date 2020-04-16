@@ -25,14 +25,16 @@ public class ClientErrorExceptionMapper implements ExceptionMapper<ClientErrorEx
     @Override
     public Response toResponse(ClientErrorException exception) {
         ResponseBuilder responseBuilder;
-        if (exception instanceof NotFoundException && exception.getCause() instanceof NumberFormatException){
+        if (exception instanceof NotFoundException && exception.getCause() instanceof NumberFormatException) {
             responseBuilder = ResponseBuilder.apiError(
-                ApiErrors.INCORRECT_PARAM_VALUE, "number format "+exception.getCause().getMessage());
-        }else {
+                ApiErrors.INCORRECT_PARAM_VALUE, "number format " + exception.getCause().getMessage());
+        } else if (exception.getCause() != null && exception.getCause() instanceof RestParameterException) {
+            RestParameterException cause = (RestParameterException) exception.getCause();
+            responseBuilder = ResponseBuilder.apiError(cause.getErrorInfo(), cause.getArgs());
+        } else {
             responseBuilder = ResponseBuilder.apiError(
                 ApiErrors.INTERNAL_SERVER_EXCEPTION, exception.getMessage());
         }
-
         return responseBuilder.build();
     }
 

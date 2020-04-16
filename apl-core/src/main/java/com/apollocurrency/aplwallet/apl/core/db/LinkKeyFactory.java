@@ -7,11 +7,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
- *
  * @author al
  */
 public abstract class LinkKeyFactory<T> extends KeyFactory<T> {
-    
+
     private final String idColumnA;
     private final String idColumnB;
 
@@ -29,5 +28,5 @@ public abstract class LinkKeyFactory<T> extends KeyFactory<T> {
     public DbKey newKey(long idA, long idB) {
         return new LinkKey(idA, idB);
     }
-    
+
 }

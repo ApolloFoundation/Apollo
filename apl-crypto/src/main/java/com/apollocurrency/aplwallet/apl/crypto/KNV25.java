@@ -23,12 +23,12 @@ package com.apollocurrency.aplwallet.apl.crypto;
 public final class KNV25 {
 
     private static final long[] constants = {
-                1L, 32898L, -9223372036854742902L, -9223372034707259392L, 32907L,
-                2147483649L, -9223372034707259263L, -9223372036854743031L, 138L, 136L,
-                2147516425L, 2147483658L, 2147516555L, -9223372036854775669L, -9223372036854742903L,
-                -9223372036854743037L, -9223372036854743038L, -9223372036854775680L, 32778L, -9223372034707292150L,
-                -9223372034707259263L, -9223372036854742912L, 2147483649L, -9223372034707259384L, 1L
-            };
+        1L, 32898L, -9223372036854742902L, -9223372034707259392L, 32907L,
+        2147483649L, -9223372034707259263L, -9223372036854743031L, 138L, 136L,
+        2147516425L, 2147483658L, 2147516555L, -9223372036854775669L, -9223372036854742903L,
+        -9223372036854743037L, -9223372036854743038L, -9223372036854775680L, 32778L, -9223372034707292150L,
+        -9223372034707259263L, -9223372036854742912L, 2147483649L, -9223372034707259384L, 1L
+    };
 
     @SuppressWarnings("ShiftOutOfRange")
     public static byte[] hash(final byte input[]) {
@@ -42,7 +42,7 @@ public final class KNV25 {
         while (inputOffset <= inputLength) {
             int i = 0;
             while (inputOffset < inputLength && i < 17) {
-                state[i++] ^= ((long)(input[inputOffset++] & 0xFF)) | (((long)(input[inputOffset++] & 0xFF)) << 8) | (((long)(input[inputOffset++] & 0xFF)) << 16) | (((long)(input[inputOffset++] & 0xFF)) << 24) | (((long)(input[inputOffset++] & 0xFF)) << 32) | (((long)(input[inputOffset++] & 0xFF)) << 40) | (((long)(input[inputOffset++] & 0xFF)) << 48) | (((long)(input[inputOffset++] & 0xFF)) << 56);
+                state[i++] ^= ((long) (input[inputOffset++] & 0xFF)) | (((long) (input[inputOffset++] & 0xFF)) << 8) | (((long) (input[inputOffset++] & 0xFF)) << 16) | (((long) (input[inputOffset++] & 0xFF)) << 24) | (((long) (input[inputOffset++] & 0xFF)) << 32) | (((long) (input[inputOffset++] & 0xFF)) << 40) | (((long) (input[inputOffset++] & 0xFF)) << 48) | (((long) (input[inputOffset++] & 0xFF)) << 56);
             }
             if (inputOffset == inputLength && i < 17) {
                 state[i] ^= 1;
@@ -118,7 +118,7 @@ public final class KNV25 {
         }
 
         for (int i = 0; i < 32; i++) {
-            output[i] = (byte)(state[i >> 3] >> ((i & 7) << 3));
+            output[i] = (byte) (state[i >> 3] >> ((i & 7) << 3));
         }
         return output;
     }

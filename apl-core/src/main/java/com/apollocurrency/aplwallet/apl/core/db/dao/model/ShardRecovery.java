@@ -6,7 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.db.dao.model;
 
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import lombok.Builder;
-import lombok.Getter;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -22,7 +21,7 @@ public class ShardRecovery {
     /**
      * tracked sharding state
      */
- //   @Builder.Default
+    //   @Builder.Default
     private String state = MigrateState.INIT.name();
     /**
      * current object/table being processed
@@ -43,7 +42,7 @@ public class ShardRecovery {
     /**
      * automatically updated date-time in UTC zone
      */
- //   @Builder.Default
+    //   @Builder.Default
     private Instant updated = Instant.now();
 
     /**
@@ -51,11 +50,7 @@ public class ShardRecovery {
      */
     private int height;
 
-    public int getHeight() {
-        return height;
-    }
-
-//TODO: rewirite all constructors to use one with all parameters and this() call
+    //TODO: rewirite all constructors to use one with all parameters and this() call
     public ShardRecovery(Long shardRecoveryId, MigrateState state, String objectName, String columnName,
                          Long lastColumnValue, String processedObject, Instant updated, Integer height) {
         Objects.requireNonNull(state);
@@ -104,6 +99,14 @@ public class ShardRecovery {
         Objects.requireNonNull(state);
         this.state = state.name();
         this.objectName = objectName;
+    }
+
+    public static ShardRecoveryBuilder builder() {
+        return new ShardRecoveryBuilder();
+    }
+
+    public int getHeight() {
+        return height;
     }
 
     public Long getShardRecoveryId() {
@@ -167,8 +170,19 @@ public class ShardRecovery {
         this.updated = updated;
     }
 
-    public static ShardRecoveryBuilder builder() {
-        return new ShardRecoveryBuilder();
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("ShardRecovery{");
+        sb.append("shardRecoveryId=").append(shardRecoveryId);
+        sb.append(", state='").append(state).append('\'');
+        sb.append(", objectName='").append(objectName).append('\'');
+        sb.append(", columnName='").append(columnName).append('\'');
+        sb.append(", lastColumnValue=").append(lastColumnValue);
+        sb.append(", processedObject='").append(processedObject).append('\'');
+        sb.append(", updated=").append(updated);
+        sb.append(", height=").append(height);
+        sb.append('}');
+        return sb.toString();
     }
 
     public static final class ShardRecoveryBuilder {
@@ -226,23 +240,8 @@ public class ShardRecovery {
 
         public ShardRecovery build() {
             return new ShardRecovery(
-                    shardRecoveryId, MigrateState.valueOf(state), objectName,
-                    columnName, lastColumnValue, processedObject, updated, height);
+                shardRecoveryId, MigrateState.valueOf(state), objectName,
+                columnName, lastColumnValue, processedObject, updated, height);
         }
-    }
-
-    @Override
-    public String toString() {
-        final StringBuffer sb = new StringBuffer("ShardRecovery{");
-        sb.append("shardRecoveryId=").append(shardRecoveryId);
-        sb.append(", state='").append(state).append('\'');
-        sb.append(", objectName='").append(objectName).append('\'');
-        sb.append(", columnName='").append(columnName).append('\'');
-        sb.append(", lastColumnValue=").append(lastColumnValue);
-        sb.append(", processedObject='").append(processedObject).append('\'');
-        sb.append(", updated=").append(updated);
-        sb.append(", height=").append(height);
-        sb.append('}');
-        return sb.toString();
     }
 }

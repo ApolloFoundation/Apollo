@@ -15,10 +15,76 @@ import org.json.simple.JSONObject;
 import java.nio.ByteBuffer;
 
 /**
- *
  * @author al
  */
 public abstract class Payment extends TransactionType {
+
+    public static final TransactionType ORDINARY = new Payment() {
+        @Override
+        public final byte getSubtype() {
+            return TransactionType.SUBTYPE_PAYMENT_ORDINARY_PAYMENT;
+        }
+
+        @Override
+        public final LedgerEvent getLedgerEvent() {
+            return LedgerEvent.ORDINARY_PAYMENT;
+        }
+
+        @Override
+        public String getName() {
+            return "OrdinaryPayment";
+        }
+
+        @Override
+        public EmptyAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            return Attachment.ORDINARY_PAYMENT;
+        }
+
+        @Override
+        public EmptyAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            return Attachment.ORDINARY_PAYMENT;
+        }
+
+        @Override
+        public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+            if (transaction.getAmountATM() <= 0 || transaction.getAmountATM() >= lookupBlockchainConfig().getCurrentConfig().getMaxBalanceATM()) {
+                throw new AplException.NotValidException("Invalid ordinary payment");
+            }
+        }
+    };
+    public static final TransactionType PRIVATE = new Payment() {
+        @Override
+        public final byte getSubtype() {
+            return TransactionType.SUBTYPE_PAYMENT_PRIVATE_PAYMENT;
+        }
+
+        @Override
+        public final LedgerEvent getLedgerEvent() {
+            return LedgerEvent.PRIVATE_PAYMENT;
+        }
+
+        @Override
+        public String getName() {
+            return "PrivatePayment";
+        }
+
+        @Override
+        public EmptyAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+            return Attachment.PRIVATE_PAYMENT;
+        }
+
+        @Override
+        public EmptyAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+            return Attachment.PRIVATE_PAYMENT;
+        }
+
+        @Override
+        public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+            if (transaction.getAmountATM() <= 0 || transaction.getAmountATM() >= lookupBlockchainConfig().getCurrentConfig().getMaxBalanceATM()) {
+                throw new AplException.NotValidException("Invalid private payment");
+            }
+        }
+    };
 
     private Payment() {
     }
@@ -54,71 +120,4 @@ public abstract class Payment extends TransactionType {
         return true;
     }
 
-    public static final TransactionType ORDINARY = new Payment() {
-        @Override
-        public final byte getSubtype() {
-            return TransactionType.SUBTYPE_PAYMENT_ORDINARY_PAYMENT;
-        }
-
-        @Override
-        public final LedgerEvent getLedgerEvent() {
-            return LedgerEvent.ORDINARY_PAYMENT;
-        }
-
-        @Override
-        public String getName() {
-            return "OrdinaryPayment";
-        }
-
-        @Override
-        public EmptyAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-            return Attachment.ORDINARY_PAYMENT;
-        }
-
-        @Override
-        public EmptyAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-            return Attachment.ORDINARY_PAYMENT;
-        }
-
-        @Override
-        public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-            if (transaction.getAmountATM() <= 0 || transaction.getAmountATM() >= blockchainConfig.getCurrentConfig().getMaxBalanceATM()) {
-                throw new AplException.NotValidException("Invalid ordinary payment");
-            }
-        }
-    };
-    public static final TransactionType PRIVATE = new Payment() {
-        @Override
-        public final byte getSubtype() {
-            return TransactionType.SUBTYPE_PAYMENT_PRIVATE_PAYMENT;
-        }
-
-        @Override
-        public final LedgerEvent getLedgerEvent() {
-            return LedgerEvent.PRIVATE_PAYMENT;
-        }
-
-        @Override
-        public String getName() {
-            return "PrivatePayment";
-        }
-
-        @Override
-        public EmptyAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-            return Attachment.PRIVATE_PAYMENT;
-        }
-
-        @Override
-        public EmptyAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-            return Attachment.PRIVATE_PAYMENT;
-        }
-
-        @Override
-        public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-            if (transaction.getAmountATM() <= 0 || transaction.getAmountATM() >= blockchainConfig.getCurrentConfig().getMaxBalanceATM()) {
-                throw new AplException.NotValidException("Invalid private payment");
-            }
-        }
-    };
-    
 }

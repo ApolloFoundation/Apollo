@@ -9,12 +9,11 @@ import com.apollocurrency.aplwallet.apl.core.account.dao.AccountLeaseTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountLedgerTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountPropertyTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
-import com.apollocurrency.aplwallet.apl.core.app.Alias;
-import com.apollocurrency.aplwallet.apl.core.app.Order;
+import com.apollocurrency.aplwallet.apl.core.alias.dao.AliasOfferTable;
+import com.apollocurrency.aplwallet.apl.core.alias.dao.AliasTable;
 import com.apollocurrency.aplwallet.apl.core.app.Poll;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
-import com.apollocurrency.aplwallet.apl.core.app.Trade;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.Vote;
 import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
@@ -37,6 +36,8 @@ import com.apollocurrency.aplwallet.apl.core.monetary.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
+import com.apollocurrency.aplwallet.apl.core.order.dao.AskOrderTable;
+import com.apollocurrency.aplwallet.apl.core.order.dao.BidOrderTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingApprovedResultTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollLinkedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
@@ -47,6 +48,7 @@ import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataDao;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataExtendDao;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataTimestampDao;
+import com.apollocurrency.aplwallet.apl.core.trade.dao.TradeTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
 
@@ -117,16 +119,23 @@ public class TableRegistryInitializer {
     private AccountPropertyTable accountPropertyTable;
     @Inject
     private AccountInfoTable accountInfoTable;
+    @Inject
+    private AliasTable aliasTable;
+    @Inject
+    private AliasOfferTable aliasOfferTable;
+    @Inject
+    private AskOrderTable askOrderTable;
+    @Inject
+    private BidOrderTable bidOrderTable;
+    @Inject
+    private TradeTable tradeTable;
 
     @PostConstruct
     public void init() {
         transactionProcessor.init();
 
-        Alias.init();
         Asset.init();
-        Order.init();
         Poll.init();
-        Trade.init();
         AssetDelete.init();
         AssetDividend.init();
         Vote.init();

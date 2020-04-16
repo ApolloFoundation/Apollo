@@ -20,17 +20,26 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import javax.enterprise.inject.spi.CDI;
-import java.util.Arrays;
-
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+
+import javax.enterprise.inject.spi.CDI;
+import java.util.Arrays;
 
 public final class Token {
     private static volatile TimeService timeService = CDI.current().select(TimeService.class).get();
     private static AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
+    private final byte[] publicKey;
+    private final int timestamp;
+    private final boolean isValid;
+
+    private Token(byte[] publicKey, int timestamp, boolean isValid) {
+        this.publicKey = publicKey;
+        this.timestamp = timestamp;
+        this.isValid = isValid;
+    }
 
     public static String generateToken(byte[] keySeed, String messageString) {
         return generateToken(keySeed, Convert.toBytes(messageString));
@@ -41,10 +50,10 @@ public final class Token {
         System.arraycopy(message, 0, data, 0, message.length);
         System.arraycopy(Crypto.getPublicKey(keySeed), 0, data, message.length, 32);
         int timestamp = timeService.getEpochTime();
-        data[message.length + 32] = (byte)timestamp;
-        data[message.length + 32 + 1] = (byte)(timestamp >> 8);
-        data[message.length + 32 + 2] = (byte)(timestamp >> 16);
-        data[message.length + 32 + 3] = (byte)(timestamp >> 24);
+        data[message.length + 32] = (byte) timestamp;
+        data[message.length + 32 + 1] = (byte) (timestamp >> 8);
+        data[message.length + 32 + 2] = (byte) (timestamp >> 16);
+        data[message.length + 32 + 3] = (byte) (timestamp >> 24);
 
         byte[] token = new byte[100];
         System.arraycopy(data, message.length, token, 0, 32 + 4);
@@ -53,8 +62,8 @@ public final class Token {
         StringBuilder buf = new StringBuilder();
         for (int ptr = 0; ptr < 100; ptr += 5) {
 
-            long number = ((long)(token[ptr] & 0xFF)) | (((long)(token[ptr + 1] & 0xFF)) << 8) | (((long)(token[ptr + 2] & 0xFF)) << 16)
-                    | (((long)(token[ptr + 3] & 0xFF)) << 24) | (((long)(token[ptr + 4] & 0xFF)) << 32);
+            long number = ((long) (token[ptr] & 0xFF)) | (((long) (token[ptr + 1] & 0xFF)) << 8) | (((long) (token[ptr + 2] & 0xFF)) << 16)
+                | (((long) (token[ptr + 3] & 0xFF)) << 24) | (((long) (token[ptr + 4] & 0xFF)) << 32);
 
             if (number < 32) {
                 buf.append("0000000");
@@ -90,11 +99,11 @@ public final class Token {
         for (; i < tokenString.length(); i += 8, j += 5) {
 
             long number = Long.parseLong(tokenString.substring(i, i + 8), 32);
-            tokenBytes[j] = (byte)number;
-            tokenBytes[j + 1] = (byte)(number >> 8);
-            tokenBytes[j + 2] = (byte)(number >> 16);
-            tokenBytes[j + 3] = (byte)(number >> 24);
-            tokenBytes[j + 4] = (byte)(number >> 32);
+            tokenBytes[j] = (byte) number;
+            tokenBytes[j + 1] = (byte) (number >> 8);
+            tokenBytes[j + 2] = (byte) (number >> 16);
+            tokenBytes[j + 3] = (byte) (number >> 24);
+            tokenBytes[j + 4] = (byte) (number >> 32);
 
         }
 
@@ -112,20 +121,10 @@ public final class Token {
         System.arraycopy(tokenBytes, 0, data, messageBytes.length, 36);
         byte[] announcedPublicKey = accountService.getPublicKeyByteArray(AccountService.getId(publicKey));
         boolean isValid = Crypto.verify(signature, data, publicKey)
-                && (announcedPublicKey == null || Arrays.equals(publicKey, announcedPublicKey));
+            && (announcedPublicKey == null || Arrays.equals(publicKey, announcedPublicKey));
 
         return new Token(publicKey, timestamp, isValid);
 
-    }
-
-    private final byte[] publicKey;
-    private final int timestamp;
-    private final boolean isValid;
-
-    private Token(byte[] publicKey, int timestamp, boolean isValid) {
-        this.publicKey = publicKey;
-        this.timestamp = timestamp;
-        this.isValid = isValid;
     }
 
     public byte[] getPublicKey() {
@@ -143,9 +142,9 @@ public final class Token {
     @Override
     public String toString() {
         return "Token{" +
-                "publicKey=" + Convert.toHexString(publicKey) +
-                ", timestamp=" + timestamp +
-                ", isValid=" + isValid +
-                '}';
+            "publicKey=" + Convert.toHexString(publicKey) +
+            ", timestamp=" + timestamp +
+            ", isValid=" + isValid +
+            '}';
     }
 }

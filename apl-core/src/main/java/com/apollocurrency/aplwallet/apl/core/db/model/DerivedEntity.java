@@ -11,26 +11,18 @@ import lombok.ToString;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
+
 @ToString
 public abstract class DerivedEntity implements Comparable {
-    private DbKey dbKey;
-    private static final long DEFAULT_DB_ID = 0L;
     protected static final int DEFAULT_HEIGHT = -1;
-
+    private static final long DEFAULT_DB_ID = 0L;
+    private DbKey dbKey;
     private long dbId;
     private int height;
 
     public DerivedEntity(Long dbId, Integer height) {
         this.dbId = dbId == null ? DEFAULT_DB_ID : dbId;
         this.height = height == null ? DEFAULT_HEIGHT : height;
-    }
-
-    public void setDbId(long dbId) {
-        this.dbId = dbId;
-    }
-
-    public void setHeight(int height) {
-        this.height = height;
     }
 
     public DerivedEntity(ResultSet rs) throws SQLException {
@@ -44,7 +36,7 @@ public abstract class DerivedEntity implements Comparable {
         if (!(o instanceof DerivedEntity)) return false;
         DerivedEntity that = (DerivedEntity) o;
         return dbId == that.dbId &&
-                height == that.height;
+            height == that.height;
     }
 
     @Override
@@ -56,16 +48,24 @@ public abstract class DerivedEntity implements Comparable {
         return dbKey;
     }
 
+    public void setDbKey(DbKey dbKey) {
+        this.dbKey = dbKey;
+    }
+
     public long getDbId() {
         return dbId;
+    }
+
+    public void setDbId(long dbId) {
+        this.dbId = dbId;
     }
 
     public int getHeight() {
         return height;
     }
 
-    public void setDbKey(DbKey dbKey) {
-        this.dbKey = dbKey;
+    public void setHeight(int height) {
+        this.height = height;
     }
 
     @Override

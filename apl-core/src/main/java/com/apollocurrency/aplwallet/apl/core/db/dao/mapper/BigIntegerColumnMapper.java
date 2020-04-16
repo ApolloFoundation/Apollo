@@ -1,12 +1,12 @@
 package com.apollocurrency.aplwallet.apl.core.db.dao.mapper;
 
+import org.jdbi.v3.core.mapper.ColumnMapper;
+import org.jdbi.v3.core.statement.StatementContext;
+
 import java.math.BigInteger;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Optional;
-
-import org.jdbi.v3.core.mapper.ColumnMapper;
-import org.jdbi.v3.core.statement.StatementContext;
 
 /**
  * Convert from database long into java BigInteger

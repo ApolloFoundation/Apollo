@@ -18,20 +18,19 @@ import java.util.List;
 @Slf4j
 public class TwoFactorAuthRepositoryImpl implements TwoFactorAuthRepository {
 
-    private DataSource db;
     private static final String TABLE_NAME = "two_factor_auth";
     private static final String KEY_COLUMN_NAME = "account";
     private static final String SECRET_COLUMN_NAME = "secret";
     private static final String CONFIRMED_COLUMN_NAME = "confirmed";
     private static final String DELETE_QUERY = String.format("DELETE FROM %s WHERE %s = ?", TABLE_NAME, KEY_COLUMN_NAME);
     private static final String SELECT_QUERY = String.format("SELECT * FROM %s WHERE %s = ?", TABLE_NAME,
-            KEY_COLUMN_NAME);
+        KEY_COLUMN_NAME);
     private static final String SELECT_QUERY_ALL = String.format("SELECT * FROM %s", TABLE_NAME);
     private static final String INSERT_QUERY = String.format("INSERT INTO %s (%s, %s, %s) VALUES (?, ?, ?)", TABLE_NAME,
-            KEY_COLUMN_NAME, SECRET_COLUMN_NAME, CONFIRMED_COLUMN_NAME);
-
+        KEY_COLUMN_NAME, SECRET_COLUMN_NAME, CONFIRMED_COLUMN_NAME);
     private static final String UPDATE_QUERY = String.format("UPDATE %s SET %s = ?, %s = ?, %s = ? WHERE %s = ?",
-            TABLE_NAME, KEY_COLUMN_NAME, SECRET_COLUMN_NAME, CONFIRMED_COLUMN_NAME, KEY_COLUMN_NAME);
+        TABLE_NAME, KEY_COLUMN_NAME, SECRET_COLUMN_NAME, CONFIRMED_COLUMN_NAME, KEY_COLUMN_NAME);
+    private DataSource db;
 
     public TwoFactorAuthRepositoryImpl(DataSource db) {
         this.db = db;
@@ -76,6 +75,7 @@ public class TwoFactorAuthRepositoryImpl implements TwoFactorAuthRepository {
             throw new DbException(e.toString(), e);
         }
     }
+
     @Override
     public boolean update(TwoFactorAuthEntity entity) {
         try (Connection con = db.getConnection()) {
@@ -123,7 +123,7 @@ public class TwoFactorAuthRepositoryImpl implements TwoFactorAuthRepository {
         log.trace("start selectAll 2fa records...");
         List<TwoFactorAuthEntity> result = new ArrayList<>(10);
         try (Connection con = db.getConnection();
-            PreparedStatement pstmt = con.prepareStatement(SELECT_QUERY_ALL)) {
+             PreparedStatement pstmt = con.prepareStatement(SELECT_QUERY_ALL)) {
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     TwoFactorAuthEntity entity = new TwoFactorAuthEntity();

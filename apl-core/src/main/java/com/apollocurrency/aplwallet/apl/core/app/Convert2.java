@@ -28,24 +28,25 @@ import java.util.Objects;
 
 public final class Convert2 {
 
-    private Convert2() {} //never
-
-    private static final String BLOCKCHAIN_IS_NULL_MSG="Blockchain config is null";
+    private static final String BLOCKCHAIN_IS_NULL_MSG = "Blockchain config is null";
     private static BlockchainConfig blockchainConfig;
     private static boolean initialized = false;
 
-    public static void init(BlockchainConfig bcConfig){
+    private Convert2() {
+    } //never
+
+    public static void init(BlockchainConfig bcConfig) {
         Objects.requireNonNull(bcConfig, BLOCKCHAIN_IS_NULL_MSG);
         blockchainConfig = bcConfig;
         initialized = true;
     }
 
-    public static boolean isInitialized(){
+    public static boolean isInitialized() {
         return initialized;
     }
 
-    private static void validate(){
-        if (!isInitialized()){
+    private static void validate() {
+        if (!isInitialized()) {
             throw new IllegalStateException(BLOCKCHAIN_IS_NULL_MSG);
         }
     }
@@ -59,9 +60,10 @@ public final class Convert2 {
     public static String rsAccount(String accountPrefix, long accountId) {
         return accountPrefix + "-" + Crypto.rsEncode(accountId);
     }
+
     //avoid static initialization chain when call Constants.ACCOUNT_PREFIX in rsAccount method
     public static String defaultRsAccount(long accountId) {
-        return  "APL-" + Crypto.rsEncode(accountId);
+        return "APL-" + Crypto.rsEncode(accountId);
     }
 
 
@@ -71,11 +73,12 @@ public final class Convert2 {
 
     /**
      * Time after genesis block.
+     *
      * @param currentTime (milliseconds)
      * @return seconds
      */
     public static int toEpochTime(long currentTime) {
-        return (int)((currentTime - GenesisImporter.EPOCH_BEGINNING + 500) / 1000);
+        return (int) ((currentTime - GenesisImporter.EPOCH_BEGINNING + 500) / 1000);
     }
 
 }

@@ -70,14 +70,14 @@ class AccountServiceTest {
     void setUp() {
         testData = new AccountTestData();
         accountService = spy(new AccountServiceImpl(
-                accountTable,
-                blockchainConfig,
-                mock(GlobalSyncImpl.class),
-                accountPublicKeyService,
-                accountEvent,
-                ledgerEvent,
-                accountGuaranteedBalanceTable,
-                blockChainInfoService
+            accountTable,
+            blockchainConfig,
+            mock(GlobalSyncImpl.class),
+            accountPublicKeyService,
+            accountEvent,
+            ledgerEvent,
+            accountGuaranteedBalanceTable,
+            blockChainInfoService
         ));
     }
 
@@ -126,7 +126,7 @@ class AccountServiceTest {
 
         //check "Duplicate key exception"
         newAccount.setPublicKey(testData.PUBLIC_KEY2);
-        assertThrows(RuntimeException.class,() -> accountService.getAccount(testData.PUBLIC_KEY1.getPublicKey()));
+        assertThrows(RuntimeException.class, () -> accountService.getAccount(testData.PUBLIC_KEY1.getPublicKey()));
     }
 
     @Test
@@ -163,19 +163,19 @@ class AccountServiceTest {
     @Test
     void getEffectiveBalanceAPLByGenesisAccount() {
         boolean lock = false;
-        int height = EFFECTIVE_BALANCE_CONFIRMATIONS-1;
+        int height = EFFECTIVE_BALANCE_CONFIRMATIONS - 1;
         assertEquals(0L, accountService.getEffectiveBalanceAPL(testData.ACC_0, height, lock));
 
         doReturn(testData.ACC_0).when(accountService).getAccount(testData.ACC_0.getId(), 0);
-        assertEquals(testData.ACC_0.getBalanceATM()/ Constants.ONE_APL
-                , accountService.getEffectiveBalanceAPL(testData.ACC_0, height, lock));
+        assertEquals(testData.ACC_0.getBalanceATM() / Constants.ONE_APL
+            , accountService.getEffectiveBalanceAPL(testData.ACC_0, height, lock));
     }
 
     @Test
     void getEffectiveBalanceAPL() {
         boolean lock = false;
         int height = testData.ACC_7.getHeight();
-        int blockchainHeight = height+1000;
+        int blockchainHeight = height + 1000;
         long balance = 0;
         long lessorsBalance = 10000L;
         long guaranteedBalance = 50000L;
@@ -185,14 +185,14 @@ class AccountServiceTest {
         doReturn(testData.PUBLIC_KEY1).when(accountPublicKeyService).getPublicKey(AccountTable.newKey(testData.ACC_0.getId()));
         doReturn(1440).when(blockchainConfig).getGuaranteedBalanceConfirmations();
         doReturn(lessorsBalance).when(accountService).getLessorsGuaranteedBalanceATM(testData.ACC_0, height);
-        doReturn(guaranteedBalance).when(accountService).getGuaranteedBalanceATM(testData.ACC_0,1440,height);
+        doReturn(guaranteedBalance).when(accountService).getGuaranteedBalanceATM(testData.ACC_0, 1440, height);
         balance = accountService.getEffectiveBalanceAPL(testData.ACC_0, height, lock);
         assertEquals(0, balance);//the balance is less then MIN_FORGING_BALANCE_ATM
 
-        doReturn(lessorsBalance*Constants.ONE_APL).when(accountService).getLessorsGuaranteedBalanceATM(testData.ACC_0, height);
-        doReturn(guaranteedBalance*Constants.ONE_APL).when(accountService).getGuaranteedBalanceATM(testData.ACC_0,1440,height);
+        doReturn(lessorsBalance * Constants.ONE_APL).when(accountService).getLessorsGuaranteedBalanceATM(testData.ACC_0, height);
+        doReturn(guaranteedBalance * Constants.ONE_APL).when(accountService).getGuaranteedBalanceATM(testData.ACC_0, 1440, height);
         balance = accountService.getEffectiveBalanceAPL(testData.ACC_0, height, lock);
-        assertEquals(lessorsBalance+guaranteedBalance, balance);
+        assertEquals(lessorsBalance + guaranteedBalance, balance);
     }
 
     @Test
@@ -202,13 +202,13 @@ class AccountServiceTest {
         int currentHeight = testData.ACC_GUARANTEE_BALANCE_HEIGHT_MAX;
         doReturn(10).when(blockChainInfoService).getHeight();
         assertThrows(IllegalArgumentException.class, () -> accountService.getGuaranteedBalanceATM(testData.ACC_1, numberOfConfirmation, currentHeight));
-        doReturn(currentHeight+10).when(blockChainInfoService).getHeight();
+        doReturn(currentHeight + 10).when(blockChainInfoService).getHeight();
 
-        doReturn(null).when(accountGuaranteedBalanceTable).getSumOfAdditions(testData.ACC_1.getId(), currentHeight-numberOfConfirmation, currentHeight);
+        doReturn(null).when(accountGuaranteedBalanceTable).getSumOfAdditions(testData.ACC_1.getId(), currentHeight - numberOfConfirmation, currentHeight);
         long sum = accountService.getGuaranteedBalanceATM(testData.ACC_1, numberOfConfirmation, currentHeight);
         assertEquals(testData.ACC_1.getBalanceATM(), sum);
 
-        doReturn(subBalance).when(accountGuaranteedBalanceTable).getSumOfAdditions(testData.ACC_1.getId(), currentHeight-numberOfConfirmation, currentHeight);
+        doReturn(subBalance).when(accountGuaranteedBalanceTable).getSumOfAdditions(testData.ACC_1.getId(), currentHeight - numberOfConfirmation, currentHeight);
         sum = accountService.getGuaranteedBalanceATM(testData.ACC_1, numberOfConfirmation, currentHeight);
         assertEquals(testData.ACC_1.getBalanceATM() - subBalance, sum);
     }
@@ -216,16 +216,17 @@ class AccountServiceTest {
     @Test
     void getLessorsGuaranteedBalanceATM() {
         int height = testData.ACC_7.getHeight();
-        int blockchainHeight = height+1000;
+        int blockchainHeight = height + 1000;
         doReturn(blockchainHeight).when(blockChainInfoService).getHeight();
         List<Account> lessorsList = List.of(testData.ACC_1, testData.ACC_7);
         doReturn(lessorsList).when(accountService).getLessors(testData.ACC_0, height);
         long lessorAdditionsSum = 500000L;
-        Map<Long, Long> lessorAdditions = new HashMap<>(); lessorAdditions.put(testData.ACC_1.getId(), lessorAdditionsSum);
+        Map<Long, Long> lessorAdditions = new HashMap<>();
+        lessorAdditions.put(testData.ACC_1.getId(), lessorAdditionsSum);
 
         doReturn(lessorAdditions).when(accountGuaranteedBalanceTable).getLessorsAdditions(
-                lessorsList.stream().map(Account::getId).collect(Collectors.toList()),
-                height, blockchainHeight);
+            lessorsList.stream().map(Account::getId).collect(Collectors.toList()),
+            height, blockchainHeight);
         long expectedBalance = lessorsList.stream().mapToLong(Account::getBalanceATM).sum() - lessorAdditionsSum;
         long lessorsBalance = accountService.getLessorsGuaranteedBalanceATM(testData.ACC_0, height);
 
@@ -257,11 +258,11 @@ class AccountServiceTest {
         verify(firedEventLedger, never()).fire(any(LedgerEntry.class));
 
         //when amount .GT. 0
-        long expectedBalance = account.getBalanceATM()+amount+fee;
+        long expectedBalance = account.getBalanceATM() + amount + fee;
         doReturn(firedEventLedger).when(ledgerEvent).select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_ENTRY));
         accountService.addToBalanceATM(account, event, eventId, amount, fee);
         assertEquals(expectedBalance, account.getBalanceATM());
-        verify(accountGuaranteedBalanceTable).addToGuaranteedBalanceATM(account.getId(), amount+fee, height);
+        verify(accountGuaranteedBalanceTable).addToGuaranteedBalanceATM(account.getId(), amount + fee, height);
         verify(accountService).update(account);
         verify(firedEvent).fire(account);
         verify(firedEventLedger, times(2)).fire(any(LedgerEntry.class));
@@ -293,15 +294,15 @@ class AccountServiceTest {
         verify(firedEventLedger, never()).fire(any(LedgerEntry.class));
 
         //when amount .GT. 0
-        long totalAmount = amount+fee;
-        long expectedBalance = account.getBalanceATM()+totalAmount;
-        long expectedUnconfirmedBalance = account.getUnconfirmedBalanceATM()+totalAmount;
+        long totalAmount = amount + fee;
+        long expectedBalance = account.getBalanceATM() + totalAmount;
+        long expectedUnconfirmedBalance = account.getUnconfirmedBalanceATM() + totalAmount;
         doReturn(firedEventLedger).when(ledgerEvent).select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_ENTRY));
         doReturn(firedEventLedger).when(ledgerEvent).select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_UNCONFIRMED_ENTRY));
         accountService.addToBalanceAndUnconfirmedBalanceATM(account, event, eventId, amount, fee);
         assertEquals(expectedBalance, account.getBalanceATM());
         assertEquals(expectedUnconfirmedBalance, account.getUnconfirmedBalanceATM());
-        verify(accountGuaranteedBalanceTable).addToGuaranteedBalanceATM(account.getId(), amount+fee, height);
+        verify(accountGuaranteedBalanceTable).addToGuaranteedBalanceATM(account.getId(), amount + fee, height);
         verify(accountService).update(account);
         verify(firedEvent, times(2)).fire(account);
         verify(firedEventLedger, times(4)).fire(any(LedgerEntry.class));
@@ -332,8 +333,8 @@ class AccountServiceTest {
         verify(firedEventLedger, never()).fire(any(LedgerEntry.class));
 
         //when amount .GT. 0
-        long totalAmount = amount+fee;
-        long expectedUnconfirmedBalance = account.getUnconfirmedBalanceATM()+totalAmount;
+        long totalAmount = amount + fee;
+        long expectedUnconfirmedBalance = account.getUnconfirmedBalanceATM() + totalAmount;
         doReturn(firedEventLedger).when(ledgerEvent).select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_UNCONFIRMED_ENTRY));
         accountService.addToUnconfirmedBalanceATM(account, event, eventId, amount, fee);
         assertEquals(expectedUnconfirmedBalance, account.getUnconfirmedBalanceATM());

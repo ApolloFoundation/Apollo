@@ -35,8 +35,6 @@ import java.util.Objects;
 
 @Singleton
 public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
-    private static final Logger LOG = LoggerFactory.getLogger(PhasingPollTable.class);
-
     static final LongKeyFactory<PhasingPoll> KEY_FACTORY = new LongKeyFactory<PhasingPoll>("id") {
         @Override
         public DbKey newKey(PhasingPoll poll) {
@@ -46,6 +44,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
             return poll.getDbKey();
         }
     };
+    private static final Logger LOG = LoggerFactory.getLogger(PhasingPollTable.class);
     private static final PhasingPollMapper MAPPER = new PhasingPollMapper(KEY_FACTORY);
     private static final String TABLE_NAME = "phasing_poll";
     private final Blockchain blockchain;
@@ -70,8 +69,8 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
     @Override
     public void save(Connection con, PhasingPoll poll) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_poll (id, account_id, "
-                + "finish_height,  finish_time, whitelist_size, voting_model, quorum, min_balance, holding_id, "
-                + "min_balance_model, hashed_secret, algorithm, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+            + "finish_height,  finish_time, whitelist_size, voting_model, quorum, min_balance, holding_id, "
+            + "min_balance_model, hashed_secret, algorithm, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, poll.getId());
             pstmt.setLong(++i, poll.getAccountId());
@@ -97,8 +96,8 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
         try {
             con = getDatabaseManager().getDataSource().getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT transaction.* FROM transaction, phasing_poll " +
-                    "WHERE phasing_poll.id = transaction.id AND phasing_poll.finish_height = ? " +
-                    "ORDER BY transaction.height, transaction.transaction_index"); // ASC, not DESC
+                "WHERE phasing_poll.id = transaction.id AND phasing_poll.finish_height = ? " +
+                "ORDER BY transaction.height, transaction.transaction_index"); // ASC, not DESC
             pstmt.setInt(1, height);
             blockchain.getTransactions(con, pstmt).forEach(transactions::add);
 
@@ -116,8 +115,8 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
         try {
             con = getDatabaseManager().getDataSource().getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT transaction.* FROM transaction, phasing_poll " +
-                    "WHERE phasing_poll.id = transaction.id AND phasing_poll.finish_height = -1 AND phasing_poll.finish_time > ? AND phasing_poll.finish_time <= ? " +
-                    "ORDER BY transaction.height, transaction.transaction_index"); // ASC, not DESC
+                "WHERE phasing_poll.id = transaction.id AND phasing_poll.finish_height = -1 AND phasing_poll.finish_time > ? AND phasing_poll.finish_time <= ? " +
+                "ORDER BY transaction.height, transaction.transaction_index"); // ASC, not DESC
             pstmt.setInt(1, startTime);
             pstmt.setInt(2, finishTime);
             blockchain.getTransactions(con, pstmt).forEach(transactions::add);
@@ -131,15 +130,14 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
     }
 
 
-
     public long getSenderPhasedTransactionFees(long accountId, int height) throws SQLException {
         try (Connection con = getDatabaseManager().getDataSource().getConnection();
 
              PreparedStatement pstmt = con.prepareStatement("SELECT SUM(transaction.fee) AS fees FROM transaction, phasing_poll " +
-                     " LEFT JOIN phasing_poll_result ON phasing_poll.id = phasing_poll_result.id " +
-                     " WHERE phasing_poll.id = transaction.id AND transaction.sender_id = ? " +
-                     " AND phasing_poll_result.id IS NULL " +
-                     " AND phasing_poll.finish_height > ?")) {
+                 " LEFT JOIN phasing_poll_result ON phasing_poll.id = phasing_poll_result.id " +
+                 " WHERE phasing_poll.id = transaction.id AND transaction.sender_id = ? " +
+                 " AND phasing_poll_result.id IS NULL " +
+                 " AND phasing_poll.finish_height > ?")) {
             int i = 0;
             pstmt.setLong(++i, accountId);
             pstmt.setInt(++i, height);
@@ -157,15 +155,15 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
         try {
             con = getDatabaseManager().getDataSource().getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT transaction.* " +
-                    "FROM transaction, phasing_poll " +
-                    "WHERE phasing_poll.holding_id = ? " +
-                    "AND phasing_poll.voting_model = ? " +
-                    "AND phasing_poll.id = transaction.id " +
-                    "AND phasing_poll.finish_height > ? " +
-                    (accountId != 0 ? "AND phasing_poll.account_id = ? " : "") +
-                    (withoutWhitelist ? "AND phasing_poll.whitelist_size = 0 " : "") +
-                    "ORDER BY transaction.height DESC, transaction.transaction_index DESC " +
-                    DbUtils.limitsClause(from, to));
+                "FROM transaction, phasing_poll " +
+                "WHERE phasing_poll.holding_id = ? " +
+                "AND phasing_poll.voting_model = ? " +
+                "AND phasing_poll.id = transaction.id " +
+                "AND phasing_poll.finish_height > ? " +
+                (accountId != 0 ? "AND phasing_poll.account_id = ? " : "") +
+                (withoutWhitelist ? "AND phasing_poll.whitelist_size = 0 " : "") +
+                "ORDER BY transaction.height DESC, transaction.transaction_index DESC " +
+                DbUtils.limitsClause(from, to));
             int i = 0;
             pstmt.setLong(++i, holdingId);
             pstmt.setByte(++i, votingModel.getCode());
@@ -181,16 +179,17 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
             throw e;
         }
     }
+
     public DbIterator<Transaction> getAccountPhasedTransactions(long accountId, int from, int to, int height) throws SQLException {
         Connection con = null;
         try {
             con = getDatabaseManager().getDataSource().getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT transaction.* FROM transaction, phasing_poll " +
-                    " LEFT JOIN phasing_poll_result ON phasing_poll.id = phasing_poll_result.id " +
-                    " WHERE phasing_poll.id = transaction.id AND (transaction.sender_id = ? OR transaction.recipient_id = ?) " +
-                    " AND phasing_poll_result.id IS NULL " +
-                    " AND phasing_poll.finish_height > ? ORDER BY transaction.height DESC, transaction.transaction_index DESC " +
-                    DbUtils.limitsClause(from, to));
+                " LEFT JOIN phasing_poll_result ON phasing_poll.id = phasing_poll_result.id " +
+                " WHERE phasing_poll.id = transaction.id AND (transaction.sender_id = ? OR transaction.recipient_id = ?) " +
+                " AND phasing_poll_result.id IS NULL " +
+                " AND phasing_poll.finish_height > ? ORDER BY transaction.height DESC, transaction.transaction_index DESC " +
+                DbUtils.limitsClause(from, to));
             int i = 0;
             pstmt.setLong(++i, accountId);
             pstmt.setLong(++i, accountId);
@@ -207,10 +206,10 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
     public int getAccountPhasedTransactionCount(long accountId, int height) throws SQLException {
         try (Connection con = getDatabaseManager().getDataSource().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM transaction, phasing_poll " +
-                     " LEFT JOIN phasing_poll_result ON phasing_poll.id = phasing_poll_result.id " +
-                     " WHERE phasing_poll.id = transaction.id AND (transaction.sender_id = ? OR transaction.recipient_id = ?) " +
-                     " AND phasing_poll_result.id IS NULL " +
-                     " AND phasing_poll.finish_height > ?")) {
+                 " LEFT JOIN phasing_poll_result ON phasing_poll.id = phasing_poll_result.id " +
+                 " WHERE phasing_poll.id = transaction.id AND (transaction.sender_id = ? OR transaction.recipient_id = ?) " +
+                 " AND phasing_poll_result.id IS NULL " +
+                 " AND phasing_poll.finish_height > ?")) {
             int i = 0;
             pstmt.setLong(++i, accountId);
             pstmt.setLong(++i, accountId);
@@ -238,9 +237,9 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection conn = dataSource.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(
-                     "SELECT db_id, id FROM transaction WHERE id IN " +
-                         "(SELECT id FROM phasing_poll WHERE height < ? AND id not in " +
-                         "(SELECT id FROM phasing_poll_result WHERE height <= ?))")) {
+                 "SELECT db_id, id FROM transaction WHERE id IN " +
+                     "(SELECT id FROM phasing_poll WHERE height < ? AND id not in " +
+                     "(SELECT id FROM phasing_poll_result WHERE height <= ?))")) {
             pstmt.setInt(1, height);
             pstmt.setInt(2, height);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -284,8 +283,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
                 pstmt4.setLong(1, id);
                 pstmt4.executeUpdate();
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -293,20 +291,20 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
     private DbIterator<PhasingPoll> getAllFinishedPolls(int height) {
         Connection con = null;
         Block block = null;
-        try{
+        try {
             block = blockchain.getBlockAtHeight(height);
-        }catch (BlockNotFoundException e){
+        } catch (BlockNotFoundException e) {
             LOG.warn("{}, use short query for trimming the {} table.", e.getMessage(), TABLE_NAME);
         }
         try {
             con = databaseManager.getDataSource().getConnection();
             String query = "SELECT * FROM phasing_poll WHERE finish_height < ? and finish_height <> -1";
-            if(block != null){
+            if (block != null) {
                 query += " or finish_time < ? and finish_time <> -1";
             }
             PreparedStatement pstmt = con.prepareStatement(query);
             pstmt.setInt(1, height);
-            if(block != null) {
+            if (block != null) {
                 pstmt.setInt(2, block.getTimestamp());
             }
             return getManyBy(con, pstmt, false);

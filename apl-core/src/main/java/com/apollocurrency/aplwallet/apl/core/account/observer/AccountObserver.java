@@ -53,14 +53,14 @@ public class AccountObserver {
             Account lessor = accountService.getAccount(lease.getLessorId());
             if (height == lease.getCurrentLeasingHeightFrom()) {
                 lessor.setActiveLesseeId(lease.getCurrentLesseeId());
-                if (log.isTraceEnabled()){
+                if (log.isTraceEnabled()) {
                     log.trace("--lease-- set activeLeaseId={}", lease.getCurrentLesseeId());
                 }
                 accountLeaseEvent.select(AccountEventBinding.literal(AccountEventType.LEASE_STARTED)).fire(lease);
             } else if (height == lease.getCurrentLeasingHeightTo()) {
                 accountLeaseEvent.select(AccountEventBinding.literal(AccountEventType.LEASE_ENDED)).fire(lease);
                 lessor.setActiveLesseeId(0);
-                if (log.isTraceEnabled()){
+                if (log.isTraceEnabled()) {
                     log.trace("--lease-- set activeLeaseId=0");
                 }
                 if (lease.getNextLeasingHeightFrom() == 0) {
@@ -78,14 +78,14 @@ public class AccountObserver {
                     accountLeaseService.insertLease(lease);
                     if (height == lease.getCurrentLeasingHeightFrom()) {
                         lessor.setActiveLesseeId(lease.getCurrentLesseeId());
-                        if (log.isTraceEnabled()){
+                        if (log.isTraceEnabled()) {
                             log.trace("--lease-- set activeLeaseId={}", lease.getCurrentLesseeId());
                         }
                         accountLeaseEvent.select(AccountEventBinding.literal(AccountEventType.LEASE_STARTED)).fire(lease);
                     }
                 }
             }
-            if (log.isTraceEnabled()){
+            if (log.isTraceEnabled()) {
                 log.trace("--lease-- update account, entity={}", lessor);
             }
             accountService.update(lessor);
@@ -93,30 +93,30 @@ public class AccountObserver {
         log.trace(":accept:AccountObserver: END onBlockApplaid AFTER_BLOCK_APPLY. block={}", block.getHeight());
     }
 
-    public void onLedgerCommitEntries(@Observes @AccountLedgerEvent(AccountLedgerEventType.COMMIT_ENTRIES) AccountLedgerEventType event ){
+    public void onLedgerCommitEntries(@Observes @AccountLedgerEvent(AccountLedgerEventType.COMMIT_ENTRIES) AccountLedgerEventType event) {
         log.trace("Catch event (COMMIT_ENTRIES) {}", event);
         accountLedgerService.commitEntries();
     }
 
-    public void onLedgerClearEntries(@Observes @AccountLedgerEvent(AccountLedgerEventType.CLEAR_ENTRIES) AccountLedgerEventType event){
+    public void onLedgerClearEntries(@Observes @AccountLedgerEvent(AccountLedgerEventType.CLEAR_ENTRIES) AccountLedgerEventType event) {
         log.trace("Catch event (CLEAR_ENTRIES) {}", event);
         accountLedgerService.clearEntries();
     }
 
-    public void onLogLedgerEntries(@Observes @AccountLedgerEvent(AccountLedgerEventType.LOG_ENTRY) LedgerEntry entry ){
+    public void onLogLedgerEntries(@Observes @AccountLedgerEvent(AccountLedgerEventType.LOG_ENTRY) LedgerEntry entry) {
         log.trace("Catch event (LOG_ENTRY) {}", entry);
         if (accountLedgerService.mustLogEntry(entry.getAccountId(), false)) {
             accountLedgerService.logEntry(entry);
-        }else{
+        } else {
             log.trace("The account {} mustn't be tracked", entry.getAccountId());
         }
     }
 
-    public void onLogUnconfirmedLedgerEntries(@Observes @AccountLedgerEvent(AccountLedgerEventType.LOG_UNCONFIRMED_ENTRY) LedgerEntry entry ){
+    public void onLogUnconfirmedLedgerEntries(@Observes @AccountLedgerEvent(AccountLedgerEventType.LOG_UNCONFIRMED_ENTRY) LedgerEntry entry) {
         log.trace("Catch event (LOG_UNCONFIRMED_ENTRY) {}", entry);
         if (accountLedgerService.mustLogEntry(entry.getAccountId(), true)) {
             accountLedgerService.logEntry(entry);
-        }else{
+        } else {
             log.trace("The account {} mustn't be tracked", entry.getAccountId());
         }
     }

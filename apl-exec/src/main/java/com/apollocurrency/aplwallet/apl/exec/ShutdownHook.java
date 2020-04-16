@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class ShutdownHook extends Thread  {
+public class ShutdownHook extends Thread {
     private static final Logger LOG = getLogger(FundingMonitor.class);
 
     private AplCoreRuntime aplCoreRuntime;
@@ -26,7 +26,7 @@ public class ShutdownHook extends Thread  {
 
         try {
             aplCoreRuntime.shutdown();
-        } catch (Exception ex){
+        } catch (Exception ex) {
             LOG.error(ex.getMessage(), ex);
         }
 

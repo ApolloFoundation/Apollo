@@ -20,16 +20,12 @@ import static org.slf4j.LoggerFactory.getLogger;
  * @author yuriy.larin
  */
 public abstract class CsvAbstractBase {
-    private static final Logger log = getLogger(CsvAbstractBase.class);
-
     /**
      * The block size for I/O operations.
      */
     public static final int IO_BUFFER_SIZE = 4 * 1024;
-
     public static final char EOT = '\u0004';
     public static final char TEXT_FIELD_START = '\'';
-
     /**
      * System property <code>line.separator</code> (default: \n).<br />
      * It is usually set by the system, and used by the script and trace tools.
@@ -39,10 +35,9 @@ public abstract class CsvAbstractBase {
      * UTF-8 is expected here
      */
     public static final String FILE_ENCODING = Charset.forName("UTF-8").name(); // UTF-8 default
-    protected String characterSet = FILE_ENCODING;
-
     public static final String CSV_FILE_EXTENSION = ".csv"; // UTF-8
-
+    private static final Logger log = getLogger(CsvAbstractBase.class);
+    protected String characterSet = FILE_ENCODING;
     protected Path dataExportPath; // common path for all CSV files are stored in
     protected String fileName; // file name (by table name)
     protected String fileNameExtension = CSV_FILE_EXTENSION; // file name extension
@@ -74,6 +69,15 @@ public abstract class CsvAbstractBase {
 
     //escaper fot ctrl characters
     protected CsvEscaper translator;
+
+    private static boolean isParam(String key, String... values) {
+        for (String v : values) {
+            if (key.equalsIgnoreCase(v)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     /**
      * TODO: refactor that functionality to using another configuration approach (properties or similar)
@@ -127,13 +131,13 @@ public abstract class CsvAbstractBase {
         return charset;
     }
 
-    private static boolean isParam(String key, String... values) {
-        for (String v : values) {
-            if (key.equalsIgnoreCase(v)) {
-                return true;
-            }
-        }
-        return false;
+    /**
+     * Get the current field separator for writing.
+     *
+     * @return the field separator
+     */
+    public String getFieldSeparatorWrite() {
+        return fieldSeparatorWrite;
     }
 
     /**
@@ -146,12 +150,12 @@ public abstract class CsvAbstractBase {
     }
 
     /**
-     * Get the current field separator for writing.
+     * Get the current case sensitive column names setting.
      *
-     * @return the field separator
+     * @return whether column names are case sensitive
      */
-    public String getFieldSeparatorWrite() {
-        return fieldSeparatorWrite;
+    public boolean getCaseSensitiveColumnNames() {
+        return caseSensitiveColumnNames;
     }
 
     /**
@@ -165,12 +169,12 @@ public abstract class CsvAbstractBase {
     }
 
     /**
-     * Get the current case sensitive column names setting.
+     * Get the current field separator for reading.
      *
-     * @return whether column names are case sensitive
+     * @return the field separator
      */
-    public boolean getCaseSensitiveColumnNames() {
-        return caseSensitiveColumnNames;
+    public char getFieldSeparatorRead() {
+        return fieldSeparatorRead;
     }
 
     /**
@@ -183,12 +187,12 @@ public abstract class CsvAbstractBase {
     }
 
     /**
-     * Get the current field separator for reading.
+     * Get the line comment character.
      *
-     * @return the field separator
+     * @return the line comment character, or 0 if disabled
      */
-    public char getFieldSeparatorRead() {
-        return fieldSeparatorRead;
+    public char getLineCommentCharacter() {
+        return lineComment;
     }
 
     /**
@@ -202,12 +206,12 @@ public abstract class CsvAbstractBase {
     }
 
     /**
-     * Get the line comment character.
+     * Get the current field delimiter.
      *
-     * @return the line comment character, or 0 if disabled
+     * @return the field delimiter
      */
-    public char getLineCommentCharacter() {
-        return lineComment;
+    public char getFieldDelimiter() {
+        return fieldDelimiter;
     }
 
     /**
@@ -220,21 +224,21 @@ public abstract class CsvAbstractBase {
         this.fieldDelimiter = fieldDelimiter;
     }
 
-    /**
-     * Get the current field delimiter.
-     *
-     * @return the field delimiter
-     */
-    public char getFieldDelimiter() {
-        return fieldDelimiter;
-    }
-
     public String getFileNameExtension() {
         return fileNameExtension;
     }
 
     public void setFileNameExtension(String fileNameExtension) {
         this.fileNameExtension = fileNameExtension;
+    }
+
+    /**
+     * Get the current escape character.
+     *
+     * @return the escape character
+     */
+    public char getEscapeCharacter() {
+        return escapeCharacter;
     }
 
     /**
@@ -268,12 +272,12 @@ public abstract class CsvAbstractBase {
     }
 
     /**
-     * Get the current escape character.
+     * Get the line separator used for writing.
      *
-     * @return the escape character
+     * @return the line separator
      */
-    public char getEscapeCharacter() {
-        return escapeCharacter;
+    public String getLineSeparator() {
+        return lineSeparator;
     }
 
     /**
@@ -289,12 +293,12 @@ public abstract class CsvAbstractBase {
     }
 
     /**
-     * Get the line separator used for writing.
+     * Get the current null string.
      *
-     * @return the line separator
+     * @return the null string.
      */
-    public String getLineSeparator() {
-        return lineSeparator;
+    public String getNullString() {
+        return nullString;
     }
 
     /**
@@ -308,12 +312,12 @@ public abstract class CsvAbstractBase {
     }
 
     /**
-     * Get the current null string.
+     * Whether whitespace in unquoted text is preserved.
      *
-     * @return the null string.
+     * @return the current value for the setting
      */
-    public String getNullString() {
-        return nullString;
+    public boolean getPreserveWhitespace() {
+        return preserveWhitespace;
     }
 
     /**
@@ -326,12 +330,12 @@ public abstract class CsvAbstractBase {
     }
 
     /**
-     * Whether whitespace in unquoted text is preserved.
+     * Whether the column header is written.
      *
      * @return the current value for the setting
      */
-    public boolean getPreserveWhitespace() {
-        return preserveWhitespace;
+    public boolean getWriteColumnHeader() {
+        return writeColumnHeader;
     }
 
     /**
@@ -341,15 +345,6 @@ public abstract class CsvAbstractBase {
      */
     public void setWriteColumnHeader(boolean value) {
         this.writeColumnHeader = value;
-    }
-
-    /**
-     * Whether the column header is written.
-     *
-     * @return the current value for the setting
-     */
-    public boolean getWriteColumnHeader() {
-        return writeColumnHeader;
     }
 
 

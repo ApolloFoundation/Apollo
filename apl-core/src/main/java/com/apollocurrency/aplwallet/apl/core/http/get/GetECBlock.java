@@ -31,11 +31,12 @@ import org.json.simple.JSONStreamAware;
 import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
+@Deprecated
 @Vetoed
 public final class GetECBlock extends AbstractAPIRequestHandler {
 
     public GetECBlock() {
-        super(new APITag[] {APITag.BLOCKS}, "timestamp");
+        super(new APITag[]{APITag.BLOCKS}, "timestamp");
     }
 
     @Override

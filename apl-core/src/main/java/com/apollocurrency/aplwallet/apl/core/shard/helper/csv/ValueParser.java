@@ -12,7 +12,7 @@ public interface ValueParser {
 
     byte[] parseBinaryObject(Object data);
 
-    default Object parseObject(Object data){
+    default Object parseObject(Object data) {
         return data;
     }
 }

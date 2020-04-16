@@ -4,7 +4,6 @@
 package com.apollocurrency.aplwallet.api.dto;
 
 /**
- *
  * @author alukin@gmail.com
  */
 public class ApolloX509Info {

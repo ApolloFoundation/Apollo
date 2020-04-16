@@ -2,6 +2,9 @@ package com.apollocurrency.aplwallet.apl.util.cert;
 
 import io.firstbridge.cryptolib.KeyReader;
 import io.firstbridge.cryptolib.impl.KeyReaderImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -11,8 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Holder of available cerificates placed in map with ID as a key
@@ -20,88 +21,17 @@ import org.slf4j.LoggerFactory;
  * @author alukin@gmail.com
  */
 public class CertificateHolder {
-    public static final String PVT_SEARCH_PATH="/../private/";   
-    private final Map<BigInteger, List<ApolloCertificate>> certMap = new TreeMap<>();
-
+    public static final String PVT_SEARCH_PATH = "/../private/";
     private static final Logger log = LoggerFactory.getLogger(CertificateHolder.class);
-
-    public List<ApolloCertificate> getCert(BigInteger id) {
-        return certMap.get(id);
-    }
-
-    public void put(BigInteger id, ApolloCertificate cert) {
-        List<ApolloCertificate> cl = certMap.get(id);
-        if (cl == null) {
-            cl = new ArrayList<>();
-        }
-        cl.add(cert);
-        certMap.put(id, cl);
-    }
-
-    public int size() {
-        return certMap.size();
-    }
-
-    public void readCertDirectory(String path, boolean loadPrivateKey) {
-        File dir = new File(path);
-        if (dir.exists() && dir.isDirectory()) {
-            File[] filesList = dir.listFiles();
-            for (File f : filesList) {
-                if (f.isFile() && f.canRead()) {
-                    ApolloCertificate vc=null;
-                    try {
-                        vc = ApolloCertificate.loadPEMFromPath(f.getAbsolutePath());
-                    } catch (IOException ex) {
-                        //impossible here
-                    } catch (ApolloCertificateException ex) {
-                        log.error("Certificate load exception wilr loading "+f.getAbsolutePath(), ex);
-                    }
-                    if (vc != null) {
-                        put(vc.getApolloId(), vc);
-                        if (loadPrivateKey) {
-                            String parent = f.getParent();
-                            String fn = f.getName();
-                            PrivateKey pk = null;
-                            pk = readPvtKey(parent + "/" + pvtKeyFileName(fn));
-                            if (pk == null) {//no key in the same dir, try ../private
-                                pk = readPvtKey(parent + PVT_SEARCH_PATH + pvtKeyFileName(fn));
-                            }
-                            if (pk != null) {
-                               if(vc.checkKeys(pk)){
-                                 vc.setPrivateKey(pk);
-                               }else{
-                                   log.error("Private key file does not correspond to certificate: {}"+f.getAbsolutePath());
-                               }
-                            } else {
-                                log.error("Private key file not foud for certificate: {}", f.getAbsolutePath());
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            log.error("Can not read certificates.Directory: {} does not exist!", path);
-        }
-    }
-
-    public PrivateKey readPvtKey(String filePath) {
-        KeyReader kr = new KeyReaderImpl();
-        PrivateKey res = null;
-        try (FileInputStream fis = new FileInputStream(filePath)){
-            res = kr.readPrivateKeyPEM(fis);
-        } catch (IOException ex) {
-            log.trace("Can not read private key: {}", filePath);
-        }
-        return res;
-    }
+    private final Map<BigInteger, List<ApolloCertificate>> certMap = new TreeMap<>();
 
     public static String rmSuffixes(String fn) {
         String name = new String(fn);
-        String ext="";
+        String ext = "";
         int last_dot = fn.lastIndexOf(".");
-        if(last_dot>=0){
-            ext=fn.substring(last_dot+1);
-            name=fn.substring(0, last_dot);
+        if (last_dot >= 0) {
+            ext = fn.substring(last_dot + 1);
+            name = fn.substring(0, last_dot);
         }
 
         String[] sfxes = {"_pvtkey", "_req", "_cert", "_selfcert", "_csr"};
@@ -136,5 +66,75 @@ public class CertificateHolder {
         String suffix = "_csr";
         String name = rmSuffixes(fn);
         return name + suffix + ".pem";
+    }
+
+    public List<ApolloCertificate> getCert(BigInteger id) {
+        return certMap.get(id);
+    }
+
+    public void put(BigInteger id, ApolloCertificate cert) {
+        List<ApolloCertificate> cl = certMap.get(id);
+        if (cl == null) {
+            cl = new ArrayList<>();
+        }
+        cl.add(cert);
+        certMap.put(id, cl);
+    }
+
+    public int size() {
+        return certMap.size();
+    }
+
+    public void readCertDirectory(String path, boolean loadPrivateKey) {
+        File dir = new File(path);
+        if (dir.exists() && dir.isDirectory()) {
+            File[] filesList = dir.listFiles();
+            for (File f : filesList) {
+                if (f.isFile() && f.canRead()) {
+                    ApolloCertificate vc = null;
+                    try {
+                        vc = ApolloCertificate.loadPEMFromPath(f.getAbsolutePath());
+                    } catch (IOException ex) {
+                        //impossible here
+                    } catch (ApolloCertificateException ex) {
+                        log.error("Certificate load exception wilr loading " + f.getAbsolutePath(), ex);
+                    }
+                    if (vc != null) {
+                        put(vc.getApolloId(), vc);
+                        if (loadPrivateKey) {
+                            String parent = f.getParent();
+                            String fn = f.getName();
+                            PrivateKey pk = null;
+                            pk = readPvtKey(parent + "/" + pvtKeyFileName(fn));
+                            if (pk == null) {//no key in the same dir, try ../private
+                                pk = readPvtKey(parent + PVT_SEARCH_PATH + pvtKeyFileName(fn));
+                            }
+                            if (pk != null) {
+                                if (vc.checkKeys(pk)) {
+                                    vc.setPrivateKey(pk);
+                                } else {
+                                    log.error("Private key file does not correspond to certificate: {}" + f.getAbsolutePath());
+                                }
+                            } else {
+                                log.error("Private key file not foud for certificate: {}", f.getAbsolutePath());
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            log.error("Can not read certificates.Directory: {} does not exist!", path);
+        }
+    }
+
+    public PrivateKey readPvtKey(String filePath) {
+        KeyReader kr = new KeyReaderImpl();
+        PrivateKey res = null;
+        try (FileInputStream fis = new FileInputStream(filePath)) {
+            res = kr.readPrivateKeyPEM(fis);
+        } catch (IOException ex) {
+            log.trace("Can not read private key: {}", filePath);
+        }
+        return res;
     }
 }

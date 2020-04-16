@@ -20,24 +20,32 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Order;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.core.order.entity.BidOrder;
+import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.BidOrderService;
+import com.apollocurrency.aplwallet.apl.core.order.service.impl.BidOrderServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.order.service.OrderService;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectorUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
+import java.util.stream.Stream;
 
 @Vetoed
 public final class GetAccountCurrentBidOrderIds extends AbstractAPIRequestHandler {
+    private final OrderService<BidOrder, ColoredCoinsBidOrderPlacement> bidOrderService =
+        CDI.current().select(BidOrderServiceImpl.class, BidOrderService.Literal.INSTANCE).get();
 
     public GetAccountCurrentBidOrderIds() {
-        super(new APITag[] {APITag.ACCOUNTS, APITag.AE}, "account", "asset", "firstIndex", "lastIndex");
+        super(new APITag[]{APITag.ACCOUNTS, APITag.AE}, "account", "asset", "firstIndex", "lastIndex");
     }
 
     @Override
@@ -48,20 +56,15 @@ public final class GetAccountCurrentBidOrderIds extends AbstractAPIRequestHandle
         int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
         int lastIndex = HttpParameterParserUtil.getLastIndex(req);
 
-        DbIterator<Order.Bid> bidOrders;
+        Stream<BidOrder> bidOrders;
         if (assetId == 0) {
-            bidOrders = Order.Bid.getBidOrdersByAccount(accountId, firstIndex, lastIndex);
+            bidOrders = bidOrderService.getOrdersByAccount(accountId, firstIndex, lastIndex);
         } else {
-            bidOrders = Order.Bid.getBidOrdersByAccountAsset(accountId, assetId, firstIndex, lastIndex);
+            bidOrders = bidOrderService.getOrdersByAccountAsset(accountId, assetId, firstIndex, lastIndex);
         }
-        JSONArray orderIds = new JSONArray();
-        try {
-            while (bidOrders.hasNext()) {
-                orderIds.add(Long.toUnsignedString(bidOrders.next().getId()));
-            }
-        } finally {
-            bidOrders.close();
-        }
+        JSONArray orderIds = bidOrders.map(b -> Long.toUnsignedString(b.getId()))
+            .collect(CollectorUtils.jsonCollector());
+
         JSONObject response = new JSONObject();
         response.put("bidOrderIds", orderIds);
         return response;

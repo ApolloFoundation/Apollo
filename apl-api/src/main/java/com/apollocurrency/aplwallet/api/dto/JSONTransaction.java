@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.api.dto;
 
 
 public class JSONTransaction { //implements Transaction {
- //   private Transaction transaction;
+    //   private Transaction transaction;
     private int numberOfConfirmations;
 
     public int getNumberOfConfirmations() {

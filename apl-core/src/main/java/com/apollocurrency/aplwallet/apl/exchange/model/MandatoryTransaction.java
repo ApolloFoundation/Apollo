@@ -26,14 +26,20 @@ public class MandatoryTransaction implements Transaction {
     private byte[] requiredTxHash;
     private Long dbId;
 
+    public MandatoryTransaction(Transaction transaction, byte[] requiredTxHash, Long dbId) {
+        this.transaction = transaction;
+        this.requiredTxHash = requiredTxHash;
+        this.dbId = dbId;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         MandatoryTransaction that = (MandatoryTransaction) o;
         return Objects.equals(transaction, that.transaction) &&
-                Arrays.equals(requiredTxHash, that.requiredTxHash) &&
-                Objects.equals(dbId, that.dbId);
+            Arrays.equals(requiredTxHash, that.requiredTxHash) &&
+            Objects.equals(dbId, that.dbId);
     }
 
     @Override
@@ -41,12 +47,6 @@ public class MandatoryTransaction implements Transaction {
         int result = Objects.hash(transaction, dbId);
         result = 31 * result + Arrays.hashCode(requiredTxHash);
         return result;
-    }
-
-    public MandatoryTransaction(Transaction transaction, byte[] requiredTxHash, Long dbId) {
-        this.transaction = transaction;
-        this.requiredTxHash = requiredTxHash;
-        this.dbId = dbId;
     }
 
     public Transaction getTransaction() {
@@ -60,11 +60,6 @@ public class MandatoryTransaction implements Transaction {
     @Override
     public boolean isUnconfirmedDuplicate(Map<TransactionType, Map<String, Integer>> unconfirmedDuplicates) {
         return transaction.isUnconfirmedDuplicate(unconfirmedDuplicates);
-    }
-
-    @Override
-    public void setFeeATM(long feeATM) {
-        transaction.setFeeATM(feeATM);
     }
 
     @Override
@@ -175,6 +170,11 @@ public class MandatoryTransaction implements Transaction {
     @Override
     public long getFeeATM() {
         return transaction.getFeeATM();
+    }
+
+    @Override
+    public void setFeeATM(long feeATM) {
+        transaction.setFeeATM(feeATM);
     }
 
     @Override

@@ -34,8 +34,8 @@ import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.model.Balances;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -52,14 +52,14 @@ import java.util.List;
 @Vetoed
 public final class GetAccount extends AbstractAPIRequestHandler {
 
-    public GetAccount() {
-        super(new APITag[] {APITag.ACCOUNTS}, "account", "includeLessors", "includeAssets", "includeCurrencies", "includeEffectiveBalance");
-    }
-
     private AccountInfoService accountInfoService = CDI.current().select(AccountInfoService.class).get();
     private AccountLeaseService accountLeaseService = CDI.current().select(AccountLeaseService.class).get();
     private AccountAssetService accountAssetService = CDI.current().select(AccountAssetService.class).get();
     private AccountCurrencyService accountCurrencyService = CDI.current().select(AccountCurrencyService.class).get();
+
+    public GetAccount() {
+        super(new APITag[]{APITag.ACCOUNTS}, "account", "includeLessors", "includeAssets", "includeCurrencies", "includeEffectiveBalance");
+    }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
@@ -126,7 +126,7 @@ public final class GetAccount extends AbstractAPIRequestHandler {
 
             JSONArray assetBalances = new JSONArray();
             JSONArray unconfirmedAssetBalances = new JSONArray();
-            assets.forEach( accountAsset -> {
+            assets.forEach(accountAsset -> {
                 JSONObject assetBalance = new JSONObject();
                 assetBalance.put("asset", Long.toUnsignedString(accountAsset.getAssetId()));
                 assetBalance.put("balanceATU", String.valueOf(accountAsset.getQuantityATU()));

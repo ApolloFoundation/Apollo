@@ -51,8 +51,8 @@ public class TwoFactorAuthEntity implements Cloneable {
         if (!(o instanceof TwoFactorAuthEntity)) return false;
         TwoFactorAuthEntity that = (TwoFactorAuthEntity) o;
         return account == that.account &&
-                confirmed == that.confirmed &&
-                Arrays.equals(secret, that.secret);
+            confirmed == that.confirmed &&
+            Arrays.equals(secret, that.secret);
     }
 
     @Override

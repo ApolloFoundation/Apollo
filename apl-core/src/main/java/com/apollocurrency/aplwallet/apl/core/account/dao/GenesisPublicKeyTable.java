@@ -24,20 +24,6 @@ import java.util.Objects;
  */
 //@Singleton
 public class GenesisPublicKeyTable extends EntityDbTable<PublicKey> {
-    private static class PublicKeyDbFactory extends LongKeyFactory<PublicKey> {
-        public PublicKeyDbFactory(String idColumn) {
-            super(idColumn);
-        }
-
-        @Override
-        public DbKey newKey(PublicKey publicKey) {
-            if (publicKey.getDbKey() == null) {
-                publicKey.setDbKey(new LongKey(publicKey.getAccountId()));
-            }
-            return publicKey.getDbKey();
-        }
-    }
-
     private final Blockchain blockchain;
 
     //@Inject
@@ -55,16 +41,29 @@ public class GenesisPublicKeyTable extends EntityDbTable<PublicKey> {
     public void save(Connection con, PublicKey publicKey) throws SQLException {
         publicKey.setHeight(blockchain.getHeight());
         try (
-                @DatabaseSpecificDml(DmlMarker.MERGE)
-                final PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table
-                    + " (account_id, public_key, height, latest) "
-                    + "KEY (account_id, height) VALUES (?, ?, ?, TRUE)")
+            @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table
+                + " (account_id, public_key, height, latest) "
+                + "KEY (account_id, height) VALUES (?, ?, ?, TRUE)")
         ) {
             int i = 0;
             pstmt.setLong(++i, publicKey.getAccountId());
             DbUtils.setBytes(pstmt, ++i, publicKey.getPublicKey());
             pstmt.setInt(++i, publicKey.getHeight());
             pstmt.executeUpdate();
+        }
+    }
+
+    private static class PublicKeyDbFactory extends LongKeyFactory<PublicKey> {
+        public PublicKeyDbFactory(String idColumn) {
+            super(idColumn);
+        }
+
+        @Override
+        public DbKey newKey(PublicKey publicKey) {
+            if (publicKey.getDbKey() == null) {
+                publicKey.setDbKey(new LongKey(publicKey.getAccountId()));
+            }
+            return publicKey.getDbKey();
         }
     }
 

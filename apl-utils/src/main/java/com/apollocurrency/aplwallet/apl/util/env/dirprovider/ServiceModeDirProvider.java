@@ -7,9 +7,8 @@ package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
 import java.util.UUID;
 
 public class ServiceModeDirProvider extends AbstractDirProvider {
-//    assume that installation dir is a directory where application executables are storing
+    //    assume that installation dir is a directory where application executables are storing
     private static final String INSTALLATION_DIR = DirProvider.getBinDir().toAbsolutePath().toString();
-
 
 
     public ServiceModeDirProvider(String applicationName, UUID chainId) {

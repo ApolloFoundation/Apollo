@@ -29,7 +29,8 @@ import org.json.simple.JSONStreamAware;
 
 public final class GetPeers extends PeerRequestHandler {
 
-    public GetPeers() {}
+    public GetPeers() {
+    }
 
     @Override
     public JSONStreamAware processRequest(JSONObject request, Peer peer) {
@@ -38,9 +39,9 @@ public final class GetPeers extends PeerRequestHandler {
         JSONArray services = new JSONArray();
         lookupPeersService().getAllPeers().forEach(otherPeer -> {
             if (!otherPeer.isBlacklisted() && otherPeer.getAnnouncedAddress() != null
-                    && otherPeer.getState() == PeerState.CONNECTED && otherPeer.shareAddress()) {
+                && otherPeer.getState() == PeerState.CONNECTED && otherPeer.shareAddress()) {
                 jsonArray.add(otherPeer.getAnnouncedAddress());
-                services.add(Long.toUnsignedString(((PeerImpl)otherPeer).getServices()));
+                services.add(Long.toUnsignedString(((PeerImpl) otherPeer).getServices()));
             }
         });
         response.put("peers", jsonArray);

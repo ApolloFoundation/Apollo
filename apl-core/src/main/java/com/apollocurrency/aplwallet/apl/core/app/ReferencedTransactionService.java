@@ -9,10 +9,10 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
-import java.util.List;
-import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.List;
+import java.util.Optional;
 
 @Singleton
 public class ReferencedTransactionService {
@@ -25,8 +25,8 @@ public class ReferencedTransactionService {
 
 
     public ReferencedTransactionService(
-            ReferencedTransactionDao referencedTransactionDao, TransactionIndexDao transactionIndexDao,
-            Blockchain blockchain, BlockchainConfig blockchainConfig, int maxReferencedTransactions) {
+        ReferencedTransactionDao referencedTransactionDao, TransactionIndexDao transactionIndexDao,
+        Blockchain blockchain, BlockchainConfig blockchainConfig, int maxReferencedTransactions) {
         this.referencedTransactionDao = referencedTransactionDao;
         this.transactionIndexDao = transactionIndexDao;
         this.blockchain = blockchain;
@@ -36,8 +36,8 @@ public class ReferencedTransactionService {
 
     @Inject
     public ReferencedTransactionService(
-            ReferencedTransactionDao referencedTransactionDao, TransactionIndexDao transactionIndexDao,
-            Blockchain blockchain, BlockchainConfig blockchainConfig) {
+        ReferencedTransactionDao referencedTransactionDao, TransactionIndexDao transactionIndexDao,
+        Blockchain blockchain, BlockchainConfig blockchainConfig) {
         this(referencedTransactionDao, transactionIndexDao, blockchain, blockchainConfig, DEFAULT_MAX_REFERENCED_TRANSACTIONS);
     }
 
@@ -45,12 +45,12 @@ public class ReferencedTransactionService {
 
         int count = 0;
         byte[] hash = hashToBytes(transaction.getReferencedTransactionFullHash());
-        while (hash != null ) {
+        while (hash != null) {
             Integer referencedTransactionHeight = blockchain.getTransactionHeight(hash, height);
             if (referencedTransactionHeight == null
-                    || referencedTransactionHeight >= height
-                    || ++count > maxReferencedTransactions
-                    || height - referencedTransactionHeight > blockchainConfig.getCurrentConfig().getReferencedTransactionHeightSpan()) {
+                || referencedTransactionHeight >= height
+                || ++count > maxReferencedTransactions
+                || height - referencedTransactionHeight > blockchainConfig.getCurrentConfig().getReferencedTransactionHeightSpan()) {
                 return false;
             }
             hash = getReferencedFullHash(Convert.fullHashToId(hash));

@@ -16,7 +16,7 @@ public class ResourcePaths {
 
     /**
      * Finds file. Search order: current dir, one level upper dir, 2 level upper
-     * dir, see searchPaths 
+     * dir, see searchPaths
      *
      * @param path
      * @return absolute path if found, empty string if not

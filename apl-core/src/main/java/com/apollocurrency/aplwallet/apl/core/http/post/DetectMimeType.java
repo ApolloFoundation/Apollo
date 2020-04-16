@@ -22,22 +22,22 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Search;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.Part;
 import java.io.IOException;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TAGGED_DATA_FILE;
-import javax.enterprise.inject.Vetoed;
 import static org.slf4j.LoggerFactory.getLogger;
 
 @Deprecated
@@ -46,7 +46,7 @@ public final class DetectMimeType extends AbstractAPIRequestHandler {
     private static final Logger LOG = getLogger(DetectMimeType.class);
 
     public DetectMimeType() {
-        super("file", new APITag[] {APITag.DATA, APITag.UTILS}, "data", "filename", "isText");
+        super("file", new APITag[]{APITag.DATA, APITag.UTILS}, "data", "filename", "isText");
     }
 
     @Override

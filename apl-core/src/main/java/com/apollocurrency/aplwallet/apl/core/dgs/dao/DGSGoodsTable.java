@@ -51,9 +51,9 @@ public class DGSGoodsTable extends EntityDbTable<DGSGoods> {
     @Override
     public void save(Connection con, DGSGoods goods) throws SQLException {
         try (
-                @DatabaseSpecificDml(DmlMarker.MERGE)
-                @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
-                PreparedStatement pstmt = con.prepareStatement("MERGE INTO goods (id, seller_id, name, "
+            @DatabaseSpecificDml(DmlMarker.MERGE)
+            @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
+            PreparedStatement pstmt = con.prepareStatement("MERGE INTO goods (id, seller_id, name, "
                 + "description, tags, parsed_tags, timestamp, quantity, price, delisted, has_image, height, latest) KEY (id, height) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")
         ) {

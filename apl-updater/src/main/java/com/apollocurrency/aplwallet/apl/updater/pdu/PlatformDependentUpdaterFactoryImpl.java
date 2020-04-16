@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.updater.pdu;
 
-import com.apollocurrency.aplwallet.apl.util.Platform;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateInfo;
-import com.apollocurrency.aplwallet.apl.updater.UpdaterConstants;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
+import com.apollocurrency.aplwallet.apl.updater.UpdaterConstants;
+import com.apollocurrency.aplwallet.apl.util.env.Platform;
 
 public class PlatformDependentUpdaterFactoryImpl implements PlatformDependentUpdaterFactory {
     private UpdaterMediator updaterMediator;
@@ -21,7 +21,7 @@ public class PlatformDependentUpdaterFactoryImpl implements PlatformDependentUpd
         switch (platform) {
             case LINUX:
                 return new LinuxPlatformDependentUpdater(UpdaterConstants.LINUX_RUN_TOOL_PATH, UpdaterConstants.LINUX_UPDATE_SCRIPT_PATH,
-                        updaterMediator, updateInfo);
+                    updaterMediator, updateInfo);
             case MAC_OS:
                 return new MacOSPlatformDependentUpdater(UpdaterConstants.MAC_OS_RUN_TOOL_PATH, UpdaterConstants.MAC_OS_UPDATE_SCRIPT_PATH, updaterMediator, updateInfo);
             case WINDOWS:

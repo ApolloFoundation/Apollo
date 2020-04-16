@@ -42,29 +42,29 @@ public final class SignTransactions {
             if (Files.exists(signed.toPath())) {
                 Files.delete(signed.toPath());
             }
-                Files.createFile(signed.toPath());
-                List<String> unsignedTransactions = Files.readAllLines(unsigned.toPath());
+            Files.createFile(signed.toPath());
+            List<String> unsignedTransactions = Files.readAllLines(unsigned.toPath());
 
-                for (String unsignedTransaction : unsignedTransactions) {
-                    Files.write(signed.toPath(), signTransaction(unsignedTransaction, keySeed).getBytes(), StandardOpenOption.APPEND);
-                    Files.write(signed.toPath(), System.lineSeparator().getBytes(), StandardOpenOption.APPEND);
-                    n += 1;
-                }
-                System.out.println("Signed " + n + " transactions");
+            for (String unsignedTransaction : unsignedTransactions) {
+                Files.write(signed.toPath(), signTransaction(unsignedTransaction, keySeed).getBytes(), StandardOpenOption.APPEND);
+                Files.write(signed.toPath(), System.lineSeparator().getBytes(), StandardOpenOption.APPEND);
+                n += 1;
+            }
+            System.out.println("Signed " + n + " transactions");
         } catch (Exception e) {
             e.printStackTrace();
             return PosixExitCodes.EX_IOERR.exitCode();
         }
         return PosixExitCodes.OK.exitCode();
     }
-    
+
     private static String signTransaction(String transactionBytesHexString, byte[] keySeed) throws AplException.NotValidException {
         byte[] transactionBytes = Convert.parseHexString(transactionBytesHexString);
         Transaction.Builder builder = Transaction.newTransactionBuilder(transactionBytes);
         Transaction transaction = builder.build(keySeed);
         return Convert.toHexString(transaction.getBytes());
     }
-    
+
     public static int signJson(String unsignedFN, String signedFN) {
         try {
             File unsigned = new File(unsignedFN);
@@ -75,9 +75,9 @@ public final class SignTransactions {
             File signed = new File(signedFN);
             if (signed.exists()) {
                 System.out.println("File already exists: " + signed.getAbsolutePath());
-               return PosixExitCodes.EX_IOERR.exitCode();
+                return PosixExitCodes.EX_IOERR.exitCode();
             }
-            try (BufferedReader reader = new BufferedReader(new FileReader(unsigned))){
+            try (BufferedReader reader = new BufferedReader(new FileReader(unsigned))) {
                 JSONObject json = (JSONObject) JSONValue.parseWithException(reader);
                 byte[] keySeed = readKeySeed();
                 Files.write(signed.toPath(), signTransaction(json, keySeed).getBytes(), StandardOpenOption.CREATE);
@@ -105,8 +105,7 @@ public final class SignTransactions {
                 } else {
                     secret = Convert.toBytes(secretPhraseString);
                 }
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         } else {
@@ -126,7 +125,6 @@ public final class SignTransactions {
         Transaction transaction = builder.build(keySeed);
         return transaction.getJSONObject().toJSONString();
     }
-
 
 
 }

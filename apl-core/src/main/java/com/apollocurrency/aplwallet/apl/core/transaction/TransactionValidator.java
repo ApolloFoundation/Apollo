@@ -37,12 +37,12 @@ public class TransactionValidator {
         long amountATM = transaction.getAmountATM();
         TransactionType type = transaction.getType();
         if (transaction.getTimestamp() == 0 ? (deadline != 0 || feeATM != 0) : (deadline < 1 || feeATM <= 0)
-                || feeATM > maxBalanceAtm
-                || amountATM < 0
-                || amountATM > maxBalanceAtm
-                || type == null) {
+            || feeATM > maxBalanceAtm
+            || amountATM < 0
+            || amountATM > maxBalanceAtm
+            || type == null) {
             throw new AplException.NotValidException("Invalid transaction parameters:\n type: " + type + ", timestamp: " + transaction.getTimestamp()
-                    + ", deadline: " + deadline + ", fee: " + feeATM + ", amount: " + amountATM);
+                + ", deadline: " + deadline + ", fee: " + feeATM + ", amount: " + amountATM);
         }
         byte[] referencedTransactionFullHash = Convert.parseHexString(transaction.getReferencedTransactionFullHash());
 
@@ -55,7 +55,7 @@ public class TransactionValidator {
             throw new AplException.NotValidException("Invalid attachment " + attachment + " for transaction of type " + type);
         }
         long recipientId = transaction.getRecipientId();
-        if (! type.canHaveRecipient()) {
+        if (!type.canHaveRecipient()) {
             if (recipientId != 0 || amountATM != 0) {
                 throw new AplException.NotValidException("Transactions of this type must have recipient == 0, amount == 0");
             }
@@ -68,7 +68,7 @@ public class TransactionValidator {
         }
 
         if (!AntifraudValidator.validate(blockchain.getHeight(), transaction.getSenderId(),
-                transaction.getRecipientId())) throw new AplException.NotValidException("Incorrect Passphrase");
+            transaction.getRecipientId())) throw new AplException.NotValidException("Incorrect Passphrase");
 
 
         boolean validatingAtFinish = transaction.getPhasing() != null && transaction.getSignature() != null && phasingPollService.getPoll(transaction.getId()) != null;
@@ -93,20 +93,20 @@ public class TransactionValidator {
             long minimumFeeATM = feeCalculator.getMinimumFeeATM(transaction, blockchainHeight);
             if (feeATM < minimumFeeATM) {
                 throw new AplException.NotCurrentlyValidException(String.format("Transaction fee %f %s less than minimum fee %f %s at height %d",
-                        ((double) feeATM) / Constants.ONE_APL, blockchainConfig.getCoinSymbol(), ((double) minimumFeeATM) / Constants.ONE_APL, blockchainConfig.getCoinSymbol(),
-                        blockchainHeight));
+                    ((double) feeATM) / Constants.ONE_APL, blockchainConfig.getCoinSymbol(), ((double) minimumFeeATM) / Constants.ONE_APL, blockchainConfig.getCoinSymbol(),
+                    blockchainHeight));
             }
             long ecBlockId = transaction.getECBlockId();
             int ecBlockHeight = transaction.getECBlockHeight();
             if (ecBlockId != 0) {
                 if (blockchainHeight < ecBlockHeight) {
                     throw new AplException.NotCurrentlyValidException("ecBlockHeight " + ecBlockHeight
-                            + " exceeds blockchain height " + blockchainHeight);
+                        + " exceeds blockchain height " + blockchainHeight);
                 }
                 if (blockchain.getBlockIdAtHeight(ecBlockHeight) != ecBlockId) {
                     throw new AplException.NotCurrentlyValidException("ecBlockHeight " + ecBlockHeight
-                            + " does not match ecBlockId " + Long.toUnsignedString(ecBlockId)
-                            + ", transaction was generated on a fork");
+                        + " does not match ecBlockId " + Long.toUnsignedString(ecBlockId)
+                        + ", transaction was generated on a fork");
                 }
             }
             AccountRestrictions.checkTransaction(transaction);

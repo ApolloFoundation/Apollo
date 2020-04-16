@@ -25,7 +25,7 @@ public class PhasingPollVoter extends DerivedEntity {
         if (!super.equals(o)) return false;
         PhasingPollVoter that = (PhasingPollVoter) o;
         return Objects.equals(pollId, that.pollId) &&
-                Objects.equals(voterId, that.voterId);
+            Objects.equals(voterId, that.voterId);
     }
 
     @Override

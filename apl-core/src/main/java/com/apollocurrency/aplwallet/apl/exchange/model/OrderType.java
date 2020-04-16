@@ -16,11 +16,11 @@ public enum OrderType {
         return OrderType.values()[ordinal];
     }
 
-    public boolean isBuy(){
+    public boolean isBuy() {
         return this.ordinal() == OrderType.BUY.ordinal();
     }
 
-    public boolean isSell(){
+    public boolean isSell() {
         return this.ordinal() == OrderType.SELL.ordinal();
     }
 

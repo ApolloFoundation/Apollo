@@ -48,8 +48,7 @@ public class PassphraseGeneratorTest {
             assertTrue(words.length >= 5);
             assertTrue(words.length <= 9);
             dictionary.containsAll(Arrays.asList(words));
-        }
-        finally {
+        } finally {
             Files.deleteIfExists(dictionaryPath);
         }
     }

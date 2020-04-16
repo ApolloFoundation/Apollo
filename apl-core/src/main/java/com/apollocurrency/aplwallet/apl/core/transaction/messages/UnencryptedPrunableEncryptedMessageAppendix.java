@@ -4,15 +4,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import java.nio.ByteBuffer;
-
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
+
+import java.nio.ByteBuffer;
 
 public class UnencryptedPrunableEncryptedMessageAppendix extends PrunableEncryptedMessageAppendix implements Encryptable {
 
@@ -22,10 +22,10 @@ public class UnencryptedPrunableEncryptedMessageAppendix extends PrunableEncrypt
     public UnencryptedPrunableEncryptedMessageAppendix(JSONObject attachmentJSON) {
         super(attachmentJSON);
         setEncryptedData(null);
-        JSONObject encryptedMessageJSON = (JSONObject)attachmentJSON.get("encryptedMessage");
-        String messageToEncryptString = (String)encryptedMessageJSON.get("messageToEncrypt");
+        JSONObject encryptedMessageJSON = (JSONObject) attachmentJSON.get("encryptedMessage");
+        String messageToEncryptString = (String) encryptedMessageJSON.get("messageToEncrypt");
         this.messageToEncrypt = isText() ? Convert.toBytes(messageToEncryptString) : Convert.parseHexString(messageToEncryptString);
-        this.recipientPublicKey = Convert.parseHexString((String)attachmentJSON.get("recipientPublicKey"));
+        this.recipientPublicKey = Convert.parseHexString((String) attachmentJSON.get("recipientPublicKey"));
     }
 
     public UnencryptedPrunableEncryptedMessageAppendix(byte[] messageToEncrypt, boolean isText, boolean isCompressed, byte[] recipientPublicKey) {
@@ -62,7 +62,7 @@ public class UnencryptedPrunableEncryptedMessageAppendix extends PrunableEncrypt
             int dataLength = getEncryptedDataLength();
             if (dataLength > Constants.MAX_PRUNABLE_ENCRYPTED_MESSAGE_LENGTH) {
                 throw new AplException.NotValidException(String.format("Message length %d exceeds max prunable encrypted message length %d",
-                        dataLength, Constants.MAX_PRUNABLE_ENCRYPTED_MESSAGE_LENGTH));
+                    dataLength, Constants.MAX_PRUNABLE_ENCRYPTED_MESSAGE_LENGTH));
             }
         } else {
             super.validate(transaction, blockHeight);
@@ -78,7 +78,8 @@ public class UnencryptedPrunableEncryptedMessageAppendix extends PrunableEncrypt
     }
 
     @Override
-    public void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {}
+    public void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
+    }
 
     @Override
     public void encrypt(byte[] keySeed) {

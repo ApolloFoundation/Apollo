@@ -1,9 +1,7 @@
 package com.apollocurrrency.aplwallet.inttest.model;
 
 import com.apollocurrency.aplwallet.api.dto.AccountAliasDTO;
-import com.apollocurrency.aplwallet.api.dto.account.AccountAssetDTO;
 import com.apollocurrency.aplwallet.api.dto.AccountAssetOrderDTO;
-import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
 import com.apollocurrency.aplwallet.api.dto.AccountMessageDTO;
 import com.apollocurrency.aplwallet.api.dto.BalanceDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockDTO;
@@ -18,6 +16,8 @@ import com.apollocurrency.aplwallet.api.dto.PeerDTO;
 import com.apollocurrency.aplwallet.api.dto.PollDTO;
 import com.apollocurrency.aplwallet.api.dto.TaggedDataDTO;
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
+import com.apollocurrency.aplwallet.api.dto.account.AccountAssetDTO;
+import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.api.response.Account2FAResponse;
 import com.apollocurrency.aplwallet.api.response.AccountAliasesResponse;
@@ -25,7 +25,7 @@ import com.apollocurrency.aplwallet.api.response.AccountAssetsCountResponse;
 import com.apollocurrency.aplwallet.api.response.AccountAssetsIdsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountAssetsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountBlockIdsResponse;
-import com.apollocurrency.aplwallet.api.response.AccountBlocksResponse;
+import com.apollocurrency.aplwallet.api.response.BlocksResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCountAliasesResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrencyResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetAskOrderIdsResponse;
@@ -152,7 +152,7 @@ public interface ITest {
 
     BlockchainInfoDTO getBlockchainStatus();
 
-    AccountBlocksResponse getBlocks();
+    BlocksResponse getBlocks();
 
     void verifyCreatingTransaction(CreateTransactionResponse transaction);
 
@@ -243,6 +243,7 @@ public interface ITest {
     CreateTransactionResponse dexCancelOrder(String orderId, Wallet wallet);
 
     String createDexOrder(String pairRate, String offerAmount, Wallet wallet, boolean isBuyOrder, boolean isEth);
+
     List<DexOrderDto> getDexOrders(String accountId);
 
     Account2FAResponse getDexBalances(String ethAddress);

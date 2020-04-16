@@ -1,11 +1,11 @@
 package com.apollocurrency.aplwallet.apl.eth.utils;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class EthUtilTest {
 

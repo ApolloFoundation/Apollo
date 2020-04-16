@@ -47,26 +47,26 @@ import static org.mockito.Mockito.mock;
 @EnableWeld
 class PrunableMessageServiceTest {
     @RegisterExtension
-    DbExtension extension = new DbExtension(DbTestData.getInMemDbProps(), null, null,  "db/prunable-message-data.sql");
+    DbExtension extension = new DbExtension(DbTestData.getInMemDbProps(), null, null, "db/prunable-message-data.sql");
     Blockchain blockchain = mock(Blockchain.class);
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from(
-            PrunableMessageTable.class,
-            DerivedDbTablesRegistryImpl.class,
-            PrunableMessageServiceImpl.class,
-            FullTextConfigImpl.class,
-            TimeServiceImpl.class,
-            NtpTime.class,
-            BlockchainConfig.class,
-            PropertiesHolder.class,
-            AccountPublicKeyServiceImpl.class,
-            PublicKeyTableProducer.class,
-            BlockChainInfoServiceImpl.class, AccountPublicKeyServiceImpl.class
+        PrunableMessageTable.class,
+        DerivedDbTablesRegistryImpl.class,
+        PrunableMessageServiceImpl.class,
+        FullTextConfigImpl.class,
+        TimeServiceImpl.class,
+        NtpTime.class,
+        BlockchainConfig.class,
+        PropertiesHolder.class,
+        AccountPublicKeyServiceImpl.class,
+        PublicKeyTableProducer.class,
+        BlockChainInfoServiceImpl.class, AccountPublicKeyServiceImpl.class
     )
-            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(blockchain, Blockchain.class))
-            .addBeans(MockBean.of(mock(InMemoryCacheManager.class), InMemoryCacheManager.class))
-            .addBeans(MockBean.of(mock(TaskDispatchManager.class), TaskDispatchManager.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(blockchain, Blockchain.class))
+        .addBeans(MockBean.of(mock(InMemoryCacheManager.class), InMemoryCacheManager.class))
+        .addBeans(MockBean.of(mock(TaskDispatchManager.class), TaskDispatchManager.class))
         .build();
     @Inject
     PrunableMessageService service;
@@ -125,6 +125,7 @@ class PrunableMessageServiceTest {
         byte[] decryptedBytes = service.decryptUsingSharedKey(data.MESSAGE_1, data.MESSAGE_1_SHARED_KEY);
         assertEquals(data.DECRYPTED_MESSAGE_1, new String(decryptedBytes));
     }
+
     @Test
     void testDecryptOrdinaryUsingSharedKey() {
         byte[] decryptedBytes = service.decryptUsingSharedKey(data.MESSAGE_4, data.MESSAGE_4_SHARED_KEY);

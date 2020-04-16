@@ -20,23 +20,21 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import net.sf.log4jdbc.ConnectionSpy;
 import org.slf4j.Logger;
 
+import javax.enterprise.inject.Vetoed;
+import javax.inject.Inject;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
-import javax.enterprise.inject.Vetoed;
-import javax.inject.Inject;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Data source with Transaction support implemented by ThreadLocal connection management.
@@ -45,18 +43,14 @@ import javax.inject.Inject;
 @Vetoed
 public class TransactionalDataSource extends DataSourceWrapper implements TransactionManagement {
     private static final Logger log = getLogger(TransactionalDataSource.class);
-
+    private final ThreadLocal<DbConnectionWrapper> localConnection = new ThreadLocal<>();
+    private final ThreadLocal<Set<TransactionCallback>> transactionCallback = new ThreadLocal<>();
     // TODO: YL remove static instance later
     private FilteredFactoryImpl factory;
-
     private long stmtThreshold;
     private long txThreshold;
     private long txInterval;
     private boolean enableSqlLogs;
-
-    private final ThreadLocal<DbConnectionWrapper> localConnection = new ThreadLocal<>();
-    private final ThreadLocal<Set<TransactionCallback>> transactionCallback = new ThreadLocal<>();
-
     private volatile long txTimes = 0;
     private volatile long txCount = 0;
     private volatile long statsTime = 0;
@@ -67,16 +61,17 @@ public class TransactionalDataSource extends DataSourceWrapper implements Transa
 
     /**
      * Created by CDI with previously initialized properties.
-     * @param dbProperties main db properties
+     *
+     * @param dbProperties     main db properties
      * @param propertiesHolder the rest of properties
      */
     @Inject
     public TransactionalDataSource(DbProperties dbProperties, PropertiesHolder propertiesHolder) {
         this(dbProperties,
-                propertiesHolder.getIntProperty("apl.statementLogThreshold", 1000),
-                propertiesHolder.getIntProperty("apl.transactionLogThreshold", 5000),
-                propertiesHolder.getIntProperty("apl.transactionLogInterval", 15) * 60 * 1000,
-                propertiesHolder.getBooleanProperty("apl.enableSqlLogs"));
+            propertiesHolder.getIntProperty("apl.statementLogThreshold", 1000),
+            propertiesHolder.getIntProperty("apl.transactionLogThreshold", 5000),
+            propertiesHolder.getIntProperty("apl.transactionLogInterval", 15) * 60 * 1000,
+            propertiesHolder.getBooleanProperty("apl.enableSqlLogs"));
     }
 
     public TransactionalDataSource(DbProperties dbProperties, int stmtThreshold, int txThreshold, int txInterval, boolean enableSqlLogs) {
@@ -89,9 +84,27 @@ public class TransactionalDataSource extends DataSourceWrapper implements Transa
         this.dbIdentity = dbProperties.getDbIdentity();
     }
 
+    private static void logThreshold(String msg) {
+        StringBuilder sb = new StringBuilder(512);
+        sb.append(msg).append('\n');
+        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+        boolean firstLine = true;
+        for (int i = 3; i < stackTrace.length; i++) {
+            String line = stackTrace[i].toString();
+            if (!line.startsWith("apl."))
+                break;
+            if (firstLine)
+                firstLine = false;
+            else
+                sb.append('\n');
+            sb.append("  ").append(line);
+        }
+        log.debug(sb.toString());
+    }
 
     /**
      * Return Connection from ThreadLocal or create new one. AUTO COMMIT = TRUE for such db connection.
+     *
      * @return db connection with autoCommit = true
      * @throws SQLException possible ini exception
      */
@@ -102,12 +115,13 @@ public class TransactionalDataSource extends DataSourceWrapper implements Transa
             return enableSqlLogs ? new ConnectionSpy(con) : con;
         }
         DbConnectionWrapper realConnection = new DbConnectionWrapper(super.getConnection(), factory,
-                localConnection, transactionCallback);
+            localConnection, transactionCallback);
         return enableSqlLogs ? new ConnectionSpy(realConnection) : realConnection;
     }
 
     /**
      * Optional
+     *
      * @param doSqlLog dump sql
      * @return spied db connection
      * @throws SQLException
@@ -225,14 +239,14 @@ public class TransactionalDataSource extends DataSourceWrapper implements Transa
         }
         localConnection.set(null);
         long now = System.currentTimeMillis();
-        long elapsed = now - ((DbConnectionWrapper)con).txStart;
+        long elapsed = now - ((DbConnectionWrapper) con).txStart;
         if (elapsed >= txThreshold) {
             logThreshold(String.format("Database transaction required %.3f seconds",
-                                       (double)elapsed/1000.0/*, blockchain.getHeight()*/));
+                (double) elapsed / 1000.0/*, blockchain.getHeight()*/));
         } else {
             long count, times;
             boolean logStats = false;
-            synchronized(this) {
+            synchronized (this) {
                 count = ++txCount;
                 times = txTimes += elapsed;
                 if (now - statsTime >= txInterval) {
@@ -244,13 +258,14 @@ public class TransactionalDataSource extends DataSourceWrapper implements Transa
             }
             if (logStats)
                 log.debug(String.format("Average database transaction time is %.3f seconds",
-                                                     (double)times/1000.0/(double)count));
+                    (double) times / 1000.0 / (double) count));
         }
         DbUtils.close(con);
     }
 
     /**
      * Used by FullTestSearch triggers
+     *
      * @param callback will be called later
      */
     public void registerCallback(TransactionCallback callback) {
@@ -262,27 +277,10 @@ public class TransactionalDataSource extends DataSourceWrapper implements Transa
         callbacks.add(callback);
     }
 
-    private static void logThreshold(String msg) {
-        StringBuilder sb = new StringBuilder(512);
-        sb.append(msg).append('\n');
-        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-        boolean firstLine = true;
-        for (int i=3; i<stackTrace.length; i++) {
-            String line = stackTrace[i].toString();
-            if (!line.startsWith("apl."))
-                break;
-            if (firstLine)
-                firstLine = false;
-            else
-                sb.append('\n');
-            sb.append("  ").append(line);
-        }
-        log.debug(sb.toString());
-    }
-
     /**
      * Return db identity value related to database type - main db, shard db, temp db.
      * Optional.EMPTY, Optional.1-xxx , Optional. -1
+     *
      * @return Optional.EMPTY for main db, Optional.value +1 for shardId, Optional.value NEGATIVE = -1L for temp db
      */
     public Optional<Long> getDbIdentity() {

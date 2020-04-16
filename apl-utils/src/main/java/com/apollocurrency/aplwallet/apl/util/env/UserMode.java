@@ -33,7 +33,8 @@ public class UserMode implements RuntimeMode {
     }
 
     @Override
-    public void shutdown() {}
+    public void shutdown() {
+    }
 
     @Override
     public void alert(String message) {

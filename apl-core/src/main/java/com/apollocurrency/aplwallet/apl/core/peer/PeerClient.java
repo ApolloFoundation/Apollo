@@ -26,34 +26,35 @@ import java.util.UUID;
 /**
  * PeerClient represents requests of P2P subsystem
  * TODO: move P2P requests here
+ *
  * @author alukin@gmail.com
  */
 @Vetoed
 public class PeerClient {
 
+    private static final Logger log = LoggerFactory.getLogger(PeerClient.class);
     private final ObjectMapper mapper = new ObjectMapper();
     private final Peer peer;
-    private static final Logger log = LoggerFactory.getLogger(PeerClient.class);
 
     public PeerClient(Peer peer) {
         Objects.requireNonNull(peer);
         //TODO: remove Json.org entirely from P2P
         mapper.registerModule(new JsonOrgModule());
-        this.peer=peer;
+        this.peer = peer;
     }
 
-    public Peer gePeer(){
+    public Peer gePeer() {
         return peer;
     }
 
-    public boolean checkConnection(){
+    public boolean checkConnection() {
         boolean res = peer.getState() == PeerState.CONNECTED;
         return res;
     }
 
-    public FileDownloadInfo getFileInfo(String entityId){
+    public FileDownloadInfo getFileInfo(String entityId) {
         log.debug("getFileInfo() entityId = {}", entityId);
-        if(!checkConnection()){
+        if (!checkConnection()) {
             log.debug("Peer: {} is not connected", peer.getAnnouncedAddress());
             return null;
         }
@@ -65,20 +66,20 @@ public class PeerClient {
         try {
             resp = peer.send(req, UUID.fromString(PeersService.myPI.getChainId()));
         } catch (PeerNotConnectedException ex) {
-            resp=null;
+            resp = null;
         }
-        if(resp == null){
-            log.debug("NULL FileInfo response from peer: {}",peer.getAnnouncedAddress());
-        }else{
+        if (resp == null) {
+            log.debug("NULL FileInfo response from peer: {}", peer.getAnnouncedAddress());
+        } else {
             log.trace("getFileInfo() resp = {}", resp.toJSONString());
         }
         FileDownloadInfoResponse res = mapper.convertValue(resp, FileDownloadInfoResponse.class);
-        if(res==null){
-            res=new FileDownloadInfoResponse();
-            res.errorCode=-3;
-            res.error="Null returned from peer";
+        if (res == null) {
+            res = new FileDownloadInfoResponse();
+            res.errorCode = -3;
+            res.error = "Null returned from peer";
         }
-        if (res.errorCode != 0 || res.error!=null) {
+        if (res.errorCode != 0 || res.error != null) {
             log.debug("Error code: {}  peer: {} file: {} error: {}", res.errorCode, peer.getAnnouncedAddress(), entityId, res.error);
         }
         return res.downloadInfo;
@@ -86,54 +87,54 @@ public class PeerClient {
 
     public FileChunk downloadChunk(FileChunkInfo fci) {
         log.trace("downloadChunk() fci = {}", fci);
-        if(!checkConnection()){
-            log.debug("Can not connect to peer: {}",peer.getAnnouncedAddress());
+        if (!checkConnection()) {
+            log.debug("Can not connect to peer: {}", peer.getAnnouncedAddress());
             return null;
         }
-       FileChunk fc;
-       FileChunkRequest rq = new FileChunkRequest();
-       rq.fileId=fci.fileId;
-       rq.id = fci.chunkId;
-       rq.offset=fci.offset;
-       rq.size=fci.size;
-       JSONObject req = mapper.convertValue(rq, JSONObject.class);
-       JSONObject resp;
-        try {
-            resp = peer.send(req, UUID.fromString(PeersService.myPI.getChainId()));
-        } catch (PeerNotConnectedException ex) {
-            resp=null;
-        }
-        if(resp==null){
-            log.debug("NULL FileInfo response from peer: {}",peer.getAnnouncedAddress());
-            return null;
-        }
-       FileChunkResponse res = mapper.convertValue(resp, FileChunkResponse.class);
-       if(res.errorCode==0){
-            fc=res.chunk;
-       }else{
-           fc=null;
-       }
-        log.trace("downloadChunk() result = {}", fc==null?"null":fc.info.toString());
-        return fc;
-    }
-
-    public ShardingInfo getShardingInfo(){
-        if(!checkConnection()){
-            log.debug("Can not connect to peer: {}",peer.getAnnouncedAddress());
-            return null;
-        }
-        ShardingInfoRequest rq = new ShardingInfoRequest();
-        rq.full=true;
+        FileChunk fc;
+        FileChunkRequest rq = new FileChunkRequest();
+        rq.fileId = fci.fileId;
+        rq.id = fci.chunkId;
+        rq.offset = fci.offset;
+        rq.size = fci.size;
         JSONObject req = mapper.convertValue(rq, JSONObject.class);
         JSONObject resp;
         try {
             resp = peer.send(req, UUID.fromString(PeersService.myPI.getChainId()));
         } catch (PeerNotConnectedException ex) {
-            resp=null;
+            resp = null;
+        }
+        if (resp == null) {
+            log.debug("NULL FileInfo response from peer: {}", peer.getAnnouncedAddress());
+            return null;
+        }
+        FileChunkResponse res = mapper.convertValue(resp, FileChunkResponse.class);
+        if (res.errorCode == 0) {
+            fc = res.chunk;
+        } else {
+            fc = null;
+        }
+        log.trace("downloadChunk() result = {}", fc == null ? "null" : fc.info.toString());
+        return fc;
+    }
+
+    public ShardingInfo getShardingInfo() {
+        if (!checkConnection()) {
+            log.debug("Can not connect to peer: {}", peer.getAnnouncedAddress());
+            return null;
+        }
+        ShardingInfoRequest rq = new ShardingInfoRequest();
+        rq.full = true;
+        JSONObject req = mapper.convertValue(rq, JSONObject.class);
+        JSONObject resp;
+        try {
+            resp = peer.send(req, UUID.fromString(PeersService.myPI.getChainId()));
+        } catch (PeerNotConnectedException ex) {
+            resp = null;
         }
         log.trace("shardInfo respond = {}", resp);
-        if(resp==null){
-            log.debug("NULL ShardInfo response from peer: {}",peer.getAnnouncedAddress());
+        if (resp == null) {
+            log.debug("NULL ShardInfo response from peer: {}", peer.getAnnouncedAddress());
             return null;
         }
         ShardingInfoResponse res = mapper.convertValue(resp, ShardingInfoResponse.class);
