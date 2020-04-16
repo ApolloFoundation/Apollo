@@ -58,6 +58,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.utils.FirstLastIndexParser;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.core.rest.validation.ValidBlockchainHeight;
+import com.apollocurrency.aplwallet.apl.core.rest.validation.ValidTimestamp;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -405,7 +406,7 @@ public class AccountController {
         @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
         @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
         @Parameter(description = "The earliest block (in seconds since the genesis block) to retrieve (optional).")
-        @QueryParam("timestamp") @PositiveOrZero int timestamp,
+        @QueryParam("timestamp") @DefaultValue("-1") @ValidTimestamp int timestamp,
         @Parameter(description = "A zero-based index to the first block ID to retrieve (optional).")
         @QueryParam("firstIndex") @DefaultValue("0") @PositiveOrZero int firstIndex,
         @Parameter(description = "A zero-based index to the last block ID to retrieve (optional).")
@@ -443,7 +444,7 @@ public class AccountController {
         @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
         @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
         @Parameter(description = "The earliest block (in seconds since the genesis block) to retrieve (optional).")
-        @QueryParam("timestamp") @PositiveOrZero int timestamp,
+        @QueryParam("timestamp") @DefaultValue("-1") @ValidTimestamp int timestamp,
         @Parameter(description = "A zero-based index to the first block ID to retrieve (optional).")
         @QueryParam("firstIndex") @DefaultValue("0") @PositiveOrZero int firstIndex,
         @Parameter(description = "A zero-based index to the last block ID to retrieve (optional).")

@@ -236,31 +236,38 @@ public class BlockchainImpl implements Blockchain {
     @Override
     public Stream<Block> getBlocksByAccountStream(long accountId, int from, int to, int timestamp) {
         long start = System.currentTimeMillis();
-        log.trace("start getBlocksByAccountStream, accountId = {}, timestamp={}, from={}, to={}",
-            accountId, timestamp, from, to);
+        int totalToFetch = to - from;
+        log.trace("start getBlocksByAccountStream, accountId = {}, timestamp={}, from={}, to={}, in total={}",
+            accountId, timestamp, from, to, totalToFetch);
+        List<Block> finalResult = new ArrayList<>(totalToFetch);
         DbIterator<Block> iterator = blockDao.getBlocksByAccount(null, accountId, from, to, timestamp); // fetch from main db
-        Stream<Block> allSourcesStream = blockConverter.apply(iterator); // create a stream from list
+        finalResult.addAll(CollectionUtil.toList(iterator));
         log.trace("getBlocksByAccountStream from main db, accountId = {}, timestamp={}, from={}, to={} in {} ms",
             accountId, timestamp, from, to, System.currentTimeMillis() - start);
-        // fetch from other shards
-        List<Shard> foundShards = shardDao.getCompletedBetweenBlockHeight(from, to);
-        for (Shard shard : foundShards) {
-            long startShard = System.currentTimeMillis();
-            TransactionalDataSource dataSource = this.getShardDataSourceOrDefault(shard.getShardId());
-            iterator = blockDao.getBlocksByAccount(dataSource, accountId, from, to, timestamp);
-            Stream<Block> toCompose = blockConverter.apply(iterator); // create a stream from list
-            if (allSourcesStream == null) {
-                allSourcesStream = toCompose; // assign first stream
-            } else {
-                // compose next stream with previous one
-                allSourcesStream = Stream.concat(allSourcesStream, toCompose);
-            }
-            log.trace("getBlocksByAccountStream from shard={}, accountId = {}, timestamp={}, from={}, to={} in {} ms",
-                dataSource.getDbIdentity(), accountId, timestamp, from, to, System.currentTimeMillis() - startShard);
+        if (finalResult.size() >= totalToFetch) {
+            return finalResult.stream();
         }
-        log.trace("DONE getBlocksByAccountStream, accountId = {}, timestamp={}, from={}, to={} in {} ms",
-            accountId, timestamp, from, to, System.currentTimeMillis() - start);
-        return allSourcesStream;
+        int nextTo = to - finalResult.size(); // decrease upper limit
+        Iterator<TransactionalDataSource> fullDataSources = ((ShardManagement) databaseManager).getAllFullDataSourcesIterator();
+        // loop shards
+        while (fullDataSources.hasNext()) {
+            long startShard = System.currentTimeMillis();
+            TransactionalDataSource dataSource = fullDataSources.next();
+            iterator = blockDao.getBlocksByAccount(dataSource, accountId, from, nextTo, timestamp);
+            List<Block> fetchedFromShard = CollectionUtil.toList(iterator);
+            log.trace("getBlocksByAccountStream, accountId = {} from shard db[{}] = fetched [{}] in {} ms", accountId, dataSource.getDbIdentity(),
+                fetchedFromShard.size(), (System.currentTimeMillis() - startShard) );
+            nextTo -= fetchedFromShard.size(); // decrease upper limit
+            finalResult.addAll(fetchedFromShard);
+            if (finalResult.size() >= totalToFetch + 1) {
+                log.trace("getBlocksByAccountStream STOP loop from shard={}, accountId = {}, timestamp={}, from={}, nextTo={} in {} ms",
+                    dataSource.getDbIdentity(), accountId, timestamp, from, nextTo, System.currentTimeMillis() - startShard);
+                break;
+            }
+        }
+        log.trace("DONE getBlocksByAccountStream[{}], accountId = {}, timestamp={}, from={}, to={} in {} ms",
+            finalResult.size(), accountId, timestamp, from, to, System.currentTimeMillis() - start);
+        return finalResult.stream();
     }
 
     @Transactional(readOnly = true)
