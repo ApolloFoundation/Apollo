@@ -7,28 +7,18 @@ import io.firstbridge.cryptolib.CryptoNotValidException;
 import io.firstbridge.cryptolib.FBCryptoParams;
 import io.firstbridge.cryptolib.dataformat.FBElGamalKeyPair;
 import io.firstbridge.cryptolib.impl.AsymJCEElGamalImpl;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.MessageDigest;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
-import org.junit.jupiter.api.BeforeAll;
 
 /**
- *
+ * Tests of crypto routines that creates test verctors for JS implementation
  * @author alukin@gmail.com
  */
-public class CryptoTest {
-    private static final String TST_IN_DIR="testdata/input/";
-    private static final String TST_OUT_DIR="testdata/out/";
-            
-    private static final String PLAIN_FILE_TEXT = "lorem_ipsum.txt";
+public class CryptoTest extends TestsCommons {
+
     private static final String OUT_FILE_ENCRYPTED = "encrypt_test.bin";
     private static final String OUT_FILE_KEYSEED_S2N = "keyseed_srtring2nonces_test.bin";
     private static final String OUT_FILE_KEYSEED_B2N = "keyseed_bytes2nonces_test.bin";
@@ -42,57 +32,13 @@ public class CryptoTest {
     private static final String OUT_FILE_SHARED_NONCE = "shared_key_nonce_test.bin";    
     private static final String OUT_FILE_AES = "aes_encrypt_test.bin";    
     private static final String OUT_FILE_AES_GCM = "aes_gcm_encrypt_test.bin";    
-    private static byte[] plain_data;
-    private static final byte[] nonce1 = new byte[32]; //(0-31)
-    private static final byte[] nonce2 = new byte[32]; //(32-63)
-    private static final String secretPhraseA = "Red fox jumps over the Lazy dog";
-    private static final String secretPhraseB = "Red dog jumps over the Lazy fox";
-    
-    private static void writeToFile(ByteBuffer data, String fileName) throws IOException {
-        FileChannel out = new FileOutputStream(fileName).getChannel();
-        data.rewind();
-        out.write(data);
-        out.close();
-    }
 
-    private static ByteBuffer readFromFile(String fileName) throws IOException {
-        
-        FileChannel fChan;
-        Long fSize;
-        ByteBuffer mBuf;
-        fChan = new FileInputStream(fileName).getChannel();
-        fSize = fChan.size();
-        mBuf = ByteBuffer.allocate(fSize.intValue());
-        fChan.read(mBuf);
-        fChan.close();
-        mBuf.rewind();
-        return mBuf;
-    }    
+
+   
 
     public CryptoTest() {
     }
     
-    @BeforeAll
-    public static void setUpClass() {
-        String inFile=TST_IN_DIR + PLAIN_FILE_TEXT;
-
-        try {
-            ByteBuffer pd = readFromFile(inFile);
-            plain_data = pd.array();
-            File directory = new File(TST_OUT_DIR);
-            if (! directory.exists()){
-                directory.mkdirs();
-            }
-    
-            writeToFile(pd, TST_OUT_DIR + PLAIN_FILE_TEXT);
-            for (Integer i = 0; i < 32; i++) {
-                nonce1[i] = i.byteValue();
-                nonce2[i] = new Integer(i + 32).byteValue();
-            }
-        } catch (IOException ex) {
-            fail("Can not read input data file: " + inFile);
-        }
-    }
 
     /**
      * Test of getMessageDigest method, of class Crypto.
