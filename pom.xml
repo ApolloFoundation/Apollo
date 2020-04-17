@@ -126,7 +126,10 @@
     <el-api.version>3.0.0</el-api.version>
     <el-glassfish-impl.version>2.2.6</el-glassfish-impl.version>
     <paranamer.version>2.8</paranamer.version>
-
+    <commons-fileupload.version>1.4</commons-fileupload.version>
+    <org.web3j.core.version>4.5.6</org.web3j.core.version>
+    <ethereumj-core.version>1.7.2-RELEASE</ethereumj-core.version>
+    <jackson-datatype-joda.version>2.9.8</jackson-datatype-joda.version>
   </properties>
 
   <!-- We have following profiles: prod, dev, debug
@@ -537,6 +540,11 @@
         <artifactId>commons-net</artifactId>
         <version>${apache-commons-net.version}</version>
       </dependency>
+      <dependency>
+        <groupId>commons-fileupload</groupId>
+        <artifactId>commons-fileupload</artifactId>
+        <version>${commons-fileupload.version}</version>
+      </dependency>
 
       <!--TEST frameworks-->
       <dependency>
@@ -735,6 +743,45 @@
         <artifactId>p6spy</artifactId>
         <version>${p6spy.version}</version>
       </dependency>
+
+      <dependency>
+        <groupId>org.web3j</groupId>
+        <artifactId>core</artifactId>
+        <version>${org.web3j.core.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.ethereum</groupId>
+        <artifactId>ethereumj-core</artifactId>
+        <version>${ethereumj-core.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-orm</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-tx</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.madgag.spongycastle</groupId>
+            <artifactId>prov</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.ethereum</groupId>
+            <artifactId>rocksdbjni</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.datatype</groupId>
+        <artifactId>jackson-datatype-joda</artifactId>
+        <version>${jackson-datatype-joda.version}</version>
+      </dependency>
+
     </dependencies>
   </dependencyManagement>
 
