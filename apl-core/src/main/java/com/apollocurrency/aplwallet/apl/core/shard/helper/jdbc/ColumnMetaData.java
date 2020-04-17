@@ -109,10 +109,10 @@ public class ColumnMetaData {
         if (o == null || getClass() != o.getClass()) return false;
         ColumnMetaData that = (ColumnMetaData) o;
         return sqlTypeInt == that.sqlTypeInt &&
-                precision == that.precision &&
-                scale == that.scale &&
-                Objects.equals(name, that.name) &&
-                Objects.equals(sqlTypeName, that.sqlTypeName);
+            precision == that.precision &&
+            scale == that.scale &&
+            Objects.equals(name, that.name) &&
+            Objects.equals(sqlTypeName, that.sqlTypeName);
     }
 
     @Override

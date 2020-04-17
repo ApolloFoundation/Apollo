@@ -11,7 +11,7 @@ import javax.enterprise.util.AnnotationLiteral;
 /**
  * @author andrew.zinchenko@gmail.com
  */
-public abstract class AccountEventBinding extends AnnotationLiteral<AccountEvent> implements AccountEvent{
+public abstract class AccountEventBinding extends AnnotationLiteral<AccountEvent> implements AccountEvent {
 
     public static AnnotationLiteral<AccountEvent> literal(final AccountEventType accountEventType) {
         return new AccountEventBinding() {

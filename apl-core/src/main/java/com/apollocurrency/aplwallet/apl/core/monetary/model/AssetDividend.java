@@ -32,14 +32,14 @@ public class AssetDividend extends DerivedEntity {
 
     private int timestamp;
 
-    public AssetDividend(long transactionId, int height, int timestamp ) {
+    public AssetDividend(long transactionId, int height, int timestamp) {
         super(null, height);
         this.id = transactionId;
         this.timestamp = timestamp;
     }
 
     public AssetDividend(long transactionId, ColoredCoinsDividendPayment attachment,
-                          long totalDividend, long numAccounts, int height, int timestamp) {
+                         long totalDividend, long numAccounts, int height, int timestamp) {
         this(transactionId, height, timestamp);
 
         this.assetId = attachment.getAssetId();

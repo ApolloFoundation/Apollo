@@ -4,21 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ACCOUNT3_2FA_SECRET_BASE32;
-import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.INVALID_CODE;
-import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.MAX_2FA_ATTEMPTS;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.spy;
-
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthService;
 import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthServiceImpl;
-import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData;
+import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.testutil.TwoFactorAuthUtil;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
@@ -34,6 +26,14 @@ import org.mockito.Mockito;
 import java.security.GeneralSecurityException;
 import java.util.Random;
 
+import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.ACCOUNT3_2FA_SECRET_BASE32;
+import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.INVALID_CODE;
+import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.MAX_2FA_ATTEMPTS;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.spy;
+
 @EnableWeld
 public class TwoFactorAuthServiceIntegrationTest {
 
@@ -46,7 +46,7 @@ public class TwoFactorAuthServiceIntegrationTest {
 
     private TwoFactorAuthRepository dbRepository = new TwoFactorAuthRepositoryImpl(dbExtension.getDatabaseManager().getDataSource());
     private TwoFactorAuthRepository fileRepository = new TwoFactorAuthFileSystemRepository(temporaryFolderExtension.getRoot().toPath());
-    private TwoFactorAuthService    service;// = new TwoFactorAuthServiceImpl(repository, "test", targetFileRepository);
+    private TwoFactorAuthService service;// = new TwoFactorAuthServiceImpl(repository, "test", targetFileRepository);
 
     @Test
     public void testEnable() {
@@ -154,6 +154,7 @@ public class TwoFactorAuthServiceIntegrationTest {
         assertEquals(Status2FA.OK, status2FA);
         assertTrue(service.isEnabled(td.ACC_2.getId()));
     }
+
     @Test
     public void testConfirmAlreadyConfirmed() throws GeneralSecurityException {
         TwoFactorAuthTestData td = new TwoFactorAuthTestData();
@@ -170,7 +171,7 @@ public class TwoFactorAuthServiceIntegrationTest {
         int currentCode = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(ACCOUNT3_2FA_SECRET_BASE32);
         service = new TwoFactorAuthServiceImpl(dbRepository, "test", fileRepository);
         Status2FA status2FA = service.confirm(td.newAccount.getId(), currentCode);
-        assertEquals(Status2FA.NOT_ENABLED,status2FA);
+        assertEquals(Status2FA.NOT_ENABLED, status2FA);
         assertFalse(service.isEnabled(td.newAccount.getId()));
     }
 

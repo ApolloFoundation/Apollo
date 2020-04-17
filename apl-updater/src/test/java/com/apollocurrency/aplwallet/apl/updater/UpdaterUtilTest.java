@@ -4,11 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.slf4j.LoggerFactory.getLogger;
-
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -28,6 +23,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.slf4j.LoggerFactory.getLogger;
+
 //import org.powermock.api.mockito.PowerMockito;
 
 //TODO: Rewrite using mockito
@@ -41,7 +41,57 @@ public class UpdaterUtilTest {
     private CertificateFactory certificateFactoryMock;
 
     /**
+     * Create certificate mock for each filename.
+     * Used to mock dependencies of UpdaterUtil.readCertificates(Set<Path> certificateFilesPaths) method
+     *
+     * @param certificateFactoryMock
+     * @param files
+     * @throws IOException
+     * @throws CertificateException
+     */
+    private static void createCertificateMocksForFiles(CertificateFactory certificateFactoryMock, String[] files) throws IOException, CertificateException {
+        for (String filename : files) {
+            InputStream inputStreamMock = Mockito.mock(InputStream.class);
+            Certificate certificateMock = Mockito.mock(Certificate.class);
+
+//            PowerMockito.when(Files.newInputStream(Paths.get(filename))).thenReturn(inputStreamMock);
+
+            Mockito.when(certificateFactoryMock.generateCertificate(inputStreamMock)).thenReturn(certificateMock);
+            Mockito.when(certificateMock.toString()).thenReturn(CERTIFICATE_MOCK_PREFIX + filename);
+        }
+    }
+
+    /**
+     * convert String[] to Stream<Path>
+     *
+     * @param filenames
+     * @return
+     */
+    private static Stream<Path> createPathStream(String[] filenames) {
+        return Arrays.stream(filenames).map(filename -> Paths.get(filename));
+    }
+
+    /**
+     * Simple iterate through result not to make filename to mock-cert mapping for better readability
+     *
+     * @param pairs
+     * @param first
+     * @param second
+     * @return
+     */
+    private static boolean containsPair(Set<CertificatePair> pairs, String first, String second) {
+        for (CertificatePair pair : pairs) {
+            if (pair.getFirstCertificate().toString().equals(CERTIFICATE_MOCK_PREFIX + first) &&
+                pair.getSecondCertificate().toString().equals(CERTIFICATE_MOCK_PREFIX + second)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Test UpdaterUtil.buildCertificatePairs(String certificateDirectory) method
+     *
      * @throws Exception
      */
     @Test
@@ -65,7 +115,7 @@ public class UpdaterUtilTest {
         Set<CertificatePair> result = UpdaterUtil.buildCertificatePairs(directory, "1_", "2_", ".crt");
 
         assertNotNull(result);
-        for(CertificatePair pair : result) {
+        for (CertificatePair pair : result) {
             log.debug("pair: [{}, {}]", pair.getFirstCertificate().toString(), pair.getSecondCertificate().toString());
         }
 
@@ -82,6 +132,7 @@ public class UpdaterUtilTest {
 
     /**
      * Test UpdaterUtil.readCertificates(Set<Path> certificateFilesPaths) method
+     *
      * @throws CertificateException
      * @throws IOException
      */
@@ -106,56 +157,10 @@ public class UpdaterUtilTest {
 
         HashSet<String> filenames = new HashSet<>(Arrays.asList(files));
         // Assert that for each filename a correspondent certificate was created
-        for(Certificate certificate : result) {
+        for (Certificate certificate : result) {
             assertTrue(filenames.contains(certificate.toString().replace(CERTIFICATE_MOCK_PREFIX, "")));
         }
 
-    }
-
-    /**
-     * Create certificate mock for each filename.
-     * Used to mock dependencies of UpdaterUtil.readCertificates(Set<Path> certificateFilesPaths) method
-     * @param certificateFactoryMock
-     * @param files
-     * @throws IOException
-     * @throws CertificateException
-     */
-    private static void createCertificateMocksForFiles(CertificateFactory certificateFactoryMock, String[] files) throws IOException, CertificateException {
-        for(String filename : files) {
-            InputStream inputStreamMock = Mockito.mock(InputStream.class);
-            Certificate certificateMock = Mockito.mock(Certificate.class);
-
-//            PowerMockito.when(Files.newInputStream(Paths.get(filename))).thenReturn(inputStreamMock);
-
-            Mockito.when(certificateFactoryMock.generateCertificate(inputStreamMock)).thenReturn(certificateMock);
-            Mockito.when(certificateMock.toString()).thenReturn(CERTIFICATE_MOCK_PREFIX + filename);
-        }
-    }
-
-    /**
-     * convert String[] to Stream<Path>
-     * @param filenames
-     * @return
-     */
-    private static Stream<Path> createPathStream(String[] filenames) {
-        return Arrays.stream(filenames).map(filename -> Paths.get(filename));
-    }
-
-    /**
-     * Simple iterate through result not to make filename to mock-cert mapping for better readability
-     * @param pairs
-     * @param first
-     * @param second
-     * @return
-     */
-    private static boolean containsPair(Set<CertificatePair> pairs, String first, String second) {
-        for(CertificatePair pair : pairs) {
-            if( pair.getFirstCertificate().toString().equals(CERTIFICATE_MOCK_PREFIX + first) &&
-                pair.getSecondCertificate().toString().equals(CERTIFICATE_MOCK_PREFIX + second)) {
-                return true;
-            }
-        }
-        return false;
     }
 
 }

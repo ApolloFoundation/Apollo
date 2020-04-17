@@ -41,8 +41,8 @@ public class PredefinedDirLocations {
             if (!StringUtils.isBlank(path)) {
                 return Paths.get(path);
             }
+        } catch (InvalidPathException | NullPointerException ignored) {
         }
-        catch (InvalidPathException | NullPointerException ignored) {}
         return null;
     }
 

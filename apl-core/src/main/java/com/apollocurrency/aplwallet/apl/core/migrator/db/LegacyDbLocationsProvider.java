@@ -8,13 +8,13 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.migrator.MigratorUtil;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
+import javax.inject.Inject;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import javax.inject.Inject;
 
 public class LegacyDbLocationsProvider {
 

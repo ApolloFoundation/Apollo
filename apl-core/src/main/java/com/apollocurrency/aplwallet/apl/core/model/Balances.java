@@ -1,3 +1,7 @@
+/*
+ * Copyright © 2018-2020 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.model;
 
 import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
@@ -27,6 +31,7 @@ public class Balances {
     public String getAccountRS() {
         return accountRS;
     }
+
     public void setAccountRS(String accountRS) {
         this.accountRS = accountRS;
     }
@@ -40,6 +45,7 @@ public class Balances {
     public long getAccount() {
         return account;
     }
+
     public void setAccount(long account) {
         this.account = account;
     }
@@ -53,6 +59,7 @@ public class Balances {
     public long getBalanceATM() {
         return balanceATM;
     }
+
     public void setBalanceATM(long balanceATM) {
         this.balanceATM = balanceATM;
     }
@@ -96,19 +103,18 @@ public class Balances {
         if (o == null || getClass() != o.getClass()) return false;
         Balances balances = (Balances) o;
         return account == balances.account &&
-                balanceATM == balances.balanceATM &&
-                unconfirmedBalanceATM == balances.unconfirmedBalanceATM &&
-                forgedBalanceATM == balances.forgedBalanceATM &&
-                effectiveBalanceAPL == balances.effectiveBalanceAPL &&
-                guaranteedBalanceATM == balances.guaranteedBalanceATM &&
-                Objects.equals(accountRS, balances.accountRS);
+            balanceATM == balances.balanceATM &&
+            unconfirmedBalanceATM == balances.unconfirmedBalanceATM &&
+            forgedBalanceATM == balances.forgedBalanceATM &&
+            effectiveBalanceAPL == balances.effectiveBalanceAPL &&
+            guaranteedBalanceATM == balances.guaranteedBalanceATM &&
+            Objects.equals(accountRS, balances.accountRS);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(accountRS, account, balanceATM, unconfirmedBalanceATM, forgedBalanceATM, effectiveBalanceAPL, guaranteedBalanceATM);
     }
-
 
 
     /**

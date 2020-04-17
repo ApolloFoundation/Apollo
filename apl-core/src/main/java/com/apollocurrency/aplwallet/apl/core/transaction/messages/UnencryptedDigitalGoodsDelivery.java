@@ -6,15 +6,15 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import java.nio.ByteBuffer;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+
 /**
- *
  * @author al
  */
 public final class UnencryptedDigitalGoodsDelivery extends DigitalGoodsDelivery implements Encryptable {
-    
+
     final byte[] goodsToEncrypt;
     final byte[] recipientPublicKey;
 
@@ -74,5 +74,5 @@ public final class UnencryptedDigitalGoodsDelivery extends DigitalGoodsDelivery 
     private byte[] getPlaintext() {
         return Convert.compress(goodsToEncrypt);
     }
-    
+
 }

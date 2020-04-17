@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.commands;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardEngine;
@@ -16,6 +14,8 @@ import org.slf4j.Logger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Update block/tr secondary tables in main db.
@@ -40,15 +40,15 @@ public class UpdateSecondaryIndexCommand implements DataMigrateOperation {
 
     public UpdateSecondaryIndexCommand(ShardEngine shardEngine,
                                        int snapshotBlockHeight, ExcludeInfo excludeInfo) {
-        this(shardEngine,  ShardConstants.DEFAULT_COMMIT_BATCH_SIZE, snapshotBlockHeight, excludeInfo);
+        this(shardEngine, ShardConstants.DEFAULT_COMMIT_BATCH_SIZE, snapshotBlockHeight, excludeInfo);
         tableNameList.add(new TableInfo(ShardConstants.BLOCK_INDEX_TABLE_NAME));
         tableNameList.add(new TableInfo(ShardConstants.TRANSACTION_INDEX_TABLE_NAME));
     }
 
     public UpdateSecondaryIndexCommand(
-            ShardEngine shardEngine,
-            int commitBatchSize,
-            int snapshotBlockHeight, ExcludeInfo excludeInfo) {
+        ShardEngine shardEngine,
+        int commitBatchSize,
+        int snapshotBlockHeight, ExcludeInfo excludeInfo) {
         this(shardEngine, commitBatchSize, snapshotBlockHeight, null, excludeInfo);
     }
 
@@ -60,11 +60,11 @@ public class UpdateSecondaryIndexCommand implements DataMigrateOperation {
     public MigrateState execute() {
         log.debug("Update Secondary Index Data Command execute...");
         CommandParamInfo paramInfo = CommandParamInfo.builder()
-                .tableInfoList(this.tableNameList)
-                .commitBatchSize(this.commitBatchSize)
-                .snapshotBlockHeight(this.snapshotBlockHeight)
-                .excludeInfo(this.excludeInfo)
-                .build();
+            .tableInfoList(this.tableNameList)
+            .commitBatchSize(this.commitBatchSize)
+            .snapshotBlockHeight(this.snapshotBlockHeight)
+            .excludeInfo(this.excludeInfo)
+            .build();
         return shardEngine.updateSecondaryIndex(paramInfo);
     }
 

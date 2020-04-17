@@ -4,13 +4,14 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import org.apache.commons.net.ntp.NTPUDPClient;
 import org.apache.commons.net.ntp.TimeInfo;
 import org.slf4j.Logger;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.SocketException;
@@ -19,9 +20,8 @@ import java.net.UnknownHostException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.inject.Singleton;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 @Singleton
 public class NtpTime {
@@ -34,6 +34,9 @@ public class NtpTime {
     private volatile long timeOffset = 0;
     private NTPUDPClient client;
 
+    public NtpTime() {
+    }
+
     private void setTimeDrift() {
         try {
             InetAddress hostAddr = InetAddress.getByName(TIME_SERVICE);
@@ -45,16 +48,14 @@ public class NtpTime {
             String offset = (offsetValue == null) ? "N/A" : offsetValue.toString();
 
             LOG.debug(" Roundtrip delay(ms)=" + delay
-                    + ", clock offset(ms)=" + offset); // offset in ms
-            if(offsetValue!=null){
-               timeOffset = offsetValue;
+                + ", clock offset(ms)=" + offset); // offset in ms
+            if (offsetValue != null) {
+                timeOffset = offsetValue;
             }
-        }
-        catch (SocketTimeoutException | UnknownHostException e) {
-            LOG.debug("Exception: "+e.getMessage() + ". Keep prev offset: " + timeOffset);
-        }
-        catch (IOException e) {
-            LOG.debug("NTP exception: {}",e.getMessage());
+        } catch (SocketTimeoutException | UnknownHostException e) {
+            LOG.debug("Exception: " + e.getMessage() + ". Keep prev offset: " + timeOffset);
+        } catch (IOException e) {
+            LOG.debug("NTP exception: {}", e.getMessage());
         }
     }
 
@@ -64,8 +65,6 @@ public class NtpTime {
     public long getTime() {
         return System.currentTimeMillis() + timeOffset;
     }
-
-    public NtpTime() {}
 
     @PostConstruct
     public void start() {
@@ -80,8 +79,7 @@ public class NtpTime {
             client = new NTPUDPClient();
             client.setDefaultTimeout(DEFAULT_TIMEOUT);
             client.open();
-        }
-        catch (SocketException e) {
+        } catch (SocketException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }

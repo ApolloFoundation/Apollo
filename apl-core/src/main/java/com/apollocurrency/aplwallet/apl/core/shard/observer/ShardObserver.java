@@ -35,8 +35,8 @@ public class ShardObserver {
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder, "propertiesHolder is NULL");
     }
 
-//no matter how we get signal sync or async, do it async
-public void onTrimDoneAsync(@ObservesAsync @TrimEvent TrimData trimData) {
+    //no matter how we get signal sync or async, do it async
+    public void onTrimDoneAsync(@ObservesAsync @TrimEvent TrimData trimData) {
         tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight());
     }
 
@@ -60,21 +60,21 @@ public void onTrimDoneAsync(@ObservesAsync @TrimEvent TrimData trimData) {
                 // TODO: YL after separating 'shard' and 'trim' logic, we can remove 'isJustUpdated()' usage and checking
                 // config has changed from previous trim scheduling, try to get previous 'shard frequency' value
                 shardingFrequency = blockchainConfig.getPreviousConfig().isPresent()
-                        && blockchainConfig.getPreviousConfig().get().isShardingEnabled() ?
-                        blockchainConfig.getPreviousConfig().get().getShardingFrequency() // previous config
-                        : currentConfig.getShardingFrequency(); // fall back
+                    && blockchainConfig.getPreviousConfig().get().isShardingEnabled() ?
+                    blockchainConfig.getPreviousConfig().get().getShardingFrequency() // previous config
+                    : currentConfig.getShardingFrequency(); // fall back
             }
             log.debug("Check shard conditions: ? [{}],  lastTrimBlockHeight = {}, blockchainHeight = {}"
-                            + ", shardingFrequency = {} ({})",
-                    shardingFrequency != 0 ?
-                            lastTrimBlockHeight % shardingFrequency == 0 : "zeroDivision",
-                    lastTrimBlockHeight, blockchainHeight,
-                    shardingFrequency, blockchainConfig.isJustUpdated());
+                    + ", shardingFrequency = {} ({})",
+                shardingFrequency != 0 ?
+                    lastTrimBlockHeight % shardingFrequency == 0 : "zeroDivision",
+                lastTrimBlockHeight, blockchainHeight,
+                shardingFrequency, blockchainConfig.isJustUpdated());
             if (lastTrimBlockHeight != 0 && lastTrimBlockHeight % shardingFrequency == 0) {
                 completableFuture = shardService.tryCreateShardAsync(lastTrimBlockHeight, blockchainHeight);
             } else {
                 log.debug("No attempt to create new shard at height '{}' (because lastTrimHeight={}), ({})",
-                        blockchainHeight, lastTrimBlockHeight, blockchainConfig.isJustUpdated());
+                    blockchainHeight, lastTrimBlockHeight, blockchainConfig.isJustUpdated());
             }
             // TODO: YL after separating 'shard' and 'trim' logic, we can remove 'isJustUpdated() + resetJustUpdated()' usage
             if (blockchainConfig.isJustUpdated()) {

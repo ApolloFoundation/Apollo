@@ -7,11 +7,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
- *
  * @author al
  */
 public abstract class StringKeyFactory<T> extends KeyFactory<T> {
-    
+
     private final String idColumn;
 
     public StringKeyFactory(String idColumn) {
@@ -27,5 +26,5 @@ public abstract class StringKeyFactory<T> extends KeyFactory<T> {
     public DbKey newKey(String id) {
         return new StringKey(id);
     }
-    
+
 }

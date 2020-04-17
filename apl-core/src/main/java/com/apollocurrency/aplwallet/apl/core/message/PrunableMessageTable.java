@@ -13,12 +13,12 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
-import javax.inject.Singleton;
 
 @Singleton
 public class PrunableMessageTable extends PrunableDbTable<PrunableMessage> {
@@ -57,8 +57,8 @@ public class PrunableMessageTable extends PrunableDbTable<PrunableMessage> {
             throw new IllegalStateException("Prunable message not fully initialized");
         }
         try (
-                @DatabaseSpecificDml(DmlMarker.MERGE)
-                PreparedStatement pstmt = con.prepareStatement("MERGE INTO prunable_message (id, sender_id, recipient_id, "
+            @DatabaseSpecificDml(DmlMarker.MERGE)
+            PreparedStatement pstmt = con.prepareStatement("MERGE INTO prunable_message (id, sender_id, recipient_id, "
                 + "message, encrypted_message, message_is_text, encrypted_is_text, is_compressed, block_timestamp, transaction_timestamp, height) "
                 + "KEY (id) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
@@ -84,8 +84,8 @@ public class PrunableMessageTable extends PrunableDbTable<PrunableMessage> {
         try {
             con = getDatabaseManager().getDataSource().getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM prunable_message WHERE sender_id = ?"
-                    + " UNION ALL SELECT * FROM prunable_message WHERE recipient_id = ? AND sender_id <> ? ORDER BY block_timestamp DESC, db_id DESC "
-                    + DbUtils.limitsClause(from, to));
+                + " UNION ALL SELECT * FROM prunable_message WHERE recipient_id = ? AND sender_id <> ? ORDER BY block_timestamp DESC, db_id DESC "
+                + DbUtils.limitsClause(from, to));
             int i = 0;
             pstmt.setLong(++i, accountId);
             pstmt.setLong(++i, accountId);
@@ -103,9 +103,9 @@ public class PrunableMessageTable extends PrunableDbTable<PrunableMessage> {
         try {
             con = getDatabaseManager().getDataSource().getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM prunable_message WHERE sender_id = ? AND recipient_id = ? "
-                    + "UNION ALL SELECT * FROM prunable_message WHERE sender_id = ? AND recipient_id = ? AND sender_id <> recipient_id "
-                    + "ORDER BY block_timestamp DESC, db_id DESC "
-                    + DbUtils.limitsClause(from, to));
+                + "UNION ALL SELECT * FROM prunable_message WHERE sender_id = ? AND recipient_id = ? AND sender_id <> recipient_id "
+                + "ORDER BY block_timestamp DESC, db_id DESC "
+                + DbUtils.limitsClause(from, to));
             int i = 0;
             pstmt.setLong(++i, accountId);
             pstmt.setLong(++i, otherAccountId);
@@ -128,8 +128,8 @@ public class PrunableMessageTable extends PrunableDbTable<PrunableMessage> {
             pstmt.setLong(1, transactionId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 return !rs.next()
-                        || (hasPrunablePlainMessage && rs.getBytes("message") == null)
-                        || (hasPrunableEncryptedMessage && rs.getBytes("encrypted_message") == null);
+                    || (hasPrunablePlainMessage && rs.getBytes("message") == null)
+                    || (hasPrunableEncryptedMessage && rs.getBytes("encrypted_message") == null);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);

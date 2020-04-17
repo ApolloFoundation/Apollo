@@ -12,9 +12,9 @@ import java.util.Map;
 
 public class CustomValidatorFactory implements ConstraintValidatorFactory {
     private ConstraintValidatorFactory delegate;
-    private Map<Class<?>,ConstraintValidator<?, ?>> validators;
+    private Map<Class<?>, ConstraintValidator<?, ?>> validators;
 
-    public CustomValidatorFactory(Map<Class<?>,ConstraintValidator<?, ?>> validators) {
+    public CustomValidatorFactory(Map<Class<?>, ConstraintValidator<?, ?>> validators) {
         this.delegate = new ConstraintValidatorFactoryImpl();
         this.validators = validators;
     }
@@ -22,7 +22,7 @@ public class CustomValidatorFactory implements ConstraintValidatorFactory {
     @Override
     public <T extends ConstraintValidator<?, ?>> T getInstance(Class<T> key) {
         ConstraintValidator<?, ?> validator = validators.get(key);
-        return ( validator != null)? (T) validator : delegate.getInstance(key);
+        return (validator != null) ? (T) validator : delegate.getInstance(key);
     }
 
     @Override

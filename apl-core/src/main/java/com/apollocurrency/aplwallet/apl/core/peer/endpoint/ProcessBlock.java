@@ -35,22 +35,23 @@ import static org.slf4j.LoggerFactory.getLogger;
 public final class ProcessBlock extends PeerRequestHandler {
     private static final Logger LOG = getLogger(ProcessBlock.class);
 
-    public ProcessBlock() {}
+    public ProcessBlock() {
+    }
 
     @Override
     public JSONStreamAware processRequest(final JSONObject request, final Peer peer) {
-        String previousBlockId = (String)request.get("previousBlock");
+        String previousBlockId = (String) request.get("previousBlock");
         Block lastBlock = lookupBlockchain().getLastBlock();
         if (lastBlock == null) {
             return JSON.emptyJSON; // probably node is not loaded with any block
         }
         long peerBlockTimestamp = Convert.parseLong(request.get("timestamp"));
         Object timeoutJsonValue = request.get("timeout");
-        int peerBlockTimeout =  timeoutJsonValue == null ? 0 : ((Long)timeoutJsonValue).intValue();
+        int peerBlockTimeout = timeoutJsonValue == null ? 0 : ((Long) timeoutJsonValue).intValue();
         if (lastBlock.getStringId().equals(previousBlockId) ||
-                (Convert.parseUnsignedLong(previousBlockId) == lastBlock.getPreviousBlockId()
-                        && (lastBlock.getTimestamp() > peerBlockTimestamp ||
-                        peerBlockTimestamp == lastBlock.getTimestamp() && peerBlockTimeout > lastBlock.getTimeout()))) {
+            (Convert.parseUnsignedLong(previousBlockId) == lastBlock.getPreviousBlockId()
+                && (lastBlock.getTimestamp() > peerBlockTimestamp ||
+                peerBlockTimestamp == lastBlock.getTimestamp() && peerBlockTimeout > lastBlock.getTimeout()))) {
             lookupPeersService().peersExecutorService.submit(() -> {
                 try {
                     LOG.debug("API: need to process better peer block");

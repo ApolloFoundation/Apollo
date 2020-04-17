@@ -53,7 +53,7 @@ class DirProviderFactoryTest {
 
         dirLocations = new PredefinedDirLocations("dbDir", "logDir", "vaultDir", "pidDir", "twoFADir", "dataExportDir", "dexStorage");
         DirProviderFactory.setup(true, UUID.randomUUID(), "Default", dirLocations);
-        df =  DirProviderFactory.getProvider();
+        df = DirProviderFactory.getProvider();
         assertNotNull(df.getAppBaseDir());
         assertNotNull(df.getLogsDir());
         assertEquals("logDir", df.getLogsDir().toFile().getName());

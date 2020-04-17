@@ -9,15 +9,15 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import java.nio.ByteBuffer;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+
 /**
- *
  * @author al
  */
 public final class MonetarySystemCurrencyIssuance extends AbstractAttachment {
-    
+
     final String name;
     final String code;
     final String description;
@@ -197,5 +197,5 @@ public final class MonetarySystemCurrencyIssuance extends AbstractAttachment {
     public byte getDecimals() {
         return decimals;
     }
-    
+
 }

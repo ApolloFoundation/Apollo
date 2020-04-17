@@ -11,7 +11,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Getter @Setter
+@Getter
+@Setter
 public class ResponseDone extends ResponseBase {
 
     private Boolean done;

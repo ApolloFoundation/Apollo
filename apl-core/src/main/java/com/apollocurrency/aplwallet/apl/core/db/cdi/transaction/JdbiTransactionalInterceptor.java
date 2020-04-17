@@ -1,7 +1,5 @@
 package com.apollocurrency.aplwallet.apl.core.db.cdi.transaction;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import org.slf4j.Logger;
 
@@ -9,6 +7,8 @@ import javax.inject.Inject;
 import javax.interceptor.AroundInvoke;
 import javax.interceptor.Interceptor;
 import javax.interceptor.InvocationContext;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * CDI interceptor for {@link Transactional} annotation.
@@ -34,8 +34,8 @@ public class JdbiTransactionalInterceptor {
         boolean readOnly = annotation.readOnly();
         boolean createHandle = !jdbiHandleFactory.currentHandleOpened();
         if (createHandle) {
-             jdbiHandleFactory.open();
-             logIfTraceEnabled("Open handle {}.{}",ctx.getTarget(), ctx.getMethod().getName());
+            jdbiHandleFactory.open();
+            logIfTraceEnabled("Open handle {}.{}", ctx.getTarget(), ctx.getMethod().getName());
         }
         try {
             if (!readOnly) {
@@ -53,27 +53,27 @@ public class JdbiTransactionalInterceptor {
 
             if (!readOnly) {
                 jdbiHandleFactory.commit();
-                logIfTraceEnabled("Commit transaction {}.{}",ctx.getTarget(), ctx.getMethod().getName());
+                logIfTraceEnabled("Commit transaction {}.{}", ctx.getTarget(), ctx.getMethod().getName());
             }
 
             return result;
         } catch (Exception e) {
             if (!readOnly) {
                 jdbiHandleFactory.rollback();
-                logIfTraceEnabled("Rollback transaction {}.{}",ctx.getTarget(), ctx.getMethod().getName());
+                logIfTraceEnabled("Rollback transaction {}.{}", ctx.getTarget(), ctx.getMethod().getName());
             }
             throw e;
         } finally {
             if (createHandle) {
                 jdbiHandleFactory.close();
-                logIfTraceEnabled("Close handle {}.{}",ctx.getTarget(), ctx.getMethod().getName());
+                logIfTraceEnabled("Close handle {}.{}", ctx.getTarget(), ctx.getMethod().getName());
             }
         }
     }
 
     private void logIfTraceEnabled(String pattern, Object... objects) {
         if (log.isTraceEnabled()) {
-            log.trace(pattern,objects);
+            log.trace(pattern, objects);
         }
     }
 }

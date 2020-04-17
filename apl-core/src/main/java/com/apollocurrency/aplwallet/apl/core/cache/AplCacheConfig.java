@@ -26,9 +26,9 @@ public class AplCacheConfig implements InMemoryCacheConfigurator {
     @Inject
     public AplCacheConfig(CacheLoader<Long, OrderFreezing> orderFreezingCacheLoader) {
         this.cacheConfigurations = new CacheConfiguration[]{
-                new PublicKeyCacheConfig(60),
-                new BlockIndexCacheConfig(60),
-                new DexOrderFreezingCacheConfig(15, orderFreezingCacheLoader)
+            new PublicKeyCacheConfig(60),
+            new BlockIndexCacheConfig(60),
+            new DexOrderFreezingCacheConfig(15, orderFreezingCacheLoader)
         };
     }
 

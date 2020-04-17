@@ -31,10 +31,39 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public final class Hallmark {
 
+    private final String hallmarkString;
+    private final String host;
+    private final int port;
+    private final int weight;
+    private final int date;
+    private final byte[] publicKey;
+    private final long accountId;
+    private final byte[] signature;
+    private final boolean isValid;
+
+    private Hallmark(String hallmarkString, byte[] publicKey, byte[] signature, String host, int weight, int date, boolean isValid)
+        throws URISyntaxException {
+        this.hallmarkString = hallmarkString;
+        PeerAddress pa = new PeerAddress(host);
+        this.host = pa.getHost();
+        this.port = pa.getPort();
+        this.publicKey = publicKey;
+        this.accountId = AccountService.getId(publicKey);
+        this.signature = signature;
+        this.weight = weight;
+        this.date = date;
+        this.isValid = isValid;
+    }
+
+    //valid
+    private Hallmark(String hallmarkString, byte[] publicKey, byte[] signature, String host, int weight, int date) throws URISyntaxException {
+        this(hallmarkString, publicKey, signature, host, weight, date, true);
+    }
+
     public static int parseDate(String dateValue) {
         return Integer.parseInt(dateValue.substring(0, 4)) * 10000
-                + Integer.parseInt(dateValue.substring(5, 7)) * 100
-                + Integer.parseInt(dateValue.substring(8, 10));
+            + Integer.parseInt(dateValue.substring(5, 7)) * 100
+            + Integer.parseInt(dateValue.substring(8, 10));
     }
 
     public static String formatDate(int date) {
@@ -59,7 +88,7 @@ public final class Hallmark {
         ByteBuffer buffer = ByteBuffer.allocate(32 + 2 + hostBytes.length + 4 + 4 + 1);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
         buffer.put(publicKey);
-        buffer.putShort((short)hostBytes.length);
+        buffer.putShort((short) hostBytes.length);
         buffer.put(hostBytes);
         buffer.putInt(weight);
         buffer.putInt(date);
@@ -103,42 +132,13 @@ public final class Hallmark {
         System.arraycopy(hallmarkBytes, 0, data, 0, data.length);
 
         boolean isValid = host.length() < 100 && weight > 0 && weight <= maxBalanceAPL
-                && Crypto.verify(signature, data, publicKey);
+            && Crypto.verify(signature, data, publicKey);
         try {
             return new Hallmark(hallmarkString, publicKey, signature, host, weight, date, isValid);
         } catch (URISyntaxException e) {
             throw new RuntimeException(e.toString(), e);
         }
 
-    }
-
-    private final String hallmarkString;
-    private final String host;
-    private final int port;
-    private final int weight;
-    private final int date;
-    private final byte[] publicKey;
-    private final long accountId;
-    private final byte[] signature;
-    private final boolean isValid;
-
-    private Hallmark(String hallmarkString, byte[] publicKey, byte[] signature, String host, int weight, int date, boolean isValid)
-            throws URISyntaxException {
-        this.hallmarkString = hallmarkString;
-        PeerAddress pa = new PeerAddress(host);
-        this.host = pa.getHost();
-        this.port = pa.getPort();
-        this.publicKey = publicKey;
-        this.accountId = AccountService.getId(publicKey);
-        this.signature = signature;
-        this.weight = weight;
-        this.date = date;
-        this.isValid = isValid;
-    }
-
-    //valid
-    private Hallmark(String hallmarkString, byte[] publicKey, byte[] signature, String host, int weight, int date) throws URISyntaxException {
-        this(hallmarkString, publicKey, signature, host, weight, date, true);
     }
 
     public String getHallmarkString() {

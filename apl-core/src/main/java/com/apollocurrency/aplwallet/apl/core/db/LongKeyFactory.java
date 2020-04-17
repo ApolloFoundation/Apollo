@@ -7,11 +7,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
- *
  * @author al
  */
 public abstract class LongKeyFactory<T> extends KeyFactory<T> {
-    
+
     private final String idColumn;
 
     public LongKeyFactory(String idColumn) {
@@ -27,5 +26,5 @@ public abstract class LongKeyFactory<T> extends KeyFactory<T> {
     public DbKey newKey(long id) {
         return new LongKey(id);
     }
-    
+
 }

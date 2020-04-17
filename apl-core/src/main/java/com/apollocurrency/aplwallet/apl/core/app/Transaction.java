@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
@@ -31,9 +32,8 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendi
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONObject;
 
@@ -43,7 +43,7 @@ import java.util.Map;
 public interface Transaction {
 
     static Transaction.Builder newTransactionBuilder(byte[] senderPublicKey, long amountATM, long feeATM, short deadline, Attachment attachment, int timestamp) {
-        return new TransactionImpl.BuilderImpl((byte)1, senderPublicKey, amountATM, feeATM, deadline, (AbstractAttachment)attachment, timestamp);
+        return new TransactionImpl.BuilderImpl((byte) 1, senderPublicKey, amountATM, feeATM, deadline, (AbstractAttachment) attachment, timestamp);
     }
 
     static Transaction.Builder newTransactionBuilder(byte[] transactionBytes) throws AplException.NotValidException {
@@ -59,44 +59,6 @@ public interface Transaction {
     }
 
     boolean isUnconfirmedDuplicate(Map<TransactionType, Map<String, Integer>> unconfirmedDuplicates);
-
-    interface Builder {
-
-        Builder recipientId(long recipientId);
-
-        default Builder recipientRs(String recipientRS) {return recipientId(Convert.parseAccountId(recipientRS));}
-
-        Builder referencedTransactionFullHash(String referencedTransactionFullHash);
-
-        Builder appendix(MessageAppendix message);
-
-        Builder appendix(EncryptedMessageAppendix encryptedMessage);
-
-        Builder appendix(EncryptToSelfMessageAppendix encryptToSelfMessage);
-
-        Builder appendix(PublicKeyAnnouncementAppendix publicKeyAnnouncement);
-
-        Builder appendix(PrunablePlainMessageAppendix prunablePlainMessage);
-
-        Builder appendix(PrunableEncryptedMessageAppendix prunableEncryptedMessage);
-
-        Builder appendix(PhasingAppendix phasing);
-
-        Builder timestamp(int timestamp);
-
-        Builder ecBlockHeight(int height);
-
-        Builder dbId(long dbId);
-
-        Builder ecBlockId(long blockId);
-
-        Transaction build() throws AplException.NotValidException;
-
-        Transaction build(byte[] keySeed) throws AplException.NotValidException;
-
-    }
-
-    void setFeeATM(long feeATM);
 
     void sign(byte[] keySeed) throws AplException.NotValidException;
 
@@ -141,6 +103,8 @@ public interface Transaction {
     long getAmountATM();
 
     long getFeeATM();
+
+    void setFeeATM(long feeATM);
 
     String getReferencedTransactionFullHash();
 
@@ -202,5 +166,43 @@ public interface Transaction {
 
     default boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
         return false;
+    }
+
+    interface Builder {
+
+        Builder recipientId(long recipientId);
+
+        default Builder recipientRs(String recipientRS) {
+            return recipientId(Convert.parseAccountId(recipientRS));
+        }
+
+        Builder referencedTransactionFullHash(String referencedTransactionFullHash);
+
+        Builder appendix(MessageAppendix message);
+
+        Builder appendix(EncryptedMessageAppendix encryptedMessage);
+
+        Builder appendix(EncryptToSelfMessageAppendix encryptToSelfMessage);
+
+        Builder appendix(PublicKeyAnnouncementAppendix publicKeyAnnouncement);
+
+        Builder appendix(PrunablePlainMessageAppendix prunablePlainMessage);
+
+        Builder appendix(PrunableEncryptedMessageAppendix prunableEncryptedMessage);
+
+        Builder appendix(PhasingAppendix phasing);
+
+        Builder timestamp(int timestamp);
+
+        Builder ecBlockHeight(int height);
+
+        Builder dbId(long dbId);
+
+        Builder ecBlockId(long blockId);
+
+        Transaction build() throws AplException.NotValidException;
+
+        Transaction build(byte[] keySeed) throws AplException.NotValidException;
+
     }
 }

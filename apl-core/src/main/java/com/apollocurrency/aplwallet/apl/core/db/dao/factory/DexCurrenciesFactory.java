@@ -10,7 +10,7 @@ import org.jdbi.v3.core.config.ConfigRegistry;
 
 import java.sql.Types;
 
-public class DexCurrenciesFactory  extends AbstractArgumentFactory<DexCurrency> {
+public class DexCurrenciesFactory extends AbstractArgumentFactory<DexCurrency> {
 
     public DexCurrenciesFactory() {
         super(Types.INTEGER);

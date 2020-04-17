@@ -21,16 +21,16 @@
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetMintingTarget;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.http.get.GetMintingTarget;
+import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 /**
@@ -44,7 +44,7 @@ import javax.servlet.http.HttpServletRequest;
  * <li>counter - a sequential number counting the ordinal mint operation number per currency/account combination<br>
  * this ever increasing value ensures that the same mint transaction cannot execute more than once</li>
  * </ul>
- *
+ * <p>
  * Each minting request triggers a hash calculation based on the submitted data and the currency hash algorithm<br>
  * The resulting hash code is compared to the target value derived from the current difficulty.<br>
  * If the hash code is smaller than the target the currency units are generated into the sender account.<br>
@@ -56,7 +56,7 @@ import javax.servlet.http.HttpServletRequest;
 public final class CurrencyMint extends CreateTransaction {
 
     public CurrencyMint() {
-        super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "nonce", "units", "counter");
+        super(new APITag[]{APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "nonce", "units", "counter");
     }
 
     @Override

@@ -23,22 +23,30 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.order.entity.AskOrder;
+import com.apollocurrency.aplwallet.apl.core.order.service.OrderService;
+import com.apollocurrency.aplwallet.apl.core.order.service.impl.AskOrderServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.AskOrderService;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectorUtils;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Order;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
+import java.util.stream.Stream;
 
 @Deprecated
 @Vetoed
 public final class GetAccountCurrentAskOrderIds extends AbstractAPIRequestHandler {
+    private final OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService =
+        CDI.current().select(AskOrderServiceImpl.class, AskOrderService.Literal.INSTANCE).get();
 
     public GetAccountCurrentAskOrderIds() {
-        super(new APITag[] {APITag.ACCOUNTS, APITag.AE}, "account", "asset", "firstIndex", "lastIndex");
+        super(new APITag[]{APITag.ACCOUNTS, APITag.AE}, "account", "asset", "firstIndex", "lastIndex");
     }
 
     @Override
@@ -49,20 +57,15 @@ public final class GetAccountCurrentAskOrderIds extends AbstractAPIRequestHandle
         int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
         int lastIndex = HttpParameterParserUtil.getLastIndex(req);
 
-        DbIterator<Order.Ask> askOrders;
+        Stream<AskOrder> askOrders;
         if (assetId == 0) {
-            askOrders = Order.Ask.getAskOrdersByAccount(accountId, firstIndex, lastIndex);
+            askOrders = askOrderService.getOrdersByAccount(accountId, firstIndex, lastIndex);
         } else {
-            askOrders = Order.Ask.getAskOrdersByAccountAsset(accountId, assetId, firstIndex, lastIndex);
+            askOrders = askOrderService.getOrdersByAccountAsset(accountId, assetId, firstIndex, lastIndex);
         }
-        JSONArray orderIds = new JSONArray();
-        try {
-            while (askOrders.hasNext()) {
-                orderIds.add(Long.toUnsignedString(askOrders.next().getId()));
-            }
-        } finally {
-            askOrders.close();
-        }
+        JSONArray orderIds = askOrders.map(a -> Long.toUnsignedString(a.getId()))
+            .collect(CollectorUtils.jsonCollector());
+
         JSONObject response = new JSONObject();
         response.put("askOrderIds", orderIds);
         return response;

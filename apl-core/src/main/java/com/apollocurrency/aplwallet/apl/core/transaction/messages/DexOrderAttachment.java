@@ -50,7 +50,7 @@ public class DexOrderAttachment extends AbstractAttachment {
         this.orderAmount = Convert.parseUnsignedLong(String.valueOf(attachmentData.get("offerAmount")));
         this.pairCurrency = Byte.valueOf(String.valueOf(attachmentData.get("pairCurrency")));
         this.pairRate = Convert.parseUnsignedLong(String.valueOf(attachmentData.get("pairRate")));
-        this.status = Byte.valueOf(String.valueOf( attachmentData.get("status")));
+        this.status = Byte.valueOf(String.valueOf(attachmentData.get("status")));
         this.finishTime = Integer.valueOf(String.valueOf(attachmentData.get("finishTime")));
     }
 

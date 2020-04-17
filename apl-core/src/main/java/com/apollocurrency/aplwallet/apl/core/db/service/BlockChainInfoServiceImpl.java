@@ -86,6 +86,6 @@ public class BlockChainInfoServiceImpl implements BlockChainInfoService {
 
     @Override
     public DbIterator<Block> getBlocks(long accountId, int timestamp, int from, int to) {
-        return blockchain.getBlocks(accountId, timestamp, from, to);
+        return blockchain.getBlocksByAccount(accountId, timestamp, from, to);
     }
 }

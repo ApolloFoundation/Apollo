@@ -27,17 +27,17 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ACCOUNT;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_ACCOUNT;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public final class RSConvert extends AbstractAPIRequestHandler {
 
     public RSConvert() {
-        super(new APITag[] {APITag.ACCOUNTS, APITag.UTILS}, "account");
+        super(new APITag[]{APITag.ACCOUNTS, APITag.UTILS}, "account");
     }
 
     @Override

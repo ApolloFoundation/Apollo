@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.updater.decryption;
 
+import com.apollocurrency.aplwallet.apl.updater.UpdaterUtil;
+
 import java.security.GeneralSecurityException;
 import java.security.PublicKey;
-
-import com.apollocurrency.aplwallet.apl.updater.UpdaterUtil;
 
 public class RSADoubleDecryptor implements DoubleDecryptor {
     @Override

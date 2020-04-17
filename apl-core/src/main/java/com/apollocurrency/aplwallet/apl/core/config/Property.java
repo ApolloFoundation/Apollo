@@ -23,6 +23,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Target({TYPE, METHOD, FIELD, PARAMETER})
 public @interface Property {
     @Nonbinding String value() default "";
+
     @Nonbinding String name() default ""; // same as 'value', if 'value' and 'name' are specified simultaneously, 'name' will override 'value'
+
     @Nonbinding String defaultValue() default ""; // default value for the property
 }

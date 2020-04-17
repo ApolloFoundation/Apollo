@@ -10,6 +10,12 @@ public class BackgroundJob {
     private final long delay;
     private final Runnable job;
 
+    public BackgroundJob(String name, long delay, Runnable job) {
+        this.name = name;
+        this.delay = delay;
+        this.job = job;
+    }
+
     public String getName() {
         return name;
     }
@@ -20,11 +26,5 @@ public class BackgroundJob {
 
     public Runnable getJob() {
         return job;
-    }
-
-    public BackgroundJob(String name, long delay, Runnable job) {
-        this.name = name;
-        this.delay = delay;
-        this.job = job;
     }
 }

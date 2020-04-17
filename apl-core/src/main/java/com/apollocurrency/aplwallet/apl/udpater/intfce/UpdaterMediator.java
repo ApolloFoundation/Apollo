@@ -32,7 +32,7 @@ public interface UpdaterMediator {
     TransactionalDataSource getDataSource();
 
     Transaction loadTransaction(Connection connection, ResultSet rs) throws AplException.NotValidException;
-    
+
     PropertiesHolder getPropertyHolder();
 
     public String getChainId();

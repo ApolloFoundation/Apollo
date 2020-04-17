@@ -19,6 +19,13 @@ public class TransactionIndex {
         this.transactionIndex = transactionIndex;
     }
 
+    public TransactionIndex() {
+    }
+
+    public static TransactionIndexBuilder builder() {
+        return new TransactionIndexBuilder();
+    }
+
     public TransactionIndex copy() {
         byte[] hashCopy = Arrays.copyOf(partialTransactionHash, partialTransactionHash.length);
         return new TransactionIndex(transactionId, hashCopy, height, transactionIndex);
@@ -30,9 +37,9 @@ public class TransactionIndex {
         if (!(o instanceof TransactionIndex)) return false;
         TransactionIndex that = (TransactionIndex) o;
         return Objects.equals(transactionId, that.transactionId) &&
-                Arrays.equals(partialTransactionHash, that.partialTransactionHash) &&
-                Objects.equals(height, that.height) &&
-                Objects.equals(transactionIndex, that.transactionIndex);
+            Arrays.equals(partialTransactionHash, that.partialTransactionHash) &&
+            Objects.equals(height, that.height) &&
+            Objects.equals(transactionIndex, that.transactionIndex);
     }
 
     @Override
@@ -40,9 +47,6 @@ public class TransactionIndex {
         int result = Objects.hash(transactionId, height, transactionIndex);
         result = 31 * result + Arrays.hashCode(partialTransactionHash);
         return result;
-    }
-
-    public TransactionIndex() {
     }
 
     public byte[] getPartialTransactionHash() {
@@ -75,10 +79,6 @@ public class TransactionIndex {
 
     public void setTransactionIndex(Short transactionIndex) {
         this.transactionIndex = transactionIndex;
-    }
-
-    public static TransactionIndexBuilder builder() {
-        return new TransactionIndexBuilder();
     }
 
     public static final class TransactionIndexBuilder {

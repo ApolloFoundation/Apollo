@@ -23,8 +23,8 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -38,7 +38,7 @@ import java.util.List;
 public final class GetAssetAccounts extends AbstractAPIRequestHandler {
 
     public GetAssetAccounts() {
-        super(new APITag[] {APITag.AE}, "asset", "height", "firstIndex", "lastIndex");
+        super(new APITag[]{APITag.AE}, "asset", "height", "firstIndex", "lastIndex");
     }
 
     @Override

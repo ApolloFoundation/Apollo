@@ -37,7 +37,7 @@ import javax.servlet.http.HttpServletRequest;
 public final class GetAccountId extends AbstractAPIRequestHandler {
 
     public GetAccountId() {
-        super(new APITag[] {APITag.ACCOUNTS}, "secretPhrase", "publicKey");
+        super(new APITag[]{APITag.ACCOUNTS}, "secretPhrase", "publicKey");
     }
 
     @Override

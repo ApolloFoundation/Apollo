@@ -32,14 +32,16 @@ public class AccountLedgerTable extends DerivedDbTable<LedgerEntry> {
 
     private final PropertiesHolder propertiesHolder;
 
-    /** Number of blocks to keep when trimming */
+    /**
+     * Number of blocks to keep when trimming
+     */
     private int trimKeep;
 
     /**
      * Create the account ledger table
      */
     @Inject
-    public AccountLedgerTable(PropertiesHolder propertiesHolder){
+    public AccountLedgerTable(PropertiesHolder propertiesHolder) {
         super("account_ledger");
         this.propertiesHolder = propertiesHolder;
         trimKeep = propertiesHolder.getIntProperty("apl.ledgerTrimKeep", 30000);
@@ -95,8 +97,8 @@ public class AccountLedgerTable extends DerivedDbTable<LedgerEntry> {
     /**
      * Save the ledger entry
      *
-     * @param   con                     Database connection
-     * @throws  SQLException            Database error occurred
+     * @param con Database connection
+     * @throws SQLException Database error occurred
      */
     private void save(Connection con, LedgerEntry ledgerEntry) throws SQLException {
         try (final PreparedStatement stmt = con.prepareStatement("INSERT INTO account_ledger " +
@@ -133,9 +135,9 @@ public class AccountLedgerTable extends DerivedDbTable<LedgerEntry> {
     /**
      * Return a single entry identified by the ledger entry identifier
      *
-     * @param   ledgerId                    Ledger entry identifier
-     * @param allowPrivate                  Allow requested ledger entry to belong to private transaction or not
-     * @return                              Ledger entry or null if entry not found
+     * @param ledgerId     Ledger entry identifier
+     * @param allowPrivate Allow requested ledger entry to belong to private transaction or not
+     * @return Ledger entry or null if entry not found
      */
     public LedgerEntry getEntry(long ledgerId, boolean allowPrivate) {
 
@@ -166,16 +168,15 @@ public class AccountLedgerTable extends DerivedDbTable<LedgerEntry> {
     /**
      * Return the ledger entries sorted in descending insert order
      *
-     *
-     * @param   accountId                   Account identifier or zero if no account identifier
-     * @param   event                       Ledger event or null
-     * @param   eventId                     Ledger event identifier or zero if no event identifier
-     * @param   holding                     Ledger holding or null
-     * @param   holdingId                   Ledger holding identifier or zero if no holding identifier
-     * @param   firstIndex                  First matching entry index, inclusive
-     * @param   lastIndex                   Last matching entry index, inclusive
-     * @param   includePrivate              Boolean flag that specifies, should response include private ledger entries or not
-     * @return                              List of ledger entries
+     * @param accountId      Account identifier or zero if no account identifier
+     * @param event          Ledger event or null
+     * @param eventId        Ledger event identifier or zero if no event identifier
+     * @param holding        Ledger holding or null
+     * @param holdingId      Ledger holding identifier or zero if no holding identifier
+     * @param firstIndex     First matching entry index, inclusive
+     * @param lastIndex      Last matching entry index, inclusive
+     * @param includePrivate Boolean flag that specifies, should response include private ledger entries or not
+     * @return List of ledger entries
      */
     public List<LedgerEntry> getEntries(long accountId, LedgerEvent event, long eventId,
                                         LedgerHolding holding, long holdingId,
@@ -200,8 +201,7 @@ public class AccountLedgerTable extends DerivedDbTable<LedgerEntry> {
                 sb.append("AND ");
             }
             sb.append("event_id not in (select event_id from account_ledger where ");
-            if (accountId != 0)
-            {
+            if (accountId != 0) {
                 sb.append("account_id = ? AND ");
             }
             sb.append("event_type = ? ) ");
@@ -241,13 +241,13 @@ public class AccountLedgerTable extends DerivedDbTable<LedgerEntry> {
                 pstmt.setInt(++i, LedgerEvent.PRIVATE_PAYMENT.code);
             }
             if (event != null) {
-                pstmt.setByte(++i, (byte)event.getCode());
+                pstmt.setByte(++i, (byte) event.getCode());
                 if (eventId != 0) {
                     pstmt.setLong(++i, eventId);
                 }
             }
             if (holding != null) {
-                pstmt.setByte(++i, (byte)holding.getCode());
+                pstmt.setByte(++i, (byte) holding.getCode());
                 if (holdingId != 0) {
                     pstmt.setLong(++i, holdingId);
                 }

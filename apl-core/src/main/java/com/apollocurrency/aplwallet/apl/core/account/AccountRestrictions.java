@@ -20,8 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.account;
 
-import static com.apollocurrency.aplwallet.apl.core.transaction.AccountControl.SET_PHASING_ONLY;
-
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
@@ -39,10 +37,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
 
+import static com.apollocurrency.aplwallet.apl.core.transaction.AccountControl.SET_PHASING_ONLY;
+
 @Slf4j
 public final class AccountRestrictions {
-
-    static AccountService accountService;
 
     static final LongKeyFactory<PhasingOnly> phasingControlDbKeyFactory = new LongKeyFactory<PhasingOnly>("account_id") {
         @Override
@@ -50,7 +48,6 @@ public final class AccountRestrictions {
             return rule.dbKey;
         }
     };
-
     static final VersionedDeletableEntityDbTable<PhasingOnly> phasingControlTable = new VersionedDeletableEntityDbTable<PhasingOnly>("account_control_phasing", phasingControlDbKeyFactory) {
 
         @Override
@@ -63,9 +60,10 @@ public final class AccountRestrictions {
             phasingOnly.save(con);
         }
     };
+    static AccountService accountService;
 
-    private static AccountService lookupAccountService(){
-        if ( accountService == null) {
+    private static AccountService lookupAccountService() {
+        if (accountService == null) {
             accountService = CDI.current().select(AccountServiceImpl.class).get();
         }
         return accountService;
@@ -90,11 +88,11 @@ public final class AccountRestrictions {
     public static boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
         Account senderAccount = lookupAccountService().getAccount(transaction.getSenderId());
         return
-                senderAccount.getControls().contains(AccountControlType.PHASING_ONLY)
+            senderAccount.getControls().contains(AccountControlType.PHASING_ONLY)
                 && PhasingOnly.get(transaction.getSenderId()).getMaxFees() != 0
                 && transaction.getType() != SET_PHASING_ONLY
                 && TransactionType.isDuplicate(SET_PHASING_ONLY,
-                        Long.toUnsignedString(senderAccount.getId()), duplicates, true);
+                Long.toUnsignedString(senderAccount.getId()), duplicates, true);
     }
 
 }

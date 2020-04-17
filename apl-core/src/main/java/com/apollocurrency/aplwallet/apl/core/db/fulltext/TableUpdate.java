@@ -3,43 +3,51 @@
  */
 
 package com.apollocurrency.aplwallet.apl.core.db.fulltext;
+
 /**
  * Table update
  */
 public class TableUpdate {
 
-    /** Transaction thread */
+    /**
+     * Transaction thread
+     */
     private final Thread thread;
 
-    /** Old table row */
+    /**
+     * Old table row
+     */
     private final Object[] oldRow;
 
-    /** New table row */
+    /**
+     * New table row
+     */
     private final Object[] newRow;
 
     /**
      * Create the table update
      *
-     * @param   thread          Transaction thread
-     * @param   oldRow          Old table row or null
-     * @param   newRow          New table row or null
+     * @param thread Transaction thread
+     * @param oldRow Old table row or null
+     * @param newRow New table row or null
      */
     public TableUpdate(Thread thread, Object[] oldRow, Object[] newRow) {
         this.thread = thread;
         this.oldRow = oldRow;
         this.newRow = newRow;
     }
+
     protected TableUpdate(Thread thread) {
         this.thread = thread;
         this.oldRow = new Object[]{};
-        this.newRow = new Object[] {};
+        this.newRow = new Object[]{};
     }
 
 
     /**
      * Return the transaction thread
      *
-     * @return                  Transaction thread
+     * @return Transaction thread
      */
     public Thread getThread() {
         return thread;
@@ -48,7 +56,7 @@ public class TableUpdate {
     /**
      * Return the old table row
      *
-     * @return                  Old table row or null
+     * @return Old table row or null
      */
     public Object[] getOldRow() {
         return oldRow;
@@ -57,7 +65,7 @@ public class TableUpdate {
     /**
      * Return the new table row
      *
-     * @return                  New table row or null
+     * @return New table row or null
      */
     public Object[] getNewRow() {
         return newRow;

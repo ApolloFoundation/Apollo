@@ -24,6 +24,11 @@ import java.util.Set;
 @NoArgsConstructor
 @Data
 public class AccountDTO extends BaseDTO {
+    //account assets
+    public List<AccountAssetBalanceDTO> assetBalances;
+    public List<AccountAssetUnconfirmedBalanceDTO> unconfirmedAssetBalances;
+    //account currency
+    public List<AccountCurrencyDTO> accountCurrencies;
     private String account;
     private String accountRS;
     private String publicKey;
@@ -58,11 +63,6 @@ public class AccountDTO extends BaseDTO {
     private List<String> lessors;
     private List<String> lessorsRS;
     private List<AccountLeaseDTO> lessorsInfo;
-    //account assets
-    public List<AccountAssetBalanceDTO> assetBalances;
-    public List<AccountAssetUnconfirmedBalanceDTO> unconfirmedAssetBalances;
-    //account currency
-    public List<AccountCurrencyDTO> accountCurrencies;
 
     public AccountDTO(long account, String accountRS, long balanceATM, long forgedBalanceATM, long unconfirmedBalanceATM) {
         this.account = Long.toUnsignedString(account);

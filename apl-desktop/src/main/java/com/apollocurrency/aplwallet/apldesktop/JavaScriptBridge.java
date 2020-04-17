@@ -30,6 +30,7 @@ import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.Region;
 import javafx.stage.FileChooser;
+import javafx.stage.FileChooser.ExtensionFilter;
 import org.slf4j.Logger;
 
 import java.awt.*;
@@ -40,7 +41,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Base64;
-import javafx.stage.FileChooser.ExtensionFilter;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -49,7 +49,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 @SuppressWarnings("WeakerAccess")
 public class JavaScriptBridge {
-        private static final Logger LOG = getLogger(JavaScriptBridge.class);
+    private static final Logger LOG = getLogger(JavaScriptBridge.class);
 
 
     DesktopApplication.MainApplication application;
@@ -112,8 +112,8 @@ public class JavaScriptBridge {
             Path downloadDir = Paths.get(home).resolve("Downloads");
             FileChooser fileChooser = new FileChooser();
             fileChooser.getExtensionFilters().add(new ExtensionFilter("All Files", "*"));
-        
-        fileChooser.setInitialDirectory(downloadDir.toFile());
+
+            fileChooser.setInitialDirectory(downloadDir.toFile());
             fileChooser.setInitialFileName(fileName);
             File chosenFile = fileChooser.showSaveDialog(DesktopApplication.mainStage);
 

@@ -17,14 +17,6 @@ import java.math.BigInteger;
 public class ActiveGenerator implements Comparable<ActiveGenerator> {
 
     private static AccountService accountService;
-
-    private AccountService lookupAccountService(){
-        if ( accountService == null) {
-            accountService = CDI.current().select(AccountServiceImpl.class).get();
-        }
-        return accountService;
-    }
-
     private final long accountId;
     private long hitTime;
     private long effectiveBalanceAPL;
@@ -33,6 +25,13 @@ public class ActiveGenerator implements Comparable<ActiveGenerator> {
     public ActiveGenerator(long accountId) {
         this.accountId = accountId;
         this.hitTime = Long.MAX_VALUE;
+    }
+
+    private AccountService lookupAccountService() {
+        if (accountService == null) {
+            accountService = CDI.current().select(AccountServiceImpl.class).get();
+        }
+        return accountService;
     }
 
     public long getAccountId() {
@@ -78,7 +77,7 @@ public class ActiveGenerator implements Comparable<ActiveGenerator> {
 
     @Override
     public boolean equals(Object obj) {
-        return (obj != null && (obj instanceof ActiveGenerator) && accountId == ((ActiveGenerator)obj).accountId);
+        return (obj != null && (obj instanceof ActiveGenerator) && accountId == ((ActiveGenerator) obj).accountId);
     }
 
     @Override

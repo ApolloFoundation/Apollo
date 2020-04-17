@@ -1,7 +1,5 @@
 package com.apollocurrency.aplwallet.apl.core.phasing.dao;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
@@ -20,18 +18,20 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 import javax.inject.Inject;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 @EnableWeld
 class PhasingApprovedResultTableTest {
     @RegisterExtension
     DbExtension extension = new DbExtension();
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-            FullTextConfigImpl.class,
-            PhasingApprovedResultTable.class,
-            DerivedDbTablesRegistryImpl.class)
-            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
-            .build();
+        FullTextConfigImpl.class,
+        PhasingApprovedResultTable.class,
+        DerivedDbTablesRegistryImpl.class)
+        .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+        .build();
     @Inject
     PhasingApprovedResultTable table;
     private PhasingApprovedResultTestData data;
@@ -43,7 +43,7 @@ class PhasingApprovedResultTableTest {
 
     @Test
     void testInsertNew() {
-        DbUtils.inTransaction(extension, (con)-> table.insert(data.NEW_RESULT));
+        DbUtils.inTransaction(extension, (con) -> table.insert(data.NEW_RESULT));
         PhasingApprovalResult phasingApprovalResult = table.get(data.NEW_RESULT.getPhasingTx());
         assertEquals(data.NEW_RESULT, phasingApprovalResult);
     }

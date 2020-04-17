@@ -47,10 +47,10 @@ class AccountCurrencyServiceTest {
     void setUp() {
         testData = new AccountTestData();
         accountCurrencyService = spy(new AccountCurrencyServiceImpl(
-                accountCurrencyTable,
-                ledgerEvent,
-                accountEvent,
-                accountCurrencyEvent,
+            accountCurrencyTable,
+            ledgerEvent,
+            accountEvent,
+            accountCurrencyEvent,
             blockChainInfoService));
     }
 
@@ -130,7 +130,7 @@ class AccountCurrencyServiceTest {
 
         doReturn(testData.CUR_0).when(accountCurrencyTable).get(any());
         assertThrows(DoubleSpendingException.class, () ->
-                accountCurrencyService.addToUnconfirmedCurrencyUnits(testData.ACC_1, event, eventId, currencyId, units));
+            accountCurrencyService.addToUnconfirmedCurrencyUnits(testData.ACC_1, event, eventId, currencyId, units));
 
     }
 
@@ -175,7 +175,7 @@ class AccountCurrencyServiceTest {
         doReturn(null).when(accountCurrencyTable).get(any());
 
         assertThrows(DoubleSpendingException.class, () ->
-                accountCurrencyService.addToUnconfirmedCurrencyUnits(testData.ACC_1, event, eventId, currencyId, units));
+            accountCurrencyService.addToUnconfirmedCurrencyUnits(testData.ACC_1, event, eventId, currencyId, units));
     }
 
     @Test
@@ -225,8 +225,8 @@ class AccountCurrencyServiceTest {
     @Test
     void testUpdate_as_insert() {
         AccountCurrency newCurrency = new AccountCurrency(
-                testData.newCurrency.getAccountId(), testData.newCurrency.getCurrencyId(),
-                1000L, 1000L,testData.CUR_BLOCKCHAIN_HEIGHT);
+            testData.newCurrency.getAccountId(), testData.newCurrency.getCurrencyId(),
+            1000L, 1000L, testData.CUR_BLOCKCHAIN_HEIGHT);
         accountCurrencyService.update(newCurrency);
         verify(accountCurrencyTable, times(1)).insert(newCurrency);
         verify(accountCurrencyTable, never()).deleteAtHeight(any(AccountCurrency.class), anyInt());

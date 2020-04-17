@@ -31,6 +31,7 @@ public class PrunableMessageServiceImpl implements PrunableMessageService {
         this.blockchain = blockchain;
         this.accountPublicKeyService = accountPublicKeyService;
     }
+
     @Override
     public int getCount() {
         return table.getCount();
@@ -79,7 +80,7 @@ public class PrunableMessageServiceImpl implements PrunableMessageService {
             return null;
         }
         byte[] publicKey = message.getSenderId() == AccountService.getId(Crypto.getPublicKey(keySeed))
-                ? accountPublicKeyService.getPublicKeyByteArray(message.getRecipientId()) : accountPublicKeyService.getPublicKeyByteArray(message.getSenderId());
+            ? accountPublicKeyService.getPublicKeyByteArray(message.getRecipientId()) : accountPublicKeyService.getPublicKeyByteArray(message.getSenderId());
         return EncryptedDataUtil.decryptFrom(publicKey, message.getEncryptedData(), keySeed, message.isCompressed());
     }
 

@@ -15,6 +15,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+
 public abstract class VersionedDeletableEntityDbTable<T> extends EntityDbTable<T> {
     protected VersionedDeletableEntityDbTable(String table, KeyFactory<T> dbKeyFactory) {
         super(table, dbKeyFactory, true, null);
@@ -25,7 +26,7 @@ public abstract class VersionedDeletableEntityDbTable<T> extends EntityDbTable<T
     }
 
     public VersionedDeletableEntityDbTable(String table, KeyFactory<T> dbKeyFactory, String fullTextSearchColumns, boolean init) {
-        super(table, dbKeyFactory,true, fullTextSearchColumns, init);
+        super(table, dbKeyFactory, true, fullTextSearchColumns, init);
     }
 
     public VersionedDeletableEntityDbTable(String table, KeyFactory<T> dbKeyFactory, boolean init) {
@@ -56,18 +57,18 @@ public abstract class VersionedDeletableEntityDbTable<T> extends EntityDbTable<T
         DbKey dbKey = keyFactory.newKey(t);
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmtCount = con.prepareStatement("SELECT db_id FROM " + table
-                     + keyFactory.getPKClause() + " AND height < ? LIMIT 1");
-             ) {
+                 + keyFactory.getPKClause() + " AND height < ? ORDER BY db_id DESC LIMIT 1");
+        ) {
             int i = dbKey.setPK(pstmtCount);
             pstmtCount.setInt(i, height);
             try (ResultSet rs = pstmtCount.executeQuery()) {
                 if (rs.next()) {
                     long dbId = rs.getLong(1);
                     try (
-                            @DatabaseSpecificDml(DmlMarker.UPDATE_WITH_LIMIT)
-                            PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
+                        @DatabaseSpecificDml(DmlMarker.UPDATE_WITH_LIMIT)
+                        PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
                             + " SET latest = FALSE, deleted = TRUE " + keyFactory.getPKClause() + " AND latest = TRUE LIMIT 1");
-                            PreparedStatement updatePrevPstmt = con.prepareStatement("UPDATE " + table + " SET latest = FALSE, deleted = TRUE WHERE db_id = ?")
+                        PreparedStatement updatePrevPstmt = con.prepareStatement("UPDATE " + table + " SET latest = FALSE, deleted = TRUE WHERE db_id = ?")
                     ) {
                         updatePrevPstmt.setLong(1, dbId);
                         updatePrevPstmt.executeUpdate();
@@ -83,8 +84,7 @@ public abstract class VersionedDeletableEntityDbTable<T> extends EntityDbTable<T
                     }
                 }
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }

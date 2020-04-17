@@ -90,37 +90,37 @@ public class DGSServiceTest {
     @RegisterExtension
     DbExtension extension = new DbExtension();
     Blockchain blockchain = mock(Blockchain.class);
-    Block lastBlock = mock(Block.class);
-    Block prevBlock = mock(Block.class);
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class, BlockchainConfig.class,
-            TimeServiceImpl.class,
-            GlobalSyncImpl.class,
-            FullTextConfigImpl.class,
-            DGSPublicFeedbackTable.class,
-            DGSFeedbackTable.class,
-            DGSGoodsTable.class,
-            DGSTagTable.class,
-            DGSPurchaseTable.class,
-            DGSServiceImpl.class,
-            DerivedDbTablesRegistryImpl.class,
-            BlockchainConfig.class,
-            BlockChainInfoServiceImpl.class, AccountServiceImpl.class, AccountTable.class)
-            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(blockchain, Blockchain.class))
-            .addBeans(MockBean.of(mock(ConfigDirProvider.class), ConfigDirProvider.class))
-            .addBeans(MockBean.of(mock(AplAppStatus.class), AplAppStatus.class))
-            .addBeans(MockBean.of(mock(FullTextSearchService.class), FullTextSearchService.class))
-            .addBeans(MockBean.of(mock(FullTextSearchEngine.class), FullTextSearchEngine.class))
-            .addBeans(MockBean.of(mock(AccountGuaranteedBalanceTable.class), AccountGuaranteedBalanceTable.class))
-            .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
-            .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
-            .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
-            .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyServiceImpl.class, AccountPublicKeyService.class))
-            .addBeans(MockBean.of(mock(AccountLedgerService.class), AccountLedgerService.class, AccountLedgerServiceImpl.class))
-            .build();
+        PropertiesHolder.class, BlockchainConfig.class,
+        TimeServiceImpl.class,
+        GlobalSyncImpl.class,
+        FullTextConfigImpl.class,
+        DGSPublicFeedbackTable.class,
+        DGSFeedbackTable.class,
+        DGSGoodsTable.class,
+        DGSTagTable.class,
+        DGSPurchaseTable.class,
+        DGSServiceImpl.class,
+        DerivedDbTablesRegistryImpl.class,
+        BlockchainConfig.class,
+        BlockChainInfoServiceImpl.class, AccountServiceImpl.class, AccountTable.class)
+        .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+        .addBeans(MockBean.of(blockchain, Blockchain.class))
+        .addBeans(MockBean.of(mock(ConfigDirProvider.class), ConfigDirProvider.class))
+        .addBeans(MockBean.of(mock(AplAppStatus.class), AplAppStatus.class))
+        .addBeans(MockBean.of(mock(FullTextSearchService.class), FullTextSearchService.class))
+        .addBeans(MockBean.of(mock(FullTextSearchEngine.class), FullTextSearchEngine.class))
+        .addBeans(MockBean.of(mock(AccountGuaranteedBalanceTable.class), AccountGuaranteedBalanceTable.class))
+        .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
+        .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
+        .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
+        .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyServiceImpl.class, AccountPublicKeyService.class))
+        .addBeans(MockBean.of(mock(AccountLedgerService.class), AccountLedgerService.class, AccountLedgerServiceImpl.class))
+        .build();
+    Block lastBlock = mock(Block.class);
+    Block prevBlock = mock(Block.class);
     @Inject
     DGSService service;
     @Inject
@@ -270,6 +270,7 @@ public class DGSServiceTest {
         sellerPurchaseCount = service.getSellerPurchaseCount(SELLER_1_ID, false, false);
         assertEquals(2, sellerPurchaseCount);
     }
+
     @Test
     void testGetSellerPurchaseWithFeedbacksCount() {
         int sellerPurchaseCount = service.getSellerPurchaseCount(SELLER_0_ID, true, false);
@@ -277,6 +278,7 @@ public class DGSServiceTest {
         sellerPurchaseCount = service.getSellerPurchaseCount(SELLER_1_ID, true, false);
         assertEquals(1, sellerPurchaseCount);
     }
+
     @Test
     void testGetSellerCompletedPurchaseCount() {
         int sellerPurchaseCount = service.getSellerPurchaseCount(SELLER_0_ID, false, true);
@@ -284,6 +286,7 @@ public class DGSServiceTest {
         sellerPurchaseCount = service.getSellerPurchaseCount(SELLER_1_ID, false, true);
         assertEquals(2, sellerPurchaseCount);
     }
+
     @Test
     void testGetSellerCompletedPurchaseWithFeedbacksCount() {
         int sellerPurchaseCount = service.getSellerPurchaseCount(SELLER_0_ID, true, true);
@@ -299,11 +302,13 @@ public class DGSServiceTest {
         dgsPurchases = CollectionUtil.toList(service.getBuyerPurchases(BUYER_2_ID, false, false, 0, Integer.MAX_VALUE));
         assertEquals(List.of(dtd.PURCHASE_14, dtd.PURCHASE_2), dgsPurchases);
     }
+
     @Test
     void testGetBuyerPurchasesForDeletedBuyerPurchase() {
         List<DGSPurchase> dgsPurchases = CollectionUtil.toList(service.getBuyerPurchases(BUYER_1_ID, false, false, 0, Integer.MAX_VALUE));
         assertEquals(List.of(), dgsPurchases);
     }
+
     @Test
     void testGetBuyerPurchasesWithFeedback() {
         List<DGSPurchase> dgsPurchases = CollectionUtil.toList(service.getBuyerPurchases(BUYER_0_ID, true, false, 0, Integer.MAX_VALUE));
@@ -311,6 +316,7 @@ public class DGSServiceTest {
         dgsPurchases = CollectionUtil.toList(service.getBuyerPurchases(BUYER_2_ID, true, false, 0, Integer.MAX_VALUE));
         assertEquals(List.of(dtd.PURCHASE_14), dgsPurchases);
     }
+
     @Test
     void testGetBuyerCompletedPurchases() {
         List<DGSPurchase> dgsPurchases = CollectionUtil.toList(service.getBuyerPurchases(BUYER_0_ID, false, true, 0, Integer.MAX_VALUE));
@@ -318,6 +324,7 @@ public class DGSServiceTest {
         dgsPurchases = CollectionUtil.toList(service.getBuyerPurchases(BUYER_2_ID, false, true, 0, Integer.MAX_VALUE));
         assertEquals(List.of(dtd.PURCHASE_14), dgsPurchases);
     }
+
     @Test
     void testGetBuyerCompletedPurchasesWithFeedback() {
         List<DGSPurchase> dgsPurchases = CollectionUtil.toList(service.getBuyerPurchases(BUYER_0_ID, true, true, 0, Integer.MAX_VALUE));
@@ -325,6 +332,7 @@ public class DGSServiceTest {
         dgsPurchases = CollectionUtil.toList(service.getBuyerPurchases(BUYER_2_ID, true, true, 0, Integer.MAX_VALUE));
         assertEquals(List.of(dtd.PURCHASE_14), dgsPurchases);
     }
+
     @Test
     void testGetBuyerPurchasesWithPagination() {
         List<DGSPurchase> dgsPurchases = CollectionUtil.toList(service.getBuyerPurchases(BUYER_0_ID, false, false, 1, 2));
@@ -340,6 +348,7 @@ public class DGSServiceTest {
         buyerPurchaseCount = service.getBuyerPurchaseCount(BUYER_2_ID, true, false);
         assertEquals(1, buyerPurchaseCount);
     }
+
     @Test
     void testGetBuyerCompletedPurchaseCount() {
         int buyerPurchaseCount = service.getBuyerPurchaseCount(BUYER_0_ID, false, true);
@@ -347,6 +356,7 @@ public class DGSServiceTest {
         buyerPurchaseCount = service.getBuyerPurchaseCount(BUYER_2_ID, false, true);
         assertEquals(1, buyerPurchaseCount);
     }
+
     @Test
     void testGetBuyerCompletedPurchaseCountWithFeedback() {
         int buyerPurchaseCount = service.getBuyerPurchaseCount(BUYER_0_ID, true, true);
@@ -354,6 +364,7 @@ public class DGSServiceTest {
         buyerPurchaseCount = service.getBuyerPurchaseCount(BUYER_2_ID, true, true);
         assertEquals(1, buyerPurchaseCount);
     }
+
     @Test
     void testGetBuyerPurchaseCount() {
         int buyerPurchaseCount = service.getBuyerPurchaseCount(BUYER_0_ID, false, false);
@@ -387,6 +398,7 @@ public class DGSServiceTest {
         purchases = CollectionUtil.toList(service.getSellerBuyerPurchases(SELLER_0_ID, BUYER_2_ID, false, true, 0, Integer.MAX_VALUE));
         assertEquals(List.of(dtd.PURCHASE_14), purchases);
     }
+
     @Test
     void testGetSellerBuyerPurchasesWithFeedback() {
         List<DGSPurchase> purchases = CollectionUtil.toList(service.getSellerBuyerPurchases(SELLER_0_ID, BUYER_0_ID, true, false, 0, Integer.MAX_VALUE));
@@ -396,6 +408,7 @@ public class DGSServiceTest {
         purchases = CollectionUtil.toList(service.getSellerBuyerPurchases(SELLER_0_ID, BUYER_2_ID, true, false, 0, Integer.MAX_VALUE));
         assertEquals(List.of(dtd.PURCHASE_14), purchases);
     }
+
     @Test
     void testGetSellerBuyerCompletedPurchasesWithFeedback() {
         List<DGSPurchase> purchases = CollectionUtil.toList(service.getSellerBuyerPurchases(SELLER_0_ID, BUYER_0_ID, true, true, 0, Integer.MAX_VALUE));
@@ -405,6 +418,7 @@ public class DGSServiceTest {
         purchases = CollectionUtil.toList(service.getSellerBuyerPurchases(SELLER_0_ID, BUYER_2_ID, true, true, 0, Integer.MAX_VALUE));
         assertEquals(List.of(dtd.PURCHASE_14), purchases);
     }
+
     @Test
     void testGetSellerBuyerPurchasesWithPagination() {
         List<DGSPurchase> purchases = CollectionUtil.toList(service.getSellerBuyerPurchases(SELLER_0_ID, BUYER_0_ID, false, false, 0, 1));
@@ -442,6 +456,7 @@ public class DGSServiceTest {
         purchaseCount = service.getSellerBuyerPurchaseCount(SELLER_0_ID, BUYER_2_ID, false, true);
         assertEquals(1, purchaseCount);
     }
+
     @Test
     void testGetSellerBuyerPurchaseWithFeedbackCount() {
         int purchaseCount = service.getSellerBuyerPurchaseCount(SELLER_0_ID, BUYER_0_ID, true, false);
@@ -451,6 +466,7 @@ public class DGSServiceTest {
         purchaseCount = service.getSellerBuyerPurchaseCount(SELLER_0_ID, BUYER_2_ID, true, false);
         assertEquals(1, purchaseCount);
     }
+
     @Test
     void testGetSellerBuyerCompletedPurchaseWithFeedbackCount() {
         int purchaseCount = service.getSellerBuyerPurchaseCount(SELLER_0_ID, BUYER_0_ID, true, true);
@@ -550,6 +566,7 @@ public class DGSServiceTest {
         goodsPurchaseCount = service.getGoodsPurchaseCount(GOODS_1_ID, false, false);
         assertEquals(1, goodsPurchaseCount);
     }
+
     @Test
     void testGetGoodsPurchaseCountForUnknownGoods() {
         int goodsPurchaseCount = service.getGoodsPurchaseCount(1, false, false);
@@ -567,6 +584,7 @@ public class DGSServiceTest {
         goodsPurchaseCount = service.getGoodsPurchaseCount(GOODS_3_ID, true, false);
         assertEquals(0, goodsPurchaseCount);
     }
+
     @Test
     void testGetGoodsCompletedPurchaseCount() {
         int goodsPurchaseCount = service.getGoodsPurchaseCount(GOODS_0_ID, false, true);
@@ -578,6 +596,7 @@ public class DGSServiceTest {
         goodsPurchaseCount = service.getGoodsPurchaseCount(GOODS_3_ID, false, true);
         assertEquals(0, goodsPurchaseCount);
     }
+
     @Test
     void testGetGoodsCompletedPurchaseCountWithFeedback() {
         int goodsPurchaseCount = service.getGoodsPurchaseCount(GOODS_0_ID, true, true);
@@ -614,6 +633,7 @@ public class DGSServiceTest {
         List<DGSPurchase> dgsPurchases = CollectionUtil.toList(service.getPendingSellerPurchases(SELLER_0_ID, 0, 2));
         assertEquals(List.of(dtd.PURCHASE_2), dgsPurchases);
     }
+
     @Test
     void testGetPendingSellerPurchasesForSellerWithoutPendingPurchases() {
         List<DGSPurchase> dgsPurchases = CollectionUtil.toList(service.getPendingSellerPurchases(SELLER_1_ID, 0, 1));
@@ -679,6 +699,7 @@ public class DGSServiceTest {
 
         assertEquals(List.of(), dgsPurchases);
     }
+
     @Test
     void testGetExpiredPendingPurchasesByBlockAbovePurcaseDeadline() {
         doReturn(dtd.PURCHASE_2.getDeadline() + 1).when(prevBlock).getTimestamp();
@@ -694,7 +715,7 @@ public class DGSServiceTest {
     @Test
     void testSetPendingForPurchase() {
         dtd.PURCHASE_8.setHeight(dtd.PURCHASE_8.getHeight() + 10_000);
-        DbUtils.inTransaction(extension, (con)-> service.setPending(dtd.PURCHASE_8, true));
+        DbUtils.inTransaction(extension, (con) -> service.setPending(dtd.PURCHASE_8, true));
         DGSPurchase pendingPurchase = service.getPendingPurchase(dtd.PURCHASE_8.getId());
         dtd.PURCHASE_8.setDbId(dtd.PURCHASE_18.getDbId() + 1);
         assertEquals(dtd.PURCHASE_8, pendingPurchase);
@@ -705,7 +726,7 @@ public class DGSServiceTest {
 
     @Test
     void testSetPendingForNewPurchase() {
-        DbUtils.inTransaction(extension, (con)-> {
+        DbUtils.inTransaction(extension, (con) -> {
             service.setPending(dtd.NEW_PURCHASE, false);
         });
         DGSPurchase pendingPurchase = service.getPurchase(dtd.NEW_PURCHASE.getId());
@@ -737,6 +758,7 @@ public class DGSServiceTest {
         assertEquals(dtd.PURCHASE_6_PUBLIC_FEEDBACKS, publicFeedbacks);
         assertEquals(dtd.PURCHASE_6_PUBLIC_FEEDBACKS, dtd.PURCHASE_14.getPublicFeedbacks());
     }
+
     @Test
     void testGetPublicFeedbacksForPurchaseWithoutPublicFeedbacks() {
         dtd.PURCHASE_2.setPublicFeedbacks(null);
@@ -753,7 +775,7 @@ public class DGSServiceTest {
 
         expected.get(0).setHeight(blockchain.getHeight());
         expected.get(1).setHeight(blockchain.getHeight());
-        DbUtils.inTransaction(extension, (con)-> {
+        DbUtils.inTransaction(extension, (con) -> {
 
             dtd.PURCHASE_16.setHeight(dtd.PURCHASE_18.getHeight() + 1000);
             dtd.PURCHASE_16.setDbId(dtd.PURCHASE_18.getDbId());
@@ -780,7 +802,7 @@ public class DGSServiceTest {
         DGSPublicFeedback expected = new DGSPublicFeedback(0L, blockchain.getHeight(), "New public feedback added", dtd.PURCHASE_2.getId());
         dtd.PURCHASE_2.setHeight(dtd.PURCHASE_18.getHeight() + 1000);
         dtd.PURCHASE_2.setDbId(dtd.PURCHASE_18.getDbId());
-        DbUtils.inTransaction(extension, (con)-> {
+        DbUtils.inTransaction(extension, (con) -> {
             service.feedback(dtd.PURCHASE_2.getId(), null, new MessageAppendix(expected.getFeedback()));
         });
         DGSPurchase purchase = service.getPurchase(dtd.PURCHASE_2.getId());
@@ -797,8 +819,8 @@ public class DGSServiceTest {
         doReturn(dtd.PURCHASE_18.getHeight() + 2000).when(blockchain).getHeight();
         DGSTestData tdCopy = new DGSTestData();
         List<DGSFeedback> expected = new ArrayList<>(tdCopy.PURCHASE_5.getFeedbacks());
-        expected.forEach(e-> e.setHeight(blockchain.getHeight()));
-        DbUtils.inTransaction(extension, (con)-> {
+        expected.forEach(e -> e.setHeight(blockchain.getHeight()));
+        DbUtils.inTransaction(extension, (con) -> {
 
             dtd.PURCHASE_14.setHeight(dtd.PURCHASE_18.getHeight() + 2000);
 
@@ -821,7 +843,7 @@ public class DGSServiceTest {
     void testAddFeedbackForPurchaseWithoutPublicFeedbacks() {
         doReturn(dtd.PURCHASE_18.getHeight() + 1000).when(blockchain).getHeight();
         List<DGSFeedback> expected = new ArrayList<>();
-        DbUtils.inTransaction(extension, (con)-> {
+        DbUtils.inTransaction(extension, (con) -> {
 
             dtd.PURCHASE_2.setHeight(dtd.PURCHASE_18.getHeight() + 1000);
             dtd.PURCHASE_2.setDbId(dtd.PURCHASE_18.getDbId());
@@ -846,11 +868,11 @@ public class DGSServiceTest {
 
         DGSTestData tdCopy = new DGSTestData();
         List<DGSFeedback> expectedFeedbacks = new ArrayList<>(tdCopy.PURCHASE_5.getFeedbacks());
-        expectedFeedbacks.forEach(e-> e.setHeight(blockchainHeight));
+        expectedFeedbacks.forEach(e -> e.setHeight(blockchainHeight));
         DGSFeedback expectedFeedback = new DGSFeedback(0L, blockchainHeight, dtd.PURCHASE_5.getId(), new EncryptedData(new byte[32], new byte[32]));
         expectedFeedbacks.add(expectedFeedback);
         List<DGSPublicFeedback> expectedPublicFeedbacks = new ArrayList<>(tdCopy.PURCHASE_5.getPublicFeedbacks());
-        expectedPublicFeedbacks.forEach(e->e.setHeight(blockchainHeight));
+        expectedPublicFeedbacks.forEach(e -> e.setHeight(blockchainHeight));
         DGSPublicFeedback expectedPublicFeedback = new DGSPublicFeedback(0L, blockchainHeight, "New public feedback", tdCopy.PURCHASE_5.getId());
         expectedPublicFeedbacks.add(expectedPublicFeedback);
         long initialEncryptedFeedbackId = tdCopy.FEEDBACK_11.getDbId();
@@ -861,7 +883,7 @@ public class DGSServiceTest {
         for (DGSPublicFeedback publicFeedback : expectedPublicFeedbacks) {
             publicFeedback.setDbId(++initialPublicFeedbackId);
         }
-        DbUtils.inTransaction(extension, (con)-> {
+        DbUtils.inTransaction(extension, (con) -> {
             service.feedback(dtd.PURCHASE_5.getId(), new EncryptedMessageAppendix(expectedFeedback.getFeedbackEncryptedData(), false, true), new MessageAppendix(expectedPublicFeedback.getFeedback()));
         });
 
@@ -884,7 +906,7 @@ public class DGSServiceTest {
         DGSTestData tdCopy = new DGSTestData();
         DGSFeedback expectedFeedback = new DGSFeedback(dtd.FEEDBACK_11.getDbId() + 1, blockchainHeight, dtd.PURCHASE_2.getId(), new EncryptedData("New encrypted feedback".getBytes(), new byte[32]));
         DGSPublicFeedback expectedPublicFeedback = new DGSPublicFeedback(dtd.PUBLIC_FEEDBACK_13.getDbId() + 1, blockchainHeight, "New public feedback", tdCopy.PURCHASE_2.getId());
-        DbUtils.inTransaction(extension, (con)-> service.feedback(dtd.PURCHASE_2.getId(), new EncryptedMessageAppendix(expectedFeedback.getFeedbackEncryptedData(), false, true), new MessageAppendix(expectedPublicFeedback.getFeedback())));
+        DbUtils.inTransaction(extension, (con) -> service.feedback(dtd.PURCHASE_2.getId(), new EncryptedMessageAppendix(expectedFeedback.getFeedbackEncryptedData(), false, true), new MessageAppendix(expectedPublicFeedback.getFeedback())));
 
 
         DGSPurchase purchase = service.getPurchase(dtd.PURCHASE_2.getId());
@@ -915,9 +937,9 @@ public class DGSServiceTest {
         doReturn(txId).when(listTransaction).getId();
         doReturn(senderId).when(listTransaction).getSenderId();
         String tags = String.join(",", List.of(tag1, tag2, tag3, tag4));
-        DGSGoods expected = new DGSGoods(dtd.GOODS_13.getDbId() + 1, height, txId, senderId, "Test goods", "Test", tags, new String[] {tag1,tag2,tag3}, 100_000, true, 2, 100_000_000, false);
+        DGSGoods expected = new DGSGoods(dtd.GOODS_13.getDbId() + 1, height, txId, senderId, "Test goods", "Test", tags, new String[]{tag1, tag2, tag3}, 100_000, true, 2, 100_000_000, false);
         DigitalGoodsListing digitalGoodsListing = new DigitalGoodsListing("Test goods", "Test", tags, 2, 100_000_000);
-        DbUtils.inTransaction(extension, (con)-> {
+        DbUtils.inTransaction(extension, (con) -> {
             service.listGoods(listTransaction, digitalGoodsListing);
         });
         DGSGoods actual = service.getGoods(txId);
@@ -989,7 +1011,7 @@ public class DGSServiceTest {
     @Test
     void testDelistGoods() {
         doReturn(100_000).when(blockchain).getHeight();
-        DbUtils.inTransaction(extension, (con)-> {
+        DbUtils.inTransaction(extension, (con) -> {
             service.delistGoods(dtd.GOODS_12.getId());
         });
         DGSGoods goods = service.getGoods(dtd.GOODS_12.getId());
@@ -1023,7 +1045,7 @@ public class DGSServiceTest {
     @Test
     void testChangeGoodsPrice() {
         doReturn(100_000).when(blockchain).getHeight();
-        DbUtils.inTransaction(extension, (con)-> {
+        DbUtils.inTransaction(extension, (con) -> {
             service.changePrice(dtd.GOODS_5.getId(), 100);
         });
         dtd.GOODS_5.setPriceATM(100);
@@ -1041,7 +1063,7 @@ public class DGSServiceTest {
     @Test
     void testChangeQuantityFoGoodsWithZeroQuantity() {
         doReturn(100_000).when(blockchain).getHeight();
-        DbUtils.inTransaction(extension, (con)-> {
+        DbUtils.inTransaction(extension, (con) -> {
             service.changeQuantity(dtd.GOODS_2.getId(), 1);
         });
         dtd.GOODS_2.setQuantity(1);
@@ -1063,10 +1085,11 @@ public class DGSServiceTest {
         }
         assertTrue(tags.containsAll(expectedTags));
     }
+
     @Test
     void testChangeQuantityFoGoodsWithQuantityGreaterThanZero() {
         doReturn(100_000).when(blockchain).getHeight();
-        DbUtils.inTransaction(extension, (con)-> {
+        DbUtils.inTransaction(extension, (con) -> {
             service.changeQuantity(dtd.GOODS_12.getId(), -1);
         });
         dtd.GOODS_12.setQuantity(2);
@@ -1076,10 +1099,11 @@ public class DGSServiceTest {
         assertEquals(dtd.GOODS_12, goods);
 
     }
+
     @Test
     void testChangeQuantityToNegative() {
         doReturn(100_000).when(blockchain).getHeight();
-        DbUtils.inTransaction(extension, (con)-> {
+        DbUtils.inTransaction(extension, (con) -> {
             service.changeQuantity(dtd.GOODS_12.getId(), -5);
         });
         dtd.GOODS_12.setQuantity(0);
@@ -1104,7 +1128,7 @@ public class DGSServiceTest {
     @Test
     void testChangeQuantityToMaxValue() {
         doReturn(100_000).when(blockchain).getHeight();
-        DbUtils.inTransaction(extension, (con)-> {
+        DbUtils.inTransaction(extension, (con) -> {
             service.changeQuantity(dtd.GOODS_12.getId(), Constants.MAX_DGS_LISTING_QUANTITY + 1);
         });
         dtd.GOODS_12.setQuantity(Constants.MAX_DGS_LISTING_QUANTITY);
@@ -1135,7 +1159,7 @@ public class DGSServiceTest {
         doReturn(senderId).when(purchaseTransaction).getSenderId();
 
         DigitalGoodsPurchase digitalGoodsPurchase = new DigitalGoodsPurchase(dtd.GOODS_12.getId(), 3, dtd.GOODS_12.getPriceATM(), 1_000_000);
-        DbUtils.inTransaction(extension, (con)-> {
+        DbUtils.inTransaction(extension, (con) -> {
             service.purchase(purchaseTransaction, digitalGoodsPurchase);
         });
         DGSPurchase expected = new DGSPurchase(dtd.PURCHASE_18.getDbId() + 1, height, txId, senderId, dtd.GOODS_12.getId(), dtd.GOODS_12.getSellerId(), 3, dtd.GOODS_12.getPriceATM(), 1_000_000, note.getEncryptedData(), 500_000, true, null, false, null, false, false, null, null, 0, 0);
@@ -1169,7 +1193,7 @@ public class DGSServiceTest {
         Account account = accountService.getAccount(50);
         long initialUnconfirmedBalance = account.getUnconfirmedBalanceATM();
         DigitalGoodsPurchase digitalGoodsPurchase = new DigitalGoodsPurchase(dtd.GOODS_8.getId(), 4, dtd.GOODS_8.getPriceATM(), 1_000_000);
-        DbUtils.inTransaction(extension, (con)-> {
+        DbUtils.inTransaction(extension, (con) -> {
             service.purchase(purchaseTransaction, digitalGoodsPurchase);
         });
         verifyAccountBalance(50, initialUnconfirmedBalance + 4 * dtd.GOODS_8.getPriceATM(), null);
@@ -1187,8 +1211,8 @@ public class DGSServiceTest {
         Account account = accountService.getAccount(50);
         long initialUnconfirmedBalance = account.getUnconfirmedBalanceATM();
         DigitalGoodsPurchase digitalGoodsPurchase = new DigitalGoodsPurchase(dtd.GOODS_12.getId(), 2, dtd.GOODS_12.getPriceATM() + 1, 1_000_000);
-        DbUtils.inTransaction(extension, (con)-> service.purchase(purchaseTransaction, digitalGoodsPurchase));
-        verifyAccountBalance(50, initialUnconfirmedBalance +  2 * (dtd.GOODS_12.getPriceATM() + 1), null);
+        DbUtils.inTransaction(extension, (con) -> service.purchase(purchaseTransaction, digitalGoodsPurchase));
+        verifyAccountBalance(50, initialUnconfirmedBalance + 2 * (dtd.GOODS_12.getPriceATM() + 1), null);
     }
 
     @Test
@@ -1203,8 +1227,8 @@ public class DGSServiceTest {
         Account account = accountService.getAccount(50);
         long initialUnconfirmedBalance = account.getUnconfirmedBalanceATM();
         DigitalGoodsPurchase digitalGoodsPurchase = new DigitalGoodsPurchase(dtd.GOODS_9.getId(), 2, dtd.GOODS_9.getPriceATM(), 1_000_000);
-        DbUtils.inTransaction(extension, (con)-> service.purchase(purchaseTransaction, digitalGoodsPurchase));
-        verifyAccountBalance(50, initialUnconfirmedBalance +  2 * (dtd.GOODS_9.getPriceATM()), null);
+        DbUtils.inTransaction(extension, (con) -> service.purchase(purchaseTransaction, digitalGoodsPurchase));
+        verifyAccountBalance(50, initialUnconfirmedBalance + 2 * (dtd.GOODS_9.getPriceATM()), null);
     }
 
     @Test
@@ -1224,7 +1248,7 @@ public class DGSServiceTest {
         doReturn(senderId).when(deliverTransaction).getSenderId();
 
         DigitalGoodsDelivery deliveryAttachment = new DigitalGoodsDelivery(dtd.PURCHASE_2.getId(), new EncryptedData("goods".getBytes(), new byte[32]), true, Constants.ONE_APL * 2);
-        DbUtils.inTransaction(extension, (con)-> {
+        DbUtils.inTransaction(extension, (con) -> {
             service.deliver(deliverTransaction, deliveryAttachment);
         });
         DGSPurchase purchase = service.getPurchase(dtd.PURCHASE_2.getId());
@@ -1246,7 +1270,7 @@ public class DGSServiceTest {
         doReturn(lastBlock).when(blockchain).getLastBlock();
         doReturn(height).when(lastBlock).getHeight();
         doReturn(height).when(blockchain).getHeight();
-        DbUtils.inTransaction(extension, (con)-> {
+        DbUtils.inTransaction(extension, (con) -> {
             service.refund(LedgerEvent.DIGITAL_GOODS_REFUND, 100, SELLER_0_ID, dtd.PURCHASE_14.getId(), 300_000_000L, new EncryptedMessageAppendix(refundNote, true, false));
         });
         dtd.PURCHASE_14.setDbId(dtd.PURCHASE_18.getDbId() + 1);
@@ -1278,7 +1302,7 @@ public class DGSServiceTest {
     @Test
     void testGetAllGoods() {
         List<DGSGoods> dgsGoods = CollectionUtil.toList(service.getAllGoods(0, Integer.MAX_VALUE));
-        assertEquals(List.of(dtd.GOODS_12, dtd.GOODS_4, dtd.GOODS_2,  dtd.GOODS_5, dtd.GOODS_10, dtd.GOODS_8,dtd.GOODS_9, dtd.GOODS_11, dtd.GOODS_13 ), dgsGoods);
+        assertEquals(List.of(dtd.GOODS_12, dtd.GOODS_4, dtd.GOODS_2, dtd.GOODS_5, dtd.GOODS_10, dtd.GOODS_8, dtd.GOODS_9, dtd.GOODS_11, dtd.GOODS_13), dgsGoods);
     }
 
     @Test
@@ -1290,19 +1314,19 @@ public class DGSServiceTest {
     @Test
     void testGetGoodsInStock() {
         List<DGSGoods> dgsGoods = CollectionUtil.toList(service.getGoodsInStock(0, Integer.MAX_VALUE));
-        assertEquals(List.of(dtd.GOODS_12, dtd.GOODS_10, dtd.GOODS_11, dtd.GOODS_13 ), dgsGoods);
+        assertEquals(List.of(dtd.GOODS_12, dtd.GOODS_10, dtd.GOODS_11, dtd.GOODS_13), dgsGoods);
     }
 
     @Test
     void testGetGoodsInStockWithPagination() {
         List<DGSGoods> dgsGoods = CollectionUtil.toList(service.getGoodsInStock(1, 2));
-        assertEquals(List.of(dtd.GOODS_10, dtd.GOODS_11 ), dgsGoods);
+        assertEquals(List.of(dtd.GOODS_10, dtd.GOODS_11), dgsGoods);
     }
 
     @Test
     void testGetSellerGoods() {
         List<DGSGoods> goods = CollectionUtil.toList(service.getSellerGoods(SELLER_0_ID, false, 0, Integer.MAX_VALUE));
-        assertEquals(List.of( dtd.GOODS_5, dtd.GOODS_12, dtd.GOODS_4, dtd.GOODS_9,  dtd.GOODS_11,   dtd.GOODS_10,  dtd.GOODS_8), goods);
+        assertEquals(List.of(dtd.GOODS_5, dtd.GOODS_12, dtd.GOODS_4, dtd.GOODS_9, dtd.GOODS_11, dtd.GOODS_10, dtd.GOODS_8), goods);
         goods = CollectionUtil.toList(service.getSellerGoods(SELLER_1_ID, false, 0, Integer.MAX_VALUE));
         assertEquals(List.of(dtd.GOODS_2), goods);
     }
@@ -1310,7 +1334,7 @@ public class DGSServiceTest {
     @Test
     void testGetSellerGoodsInStock() {
         List<DGSGoods> goods = CollectionUtil.toList(service.getSellerGoods(SELLER_0_ID, true, 0, Integer.MAX_VALUE));
-        assertEquals(List.of( dtd.GOODS_12,  dtd.GOODS_11,   dtd.GOODS_10), goods);
+        assertEquals(List.of(dtd.GOODS_12, dtd.GOODS_11, dtd.GOODS_10), goods);
         goods = CollectionUtil.toList(service.getSellerGoods(SELLER_1_ID, true, 0, Integer.MAX_VALUE));
         assertEquals(List.of(), goods);
     }
@@ -1318,7 +1342,7 @@ public class DGSServiceTest {
     @Test
     void testGetSellerGoodsWithPagination() {
         List<DGSGoods> goods = CollectionUtil.toList(service.getSellerGoods(SELLER_0_ID, false, 2, 4));
-        assertEquals(List.of( dtd.GOODS_4, dtd.GOODS_9,  dtd.GOODS_11), goods);
+        assertEquals(List.of(dtd.GOODS_4, dtd.GOODS_9, dtd.GOODS_11), goods);
         goods = CollectionUtil.toList(service.getSellerGoods(SELLER_1_ID, false, 0, 0));
         assertEquals(List.of(dtd.GOODS_2), goods);
     }
@@ -1347,9 +1371,6 @@ public class DGSServiceTest {
         }
         assertEquals(unconfirmedBalance, account.getUnconfirmedBalanceATM());
     }
-
-
-
 
 
 }

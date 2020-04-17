@@ -28,14 +28,13 @@ import static com.apollocurrency.aplwallet.apl.exchange.service.graph.Candlestic
 @Singleton
 public class DexTradingDataService {
 
-    private static final int  DEFAULT_ORDER_SELECT_LIMIT = 100;
+    private static final int DEFAULT_ORDER_SELECT_LIMIT = 100;
 
     private boolean enableTradingViewGraphDataFeeder; // not yet implemented
     private boolean enableTradingDataCache; // not yet implemented
     private DexCandlestickDao candlestickDao;
     private DexOrderDao orderDao;
     private int orderSelectLimit;
-
 
 
     @Inject
@@ -85,7 +84,7 @@ public class DexTradingDataService {
         int lastCandlestickTimestamp = getLastCandlestickTimestamp(currency);
         List<SimpleTradingEntry> data = new ArrayList<>();
         if (lastCandlestickTimestamp == -1 ||
-                floorTo(timeFrame, lastCandlestickTimestamp) <= ceilTo(timeFrame, fromTimestamp) && floorTo(timeFrame, lastCandlestickTimestamp) <= toTimestamp) { // only orders
+            floorTo(timeFrame, lastCandlestickTimestamp) <= ceilTo(timeFrame, fromTimestamp) && floorTo(timeFrame, lastCandlestickTimestamp) <= toTimestamp) { // only orders
             data.addAll(getForTimeFrameFromDexOrders(ceilTo(timeFrame, fromTimestamp), toTimestamp, currency, timeFrame));
         } else if (floorTo(timeFrame, lastCandlestickTimestamp) > toTimestamp) { // only candlesticks
             data.addAll(getFromCandlesticks(fromTimestamp, toTimestamp, currency, timeFrame));
@@ -106,6 +105,7 @@ public class DexTradingDataService {
             return -1;
         }
     }
+
     public List<SimpleTradingEntry> getForTimeFrameFromDexOrders(int fromTimestamp, int toTimestamp, DexCurrency currency, TimeFrame timeFrame) {
         List<DexCandlestick> orderCandlesticks = getOrderCandlesticks(fromTimestamp, toTimestamp, currency, timeFrame);
         List<SimpleTradingEntry> fullData = orderCandlesticks.stream().map(this::fromCandleStick).collect(Collectors.toList());
@@ -113,20 +113,20 @@ public class DexTradingDataService {
     }
 
     private List<DexCandlestick> getOrderCandlesticks(int fromTimestamp, int toTimestamp, DexCurrency currency, TimeFrame timeFrame) {
-        int fromEpochTime = Convert2.toEpochTime((long)fromTimestamp * 1000);
-        int toEpochTime = Convert2.toEpochTime((long)toTimestamp * 1000);
+        int fromEpochTime = Convert2.toEpochTime((long) fromTimestamp * 1000);
+        int toEpochTime = Convert2.toEpochTime((long) toTimestamp * 1000);
         long fromDbId = 0;
         List<DexOrder> orders;
         Map<Integer, DexCandlestick> candlesticks = new HashMap<>();
         do {
             orders = orderDao.getOrdersFromDbIdBetweenTimestamps(OrderDbIdPaginationDbRequest.builder()
-                    .limit(orderSelectLimit)
-                    .coin(currency)
-                    .fromTime(fromEpochTime)
-                    .toTime(toEpochTime)
-                    .fromDbId(fromDbId)
-                    .build());
-            convertOrders(orders, candlesticks, timeFrame, t-> null);
+                .limit(orderSelectLimit)
+                .coin(currency)
+                .fromTime(fromEpochTime)
+                .toTime(toEpochTime)
+                .fromDbId(fromDbId)
+                .build());
+            convertOrders(orders, candlesticks, timeFrame, t -> null);
             if (orders.size() > 0) {
                 fromDbId = orders.get(orders.size() - 1).getDbId();
             }
@@ -140,7 +140,7 @@ public class DexTradingDataService {
         for (int candlestickTime = startTime; candlestickTime <= finishTime; candlestickTime += interval) {
             int candlestickFinishTime = candlestickTime + interval;
             int finalCandlestickTime = candlestickTime;
-            List<SimpleTradingEntry> entries = fullData.stream().filter(e->e.getTime() < candlestickFinishTime && e.getTime() >= finalCandlestickTime).collect(Collectors.toList());
+            List<SimpleTradingEntry> entries = fullData.stream().filter(e -> e.getTime() < candlestickFinishTime && e.getTime() >= finalCandlestickTime).collect(Collectors.toList());
             if (entries.isEmpty()) {
                 continue;
             }
@@ -155,9 +155,9 @@ public class DexTradingDataService {
         TradingDataOutput tradingDataOutput = new TradingDataOutput();
         if (data.isEmpty()) {
             tradingDataOutput.setS("no_data");
-            DexOrder order = orderDao.getLastClosedOrderBeforeTimestamp(currency, Convert2.toEpochTime((long)fromTimestamp * 1000));
+            DexOrder order = orderDao.getLastClosedOrderBeforeTimestamp(currency, Convert2.toEpochTime((long) fromTimestamp * 1000));
             if (order != null) {
-                int nextTime =(int)  (Convert2.fromEpochTime(order.getFinishTime()) / 1000);
+                int nextTime = (int) (Convert2.fromEpochTime(order.getFinishTime()) / 1000);
                 tradingDataOutput.setNextTime(floorTo(timeFrame, nextTime));
             }
         } else {
@@ -176,29 +176,29 @@ public class DexTradingDataService {
     }
 
     private SimpleTradingEntry pack(List<SimpleTradingEntry> entries, int time) {
-            BigDecimal totalVolumeFrom = BigDecimal.ZERO;
-            BigDecimal totalVolumeTo = BigDecimal.ZERO;
-            BigDecimal maxPrice = BigDecimal.ZERO;
-            BigDecimal openPrice = BigDecimal.ZERO;
-            BigDecimal closePrice = BigDecimal.ZERO;
-            BigDecimal minPrice = BigDecimal.ZERO;
-            boolean openFound = false;
-            for (SimpleTradingEntry entry : entries) {
-                if (maxPrice.compareTo(entry.getHigh()) < 0) {
-                    maxPrice = entry.getHigh();
-                }
-                if (minPrice.equals(BigDecimal.ZERO) || minPrice.compareTo(entry.getLow()) > 0) {
-                    minPrice = entry.getLow();
-                }
-                totalVolumeFrom = totalVolumeFrom.add(entry.getVolumefrom());
-                totalVolumeTo = totalVolumeTo.add(entry.getVolumeto());
-                if (!openFound) {
-                    openPrice = entry.getOpen();
-                    openFound = true;
-                }
-                closePrice = entry.getClose();
+        BigDecimal totalVolumeFrom = BigDecimal.ZERO;
+        BigDecimal totalVolumeTo = BigDecimal.ZERO;
+        BigDecimal maxPrice = BigDecimal.ZERO;
+        BigDecimal openPrice = BigDecimal.ZERO;
+        BigDecimal closePrice = BigDecimal.ZERO;
+        BigDecimal minPrice = BigDecimal.ZERO;
+        boolean openFound = false;
+        for (SimpleTradingEntry entry : entries) {
+            if (maxPrice.compareTo(entry.getHigh()) < 0) {
+                maxPrice = entry.getHigh();
             }
-            return new SimpleTradingEntry(time, openPrice, closePrice, minPrice, maxPrice, totalVolumeFrom, totalVolumeTo);
+            if (minPrice.equals(BigDecimal.ZERO) || minPrice.compareTo(entry.getLow()) > 0) {
+                minPrice = entry.getLow();
+            }
+            totalVolumeFrom = totalVolumeFrom.add(entry.getVolumefrom());
+            totalVolumeTo = totalVolumeTo.add(entry.getVolumeto());
+            if (!openFound) {
+                openPrice = entry.getOpen();
+                openFound = true;
+            }
+            closePrice = entry.getClose();
+        }
+        return new SimpleTradingEntry(time, openPrice, closePrice, minPrice, maxPrice, totalVolumeFrom, totalVolumeTo);
     }
 
     private SimpleTradingEntry fromCandleStick(DexCandlestick c) {

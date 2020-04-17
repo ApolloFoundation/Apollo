@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDeletableEntity;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -41,6 +42,7 @@ import java.util.Set;
 @Slf4j
 @Getter
 @ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
 public class Account extends VersionedDeletableEntity {
 
     private long id;
@@ -110,8 +112,9 @@ public class Account extends VersionedDeletableEntity {
 
     /**
      * Add control into account
+     *
      * @param control - the control type
-     * @return  true if a control was added successfully and false otherwise.
+     * @return true if a control was added successfully and false otherwise.
      * In case of success, the account needs to be updated in the repository.
      */
     public boolean addControl(AccountControlType control) {
@@ -126,8 +129,9 @@ public class Account extends VersionedDeletableEntity {
 
     /**
      * Remove control from account
+     *
      * @param control - the control type
-     * @return  true if a control was removed successfully and false otherwise.
+     * @return true if a control was removed successfully and false otherwise.
      * In case of success, the account needs to be updated in the repository.
      */
     public boolean removeControl(AccountControlType control) {

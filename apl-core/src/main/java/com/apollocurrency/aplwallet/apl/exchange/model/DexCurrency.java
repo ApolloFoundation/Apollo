@@ -11,49 +11,35 @@ public enum DexCurrency {
     ETH("eth"),
     PAX("pax");
 
+    private String currencyCode;
+
     DexCurrency(String currency) {
         this.currencyCode = currency;
     }
 
-    private String currencyCode;
-
-    public String getCurrencyCode() {
-        return currencyCode;
-    }
-
-    public static Integer getValue( DexCurrency i ) {
+    public static Integer getValue(DexCurrency i) {
         switch (i) {
-            case APL : return 0;
-            case ETH : return 1;
-            case PAX : return 2;
+            case APL:
+                return 0;
+            case ETH:
+                return 1;
+            case PAX:
+                return 2;
         }
         return -1;
     }
 
-    public static DexCurrency getType(int ordinal){
-        if(ordinal < 0 || ordinal > DexCurrency.values().length){
+    public static DexCurrency getType(int ordinal) {
+        if (ordinal < 0 || ordinal > DexCurrency.values().length) {
             return null;
         }
 
         return DexCurrency.values()[ordinal];
     }
 
-    public boolean isEthOrPax(){
-        return (this == DexCurrency.ETH) || (this == DexCurrency.PAX);
-    }
-
-    public boolean isApl(){
-        return this == DexCurrency.APL;
-    }
-    public boolean isEth(){
-        return this == DexCurrency.ETH;
-    }
-    public boolean isPax(){
-        return this == DexCurrency.PAX;
-    }
-
     /**
      * Resteasy currency parsing method. Please note, that APL/ETH will be parsed to ETH
+     *
      * @param value request parameter in standard format 'apl','eth' or 'APL_ETH','APL/ETH' (end with currency code)
      * @return currency parsed from input
      * @throws IllegalArgumentException when currency was not parsed from input
@@ -66,5 +52,25 @@ public enum DexCurrency {
             }
         }
         throw new IllegalArgumentException("Incorrect DexCurrency value: " + value);
+    }
+
+    public String getCurrencyCode() {
+        return currencyCode;
+    }
+
+    public boolean isEthOrPax() {
+        return (this == DexCurrency.ETH) || (this == DexCurrency.PAX);
+    }
+
+    public boolean isApl() {
+        return this == DexCurrency.APL;
+    }
+
+    public boolean isEth() {
+        return this == DexCurrency.ETH;
+    }
+
+    public boolean isPax() {
+        return this == DexCurrency.PAX;
     }
 }

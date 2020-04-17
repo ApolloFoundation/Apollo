@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-wallet</artifactId>
-    <version>1.42.2</version>
+    <version>1.43.1</version>
   </parent>
 
   <artifactId>apl-core</artifactId>
@@ -15,21 +16,6 @@
   <dependencies>
     <dependency>
       <groupId>com.apollocurrency</groupId>
-      <artifactId>apl-crypto</artifactId>
-      <version>${project.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-log4j12</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.junit</groupId>
-          <artifactId>junit-bom</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>com.apollocurrency</groupId>
       <artifactId>apl-utils</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -37,20 +23,6 @@
       <groupId>com.apollocurrency</groupId>
       <artifactId>apl-api</artifactId>
       <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.firstbridge</groupId>
-      <artifactId>cryptolib</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-log4j12</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.junit</groupId>
-          <artifactId>junit-bom</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>
@@ -133,7 +105,7 @@
       <artifactId>jboss-logging-processor</artifactId>
     </dependency>
 
-  <!--Validation dependencies-->
+    <!--Validation dependencies-->
     <dependency>
       <groupId>javax.validation</groupId>
       <artifactId>validation-api</artifactId>
@@ -217,6 +189,11 @@
     <dependency>
       <groupId>org.junit.platform</groupId>
       <artifactId>junit-platform-engine</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.skyscreamer</groupId>
+      <artifactId>jsonassert</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -391,7 +368,8 @@
               <goal>copy-resources</goal>
             </goals>
             <configuration>
-              <outputDirectory>${basedir}/src/main/resources/com/apollocurrency/aplwallet/apl/core/rest/i18n</outputDirectory>
+              <outputDirectory>${basedir}/src/main/resources/com/apollocurrency/aplwallet/apl/core/rest/i18n
+              </outputDirectory>
               <resources>
                 <resource>
                   <directory>${basedir}/src/test/resources/i18n</directory>

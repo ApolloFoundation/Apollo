@@ -26,8 +26,8 @@ import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -40,10 +40,12 @@ import javax.servlet.http.HttpServletRequest;
 @Vetoed
 public final class GetDGSPurchases extends AbstractAPIRequestHandler {
 
-    public GetDGSPurchases() {
-        super(new APITag[] {APITag.DGS}, "seller", "buyer", "firstIndex", "lastIndex", "withPublicFeedbacksOnly", "completed");
-    }
     private DGSService service = CDI.current().select(DGSService.class).get();
+
+    public GetDGSPurchases() {
+        super(new APITag[]{APITag.DGS}, "seller", "buyer", "firstIndex", "lastIndex", "withPublicFeedbacksOnly", "completed");
+    }
+
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 

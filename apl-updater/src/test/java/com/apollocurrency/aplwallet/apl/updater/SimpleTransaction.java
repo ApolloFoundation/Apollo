@@ -30,22 +30,6 @@ public class SimpleTransaction implements Transaction {
     private TransactionType type;
     private Attachment attachment;
 
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    public void setHeight(int height) {
-        this.height = height;
-    }
-
-    public void setType(TransactionType type) {
-        this.type = type;
-    }
-
-    public void setAttachment(Attachment attachment) {
-        this.attachment = attachment;
-    }
-
     public SimpleTransaction(long id, TransactionType type, int height) {
         this.id = id;
         this.type = type;
@@ -66,11 +50,6 @@ public class SimpleTransaction implements Transaction {
     }
 
     @Override
-    public void setFeeATM(long feeATM) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public void sign(byte[] keySeed) throws AplException.NotValidException {
 
     }
@@ -78,6 +57,10 @@ public class SimpleTransaction implements Transaction {
     @Override
     public long getId() {
         return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
     }
 
     @Override
@@ -113,6 +96,10 @@ public class SimpleTransaction implements Transaction {
     @Override
     public int getHeight() {
         return height;
+    }
+
+    public void setHeight(int height) {
+        this.height = height;
     }
 
     @Override
@@ -170,6 +157,11 @@ public class SimpleTransaction implements Transaction {
     }
 
     @Override
+    public void setFeeATM(long feeATM) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public String getReferencedTransactionFullHash() {
         return null;
     }
@@ -199,9 +191,17 @@ public class SimpleTransaction implements Transaction {
         return type;
     }
 
+    public void setType(TransactionType type) {
+        this.type = type;
+    }
+
     @Override
     public Attachment getAttachment() {
         return attachment;
+    }
+
+    public void setAttachment(Attachment attachment) {
+        this.attachment = attachment;
     }
 
     @Override

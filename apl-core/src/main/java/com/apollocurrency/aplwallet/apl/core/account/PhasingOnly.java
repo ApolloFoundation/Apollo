@@ -33,14 +33,38 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
- *
  * @author al
  */
 public final class PhasingOnly {
 
-    private BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    final DbKey dbKey;
+    private final long accountId;
+    private BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
+    private PhasingParams phasingParams;
+    private long maxFees;
+    private short minDuration;
+    private short maxDuration;
+
+    PhasingOnly(long accountId, PhasingParams params, long maxFees, short minDuration, short maxDuration) {
+        this.accountId = accountId;
+        dbKey = AccountRestrictions.phasingControlDbKeyFactory.newKey(this.accountId);
+        phasingParams = params;
+        this.maxFees = maxFees;
+        this.minDuration = minDuration;
+        this.maxDuration = maxDuration;
+    }
+
+    public PhasingOnly(ResultSet rs, DbKey dbKey) throws SQLException {
+        this.accountId = rs.getLong("account_id");
+        this.dbKey = dbKey;
+        Long[] whitelist = DbUtils.getArray(rs, "whitelist", Long[].class);
+        phasingParams = new PhasingParams(rs.getByte("voting_model"), rs.getLong("holding_id"), rs.getLong("quorum"), rs.getLong("min_balance"), rs.getByte("min_balance_model"), whitelist == null ? Convert.EMPTY_LONG : Convert.toArray(whitelist));
+        this.maxFees = rs.getLong("max_fees");
+        this.minDuration = rs.getShort("min_duration");
+        this.maxDuration = rs.getShort("max_duration");
+    }
 
     public static PhasingOnly get(long accountId) {
         return AccountRestrictions.phasingControlTable.getBy(new DbClause.LongClause("account_id", accountId).and(new DbClause.ByteClause("voting_model", DbClause.Op.NE, VoteWeighting.VotingModel.NONE.getCode())));
@@ -87,32 +111,6 @@ public final class PhasingOnly {
         account.removeControl(AccountControlType.PHASING_ONLY);
         PhasingOnly phasingOnly = get(account.getId());
         AccountRestrictions.phasingControlTable.deleteAtHeight(phasingOnly, blockchain.getHeight());
-    }
-    final DbKey dbKey;
-    private final long accountId;
-    private PhasingParams phasingParams;
-    private long maxFees;
-    private short minDuration;
-    private short maxDuration;
-
-
-    PhasingOnly(long accountId, PhasingParams params, long maxFees, short minDuration, short maxDuration) {
-        this.accountId = accountId;
-        dbKey = AccountRestrictions.phasingControlDbKeyFactory.newKey(this.accountId);
-        phasingParams = params;
-        this.maxFees = maxFees;
-        this.minDuration = minDuration;
-        this.maxDuration = maxDuration;
-    }
-
-    public PhasingOnly(ResultSet rs, DbKey dbKey) throws SQLException {
-        this.accountId = rs.getLong("account_id");
-        this.dbKey = dbKey;
-        Long[] whitelist = DbUtils.getArray(rs, "whitelist", Long[].class);
-        phasingParams = new PhasingParams(rs.getByte("voting_model"), rs.getLong("holding_id"), rs.getLong("quorum"), rs.getLong("min_balance"), rs.getByte("min_balance_model"), whitelist == null ? Convert.EMPTY_LONG : Convert.toArray(whitelist));
-        this.maxFees = rs.getLong("max_fees");
-        this.minDuration = rs.getShort("min_duration");
-        this.maxDuration = rs.getShort("max_duration");
     }
 
     public long getAccountId() {
@@ -163,8 +161,7 @@ public final class PhasingOnly {
 
     void save(Connection con) throws SQLException {
         try (
-                @DatabaseSpecificDml(DmlMarker.MERGE)
-                final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_control_phasing " + "(account_id, whitelist, voting_model, quorum, min_balance, holding_id, min_balance_model, " + "max_fees, min_duration, max_duration, height, latest, deleted) KEY (account_id, height) " + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)")
+            @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_control_phasing " + "(account_id, whitelist, voting_model, quorum, min_balance, holding_id, min_balance_model, " + "max_fees, min_duration, max_duration, height, latest, deleted) KEY (account_id, height) " + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)")
         ) {
             int i = 0;
             pstmt.setLong(++i, this.accountId);

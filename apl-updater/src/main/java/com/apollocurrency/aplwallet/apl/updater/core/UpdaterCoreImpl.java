@@ -4,14 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.updater.core;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.UpdaterMediatorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
 import com.apollocurrency.aplwallet.apl.core.transaction.Update;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.UpdateAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateData;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateInfo;
@@ -34,43 +32,39 @@ import com.apollocurrency.aplwallet.apl.util.Version;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.Objects;
 import javax.enterprise.event.Event;
 import javax.enterprise.event.Observes;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.Objects;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 @Singleton
 public class UpdaterCoreImpl implements UpdaterCore {
     private static final Logger LOG = getLogger(UpdaterCoreImpl.class);
+    private final UpdateInfo updateInfo;
+    private final Event<UpdateEventData> startUpdateEvent;
     private UpdaterService updaterService;
     private UpdaterMediator updaterMediator;
     private UpdaterFactory updaterFactory;
     private UpdateTransactionVerifier updateTransactionVerifier;
-    private final UpdateInfo updateInfo;
     private volatile boolean processUpdateTxs = false;
-    private final Event<UpdateEventData> startUpdateEvent;
-
-    @Override
-    public UpdateInfo getUpdateInfo() {
-        return updateInfo;
-    }
 
     public UpdaterCoreImpl(UpdaterService updaterService, UpdaterMediator updaterMediator, UpdateInfo updateInfo, Event<UpdateEventData> startUpdateEvent) {
         this(updaterService, updaterMediator, new UpdaterFactoryImpl(updaterMediator, updaterService, updateInfo),
-                new UpdateTransactionVerifierImpl(updaterMediator, updaterService), updateInfo, startUpdateEvent);
+            new UpdateTransactionVerifierImpl(updaterMediator, updaterService), updateInfo, startUpdateEvent);
     }
 
     @Inject
     public UpdaterCoreImpl(UpdaterMediatorImpl updaterMediator, UpdateInfo updateInfo, Event<UpdateEventData> startUpdateEvent) {
         this(new UpdaterServiceImpl(new UpdaterDbRepository(updaterMediator)), updaterMediator, updateInfo, startUpdateEvent);
     }
-
 
     public UpdaterCoreImpl(UpdaterService updaterService, UpdaterMediator updaterMediator,
                            UpdateTransactionVerifier updateTransactionVerifier, UpdateInfo updateInfo, Event<UpdateEventData> startUpdateEvent) {
@@ -88,6 +82,11 @@ public class UpdaterCoreImpl implements UpdaterCore {
         this.updateInfo = Objects.requireNonNull(updateInfo);
         this.updateTransactionVerifier = updateTransactionVerifier;
         this.startUpdateEvent = startUpdateEvent;
+    }
+
+    @Override
+    public UpdateInfo getUpdateInfo() {
+        return updateInfo;
     }
 
     @Override
@@ -114,8 +113,7 @@ public class UpdaterCoreImpl implements UpdaterCore {
         } else {
             try {
                 updateTransaction = updaterService.getLast();
-            }
-            catch (Throwable e) {
+            } catch (Throwable e) {
                 LOG.debug("Updater db error: {}", e.getLocalizedMessage());
             }
             if (updateTransaction != null) {
@@ -140,7 +138,7 @@ public class UpdaterCoreImpl implements UpdaterCore {
                     Version expectedVersion = attachment.getAppVersion();
                     if (expectedVersion.greaterThan(updaterMediator.getWalletVersion())) {
                         LOG.error("Found " + transaction.getType() + " update (platform dependent script failed): currentVersion: " + updaterMediator.getWalletVersion() +
-                                " " + " updateVersion: " + expectedVersion);
+                            " " + " updateVersion: " + expectedVersion);
                         if (transaction.getType() == Update.CRITICAL) {
                             updaterMediator.suspendBlockchain();
                             updateState(transaction, UpdateInfo.UpdateState.REQUIRED_MANUAL_INSTALL);
@@ -162,16 +160,15 @@ public class UpdaterCoreImpl implements UpdaterCore {
             ObjectMapper objectMapper = new ObjectMapper();
             FileUpdateAttachment fua = objectMapper.readValue(path.toAbsolutePath().toFile(), FileUpdateAttachment.class);
             UpdateAttachment attachment = UpdateAttachment.getAttachment(fua.getPlatform(), fua.getArchitecture(), new DoubleByteArrayTuple(
-                            Convert.parseHexString(fua.getUrlFirstPart()), Convert.parseHexString(fua.getUrlSecondPart())
-                    ),
-                    new Version(fua.getVersion()),
-                    Convert.parseHexString(fua.getHash()),
-                    (byte) fua.getLevel()
+                    Convert.parseHexString(fua.getUrlFirstPart()), Convert.parseHexString(fua.getUrlSecondPart())
+                ),
+                new Version(fua.getVersion()),
+                Convert.parseHexString(fua.getHash()),
+                (byte) fua.getLevel()
             );
             LOG.info("Got update attachment: {}", attachment.getJSONObject().toJSONString());
             return attachment;
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException(e.toString(), e);
         }
 
@@ -180,8 +177,8 @@ public class UpdaterCoreImpl implements UpdaterCore {
     @Override
     public void startUpdate(UpdateData updateData) {
         new Thread(() ->
-                performUpdate(updateData),
-                "UpdateExecutor").start();
+            performUpdate(updateData),
+            "UpdateExecutor").start();
     }
 
     @Override

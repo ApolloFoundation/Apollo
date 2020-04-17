@@ -4,6 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.model;
 
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import lombok.extern.slf4j.Slf4j;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -11,10 +15,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
-
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Singleton
@@ -37,8 +37,7 @@ public class OptionDAO {
                     return rs.getString("value");
                 }
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             log.error(e.getMessage());
         }
         return null;
@@ -52,8 +51,7 @@ public class OptionDAO {
                 stmt.setString(1, optionName);
                 stmt.setString(2, optionValue);
                 stmt.execute();
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 log.error("OptionDAO insert error, {}={}, {}", optionName, optionValue, e.getMessage());
             }
         } else {
@@ -62,8 +60,7 @@ public class OptionDAO {
                 stmt.setString(1, optionValue);
                 stmt.setString(2, optionName);
                 stmt.execute();
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 log.error("OptionDAO update error, {}={}, {}", optionName, optionValue, e.getMessage());
             }
         }
@@ -78,8 +75,7 @@ public class OptionDAO {
                 stmt.setString(1, optionName);
                 int deletedRows = stmt.executeUpdate();
                 return deletedRows == 1;
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 log.error(e.getMessage());
             }
         }
@@ -89,13 +85,12 @@ public class OptionDAO {
     public void deleteAll() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         Objects.requireNonNull(dataSource, "dataSource is NULL");
-            try (Connection con = dataSource.getConnection()) {
-                PreparedStatement stmt = con.prepareStatement("DELETE FROM option");
-                int deletedRows = stmt.executeUpdate();
-            }
-            catch (SQLException e) {
-                log.error(e.getMessage());
-            }
+        try (Connection con = dataSource.getConnection()) {
+            PreparedStatement stmt = con.prepareStatement("DELETE FROM option");
+            int deletedRows = stmt.executeUpdate();
+        } catch (SQLException e) {
+            log.error(e.getMessage());
+        }
     }
 
     public boolean exist(String optionKey) {
@@ -108,8 +103,7 @@ public class OptionDAO {
                     return rs.getLong(1) > 0;
                 }
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             log.error(e.getMessage());
         }
         return false;

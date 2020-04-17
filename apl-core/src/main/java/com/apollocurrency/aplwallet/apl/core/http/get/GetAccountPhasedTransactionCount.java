@@ -35,10 +35,12 @@ import javax.servlet.http.HttpServletRequest;
 @Vetoed
 public class GetAccountPhasedTransactionCount extends AbstractAPIRequestHandler {
 
+    private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
+
     public GetAccountPhasedTransactionCount() {
         super(new APITag[]{APITag.ACCOUNTS, APITag.PHASING}, "account");
     }
-    private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
+
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         long accountId = HttpParameterParserUtil.getAccountId(req, true);

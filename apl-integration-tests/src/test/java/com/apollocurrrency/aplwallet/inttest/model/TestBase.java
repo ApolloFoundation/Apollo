@@ -1,10 +1,10 @@
 package com.apollocurrrency.aplwallet.inttest.model;
 
-import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
 import com.apollocurrency.aplwallet.api.dto.BalanceDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockchainInfoDTO;
 import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
+import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrency.aplwallet.api.response.ForgingResponse;
 import com.apollocurrency.aplwallet.api.response.GetAccountResponse;
@@ -44,20 +44,20 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 
 public abstract class TestBase implements ITest {
+    public static final Logger log = LoggerFactory.getLogger(TestBase.class);
     public static TestInfo testInfo;
     protected static RetryPolicy retryPolicy;
     protected static RestHelper restHelper;
     protected static ObjectMapper mapper = new ObjectMapper();
-    public static final Logger log = LoggerFactory.getLogger(TestBase.class);
 
     @BeforeAll
     static void initAll() {
         log.info("Preconditions started");
         TestConfiguration.getTestConfiguration();
         retryPolicy = new RetryPolicy()
-                .retryWhen(false)
-                .withMaxRetries(30)
-                .withDelay(5, TimeUnit.SECONDS);
+            .retryWhen(false)
+            .withMaxRetries(30)
+            .withDelay(5, TimeUnit.SECONDS);
         restHelper = new RestHelper();
         ClassLoader classLoader = TestBase.class.getClassLoader();
         String secretFilePath = Objects.requireNonNull(classLoader.getResource(TestConfiguration.getTestConfiguration().getVaultWallet().getUser())).getPath();
@@ -71,19 +71,6 @@ public abstract class TestBase implements ITest {
         log.info("Preconditions finished");
     }
 
-    @BeforeEach
-    @Step("Before test")
-    public void setUp(TestInfo testInfo) {
-        this.testInfo = testInfo;
-    }
-
-
-    @AfterEach
-    @Step("AfterEach")
-    public void tearDown() {
-        this.testInfo = null;
-    }
-
     @AfterAll
     @Step("AfterAll")
     static void afterAll() {
@@ -94,37 +81,36 @@ public abstract class TestBase implements ITest {
     private static void importSecretFileSetUp(String pathToSecretFile, String pass) {
         String path = "/rest/keyStore/upload";
         given().log().all()
-                .spec(restHelper.getPreconditionSpec())
-                .header("Content-Type", "multipart/form-data")
-                .multiPart("keyStore", new File(pathToSecretFile))
-                .formParam("passPhrase", pass)
-                .when()
-                .post(path);
+            .spec(restHelper.getPreconditionSpec())
+            .header("Content-Type", "multipart/form-data")
+            .multiPart("keyStore", new File(pathToSecretFile))
+            .formParam("passPhrase", pass)
+            .when()
+            .post(path);
     }
 
     public static void setUpTestData() {
         CreateTransactionResponse transactionResponse;
         if (getBalanceSetUP(TestConfiguration.getTestConfiguration().getStandartWallet()).getBalanceATM() < 90000000000000L) {
             transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getGenesisWallet(),
-                    TestConfiguration.getTestConfiguration().getStandartWallet().getUser(), 1000000);
+                TestConfiguration.getTestConfiguration().getStandartWallet().getUser(), 1000000);
             verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
         }
 
         transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getStandartWallet(),
-                TestConfiguration.getTestConfiguration().getStandartWallet().getUser(), 10);
+            TestConfiguration.getTestConfiguration().getStandartWallet().getUser(), 10);
         verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
 
         if (getBalanceSetUP(TestConfiguration.getTestConfiguration().getVaultWallet()).getBalanceATM() < 90000000000000L) {
             transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getGenesisWallet(),
-                    TestConfiguration.getTestConfiguration().getVaultWallet().getUser(), 1000000);
+                TestConfiguration.getTestConfiguration().getVaultWallet().getUser(), 1000000);
             verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
         }
 
         transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getVaultWallet(),
-                TestConfiguration.getTestConfiguration().getVaultWallet().getUser(), 10);
+            TestConfiguration.getTestConfiguration().getVaultWallet().getUser(), 10);
         verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
     }
-
 
     private static CreateTransactionResponse sendMoneySetUp(Wallet wallet, String recipient, int moneyAmount) {
         addParameters(RequestType.requestType, RequestType.sendMoney);
@@ -160,16 +146,15 @@ public abstract class TestBase implements ITest {
         return getInstanse(BalanceDTO.class);
     }
 
-
     private static void startForgingSetUp() {
         List<String> peersIp;
         String path;
         if (TestConfiguration.getTestConfiguration().getBaseURL().equals("localhost")) {
             path = "/rest/networking/peer/all";
             List<String> peers = given().log().uri()
-                    .spec(restHelper.getPreconditionSpec())
-                    .when()
-                    .get(path).as(GetPeersIpResponse.class).getPeers();
+                .spec(restHelper.getPreconditionSpec())
+                .when()
+                .get(path).as(GetPeersIpResponse.class).getPeers();
 
             if (peers.size() > 0) {
                 //TODO: Change on REST Easy
@@ -178,15 +163,15 @@ public abstract class TestBase implements ITest {
 
                 path = "/apl";
                 BlockchainInfoDTO status = given().log().all()
-                        .spec(restHelper.getPreconditionSpec())
-                        .contentType(ContentType.URLENC)
-                        .formParams(param)
-                        .when()
-                        .post(path)
-                        .then()
-                        .assertThat().statusCode(200)
-                        .extract().body().jsonPath()
-                        .getObject("", BlockchainInfoDTO.class);
+                    .spec(restHelper.getPreconditionSpec())
+                    .contentType(ContentType.URLENC)
+                    .formParams(param)
+                    .when()
+                    .post(path)
+                    .then()
+                    .assertThat().statusCode(200)
+                    .extract().body().jsonPath()
+                    .getObject("", BlockchainInfoDTO.class);
 
                 peersIp = TestConfiguration.getTestConfiguration().getHostsByChainID(status.getChainId());
 
@@ -200,21 +185,21 @@ public abstract class TestBase implements ITest {
 
                     for (String ip : peersIp) {
 
-                    HashMap<String, String> param = new HashMap();
-                    param.put(RequestType.requestType.toString(), RequestType.getForging.toString());
-                    param.put(Parameters.adminPassword.toString(), getTestConfiguration().getAdminPass());
+                        HashMap<String, String> param = new HashMap();
+                        param.put(RequestType.requestType.toString(), RequestType.getForging.toString());
+                        param.put(Parameters.adminPassword.toString(), getTestConfiguration().getAdminPass());
 
                         path = "/apl";
                         ForgingResponse forgingResponse = given().log().all()
-                                .baseUri(String.format("http://%s:%s", ip, 7876))
-                                .contentType(ContentType.URLENC)
-                                .formParams(param)
-                                .when()
-                                .post(path)
-                                .then()
-                                .assertThat().statusCode(200)
-                                .extract().body().jsonPath()
-                                .getObject("", ForgingResponse.class);
+                            .baseUri(String.format("http://%s:%s", ip, 7876))
+                            .contentType(ContentType.URLENC)
+                            .formParams(param)
+                            .when()
+                            .post(path)
+                            .then()
+                            .assertThat().statusCode(200)
+                            .extract().body().jsonPath()
+                            .getObject("", ForgingResponse.class);
 
                         if (forgingResponse.getGenerators().size() > 0) {
                             isForgingEnableOnGen = true;
@@ -262,5 +247,17 @@ public abstract class TestBase implements ITest {
                 sendMoneySetUp(TestConfiguration.getTestConfiguration().getGenesisWallet(), account.getAccountRS(), 5000000);
             }
         }
+    }
+
+    @BeforeEach
+    @Step("Before test")
+    public void setUp(TestInfo testInfo) {
+        this.testInfo = testInfo;
+    }
+
+    @AfterEach
+    @Step("AfterEach")
+    public void tearDown() {
+        this.testInfo = null;
     }
 }

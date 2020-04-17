@@ -27,9 +27,24 @@ public class Version implements Comparable<Version> {
         intermediateVersion = Integer.parseInt(versionNumbers[1]);
         minorVersion = (Integer.parseInt(versionNumbers[2]));
     }
+
+    public static boolean isOldVersion(Version version, Version minVersion) {
+        if (version == null) {
+            return true;
+        }
+        return version.lessThan(minVersion);
+    }
+
+    public static boolean isNewVersion(Version version) {
+        if (version == null) {
+            return true;
+        }
+        return version.greaterThan(Constants.VERSION);
+    }
+
     @Override
     public String toString() {
-        return majorVersion +"."+ intermediateVersion + "." + minorVersion;
+        return majorVersion + "." + intermediateVersion + "." + minorVersion;
     }
 
     @Override
@@ -38,8 +53,8 @@ public class Version implements Comparable<Version> {
         if (!(o instanceof Version)) return false;
         Version version = (Version) o;
         return majorVersion == version.majorVersion &&
-                intermediateVersion == version.intermediateVersion &&
-                minorVersion == version.minorVersion;
+            intermediateVersion == version.intermediateVersion &&
+            minorVersion == version.minorVersion;
     }
 
     @Override
@@ -63,10 +78,10 @@ public class Version implements Comparable<Version> {
     @Override
     public int compareTo(Version v) {
         int majorVersionCompare = Integer.compare(majorVersion, v.getMajorVersion());
-        if (majorVersionCompare != 0 )
+        if (majorVersionCompare != 0)
             return majorVersionCompare;
         int intermediateVersionCompare = Integer.compare(intermediateVersion, v.getIntermediateVersion());
-        if (intermediateVersionCompare != 0 )
+        if (intermediateVersionCompare != 0)
             return intermediateVersionCompare;
         return Integer.compare(minorVersion, v.getMinorVersion());
     }
@@ -78,22 +93,8 @@ public class Version implements Comparable<Version> {
     public Version incrementVersion() {
         return new Version(getMajorVersion(), getIntermediateVersion(), getMinorVersion() + 1);
     }
+
     public boolean lessThan(Version v) {
         return compareTo(v) < 0;
     }
-
-    public static boolean isOldVersion(Version version, Version minVersion) {
-        if (version == null) {
-            return true;
-        }
-        return version.lessThan(minVersion);
-    }
-
-
-    public static boolean isNewVersion(Version version) {
-        if (version == null) {
-            return true;
-        }
-        return version.greaterThan(Constants.VERSION);
-    }    
 }

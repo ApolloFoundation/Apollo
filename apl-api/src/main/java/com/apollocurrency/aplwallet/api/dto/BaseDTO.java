@@ -9,7 +9,8 @@ package com.apollocurrency.aplwallet.api.dto;
 import lombok.Getter;
 import lombok.Setter;
 
-@Getter @Setter
+@Getter
+@Setter
 public class BaseDTO {
     /**
      * Time in milliseconds that took from incoming request to response

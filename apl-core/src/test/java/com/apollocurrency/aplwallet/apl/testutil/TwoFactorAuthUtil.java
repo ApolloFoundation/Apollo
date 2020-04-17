@@ -14,7 +14,8 @@ import java.security.GeneralSecurityException;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TwoFactorAuthUtil {
-    private TwoFactorAuthUtil() {}
+    private TwoFactorAuthUtil() {
+    }
 
     public static boolean tryAuth(TwoFactorAuthService service, long account, String secret, int maxAttempts) throws GeneralSecurityException {
         // TimeBased code sometimes expire before calling tryAuth method, which will generate another code
@@ -31,6 +32,6 @@ public class TwoFactorAuthUtil {
     public static void verifySecretCode(TwoFactorAuthDetails details, String accountRS) {
         assertTrue(details.getQrCodeUrl().contains(details.getSecret()));
         assertTrue(details.getQrCodeUrl().startsWith(TimeBasedOneTimePasswordUtil.qrImageUrl(accountRS,
-                details.getSecret())));
+            details.getSecret())));
     }
 }

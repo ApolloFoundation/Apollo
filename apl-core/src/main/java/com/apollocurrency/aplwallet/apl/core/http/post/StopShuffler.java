@@ -20,32 +20,32 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import javax.servlet.http.HttpServletRequest;
-
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffler;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+
+import javax.enterprise.inject.Vetoed;
+import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class StopShuffler extends AbstractAPIRequestHandler {
 
     public StopShuffler() {
-        super(new APITag[] {APITag.SHUFFLING}, "shufflingFullHash", "secretPhrase", "adminPassword");
+        super(new APITag[]{APITag.SHUFFLING}, "shufflingFullHash", "secretPhrase", "adminPassword");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
         byte[] shufflingFullHash = HttpParameterParserUtil.getBytes(req, "shufflingFullHash", false);
         long accountId = HttpParameterParserUtil.getAccountId(req, false);
-        byte[] keySeed = HttpParameterParserUtil.getKeySeed(req,accountId, false);
+        byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, accountId, false);
         JSONObject response = new JSONObject();
         if (keySeed != null) {
             if (accountId != 0 && AccountService.getId(Crypto.getPublicKey(keySeed)) != accountId) {

@@ -4,12 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
-import java.util.Optional;
-
 /**
  * Factory for creation helper used for processing specified table
- * @param <T>
  *
+ * @param <T>
  * @author yuriy.larin
  */
 public interface HelperFactory<T> {
@@ -21,10 +19,11 @@ public interface HelperFactory<T> {
      * @return table specific helper class OR throw exception
      * @throws IllegalArgumentException when unable to find helper for specific helperTableName
      */
-     T createSelectInsertHelper(String helperTableName) throws IllegalArgumentException;
+    T createSelectInsertHelper(String helperTableName) throws IllegalArgumentException;
 
     /**
      * Create specified helper class. There are helpers used for deleting
+     *
      * @param helperTableName
      * @param helperTableName table name
      * @return table specific helper class OR throw exception

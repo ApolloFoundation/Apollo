@@ -12,16 +12,21 @@ import org.web3j.utils.Convert;
 import javax.enterprise.inject.Vetoed;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+
 @Vetoed
 public class EthUtil {
 
     private static final String ETH_ADDRESS_PATTERN = "^0x[0-9a-f]{40}$";
 
+    private EthUtil() {
+    }
+
     /**
      * Generate new account with random key.
+     *
      * @return EthWallet
      */
-    public static EthWalletKey generateNewAccount(){
+    public static EthWalletKey generateNewAccount() {
         byte[] secretBytes = new byte[32];
         Crypto.getSecureRandom().nextBytes(secretBytes);
         byte[] keySeed = Crypto.getKeySeed(secretBytes);
@@ -69,10 +74,8 @@ public class EthUtil {
         return ix.divide(BigDecimal.valueOf(Constants.ONE_APL));
     }
 
-    public static boolean isAddressValid(String address){
-        return  StringUtils.isNotBlank(address) && address.toLowerCase().matches(ETH_ADDRESS_PATTERN);
+    public static boolean isAddressValid(String address) {
+        return StringUtils.isNotBlank(address) && address.toLowerCase().matches(ETH_ADDRESS_PATTERN);
     }
-
-    private EthUtil() {}
 
 }

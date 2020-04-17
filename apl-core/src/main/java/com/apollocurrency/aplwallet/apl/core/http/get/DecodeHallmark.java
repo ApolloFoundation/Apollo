@@ -36,7 +36,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_H
 public final class DecodeHallmark extends AbstractAPIRequestHandler {
 
     public DecodeHallmark() {
-        super(new APITag[] {APITag.TOKENS}, "hallmark");
+        super(new APITag[]{APITag.TOKENS}, "hallmark");
     }
 
     @Override

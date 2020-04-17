@@ -22,23 +22,26 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.http.JSONData;
+import com.apollocurrency.aplwallet.apl.core.trade.service.TradeService;
+import com.apollocurrency.aplwallet.apl.core.trade.service.impl.TradeServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectorUtils;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Trade;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class GetAllTrades extends AbstractAPIRequestHandler {
+    private final TradeService tradeService = CDI.current().select(TradeService.class).get();
 
     public GetAllTrades() {
-        super(new APITag[] {APITag.AE}, "timestamp", "firstIndex", "lastIndex", "includeAssetInfo");
+        super(new APITag[]{APITag.AE}, "timestamp", "firstIndex", "lastIndex", "includeAssetInfo");
     }
 
     @Override
@@ -49,16 +52,11 @@ public final class GetAllTrades extends AbstractAPIRequestHandler {
         boolean includeAssetInfo = "true".equalsIgnoreCase(req.getParameter("includeAssetInfo"));
 
         JSONObject response = new JSONObject();
-        JSONArray trades = new JSONArray();
-        try (DbIterator<Trade> tradeIterator = Trade.getAllTrades(firstIndex, lastIndex)) {
-            while (tradeIterator.hasNext()) {
-                Trade trade = tradeIterator.next();
-                if (trade.getTimestamp() < timestamp) {
-                    break;
-                }
-                trades.add(JSONData.trade(trade, includeAssetInfo));
-            }
-        }
+        JSONArray trades = tradeService.getAllTrades(firstIndex, lastIndex)
+            .takeWhile(trade -> trade.getTimestamp() >= timestamp)
+            .map(trade -> JSONData.trade(trade, includeAssetInfo))
+            .collect(CollectorUtils.jsonCollector());
+
         response.put("trades", trades);
         return response;
     }

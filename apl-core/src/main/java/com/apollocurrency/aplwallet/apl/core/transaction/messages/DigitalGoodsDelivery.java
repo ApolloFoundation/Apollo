@@ -10,19 +10,19 @@ import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import java.nio.ByteBuffer;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+
 /**
- *
  * @author al
  */
 public class DigitalGoodsDelivery extends AbstractAttachment {
-    
+
     final long purchaseId;
-    EncryptedData goods;
     final long discountATM;
     final boolean goodsIsText;
+    EncryptedData goods;
 
     public DigitalGoodsDelivery(ByteBuffer buffer) throws AplException.NotValidException {
         super(buffer);
@@ -106,5 +106,5 @@ public class DigitalGoodsDelivery extends AbstractAttachment {
     public final boolean goodsIsText() {
         return goodsIsText;
     }
-    
+
 }
