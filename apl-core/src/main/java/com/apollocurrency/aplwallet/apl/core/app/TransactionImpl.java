@@ -15,12 +15,12 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
@@ -70,6 +70,8 @@ public class TransactionImpl implements Transaction {
 
     @Inject
     private static AccountPublicKeyService accountPublicKeyService;
+    private static AccountControlPhasingService accountControlPhasingService;
+
     private final short deadline;
     private final long recipientId;
     private final long amountATM;
@@ -367,6 +369,13 @@ public class TransactionImpl implements Transaction {
             accountPublicKeyService = CDI.current().select(AccountPublicKeyService.class).get();
         }
         return accountPublicKeyService;
+    }
+
+    public AccountControlPhasingService lookupAccountControlPhasingService() {
+        if (accountControlPhasingService == null) {
+            accountControlPhasingService = CDI.current().select(AccountControlPhasingService.class).get();
+        }
+        return accountControlPhasingService;
     }
 
     @Override
@@ -838,7 +847,7 @@ public class TransactionImpl implements Transaction {
             return false;
         }
         if (atAcceptanceHeight) {
-            if (AccountRestrictions.isBlockDuplicate(this, duplicates)) {
+            if (lookupAccountControlPhasingService().isBlockDuplicate(this, duplicates)) {
                 return true;
             }
             // all are checked at acceptance height for block duplicates

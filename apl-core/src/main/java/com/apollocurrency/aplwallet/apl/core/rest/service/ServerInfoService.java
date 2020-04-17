@@ -13,7 +13,7 @@ import com.apollocurrency.aplwallet.api.dto.info.NameCodeTypeDto;
 import com.apollocurrency.aplwallet.api.dto.info.SubTypeDto;
 import com.apollocurrency.aplwallet.api.dto.info.TimeDto;
 import com.apollocurrency.aplwallet.api.dto.info.TotalSupplyDto;
-import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountLeaseService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
@@ -101,6 +101,7 @@ public class ServerInfoService {
     private final OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService;
     private final OrderService<BidOrder, ColoredCoinsBidOrderPlacement> bidOrderService;
     private final TradeService tradeService;
+    private final AccountControlPhasingService accountControlPhasingService;
 
     @Inject
     public ServerInfoService(BlockchainConfig blockchainConfig, Blockchain blockchain,
@@ -118,7 +119,8 @@ public class ServerInfoService {
                              AliasService aliasService,
                              @AskOrderService OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService,
                              @BidOrderService OrderService<BidOrder, ColoredCoinsBidOrderPlacement> bidOrderService,
-                             TradeService tradeService
+                             TradeService tradeService,
+                             AccountControlPhasingService accountControlPhasingService
     ) {
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
         this.blockchain = Objects.requireNonNull(blockchain, "blockchain is NULL");
@@ -139,6 +141,7 @@ public class ServerInfoService {
         this.askOrderService = Objects.requireNonNull(askOrderService, "askOrderService is NULL");
         this.bidOrderService = Objects.requireNonNull(bidOrderService, "bidOrderService is NULL");
         this.tradeService = Objects.requireNonNull(tradeService, "tradeService is NULL");
+        this.accountControlPhasingService = Objects.requireNonNull(accountControlPhasingService, "accountControlPhasingService is NULL");
     }
 
     public ApolloX509Info getX509Info() {
@@ -344,7 +347,8 @@ public class ServerInfoService {
             dto.numberOfActiveAccountLeases = accountService.getActiveLeaseCount();
             dto.numberOfShufflings = Shuffling.getCount();
             dto.numberOfActiveShufflings = Shuffling.getActiveCount();
-            dto.numberOfPhasingOnlyAccounts = PhasingOnly.getCount();
+//            dto.numberOfPhasingOnlyAccounts = PhasingOnly.getCount();
+            dto.numberOfPhasingOnlyAccounts = accountControlPhasingService.getCount();
         }
         dto.numberOfPeers = peersService.getAllPeers().size();
         dto.numberOfActivePeers = peersService.getActivePeers().size();

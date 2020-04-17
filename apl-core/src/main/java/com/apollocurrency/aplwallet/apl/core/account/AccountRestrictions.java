@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.account;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+/*import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -37,11 +37,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
 
-import static com.apollocurrency.aplwallet.apl.core.transaction.AccountControl.SET_PHASING_ONLY;
+import static com.apollocurrency.aplwallet.apl.core.transaction.AccountControl.SET_PHASING_ONLY;*/
 
-@Slf4j
+@Deprecated
 public final class AccountRestrictions {
 
+/*
     static final LongKeyFactory<PhasingOnly> phasingControlDbKeyFactory = new LongKeyFactory<PhasingOnly>("account_id") {
         @Override
         public DbKey newKey(PhasingOnly rule) {
@@ -60,6 +61,9 @@ public final class AccountRestrictions {
             phasingOnly.save(con);
         }
     };
+*/
+
+/*
     static AccountService accountService;
 
     private static AccountService lookupAccountService() {
@@ -68,12 +72,15 @@ public final class AccountRestrictions {
         }
         return accountService;
     }
+*/
 
+/*
     public static void init() {
         lookupAccountService();
-
     }
+*/
 
+/*
     public static void checkTransaction(Transaction transaction) throws AplException.NotCurrentlyValidException {
         Account senderAccount = lookupAccountService().getAccount(transaction.getSenderId());
         if (senderAccount == null) {
@@ -84,7 +91,9 @@ public final class AccountRestrictions {
             phasingOnly.checkTransaction(transaction);
         }
     }
+*/
 
+/*
     public static boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
         Account senderAccount = lookupAccountService().getAccount(transaction.getSenderId());
         return
@@ -94,5 +103,6 @@ public final class AccountRestrictions {
                 && TransactionType.isDuplicate(SET_PHASING_ONLY,
                 Long.toUnsignedString(senderAccount.getId()), duplicates, true);
     }
+*/
 
 }

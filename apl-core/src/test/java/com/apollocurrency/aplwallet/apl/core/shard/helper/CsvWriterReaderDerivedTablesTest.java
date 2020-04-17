@@ -1,14 +1,15 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
-import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountAssetTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountControlPhasingTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountCurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.GenesisPublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.PublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
@@ -174,6 +175,7 @@ class CsvWriterReaderDerivedTablesTest {
         .addBeans(MockBean.of(mock(AccountService.class), AccountServiceImpl.class, AccountService.class))
         .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyServiceImpl.class, AccountPublicKeyService.class))
         .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
+        .addBeans(MockBean.of(mock(AccountControlPhasingService.class), AccountControlPhasingService.class))
         .build();
     @Inject
     private Blockchain blockchain;
@@ -200,7 +202,9 @@ class CsvWriterReaderDerivedTablesTest {
         // init several derived tables
         AccountCurrencyTable accountCurrencyTable = new AccountCurrencyTable();
         accountCurrencyTable.init();
-        PhasingOnly.get(Long.parseLong("-8446384352342482748"));
+        AccountControlPhasingTable accountControlPhasingTable = new AccountControlPhasingTable();
+        accountControlPhasingTable.init();
+//        PhasingOnly.get(Long.parseLong("-8446384352342482748"));
         AccountAssetTable accountAssetTable = new AccountAssetTable();
         accountAssetTable.init();
         GenesisPublicKeyTable genesisPublicKeyTable = new GenesisPublicKeyTable(blockchain);

@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.transaction;
@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountInfoService;
@@ -135,6 +136,7 @@ public abstract class TransactionType {
     private static AccountAssetService accountAssetService;
     private static AccountPropertyService accountPropertyService;
     private static AccountInfoService accountInfoService;
+    private static AccountControlPhasingService accountControlPhasingService;
 
     public TransactionType() {
     }
@@ -224,6 +226,13 @@ public abstract class TransactionType {
             }
         }
         return ALIAS_SERVICE;
+    }
+
+    public static synchronized AccountControlPhasingService lookupAccountControlPhasingService(){
+        if (accountControlPhasingService == null) {
+            accountControlPhasingService = CDI.current().select(AccountControlPhasingService.class).get();
+        }
+        return accountControlPhasingService;
     }
 
     public static TransactionType findTransactionType(byte type, byte subtype) {

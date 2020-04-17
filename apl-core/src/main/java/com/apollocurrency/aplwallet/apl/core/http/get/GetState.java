@@ -15,12 +15,11 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.alias.service.AliasService;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.app.Poll;
@@ -110,7 +109,8 @@ public final class GetState extends AbstractAPIRequestHandler {
             response.put("numberOfActiveAccountLeases", lookupAccountService().getActiveLeaseCount());
             response.put("numberOfShufflings", Shuffling.getCount());
             response.put("numberOfActiveShufflings", Shuffling.getActiveCount());
-            response.put("numberOfPhasingOnlyAccounts", PhasingOnly.getCount());
+//            response.put("numberOfPhasingOnlyAccounts", PhasingOnly.getCount());
+            response.put("numberOfPhasingOnlyAccounts", lookupAccountControlPhasingService().getCount());
         }
         response.put("numberOfPeers", lookupPeersService().getAllPeers().size());
         response.put("numberOfActivePeers", lookupPeersService().getActivePeers().size());

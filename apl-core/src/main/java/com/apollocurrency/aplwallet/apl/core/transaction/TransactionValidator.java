@@ -1,7 +1,11 @@
+/*
+ * Copyright © 2018-2020 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.antifraud.AntifraudValidator;
-import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -21,13 +25,17 @@ public class TransactionValidator {
     private PhasingPollService phasingPollService;
     private Blockchain blockchain;
     private FeeCalculator feeCalculator;
+    private AccountControlPhasingService accountControlPhasingService;
 
     @Inject
-    public TransactionValidator(BlockchainConfig blockchainConfig, PhasingPollService phasingPollService, Blockchain blockchain, FeeCalculator feeCalculator) {
+    public TransactionValidator(BlockchainConfig blockchainConfig, PhasingPollService phasingPollService,
+                                Blockchain blockchain, FeeCalculator feeCalculator,
+                                AccountControlPhasingService accountControlPhasingService) {
         this.blockchainConfig = blockchainConfig;
         this.phasingPollService = phasingPollService;
         this.blockchain = blockchain;
         this.feeCalculator = feeCalculator;
+        this.accountControlPhasingService = accountControlPhasingService;
     }
 
     public void validate(Transaction transaction) throws AplException.ValidationException {
@@ -109,7 +117,7 @@ public class TransactionValidator {
                         + ", transaction was generated on a fork");
                 }
             }
-            AccountRestrictions.checkTransaction(transaction);
+            accountControlPhasingService.checkTransaction(transaction);
         }
     }
 }

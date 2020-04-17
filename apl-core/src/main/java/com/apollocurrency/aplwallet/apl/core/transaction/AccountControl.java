@@ -1,11 +1,11 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
+
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -151,7 +151,8 @@ public abstract class AccountControl extends TransactionType {
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             SetPhasingOnly attachment = (SetPhasingOnly) transaction.getAttachment();
-            PhasingOnly.set(senderAccount, attachment);
+//            PhasingOnly.set(senderAccount, attachment);
+            lookupAccountControlPhasingService().set(senderAccount, attachment);
         }
 
         @Override

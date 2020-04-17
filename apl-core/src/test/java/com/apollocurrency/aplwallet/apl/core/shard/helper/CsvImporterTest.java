@@ -1,6 +1,11 @@
+/*
+ * Copyright © 2018-2020 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
-import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountControlPhasing;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
@@ -137,6 +142,7 @@ class CsvImporterTest {
         .addBeans(MockBean.of(mock(AccountService.class), AccountServiceImpl.class, AccountService.class))
         .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyServiceImpl.class, AccountPublicKeyService.class))
         .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
+        .addBeans(MockBean.of(mock(AccountControlPhasingService.class), AccountControlPhasingService.class))
         .build();
     private HeightConfig config = Mockito.mock(HeightConfig.class);
     private Chain chain = Mockito.mock(Chain.class);
@@ -241,7 +247,8 @@ class CsvImporterTest {
                 assertEquals(4, countRs.getInt(1));
                 ResultSet allRs = stmt.executeQuery("select * from " + tableName);
                 while (allRs.next()) {
-                    PhasingOnly phasingOnly = new PhasingOnly(allRs, null); // should not fail
+//                    PhasingOnly phasingOnly = new PhasingOnly(allRs, null); // should not fail
+                    AccountControlPhasing phasingOnly = new AccountControlPhasing(allRs, null); // should not fail
                     long[] whitelist = phasingOnly.getPhasingParams().getWhitelist();
                     assertNotNull(whitelist);
                 }

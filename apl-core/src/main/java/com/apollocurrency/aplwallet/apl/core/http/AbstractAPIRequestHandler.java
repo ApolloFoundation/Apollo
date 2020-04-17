@@ -1,11 +1,12 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountInfoService;
@@ -70,6 +71,7 @@ public abstract class AbstractAPIRequestHandler {
     private AccountLeaseService accountLeaseService;
     private AccountPropertyService accountPropertyService;
     private PeersService peers;
+    private AccountControlPhasingService accountControlPhasingService;
 
     public AbstractAPIRequestHandler(APITag[] apiTags, String... parameters) {
         this(null, apiTags, parameters);
@@ -192,6 +194,13 @@ public abstract class AbstractAPIRequestHandler {
     protected TrimService lookupTrimService() {
         if (trimService == null) trimService = CDI.current().select(TrimService.class).get();
         return trimService;
+    }
+
+    public AccountControlPhasingService lookupAccountControlPhasingService() {
+        if (accountControlPhasingService == null) {
+            accountControlPhasingService = CDI.current().select(AccountControlPhasingService.class).get();
+        }
+        return accountControlPhasingService;
     }
 
     public final List<String> getParameters() {

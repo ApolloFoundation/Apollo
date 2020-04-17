@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http;
@@ -28,6 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.account.LedgerHolding;
 import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountLease;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountProperty;
@@ -85,7 +86,6 @@ import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.DataTag;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.trade.entity.Trade;
@@ -838,7 +838,29 @@ public final class JSONData {
         }
     }
 
+/*
+    @Deprecated
     public static JSONObject phasingOnly(PhasingOnly phasingOnly) {
+        JSONObject json = new JSONObject();
+        putAccount(json, "account", phasingOnly.getAccountId());
+        json.put("quorum", String.valueOf(phasingOnly.getPhasingParams().getQuorum()));
+        JSONArray whitelistJson = new JSONArray();
+        for (long accountId : phasingOnly.getPhasingParams().getWhitelist()) {
+            JSONObject whitelisted = new JSONObject();
+            putAccount(whitelisted, "whitelisted", accountId);
+            whitelistJson.add(whitelisted);
+        }
+        json.put("whitelist", whitelistJson);
+        json.put("maxFees", String.valueOf(phasingOnly.getMaxFees()));
+        json.put("minDuration", phasingOnly.getMinDuration());
+        json.put("maxDuration", phasingOnly.getMaxDuration());
+        putVoteWeighting(json, phasingOnly.getPhasingParams().getVoteWeighting());
+        return json;
+    }
+*/
+
+    @Deprecated
+    public static JSONObject phasingOnly(AccountControlPhasing phasingOnly) {
         JSONObject json = new JSONObject();
         putAccount(json, "account", phasingOnly.getAccountId());
         json.put("quorum", String.valueOf(phasingOnly.getPhasingParams().getQuorum()));

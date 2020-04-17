@@ -1,7 +1,11 @@
+/*
+ * Copyright © 2018-2020 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountAssetTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountControlPhasingTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountCurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountInfoTable;
@@ -129,6 +133,8 @@ public class TableRegistryInitializer {
     private BidOrderTable bidOrderTable;
     @Inject
     private TradeTable tradeTable;
+    @Inject
+    private AccountControlPhasingTable accountControlPhasingTable;
 
     @PostConstruct
     public void init() {
@@ -150,7 +156,7 @@ public class TableRegistryInitializer {
         Shuffling.init();
         ShufflingParticipant.init();
         CurrencyExchangeOffer.init();
-        AccountRestrictions.init();
+//        AccountRestrictions.init();
         AssetTransfer.init(databaseManager);
     }
 }

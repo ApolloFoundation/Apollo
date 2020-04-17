@@ -15,12 +15,12 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
@@ -63,7 +63,8 @@ public final class GetPhasingOnlyControl extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
         long accountId = HttpParameterParserUtil.getAccountId(req, true);
-        PhasingOnly phasingOnly = PhasingOnly.get(accountId);
+//        PhasingOnly phasingOnly = PhasingOnly.get(accountId);
+        AccountControlPhasing phasingOnly = lookupAccountControlPhasingService().get(accountId);
         return phasingOnly == null ? JSON.emptyJSON : JSONData.phasingOnly(phasingOnly);
     }
 
