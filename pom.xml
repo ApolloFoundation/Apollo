@@ -46,20 +46,6 @@
     <module>apl-utils</module>
     <module>apl-core</module>
     <module>apl-updater</module>
-    <module>apl-conf</module>
-    <!-- this is file set for APITestServlet and should be romoved after full transition to Swagger -->
-    <module>apl-html</module>
-    <!--
-         Tt is a whole mess at the moment. commented out. Please!!! Integration test
-         SHOULD NOT USE classes from core in any case. It is INTEGARATION tests
-         ant it MUST use REST API only!
-    -->
-    <!--        <module>apl-tests</module> -->
-    <module>apl-tools</module>
-    <module>apl-exec</module>
-    <module>apl-desktop</module>
-    <module>apl-integration-tests</module>
-    <module>apl-performance-tests</module>
   </modules>
 
   <properties>
