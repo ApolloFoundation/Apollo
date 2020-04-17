@@ -182,8 +182,9 @@ public class BlockchainImpl implements Blockchain {
         int blockchainHeight = getHeight();
         int calculatedFrom = blockchainHeight - from;
         int calculatedTo = blockchainHeight - to;
-        log.trace("start getBlocksStream( from={} / {}, to={} / {}, timestamp={} ): , currentHeight={}",
-            from, calculatedFrom, to, calculatedTo, timestamp, blockchainHeight);
+        int totalToFetch = to - from;
+        log.trace("start getBlocksStream( from={} / {}, to={} / {}, timestamp={} ): , currentHeight={}, totalToFetch={}",
+            from, calculatedFrom, to, calculatedTo, timestamp, blockchainHeight, totalToFetch);
         Stream<Block> allSourcesStream = null; // complete stream from all sources
         // select possibly - none, one, two shard's records by specified height range
         List<Shard> foundShards = shardDao.getCompletedBetweenBlockHeight(calculatedTo, calculatedFrom); // reverse params

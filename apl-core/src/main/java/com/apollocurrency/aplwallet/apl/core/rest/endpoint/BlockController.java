@@ -126,7 +126,8 @@ public class BlockController {
         return getBlockResponse(blockId, height, timestamp, includeTransactions, includeExecutedPhased);
     }
 
-    private Response getBlockResponse(@QueryParam("block") @Parameter(description = "Block id (optional, default is last block)", schema = @Schema(implementation = Long.class, description = "Block id (optional, default is last block")) LongParameter blockId, @ValidBlockchainHeight @DefaultValue("-1") @QueryParam("height") @Parameter(description = "The block height (optional, default is last block).") int height, @ValidTimestamp @DefaultValue("-1") @QueryParam("timestamp") @Parameter(description = "The earliest block (in seconds since the genesis block) to retrieve (optional).") int timestamp, @DefaultValue("false") @QueryParam("includeTransactions") @Parameter(description = "Include transactions detail info") boolean includeTransactions, @DefaultValue("false") @QueryParam("includeExecutedPhased") @Parameter(description = "Include phased transactions detail info") boolean includeExecutedPhased) {
+    private Response getBlockResponse(LongParameter blockId, int height, int timestamp,
+                                      boolean includeTransactions, boolean includeExecutedPhased) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         log.trace("Started getBlock : \t blockId={}, height={}, timestamp={}, includeTransactions={}, includeExecutedPhased={}",
             blockId, height, timestamp, includeTransactions, includeExecutedPhased);
@@ -195,7 +196,7 @@ public class BlockController {
         return getBlockByIdResponse(height);
     }
 
-    private Response getBlockByIdResponse(@ValidBlockchainHeight @QueryParam("height") @Parameter(description = "The block height, mandatory", required = true) int height) {
+    private Response getBlockByIdResponse(int height) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         log.trace("Started getBlockId : \t height={}", height);
         Long blockId = null;
@@ -276,7 +277,8 @@ public class BlockController {
         return getBlockListResponse(firstIndex, lastIndex, timestamp, includeTransactions, includeExecutedPhased);
     }
 
-    private Response getBlockListResponse(@DefaultValue("0") @QueryParam("firstIndex") @Parameter(description = "A zero-based index to the 'first height' to retrieve (optional).") @PositiveOrZero int firstIndex, @DefaultValue("-1") @QueryParam("lastIndex") @Parameter(description = "A zero-based index to the 'last height' to retrieve (optional).") int lastIndex, @ValidTimestamp @DefaultValue("-1") @QueryParam("timestamp") @Parameter(description = "The earliest block (in seconds since the genesis block) to retrieve (optional).") int timestamp, @DefaultValue("false") @QueryParam("includeTransactions") @Parameter(description = "Include transactions detail info") boolean includeTransactions, @DefaultValue("false") @QueryParam("includeExecutedPhased") @Parameter(description = "Include phased transactions detail info") boolean includeExecutedPhased) {
+    private Response getBlockListResponse(int firstIndex, int lastIndex, int timestamp,
+                                          boolean includeTransactions, boolean includeExecutedPhased) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         log.trace("Started getBlocks : \t firstIndex={}, lastIndex={}, timestamp={}, includeTransactions={}, includeExecutedPhased={}",
             firstIndex, lastIndex, timestamp, includeTransactions, includeExecutedPhased);
@@ -341,7 +343,7 @@ public class BlockController {
         return getBlockByEcResponse(timestamp);
     }
 
-    private Response getBlockByEcResponse(@ValidTimestamp @DefaultValue("-1") @QueryParam("timestamp") @Parameter(description = "The earliest block (in seconds since the genesis block) to retrieve (optional).") int timestamp) {
+    private Response getBlockByEcResponse(int timestamp) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         log.trace("Started getECBlock : \t timestamp={}", timestamp);
         if (timestamp <= 0) {
