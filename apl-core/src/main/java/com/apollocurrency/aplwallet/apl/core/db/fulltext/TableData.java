@@ -58,11 +58,11 @@ public class TableData {
         if (!(o instanceof TableData)) return false;
         TableData tableData = (TableData) o;
         return dbIdColumnPosition == tableData.dbIdColumnPosition &&
-                Objects.equals(table, tableData.table) &&
-                Objects.equals(schema, tableData.schema) &&
-                Objects.equals(columnNames, tableData.columnNames) &&
-                Objects.equals(columnTypes, tableData.columnTypes) &&
-                Objects.equals(indexColumns, tableData.indexColumns);
+            Objects.equals(table, tableData.table) &&
+            Objects.equals(schema, tableData.schema) &&
+            Objects.equals(columnNames, tableData.columnNames) &&
+            Objects.equals(columnTypes, tableData.columnTypes) &&
+            Objects.equals(indexColumns, tableData.indexColumns);
     }
 
     @Override
@@ -73,12 +73,12 @@ public class TableData {
     @Override
     public String toString() {
         return "TableData{" +
-                "dbIdColumnPosition=" + dbIdColumnPosition +
-                ", table='" + table + '\'' +
-                ", schema='" + schema + '\'' +
-                ", columnNames=" + columnNames +
-                ", columnTypes=" + columnTypes +
-                ", indexColumns=" + indexColumns +
-                '}';
+            "dbIdColumnPosition=" + dbIdColumnPosition +
+            ", table='" + table + '\'' +
+            ", schema='" + schema + '\'' +
+            ", columnNames=" + columnNames +
+            ", columnTypes=" + columnTypes +
+            ", indexColumns=" + indexColumns +
+            '}';
     }
 }

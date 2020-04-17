@@ -29,13 +29,14 @@ import org.json.simple.JSONStreamAware;
 
 public final class AddPeers extends PeerRequestHandler {
 
-    public AddPeers() {}
+    public AddPeers() {
+    }
 
     @Override
     public JSONStreamAware processRequest(JSONObject request, Peer peer) {
         final JSONArray peersArray = (JSONArray) request.get("peers");
         if (peersArray != null && lookupPeersService().getMorePeers && !lookupPeersService().hasTooManyKnownPeers()) {
-            final JSONArray services = (JSONArray)request.get("services");
+            final JSONArray services = (JSONArray) request.get("services");
             final boolean setServices = (services != null && services.size() == peersArray.size());
             lookupPeersService().peersExecutorService.submit(() -> {
                 for (int i = 0; i < peersArray.size(); i++) {
@@ -43,7 +44,7 @@ public final class AddPeers extends PeerRequestHandler {
                     PeerImpl newPeer = lookupPeersService().findOrCreatePeer(null, announcedAddress, true);
                     if (newPeer != null) {
                         if (lookupPeersService().addPeer(newPeer) && setServices) {
-                            newPeer.setServices(Long.parseUnsignedLong((String)services.get(i)));
+                            newPeer.setServices(Long.parseUnsignedLong((String) services.get(i)));
                         }
                         if (lookupPeersService().hasTooManyKnownPeers()) {
                             break;

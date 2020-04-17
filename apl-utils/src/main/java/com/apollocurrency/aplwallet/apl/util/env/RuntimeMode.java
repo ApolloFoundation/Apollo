@@ -28,8 +28,9 @@ public interface RuntimeMode {
 
     void alert(String message);
 
-    default void updateAppStatus(String newStatus) {}
+    default void updateAppStatus(String newStatus) {
+    }
 
     void displayError(String errorMessage);
-  
+
 }

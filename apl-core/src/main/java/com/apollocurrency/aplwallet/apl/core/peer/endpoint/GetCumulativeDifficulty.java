@@ -27,7 +27,8 @@ import org.json.simple.JSONStreamAware;
 
 public final class GetCumulativeDifficulty extends PeerRequestHandler {
 
-    public GetCumulativeDifficulty() {}
+    public GetCumulativeDifficulty() {
+    }
 
 
     @Override

@@ -29,8 +29,7 @@ public class TransactionRowMapper implements RowMapper<Transaction> {
     public Transaction map(ResultSet rs, StatementContext ctx) throws SQLException {
         try {
             return mapWithException(rs, ctx);
-        }
-        catch (AplException.NotValidException e) {
+        } catch (AplException.NotValidException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -66,19 +65,19 @@ public class TransactionRowMapper implements RowMapper<Transaction> {
             }
             TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
             TransactionImpl.BuilderImpl builder = new TransactionImpl.BuilderImpl(version, senderPublicKey,
-                    amountATM, feeATM, deadline, transactionType != null ? transactionType.parseAttachment(buffer) : null, timestamp)
-                    .referencedTransactionFullHash(referencedTransactionFullHash)
-                    .signature(signature)
-                    .blockId(blockId)
-                    .height(height)
-                    .id(id)
-                    .senderId(senderId)
-                    .blockTimestamp(blockTimestamp)
-                    .fullHash(fullHash)
-                    .ecBlockHeight(ecBlockHeight)
-                    .ecBlockId(ecBlockId)
-                    .dbId(dbId)
-                    .index(transactionIndex);
+                amountATM, feeATM, deadline, transactionType != null ? transactionType.parseAttachment(buffer) : null, timestamp)
+                .referencedTransactionFullHash(referencedTransactionFullHash)
+                .signature(signature)
+                .blockId(blockId)
+                .height(height)
+                .id(id)
+                .senderId(senderId)
+                .blockTimestamp(blockTimestamp)
+                .fullHash(fullHash)
+                .ecBlockHeight(ecBlockHeight)
+                .ecBlockId(ecBlockId)
+                .dbId(dbId)
+                .index(transactionIndex);
             if (transactionType != null && transactionType.canHaveRecipient()) {
                 long recipientId = rs.getLong("recipient_id");
                 if (!rs.wasNull()) {

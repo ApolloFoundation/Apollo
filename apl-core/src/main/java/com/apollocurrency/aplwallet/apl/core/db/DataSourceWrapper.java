@@ -65,7 +65,65 @@ public class DataSourceWrapper implements DataSource {
     private static final String MV_STORE = "MV_STORE";
     private static final String MVCC = "MVCC";
     private static Pattern patternExtractShardNumber = Pattern.compile("shard-\\d+");
+    //    private JdbcConnectionPool dataSource;
+//    private volatile int maxActiveConnections;
+    private final String dbUrl;
+    private final String dbUsername;
+    private final String dbPassword;
+    private final int maxConnections;
+    private final int loginTimeout;
+    private final int defaultLockTimeout;
+    private final int maxMemoryRows;
     private String shardId = "main-db";
+    private HikariDataSource dataSource;
+    private HikariPoolMXBean jmxBean;
+    private volatile boolean initialized = false;
+    private volatile boolean shutdown = false;
+
+    public DataSourceWrapper(DbProperties dbProperties) {
+        long maxCacheSize = dbProperties.getMaxCacheSize();
+        if (maxCacheSize == 0) {
+            maxCacheSize = Math.min(256, Math.max(16, (Runtime.getRuntime().maxMemory() / (1024 * 1024) - 128) / 2)) * 1024;
+        }
+
+        //Even though dbUrl is no longer coming from apl-blockchain.properties,
+        //DbMigrationExecutor in afterMigration triggers the further creation of DataSourceWrapper
+        String dbUrlTemp = dbProperties.getDbUrl();
+        final String dbParams = dbProperties.getDbParams();
+        validateDbParams(dbParams);
+
+        if (StringUtils.isBlank(dbUrlTemp)) {
+            String dbFileName = dbProperties.getDbFileName();
+            Matcher m = patternExtractShardNumber.matcher(dbFileName); // try to match shard name
+            if (m.find()) { // if found
+                shardId = m.group(); // store shard id
+            }
+            dbUrlTemp = String.format(
+                "jdbc:%s:file:%s/%s;%s",
+                dbProperties.getDbType(),
+                dbProperties.getDbDir(),
+                dbFileName,
+                dbProperties.getDbParams()
+            );
+        } else {
+            validateDbParams(dbUrlTemp);
+        }
+
+        if (!dbUrlTemp.contains(MV_STORE + "=")) {
+            dbUrlTemp += ";" + MV_STORE + "=TRUE";
+        }
+        if (!dbUrlTemp.contains("CACHE_SIZE=")) {
+            dbUrlTemp += ";CACHE_SIZE=" + maxCacheSize;
+        }
+        this.dbUrl = dbUrlTemp;
+        dbProperties.dbUrl(dbUrlTemp);
+        this.dbUsername = dbProperties.getDbUsername();
+        this.dbPassword = dbProperties.getDbPassword();
+        this.maxConnections = dbProperties.getMaxConnections();
+        this.loginTimeout = dbProperties.getLoginTimeout();
+        this.defaultLockTimeout = dbProperties.getDefaultLockTimeout();
+        this.maxMemoryRows = dbProperties.getMaxMemoryRows();
+    }
 
     @Override
     public Connection getConnection(String username, String password) {
@@ -103,15 +161,15 @@ public class DataSourceWrapper implements DataSource {
     }
 
     @Override
-    public void setLoginTimeout(int seconds) throws SQLException {
-        requireInitialization();
-        this.dataSource.setLoginTimeout(seconds);
-    }
-
-    @Override
     public int getLoginTimeout() throws SQLException {
         requireInitialization();
         return this.dataSource.getLoginTimeout();
+    }
+
+    @Override
+    public void setLoginTimeout(int seconds) throws SQLException {
+        requireInitialization();
+        this.dataSource.setLoginTimeout(seconds);
     }
 
     @Override
@@ -120,67 +178,8 @@ public class DataSourceWrapper implements DataSource {
         return this.dataSource.getParentLogger();
     }
 
-    private HikariDataSource dataSource;
-    private HikariPoolMXBean jmxBean;
-//    private JdbcConnectionPool dataSource;
-//    private volatile int maxActiveConnections;
-    private final String dbUrl;
-    private final String dbUsername;
-    private final String dbPassword;
-    private final int maxConnections;
-    private final int loginTimeout;
-    private final int defaultLockTimeout;
-    private final int maxMemoryRows;
-    private volatile boolean initialized = false;
-    private volatile boolean shutdown = false;
-
     public HikariPoolMXBean getJmxBean() {
         return jmxBean;
-    }
-
-    public DataSourceWrapper(DbProperties dbProperties) {
-        long maxCacheSize = dbProperties.getMaxCacheSize();
-        if (maxCacheSize == 0) {
-            maxCacheSize = Math.min(256, Math.max(16, (Runtime.getRuntime().maxMemory() / (1024 * 1024) - 128)/2)) * 1024;
-        }
-
-        //Even though dbUrl is no longer coming from apl-blockchain.properties,
-        //DbMigrationExecutor in afterMigration triggers the further creation of DataSourceWrapper
-        String dbUrlTemp = dbProperties.getDbUrl();
-        final String dbParams = dbProperties.getDbParams();
-        validateDbParams(dbParams);
-
-        if (StringUtils.isBlank(dbUrlTemp)) {
-            String dbFileName = dbProperties.getDbFileName();
-            Matcher m = patternExtractShardNumber.matcher(dbFileName); // try to match shard name
-            if (m.find()) { // if found
-                shardId = m.group(); // store shard id
-            }
-            dbUrlTemp = String.format(
-                    "jdbc:%s:file:%s/%s;%s",
-                    dbProperties.getDbType(),
-                    dbProperties.getDbDir(),
-                    dbFileName,
-                    dbProperties.getDbParams()
-            );
-        } else {
-            validateDbParams(dbUrlTemp);
-        }
-
-        if (!dbUrlTemp.contains(MV_STORE + "=")) {
-            dbUrlTemp += ";" + MV_STORE + "=TRUE";
-        }
-        if (!dbUrlTemp.contains("CACHE_SIZE=")) {
-            dbUrlTemp += ";CACHE_SIZE=" + maxCacheSize;
-        }
-        this.dbUrl = dbUrlTemp;
-        dbProperties.dbUrl(dbUrlTemp);
-        this.dbUsername = dbProperties.getDbUsername();
-        this.dbPassword = dbProperties.getDbPassword();
-        this.maxConnections = dbProperties.getMaxConnections();
-        this.loginTimeout = dbProperties.getLoginTimeout();
-        this.defaultLockTimeout = dbProperties.getDefaultLockTimeout();
-        this.maxMemoryRows = dbProperties.getMaxMemoryRows();
     }
 
     private void validateDbParams(String dbParams) {
@@ -210,6 +209,7 @@ public class DataSourceWrapper implements DataSource {
 
     /**
      * Constructor creates internal DataSource.
+     *
      * @param dbVersion database version related information
      */
     public Jdbi initWithJdbi(DbVersion dbVersion) {
@@ -272,7 +272,7 @@ public class DataSourceWrapper implements DataSource {
         try (Handle handle = jdbi.open()) {
             @DatabaseSpecificDml(DmlMarker.DUAL_TABLE_USE)
             Optional<Integer> result = handle.createQuery("select 1 from dual;")
-                    .mapTo(Integer.class).findOne();
+                .mapTo(Integer.class).findOne();
             log.debug("check SQL result ? = {}", result);
         } catch (ConnectionException e) {
             log.error("Error on opening database connection", e);
@@ -336,7 +336,7 @@ public class DataSourceWrapper implements DataSource {
     protected Connection getPooledConnection() throws SQLException {
         Connection con = dataSource.getConnection();
         if (jmxBean != null) {
-            if (log.isDebugEnabled()){
+            if (log.isDebugEnabled()) {
                 int totalConnections = jmxBean.getTotalConnections();
                 int idleConnections = jmxBean.getIdleConnections();
 
@@ -344,12 +344,12 @@ public class DataSourceWrapper implements DataSource {
                     int activeConnections = jmxBean.getActiveConnections();
                     int threadAwaitingConnections = jmxBean.getThreadsAwaitingConnection();
                     log.debug("Total/Active/Idle connections in Pool '{}'/'{}'/'{}', threadsAwaitPool=[{}], {} Tread: {}",
-                            totalConnections,
-                            activeConnections,
-                            idleConnections,
-                            threadAwaitingConnections,
-                            dataSource.getPoolName(), // show main or shard db
-                            Thread.currentThread().getName());
+                        totalConnections,
+                        activeConnections,
+                        idleConnections,
+                        threadAwaitingConnections,
+                        dataSource.getPoolName(), // show main or shard db
+                        Thread.currentThread().getName());
                 }
             }
         }
@@ -363,9 +363,9 @@ public class DataSourceWrapper implements DataSource {
     @Override
     public String toString() {
         return "DataSourceWrapper{" +
-                "dbUrl='" + dbUrl + '\'' +
-                ", initialized=" + initialized +
-                ", shutdown=" + shutdown +
-                '}';
+            "dbUrl='" + dbUrl + '\'' +
+            ", initialized=" + initialized +
+            ", shutdown=" + shutdown +
+            '}';
     }
 }

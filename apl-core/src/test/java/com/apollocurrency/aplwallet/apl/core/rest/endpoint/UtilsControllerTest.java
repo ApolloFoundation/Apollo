@@ -33,11 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 
 class UtilsControllerTest {
-    @Mock
-    private BlockchainConfig blockchainConfig = Mockito.mock(BlockchainConfig.class);
-
     private static ObjectMapper mapper = new ObjectMapper();
-    private Dispatcher dispatcher;
     private static String encodeQrUri = "/utils/qrcode/encoding";
     private static String decodeQrUri = "/utils/qrcode/decoding";
     private static String fullHashToIdUri = "/utils/fullhash/toid";
@@ -45,9 +41,12 @@ class UtilsControllerTest {
     private static String longConvertUri = "/utils/convert/long";
     private static String rcConvertUri = "/utils/convert/rs";
     private static String hashUri = "/utils/hash";
+    @Mock
+    private BlockchainConfig blockchainConfig = Mockito.mock(BlockchainConfig.class);
+    private Dispatcher dispatcher;
 
     @BeforeEach
-    void setup(){
+    void setup() {
         dispatcher = MockDispatcherFactory.createDispatcher();
         UtilsController controller = new UtilsController(blockchainConfig);
         dispatcher.getRegistry().addSingletonResource(controller);
@@ -64,7 +63,8 @@ class UtilsControllerTest {
 
         assertEquals(200, response.getStatus());
         String respondJson = response.getContentAsString();
-        QrEncodeDto qrCodeDto = mapper.readValue(respondJson, new TypeReference<>(){});
+        QrEncodeDto qrCodeDto = mapper.readValue(respondJson, new TypeReference<>() {
+        });
         assertNotNull(qrCodeDto.qrCodeBase64);
         assertTrue(qrCodeDto.qrCodeBase64.length() > 0);
 
@@ -78,7 +78,8 @@ class UtilsControllerTest {
 
         assertEquals(200, response.getStatus());
         respondJson = response.getContentAsString();
-        qrCodeDto = mapper.readValue(respondJson, new TypeReference<>(){});
+        qrCodeDto = mapper.readValue(respondJson, new TypeReference<>() {
+        });
         assertNotNull(qrCodeDto.qrCodeBase64);
         assertTrue(qrCodeDto.qrCodeBase64.length() > 0);
     }
@@ -111,7 +112,8 @@ class UtilsControllerTest {
         assertEquals(200, response.getStatus());
         String respondJson = response.getContentAsString();
         assertNotNull(respondJson);
-        Error error = mapper.readValue(respondJson, new TypeReference<>(){});
+        Error error = mapper.readValue(respondJson, new TypeReference<>() {
+        });
         assertNotNull(error.getErrorDescription());
         assertEquals(2013, error.getNewErrorCode());
 
@@ -125,7 +127,8 @@ class UtilsControllerTest {
         assertEquals(200, response.getStatus());
         respondJson = response.getContentAsString();
         assertNotNull(respondJson);
-        error = mapper.readValue(respondJson, new TypeReference<>(){});
+        error = mapper.readValue(respondJson, new TypeReference<>() {
+        });
         assertNotNull(error.getErrorDescription());
         assertEquals(2013, error.getNewErrorCode());
     }
@@ -143,7 +146,8 @@ class UtilsControllerTest {
         assertEquals(200, response.getStatus());
         String respondJson = response.getContentAsString();
         assertNotNull(respondJson);
-        Error error = mapper.readValue(respondJson, new TypeReference<>(){});
+        Error error = mapper.readValue(respondJson, new TypeReference<>() {
+        });
         assertNotNull(error.getErrorDescription());
         assertEquals(2013, error.getNewErrorCode());
     }
@@ -160,7 +164,8 @@ class UtilsControllerTest {
         assertEquals(200, response.getStatus());
         String respondJson = response.getContentAsString();
         assertNotNull(respondJson);
-        Error error = mapper.readValue(respondJson, new TypeReference<>(){});
+        Error error = mapper.readValue(respondJson, new TypeReference<>() {
+        });
         assertNotNull(error.getErrorDescription());
         assertEquals(2013, error.getNewErrorCode());
     }
@@ -175,7 +180,8 @@ class UtilsControllerTest {
 
         assertEquals(200, response.getStatus());
         String respondJson = response.getContentAsString();
-        QrDecodeDto qrCodeDto = mapper.readValue(respondJson, new TypeReference<>(){});
+        QrDecodeDto qrCodeDto = mapper.readValue(respondJson, new TypeReference<>() {
+        });
         assertNotNull(qrCodeDto.qrCodeData);
         assertTrue(qrCodeDto.qrCodeData.length() > 0);
         assertEquals("1", qrCodeDto.qrCodeData);
@@ -217,7 +223,8 @@ class UtilsControllerTest {
 
         assertEquals(200, response.getStatus());
         String respondJson = response.getContentAsString();
-        Error error = mapper.readValue(respondJson, new TypeReference<>(){});
+        Error error = mapper.readValue(respondJson, new TypeReference<>() {
+        });
         assertNotNull(error.getErrorDescription());
         assertEquals(1000, error.getNewErrorCode());
     }
@@ -232,7 +239,8 @@ class UtilsControllerTest {
 
         assertEquals(200, response.getStatus());
         String respondJson = response.getContentAsString();
-        Error error = mapper.readValue(respondJson, new TypeReference<>(){});
+        Error error = mapper.readValue(respondJson, new TypeReference<>() {
+        });
 
         assertEquals(200, response.getStatus());
         assertNotNull(error.getErrorDescription());
@@ -248,7 +256,8 @@ class UtilsControllerTest {
 
         assertEquals(200, response.getStatus());
         String respondJson = response.getContentAsString();
-        FullHashToIdDto dto = mapper.readValue(respondJson, new TypeReference<>(){});
+        FullHashToIdDto dto = mapper.readValue(respondJson, new TypeReference<>() {
+        });
         assertNotNull(dto);
         assertNotNull(dto.stringId);
         assertEquals("14906400428262639710", dto.stringId);
@@ -274,7 +283,8 @@ class UtilsControllerTest {
 
         assertEquals(200, response.getStatus());
         String respondJson = response.getContentAsString();
-        Error error = mapper.readValue(respondJson, new TypeReference<>(){});
+        Error error = mapper.readValue(respondJson, new TypeReference<>() {
+        });
         assertNotNull(error.getErrorDescription());
     }
 
@@ -287,7 +297,8 @@ class UtilsControllerTest {
 
         assertEquals(200, response.getStatus());
         String respondJson = response.getContentAsString();
-        HexConvertDto dto = mapper.readValue(respondJson, new TypeReference<>(){});
+        HexConvertDto dto = mapper.readValue(respondJson, new TypeReference<>() {
+        });
         assertNotNull(dto);
         assertNotNull(dto.text);
         assertEquals("35653438353334363336326364656365353264616461303736343539616266383861306165313238636163363837306531303832353761383835343366303966",
@@ -300,7 +311,8 @@ class UtilsControllerTest {
 
         assertEquals(200, response.getStatus());
         respondJson = response.getContentAsString();
-        dto = mapper.readValue(respondJson, new TypeReference<>(){});
+        dto = mapper.readValue(respondJson, new TypeReference<>() {
+        });
         assertNotNull(dto);
         assertNull(dto.text);
         assertNotNull(dto.binary);
@@ -325,7 +337,8 @@ class UtilsControllerTest {
 
         assertEquals(200, response.getStatus());
         String respondJson = response.getContentAsString();
-        HexConvertDto dto = mapper.readValue(respondJson, new TypeReference<>(){});
+        HexConvertDto dto = mapper.readValue(respondJson, new TypeReference<>() {
+        });
         assertNotNull(dto);
         assertNotNull(dto.binary);
     }
@@ -339,7 +352,8 @@ class UtilsControllerTest {
 
         assertEquals(200, response.getStatus());
         String respondJson = response.getContentAsString();
-        FullHashToIdDto dto = mapper.readValue(respondJson, new TypeReference<>(){});
+        FullHashToIdDto dto = mapper.readValue(respondJson, new TypeReference<>() {
+        });
         assertNotNull(dto);
         assertNotNull(dto.stringId);
         assertNotNull(dto.longId);
@@ -352,7 +366,8 @@ class UtilsControllerTest {
         dispatcher.invoke(request, response);
         assertEquals(200, response.getStatus());
         respondJson = response.getContentAsString();
-        dto = mapper.readValue(respondJson, new TypeReference<>(){});
+        dto = mapper.readValue(respondJson, new TypeReference<>() {
+        });
         assertNotNull(dto);
         assertNotNull(dto.stringId);
         assertNotNull(dto.longId);
@@ -378,7 +393,8 @@ class UtilsControllerTest {
         dispatcher.invoke(request, response);
         assertEquals(200, response.getStatus());
         String respondJson = response.getContentAsString();
-        Error error = mapper.readValue(respondJson, new TypeReference<>(){});
+        Error error = mapper.readValue(respondJson, new TypeReference<>() {
+        });
         assertNotNull(error.getErrorDescription());
 
         uri = longConvertUri + "?id=-99999998446744073709551616";
@@ -387,7 +403,8 @@ class UtilsControllerTest {
         dispatcher.invoke(request, response);
         assertEquals(200, response.getStatus());
         respondJson = response.getContentAsString();
-        error = mapper.readValue(respondJson, new TypeReference<>(){});
+        error = mapper.readValue(respondJson, new TypeReference<>() {
+        });
         assertNotNull(error.getErrorDescription());
 
         uri = longConvertUri + "?id=98446744073709551618";
@@ -396,7 +413,8 @@ class UtilsControllerTest {
         dispatcher.invoke(request, response);
         assertEquals(200, response.getStatus());
         respondJson = response.getContentAsString();
-        error = mapper.readValue(respondJson, new TypeReference<>(){});
+        error = mapper.readValue(respondJson, new TypeReference<>() {
+        });
         assertNotNull(error.getErrorDescription());
     }
 
@@ -409,7 +427,8 @@ class UtilsControllerTest {
 
         assertEquals(200, response.getStatus());
         String respondJson = response.getContentAsString();
-        RsConvertDto dto = mapper.readValue(respondJson, new TypeReference<>(){});
+        RsConvertDto dto = mapper.readValue(respondJson, new TypeReference<>() {
+        });
         assertNotNull(dto);
         assertNotNull(dto.account);
         assertNotNull(dto.accountRS);
@@ -422,7 +441,8 @@ class UtilsControllerTest {
         dispatcher.invoke(request, response);
         assertEquals(200, response.getStatus());
         respondJson = response.getContentAsString();
-        dto = mapper.readValue(respondJson, new TypeReference<>(){});
+        dto = mapper.readValue(respondJson, new TypeReference<>() {
+        });
         assertNotNull(dto);
         assertNotNull(dto.account);
         assertNotNull(dto.accountRS);
@@ -448,7 +468,8 @@ class UtilsControllerTest {
         dispatcher.invoke(request, response);
         assertEquals(200, response.getStatus());
         String respondJson = response.getContentAsString();
-        Error error = mapper.readValue(respondJson, new TypeReference<>(){});
+        Error error = mapper.readValue(respondJson, new TypeReference<>() {
+        });
         assertNotNull(error.getErrorDescription());
 
         uri = rcConvertUri + "?account=-99999998446744073709551616";
@@ -457,7 +478,8 @@ class UtilsControllerTest {
         dispatcher.invoke(request, response);
         assertEquals(200, response.getStatus());
         respondJson = response.getContentAsString();
-        error = mapper.readValue(respondJson, new TypeReference<>(){});
+        error = mapper.readValue(respondJson, new TypeReference<>() {
+        });
         assertNotNull(error.getErrorDescription());
 
         uri = rcConvertUri + "?account=98446744073709551618";
@@ -466,7 +488,8 @@ class UtilsControllerTest {
         dispatcher.invoke(request, response);
         assertEquals(200, response.getStatus());
         respondJson = response.getContentAsString();
-        error = mapper.readValue(respondJson, new TypeReference<>(){});
+        error = mapper.readValue(respondJson, new TypeReference<>() {
+        });
         assertNotNull(error.getErrorDescription());
     }
 
@@ -479,7 +502,8 @@ class UtilsControllerTest {
 
         assertEquals(200, response.getStatus());
         String respondJson = response.getContentAsString();
-        HashDto dto = mapper.readValue(respondJson, new TypeReference<>(){});
+        HashDto dto = mapper.readValue(respondJson, new TypeReference<>() {
+        });
         assertNotNull(dto);
         assertNotNull(dto.hash);
         assertEquals("1841d653f9c4edda9d66a7e7737b39763d6bd40f569a3ec6859d3305b72310e6", dto.hash);
@@ -490,7 +514,8 @@ class UtilsControllerTest {
         dispatcher.invoke(request, response);
         assertEquals(200, response.getStatus());
         respondJson = response.getContentAsString();
-        dto = mapper.readValue(respondJson, new TypeReference<>(){});
+        dto = mapper.readValue(respondJson, new TypeReference<>() {
+        });
         assertNotNull(dto);
         assertNotNull(dto.hash);
         assertEquals("92cf48b58578dc5cc78b211383a3eae92999260dfba48e349d9dfcb387c5a6e8", dto.hash);
@@ -531,7 +556,8 @@ class UtilsControllerTest {
         dispatcher.invoke(request, response);
         assertEquals(200, response.getStatus());
         respondJson = response.getContentAsString();
-        Error error = mapper.readValue(respondJson, new TypeReference<>(){});
+        Error error = mapper.readValue(respondJson, new TypeReference<>() {
+        });
         assertNotNull(error.getErrorDescription());
     }
 

@@ -24,18 +24,20 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import javax.enterprise.inject.spi.CDI;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+
+import javax.enterprise.inject.spi.CDI;
 
 /**
  * Get the transactions
  */
 public class GetTransactions extends PeerRequestHandler {
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
+    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
 
-    public GetTransactions() {}
+    public GetTransactions() {
+    }
 
     @Override
     public JSONStreamAware processRequest(JSONObject request, Peer peer) {
@@ -44,14 +46,14 @@ public class GetTransactions extends PeerRequestHandler {
         }
         JSONObject response = new JSONObject();
         JSONArray transactionArray = new JSONArray();
-        JSONArray transactionIds = (JSONArray)request.get("transactionIds");
+        JSONArray transactionIds = (JSONArray) request.get("transactionIds");
         Blockchain blockchain = lookupBlockchain();
         //
         // Return the transactions to the caller
         //
         if (transactionIds != null) {
             transactionIds.forEach(transactionId -> {
-                long id = Long.parseUnsignedLong((String)transactionId);
+                long id = Long.parseUnsignedLong((String) transactionId);
                 Transaction transaction = blockchain.getTransaction(id);
                 if (transaction != null) {
                     transaction.getAppendages(true);

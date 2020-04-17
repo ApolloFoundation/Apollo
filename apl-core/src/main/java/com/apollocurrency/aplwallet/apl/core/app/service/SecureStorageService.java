@@ -26,6 +26,7 @@ public interface SecureStorageService {
 
     /**
      * Save encrypted by passphrase secretStore in the json format.
+     *
      * @return true - if secretStore were saved successfully, otherwise returned false
      */
     boolean storeSecretStorage();
@@ -47,8 +48,9 @@ public interface SecureStorageService {
 
     /**
      * Flushing keys after decentralized exchange routine
-     * @param accountID   id of the corresponding account
-     * @param passPhrase  passphrase of the particular wallet
+     *
+     * @param accountID  id of the corresponding account
+     * @param passPhrase passphrase of the particular wallet
      * @return flag whether the corresponding pair was found
      */
     boolean flushAccountKeys(Long accountID, String passPhrase);

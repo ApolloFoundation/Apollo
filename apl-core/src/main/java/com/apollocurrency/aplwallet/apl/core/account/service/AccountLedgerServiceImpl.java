@@ -33,29 +33,43 @@ import java.util.TreeSet;
 @Slf4j
 @Singleton
 public class AccountLedgerServiceImpl implements AccountLedgerService {
-    /** Account ledger is enabled */
+    /**
+     * Account ledger is enabled
+     */
     private final boolean ledgerEnabled;
 
-    /** Track all accounts */
+    /**
+     * Track all accounts
+     */
     private final boolean trackAllAccounts;
 
-    /** Accounts to track */
+    /**
+     * Accounts to track
+     */
     private final SortedSet<Long> trackAccounts = new TreeSet<>();
 
-    /** Unconfirmed logging */
+    /**
+     * Unconfirmed logging
+     */
     private final int logUnconfirmed;
 
-    /** Blockchain */
+    /**
+     * Blockchain
+     */
     private final Blockchain blockchain;
 
-    /** Blockchain processor */
+    /**
+     * Blockchain processor
+     */
     private final BlockchainProcessor blockchainProcessor;
 
     private final BlockchainConfig blockchainConfig;
 
     private final AccountLedgerTable accountLedgerTable;
 
-    /** Pending ledger entries */
+    /**
+     * Pending ledger entries
+     */
     @Getter
     private final List<LedgerEntry> pendingEntries = new ArrayList<>();
 
@@ -93,11 +107,10 @@ public class AccountLedgerServiceImpl implements AccountLedgerService {
     }
 
     /**
-     *
-     * @return  the Number of blocks to keep when trimming
+     * @return the Number of blocks to keep when trimming
      */
     @Override
-    public int getTrimKeep(){
+    public int getTrimKeep() {
         return accountLedgerTable.getTrimKeep();
     }
 
@@ -132,7 +145,7 @@ public class AccountLedgerServiceImpl implements AccountLedgerService {
         // is less than the minimum account_ledger trim height
         //
         if (blockchainProcessor.isScanning() && getTrimKeep() > 0 &&
-                blockchain.getHeight() <= blockchainProcessor.getInitialScanHeight() - getTrimKeep()) {
+            blockchain.getHeight() <= blockchainProcessor.getInitialScanHeight() - getTrimKeep()) {
             return false;
         }
         return true;
@@ -141,7 +154,7 @@ public class AccountLedgerServiceImpl implements AccountLedgerService {
     /**
      * Log an event in the account_ledger table
      *
-     * @param   ledgerEntry                 Ledger entry
+     * @param ledgerEntry Ledger entry
      */
     @Override
     public void logEntry(LedgerEntry ledgerEntry) {
@@ -162,8 +175,8 @@ public class AccountLedgerServiceImpl implements AccountLedgerService {
             for (; index < pendingEntries.size(); index++) {
                 existingEntry = pendingEntries.get(index);
                 if (existingEntry.getAccountId() == ledgerEntry.getAccountId() &&
-                        existingEntry.getHolding() == ledgerEntry.getHolding() &&
-                        ((existingEntry.getHoldingId() == null && ledgerEntry.getHoldingId() == null) ||
+                    existingEntry.getHolding() == ledgerEntry.getHolding() &&
+                    ((existingEntry.getHoldingId() == null && ledgerEntry.getHoldingId() == null) ||
                         (existingEntry.getHoldingId() != null && existingEntry.getHoldingId().equals(ledgerEntry.getHoldingId())))) {
                     adjustedBalance += existingEntry.getChange();
                     existingEntry.setBalance(adjustedBalance);
@@ -196,9 +209,9 @@ public class AccountLedgerServiceImpl implements AccountLedgerService {
     /**
      * Return a single entry identified by the ledger entry identifier
      *
-     * @param   ledgerId                    Ledger entry identifier
-     * @param allowPrivate                  Allow requested ledger entry to belong to private transaction or not
-     * @return                              Ledger entry or null if entry not found
+     * @param ledgerId     Ledger entry identifier
+     * @param allowPrivate Allow requested ledger entry to belong to private transaction or not
+     * @return Ledger entry or null if entry not found
      */
     @Override
     public LedgerEntry getEntry(long ledgerId, boolean allowPrivate) {
@@ -210,16 +223,15 @@ public class AccountLedgerServiceImpl implements AccountLedgerService {
     /**
      * Return the ledger entries sorted in descending insert order
      *
-     *
-     * @param   accountId                   Account identifier or zero if no account identifier
-     * @param   event                       Ledger event or null
-     * @param   eventId                     Ledger event identifier or zero if no event identifier
-     * @param   holding                     Ledger holding or null
-     * @param   holdingId                   Ledger holding identifier or zero if no holding identifier
-     * @param   firstIndex                  First matching entry index, inclusive
-     * @param   lastIndex                   Last matching entry index, inclusive
-     * @param   includePrivate              Boolean flag that specifies, should response include private ledger entries or not
-     * @return                              List of ledger entries
+     * @param accountId      Account identifier or zero if no account identifier
+     * @param event          Ledger event or null
+     * @param eventId        Ledger event identifier or zero if no event identifier
+     * @param holding        Ledger holding or null
+     * @param holdingId      Ledger holding identifier or zero if no holding identifier
+     * @param firstIndex     First matching entry index, inclusive
+     * @param lastIndex      Last matching entry index, inclusive
+     * @param includePrivate Boolean flag that specifies, should response include private ledger entries or not
+     * @return List of ledger entries
      */
     @Override
     public List<LedgerEntry> getEntries(long accountId, LedgerEvent event, long eventId,

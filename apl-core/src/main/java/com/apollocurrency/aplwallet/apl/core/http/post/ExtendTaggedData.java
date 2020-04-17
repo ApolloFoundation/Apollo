@@ -20,8 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_TRANSACTION;
-
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
@@ -35,13 +33,15 @@ import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_TRANSACTION;
+
 @Vetoed
 public final class ExtendTaggedData extends CreateTransaction {
     private TaggedDataService taggedDataService = CDI.current().select(TaggedDataService.class).get();
 
     public ExtendTaggedData() {
-        super("file", new APITag[] {APITag.DATA, APITag.CREATE_TRANSACTION}, "transaction",
-                "name", "description", "tags", "type", "channel", "isText", "filename", "data");
+        super("file", new APITag[]{APITag.DATA, APITag.CREATE_TRANSACTION}, "transaction",
+            "name", "description", "tags", "type", "channel", "isText", "filename", "data");
     }
 
     @Override

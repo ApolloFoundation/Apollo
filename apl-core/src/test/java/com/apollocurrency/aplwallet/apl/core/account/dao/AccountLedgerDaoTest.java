@@ -48,34 +48,30 @@ class AccountLedgerDaoTest {
     public static final int TRIM_KEEP = 300;
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension(DbTestData.getInMemDbProps(), "db/acc-data.sql", "db/schema.sql");
-
+    @Inject
+    AccountLedgerTable table;
+    AccountTestData testData = new AccountTestData();
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     private BlockchainProcessor blockchainProcessor = mock(BlockchainProcessor.class);
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
+    @WeldSetup
+    public WeldInitiator weld = WeldInitiator.from(
+        GlobalSyncImpl.class, AccountLedgerTable.class
+    )
+        .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
+        .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
+        .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
+        .addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class))
+        .addBeans(MockBean.of(blockchainProcessor, BlockchainProcessor.class, BlockchainProcessorImpl.class))
+        .addBeans(MockBean.of(mock(FullTextConfig.class), FullTextConfig.class, FullTextConfigImpl.class))
+        .addBeans(MockBean.of(mock(DerivedTablesRegistry.class), DerivedTablesRegistry.class, DerivedDbTablesRegistryImpl.class))
+        .build();
 
     {
         doReturn(TRIM_KEEP).when(propertiesHolder).getIntProperty("apl.ledgerTrimKeep", 30000);
     }
-
-    @WeldSetup
-    public WeldInitiator weld = WeldInitiator.from(
-            GlobalSyncImpl.class, AccountLedgerTable.class
-    )
-            .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
-            .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
-            .addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class))
-            .addBeans(MockBean.of(blockchainProcessor, BlockchainProcessor.class, BlockchainProcessorImpl.class))
-            .addBeans(MockBean.of(mock(FullTextConfig.class), FullTextConfig.class, FullTextConfigImpl.class))
-            .addBeans(MockBean.of(mock(DerivedTablesRegistry.class), DerivedTablesRegistry.class, DerivedDbTablesRegistryImpl.class))
-            .build();
-
-    @Inject
-    AccountLedgerTable table;
-
-    AccountTestData testData = new AccountTestData();
 
     @Test
     void testSave_insert_new_entity() {//SQL MERGE -> INSERT
@@ -110,14 +106,14 @@ class AccountLedgerDaoTest {
     @Test
     void testTrim_on_MAX_height() {
         doReturn(Integer.MAX_VALUE).when(propertiesHolder).BATCH_COMMIT_SIZE();
-        doReturn(testData.LEDGER_HEIGHT+TRIM_KEEP).when(blockchain).getHeight();
-        DbUtils.inTransaction(dbExtension, (con) -> table.trim(testData.LEDGER_HEIGHT+TRIM_KEEP));
+        doReturn(testData.LEDGER_HEIGHT + TRIM_KEEP).when(blockchain).getHeight();
+        DbUtils.inTransaction(dbExtension, (con) -> table.trim(testData.LEDGER_HEIGHT + TRIM_KEEP));
 
         List<LedgerEntry> expected = Collections.emptyList();
 
         List<LedgerEntry> all = table.getEntries(testData.ACC_LEDGER_4.getAccountId(),
-                null,0,null,0,
-                0, Integer.MAX_VALUE, true);
+            null, 0, null, 0,
+            0, Integer.MAX_VALUE, true);
 
         assertEquals(expected, all);
     }
@@ -125,14 +121,14 @@ class AccountLedgerDaoTest {
     @Test
     void testTrim_on_height() {
         doReturn(Integer.MAX_VALUE).when(propertiesHolder).BATCH_COMMIT_SIZE();
-        doReturn(testData.LEDGER_HEIGHT-1+TRIM_KEEP).when(blockchain).getHeight();
+        doReturn(testData.LEDGER_HEIGHT - 1 + TRIM_KEEP).when(blockchain).getHeight();
         DbUtils.inTransaction(dbExtension, (con) -> table.trim(testData.LEDGER_HEIGHT));
 
-        List<LedgerEntry> expected = testData.ALL_LEDGERS.stream().filter(e -> e.getHeight()>testData.LEDGER_HEIGHT-TRIM_KEEP)
-                .sorted(Comparator.comparing(LedgerEntry::getDbId, Comparator.reverseOrder()))
-                .collect(Collectors.toList());
-        List<LedgerEntry> all = table.getEntries(0,null,0,null,0,
-                0, Integer.MAX_VALUE, true);
+        List<LedgerEntry> expected = testData.ALL_LEDGERS.stream().filter(e -> e.getHeight() > testData.LEDGER_HEIGHT - TRIM_KEEP)
+            .sorted(Comparator.comparing(LedgerEntry::getDbId, Comparator.reverseOrder()))
+            .collect(Collectors.toList());
+        List<LedgerEntry> all = table.getEntries(0, null, 0, null, 0,
+            0, Integer.MAX_VALUE, true);
 
         assertEquals(expected, all);
     }
@@ -149,12 +145,12 @@ class AccountLedgerDaoTest {
     @Test
     void getEntries() {
         List<LedgerEntry> expected = List.of(testData.ACC_LEDGER_15, testData.ACC_LEDGER_14, testData.ACC_LEDGER_13,
-                testData.ACC_LEDGER_12, testData.ACC_LEDGER_9, testData.ACC_LEDGER_6, testData.ACC_LEDGER_5,
-                testData.ACC_LEDGER_2);
+            testData.ACC_LEDGER_12, testData.ACC_LEDGER_9, testData.ACC_LEDGER_6, testData.ACC_LEDGER_5,
+            testData.ACC_LEDGER_2);
 
         List<LedgerEntry> all = table.getEntries(testData.ACC_LEDGER_9.getAccountId(),
-                null,0,null,0,
-                0, Integer.MAX_VALUE, true);
+            null, 0, null, 0,
+            0, Integer.MAX_VALUE, true);
 
         assertEquals(expected, all);
     }

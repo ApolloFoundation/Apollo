@@ -100,60 +100,57 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Execution(ExecutionMode.CONCURRENT)
 class CsvImporterTest {
     private static final Logger log = getLogger(CsvImporterTest.class);
-
-    @RegisterExtension
-    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("csvExporterDb").toAbsolutePath().toString()));
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
-
+    @RegisterExtension
+    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("csvExporterDb").toAbsolutePath().toString()));
+    CsvImporter csvImporter;
     private NtpTime time = mock(NtpTime.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
-    private HeightConfig config = Mockito.mock(HeightConfig.class);
-    private Chain chain = Mockito.mock(Chain.class);
-
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class, BlockchainImpl.class, DaoConfig.class,
-            PropertyProducer.class, TransactionApplier.class, ServiceModeDirProvider.class,
-            TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
-            GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
-            ReferencedTransactionDaoImpl.class,
-            TaggedDataDao.class,
-            DataTagDao.class, PhasingPollServiceImpl.class, PhasingPollResultTable.class,
-            PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class, PhasingVoteTable.class, PhasingPollTable.class, PhasingApprovedResultTable.class,
-            KeyFactoryProducer.class, FeeCalculator.class,
-            TaggedDataTimestampDao.class,
-            TaggedDataExtendDao.class,
-            FullTextConfigImpl.class,
-            DerivedDbTablesRegistryImpl.class,
-            AplAppStatus.class,
-            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
-            ValueParserImpl.class, CsvEscaperImpl.class)
-            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
-            .addBeans(MockBean.of(mock(DirProvider.class), DirProvider.class))
-            .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
-            .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessorImpl.class, BlockchainProcessor.class))
-            .addBeans(MockBean.of(mock(TrimService.class), TrimService.class))
-            .addBeans(MockBean.of(time, NtpTime.class))
-            .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
-            .addBeans(MockBean.of(mock(AccountService.class), AccountServiceImpl.class, AccountService.class))
-            .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyServiceImpl.class, AccountPublicKeyService.class))
-            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
-            .build();
-
+        PropertiesHolder.class, BlockchainImpl.class, DaoConfig.class,
+        PropertyProducer.class, TransactionApplier.class, ServiceModeDirProvider.class,
+        TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
+        GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
+        ReferencedTransactionDaoImpl.class,
+        TaggedDataDao.class,
+        DataTagDao.class, PhasingPollServiceImpl.class, PhasingPollResultTable.class,
+        PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class, PhasingVoteTable.class, PhasingPollTable.class, PhasingApprovedResultTable.class,
+        KeyFactoryProducer.class, FeeCalculator.class,
+        TaggedDataTimestampDao.class,
+        TaggedDataExtendDao.class,
+        FullTextConfigImpl.class,
+        DerivedDbTablesRegistryImpl.class,
+        AplAppStatus.class,
+        TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
+        ValueParserImpl.class, CsvEscaperImpl.class)
+        .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
+        .addBeans(MockBean.of(mock(DirProvider.class), DirProvider.class))
+        .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
+        .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessorImpl.class, BlockchainProcessor.class))
+        .addBeans(MockBean.of(mock(TrimService.class), TrimService.class))
+        .addBeans(MockBean.of(time, NtpTime.class))
+        .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
+        .addBeans(MockBean.of(mock(AccountService.class), AccountServiceImpl.class, AccountService.class))
+        .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyServiceImpl.class, AccountPublicKeyService.class))
+        .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
+        .build();
+    private HeightConfig config = Mockito.mock(HeightConfig.class);
+    private Chain chain = Mockito.mock(Chain.class);
     @Inject
     private AplAppStatus aplAppStatus;
     @Inject
     private ValueParser valueParser;
-    CsvImporter csvImporter;
     @Inject
     private CsvEscaper translator;
 
-    private Set<String> tables = Set.of( "account_info", "account_control_phasing", "phasing_poll", "public_key", "purchase", "shard", "shuffling_data");
+    private Set<String> tables = Set.of("account_info", "account_control_phasing", "phasing_poll", "public_key", "purchase", "shard", "shuffling_data");
 
-    public CsvImporterTest() throws Exception {}
+    public CsvImporterTest() throws Exception {
+    }
 
     private Path createPath(String fileName) {
         try {

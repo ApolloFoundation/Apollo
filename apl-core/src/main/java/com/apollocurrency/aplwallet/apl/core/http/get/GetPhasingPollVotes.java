@@ -23,11 +23,11 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONArray;
@@ -41,10 +41,12 @@ import javax.servlet.http.HttpServletRequest;
 @Vetoed
 public class GetPhasingPollVotes extends AbstractAPIRequestHandler {
 
-    public GetPhasingPollVotes() {
-        super(new APITag[] {APITag.PHASING}, "transaction", "firstIndex", "lastIndex");
-    }
     private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
+
+    public GetPhasingPollVotes() {
+        super(new APITag[]{APITag.PHASING}, "transaction", "firstIndex", "lastIndex");
+    }
+
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         long transactionId = HttpParameterParserUtil.getUnsignedLong(req, "transaction", true);

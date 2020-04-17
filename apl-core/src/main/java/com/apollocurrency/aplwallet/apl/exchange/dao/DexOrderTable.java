@@ -34,8 +34,8 @@ import java.util.List;
 public class DexOrderTable extends EntityDbTable<DexOrder> {
 
     private static final String TABLE_NAME = "dex_offer";
-    private DexOrderMapper dexOrderMapper = new DexOrderMapper();
     private static DexOrderKeyFactory keyFactory = new DexOrderKeyFactory();
+    private DexOrderMapper dexOrderMapper = new DexOrderMapper();
 
     @Inject
     public DexOrderTable() {
@@ -55,8 +55,8 @@ public class DexOrderTable extends EntityDbTable<DexOrder> {
         List<DexOrder> dexOrders = new ArrayList<>();
         try (Connection con = getDatabaseManager().getDataSource().getConnection();
              PreparedStatement pstmt = con
-                     .prepareStatement("SELECT * FROM dex_offer AS offer where latest = true " +
-                             "AND offer.status = 0 AND offer.finish_time < ?")
+                 .prepareStatement("SELECT * FROM dex_offer AS offer where latest = true " +
+                     "AND offer.status = 0 AND offer.finish_time < ?")
         ) {
             int i = 0;
             pstmt.setLong(++i, currentTime);
@@ -107,8 +107,8 @@ public class DexOrderTable extends EntityDbTable<DexOrder> {
     public List<DexOrder> getPendingOrdersWithoutContracts(int height) {
         try (Connection con = databaseManager.getDataSource().getConnection();
              PreparedStatement pstm = con.prepareStatement(
-                     "SELECT * FROM dex_offer LEFT JOIN dex_contract ON dex_offer.id = dex_contract.counter_offer_id " +
-                             "OR dex_offer.id = dex_contract.offer_id WHERE dex_contract.id IS NULL AND dex_offer.status=1 AND dex_offer.height < ? AND dex_offer.latest = true")) {
+                 "SELECT * FROM dex_offer LEFT JOIN dex_contract ON dex_offer.id = dex_contract.counter_offer_id " +
+                     "OR dex_offer.id = dex_contract.offer_id WHERE dex_contract.id IS NULL AND dex_offer.status=1 AND dex_offer.height < ? AND dex_offer.latest = true")) {
             pstm.setInt(1, height);
             return CollectionUtil.toList(getManyBy(con, pstm, false));
         } catch (SQLException e) {

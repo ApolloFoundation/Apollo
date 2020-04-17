@@ -23,19 +23,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @DisplayName("Marketplace")
 @Epic(value = "Marketplace")
 public class TestMarketplace extends TestBaseOld {
-    private String dgsName;
-    private String description;
-    private String tag;
-    private int price;
-    private int quantity;
     private final File image = TestConfiguration.getTestConfiguration().getDefaultImage();
-    String symbols = "!@$^&*()_+{}:'./,\"";
-
     //TODO: Need implement in test "Purchase"
     private final int DELIVERY_TYPE_GOODS_TO_ENCRYPT = 1;
     private final int DELIVERY_TYPE_GOODS_IS_TEXT = 2;
     private final int DELIVERY_TYPE_GOODS_DATA = 3;
     private final int DELIVERY_TYPE_GOODS_NONCE = 4;
+    String symbols = "!@$^&*()_+{}:'./,\"";
+    private String dgsName;
+    private String description;
+    private String tag;
+    private int price;
+    private int quantity;
 
     @BeforeEach
     @Override

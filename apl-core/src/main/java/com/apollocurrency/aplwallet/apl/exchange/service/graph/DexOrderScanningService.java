@@ -25,8 +25,8 @@ import java.util.concurrent.locks.ReentrantLock;
 @Singleton
 @Slf4j
 public class DexOrderScanningService {
-    private static final int DEFAULT_ORDER_SELECT_LIMIT = 100;
     static final String SERVICE_NAME = "CandlesticksScanner";
+    private static final int DEFAULT_ORDER_SELECT_LIMIT = 100;
     private static final String TASK_NAME = "OrderProcessor";
     private static final int ORDER_SCANNING_HEIGHT_OFFSET = 50_000;
     private static final int ORDER_SCANNING_DELAY = 5 * 60 * 1000; // 5 minutes in ms
@@ -59,11 +59,11 @@ public class DexOrderScanningService {
     @PostConstruct
     public void init() {
         taskDispatchManager.newScheduledDispatcher(SERVICE_NAME)
-                .schedule(Task.builder()
-                        .name(TASK_NAME)
-                        .task(this::tryScan)
-                        .delay(ORDER_SCANNING_DELAY)
-                        .build());
+            .schedule(Task.builder()
+                .name(TASK_NAME)
+                .task(this::tryScan)
+                .delay(ORDER_SCANNING_DELAY)
+                .build());
     }
 
     void tryScan() {
@@ -71,8 +71,7 @@ public class DexOrderScanningService {
         int toHeight = height - ORDER_SCANNING_HEIGHT_OFFSET;
         try {
             startScan(toHeight);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error("Error during order scanning, end height - " + toHeight, e);
         }
     }
@@ -94,8 +93,7 @@ public class DexOrderScanningService {
                     return;
                 }
                 orders = scanPerformer.doIteration(currency, toHeight, orderSelectLimit);
-            }
-            finally {
+            } finally {
                 lock.unlock();
             }
             ThreadUtils.sleep(200);
@@ -117,11 +115,10 @@ public class DexOrderScanningService {
                     if (order != null) {
                         dbId = order.getDbId();
                     }
-                    scanPerformer.saveOrderScan(new OrderScan(cur,  dbId));
+                    scanPerformer.saveOrderScan(new OrderScan(cur, dbId));
                 }
             }
-        }
-        finally {
+        } finally {
             lock.unlock();
         }
     }

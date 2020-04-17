@@ -4,7 +4,6 @@
 package com.apollocurrency.aplwallet.apl.core.files.statcheck;
 
 /**
- *
  * @author al
  */
 public enum FileDownloadDecision {

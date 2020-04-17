@@ -9,11 +9,10 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 /**
- *
  * @author al
  */
 class NetworkAddress {
-    
+
     private BigInteger netAddress;
     private BigInteger netMask;
 
@@ -34,5 +33,5 @@ class NetworkAddress {
     boolean contains(BigInteger hostAddressToCheck) {
         return hostAddressToCheck.and(netMask).equals(netAddress);
     }
-    
+
 }

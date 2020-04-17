@@ -7,13 +7,13 @@ package com.apollocurrency.aplwallet.apl.core.db.fulltext;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 
+import javax.enterprise.inject.Produces;
+import javax.inject.Named;
+import javax.inject.Singleton;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import javax.enterprise.inject.Produces;
-import javax.inject.Named;
-import javax.inject.Singleton;
 
 @Singleton
 public class FullTextConfigImpl implements FullTextConfig {
@@ -21,6 +21,9 @@ public class FullTextConfigImpl implements FullTextConfig {
     private Set<String> tableNames = ConcurrentHashMap.newKeySet();
     private String schema = "PUBLIC";
     private Path ftlIndexPath;
+
+    public FullTextConfigImpl() {
+    }
 
     public void setFtlIndexPath(Path ftlIndexPath) {
         this.ftlIndexPath = ftlIndexPath;
@@ -31,25 +34,21 @@ public class FullTextConfigImpl implements FullTextConfig {
         tableNames.add(tableName);
     }
 
-    public void setSchema(String schema) {
-        StringValidator.requireNonBlank(schema, "Schema");
-        this.schema = schema;
-    }
-
-    public FullTextConfigImpl() {
-    }
-
     @Produces
     @Named("fullTextTables")
     public synchronized Set<String> getTableNames() {
         return Collections.unmodifiableSet(tableNames);
     }
 
-
     @Produces
     @Named("tablesSchema")
     public String getSchema() {
         return schema;
+    }
+
+    public void setSchema(String schema) {
+        StringValidator.requireNonBlank(schema, "Schema");
+        this.schema = schema;
     }
 
     @Produces

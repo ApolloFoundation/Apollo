@@ -13,19 +13,19 @@ import org.h2.api.Trigger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import javax.enterprise.inject.spi.CDI;
 
 /**
  * WARNING!!! Trigger instances will be created while construction of DatabaseManager, so that -> do NOT inject DatabaseManager directly into field
  */
 @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
 public class FullTextTrigger implements Trigger, TransactionCallback {
-        private static final Logger LOG = LoggerFactory.getLogger(FullTextTrigger.class);
+    private static final Logger LOG = LoggerFactory.getLogger(FullTextTrigger.class);
     /**
      * Pending table updates
      * We collect index row updates and then commit or rollback it when db transaction was finished or rollbacked
@@ -41,49 +41,51 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
 
 
     private TableData readTableData(Connection connection, String schema, String tableName) throws SQLException {
-         return DbUtils.getTableData(connection, tableName, schema);
+        return DbUtils.getTableData(connection, tableName, schema);
     }
 
     /**
      * Initialize the trigger (Trigger interface)
      *
-     * @param   conn                Database connection
-     * @param   schema              Database schema name
-     * @param   trigger             Database trigger name
-     * @param   table               Database table name
-     * @param   before              TRUE if trigger is called before database operation
-     * @param   type                Trigger type
-     * @throws  SQLException        A SQL error occurred
+     * @param conn    Database connection
+     * @param schema  Database schema name
+     * @param trigger Database trigger name
+     * @param table   Database table name
+     * @param before  TRUE if trigger is called before database operation
+     * @param type    Trigger type
+     * @throws SQLException A SQL error occurred
      */
     @Override
     public void init(Connection conn, String schema, String trigger, String table, boolean before, int type)
-            throws SQLException {
+        throws SQLException {
         this.tableData = readTableData(conn, schema, table);
     }
 
     /**
      * Close the trigger (Trigger interface)
      *
-     * @throws  SQLException        A SQL error occurred
+     * @throws SQLException A SQL error occurred
      */
     @Override
-    public void close() throws SQLException {}
+    public void close() throws SQLException {
+    }
 
     /**
      * Remove the trigger (Trigger interface)
      *
-     * @throws  SQLException        A SQL error occurred
+     * @throws SQLException A SQL error occurred
      */
     @Override
-    public void remove() throws SQLException {}
+    public void remove() throws SQLException {
+    }
 
     /**
      * Trigger has fired (Trigger interface)
      *
-     * @param   conn                Database connection
-     * @param   oldRow              The old row or null
-     * @param   newRow              The new row or null
-     * @throws  SQLException        A SQL error occurred
+     * @param conn   Database connection
+     * @param oldRow The old row or null
+     * @param newRow The new row or null
+     * @throws SQLException A SQL error occurred
      */
     @Override
     public void fire(Connection conn, Object[] oldRow, Object[] newRow) throws SQLException {
@@ -104,7 +106,7 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
         // Save the table update until the update is committed or rolled back.  Note
         // that the current thread is the application thread performing the update operation.
         //
-        synchronized(tableUpdates) {
+        synchronized (tableUpdates) {
             tableUpdates.add(new TableUpdate(Thread.currentThread(), oldRow, newRow));
         }
         //
@@ -120,7 +122,7 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
         return databaseManager;
     }
 
-    private FullTextSearchEngine  lookupFullTextSearchEngine() {
+    private FullTextSearchEngine lookupFullTextSearchEngine() {
         if (ftl == null) {
             ftl = CDI.current().select(FullTextSearchEngine.class).get();
         }
@@ -140,7 +142,7 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
             // by the current thread.
             //
             boolean commit = false;
-            synchronized(tableUpdates) {
+            synchronized (tableUpdates) {
                 Iterator<TableUpdate> updateIt = tableUpdates.iterator();
                 while (updateIt.hasNext()) {
                     TableUpdate update = updateIt.next();
@@ -168,7 +170,7 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
     @Override
     public void rollback() {
         Thread thread = Thread.currentThread();
-        synchronized(tableUpdates) {
+        synchronized (tableUpdates) {
             tableUpdates.removeIf(update -> update.getThread() == thread);
         }
     }

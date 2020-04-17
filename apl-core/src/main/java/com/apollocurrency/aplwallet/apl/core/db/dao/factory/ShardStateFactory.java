@@ -4,12 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.dao.factory;
 
-import java.sql.Types;
-
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardState;
 import org.jdbi.v3.core.argument.AbstractArgumentFactory;
 import org.jdbi.v3.core.argument.Argument;
 import org.jdbi.v3.core.config.ConfigRegistry;
+
+import java.sql.Types;
 
 public class ShardStateFactory extends AbstractArgumentFactory<ShardState> {
 

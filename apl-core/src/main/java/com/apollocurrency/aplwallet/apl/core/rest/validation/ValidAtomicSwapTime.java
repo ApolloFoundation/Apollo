@@ -19,9 +19,9 @@ import java.lang.annotation.Target;
 @Constraint(validatedBy = AtomicSwapTimeValidator.class)
 @Documented
 public @interface ValidAtomicSwapTime {
-    String message () default "Not a valid atomic swap duration, required in range %d;%d ";
+    String message() default "Not a valid atomic swap duration, required in range %d;%d ";
 
-    Class<?>[] groups () default {};
+    Class<?>[] groups() default {};
 
-    Class<? extends Payload>[] payload () default {};
+    Class<? extends Payload>[] payload() default {};
 }

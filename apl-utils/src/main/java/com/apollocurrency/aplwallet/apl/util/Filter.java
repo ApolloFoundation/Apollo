@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl.util;
 
 import java.util.function.Predicate;
 
-public interface Filter<T> extends Predicate<T>{
+public interface Filter<T> extends Predicate<T> {
 
     boolean test(T t);
 

@@ -11,17 +11,18 @@ import com.apollocurrency.aplwallet.apl.core.migrator.MigrationExecutor;
 import com.apollocurrency.aplwallet.apl.core.migrator.Migrator;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
+import javax.inject.Inject;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
-import javax.inject.Inject;
 
 /**
  * <p>Provide database specific components for migration, also add special {@link DbMigrationExecutor#afterMigration} and
  * {@link DbMigrationExecutor#beforeMigration} handlers
  * to interact with db</p>
+ *
  * @see MigrationExecutor
  * @see LegacyDbLocationsProvider
  * @see DbMigrator

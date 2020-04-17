@@ -4,9 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
@@ -20,26 +17,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 
 import javax.enterprise.inject.spi.CDI;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+
 @Slf4j
 public class PublicKeyAnnouncementAppendix extends AbstractAppendix {
 
     private static final String appendixName = "PublicKeyAnnouncement";
-
-    public static PublicKeyAnnouncementAppendix parse(JSONObject attachmentData) {
-        if (!Appendix.hasAppendix(appendixName, attachmentData)) {
-            return null;
-        }
-        return new PublicKeyAnnouncementAppendix(attachmentData);
-    }
     private static AccountPublicKeyService accountPublicKeyService;
-
-    protected AccountPublicKeyService lookupAccountPublickKeyService(){
-        if ( accountPublicKeyService == null) {
-            accountPublicKeyService = CDI.current().select(AccountPublicKeyServiceImpl.class).get();
-        }
-        return accountPublicKeyService;
-    }
-
     private final byte[] publicKey;
 
     public PublicKeyAnnouncementAppendix(ByteBuffer buffer) {
@@ -50,11 +35,25 @@ public class PublicKeyAnnouncementAppendix extends AbstractAppendix {
 
     public PublicKeyAnnouncementAppendix(JSONObject attachmentData) {
         super(attachmentData);
-        this.publicKey = Convert.parseHexString((String)attachmentData.get("recipientPublicKey"));
+        this.publicKey = Convert.parseHexString((String) attachmentData.get("recipientPublicKey"));
     }
 
     public PublicKeyAnnouncementAppendix(byte[] publicKey) {
         this.publicKey = publicKey;
+    }
+
+    public static PublicKeyAnnouncementAppendix parse(JSONObject attachmentData) {
+        if (!Appendix.hasAppendix(appendixName, attachmentData)) {
+            return null;
+        }
+        return new PublicKeyAnnouncementAppendix(attachmentData);
+    }
+
+    protected AccountPublicKeyService lookupAccountPublickKeyService() {
+        if (accountPublicKeyService == null) {
+            accountPublicKeyService = CDI.current().select(AccountPublicKeyServiceImpl.class).get();
+        }
+        return accountPublicKeyService;
     }
 
     @Override
@@ -90,7 +89,7 @@ public class PublicKeyAnnouncementAppendix extends AbstractAppendix {
             throw new AplException.NotValidException("Announced public key does not match recipient accountId");
         }
         byte[] recipientPublicKey = lookupAccountPublickKeyService().getPublicKeyByteArray(recipientId);
-        if (recipientPublicKey != null && ! Arrays.equals(publicKey, recipientPublicKey)) {
+        if (recipientPublicKey != null && !Arrays.equals(publicKey, recipientPublicKey)) {
             throw new AplException.NotCurrentlyValidException("A different public key for this account has already been announced");
         }
     }
@@ -98,8 +97,8 @@ public class PublicKeyAnnouncementAppendix extends AbstractAppendix {
     @Override
     public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
         if (publicKey == null || publicKey.length == 0) {
-            log.debug("SAVE NULL PUBLIC KEY = {}, applyAppendix = {}", publicKey, ThreadUtils.lastStacktrace());
-            log.debug("SAVE NULL PUBLIC KEY, applyAppendix, senderAccount = {}, recipientAccount = {}, trId = {}",
+            log.trace("SAVE NULL PUBLIC KEY = {}, applyAppendix = {}", publicKey, ThreadUtils.lastStacktrace());
+            log.trace("SAVE NULL PUBLIC KEY, applyAppendix, senderAccount = {}, recipientAccount = {}, trId = {}",
                 senderAccount, recipientAccount, transaction.getId());
         }
         if (lookupAccountPublickKeyService().setOrVerifyPublicKey(recipientAccount.getId(), publicKey)) {

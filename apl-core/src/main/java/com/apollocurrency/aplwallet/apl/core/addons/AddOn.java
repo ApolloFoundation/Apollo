@@ -27,9 +27,11 @@ import java.util.Map;
 
 public interface AddOn {
 
-    default void init() {}
+    default void init() {
+    }
 
-    default void shutdown() {}
+    default void shutdown() {
+    }
 
     default AbstractAPIRequestHandler getAPIRequestHandler() {
         return null;
@@ -39,6 +41,7 @@ public interface AddOn {
         return null;
     }
 
-    default void processRequest(Map<String, String> params) {}
+    default void processRequest(Map<String, String> params) {
+    }
 
 }

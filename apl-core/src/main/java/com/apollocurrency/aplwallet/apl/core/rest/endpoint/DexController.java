@@ -8,13 +8,12 @@ import com.apollocurrency.aplwallet.api.dto.ExchangeContractDTO;
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.ExchangeContractToDTOConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.CustomRequestWrapper;
@@ -41,7 +40,6 @@ import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexEthService;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexOrderTransactionCreator;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
-import com.apollocurrency.aplwallet.apl.exchange.service.DexSmartContractService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -97,14 +95,13 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Singleton
 public class DexController {
     private static final Logger log = getLogger(DexController.class);
-
+    private static final Integer DEFAULT_DEADLINE_MIN = 60 * 2;
+    private static final String TX_DEADLINE = "1440";
     private DexService service;
     private DexOrderTransactionCreator dexOrderTransactionCreator;
     private TimeService timeService;
     private DexEthService dexEthService;
     private EthereumWalletService ethereumWalletService;
-    private static final Integer DEFAULT_DEADLINE_MIN = 60*2;
-    private static final String TX_DEADLINE = "1440";
     private ObjectMapper mapper = new ObjectMapper();
     private ExchangeContractToDTOConverter contractConverter = new ExchangeContractToDTOConverter();
 
@@ -126,19 +123,19 @@ public class DexController {
     @Path("/balance")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"dex"}, summary = "Balances of cryptocurrency wallets",
-            description = "dexGetBalances endpoint returns cryptocurrency wallets' (ETH/PAX) balances")
+        description = "dexGetBalances endpoint returns cryptocurrency wallets' (ETH/PAX) balances")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Wallets balances"),
-            @ApiResponse(responseCode = "200", description = "Unexpected error") })
+        @ApiResponse(responseCode = "200", description = "Wallets balances"),
+        @ApiResponse(responseCode = "200", description = "Unexpected error")})
     @PermitAll
     public Response getBalances(@Parameter(description = "Addresses to get balance", required = true) @QueryParam("eth") List<String> ethAddresses
-        ) throws NotFoundException {
+    ) throws NotFoundException {
 
         log.debug("getBalances: ");
 
         for (String ethAddress : ethAddresses) {
-            log.debug("address: {}",ethAddress);
-            if(!EthUtil.isAddressValid(ethAddress)){
+            log.debug("address: {}", ethAddress);
+            if (!EthUtil.isAddressValid(ethAddress)) {
                 log.debug("Valid!");
                 return Response.status(Response.Status.OK).entity(incorrect("ethAddress", "Address length is not correct.")).build();
             }
@@ -159,13 +156,13 @@ public class DexController {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"dex"}, summary = "Create order", description = "get trading history for certain account")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "OK"),
-            @ApiResponse(responseCode = "200", description = "Unexpected error") })
+        @ApiResponse(responseCode = "200", description = "OK"),
+        @ApiResponse(responseCode = "200", description = "Unexpected error")})
     @PermitAll
     public Response createOffer(@Parameter(description = "Type of the APL offer. (BUY APL / SELL APL) 0/1", required = true) @FormParam("offerType") Byte offerType,
                                 @Parameter(description = "From address", required = true) @FormParam("walletAddress") String walletAddress,
                                 @Parameter(description = "APL amount (buy or sell) for order in Gwei (1 Gwei = 0.000000001), " +
-                                        "in other words  - amount of apollo atoms multiplied by 10. 1 Gwei = 10^-9, 1 ATM = 10^-8", required = true) @FormParam("offerAmount") Long orderAmount,
+                                    "in other words  - amount of apollo atoms multiplied by 10. 1 Gwei = 10^-9, 1 ATM = 10^-8", required = true) @FormParam("offerAmount") Long orderAmount,
                                 @Parameter(description = "Paired currency. (ETH=1, PAX=2)", required = true) @FormParam("pairCurrency") Byte pairCurrency,
                                 @Parameter(description = "Pair rate in Gwei. (1 Gwei = 0.000000001). Represent real pair rate, multiplied by 10^9", required = true) @FormParam("pairRate") Long pairRate,
                                 @Parameter(description = "Amount of time for this offer. (seconds)", required = true) @FormParam("amountOfTime") Integer amountOfTime,
@@ -173,7 +170,7 @@ public class DexController {
 
 
         log.debug("createOffer: offerType: {}, walletAddress: {}, orderAmount: {}, pairCurrency: {}, pairRate: {}, amountOfTime: {}", offerType, walletAddress, orderAmount, pairCurrency, pairRate, amountOfTime);
-        if (pairRate <= 0 ) {
+        if (pairRate <= 0) {
             return Response.ok(JSON.toString(incorrect("pairRate", "Should be more than zero."))).build();
         }
         if (orderAmount <= 0) {
@@ -182,7 +179,7 @@ public class DexController {
 
         if (amountOfTime <= 0 || amountOfTime > MAX_ORDER_DURATION_SEC) {
             return Response.ok(
-                    JSON.toString(incorrect("amountOfTime",  String.format("value %d not in range [%d-%d]", amountOfTime, 0, MAX_ORDER_DURATION_SEC)))
+                JSON.toString(incorrect("amountOfTime", String.format("value %d not in range [%d-%d]", amountOfTime, 0, MAX_ORDER_DURATION_SEC)))
             ).build();
         }
 
@@ -197,17 +194,17 @@ public class DexController {
                     return Response.ok(incorrect("pairedCurrency", "APL is not allowed to be a paired currency")).build();
                 }
                 order = DexOrder.builder()
-                        .accountId(account.getId())
-                        .type(type)
-                        .orderAmount(EthUtil.gweiToAtm(orderAmount))
-                        .fromAddress(type.isSell() ? Convert2.defaultRsAccount(account.getId()) : walletAddress)
-                        .toAddress(type.isSell() ? walletAddress : Convert2.defaultRsAccount(account.getId()))
-                        .orderCurrency(DexCurrency.APL)
-                        .pairCurrency(pairedCurrency)
-                        .pairRate(EthUtil.gweiToEth(pairRate))
-                        .status(OrderStatus.OPEN)
-                        .finishTime(currentTime + amountOfTime)
-                        .build();
+                    .accountId(account.getId())
+                    .type(type)
+                    .orderAmount(EthUtil.gweiToAtm(orderAmount))
+                    .fromAddress(type.isSell() ? Convert2.defaultRsAccount(account.getId()) : walletAddress)
+                    .toAddress(type.isSell() ? walletAddress : Convert2.defaultRsAccount(account.getId()))
+                    .orderCurrency(DexCurrency.APL)
+                    .pairCurrency(pairedCurrency)
+                    .pairRate(EthUtil.gweiToEth(pairRate))
+                    .status(OrderStatus.OPEN)
+                    .finishTime(currentTime + amountOfTime)
+                    .build();
             } catch (Exception ex) {
                 return Response.ok(JSON.toString(JSONResponses.ERROR_INCORRECT_REQUEST)).build();
             }
@@ -221,7 +218,7 @@ public class DexController {
                     if (!Convert2.rsAccount(account.getId()).equals(order.getFromAddress())) {
                         return Response.ok(JSON.toString(incorrect("fromAddress", "You can use only your address."))).build();
                     }
-                } catch (Exception ex){
+                } catch (Exception ex) {
                     return Response.ok(JSON.toString(incorrect("fromAddress", " is not valid."))).build();
                 }
 
@@ -293,8 +290,8 @@ public class DexController {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"dex"}, summary = "Get exchange offers", description = "dexGetOffers endpoint list of opened pending exchange orders")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Exchange offers"),
-            @ApiResponse(responseCode = "200", description = "Unexpected error") })
+        @ApiResponse(responseCode = "200", description = "Exchange offers"),
+        @ApiResponse(responseCode = "200", description = "Unexpected error")})
     @PermitAll
     public Response getOffers(@Parameter(description = "Type of the offer. (BUY = 0 /SELL = 1)") @QueryParam("orderType") Byte orderType,
                               @Parameter(description = "Criteria by Paired currency. (APL=0, ETH=1, PAX=2)") @QueryParam("pairCurrency") Byte pairCurrency,
@@ -327,13 +324,13 @@ public class DexController {
             if (isAvailableForNow) {
                 currentTime = timeService.getEpochTime();
             }
-            if(!StringUtils.isBlank(accountIdStr)){
+            if (!StringUtils.isBlank(accountIdStr)) {
                 accountId = Long.parseUnsignedLong(accountIdStr);
             }
-            if(status != null){
+            if (status != null) {
                 orderStatus = OrderStatus.getType(status);
             }
-        } catch (Exception ex){
+        } catch (Exception ex) {
             return Response.ok(JSON.toString(JSONResponses.ERROR_INCORRECT_REQUEST)).build();
         }
 
@@ -345,25 +342,25 @@ public class DexController {
         log.debug("args dump, type: {}, currentTime: {}, pairCur: {}, accountId: {}, offerStatus: {}, minAskPrice: {}, maxBidPrice: {}, offset: {}, limit: {}", type, currentTime, pairCur, accountId, orderStatus, minAskPrice, maxBidPrice, firstIndex, limit);
 
         DexOrderDBRequest dexOrderDBRequest = DexOrderDBRequest.builder()
-                .type(type != null ? type.ordinal() : null)
-                .currentTime(currentTime)
-                .offerCur(DexCurrency.APL.ordinal())
-                .pairCur(pairCur != null ? pairCur.ordinal() : null)
-                .accountId(accountId)
-                .status(orderStatus)
-                .minAskPrice(minAskPrice)
-                .maxBidPrice(maxBidPrice)
-                .offset(firstIndex)
-                .limit(limit)
-                .hasFrozenMoney(hasFrozenMoney)
+            .type(type != null ? type.ordinal() : null)
+            .currentTime(currentTime)
+            .offerCur(DexCurrency.APL.ordinal())
+            .pairCur(pairCur != null ? pairCur.ordinal() : null)
+            .accountId(accountId)
+            .status(orderStatus)
+            .minAskPrice(minAskPrice)
+            .maxBidPrice(maxBidPrice)
+            .offset(firstIndex)
+            .limit(limit)
+            .hasFrozenMoney(hasFrozenMoney)
             .sortBy(sortBy)
             .sortOrder(sortOrder)
-                .build();
+            .build();
 
         List<DexOrderWithFreezing> orders = service.getOrdersWithFreezing(dexOrderDBRequest);
         return Response.ok(orders.stream()
-                .map(order -> order.getDexOrder().toDto(order.isHasFrozenMoney()))
-                .collect(Collectors.toList())
+            .map(order -> order.getDexOrder().toDto(order.isHasFrozenMoney()))
+            .collect(Collectors.toList())
         ).build();
     }
 
@@ -387,24 +384,24 @@ public class DexController {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"dex"}, summary = "Cancel Order By Id")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Order"),
-            @ApiResponse(responseCode = "200", description = "Unexpected error") })
+        @ApiResponse(responseCode = "200", description = "Order"),
+        @ApiResponse(responseCode = "200", description = "Unexpected error")})
     @PermitAll
     public Response cancelOrderByOrderID(@Parameter(description = "Order id") @FormParam("orderId") String orderId,
                                          @Context HttpServletRequest req) throws NotFoundException {
 
         log.debug("cancelOrderByOrderID: {}", orderId);
 
-        try{
+        try {
             Long transactionId;
             Account account = HttpParameterParserUtil.getSenderAccount(req);
 
             if (StringUtils.isBlank(orderId)) {
                 return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("id", "Can't be null."))).build();
             }
-            try{
+            try {
                 transactionId = Long.parseUnsignedLong(orderId);
-            } catch (Exception ex){
+            } catch (Exception ex) {
                 return Response.ok(JSON.toString(incorrect("id", "Transaction ID is not correct."))).build();
             }
             DexOrder order = service.getOrder(transactionId);
@@ -419,7 +416,7 @@ public class DexController {
             }
 
             String passphrase = Convert.emptyToNull(HttpParameterParserUtil.getPassphrase(req, true));
-            if(passphrase == null) {
+            if (passphrase == null) {
                 return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("passphrase", "Can't be null."))).build();
             }
 
@@ -434,7 +431,7 @@ public class DexController {
             } catch (AplException.ValidationException e) {
                 return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_APL)).build();
             }
-        } catch (ParameterException ex){
+        } catch (ParameterException ex) {
             return Response.ok(JSON.toString(ex.getErrorResponse())).build();
         }
     }
@@ -444,33 +441,33 @@ public class DexController {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"dex"}, summary = "Widthraw cryptocurrency", description = "dexWidthraw endpoint provides transferEth of Ethereum/Pax")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Transaction hash"),
-            @ApiResponse(responseCode = "200", description = "Unexpected error") })
+        @ApiResponse(responseCode = "200", description = "Transaction hash"),
+        @ApiResponse(responseCode = "200", description = "Unexpected error")})
     @PermitAll
     public Response dexWithdrawPost(
-                                    @NotNull @Parameter(description = "amount eth for withdraw") @FormParam("amount") BigDecimal amount,
-                                    @NotNull @Parameter(description = "Send from address") @FormParam("fromAddress") String fromAddress,
-                                    @NotNull @Parameter(description = "Send to address") @FormParam("toAddress") String toAddress,
-                                    @NotNull @Parameter(description = "Transfer fee in GWei") @FormParam("transferFee") Long transferFee,
-                                    @NotNull @Parameter(description = "crypto currency for withdraw:ETH=1/PAX=2") @FormParam("cryptocurrency") Byte cryptocurrency,
-                                    @Context HttpServletRequest req) {
+        @NotNull @Parameter(description = "amount eth for withdraw") @FormParam("amount") BigDecimal amount,
+        @NotNull @Parameter(description = "Send from address") @FormParam("fromAddress") String fromAddress,
+        @NotNull @Parameter(description = "Send to address") @FormParam("toAddress") String toAddress,
+        @NotNull @Parameter(description = "Transfer fee in GWei") @FormParam("transferFee") Long transferFee,
+        @NotNull @Parameter(description = "crypto currency for withdraw:ETH=1/PAX=2") @FormParam("cryptocurrency") Byte cryptocurrency,
+        @Context HttpServletRequest req) {
 
         log.debug("dexWithdrawPost, amount: {}, fromAddress: {}, toAddr: {}, transferFee: {}, currency: ", amount, fromAddress, toAddress, transferFee, cryptocurrency);
 
         DexCurrency currencies = null;
         String passphrase;
         long sender;
-        try{
+        try {
             passphrase = Convert.emptyToNull(HttpParameterParserUtil.getPassphrase(req, true));
             sender = HttpParameterParserUtil.getAccountId(req, "sender", true);
 
             if (cryptocurrency != null) {
                 currencies = DexCurrency.getType(cryptocurrency);
             }
-        } catch (ParameterException ex){
+        } catch (ParameterException ex) {
             log.error(ex.getMessage(), ex);
             return Response.ok(JSON.toString(ex.getErrorResponse())).build();
-        } catch (Exception ex){
+        } catch (Exception ex) {
             log.error(ex.getMessage(), ex);
             return Response.ok(JSON.toString(JSONResponses.ERROR_INCORRECT_REQUEST)).build();
         }
@@ -479,25 +476,25 @@ public class DexController {
             return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("cryptocurrency", "Withdraw can work only with Eth or Pax."))).build();
         }
 
-        if(!EthUtil.isAddressValid(toAddress)){
+        if (!EthUtil.isAddressValid(toAddress)) {
             return Response.status(Response.Status.OK).entity(incorrect("toAddress", "Address length is not correct.")).build();
         }
-        if(!EthUtil.isAddressValid(fromAddress)){
+        if (!EthUtil.isAddressValid(fromAddress)) {
             return Response.status(Response.Status.OK).entity(incorrect("fromAddress", "Address length is not correct.")).build();
         }
-        if(transferFee < 1 || transferFee > Integer.MAX_VALUE){
+        if (transferFee < 1 || transferFee > Integer.MAX_VALUE) {
             return Response.status(Response.Status.OK).entity(incorrect("transferFee", String.format("value %d not in range [%d-%d]", transferFee, 1, Integer.MAX_VALUE))).build();
         }
 
-        if(currencies.isEth()){
+        if (currencies.isEth()) {
             BigDecimal eth = EthUtil.weiToEther(ethereumWalletService.getEthBalanceWei(fromAddress));
             //we cant send every thing because we should pay fee.
-            if(eth==null || eth.compareTo(amount) < 1){
+            if (eth == null || eth.compareTo(amount) < 1) {
                 return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_APL)).build();
             }
-        } else if(currencies.isPax()){
+        } else if (currencies.isPax()) {
             BigDecimal pax = EthUtil.weiToEther(ethereumWalletService.getPaxBalanceWei(fromAddress));
-            if(pax==null || pax.compareTo(amount) < 0){
+            if (pax == null || pax.compareTo(amount) < 0) {
                 return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_APL)).build();
             }
         }
@@ -505,11 +502,11 @@ public class DexController {
         String transaction;
         try {
             transaction = service.withdraw(sender, passphrase, fromAddress, toAddress, amount, currencies, transferFee);
-        } catch (Exception e){
+        } catch (Exception e) {
             return Response.ok(JSON.toString(JSONResponses.error(e.getMessage()))).build();
         }
 
-        if(StringUtils.isBlank(transaction)){
+        if (StringUtils.isBlank(transaction)) {
             return Response.ok(JSON.toString(JSONResponses.error("Transfer didn't send."))).build();
         } else {
             return Response.ok(new WithdrawResponse(transaction)).build();
@@ -526,11 +523,10 @@ public class DexController {
         try {
             EthGasInfo ethGasInfo = dexEthService.getEthPriceInfo();
             return Response.ok(ethGasInfo.toDto()).build();
-        } catch (Exception ex){
+        } catch (Exception ex) {
             return Response.ok(incorrect("Gas service is not available now.")).build();
         }
     }
-
 
 
     @GET
@@ -538,29 +534,29 @@ public class DexController {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"dex"}, summary = "Flush temporary keys", description = "cleanup after the exchange routine")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Exchange offers"),
-            @ApiResponse(responseCode = "200", description = "Unexpected error") })
-    public Response flush(      @Parameter(description = "User account id.") @QueryParam("accountid") String accountIdStr,
-                                @Context HttpServletRequest req) throws NotFoundException {
+        @ApiResponse(responseCode = "200", description = "Exchange offers"),
+        @ApiResponse(responseCode = "200", description = "Unexpected error")})
+    public Response flush(@Parameter(description = "User account id.") @QueryParam("accountid") String accountIdStr,
+                          @Context HttpServletRequest req) throws NotFoundException {
 
         log.debug("flush: accountIdStr: {}", accountIdStr);
         Long accountId = null;
         try {
-            if(!StringUtils.isBlank(accountIdStr)){
+            if (!StringUtils.isBlank(accountIdStr)) {
                 accountId = Long.parseUnsignedLong(accountIdStr);
             }
             String xpassphrase = Convert.emptyToNull(HttpParameterParserUtil.getPassphrase(req, true));
-            if(xpassphrase == null) {
+            if (xpassphrase == null) {
                 log.error("null passphrase is unacceptable");
                 return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("passphrase", "Can't be null."))).build();
             }
-            if ( service.flushSecureStorage(accountId, xpassphrase) ) {
+            if (service.flushSecureStorage(accountId, xpassphrase)) {
                 return ResponseBuilder.done().build();
             } else {
                 return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("keyData", "Key does not exist or has already been wiped"))).build();
             }
 
-        } catch (Exception ex){
+        } catch (Exception ex) {
             return Response.ok(JSON.toString(JSONResponses.ERROR_INCORRECT_REQUEST)).build();
         }
     }
@@ -569,8 +565,8 @@ public class DexController {
     @Path("/contracts")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"dex"}, summary = "Retrieve dex contracts for order", description = "Lookup the database to get dex contracts associated with specified account and order with status >= STEP1",
-            responses = @ApiResponse(description = "List of contracts, by default should contain 1 entry, in some cases may contain more than 1 entry (i.e. order was reopened due to expired contract; few users sent matching contract to one order) ", responseCode = "200",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ExchangeContractDTO.class))))
+        responses = @ApiResponse(description = "List of contracts, by default should contain 1 entry, in some cases may contain more than 1 entry (i.e. order was reopened due to expired contract; few users sent matching contract to one order) ", responseCode = "200",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ExchangeContractDTO.class))))
     @PermitAll
     public Response getContractForOrder(@Parameter(description = "APL account id (RS, singed or unsigned int64/long) ") @QueryParam("accountId") String account,
                                         @Parameter(description = "Order id (signed/unsigned int64/long) ") @QueryParam("orderId") String order) {
@@ -588,11 +584,11 @@ public class DexController {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = EthDepositsWithOffset.class))))
     @PermitAll
     public Response getUserActiveDeposits(@Parameter(description = "Number of first N deposits, which should be skipped during fetching (useful for pagination)") @QueryParam("offset") @PositiveOrZero long offset,
-                                        @Parameter(description = "Number of deposits to extract") @QueryParam("limit") @Min(1) @Max(100) long limit,
-                                        @Parameter(description = "Eth address, for which active deposits should be extracted") @QueryParam(DexApiConstants.WALLET_ADDRESS) @NotBlank String walletAddress) {
+                                          @Parameter(description = "Number of deposits to extract") @QueryParam("limit") @Min(1) @Max(100) long limit,
+                                          @Parameter(description = "Eth address, for which active deposits should be extracted") @QueryParam(DexApiConstants.WALLET_ADDRESS) @NotBlank String walletAddress) {
 
         try {
-            return Response.ok(service.getUserActiveDeposits(walletAddress,offset, limit )).build();
+            return Response.ok(service.getUserActiveDeposits(walletAddress, offset, limit)).build();
         } catch (AplException.ExecutiveProcessException e) {
             return ResponseBuilder.apiError(ApiErrors.ETH_NODE_ERROR, e.getMessage()).build();
         }
@@ -613,7 +609,8 @@ public class DexController {
             return Response.ok(service.getUserFilledOrders(walletAddress, offset, limit)).build();
         } catch (AplException.ExecutiveProcessException e) {
 
-        return ResponseBuilder.apiError(ApiErrors.ETH_NODE_ERROR, e.getMessage() ) .build();}
+            return ResponseBuilder.apiError(ApiErrors.ETH_NODE_ERROR, e.getMessage()).build();
+        }
     }
 
 
@@ -621,8 +618,8 @@ public class DexController {
     @Path("/all-contracts")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"dex"}, summary = "Retrieve all versioned dex contracts for order", description = "Get all versions of dex contracts related to the specified order (including all contracts with STEP1 status and previous versions of processable contract) ",
-            responses = @ApiResponse(description = "List of versioned contracts", responseCode = "200",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ExchangeContractDTO.class))))
+        responses = @ApiResponse(description = "List of versioned contracts", responseCode = "200",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ExchangeContractDTO.class))))
     @PermitAll
     public Response getAllVersionedContractsForOrder(@Parameter(description = "APL account id (RS, singed or unsigned int64/long) ") @QueryParam("accountId") String account,
                                                      @Parameter(description = "Order id (signed/unsigned int64/long) ") @QueryParam("orderId") String order) {

@@ -8,8 +8,15 @@ import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountInfo;
-import com.apollocurrency.aplwallet.apl.core.account.service.*;
-import com.apollocurrency.aplwallet.apl.core.app.Alias;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountInfoService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountInfoServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.alias.service.AliasService;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -32,6 +39,7 @@ public class BlockEventSourceProcessor implements Runnable {
     private final BlockEventSource eventSource;
     private final long accountId;
     private final Blockchain blockchain = CDI.current().select(Blockchain.class).get();
+    private final AliasService aliasService = CDI.current().select(AliasService.class).get();
     private DGSService service = CDI.current().select(DGSService.class).get();
     private AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
     private AccountInfoService accountInfoService = CDI.current().select(AccountInfoServiceImpl.class).get();
@@ -70,12 +78,12 @@ public class BlockEventSourceProcessor implements Runnable {
     protected JSONObject getBlockchainData(Blockchain blockchain) {
         JSONArray transactionsArray = new JSONArray();
         List<Transaction> list = blockchain.getTransactions(accountId,
-                0, (byte) -1, (byte) -1, 0, false,
-                false, false, 0, 9, false,
-                false, false);
-            for (Transaction transaction : list) {
-                transactionsArray.add(JSONData.transaction(false, transaction));
-            }
+            0, (byte) -1, (byte) -1, 0, false,
+            false, false, 0, 9, false,
+            false, false);
+        for (Transaction transaction : list) {
+            transactionsArray.add(JSONData.transaction(false, transaction));
+        }
 
         JSONArray purchasesJSON = new JSONArray();
 
@@ -86,7 +94,7 @@ public class BlockEventSourceProcessor implements Runnable {
             }
         }
         int sellerPurchaseCount = service.getSellerPurchaseCount(accountId, false, false);
-        int aliasCount = Alias.getAccountAliasCount(accountId);
+        int aliasCount = aliasService.getAccountAliasCount(accountId);
         JSONArray assetJson = new JSONArray();
         List<AccountAsset> accountAssets = accountAssetService.getAssetsByAccount(accountId, -1, 0, 2);
         accountAssets.forEach(accountAsset -> assetJson.add(JSONData.accountAsset(accountAsset, false, true)));

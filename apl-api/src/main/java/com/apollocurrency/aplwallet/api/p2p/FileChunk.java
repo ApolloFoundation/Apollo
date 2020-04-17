@@ -11,15 +11,15 @@ import lombok.Setter;
 import lombok.ToString;
 
 /**
- *
  * @author alukin@gmail.com
  */
-@Getter @Setter
+@Getter
+@Setter
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class FileChunk {
-    public FileChunkInfo info=new FileChunkInfo();
+    public FileChunkInfo info = new FileChunkInfo();
     public String mime64data;
 }

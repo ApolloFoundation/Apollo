@@ -65,9 +65,9 @@ public class FileDownloadService {
             downloader.startDownload(fstatus.getFileDownloadInfo(), fstatus, fstatus.getGoodPeers());
         } else {
             FileEventData data = new FileEventData(
-                    fileId,
-                    false,
-                    "File statistics is not acceptable: " + fstatus.decision.toString()
+                fileId,
+                false,
+                "File statistics is not acceptable: " + fstatus.decision.toString()
             );
             fileEvent.select(new AnnotationLiteral<FileDownloadEvent>() {
             }).fireAsync(data);
@@ -80,8 +80,8 @@ public class FileDownloadService {
     }
 
 
-    public boolean isFileDownloadedAlready(String fileId, String hexHashString){
-        boolean res =  false;
+    public boolean isFileDownloadedAlready(String fileId, String hexHashString) {
+        boolean res = false;
         File zipInExportedFolder = downloadableFilesManager.mapFileIdToLocalPath(fileId).toFile();
         log.debug("Checking existence zip = '{}', ? = {}", zipInExportedFolder, zipInExportedFolder.exists());
         if (zipInExportedFolder.exists()) {
@@ -96,7 +96,7 @@ public class FileDownloadService {
                 boolean deleteResult = zipInExportedFolder.delete();
                 res = false;
                 log.debug("bad shard file: '{}', received hash: '{}'. Calculated hash: '{}'. Zip is deleted = '{}'",
-                        zipInExportedFolder.getAbsolutePath(), hexHashString, fileHashActual, deleteResult);
+                    zipInExportedFolder.getAbsolutePath(), hexHashString, fileHashActual, deleteResult);
             }
         }
 

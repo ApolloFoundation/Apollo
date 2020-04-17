@@ -89,12 +89,12 @@ public class DGSGoods extends VersionedDerivedEntity {
         this.quantity = quantity;
     }
 
-    public void setPriceATM(long priceATM) {
-        this.priceATM = priceATM;
-    }
-
     public long getPriceATM() {
         return priceATM;
+    }
+
+    public void setPriceATM(long priceATM) {
+        this.priceATM = priceATM;
     }
 
     public boolean isDelisted() {
@@ -120,16 +120,16 @@ public class DGSGoods extends VersionedDerivedEntity {
         if (!super.equals(o)) return false;
         DGSGoods dgsGoods = (DGSGoods) o;
         return id == dgsGoods.id &&
-                sellerId == dgsGoods.sellerId &&
-                timestamp == dgsGoods.timestamp &&
-                hasImage == dgsGoods.hasImage &&
-                quantity == dgsGoods.quantity &&
-                priceATM == dgsGoods.priceATM &&
-                delisted == dgsGoods.delisted &&
-                Objects.equals(name, dgsGoods.name) &&
-                Objects.equals(description, dgsGoods.description) &&
-                Objects.equals(tags, dgsGoods.tags) &&
-                Arrays.equals(parsedTags, dgsGoods.parsedTags);
+            sellerId == dgsGoods.sellerId &&
+            timestamp == dgsGoods.timestamp &&
+            hasImage == dgsGoods.hasImage &&
+            quantity == dgsGoods.quantity &&
+            priceATM == dgsGoods.priceATM &&
+            delisted == dgsGoods.delisted &&
+            Objects.equals(name, dgsGoods.name) &&
+            Objects.equals(description, dgsGoods.description) &&
+            Objects.equals(tags, dgsGoods.tags) &&
+            Arrays.equals(parsedTags, dgsGoods.parsedTags);
     }
 
     @Override

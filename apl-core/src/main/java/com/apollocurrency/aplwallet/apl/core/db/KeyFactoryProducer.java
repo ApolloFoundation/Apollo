@@ -4,7 +4,6 @@ import com.apollocurrency.aplwallet.apl.core.app.UnconfirmedTransaction;
 
 import javax.enterprise.inject.Produces;
 import javax.inject.Named;
-import javax.inject.Singleton;
 
 public class KeyFactoryProducer {
     private static final LongKeyFactory<UnconfirmedTransaction> unconfirmedTransactionKeyFactory = new LongKeyFactory<UnconfirmedTransaction>("id") {

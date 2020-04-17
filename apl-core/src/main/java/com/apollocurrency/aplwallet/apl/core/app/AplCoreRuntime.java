@@ -40,15 +40,14 @@ public class AplCoreRuntime {
 
     private static final Logger LOG = LoggerFactory.getLogger(AplCoreRuntime.class);
     private final List<AplCore> cores = new ArrayList<>();
+    private final DatabaseManager databaseManager;
+    private final AplAppStatus aplAppStatus;
+    private final PeersService peers;
     private RuntimeMode runtimeMode;
-
     //TODO: may be it is better to take below variables from here instead of getting it from CDI
     // in every class?
     private BlockchainConfig blockchainConfig;
     private PropertiesHolder propertiesHolder;
-    private final DatabaseManager databaseManager;
-    private final AplAppStatus aplAppStatus;
-    private final PeersService peers;
     //TODO:  check and debug minting
     private MintWorker mintworker;
     private Thread mintworkerThread;
@@ -64,20 +63,46 @@ public class AplCoreRuntime {
 
     }
 
+    public static void logSystemProperties() {
+        String[] loggedProperties = new String[]{
+            "java.version",
+            "java.vm.version",
+            "java.vm.name",
+            "java.vendor",
+            "java.vm.vendor",
+            "java.home",
+            "java.library.path",
+            "java.class.path",
+            "os.arch",
+            "sun.arch.data.model",
+            "os.name",
+            "file.encoding",
+            "java.security.policy",
+            "java.security.manager",
+            RuntimeEnvironment.RUNTIME_MODE_ARG,};
+        for (String property : loggedProperties) {
+            LOG.debug("{} = {}", property, System.getProperty(property));
+        }
+        LOG.debug("availableProcessors = {}", Runtime.getRuntime().availableProcessors());
+        LOG.debug("maxMemory = {}", Runtime.getRuntime().maxMemory());
+        LOG.debug("processId = {}", RuntimeParams.getProcessId());
+    }
+
     public void init(RuntimeMode runtimeMode, BlockchainConfig blockchainConfig, PropertiesHolder propertiesHolder, TaskDispatchManager taskManager) {
         this.blockchainConfig = blockchainConfig;
         this.propertiesHolder = propertiesHolder;
         this.runtimeMode = runtimeMode;
         this.taskManager = taskManager;
         TaskDispatcher taskDispatcher = taskManager.newScheduledDispatcher("AplCoreRuntime-periodics");
-        taskDispatcher.schedule( Task.builder()
-                .name("Core-health")
-                .initialDelay(HEALTH_CHECK_INTERVAL * 2)
-                .delay(HEALTH_CHECK_INTERVAL)
-                .task(()-> { LOG.info(getNodeHealth());
-                    aplAppStatus.clearFinished(1 * 60L); //10 min
-                })
-                .build());
+        taskDispatcher.schedule(Task.builder()
+            .name("Core-health")
+            .initialDelay(HEALTH_CHECK_INTERVAL * 2)
+            .delay(HEALTH_CHECK_INTERVAL)
+            .task(() -> {
+                LOG.info(getNodeHealth());
+                aplAppStatus.clearFinished(1 * 60L); //10 min
+            })
+            .build());
     }
 
     private void findDeadLocks(StringBuilder sb) {
@@ -104,7 +129,7 @@ public class AplCoreRuntime {
         }
     }
 
-    private String getNodeHealth(){
+    private String getNodeHealth() {
         StringBuilder sb = new StringBuilder("Node health info\n");
         HikariPoolMXBean jmxBean = databaseManager.getDataSource().getJmxBean();
         String usedConnections = null;
@@ -114,16 +139,16 @@ public class AplCoreRuntime {
             int idleConnections = jmxBean.getIdleConnections();
             int threadAwaitingConnections = jmxBean.getThreadsAwaitingConnection();
             usedConnections = String.format("Total/Active/Idle connections in Pool '%d'/'%d'/'%d', threadsAwaitPool=[%d], 'main-db'",
-                    totalConnections,
-                    activeConnections,
-                    idleConnections,
-                    threadAwaitingConnections);
+                totalConnections,
+                activeConnections,
+                idleConnections,
+                threadAwaitingConnections);
         }
         sb.append("Used DB connections: ").append(usedConnections);
         Runtime runtime = Runtime.getRuntime();
         sb.append("\nRuntime total memory :").append(String.format(" %,d KB", (runtime.totalMemory() / 1024)));
         sb.append("\nRuntime free  memory :").append(String.format(" %,d KB", (runtime.freeMemory() / 1024)));
-        sb.append("\nRuntime max   memory :").append(String.format(" %,d KB", (runtime.maxMemory() / 1024)) );
+        sb.append("\nRuntime max   memory :").append(String.format(" %,d KB", (runtime.maxMemory() / 1024)));
         sb.append("\nActive threads count :").append(Thread.currentThread().getThreadGroup().getParent().activeCount());
         sb.append("\nInbound peers count: ").append(peers.getInboundPeers().size());
         sb.append(", Active peers count: ").append(peers.getActivePeers().size());
@@ -155,32 +180,6 @@ public class AplCoreRuntime {
             }
         }
         runtimeMode.shutdown();
-    }
-
-
-    public static void logSystemProperties() {
-        String[] loggedProperties = new String[]{
-            "java.version",
-            "java.vm.version",
-            "java.vm.name",
-            "java.vendor",
-            "java.vm.vendor",
-            "java.home",
-            "java.library.path",
-            "java.class.path",
-            "os.arch",
-            "sun.arch.data.model",
-            "os.name",
-            "file.encoding",
-            "java.security.policy",
-            "java.security.manager",
-            RuntimeEnvironment.RUNTIME_MODE_ARG,};
-        for (String property : loggedProperties) {
-            LOG.debug("{} = {}", property, System.getProperty(property));
-        }
-        LOG.debug("availableProcessors = {}", Runtime.getRuntime().availableProcessors());
-        LOG.debug("maxMemory = {}", Runtime.getRuntime().maxMemory());
-        LOG.debug("processId = {}", RuntimeParams.getProcessId());
     }
 
     public void startMinter() {

@@ -28,8 +28,6 @@ import java.util.Objects;
 @Slf4j
 public class PublicKeyTable extends EntityDbTable<PublicKey> implements EntityDbTableInterface<PublicKey> {
 
-    private final Blockchain blockchain;
-
     private static final LongKeyFactory<PublicKey> KEY_FACTORY = new LongKeyFactory<>("account_id") {
         @Override
         public DbKey newKey(PublicKey publicKey) {
@@ -39,13 +37,14 @@ public class PublicKeyTable extends EntityDbTable<PublicKey> implements EntityDb
             return publicKey.getDbKey();
         }
     };
+    private final Blockchain blockchain;
 
     public PublicKeyTable(Blockchain blockchain) {
         super("public_key", KEY_FACTORY, true, null, true);
         this.blockchain = Objects.requireNonNull(blockchain, "Blockchain cannot be null");
     }
 
-    public DbKey newKey(long id){
+    public DbKey newKey(long id) {
         return KEY_FACTORY.newKey(id);
     }
 
@@ -58,8 +57,7 @@ public class PublicKeyTable extends EntityDbTable<PublicKey> implements EntityDb
     public void save(Connection con, PublicKey publicKey) throws SQLException {
         publicKey.setHeight(blockchain.getHeight());
         try (
-                @DatabaseSpecificDml(DmlMarker.MERGE)
-                final PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (account_id, public_key, height, latest) " + "KEY (account_id, height) VALUES (?, ?, ?, TRUE)")
+            @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (account_id, public_key, height, latest) " + "KEY (account_id, height) VALUES (?, ?, ?, TRUE)")
         ) {
             int i = 0;
             pstmt.setLong(++i, publicKey.getAccountId());

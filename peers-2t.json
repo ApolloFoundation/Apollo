@@ -6,19 +6,19 @@
       "schema": "http"
     },
     {
-      "host": "51.15.209.252",
-      "schema": "http"
-    },
-    {
-      "host": "51.15.228.90",
-      "schema": "http"
-    },
-    {
       "host": "51.15.228.126",
       "schema": "http"
     },
     {
       "host": "51.15.228.171",
+      "schema": "http"
+    },
+    {
+      "host": "51.15.209.252",
+      "schema": "http"
+    },
+    {
+      "host": "51.15.228.90",
       "schema": "http"
     },
     {

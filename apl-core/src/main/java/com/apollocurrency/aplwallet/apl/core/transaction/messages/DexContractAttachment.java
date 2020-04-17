@@ -93,11 +93,11 @@ public class DexContractAttachment extends AbstractAttachment {
     @Override
     public int getMySize() {
         return 8 + 8
-                + 1 + (this.secretHash != null ? 32 + 64 : 0)
-                + 1
-                + 2 + (this.transferTxId != null ? Convert.toBytes(transferTxId).length : 0)
-                + 2 + (this.counterTransferTxId != null ? Convert.toBytes(counterTransferTxId).length : 0)
-                + 4;
+            + 1 + (this.secretHash != null ? 32 + 64 : 0)
+            + 1
+            + 2 + (this.transferTxId != null ? Convert.toBytes(transferTxId).length : 0)
+            + 2 + (this.counterTransferTxId != null ? Convert.toBytes(counterTransferTxId).length : 0)
+            + 4;
     }
 
     @Override
@@ -106,7 +106,7 @@ public class DexContractAttachment extends AbstractAttachment {
         buffer.putLong(this.counterOrderId);
 
         //32
-        if(this.secretHash != null) {
+        if (this.secretHash != null) {
             buffer.put((byte) 1);
             buffer.put(this.secretHash);
             buffer.put(this.encryptedSecret);

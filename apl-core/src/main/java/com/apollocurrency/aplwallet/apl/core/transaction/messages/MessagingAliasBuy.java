@@ -9,15 +9,15 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import java.nio.ByteBuffer;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+
 /**
- *
  * @author al
  */
 public final class MessagingAliasBuy extends AbstractAttachment {
-    
+
     final String aliasName;
 
     public MessagingAliasBuy(ByteBuffer buffer) throws AplException.NotValidException {
@@ -63,5 +63,5 @@ public final class MessagingAliasBuy extends AbstractAttachment {
     public String getAliasName() {
         return aliasName;
     }
-    
+
 }

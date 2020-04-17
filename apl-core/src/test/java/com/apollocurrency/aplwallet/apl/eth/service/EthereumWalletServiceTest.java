@@ -92,6 +92,7 @@ class EthereumWalletServiceTest {
 
         assertNoConfirmations();
     }
+
     @Test
     void testGetNumberOfConfirmationsWhenBlockNumberResponseContainsError() throws IOException {
         mockTxErrorInResponse("Node is not available");
@@ -138,6 +139,7 @@ class EthereumWalletServiceTest {
         doReturn(mockRequest).when(web3j).ethGetTransactionReceipt(txHash);
         return mockRequest;
     }
+
     private Request mockEstimateGas() {
         Request mockRequest = mock(Request.class);
         doReturn(mockRequest).when(web3j).ethEstimateGas(any(org.web3j.protocol.core.methods.request.Transaction.class));
@@ -169,6 +171,7 @@ class EthereumWalletServiceTest {
         doReturn(receipt).when(ethTransaction).getResult();
         doReturn(blockNumber).when(receipt).getBlockNumber();
     }
+
     private void mockTxErrorInResponse(String error) throws IOException {
         EthGetTransactionReceipt ethTransaction = mockTxReceiptRequestResponse();
         Response.Error err = new Response.Error(0, error);
@@ -205,7 +208,7 @@ class EthereumWalletServiceTest {
     void testEstimateGas() throws IOException {
         mockEstimateGasRequestResponse(null, BigInteger.TEN);
 
-        BigInteger gasLimit = service.estimateGasLimit(accountAddress, "", function , BigInteger.TEN);
+        BigInteger gasLimit = service.estimateGasLimit(accountAddress, "", function, BigInteger.TEN);
 
         assertEquals(BigInteger.valueOf(11), gasLimit);
 
@@ -248,6 +251,7 @@ class EthereumWalletServiceTest {
 
         assertEquals(BigInteger.valueOf(5), gasLimit);
     }
+
     @Test
     void testValidateBalanceNotEnoughFundsToPayFee() throws IOException {
         mockEstimateGasRequestResponse(null, BigInteger.TEN);

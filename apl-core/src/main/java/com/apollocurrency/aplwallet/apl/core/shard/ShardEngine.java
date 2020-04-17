@@ -25,7 +25,7 @@ public interface ShardEngine {
 
     /**
      * Create database BACKUP-BEFORE-0000001.zip file before sharding in case configured setting
-     * apl.sharding.backupDb=true
+     * apl.sharding.backupDb=f
      *
      * @return MigrateState.MAIN_DB_BACKUPED if success, MigrateState.FAILED otherwise
      */
@@ -86,6 +86,7 @@ public interface ShardEngine {
 
     /**
      * Remove recovery data, so the process is finished and ready for next time
+     *
      * @param paramInfo empty, left for compatibility
      * @return COMPLETED usually
      */

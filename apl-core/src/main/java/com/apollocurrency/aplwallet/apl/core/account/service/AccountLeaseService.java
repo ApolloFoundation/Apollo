@@ -28,9 +28,10 @@ public interface AccountLeaseService {
     /**
      * Lease own's forging power to another account for a fixed period of time.
      * When the leasing period expires, the forging power will return back automatically.
+     *
      * @param account  it's forging power is allowed to lease
      * @param lesseeId another account
-     * @param period a certain fixed period time
+     * @param period   a certain fixed period time
      */
     void leaseEffectiveBalance(Account account, long lesseeId, int period);
 }

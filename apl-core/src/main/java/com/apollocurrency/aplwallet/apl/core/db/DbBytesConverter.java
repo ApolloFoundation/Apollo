@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.db;
 
 import javax.enterprise.inject.spi.CDI;
-
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.sql.Connection;
@@ -37,8 +36,7 @@ public class DbBytesConverter {
             String className = DbBytesConverter.class.getName();
             String functionPath = className + "." + BYTE_TO_LONG_METHOD_NAME;
             stmt.executeUpdate(String.format("CREATE ALIAS %s FOR \"%s\"", BYTE_TO_LONG_DB_FUNCTION_NAME, functionPath));
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }

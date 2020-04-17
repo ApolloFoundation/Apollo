@@ -14,8 +14,8 @@ import com.apollocurrency.aplwallet.apl.core.cache.PublicKeyCacheConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTableInterface;
-import com.apollocurrency.aplwallet.apl.core.dgs.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.core.db.service.BlockChainInfoService;
+import com.apollocurrency.aplwallet.apl.core.dgs.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.core.shard.DbHotSwapConfig;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
@@ -47,9 +47,9 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
     private final InMemoryCacheManager cacheManager;
     @Getter
     private final boolean cacheEnabled;
+    private final BlockChainInfoService blockChainInfoService;
     @Getter
     private Cache<DbKey, PublicKey> publicKeyCache;
-    private final BlockChainInfoService blockChainInfoService;
 
     @Inject
     public AccountPublicKeyServiceImpl(@Named("publicKeyTable") EntityDbTableInterface<PublicKey> publicKeyTable,
@@ -65,12 +65,13 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
     }
 
     @PostConstruct
-    void init(){
-        if (isCacheEnabled()){
+    void init() {
+        if (isCacheEnabled()) {
             publicKeyCache = cacheManager.acquireCache(PublicKeyCacheConfig.PUBLIC_KEY_CACHE_NAME);
             log.debug("--cache-- init PUBLIC KEY CACHE={}", publicKeyCache);
         }
     }
+
     void onRescanBegan(@Observes @BlockEvent(BlockEventType.RESCAN_BEGIN) Block block) {
         clearCache();
     }
@@ -101,17 +102,17 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
     */
 
     @Override
-    public int getCount(){
+    public int getCount() {
         return getPublicKeysCount() + getGenesisPublicKeysCount();
     }
 
     @Override
-    public int getPublicKeysCount(){
+    public int getPublicKeysCount() {
         return publicKeyTable.getCount();
     }
 
     @Override
-    public int getGenesisPublicKeysCount(){
+    public int getGenesisPublicKeysCount() {
         return genesisPublicKeyTable.getCount();
     }
 
@@ -167,6 +168,7 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
     /**
      * Gets GenesisPublicKey without checking doesNotExceed and checkAvailable
      * because GenesisPublicKeys are unchangeable.
+     *
      * @param dbKey
      * @param height
      * @return
@@ -276,9 +278,9 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
     @Override
     public PublicKey insertPublicKey(PublicKey publicKey, boolean isGenesis) {
-        if(isGenesis){
+        if (isGenesis) {
             genesisPublicKeyTable.insert(publicKey);
-        }else{
+        } else {
             publicKeyTable.insert(publicKey);
         }
         return publicKey;
@@ -299,30 +301,30 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
     }
 
     private void clearCache() {
-        if ( isCacheEnabled()) {
+        if (isCacheEnabled()) {
             publicKeyCache.invalidateAll();
         }
     }
 
     private void removeFromCache(DbKey key) {
-        if ( isCacheEnabled()) {
+        if (isCacheEnabled()) {
             log.trace("--cache-- remove dbKey={}", key);
             publicKeyCache.invalidate(key);
         }
     }
 
-    private PublicKey getFromCache(DbKey key){
-        if (isCacheEnabled()){
+    private PublicKey getFromCache(DbKey key) {
+        if (isCacheEnabled()) {
             PublicKey pkey = publicKeyCache.getIfPresent(key);
             log.trace("--cache-- get dbKey={}, from cache pkey={}", key, pkey);
             return pkey;
-        }else{
+        } else {
             return null;
         }
     }
 
     private void refreshInCache(DbKey dbKey) {
-        if ( isCacheEnabled()) {
+        if (isCacheEnabled()) {
             PublicKey publicKey = loadPublicKeyFromDb(dbKey);
             if (publicKey != null) {
                 log.trace("--cache-- refresh dbKey={} height={}", dbKey, publicKey.getHeight());
@@ -331,8 +333,8 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
         }
     }
 
-    private void putInCache(DbKey key, PublicKey value){
-        if (isCacheEnabled()){
+    private void putInCache(DbKey key, PublicKey value) {
+        if (isCacheEnabled()) {
             log.trace("--cache-- put  dbKey={} height={}", key, value.getHeight());
             publicKeyCache.put(key, value);
         }

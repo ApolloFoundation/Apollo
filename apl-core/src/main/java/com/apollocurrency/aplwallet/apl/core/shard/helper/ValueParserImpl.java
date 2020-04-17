@@ -34,7 +34,7 @@ public class ValueParserImpl implements ValueParser {
     @Override
     public String parseStringObject(Object data) {
         String value = null;
-        if (data!=null) {
+        if (data != null) {
             String stringValue = removeQuote(data);
             value = stringValue.replaceAll(DOUBLE_QUOTE, QUOTE);
             value = translator.unEscape(value);
@@ -52,7 +52,7 @@ public class ValueParserImpl implements ValueParser {
                 actualArray = new Object[split.length];
                 for (int j = 0; j < split.length; j++) {
                     String value = split[j];
-                    if (value.startsWith(BYTE_ARRAY_PREFIX) ) { //find byte arrays
+                    if (value.startsWith(BYTE_ARRAY_PREFIX)) { //find byte arrays
                         //byte array found
                         actualArray[j] = parseBinaryObject(value);
                     } else if (value.startsWith(QUOTE)) { //find string
@@ -78,21 +78,21 @@ public class ValueParserImpl implements ValueParser {
 
     @Override
     public byte[] parseBinaryObject(Object data) {
-        if(data == null){
+        if (data == null) {
             return null;
-        }else {
+        } else {
             String value = (String) data;
             if (value.startsWith(BYTE_ARRAY_PREFIX) && value.endsWith(QUOTE)) { //find byte arrays
                 return Base64.getDecoder().decode(value.substring(2, value.length() - 1));
-            }else{
-                throw new RuntimeException("Expected byte array format: [b'...'], but found [" + value.substring(0,2) + "]");
+            } else {
+                throw new RuntimeException("Expected byte array format: [b'...'], but found [" + value.substring(0, 2) + "]");
             }
         }
     }
 
     private String removeQuote(Object data) {
         String value = null;
-        if (data!=null) {
+        if (data != null) {
             String stringObject = (String) data;
             if (stringObject.charAt(0) == QUOTE_CHAR) {
                 if (stringObject.charAt(stringObject.length() - 1) == QUOTE_CHAR) {
@@ -100,7 +100,7 @@ public class ValueParserImpl implements ValueParser {
                 } else {
                     throw new RuntimeException(String.format(WRONG_QUOTES_BALANCE, stringObject));
                 }
-            } else if (stringObject.charAt(stringObject.length() - 1) == QUOTE_CHAR){
+            } else if (stringObject.charAt(stringObject.length() - 1) == QUOTE_CHAR) {
                 throw new RuntimeException(String.format(WRONG_QUOTES_BALANCE, stringObject));
             } else {//string without quotes
                 value = stringObject;

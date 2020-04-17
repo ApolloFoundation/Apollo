@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.updater.decryption;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.updater.UpdaterUtil;
 import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
@@ -13,6 +11,7 @@ import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
 import org.slf4j.Logger;
 
+import javax.crypto.Cipher;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
@@ -28,7 +27,8 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.interfaces.RSAKey;
 import java.security.spec.PKCS8EncodedKeySpec;
-import javax.crypto.Cipher;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 
 public class RSAUtil {
@@ -96,8 +96,7 @@ public class RSAUtil {
         try {
             PublicKey publicKey = getPublicKeyFromCertificate(certificatePath);
             return decrypt(publicKey, encrypted);
-        }
-        catch (CertificateException | IOException | URISyntaxException e) {
+        } catch (CertificateException | IOException | URISyntaxException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -108,7 +107,7 @@ public class RSAUtil {
         Object keyObject = null;
         if (resource == null) {
             Path pathToFile = Paths.get(path);
-            PEMParser   pem = new PEMParser(new InputStreamReader(Files.newInputStream(pathToFile)));
+            PEMParser pem = new PEMParser(new InputStreamReader(Files.newInputStream(pathToFile)));
             keyObject = pem.readObject();
         } else {
             PEMParser pem = new PEMParser(new InputStreamReader(resource.openStream()));
@@ -135,7 +134,7 @@ public class RSAUtil {
     }
 
     public static int maxEncryptionLength(RSAKey key) {
-        return keyLength(key)-11;
+        return keyLength(key) - 11;
     }
 
     public static int keyLength(RSAKey key) {

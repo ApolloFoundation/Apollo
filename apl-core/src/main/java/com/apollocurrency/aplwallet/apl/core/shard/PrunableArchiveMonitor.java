@@ -48,33 +48,33 @@ public class PrunableArchiveMonitor {
     public void init() {
         taskDispatcher = taskManager.newScheduledDispatcher("PrunableArchiveMonitor");
         taskDispatcher.schedule(Task.builder()
-                .name("RecalculatePrunableZipHash")
-                .initialDelay(PRUNABLE_MONITOR_INITIAL_DELAY)
-                .task(this::processPrunableDataArchive)
-                .delay(PRUNABLE_MONITOR_DELAY)
-                .build());
+            .name("RecalculatePrunableZipHash")
+            .initialDelay(PRUNABLE_MONITOR_INITIAL_DELAY)
+            .task(this::processPrunableDataArchive)
+            .delay(PRUNABLE_MONITOR_DELAY)
+            .build());
         log.info("PrunableArchiveMonitor initialized, initial delay={} ms, delay={} ms.",
-                PRUNABLE_MONITOR_INITIAL_DELAY,
-                PRUNABLE_MONITOR_DELAY );
+            PRUNABLE_MONITOR_INITIAL_DELAY,
+            PRUNABLE_MONITOR_DELAY);
     }
 
-    public void onResumeBlockchainEvent(@Observes @BlockchainEvent(BlockchainEventType.RESUME_DOWNLOADING) BlockchainConfig cfg){
+    public void onResumeBlockchainEvent(@Observes @BlockchainEvent(BlockchainEventType.RESUME_DOWNLOADING) BlockchainConfig cfg) {
         resumeMonitor();
     }
 
-    public void onSuspendBlockchainEvent(@Observes @BlockchainEvent(BlockchainEventType.SUSPEND_DOWNLOADING) BlockchainConfig cfg){
+    public void onSuspendBlockchainEvent(@Observes @BlockchainEvent(BlockchainEventType.SUSPEND_DOWNLOADING) BlockchainConfig cfg) {
         suspendMonitor();
     }
 
-    public void resumeMonitor(){
+    public void resumeMonitor() {
         taskDispatcher.resume();
     }
 
-    public void suspendMonitor(){
+    public void suspendMonitor() {
         taskDispatcher.suspend();
     }
 
-    private void processPrunableDataArchive(){
+    private void processPrunableDataArchive() {
         int epochTime = timeService.getEpochTime();
         int pruningTime = epochTime - epochTime % DEFAULT_PRUNABLE_UPDATE_PERIOD;
         log.debug("processPrunableDataArchive started pruningTime={} ", pruningTime);
@@ -82,7 +82,7 @@ public class PrunableArchiveMonitor {
         processing = true;
         try {
             hashCalculator.tryRecalculatePrunableArchiveHashes(pruningTime);
-        }finally {
+        } finally {
             processing = false;
         }
         log.debug("processPrunableDataArchive finished");

@@ -20,19 +20,20 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
-
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SetPhasingOnly;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONStreamAware;
+
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.http.HttpServletRequest;
+
 /**
  * Sets an account control that blocks transactions unless they are phased with certain parameters
  *
@@ -64,16 +65,14 @@ import org.json.simple.JSONStreamAware;
  * <li>controlMinDuration - The minimum phasing duration (finish height minus current height).</li>
  * <li>controlHolding - The maximum allowed phasing duration.</li>
  * </ul>
- *
- *
  */
 @Vetoed
 public final class SetPhasingOnlyControl extends CreateTransaction {
 
     public SetPhasingOnlyControl() {
-        super(new APITag[] {APITag.ACCOUNT_CONTROL, APITag.CREATE_TRANSACTION}, "controlVotingModel", "controlQuorum", "controlMinBalance",
-                "controlMinBalanceModel", "controlHolding", "controlWhitelisted", "controlWhitelisted", "controlWhitelisted",
-                "controlMaxFees", "controlMinDuration", "controlMaxDuration");
+        super(new APITag[]{APITag.ACCOUNT_CONTROL, APITag.CREATE_TRANSACTION}, "controlVotingModel", "controlQuorum", "controlMinBalance",
+            "controlMinBalanceModel", "controlHolding", "controlWhitelisted", "controlWhitelisted", "controlWhitelisted",
+            "controlMaxFees", "controlMinDuration", "controlMaxDuration");
     }
 
     @Override

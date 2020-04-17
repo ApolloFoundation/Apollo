@@ -8,18 +8,27 @@ import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.Block;
 import com.apollocurrency.aplwallet.apl.util.Version;
 
 import java.util.List;
+import java.util.Map;
 
 public class PeerMonitoringResult {
-    private List<Block> blocks;
     private List<ShardDTO> shards;
     private int height;
     private Version version;
+    private Map<String, Block> peerMutualBlocks;
 
-    public PeerMonitoringResult(List<Block> blocks, Version version, int height, List<ShardDTO> shards) {
-        this.blocks = blocks;
+    public PeerMonitoringResult(List<ShardDTO> shards, int height, Version version, Map<String, Block> peerMutualBlocks) {
+        this.shards = shards;
         this.height = height;
         this.version = version;
-        this.shards = shards;
+        this.peerMutualBlocks = peerMutualBlocks;
+    }
+
+    public Map<String, Block> getPeerMutualBlocks() {
+        return peerMutualBlocks;
+    }
+
+    public void setPeerMutualBlocks(Map<String, Block> peerMutualBlocks) {
+        this.peerMutualBlocks = peerMutualBlocks;
     }
 
     public int getHeight() {
@@ -28,14 +37,6 @@ public class PeerMonitoringResult {
 
     public void setHeight(int height) {
         this.height = height;
-    }
-
-    public List<Block> getBlocks() {
-        return blocks;
-    }
-
-    public void setBlocks(List<Block> blocks) {
-        this.blocks = blocks;
     }
 
     public Version getVersion() {

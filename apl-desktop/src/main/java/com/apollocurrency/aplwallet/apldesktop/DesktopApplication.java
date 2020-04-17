@@ -75,26 +75,26 @@ public class DesktopApplication extends Application {
     private static final SplashScreen SPLASH_SCREEN = SplashScreen.getInstance();
     private static final DbRecoveringUI DB_RECOVERING_UI = DbRecoveringUI.getInstance();
     private static final boolean ENABLE_JAVASCRIPT_DEBUGGER = false;
-    private static volatile boolean isSplashScreenLaunched = false;
     static volatile Stage mainStage;
+    private static volatile boolean isSplashScreenLaunched = false;
     //private static OptionDAO optionDAO = new OptionDAO();
     private static volatile Stage screenStage;
     private static volatile Stage changelogStage;
     private static String APIUrl;
-    //private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
+    //private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
 
 //    private static final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
 //    private static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-        
+
 
     public static void refreshMainApplication() {
         MainApplication.refresh();
     }
-    
+
     private static String getUrl() {
         /*/TODO: use default URL from config
         String url = "http://localhost:7876/";//API.getWelcomePageUri().toString();
-        
+
         if (url.startsWith("https")) {
             HttpsURLConnection.setDefaultSSLSocketFactory(TrustAllSSLProvider.getSslSocketFactory());
             HttpsURLConnection.setDefaultHostnameVerifier(TrustAllSSLProvider.getHostNameVerifier());
@@ -120,13 +120,13 @@ public class DesktopApplication extends Application {
     //rewrite (start on existing stage)
     public static void launch() {
         Application.launch(DesktopApplication.class);
-            
-     
+
+
         if (mainStage != null) {
             Platform.runLater(() -> showStage(false));
         }
     }
-    
+
     //TODO: Recover DB in core
     /*public static void recoverDbUI() {
         DB_RECOVERING_UI.tryToRecoverDB();
@@ -147,7 +147,7 @@ public class DesktopApplication extends Application {
         {
             Platform.runLater(MAIN_APPLICATION::startChangelogWindow);
             optionDAO.set("Previous launch APP Version", Constants.VERSION.toString());
-            
+
         }*/
 
     }
@@ -179,8 +179,7 @@ public class DesktopApplication extends Application {
             try {
                 Class<?> aClass = Class.forName("com.mohamnag.fxwebview_debugger.DevToolsDebuggerServer");
                 aClass.getMethod("stopDebugServer").invoke(null);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 LOG.info("Error shutting down webview debugger", e);
             }
         }
@@ -203,7 +202,7 @@ public class DesktopApplication extends Application {
             alert.setHeight(200);
             alert.getDialogPane().setContent(hbox);
             alert.showAndWait();
-            
+
             System.exit(0);
         });
     }
@@ -297,8 +296,7 @@ public class DesktopApplication extends Application {
                                 statusText.setText(lastStatus);
                             }
                         });
-                    }
-                    catch (InterruptedException e) {
+                    } catch (InterruptedException e) {
                         LOG.info("GUI thread was interrupted", e);
                     }
                 }
@@ -321,10 +319,12 @@ public class DesktopApplication extends Application {
         private static volatile WebEngine webEngine;
         private static volatile WebEngine webEngine2;
         private static MainApplication instance = new MainApplication();
-//        private JSObject ars;
+        private static WebView browser;
+        private static WebView invisible;
+        //        private JSObject ars;
         private volatile long updateTime;
         private JavaScriptBridge javaScriptBridge;
-      
+
         private MainApplication() {
         }
 
@@ -348,9 +348,6 @@ public class DesktopApplication extends Application {
         public static MainApplication getInstance() {
             return instance;
         }
-
-        private static WebView browser;
-        private static WebView invisible;
 
         private static void enableFirebug(final WebEngine engine) {
             //uncomment it to enable firebug
@@ -382,26 +379,26 @@ public class DesktopApplication extends Application {
 //            });
             Worker<Void> loadWorker = webEngine.getLoadWorker();
             loadWorker.stateProperty().addListener((ov, oldState, newState) -> {
-                        LOG.debug("loadWorker old state " + oldState + " new state " + newState);
-                        if (newState != Worker.State.SUCCEEDED) {
-                            LOG.debug("loadWorker state change ignored");
-                            return;
-                        }
+                LOG.debug("loadWorker old state " + oldState + " new state " + newState);
+                if (newState != Worker.State.SUCCEEDED) {
+                    LOG.debug("loadWorker state change ignored");
+                    return;
+                }
 
-                        JSObject window = (JSObject) webEngine.executeScript("window");
-                        javaScriptBridge = new JavaScriptBridge(this); // Must be a member variable to prevent gc
-                        window.setMember("java", javaScriptBridge);
+                JSObject window = (JSObject) webEngine.executeScript("window");
+                javaScriptBridge = new JavaScriptBridge(this); // Must be a member variable to prevent gc
+                window.setMember("java", javaScriptBridge);
 //                        Locale locale = Locale.getDefault();
 //                        String language = locale.getLanguage().toLowerCase() + "-" + locale.getCountry().toUpperCase();
 //                        window.setMember("javaFxLanguage", language);
 
-                        webEngine.executeScript("console.log = function(msg) { java.log(msg); };");
+                webEngine.executeScript("console.log = function(msg) { java.log(msg); };");
 //TODO: Get Blockchain config from API
 //                        mainStage.setTitle(blockchainConfig.getProjectName() + " Desktop - " + webEngine.getLocation());
 //                        mainStage.setTitle("Apollo" + " Desktop - " + webEngine.getLocation());
 
-                       // updateClientState("Desktop Wallet started");
-/*                       
+                // updateClientState("Desktop Wallet started");
+/*
                         if (ENABLE_JAVASCRIPT_DEBUGGER) {
                             try {
                                 // Add the javafx_webview_debugger lib to the classpath
@@ -416,7 +413,7 @@ public class DesktopApplication extends Application {
                             }
                         }
 */
-                    });
+            });
 
             // Invoked by the webEngine popup handler
             // The invisible webView does not show the link, instead it opens a browser window
@@ -427,16 +424,16 @@ public class DesktopApplication extends Application {
 
             // Invoked when clicking a link to external site like Help or API console
             webEngine.setCreatePopupHandler(
-                    config -> {
-                        LOG.info("popup request from webEngine");
-                        LOG.info(webEngine.getLocation());
-                        return invisible.getEngine();
-                    });
+                config -> {
+                    LOG.info("popup request from webEngine");
+                    LOG.info(webEngine.getLocation());
+                    return invisible.getEngine();
+                });
 
             webEngine.load(getUrl());
 
             Scene scene = new Scene(browser);
-            //TODO: 
+            //TODO:
             //String address = API.getServerRootUri().toString();
             String address = "http://localhost:7876/";
             mainStage.getIcons().add(new Image(address + "/img/apl-icon-32x32.png"));
@@ -452,7 +449,7 @@ public class DesktopApplication extends Application {
             changelogStage = new Stage();
             Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
             WebView browser = new WebView();
-           // browser.setOnContextMenuRequested(new WalletContextMenu());
+            // browser.setOnContextMenuRequested(new WalletContextMenu());
 
             int height = (int) Math.min(primaryScreenBounds.getMaxY() - 100, 500);
             int width = (int) Math.min(primaryScreenBounds.getMaxX() - 100, 720);
@@ -473,19 +470,19 @@ public class DesktopApplication extends Application {
             Platform.setImplicitExit(false); // So that we can reopen the application in case the user closed it
         }
 
-        public<T> void showOnCloseWarnAlert(T event) {
+        public <T> void showOnCloseWarnAlert(T event) {
 
             Alert warnAlert = new Alert(Alert.AlertType.WARNING, "", ButtonType.YES, ButtonType.NO);
             HBox hbox = new HBox();
             hbox.setAlignment(Pos.CENTER);
             hbox.setPadding(new Insets(5, 5, 0, 5));
             Text text = new Text("By closing desktop you will not stop apollo wallet completely. Apollo desktop app will work in tray (if " +
-                    "supported) or in browser mode in " +
-                    "background and will be available also in your browser at " + getUrl()+ ". If you want to close completely application -> " +
-                    "click " +
-                    "YES");
-           
-            text.setFont(Font.font ("Verdana", 11));
+                "supported) or in browser mode in " +
+                "background and will be available also in your browser at " + getUrl() + ". If you want to close completely application -> " +
+                "click " +
+                "YES");
+
+            text.setFont(Font.font("Verdana", 11));
 
             text.setTextAlignment(TextAlignment.JUSTIFY);
             hbox.setMaxSize(500, 250);
@@ -497,21 +494,20 @@ public class DesktopApplication extends Application {
             warnAlert.getDialogPane().setMinWidth(Region.USE_PREF_SIZE);
 
             warnAlert.setHeaderText("Apollo desktop app shutdown will not" + System.lineSeparator() + " cause shutdown of Apollo wallet");
-            
+
             ButtonType clickedButton = warnAlert.showAndWait().orElse(ButtonType.NO);
             if (clickedButton == ButtonType.YES) {
                 System.exit(0);
             }
         }
 
-     //   @SuppressWarnings("WeakerAccess")
+        //   @SuppressWarnings("WeakerAccess")
         public void popupHandlerURLChange(String newValue) {
             LOG.info("popup request for " + newValue);
             Platform.runLater(() -> {
                 try {
                     Desktop.getDesktop().browse(new URI(newValue));
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     LOG.info("Cannot open " + newValue + " error " + e.getMessage());
                 }
             });
@@ -522,8 +518,7 @@ public class DesktopApplication extends Application {
             URL url;
             try {
                 url = new URL(newValue);
-            }
-            catch (MalformedURLException e) {
+            } catch (MalformedURLException e) {
                 LOG.info("Malformed URL " + newValue, e);
                 return;
             }
@@ -539,7 +534,7 @@ public class DesktopApplication extends Application {
                     params.put(keyValuePair[0], keyValuePair[1]);
                 }
             }
-            
+
             if (newValue.startsWith("blob:")) {
                 download(newValue);
             } else {
@@ -639,8 +634,7 @@ public class DesktopApplication extends Application {
                 outputStream.close();
                 growl(String.format("File %s saved to folder %s", filename, folderPath));
 
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 growl("Download failed " + e.getMessage(), e);
             }
         }
@@ -708,8 +702,6 @@ public class DesktopApplication extends Application {
         }
 
         */
-        
-
 
 
         private Alert prepareAlert(Alert.AlertType alertType, String title, String contentText, int height, ButtonType... buttons) {
@@ -740,5 +732,5 @@ public class DesktopApplication extends Application {
             return alert;
         }*/
     }
-        
+
 }

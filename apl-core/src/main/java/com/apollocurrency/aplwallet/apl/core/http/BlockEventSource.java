@@ -17,6 +17,12 @@ public class BlockEventSource implements org.eclipse.jetty.servlets.EventSource 
     private volatile boolean shutdown = false;
     private ThreadPoolExecutor threadPoolExecutor;
     private long accountId;
+
+    public BlockEventSource(ThreadPoolExecutor threadPoolExecutor, long accountId) {
+        this.threadPoolExecutor = threadPoolExecutor;
+        this.accountId = accountId;
+    }
+
     @Override
     public void onOpen(Emitter emitter) throws IOException {
         this.emitter = emitter;
@@ -32,11 +38,6 @@ public class BlockEventSource implements org.eclipse.jetty.servlets.EventSource 
         LOG.trace("Close event source");
         shutdown = true;
 
-    }
-
-    public BlockEventSource(ThreadPoolExecutor threadPoolExecutor, long accountId) {
-        this.threadPoolExecutor = threadPoolExecutor;
-        this.accountId = accountId;
     }
 
     public boolean isShutdown() {

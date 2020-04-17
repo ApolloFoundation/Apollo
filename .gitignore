@@ -26,3 +26,9 @@ nbactions.xml
 /apl-integration-tests/.allure
 /apl-utils/nbproject/
 /.mvn/
+/apl-blockchain-db/
+/apl-blockchain-logs/
+/apl-blockchain-secure-storage/
+/apl-blockchain-vault-keystore/
+/trace.db/
+

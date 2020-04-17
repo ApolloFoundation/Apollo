@@ -47,7 +47,7 @@ public class DGSFeedbackTable extends ValuesDbTable<DGSFeedback> {
     @Override
     public void save(Connection con, DGSFeedback feedback) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO purchase_feedback (id, feedback_data, feedback_nonce, "
-                + "height, latest) VALUES (?, ?, ?, ?, TRUE)")) {
+            + "height, latest) VALUES (?, ?, ?, ?, TRUE)")) {
             int i = 0;
             pstmt.setLong(++i, feedback.getPurchaseId());
             i = EncryptedDataUtil.setEncryptedData(pstmt, feedback.getFeedbackEncryptedData(), ++i);

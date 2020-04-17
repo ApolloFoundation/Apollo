@@ -18,18 +18,16 @@ import com.apollocurrency.aplwallet.apl.core.account.service.AccountLeaseService
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.app.Alias;
+import com.apollocurrency.aplwallet.apl.core.alias.service.AliasService;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
-import com.apollocurrency.aplwallet.apl.core.app.Order;
 import com.apollocurrency.aplwallet.apl.core.app.Poll;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
-import com.apollocurrency.aplwallet.apl.core.app.Trade;
 import com.apollocurrency.aplwallet.apl.core.app.Vote;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMinting;
@@ -49,13 +47,20 @@ import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.order.entity.AskOrder;
+import com.apollocurrency.aplwallet.apl.core.order.entity.BidOrder;
+import com.apollocurrency.aplwallet.apl.core.order.service.OrderService;
+import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.AskOrderService;
+import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.BidOrderService;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
+import com.apollocurrency.aplwallet.apl.core.trade.service.TradeService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
@@ -72,27 +77,30 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- *
  * @author alukin@gmail.com
  */
 @Slf4j
 @Singleton
 public class ServerInfoService {
-    private BlockchainConfig blockchainConfig;
-    private Blockchain blockchain;
-    private PropertiesHolder propertiesHolder;
-    private BlockchainProcessor blockchainProcessor;
-    private PeersService peersService;
-    private TimeService timeService;
-    private AccountService accountService;
-    private AccountLedgerService accountLedgerService;
-    private AccountPublicKeyService accountPublicKeyService;
-    private DGSService dgsService;
-    private PrunableMessageService prunableMessageService;
-    private TaggedDataService taggedDataService;
-    private AccountLeaseService accountLeaseService;
-    private AdminPasswordVerifier apw;
-    private UPnP upnp;
+    private final BlockchainConfig blockchainConfig;
+    private final Blockchain blockchain;
+    private final PropertiesHolder propertiesHolder;
+    private final BlockchainProcessor blockchainProcessor;
+    private final PeersService peersService;
+    private final TimeService timeService;
+    private final AccountService accountService;
+    private final AccountLedgerService accountLedgerService;
+    private final AccountPublicKeyService accountPublicKeyService;
+    private final DGSService dgsService;
+    private final PrunableMessageService prunableMessageService;
+    private final TaggedDataService taggedDataService;
+    private final AccountLeaseService accountLeaseService;
+    private final AdminPasswordVerifier apw;
+    private final UPnP upnp;
+    private final AliasService aliasService;
+    private final OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService;
+    private final OrderService<BidOrder, ColoredCoinsBidOrderPlacement> bidOrderService;
+    private final TradeService tradeService;
 
     @Inject
     public ServerInfoService(BlockchainConfig blockchainConfig, Blockchain blockchain,
@@ -106,25 +114,34 @@ public class ServerInfoService {
                              TaggedDataService taggedDataService,
                              AccountLeaseService accountLeaseService,
                              AdminPasswordVerifier apw,
-                             UPnP upnp) {
+                             UPnP upnp,
+                             AliasService aliasService,
+                             @AskOrderService OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService,
+                             @BidOrderService OrderService<BidOrder, ColoredCoinsBidOrderPlacement> bidOrderService,
+                             TradeService tradeService
+    ) {
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
         this.blockchain = Objects.requireNonNull(blockchain, "blockchain is NULL");
-        this.propertiesHolder = Objects.requireNonNull(propertiesHolder,"propertiesHolder is NULL");
-        this.blockchainProcessor = Objects.requireNonNull(blockchainProcessor,"blockchainProcessor is NULL");
-        this.peersService = Objects.requireNonNull(peersService,"peersService is NULL");
-        this.timeService = Objects.requireNonNull(timeService,"timeService is NULL");
-        this.accountService = Objects.requireNonNull(accountService,"accountService is NULL");
-        this.accountLedgerService = Objects.requireNonNull(accountLedgerService,"accountLedgerService is NULL");
-        this.accountPublicKeyService = Objects.requireNonNull(accountPublicKeyService,"accountPublicKeyService is NULL");
-        this.dgsService = Objects.requireNonNull(dgsService,"dgsService is NULL");
-        this.prunableMessageService = Objects.requireNonNull(prunableMessageService,"prunableMessageService is NULL");
-        this.taggedDataService = Objects.requireNonNull(taggedDataService,"taggedDataService is NULL");
-        this.accountLeaseService = Objects.requireNonNull(accountLeaseService,"accountLeaseService is NULL");
-        this.apw = Objects.requireNonNull(apw,"adminPasswordVerifier is NULL");
-        this.upnp = Objects.requireNonNull(upnp,"upnp is NULL");
+        this.propertiesHolder = Objects.requireNonNull(propertiesHolder, "propertiesHolder is NULL");
+        this.blockchainProcessor = Objects.requireNonNull(blockchainProcessor, "blockchainProcessor is NULL");
+        this.peersService = Objects.requireNonNull(peersService, "peersService is NULL");
+        this.timeService = Objects.requireNonNull(timeService, "timeService is NULL");
+        this.accountService = Objects.requireNonNull(accountService, "accountService is NULL");
+        this.accountLedgerService = Objects.requireNonNull(accountLedgerService, "accountLedgerService is NULL");
+        this.accountPublicKeyService = Objects.requireNonNull(accountPublicKeyService, "accountPublicKeyService is NULL");
+        this.dgsService = Objects.requireNonNull(dgsService, "dgsService is NULL");
+        this.prunableMessageService = Objects.requireNonNull(prunableMessageService, "prunableMessageService is NULL");
+        this.taggedDataService = Objects.requireNonNull(taggedDataService, "taggedDataService is NULL");
+        this.accountLeaseService = Objects.requireNonNull(accountLeaseService, "accountLeaseService is NULL");
+        this.apw = Objects.requireNonNull(apw, "adminPasswordVerifier is NULL");
+        this.upnp = Objects.requireNonNull(upnp, "upnp is NULL");
+        this.aliasService = Objects.requireNonNull(aliasService, "aliasService is NULL");
+        this.askOrderService = Objects.requireNonNull(askOrderService, "askOrderService is NULL");
+        this.bidOrderService = Objects.requireNonNull(bidOrderService, "bidOrderService is NULL");
+        this.tradeService = Objects.requireNonNull(tradeService, "tradeService is NULL");
     }
 
-    public ApolloX509Info getX509Info(){
+    public ApolloX509Info getX509Info() {
         ApolloX509Info res = new ApolloX509Info();
         res.id = "No ID yet available";
         return res;
@@ -135,12 +152,15 @@ public class ServerInfoService {
         List<Generator> forgers = Generator.getSortedForgers();
         for (Generator g : forgers) {
             GeneratorInfo gi = new GeneratorInfo();
-            gi.setAccount(Convert.defaultRsAccount(g.getAccountId()));
+            gi.setAccount(g.getAccountId());
             gi.setDeadline(g.getDeadline());
             gi.setHitTime(g.getHitTime());
             if (showBallances) {
+                gi.setEffectiveBalanceAPL(g.getEffectiveBalance().longValue());
+            } else {
                 gi.setEffectiveBalanceAPL(0L);
             }
+            res.add(gi);
         }
         return res;
     }
@@ -250,7 +270,7 @@ public class ServerInfoService {
         }
         // several types generated to JSON
         for (CurrencyType currencyType : CurrencyType.values()) {
-            dto.currencyTypes.add(new NameCodeTypeDto(currencyType.toString(), currencyType.getCode() ));
+            dto.currencyTypes.add(new NameCodeTypeDto(currencyType.toString(), currencyType.getCode()));
         }
         for (VoteWeighting.VotingModel votingModel : VoteWeighting.VotingModel.values()) {
             dto.votingModels.add(new NameCodeTypeDto(votingModel.toString(), votingModel.getCode()));
@@ -299,19 +319,19 @@ public class ServerInfoService {
             dto.numberOfTransactions = blockchain.getTransactionCount();
             dto.numberOfAccounts = accountPublicKeyService.getCount();
             dto.numberOfAssets = Asset.getCount();
-            int askCount = Order.Ask.getCount();
-            int bidCount = Order.Bid.getCount();
+            int askCount = askOrderService.getCount();
+            int bidCount = bidOrderService.getCount();
             dto.numberOfOrders = askCount + bidCount;
             dto.numberOfAskOrders = askCount;
             dto.numberOfBidOrders = bidCount;
-            dto.numberOfTrades = Trade.getCount();
+            dto.numberOfTrades = tradeService.getCount();
             dto.numberOfTransfers = AssetTransfer.getCount();
             dto.numberOfCurrencies = Currency.getCount();
             dto.numberOfOffers = CurrencyBuyOffer.getCount();
             dto.numberOfExchangeRequests = ExchangeRequest.getCount();
             dto.numberOfExchanges = Exchange.getCount();
             dto.numberOfCurrencyTransfers = CurrencyTransfer.getCount();
-            dto.numberOfAliases = Alias.getCount();
+            dto.numberOfAliases = aliasService.getCount();
             dto.numberOfGoods = dgsService.getGoodsCount();
             dto.numberOfPurchases = dgsService.getPurchaseCount();
             dto.numberOfTags = dgsService.getTagsCount();
@@ -361,7 +381,7 @@ public class ServerInfoService {
         propertiesHolder.getProperties().forEach((k, v) -> {
                 if (k.equals("apl.adminPassword")
                     || k.equals("apl.dbPassword") || k.equals("apl.dbUsername")
-                    || k.equals("apl.testDbPassword") || k.equals("apl.testDbUsername") ) {
+                    || k.equals("apl.testDbPassword") || k.equals("apl.testDbUsername")) {
                     map.put(k.toString(), "***"); // password only
                 } else {
                     map.put(k.toString(), v);

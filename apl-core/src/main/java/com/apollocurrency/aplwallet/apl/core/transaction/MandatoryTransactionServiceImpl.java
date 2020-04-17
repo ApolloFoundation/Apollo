@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
 import com.apollocurrency.aplwallet.apl.exchange.model.MandatoryTransaction;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
-import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PostConstruct;
@@ -42,12 +41,12 @@ public class MandatoryTransactionServiceImpl implements MandatoryTransactionServ
     @PostConstruct
     public void init() {
         taskManager.newScheduledDispatcher("MandatoryTransactionService")
-                .schedule(Task.builder()
-                        .name("RebroadcastMandatoryTxs")
-                        .initialDelay(INITIAL_DELAY)
-                        .task(this::processMandatoryTransactions)
-                        .delay(REPEAT_DELAY)
-                        .build());
+            .schedule(Task.builder()
+                .name("RebroadcastMandatoryTxs")
+                .initialDelay(INITIAL_DELAY)
+                .task(this::processMandatoryTransactions)
+                .delay(REPEAT_DELAY)
+                .build());
     }
 
     @Transactional

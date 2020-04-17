@@ -12,13 +12,6 @@ public class GeneratorInfo {
     private Long hitTime;
     private BasicAccount account;
 
-    public GeneratorInfo(Long effectiveBalanceAPL, Long deadline, String account, Long hitTime) {
-        this.effectiveBalanceAPL = effectiveBalanceAPL;
-        this.deadline = deadline;
-        this.account = new BasicAccount(account);
-        this.hitTime = hitTime;
-    }
-
     public GeneratorInfo() {
     }
 
@@ -33,11 +26,11 @@ public class GeneratorInfo {
     @Override
     public String toString() {
         return "Generator{" +
-                "effectiveBalanceAPL=" + effectiveBalanceAPL +
-                ", deadline=" + deadline +
-                ", account='" + account + '\'' +
-                ", hitTime=" + hitTime +
-                '}';
+            "effectiveBalanceAPL=" + effectiveBalanceAPL +
+            ", deadline=" + deadline +
+            ", account='" + account + '\'' +
+            ", hitTime=" + hitTime +
+            '}';
     }
 
     @Override
@@ -46,9 +39,9 @@ public class GeneratorInfo {
         if (!(o instanceof GeneratorInfo)) return false;
         GeneratorInfo generator = (GeneratorInfo) o;
         return Objects.equals(effectiveBalanceAPL, generator.effectiveBalanceAPL) &&
-                Objects.equals(deadline, generator.deadline) &&
-                Objects.equals(account, generator.account) &&
-                Objects.equals(hitTime, generator.hitTime);
+            Objects.equals(deadline, generator.deadline) &&
+            Objects.equals(account, generator.account) &&
+            Objects.equals(hitTime, generator.hitTime);
     }
 
     @Override
@@ -69,7 +62,7 @@ public class GeneratorInfo {
         return account;
     }
 
-    public void setAccount(String account) {
+    public void setAccount(long account) {
         this.account = new BasicAccount(account);
     }
 

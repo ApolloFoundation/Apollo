@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AccountControlEffectiveBalanceLeasing;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SetPhasingOnly;
@@ -21,27 +22,9 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 
 /**
- *
  * @author al
  */
 public abstract class AccountControl extends TransactionType {
-
-    private AccountControl() {
-    }
-
-    @Override
-    public final byte getType() {
-        return TransactionType.TYPE_ACCOUNT_CONTROL;
-    }
-
-    @Override
-    public final boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        return true;
-    }
-
-    @Override
-    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-    }
 
     public static final TransactionType EFFECTIVE_BALANCE_LEASING = new AccountControl() {
         @Override
@@ -85,7 +68,7 @@ public abstract class AccountControl extends TransactionType {
             if (transaction.getAmountATM() != 0) {
                 throw new AplException.NotValidException("Transaction amount must be 0 for effective balance leasing");
             }
-            if (attachment.getPeriod() < blockchainConfig.getLeasingDelay() || attachment.getPeriod() > 65535) {
+            if (attachment.getPeriod() < lookupBlockchainConfig().getLeasingDelay() || attachment.getPeriod() > 65535) {
                 throw new AplException.NotValidException("Invalid effective balance leasing period: " + attachment.getPeriod());
             }
             byte[] recipientPublicKey = lookupAccountService().getPublicKeyByteArray(transaction.getRecipientId());
@@ -143,6 +126,7 @@ public abstract class AccountControl extends TransactionType {
             }
             long maxFees = attachment.getMaxFees();
             long maxFeesLimit = (attachment.getPhasingParams().getVoteWeighting().isBalanceIndependent() ? 3 : 22) * Constants.ONE_APL;
+            BlockchainConfig blockchainConfig = lookupBlockchainConfig();
             if (maxFees < 0 || (maxFees > 0 && maxFees < maxFeesLimit) || maxFees > blockchainConfig.getCurrentConfig().getMaxBalanceATM()) {
                 throw new AplException.NotValidException(String.format("Invalid max fees %f %s", ((double) maxFees) / Constants.ONE_APL, blockchainConfig.getCoinSymbol()));
             }
@@ -185,5 +169,22 @@ public abstract class AccountControl extends TransactionType {
             return false;
         }
     };
+
+    private AccountControl() {
+    }
+
+    @Override
+    public final byte getType() {
+        return TransactionType.TYPE_ACCOUNT_CONTROL;
+    }
+
+    @Override
+    public final boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        return true;
+    }
+
+    @Override
+    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+    }
 
 }

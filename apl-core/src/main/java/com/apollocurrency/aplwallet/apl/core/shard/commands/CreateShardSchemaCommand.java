@@ -4,15 +4,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.commands;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
-import com.apollocurrency.aplwallet.apl.core.shard.model.PrevBlockData;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardEngine;
+import com.apollocurrency.aplwallet.apl.core.shard.model.PrevBlockData;
 import org.slf4j.Logger;
 
 import java.util.Objects;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Command for creating initial Shard Schema in shard database/file.
@@ -29,12 +29,12 @@ public class CreateShardSchemaCommand implements DataMigrateOperation {
     private long shardId;
 
     public CreateShardSchemaCommand(
-            long shardId,
-            ShardEngine shardEngine,
-            DbVersion dbVersion,
-            byte[] shardHash, PrevBlockData prevBlockData) { // shardHash can be NULL
+        long shardId,
+        ShardEngine shardEngine,
+        DbVersion dbVersion,
+        byte[] shardHash, PrevBlockData prevBlockData) { // shardHash can be NULL
         this.shardEngine = Objects.requireNonNull(
-                shardEngine, "shardEngine is NULL");
+            shardEngine, "shardEngine is NULL");
         this.dbVersion = Objects.requireNonNull(dbVersion, "dbVersion is NULL");
         this.shardHash = shardHash;
         this.prevBlockData = prevBlockData;
@@ -48,15 +48,15 @@ public class CreateShardSchemaCommand implements DataMigrateOperation {
     public MigrateState execute() {
         log.debug("Create Shard Schema Command execute...");
         return shardEngine.addOrCreateShard(dbVersion, CommandParamInfo.builder()
-                .shardHash(shardHash)
-                .prevBlockData(prevBlockData)
-                .shardId(shardId)
-                .build()); // shardHash can be NULL or value
+            .shardHash(shardHash)
+            .prevBlockData(prevBlockData)
+            .shardId(shardId)
+            .build()); // shardHash can be NULL or value
     }
 
     @Override
     public String toString() {
         return "CreateShardSchemaCommand{" + "dbVersion=" + dbVersion +
-                '}';
+            '}';
     }
 }

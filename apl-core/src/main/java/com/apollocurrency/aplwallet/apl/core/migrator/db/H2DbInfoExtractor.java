@@ -4,6 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
+import com.apollocurrency.aplwallet.apl.core.config.Property;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
+import org.h2.jdbcx.JdbcConnectionPool;
+
 import javax.inject.Inject;
 import javax.sql.DataSource;
 import java.nio.file.Files;
@@ -13,10 +17,6 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-
-import com.apollocurrency.aplwallet.apl.core.config.Property;
-import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
-import org.h2.jdbcx.JdbcConnectionPool;
 
 /**
  * Extract height and path from h2 db
@@ -40,6 +40,7 @@ public class H2DbInfoExtractor implements DbInfoExtractor {
     private Path createDbPath(String dbPath) {
         return Paths.get(dbPath + DbProperties.DB_EXTENSION_WITH_DOT);
     }
+
     @Override
     public int getHeight(String dbPath) {
         JdbcConnectionPool dataSource = createDataSource(dbPath);
@@ -60,8 +61,7 @@ public class H2DbInfoExtractor implements DbInfoExtractor {
             Connection connection = dataSource.getConnection();
             connection.createStatement().execute("SHUTDOWN");
             dataSource.dispose();
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
@@ -81,15 +81,15 @@ public class H2DbInfoExtractor implements DbInfoExtractor {
 
     private int getHeight(DataSource dataSource) {
         int height = 0;
-        try(Connection connection = dataSource.getConnection();
-            Statement stmt = connection.createStatement()) {
+        try (Connection connection = dataSource.getConnection();
+             Statement stmt = connection.createStatement()) {
             try (ResultSet rs = stmt.executeQuery("SELECT height FROM block order by timestamp desc")) {
                 if (rs.next()) {
                     height = rs.getInt(1);
                 }
             }
+        } catch (SQLException ignored) {
         }
-        catch (SQLException ignored) {}
         return height;
     }
 

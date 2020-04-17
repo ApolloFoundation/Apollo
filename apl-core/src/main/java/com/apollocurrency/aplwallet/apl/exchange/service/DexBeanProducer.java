@@ -7,7 +7,6 @@ import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.response.PollingTransactionReceiptProcessor;
 import org.web3j.tx.response.TransactionReceiptProcessor;
 
-import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -25,10 +24,10 @@ public class DexBeanProducer {
         this.propertiesHolder = propertiesHolder;
     }
 
-    public Web3j web3j(){
-        if(web3j == null){
+    public Web3j web3j() {
+        if (web3j == null) {
             synchronized (this) {
-                if(web3j == null) {
+                if (web3j == null) {
                     String ethNodeUrl = propertiesHolder.getStringProperty("apl.eth.node.url");
                     String ethNodePort = propertiesHolder.getStringProperty("apl.eth.node.port");
                     //TODO move HttpService config to config files.
@@ -47,7 +46,7 @@ public class DexBeanProducer {
     }
 
     public TransactionReceiptProcessor receiptProcessor() {
-        if(transactionReceiptProcessor == null) {
+        if (transactionReceiptProcessor == null) {
             synchronized (this) {
                 if (transactionReceiptProcessor == null) {
                     transactionReceiptProcessor = new PollingTransactionReceiptProcessor(web3j(), DEFAULT_BLOCK_TIME, DEFAULT_POLLING_ATTEMPTS_PER_TX_HASH);

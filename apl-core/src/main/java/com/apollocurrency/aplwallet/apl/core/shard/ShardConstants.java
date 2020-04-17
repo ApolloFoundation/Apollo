@@ -28,5 +28,6 @@ public class ShardConstants {
     public static final String ACCOUNT_ASSET_TABLE_NAME = "account_asset";
 
 
-    private ShardConstants() {}
+    private ShardConstants() {
+    }
 }

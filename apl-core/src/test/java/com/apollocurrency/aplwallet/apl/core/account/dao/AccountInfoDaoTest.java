@@ -43,32 +43,28 @@ class AccountInfoDaoTest {
 
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension(Map.of("account_info", List.of("name", "description")));
-
+    @Inject
+    AccountInfoTable table;
+    AccountTestData testData = new AccountTestData();
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     private BlockchainProcessor blockchainProcessor = mock(BlockchainProcessor.class);
-
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class,
-            FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class,
-            AccountInfoTable.class
+        PropertiesHolder.class,
+        FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class,
+        AccountInfoTable.class
     )
-            .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
-            .addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class))
-            .addBeans(MockBean.of(blockchainProcessor, BlockchainProcessor.class, BlockchainProcessorImpl.class))
-            //.addBeans(MockBean.of(mock(FullTextConfig.class), FullTextConfig.class, FullTextConfigImpl.class))
-            //.addBeans(MockBean.of(mock(DerivedTablesRegistry.class), DerivedTablesRegistry.class, DerivedDbTablesRegistryImpl.class))
-            .addBeans(MockBean.of(dbExtension.getFtl(), FullTextSearchService.class))
-            .addBeans(MockBean.of(dbExtension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
-            .build();
-
-    @Inject
-    AccountInfoTable table;
-
-    AccountTestData testData = new AccountTestData();
+        .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
+        .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
+        .addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class))
+        .addBeans(MockBean.of(blockchainProcessor, BlockchainProcessor.class, BlockchainProcessorImpl.class))
+        //.addBeans(MockBean.of(mock(FullTextConfig.class), FullTextConfig.class, FullTextConfigImpl.class))
+        //.addBeans(MockBean.of(mock(DerivedTablesRegistry.class), DerivedTablesRegistry.class, DerivedDbTablesRegistryImpl.class))
+        .addBeans(MockBean.of(dbExtension.getFtl(), FullTextSearchService.class))
+        .addBeans(MockBean.of(dbExtension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
+        .build();
 
     @Test
     void testSave_insert_new_entity() {//SQL MERGE -> INSERT

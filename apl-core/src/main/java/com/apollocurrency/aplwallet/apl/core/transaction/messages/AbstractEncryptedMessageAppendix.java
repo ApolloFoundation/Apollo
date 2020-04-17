@@ -5,24 +5,24 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import java.nio.ByteBuffer;
-
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
+
+import java.nio.ByteBuffer;
 
 public abstract class AbstractEncryptedMessageAppendix extends AbstractAppendix {
 
     private static final Fee ENCRYPTED_MESSAGE_FEE = new Fee.SizeBasedFee(Constants.ONE_APL, Constants.ONE_APL, 32) {
         @Override
         public int getSize(Transaction transaction, Appendix appendage) {
-            return ((AbstractEncryptedMessageAppendix)appendage).getEncryptedDataLength() - 16;
+            return ((AbstractEncryptedMessageAppendix) appendage).getEncryptedDataLength() - 16;
         }
     };
 
@@ -47,7 +47,7 @@ public abstract class AbstractEncryptedMessageAppendix extends AbstractAppendix 
 
     public AbstractEncryptedMessageAppendix(JSONObject attachmentJSON, JSONObject encryptedMessageJSON) {
         super(attachmentJSON);
-        byte[] data = Convert.parseHexString((String)encryptedMessageJSON.get("data"));
+        byte[] data = Convert.parseHexString((String) encryptedMessageJSON.get("data"));
         byte[] nonce = Convert.parseHexString((String) encryptedMessageJSON.get("nonce"));
         this.encryptedData = new EncryptedData(data, nonce);
         this.isText = Boolean.TRUE.equals(encryptedMessageJSON.get("isText"));
@@ -94,7 +94,7 @@ public abstract class AbstractEncryptedMessageAppendix extends AbstractAppendix 
         }
         if (encryptedData != null) {
             if ((encryptedData.getNonce().length != 32 && encryptedData.getData().length > 0)
-                    || (encryptedData.getNonce().length != 0 && encryptedData.getData().length == 0)) {
+                || (encryptedData.getNonce().length != 0 && encryptedData.getData().length == 0)) {
                 throw new AplException.NotValidException("Invalid nonce length " + encryptedData.getNonce().length);
             }
         }
@@ -109,7 +109,8 @@ public abstract class AbstractEncryptedMessageAppendix extends AbstractAppendix 
     }
 
     @Override
-    public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {}
+    public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
+    }
 
     public final EncryptedData getEncryptedData() {
         return encryptedData;

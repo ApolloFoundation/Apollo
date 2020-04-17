@@ -40,10 +40,10 @@ public class NetworkStats {
         if (!(o instanceof NetworkStats)) return false;
         NetworkStats that = (NetworkStats) o;
         return currentMaxDiff == that.currentMaxDiff &&
-                Objects.equals(peerHeight, that.peerHeight) &&
-                Objects.equals(peerDiffStats, that.peerDiffStats) &&
-                Objects.equals(peerShards, that.peerShards) &&
-                Objects.equals(diffForTime, that.diffForTime);
+            Objects.equals(peerHeight, that.peerHeight) &&
+            Objects.equals(peerDiffStats, that.peerDiffStats) &&
+            Objects.equals(peerShards, that.peerShards) &&
+            Objects.equals(diffForTime, that.diffForTime);
     }
 
     @Override

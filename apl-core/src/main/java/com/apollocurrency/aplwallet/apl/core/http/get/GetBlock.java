@@ -28,6 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_BLOCK;
@@ -35,10 +36,12 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TIMESTAMP;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_BLOCK;
 import javax.enterprise.inject.Vetoed;
+
+@Deprecated
 @Vetoed
 public final class GetBlock extends AbstractAPIRequestHandler {
     public GetBlock() {
-        super(new APITag[] {APITag.BLOCKS}, "block", "height", "timestamp", "includeTransactions", "includeExecutedPhased");
+        super(new APITag[]{APITag.BLOCKS}, "block", "height", "timestamp", "includeTransactions", "includeExecutedPhased");
     }
 
     @Override

@@ -11,27 +11,20 @@ import com.apollocurrency.aplwallet.apl.core.transaction.Data;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import java.nio.ByteBuffer;
-import javax.enterprise.inject.spi.CDI;
 import org.json.simple.JSONObject;
 
+import javax.enterprise.inject.spi.CDI;
+import java.nio.ByteBuffer;
+
 /**
- *
  * @author al
  */
 public final class TaggedDataExtendAttachment extends TaggedDataAttachment {
 
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-
-    public static TaggedDataExtendAttachment parse(JSONObject attachmentData) {
-        if (!Appendix.hasAppendix(Data.TAGGED_DATA_EXTEND.getName(), attachmentData)) {
-            return null;
-        }
-        return new TaggedDataExtendAttachment(attachmentData);
-    }
-    private volatile byte[] hash;
     final long taggedDataId;
     final boolean jsonIsPruned;
+    private volatile byte[] hash;
 
     public TaggedDataExtendAttachment(ByteBuffer buffer) {
         super(buffer);
@@ -49,6 +42,13 @@ public final class TaggedDataExtendAttachment extends TaggedDataAttachment {
         super(taggedData.getName(), taggedData.getDescription(), taggedData.getTags(), taggedData.getType(), taggedData.getChannel(), taggedData.isText(), taggedData.getFilename(), taggedData.getData());
         this.taggedDataId = taggedData.getId();
         this.jsonIsPruned = false;
+    }
+
+    public static TaggedDataExtendAttachment parse(JSONObject attachmentData) {
+        if (!Appendix.hasAppendix(Data.TAGGED_DATA_EXTEND.getName(), attachmentData)) {
+            return null;
+        }
+        return new TaggedDataExtendAttachment(attachmentData);
     }
 
     @Override

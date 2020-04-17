@@ -31,6 +31,9 @@ import org.h2.tools.SimpleResultSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -40,32 +43,33 @@ import java.sql.Types;
 import java.util.List;
 import java.util.StringJoiner;
 import java.util.stream.Stream;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 
 @Singleton
 @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
 public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
     private static final Logger LOG = LoggerFactory.getLogger(LuceneFullTextSearchEngine.class);
-
-    /** Index lock */
+    /**
+     * Lucene index reader (thread-safe)
+     */
+    private static DirectoryReader indexReader;
+    /**
+     * Lucene index searcher (thread-safe)
+     */
+    private static IndexSearcher indexSearcher;
+    /**
+     * Lucene index writer (thread-safe)
+     */
+    private static IndexWriter indexWriter;
+    /**
+     * Index lock
+     */
     private final ReadWriteUpdateLock indexLock = new ReadWriteUpdateLock();
-
-    /** Lucene analyzer (thread-safe) */
+    /**
+     * Lucene analyzer (thread-safe)
+     */
     private final Analyzer analyzer = new StandardAnalyzer();
-
     private NtpTime ntpTime;
     private Path indexDirPath;
-
-    /** Lucene index reader (thread-safe) */
-    private static DirectoryReader indexReader;
-
-    /** Lucene index searcher (thread-safe) */
-    private static IndexSearcher indexSearcher;
-
-    /** Lucene index writer (thread-safe) */
-    private static IndexWriter indexWriter;
 
 
     @Inject
@@ -75,8 +79,7 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
         if (!Files.exists(indexPath)) {
             try {
                 Files.createDirectories(indexPath);
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 throw new RuntimeException("Cannot create index directory", e);
             }
         }
@@ -87,33 +90,33 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
      */
     @Override
     public void indexRow(Object[] row, TableData tableData) throws SQLException {
-            indexLock.readLock().lock();
-            try {
-                List<String> columnNames = tableData.getColumnNames();
-                List<Integer> indexColumns = tableData.getIndexColumns();
-                int dbColumn = tableData.getDbIdColumnPosition();
-                String tableName = tableData.getSchema().toUpperCase() + "." + tableData.getTable().toUpperCase();
-                String query = tableName + ";" + columnNames.get(dbColumn) + ";" + (long) row[dbColumn];
-                Document document = new Document();
-                document.add(new StringField("_QUERY", query, Field.Store.YES));
-                long now = ntpTime.getTime();
-                document.add(new TextField("_MODIFIED", DateTools.timeToString(now, DateTools.Resolution.SECOND), Field.Store.NO));
-                document.add(new TextField("_TABLE", tableName, Field.Store.NO));
-                StringJoiner sj = new StringJoiner(" ");
-                for (int index : indexColumns) {
-                    String data = (row[index] != null ? (String)row[index] : "NULL");
-                    document.add(new TextField(columnNames.get(index), data, Field.Store.NO));
-                    sj.add(data);
-                }
-                document.add(new TextField("_DATA", sj.toString(), Field.Store.NO));
-                indexWriter.updateDocument(new Term("_QUERY", query), document);
-            } catch (IOException exc) {
-                LOG.error("Unable to index row", exc);
-                throw new SQLException("Unable to index row", exc);
-            } finally {
-                indexLock.readLock().unlock();
+        indexLock.readLock().lock();
+        try {
+            List<String> columnNames = tableData.getColumnNames();
+            List<Integer> indexColumns = tableData.getIndexColumns();
+            int dbColumn = tableData.getDbIdColumnPosition();
+            String tableName = tableData.getSchema().toUpperCase() + "." + tableData.getTable().toUpperCase();
+            String query = tableName + ";" + columnNames.get(dbColumn) + ";" + (long) row[dbColumn];
+            Document document = new Document();
+            document.add(new StringField("_QUERY", query, Field.Store.YES));
+            long now = ntpTime.getTime();
+            document.add(new TextField("_MODIFIED", DateTools.timeToString(now, DateTools.Resolution.SECOND), Field.Store.NO));
+            document.add(new TextField("_TABLE", tableName, Field.Store.NO));
+            StringJoiner sj = new StringJoiner(" ");
+            for (int index : indexColumns) {
+                String data = (row[index] != null ? (String) row[index] : "NULL");
+                document.add(new TextField(columnNames.get(index), data, Field.Store.NO));
+                sj.add(data);
             }
+            document.add(new TextField("_DATA", sj.toString(), Field.Store.NO));
+            indexWriter.updateDocument(new Term("_QUERY", query), document);
+        } catch (IOException exc) {
+            LOG.error("Unable to index row", exc);
+            throw new SQLException("Unable to index row", exc);
+        } finally {
+            indexLock.readLock().unlock();
         }
+    }
 
     /**
      * {@inheritDoc}
@@ -130,9 +133,10 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
             indexRow(newRow, tableData);
         }
     }
+
     private void deleteRow(Object[] row, TableData tableData) throws SQLException {
         String query =
-                tableData.getTable() + ";" + tableData.getColumnNames().get(tableData.getDbIdColumnPosition()) + ";" + (long) row[tableData.getDbIdColumnPosition()];
+            tableData.getTable() + ";" + tableData.getColumnNames().get(tableData.getDbIdColumnPosition()) + ";" + (long) row[tableData.getDbIdColumnPosition()];
         indexLock.readLock().lock();
         try {
             indexWriter.deleteDocuments(new Term("_QUERY", query));
@@ -156,26 +160,26 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
         }
         try {
 
-                indexLock.writeLock().lock();
-                try {
-                        IndexWriterConfig config = new IndexWriterConfig(analyzer);
-                        config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
-                        Directory indexDir = FSDirectory.open(indexDirPath);
-                        indexWriter = new IndexWriter(indexDir, config);
-                        Document document = new Document();
-                        document.add(new StringField("_QUERY", "_CONTROL_DOCUMENT_", Field.Store.YES));
-                        indexWriter.updateDocument(new Term("_QUERY", "_CONTROL_DOCUMENT_"), document);
-                        indexWriter.commit();
-                        indexReader = DirectoryReader.open(indexDir);
-                        indexSearcher = new IndexSearcher(indexReader);
-                } finally {
-                    indexLock.writeLock().unlock();
-                }
+            indexLock.writeLock().lock();
+            try {
+                IndexWriterConfig config = new IndexWriterConfig(analyzer);
+                config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
+                Directory indexDir = FSDirectory.open(indexDirPath);
+                indexWriter = new IndexWriter(indexDir, config);
+                Document document = new Document();
+                document.add(new StringField("_QUERY", "_CONTROL_DOCUMENT_", Field.Store.YES));
+                indexWriter.updateDocument(new Term("_QUERY", "_CONTROL_DOCUMENT_"), document);
+                indexWriter.commit();
+                indexReader = DirectoryReader.open(indexDir);
+                indexSearcher = new IndexSearcher(indexReader);
+            } finally {
+                indexLock.writeLock().unlock();
+            }
 
         } catch (IOException exc) {
             LOG.error("Unable to access the Lucene index", exc);
             throw new IOException("Unable to access the Lucene index", exc);
-        }  finally {
+        } finally {
             if (obtainedUpdateLock) {
                 indexLock.updateLock().unlock();
             }
@@ -207,7 +211,7 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
     /**
      * Remove the Lucene index files
      *
-     * @throws  SQLException        I/O error occurred
+     * @throws SQLException I/O error occurred
      */
     @Override
     public void clearIndex() throws SQLException {
@@ -226,22 +230,21 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
                 }
                 init();
                 LOG.info("Lucene search index deleted");
-            }
-            catch (IOException exc) {
+            } catch (IOException exc) {
                 LOG.error("Unable to remove Lucene index files", exc);
                 throw new SQLException("Unable to remove Lucene index files", exc);
             }
-        }
-        finally {
+        } finally {
             indexLock.writeLock().unlock();
         }
     }
+
     /**
      * {@inheritDoc}
      */
     @Override
     public ResultSet search(String schema, String table, String queryText, int limit, int offset)
-            throws SQLException {
+        throws SQLException {
         //
         // Create the result set columns
         //
@@ -269,15 +272,15 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
             ScoreDoc[] hits = documents.scoreDocs;
             int resultCount = Math.min(hits.length, (limit == 0 ? hits.length : limit));
             int resultOffset = Math.min(offset, resultCount);
-            for (int i=resultOffset; i<resultCount; i++) {
+            for (int i = resultOffset; i < resultCount; i++) {
                 Document document = indexSearcher.doc(hits[i].doc);
                 String[] indexParts = document.get("_QUERY").split(";");
                 String[] nameParts = indexParts[0].split("\\.");
                 result.addRow(nameParts[0],
-                        nameParts[1],
-                        new String[] {indexParts[1]},
-                        new Long[] {Long.parseLong(indexParts[2])},
-                        hits[i].score);
+                    nameParts[1],
+                    new String[]{indexParts[1]},
+                    new Long[]{Long.parseLong(indexParts[2])},
+                    hits[i].score);
             }
         } catch (ParseException exc) {
             LOG.debug("Lucene parse exception for query: " + queryText + "\n" + exc.getMessage());

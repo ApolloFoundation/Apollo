@@ -13,7 +13,7 @@ public class DGSPurchasesClause extends DbClause {
 
     public DGSPurchasesClause(String clause, boolean withPublicFeedbacksOnly, boolean completedOnly) {
         super(clause + (completedOnly ? " AND goods IS NOT NULL " : " ")
-                + (withPublicFeedbacksOnly ? " AND has_public_feedbacks = TRUE " : " "));
+            + (withPublicFeedbacksOnly ? " AND has_public_feedbacks = TRUE " : " "));
     }
 
     @Override

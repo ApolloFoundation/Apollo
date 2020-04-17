@@ -15,12 +15,8 @@ public class DexTransaction {
     private long timestamp;
 
     public enum Op {
-        DEPOSIT((byte) 0),INITIATE((byte)1), REDEEM((byte)2), REFUND((byte)3), WITHDRAW((byte)4);
+        DEPOSIT((byte) 0), INITIATE((byte) 1), REDEEM((byte) 2), REFUND((byte) 3), WITHDRAW((byte) 4);
         final byte code;
-
-        public byte getCode() {
-            return code;
-        }
 
         Op(byte code) {
             this.code = code;
@@ -33,6 +29,10 @@ public class DexTransaction {
                 }
             }
             throw new IllegalArgumentException("DexOperation for code '" + code + "' does not exist");
+        }
+
+        public byte getCode() {
+            return code;
         }
     }
 }

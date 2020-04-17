@@ -19,58 +19,79 @@ import java.util.Objects;
  * Ledger entry
  */
 @ToString(callSuper = true)
-@Getter @Setter
+@Getter
+@Setter
 public class LedgerEntry extends DerivedEntity {
-    /** Ledger identifier */
-    private long ledgerId = -1;
-    /** Ledger event */
+    /**
+     * Ledger event
+     */
     private final LedgerEvent event;
-    /** Associated event identifier */
+    /**
+     * Associated event identifier
+     */
     private final long eventId;
-    /** Account identifier */
+    /**
+     * Account identifier
+     */
     private final long accountId;
-    /** Holding */
+    /**
+     * Holding
+     */
     private final LedgerHolding holding;
-    /** Holding identifier */
+    /**
+     * Holding identifier
+     */
     private final Long holdingId;
-    /** Change in balance */
-    private long change;
-    /** New balance */
-    private long balance;
-    /** Block identifier */
+    /**
+     * Block identifier
+     */
     private final long blockId;
-    /** Block timestamp */
+    /**
+     * Block timestamp
+     */
     private final int timestamp;
+    /**
+     * Ledger identifier
+     */
+    private long ledgerId = -1;
+    /**
+     * Change in balance
+     */
+    private long change;
+    /**
+     * New balance
+     */
+    private long balance;
 
     /**
      * Create a ledger entry
      *
-     * @param   event                   Event
-     * @param   eventId                 Event identifier
-     * @param   accountId               Account identifier
-     * @param   holding                 Holding or null
-     * @param   holdingId               Holding identifier or null
-     * @param   change                  Change in balance
-     * @param   balance                 New balance
-     * @param   lastBlock               Last block in blockchain
+     * @param event     Event
+     * @param eventId   Event identifier
+     * @param accountId Account identifier
+     * @param holding   Holding or null
+     * @param holdingId Holding identifier or null
+     * @param change    Change in balance
+     * @param balance   New balance
+     * @param lastBlock Last block in blockchain
      */
     public LedgerEntry(LedgerEvent event, long eventId, long accountId, LedgerHolding holding, Long holdingId, long change, long balance, Block lastBlock) {
-        this(event, eventId ,accountId, holding, holdingId, change, balance, lastBlock.getId(), lastBlock.getTimestamp(), lastBlock.getHeight());
+        this(event, eventId, accountId, holding, holdingId, change, balance, lastBlock.getId(), lastBlock.getTimestamp(), lastBlock.getHeight());
     }
 
     /**
      * Create a ledger entry
      *
-     * @param   event                   Event
-     * @param   eventId                 Event identifier
-     * @param   accountId               Account identifier
-     * @param   holding                 Holding or null
-     * @param   holdingId               Holding identifier or null
-     * @param   change                  Change in balance
-     * @param   balance                 New balance
-     * @param   lastBlockId             Last block Id in the blockchain
-     * @param   blockTimeStamp          Last block timestamp
-     * @param   height                  the blockchain height
+     * @param event          Event
+     * @param eventId        Event identifier
+     * @param accountId      Account identifier
+     * @param holding        Holding or null
+     * @param holdingId      Holding identifier or null
+     * @param change         Change in balance
+     * @param balance        New balance
+     * @param lastBlockId    Last block Id in the blockchain
+     * @param blockTimeStamp Last block timestamp
+     * @param height         the blockchain height
      */
     public LedgerEntry(LedgerEvent event, long eventId, long accountId, LedgerHolding holding, Long holdingId, long change, long balance, long lastBlockId, int blockTimeStamp, int height) {
         super(null, height);
@@ -88,8 +109,8 @@ public class LedgerEntry extends DerivedEntity {
     /**
      * Create a ledger entry from a database entry
      *
-     * @param   rs                      Result set
-     * @throws  SQLException            Database error occurred
+     * @param rs Result set
+     * @throws SQLException Database error occurred
      */
     public LedgerEntry(ResultSet rs) throws SQLException {
         super(rs);
@@ -118,7 +139,7 @@ public class LedgerEntry extends DerivedEntity {
     /**
      * Update the balance change
      *
-     * @param   amount                  Change amount
+     * @param amount Change amount
      */
     public void updateChange(long amount) {
         change += amount;
@@ -127,7 +148,7 @@ public class LedgerEntry extends DerivedEntity {
     /**
      * Return the hash code
      *
-     * @return  Hash code
+     * @return Hash code
      */
     @Override
     public int hashCode() {
@@ -137,8 +158,8 @@ public class LedgerEntry extends DerivedEntity {
     /**
      * Check if two ledger events are equal
      *
-     * @param   obj Ledger event to check
-     * @return  TRUE if the ledger events are the same
+     * @param obj Ledger event to check
+     * @return TRUE if the ledger events are the same
      */
     @Override
     public boolean equals(Object obj) {

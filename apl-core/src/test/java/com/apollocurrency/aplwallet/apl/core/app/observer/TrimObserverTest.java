@@ -53,25 +53,25 @@ class TrimObserverTest {
     HeightConfig config = Mockito.mock(HeightConfig.class);
     Random random = Mockito.mock(Random.class);
     Blockchain blockchain = mock(Blockchain.class);
-    {
-        doReturn(config).when(blockchainConfig).getCurrentConfig();
-        doReturn(12).doReturn(809).when(random).nextInt(Constants.DEFAULT_TRIM_FREQUENCY - 1); // emulate random
-    }
-
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from(TrimObserver.class)
-            .addBeans(MockBean.of(trimService, TrimService.class))
-            .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
-            .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
-            .addBeans(MockBean.of(random, Random.class))
-            .addBeans(MockBean.of(blockchain, Blockchain.class))
-            .build();
+        .addBeans(MockBean.of(trimService, TrimService.class))
+        .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
+        .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
+        .addBeans(MockBean.of(random, Random.class))
+        .addBeans(MockBean.of(blockchain, Blockchain.class))
+        .build();
     @Inject
     Event<Block> blockEvent;
     @Inject
     Event<TrimConfig> trimEvent;
     @Inject
     TrimObserver observer;
+
+    {
+        doReturn(config).when(blockchainConfig).getCurrentConfig();
+        doReturn(12).doReturn(809).when(random).nextInt(Constants.DEFAULT_TRIM_FREQUENCY - 1); // emulate random
+    }
 
     @BeforeEach
     void setUp() {
@@ -175,8 +175,8 @@ class TrimObserverTest {
                     verify(trimService).trimDerivedTables(height, true);
                 }
                 break;
+            } catch (Throwable ignored) {
             }
-            catch (Throwable ignored) {}
         }
     }
 

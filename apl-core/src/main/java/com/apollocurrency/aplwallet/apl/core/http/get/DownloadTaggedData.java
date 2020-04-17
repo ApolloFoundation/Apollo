@@ -22,14 +22,15 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -39,14 +40,13 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.PRUNED_TRANSACTION;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public final class DownloadTaggedData extends AbstractAPIRequestHandler {
     private TaggedDataService taggedDataService = CDI.current().select(TaggedDataService.class).get();
 
     public DownloadTaggedData() {
-        super(new APITag[] {APITag.DATA}, "transaction", "retrieve");
+        super(new APITag[]{APITag.DATA}, "transaction", "retrieve");
     }
 
     @Override
@@ -77,7 +77,8 @@ public final class DownloadTaggedData extends AbstractAPIRequestHandler {
         try {
             URI uri = new URI(null, null, filename, null);
             contentDisposition += "; filename*=UTF-8''" + uri.toASCIIString();
-        } catch (URISyntaxException ignore) {}
+        } catch (URISyntaxException ignore) {
+        }
         response.setHeader("Content-Disposition", contentDisposition);
         response.setContentLength(data.length);
         try (OutputStream out = response.getOutputStream()) {

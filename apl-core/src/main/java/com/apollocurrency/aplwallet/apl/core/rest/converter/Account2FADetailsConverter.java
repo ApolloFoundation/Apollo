@@ -19,14 +19,14 @@ public class Account2FADetailsConverter implements Converter<TwoFactorAuthDetail
         return dto;
     }
 
-    public void addAccount(Account2FADetailsDTO o, long accountId){
+    public void addAccount(Account2FADetailsDTO o, long accountId) {
         if (o != null) {
             o.setAccount(Long.toUnsignedString(accountId));
             o.setAccountRS(Convert2.rsAccount(accountId));
         }
     }
 
-    public void addPrivateAccount(Account2FADetailsDTO o, long accountId){
+    public void addPrivateAccount(Account2FADetailsDTO o, long accountId) {
         if (o != null) {
             o.setAccount(Long.toUnsignedString(accountId));
             long accId = AccountConverter.anonymizeAccount();

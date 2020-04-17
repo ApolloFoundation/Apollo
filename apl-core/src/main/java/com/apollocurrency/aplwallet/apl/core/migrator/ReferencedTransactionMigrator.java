@@ -4,18 +4,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import org.slf4j.Logger;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 @Singleton
 public class ReferencedTransactionMigrator {
@@ -41,9 +41,9 @@ public class ReferencedTransactionMigrator {
             Connection con = dataSource.getConnection();
 
             try (
-                    PreparedStatement selectPstmt = con.prepareStatement((
-                            "SELECT rtx.transaction_id as id, tx.height FROM referenced_transaction rtx left join transaction  tx  on rtx.transaction_id = tx.id where rtx.height = -1"));
-                    PreparedStatement updatePstmt = con.prepareStatement("UPDATE referenced_transaction SET height = ? WHERE transaction_id = ?")
+                PreparedStatement selectPstmt = con.prepareStatement((
+                    "SELECT rtx.transaction_id as id, tx.height FROM referenced_transaction rtx left join transaction  tx  on rtx.transaction_id = tx.id where rtx.height = -1"));
+                PreparedStatement updatePstmt = con.prepareStatement("UPDATE referenced_transaction SET height = ? WHERE transaction_id = ?")
             ) {
                 int counter = 0;
                 try (ResultSet rs = selectPstmt.executeQuery()) {
@@ -63,8 +63,7 @@ public class ReferencedTransactionMigrator {
                 }
             }
             dataSource.commit(!isInTransaction);
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             dataSource.rollback(!isInTransaction);
             throw new RuntimeException(e.toString(), e);
         }

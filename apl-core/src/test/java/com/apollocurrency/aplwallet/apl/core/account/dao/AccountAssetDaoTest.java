@@ -48,33 +48,28 @@ import static org.mockito.Mockito.mock;
 class AccountAssetDaoTest {
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension(DbTestData.getInMemDbProps(), "db/acc-data.sql", "db/schema.sql");
-
+    @Inject
+    AccountAssetTable table;
+    AccountTestData td;
+    Comparator<AccountAsset> assetComparator = Comparator
+        .comparing(AccountAsset::getQuantityATU, Comparator.reverseOrder())
+        .thenComparing(AccountAsset::getAccountId)
+        .thenComparing(AccountAsset::getAssetId);
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     private BlockchainProcessor blockchainProcessor = mock(BlockchainProcessor.class);
-
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class, AccountAssetTable.class
+        PropertiesHolder.class, AccountAssetTable.class
     )
-            .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
-            .addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class))
-            .addBeans(MockBean.of(blockchainProcessor, BlockchainProcessor.class, BlockchainProcessorImpl.class))
-            .addBeans(MockBean.of(mock(FullTextConfig.class), FullTextConfig.class, FullTextConfigImpl.class))
-            .addBeans(MockBean.of(mock(DerivedTablesRegistry.class), DerivedTablesRegistry.class, DerivedDbTablesRegistryImpl.class))
-            .build();
-
-    @Inject
-    AccountAssetTable table;
-
-    AccountTestData td;
-
-    Comparator<AccountAsset> assetComparator = Comparator
-            .comparing(AccountAsset::getQuantityATU, Comparator.reverseOrder())
-            .thenComparing(AccountAsset::getAccountId)
-            .thenComparing(AccountAsset::getAssetId);
+        .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
+        .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
+        .addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class))
+        .addBeans(MockBean.of(blockchainProcessor, BlockchainProcessor.class, BlockchainProcessorImpl.class))
+        .addBeans(MockBean.of(mock(FullTextConfig.class), FullTextConfig.class, FullTextConfigImpl.class))
+        .addBeans(MockBean.of(mock(DerivedTablesRegistry.class), DerivedTablesRegistry.class, DerivedDbTablesRegistryImpl.class))
+        .build();
 
     @BeforeEach
     void setUp() {
@@ -112,13 +107,13 @@ class AccountAssetDaoTest {
     void testSave_update_existing_entity() {//SQL MERGE -> UPDATE
         AccountAsset previous = table.get(table.getDbKeyFactory().newKey(td.ACC_ASSET_0));
         assertNotNull(previous);
-        previous.setUnconfirmedQuantityATU(previous.getUnconfirmedQuantityATU()+50000);
+        previous.setUnconfirmedQuantityATU(previous.getUnconfirmedQuantityATU() + 50000);
 
         DbUtils.inTransaction(dbExtension, (con) -> table.insert(previous));
         AccountAsset actual = table.get(table.getDbKeyFactory().newKey(previous));
 
         assertNotNull(actual);
-        assertTrue(actual.getUnconfirmedQuantityATU()- td.ACC_ASSET_0.getUnconfirmedQuantityATU() == 50000);
+        assertTrue(actual.getUnconfirmedQuantityATU() - td.ACC_ASSET_0.getUnconfirmedQuantityATU() == 50000);
         assertEquals(previous.getQuantityATU(), actual.getQuantityATU());
         assertEquals(previous.getAssetId(), actual.getAssetId());
     }
@@ -178,28 +173,28 @@ class AccountAssetDaoTest {
         List<AccountAsset> actual = table.getByAssetId(td.ACC_ASSET_6.getAssetId(), 0, Integer.MAX_VALUE);
         assertEquals(4, actual.size());
         List<AccountAsset> expected = td.ALL_ASSETS.stream()
-                .filter(ass -> ass.getAssetId()== td.ACC_ASSET_6.getAssetId())
-                .sorted(assetComparator).collect(Collectors.toList());
+            .filter(ass -> ass.getAssetId() == td.ACC_ASSET_6.getAssetId())
+            .sorted(assetComparator).collect(Collectors.toList());
         assertEquals(expected, actual);
     }
 
     @Test
     void testTrimDeletedRecord() {
         int rowCount = table.getRowCount();
-        DbUtils.inTransaction(dbExtension, (con)-> table.trim(Integer.MAX_VALUE));
+        DbUtils.inTransaction(dbExtension, (con) -> table.trim(Integer.MAX_VALUE));
         assertEquals(rowCount, table.getRowCount());
 
         td.ACC_ASSET_2.setHeight(td.ACC_ASSET_2.getHeight() + 1);
-        DbUtils.inTransaction(dbExtension, (con)-> table.deleteAtHeight(td.ACC_ASSET_2, td.ACC_ASSET_2.getHeight()));
+        DbUtils.inTransaction(dbExtension, (con) -> table.deleteAtHeight(td.ACC_ASSET_2, td.ACC_ASSET_2.getHeight()));
 
         assertEquals(rowCount + 1, table.getRowCount());
         assertNull(table.get(td.ACC_ASSET_2.getDbKey()));
 
-        DbUtils.inTransaction(dbExtension, (con)-> table.trim(td.ACC_ASSET_2.getHeight()));
+        DbUtils.inTransaction(dbExtension, (con) -> table.trim(td.ACC_ASSET_2.getHeight()));
 
         assertEquals(rowCount + 1, table.getRowCount());
 
-        DbUtils.inTransaction(dbExtension, (con)-> table.trim(td.ACC_ASSET_2.getHeight() + 1));
+        DbUtils.inTransaction(dbExtension, (con) -> table.trim(td.ACC_ASSET_2.getHeight() + 1));
         assertEquals(rowCount - 1, table.getRowCount());
         assertNull(table.get(td.ACC_ASSET_2.getDbKey()));
     }
@@ -208,11 +203,11 @@ class AccountAssetDaoTest {
     void testRollbackDeletedRecord() {
         int rowCount = table.getRowCount();
         td.ACC_ASSET_2.setHeight(td.ACC_ASSET_2.getHeight() + 1);
-        DbUtils.inTransaction(dbExtension, (con)-> table.deleteAtHeight(td.ACC_ASSET_2, td.ACC_ASSET_2.getHeight()));
+        DbUtils.inTransaction(dbExtension, (con) -> table.deleteAtHeight(td.ACC_ASSET_2, td.ACC_ASSET_2.getHeight()));
         assertEquals(rowCount + 1, table.getRowCount());
         assertNull(table.get(td.ACC_ASSET_2.getDbKey()));
 
-        DbUtils.inTransaction(dbExtension, (con)-> table.rollback(td.ACC_ASSET_2.getHeight() - 1));
+        DbUtils.inTransaction(dbExtension, (con) -> table.rollback(td.ACC_ASSET_2.getHeight() - 1));
 
         assertEquals(3, table.getRowCount());
         td.ACC_ASSET_2.setHeight(td.ACC_ASSET_2.getHeight() - 1);
@@ -221,14 +216,15 @@ class AccountAssetDaoTest {
 
     @Test
     void testDeleteInsertedRecord_on_same_height() throws SQLException {
+        doReturn(td.ACC_ASSET_14.getHeight() + 2).when(blockchain).getHeight();
         td.ACC_ASSET_14.setHeight(td.ACC_ASSET_14.getHeight() + 2);
         td.ACC_ASSET_14.setQuantityATU(100_000_000_000L);
-        DbUtils.inTransaction(dbExtension, (con)-> table.insert(td.ACC_ASSET_14));
+        DbUtils.inTransaction(dbExtension, (con) -> table.insert(td.ACC_ASSET_14));
 
         AccountAsset newEntity = table.get(td.ACC_ASSET_14.getDbKey());
         assertEquals(newEntity.getQuantityATU(), td.ACC_ASSET_14.getQuantityATU());
 
-        DbUtils.inTransaction(dbExtension, (con)-> table.deleteAtHeight(td.ACC_ASSET_14, td.ACC_ASSET_14.getHeight()));
+        DbUtils.inTransaction(dbExtension, (con) -> table.deleteAtHeight(td.ACC_ASSET_14, td.ACC_ASSET_14.getHeight()));
 
         AccountAsset deletedEntity = table.get(td.ACC_ASSET_14.getDbKey(), td.ACC_ASSET_14.getHeight() - 1);
         assertTrue(deletedEntity.isDeleted());
@@ -242,27 +238,46 @@ class AccountAssetDaoTest {
         assertTrue(recentDeleteRecord.isDeleted());
         assertFalse(recentDeleteRecord.isLatest());
         assertEquals(td.ACC_ASSET_14.getHeight(), recentDeleteRecord.getHeight());
+        // update deleted record by new record on the same height
+        DbUtils.inTransaction(dbExtension, (con) -> table.insert(td.ACC_ASSET_14));
+
+        AccountAsset newEntityAtDeletedHeight = table.get(td.ACC_ASSET_14.getDbKey());
+        assertFalse(newEntityAtDeletedHeight.isDeleted());
+        assertTrue(newEntityAtDeletedHeight.isLatest());
+//        should has deleted=false
+        AccountAsset initialAsset = table.get(td.ACC_ASSET_14.getDbKey(), td.ACC_ASSET_14.getHeight() - 1);
+        assertFalse(initialAsset.isDeleted());
+        assertFalse(initialAsset.isLatest());
     }
 
     @Test
     void testSequentialDeleteWithTrim() throws SQLException {
         td.ACC_ASSET_14.setHeight(td.ACC_ASSET_14.getHeight() + 1);
         td.ACC_ASSET_14.setQuantityATU(19999999);
-        DbUtils.inTransaction(dbExtension, (con)-> table.insert(td.ACC_ASSET_14)); // update
+        DbUtils.inTransaction(dbExtension, (con) -> table.insert(td.ACC_ASSET_14)); // update
 
         td.ACC_ASSET_14.setHeight(td.ACC_ASSET_14.getHeight() + 1); // delete
-        DbUtils.inTransaction(dbExtension, (con)-> table.deleteAtHeight(td.ACC_ASSET_14, td.ACC_ASSET_14.getHeight()));
+        DbUtils.inTransaction(dbExtension, (con) -> table.deleteAtHeight(td.ACC_ASSET_14, td.ACC_ASSET_14.getHeight()));
+        List<AccountAsset> afterFirstDelete = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
+
+        assertEquals(17, afterFirstDelete.size());
+//        Last 3 entries corresponds the same db key
+        assertEquals(table.getDbKeyFactory().newKey(afterFirstDelete.get(14)), table.getDbKeyFactory().newKey(afterFirstDelete.get(15)));
+        assertEquals(table.getDbKeyFactory().newKey(afterFirstDelete.get(15)), table.getDbKeyFactory().newKey(afterFirstDelete.get(16)));
+        assertFalse(afterFirstDelete.get(14).isDeleted());
+        assertTrue(afterFirstDelete.get(15).isDeleted());
+        assertTrue(afterFirstDelete.get(16).isDeleted());
 
         td.ACC_ASSET_14.setHeight(td.ACC_ASSET_14.getHeight() + 1); // insert new
-        DbUtils.inTransaction(dbExtension, (con)-> table.insert(td.ACC_ASSET_14));
+        DbUtils.inTransaction(dbExtension, (con) -> table.insert(td.ACC_ASSET_14));
 
         td.ACC_ASSET_14.setHeight(td.ACC_ASSET_14.getHeight() + 1); // delete new
-        DbUtils.inTransaction(dbExtension, (con)-> table.deleteAtHeight(td.ACC_ASSET_14, td.ACC_ASSET_14.getHeight()));
+        DbUtils.inTransaction(dbExtension, (con) -> table.deleteAtHeight(td.ACC_ASSET_14, td.ACC_ASSET_14.getHeight()));
 
 
         AccountAsset deleted = table.get(td.ACC_ASSET_14.getDbKey());
         assertNull(deleted);
-        DbUtils.inTransaction(dbExtension, (con)-> table.trim(td.ACC_ASSET_14.getHeight())); // try trim inside a gap of deleted records
+        DbUtils.inTransaction(dbExtension, (con) -> table.trim(td.ACC_ASSET_14.getHeight())); // try trim inside a gap of deleted records
 
 
         List<AccountAsset> existing = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
@@ -278,8 +293,8 @@ class AccountAssetDaoTest {
         doReturn(td.ASS_BLOCKCHAIN_HEIGHT).when(blockchain).getHeight();
         List<AccountAsset> actual = table.getByAssetId(td.ACC_ASSET_6.getAssetId(), td.ACC_ASSET_6.getHeight(), 0, Integer.MAX_VALUE);
         List<AccountAsset> expected = td.ALL_ASSETS.stream()
-                .filter(ass -> ass.getAssetId()== td.ACC_ASSET_6.getAssetId())
-                .sorted(assetComparator).collect(Collectors.toList());
+            .filter(ass -> ass.getAssetId() == td.ACC_ASSET_6.getAssetId())
+            .sorted(assetComparator).collect(Collectors.toList());
         assertEquals(3, actual.size());
         assertEquals(td.ACC_ASSET_6.getAccountId(), actual.get(0).getAccountId());
     }

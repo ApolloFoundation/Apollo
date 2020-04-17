@@ -44,28 +44,24 @@ import static org.mockito.Mockito.mock;
 class AccountLeaseDaoTest {
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension(DbTestData.getInMemDbProps(), "db/acc-data.sql", "db/schema.sql");
-
+    @Inject
+    AccountLeaseTable table;
+    AccountTestData testData = new AccountTestData();
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     private BlockchainProcessor blockchainProcessor = mock(BlockchainProcessor.class);
-
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class, AccountLeaseTable.class
+        PropertiesHolder.class, AccountLeaseTable.class
     )
-            .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
-            .addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class))
-            .addBeans(MockBean.of(blockchainProcessor, BlockchainProcessor.class, BlockchainProcessorImpl.class))
-            .addBeans(MockBean.of(mock(FullTextConfig.class), FullTextConfig.class, FullTextConfigImpl.class))
-            .addBeans(MockBean.of(mock(DerivedTablesRegistry.class), DerivedTablesRegistry.class, DerivedDbTablesRegistryImpl.class))
-            .build();
-
-    @Inject
-    AccountLeaseTable table;
-
-    AccountTestData testData = new AccountTestData();
+        .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
+        .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
+        .addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class))
+        .addBeans(MockBean.of(blockchainProcessor, BlockchainProcessor.class, BlockchainProcessorImpl.class))
+        .addBeans(MockBean.of(mock(FullTextConfig.class), FullTextConfig.class, FullTextConfigImpl.class))
+        .addBeans(MockBean.of(mock(DerivedTablesRegistry.class), DerivedTablesRegistry.class, DerivedDbTablesRegistryImpl.class))
+        .build();
 
     @Test
     void testSave_insert_new_entity() {//SQL MERGE -> INSERT
@@ -85,15 +81,15 @@ class AccountLeaseDaoTest {
     void testSave_update_existing_entity() {//SQL MERGE -> UPDATE
         AccountLease previous = table.get(table.getDbKeyFactory().newKey(testData.ACC_LEAS_0));
         assertNotNull(previous);
-        previous.setCurrentLeasingHeightFrom(previous.getCurrentLeasingHeightFrom()+50000);
-        previous.setCurrentLeasingHeightTo(previous.getCurrentLeasingHeightFrom()+10000);
+        previous.setCurrentLeasingHeightFrom(previous.getCurrentLeasingHeightFrom() + 50000);
+        previous.setCurrentLeasingHeightTo(previous.getCurrentLeasingHeightFrom() + 10000);
 
         DbUtils.inTransaction(dbExtension, (con) -> table.insert(previous));
         AccountLease actual = table.get(table.getDbKeyFactory().newKey(previous));
 
         assertNotNull(actual);
-        assertTrue(actual.getCurrentLeasingHeightFrom()-testData.ACC_LEAS_0.getCurrentLeasingHeightFrom() == 50000);
-        assertTrue(actual.getCurrentLeasingHeightTo()-actual.getCurrentLeasingHeightFrom() == 10000);
+        assertTrue(actual.getCurrentLeasingHeightFrom() - testData.ACC_LEAS_0.getCurrentLeasingHeightFrom() == 50000);
+        assertTrue(actual.getCurrentLeasingHeightTo() - actual.getCurrentLeasingHeightFrom() == 10000);
         assertEquals(previous.getLessorId(), actual.getLessorId());
         assertEquals(previous.getCurrentLesseeId(), actual.getCurrentLesseeId());
     }
@@ -117,10 +113,10 @@ class AccountLeaseDaoTest {
     void getLeaseChangingAccounts() {
         List<AccountLease> accounts = table.getLeaseChangingAccountsAtHeight(testData.ACC_LEAS_0.getHeight());
         List<AccountLease> expected = testData.ALL_LEASE.stream()
-                .filter(accountLease -> accountLease.getCurrentLeasingHeightFrom()==testData.ACC_LEAS_0.getHeight()
-                        || accountLease.getCurrentLeasingHeightTo()==testData.ACC_LEAS_0.getHeight())
-                .sorted(Comparator.comparing(AccountLease::getCurrentLesseeId).thenComparing(AccountLease::getLessorId))
-                .collect(Collectors.toList());
+            .filter(accountLease -> accountLease.getCurrentLeasingHeightFrom() == testData.ACC_LEAS_0.getHeight()
+                || accountLease.getCurrentLeasingHeightTo() == testData.ACC_LEAS_0.getHeight())
+            .sorted(Comparator.comparing(AccountLease::getCurrentLesseeId).thenComparing(AccountLease::getLessorId))
+            .collect(Collectors.toList());
         assertEquals(expected, accounts);
     }
 }

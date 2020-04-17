@@ -34,43 +34,42 @@ public class ApolloFbWallet extends FbWallet {
     private static final Integer HEXADECIMAL = 16;
 
 
-
-    public String getAplKeySecret(){
+    public String getAplKeySecret() {
         String secret = this.getAllData().stream()
-                .filter(dataRecord -> Objects.equals(dataRecord.alias, APL_SECRET_KEY_ALIAS))
-                .map(dataRecord -> dataRecord.data)
-                .findFirst().orElse(null);
+            .filter(dataRecord -> Objects.equals(dataRecord.alias, APL_SECRET_KEY_ALIAS))
+            .map(dataRecord -> dataRecord.data)
+            .findFirst().orElse(null);
 
         return secret;
     }
 
-    public AplWalletKey getAplWalletKey(){
+    public AplWalletKey getAplWalletKey() {
         String secret = getAplKeySecret();
         return new AplWalletKey(Convert.parseHexString(secret));
     }
 
-    public  List<EthWalletKey> getEthWalletKeys(){
+    public List<EthWalletKey> getEthWalletKeys() {
         List<EthWalletKey> ethWalletKeys = new ArrayList<>();
         ethWalletKeys.add(getEthOrToken(ETH_PRIVATE_KEY_ALIAS));
 
         //For backward compatibility
         EthWalletKey pax = getEthOrToken(PAX_PRIVATE_KEY_ALIAS);
-        if(pax != null) {
+        if (pax != null) {
             ethWalletKeys.add(pax);
         }
         return ethWalletKeys;
     }
 
-    private EthWalletKey getEthOrToken(String alias){
+    private EthWalletKey getEthOrToken(String alias) {
         String secret = this.getAllData().stream()
-                .filter(dataRecord -> Objects.equals(dataRecord.alias, alias))
-                .map(dataRecord -> dataRecord.data)
-                .findFirst().orElse(null);
+            .filter(dataRecord -> Objects.equals(dataRecord.alias, alias))
+            .map(dataRecord -> dataRecord.data)
+            .findFirst().orElse(null);
 
         return secret != null ? new EthWalletKey(Convert.parseHexString(secret)) : null;
     }
 
-    public void addAplKey(AplWalletKey aplWalletKey){
+    public void addAplKey(AplWalletKey aplWalletKey) {
         DataRecord dr = new DataRecord();
         dr.alias = APL_PRIVATE_KEY_ALIAS;
         dr.data = Convert.toHexString(aplWalletKey.getPrivateKey());
@@ -94,7 +93,7 @@ public class ApolloFbWallet extends FbWallet {
         this.addKey(krSecretK);
     }
 
-    public void addEthKey(EthWalletKey ethWalletKey){
+    public void addEthKey(EthWalletKey ethWalletKey) {
         DataRecord dr = new DataRecord();
         dr.alias = ETH_PRIVATE_KEY_ALIAS;
         dr.data = ethWalletKey.getCredentials().getEcKeyPair().getPrivateKey().toString(HEXADECIMAL);

@@ -19,10 +19,11 @@ import java.util.Objects;
 public class DefaultDirectoryMigrator implements Migrator {
     /**
      * Copy data from srcPaths directores to destDirectoryPath directory recursively
+     *
      * @param srcDirectoriesPaths list of directories where data for migration stored
-     * @param destDirectoryPath path to the target directory, where migration should be performed
+     * @param destDirectoryPath   path to the target directory, where migration should be performed
      * @return list of directories files from which were migrated (empty directores will be ignored)
-     * @throws IOException when IO error occurred
+     * @throws IOException              when IO error occurred
      * @throws IllegalArgumentException when one among srcDirectoriesPaths or destDirectoryPath is not a directory
      */
     @Override
@@ -45,13 +46,14 @@ public class DefaultDirectoryMigrator implements Migrator {
                                     migrated = true;
                                 }
                             }
-                        } else throw new IllegalArgumentException("List of src directories should contain only directories");
+                        } else
+                            throw new IllegalArgumentException("List of src directories should contain only directories");
                     }
                 }
                 if (migrated) {
                     FileUtils.copyDirectory(tempDirectory.toFile(), destDirectoryPath.toFile());
                 }
-            }finally {
+            } finally {
                 FileUtils.deleteDirectory(tempDirectory.toFile());
 
             }

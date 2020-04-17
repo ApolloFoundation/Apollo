@@ -22,25 +22,14 @@ import java.util.List;
 
 /**
  * Read/Write file by chunks
+ *
  * @author alukin@gmail.com
  */
 @Slf4j
 public class ChunkedFileOps {
     public static final int FILE_CHUNK_SIZE = 32768;
     public static final String DIGESTER = "SHA-256";
-
-    public static class ChunkInfo{
-        public long offset;
-        public long size;
-        public long crc;
-
-        ChunkInfo(long offset, long size, long crc) {
-            this.offset = offset;
-            this.size = size;
-            this.crc = crc;
-        }
-    }
-
+    private final List<ChunkInfo> fileCRCs = new ArrayList<>();
     @Getter
     @Setter
     private String fileId;
@@ -50,18 +39,16 @@ public class ChunkedFileOps {
     private Long lastWRChunkCrc;
 
     private byte[] fileHash = null;
-    private final List<ChunkInfo> fileCRCs = new ArrayList<>();
-
-    public boolean isHashedOK() {
-        return fileHash != null;
-    }
-
     public ChunkedFileOps(String absPath) {
         this(Paths.get(absPath));
     }
 
     public ChunkedFileOps(Path absPath) {
-        this.absPath=absPath;
+        this.absPath = absPath;
+    }
+
+    public boolean isHashedOK() {
+        return fileHash != null;
     }
 
     public void moveFile(Path target) throws IOException {
@@ -69,21 +56,21 @@ public class ChunkedFileOps {
     }
 
     public byte[] getFileHash() {
-        if(fileHash==null){
+        if (fileHash == null) {
             getFileHashSums(FILE_CHUNK_SIZE);
         }
         return fileHash;
     }
 
-    public synchronized void writeChunk(Long offset, byte[] data, long crc) throws IOException{
-        int res=0;
+    public synchronized void writeChunk(Long offset, byte[] data, long crc) throws IOException {
+        int res = 0;
         CheckSum cs = new CheckSum();
         cs.update(data);
-        lastWRChunkCrc=cs.finish();
-        if(lastWRChunkCrc != crc){
+        lastWRChunkCrc = cs.finish();
+        if (lastWRChunkCrc != crc) {
             throw new BadCheckSumException(absPath.toString());
         }
-        if(!absPath.getParent().toFile().exists()){
+        if (!absPath.getParent().toFile().exists()) {
             absPath.getParent().toFile().mkdirs();
         }
         try (RandomAccessFile rf = new RandomAccessFile(absPath.toFile(), "rw")) {
@@ -95,18 +82,18 @@ public class ChunkedFileOps {
         }
     }
 
-    public int readChunk(Long offset, Long size, byte[] dataBuf) throws IOException{
+    public int readChunk(Long offset, Long size, byte[] dataBuf) throws IOException {
         int res;
-        if(!absPath.toFile().exists()){
-           res=-2;
-           return res;
+        if (!absPath.toFile().exists()) {
+            res = -2;
+            return res;
         }
-        RandomAccessFile rf = new RandomAccessFile(absPath.toFile(),"r");
+        RandomAccessFile rf = new RandomAccessFile(absPath.toFile(), "r");
         rf.skipBytes(offset.intValue());
-        res = rf.read(dataBuf,0,size.intValue());
+        res = rf.read(dataBuf, 0, size.intValue());
         CheckSum cs = new CheckSum();
-        cs.update(dataBuf,size.intValue());
-        lastRDChunkCrc=cs.finish();
+        cs.update(dataBuf, size.intValue());
+        lastRDChunkCrc = cs.finish();
         return res;
     }
 
@@ -118,65 +105,79 @@ public class ChunkedFileOps {
         return lastRDChunkCrc;
     }
 
-    public long getFileSize(){
+    public long getFileSize() {
         long res = -1L;
         try {
             BasicFileAttributes attrs = Files.readAttributes(absPath, BasicFileAttributes.class);
             res = attrs.size();
         } catch (IOException ignored) {
         }
-      return res;
+        return res;
     }
 
-    public byte[] getFileHashSums(){
+    public byte[] getFileHashSums() {
         return getFileHashSums(FILE_CHUNK_SIZE);
     }
+
     /**
      * Calculates file hash and partial CRCss
      * Should depends on crypto settings, but at the time it is SHA-256
+     *
      * @param chunkSize size of file chunks to calculate partial CRCs
      * @return Crypto hash sum of entire file
      */
-    public byte[] getFileHashSums(int chunkSize){
+    public byte[] getFileHashSums(int chunkSize) {
         byte[] hash = {}; //do not return null
         byte[] buf = new byte[chunkSize];
         fileCRCs.clear();
-        if(absPath==null){
-           return hash;
+        if (absPath == null) {
+            return hash;
         }
-        try (RandomAccessFile rf = new RandomAccessFile(absPath.toFile(),"r")) {
+        try (RandomAccessFile rf = new RandomAccessFile(absPath.toFile(), "r")) {
             //TODO: use FBCryptoDigest after FBCrypto update for stream operations
             MessageDigest dgst = MessageDigest.getInstance(DIGESTER);
             int rd;
-            long offset=0;
-            while((rd=rf.read(buf))>0){
-                dgst.update(buf,0,rd);
+            long offset = 0;
+            while ((rd = rf.read(buf)) > 0) {
+                dgst.update(buf, 0, rd);
                 CheckSum cs = new CheckSum();
-                cs.update(buf,rd);
+                cs.update(buf, rd);
                 ChunkInfo ci = new ChunkInfo(offset, rd, cs.finish());
                 fileCRCs.add(ci);
                 offset += rd;
             }
-            fileHash=dgst.digest();
+            fileHash = dgst.digest();
         } catch (IOException | NoSuchAlgorithmException ignored) {
         }
-       return fileHash;
+        return fileHash;
     }
 
-    public List<ChunkInfo> getChunksCRC(){
-        if(fileCRCs.size() == 0){
+    public List<ChunkInfo> getChunksCRC() {
+        if (fileCRCs.size() == 0) {
             getFileHashSums();
         }
         return fileCRCs;
     }
 
     public Date getFileDate() {
-        long res=1L;
+        long res = 1L;
         try {
             BasicFileAttributes attrs = Files.readAttributes(absPath, BasicFileAttributes.class);
             res = attrs.lastModifiedTime().toMillis();
         } catch (IOException ignored) {
         }
-       return new Date(res);
+        return new Date(res);
+    }
+
+    public static class ChunkInfo {
+        public long offset;
+        public long size;
+        public long crc;
+
+        ChunkInfo(long offset, long size, long crc) {
+            this.offset = offset;
+            this.size = size;
+            this.crc = crc;
+        }
     }
 }
