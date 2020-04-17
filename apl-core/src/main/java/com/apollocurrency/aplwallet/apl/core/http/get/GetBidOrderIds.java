@@ -20,21 +20,28 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Order;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.order.entity.BidOrder;
+import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.BidOrderService;
+import com.apollocurrency.aplwallet.apl.core.order.service.impl.BidOrderServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.order.service.OrderService;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectorUtils;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class GetBidOrderIds extends AbstractAPIRequestHandler {
+    private final OrderService<BidOrder, ColoredCoinsBidOrderPlacement> bidOrderService =
+        CDI.current().select(BidOrderServiceImpl.class, BidOrderService.Literal.INSTANCE).get();
 
     public GetBidOrderIds() {
         super(new APITag[]{APITag.AE}, "asset", "firstIndex", "lastIndex");
@@ -47,12 +54,10 @@ public final class GetBidOrderIds extends AbstractAPIRequestHandler {
         int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
         int lastIndex = HttpParameterParserUtil.getLastIndex(req);
 
-        JSONArray orderIds = new JSONArray();
-        try (DbIterator<Order.Bid> bidOrders = Order.Bid.getSortedOrders(assetId, firstIndex, lastIndex)) {
-            while (bidOrders.hasNext()) {
-                orderIds.add(Long.toUnsignedString(bidOrders.next().getId()));
-            }
-        }
+        JSONArray orderIds = bidOrderService.getSortedOrders(assetId, firstIndex, lastIndex)
+            .map(b -> Long.toUnsignedString(b.getId()))
+            .collect(CollectorUtils.jsonCollector());
+
         JSONObject response = new JSONObject();
         response.put("bidOrderIds", orderIds);
         return response;

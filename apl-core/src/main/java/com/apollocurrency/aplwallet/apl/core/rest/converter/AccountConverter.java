@@ -83,6 +83,13 @@ public class AccountConverter implements Converter<Account, AccountDTO> {
         return 100_000_000L * (random.nextInt(10_000_000) + 1);
     }
 
+    public static String anonymizePublicKey(){
+        Random random = new Random();
+        byte[] b = new byte[32];
+        random.nextBytes(b);
+        return Convert.toHexString(b);
+    }
+                
     @Override
     public AccountDTO apply(Account account) {
         AccountDTO dto = new AccountDTO();
