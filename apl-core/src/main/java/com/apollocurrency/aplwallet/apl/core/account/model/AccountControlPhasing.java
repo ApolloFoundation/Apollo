@@ -21,7 +21,6 @@ import lombok.Setter;
 @Getter
 public class AccountControlPhasing extends VersionedDeletableEntity {
 
-//    private final DbKey dbKey;
     private final long accountId;
     private long maxFees;
     private short minDuration;
