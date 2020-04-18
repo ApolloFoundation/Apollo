@@ -12,9 +12,13 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDeletableEntity;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@EqualsAndHashCode(callSuper = true)
+@Setter
+@Getter
 public class AccountControlPhasing extends VersionedDeletableEntity {
 
 //    private final DbKey dbKey;
@@ -28,16 +32,6 @@ public class AccountControlPhasing extends VersionedDeletableEntity {
         super(null, height);
         this.accountId = accountId;
         setDbKey(dbKey);
-        this.phasingParams = params;
-        this.maxFees = maxFees;
-        this.minDuration = minDuration;
-        this.maxDuration = maxDuration;
-    }
-
-    public AccountControlPhasing(long accountId, PhasingParams params, long maxFees, short minDuration, short maxDuration, int height) {
-        super(null, height);
-        this.accountId = accountId;
-//        this.dbKey = null;//AccountRestrictions.phasingControlDbKeyFactory.newKey(this.accountId); // TODO fix it
         this.phasingParams = params;
         this.maxFees = maxFees;
         this.minDuration = minDuration;

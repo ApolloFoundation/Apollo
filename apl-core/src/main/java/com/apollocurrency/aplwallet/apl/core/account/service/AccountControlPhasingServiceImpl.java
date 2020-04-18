@@ -93,7 +93,9 @@ public class AccountControlPhasingServiceImpl implements AccountControlPhasingSe
             senderAccount.addControl(AccountControlType.PHASING_ONLY);
             AccountControlPhasing phasingOnly = this.get(senderAccount.getId());
             if (phasingOnly == null) {
-                phasingOnly = new AccountControlPhasing(senderAccount.getId(), phasingParams,
+                phasingOnly = new AccountControlPhasing(
+                    AccountControlPhasingTable.accountControlPhasingDbKeyFactory.newKey(senderAccount.getId()),
+                    senderAccount.getId(), phasingParams,
                     attachment.getMaxFees(), attachment.getMinDuration(), attachment.getMaxDuration(),
                     blockChainInfoService.getHeight());
             } else {
