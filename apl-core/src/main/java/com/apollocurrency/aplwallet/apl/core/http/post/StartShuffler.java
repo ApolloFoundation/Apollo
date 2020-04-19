@@ -24,9 +24,9 @@ import com.apollocurrency.aplwallet.apl.core.app.Shuffler;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
@@ -40,17 +40,17 @@ public final class StartShuffler extends AbstractAPIRequestHandler {
 
     public StartShuffler() {
         super(new APITag[]{APITag.SHUFFLING}, "secretPhrase", "shufflingFullHash", "recipientSecretPhrase", "recipientPublicKey", "recipientAccount",
-                "recipientPassphrase");
+            "recipientPassphrase");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        byte[] shufflingFullHash = ParameterParser.getBytes(req, "shufflingFullHash", true);
-        long accountId = ParameterParser.getAccountId(req, vaultAccountName(), false);
-        long recipientId = ParameterParser.getAccountId(req, "recipientAccount", false);
-        byte[] secretBytes = ParameterParser.getSecretBytes(req, accountId, true);
+        byte[] shufflingFullHash = HttpParameterParserUtil.getBytes(req, "shufflingFullHash", true);
+        long accountId = HttpParameterParserUtil.getAccountId(req, vaultAccountName(), false);
+        long recipientId = HttpParameterParserUtil.getAccountId(req, "recipientAccount", false);
+        byte[] secretBytes = HttpParameterParserUtil.getSecretBytes(req, accountId, true);
 
-        byte[] recipientPublicKey = ParameterParser.getPublicKey(req, "recipient", recipientId, true);
+        byte[] recipientPublicKey = HttpParameterParserUtil.getPublicKey(req, "recipient", recipientId, true);
         try {
             Shuffler shuffler = Shuffler.addOrGetShuffler(secretBytes, recipientPublicKey, shufflingFullHash);
             return shuffler != null ? JSONData.shuffler(shuffler, false) : JSON.emptyJSON;

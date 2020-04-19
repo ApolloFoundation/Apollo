@@ -1,15 +1,17 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
+import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import com.apollocurrency.aplwallet.api.dto.TransactionHash;
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
+import com.apollocurrency.aplwallet.apl.core.rest.validation.ValidAtomicSwapTime;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
@@ -75,23 +77,23 @@ public class DexTransactionSendingController {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Operation(tags = {"dex"}, summary = "Send apl dex order transaction", description = "Create, validate and conditionally broadcast Apollo DexOrderTransaction, depending on specified parameters ",
-            responses = @ApiResponse(description = "Transaction in json format", responseCode = "200",
-                    content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = Transaction.class))))
+        responses = @ApiResponse(description = "Transaction in json format", responseCode = "200",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = TransactionDTO.class))))
     public Response sendOrder(
-            @Parameter(description = "APL account id of sender (RS, signed or unsigned int64/long)", required = true) @FormParam("sender") @NotBlank String accountString,
-            @Parameter(description = "Passphrase for the vault account", required = true) @FormParam("passphrase") @NotBlank String passphrase,
-            @Parameter(description = "Two factor authentication code, if 2fa is enabled") @FormParam("code2FA") @DefaultValue("0") @Min(0) @Max(999999) int code2FA,
-            @Parameter(description = "Type of the APL offer. (BUY APL / SELL APL) ", required = true) @FormParam("offerType") OrderType orderType,
-            @Parameter(description = "Address from which money will be transferred for BUY orders. For SELL orders must specify ETH 'to' address") @FormParam(DexApiConstants.WALLET_ADDRESS) String walletAddress,
-            @Parameter(description = "APL amount (buy or sell) for order in Gwei (1 Gwei = 0.000000001), " +
-                    "in other words  - amount of apollo atoms multiplied by 10. 1 Gwei = 10^-9, 1 ATM = 10^-8", required = true) @FormParam("offerAmount") @Min(1) Long orderAmount,
-            @Parameter(description = "Paired currency. (ETH or PAX)", required = true) @FormParam(DexApiConstants.PAIR_CURRENCY) DexCurrency pairCurrency,
-            @Parameter(description = "Pair rate in Gwei. (1 Gwei = 0.000000001). Represent real pair rate, multiplied by 10^9", required = true)  @FormParam("pairRate") @Min(1) Long pairRate,
-            @Parameter(description = "Amount of time for this offer. (seconds)", required = true) @FormParam("amountOfTime") @Min(1) @Max(MAX_ORDER_DURATION_SEC) Integer amountOfTime,
-            @Parameter(description = "Desirable order status. Accepted OPEN or PENDING. Default is OPEN.") @FormParam("orderStatus") @DefaultValue("OPEN") OrderStatus status,
-            @Context HttpServletRequest req
+        @Parameter(description = "APL account id of sender (RS, signed or unsigned int64/long)", required = true) @FormParam("sender") @NotBlank String accountString,
+        @Parameter(description = "Passphrase for the vault account", required = true) @FormParam("passphrase") @NotBlank String passphrase,
+        @Parameter(description = "Two factor authentication code, if 2fa is enabled") @FormParam("code2FA") @DefaultValue("0") @Min(0) @Max(999999) int code2FA,
+        @Parameter(description = "Type of the APL offer. (BUY APL / SELL APL) ", required = true) @FormParam("offerType") OrderType orderType,
+        @Parameter(description = "Address from which money will be transferred for BUY orders. For SELL orders must specify ETH 'to' address") @FormParam(DexApiConstants.WALLET_ADDRESS) String walletAddress,
+        @Parameter(description = "APL amount (buy or sell) for order in Gwei (1 Gwei = 0.000000001), " +
+            "in other words  - amount of apollo atoms multiplied by 10. 1 Gwei = 10^-9, 1 ATM = 10^-8", required = true) @FormParam("offerAmount") @Min(1) Long orderAmount,
+        @Parameter(description = "Paired currency. (ETH or PAX)", required = true) @FormParam(DexApiConstants.PAIR_CURRENCY) DexCurrency pairCurrency,
+        @Parameter(description = "Pair rate in Gwei. (1 Gwei = 0.000000001). Represent real pair rate, multiplied by 10^9", required = true) @FormParam("pairRate") @Min(1) Long pairRate,
+        @Parameter(description = "Amount of time for this offer. (seconds)", required = true) @FormParam("amountOfTime") @Min(1) @Max(MAX_ORDER_DURATION_SEC) Integer amountOfTime,
+        @Parameter(description = "Desirable order status. Accepted OPEN or PENDING. Default is OPEN.") @FormParam("orderStatus") @DefaultValue("OPEN") OrderStatus status,
+        @Context HttpServletRequest req
 
-            ) throws ParameterException, AplException.ValidationException {
+    ) throws ParameterException, AplException.ValidationException {
         AccountDetails accountDetails = getAndVerifyAccount(accountString, passphrase, code2FA);
         Account account = accountDetails.getAccount();
 
@@ -109,7 +111,7 @@ public class DexTransactionSendingController {
             toAddress = walletAddress;
         }
         Transaction tx =
-        dexService.createDexOrderTransaction(req, account,
+            dexService.createDexOrderTransaction(req, account,
                 fromAddress, toAddress,
                 amountOfTime, orderType, EthUtil.gweiToEth(pairRate), status, EthUtil.gweiToAtm(orderAmount), pairCurrency);
 
@@ -125,17 +127,17 @@ public class DexTransactionSendingController {
         "orderId, currency and walletAddress, such option can be used for node, which is downloading blockchain or order is not broadcasted/confirmed yet on this node." +
         "For the first way, walletAddress, amountGwei,currency are not required, for the second these parameters are mandatory. By default first way followed, " +
         "when walletAddress, amountGwei,currency are specified - second way activates",
-            responses = @ApiResponse(description = "Deposit transaction hash", responseCode = "200",
-                    content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = TransactionHash.class))))
+        responses = @ApiResponse(description = "Deposit transaction hash", responseCode = "200",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = TransactionHash.class))))
     public Response freezeEthPax(
-            @Parameter(description = "APL account id of sender (RS, signed or unsigned int64/long)", required = true) @FormParam("sender") @NotBlank String accountString,
-            @Parameter(description = "Passphrase for the vault account", required = true) @FormParam("passphrase") @NotBlank String passphrase,
-            @Parameter(description = "Two factor authentication code, if 2fa is enabled") @FormParam("code2FA")@DefaultValue("0") @Min(0) @Max(999999) int code2FA,
-            @Parameter(description = "Id of order for which money has to be deposited. Signed or unsigned int64/long", required = true) @FormParam(ORDER_ID) String orderIdString,
-            @Parameter(description = "Amount of eth/pax to transfer in gwei") @FormParam("amount")  long amountGwei,
-            @Parameter(description = "Eth address, which will send eth deposit transaction.") @FormParam(DexApiConstants.WALLET_ADDRESS) String walletAddress,
-            @Parameter(description = "Currency to deposit, ETH or PAX") @FormParam(DexApiConstants.PAIR_CURRENCY) DexCurrency cur
-            ) throws ParameterException, AplException.ExecutiveProcessException {
+        @Parameter(description = "APL account id of sender (RS, signed or unsigned int64/long)", required = true) @FormParam("sender") @NotBlank String accountString,
+        @Parameter(description = "Passphrase for the vault account", required = true) @FormParam("passphrase") @NotBlank String passphrase,
+        @Parameter(description = "Two factor authentication code, if 2fa is enabled") @FormParam("code2FA") @DefaultValue("0") @Min(0) @Max(999999) int code2FA,
+        @Parameter(description = "Id of order for which money has to be deposited. Signed or unsigned int64/long", required = true) @FormParam(ORDER_ID) String orderIdString,
+        @Parameter(description = "Amount of eth/pax to transfer in gwei") @FormParam("amount") long amountGwei,
+        @Parameter(description = "Eth address, which will send eth deposit transaction.") @FormParam(DexApiConstants.WALLET_ADDRESS) String walletAddress,
+        @Parameter(description = "Currency to deposit, ETH or PAX") @FormParam(DexApiConstants.PAIR_CURRENCY) DexCurrency cur
+    ) throws ParameterException, AplException.ExecutiveProcessException {
         AccountDetails details = getAndVerifyAccount(accountString, passphrase, code2FA);
         Account account = details.getAccount();
         String hash;
@@ -157,8 +159,8 @@ public class DexTransactionSendingController {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Operation(tags = {"dex"}, summary = "Create STEP1 contract ", description = "Will send APL transaction to create new offering contract for PENDING (sender) order and another OPEN order.",
-            responses = @ApiResponse(description = "Apl transaction in JSON format", responseCode = "200",
-                    content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = Transaction.class))))
+        responses = @ApiResponse(description = "Apl transaction in JSON format", responseCode = "200",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = TransactionDTO.class))))
     public Response sendContractStep1(@Parameter(description = "APL account id of sender (RS, signed or unsigned int64/long)", required = true) @FormParam("sender") @NotBlank String accountString,
                                       @Parameter(description = "Passphrase for the vault account", required = true) @FormParam("passphrase") @NotBlank String passphrase,
                                       @Parameter(description = "Two factor authentication code, if 2fa is enabled") @DefaultValue("0") @FormParam("code2FA") @Min(0) @Max(999999) int code2FA,
@@ -166,7 +168,7 @@ public class DexTransactionSendingController {
                                       @Parameter(description = "Id of order, owned by sender account in PENDING status. Signed or unsigned int64/long", required = true) @FormParam("orderId") @NotBlank String orderId,
                                       @Parameter(description = "Id of order to match sender's order. Required OPEN status and opposite type. Signed or unsigned int64/long", required = true) @FormParam("counterOrderId") @NotBlank String counterOrderId,
                                       @Context HttpServletRequest req
-                                      ) throws ParameterException, AplException.ValidationException {
+    ) throws ParameterException, AplException.ValidationException {
         AccountDetails accountDetails = getAndVerifyAccount(accountString, passphrase, code2FA);
         Account account = accountDetails.getAccount();
         DexOrder dexOrder = getAndVerifyAccountOrder(orderId, account.getId());
@@ -178,7 +180,7 @@ public class DexTransactionSendingController {
             throw new ParameterException(JSONResponses.incorrect(COUNTER_ORDER_ID, "Expected counter order status 'OPEN', got " + counterOrder.getStatus()));
         }
         Transaction transaction = dexService.sendContractStep1Transaction(req, account, dexOrder, counterOrder, timeToReply);
-        return Response.ok(JSONData.unconfirmedTransaction( transaction).toJSONString()).build();
+        return Response.ok(JSONData.unconfirmedTransaction(transaction).toJSONString()).build();
     }
 
     @POST
@@ -186,9 +188,9 @@ public class DexTransactionSendingController {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Operation(tags = {"dex"}, summary = "Create STEP2 contract ", description = "Will send APL contract transaction to update existing STEP1 contract specified by id and fill it with secretHash, encryptedSecret, timeToReply and counterTransferTx data." +
-            "Can be sent only by account, owning counterOrder specified in the contract",
-            responses = @ApiResponse(description = "Apl transaction in JSON format", responseCode = "200",
-                    content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = Transaction.class))))
+        "Can be sent only by account, owning counterOrder specified in the contract",
+        responses = @ApiResponse(description = "Apl transaction in JSON format", responseCode = "200",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = TransactionDTO.class))))
     public Response sendContractStep2(@Parameter(description = "APL account id of sender (RS, signed or unsigned int64/long)", required = true) @FormParam("sender") @NotBlank String accountString,
                                       @Parameter(description = "Passphrase for the vault account", required = true) @FormParam("passphrase") @NotBlank String passphrase,
                                       @Parameter(description = "Two factor authentication code, if 2fa is enabled") @FormParam("code2FA") @DefaultValue("0") @Min(0) @Max(999999) int code2FA,
@@ -218,7 +220,7 @@ public class DexTransactionSendingController {
         }
 
         Transaction transaction = dexService.sendContractStep2Transaction(req, account, secretHashBytes, encryptedSecretBytes, counterTransferTx, timeToReply, contract);
-        return Response.ok(JSONData.unconfirmedTransaction( transaction).toJSONString()).build();
+        return Response.ok(JSONData.unconfirmedTransaction(transaction).toJSONString()).build();
     }
 
     private byte[] getAndValidateSecretHash(String secretHash) throws ParameterException {
@@ -234,9 +236,9 @@ public class DexTransactionSendingController {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Operation(tags = {"dex"}, summary = "Create STEP3 contract ", description = "Will send APL contract transaction to update existing STEP2 contract specified by id and fill it with timeToReply and transferTx data." +
-            "Can be sent only by account, owning order specified in the contract (account, who originally created contract with STEP1)",
-            responses = @ApiResponse(description = "Apl transaction in JSON format", responseCode = "200",
-                    content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = Transaction.class))))
+        "Can be sent only by account, owning order specified in the contract (account, who originally created contract with STEP1)",
+        responses = @ApiResponse(description = "Apl transaction in JSON format", responseCode = "200",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = TransactionDTO.class))))
     public Response sendContractStep3(@Parameter(description = "APL account id of sender (RS, signed or unsigned int64/long)", required = true) @FormParam("sender") @NotBlank String accountString,
                                       @Parameter(description = "Passphrase for the vault account", required = true) @FormParam("passphrase") @NotBlank String passphrase,
                                       @Parameter(description = "Two factor authentication code, if 2fa is enabled") @FormParam("code2FA") @DefaultValue("0") @Min(0) @Max(999999) int code2FA,
@@ -260,7 +262,7 @@ public class DexTransactionSendingController {
         }
 
         Transaction transaction = dexService.sendContractStep3Transaction(req, account, transferTx, timeToReply, contract);
-        return Response.ok(JSONData.unconfirmedTransaction( transaction).toJSONString()).build();
+        return Response.ok(JSONData.unconfirmedTransaction(transaction).toJSONString()).build();
     }
 
     @POST
@@ -268,20 +270,20 @@ public class DexTransactionSendingController {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Operation(tags = {"dex"}, summary = "Send apl using phased transaction linked to the contract STEP2/STEP3 and dex order", description = "Will send APL DexTransferMoney transaction with Phasing appendix, amount of transaction will be transferred when and only when another account reveals secret. " +
-            "Also BUY dex order will be closed after successful approval. If phasing is expiring without approval, contract will be closed (exchange is unsuccessful ) and order, eventually, can be reopened if its finish time is not reached " +
-            "Can be sent only by account, owning SELL order specified in the contract. IMPORTANT: created transaction will not be broadcasted because it require existence of the contract in STEP2/STEP3 but to make such contract" +
-            " by sending appropriate transaction, you require hash of transfer transaction, which you can obtain only by creating, but not sending TransferMoney transaction. When contract transaction will be confirmed, you should broadcast your TransferMoney transaction. ",
-            responses = @ApiResponse(description = "Apl transaction in JSON format", responseCode = "200",
-                    content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = Transaction.class))))
+        "Also BUY dex order will be closed after successful approval. If phasing is expiring without approval, contract will be closed (exchange is unsuccessful ) and order, eventually, can be reopened if its finish time is not reached " +
+        "Can be sent only by account, owning SELL order specified in the contract. IMPORTANT: created transaction will not be broadcasted because it require existence of the contract in STEP2/STEP3 but to make such contract" +
+        " by sending appropriate transaction, you require hash of transfer transaction, which you can obtain only by creating, but not sending TransferMoney transaction. When contract transaction will be confirmed, you should broadcast your TransferMoney transaction. ",
+        responses = @ApiResponse(description = "Apl transaction in JSON format", responseCode = "200",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = TransactionDTO.class))))
     public Response transferMoneyWithApproval(
-            @Parameter(description = "APL account id of sender (RS, signed or unsigned int64/long)", required = true) @FormParam("sender") @NotBlank String accountString,
-            @Parameter(description = "Passphrase for the vault account", required = true) @FormParam("passphrase") @NotBlank String passphrase,
-            @Parameter(description = "Two factor authentication code, if 2fa is enabled") @FormParam("code2FA") @DefaultValue("0") @Min(0) @Max(999999) int code2FA,
-            @Parameter(description = "Amount of time for transaction to expire. Use twice times less duration than left in already initiated atomic swap", required = true) @FormParam("atomicSwapDuration") @ValidAtomicSwapTime int atomicSwapDuration,
-            @Parameter(description = "Id of the contract to which TransferMoney transaction will be linked.  Signed or unsigned int64/long", required = true) @FormParam("contractId") @NotBlank String contractId,
-            @Parameter(description = "SHA-256 hash of the secret in the hexadecimal format", required = true) @FormParam("secretHash") @NotBlank String secretHash,
-            @Parameter(description = "Amount of atms to transfer", required = true) @FormParam("amount") @Min(0) long amountAtm,
-            @Context HttpServletRequest request
+        @Parameter(description = "APL account id of sender (RS, signed or unsigned int64/long)", required = true) @FormParam("sender") @NotBlank String accountString,
+        @Parameter(description = "Passphrase for the vault account", required = true) @FormParam("passphrase") @NotBlank String passphrase,
+        @Parameter(description = "Two factor authentication code, if 2fa is enabled") @FormParam("code2FA") @DefaultValue("0") @Min(0) @Max(999999) int code2FA,
+        @Parameter(description = "Amount of time for transaction to expire. Use twice times less duration than left in already initiated atomic swap", required = true) @FormParam("atomicSwapDuration") @ValidAtomicSwapTime int atomicSwapDuration,
+        @Parameter(description = "Id of the contract to which TransferMoney transaction will be linked.  Signed or unsigned int64/long", required = true) @FormParam("contractId") @NotBlank String contractId,
+        @Parameter(description = "SHA-256 hash of the secret in the hexadecimal format", required = true) @FormParam("secretHash") @NotBlank String secretHash,
+        @Parameter(description = "Amount of atms to transfer", required = true) @FormParam("amount") @Min(0) long amountAtm,
+        @Context HttpServletRequest request
     ) throws ParameterException, AplException.ValidationException {
         AccountDetails accountDetails = getAndVerifyAccount(accountString, passphrase, code2FA);
         Account account = accountDetails.getAccount();
@@ -297,7 +299,7 @@ public class DexTransactionSendingController {
         byte[] secretHashBytes = getAndValidateSecretHash(secretHash);
         long recipientId = account.getId() == contract.getRecipient() ? contract.getSender() : contract.getRecipient();
         Transaction transaction = dexService.transferApl(request, account, contractParsedId, recipientId, amountAtm, atomicSwapDuration, secretHashBytes);
-        return Response.ok(JSONData.unconfirmedTransaction( transaction).toJSONString()).build();
+        return Response.ok(JSONData.unconfirmedTransaction(transaction).toJSONString()).build();
     }
 
     @POST
@@ -305,17 +307,17 @@ public class DexTransactionSendingController {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Operation(tags = {"dex"}, summary = "Create ETH swap", description = "Call eth 'initiate' function on smart contract, which will freeze eth/pax for specified time [10m..180d] and will create atomic swap, which" +
-            " can be redeemed by another user by revealing secret. After expiration, atomic swap become not-redeemable, but refundable. User has to call 'refundAndWithdraw' function to get back eth/pax, or call 'refund' and after confirmation - 'withdraw' ",
-            responses = @ApiResponse(description = "Eth transaction hash in hexadecimal format", responseCode = "200",
-                    content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = TransactionHash.class))))
+        " can be redeemed by another user by revealing secret. After expiration, atomic swap become not-redeemable, but refundable. User has to call 'refundAndWithdraw' function to get back eth/pax, or call 'refund' and after confirmation - 'withdraw' ",
+        responses = @ApiResponse(description = "Eth transaction hash in hexadecimal format", responseCode = "200",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = TransactionHash.class))))
     public Response initiateAtomicSwap(
-            @Parameter(description = "APL account id of sender (RS, signed or unsigned int64/long)", required = true) @FormParam("sender") @NotBlank String accountString,
-            @Parameter(description = "Passphrase for the vault account", required = true) @FormParam("passphrase") @NotBlank String passphrase,
-            @Parameter(description = "Two factor authentication code, if 2fa is enabled") @FormParam("code2FA") @DefaultValue("0") @Min(0) @Max(999999) int code2FA,
-            @Parameter(description = "Amount of time for atomic swap to expire. Use twice times less duration than left in already initiated atomic swap.", required = true) @FormParam("atomicSwapDuration") @ValidAtomicSwapTime int atomicSwapDuration,
-            @Parameter(description = "Id of the contract to which ETH 'atomic swap' will be linked.  Signed or unsigned int64/long", required = true) @FormParam("contractId") @NotBlank String contractId,
-            @Parameter(description = "SHA-256 hash of the secret in the hexadecimal format", required = true) @FormParam("secretHash") @NotBlank String secretHash,
-            @Context HttpServletRequest request
+        @Parameter(description = "APL account id of sender (RS, signed or unsigned int64/long)", required = true) @FormParam("sender") @NotBlank String accountString,
+        @Parameter(description = "Passphrase for the vault account", required = true) @FormParam("passphrase") @NotBlank String passphrase,
+        @Parameter(description = "Two factor authentication code, if 2fa is enabled") @FormParam("code2FA") @DefaultValue("0") @Min(0) @Max(999999) int code2FA,
+        @Parameter(description = "Amount of time for atomic swap to expire. Use twice times less duration than left in already initiated atomic swap.", required = true) @FormParam("atomicSwapDuration") @ValidAtomicSwapTime int atomicSwapDuration,
+        @Parameter(description = "Id of the contract to which ETH 'atomic swap' will be linked.  Signed or unsigned int64/long", required = true) @FormParam("contractId") @NotBlank String contractId,
+        @Parameter(description = "SHA-256 hash of the secret in the hexadecimal format", required = true) @FormParam("secretHash") @NotBlank String secretHash,
+        @Context HttpServletRequest request
     ) throws ParameterException, AplException.ExecutiveProcessException {
         AccountDetails accountDetails = getAndVerifyAccount(accountString, passphrase, code2FA);
         Account account = accountDetails.getAccount();
@@ -341,16 +343,16 @@ public class DexTransactionSendingController {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Operation(tags = {"dex"}, summary = "Redeem ETH swap", description = "Call eth 'redeem' function on smart contract, which will transfer frozen eth/pax to the caller address, specified by 'walletAddress' parameter." +
-            " Account has to be whitelisted in redeemable, non-expired atomic swap ",
-            responses = @ApiResponse(description = "Eth transaction hash in hexadecimal format", responseCode = "200",
-                    content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = TransactionHash.class))))
+        " Account has to be whitelisted in redeemable, non-expired atomic swap ",
+        responses = @ApiResponse(description = "Eth transaction hash in hexadecimal format", responseCode = "200",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = TransactionHash.class))))
     public Response redeemAtomicSwap(
-            @Parameter(description = "APL account id of sender (RS, signed or unsigned int64/long)", required = true) @FormParam("sender") @NotBlank String accountString,
-            @Parameter(description = "Passphrase for the vault account", required = true) @FormParam("passphrase") @NotBlank String passphrase,
-            @Parameter(description = "Two factor authentication code, if 2fa is enabled") @FormParam("code2FA") @DefaultValue("0") @Min(0) @Max(999999) int code2FA,
-            @Parameter(description = "Secret sequence of bytes represented in the hexadecimal format to redeem the swap by revealing it", required = true) @FormParam("secret") @NotBlank String secret,
-            @Parameter(description = "Eth address to which eth/pax will be transferred after successful redeeming", required = true) @FormParam(DexApiConstants.WALLET_ADDRESS) String walletAddress,
-            @Context HttpServletRequest request
+        @Parameter(description = "APL account id of sender (RS, signed or unsigned int64/long)", required = true) @FormParam("sender") @NotBlank String accountString,
+        @Parameter(description = "Passphrase for the vault account", required = true) @FormParam("passphrase") @NotBlank String passphrase,
+        @Parameter(description = "Two factor authentication code, if 2fa is enabled") @FormParam("code2FA") @DefaultValue("0") @Min(0) @Max(999999) int code2FA,
+        @Parameter(description = "Secret sequence of bytes represented in the hexadecimal format to redeem the swap by revealing it", required = true) @FormParam("secret") @NotBlank String secret,
+        @Parameter(description = "Eth address to which eth/pax will be transferred after successful redeeming", required = true) @FormParam(DexApiConstants.WALLET_ADDRESS) String walletAddress,
+        @Context HttpServletRequest request
     ) throws ParameterException, AplException.ExecutiveProcessException {
         AccountDetails accountDetails = getAndVerifyAccount(accountString, passphrase, code2FA);
         Account account = accountDetails.getAccount();
@@ -372,16 +374,16 @@ public class DexTransactionSendingController {
     @Operation(tags = {"dex"}, summary = "Refund ETH swap", description = "Call eth 'refund' or 'refundAndWithdraw' function on smart contract."
         + "When 'fullRefund=true' specified 'refundAndWithdraw' function will be called, which will refund atomic swap and send eth/pax back to account, " +
         "otherwise 'refund' will be called, which will withdraw money from atomic swap and transfer it to the deposit from which money were withdrawn, after that deposit is ready for another atomic swap",
-            responses = @ApiResponse(description = "Eth transaction hash in hexadecimal format", responseCode = "200",
-                    content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = TransactionHash.class))))
+        responses = @ApiResponse(description = "Eth transaction hash in hexadecimal format", responseCode = "200",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = TransactionHash.class))))
     public Response refundAtomicSwap(
-            @Parameter(description = "APL account id of sender (RS, signed or unsigned int64/long)", required = true) @FormParam("sender") @NotBlank String accountString,
-            @Parameter(description = "Passphrase for the vault account", required = true) @FormParam("passphrase") @NotBlank String passphrase,
-            @Parameter(description = "Two factor authentication code, if 2fa is enabled") @FormParam("code2FA") @DefaultValue("0") @Min(0) @Max(999999) int code2FA,
-            @Parameter(description = "SHA-256 hash of the secret in the hexadecimal format", required = true) @FormParam("secretHash") @NotBlank String secretHash,
-            @Parameter(description = "Eth address to which eth/pax will be transferred after successful refunding") @FormParam(DexApiConstants.WALLET_ADDRESS) String walletAddress,
-            @Parameter(description = "Perform full refund of expired atomic swap or just renew deposit to prepare it for another possible atomic swap ") @FormParam("fullRefund") @DefaultValue("true") boolean fullRefund,
-            @Context HttpServletRequest request
+        @Parameter(description = "APL account id of sender (RS, signed or unsigned int64/long)", required = true) @FormParam("sender") @NotBlank String accountString,
+        @Parameter(description = "Passphrase for the vault account", required = true) @FormParam("passphrase") @NotBlank String passphrase,
+        @Parameter(description = "Two factor authentication code, if 2fa is enabled") @FormParam("code2FA") @DefaultValue("0") @Min(0) @Max(999999) int code2FA,
+        @Parameter(description = "SHA-256 hash of the secret in the hexadecimal format", required = true) @FormParam("secretHash") @NotBlank String secretHash,
+        @Parameter(description = "Eth address to which eth/pax will be transferred after successful refunding") @FormParam(DexApiConstants.WALLET_ADDRESS) String walletAddress,
+        @Parameter(description = "Perform full refund of expired atomic swap or just renew deposit to prepare it for another possible atomic swap ") @FormParam("fullRefund") @DefaultValue("true") boolean fullRefund,
+        @Context HttpServletRequest request
     ) throws ParameterException, AplException.ExecutiveProcessException {
         AccountDetails accountDetails = getAndVerifyAccount(accountString, passphrase, code2FA);
         Account account = accountDetails.getAccount();
@@ -398,6 +400,7 @@ public class DexTransactionSendingController {
         }
         return Response.ok(new TransactionHash(hash)).build();
     }
+
     @POST
     @Path("/eth-deposit-withdrawals")
     @Produces(MediaType.APPLICATION_JSON)
@@ -441,8 +444,8 @@ public class DexTransactionSendingController {
     }
 
     private AccountDetails getAndVerifyAccount(String accountString, String passphrase, int code2FA) throws ParameterException {
-        Account account = ParameterParser.getAccount(accountString, "sender");
-        String decryptedPassphrase = ParameterParser.getPassphrase(passphrase, true);
+        Account account = HttpParameterParserUtil.getAccount(accountString, "sender");
+        String decryptedPassphrase = HttpParameterParserUtil.getPassphrase(passphrase, true);
         validator.validateVaultAccount(account.getId(), passphrase);
         Helper2FA.verifyVault2FA(account.getId(), code2FA);
         return new AccountDetails(decryptedPassphrase, account);

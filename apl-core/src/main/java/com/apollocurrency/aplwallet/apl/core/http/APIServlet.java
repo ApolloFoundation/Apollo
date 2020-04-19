@@ -58,23 +58,20 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 public final class APIServlet extends HttpServlet {
     private static final Logger LOG = getLogger(APIServlet.class);
-
-    private final PropertiesHolder propertiesHolder;
-
-    private final boolean enforcePost;
     public static Map<String, AbstractAPIRequestHandler> apiRequestHandlers;
     public static Map<String, AbstractAPIRequestHandler> disabledRequestHandlers;
-
+    private final PropertiesHolder propertiesHolder;
+    private final boolean enforcePost;
     private final Blockchain blockchain;//
     private final GlobalSync globalSync; // = CDI.current().select(GlobalSync.class).get();
     private final AdminPasswordVerifier apw; // =  CDI.current().select(AdminPasswordVerifier.class).get();
 
     @Inject
     public APIServlet() {
-        this.propertiesHolder=CDI.current().select(PropertiesHolder.class).get();
-        this.blockchain= CDI.current().select(BlockchainImpl.class).get();
-        this.globalSync=CDI.current().select(GlobalSync.class).get();
-        this.apw=CDI.current().select(AdminPasswordVerifier.class).get();
+        this.propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+        this.blockchain = CDI.current().select(BlockchainImpl.class).get();
+        this.globalSync = CDI.current().select(GlobalSync.class).get();
+        this.apw = CDI.current().select(AdminPasswordVerifier.class).get();
 
 
         Map<String, AbstractAPIRequestHandler> map = new HashMap<>();
@@ -116,13 +113,13 @@ public final class APIServlet extends HttpServlet {
         enforcePost = propertiesHolder.getBooleanProperty("apl.apiServerEnforcePOST");
     }
 
-    @Override
-    public void init(){
-        LOG.debug("API servlet init");
-    }
-
     public static AbstractAPIRequestHandler getAPIRequestHandler(String requestType) {
         return apiRequestHandlers.get(requestType);
+    }
+
+    @Override
+    public void init() {
+        LOG.debug("API servlet init");
     }
 
     @Override
@@ -186,9 +183,9 @@ public final class APIServlet extends HttpServlet {
                 Helper2FA.verify2FA(req, accountName2FA);
             }
             final long requireBlockId = apiRequestHandler.allowRequiredBlockParameters() ?
-                    ParameterParser.getUnsignedLong(req, "requireBlock", false) : 0;
+                HttpParameterParserUtil.getUnsignedLong(req, "requireBlock", false) : 0;
             final long requireLastBlockId = apiRequestHandler.allowRequiredBlockParameters() ?
-                    ParameterParser.getUnsignedLong(req, "requireLastBlock", false) : 0;
+                HttpParameterParserUtil.getUnsignedLong(req, "requireLastBlock", false) : 0;
             if (requireBlockId != 0 || requireLastBlockId != 0) {
                 globalSync.readLock();
             }
@@ -247,7 +244,7 @@ public final class APIServlet extends HttpServlet {
                     long requestTime = System.currentTimeMillis() - startTime;
                     ((JSONObject) response).put("requestProcessingTime", requestTime);
                     if (logRequestTime) {
-                        LOG.debug("Request \'" +req.getParameter("requestType")+ "\' took " + requestTime + " ms");
+                        LOG.debug("Request \'" + req.getParameter("requestType") + "\' took " + requestTime + " ms");
                     }
                 }
                 try (Writer writer = resp.getWriter()) {

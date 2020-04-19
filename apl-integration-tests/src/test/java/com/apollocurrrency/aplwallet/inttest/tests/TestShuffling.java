@@ -1,6 +1,6 @@
 package com.apollocurrrency.aplwallet.inttest.tests;
 
-import com.apollocurrency.aplwallet.api.dto.AccountCurrencyDTO;
+import com.apollocurrency.aplwallet.api.dto.account.AccountCurrencyDTO;
 import com.apollocurrency.aplwallet.api.response.Account2FAResponse;
 import com.apollocurrency.aplwallet.api.response.AccountAssetsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrencyResponse;
@@ -40,37 +40,29 @@ import static org.junit.jupiter.api.parallel.ExecutionMode.SAME_THREAD;
 @Execution(SAME_THREAD)
 public class TestShuffling extends TestBaseOld {
     public static final Logger log = LoggerFactory.getLogger(TestShuffling.class);
-
-    RetryPolicy retry = new RetryPolicy()
-            .retryWhen(false)
-            .withMaxRetries(20)
-            .withDelay(10, TimeUnit.SECONDS);
     private final int NON_SHUFFLEABLE = 32;
-
     private final int STAGE_REGISTRATION = 0;
     private final int STAGE_PROCESSING = 1;
     private final int STAGE_VERIFICATION = 2;
     private final int STAGE_BLAME = 3;
     private final int STAGE_CANCELLED = 4;
     private final int STAGE_DONE = 5;
-
     private final int PARTICIPANT_COUNT = 3;
     private final int APL_AMOUNT = 1000;
     private final int ASSET_AMOUNT = 1;
     private final int CURRENCY_AMOUNT = 1;
-
     private final int SHUFFLING_TYPE_APL = 0;
     private final int SHUFFLING_TYPE_ASSET = 1;
     private final int SHUFFLING_TYPE_CURRENCY = 2;
-
-
+    private final ArrayList<Wallet> wallets = new ArrayList<>();
+    RetryPolicy retry = new RetryPolicy()
+        .retryWhen(false)
+        .withMaxRetries(20)
+        .withDelay(10, TimeUnit.SECONDS);
     private List<Wallet> recipients;
     private Wallet randomStandart;
     private Wallet randomVault;
     private CreateTransactionResponse shuffling = null;
-
-
-    private final ArrayList<Wallet> wallets = new ArrayList<>();
 
     @BeforeEach
     @Override
@@ -104,7 +96,7 @@ public class TestShuffling extends TestBaseOld {
                 case SHUFFLING_TYPE_ASSET:
                     AccountAssetsResponse assets = getAccountAssets(wallet);
                     String assetID = assets.getAccountAssets().stream()
-                            .filter(asset -> asset.getQuantityATU() > 10).findFirst().get().getAsset();
+                        .filter(asset -> asset.getQuantityATU() > 10).findFirst().get().getAsset();
                     assertNotNull(assets.getAccountAssets());
                     verifyTransactionInBlock(transferAsset(wallet, assetID, 3, randomStandart.getUser()).getTransaction());
                     verifyTransactionInBlock(transferAsset(wallet, assetID, 3, randomVault.getUser()).getTransaction());
@@ -115,8 +107,8 @@ public class TestShuffling extends TestBaseOld {
                     AccountCurrencyResponse currencies = getAccountCurrencies(wallet);
                     assertNotNull(currencies.getAccountCurrencies());
                     AccountCurrencyDTO currencyDTO = currencies.getAccountCurrencies().stream()
-                            .filter(currencie -> (currencie.getType() & NON_SHUFFLEABLE) != NON_SHUFFLEABLE)
-                            .findFirst().get();
+                        .filter(currencie -> (currencie.getType() & NON_SHUFFLEABLE) != NON_SHUFFLEABLE)
+                        .findFirst().get();
                     verifyTransactionInBlock(transferCurrency(randomStandart.getUser(), currencyDTO.getCurrency(), wallet, 3).getTransaction());
                     verifyTransactionInBlock(transferCurrency(randomVault.getUser(), currencyDTO.getCurrency(), wallet, 3).getTransaction());
                     shuffling = shufflingCreate(wallet, registrationPeriod, PARTICIPANT_COUNT, CURRENCY_AMOUNT, currencyDTO.getCurrency(), type);
@@ -137,20 +129,20 @@ public class TestShuffling extends TestBaseOld {
             waitForChangeShufflingStage(shuffling.getTransaction(), STAGE_PROCESSING);
 
             recipients = Arrays.asList(
-                    getRandomRecipientWallet(),
-                    getRandomRecipientWallet(),
-                    getRandomRecipientWallet());
+                getRandomRecipientWallet(),
+                getRandomRecipientWallet(),
+                getRandomRecipientWallet());
 
             verifyCreatingTransaction(
-                    shufflingProcess(wallet, shuffling.getTransaction(), recipients.get(2).getPass()));
+                shufflingProcess(wallet, shuffling.getTransaction(), recipients.get(2).getPass()));
             waitForChangeShufflingAssign(shuffling.getTransaction(), randomStandart.getUser());
 
             verifyCreatingTransaction(
-                    shufflingProcess(randomStandart, shuffling.getTransaction(), recipients.get(1).getPass()));
+                shufflingProcess(randomStandart, shuffling.getTransaction(), recipients.get(1).getPass()));
             waitForChangeShufflingAssign(shuffling.getTransaction(), randomVault.getUser());
 
             verifyCreatingTransaction(
-                    shufflingProcess(randomVault, shuffling.getTransaction(), recipients.get(0).getPass()));
+                shufflingProcess(randomVault, shuffling.getTransaction(), recipients.get(0).getPass()));
 
             waitForChangeShufflingStage(shuffling.getTransaction(), STAGE_VERIFICATION);
 
@@ -181,7 +173,7 @@ public class TestShuffling extends TestBaseOld {
                 case SHUFFLING_TYPE_ASSET:
                     AccountAssetsResponse assets = getAccountAssets(wallet);
                     String assetID = assets.getAccountAssets().stream()
-                            .filter(asset -> asset.getQuantityATU() > 10).findFirst().get().getAsset();
+                        .filter(asset -> asset.getQuantityATU() > 10).findFirst().get().getAsset();
                     assertNotNull(assets.getAccountAssets());
                     verifyTransactionInBlock(transferAsset(wallet, assetID, 3, randomStandart.getUser()).getTransaction());
                     verifyTransactionInBlock(transferAsset(wallet, assetID, 3, randomVault.getUser()).getTransaction());
@@ -192,8 +184,8 @@ public class TestShuffling extends TestBaseOld {
                     AccountCurrencyResponse currencies = getAccountCurrencies(wallet);
                     assertNotNull(currencies.getAccountCurrencies());
                     AccountCurrencyDTO currencyDTO = currencies.getAccountCurrencies().stream()
-                            .filter(currencie -> (currencie.getType() & NON_SHUFFLEABLE) != NON_SHUFFLEABLE)
-                            .findFirst().get();
+                        .filter(currencie -> (currencie.getType() & NON_SHUFFLEABLE) != NON_SHUFFLEABLE)
+                        .findFirst().get();
                     verifyTransactionInBlock(transferCurrency(randomStandart.getUser(), currencyDTO.getCurrency(), wallet, 3).getTransaction());
                     verifyTransactionInBlock(transferCurrency(randomVault.getUser(), currencyDTO.getCurrency(), wallet, 3).getTransaction());
                     shuffling = shufflingCreate(wallet, registrationPeriod, PARTICIPANT_COUNT, CURRENCY_AMOUNT, currencyDTO.getCurrency(), type);
@@ -203,9 +195,9 @@ public class TestShuffling extends TestBaseOld {
             verifyCreatingTransaction(shuffling);
             verifyTransactionInBlock(shuffling.getTransaction());
             recipients = Arrays.asList(
-                    getRandomRecipientWallet(),
-                    getRandomRecipientWallet(),
-                    getRandomRecipientWallet());
+                getRandomRecipientWallet(),
+                getRandomRecipientWallet(),
+                getRandomRecipientWallet());
 
 
             startShuffler(wallet, shuffling.getFullHash(), recipients.get(0).getPass());
@@ -239,7 +231,7 @@ public class TestShuffling extends TestBaseOld {
                 case SHUFFLING_TYPE_ASSET:
                     AccountAssetsResponse assets = getAccountAssets(wallet);
                     String assetID = assets.getAccountAssets().stream()
-                            .filter(asset -> asset.getQuantityATU() > 10).findFirst().get().getAsset();
+                        .filter(asset -> asset.getQuantityATU() > 10).findFirst().get().getAsset();
                     assertNotNull(assets.getAccountAssets());
                     verifyTransactionInBlock(transferAsset(wallet, assetID, 3, randomStandart.getUser()).getTransaction());
                     verifyTransactionInBlock(transferAsset(wallet, assetID, 3, randomVault.getUser()).getTransaction());
@@ -250,8 +242,8 @@ public class TestShuffling extends TestBaseOld {
                     AccountCurrencyResponse currencies = getAccountCurrencies(wallet);
                     assertNotNull(currencies.getAccountCurrencies());
                     AccountCurrencyDTO currencyDTO = currencies.getAccountCurrencies().stream()
-                            .filter(currencie -> (currencie.getType() & NON_SHUFFLEABLE) != NON_SHUFFLEABLE)
-                            .findFirst().get();
+                        .filter(currencie -> (currencie.getType() & NON_SHUFFLEABLE) != NON_SHUFFLEABLE)
+                        .findFirst().get();
                     verifyTransactionInBlock(transferCurrency(randomStandart.getUser(), currencyDTO.getCurrency(), wallet, 3).getTransaction());
                     verifyTransactionInBlock(transferCurrency(randomVault.getUser(), currencyDTO.getCurrency(), wallet, 3).getTransaction());
                     shuffling = shufflingCreate(wallet, registrationPeriod, PARTICIPANT_COUNT, CURRENCY_AMOUNT, currencyDTO.getCurrency(), type);
@@ -272,25 +264,25 @@ public class TestShuffling extends TestBaseOld {
             waitForChangeShufflingStage(shuffling.getTransaction(), STAGE_PROCESSING);
 
             recipients = Arrays.asList(
-                    getRandomRecipientWallet(),
-                    getRandomRecipientWallet(),
-                    getRandomRecipientWallet());
+                getRandomRecipientWallet(),
+                getRandomRecipientWallet(),
+                getRandomRecipientWallet());
 
 
             verifyCreatingTransaction(
-                    shufflingProcess(wallet, shuffling.getTransaction(), recipients.get(2).getPass())
+                shufflingProcess(wallet, shuffling.getTransaction(), recipients.get(2).getPass())
             );
 
             waitForChangeShufflingAssign(shuffling.getTransaction(), randomStandart.getUser());
 
             verifyCreatingTransaction(
-                    shufflingProcess(randomStandart, shuffling.getTransaction(), recipients.get(1).getPass())
+                shufflingProcess(randomStandart, shuffling.getTransaction(), recipients.get(1).getPass())
             );
 
             waitForChangeShufflingAssign(shuffling.getTransaction(), randomVault.getUser());
 
             verifyTransactionInBlock(
-                    shufflingProcess(randomVault, shuffling.getTransaction(), recipients.get(0).getPass()).getTransaction()
+                shufflingProcess(randomVault, shuffling.getTransaction(), recipients.get(0).getPass()).getTransaction()
             );
 
             waitForChangeShufflingStage(shuffling.getTransaction(), STAGE_VERIFICATION);
@@ -355,10 +347,10 @@ public class TestShuffling extends TestBaseOld {
         log.info(String.format("Vault Wallet: %s pass: %s", vaultWallet.getUser(), vaultWallet.getPass()));
 
         verifyTransactionInBlock(
-                sendMoney(TestConfiguration.getTestConfiguration().getGenesisWallet(), vaultWallet.getUser(), 10000).getTransaction()
+            sendMoney(TestConfiguration.getTestConfiguration().getGenesisWallet(), vaultWallet.getUser(), 10000).getTransaction()
         );
         verifyTransactionInBlock(
-                sendMoney(vaultWallet, vaultWallet.getUser(), 10).getTransaction()
+            sendMoney(vaultWallet, vaultWallet.getUser(), 10).getTransaction()
         );
         return vaultWallet;
     }
@@ -366,12 +358,12 @@ public class TestShuffling extends TestBaseOld {
     @Step
     private void setUpCurrency(Wallet wallet) {
         issueCurrency(wallet, 1,
-                RandomStringUtils.randomAlphabetic(5),
-                RandomStringUtils.randomAlphabetic(5),
-                RandomStringUtils.randomAlphabetic(5).toUpperCase(),
-                150,
-                150,
-                0);
+            RandomStringUtils.randomAlphabetic(5),
+            RandomStringUtils.randomAlphabetic(5),
+            RandomStringUtils.randomAlphabetic(5).toUpperCase(),
+            150,
+            150,
+            0);
     }
 
     @Step

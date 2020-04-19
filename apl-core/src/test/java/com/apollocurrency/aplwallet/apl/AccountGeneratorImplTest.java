@@ -17,8 +17,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class AccountGeneratorImplTest {
-    private AccountGeneratorUtil accountGenerator = new AccountGeneratorUtil();
     private static final String MESSAGE = "Test message";
+    private AccountGeneratorUtil accountGenerator = new AccountGeneratorUtil();
 
     @Test
     public void testGenerateAccountApl() {

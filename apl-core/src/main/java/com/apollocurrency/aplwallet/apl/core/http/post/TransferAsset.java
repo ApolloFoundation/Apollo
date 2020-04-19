@@ -20,35 +20,35 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.http.APITag;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
-import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_ENOUGH_ASSETS;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public final class TransferAsset extends CreateTransaction {
 
     public TransferAsset() {
-        super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "recipient", "asset", "quantityATU");
+        super(new APITag[]{APITag.AE, APITag.CREATE_TRANSACTION}, "recipient", "asset", "quantityATU");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        long recipient = ParameterParser.getAccountId(req, "recipient", true);
+        long recipient = HttpParameterParserUtil.getAccountId(req, "recipient", true);
 
-        Asset asset = ParameterParser.getAsset(req);
-        long quantityATU = ParameterParser.getQuantityATU(req);
-        Account account = ParameterParser.getSenderAccount(req);
+        Asset asset = HttpParameterParserUtil.getAsset(req);
+        long quantityATU = HttpParameterParserUtil.getQuantityATU(req);
+        Account account = HttpParameterParserUtil.getSenderAccount(req);
 
         Attachment attachment = new ColoredCoinsAssetTransfer(asset.getId(), quantityATU);
         try {

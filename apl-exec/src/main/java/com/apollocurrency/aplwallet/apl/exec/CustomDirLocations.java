@@ -31,7 +31,7 @@ public class CustomDirLocations {
         if (!(o instanceof CustomDirLocations)) return false;
         CustomDirLocations that = (CustomDirLocations) o;
         return Objects.equals(dbDir, that.dbDir) &&
-                Objects.equals(keystoreDir, that.keystoreDir);
+            Objects.equals(keystoreDir, that.keystoreDir);
     }
 
     @Override

@@ -4,14 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.updater.core;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.UpdaterMediatorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
 import com.apollocurrency.aplwallet.apl.core.transaction.Update;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.UpdateAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateData;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateInfo;
@@ -21,6 +19,10 @@ import com.apollocurrency.aplwallet.apl.updater.UpdateTransaction;
 import com.apollocurrency.aplwallet.apl.updater.UpdateTransactionVerifier;
 import com.apollocurrency.aplwallet.apl.updater.UpdateTransactionVerifierImpl;
 import com.apollocurrency.aplwallet.apl.updater.UpdaterUtil;
+import com.apollocurrency.aplwallet.apl.updater.export.event.UpdateEvent;
+import com.apollocurrency.aplwallet.apl.updater.export.event.UpdateEventBinding;
+import com.apollocurrency.aplwallet.apl.updater.export.event.UpdateEventData;
+import com.apollocurrency.aplwallet.apl.updater.export.event.UpdateEventType;
 import com.apollocurrency.aplwallet.apl.updater.repository.UpdaterDbRepository;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterService;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterServiceImpl;
@@ -30,53 +32,61 @@ import com.apollocurrency.aplwallet.apl.util.Version;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 
+import javax.enterprise.event.Event;
+import javax.enterprise.event.Observes;
+import javax.enterprise.util.AnnotationLiteral;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Objects;
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 @Singleton
 public class UpdaterCoreImpl implements UpdaterCore {
     private static final Logger LOG = getLogger(UpdaterCoreImpl.class);
+    private final UpdateInfo updateInfo;
+    private final Event<UpdateEventData> startUpdateEvent;
     private UpdaterService updaterService;
     private UpdaterMediator updaterMediator;
     private UpdaterFactory updaterFactory;
     private UpdateTransactionVerifier updateTransactionVerifier;
-    private final UpdateInfo updateInfo;
     private volatile boolean processUpdateTxs = false;
 
-    @Override
-    public UpdateInfo getUpdateInfo() {
-        return updateInfo;
-    }
-
-    public UpdaterCoreImpl(UpdaterService updaterService, UpdaterMediator updaterMediator, UpdateInfo updateInfo) {
+    public UpdaterCoreImpl(UpdaterService updaterService, UpdaterMediator updaterMediator, UpdateInfo updateInfo, Event<UpdateEventData> startUpdateEvent) {
         this(updaterService, updaterMediator, new UpdaterFactoryImpl(updaterMediator, updaterService, updateInfo),
-                new UpdateTransactionVerifierImpl(updaterMediator, updaterService), updateInfo);
+            new UpdateTransactionVerifierImpl(updaterMediator, updaterService), updateInfo, startUpdateEvent);
     }
 
     @Inject
-    public UpdaterCoreImpl(UpdaterMediatorImpl updaterMediator, UpdateInfo updateInfo) {
-        this(new UpdaterServiceImpl(new UpdaterDbRepository(updaterMediator)), updaterMediator, updateInfo);
+    public UpdaterCoreImpl(UpdaterMediatorImpl updaterMediator, UpdateInfo updateInfo, Event<UpdateEventData> startUpdateEvent) {
+        this(new UpdaterServiceImpl(new UpdaterDbRepository(updaterMediator)), updaterMediator, updateInfo, startUpdateEvent);
     }
 
-
-    public UpdaterCoreImpl(UpdaterService updaterService, UpdaterMediator updaterMediator, UpdateTransactionVerifier updateTransactionVerifier, UpdateInfo updateInfo) {
-        this(updaterService, updaterMediator, new UpdaterFactoryImpl(updaterMediator, updaterService, updateInfo), updateTransactionVerifier, updateInfo);
+    public UpdaterCoreImpl(UpdaterService updaterService, UpdaterMediator updaterMediator,
+                           UpdateTransactionVerifier updateTransactionVerifier, UpdateInfo updateInfo, Event<UpdateEventData> startUpdateEvent) {
+        this(updaterService, updaterMediator,
+            new UpdaterFactoryImpl(updaterMediator, updaterService, updateInfo),
+            updateTransactionVerifier, updateInfo, startUpdateEvent);
     }
 
 
     public UpdaterCoreImpl(UpdaterService updaterService, UpdaterMediator updaterMediator, UpdaterFactory updaterFactory,
-                           UpdateTransactionVerifier updateTransactionVerifier, UpdateInfo updateInfo) {
+                           UpdateTransactionVerifier updateTransactionVerifier, UpdateInfo updateInfo, Event<UpdateEventData> startUpdateEvent) {
         this.updaterService = updaterService;
         this.updaterMediator = updaterMediator;
         this.updaterFactory = updaterFactory;
         this.updateInfo = Objects.requireNonNull(updateInfo);
         this.updateTransactionVerifier = updateTransactionVerifier;
+        this.startUpdateEvent = startUpdateEvent;
+    }
+
+    @Override
+    public UpdateInfo getUpdateInfo() {
+        return updateInfo;
     }
 
     @Override
@@ -96,13 +106,14 @@ public class UpdaterCoreImpl implements UpdaterCore {
             if (updateData == null) {
                 LOG.debug("Unable to validate file attachment");
             } else {
+                fireStartUpdateEventMethod(); // fire event for doing data export
+                LOG.debug("run startUpdate...");
                 startUpdate(updateData);
             }
         } else {
             try {
                 updateTransaction = updaterService.getLast();
-            }
-            catch (Throwable e) {
+            } catch (Throwable e) {
                 LOG.debug("Updater db error: {}", e.getLocalizedMessage());
             }
             if (updateTransaction != null) {
@@ -127,7 +138,7 @@ public class UpdaterCoreImpl implements UpdaterCore {
                     Version expectedVersion = attachment.getAppVersion();
                     if (expectedVersion.greaterThan(updaterMediator.getWalletVersion())) {
                         LOG.error("Found " + transaction.getType() + " update (platform dependent script failed): currentVersion: " + updaterMediator.getWalletVersion() +
-                                " " + " updateVersion: " + expectedVersion);
+                            " " + " updateVersion: " + expectedVersion);
                         if (transaction.getType() == Update.CRITICAL) {
                             updaterMediator.suspendBlockchain();
                             updateState(transaction, UpdateInfo.UpdateState.REQUIRED_MANUAL_INSTALL);
@@ -149,16 +160,15 @@ public class UpdaterCoreImpl implements UpdaterCore {
             ObjectMapper objectMapper = new ObjectMapper();
             FileUpdateAttachment fua = objectMapper.readValue(path.toAbsolutePath().toFile(), FileUpdateAttachment.class);
             UpdateAttachment attachment = UpdateAttachment.getAttachment(fua.getPlatform(), fua.getArchitecture(), new DoubleByteArrayTuple(
-                            Convert.parseHexString(fua.getUrlFirstPart()), Convert.parseHexString(fua.getUrlSecondPart())
-                    ),
-                    new Version(fua.getVersion()),
-                    Convert.parseHexString(fua.getHash()),
-                    (byte) fua.getLevel()
+                    Convert.parseHexString(fua.getUrlFirstPart()), Convert.parseHexString(fua.getUrlSecondPart())
+                ),
+                new Version(fua.getVersion()),
+                Convert.parseHexString(fua.getHash()),
+                (byte) fua.getLevel()
             );
             LOG.info("Got update attachment: {}", attachment.getJSONObject().toJSONString());
             return attachment;
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException(e.toString(), e);
         }
 
@@ -167,8 +177,8 @@ public class UpdaterCoreImpl implements UpdaterCore {
     @Override
     public void startUpdate(UpdateData updateData) {
         new Thread(() ->
-                performUpdate(updateData),
-                "UpdateExecutor").start();
+            performUpdate(updateData),
+            "UpdateExecutor").start();
     }
 
     @Override
@@ -191,6 +201,7 @@ public class UpdaterCoreImpl implements UpdaterCore {
     private void performUpdate(UpdateData data) {
         Updater updater = updaterFactory.getUpdater(data);
         getUpdateInfo().setDownloadInfo(updaterService.getDownloadInfo());
+        fireStartUpdateEventMethod(); // fire event for doing data export
         UpdateInfo.UpdateState updateState = updater.processUpdate();
         LOG.info("Update state: {}", updateState);
     }
@@ -232,5 +243,20 @@ public class UpdaterCoreImpl implements UpdaterCore {
             updateInfo.setVersion(updateAttachment.getAppVersion());
             updateInfo.setUpdateState(state);
         }
+    }
+
+    protected void fireStartUpdateEventMethod() {
+        LOG.debug("Fire StartUpdateEvent BEFORE...");
+        UpdateEventData updateEventData = new UpdateEventData();
+        startUpdateEvent.select(literal(UpdateEventType.BEFORE_SCRIPT)).fire(updateEventData); // data is ignored
+    }
+
+    private AnnotationLiteral<UpdateEvent> literal(UpdateEventType updateEventType) {
+        return new UpdateEventBinding() {
+            @Override
+            public UpdateEventType value() {
+                return updateEventType;
+            }
+        };
     }
 }

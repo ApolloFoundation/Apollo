@@ -4,6 +4,28 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
+import com.apollocurrency.aplwallet.apl.core.converter.IteratorToStreamConverter;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
+import com.apollocurrency.aplwallet.apl.data.BlockTestData;
+import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.Filter;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -13,49 +35,26 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
-import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
-import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
-import com.apollocurrency.aplwallet.apl.data.BlockTestData;
-import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
-import com.apollocurrency.aplwallet.apl.util.Filter;
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
 public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDbTableTest<T> {
 
+    EntityDbTable<T> table;
     private DbKey THROWING_DB_KEY = createThrowingKey();
     private Comparator<T> DB_ID_HEIGHT_COMPARATOR = Comparator.comparing(T::getHeight).thenComparing(T::getDbId).reversed();
     private String DB_ID_HEIGHT_SORT = " ORDER BY height DESC, db_id DESC";
-
-    private DbKey createThrowingKey() {
-        DbKey throwingKey = mock(DbKey.class);
-        try {
-            doThrow(SQLException.class).when(throwingKey).setPK(any(PreparedStatement.class));
-        }
-        catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-        return throwingKey;
-    }
 
     public EntityDbTableTest(Class<T> clazz) {
         super(clazz);
     }
 
-    EntityDbTable<T> table;
+    private DbKey createThrowingKey() {
+        DbKey throwingKey = mock(DbKey.class);
+        try {
+            doThrow(SQLException.class).when(throwingKey).setPK(any(PreparedStatement.class));
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+        return throwingKey;
+    }
 
     @Override
     @BeforeEach
@@ -156,11 +155,12 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
             actual = table.get(entries.getKey(), first.getHeight());
             assertEquals(first, actual);
 
-            T deleted = getDeletedMultiversionRecord().get(0);
+            if (table.supportDelete()) {
+                T deleted = getDeletedMultiversionRecord().get(0);
+                actual = table.get(table.getDbKeyFactory().newKey(deleted), deleted.getHeight());
+                assertNull(actual);
+            }
 
-            actual = table.get(table.getDbKeyFactory().newKey(deleted), deleted.getHeight());
-
-            assertNull(actual);
 
             entries = getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 1, true);
 
@@ -211,6 +211,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
         assertNull(uknownEntity, "Entity with unknown db_id should not exist");
     }
 
+    /*
     @Test
     public void testGetByDbClauseWithHeight() {
         T expected;
@@ -223,6 +224,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
         T actual = table.getBy((new DbClause.LongClause("db_id", DbClause.Op.EQ, expected.getDbId())), expected.getHeight());
         assertEquals(expected, actual);
     }
+     */
 
     @Test
     public void testGetByDbClauseWithHeightUsingIncorrectDbId() {
@@ -234,7 +236,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
 
     public long getIncorrectDbId() {
         long incorrectDbId;
-        if (table.isMultiversion()) {
+        if (table.isMultiversion() && table.supportDelete()) {
             incorrectDbId = getDeletedMultiversionRecord().get(0).getDbId();
         } else {
             incorrectDbId = Long.MAX_VALUE;
@@ -270,12 +272,34 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
         assertEquals(expected, all);
     }
 
+    /**
+     * Even though FilteringIterator is a separate class,
+     * this test is here so that not to create a DB with a schema one more time.
+     */
     @Test
-    public void testGetManyByEmptyClauseWithLimitAndOffset() {
-        List<T> allExpectedData = getAllLatest();
-        List<T> all = CollectionUtil.toList(table.getManyBy(DbClause.EMPTY_CLAUSE, 1, allExpectedData.size() - 2));
-        List<T> expected = allExpectedData.stream().sorted(getDefaultComparator()).skip(1).limit(allExpectedData.size() - 2).collect(Collectors.toList());
-        assertEquals(expected, all);
+    void shouldTestFilteringIterator() {
+        //GIVEN
+        final int from = 3;
+        final int to = 7;
+        final List<T> expected = new ArrayList<>();
+        final int maxSize = to - from + 1;
+
+        //WHEN
+        try (FilteringIterator<T> iterator = new FilteringIterator<>(
+            table.getManyBy(DbClause.EMPTY_CLAUSE, 0, Integer.MAX_VALUE), e -> true, from, to
+        )) {
+            while (iterator.hasNext()) {
+                expected.add(iterator.next());
+            }
+        }
+
+        final IteratorToStreamConverter<T> converter = new IteratorToStreamConverter<>();
+        final ArrayList<T> actual = converter.convert(
+            table.getManyBy(DbClause.EMPTY_CLAUSE, 0, Integer.MAX_VALUE)
+        ).skip(from).limit(maxSize).collect(Collectors.toCollection(ArrayList::new));
+
+        //THEN
+        assertEquals(expected, actual);
     }
 
     @Test
@@ -380,156 +404,15 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
     public void testGetManyOnConnectionWithoutCache() {
         List<T> allExpectedData = sortByHeightDesc(getAll());
         DbUtils.inTransaction(extension, (con) -> {
-                    try {
-                        PreparedStatement pstm = con.prepareStatement("select * from " + table.getTableName() + " order by height desc, db_id desc");
-                        List<T> all = CollectionUtil.toList(table.getManyBy(con, pstm, false));
-                        assertEquals(allExpectedData, all);
-                    }
-                    catch (SQLException e) {
-                        throw new RuntimeException(e.toString(), e);
-                    }
+                try {
+                    PreparedStatement pstm = con.prepareStatement("select * from " + table.getTableName() + " order by height desc, db_id desc");
+                    List<T> all = CollectionUtil.toList(table.getManyBy(con, pstm, false));
+                    assertEquals(allExpectedData, all);
+                } catch (SQLException e) {
+                    throw new RuntimeException(e.toString(), e);
                 }
-        );
-    }
-
-    @Test
-    public void testGetAllWithMaxPagination() {
-        testGetAllWithPaginationHeightSorted(0, Integer.MAX_VALUE);
-        testGetAllWithPaginationCustomSorted(0, Integer.MAX_VALUE);
-    }
-
-    @Test
-    public void testGetAllWithDataSizePagination() {
-        testGetAllWithPaginationHeightSorted(0, getAllLatest().size());
-        testGetAllWithPaginationCustomSorted(0, getAllLatest().size());
-    }
-
-    @Test
-    public void testGetAllWithPaginationExcludingFirst() {
-        testGetAllWithPaginationHeightSorted(1, getAllLatest().size());
-        testGetAllWithPaginationCustomSorted(1, getAllLatest().size());
-    }
-
-    @Test
-    public void testGetAllWithPaginationExcludingLast() {
-        testGetAllWithPaginationHeightSorted(0, getAllLatest().size() - 1);
-        testGetAllWithPaginationCustomSorted(0, getAllLatest().size() - 1);
-    }
-
-    @Test
-    public void testGetAllWithPaginationExcludingFirstAndLast() {
-        testGetAllWithPaginationHeightSorted(1, getAllLatest().size() - 1);
-        testGetAllWithPaginationCustomSorted(1, getAllLatest().size() - 1);
-    }
-
-    public void testGetAllWithPaginationHeightSorted(int from, int to) {
-        testGetAllWithPagination(from, to, DB_ID_HEIGHT_COMPARATOR, DB_ID_HEIGHT_SORT);
-    }
-
-    public void testGetAllWithPaginationCustomSorted(int from, int to) {
-        testGetAllWithPagination(from, to, getDefaultComparator(), null);
-    }
-
-    public void testGetAllWithPagination(int from, int to, Comparator<T> comparator, String sort) {
-        List<T> expected = getAllLatest()
-                .stream()
-                .sorted(comparator)
-                .skip(from)
-                .limit(to - from)
-                .collect(Collectors.toList());
-
-        DbUtils.inTransaction(extension, (con) -> {
-            List<T> actual = getAllWithSort(from, to, sort);
-            assertEquals(expected, actual);
-        });
-
-        List<T> actual = getAllWithSort(from, to, sort);
-        assertEquals(expected, actual);
-    }
-
-    private List<T> getAllWithSort(int from, int to, String sort) {
-        List<T> actual;
-        if (StringUtils.isBlank(sort)) {
-            actual = CollectionUtil.toList(table.getAll(from, to - 1)); //default sort
-        } else {
-            actual = CollectionUtil.toList(table.getAll(from, to - 1, sort)); //default
-        }
-        return actual;
-    }
-
-    @Test
-    public void testGetAllWithPaginationForMaxHeight() {
-        testGetAllWithPaginationForHeight(Integer.MAX_VALUE);
-    }
-
-    @Test
-    public void testGetAllWithPaginationForLastHeight() {
-        Block mock = mock(Block.class);
-        doReturn(Integer.MAX_VALUE).when(mock).getHeight();
-        getBlockchain().setLastBlock(mock);
-        int height = getHeights().get(0);
-        testGetAllWithPaginationForHeight(height);
-    }
-
-    @Test
-    public void testGetAllWithPaginationForMiddleHeight() {
-        Block mock = mock(Block.class);
-        doReturn(Integer.MAX_VALUE).when(mock).getHeight();
-        getBlockchain().setLastBlock(mock);
-        List<Integer> heights = getHeights();
-        int height = heights.get(heights.size() / 2);
-        testGetAllWithPaginationForHeight(height);
-    }
-
-    @Test
-    public void testGetAllWithPaginationForMinHeight() {
-        Block mock = mock(Block.class);
-        doReturn(Integer.MAX_VALUE).when(mock).getHeight();
-        getBlockchain().setLastBlock(mock);
-        List<Integer> heights = getHeights();
-        int height = heights.get(heights.size() - 1);
-        testGetAllWithPaginationForHeight(height);
-    }
-
-    public void testGetAllWithPaginationForHeight(int height) {
-        testGetAllWithPaginationForHeight(1, 3, height);
-        testGetAllWithPaginationForHeight(0, 2, height);
-        testGetAllWithPaginationForHeight(1, 2, height);
-        testGetAllWithPaginationForHeight(2, 3, height);
-        testGetAllWithPaginationForHeight(0, 1, height);
-        testGetAllWithPaginationForHeight(0, Integer.MAX_VALUE, height);
-        testGetAllWithPaginationForHeight(1, Integer.MAX_VALUE, height);
-    }
-
-    public void testGetAllWithPaginationForHeight(int from, int to, int height) {
-        testGetAllWithPaginationForHeightHeightSorted(from, to, height); // check height sort
-        testGetAllWithPaginationForHeightCustomSorted(from, to, height); //check default sort
-    }
-
-    public void testGetAllWithPaginationForHeightHeightSorted(int from, int to, int height) {
-        testGetAllWithPaginationForHeight(from, to, height, DB_ID_HEIGHT_COMPARATOR, DB_ID_HEIGHT_SORT);
-    }
-
-    public void testGetAllWithPaginationForHeightCustomSorted(int from, int to, int height) {
-        testGetAllWithPaginationForHeight(from, to, height, getDefaultComparator(), null);
-    }
-
-
-    public void testGetAllWithPaginationForHeight(int from, int to, int height, Comparator<T> comp, String sort) {
-
-        List<T> expected = getExpectedAtHeight(from, to, height, comp, (t)->true);
-
-        DbUtils.inTransaction(extension, (con) -> {
-
-            List<T> actual;
-            if (StringUtils.isBlank(sort)) {
-                actual = CollectionUtil.toList(table.getAll(height, from, to - 1)); // default sort
-            } else {
-                actual = CollectionUtil.toList(table.getAll(height, from, to - 1, sort)); // custom sort
             }
-            //check cache, which should not contain data
-            assertEquals(expected, actual);
-        });
+        );
     }
 
     protected List<T> getExpectedAtHeight(int from, int to, int height, Comparator<T> comp, Filter<T> filter) {
@@ -544,21 +427,21 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
 
                 List<T> elements = dbKeyListMap.get(table.getDbKeyFactory().newKey(e));
                 boolean notDeleted = elements
-                        .stream()
-                        .anyMatch(el -> el.getHeight() > height);
+                    .stream()
+                    .anyMatch(el -> el.getHeight() > height);
                 boolean lastAtHeight = elements
-                        .stream()
-                        .noneMatch(el -> el.getHeight() <= height && el.getHeight() > e.getHeight());
+                    .stream()
+                    .noneMatch(el -> el.getHeight() <= height && el.getHeight() > e.getHeight());
                 return notDeleted && lastAtHeight;
 
             } else {
                 return false;
             }
         })
-                .sorted(comp)
-                .skip(from)
-                .limit(to - from)
-                .collect(Collectors.toList());
+            .sorted(comp)
+            .skip(from)
+            .limit(to - from)
+            .collect(Collectors.toList());
         return expected;
     }
 
@@ -651,7 +534,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
 
     public void testGetCountByDbClauseWithHeight(int index, int height) {
         List<T> allLatest = getAllLatest();
-        List<T> expected = getExpectedAtHeight(0, Integer.MAX_VALUE, height, (v1, v2) -> 0, (v)-> true);
+        List<T> expected = getExpectedAtHeight(0, Integer.MAX_VALUE, height, (v1, v2) -> 0, (v) -> true);
         assertEquals(expected.size(), table.getCount(DbClause.EMPTY_CLAUSE, height));
         for (DbClause.Op op : DbClause.Op.values()) {
             long dbId = allLatest.get(index).getDbId();

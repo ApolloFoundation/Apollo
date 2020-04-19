@@ -20,37 +20,36 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_FORGING;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_ACCOUNT;
-
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
-import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
+
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_FORGING;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_ACCOUNT;
 
 @Vetoed
 public final class GetForging extends AbstractAPIRequestHandler {
 
     public GetForging() {
-        super(new APITag[] {APITag.FORGING}, "secretPhrase", "adminPassword", "publicKey");
+        super(new APITag[]{APITag.FORGING}, "secretPhrase", "adminPassword", "publicKey");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
-        long id = ParameterParser.getAccountId(req, vaultAccountName(), false);
-        byte[] publicKey = ParameterParser.getPublicKey(req, null, id, false);
+        long id = HttpParameterParserUtil.getAccountId(req, vaultAccountName(), false);
+        byte[] publicKey = HttpParameterParserUtil.getPublicKey(req, null, id, false);
         Block lastBlock = lookupBlockchain().getLastBlock();
         if (lastBlock == null) {
             JSONObject response = new JSONObject();
@@ -60,7 +59,7 @@ public final class GetForging extends AbstractAPIRequestHandler {
         }
         int elapsedTime = timeService.getEpochTime() - lastBlock.getTimestamp();
         if (publicKey != null) {
-            Account account = Account.getAccount(publicKey);
+            Account account = lookupAccountService().getAccount(publicKey);
             if (account == null) {
                 return UNKNOWN_ACCOUNT;
             }

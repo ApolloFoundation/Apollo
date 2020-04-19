@@ -4,9 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.core.account.GenesisPublicKeyTable;
-import com.apollocurrency.aplwallet.apl.core.account.PublicKey;
-import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.GenesisPublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.PublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.cache.PublicKeyCacheConfig;
 import com.apollocurrency.aplwallet.apl.core.db.derived.CachedTable;
@@ -57,19 +57,19 @@ public class PublicKeyTableProducer {
     }
 
     @PostConstruct
-    private void init(){
-        if (isCacheEnabled()){
+    private void init() {
+        if (isCacheEnabled()) {
             log.info("'{}' is TURNED ON...", PublicKeyCacheConfig.PUBLIC_KEY_CACHE_NAME);
             publicKeyCache = cacheManager.acquireCache(PublicKeyCacheConfig.PUBLIC_KEY_CACHE_NAME);
             log.debug("--cache-- init PUBLIC KEY CACHE={}", publicKeyCache);
             TaskDispatcher taskDispatcher = taskManager.newScheduledDispatcher("PublicKeyProducer-periodics");
-            taskDispatcher.schedule( Task.builder()
+            taskDispatcher.schedule(Task.builder()
                 .name("Cache-stats")
                 .initialDelay(HEALTH_CHECK_INTERVAL * 2)
                 .delay(HEALTH_CHECK_INTERVAL)
-                .task(()-> log.info("--cache-- PUBLIC Keys Cache size={} stats={}", publicKeyCache.size(), publicKeyCache.stats().toString()))
+                .task(() -> log.info("--cache-- PUBLIC Keys Cache size={} stats={}", publicKeyCache.size(), publicKeyCache.stats().toString()))
                 .build());
-        }else{
+        } else {
             log.info("'{}' is TURNED OFF...", PublicKeyCacheConfig.PUBLIC_KEY_CACHE_NAME);
         }
     }
@@ -77,9 +77,9 @@ public class PublicKeyTableProducer {
     @Produces
     @Named("publicKeyTable")
     public EntityDbTableInterface<PublicKey> getPublicKeyTable() {
-        if(isCacheEnabled()) {
+        if (isCacheEnabled()) {
             return new CachedTable<>(publicKeyCache, publicKeyTable);
-        }else{
+        } else {
             return publicKeyTable;
         }
     }
@@ -87,9 +87,9 @@ public class PublicKeyTableProducer {
     @Produces
     @Named("genesisPublicKeyTable")
     public EntityDbTableInterface<PublicKey> getGenesisPublicKeyTable() {
-        if(isCacheEnabled()) {
+        if (isCacheEnabled()) {
             return new CachedTable<>(publicKeyCache, genesisPublicKeyTable);
-        }else {
+        } else {
             return genesisPublicKeyTable;
         }
     }

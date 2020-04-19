@@ -4,28 +4,29 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Arrays;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.Arrays;
 
 @Slf4j
 @Singleton
 public class DefaultBlockValidator extends AbstractBlockValidator {
 
     @Inject
-    public DefaultBlockValidator(Blockchain blockchain, BlockchainConfig blockchainConfig) {
-        super(blockchain, blockchainConfig);
+    public DefaultBlockValidator(Blockchain blockchain, BlockchainConfig blockchainConfig, AccountService accountService) {
+        super(blockchain, blockchainConfig, accountService);
     }
 
     @Override
     void validatePreviousHash(Block block, Block previousBlock) throws BlockchainProcessor.BlockNotAcceptedException {
-        if (!Arrays.equals(Crypto.sha256().digest(((BlockImpl)previousBlock).bytes()),
-                block.getPreviousBlockHash())) {
-            if ( log.isTraceEnabled()) {
+        if (!Arrays.equals(Crypto.sha256().digest(((BlockImpl) previousBlock).bytes()),
+            block.getPreviousBlockHash())) {
+            if (log.isTraceEnabled()) {
                 log.trace("Pervious block={} height={}", previousBlock.getStringId(), previousBlock.getHeight());
                 log.trace("Current block={} prev={} prevHash={}", block.getStringId(), Long.toUnsignedString(block.getPreviousBlockId()), block.getPreviousBlockHash());
                 log.trace("PrevBlock={}", previousBlock.toJsonString());

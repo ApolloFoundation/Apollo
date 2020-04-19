@@ -7,10 +7,10 @@ package com.apollocurrency.aplwallet.apl.core.phasing.model;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.AplException.ValidationException;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -25,7 +25,7 @@ public final class PhasingParams {
     private final long quorum;
     private final long[] whitelist;
     private final VoteWeighting voteWeighting;
-    
+
     public PhasingParams(ByteBuffer buffer) {
         byte votingModel = buffer.get();
         quorum = buffer.getLong();
@@ -43,7 +43,7 @@ public final class PhasingParams {
         byte minBalanceModel = buffer.get();
         voteWeighting = new VoteWeighting(votingModel, holdingId, minBalance, minBalanceModel);
     }
-    
+
     public PhasingParams(JSONObject attachmentData) {
         quorum = Convert.parseLong(attachmentData.get("phasingQuorum"));
         long minBalance = Convert.parseLong(attachmentData.get("phasingMinBalance"));
@@ -61,7 +61,7 @@ public final class PhasingParams {
         byte minBalanceModel = ((Long) attachmentData.get("phasingMinBalanceModel")).byteValue();
         voteWeighting = new VoteWeighting(votingModel, holdingId, minBalance, minBalanceModel);
     }
-    
+
     public PhasingParams(byte votingModel, long holdingId, long quorum, long minBalance, byte minBalanceModel, long[] whitelist) {
         this.quorum = quorum;
         this.whitelist = Convert.nullToEmpty(whitelist);
@@ -74,7 +74,7 @@ public final class PhasingParams {
     public int getMySize() {
         return 1 + 8 + 8 + 1 + 8 * whitelist.length + 8 + 1;
     }
-    
+
     public void putMyBytes(ByteBuffer buffer) {
         buffer.put(voteWeighting.getVotingModel().getCode());
         buffer.putLong(quorum);
@@ -86,7 +86,7 @@ public final class PhasingParams {
         buffer.putLong(voteWeighting.getHoldingId());
         buffer.put(voteWeighting.getMinBalanceModel().getCode());
     }
-    
+
     public void putMyJSON(JSONObject json) {
         json.put("phasingQuorum", quorum);
         json.put("phasingMinBalance", voteWeighting.getMinBalance());
@@ -136,7 +136,7 @@ public final class PhasingParams {
 
         if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.ACCOUNT && whitelist.length > 0 && quorum > whitelist.length) {
             throw new AplException.NotValidException("Quorum of " + quorum + " cannot be achieved in by-account voting with whitelist of length "
-                    + whitelist.length);
+                + whitelist.length);
         }
 
         voteWeighting.validate();
@@ -148,28 +148,28 @@ public final class PhasingParams {
             }
             if (quorum > currency.getMaxSupply()) {
                 throw new AplException.NotCurrentlyValidException("Quorum of " + quorum
-                        + " exceeds max currency supply " + currency.getMaxSupply());
+                    + " exceeds max currency supply " + currency.getMaxSupply());
             }
             if (voteWeighting.getMinBalance() > currency.getMaxSupply()) {
                 throw new AplException.NotCurrentlyValidException("MinBalance of " + voteWeighting.getMinBalance()
-                        + " exceeds max currency supply " + currency.getMaxSupply());
+                    + " exceeds max currency supply " + currency.getMaxSupply());
             }
         } else if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.ASSET) {
             Asset asset = Asset.getAsset(voteWeighting.getHoldingId());
             if (quorum > asset.getInitialQuantityATU()) {
                 throw new AplException.NotCurrentlyValidException("Quorum of " + quorum
-                        + " exceeds total initial asset quantity " + asset.getInitialQuantityATU());
+                    + " exceeds total initial asset quantity " + asset.getInitialQuantityATU());
             }
             if (voteWeighting.getMinBalance() > asset.getInitialQuantityATU()) {
                 throw new AplException.NotCurrentlyValidException("MinBalance of " + voteWeighting.getMinBalance()
-                        + " exceeds total initial asset quantity " + asset.getInitialQuantityATU());
+                    + " exceeds total initial asset quantity " + asset.getInitialQuantityATU());
             }
         } else if (voteWeighting.getMinBalance() > 0) {
             if (voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.ASSET) {
                 Asset asset = Asset.getAsset(voteWeighting.getHoldingId());
                 if (voteWeighting.getMinBalance() > asset.getInitialQuantityATU()) {
                     throw new AplException.NotCurrentlyValidException("MinBalance of " + voteWeighting.getMinBalance()
-                            + " exceeds total initial asset quantity " + asset.getInitialQuantityATU());
+                        + " exceeds total initial asset quantity " + asset.getInitialQuantityATU());
                 }
             } else if (voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.CURRENCY) {
                 Currency currency = Currency.getCurrency(voteWeighting.getHoldingId());
@@ -178,7 +178,7 @@ public final class PhasingParams {
                 }
                 if (voteWeighting.getMinBalance() > currency.getMaxSupply()) {
                     throw new AplException.NotCurrentlyValidException("MinBalance of " + voteWeighting.getMinBalance()
-                            + " exceeds max currency supply " + currency.getMaxSupply());
+                        + " exceeds max currency supply " + currency.getMaxSupply());
                 }
             }
         }
@@ -188,11 +188,11 @@ public final class PhasingParams {
     public void checkApprovable() throws AplException.NotCurrentlyValidException {
 
         if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.CURRENCY
-                && Currency.getCurrency(voteWeighting.getHoldingId()) == null) {
+            && Currency.getCurrency(voteWeighting.getHoldingId()) == null) {
             throw new AplException.NotCurrentlyValidException("Currency " + Long.toUnsignedString(voteWeighting.getHoldingId()) + " not found");
         }
         if (voteWeighting.getMinBalance() > 0 && voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.CURRENCY
-                && Currency.getCurrency(voteWeighting.getHoldingId()) == null) {
+            && Currency.getCurrency(voteWeighting.getHoldingId()) == null) {
             throw new AplException.NotCurrentlyValidException("Currency " + Long.toUnsignedString(voteWeighting.getHoldingId()) + " not found");
         }
     }
@@ -208,18 +208,18 @@ public final class PhasingParams {
     public VoteWeighting getVoteWeighting() {
         return voteWeighting;
     }
-    
+
     @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof PhasingParams)) {
             return false;
         }
-        PhasingParams other = (PhasingParams)obj;
+        PhasingParams other = (PhasingParams) obj;
         return other.quorum == this.quorum
-                && other.voteWeighting.equals(this.voteWeighting)
-                && Arrays.equals(other.whitelist, this.whitelist);
+            && other.voteWeighting.equals(this.voteWeighting)
+            && Arrays.equals(other.whitelist, this.whitelist);
     }
-    
+
     @Override
     public int hashCode() {
         int hashCode = 17;
@@ -230,7 +230,7 @@ public final class PhasingParams {
         hashCode = 31 * hashCode + voteWeighting.hashCode();
         return hashCode;
     }
-    
+
     @Override
     public String toString() {
         JSONObject resultJson = new JSONObject();

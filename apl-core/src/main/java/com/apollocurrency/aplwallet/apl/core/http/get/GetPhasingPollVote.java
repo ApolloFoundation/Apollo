@@ -22,29 +22,31 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
 public class GetPhasingPollVote extends AbstractAPIRequestHandler {
 
-    public GetPhasingPollVote() {
-        super(new APITag[] {APITag.PHASING}, "transaction", "account");
-    }
     private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
+
+    public GetPhasingPollVote() {
+        super(new APITag[]{APITag.PHASING}, "transaction", "account");
+    }
+
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
-        long accountId = ParameterParser.getAccountId(req, true);
+        long transactionId = HttpParameterParserUtil.getUnsignedLong(req, "transaction", true);
+        long accountId = HttpParameterParserUtil.getAccountId(req, true);
 
         PhasingVote phasingVote = phasingPollService.getVote(transactionId, accountId);
         if (phasingVote != null) {

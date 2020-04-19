@@ -8,7 +8,6 @@ import java.math.BigDecimal;
 import java.util.Objects;
 
 
-
 public class ExchangeOrder {
 
     private BigDecimal orderId = null;
@@ -31,6 +30,7 @@ public class ExchangeOrder {
     public BigDecimal getOrderId() {
         return orderId;
     }
+
     public void setOrderId(BigDecimal orderId) {
         this.orderId = orderId;
     }
@@ -44,6 +44,7 @@ public class ExchangeOrder {
     public String getOrderType() {
         return orderType;
     }
+
     public void setOrderType(String orderType) {
         this.orderType = orderType;
     }
@@ -57,6 +58,7 @@ public class ExchangeOrder {
     public String getPair() {
         return pair;
     }
+
     public void setPair(String pair) {
         this.pair = pair;
     }
@@ -70,6 +72,7 @@ public class ExchangeOrder {
     public BigDecimal getRate() {
         return rate;
     }
+
     public void setRate(BigDecimal rate) {
         this.rate = rate;
     }
@@ -83,6 +86,7 @@ public class ExchangeOrder {
     public BigDecimal getAmountAPL() {
         return amountAPL;
     }
+
     public void setAmountAPL(BigDecimal amountAPL) {
         this.amountAPL = amountAPL;
     }
@@ -96,6 +100,7 @@ public class ExchangeOrder {
     public BigDecimal getAmount() {
         return amount;
     }
+
     public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
@@ -109,6 +114,7 @@ public class ExchangeOrder {
     public String getStatus() {
         return status;
     }
+
     public void setStatus(String status) {
         this.status = status;
     }
@@ -122,6 +128,7 @@ public class ExchangeOrder {
     public String getOpenTime() {
         return openTime;
     }
+
     public void setOpenTime(String openTime) {
         this.openTime = openTime;
     }
@@ -135,6 +142,7 @@ public class ExchangeOrder {
     public BigDecimal getTransaction() {
         return transaction;
     }
+
     public void setTransaction(BigDecimal transaction) {
         this.transaction = transaction;
     }
@@ -148,6 +156,7 @@ public class ExchangeOrder {
     public BigDecimal getExecTransaction() {
         return execTransaction;
     }
+
     public void setExecTransaction(BigDecimal execTransaction) {
         this.execTransaction = execTransaction;
     }
@@ -163,15 +172,15 @@ public class ExchangeOrder {
         }
         ExchangeOrder orders = (ExchangeOrder) o;
         return Objects.equals(orderId, orders.orderId) &&
-                Objects.equals(orderType, orders.orderType) &&
-                Objects.equals(pair, orders.pair) &&
-                Objects.equals(rate, orders.rate) &&
-                Objects.equals(amountAPL, orders.amountAPL) &&
-                Objects.equals(amount, orders.amount) &&
-                Objects.equals(status, orders.status) &&
-                Objects.equals(openTime, orders.openTime) &&
-                Objects.equals(transaction, orders.transaction) &&
-                Objects.equals(execTransaction, orders.execTransaction);
+            Objects.equals(orderType, orders.orderType) &&
+            Objects.equals(pair, orders.pair) &&
+            Objects.equals(rate, orders.rate) &&
+            Objects.equals(amountAPL, orders.amountAPL) &&
+            Objects.equals(amount, orders.amount) &&
+            Objects.equals(status, orders.status) &&
+            Objects.equals(openTime, orders.openTime) &&
+            Objects.equals(transaction, orders.transaction) &&
+            Objects.equals(execTransaction, orders.execTransaction);
     }
 
     @Override

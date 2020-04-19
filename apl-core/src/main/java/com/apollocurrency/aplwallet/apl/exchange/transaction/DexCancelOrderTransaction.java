@@ -1,7 +1,10 @@
+/*
+ * Copyright © 2018-2020 Apollo Foundation
+ */
 package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
@@ -12,13 +15,10 @@ import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 
-import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
 public class DexCancelOrderTransaction extends DEX {
-
-    private DexService dexService = CDI.current().select(DexService.class).get();
 
     @Override
     public byte getSubtype() {
@@ -45,7 +45,7 @@ public class DexCancelOrderTransaction extends DEX {
         DexOrderCancelAttachment attachment = (DexOrderCancelAttachment) transaction.getAttachment();
         long orderTransactionId = attachment.getOrderId();
 
-        DexOrder order = dexService.getOrder(orderTransactionId);
+        DexOrder order = lookupDexService().getOrder(orderTransactionId);
         if (order == null) {
             throw new AplException.NotCurrentlyValidException("Order was not found. OrderId: " + orderTransactionId);
         }
@@ -56,7 +56,7 @@ public class DexCancelOrderTransaction extends DEX {
 
         if (!OrderStatus.OPEN.equals(order.getStatus())) {
             throw new AplException.NotCurrentlyValidException("Can cancel only Open orders. Order Id/Tx: " + order.getId() + "/" + Long.toUnsignedString(order.getId())
-                    + ", order status: " + order.getStatus() + " , Cancel Tx dbId:" + Long.toUnsignedString(transaction.getId()) + ", BlockId: " + Long.toUnsignedString(transaction.getECBlockId()));
+                + ", order status: " + order.getStatus() + " , Cancel Tx dbId:" + Long.toUnsignedString(transaction.getId()) + ", BlockId: " + Long.toUnsignedString(transaction.getECBlockId()));
         }
 
     }
@@ -69,6 +69,7 @@ public class DexCancelOrderTransaction extends DEX {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         DexOrderCancelAttachment attachment = (DexOrderCancelAttachment) transaction.getAttachment();
+        DexService dexService = lookupDexService();
         DexOrder order = dexService.getOrder(attachment.getOrderId());
 
         try {
@@ -91,7 +92,7 @@ public class DexCancelOrderTransaction extends DEX {
     public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
         DexOrderCancelAttachment attachment = (DexOrderCancelAttachment) transaction.getAttachment();
         return isDuplicate(DEX.DEX_CONTRACT_TRANSACTION, Long.toUnsignedString(attachment.getOrderId()), duplicates, true)
-                || isDuplicate(DEX.DEX_CANCEL_ORDER_TRANSACTION, Long.toUnsignedString(attachment.getOrderId()), duplicates, true);
+            || isDuplicate(DEX.DEX_CANCEL_ORDER_TRANSACTION, Long.toUnsignedString(attachment.getOrderId()), duplicates, true);
     }
 
     @Override

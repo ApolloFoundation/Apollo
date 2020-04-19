@@ -8,36 +8,49 @@ import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-import java.util.logging.Level;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 
 /**
  * Callable method to get the next block segment from the selected peer
  */
 public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
     private static final Logger log = LoggerFactory.getLogger(GetNextBlocksTask.class);
-    
-    private BlockchainConfig blockchainConfig;   
-    /** Callable future */
-    private Future<List<BlockImpl>> future;
-    /** Peer */
-    private Peer peer;
-    /** Block identifier list */
+    /**
+     * Block identifier list
+     */
     private final List<Long> blockIds;
-    /** Start index */
+    private BlockchainConfig blockchainConfig;
+    /**
+     * Callable future
+     */
+    private Future<List<BlockImpl>> future;
+    /**
+     * Peer
+     */
+    private Peer peer;
+    /**
+     * Start index
+     */
     private int start;
-    /** Stop index */
+    /**
+     * Stop index
+     */
     private int stop;
-    /** Request count */
+    /**
+     * Request count
+     */
     private int requestCount;
-    /** Time it took to return getNextBlocks */
+    /**
+     * Time it took to return getNextBlocks
+     */
     private long responseTime;
     /**
      * height of the block from which we will start to download next blocks
@@ -47,10 +60,10 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
     /**
      * Create the callable future
      *
-     * @param   blockIds            Block identifier list
-     * @param   start               Start index within the list
-     * @param   stop                Stop index within the list
-     * @param   startHeight         Height of the block from which we will start to download blockchain
+     * @param blockIds    Block identifier list
+     * @param start       Start index within the list
+     * @param stop        Stop index within the list
+     * @param startHeight Height of the block from which we will start to download blockchain
      */
     public GetNextBlocksTask(List<Long> blockIds, int start, int stop, int startHeight, BlockchainConfig blockchainConfig) {
         this.blockchainConfig = blockchainConfig;
@@ -64,7 +77,7 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
     /**
      * Return the result
      *
-     * @return                      List of blocks or null if an error occurred
+     * @return List of blocks or null if an error occurred
      */
     @Override
     public List<BlockImpl> call() {
@@ -86,7 +99,7 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
         try {
             response = peer.send(JSON.prepareRequest(request), blockchainConfig.getChain().getChainId());
         } catch (PeerNotConnectedException ex) {
-            response=null;
+            response = null;
         }
         responseTime = System.currentTimeMillis() - startTime;
         if (response == null) {
@@ -126,7 +139,7 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
     /**
      * Return the callable future
      *
-     * @return                      Callable future
+     * @return Callable future
      */
     public Future<List<BlockImpl>> getFuture() {
         return future;
@@ -135,7 +148,7 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
     /**
      * Set the callable future
      *
-     * @param   future              Callable future
+     * @param future Callable future
      */
     public void setFuture(Future<List<BlockImpl>> future) {
         this.future = future;
@@ -144,7 +157,7 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
     /**
      * Return the peer
      *
-     * @return                      Peer
+     * @return Peer
      */
     public Peer getPeer() {
         return peer;
@@ -153,7 +166,7 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
     /**
      * Set the peer
      *
-     * @param   peer                Peer
+     * @param peer Peer
      */
     public void setPeer(Peer peer) {
         this.peer = peer;
@@ -162,7 +175,7 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
     /**
      * Return the start index
      *
-     * @return                      Start index
+     * @return Start index
      */
     public int getStart() {
         return start;
@@ -171,7 +184,7 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
     /**
      * Set the start index
      *
-     * @param   start               Start index
+     * @param start Start index
      */
     public void setStart(int start) {
         this.start = start;
@@ -180,7 +193,7 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
     /**
      * Return the stop index
      *
-     * @return                      Stop index
+     * @return Stop index
      */
     public int getStop() {
         return stop;
@@ -189,7 +202,7 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
     /**
      * Return the request count
      *
-     * @return                      Request count
+     * @return Request count
      */
     public int getRequestCount() {
         return requestCount;
@@ -198,10 +211,10 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
     /**
      * Return the response time
      *
-     * @return                      Response time
+     * @return Response time
      */
     public long getResponseTime() {
         return responseTime;
     }
-    
+
 }

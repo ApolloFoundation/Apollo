@@ -29,15 +29,10 @@ import java.util.NoSuchElementException;
 
 public final class DbIterator<T> implements Iterator<T>, Iterable<T>, AutoCloseable {
 
-    public interface ResultSetReader<T> {
-        T get(Connection con, ResultSet rs) throws Exception;
-    }
-
     private final Connection con;
     private final PreparedStatement pstmt;
     private final ResultSetReader<T> rsReader;
     private final ResultSet rs;
-
     private boolean hasNext;
     private boolean iterated;
 
@@ -56,7 +51,7 @@ public final class DbIterator<T> implements Iterator<T>, Iterable<T>, AutoClosea
 
     @Override
     public boolean hasNext() {
-        if (! hasNext) {
+        if (!hasNext) {
             DbUtils.close(rs, pstmt, con);
         }
         return hasNext;
@@ -64,7 +59,7 @@ public final class DbIterator<T> implements Iterator<T>, Iterable<T>, AutoClosea
 
     @Override
     public T next() {
-        if (! hasNext) {
+        if (!hasNext) {
             DbUtils.close(rs, pstmt, con);
             throw new NoSuchElementException();
         }
@@ -95,5 +90,9 @@ public final class DbIterator<T> implements Iterator<T>, Iterable<T>, AutoClosea
         }
         iterated = true;
         return this;
+    }
+
+    public interface ResultSetReader<T> {
+        T get(Connection con, ResultSet rs) throws Exception;
     }
 }

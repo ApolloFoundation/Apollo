@@ -17,22 +17,13 @@ import java.security.MessageDigest;
 import java.util.Arrays;
 
 /**
- *
  * @author al
  */
 public final class ShufflingProcessingAttachment extends AbstractShufflingAttachment implements Prunable {
-    
+
     private static final byte[] emptyDataHash = Crypto.sha256().digest();
-
-    public static ShufflingProcessingAttachment parse(JSONObject attachmentData) {
-        if (!Appendix.hasAppendix(ShufflingTransaction.SHUFFLING_PROCESSING.getName(), attachmentData)) {
-            return null;
-        }
-        return new ShufflingProcessingAttachment(attachmentData);
-    }
-
-    volatile byte[][] data;
     final byte[] hash;
+    volatile byte[][] data;
 
     public ShufflingProcessingAttachment(ByteBuffer buffer) {
         super(buffer);
@@ -60,6 +51,13 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
         super(shufflingId, shufflingStateHash);
         this.data = data;
         this.hash = null;
+    }
+
+    public static ShufflingProcessingAttachment parse(JSONObject attachmentData) {
+        if (!Appendix.hasAppendix(ShufflingTransaction.SHUFFLING_PROCESSING.getName(), attachmentData)) {
+            return null;
+        }
+        return new ShufflingProcessingAttachment(attachmentData);
     }
 
     @Override
@@ -139,5 +137,5 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
     public void restorePrunableData(Transaction transaction, int blockTimestamp, int height) {
         ShufflingParticipant.restoreData(getShufflingId(), transaction.getSenderId(), getData(), transaction.getTimestamp(), height);
     }
-    
+
 }

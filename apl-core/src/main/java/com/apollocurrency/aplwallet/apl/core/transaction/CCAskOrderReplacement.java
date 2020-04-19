@@ -3,23 +3,31 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.app.Order;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.order.service.OrderMatchService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import java.nio.ByteBuffer;
 import org.json.simple.JSONObject;
 
+import javax.enterprise.inject.spi.CDI;
+import java.nio.ByteBuffer;
+
 /**
- *
  * @author al
  */
 class CCAskOrderReplacement extends ColoredCoinsOrderPlacement {
-    
+    private OrderMatchService orderMatchService;
+
     public CCAskOrderReplacement() {
+    }
+
+    private OrderMatchService lookupOrderMatchService() {
+        if (orderMatchService == null) {
+            this.orderMatchService = CDI.current().select(OrderMatchService.class).get();
+        }
+        return orderMatchService;
     }
 
     @Override
@@ -50,9 +58,9 @@ class CCAskOrderReplacement extends ColoredCoinsOrderPlacement {
     @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         ColoredCoinsAskOrderPlacement attachment = (ColoredCoinsAskOrderPlacement) transaction.getAttachment();
-        long unconfirmedAssetBalance = senderAccount.getUnconfirmedAssetBalanceATU(attachment.getAssetId());
+        long unconfirmedAssetBalance = lookupAccountAssetService().getUnconfirmedAssetBalanceATU(senderAccount, attachment.getAssetId());
         if (unconfirmedAssetBalance >= 0 && unconfirmedAssetBalance >= attachment.getQuantityATU()) {
-            senderAccount.addToUnconfirmedAssetBalanceATU(getLedgerEvent(), transaction.getId(), attachment.getAssetId(), -attachment.getQuantityATU());
+            lookupAccountAssetService().addToUnconfirmedAssetBalanceATU(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getAssetId(), -attachment.getQuantityATU());
             return true;
         }
         return false;
@@ -61,13 +69,13 @@ class CCAskOrderReplacement extends ColoredCoinsOrderPlacement {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         ColoredCoinsAskOrderPlacement attachment = (ColoredCoinsAskOrderPlacement) transaction.getAttachment();
-        Order.Ask.addOrder(transaction, attachment);
+        lookupOrderMatchService().addAskOrder(transaction, attachment);
     }
 
     @Override
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         ColoredCoinsAskOrderPlacement attachment = (ColoredCoinsAskOrderPlacement) transaction.getAttachment();
-        senderAccount.addToUnconfirmedAssetBalanceATU(getLedgerEvent(), transaction.getId(), attachment.getAssetId(), attachment.getQuantityATU());
+        lookupAccountAssetService().addToUnconfirmedAssetBalanceATU(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getAssetId(), attachment.getQuantityATU());
     }
-    
+
 }

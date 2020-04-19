@@ -20,16 +20,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveClaim;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveClaim;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 /**
@@ -43,20 +43,20 @@ import javax.servlet.http.HttpServletRequest;
  * </ul>
  * <p>
  * Constraints
- * <p>This transaction is allowed only when the currency is {@link com.apollocurrency.aplwallet.apl.CurrencyType#CLAIMABLE} and is already active.<br>
+ * <p>This transaction is allowed only when the currency is {@link com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType#CLAIMABLE} and is already active.<br>
  */
 @Vetoed
 public final class CurrencyReserveClaim extends CreateTransaction {
 
     public CurrencyReserveClaim() {
-        super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "units");
+        super(new APITag[]{APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "units");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        Currency currency = ParameterParser.getCurrency(req);
-        long units = ParameterParser.getLong(req, "units", 0, currency.getReserveSupply(), false);
-        Account account = ParameterParser.getSenderAccount(req);
+        Currency currency = HttpParameterParserUtil.getCurrency(req);
+        long units = HttpParameterParserUtil.getLong(req, "units", 0, currency.getReserveSupply(), false);
+        Account account = HttpParameterParserUtil.getSenderAccount(req);
         Attachment attachment = new MonetarySystemReserveClaim(currency.getId(), units);
         return createTransaction(req, account, attachment);
 

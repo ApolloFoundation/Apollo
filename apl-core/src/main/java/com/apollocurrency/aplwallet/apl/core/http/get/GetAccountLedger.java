@@ -20,27 +20,26 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
-import com.apollocurrency.aplwallet.apl.core.account.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerHolding;
+import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.ACCOUNT_LEDGER_PRIVATE_TRANSACTIONS_ACCESS_DENIED;
-import javax.enterprise.inject.Vetoed;
 
 /**
  * <p>
@@ -238,33 +237,33 @@ public class GetAccountLedger extends AbstractAPIRequestHandler {
     /**
      * Create the GetAccountLedger instance
      */
-   public GetAccountLedger() {
-        super(new APITag[] {APITag.ACCOUNTS}, "account", "firstIndex", "lastIndex",
-                "eventType", "event", "holdingType", "holding", "includeTransactions", "includeHoldingInfo");
+    public GetAccountLedger() {
+        super(new APITag[]{APITag.ACCOUNTS}, "account", "firstIndex", "lastIndex",
+            "eventType", "event", "holdingType", "holding", "includeTransactions", "includeHoldingInfo");
     }
 
     /**
      * Process the GetAccountLedger API request
      *
-     * @param   req                 API request
-     * @return                      API response
-     * @throws  AplException        Invalid request
+     * @param req API request
+     * @return API response
+     * @throws AplException Invalid request
      */
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         //
         // Process the request parameters
         //
-        long accountId = ParameterParser.getAccountId(req, "account", false);
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
+        long accountId = HttpParameterParserUtil.getAccountId(req, "account", false);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
         String eventType = Convert.emptyToNull(req.getParameter("eventType"));
         LedgerEvent event = null;
         long eventId = 0;
         if (eventType != null) {
             try {
                 event = LedgerEvent.valueOf(eventType);
-                eventId = ParameterParser.getUnsignedLong(req, "event", false);
+                eventId = HttpParameterParserUtil.getUnsignedLong(req, "event", false);
             } catch (RuntimeException e) {
                 throw new ParameterException(JSONResponses.incorrect("eventType"));
             }
@@ -275,7 +274,7 @@ public class GetAccountLedger extends AbstractAPIRequestHandler {
         if (holdingType != null) {
             try {
                 holding = LedgerHolding.valueOf(holdingType);
-                holdingId = ParameterParser.getUnsignedLong(req, "holding", false);
+                holdingId = HttpParameterParserUtil.getUnsignedLong(req, "holding", false);
             } catch (RuntimeException e) {
                 throw new ParameterException(JSONResponses.incorrect("holdingType"));
             }
@@ -288,8 +287,8 @@ public class GetAccountLedger extends AbstractAPIRequestHandler {
         //
         // Get the ledger entries
         //
-        List<LedgerEntry> ledgerEntries = AccountLedger.getEntries(accountId, event, eventId,
-                                                                   holding, holdingId, firstIndex, lastIndex, false);
+        List<LedgerEntry> ledgerEntries = lookupAccountLedgerService().getEntries(accountId, event, eventId,
+            holding, holdingId, firstIndex, lastIndex, false);
         //
         // Return the response
         //

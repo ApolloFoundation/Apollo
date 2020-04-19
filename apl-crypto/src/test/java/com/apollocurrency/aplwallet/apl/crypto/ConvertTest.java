@@ -4,24 +4,24 @@
 
 package com.apollocurrency.aplwallet.apl.crypto;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class ConvertTest {
     private static final byte[] EMPTY = new byte[0];
-    private static final byte[] REVERSED_1 = new byte[] {3, 2, 1};
-    private static final byte[] REVERSED_3 = new byte[] {-3, -1};
-    private static final byte[] ARR_1 = new byte[] {1, 2, 3};
-    private static final byte[] ARR_2 = new byte[] {4, 5};
-    private static final byte[] ARR_3 = new byte[] {-1, -3};
-    private static final byte[] ARR_4 = new byte[] {-2};
-    private static final byte[] ALL_BYTES = new byte[] {1, 2, 3, 4, 5, -1, -3, -2};
+    private static final byte[] REVERSED_1 = new byte[]{3, 2, 1};
+    private static final byte[] REVERSED_3 = new byte[]{-3, -1};
+    private static final byte[] ARR_1 = new byte[]{1, 2, 3};
+    private static final byte[] ARR_2 = new byte[]{4, 5};
+    private static final byte[] ARR_3 = new byte[]{-1, -3};
+    private static final byte[] ARR_4 = new byte[]{-2};
+    private static final byte[] ALL_BYTES = new byte[]{1, 2, 3, 4, 5, -1, -3, -2};
     private static final byte[] LONG_BYTES = Convert.parseHexString("ff1ed78a9cc314e0");
     private static final long LONG_VALUE = Long.parseUnsignedLong("18383367719308432608");
     private static final long ID = -2899336147900037206L;
@@ -43,12 +43,12 @@ public class ConvertTest {
     @Test
     void testConcatEmptyArray() {
         byte[] actual = Convert.concat(EMPTY);
-        assertArrayEquals(actual, EMPTY);
+        assertArrayEquals(EMPTY, actual);
     }
 
     @Test
     void testConcatNull() {
-        assertThrows(NullPointerException.class, () -> Convert.concat(null));
+        assertThrows(NullPointerException.class, () -> Convert.concat((byte[]) null));
     }
 
     @Test
@@ -126,6 +126,6 @@ public class ConvertTest {
     void testListOfLongsToLongArray() {
         Long[] longs = Convert.toObjectLongArray(List.of(1L, 2L));
 
-        assertArrayEquals(new Long[] {1L, 2L}, longs);
+        assertArrayEquals(new Long[]{1L, 2L}, longs);
     }
 }

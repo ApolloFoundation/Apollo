@@ -20,47 +20,47 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_PUBLIC_KEY;
-
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
+import com.apollocurrency.aplwallet.apl.core.http.APITag;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttachment;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
+
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_PUBLIC_KEY;
 
 @Vetoed
 public final class ShufflingProcess extends CreateTransaction {
 
     public ShufflingProcess() {
         super(new APITag[]{APITag.SHUFFLING, APITag.CREATE_TRANSACTION},
-                "shuffling", "recipientSecretPhrase", "recipientPublicKey");
+            "shuffling", "recipientSecretPhrase", "recipientPublicKey");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        Shuffling shuffling = ParameterParser.getShuffling(req);
+        Shuffling shuffling = HttpParameterParserUtil.getShuffling(req);
         if (shuffling.getStage() != Shuffling.Stage.PROCESSING) {
             JSONObject response = new JSONObject();
             response.put("errorCode", 11);
             response.put("errorDescription", "Shuffling is not in processing, stage " + shuffling.getStage());
             return JSON.prepare(response);
         }
-        Account senderAccount = ParameterParser.getSenderAccount(req);
+        Account senderAccount = HttpParameterParserUtil.getSenderAccount(req);
         long senderId = senderAccount.getId();
         if (shuffling.getAssigneeAccountId() != senderId) {
             JSONObject response = new JSONObject();
             response.put("errorCode", 12);
             response.put("errorDescription", String.format("Account %s cannot process shuffling since shuffling assignee is %s",
-                    Convert2.rsAccount(senderId), Convert2.rsAccount(shuffling.getAssigneeAccountId())));
+                Convert2.rsAccount(senderId), Convert2.rsAccount(shuffling.getAssigneeAccountId())));
             return JSON.prepare(response);
         }
         ShufflingParticipant participant = shuffling.getParticipant(senderId);
@@ -68,14 +68,14 @@ public final class ShufflingProcess extends CreateTransaction {
             JSONObject response = new JSONObject();
             response.put("errorCode", 13);
             response.put("errorDescription", String.format("Account %s is not a participant of shuffling %d",
-                    Convert2.rsAccount(senderId), shuffling.getId()));
+                Convert2.rsAccount(senderId), shuffling.getId()));
             return JSON.prepare(response);
         }
 
-        long accountId = ParameterParser.getAccountId(req, this.vaultAccountName(), false);
-        byte[] secretBytes = ParameterParser.getSecretBytes(req,accountId, true);
-        byte[] recipientPublicKey = ParameterParser.getPublicKey(req, "recipient");
-        if (Account.getAccount(recipientPublicKey) != null) {
+        long accountId = HttpParameterParserUtil.getAccountId(req, this.vaultAccountName(), false);
+        byte[] secretBytes = HttpParameterParserUtil.getSecretBytes(req, accountId, true);
+        byte[] recipientPublicKey = HttpParameterParserUtil.getPublicKey(req, "recipient");
+        if (lookupAccountService().getAccount(recipientPublicKey) != null) {
             return INCORRECT_PUBLIC_KEY; // do not allow existing account to be used as recipient
         }
 

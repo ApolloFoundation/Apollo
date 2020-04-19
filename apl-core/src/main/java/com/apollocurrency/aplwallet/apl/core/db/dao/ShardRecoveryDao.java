@@ -42,16 +42,16 @@ public interface ShardRecoveryDao {
 
     @Transactional
     @SqlUpdate("INSERT INTO shard_recovery(" +
-            "shard_recovery_id, state, object_name, column_name, last_column_value, processed_object, updated, height) " +
-            "VALUES (:shardRecoveryId, :state, :objectName, :columnName, :lastColumnValue, :processedObject, CURRENT_TIMESTAMP(), :height)")
+        "shard_recovery_id, state, object_name, column_name, last_column_value, processed_object, updated, height) " +
+        "VALUES (:shardRecoveryId, :state, :objectName, :columnName, :lastColumnValue, :processedObject, CURRENT_TIMESTAMP(), :height)")
     @RegisterRowMapper(ShardRecoveryRowMapper.class)
     @GetGeneratedKeys
     long saveShardRecovery(@BindBean ShardRecovery shard);
 
     @Transactional
     @SqlUpdate("UPDATE shard_recovery SET state=:state, object_name=:objectName, column_name=:columnName, " +
-            "last_column_value=:lastColumnValue, processed_object=:processedObject, updated=CURRENT_TIMESTAMP() " +
-            "where shard_recovery_id =:shardRecoveryId")
+        "last_column_value=:lastColumnValue, processed_object=:processedObject, updated=CURRENT_TIMESTAMP() " +
+        "where shard_recovery_id =:shardRecoveryId")
     @RegisterRowMapper(ShardRecoveryRowMapper.class)
     int updateShardRecovery(@BindBean ShardRecovery shardRecovery);
 

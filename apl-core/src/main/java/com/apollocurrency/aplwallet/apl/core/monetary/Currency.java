@@ -20,15 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.monetary;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountCurrency;
-import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
@@ -39,6 +38,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.service.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
@@ -58,12 +58,8 @@ import java.util.List;
 @SuppressWarnings("UnusedDeclaration")
 public final class Currency {
 
-    public enum Event {
-        BEFORE_DISTRIBUTE_CROWDFUNDING, BEFORE_UNDO_CROWDFUNDING, BEFORE_DELETE
-    }
-
-    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-    private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+    private static final BlockChainInfoService BLOCK_CHAIN_INFO_SERVICE =
+        CDI.current().select(BlockChainInfoService.class).get();
     private static final LongKeyFactory<Currency> currencyDbKeyFactory = new LongKeyFactory<Currency>("id") {
 
         @Override
@@ -72,7 +68,6 @@ public final class Currency {
         }
 
     };
-
     private static final VersionedDeletableEntityDbTable<Currency> currencyTable = new VersionedDeletableEntityDbTable<Currency>("currency", currencyDbKeyFactory, "code,name,description") {
 
         @Override
@@ -91,44 +86,6 @@ public final class Currency {
         }
 
     };
-
-    private static final class CurrencySupply {
-
-        private final DbKey dbKey;
-        private final long currencyId;
-        private long currentSupply;
-        private long currentReservePerUnitATM;
-
-        private CurrencySupply(Currency currency) {
-            this.currencyId = currency.currencyId;
-            this.dbKey = currencySupplyDbKeyFactory.newKey(this.currencyId);
-        }
-
-        private CurrencySupply(ResultSet rs, DbKey dbKey) throws SQLException {
-            this.currencyId = rs.getLong("id");
-            this.dbKey = dbKey;
-            this.currentSupply = rs.getLong("current_supply");
-            this.currentReservePerUnitATM =
-                    rs.getLong("current_reserve_per_unit_atm");
-        }
-
-        private void save(Connection con) throws SQLException {
-            try (
-                    @DatabaseSpecificDml(DmlMarker.MERGE)
-                    PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency_supply (id, current_supply, "
-                    + "current_reserve_per_unit_atm, height, latest) "
-                    + "KEY (id, height) VALUES (?, ?, ?, ?, TRUE)")
-            ) {
-                int i = 0;
-                pstmt.setLong(++i, this.currencyId);
-                pstmt.setLong(++i, this.currentSupply);
-                pstmt.setLong(++i, this.currentReservePerUnitATM);
-                pstmt.setInt(++i, blockchain.getHeight());
-                pstmt.executeUpdate();
-            }
-        }
-    }
-
     private static final LongKeyFactory<CurrencySupply> currencySupplyDbKeyFactory = new LongKeyFactory<CurrencySupply>("id") {
 
         @Override
@@ -137,7 +94,6 @@ public final class Currency {
         }
 
     };
-
     private static final VersionedDeletableEntityDbTable<CurrencySupply> currencySupplyTable = new VersionedDeletableEntityDbTable<CurrencySupply>("currency_supply", currencySupplyDbKeyFactory) {
 
         @Override
@@ -151,8 +107,97 @@ public final class Currency {
         }
 
     };
+    private static final Listeners<Currency, Event> listeners = new Listeners<>();
+    private static AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
+    private static AccountCurrencyService accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
+    private final long currencyId;
+    private final DbKey dbKey;
+    private final long accountId;
+    private final String name;
+    private final String code;
+    private final String description;
+    private final int type;
+    private final long maxSupply;
+    private final long reserveSupply;
+    private final int creationHeight;
+    private final int issuanceHeight;
+    private final long minReservePerUnitATM;
 
-    private static final Listeners<Currency,Event> listeners = new Listeners<>();
+    /*
+        static {
+            AplCore.getBlockchainProcessor().addListener(new CrowdFundingListener(), BlockchainProcessor.Event.AFTER_BLOCK_APPLY);
+        }
+    */
+    private final int minDifficulty;
+    private final int maxDifficulty;
+    private final byte ruleset;
+    private final byte algorithm;
+    private final byte decimals;
+    private final long initialSupply;
+    private CurrencySupply currencySupply;
+
+    private Currency(Transaction transaction, MonetarySystemCurrencyIssuance attachment) {
+        this.currencyId = transaction.getId();
+        this.dbKey = currencyDbKeyFactory.newKey(this.currencyId);
+        this.accountId = transaction.getSenderId();
+        this.name = attachment.getName();
+        this.code = attachment.getCode();
+        this.description = attachment.getDescription();
+        this.type = attachment.getType();
+        this.initialSupply = attachment.getInitialSupply();
+        this.reserveSupply = attachment.getReserveSupply();
+        this.maxSupply = attachment.getMaxSupply();
+        this.creationHeight = BLOCK_CHAIN_INFO_SERVICE.getHeight();
+        this.issuanceHeight = attachment.getIssuanceHeight();
+        this.minReservePerUnitATM = attachment.getMinReservePerUnitATM();
+        this.minDifficulty = attachment.getMinDifficulty();
+        this.maxDifficulty = attachment.getMaxDifficulty();
+        this.ruleset = attachment.getRuleset();
+        this.algorithm = attachment.getAlgorithm();
+        this.decimals = attachment.getDecimals();
+    }
+
+    private Currency(ResultSet rs, DbKey dbKey) throws SQLException {
+        this.currencyId = rs.getLong("id");
+        this.dbKey = dbKey;
+        this.accountId = rs.getLong("account_id");
+        this.name = rs.getString("name");
+        this.code = rs.getString("code");
+        this.description = rs.getString("description");
+        this.type = rs.getInt("type");
+        this.initialSupply = rs.getLong("initial_supply");
+        this.reserveSupply = rs.getLong("reserve_supply");
+        this.maxSupply = rs.getLong("max_supply");
+        this.creationHeight = rs.getInt("creation_height");
+        this.issuanceHeight = rs.getInt("issuance_height");
+        this.minReservePerUnitATM = rs.getLong("min_reserve_per_unit_atm");
+        this.minDifficulty = rs.getByte("min_difficulty") & 0xFF;
+        this.maxDifficulty = rs.getByte("max_difficulty") & 0xFF;
+        this.ruleset = rs.getByte("ruleset");
+        this.algorithm = rs.getByte("algorithm");
+        this.decimals = rs.getByte("decimals");
+    }
+
+    private Currency(long currencyId, DbKey dbKey, long accountId, String name, String code, String description, int type, long maxSupply, long reserveSupply, int creationHeight, int issuanceHeight, long minReservePerUnitATM, int minDifficulty, int maxDifficulty, byte ruleset, byte algorithm, byte decimals, long initialSupply) {
+        this.currencyId = currencyId;
+        this.dbKey = dbKey;
+        this.accountId = accountId;
+        this.name = name;
+        this.code = code;
+        this.description = description;
+        this.type = type;
+        this.maxSupply = maxSupply;
+        this.reserveSupply = reserveSupply;
+        this.creationHeight = creationHeight;
+        this.issuanceHeight = issuanceHeight;
+        this.minReservePerUnitATM = minReservePerUnitATM;
+        this.minDifficulty = minDifficulty;
+        this.maxDifficulty = maxDifficulty;
+        this.ruleset = ruleset;
+        this.algorithm = algorithm;
+        this.decimals = decimals;
+        this.initialSupply = initialSupply;
+    }
 
     public static boolean addListener(Listener<Currency> listener, Event eventType) {
         return listeners.addListener(listener, eventType);
@@ -215,107 +260,40 @@ public final class Currency {
 
     }
 
-/*
-    static {
-        AplCore.getBlockchainProcessor().addListener(new CrowdFundingListener(), BlockchainProcessor.Event.AFTER_BLOCK_APPLY);
-    }
-*/
-
     public static void init() {
     }
 
-    private final long currencyId;
-
-    private final DbKey dbKey;
-    private final long accountId;
-    private final String name;
-    private final String code;
-    private final String description;
-    private final int type;
-    private final long maxSupply;
-    private final long reserveSupply;
-    private final int creationHeight;
-    private final int issuanceHeight;
-    private final long minReservePerUnitATM;
-    private final int minDifficulty;
-    private final int maxDifficulty;
-    private final byte ruleset;
-    private final byte algorithm;
-    private final byte decimals;
-    private final long initialSupply;
-    private CurrencySupply currencySupply;
-
-    private Currency(Transaction transaction, MonetarySystemCurrencyIssuance attachment) {
-        this.currencyId = transaction.getId();
-        this.dbKey = currencyDbKeyFactory.newKey(this.currencyId);
-        this.accountId = transaction.getSenderId();
-        this.name = attachment.getName();
-        this.code = attachment.getCode();
-        this.description = attachment.getDescription();
-        this.type = attachment.getType();
-        this.initialSupply = attachment.getInitialSupply();
-        this.reserveSupply = attachment.getReserveSupply();
-        this.maxSupply = attachment.getMaxSupply();
-        this.creationHeight = blockchain.getHeight();
-        this.issuanceHeight = attachment.getIssuanceHeight();
-        this.minReservePerUnitATM = attachment.getMinReservePerUnitATM();
-        this.minDifficulty = attachment.getMinDifficulty();
-        this.maxDifficulty = attachment.getMaxDifficulty();
-        this.ruleset = attachment.getRuleset();
-        this.algorithm = attachment.getAlgorithm();
-        this.decimals = attachment.getDecimals();
+    static void increaseReserve(LedgerEvent event, long eventId, Account account, long currencyId, long amountPerUnitATM) {
+        Currency currency = Currency.getCurrency(currencyId);
+        accountService.addToBalanceATM(account, event, eventId, -Math.multiplyExact(currency.getReserveSupply(), amountPerUnitATM));
+        CurrencySupply currencySupply = currency.getSupplyData();
+        currencySupply.currentReservePerUnitATM += amountPerUnitATM;
+        currencySupplyTable.insert(currencySupply);
+        CurrencyFounder.addOrUpdateFounder(currencyId, account.getId(), amountPerUnitATM);
     }
 
-    private Currency(ResultSet rs, DbKey dbKey) throws SQLException {
-        this.currencyId = rs.getLong("id");
-        this.dbKey = dbKey;
-        this.accountId = rs.getLong("account_id");
-        this.name = rs.getString("name");
-        this.code = rs.getString("code");
-        this.description = rs.getString("description");
-        this.type = rs.getInt("type");
-        this.initialSupply = rs.getLong("initial_supply");
-        this.reserveSupply = rs.getLong("reserve_supply");
-        this.maxSupply = rs.getLong("max_supply");
-        this.creationHeight = rs.getInt("creation_height");
-        this.issuanceHeight = rs.getInt("issuance_height");
-        this.minReservePerUnitATM = rs.getLong("min_reserve_per_unit_atm");
-        this.minDifficulty = rs.getByte("min_difficulty") & 0xFF;
-        this.maxDifficulty = rs.getByte("max_difficulty") & 0xFF;
-        this.ruleset = rs.getByte("ruleset");
-        this.algorithm = rs.getByte("algorithm");
-        this.decimals = rs.getByte("decimals");
+    static void claimReserve(LedgerEvent event, long eventId, Account account, long currencyId, long units) {
+        accountCurrencyService.addToCurrencyUnits(account, event, eventId, currencyId, -units);
+        Currency currency = Currency.getCurrency(currencyId);
+        currency.increaseSupply(-units);
+        accountService.addToBalanceAndUnconfirmedBalanceATM(account, event, eventId,
+            Math.multiplyExact(units, currency.getCurrentReservePerUnitATM()));
     }
 
-    private Currency(long currencyId, DbKey dbKey, long accountId, String name, String code, String description, int type, long maxSupply, long reserveSupply, int creationHeight, int issuanceHeight, long minReservePerUnitATM, int minDifficulty, int maxDifficulty, byte ruleset, byte algorithm, byte decimals, long initialSupply) {
-        this.currencyId = currencyId;
-        this.dbKey = dbKey;
-        this.accountId = accountId;
-        this.name = name;
-        this.code = code;
-        this.description = description;
-        this.type = type;
-        this.maxSupply = maxSupply;
-        this.reserveSupply = reserveSupply;
-        this.creationHeight = creationHeight;
-        this.issuanceHeight = issuanceHeight;
-        this.minReservePerUnitATM = minReservePerUnitATM;
-        this.minDifficulty = minDifficulty;
-        this.maxDifficulty = maxDifficulty;
-        this.ruleset = ruleset;
-        this.algorithm = algorithm;
-        this.decimals = decimals;
-        this.initialSupply = initialSupply;
+    static void transferCurrency(LedgerEvent event, long eventId, Account senderAccount, Account recipientAccount,
+                                 long currencyId, long units) {
+        accountCurrencyService.addToCurrencyUnits(senderAccount, event, eventId, currencyId, -units);
+        accountCurrencyService.addToCurrencyAndUnconfirmedCurrencyUnits(recipientAccount, event, eventId, currencyId, units);
     }
 
     private void save(Connection con) throws SQLException {
         try (
-                @DatabaseSpecificDml(DmlMarker.MERGE)
-                @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
-                PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency (id, account_id, name, code, "
-                        + "description, type, initial_supply, reserve_supply, max_supply, creation_height, issuance_height, min_reserve_per_unit_atm, "
-                        + "min_difficulty, max_difficulty, ruleset, algorithm, decimals, height, latest) "
-                        + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")
+            @DatabaseSpecificDml(DmlMarker.MERGE)
+            @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
+            PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency (id, account_id, name, code, "
+                + "description, type, initial_supply, reserve_supply, max_supply, creation_height, issuance_height, min_reserve_per_unit_atm, "
+                + "min_difficulty, max_difficulty, ruleset, algorithm, decimals, height, latest, deleted) "
+                + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)")
         ) {
             int i = 0;
             pstmt.setLong(++i, this.currencyId);
@@ -335,7 +313,7 @@ public final class Currency {
             pstmt.setByte(++i, this.ruleset);
             pstmt.setByte(++i, this.algorithm);
             pstmt.setByte(++i, this.decimals);
-            pstmt.setInt(++i, blockchain.getHeight());
+            pstmt.setInt(++i, BLOCK_CHAIN_INFO_SERVICE.getHeight());
             pstmt.executeUpdate();
         }
     }
@@ -426,7 +404,7 @@ public final class Currency {
     }
 
     public boolean isActive() {
-        return issuanceHeight <= blockchain.getHeight();
+        return issuanceHeight <= BLOCK_CHAIN_INFO_SERVICE.getHeight();
     }
 
     private CurrencySupply getSupplyData() {
@@ -442,29 +420,6 @@ public final class Currency {
         return currencySupply;
     }
 
-    static void increaseReserve(LedgerEvent event, long eventId, Account account, long currencyId, long amountPerUnitATM) {
-        Currency currency = Currency.getCurrency(currencyId);
-        account.addToBalanceATM(event, eventId, -Math.multiplyExact(currency.getReserveSupply(), amountPerUnitATM));
-        CurrencySupply currencySupply = currency.getSupplyData();
-        currencySupply.currentReservePerUnitATM += amountPerUnitATM;
-        currencySupplyTable.insert(currencySupply);
-        CurrencyFounder.addOrUpdateFounder(currencyId, account.getId(), amountPerUnitATM);
-    }
-
-    static void claimReserve(LedgerEvent event, long eventId, Account account, long currencyId, long units) {
-        account.addToCurrencyUnits(event, eventId, currencyId, -units);
-        Currency currency = Currency.getCurrency(currencyId);
-        currency.increaseSupply(- units);
-        account.addToBalanceAndUnconfirmedBalanceATM(event, eventId,
-                Math.multiplyExact(units, currency.getCurrentReservePerUnitATM()));
-    }
-
-    static void transferCurrency(LedgerEvent event, long eventId, Account senderAccount, Account recipientAccount,
-                                 long currencyId, long units) {
-        senderAccount.addToCurrencyUnits(event, eventId, currencyId, -units);
-        recipientAccount.addToCurrencyAndUnconfirmedCurrencyUnits(event, eventId, currencyId, units);
-    }
-
     public void increaseSupply(long units) {
         getSupplyData();
         currencySupply.currentSupply += units;
@@ -473,14 +428,6 @@ public final class Currency {
             throw new IllegalArgumentException("Cannot add " + units + " to current supply of " + currencySupply.currentSupply);
         }
         currencySupplyTable.insert(currencySupply);
-    }
-
-    public DbIterator<AccountCurrency> getAccounts(int from, int to) {
-        return AccountCurrencyTable.getCurrencyAccounts(this.currencyId, from, to);
-    }
-
-    public DbIterator<AccountCurrency> getAccounts(int height, int from, int to) {
-        return AccountCurrencyTable.getCurrencyAccounts(this.currencyId, height, from, to);
     }
 
     public DbIterator<Exchange> getExchanges(int from, int to) {
@@ -505,9 +452,9 @@ public final class Currency {
         if (is(CurrencyType.MINTABLE) && getCurrentSupply() < maxSupply && senderAccountId != accountId) {
             return false;
         }
-        try (DbIterator<AccountCurrency> accountCurrencies = AccountCurrencyTable.getCurrencyAccounts(this.currencyId, 0, -1)) {
-            return ! accountCurrencies.hasNext() || accountCurrencies.next().getAccountId() == senderAccountId && ! accountCurrencies.hasNext();
-        }
+
+        List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrenciesByAccount(this.currencyId, 0, -1);
+        return accountCurrencies.isEmpty() || accountCurrencies.size() == 1 && accountCurrencies.get(0).getAccountId() == senderAccountId;
     }
 
     void delete(LedgerEvent event, long eventId, Account senderAccount) {
@@ -518,16 +465,17 @@ public final class Currency {
         listeners.notify(this, Event.BEFORE_DELETE);
         if (is(CurrencyType.RESERVABLE)) {
             if (is(CurrencyType.CLAIMABLE) && isActive()) {
-                senderAccount.addToUnconfirmedCurrencyUnits(event, eventId, currencyId,
-                        -senderAccount.getCurrencyUnits(currencyId));
-                Currency.claimReserve(event, eventId, senderAccount, currencyId, senderAccount.getCurrencyUnits(currencyId));
+                accountCurrencyService.addToUnconfirmedCurrencyUnits(senderAccount, event, eventId, currencyId,
+                    -accountCurrencyService.getCurrencyUnits(senderAccount, currencyId));
+                Currency.claimReserve(event, eventId, senderAccount, currencyId,
+                    accountCurrencyService.getCurrencyUnits(senderAccount, currencyId));
             }
             if (!isActive()) {
                 try (DbIterator<CurrencyFounder> founders = CurrencyFounder.getCurrencyFounders(currencyId, 0, Integer.MAX_VALUE)) {
                     for (CurrencyFounder founder : founders) {
-                        Account.getAccount(founder.getAccountId())
-                                .addToBalanceAndUnconfirmedBalanceATM(event, eventId, Math.multiplyExact(reserveSupply,
-                                        founder.getAmountPerUnitATM()));
+                        accountService.addToBalanceAndUnconfirmedBalanceATM(
+                            accountService.getAccount(founder.getAccountId()),
+                            event, eventId, Math.multiplyExact(reserveSupply, founder.getAmountPerUnitATM()));
                     }
                 }
             }
@@ -545,10 +493,52 @@ public final class Currency {
         if (is(CurrencyType.MINTABLE)) {
             CurrencyMint.deleteCurrency(this);
         }
-        senderAccount.addToUnconfirmedCurrencyUnits(event, eventId, currencyId,
-                -senderAccount.getUnconfirmedCurrencyUnits(currencyId));
-        senderAccount.addToCurrencyUnits(event, eventId, currencyId, -senderAccount.getCurrencyUnits(currencyId));
-        currencyTable.delete(this);
+        accountCurrencyService.addToUnconfirmedCurrencyUnits(senderAccount, event, eventId, currencyId,
+            -accountCurrencyService.getUnconfirmedCurrencyUnits(senderAccount, currencyId));
+        accountCurrencyService.addToCurrencyUnits(senderAccount, event, eventId, currencyId,
+            -accountCurrencyService.getCurrencyUnits(senderAccount, currencyId));
+        currencyTable.deleteAtHeight(this, BLOCK_CHAIN_INFO_SERVICE.getHeight());
+    }
+
+    public enum Event {
+        BEFORE_DISTRIBUTE_CROWDFUNDING, BEFORE_UNDO_CROWDFUNDING, BEFORE_DELETE
+    }
+
+    private static final class CurrencySupply {
+
+        private final DbKey dbKey;
+        private final long currencyId;
+        private long currentSupply;
+        private long currentReservePerUnitATM;
+
+        private CurrencySupply(Currency currency) {
+            this.currencyId = currency.currencyId;
+            this.dbKey = currencySupplyDbKeyFactory.newKey(this.currencyId);
+        }
+
+        private CurrencySupply(ResultSet rs, DbKey dbKey) throws SQLException {
+            this.currencyId = rs.getLong("id");
+            this.dbKey = dbKey;
+            this.currentSupply = rs.getLong("current_supply");
+            this.currentReservePerUnitATM =
+                rs.getLong("current_reserve_per_unit_atm");
+        }
+
+        private void save(Connection con) throws SQLException {
+            try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency_supply (id, current_supply, "
+                    + "current_reserve_per_unit_atm, height, latest, deleted) "
+                    + "KEY (id, height) VALUES (?, ?, ?, ?, TRUE, FALSE)")
+            ) {
+                int i = 0;
+                pstmt.setLong(++i, this.currencyId);
+                pstmt.setLong(++i, this.currentSupply);
+                pstmt.setLong(++i, this.currentReservePerUnitATM);
+                pstmt.setInt(++i, BLOCK_CHAIN_INFO_SERVICE.getHeight());
+                pstmt.executeUpdate();
+            }
+        }
     }
 
     @Slf4j
@@ -572,16 +562,19 @@ public final class Currency {
         private void undoCrowdFunding(Currency currency) {
             try (DbIterator<CurrencyFounder> founders = CurrencyFounder.getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
                 for (CurrencyFounder founder : founders) {
-                    Account.getAccount(founder.getAccountId())
-                            .addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.CURRENCY_UNDO_CROWDFUNDING, currency.getId(),
-                                    Math.multiplyExact(currency.getReserveSupply(),
-                                            founder.getAmountPerUnitATM()));
+                    accountService.addToBalanceAndUnconfirmedBalanceATM(
+                        accountService.getAccount(founder.getAccountId()),
+                        LedgerEvent.CURRENCY_UNDO_CROWDFUNDING,
+                        currency.getId(),
+                        Math.multiplyExact(currency.getReserveSupply(),
+                            founder.getAmountPerUnitATM()));
                 }
             }
-            Account.getAccount(currency.getAccountId())
-                    .addToCurrencyAndUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_UNDO_CROWDFUNDING, currency.getId(),
-                            currency.getId(), - currency.getInitialSupply());
-            currencyTable.delete(currency);
+            accountCurrencyService.addToCurrencyAndUnconfirmedCurrencyUnits(
+                accountService.getAccount(currency.getAccountId()),
+                LedgerEvent.CURRENCY_UNDO_CROWDFUNDING, currency.getId(),
+                currency.getId(), -currency.getInitialSupply());
+            currencyTable.deleteAtHeight(currency, BLOCK_CHAIN_INFO_SERVICE.getHeight());
             CurrencyFounder.remove(currency.getId());
         }
 
@@ -599,16 +592,17 @@ public final class Currency {
             for (CurrencyFounder founder : currencyFounders) {
                 long units = Math.multiplyExact(remainingSupply, founder.getAmountPerUnitATM()) / totalAmountPerUnit;
                 currencySupply.currentSupply += units;
-                Account.getAccount(founder.getAccountId())
-                        .addToCurrencyAndUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_DISTRIBUTION, currency.getId(),
-                                currency.getId(), units);
+                accountCurrencyService.addToCurrencyAndUnconfirmedCurrencyUnits(
+                    accountService.getAccount(founder.getAccountId()),
+                    LedgerEvent.CURRENCY_DISTRIBUTION, currency.getId(),
+                    currency.getId(), units);
             }
-            Account issuerAccount = Account.getAccount(currency.getAccountId());
-            issuerAccount.addToCurrencyAndUnconfirmedCurrencyUnits(LedgerEvent.CURRENCY_DISTRIBUTION, currency.getId(),
-                    currency.getId(), currency.getReserveSupply() - currency.getCurrentSupply());
+            Account issuerAccount = accountService.getAccount(currency.getAccountId());
+            accountCurrencyService.addToCurrencyAndUnconfirmedCurrencyUnits(issuerAccount, LedgerEvent.CURRENCY_DISTRIBUTION, currency.getId(),
+                currency.getId(), currency.getReserveSupply() - currency.getCurrentSupply());
             if (!currency.is(CurrencyType.CLAIMABLE)) {
-                issuerAccount.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.CURRENCY_DISTRIBUTION, currency.getId(),
-                        Math.multiplyExact(totalAmountPerUnit, currency.getReserveSupply()));
+                accountService.addToBalanceAndUnconfirmedBalanceATM(issuerAccount, LedgerEvent.CURRENCY_DISTRIBUTION, currency.getId(),
+                    Math.multiplyExact(totalAmountPerUnit, currency.getReserveSupply()));
             }
             currencySupply.currentSupply = currency.getReserveSupply();
             currencySupplyTable.insert(currencySupply);

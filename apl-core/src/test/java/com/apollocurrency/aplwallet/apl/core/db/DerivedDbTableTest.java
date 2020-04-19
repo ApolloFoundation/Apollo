@@ -4,12 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import static java.util.stream.Collectors.toList;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
@@ -24,6 +18,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 
 public abstract class DerivedDbTableTest<T extends DerivedEntity> {
     @RegisterExtension
@@ -77,7 +77,7 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
 
     @Test
     public void testDelete() throws SQLException {
-        assertThrows(UnsupportedOperationException.class, () -> derivedDbTable.delete(mock(clazz)));
+        assertThrows(UnsupportedOperationException.class, () -> derivedDbTable.deleteAtHeight(mock(clazz), 1));
     }
 
     @Test
@@ -91,7 +91,7 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
 
     @Test
     public void testInsert() {
-        assertThrows(UnsupportedOperationException.class, ()-> DbUtils.inTransaction(extension, (con) -> derivedDbTable.insert(mock(clazz))));
+        assertThrows(UnsupportedOperationException.class, () -> DbUtils.inTransaction(extension, (con) -> derivedDbTable.insert(mock(clazz))));
     }
 
     @Test
@@ -120,22 +120,21 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
     }
 
 
-
     public List<T> sublistByHeightDesc(List<T> list, int maxHeight) {
         return list
-                .stream()
-                .filter(d-> d.getHeight() <= maxHeight)
-                .sorted(Comparator.comparing(DerivedEntity::getHeight).thenComparing(DerivedEntity::getDbId).reversed())
-                .collect(toList());
+            .stream()
+            .filter(d -> d.getHeight() <= maxHeight)
+            .sorted(Comparator.comparing(DerivedEntity::getHeight).thenComparing(DerivedEntity::getDbId).reversed())
+            .collect(toList());
     }
 
 
     public List<T> sublistByHeight(List<T> list, int maxHeight) {
         return list
-                .stream()
-                .filter(d-> d.getHeight() <= maxHeight)
-                .sorted(Comparator.comparing(DerivedEntity::getHeight).thenComparing(DerivedEntity::getDbId))
-                .collect(toList());
+            .stream()
+            .filter(d -> d.getHeight() <= maxHeight)
+            .sorted(Comparator.comparing(DerivedEntity::getHeight).thenComparing(DerivedEntity::getDbId))
+            .collect(toList());
     }
 
     public List<T> sortByHeightDesc(List<T> list) {
@@ -144,32 +143,33 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
 
     public List<T> sortByHeightAsc(List<T> list) {
         return list
-                .stream()
-                .sorted(Comparator.comparing(DerivedEntity::getHeight).thenComparing(DerivedEntity::getDbId))
-                .collect(toList());
+            .stream()
+            .sorted(Comparator.comparing(DerivedEntity::getHeight).thenComparing(DerivedEntity::getDbId))
+            .collect(toList());
     }
 
     public List<Integer> getHeights() {
         return getHeights(getAll());
     }
+
     public List<Integer> getHeights(List<T> l) {
         return l
-                .stream()
-                .map(DerivedEntity::getHeight)
-                .sorted(Comparator.reverseOrder())
-                .distinct()
-                .collect(toList());
+            .stream()
+            .map(DerivedEntity::getHeight)
+            .sorted(Comparator.reverseOrder())
+            .distinct()
+            .collect(toList());
     }
 
     public Map<DbKey, List<T>> groupByDbKey(List<T> data, KeyFactory<T> keyFactory) {
         return data
-                .stream()
-                .collect(Collectors.groupingBy(keyFactory::newKey,
-                        Collectors.collectingAndThen(toList(),
-                                l-> l.stream().sorted(
-                                        Comparator.comparing(DerivedEntity::getHeight)
-                                                .thenComparing(DerivedEntity::getDbId)
-                                                .reversed()).collect(toList()))));
+            .stream()
+            .collect(Collectors.groupingBy(keyFactory::newKey,
+                Collectors.collectingAndThen(toList(),
+                    l -> l.stream().sorted(
+                        Comparator.comparing(DerivedEntity::getHeight)
+                            .thenComparing(DerivedEntity::getDbId)
+                            .reversed()).collect(toList()))));
     }
 
     public Map<DbKey, List<T>> groupByDbKey(KeyFactory<T> keyFactory) {
@@ -178,21 +178,21 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
 
     protected Map.Entry<DbKey, List<T>> getEntryWithListOfSize(List<T> data, KeyFactory<T> keyFactory, int size) {
         return groupByDbKey(data, keyFactory)
-                .entrySet()
-                .stream()
-                .filter(entry -> entry.getValue().size() == size)
-                .findFirst()
-                .get();
+            .entrySet()
+            .stream()
+            .filter(entry -> entry.getValue().size() == size)
+            .findFirst()
+            .get();
     }
 
     protected Map.Entry<DbKey, List<T>> getEntryWithListOfSize(List<T> data, KeyFactory<T> keyFactory, int size, boolean skipDeleted) {
         return groupByDbKey(data, keyFactory)
-                .entrySet()
-                .stream()
-                .filter(entry-> !skipDeleted || entry.getValue().stream().anyMatch(e -> ((VersionedDerivedEntity) e).isLatest()))
-                .filter(entry -> getHeights(entry.getValue()).size() == size)
-                .findFirst()
-                .get();
+            .entrySet()
+            .stream()
+            .filter(entry -> !skipDeleted || entry.getValue().stream().anyMatch(e -> ((VersionedDerivedEntity) e).isLatest()))
+            .filter(entry -> getHeights(entry.getValue()).size() == size)
+            .findFirst()
+            .get();
     }
 
 

@@ -20,28 +20,50 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import javax.enterprise.inject.spi.CDI;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.concurrent.ThreadLocalRandom;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-
 public final class Hallmark {
-   
-    private static PropertiesHolder propertiesHolder= CDI.current().select(PropertiesHolder.class).get();;
-    
-    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    
+
+    private final String hallmarkString;
+    private final String host;
+    private final int port;
+    private final int weight;
+    private final int date;
+    private final byte[] publicKey;
+    private final long accountId;
+    private final byte[] signature;
+    private final boolean isValid;
+
+    private Hallmark(String hallmarkString, byte[] publicKey, byte[] signature, String host, int weight, int date, boolean isValid)
+        throws URISyntaxException {
+        this.hallmarkString = hallmarkString;
+        PeerAddress pa = new PeerAddress(host);
+        this.host = pa.getHost();
+        this.port = pa.getPort();
+        this.publicKey = publicKey;
+        this.accountId = AccountService.getId(publicKey);
+        this.signature = signature;
+        this.weight = weight;
+        this.date = date;
+        this.isValid = isValid;
+    }
+
+    //valid
+    private Hallmark(String hallmarkString, byte[] publicKey, byte[] signature, String host, int weight, int date) throws URISyntaxException {
+        this(hallmarkString, publicKey, signature, host, weight, date, true);
+    }
+
     public static int parseDate(String dateValue) {
         return Integer.parseInt(dateValue.substring(0, 4)) * 10000
-                + Integer.parseInt(dateValue.substring(5, 7)) * 100
-                + Integer.parseInt(dateValue.substring(8, 10));
+            + Integer.parseInt(dateValue.substring(5, 7)) * 100
+            + Integer.parseInt(dateValue.substring(8, 10));
     }
 
     public static String formatDate(int date) {
@@ -51,12 +73,11 @@ public final class Hallmark {
         return (year < 10 ? "000" : (year < 100 ? "00" : (year < 1000 ? "0" : ""))) + year + "-" + (month < 10 ? "0" : "") + month + "-" + (day < 10 ? "0" : "") + day;
     }
 
-    public static String generateHallmark(byte[] keySeed, String host, int weight, int date) {
+    public static String generateHallmark(byte[] keySeed, String host, int weight, int date, long maxBalanceAPL) {
 
         if (host.length() == 0 || host.length() > 100) {
             throw new IllegalArgumentException("Hostname length should be between 1 and 100");
         }
-        long maxBalanceAPL = blockchainConfig.getCurrentConfig().getMaxBalanceAPL();
         if (weight <= 0 || weight > maxBalanceAPL) {
             throw new IllegalArgumentException("Weight should be between 1 and " + maxBalanceAPL);
         }
@@ -67,7 +88,7 @@ public final class Hallmark {
         ByteBuffer buffer = ByteBuffer.allocate(32 + 2 + hostBytes.length + 4 + 4 + 1);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
         buffer.put(publicKey);
-        buffer.putShort((short)hostBytes.length);
+        buffer.putShort((short) hostBytes.length);
         buffer.put(hostBytes);
         buffer.putInt(weight);
         buffer.putInt(date);
@@ -80,7 +101,7 @@ public final class Hallmark {
 
     }
 
-    public static Hallmark parseHallmark(String hallmarkString) {
+    public static Hallmark parseHallmark(String hallmarkString, long maxBalanceAPL) {
 
         hallmarkString = hallmarkString.trim();
         if (hallmarkString.length() % 2 != 0) {
@@ -110,43 +131,14 @@ public final class Hallmark {
         byte[] data = new byte[hallmarkBytes.length - 64];
         System.arraycopy(hallmarkBytes, 0, data, 0, data.length);
 
-        boolean isValid = host.length() < 100 && weight > 0 && weight <= blockchainConfig.getCurrentConfig().getMaxBalanceAPL()
-                && Crypto.verify(signature, data, publicKey);
+        boolean isValid = host.length() < 100 && weight > 0 && weight <= maxBalanceAPL
+            && Crypto.verify(signature, data, publicKey);
         try {
             return new Hallmark(hallmarkString, publicKey, signature, host, weight, date, isValid);
         } catch (URISyntaxException e) {
             throw new RuntimeException(e.toString(), e);
         }
 
-    }
-
-    private final String hallmarkString;
-    private final String host;
-    private final int port;
-    private final int weight;
-    private final int date;
-    private final byte[] publicKey;
-    private final long accountId;
-    private final byte[] signature;
-    private final boolean isValid;
-
-    private Hallmark(String hallmarkString, byte[] publicKey, byte[] signature, String host, int weight, int date, boolean isValid)
-            throws URISyntaxException {
-        this.hallmarkString = hallmarkString;
-        PeerAddress pa = new PeerAddress(host);
-        this.host = pa.getHost();
-        this.port = pa.getPort();
-        this.publicKey = publicKey;
-        this.accountId = Account.getId(publicKey);
-        this.signature = signature;
-        this.weight = weight;
-        this.date = date;
-        this.isValid = isValid;
-    }
-
-    //valid
-    private Hallmark(String hallmarkString, byte[] publicKey, byte[] signature, String host, int weight, int date) throws URISyntaxException {
-        this(hallmarkString, publicKey, signature, host, weight, date, true);
     }
 
     public String getHallmarkString() {

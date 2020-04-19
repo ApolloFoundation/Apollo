@@ -20,25 +20,24 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import javax.servlet.http.HttpServletRequest;
-import java.util.List;
-
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.FundingMonitor;
-import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
-import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Filter;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+
+import javax.enterprise.inject.Vetoed;
+import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
  * Get a funding monitor
@@ -60,21 +59,22 @@ import org.json.simple.JSONStreamAware;
 public class GetFundingMonitor extends AbstractAPIRequestHandler {
 
     public GetFundingMonitor() {
-        super(new APITag[] {APITag.ACCOUNTS}, "holdingType", "holding", "property", "secretPhrase",
-                "includeMonitoredAccounts", "account", "adminPassword", "account", "passphrase");
+        super(new APITag[]{APITag.ACCOUNTS}, "holdingType", "holding", "property", "secretPhrase",
+            "includeMonitoredAccounts", "account", "adminPassword", "account", "passphrase");
     }
+
     /**
      * Process the request
      *
-     * @param   req                 Client request
-     * @return                      Client response
-     * @throws ParameterException        Unable to process request
+     * @param req Client request
+     * @return Client response
+     * @throws ParameterException Unable to process request
      */
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
-        long accountId = ParameterParser.getAccountId(req, false);
-        byte[] keySeed = ParameterParser.getKeySeed(req, accountId, false);
-        long account = ParameterParser.getAccountId(req, false);
+        long accountId = HttpParameterParserUtil.getAccountId(req, false);
+        byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, accountId, false);
+        long account = HttpParameterParserUtil.getAccountId(req, false);
         boolean includeMonitoredAccounts = "true".equalsIgnoreCase(req.getParameter("includeMonitoredAccounts"));
         if (keySeed == null) {
             apw.verifyPassword(req);
@@ -83,24 +83,24 @@ public class GetFundingMonitor extends AbstractAPIRequestHandler {
         if (keySeed != null || account != 0) {
             if (keySeed != null) {
                 if (account != 0) {
-                    if (Account.getId(Crypto.getPublicKey(keySeed)) != account) {
+                    if (AccountService.getId(Crypto.getPublicKey(keySeed)) != account) {
                         return JSONResponses.INCORRECT_ACCOUNT;
                     }
                 } else {
-                    account = Account.getId(Crypto.getPublicKey(keySeed));
+                    account = AccountService.getId(Crypto.getPublicKey(keySeed));
                 }
             }
             accountId = account;
-            final HoldingType holdingType = ParameterParser.getHoldingType(req);
-            final long holdingId = ParameterParser.getHoldingId(req, holdingType);
-            final String property = ParameterParser.getAccountProperty(req, false);
+            final HoldingType holdingType = HttpParameterParserUtil.getHoldingType(req);
+            final long holdingId = HttpParameterParserUtil.getHoldingId(req, holdingType);
+            final String property = HttpParameterParserUtil.getAccountProperty(req, false);
             Filter<FundingMonitor> filter;
             long finalAccountId = accountId;
             if (property != null) {
                 filter = (monitor) -> monitor.getAccountId() == finalAccountId &&
-                        monitor.getProperty().equals(property) &&
-                        monitor.getHoldingType() == holdingType &&
-                        monitor.getHoldingId() == holdingId;
+                    monitor.getProperty().equals(property) &&
+                    monitor.getHoldingType() == holdingType &&
+                    monitor.getHoldingId() == holdingId;
             } else {
                 filter = (monitor) -> monitor.getAccountId() == finalAccountId;
             }

@@ -16,7 +16,13 @@ import java.sql.SQLException;
  */
 public interface DerivedTableInterface<T> {
 
-    void rollback(int height);
+    /**
+     * Remove all records from the derived table above the height.
+     *
+     * @param height the height
+     * @return the number of removed records
+     */
+    int rollback(int height);
 
     /**
      * @return true, when this table is not a part of blockchain core data and can be reverted and re-populated
@@ -31,12 +37,11 @@ public interface DerivedTableInterface<T> {
 
     /**
      * Trim process can be different when it runs on usual way or in case sharding process
-     * @param height trim height
+     *
+     * @param height     trim height
      * @param isSharding true when called in sharding process, false otherwise (do the same as usual trim)
      */
     void trim(int height, boolean isSharding);
-
-    void createSearchIndex(Connection con) throws SQLException;
 
     void prune(int time);
 
@@ -44,23 +49,24 @@ public interface DerivedTableInterface<T> {
 
     /**
      * Method is used by unit tests mainly
-     * @param from bottom column value (id or similar)
-     * @param limit top column value (id or similar)
+     *
+     * @param from      bottom column value (id or similar)
+     * @param limit     top column value (id or similar)
      * @param dbIdLimit batch value
      * @return table rows with lastDbId inside
      * @throws SQLException
      */
     DerivedTableData<T> getAllByDbId(long from, int limit, long dbIdLimit) throws SQLException;
 
-    boolean delete(T t);
+    boolean deleteAtHeight(T t, int height);
 
     /**
      * Retrieve sql result set partial table's data for later processing with pagination on current table
      *
-     * @param con sql connection to use for sql statement
-     * @param pstmt select sql to execute for selecting with pagination
+     * @param con         sql connection to use for sql statement
+     * @param pstmt       select sql to execute for selecting with pagination
      * @param minMaxValue object to keep track on latest ID during pagination
-     * @param limit batch pagination limit
+     * @param limit       batch pagination limit
      * @return sql result set
      * @throws SQLException
      */
@@ -77,7 +83,22 @@ public interface DerivedTableInterface<T> {
     MinMaxValue getMinMaxValue(int height);
 
     /**
+     * @return true, if Table support delete operations (soft remove for entities), otherwise - false
+     */
+    boolean supportDelete();
+
+    /**
      * @return table db name
      */
     String getName();
+
+    /**
+     * Gets null as full text search columns only for those tables that do not have
+     * the EntityDbTable ancestor.
+     *
+     * @return null
+     */
+    default String getFullTextSearchColumns() {
+        return null;
+    }
 }

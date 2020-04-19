@@ -15,6 +15,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -22,11 +23,13 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class FileUtils {
     private static final Logger log = getLogger(FileUtils.class);
 
+    private FileUtils() {
+    }
+
     public static boolean deleteFileIfExistsQuietly(Path file) {
         try {
             return Files.deleteIfExists(file);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             log.error("Unable to delete file {}, cause: {}", file, e.getMessage());
         }
         return false;
@@ -35,8 +38,7 @@ public class FileUtils {
     public static boolean deleteFileIfExistsAndHandleException(Path file, Consumer<IOException> handler) {
         try {
             return Files.deleteIfExists(file);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             handler.accept(e);
         }
         return false;
@@ -45,8 +47,7 @@ public class FileUtils {
     public static boolean deleteFileIfExists(Path file) {
         try {
             return Files.deleteIfExists(file);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -57,20 +58,20 @@ public class FileUtils {
         }
         try {
             Files.walkFileTree(directory, new SimpleFileVisitor<>() {
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    Files.delete(file);
-                    return FileVisitResult.CONTINUE;
-                }
-
-                        @Override
-                        public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                            if (!dir.equals(directory)) {
-                                Files.delete(dir);
-                            }
-                            return super.postVisitDirectory(dir, exc);
-                        }
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        Files.delete(file);
+                        return FileVisitResult.CONTINUE;
                     }
+
+                    @Override
+                    public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                        if (!dir.equals(directory)) {
+                            Files.delete(dir);
+                        }
+                        return super.postVisitDirectory(dir, exc);
+                    }
+                }
 
             );
         } catch (IOException e) {
@@ -82,8 +83,8 @@ public class FileUtils {
         if (!Files.isDirectory(directory) || !Files.exists(directory)) {
             return;
         }
-        try {
-            Files.list(directory).filter(p -> {
+        try (Stream<Path> pathStream = Files.list(directory)) {
+            pathStream.filter(p -> {
                 boolean match = names == null;
                 if (!match) {
                     for (String name : names) {
@@ -119,14 +120,16 @@ public class FileUtils {
         if (!Files.isDirectory(directory) || !Files.exists(directory)) {
             return;
         }
-        try {
-            Files.list(directory).filter(predicate).forEach(FileUtils::deleteFileIfExistsQuietly);
+        try (Stream<Path> files = Files.list(directory)) {
+            files.filter(predicate).forEach(FileUtils::deleteFileIfExistsQuietly);
         } catch (IOException e) {
             log.error("Unable to delete dir {}", directory);
         }
     }
 
-
-
-    private FileUtils() {}
+    public static long countElementsOfDirectory(Path directory) throws IOException {
+        try (Stream<Path> stream = Files.list(directory)) {
+            return stream.count();
+        }
+    }
 }

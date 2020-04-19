@@ -4,21 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.Update;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.UpdateAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateAttachment;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateData;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateInfo;
@@ -26,13 +16,13 @@ import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl;
 import com.apollocurrency.aplwallet.apl.updater.core.UpdaterFactory;
+import com.apollocurrency.aplwallet.apl.updater.export.event.UpdateEventData;
 import com.apollocurrency.aplwallet.apl.updater.pdu.PlatformDependentUpdater;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterService;
-import com.apollocurrency.aplwallet.apl.util.Architecture;
 import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
-import com.apollocurrency.aplwallet.apl.util.Listener;
-import com.apollocurrency.aplwallet.apl.util.Platform;
 import com.apollocurrency.aplwallet.apl.util.Version;
+import com.apollocurrency.aplwallet.apl.util.env.Architecture;
+import com.apollocurrency.aplwallet.apl.util.env.Platform;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,17 +33,30 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import javax.enterprise.event.Event;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 @Disabled
 @ExtendWith(MockitoExtension.class)
 public class UpdaterCoreTest {
 
+    private final String decryptedUrl = "http://apollocurrency/ApolloWallet.jar";
+    @Mock
+    UpdaterMediator updaterMediator;
     private UpdateAttachment attachment;
-
     @Mock
     private PropertiesHolder propertiesHolder;
     @Mock
@@ -67,20 +70,18 @@ public class UpdaterCoreTest {
     @Mock
     private UpdateTransactionVerifier transactionVerifier;
     @Mock
-    UpdaterMediator updaterMediator;
-
-    private final String decryptedUrl = "http://apollocurrency/ApolloWallet.jar";
+    private Event<UpdateEventData> startUpdateEvent;
 
     @BeforeEach
     public void setUp() throws Exception {
         doReturn(new TransactionalDataSource(new DbProperties(), propertiesHolder)).when(updaterMediator).getDataSource();
         attachment = UpdateAttachment.getAttachment(
-                Platform.current(),
-                Architecture.current(),
-                new DoubleByteArrayTuple(new byte[0], new byte[0]),
-                new Version("1.0.8"),
-                new byte[0],
-                (byte) 0);
+            Platform.current(),
+            Architecture.current(),
+            new DoubleByteArrayTuple(new byte[0], new byte[0]),
+            new Version("1.0.8"),
+            new byte[0],
+            (byte) 0);
 
     }
 
@@ -94,7 +95,8 @@ public class UpdaterCoreTest {
         when(updaterService.getLast()).thenReturn(updateTransaction);
         when(transactionVerifier.process(mockTransaction)).thenReturn(new UpdateData(attachment, mockTransaction.getId(), decryptedUrl));
         UpdateInfo updateInfo = new UpdateInfo();
-        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier, updateInfo);
+        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance,
+            updaterFactory, transactionVerifier, updateInfo, startUpdateEvent);
 
         UpdaterCore spy = spy(updaterCore);
 
@@ -113,7 +115,8 @@ public class UpdaterCoreTest {
         when(updaterService.getLast()).thenReturn(updateTransaction);
         when(transactionVerifier.process(mockTransaction)).thenReturn(new UpdateData(attachment, mockTransaction.getId(), decryptedUrl));
         UpdateInfo updateInfo = new UpdateInfo();
-        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier,updateInfo);
+        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance,
+            updaterFactory, transactionVerifier, updateInfo, startUpdateEvent);
         UpdaterCore spy = spy(updaterCore);
 
         spy.init();
@@ -126,7 +129,8 @@ public class UpdaterCoreTest {
     @Test
     public void testInitNullUpdateTransaction() throws Exception {
         UpdateInfo updateInfo = new UpdateInfo();
-        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier, updateInfo);
+        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance,
+            updaterFactory, transactionVerifier, updateInfo, startUpdateEvent);
         UpdaterCore spy = spy(updaterCore);
 
         spy.init();
@@ -143,7 +147,8 @@ public class UpdaterCoreTest {
         UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction.getId(), false);
         when(updaterService.getLast()).thenReturn(updateTransaction);
         UpdateInfo updateInfo = new UpdateInfo();
-        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier, updateInfo);
+        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance,
+            updaterFactory, transactionVerifier, updateInfo, startUpdateEvent);
         UpdaterCore spy = spy(updaterCore);
 
         spy.init();
@@ -161,7 +166,8 @@ public class UpdaterCoreTest {
         UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction.getId(), true);
         when(updaterService.getLast()).thenReturn(updateTransaction);
         UpdateInfo updateInfo = new UpdateInfo();
-        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier, updateInfo);
+        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance,
+            updaterFactory, transactionVerifier, updateInfo, startUpdateEvent);
         UpdaterCore spy = spy(updaterCore);
         when(updaterMediatorInstance.getWalletVersion()).thenReturn(new Version("1.0.7"));
 
@@ -181,7 +187,8 @@ public class UpdaterCoreTest {
         UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction.getId(), true);
         when(updaterService.getLast()).thenReturn(updateTransaction);
         UpdateInfo updateInfo = new UpdateInfo();
-        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier, updateInfo);
+        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance,
+            updaterFactory, transactionVerifier, updateInfo, startUpdateEvent);
         UpdaterCore spy = spy(updaterCore);
         when(updaterMediatorInstance.getWalletVersion()).thenReturn(new Version("1.0.7"));
 
@@ -198,7 +205,8 @@ public class UpdaterCoreTest {
         UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction.getId(), true);
         when(updaterService.getLast()).thenReturn(updateTransaction);
         UpdateInfo updateInfo = new UpdateInfo();
-        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier, updateInfo);
+        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance,
+            updaterFactory, transactionVerifier, updateInfo, startUpdateEvent);
         UpdaterCore spy = spy(updaterCore);
         when(updaterMediatorInstance.getWalletVersion()).thenReturn(attachment.getAppVersion());
 
@@ -217,7 +225,7 @@ public class UpdaterCoreTest {
         UpdateData updateData = new UpdateData(attachment, mockTransaction.getId(), decryptedUrl);
         UpdateInfo updateInfo = new UpdateInfo();
         UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance,
-                transactionVerifier, updateInfo);
+            transactionVerifier, updateInfo, startUpdateEvent);
         doReturn(new UpdateTransaction(mockTransaction.getId(), false)).when(updaterService).getLast();
         doReturn(updateData).when(transactionVerifier).process(mockTransaction);
         UpdaterCore spy = spy(updaterCore);
@@ -238,7 +246,7 @@ public class UpdaterCoreTest {
         Random random = new Random();
         for (int i = 0; i < numberOfTransactions; i++) {
             Transaction transaction = new SimpleTransaction(random.nextLong(), TransactionType.findTransactionType((byte) random.nextInt(8),
-                    (byte) 0));
+                (byte) 0));
             transactions.add(transaction);
         }
         return transactions;

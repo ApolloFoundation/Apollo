@@ -20,11 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_TRANSACTION;
-
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtendAttachment;
@@ -35,20 +33,22 @@ import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_TRANSACTION;
+
 @Vetoed
 public final class ExtendTaggedData extends CreateTransaction {
     private TaggedDataService taggedDataService = CDI.current().select(TaggedDataService.class).get();
 
     public ExtendTaggedData() {
-        super("file", new APITag[] {APITag.DATA, APITag.CREATE_TRANSACTION}, "transaction",
-                "name", "description", "tags", "type", "channel", "isText", "filename", "data");
+        super("file", new APITag[]{APITag.DATA, APITag.CREATE_TRANSACTION}, "transaction",
+            "name", "description", "tags", "type", "channel", "isText", "filename", "data");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        Account account = ParameterParser.getSenderAccount(req);
-        long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
+        Account account = HttpParameterParserUtil.getSenderAccount(req);
+        long transactionId = HttpParameterParserUtil.getUnsignedLong(req, "transaction", true);
         TaggedData taggedData = taggedDataService.getData(transactionId);
         if (taggedData == null) {
             return UNKNOWN_TRANSACTION;

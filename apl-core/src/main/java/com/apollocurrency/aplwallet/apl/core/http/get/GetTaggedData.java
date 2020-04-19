@@ -22,31 +22,31 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.PRUNED_TRANSACTION;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public final class GetTaggedData extends AbstractAPIRequestHandler {
     private TaggedDataService taggedDataService = CDI.current().select(TaggedDataService.class).get();
 
     public GetTaggedData() {
-        super(new APITag[] {APITag.DATA}, "transaction", "includeData", "retrieve");
+        super(new APITag[]{APITag.DATA}, "transaction", "includeData", "retrieve");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
+        long transactionId = HttpParameterParserUtil.getUnsignedLong(req, "transaction", true);
         boolean includeData = !"false".equalsIgnoreCase(req.getParameter("includeData"));
         boolean retrieve = "true".equalsIgnoreCase(req.getParameter("retrieve"));
 

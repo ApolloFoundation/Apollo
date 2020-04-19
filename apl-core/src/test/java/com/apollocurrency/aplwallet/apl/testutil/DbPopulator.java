@@ -4,7 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.testutil;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.core.db.DataSourceWrapper;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.StringValidator;
+import org.slf4j.Logger;
 
 import javax.sql.DataSource;
 import java.io.File;
@@ -20,10 +23,7 @@ import java.sql.Statement;
 import java.util.Objects;
 import java.util.StringTokenizer;
 
-import com.apollocurrency.aplwallet.apl.core.db.DataSourceWrapper;
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
-import com.apollocurrency.aplwallet.apl.util.StringValidator;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public class DbPopulator {
     private static final Logger LOG = getLogger(DbPopulator.class);
@@ -52,8 +52,7 @@ public class DbPopulator {
                  Statement stm = con.createStatement()) {
                 stm.executeUpdate(sqlCommand);
                 con.commit();
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
             }
         }
@@ -63,8 +62,7 @@ public class DbPopulator {
     private byte[] readAllBytes(URI file) {
         try (InputStream inputStream = new FileInputStream(new File(file))) {
             return inputStream.readAllBytes();
-        }
-        catch (IOException exception) {
+        } catch (IOException exception) {
             throw new RuntimeException("Unable to read file " + file);
         }
     }
@@ -87,8 +85,7 @@ public class DbPopulator {
         Objects.requireNonNull(resource, "Resource not found  in classpath: " + resourcePath);
         try {
             return resource.toURI();
-        }
-        catch (URISyntaxException e) {
+        } catch (URISyntaxException e) {
             throw new RuntimeException(e.toString(), e);
         }
 

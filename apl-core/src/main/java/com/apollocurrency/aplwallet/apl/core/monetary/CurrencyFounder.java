@@ -20,18 +20,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.monetary;
 
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import javax.enterprise.inject.spi.CDI;
-
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.service.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -45,6 +43,8 @@ import java.util.List;
  * In case the currency is not issued because of insufficient funding, all funds are returned to the founders
  */
 public class CurrencyFounder {
+    private static final BlockChainInfoService BLOCK_CHAIN_INFO_SERVICE =
+        CDI.current().select(BlockChainInfoService.class).get();
 
     private static final LinkKeyFactory<CurrencyFounder> currencyFounderDbKeyFactory = new LinkKeyFactory<CurrencyFounder>("currency_id", "account_id") {
 
@@ -73,9 +73,6 @@ public class CurrencyFounder {
         }
 
     };
-
-    public static void init() {}
-
     private final DbKey dbKey;
     private final long currencyId;
     private final long accountId;
@@ -95,42 +92,7 @@ public class CurrencyFounder {
         this.amountPerUnitATM = rs.getLong("amount");
     }
 
-    @Override
-    public String toString() {
-        return "CurrencyFounder{" +
-                "dbKey=" + dbKey +
-                ", currencyId=" + currencyId +
-                ", accountId=" + accountId +
-                ", amountPerUnitATM=" + amountPerUnitATM +
-                '}';
-    }
-
-    private void save(Connection con) throws SQLException {
-        Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-        try (
-                @DatabaseSpecificDml(DmlMarker.MERGE)
-                PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency_founder (currency_id, account_id, amount, height, latest) "
-                + "KEY (currency_id, account_id, height) VALUES (?, ?, ?, ?, TRUE)")
-        ) {
-            int i = 0;
-            pstmt.setLong(++i, this.getCurrencyId());
-            pstmt.setLong(++i, this.getAccountId());
-            pstmt.setLong(++i, this.getAmountPerUnitATM());
-            pstmt.setInt(++i, blockchain.getHeight());
-            pstmt.executeUpdate();
-        }
-    }
-
-    public long getCurrencyId() {
-        return currencyId;
-    }
-
-    public long getAccountId() {
-        return accountId;
-    }
-
-    public long getAmountPerUnitATM() {
-        return amountPerUnitATM;
+    public static void init() {
     }
 
     static void addOrUpdateFounder(long currencyId, long accountId, long amount) {
@@ -162,6 +124,43 @@ public class CurrencyFounder {
                 founders.add(founder);
             }
         }
-        founders.forEach(currencyFounderTable::delete);
+        founders.forEach(f -> currencyFounderTable.deleteAtHeight(f, BLOCK_CHAIN_INFO_SERVICE.getHeight()));
+    }
+
+    @Override
+    public String toString() {
+        return "CurrencyFounder{" +
+            "dbKey=" + dbKey +
+            ", currencyId=" + currencyId +
+            ", accountId=" + accountId +
+            ", amountPerUnitATM=" + amountPerUnitATM +
+            '}';
+    }
+
+    private void save(Connection con) throws SQLException {
+        try (
+            @DatabaseSpecificDml(DmlMarker.MERGE)
+            PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency_founder (currency_id, account_id, amount, height, latest, deleted) "
+                + "KEY (currency_id, account_id, height) VALUES (?, ?, ?, ?, TRUE, FALSE)")
+        ) {
+            int i = 0;
+            pstmt.setLong(++i, this.getCurrencyId());
+            pstmt.setLong(++i, this.getAccountId());
+            pstmt.setLong(++i, this.getAmountPerUnitATM());
+            pstmt.setInt(++i, BLOCK_CHAIN_INFO_SERVICE.getHeight());
+            pstmt.executeUpdate();
+        }
+    }
+
+    public long getCurrencyId() {
+        return currencyId;
+    }
+
+    public long getAccountId() {
+        return accountId;
+    }
+
+    public long getAmountPerUnitATM() {
+        return amountPerUnitATM;
     }
 }

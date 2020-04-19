@@ -28,15 +28,16 @@ import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 import java.math.BigInteger;
-import javax.enterprise.inject.Vetoed;
 
+@Deprecated
 @Vetoed
 public final class LongConvert extends AbstractAPIRequestHandler {
 
     public LongConvert() {
-        super(new APITag[] {APITag.UTILS}, "id");
+        super(new APITag[]{APITag.UTILS}, "id");
     }
 
     @Override

@@ -52,7 +52,7 @@ public class TaggedDataExtend extends VersionedDerivedEntity {
         if (!super.equals(o)) return false;
         TaggedDataExtend that = (TaggedDataExtend) o;
         return taggedDataId == that.taggedDataId &&
-                extendId == that.extendId;
+            extendId == that.extendId;
     }
 
     @Override

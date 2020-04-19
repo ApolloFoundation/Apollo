@@ -20,47 +20,47 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class GetBuyOffers extends AbstractAPIRequestHandler {
 
     public GetBuyOffers() {
-        super(new APITag[] {APITag.MS}, "currency", "account", "availableOnly", "firstIndex", "lastIndex");
+        super(new APITag[]{APITag.MS}, "currency", "account", "availableOnly", "firstIndex", "lastIndex");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
-        long currencyId = ParameterParser.getUnsignedLong(req, "currency", false);
-        long accountId = ParameterParser.getAccountId(req, false);
+        long currencyId = HttpParameterParserUtil.getUnsignedLong(req, "currency", false);
+        long accountId = HttpParameterParserUtil.getAccountId(req, false);
         if (currencyId == 0 && accountId == 0) {
             return JSONResponses.MISSING_CURRENCY_ACCOUNT;
         }
         boolean availableOnly = "true".equalsIgnoreCase(req.getParameter("availableOnly"));
 
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
 
         JSONObject response = new JSONObject();
         JSONArray offerData = new JSONArray();
         response.put("offers", offerData);
 
-        DbIterator<CurrencyBuyOffer> offers= null;
+        DbIterator<CurrencyBuyOffer> offers = null;
         try {
             if (accountId == 0) {
                 offers = CurrencyBuyOffer.getCurrencyOffers(currencyId, availableOnly, firstIndex, lastIndex);

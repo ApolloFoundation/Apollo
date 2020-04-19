@@ -8,7 +8,7 @@ import org.jdbi.v3.core.statement.StatementContext;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class PhasingApprovedResultMapper  extends DerivedEntityMapper<PhasingApprovalResult> {
+public class PhasingApprovedResultMapper extends DerivedEntityMapper<PhasingApprovalResult> {
 
     public PhasingApprovedResultMapper(KeyFactory<PhasingApprovalResult> keyFactory) {
         super(keyFactory);

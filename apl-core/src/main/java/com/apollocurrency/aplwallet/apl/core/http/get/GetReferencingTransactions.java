@@ -24,38 +24,37 @@ import com.apollocurrency.aplwallet.apl.core.app.ReferencedTransactionService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import java.util.List;
+import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 @Vetoed
 public final class GetReferencingTransactions extends AbstractAPIRequestHandler {
 
-   public GetReferencingTransactions() {
-        super(new APITag[] {APITag.TRANSACTIONS}, "transaction", "firstIndex", "lastIndex");
+    private static ReferencedTransactionService referencedTransactionService = CDI.current().select(ReferencedTransactionService.class).get();
+
+    public GetReferencingTransactions() {
+        super(new APITag[]{APITag.TRANSACTIONS}, "transaction", "firstIndex", "lastIndex");
     }
 
-    private static ReferencedTransactionService referencedTransactionService = CDI.current().select(ReferencedTransactionService.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
+        long transactionId = HttpParameterParserUtil.getUnsignedLong(req, "transaction", true);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
 
         JSONArray transactions = new JSONArray();
         List<Transaction> referencingTransactions = referencedTransactionService.getReferencingTransactions(transactionId, firstIndex, lastIndex);
-        referencingTransactions.forEach(tx-> transactions.add(JSONData.transaction(false, tx)));
+        referencingTransactions.forEach(tx -> transactions.add(JSONData.transaction(false, tx)));
 
         JSONObject response = new JSONObject();
         response.put("transactions", transactions);

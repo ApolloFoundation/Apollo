@@ -20,34 +20,34 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_WEBSITE;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_WEBSITE;
-
-import javax.servlet.http.HttpServletRequest;
-
 import com.apollocurrency.aplwallet.apl.core.app.Token;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+
+import javax.enterprise.inject.Vetoed;
+import javax.servlet.http.HttpServletRequest;
+
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_WEBSITE;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_WEBSITE;
 
 @Vetoed
 public final class GenerateToken extends AbstractAPIRequestHandler {
 
     public GenerateToken() {
-        super(new APITag[] {APITag.TOKENS}, "website", "secretPhrase", "account", "passphrase");
+        super(new APITag[]{APITag.TOKENS}, "website", "secretPhrase", "account", "passphrase");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
-        long accountId = ParameterParser.getAccountId(req, true);
-        byte[] keySeed = ParameterParser.getKeySeed(req, accountId, true);
+        long accountId = HttpParameterParserUtil.getAccountId(req, true);
+        byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, accountId, true);
 
         String website = Convert.emptyToNull(req.getParameter("website"));
         if (website == null) {

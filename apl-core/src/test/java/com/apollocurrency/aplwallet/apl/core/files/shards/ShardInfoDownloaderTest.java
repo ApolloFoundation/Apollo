@@ -46,18 +46,6 @@ public class ShardInfoDownloaderTest {
 
     private ShardInfoDownloader downloader;
 
-    @BeforeEach
-    void setUp() {
-        doReturn(UUID.fromString("d5c22b16-935e-495d-aa3f-bb26ef2115d3")).when(chain).getChainId();
-        doReturn(chain).when(blockchainConfig).getChain();
-
-        doReturn(null).when(peersService).getAllConnectablePeers();
-        doReturn(null).when(peersService).findOrCreatePeer(null, "ADR1", true);
-        doReturn(null).when(peersService).findOrCreatePeer(null, "ADR2", true);
-        doReturn(blockchainConfig).when(peersService).getBlockchainConfig();
-        downloader = new ShardInfoDownloader(peersService);
-    }
-
     @BeforeAll
     public static void setUpClass() {
         //all 3 shards are OK
@@ -103,10 +91,35 @@ public class ShardInfoDownloaderTest {
         shardInfoByPeers_less3rd.put("7", si7);
 
     }
+
+    private static ShardingInfo readData(String fileName) {
+        String fn = "conf/data/" + fileName;
+        ObjectMapper mapper = new ObjectMapper();
+        InputStream is = ShardInfoDownloaderTest.class.getClassLoader().getResourceAsStream(fn);
+        ShardingInfo res = null;
+        try {
+            res = mapper.readValue(is, ShardingInfo.class);
+        } catch (IOException ex) {
+            System.out.println("Can not read file from resources: " + fn);
+        }
+        return res;
+    }
     /*
      *  TODO: finish tests, there is a lot to test yet
      *
      */
+
+    @BeforeEach
+    void setUp() {
+        doReturn(UUID.fromString("d5c22b16-935e-495d-aa3f-bb26ef2115d3")).when(chain).getChainId();
+        doReturn(chain).when(blockchainConfig).getChain();
+
+        doReturn(null).when(peersService).getAllConnectablePeers();
+        doReturn(null).when(peersService).findOrCreatePeer(null, "ADR1", true);
+        doReturn(null).when(peersService).findOrCreatePeer(null, "ADR2", true);
+        doReturn(blockchainConfig).when(peersService).getBlockchainConfig();
+        downloader = new ShardInfoDownloader(peersService);
+    }
 
     /**
      * Test of processAllPeersShardingInfo method, of class ShardInfoDownloader.
@@ -146,7 +159,7 @@ public class ShardInfoDownloaderTest {
      */
     @Test
     public void testGetShardInfoFromPeers() {
-        //should be nothing here, data are prepared        
+        //should be nothing here, data are prepared
     }
 
     /**
@@ -194,7 +207,6 @@ public class ShardInfoDownloaderTest {
         assertEquals(size, 3);
     }
 
-
     /**
      * Test of getShardsPeers method, of class ShardInfoDownloader.
      */
@@ -229,7 +241,7 @@ public class ShardInfoDownloaderTest {
         Map<String, ShardingInfo> result = downloader.getShardInfoByPeers();
         int size = result.size();
         //one gets removed
-        assertEquals(size,6);
+        assertEquals(size, 6);
     }
 
     /**
@@ -242,18 +254,5 @@ public class ShardInfoDownloaderTest {
         Map<Long, Set<PeerFileHashSum>> result = downloader.getGoodPeersMap();
         int size = result.get(3L).size();
         assertEquals(size, 6);
-    }
-
-    private static ShardingInfo readData(String fileName) {
-        String fn = "conf/data/" + fileName;
-        ObjectMapper mapper = new ObjectMapper();
-        InputStream is = ShardInfoDownloaderTest.class.getClassLoader().getResourceAsStream(fn);
-        ShardingInfo res = null;
-        try {
-            res = mapper.readValue(is, ShardingInfo.class);
-        } catch (IOException ex) {
-            System.out.println("Can not read file from resources: " + fn);
-        }
-        return res;
     }
 }

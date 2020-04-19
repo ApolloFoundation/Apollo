@@ -14,21 +14,21 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Comparator;
-import java.util.Map;
-import java.util.Optional;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.Comparator;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * <p>To provide height-based config changing as described in conf/chains.json it used special listener that, depending
- *  on current height, change part of config represented by {@link HeightConfig}</p>
- *  <p>Note that this class is not thread-safe and cannot be used without additional synchronization. Its important especially, when dynamic
- *  chain switch will be implemented and {@link BlockchainConfigUpdater#updateChain} method will be called not only at startup but from different
- *  parts of
- *  application in concurrent environment</p>
- *  <p>Typically config should be updated to the latest height at application startup to provide correct config values for blockchain logic, such as
+ * on current height, change part of config represented by {@link HeightConfig}</p>
+ * <p>Note that this class is not thread-safe and cannot be used without additional synchronization. Its important especially, when dynamic
+ * chain switch will be implemented and {@link BlockchainConfigUpdater#updateChain} method will be called not only at startup but from different
+ * parts of
+ * application in concurrent environment</p>
+ * <p>Typically config should be updated to the latest height at application startup to provide correct config values for blockchain logic, such as
  * blockTime, adaptiveBlockTime, maxBalance and so on</p>
  */
 @Singleton
@@ -38,7 +38,7 @@ public class BlockchainConfigUpdater {
     private BlockDao blockDao;
     private BlockchainConfig blockchainConfig;
     private Chain chain;
-    
+
     @Inject
     public BlockchainConfigUpdater(BlockchainConfig blockchainConfig, BlockDao blockDao) {
         this.blockchainConfig = blockchainConfig;
@@ -56,6 +56,7 @@ public class BlockchainConfigUpdater {
             blockchainConfig.setCurrentConfig(new HeightConfig(bp));
         }
     }
+
     public void onBlockPopped(@Observes @BlockEvent(BlockEventType.BLOCK_POPPED) Block block) {
         updateToHeight(block.getHeight() - 1);
     }
@@ -95,13 +96,13 @@ public class BlockchainConfigUpdater {
             return new HeightConfig(bpAtHeight);
         }
         Optional<Integer> maxHeight =
-                blockchainProperties
-                        .keySet()
-                        .stream()
-                        .filter(height -> targetHeight >= height)
-                        .max(Comparator.naturalOrder());
+            blockchainProperties
+                .keySet()
+                .stream()
+                .filter(height -> targetHeight >= height)
+                .max(Comparator.naturalOrder());
         return maxHeight
-                .map(height -> new HeightConfig(blockchainProperties.get(height)))
-                .orElse(null);
+            .map(height -> new HeightConfig(blockchainProperties.get(height)))
+            .orElse(null);
     }
 }

@@ -26,9 +26,9 @@ import java.math.BigInteger;
 import java.util.List;
 
 public interface Block {
-    int LEGACY_BLOCK_VERSION   = 3;
-    int REGULAR_BLOCK_VERSION  = 4;
-    int INSTANT_BLOCK_VERSION  = 5;
+    int LEGACY_BLOCK_VERSION = 3;
+    int REGULAR_BLOCK_VERSION = 4;
+    int INSTANT_BLOCK_VERSION = 5;
     int ADAPTIVE_BLOCK_VERSION = 6;
 
     int getVersion();

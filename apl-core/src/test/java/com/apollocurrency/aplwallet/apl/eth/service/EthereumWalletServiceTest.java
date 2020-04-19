@@ -4,6 +4,7 @@ import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.exchange.dao.UserErrorMessageDao;
 import com.apollocurrency.aplwallet.apl.exchange.exception.NotSufficientFundsException;
 import com.apollocurrency.aplwallet.apl.exchange.exception.NotValidTransactionException;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexBeanProducer;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexEthService;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,13 +35,20 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class EthereumWalletServiceTest {
-    @Mock Web3j web3j;
-    @Mock PropertiesHolder propertiesHolder;
-    @Mock KeyStoreService keyStoreService;
-    @Mock DexEthService dexEthService;
+    @Mock
+    Web3j web3j;
+    @Mock
+    DexBeanProducer dexBeanProducer;
+    @Mock
+    PropertiesHolder propertiesHolder;
+    @Mock
+    KeyStoreService keyStoreService;
+    @Mock
+    DexEthService dexEthService;
     @Mock
     UserErrorMessageDao userErrorMessageDao;
     String txHash = "0x88df016429689c079f3b2f6ad39fa052532c56795b733da78a91ebe6a713944b";
@@ -50,7 +58,9 @@ class EthereumWalletServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new EthereumWalletService(web3j, propertiesHolder, keyStoreService, dexEthService, userErrorMessageDao);
+        service = new EthereumWalletService(propertiesHolder, keyStoreService, dexEthService, userErrorMessageDao, dexBeanProducer);
+        when(dexBeanProducer.web3j()).thenReturn(web3j);
+        service.init();
     }
 
     @Test
@@ -82,6 +92,7 @@ class EthereumWalletServiceTest {
 
         assertNoConfirmations();
     }
+
     @Test
     void testGetNumberOfConfirmationsWhenBlockNumberResponseContainsError() throws IOException {
         mockTxErrorInResponse("Node is not available");
@@ -128,6 +139,7 @@ class EthereumWalletServiceTest {
         doReturn(mockRequest).when(web3j).ethGetTransactionReceipt(txHash);
         return mockRequest;
     }
+
     private Request mockEstimateGas() {
         Request mockRequest = mock(Request.class);
         doReturn(mockRequest).when(web3j).ethEstimateGas(any(org.web3j.protocol.core.methods.request.Transaction.class));
@@ -159,6 +171,7 @@ class EthereumWalletServiceTest {
         doReturn(receipt).when(ethTransaction).getResult();
         doReturn(blockNumber).when(receipt).getBlockNumber();
     }
+
     private void mockTxErrorInResponse(String error) throws IOException {
         EthGetTransactionReceipt ethTransaction = mockTxReceiptRequestResponse();
         Response.Error err = new Response.Error(0, error);
@@ -195,7 +208,7 @@ class EthereumWalletServiceTest {
     void testEstimateGas() throws IOException {
         mockEstimateGasRequestResponse(null, BigInteger.TEN);
 
-        BigInteger gasLimit = service.estimateGasLimit(accountAddress, "", function , BigInteger.TEN);
+        BigInteger gasLimit = service.estimateGasLimit(accountAddress, "", function, BigInteger.TEN);
 
         assertEquals(BigInteger.valueOf(11), gasLimit);
 
@@ -238,6 +251,7 @@ class EthereumWalletServiceTest {
 
         assertEquals(BigInteger.valueOf(5), gasLimit);
     }
+
     @Test
     void testValidateBalanceNotEnoughFundsToPayFee() throws IOException {
         mockEstimateGasRequestResponse(null, BigInteger.TEN);

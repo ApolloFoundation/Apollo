@@ -4,102 +4,98 @@
 
 package com.apollocurrency.aplwallet.apl.data;
 
+import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.BlockImpl;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.BlockImpl;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-
 public class BlockTestData {
-    public static final int GENESIS_BLOCK_HEIGHT = 0   ;
-    public static final int BLOCK_0_HEIGHT    = 1000   ;
-    public static final int BLOCK_1_HEIGHT    = 1500   ;
-    public static final int BLOCK_2_HEIGHT    = 2000   ;
-    public static final int BLOCK_3_HEIGHT    = 2499   ;
-    public static final int BLOCK_4_HEIGHT    = 2998   ;
-    public static final int BLOCK_5_HEIGHT    = 3500   ;
-    public static final int BLOCK_6_HEIGHT    = 5000   ;
-    public static final int BLOCK_7_HEIGHT    = 8000   ;
-    public static final int BLOCK_8_HEIGHT    = 10000  ;
-    public static final int BLOCK_9_HEIGHT    = 15000  ;
-    public static final int BLOCK_10_HEIGHT   = 15456  ;
-    public static final int BLOCK_11_HEIGHT   = 104595 ;
-    public static final int BLOCK_12_HEIGHT   = 517468 ;
-    public static final int BLOCK_13_HEIGHT   = 553326 ;
+    public static final int GENESIS_BLOCK_HEIGHT = 0;
+    public static final int BLOCK_0_HEIGHT = 1000;
+    public static final int BLOCK_1_HEIGHT = 1500;
+    public static final int BLOCK_2_HEIGHT = 2000;
+    public static final int BLOCK_3_HEIGHT = 2499;
+    public static final int BLOCK_4_HEIGHT = 2998;
+    public static final int BLOCK_5_HEIGHT = 3500;
+    public static final int BLOCK_6_HEIGHT = 5000;
+    public static final int BLOCK_7_HEIGHT = 8000;
+    public static final int BLOCK_8_HEIGHT = 10000;
+    public static final int BLOCK_9_HEIGHT = 15000;
+    public static final int BLOCK_10_HEIGHT = 15456;
+    public static final int BLOCK_11_HEIGHT = 104595;
+    public static final int BLOCK_12_HEIGHT = 517468;
+    public static final int BLOCK_13_HEIGHT = 553326;
 
-    public static final int GENESIS_BLOCK_TIMESTAMP = 0     ;
-    public static final int BLOCK_0_TIMESTAMP       = 9200  ;
-    public static final int BLOCK_1_TIMESTAMP       = 13800 ;
-    public static final int BLOCK_2_TIMESTAMP       = 18400 ;
-    public static final int BLOCK_3_TIMESTAMP       = 22998 ;
-    public static final int BLOCK_4_TIMESTAMP       = 28098 ;
-    public static final int BLOCK_5_TIMESTAMP       = 32200 ;
-    public static final int BLOCK_6_TIMESTAMP       = 46000 ;
-    public static final int BLOCK_7_TIMESTAMP       = 73600 ;
-    public static final int BLOCK_8_TIMESTAMP       = 92000 ;
-    public static final int BLOCK_9_TIMESTAMP       = 138000;
-    public static final int BLOCK_10_TIMESTAMP      = 142195;
-    public static final int BLOCK_11_TIMESTAMP      = 962274;
-    public static final int BLOCK_12_TIMESTAMP      = 41571157;
-    public static final int BLOCK_13_TIMESTAMP      = 41974339;
+    public static final int GENESIS_BLOCK_TIMESTAMP = 0;
+    public static final int BLOCK_0_TIMESTAMP = 9200;
+    public static final int BLOCK_1_TIMESTAMP = 13800;
+    public static final int BLOCK_2_TIMESTAMP = 18400;
+    public static final int BLOCK_3_TIMESTAMP = 22998;
+    public static final int BLOCK_4_TIMESTAMP = 28098;
+    public static final int BLOCK_5_TIMESTAMP = 32200;
+    public static final int BLOCK_6_TIMESTAMP = 46000;
+    public static final int BLOCK_7_TIMESTAMP = 73600;
+    public static final int BLOCK_8_TIMESTAMP = 92000;
+    public static final int BLOCK_9_TIMESTAMP = 138000;
+    public static final int BLOCK_10_TIMESTAMP = 142195;
+    public static final int BLOCK_11_TIMESTAMP = 962274;
+    public static final int BLOCK_12_TIMESTAMP = 41571157;
+    public static final int BLOCK_13_TIMESTAMP = 41974339;
 
-    public static final int GENESIS_BLOCK_TIMEOUT   = 0;
-    public static final int BLOCK_0_TIMEOUT         = 0;
-    public static final int BLOCK_1_TIMEOUT         = 0;
-    public static final int BLOCK_2_TIMEOUT         = 1;
-    public static final int BLOCK_3_TIMEOUT         = 4;
-    public static final int BLOCK_4_TIMEOUT         = 3;
-    public static final int BLOCK_5_TIMEOUT         = 0;
-    public static final int BLOCK_6_TIMEOUT         = 7;
-    public static final int BLOCK_7_TIMEOUT         = 0;
-    public static final int BLOCK_8_TIMEOUT         = 6;
-    public static final int BLOCK_9_TIMEOUT         = 9;
-    public static final int BLOCK_10_TIMEOUT        = 0;
-    public static final int BLOCK_11_TIMEOUT        = 9;
-    public static final int BLOCK_12_TIMEOUT        = 2;
-    public static final int BLOCK_13_TIMEOUT        = 0;
-
-
+    public static final int GENESIS_BLOCK_TIMEOUT = 0;
+    public static final int BLOCK_0_TIMEOUT = 0;
+    public static final int BLOCK_1_TIMEOUT = 0;
+    public static final int BLOCK_2_TIMEOUT = 1;
+    public static final int BLOCK_3_TIMEOUT = 4;
+    public static final int BLOCK_4_TIMEOUT = 3;
+    public static final int BLOCK_5_TIMEOUT = 0;
+    public static final int BLOCK_6_TIMEOUT = 7;
+    public static final int BLOCK_7_TIMEOUT = 0;
+    public static final int BLOCK_8_TIMEOUT = 6;
+    public static final int BLOCK_9_TIMEOUT = 9;
+    public static final int BLOCK_10_TIMEOUT = 0;
+    public static final int BLOCK_11_TIMEOUT = 9;
+    public static final int BLOCK_12_TIMEOUT = 2;
+    public static final int BLOCK_13_TIMEOUT = 0;
 
 
-    public static final long GENESIS_BLOCK_ID = -107868771406622438L ;
-    public static final long BLOCK_0_ID  = -468651855371775066L ;
-    public static final long BLOCK_1_ID  = -7242168411665692630L;
-    public static final long BLOCK_2_ID  = -6746699668324916965L;
-    public static final long BLOCK_3_ID  = -3540343645446911906L;
-    public static final long BLOCK_4_ID  =  2729391131122928659L;
-    public static final long BLOCK_5_ID  =  1842732555539684628L;
-    public static final long BLOCK_6_ID  = -5580266015477525080L;
-    public static final long BLOCK_7_ID  =  6438949995368593549L;
-    public static final long BLOCK_8_ID  =  7551185434952726924L;
-    public static final long BLOCK_9_ID =  8306616486060836520L;
+    public static final long GENESIS_BLOCK_ID = -107868771406622438L;
+    public static final long BLOCK_0_ID = -468651855371775066L;
+    public static final long BLOCK_1_ID = -7242168411665692630L;
+    public static final long BLOCK_2_ID = -6746699668324916965L;
+    public static final long BLOCK_3_ID = -3540343645446911906L;
+    public static final long BLOCK_4_ID = 2729391131122928659L;
+    public static final long BLOCK_5_ID = 1842732555539684628L;
+    public static final long BLOCK_6_ID = -5580266015477525080L;
+    public static final long BLOCK_7_ID = 6438949995368593549L;
+    public static final long BLOCK_8_ID = 7551185434952726924L;
+    public static final long BLOCK_9_ID = 8306616486060836520L;
     public static final long BLOCK_10_ID = -6206981717632723220L;
     public static final long BLOCK_11_ID = -4166853316012435358L;
-    public static final long BLOCK_12_ID =  6282714800700403321L;
+    public static final long BLOCK_12_ID = 6282714800700403321L;
     public static final long BLOCK_13_ID = -5966687593234418746L;
 
-    public static final long GENESIS_BLOCK_GENERATOR =  1739068987193023818L ;
-    public static final long BLOCK_0_GENERATOR       =  9211698109297098287L ;
-    public static final long BLOCK_1_GENERATOR       =  9211698109297098287L ;
-    public static final long BLOCK_2_GENERATOR       =  5564664969772495473L ;
-    public static final long BLOCK_3_GENERATOR       = -902424482979450876L  ;
-    public static final long BLOCK_4_GENERATOR       =  4363726829568989435L ;
-    public static final long BLOCK_5_GENERATOR       =  4363726829568989435L ;
-    public static final long BLOCK_6_GENERATOR       = -6535098620285495989L ;
-    public static final long BLOCK_7_GENERATOR       =  6415509874415488619L ;
-    public static final long BLOCK_8_GENERATOR       =  7160808267188566436L ;
-    public static final long BLOCK_9_GENERATOR       = -3985647971895643754L ;
-    public static final long BLOCK_10_GENERATOR      =  4749500066832760520L ;
-    public static final long BLOCK_11_GENERATOR      =  3883484057046974168L ;
-    public static final long BLOCK_12_GENERATOR      = 9211698109297098287L  ;
-    public static final long BLOCK_13_GENERATOR      = -208393164898941117L  ;
-
-    private final TransactionTestData td = new TransactionTestData();
+    public static final long GENESIS_BLOCK_GENERATOR = 1739068987193023818L;
+    public static final long BLOCK_0_GENERATOR = 9211698109297098287L;
+    public static final long BLOCK_1_GENERATOR = 9211698109297098287L;
+    public static final long BLOCK_2_GENERATOR = 5564664969772495473L;
+    public static final long BLOCK_3_GENERATOR = -902424482979450876L;
+    public static final long BLOCK_4_GENERATOR = 4363726829568989435L;
+    public static final long BLOCK_5_GENERATOR = 4363726829568989435L;
+    public static final long BLOCK_6_GENERATOR = -6535098620285495989L;
+    public static final long BLOCK_7_GENERATOR = 6415509874415488619L;
+    public static final long BLOCK_8_GENERATOR = 7160808267188566436L;
+    public static final long BLOCK_9_GENERATOR = -3985647971895643754L;
+    public static final long BLOCK_10_GENERATOR = 4749500066832760520L;
+    public static final long BLOCK_11_GENERATOR = 3883484057046974168L;
+    public static final long BLOCK_12_GENERATOR = 9211698109297098287L;
+    public static final long BLOCK_13_GENERATOR = -208393164898941117L;
     public final Block GENESIS_BLOCK;
     public final Block BLOCK_0;
     public final Block BLOCK_1;
@@ -117,8 +113,8 @@ public class BlockTestData {
     public final Block BLOCK_13;
     public final Block LAST_BLOCK;
     public final Block NEW_BLOCK;
-
     public final List<Block> BLOCKS;
+    private final TransactionTestData td = new TransactionTestData();
 
     public BlockTestData() {
         GENESIS_BLOCK = buildBlock(GENESIS_BLOCK_ID     , GENESIS_BLOCK_HEIGHT  , -1, GENESIS_BLOCK_TIMESTAMP   , 0                    ,              0             , 0             ,0        , "0000000000000000000000000000000000000000000000000000000000000000","00"              , 5124095     , 8235640967557025109L   ,  "bc26bb638c9991f88fa52365591e00e22d3e9f9ad721ca4fe1683c8795a037e5"    , "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", "0000000000000000000000000000000000000000000000000000000000000000", GENESIS_BLOCK_GENERATOR ,GENESIS_BLOCK_TIMEOUT, Collections.emptyList());
@@ -135,16 +131,21 @@ public class BlockTestData {
         BLOCK_10 =      buildBlock( BLOCK_10_ID         , BLOCK_10_HEIGHT       ,  4, BLOCK_10_TIMESTAMP        , 8306616486060836520L ,              0             , 200000000     ,207      , "550dfe6da8732c1977c7545675f8dc163995aaba5533306b7a1f1b9364190dd3","02dfb519fc012db3", 23058430050L,-4166853316012435358L   ,  "df545469ed5a9405e0ff6efcdf468e61564776568c8b227f776f24c47206af46"    , "3d1c22000eb41599cb12dfbfaa3980353fa84cdf99145d1fcc92886551044a0c0b388c539efa48414c21251e493e468d97a2df12be24e9a33dec4521fdb6c2eb", "a8460f09af074773186c58688eb29215a81d5b0b10fc9e5fc5275b2f39fd93bb", BLOCK_10_GENERATOR       ,BLOCK_10_TIMEOUT,Arrays.asList(td.TRANSACTION_9, td.TRANSACTION_10, td.TRANSACTION_11, td.TRANSACTION_12));
         BLOCK_11 =      buildBlock( BLOCK_11_ID         , BLOCK_11_HEIGHT       ,  6, BLOCK_11_TIMESTAMP        , -6206981717632723220L,              0             , 0             ,0        , "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","02dfb51a2bb035b4", 23058430050L, 433871417191886464L    ,  "82e59d851fdf0d01ca1ee20df906009cd66885cc63e8314ebde80dc5e38987fa"    , "202acda4d57f2a24212d265053241a07608de29a6dd8252994cf8be197765d02a585c676aca15e7f43a57d7747173d51435d9f2820da637ca8bc9cd1e536d761", "ec562889035fdca9d59d9bdca460992c01c5286278104287a989834eeffcb83e", BLOCK_11_GENERATOR       ,BLOCK_11_TIMEOUT, Collections.emptyList());
         BLOCK_12 =      buildBlock( BLOCK_12_ID         , BLOCK_12_HEIGHT       ,  5, BLOCK_12_TIMESTAMP        ,-3194395162061405253L ,              12000000000L  ,23000000000L   ,414      , "bb831a55863aabd3d2622a1692a4c03ba9eb14839902e029a702c58aeea6a935","3d46b0302ef95c"  , 7686143350L , BLOCK_13_ID                       ,  "d60150d67b47f37a90ca0b0c7a0151af1c2d9a69687f3eef75f42d7b5f12c191"    , "d2c6b60abaf85e17f65f339879fda8de5346415908a9cbb9a21b3c6d24bd1d0454222fb8962ad2aec679da0d8fb7e835b76a35301c33e925b48245a9d24954de", "4555a1d9a7c2226b9a5797e56d245485cb94fdb2495fc8ca31c3297e597c7b68", BLOCK_12_GENERATOR       ,BLOCK_12_TIMEOUT,  List.of(td.TRANSACTION_13));
-        BLOCK_13 =      buildBlock(	BLOCK_13_ID         , BLOCK_13_HEIGHT       ,  3, BLOCK_13_TIMESTAMP        ,-420771891665807004L	 ,              0             ,1000000000	  ,2668	     ,"6459caa1311e29fa9c60bed5752f161a5e82b77328cac949cb7afbaccacfbb8e","3de7206ceaebce"	 , 168574215	 ,0                       ,  "dc3b7c24f1e6caba84e39ff7b8f4040be4c614b16b7e697364cedecdd072b6df"    , "866847568d2518e1c1c6f97ee014b6f15e4197e5ff9041ab449d9087aba343060e746dc56dbc34966d42f6fd326dc5c4b741ae330bd5fa56539022bd75643cd6", "cf8dc4e015626b309ca7518a390e3e1e7b058a83428287ff39dc49b1518df50c", BLOCK_13_GENERATOR        ,BLOCK_13_TIMEOUT, List.of(td.TRANSACTION_14));
+        BLOCK_13 =      buildBlock(	BLOCK_13_ID         , BLOCK_13_HEIGHT       ,  3, BLOCK_13_TIMESTAMP        ,-420771891665807004L  ,              0             ,1000000000	  ,2668	   ,"6459caa1311e29fa9c60bed5752f161a5e82b77328cac949cb7afbaccacfbb8e","3de7206ceaebce"	, 168574215	 ,0                      ,  "dc3b7c24f1e6caba84e39ff7b8f4040be4c614b16b7e697364cedecdd072b6df"    , "866847568d2518e1c1c6f97ee014b6f15e4197e5ff9041ab449d9087aba343060e746dc56dbc34966d42f6fd326dc5c4b741ae330bd5fa56539022bd75643cd6", "cf8dc4e015626b309ca7518a390e3e1e7b058a83428287ff39dc49b1518df50c", BLOCK_13_GENERATOR        ,BLOCK_13_TIMEOUT, List.of(td.TRANSACTION_14));
         BLOCKS = Arrays.asList(GENESIS_BLOCK, BLOCK_0, BLOCK_1, BLOCK_2, BLOCK_3, BLOCK_4, BLOCK_5, BLOCK_6, BLOCK_7, BLOCK_8, BLOCK_9, BLOCK_10, BLOCK_11, BLOCK_12, BLOCK_13);
         LAST_BLOCK = BLOCKS.stream().max(Comparator.comparing(Block::getHeight)).get();
-        NEW_BLOCK = buildBlock(-1603399584319711244L, LAST_BLOCK.getHeight() + 1, 3, LAST_BLOCK.getTimestamp() + 60, LAST_BLOCK.getId(), 0, 0, 0, "76a5fa85156953c4edaef2fa9718bcc355c7650a525401b556622d913662fe73", "460ea19d66a03d",	139844025, 0, "26d0567afcd911004d5e2beb6835a087859d3fc9ef838f2c437ebf3f8f8faf0e",	"2c4937fd091efcb856dc20541c685ca483bca781419cfbc45a3d00eefbd0dd018ae99e030ce9f84ff483fba5855e108684da8bbc471938b6707edd488331d0f5", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", 983818929690189948L, 0);
+        NEW_BLOCK = buildBlock(-1603399584319711244L, LAST_BLOCK.getHeight() + 1, 3, LAST_BLOCK.getTimestamp() + 60, LAST_BLOCK.getId(), 0, 0, 0, "76a5fa85156953c4edaef2fa9718bcc355c7650a525401b556622d913662fe73", "460ea19d66a03d", 139844025, 0, "26d0567afcd911004d5e2beb6835a087859d3fc9ef838f2c437ebf3f8f8faf0e", "2c4937fd091efcb856dc20541c685ca483bca781419cfbc45a3d00eefbd0dd018ae99e030ce9f84ff483fba5855e108684da8bbc471938b6707edd488331d0f5", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", 983818929690189948L, 0);
     }
 
-    public Block buildBlock(long id, int height, int version, int timestamp, long prevBlockId, long totalAmount, long totalFee, int payloadLength, String prevBlockHash, String cumulativeDifficulty, long baseTarget, long nextBlockId, String generationSignature, String blockSignature, String payloadHash, long generatorId, int timeot, List<Transaction> txs) {
+    public static Block buildBlock(long id, int height, int version, int timestamp, long prevBlockId, long totalAmount, long totalFee, int payloadLength, String prevBlockHash, String cumulativeDifficulty, long baseTarget, long nextBlockId, String generationSignature, String blockSignature, String payloadHash, long generatorId, int timeot, List<Transaction> txs) {
         return new BlockImpl(version, timestamp, prevBlockId, totalAmount, totalFee, payloadLength, Convert.parseHexString(payloadHash), generatorId, Convert.parseHexString(generationSignature), Convert.parseHexString(blockSignature), Convert.parseHexString(prevBlockHash), new BigInteger(Convert.parseHexString(cumulativeDifficulty)), baseTarget, nextBlockId, height, id, timeot, txs);
     }
-    public Block buildBlock(long id, int height, int version, int timestamp, long prevBlockId, long totalAmount, long totalFee, int payloadLength, String prevBlockHash, String cumulativeDifficulty, long baseTarget, long nextBlockId, String generationSignature, String blockSignature, String payloadHash, long generatorId, int timeot) {
+
+    public static Block buildBlock(long id, int height, int version, int timestamp, long prevBlockId, long totalAmount, long totalFee, int payloadLength, String prevBlockHash, String cumulativeDifficulty, long baseTarget, long nextBlockId, String generationSignature, String generatorPublickKey, String blockSignature, String payloadHash, long generatorId, int timeot, List<Transaction> txs) {
+        return new BlockImpl(version, timestamp, prevBlockId, totalAmount, totalFee, payloadLength, Convert.parseHexString(payloadHash), generatorId, Convert.parseHexString(generatorPublickKey), Convert.parseHexString(generationSignature), Convert.parseHexString(blockSignature), Convert.parseHexString(prevBlockHash), new BigInteger(Convert.parseHexString(cumulativeDifficulty)), baseTarget, nextBlockId, height, id, timeot, txs);
+    }
+
+    public static Block buildBlock(long id, int height, int version, int timestamp, long prevBlockId, long totalAmount, long totalFee, int payloadLength, String prevBlockHash, String cumulativeDifficulty, long baseTarget, long nextBlockId, String generationSignature, String blockSignature, String payloadHash, long generatorId, int timeot) {
         return new BlockImpl(version, timestamp, prevBlockId, totalAmount, totalFee, payloadLength, Convert.parseHexString(payloadHash), generatorId, Convert.parseHexString(generationSignature), Convert.parseHexString(blockSignature), Convert.parseHexString(prevBlockHash), new BigInteger(Convert.parseHexString(cumulativeDifficulty)), baseTarget, nextBlockId, height, id, timeot, Collections.emptyList());
     }
 }

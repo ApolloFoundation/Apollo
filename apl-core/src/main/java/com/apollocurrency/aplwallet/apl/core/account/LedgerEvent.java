@@ -8,7 +8,7 @@ import java.util.Map;
 
 /**
  * Ledger events
- *
+ * <p>
  * There must be a ledger event defined for each transaction (type,subtype) pair.  When adding
  * a new event, do not change the existing code assignments since these codes are stored in
  * the event_type field of the account_ledger table.
@@ -25,9 +25,12 @@ public enum LedgerEvent {
     TAGGED_DATA_UPLOAD(47, true), TAGGED_DATA_EXTEND(48, true), // TYPE_SHUFFLING
     SHUFFLING_REGISTRATION(51, true), SHUFFLING_PROCESSING(52, true), SHUFFLING_CANCELLATION(53, true), SHUFFLING_DISTRIBUTION(54, true), // TYPE_UPDATE
     UPDATE_CRITICAL(59, true), UPDATE_IMPORTANT(60, true), UPDATE_MINOR(61, true),
-    DEX_REFUND_FROZEN_MONEY(62, true), DEX_FREEZE_MONEY(63, true),  DEX_TRANSFER_MONEY(64, true);
-    /** Event code mapping */
+    DEX_REFUND_FROZEN_MONEY(62, true), DEX_FREEZE_MONEY(63, true), DEX_TRANSFER_MONEY(64, true), UPDATE_V2(65, true);
+    /**
+     * Event code mapping
+     */
     private static final Map<Integer, LedgerEvent> eventMap = new HashMap<>();
+
     static {
         for (LedgerEvent event : values()) {
             if (eventMap.put(event.code, event) != null) {
@@ -35,16 +38,21 @@ public enum LedgerEvent {
             }
         }
     }
-    /** Event code */
-    final int code;
-    /** Event identifier is a transaction */
+
+    /**
+     * Event code
+     */
+    public final int code;
+    /**
+     * Event identifier is a transaction
+     */
     private final boolean isTransaction;
 
     /**
      * Create the ledger event
      *
-     * @param   code                    Event code
-     * @param   isTransaction           Event identifier is a transaction
+     * @param code          Event code
+     * @param isTransaction Event identifier is a transaction
      */
     LedgerEvent(int code, boolean isTransaction) {
         this.code = code;
@@ -52,28 +60,10 @@ public enum LedgerEvent {
     }
 
     /**
-     * Check if the event identifier is a transaction
-     *
-     * @return                          TRUE if the event identifier is a transaction
-     */
-    public boolean isTransaction() {
-        return isTransaction;
-    }
-
-    /**
-     * Return the event code
-     *
-     * @return                          Event code
-     */
-    public int getCode() {
-        return code;
-    }
-
-    /**
      * Get the event from the event code
      *
-     * @param   code                    Event code
-     * @return                          Event
+     * @param code Event code
+     * @return Event
      */
     public static LedgerEvent fromCode(int code) {
         LedgerEvent event = eventMap.get(code);
@@ -82,5 +72,23 @@ public enum LedgerEvent {
         }
         return event;
     }
-    
+
+    /**
+     * Check if the event identifier is a transaction
+     *
+     * @return TRUE if the event identifier is a transaction
+     */
+    public boolean isTransaction() {
+        return isTransaction;
+    }
+
+    /**
+     * Return the event code
+     *
+     * @return Event code
+     */
+    public int getCode() {
+        return code;
+    }
+
 }

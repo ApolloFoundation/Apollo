@@ -32,13 +32,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
  * @author alukin@gmail.com
  */
 @ApplicationScoped
 public class BackendControlService {
-    
-    @Inject @Setter
+
+    @Inject
+    @Setter
     AplAppStatus appStatus;
 
     @Inject
@@ -71,53 +71,53 @@ public class BackendControlService {
 
     public NodeStatusInfo getNodeStatus() {
         NodeStatusInfo res = new NodeStatusInfo();
-        OperatingSystemMXBean mxbean =  ManagementFactory.getOperatingSystemMXBean();
-        res.threadsRunning=java.lang.Thread.activeCount();
+        OperatingSystemMXBean mxbean = ManagementFactory.getOperatingSystemMXBean();
+        res.threadsRunning = java.lang.Thread.activeCount();
         res.cpuCount = Runtime.getRuntime().availableProcessors();
         res.cpuLoad = mxbean.getSystemLoadAverage();
-        res.operatingSystem=mxbean.getName()+" Version:"+mxbean.getVersion()+" Arch:"+mxbean.getArch();
+        res.operatingSystem = mxbean.getName() + " Version:" + mxbean.getVersion() + " Arch:" + mxbean.getArch();
         res.memoryTotal = Runtime.getRuntime().totalMemory();
-        res.memoryFree  = Runtime.getRuntime().freeMemory();    
+        res.memoryFree = Runtime.getRuntime().freeMemory();
         return res;
-    } 
+    }
 
     public List<DurableTaskInfo> getNodeTasks(String state) {
         ArrayList<DurableTaskInfo> res;
-        if(state.equalsIgnoreCase(DurableTaskInfo.TASK_STATES[5])){ //"All
+        if (state.equalsIgnoreCase(DurableTaskInfo.TASK_STATES[5])) { //"All
             res = new ArrayList(appStatus.getTasksList());
-        }else{
-            res=new ArrayList<>();
-            for(DurableTaskInfo dti: appStatus.getTasksList()){
-                if(dti.stateOfTask.equalsIgnoreCase(state)){
+        } else {
+            res = new ArrayList<>();
+            for (DurableTaskInfo dti : appStatus.getTasksList()) {
+                if (dti.stateOfTask.equalsIgnoreCase(state)) {
                     res.add(dti);
                 }
             }
         }
         return res;
     }
-    
-    public RunningThreadsInfo getThreadsInfo(){
-       RunningThreadsInfo res = new  RunningThreadsInfo();
-       ThreadMXBean tmxb = ManagementFactory.getThreadMXBean();
-       long[]  tids = tmxb.getAllThreadIds();
-       for(long tid:tids){
-           ThreadInfoDTO tdto = new ThreadInfoDTO();
-           ThreadInfo ti = tmxb.getThreadInfo(tid);
-           tdto.name = ti.getThreadName();
-           tdto.state=ti.getThreadState().toString();
-           tdto.priority= ti.getPriority();
-           tdto.isDaemon=ti.isDaemon();
-           tdto.cpuTime=tmxb.getThreadCpuTime(tid);
-           res.threads.add(tdto);
-       }
-       return res;
+
+    public RunningThreadsInfo getThreadsInfo() {
+        RunningThreadsInfo res = new RunningThreadsInfo();
+        ThreadMXBean tmxb = ManagementFactory.getThreadMXBean();
+        long[] tids = tmxb.getAllThreadIds();
+        for (long tid : tids) {
+            ThreadInfoDTO tdto = new ThreadInfoDTO();
+            ThreadInfo ti = tmxb.getThreadInfo(tid);
+            tdto.name = ti.getThreadName();
+            tdto.state = ti.getThreadState().toString();
+            tdto.priority = ti.getPriority();
+            tdto.isDaemon = ti.isDaemon();
+            tdto.cpuTime = tmxb.getThreadCpuTime(tid);
+            res.threads.add(tdto);
+        }
+        return res;
     }
-    
-   //TODO: use AdminPasswordVerifier component 
-   public boolean isAdminPasswordOK(HttpServletRequest request) {
-       boolean res = apv.checkPassword(request);
-       return res;
-   }
+
+    //TODO: use AdminPasswordVerifier component
+    public boolean isAdminPasswordOK(HttpServletRequest request) {
+        boolean res = apv.checkPassword(request);
+        return res;
+    }
 
     public NodeHealthInfo getNodeHealth() {
         NodeHealthInfo info = new NodeHealthInfo();

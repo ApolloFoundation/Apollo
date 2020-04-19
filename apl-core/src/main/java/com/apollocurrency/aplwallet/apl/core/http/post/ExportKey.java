@@ -7,8 +7,8 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
@@ -26,20 +26,20 @@ import javax.servlet.http.HttpServletRequest;
 public class ExportKey extends AbstractAPIRequestHandler {
 
     public ExportKey() {
-        super(new APITag[] {APITag.ACCOUNTS});
+        super(new APITag[]{APITag.ACCOUNTS});
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
 
-        String passphrase = ParameterParser.getPassphrase(request, true);
-        long accountId = ParameterParser.getAccountId(request, true);
+        String passphrase = HttpParameterParserUtil.getPassphrase(request, true);
+        long accountId = HttpParameterParserUtil.getAccountId(request, true);
 
-        byte [] secretBytes = Helper2FA.findAplSecretBytes(accountId, passphrase);
+        byte[] secretBytes = Helper2FA.findAplSecretBytes(accountId, passphrase);
 
         JSONObject response = new JSONObject();
         JSONData.putAccount(response, "account", accountId);
-        response.put("secretBytes", Convert.toHexString(secretBytes) );
+        response.put("secretBytes", Convert.toHexString(secretBytes));
 
         return response;
     }

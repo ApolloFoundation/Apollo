@@ -20,21 +20,21 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 /**
- * Publish exchange offer for {@link com.apollocurrency.aplwallet.apl.CurrencyType#EXCHANGEABLE} currency
+ * Publish exchange offer for {@link com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType#EXCHANGEABLE} currency
  * <p>
  * Parameters
  * <ul>
@@ -68,23 +68,23 @@ public final class PublishExchangeOffer extends CreateTransaction {
 
     public PublishExchangeOffer() {
         super(new APITag[]{APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "buyRateATM", "sellRateATM",
-                "totalBuyLimit", "totalSellLimit", "initialBuySupply", "initialSellSupply", "expirationHeight");
+            "totalBuyLimit", "totalSellLimit", "initialBuySupply", "initialSellSupply", "expirationHeight");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        Currency currency = ParameterParser.getCurrency(req);
-        long buyRateATM = ParameterParser.getLong(req, "buyRateATM", 0, Long.MAX_VALUE, true);
-        long sellRateATM = ParameterParser.getLong(req, "sellRateATM", 0, Long.MAX_VALUE, true);
-        long totalBuyLimit = ParameterParser.getLong(req, "totalBuyLimit", 0, Long.MAX_VALUE, true);
-        long totalSellLimit = ParameterParser.getLong(req, "totalSellLimit", 0, Long.MAX_VALUE, true);
-        long initialBuySupply = ParameterParser.getLong(req, "initialBuySupply", 0, Long.MAX_VALUE, true);
-        long initialSellSupply = ParameterParser.getLong(req, "initialSellSupply", 0, Long.MAX_VALUE, true);
-        int expirationHeight = ParameterParser.getInt(req, "expirationHeight", 0, Integer.MAX_VALUE, true);
-        Account account = ParameterParser.getSenderAccount(req);
+        Currency currency = HttpParameterParserUtil.getCurrency(req);
+        long buyRateATM = HttpParameterParserUtil.getLong(req, "buyRateATM", 0, Long.MAX_VALUE, true);
+        long sellRateATM = HttpParameterParserUtil.getLong(req, "sellRateATM", 0, Long.MAX_VALUE, true);
+        long totalBuyLimit = HttpParameterParserUtil.getLong(req, "totalBuyLimit", 0, Long.MAX_VALUE, true);
+        long totalSellLimit = HttpParameterParserUtil.getLong(req, "totalSellLimit", 0, Long.MAX_VALUE, true);
+        long initialBuySupply = HttpParameterParserUtil.getLong(req, "initialBuySupply", 0, Long.MAX_VALUE, true);
+        long initialSellSupply = HttpParameterParserUtil.getLong(req, "initialSellSupply", 0, Long.MAX_VALUE, true);
+        int expirationHeight = HttpParameterParserUtil.getInt(req, "expirationHeight", 0, Integer.MAX_VALUE, true);
+        Account account = HttpParameterParserUtil.getSenderAccount(req);
 
         Attachment attachment = new MonetarySystemPublishExchangeOffer(currency.getId(), buyRateATM, sellRateATM,
-                totalBuyLimit, totalSellLimit, initialBuySupply, initialSellSupply, expirationHeight);
+            totalBuyLimit, totalSellLimit, initialBuySupply, initialSellSupply, expirationHeight);
         try {
             return createTransaction(req, account, attachment);
         } catch (AplException.InsufficientBalanceException e) {

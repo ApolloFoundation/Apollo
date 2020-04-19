@@ -27,12 +27,14 @@ public class HeightConfig {
         this.maxPayloadLength = bp.getMaxNumberOfTransactions() * Constants.MIN_TRANSACTION_SIZE;
         this.maxBalanceAtm = bp.getMaxBalance() * Constants.ONE_APL;
         this.initialBaseTarget = BigInteger.valueOf(2).pow(63).divide(BigInteger.valueOf(bp.getBlockTime() * bp.getMaxBalance())).longValue();
-        this.maxBaseTarget = initialBaseTarget *  50;
+        this.maxBaseTarget = initialBaseTarget * 50;
         this.minBaseTarget = initialBaseTarget * 9 / 10;
         this.blockTimeScaledConfig = new BlockTimeScaledConfig(bp.getBlockTime());
     }
 
-    public int getReferencedTransactionHeightSpan() {return blockTimeScaledConfig.getReferencedTransactionHeightSpan();}
+    public int getReferencedTransactionHeightSpan() {
+        return blockTimeScaledConfig.getReferencedTransactionHeightSpan();
+    }
 
     public int getMaxPayloadLength() {
         return maxPayloadLength;
@@ -56,23 +58,41 @@ public class HeightConfig {
         return minBaseTarget;
     }
 
-    public int getHeight() {return bp.getHeight();}
+    public int getHeight() {
+        return bp.getHeight();
+    }
 
-    public int getMaxNumberOfTransactions() {return bp.getMaxNumberOfTransactions();}
+    public int getMaxNumberOfTransactions() {
+        return bp.getMaxNumberOfTransactions();
+    }
 
-    public int getBlockTime() {return bp.getBlockTime();}
+    public int getBlockTime() {
+        return bp.getBlockTime();
+    }
 
-    public long getMaxBalanceAPL() {return bp.getMaxBalance();}
+    public long getMaxBalanceAPL() {
+        return bp.getMaxBalance();
+    }
 
-    public int getMaxBlockTimeLimit() {return bp.getMaxBlockTimeLimit();}
+    public int getMaxBlockTimeLimit() {
+        return bp.getMaxBlockTimeLimit();
+    }
 
-    public int getMinBlockTimeLimit() {return bp.getMinBlockTimeLimit();}
+    public int getMinBlockTimeLimit() {
+        return bp.getMinBlockTimeLimit();
+    }
 
-    public String getShardingDigestAlgorithm() {return bp.getShardingSettings().getDigestAlgorithm();}
+    public String getShardingDigestAlgorithm() {
+        return bp.getShardingSettings().getDigestAlgorithm();
+    }
 
-    public ConsensusSettings.Type getConsensusType() {return bp.getConsensusSettings().getType();}
+    public ConsensusSettings.Type getConsensusType() {
+        return bp.getConsensusSettings().getType();
+    }
 
-    public int getAdaptiveBlockTime() {return bp.getConsensusSettings().getAdaptiveForgingSettings().getAdaptiveBlockTime();}
+    public int getAdaptiveBlockTime() {
+        return bp.getConsensusSettings().getAdaptiveForgingSettings().getAdaptiveBlockTime();
+    }
 
     public int getNumberOfTransactionsInAdaptiveBlock() {
         return bp.getConsensusSettings().getAdaptiveForgingSettings().getNumberOfTransactions();
@@ -96,11 +116,11 @@ public class HeightConfig {
         if (!(o instanceof HeightConfig)) return false;
         HeightConfig that = (HeightConfig) o;
         return maxPayloadLength == that.maxPayloadLength &&
-                maxBalanceAtm == that.maxBalanceAtm &&
-                initialBaseTarget == that.initialBaseTarget &&
-                maxBaseTarget == that.maxBaseTarget &&
-                minBaseTarget == that.minBaseTarget &&
-                Objects.equals(bp, that.bp);
+            maxBalanceAtm == that.maxBalanceAtm &&
+            initialBaseTarget == that.initialBaseTarget &&
+            maxBaseTarget == that.maxBaseTarget &&
+            minBaseTarget == that.minBaseTarget &&
+            Objects.equals(bp, that.bp);
     }
 
     @Override
@@ -111,12 +131,12 @@ public class HeightConfig {
     @Override
     public String toString() {
         return "HeightConfig{" +
-                "bp=" + bp +
-                ", maxPayloadLength=" + maxPayloadLength +
-                ", maxBalanceAtm=" + maxBalanceAtm +
-                ", initialBaseTarget=" + initialBaseTarget +
-                ", maxBaseTarget=" + maxBaseTarget +
-                ", minBaseTarget=" + minBaseTarget +
-                '}';
+            "bp=" + bp +
+            ", maxPayloadLength=" + maxPayloadLength +
+            ", maxBalanceAtm=" + maxBalanceAtm +
+            ", initialBaseTarget=" + initialBaseTarget +
+            ", maxBaseTarget=" + maxBaseTarget +
+            ", minBaseTarget=" + minBaseTarget +
+            '}';
     }
 }

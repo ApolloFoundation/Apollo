@@ -21,38 +21,39 @@
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
+@Deprecated
 public final class GetAccountBlocks extends AbstractAPIRequestHandler {
 
     public GetAccountBlocks() {
-        super(new APITag[] {APITag.ACCOUNTS}, "account", "timestamp", "firstIndex", "lastIndex", "includeTransactions");
+        super(new APITag[]{APITag.ACCOUNTS}, "account", "timestamp", "firstIndex", "lastIndex", "includeTransactions");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        long accountId = ParameterParser.getAccountId(req, true);
-        int timestamp = ParameterParser.getTimestamp(req);
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
+        long accountId = HttpParameterParserUtil.getAccountId(req, true);
+        int timestamp = HttpParameterParserUtil.getTimestamp(req);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
 
         boolean includeTransactions = "true".equalsIgnoreCase(req.getParameter("includeTransactions"));
 
         JSONArray blocks = new JSONArray();
-        try (DbIterator<? extends Block> iterator = lookupBlockchain().getBlocks(accountId, timestamp, firstIndex, lastIndex)) {
+        try (DbIterator<? extends Block> iterator = lookupBlockchain().getBlocksByAccount(accountId, timestamp, firstIndex, lastIndex)) {
             while (iterator.hasNext()) {
                 Block block = iterator.next();
                 blocks.add(JSONData.block(block, includeTransactions, false));

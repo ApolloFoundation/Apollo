@@ -20,37 +20,58 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import java.nio.ByteBuffer;
-
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 
-public interface Appendix {
+import java.nio.ByteBuffer;
 
-    int getSize();
-    int getFullSize();
-    void putBytes(ByteBuffer buffer);
-    JSONObject getJSONObject();
-    byte getVersion();
-    int getBaselineFeeHeight();
-    Fee getBaselineFee(Transaction transaction);
-    int getNextFeeHeight();
-    Fee getNextFee(Transaction transaction);
-    default boolean isPhasable() {return false;}
-    boolean isPhased(Transaction transaction);
-    void apply(Transaction transaction, Account senderAccount, Account recipientAccount);
-    void validateAtFinish(Transaction transaction, int blockHeight) throws AplException.ValidationException;
-    void validate(Transaction transaction, int blockHeight ) throws AplException.ValidationException;
+public interface Appendix {
 
     static boolean hasAppendix(String appendixName, JSONObject attachmentData) {
         return attachmentData.get("version." + appendixName) != null;
     }
 
-    default void loadPrunable(Transaction transaction) {}
-    default void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {}
-    default String getAppendixName() { return null;}
+    int getSize();
+
+    int getFullSize();
+
+    void putBytes(ByteBuffer buffer);
+
+    JSONObject getJSONObject();
+
+    byte getVersion();
+
+    int getBaselineFeeHeight();
+
+    Fee getBaselineFee(Transaction transaction);
+
+    int getNextFeeHeight();
+
+    Fee getNextFee(Transaction transaction);
+
+    default boolean isPhasable() {
+        return false;
+    }
+
+    boolean isPhased(Transaction transaction);
+
+    void apply(Transaction transaction, Account senderAccount, Account recipientAccount);
+
+    void validateAtFinish(Transaction transaction, int blockHeight) throws AplException.ValidationException;
+
+    void validate(Transaction transaction, int blockHeight) throws AplException.ValidationException;
+
+    default void loadPrunable(Transaction transaction) {
+    }
+
+    default void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
+    }
+
+    default String getAppendixName() {
+        return null;
+    }
 
 }

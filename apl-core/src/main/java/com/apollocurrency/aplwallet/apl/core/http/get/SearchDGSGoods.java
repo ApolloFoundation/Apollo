@@ -21,22 +21,21 @@
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
 import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
-import javax.enterprise.inject.Vetoed;
-
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
@@ -45,21 +44,21 @@ public final class SearchDGSGoods extends AbstractAPIRequestHandler {
 
     private DGSService service = CDI.current().select(DGSService.class).get();
 
+    public SearchDGSGoods() {
+        super(new APITag[]{APITag.DGS, APITag.SEARCH}, "query", "tag", "seller", "firstIndex", "lastIndex", "inStockOnly", "hideDelisted", "includeCounts");
+    }
+
     @Override
     protected boolean logRequestTime() {
         return true;
     }
 
-    public SearchDGSGoods() {
-        super(new APITag[] {APITag.DGS, APITag.SEARCH}, "query", "tag", "seller", "firstIndex", "lastIndex", "inStockOnly", "hideDelisted", "includeCounts");
-    }
-
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        long sellerId = ParameterParser.getAccountId(req, "seller", false);
-        String query = ParameterParser.getSearchQuery(req);
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
+        long sellerId = HttpParameterParserUtil.getAccountId(req, "seller", false);
+        String query = HttpParameterParserUtil.getSearchQuery(req);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
         boolean inStockOnly = !"false".equalsIgnoreCase(req.getParameter("inStockOnly"));
         boolean hideDelisted = "true".equalsIgnoreCase(req.getParameter("hideDelisted"));
         boolean includeCounts = "true".equalsIgnoreCase(req.getParameter("includeCounts"));
@@ -68,7 +67,7 @@ public final class SearchDGSGoods extends AbstractAPIRequestHandler {
         JSONArray goodsJSON = new JSONArray();
         response.put("goods", goodsJSON);
 
-        Filter<DGSGoods> filter = hideDelisted ? goods -> ! goods.isDelisted() : goods -> true;
+        Filter<DGSGoods> filter = hideDelisted ? goods -> !goods.isDelisted() : goods -> true;
 
         FilteringIterator<DGSGoods> iterator = null;
         try {

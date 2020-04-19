@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.tools;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
@@ -52,65 +52,14 @@ import java.util.stream.IntStream;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public final class PassphraseRecovery {
-    private static final Logger LOG = getLogger(PassphraseRecovery.class);
-
     final static Solution NO_SOLUTION = new Solution();
+    private static final Logger LOG = getLogger(PassphraseRecovery.class);
     // TODO: YL remove static instance later
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private static DatabaseManager databaseManager;
 
     public static void main(String[] args) {
         new PassphraseRecovery().recover();
-    }
-
-    private void recover() {
-        try {
-            Map<Long, byte[]> publicKeys = getPublicKeys();
-            String wildcard = propertiesHolder.getStringProperty("recoveryWildcard", "", false, "UTF-8"); // support UTF8 chars
-            if ("".equals(wildcard)) {
-                LOG.info("Specify in the recoveryWildcard setting, an approximate passphrase as close as possible to the real passphrase");
-                return;
-            }
-            int[] passphraseChars = wildcard.chars().toArray();
-            LOG.info("wildcard=" + wildcard + ", wildcard chars=" + Arrays.toString(passphraseChars));
-            String positionsStr = propertiesHolder.getStringProperty("recoveryPositions", "");
-            int[] positions;
-            try {
-                if (positionsStr.length() == 0) {
-                    positions = new int[0];
-                } else {
-                    positions = Arrays.stream(positionsStr.split(",")).map(String::trim).mapToInt(Integer::parseInt).map(i -> i - 1).toArray();
-                }
-                List<Integer> list = IntStream.of(positions).boxed().collect(Collectors.toList());
-                String s = list.stream().map(p -> Character.toString(wildcard.charAt(p))).collect(Collectors.joining(" "));
-                LOG.info("Recovering chars: " + s);
-            } catch (NumberFormatException e) {
-                LOG.info("Specify in the recoveryPositions setting, a comma separated list of numeric positions pointing to the recoveryWildcard unknown characters (first position is 1)");
-                return;
-            }
-            String dictionaryStr = propertiesHolder.getStringProperty("recoveryDictionary", "");
-            char[] dictionary;
-            switch(dictionaryStr.toLowerCase()) {
-                case "":
-                case "ascii":
-                    dictionary = getDictionary(32, 127);
-                    break;
-                case "asciiall":
-                    dictionary = getDictionary(0, (int)(Math.pow(2, 8) - 1));
-                    break;
-                case "unicode":
-                    dictionary = getDictionary(0, (int)(Math.pow(2, 16) - 1));
-                    break;
-                default:
-                    dictionary = dictionaryStr.toCharArray();
-            }
-            LOG.info(String.format("Wildcard %s positions %s dictionary %s", wildcard, Arrays.toString(positions), Arrays.toString(dictionary)));
-            Scanner scanner = new Scanner(publicKeys, positions, wildcard.toCharArray(), dictionary);
-            Solution solution = scanner.scan();
-            LOG.debug("" + solution);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     static char[] getDefaultDictionary() {
@@ -141,6 +90,56 @@ public final class PassphraseRecovery {
         return publicKeys;
     }
 
+    private void recover() {
+        try {
+            Map<Long, byte[]> publicKeys = getPublicKeys();
+            String wildcard = propertiesHolder.getStringProperty("recoveryWildcard", "", false, "UTF-8"); // support UTF8 chars
+            if ("".equals(wildcard)) {
+                LOG.info("Specify in the recoveryWildcard setting, an approximate passphrase as close as possible to the real passphrase");
+                return;
+            }
+            int[] passphraseChars = wildcard.chars().toArray();
+            LOG.info("wildcard=" + wildcard + ", wildcard chars=" + Arrays.toString(passphraseChars));
+            String positionsStr = propertiesHolder.getStringProperty("recoveryPositions", "");
+            int[] positions;
+            try {
+                if (positionsStr.length() == 0) {
+                    positions = new int[0];
+                } else {
+                    positions = Arrays.stream(positionsStr.split(",")).map(String::trim).mapToInt(Integer::parseInt).map(i -> i - 1).toArray();
+                }
+                List<Integer> list = IntStream.of(positions).boxed().collect(Collectors.toList());
+                String s = list.stream().map(p -> Character.toString(wildcard.charAt(p))).collect(Collectors.joining(" "));
+                LOG.info("Recovering chars: " + s);
+            } catch (NumberFormatException e) {
+                LOG.info("Specify in the recoveryPositions setting, a comma separated list of numeric positions pointing to the recoveryWildcard unknown characters (first position is 1)");
+                return;
+            }
+            String dictionaryStr = propertiesHolder.getStringProperty("recoveryDictionary", "");
+            char[] dictionary;
+            switch (dictionaryStr.toLowerCase()) {
+                case "":
+                case "ascii":
+                    dictionary = getDictionary(32, 127);
+                    break;
+                case "asciiall":
+                    dictionary = getDictionary(0, (int) (Math.pow(2, 8) - 1));
+                    break;
+                case "unicode":
+                    dictionary = getDictionary(0, (int) (Math.pow(2, 16) - 1));
+                    break;
+                default:
+                    dictionary = dictionaryStr.toCharArray();
+            }
+            LOG.info(String.format("Wildcard %s positions %s dictionary %s", wildcard, Arrays.toString(positions), Arrays.toString(dictionary)));
+            Scanner scanner = new Scanner(publicKeys, positions, wildcard.toCharArray(), dictionary);
+            Solution solution = scanner.scan();
+            LOG.debug("" + solution);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     static class Scanner implements Callable<Solution> {
         private Map<Long, byte[]> publicKeys;
         private int[] positions;
@@ -159,7 +158,7 @@ public final class PassphraseRecovery {
             if (positions.length == 0) {
                 LOG.info("Position not specified scanning for a single typo");
                 char[] copy = new char[wildcard.length];
-                for (int i=0; i<wildcard.length; i++) {
+                for (int i = 0; i < wildcard.length; i++) {
                     positions = new int[1];
                     positions[0] = i;
                     System.arraycopy(wildcard, 0, copy, 0, wildcard.length);
@@ -220,7 +219,7 @@ public final class PassphraseRecovery {
                 } else {
                     String secretPhrase = new String(wildcard);
                     byte[] publicKey = Crypto.getPublicKey(secretPhrase);
-                    long id = Account.getId(publicKey);
+                    long id = AccountService.getId(publicKey);
                     if (publicKeys.keySet().contains(id)) {
                         return new Solution(secretPhrase, publicKeys.get(id), id, Convert2.rsAccount(id));
                     }
@@ -265,12 +264,12 @@ public final class PassphraseRecovery {
             }
             int[] passphraseChars = passphrase.chars().toArray();
             return "Solution{" +
-                    "passphrase=" + passphrase +
-                    ", passphraseChars=" + Arrays.toString(passphraseChars) +
-                    ", publicKey=" + (publicKey != null ? Convert.toHexString(publicKey) : "not registered on blockchain") +
-                    ", accountId=" + accountId +
-                    ", rsAccount=" + rsAccount +
-                    '}';
+                "passphrase=" + passphrase +
+                ", passphraseChars=" + Arrays.toString(passphraseChars) +
+                ", publicKey=" + (publicKey != null ? Convert.toHexString(publicKey) : "not registered on blockchain") +
+                ", accountId=" + accountId +
+                ", rsAccount=" + rsAccount +
+                '}';
         }
 
         public String getRsAccount() {

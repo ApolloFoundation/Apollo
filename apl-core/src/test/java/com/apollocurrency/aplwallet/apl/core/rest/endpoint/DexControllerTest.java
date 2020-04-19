@@ -9,7 +9,6 @@ import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexEthService;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexOrderTransactionCreator;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
-import com.apollocurrency.aplwallet.apl.exchange.service.DexSmartContractService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jboss.resteasy.mock.MockDispatcherFactory;
@@ -45,14 +44,12 @@ public class DexControllerTest {
     private DexEthService dexEthService;
     @Mock
     private EthereumWalletService walletService;
-    @Mock
-    private DexSmartContractService smartContractService;
     private DexTestData td;
 
     @BeforeEach
     void setup() {
         dispatcher = MockDispatcherFactory.createDispatcher();
-        DexController dexController = new DexController(service, dexOrderTransactionCreator, timeService, dexEthService, walletService, smartContractService);
+        DexController dexController = new DexController(service, dexOrderTransactionCreator, timeService, dexEthService, walletService);
         dispatcher.getRegistry().addSingletonResource(dexController);
         td = new DexTestData();
     }
@@ -69,7 +66,8 @@ public class DexControllerTest {
         assertEquals(200, response.getStatus());
 
         String errorJson = response.getContentAsString();
-        List<ExchangeContractDTO> responseErrors = mapper.readValue(errorJson, new TypeReference<>() {});
+        List<ExchangeContractDTO> responseErrors = mapper.readValue(errorJson, new TypeReference<>() {
+        });
         ExchangeContractToDTOConverter converter = new ExchangeContractToDTOConverter();
         assertEquals(converter.convert(contracts), responseErrors);
     }
@@ -86,7 +84,8 @@ public class DexControllerTest {
         assertEquals(200, response.getStatus());
 
         String errorJson = response.getContentAsString();
-        List<ExchangeContractDTO> responseErrors = mapper.readValue(errorJson, new TypeReference<>() {});
+        List<ExchangeContractDTO> responseErrors = mapper.readValue(errorJson, new TypeReference<>() {
+        });
         ExchangeContractToDTOConverter converter = new ExchangeContractToDTOConverter();
         assertEquals(converter.convert(contracts), responseErrors);
     }
@@ -103,7 +102,8 @@ public class DexControllerTest {
         assertEquals(200, response.getStatus());
 
         String errorJson = response.getContentAsString();
-        List<ExchangeContractDTO> responseErrors = mapper.readValue(errorJson, new TypeReference<>() {});
+        List<ExchangeContractDTO> responseErrors = mapper.readValue(errorJson, new TypeReference<>() {
+        });
         ExchangeContractToDTOConverter converter = new ExchangeContractToDTOConverter();
         assertEquals(converter.convert(contracts), responseErrors);
     }

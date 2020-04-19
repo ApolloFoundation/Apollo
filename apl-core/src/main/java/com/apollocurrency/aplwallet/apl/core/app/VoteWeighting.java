@@ -20,179 +20,27 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
-import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+
+import javax.enterprise.inject.spi.CDI;
 
 public final class VoteWeighting {
 
-    public enum VotingModel {
-        NONE(-1) {
-            @Override
-            public final boolean acceptsVotes() {
-                return false;
-            }
-            @Override
-            public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
-                throw new UnsupportedOperationException("No voting possible for VotingModel.NONE");
-            }
-            @Override
-            public final MinBalanceModel getMinBalanceModel() {
-                return MinBalanceModel.NONE;
-            }
-        },
-        ACCOUNT(0) {
-            @Override
-            public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
-                return (voteWeighting.minBalance == 0 || voteWeighting.minBalanceModel.getBalance(voteWeighting, voterId, height) >= voteWeighting.minBalance) ? 1 : 0;
-            }
-            @Override
-            public final MinBalanceModel getMinBalanceModel() {
-                return MinBalanceModel.NONE;
-            }
-        },
-        ATM(1) {
-            @Override
-            public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
-                long atmBalance = Account.getAccount(voterId, height).getBalanceATM();
-                return atmBalance >= voteWeighting.minBalance ? atmBalance : 0;
-            }
-            @Override
-            public final MinBalanceModel getMinBalanceModel() {
-                return MinBalanceModel.ATM;
-            }
-        },
-        ASSET(2) {
-            @Override
-            public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
-                long atuBalance = AccountAssetTable.getInstance().getAssetBalanceATU(voterId, voteWeighting.holdingId, height);
-                return atuBalance >= voteWeighting.minBalance ? atuBalance : 0;
-            }
-            @Override
-            public final MinBalanceModel getMinBalanceModel() {
-                return MinBalanceModel.ASSET;
-            }
-        },
-        CURRENCY(3) {
-            @Override
-            public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
-                long units = AccountCurrencyTable.getCurrencyUnits(voterId, voteWeighting.holdingId, height);
-                return units >= voteWeighting.minBalance ? units : 0;
-            }
-            @Override
-            public final MinBalanceModel getMinBalanceModel() {
-                return MinBalanceModel.CURRENCY;
-            }
-        },
-        TRANSACTION(4) {
-            @Override
-            public final boolean acceptsVotes() {
-                return false;
-            }
-            @Override
-            public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
-                throw new UnsupportedOperationException("No voting possible for VotingModel.TRANSACTION");
-            }
-            @Override
-            public final MinBalanceModel getMinBalanceModel() {
-                return MinBalanceModel.NONE;
-            }
-        },
-        HASH(5) {
-            @Override
-            public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
-                return 1;
-            }
-            @Override
-            public final MinBalanceModel getMinBalanceModel() {
-                return MinBalanceModel.NONE;
-            }
-        };
-
-        private final byte code;
-
-        VotingModel(int code) {
-            this.code = (byte)code;
-        }
-
-        public byte getCode() {
-            return code;
-        }
-
-        public abstract long calcWeight(VoteWeighting voteWeighting, long voterId, int height);
-
-        public abstract MinBalanceModel getMinBalanceModel();
-
-        public boolean acceptsVotes() {
-            return true;
-        }
-
-        public static VotingModel get(byte code) {
-            for (VotingModel votingModel : values()) {
-                if (votingModel.getCode() == code) {
-                    return votingModel;
-                }
-            }
-            throw new IllegalArgumentException("Invalid votingModel " + code);
-        }
-    }
-
-    public enum MinBalanceModel {
-        NONE(0) {
-            @Override
-            public final long getBalance(VoteWeighting voteWeighting, long voterId, int height) {
-                throw new UnsupportedOperationException();
-            }
-        },
-        ATM(1) {
-            @Override
-            public final long getBalance(VoteWeighting voteWeighting, long voterId, int height) {
-                return Account.getAccount(voterId, height).getBalanceATM();
-            }
-        },
-        ASSET(2) {
-            @Override
-            public final long getBalance(VoteWeighting voteWeighting, long voterId, int height) {
-                return AccountAssetTable.getAssetBalanceATU(voterId, voteWeighting.holdingId, height);
-            }
-        },
-        CURRENCY(3) {
-            @Override
-            public final long getBalance(VoteWeighting voteWeighting, long voterId, int height) {
-                return AccountCurrencyTable.getCurrencyUnits(voterId, voteWeighting.holdingId, height);
-            }
-        };
-
-        private final byte code;
-
-        MinBalanceModel(int code) {
-            this.code = (byte)code;
-        }
-
-        public byte getCode() {
-            return code;
-        }
-
-        public abstract long getBalance(VoteWeighting voteWeighting, long voterId, int height);
-
-        public static MinBalanceModel get(byte code) {
-            for (MinBalanceModel minBalanceModel : values()) {
-                if (minBalanceModel.getCode() == code) {
-                    return minBalanceModel;
-                }
-            }
-            throw new IllegalArgumentException("Invalid minBalanceModel " + code);
-        }
-    }
-
+    private static AccountService accountService;
+    private static AccountAssetService accountAssetService;
+    private static AccountCurrencyService accountCurrencyService;
     private final VotingModel votingModel;
     private final long holdingId; //either asset id or MS coin id
     private final long minBalance;
     private final MinBalanceModel minBalanceModel;
-
 
     public VoteWeighting(byte votingModel, long holdingId, long minBalance, byte minBalanceModel) {
         this.votingModel = VotingModel.get(votingModel);
@@ -206,6 +54,27 @@ public final class VoteWeighting {
         this.holdingId = holdingId;
         this.minBalance = minBalance;
         this.minBalanceModel = minBalanceModel;
+    }
+
+    private static AccountService lookupAccountService() {
+        if (accountService == null) {
+            accountService = CDI.current().select(AccountServiceImpl.class).get();
+        }
+        return accountService;
+    }
+
+    private static AccountAssetService lookupAccountAssetService() {
+        if (accountAssetService == null) {
+            accountAssetService = CDI.current().select(AccountAssetServiceImpl.class).get();
+        }
+        return accountAssetService;
+    }
+
+    private static AccountCurrencyService lookupAccountCurrencyService() {
+        if (accountCurrencyService == null) {
+            accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
+        }
+        return accountCurrencyService;
     }
 
     public VotingModel getVotingModel() {
@@ -281,14 +150,14 @@ public final class VoteWeighting {
 
     @Override
     public boolean equals(Object o) {
-        if (! (o instanceof VoteWeighting)) {
+        if (!(o instanceof VoteWeighting)) {
             return false;
         }
-        VoteWeighting other = (VoteWeighting)o;
+        VoteWeighting other = (VoteWeighting) o;
         return other.votingModel == this.votingModel
-                && other.minBalanceModel == this.minBalanceModel
-                && other.holdingId == this.holdingId
-                && other.minBalance == this.minBalance;
+            && other.minBalanceModel == this.minBalanceModel
+            && other.holdingId == this.holdingId
+            && other.minBalance == this.minBalance;
     }
 
     @Override
@@ -301,4 +170,182 @@ public final class VoteWeighting {
         return hashCode;
     }
 
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("VoteWeighting{");
+        sb.append("votingModel=").append(votingModel);
+        sb.append(", holdingId=").append(holdingId);
+        sb.append(", minBalance=").append(minBalance);
+        sb.append(", minBalanceModel=").append(minBalanceModel);
+        sb.append('}');
+        return sb.toString();
+    }
+
+    public enum VotingModel {
+        NONE(-1) {
+            @Override
+            public final boolean acceptsVotes() {
+                return false;
+            }
+
+            @Override
+            public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
+                throw new UnsupportedOperationException("No voting possible for VotingModel.NONE");
+            }
+
+            @Override
+            public final MinBalanceModel getMinBalanceModel() {
+                return MinBalanceModel.NONE;
+            }
+        },
+        ACCOUNT(0) {
+            @Override
+            public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
+                return (voteWeighting.minBalance == 0 || voteWeighting.minBalanceModel.getBalance(voteWeighting, voterId, height) >= voteWeighting.minBalance) ? 1 : 0;
+            }
+
+            @Override
+            public final MinBalanceModel getMinBalanceModel() {
+                return MinBalanceModel.NONE;
+            }
+        },
+        ATM(1) {
+            @Override
+            public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
+                long atmBalance = lookupAccountService().getAccount(voterId, height).getBalanceATM();
+                return atmBalance >= voteWeighting.minBalance ? atmBalance : 0;
+            }
+
+            @Override
+            public final MinBalanceModel getMinBalanceModel() {
+                return MinBalanceModel.ATM;
+            }
+        },
+        ASSET(2) {
+            @Override
+            public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
+                long atuBalance = lookupAccountAssetService().getAssetBalanceATU(voterId, voteWeighting.holdingId, height);
+                return atuBalance >= voteWeighting.minBalance ? atuBalance : 0;
+            }
+
+            @Override
+            public final MinBalanceModel getMinBalanceModel() {
+                return MinBalanceModel.ASSET;
+            }
+        },
+        CURRENCY(3) {
+            @Override
+            public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
+                long units = lookupAccountCurrencyService().getCurrencyUnits(voterId, voteWeighting.holdingId, height);
+                return units >= voteWeighting.minBalance ? units : 0;
+            }
+
+            @Override
+            public final MinBalanceModel getMinBalanceModel() {
+                return MinBalanceModel.CURRENCY;
+            }
+        },
+        TRANSACTION(4) {
+            @Override
+            public final boolean acceptsVotes() {
+                return false;
+            }
+
+            @Override
+            public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
+                throw new UnsupportedOperationException("No voting possible for VotingModel.TRANSACTION");
+            }
+
+            @Override
+            public final MinBalanceModel getMinBalanceModel() {
+                return MinBalanceModel.NONE;
+            }
+        },
+        HASH(5) {
+            @Override
+            public final long calcWeight(VoteWeighting voteWeighting, long voterId, int height) {
+                return 1;
+            }
+
+            @Override
+            public final MinBalanceModel getMinBalanceModel() {
+                return MinBalanceModel.NONE;
+            }
+        };
+
+        private final byte code;
+
+        VotingModel(int code) {
+            this.code = (byte) code;
+        }
+
+        public static VotingModel get(byte code) {
+            for (VotingModel votingModel : values()) {
+                if (votingModel.getCode() == code) {
+                    return votingModel;
+                }
+            }
+            throw new IllegalArgumentException("Invalid votingModel " + code);
+        }
+
+        public byte getCode() {
+            return code;
+        }
+
+        public abstract long calcWeight(VoteWeighting voteWeighting, long voterId, int height);
+
+        public abstract MinBalanceModel getMinBalanceModel();
+
+        public boolean acceptsVotes() {
+            return true;
+        }
+    }
+
+    public enum MinBalanceModel {
+        NONE(0) {
+            @Override
+            public final long getBalance(VoteWeighting voteWeighting, long voterId, int height) {
+                throw new UnsupportedOperationException();
+            }
+        },
+        ATM(1) {
+            @Override
+            public final long getBalance(VoteWeighting voteWeighting, long voterId, int height) {
+                return lookupAccountService().getAccount(voterId, height).getBalanceATM();
+            }
+        },
+        ASSET(2) {
+            @Override
+            public final long getBalance(VoteWeighting voteWeighting, long voterId, int height) {
+                return lookupAccountAssetService().getAssetBalanceATU(voterId, voteWeighting.holdingId, height);
+            }
+        },
+        CURRENCY(3) {
+            @Override
+            public final long getBalance(VoteWeighting voteWeighting, long voterId, int height) {
+                return lookupAccountCurrencyService().getCurrencyUnits(voterId, voteWeighting.holdingId, height);
+            }
+        };
+
+        private final byte code;
+
+        MinBalanceModel(int code) {
+            this.code = (byte) code;
+        }
+
+        public static MinBalanceModel get(byte code) {
+            for (MinBalanceModel minBalanceModel : values()) {
+                if (minBalanceModel.getCode() == code) {
+                    return minBalanceModel;
+                }
+            }
+            throw new IllegalArgumentException("Invalid minBalanceModel " + code);
+        }
+
+        public byte getCode() {
+            return code;
+        }
+
+        public abstract long getBalance(VoteWeighting voteWeighting, long voterId, int height);
+    }
 }

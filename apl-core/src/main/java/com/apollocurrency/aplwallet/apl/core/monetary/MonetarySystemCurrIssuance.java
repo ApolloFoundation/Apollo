@@ -3,30 +3,30 @@
  */
 package com.apollocurrency.aplwallet.apl.core.monetary;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import java.nio.ByteBuffer;
-import java.util.Map;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+import java.util.Map;
+
 /**
- *
  * @author al
  */
 class MonetarySystemCurrIssuance extends MonetarySystem {
-    
-    public MonetarySystemCurrIssuance() {
-    }
+
     private final Fee FIVE_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(40 * Constants.ONE_APL);
     private final Fee FOUR_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(1000 * Constants.ONE_APL);
     private final Fee THREE_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(25000 * Constants.ONE_APL);
+
+    public MonetarySystemCurrIssuance() {
+    }
 
     @Override
     public byte getSubtype() {
@@ -141,12 +141,12 @@ class MonetarySystemCurrIssuance extends MonetarySystem {
         MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
         long transactionId = transaction.getId();
         Currency.addCurrency(getLedgerEvent(), transactionId, transaction, senderAccount, attachment);
-        senderAccount.addToCurrencyAndUnconfirmedCurrencyUnits(getLedgerEvent(), transactionId, transactionId, attachment.getInitialSupply());
+        lookupAccountCurrencyService().addToCurrencyAndUnconfirmedCurrencyUnits(senderAccount, getLedgerEvent(), transactionId, transactionId, attachment.getInitialSupply());
     }
 
     @Override
     public boolean canHaveRecipient() {
         return false;
     }
-    
+
 }

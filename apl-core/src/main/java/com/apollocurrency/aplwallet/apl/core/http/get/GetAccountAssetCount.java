@@ -20,30 +20,30 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Deprecated
 public final class GetAccountAssetCount extends AbstractAPIRequestHandler {
 
     public GetAccountAssetCount() {
-        super(new APITag[] {APITag.ACCOUNTS, APITag.AE}, "account", "height");
+        super(new APITag[]{APITag.ACCOUNTS, APITag.AE}, "account", "height");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        long accountId = ParameterParser.getAccountId(req, true);
-        int height = ParameterParser.getHeight(req);
+        long accountId = HttpParameterParserUtil.getAccountId(req, true);
+        int height = HttpParameterParserUtil.getHeight(req);
 
         JSONObject response = new JSONObject();
-        response.put("numberOfAssets", AccountAssetTable.getAccountAssetCount(accountId, height));
+        response.put("numberOfAssets", lookupAccountAssetService().getCountByAccount(accountId, height));
         return response;
     }
 

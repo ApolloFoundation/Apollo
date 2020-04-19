@@ -17,6 +17,6 @@ public class UserErrorMessageMapper implements RowMapper<UserErrorMessage> {
         String operation = rs.getString("operation");
         String details = rs.getString("details");
         long timestamp = rs.getLong("timestamp");
-        return new UserErrorMessage(dbId, address, error,operation, details, timestamp);
+        return new UserErrorMessage(dbId, address, error, operation, details, timestamp);
     }
 }

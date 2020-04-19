@@ -13,10 +13,10 @@ public class DexOrderAttachmentFactory {
     public static DexOrderAttachment build(ByteBuffer buffer) throws AplException.NotValidException {
         byte version = buffer.get();
 
-        switch (version)  {
-            case 1 :
+        switch (version) {
+            case 1:
                 return new DexOrderAttachment(buffer);
-            case 2 :
+            case 2:
                 return new DexOrderAttachmentV2(buffer);
             default:
                 throw new UnsupportedOperationException("Version: " + version + ", not supported.");
@@ -24,9 +24,9 @@ public class DexOrderAttachmentFactory {
     }
 
     public static DexOrderAttachment parse(JSONObject attachmentData) {
-        if (Appendix.hasAppendix( "DexOrder", attachmentData)) {
+        if (Appendix.hasAppendix("DexOrder", attachmentData)) {
             return new DexOrderAttachment(attachmentData);
-        } else if (Appendix.hasAppendix("DexOrder_v2", attachmentData)){
+        } else if (Appendix.hasAppendix("DexOrder_v2", attachmentData)) {
             return new DexOrderAttachmentV2(attachmentData);
         }
         return null;

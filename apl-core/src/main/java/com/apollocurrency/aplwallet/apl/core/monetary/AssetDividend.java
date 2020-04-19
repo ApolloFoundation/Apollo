@@ -22,17 +22,16 @@ package com.apollocurrency.aplwallet.apl.core.monetary;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import javax.enterprise.inject.spi.CDI;
-
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -40,12 +39,7 @@ import java.sql.SQLException;
 
 public final class AssetDividend {
 
-    public enum Event {
-        ASSET_DIVIDEND
-    }
-
-    private static final Listeners<AssetDividend,Event> listeners = new Listeners<>();
-
+    private static final Listeners<AssetDividend, Event> listeners = new Listeners<>();
     private static final LongKeyFactory<AssetDividend> dividendDbKeyFactory = new LongKeyFactory<AssetDividend>("id") {
 
         @Override
@@ -54,7 +48,6 @@ public final class AssetDividend {
         }
 
     };
-
     private static final EntityDbTable<AssetDividend> assetDividendTable = new EntityDbTable<AssetDividend>("asset_dividend", dividendDbKeyFactory) {
 
         @Override
@@ -68,48 +61,6 @@ public final class AssetDividend {
         }
 
     };
-
-    public static boolean addListener(Listener<AssetDividend> listener, Event eventType) {
-        return listeners.addListener(listener, eventType);
-    }
-
-    public static boolean removeListener(Listener<AssetDividend> listener, Event eventType) {
-        return listeners.removeListener(listener, eventType);
-    }
-
-    public static boolean addListener(Listener<AssetDividend> listener) {
-        return addListener(listener, Event.ASSET_DIVIDEND);
-    }
-
-    public static boolean removeListener(Listener<AssetDividend> listener) {
-        return removeListener(listener, Event.ASSET_DIVIDEND);
-    }
-
-
-    public static DbIterator<AssetDividend> getAssetDividends(long assetId, int from, int to) {
-        return assetDividendTable.getManyBy(new DbClause.LongClause("asset_id", assetId), from, to);
-    }
-
-    public static AssetDividend getLastDividend(long assetId) {
-        try (DbIterator<AssetDividend> dividends = assetDividendTable.getManyBy(new DbClause.LongClause("asset_id", assetId), 0, 0)) {
-            if (dividends.hasNext()) {
-                return dividends.next();
-            }
-        }
-        return null;
-    }
-
-    public static AssetDividend addAssetDividend(long transactionId, ColoredCoinsDividendPayment attachment,
-                                          long totalDividend, long numAccounts) {
-        AssetDividend assetDividend = new AssetDividend(transactionId, attachment, totalDividend, numAccounts);
-        assetDividendTable.insert(assetDividend);
-        listeners.notify(assetDividend, Event.ASSET_DIVIDEND);
-        return assetDividend;
-    }
-
-    public static void init() {}
-
-
     private final long id;
     private final DbKey dbKey;
     private final long assetId;
@@ -119,6 +70,7 @@ public final class AssetDividend {
     private final long numAccounts;
     private final int timestamp;
     private final int height;
+
 
     private AssetDividend(long transactionId, ColoredCoinsDividendPayment attachment,
                           long totalDividend, long numAccounts) {
@@ -146,10 +98,50 @@ public final class AssetDividend {
         this.height = rs.getInt("height");
     }
 
+    public static boolean addListener(Listener<AssetDividend> listener, Event eventType) {
+        return listeners.addListener(listener, eventType);
+    }
+
+    public static boolean removeListener(Listener<AssetDividend> listener, Event eventType) {
+        return listeners.removeListener(listener, eventType);
+    }
+
+    public static boolean addListener(Listener<AssetDividend> listener) {
+        return addListener(listener, Event.ASSET_DIVIDEND);
+    }
+
+    public static boolean removeListener(Listener<AssetDividend> listener) {
+        return removeListener(listener, Event.ASSET_DIVIDEND);
+    }
+
+    public static DbIterator<AssetDividend> getAssetDividends(long assetId, int from, int to) {
+        return assetDividendTable.getManyBy(new DbClause.LongClause("asset_id", assetId), from, to);
+    }
+
+    public static AssetDividend getLastDividend(long assetId) {
+        try (DbIterator<AssetDividend> dividends = assetDividendTable.getManyBy(new DbClause.LongClause("asset_id", assetId), 0, 0)) {
+            if (dividends.hasNext()) {
+                return dividends.next();
+            }
+        }
+        return null;
+    }
+
+    public static AssetDividend addAssetDividend(long transactionId, ColoredCoinsDividendPayment attachment,
+                                                 long totalDividend, long numAccounts) {
+        AssetDividend assetDividend = new AssetDividend(transactionId, attachment, totalDividend, numAccounts);
+        assetDividendTable.insert(assetDividend);
+        listeners.notify(assetDividend, Event.ASSET_DIVIDEND);
+        return assetDividend;
+    }
+
+    public static void init() {
+    }
+
     private void save(Connection con) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO asset_dividend (id, asset_id, "
-                + "amount, dividend_height, total_dividend, num_accounts, timestamp, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
+            + "amount, dividend_height, total_dividend, num_accounts, timestamp, height) "
+            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, this.id);
             pstmt.setLong(++i, this.assetId);
@@ -193,6 +185,10 @@ public final class AssetDividend {
 
     public int getHeight() {
         return height;
+    }
+
+    public enum Event {
+        ASSET_DIVIDEND
     }
 
 }

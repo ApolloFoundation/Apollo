@@ -24,7 +24,7 @@ class PredefinedDirLocationsTest {
     @Test
     void createWithDirs() {
         PredefinedDirLocations locations = new PredefinedDirLocations(
-                "dbpath", "logs", "vaultKeyStore", "pidDir", "twoFA", "dataExportDir", "dexStorage");
+            "dbpath", "logs", "vaultKeyStore", "pidDir", "twoFA", "dataExportDir", "dexStorage");
         assertNotNull(locations.getDbDir());
         assertNotNull(locations.getLogsDir());
         assertNotNull(locations.getPidFilePath());

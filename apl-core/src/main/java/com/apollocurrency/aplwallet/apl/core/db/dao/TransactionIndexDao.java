@@ -24,8 +24,9 @@ public interface TransactionIndexDao {
 
     /**
      * For Unit tests ONLY
+     *
      * @param height height of block
-     * @param limit limit number or rows
+     * @param limit  limit number or rows
      * @return found records list
      */
     @Transactional(readOnly = true)

@@ -31,13 +31,13 @@ public class DbTableWrapper<T extends DerivedEntity> implements EntityDbTableInt
     }
 
     @Override
-    public void rollback(final int height) {
-        table.rollback(height);
+    public int rollback(final int height) {
+        return table.rollback(height);
     }
 
     @Override
-    public boolean delete(T t) {
-        return table.delete(t);
+    public boolean deleteAtHeight(T t, int height) {
+        return table.deleteAtHeight(t, height);
     }
 
     @Override
@@ -96,23 +96,13 @@ public class DbTableWrapper<T extends DerivedEntity> implements EntityDbTableInt
     }
 
     @Override
-    public void checkAvailable(int height) {
-        table.checkAvailable(height);
-    }
-
-    @Override
-    public T newEntity(DbKey dbKey) {
-        return table.newEntity(dbKey);
-    }
-
-    @Override
     public T get(DbKey dbKey) {
         return table.get(dbKey);
     }
 
     @Override
-    public T get(DbKey dbKey, boolean cache) {
-        return table.get(dbKey, cache);
+    public T get(DbKey dbKey, boolean createDbKey) {
+        return table.get(dbKey, createDbKey);
     }
 
     @Override
@@ -123,11 +113,6 @@ public class DbTableWrapper<T extends DerivedEntity> implements EntityDbTableInt
     @Override
     public T getBy(DbClause dbClause) {
         return table.getBy(dbClause);
-    }
-
-    @Override
-    public T getBy(DbClause dbClause, int height) {
-        return table.getBy(dbClause, height);
     }
 
     @Override
@@ -156,13 +141,18 @@ public class DbTableWrapper<T extends DerivedEntity> implements EntityDbTableInt
     }
 
     @Override
-    public boolean doesNotExceed(int height) {
-        return table.doesNotExceed(height);
+    public boolean isMultiversion() {
+        return table.isMultiversion();
     }
 
     @Override
     public String getName() {
         return table.getName();
+    }
+
+    @Override
+    public String getFullTextSearchColumns() {
+        return table.getFullTextSearchColumns();
     }
 
     @Override
@@ -176,16 +166,6 @@ public class DbTableWrapper<T extends DerivedEntity> implements EntityDbTableInt
     }
 
     @Override
-    public DbIterator<T> getAll(int height, int from, int to) {
-        return table.getAll(height, from, to);
-    }
-
-    @Override
-    public DbIterator<T> getAll(int height, int from, int to, String sort) {
-        return table.getAll(height, from, to, sort);
-    }
-
-    @Override
     public void trim(int height) {
         table.trim(height);
     }
@@ -193,11 +173,6 @@ public class DbTableWrapper<T extends DerivedEntity> implements EntityDbTableInt
     @Override
     public void trim(int height, boolean isSharding) {
         table.trim(height, isSharding);
-    }
-
-    @Override
-    public void createSearchIndex(Connection con) throws SQLException {
-        table.createSearchIndex(con);
     }
 
     @Override
@@ -213,6 +188,11 @@ public class DbTableWrapper<T extends DerivedEntity> implements EntityDbTableInt
     @Override
     public MinMaxValue getMinMaxValue(int height) {
         return table.getMinMaxValue(height);
+    }
+
+    @Override
+    public boolean supportDelete() {
+        return table.supportDelete();
     }
 
     @Override

@@ -15,6 +15,7 @@ import org.jdbi.v3.core.statement.StatementContext;
 import javax.inject.Singleton;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+
 @Singleton
 public class DexOrderMapper extends VersionedDerivedEntityMapper<DexOrder> {
 

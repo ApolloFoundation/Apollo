@@ -17,11 +17,13 @@ import java.util.List;
 
 /**
  * Info about shard
+ *
  * @author alukin@gmail.com
  */
 @NoArgsConstructor
 @AllArgsConstructor
-@Getter @Setter
+@Getter
+@Setter
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -29,8 +31,8 @@ import java.util.List;
 public class ShardInfo {
     public Long shardId;
     public String chainId;
-    public String hash=null;
-    public String zipCrcHash=null;
+    public String hash = null;
+    public String zipCrcHash = null;
     public Long height;
     public List<String> additionalFiles = new ArrayList<>();
     public List<String> additionalHashes = new ArrayList<>();

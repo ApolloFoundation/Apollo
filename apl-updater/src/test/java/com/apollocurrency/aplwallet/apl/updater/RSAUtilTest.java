@@ -4,16 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.decrypt;
-import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.doubleDecrypt;
-import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.doubleEncrypt;
-import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.encrypt;
-import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.getPrivateKey;
-import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.getPublicKeyFromCertificate;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.updater.decryption.RSADoubleDecryptor;
 import com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil;
@@ -28,6 +18,16 @@ import java.security.cert.Certificate;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
+
+import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.decrypt;
+import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.doubleDecrypt;
+import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.doubleEncrypt;
+import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.encrypt;
+import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.getPrivateKey;
+import static com.apollocurrency.aplwallet.apl.updater.decryption.RSAUtil.getPublicKeyFromCertificate;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.slf4j.LoggerFactory.getLogger;
 
 
 public class RSAUtilTest {
@@ -83,10 +83,10 @@ public class RSAUtilTest {
         DoubleByteArrayTuple doubleEncryptedBytes = RSAUtil.doubleEncrypt(privateKey1, privateKey2, expectedMessage.getBytes());
 
         byte[] encryptedBytes = ArrayUtils.addAll(doubleEncryptedBytes.getFirst(),
-                doubleEncryptedBytes.getSecond());
+            doubleEncryptedBytes.getSecond());
 
         String url = new String(new RSADoubleDecryptor().decrypt(encryptedBytes,
-                pubKey2, pubKey1));
+            pubKey2, pubKey1));
         assertNotNull(url);
         assertEquals(expectedMessage, url);
     }

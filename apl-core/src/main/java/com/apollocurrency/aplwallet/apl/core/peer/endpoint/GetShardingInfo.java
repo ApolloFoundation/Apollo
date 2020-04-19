@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- *
  * @author alukin@gmail.com
  */
 @Slf4j
@@ -70,13 +69,13 @@ public class GetShardingInfo extends PeerRequestHandler {
                     adFileHashes.add(Convert.toHexString(shard.getPrunableZipHash()));
                 }
                 ShardInfo shardInfo = new ShardInfo(
-                        shard.getShardId(),
-                        chainId.toString() /* no chainId in db */,
-                        Convert.toHexString(shard.getShardHash()),
-                        Convert.toHexString(shard.getCoreZipHash()),
-                        shard.getShardHeight().longValue(),
-                        adFileIDs,
-                        adFileHashes
+                    shard.getShardId(),
+                    chainId.toString() /* no chainId in db */,
+                    Convert.toHexString(shard.getShardHash()),
+                    Convert.toHexString(shard.getCoreZipHash()),
+                    shard.getShardHeight().longValue(),
+                    adFileIDs,
+                    adFileHashes
                 );
                 res.shardingInfo.shards.add(shardInfo);
             }

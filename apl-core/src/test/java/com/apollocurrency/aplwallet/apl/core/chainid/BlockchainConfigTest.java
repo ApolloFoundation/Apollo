@@ -39,34 +39,30 @@ import static org.mockito.Mockito.mock;
 
 @EnableWeld
 public class BlockchainConfigTest {
-    private BlockDao blockDao = mock(BlockDao.class);
-    @WeldSetup
-    private WeldInitiator weld =
-            WeldInitiator.from(BlockchainConfig.class, BlockchainConfigUpdater.class).addBeans(MockBean.of(blockDao, BlockDao.class)).build();
     private static final BlockchainProperties bp1 = new BlockchainProperties(0, 0, 1, 0, 0, 100L);
     private static final BlockchainProperties bp2 = new BlockchainProperties(100, 0, 1, 0, 0, 100L);
     private static final BlockchainProperties bp3 = new BlockchainProperties(200, 0, 2, 0, 0, 100L);
     private static final List<BlockchainProperties> BLOCKCHAIN_PROPERTIES = Arrays.asList(
-            bp1,
-            bp2,
-            bp3
+        bp1,
+        bp2,
+        bp3
     );
-
-
-
     private final Chain chain = new Chain(UUID.randomUUID(), true, Collections.emptyList(), Collections.emptyList(),
-            Collections.emptyList(),
-            "test",
-            "test",
-            "TEST",
-            "TEST", "Test", "data.json", BLOCKCHAIN_PROPERTIES, new FeaturesHeightRequirement(100, 100));
-
+        Collections.emptyList(),
+        "test",
+        "test",
+        "TEST",
+        "TEST", "Test", "data.json", BLOCKCHAIN_PROPERTIES, new FeaturesHeightRequirement(100, 100));
     @Inject
     BlockchainConfig blockchainConfig;
     @Inject
     BlockchainConfigUpdater blockchainConfigUpdater;
     @Inject
     Event<Block> blockEvent;
+    private BlockDao blockDao = mock(BlockDao.class);
+    @WeldSetup
+    private WeldInitiator weld =
+        WeldInitiator.from(BlockchainConfig.class, BlockchainConfigUpdater.class).addBeans(MockBean.of(blockDao, BlockDao.class)).build();
 
     @Test
     public void testInitBlockchainConfig() {
@@ -99,10 +95,11 @@ public class BlockchainConfigTest {
         Chain emptyChain = new Chain(UUID.randomUUID(), new ArrayList<>(), "Empty", "Empty chain", "EMP", "EM", "EMP", "", List.of());
         assertThrows(IllegalArgumentException.class, () -> blockchainConfig.updateChain(emptyChain));
     }
+
     @Test
     void testCreateBlockchainConfigFromChainWithoutZeroHeightConfig() {
         Chain chainWithoutZeroConfig = chain.copy();
-        chainWithoutZeroConfig.setBlockchainProperties(Map.of(100, bp1, 200, bp2, 300 , bp3));
+        chainWithoutZeroConfig.setBlockchainProperties(Map.of(100, bp1, 200, bp2, 300, bp3));
         assertThrows(IllegalArgumentException.class, () -> blockchainConfig.updateChain(chainWithoutZeroConfig));
     }
 
@@ -202,6 +199,7 @@ public class BlockchainConfigTest {
         assertEquals(new HeightConfig(bp2), blockchainConfig.getCurrentConfig());
 
     }
+
     @Test
     public void testChangeListenerOnPopped() {
         blockchainConfigUpdater.updateChain(chain, new PropertiesHolder());

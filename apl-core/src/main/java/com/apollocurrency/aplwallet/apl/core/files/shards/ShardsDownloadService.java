@@ -41,16 +41,15 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ShardsDownloadService {
 
+    public static final String FORCED_SHARD_ID_ENV = "APOLLO_FORCE_IMPORT_SHARD_ID";
+    private static final int MIN_SHARDING_PEERS = 2;
     private final ShardInfoDownloader shardInfoDownloader;
     private final UUID myChainId;
-
     private final Event<ShardPresentData> presentDataEvent;
     private final FileDownloadService fileDownloadService;
     private final PropertiesHolder propertiesHolder;
     private final ShardNameHelper shardNameHelper = new ShardNameHelper();
     private final Map<Long, ShardDownloadStatus> shardDownloadStatuses = new HashMap<>();
-    private static final int MIN_SHARDING_PEERS = 2;
-    public static final String FORCED_SHARD_ID_ENV = "APOLLO_FORCE_IMPORT_SHARD_ID";
 
     @Inject
     public ShardsDownloadService(ShardInfoDownloader shardInfoDownloader,
@@ -66,21 +65,37 @@ public class ShardsDownloadService {
         this.propertiesHolder = propertiesHolder;
     }
 
+    private static boolean isAcceptable(FileDownloadDecision d) {
+        boolean res = (d == FileDownloadDecision.AbsOK || d == FileDownloadDecision.OK);
+        return res;
+    }
+
+    public static Map<Long, Double> sortByValue(final Map<Long, Double> w) {
+        return w.entrySet()
+            .stream()
+            .sorted((Map.Entry.<Long, Double>comparingByValue().reversed()))
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+    }
+
     public boolean getShardingInfoFromPeers() {
         Map<String, ShardingInfo> shardInfoByPeers = shardInfoDownloader.getShardInfoFromPeers();
         if (shardInfoByPeers.size() < MIN_SHARDING_PEERS) {
             return false;
         }
         shardInfoDownloader.processAllPeersShardingInfo();
-        shardInfoDownloader.getSortedByIdShards().keySet().forEach((sId)
-                -> {
+        Set<Long> shardIds = shardInfoDownloader.getSortedByIdShards().keySet();
+        for (Long sId : shardIds) {
             ShardInfo si = shardInfoDownloader.getShardInfo(sId);
+            if (si == null) {
+                //very strange situation, but it could happend
+                continue;
+            }
             Set<String> shardFiles = new HashSet<>();
             shardFiles.add(shardNameHelper.getFullShardId(sId, myChainId));
             shardFiles.addAll(si.additionalFiles);
             ShardDownloadStatus st = new ShardDownloadStatus(shardFiles);
             shardDownloadStatuses.put(sId, st);
-        });
+        }
         return shardInfoByPeers.size() >= MIN_SHARDING_PEERS;
     }
 
@@ -108,11 +123,6 @@ public class ShardsDownloadService {
         }
     }
 
-    private static boolean isAcceptable(FileDownloadDecision d) {
-        boolean res = (d == FileDownloadDecision.AbsOK || d == FileDownloadDecision.OK);
-        return res;
-    }
-
     private AnnotationLiteral<ShardPresentEvent> literal(ShardPresentEventType shardPresentEventType) {
         return new ShardPresentEventBinding() {
             @Override
@@ -137,9 +147,9 @@ public class ShardsDownloadService {
             si = new ShardInfo(); //TODO: forced additional files
         }
         ShardPresentData shardPresentData = new ShardPresentData(
-                shardId,
-                fileId,
-                si.additionalFiles
+            shardId,
+            fileId,
+            si.additionalFiles
         );
         log.debug("Firing 'SHARD_PRESENT' event {}...", shardPresentData);
         presentDataEvent.select(literal(ShardPresentEventType.SHARD_PRESENT)).fireAsync(shardPresentData); // data is used
@@ -194,13 +204,6 @@ public class ShardsDownloadService {
             fileDownloadService.startDownload(fileId, peers);
         });
         return result;
-    }
-
-    public static Map<Long, Double> sortByValue(final Map<Long, Double> w) {
-        return w.entrySet()
-                .stream()
-                .sorted((Map.Entry.<Long, Double>comparingByValue().reversed()))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
     }
 
     private Long readForcedShardId() {

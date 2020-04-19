@@ -3,13 +3,12 @@
  */
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import java.util.List;
-import java.util.Map;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Singleton;
+import java.util.List;
+import java.util.Map;
 
 /**
- *
  * @author al
  */
 @Singleton
@@ -17,13 +16,13 @@ public class GenesisAccounts {
     private static List<Map.Entry<String, Long>> initialGenesisAccountsBalances;
     private static GenesisImporter genesisImporter;
 
-    public static void init () {
+    public static void init() {
         if (genesisImporter == null) {
             genesisImporter = CDI.current().select(GenesisImporter.class).get();
         }
         initialGenesisAccountsBalances = genesisImporter.loadGenesisAccounts();
     }
- 
+
     public static List<Map.Entry<String, Long>> getGenesisBalances(int firstIndex, int lastIndex) {
         firstIndex = Math.max(firstIndex, 0);
         lastIndex = Math.max(lastIndex, 0);
@@ -42,5 +41,5 @@ public class GenesisAccounts {
     public static int getGenesisBalancesNumber() {
         return initialGenesisAccountsBalances.size();
     }
-      
+
 }

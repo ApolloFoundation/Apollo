@@ -23,8 +23,8 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -33,9 +33,9 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import java.util.List;
-import javax.servlet.http.HttpServletRequest;
 import javax.enterprise.inject.Vetoed;
+import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 @Vetoed
 public final class GetExpectedCurrencyTransfers extends AbstractAPIRequestHandler {
@@ -43,11 +43,12 @@ public final class GetExpectedCurrencyTransfers extends AbstractAPIRequestHandle
     public GetExpectedCurrencyTransfers() {
         super(new APITag[]{APITag.MS}, "currency", "account", "includeCurrencyInfo");
     }
+
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        long currencyId = ParameterParser.getUnsignedLong(req, "currency", false);
-        long accountId = ParameterParser.getAccountId(req, "account", false);
+        long currencyId = HttpParameterParserUtil.getUnsignedLong(req, "currency", false);
+        long accountId = HttpParameterParserUtil.getAccountId(req, "account", false);
         boolean includeCurrencyInfo = "true".equalsIgnoreCase(req.getParameter("includeCurrencyInfo"));
 
         Filter<Transaction> filter = transaction -> {
@@ -57,7 +58,7 @@ public final class GetExpectedCurrencyTransfers extends AbstractAPIRequestHandle
             if (accountId != 0 && transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId) {
                 return false;
             }
-            MonetarySystemCurrencyTransfer attachment = (MonetarySystemCurrencyTransfer)transaction.getAttachment();
+            MonetarySystemCurrencyTransfer attachment = (MonetarySystemCurrencyTransfer) transaction.getAttachment();
             return currencyId == 0 || attachment.getCurrencyId() == currencyId;
         };
 

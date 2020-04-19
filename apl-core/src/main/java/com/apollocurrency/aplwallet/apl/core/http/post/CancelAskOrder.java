@@ -20,38 +20,52 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Order;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.order.entity.AskOrder;
+import com.apollocurrency.aplwallet.apl.core.order.service.OrderService;
+import com.apollocurrency.aplwallet.apl.core.order.service.impl.AskOrderServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.AskOrderService;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderCancellation;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_ORDER;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public final class CancelAskOrder extends CreateTransaction {
-
+    private OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService;
 
     public CancelAskOrder() {
-        super(new APITag[] {APITag.AE, APITag.CREATE_TRANSACTION}, "order");
+        super(new APITag[]{APITag.AE, APITag.CREATE_TRANSACTION}, "order");
+    }
+
+    private OrderService<AskOrder, ColoredCoinsAskOrderPlacement> lookupAskOrderService() {
+        if (askOrderService == null) {
+            this.askOrderService = CDI.current().select(
+                AskOrderServiceImpl.class,
+                AskOrderService.Literal.INSTANCE
+            ).get();
+        }
+        return askOrderService;
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        long orderId = ParameterParser.getUnsignedLong(req, "order", true);
-        Account account = ParameterParser.getSenderAccount(req);
-        Order.Ask orderData = Order.Ask.getAskOrder(orderId);
+        long orderId = HttpParameterParserUtil.getUnsignedLong(req, "order", true);
+        Account account = HttpParameterParserUtil.getSenderAccount(req);
+        AskOrder orderData = lookupAskOrderService().getOrder(orderId);
         if (orderData == null || orderData.getAccountId() != account.getId()) {
             return UNKNOWN_ORDER;
         }
         Attachment attachment = new ColoredCoinsAskOrderCancellation(orderId);
         return createTransaction(req, account, attachment);
     }
-
 }

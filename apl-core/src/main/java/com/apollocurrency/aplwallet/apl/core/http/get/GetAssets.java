@@ -20,12 +20,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -37,12 +37,12 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_A
 public final class GetAssets extends AbstractAPIRequestHandler {
 
     public GetAssets() {
-        super(new APITag[] {APITag.AE}, "assets", "assets", "assets", "includeCounts"); // limit to 3 for testing
+        super(new APITag[]{APITag.AE}, "assets", "assets", "assets", "includeCounts"); // limit to 3 for testing
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
-        long[] assetIds = ParameterParser.getUnsignedLongs(req, "assets");
+        long[] assetIds = HttpParameterParserUtil.getUnsignedLongs(req, "assets");
         boolean includeCounts = "true".equalsIgnoreCase(req.getParameter("includeCounts"));
         JSONObject response = new JSONObject();
         JSONArray assetsJSONArray = new JSONArray();

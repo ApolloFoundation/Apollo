@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporter;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaper;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
+import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.ZipImpl;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
@@ -59,16 +60,23 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 @ExtendWith(MockitoExtension.class)
 @EnableWeld
 class PrunableArchiveMigratorTest {
-    @Mock ShardDao shardDao;
-    @Mock OptionDAO optionDAO;
-    @Mock DirProvider dirProvider;
-    @Mock BlockchainConfig blockchainConfig;
+    @Mock
+    ShardDao shardDao;
+    @Mock
+    OptionDAO optionDAO;
+    @Mock
+    DirProvider dirProvider;
+    @Mock
+    BlockchainConfig blockchainConfig;
     Zip zip = spy(new ZipImpl());
-    @Mock DerivedTablesRegistry registry;
-    @Mock CsvExporter csvExporter;
+    @Mock
+    DerivedTablesRegistry registry;
+    @Mock
+    CsvExporter csvExporter;
     @Mock
     CsvEscaper csvEscaper;
-    @Mock DatabaseManager databaseManager;
+    @Mock
+    DatabaseManager databaseManager;
     @RegisterExtension
     TemporaryFolderExtension extension = new TemporaryFolderExtension();
     @WeldSetup
@@ -119,8 +127,8 @@ class PrunableArchiveMigratorTest {
         assertArrayEquals(newHash, shard.getCoreZipHash());
         assertArrayEquals(new byte[32], shard.getPrunableZipHash());
         Path extractPath = extension.newFolder().toPath();
-        zip.extract(path.toAbsolutePath().toString(), extractPath.toAbsolutePath().toString());
-        assertEquals(2, Files.list(extractPath).count());
+        zip.extract(path.toAbsolutePath().toString(), extractPath.toAbsolutePath().toString(), true);
+        assertEquals(2, FileUtils.countElementsOfDirectory(extractPath));
         assertTrue(Files.exists(extractPath.resolve("not-prunable.csv")));
         assertTrue(Files.exists(extractPath.resolve("shard.csv")));
         assertEquals(List.of("shard1"), Files.readAllLines(extractPath.resolve("shard.csv")));
@@ -182,14 +190,6 @@ class PrunableArchiveMigratorTest {
         }).when(csvExporter).exportShardTableIgnoringLastZipHashes(anyInt(), anyInt());
         return new MockData(hash1, hash2, firstZipPath, secondZipPath);
     }
-    @Data
-    @AllArgsConstructor
-    private static class MockData {
-        byte[] hash1;
-        byte[] hash2;
-        Path firstZipPath;
-        Path secondZipPath;
-    }
 
     @Test
     void testThrowExceptionDuringMigration() throws IOException {
@@ -214,6 +214,15 @@ class PrunableArchiveMigratorTest {
         Chain chain = mock(Chain.class);
         doReturn(chainId).when(chain).getChainId();
         doReturn(chain).when(blockchainConfig).getChain();
+    }
+
+    @Data
+    @AllArgsConstructor
+    private static class MockData {
+        byte[] hash1;
+        byte[] hash2;
+        Path firstZipPath;
+        Path secondZipPath;
     }
 
 }

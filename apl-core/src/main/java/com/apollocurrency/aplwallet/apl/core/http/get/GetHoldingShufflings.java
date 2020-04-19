@@ -24,24 +24,24 @@ import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public final class GetHoldingShufflings extends AbstractAPIRequestHandler {
 
     public GetHoldingShufflings() {
-        super(new APITag[] {APITag.SHUFFLING}, "holding", "stage", "includeFinished", "firstIndex", "lastIndex");
+        super(new APITag[]{APITag.SHUFFLING}, "holding", "stage", "includeFinished", "firstIndex", "lastIndex");
     }
 
     @Override
@@ -66,8 +66,8 @@ public final class GetHoldingShufflings extends AbstractAPIRequestHandler {
             }
         }
         boolean includeFinished = "true".equalsIgnoreCase(req.getParameter("includeFinished"));
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
 
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();

@@ -5,15 +5,15 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-import java.nio.ByteBuffer;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+
 /**
- *
  * @author al
  */
 public final class ShufflingVerificationAttachment extends AbstractShufflingAttachment {
-    
+
     public ShufflingVerificationAttachment(ByteBuffer buffer) {
         super(buffer);
     }
@@ -30,5 +30,5 @@ public final class ShufflingVerificationAttachment extends AbstractShufflingAtta
     public TransactionType getTransactionType() {
         return ShufflingTransaction.SHUFFLING_VERIFICATION;
     }
-    
+
 }

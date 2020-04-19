@@ -20,17 +20,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionSchedulerService;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
@@ -51,19 +49,20 @@ import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 
 @Vetoed
 public final class ScheduleCurrencyBuy extends CreateTransaction {
     private static final Logger LOG = getLogger(ScheduleCurrencyBuy.class);
     private static TransactionValidator validator = CDI.current().select(TransactionValidator.class).get();
-
-    private final TransactionSchedulerService transactionSchedulerService = CDI.current().select(TransactionSchedulerService.class).get();
     private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
+    private final TransactionSchedulerService transactionSchedulerService = CDI.current().select(TransactionSchedulerService.class).get();
 
     public ScheduleCurrencyBuy() {
 
-        super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "rateATM", "units", "offerIssuer",
-                "transactionJSON", "transactionBytes", "prunableAttachmentJSON", "adminPassword");
+        super(new APITag[]{APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "rateATM", "units", "offerIssuer",
+            "transactionJSON", "transactionBytes", "prunableAttachmentJSON", "adminPassword");
     }
 
     @Override
@@ -71,7 +70,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
         String transactionJSON = Convert.emptyToNull(req.getParameter("transactionJSON"));
         String transactionBytes = Convert.emptyToNull(req.getParameter("transactionBytes"));
         String prunableAttachmentJSON = Convert.emptyToNull(req.getParameter("prunableAttachmentJSON"));
-        long offerIssuerId = ParameterParser.getAccountId(req, "offerIssuer", true);
+        long offerIssuerId = HttpParameterParserUtil.getAccountId(req, "offerIssuer", true);
 
         try {
             JSONObject response;
@@ -81,13 +80,13 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                 if (broadcast) {
                     return JSONResponses.error("Must use broadcast=false to schedule a future currency buy");
                 }
-                Currency currency = ParameterParser.getCurrency(req);
-                long rateATM = ParameterParser.getLong(req, "rateATM", 0, Long.MAX_VALUE, true);
-                long units = ParameterParser.getLong(req, "units", 0, Long.MAX_VALUE, true);
-                Account account = ParameterParser.getSenderAccount(req);
-                byte[] keySeed = ParameterParser.getKeySeed(req, account.getId(), false);
+                Currency currency = HttpParameterParserUtil.getCurrency(req);
+                long rateATM = HttpParameterParserUtil.getLong(req, "rateATM", 0, Long.MAX_VALUE, true);
+                long units = HttpParameterParserUtil.getLong(req, "units", 0, Long.MAX_VALUE, true);
+                Account account = HttpParameterParserUtil.getSenderAccount(req);
+                byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, account.getId(), false);
                 Attachment attachment = new MonetarySystemExchangeBuyAttachment(currency.getId(), rateATM, units);
-                response = (JSONObject)JSONValue.parse(JSON.toString(createTransaction(req, account, attachment)));
+                response = (JSONObject) JSONValue.parse(JSON.toString(createTransaction(req, account, attachment)));
                 if (keySeed == null || "true".equalsIgnoreCase(req.getParameter("calculateFee"))) {
                     response.put("scheduled", false);
                     return response;
@@ -95,19 +94,20 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                 transaction = Transaction.newTransactionBuilder((JSONObject) response.get("transactionJSON")).build();
             } else {
                 response = new JSONObject();
-                transaction = ParameterParser.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON).build();
+                transaction = HttpParameterParserUtil.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON).build();
                 JSONObject json = JSONData.unconfirmedTransaction(transaction);
                 response.put("transactionJSON", json);
                 try {
                     response.put("unsignedTransactionBytes", Convert.toHexString(transaction.getUnsignedBytes()));
-                } catch (AplException.NotYetEncryptedException ignore) {}
+                } catch (AplException.NotYetEncryptedException ignore) {
+                }
                 response.put("transactionBytes", Convert.toHexString(transaction.getBytes()));
                 response.put("signatureHash", json.get("signatureHash"));
                 response.put("transaction", transaction.getStringId());
                 response.put("fullHash", transaction.getFullHashString());
             }
 
-            MonetarySystemExchangeBuyAttachment attachment = (MonetarySystemExchangeBuyAttachment)transaction.getAttachment();
+            MonetarySystemExchangeBuyAttachment attachment = (MonetarySystemExchangeBuyAttachment) transaction.getAttachment();
             Filter<Transaction> filter = new ExchangeOfferFilter(offerIssuerId, attachment.getCurrencyId(), attachment.getRateATM());
 
             globalSync.updateLock();
@@ -136,7 +136,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                     response.put("scheduled", true);
                 } else {
                     return JSONResponses.error("No sell offer is currently available. Please try again when there is an open sell offer. " +
-                            "(To schedule a buy order even in the absence of a sell offer, on a node protected by admin password, please first specify the admin password in the account settings.)");
+                        "(To schedule a buy order even in the absence of a sell offer, on a node protected by admin password, please first specify the admin password in the account settings.)");
                 }
             } finally {
                 globalSync.updateUnlock();
@@ -168,11 +168,11 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
         @Override
         public boolean test(Transaction transaction) {
             if (transaction.getSenderId() != senderId
-                    || transaction.getType() != MonetarySystem.PUBLISH_EXCHANGE_OFFER
-                    || transaction.getPhasing() != null) {
+                || transaction.getType() != MonetarySystem.PUBLISH_EXCHANGE_OFFER
+                || transaction.getPhasing() != null) {
                 return false;
             }
-            MonetarySystemPublishExchangeOffer attachment = (MonetarySystemPublishExchangeOffer)transaction.getAttachment();
+            MonetarySystemPublishExchangeOffer attachment = (MonetarySystemPublishExchangeOffer) transaction.getAttachment();
             if (attachment.getCurrencyId() != currencyId || attachment.getSellRateATM() > rateATM) {
                 return false;
             }

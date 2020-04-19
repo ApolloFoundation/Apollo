@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.dao;
 
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
@@ -65,25 +67,26 @@ class ReferencedTransactionDaoTest {
     static DbExtension extension = new DbExtension();
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class, TransactionImpl.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
-            ReferencedTransactionDaoImpl.class,
-            GlobalSync.class, TransactionTestData.class,
-            GlobalSyncImpl.class,
-            DerivedDbTablesRegistryImpl.class,
-            PhasingPollServiceImpl.class, PhasingPollResultTable.class,
-            PhasingApprovedResultTable.class,
-            PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class,
-            PhasingVoteTable.class, PhasingPollTable.class,
-            FullTextConfigImpl.class,
-            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
-            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
-            .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
-            .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
-            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
-            .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
-            .build();
+        PropertiesHolder.class, TransactionImpl.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
+        ReferencedTransactionDaoImpl.class,
+        GlobalSync.class, TransactionTestData.class,
+        GlobalSyncImpl.class,
+        DerivedDbTablesRegistryImpl.class,
+        PhasingPollServiceImpl.class, PhasingPollResultTable.class,
+        PhasingApprovedResultTable.class,
+        PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class,
+        PhasingVoteTable.class, PhasingPollTable.class,
+        FullTextConfigImpl.class,
+        TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
+        .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
+        .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
+        .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
+        .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
+        .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
+        .addBeans(MockBean.of(mock(AccountService.class), AccountService.class, AccountServiceImpl.class))
+        .build();
 
 
     @Inject

@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-wallet</artifactId>
-    <version>1.41.15</version>
+    <version>1.43.1</version>
   </parent>
 
   <artifactId>apl-exec</artifactId>
@@ -138,7 +139,7 @@
             </goals>
             <configuration>
               <excludeTypes>zip</excludeTypes>
-              <excludeArtifactIds>weld-junit5,weld-junit-common</excludeArtifactIds>
+              <excludeArtifactIds>weld-junit5,weld-junit-common,jsonassert</excludeArtifactIds>
               <excludeGroupIds>org.junit,org.mockito,org.opentest4j,org.hibernate.javax.persistence</excludeGroupIds>
               <outputDirectory>${project.build.directory}/lib</outputDirectory>
             </configuration>

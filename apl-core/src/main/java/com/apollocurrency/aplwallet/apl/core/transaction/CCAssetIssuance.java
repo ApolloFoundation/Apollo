@@ -3,30 +3,26 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
+import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetIssuance;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import java.nio.ByteBuffer;
-import java.util.Map;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+import java.util.Map;
+
 /**
- *
  * @author al
  */
 class CCAssetIssuance extends ColoredCoins {
-    
-    public CCAssetIssuance() {
-    }
+
     private final Fee SINGLETON_ASSET_FEE = new Fee.SizeBasedFee(Constants.ONE_APL, Constants.ONE_APL, 32) {
         public int getSize(Transaction transaction, Appendix appendage) {
             ColoredCoinsAssetIssuance attachment = (ColoredCoinsAssetIssuance) transaction.getAttachment();
@@ -34,6 +30,9 @@ class CCAssetIssuance extends ColoredCoins {
         }
     };
     private final Fee ASSET_ISSUANCE_FEE = (transaction, appendage) -> isSingletonIssuance(transaction) ? SINGLETON_ASSET_FEE.getFee(transaction, appendage) : 1000 * Constants.ONE_APL;
+
+    public CCAssetIssuance() {
+    }
 
     @Override
     public final byte getSubtype() {
@@ -84,7 +83,7 @@ class CCAssetIssuance extends ColoredCoins {
         ColoredCoinsAssetIssuance attachment = (ColoredCoinsAssetIssuance) transaction.getAttachment();
         long assetId = transaction.getId();
         Asset.addAsset(transaction, attachment);
-        senderAccount.addToAssetAndUnconfirmedAssetBalanceATU(getLedgerEvent(), assetId, assetId, attachment.getQuantityATU());
+        lookupAccountAssetService().addToAssetAndUnconfirmedAssetBalanceATU(senderAccount, getLedgerEvent(), assetId, assetId, attachment.getQuantityATU());
     }
 
     @Override
@@ -124,5 +123,5 @@ class CCAssetIssuance extends ColoredCoins {
         ColoredCoinsAssetIssuance attachment = (ColoredCoinsAssetIssuance) transaction.getAttachment();
         return attachment.getQuantityATU() == 1 && attachment.getDecimals() == 0 && attachment.getDescription().length() <= Constants.MAX_SINGLETON_ASSET_DESCRIPTION_LENGTH;
     }
-    
+
 }

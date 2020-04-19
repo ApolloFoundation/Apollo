@@ -20,11 +20,12 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
-public interface Observable<T,E extends Enum<E>> {
+public interface Observable<T, E extends Enum<E>> {
 
     boolean addListener(Listener<T> listener, E eventType);
 
     boolean removeListener(Listener<T> listener, E eventType);
 
-    default void ignoreListener(Listener<T> listener, E eventType){}
+    default void ignoreListener(Listener<T> listener, E eventType) {
+    }
 }

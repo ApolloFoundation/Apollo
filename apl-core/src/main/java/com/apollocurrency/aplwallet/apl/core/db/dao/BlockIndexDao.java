@@ -71,7 +71,7 @@ public interface BlockIndexDao {
 
     @Transactional
     @SqlUpdate("INSERT INTO block_index(block_id, block_height) " +
-            "VALUES (:blockId, :blockHeight)")
+        "VALUES (:blockId, :blockHeight)")
     int saveBlockIndex(@BindBean BlockIndex blockIndex);
 
     @Transactional

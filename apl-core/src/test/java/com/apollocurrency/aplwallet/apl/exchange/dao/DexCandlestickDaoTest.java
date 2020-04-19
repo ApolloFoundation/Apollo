@@ -23,12 +23,14 @@ class DexCandlestickDaoTest {
     private DexCandlestickDao dao;
 
     private DexTradingTestData td;
+
     @BeforeEach
     void setUp() {
         dao = JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(
-                extension.getDatabaseManager().getJdbiHandleFactory(), DexCandlestickDao.class);
+            extension.getDatabaseManager().getJdbiHandleFactory(), DexCandlestickDao.class);
         td = new DexTradingTestData();
     }
+
     @Test
     void testGetByTimestampAndCoin() {
         DexCandlestick ethCandlestick = dao.getByTimestamp(td.ETH_0_CANDLESTICK.getTimestamp(), DexCurrency.ETH);

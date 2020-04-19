@@ -23,8 +23,8 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONStreamAware;
 
@@ -35,15 +35,16 @@ import javax.servlet.http.HttpServletRequest;
 @Vetoed
 public final class GetDGSGood extends AbstractAPIRequestHandler {
 
+    private DGSService service = CDI.current().select(DGSService.class).get();
+
     public GetDGSGood() {
-        super(new APITag[] {APITag.DGS}, "goods", "includeCounts");
+        super(new APITag[]{APITag.DGS}, "goods", "includeCounts");
     }
 
-    private DGSService service = CDI.current().select(DGSService.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         boolean includeCounts = "true".equalsIgnoreCase(req.getParameter("includeCounts"));
-        return JSONData.goods(ParameterParser.getGoods(service, req), includeCounts);
+        return JSONData.goods(HttpParameterParserUtil.getGoods(service, req), includeCounts);
     }
 
 

@@ -37,6 +37,23 @@ public class PassphraseGeneratorImpl implements PassphraseGenerator {
         this.dictionaryURL = dictionaryURL;
     }
 
+    public PassphraseGeneratorImpl(int minNumberOfWords, int maxNumberOfWords) {
+        if (minNumberOfWords <= 0 || maxNumberOfWords <= 0) {
+            throw new IllegalArgumentException("'minNumberOfWords' and 'maxNumberOfWords' should be positive");
+        }
+
+        if (minNumberOfWords > maxNumberOfWords) {
+            throw new IllegalArgumentException("'minNumberOfWords' should be less or equal to 'maxNumberOfWords'");
+        }
+        this.minNumberOfWords = minNumberOfWords;
+        this.maxNumberOfWords = maxNumberOfWords;
+        this.dictionaryURL = getClass().getClassLoader().getResource(DEFAULT_DICTIONARY_PATH);
+    }
+
+    public PassphraseGeneratorImpl() {
+        this(DEFAULT_MIN_NUMBER_OF_WORDS, DEFAULT_MAX_NUMBER_OF_WORDS);
+    }
+
     public int getMinNumberOfWords() {
         return minNumberOfWords;
     }
@@ -55,24 +72,6 @@ public class PassphraseGeneratorImpl implements PassphraseGenerator {
 
     public List<String> getDictionary() {
         return dictionary;
-    }
-
-    public PassphraseGeneratorImpl(int minNumberOfWords, int maxNumberOfWords) {
-        if (minNumberOfWords <= 0 || maxNumberOfWords <= 0) {
-            throw new IllegalArgumentException("'minNumberOfWords' and 'maxNumberOfWords' should be positive");
-        }
-
-        if (minNumberOfWords > maxNumberOfWords) {
-            throw new IllegalArgumentException("'minNumberOfWords' should be less or equal to 'maxNumberOfWords'");
-        }
-        this.minNumberOfWords = minNumberOfWords;
-        this.maxNumberOfWords = maxNumberOfWords;
-        this.dictionaryURL = getClass().getClassLoader().getResource(DEFAULT_DICTIONARY_PATH);
-    }
-
-
-    public PassphraseGeneratorImpl() {
-        this(DEFAULT_MIN_NUMBER_OF_WORDS, DEFAULT_MAX_NUMBER_OF_WORDS);
     }
 
     @Override
@@ -97,16 +96,15 @@ public class PassphraseGeneratorImpl implements PassphraseGenerator {
                 passphraseWords.add(dictionary.get(random.nextInt(dictionary.size())));
             }
             return String.join(" ", passphraseWords);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
 
     protected List<String> loadDictionary() throws IOException {
-            if (dictionaryURL == null) {
-                throw new RuntimeException("Dictionary " + DEFAULT_DICTIONARY_PATH + " is not exist");
-            }
+        if (dictionaryURL == null) {
+            throw new RuntimeException("Dictionary " + DEFAULT_DICTIONARY_PATH + " is not exist");
+        }
         List<String> words = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(dictionaryURL.openStream()))) {
             for (String line = reader.readLine(); line != null; line = reader.readLine()) {

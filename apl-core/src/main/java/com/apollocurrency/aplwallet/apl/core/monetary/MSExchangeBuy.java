@@ -3,22 +3,22 @@
  */
 package com.apollocurrency.aplwallet.apl.core.monetary;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeBuyAttachment;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import java.nio.ByteBuffer;
-import java.util.Map;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+import java.util.Map;
+
 /**
- *
  * @author al
  */
 class MSExchangeBuy extends MonetarySystemExchange {
-    
+
     public MSExchangeBuy() {
     }
 
@@ -56,7 +56,7 @@ class MSExchangeBuy extends MonetarySystemExchange {
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         MonetarySystemExchangeBuyAttachment attachment = (MonetarySystemExchangeBuyAttachment) transaction.getAttachment();
         if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact(attachment.getUnits(), attachment.getRateATM())) {
-            senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), -Math.multiplyExact(attachment.getUnits(), attachment.getRateATM()));
+            lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -Math.multiplyExact(attachment.getUnits(), attachment.getRateATM()));
             return true;
         }
         return false;
@@ -65,7 +65,7 @@ class MSExchangeBuy extends MonetarySystemExchange {
     @Override
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         MonetarySystemExchangeBuyAttachment attachment = (MonetarySystemExchangeBuyAttachment) transaction.getAttachment();
-        senderAccount.addToUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), Math.multiplyExact(attachment.getUnits(), attachment.getRateATM()));
+        lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), Math.multiplyExact(attachment.getUnits(), attachment.getRateATM()));
     }
 
     @Override
@@ -74,5 +74,5 @@ class MSExchangeBuy extends MonetarySystemExchange {
         ExchangeRequest.addExchangeRequest(transaction, attachment);
         CurrencyExchangeOffer.exchangeAPLForCurrency(transaction, senderAccount, attachment.getCurrencyId(), attachment.getRateATM(), attachment.getUnits());
     }
-    
+
 }

@@ -19,7 +19,6 @@ import java.nio.file.Path;
 import java.util.Base64;
 
 /**
- *
  * @author alukin@gmail.com
  */
 @Slf4j
@@ -46,11 +45,11 @@ public class GetFileChunk extends PeerRequestHandler {
                 res.errorCode = -1;
             }
             FileChunk fc = new FileChunk();
-            fc.info.crc=ops.getLastRDChunkCrc();
-            fc.info.fileId=fcr.fileId;
-            fc.info.size=rres.longValue();
-            fc.info.offset=fcr.offset;
-            fc.mime64data=Base64.getEncoder().encodeToString(dataBuf);
+            fc.info.crc = ops.getLastRDChunkCrc();
+            fc.info.fileId = fcr.fileId;
+            fc.info.size = rres.longValue();
+            fc.info.offset = fcr.offset;
+            fc.mime64data = Base64.getEncoder().encodeToString(dataBuf);
             res.chunk = fc;
         } catch (IOException ex) {
             log.error("Error reading file with id: " + fcr.fileId, ex);

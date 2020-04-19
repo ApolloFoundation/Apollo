@@ -1,9 +1,7 @@
 package com.apollocurrrency.aplwallet.inttest.model;
 
 import com.apollocurrency.aplwallet.api.dto.AccountAliasDTO;
-import com.apollocurrency.aplwallet.api.dto.AccountAssetDTO;
 import com.apollocurrency.aplwallet.api.dto.AccountAssetOrderDTO;
-import com.apollocurrency.aplwallet.api.dto.AccountDTO;
 import com.apollocurrency.aplwallet.api.dto.AccountMessageDTO;
 import com.apollocurrency.aplwallet.api.dto.BalanceDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockDTO;
@@ -20,6 +18,8 @@ import com.apollocurrency.aplwallet.api.dto.PollDTO;
 import com.apollocurrency.aplwallet.api.dto.ShardDTO;
 import com.apollocurrency.aplwallet.api.dto.TaggedDataDTO;
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
+import com.apollocurrency.aplwallet.api.dto.account.AccountAssetDTO;
+import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.api.response.Account2FAResponse;
 import com.apollocurrency.aplwallet.api.response.AccountAliasesResponse;
@@ -27,7 +27,7 @@ import com.apollocurrency.aplwallet.api.response.AccountAssetsCountResponse;
 import com.apollocurrency.aplwallet.api.response.AccountAssetsIdsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountAssetsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountBlockIdsResponse;
-import com.apollocurrency.aplwallet.api.response.AccountBlocksResponse;
+import com.apollocurrency.aplwallet.api.response.BlocksResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCountAliasesResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrencyResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetAskOrderIdsResponse;
@@ -188,9 +188,9 @@ public class TestBaseOld extends TestBase {
     public boolean waitForHeight(int height) {
         log.info("Wait For Height: {}", height);
         RetryPolicy retry = new RetryPolicy()
-                .retryWhen(false)
-                .withMaxRetries(15)
-                .withDelay(10, TimeUnit.SECONDS);
+            .retryWhen(false)
+            .withMaxRetries(15)
+            .withDelay(10, TimeUnit.SECONDS);
         boolean isHeight = false;
 
         try {
@@ -201,6 +201,7 @@ public class TestBaseOld extends TestBase {
         assertTrue(isHeight, String.format("Height %s not reached: %s", height, getBlock().getHeight()));
         return isHeight;
     }
+
     @Step
     public TransactionDTO getTransaction(String transaction) {
         addParameters(RequestType.requestType, RequestType.getTransaction);
@@ -718,9 +719,9 @@ public class TestBaseOld extends TestBase {
     }
 
     @Step
-    public AccountBlocksResponse getBlocks() {
+    public BlocksResponse getBlocks() {
         addParameters(RequestType.requestType, getBlocks);
-        return getInstanse(AccountBlocksResponse.class);
+        return getInstanse(BlocksResponse.class);
     }
 
     @Step

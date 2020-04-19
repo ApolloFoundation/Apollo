@@ -5,27 +5,30 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.slf4j.Logger;
 
-import java.util.Objects;
 import javax.inject.Inject;
+import java.util.Objects;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 public abstract class AbstractBlockValidator implements BlockValidator {
     private static final Logger LOG = getLogger(AbstractBlockValidator.class);
-    private Blockchain blockchain;
     protected BlockchainConfig blockchainConfig;
-    
+    private Blockchain blockchain;
+    private AccountService accountService;
+
     @Inject
-    public AbstractBlockValidator(Blockchain blockchain, BlockchainConfig blockchainConfig) {
+    public AbstractBlockValidator(Blockchain blockchain, BlockchainConfig blockchainConfig, AccountService accountService) {
         Objects.requireNonNull(blockchain, "Blockchain is null");
         Objects.requireNonNull(blockchainConfig, "Blockchain config is null");
         this.blockchain = blockchain;
         this.blockchainConfig = blockchainConfig;
+        this.accountService = accountService;
     }
 
     @Override
@@ -35,13 +38,13 @@ public abstract class AbstractBlockValidator implements BlockValidator {
         }
         if (block.getTimestamp() > curTime + Constants.MAX_TIMEDRIFT) {
             LOG.warn("Received block " + block.getStringId() + " from the future, timestamp " + block.getTimestamp()
-                    + " generator " + Long.toUnsignedString(block.getGeneratorId()) + " current time " + curTime + ", system clock may be off");
+                + " generator " + Long.toUnsignedString(block.getGeneratorId()) + " current time " + curTime + ", system clock may be off");
             throw new BlockchainProcessor.BlockOutOfOrderException("Invalid timestamp: " + block.getTimestamp()
-                    + " current time is " + curTime, block);
+                + " current time is " + curTime, block);
         }
         if (block.getTimestamp() <= previousLastBlock.getTimestamp()) {
             throw new BlockchainProcessor.BlockNotAcceptedException("Block timestamp " + block.getTimestamp() + " is before previous block timestamp "
-                    + previousLastBlock.getTimestamp(), block);
+                + previousLastBlock.getTimestamp(), block);
         }
         verifySignature(block);
         validatePreviousHash(block, previousLastBlock);
@@ -49,8 +52,8 @@ public abstract class AbstractBlockValidator implements BlockValidator {
             throw new BlockchainProcessor.BlockNotAcceptedException("Duplicate block or invalid id", block);
         }
         if (!block.verifyGenerationSignature()) {
-            Account generatorAccount = Account.getAccount(block.getGeneratorId());
-            long generatorBalance = generatorAccount == null ? 0 : generatorAccount.getEffectiveBalanceAPL();
+            Account generatorAccount = accountService.getAccount(block.getGeneratorId());
+            long generatorBalance = generatorAccount == null ? 0 : accountService.getEffectiveBalanceAPL(generatorAccount, blockchain.getHeight(), true);
             throw new BlockchainProcessor.BlockNotAcceptedException("Generation signature verification failed, effective balance " + generatorBalance, block);
         }
 

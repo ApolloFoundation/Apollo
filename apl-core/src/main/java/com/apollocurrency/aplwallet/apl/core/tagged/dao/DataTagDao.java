@@ -37,7 +37,7 @@ public class DataTagDao extends EntityDbTable<DataTag> {
     private static final StringKeyFactory<DataTag> tagDbKeyFactory = new StringKeyFactory<>("tag") {
         @Override
         public DbKey newKey(DataTag dataTag) {
-           return newKey(dataTag.getTag());
+            return newKey(dataTag.getTag());
         }
     };
     private static final DataTagMapper MAPPER = new DataTagMapper(tagDbKeyFactory);
@@ -146,10 +146,10 @@ public class DataTagDao extends EntityDbTable<DataTag> {
     @Override
     public void save(Connection con, DataTag dataTag) throws SQLException {
         try (
-                @DatabaseSpecificDml(DmlMarker.MERGE)
-                PreparedStatement pstmt = con.prepareStatement(
+            @DatabaseSpecificDml(DmlMarker.MERGE)
+            PreparedStatement pstmt = con.prepareStatement(
                 "MERGE INTO data_tag (tag, tag_count, height, latest) "
-                        + "KEY (tag, height) VALUES (?, ?, ?, TRUE)")
+                    + "KEY (tag, height) VALUES (?, ?, ?, TRUE)")
         ) {
             int i = 0;
             pstmt.setString(++i, dataTag.getTag());

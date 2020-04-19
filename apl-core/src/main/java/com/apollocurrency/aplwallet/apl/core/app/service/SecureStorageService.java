@@ -7,6 +7,8 @@ import java.util.List;
 
 public interface SecureStorageService {
 
+    String SECURE_STORE_KEY = "secure_store_key";
+
     /**
      * Add user passPhrase to the storage.
      */
@@ -24,6 +26,7 @@ public interface SecureStorageService {
 
     /**
      * Save encrypted by passphrase secretStore in the json format.
+     *
      * @return true - if secretStore were saved successfully, otherwise returned false
      */
     boolean storeSecretStorage();
@@ -42,16 +45,15 @@ public interface SecureStorageService {
      * Create private key for application.
      */
     String createPrivateKeyForStorage() throws AplException.ExecutiveProcessException;
-   
-    
+
     /**
      * Flushing keys after decentralized exchange routine
-     * @param accountID   id of the corresponding account
-     * @param passPhrase  passphrase of the particular wallet
+     *
+     * @param accountID  id of the corresponding account
+     * @param passPhrase passphrase of the particular wallet
      * @return flag whether the corresponding pair was found
      */
     boolean flushAccountKeys(Long accountID, String passPhrase);
-
 
     boolean isEnabled();
 }

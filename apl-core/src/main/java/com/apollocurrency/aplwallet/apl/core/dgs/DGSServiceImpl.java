@@ -4,8 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.dgs;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -30,28 +31,33 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 
-import java.util.ArrayList;
-import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.ArrayList;
+import java.util.List;
 
 @Singleton
 public class DGSServiceImpl implements DGSService {
+    private final DbClause inStockOnlyClause = new DbClause.IntClause("in_stock_count", DbClause.Op.GT, 0);
+    private final DbClause inStockClause = new DbClause.BooleanClause("goods.delisted", false)
+        .and(new DbClause.LongClause("goods.quantity", DbClause.Op.GT, 0));
     private DGSPublicFeedbackTable publicFeedbackTable;
     private DGSPurchaseTable purchaseTable;
     private DGSFeedbackTable feedbackTable;
     private Blockchain blockchain;
     private DGSGoodsTable goodsTable;
     private DGSTagTable tagTable;
+    private AccountService accountService;
 
     @Inject
-    public DGSServiceImpl(DGSPublicFeedbackTable publicFeedbackTable, DGSPurchaseTable purchaseTable, DGSFeedbackTable feedbackTable, Blockchain blockchain, DGSGoodsTable goodsTable, DGSTagTable tagTable) {
+    public DGSServiceImpl(DGSPublicFeedbackTable publicFeedbackTable, DGSPurchaseTable purchaseTable, DGSFeedbackTable feedbackTable, Blockchain blockchain, DGSGoodsTable goodsTable, DGSTagTable tagTable, AccountService accountService) {
         this.publicFeedbackTable = publicFeedbackTable;
         this.purchaseTable = purchaseTable;
         this.feedbackTable = feedbackTable;
         this.blockchain = blockchain;
         this.goodsTable = goodsTable;
         this.tagTable = tagTable;
+        this.accountService = accountService;
     }
 
     public int getPurchaseCount() {
@@ -119,8 +125,8 @@ public class DGSServiceImpl implements DGSService {
 
     public DbIterator<DGSPurchase> getExpiredSellerPurchases(final long sellerId, int from, int to) {
         DbClause dbClause = new DbClause.LongClause("seller_id", sellerId)
-                .and(new DbClause.BooleanClause("pending", false))
-                .and(new DbClause.NullClause("goods"));
+            .and(new DbClause.BooleanClause("pending", false))
+            .and(new DbClause.NullClause("goods"));
         return purchaseTable.getManyBy(dbClause, from, to);
     }
 
@@ -137,11 +143,10 @@ public class DGSServiceImpl implements DGSService {
         final int previousTimestamp = privBlock.getTimestamp();
 
         DbClause dbClause = new DbClause.LongClause("deadline", DbClause.Op.LT, timestamp)
-                .and(new DbClause.LongClause("deadline", DbClause.Op.GTE, previousTimestamp))
-                .and(new DbClause.BooleanClause("pending", true));
+            .and(new DbClause.LongClause("deadline", DbClause.Op.GTE, previousTimestamp))
+            .and(new DbClause.BooleanClause("pending", true));
         return purchaseTable.getManyBy(dbClause, 0, -1);
     }
-
 
     public void setPending(DGSPurchase purchase, boolean isPending) {
         purchase.setPending(isPending);
@@ -152,7 +157,6 @@ public class DGSServiceImpl implements DGSService {
         purchase.setEncryptedGoods(encryptedGoods, goodsIsText);
         purchaseTable.insert(purchase/*, blockchain.getHeight()*/);
     }
-
 
     private void setRefundNote(DGSPurchase purchase, EncryptedData refundNote) {
         purchase.setRefundNote(refundNote);
@@ -184,7 +188,6 @@ public class DGSServiceImpl implements DGSService {
 
         feedbackTable.insert(purchase.getFeedbacks());
     }
-
 
     private void addPublicFeedback(DGSPurchase dgsPurchase, String publicFeedback) {
 
@@ -230,8 +233,6 @@ public class DGSServiceImpl implements DGSService {
     public int getTagsCount() {
         return tagTable.getCount();
     }
-
-    private final DbClause inStockOnlyClause = new DbClause.IntClause("in_stock_count", DbClause.Op.GT, 0);
 
     public int getCountInStock() {
         return tagTable.getCount(inStockOnlyClause);
@@ -311,16 +312,16 @@ public class DGSServiceImpl implements DGSService {
     public void purchase(Transaction transaction, DigitalGoodsPurchase attachment) {
         DGSGoods goods = goodsTable.get(attachment.getGoodsId());
         if (!goods.isDelisted()
-                && attachment.getQuantity() <= goods.getQuantity()
-                && attachment.getPriceATM() == goods.getPriceATM()) {
+            && attachment.getQuantity() <= goods.getQuantity()
+            && attachment.getPriceATM() == goods.getPriceATM()) {
             goods.setHeight(blockchain.getHeight());
             changeQuantity(goods, -attachment.getQuantity());
             DGSPurchase purchase = new DGSPurchase(transaction, attachment, goods.getSellerId(), blockchain.getLastBlockTimestamp(), new ArrayList<>());
             purchaseTable.insert(purchase);
         } else {
-            Account buyer = Account.getAccount(transaction.getSenderId());
-            buyer.addToUnconfirmedBalanceATM(LedgerEvent.DIGITAL_GOODS_DELISTED, transaction.getId(),
-                    Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceATM()));
+            Account buyer = accountService.getAccount(transaction.getSenderId());
+            accountService.addToUnconfirmedBalanceATM(buyer, LedgerEvent.DIGITAL_GOODS_DELISTED, transaction.getId(),
+                Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceATM()));
             // restoring the unconfirmed balance if purchase not successful, however buyer still lost the transaction fees
         }
     }
@@ -330,14 +331,15 @@ public class DGSServiceImpl implements DGSService {
         purchase.setHeight(blockchain.getHeight());
         setPending(purchase, false);
         long totalWithoutDiscount = Math.multiplyExact((long) purchase.getQuantity(), purchase.getPriceATM());
-        Account buyer = Account.getAccount(purchase.getBuyerId());
+        Account buyer = accountService.getAccount(purchase.getBuyerId());
         long transactionId = transaction.getId();
-        buyer.addToBalanceATM(LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId,
-                Math.subtractExact(attachment.getDiscountATM(), totalWithoutDiscount));
-        buyer.addToUnconfirmedBalanceATM(LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId, attachment.getDiscountATM());
-        Account seller = Account.getAccount(transaction.getSenderId());
-        seller.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId,
-                Math.subtractExact(totalWithoutDiscount, attachment.getDiscountATM()));
+        //buyer.addToBalanceATM(LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId,Math.subtractExact(attachment.getDiscountATM(), totalWithoutDiscount));
+        accountService.addToBalanceATM(buyer, LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId, Math.subtractExact(attachment.getDiscountATM(), totalWithoutDiscount));
+        //buyer.addToUnconfirmedBalanceATM(LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId, attachment.getDiscountATM());
+        accountService.addToUnconfirmedBalanceATM(buyer, LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId, attachment.getDiscountATM());
+        Account seller = accountService.getAccount(transaction.getSenderId());
+        //seller.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId, Math.subtractExact(totalWithoutDiscount, attachment.getDiscountATM()));
+        accountService.addToBalanceAndUnconfirmedBalanceATM(seller, LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId, Math.subtractExact(totalWithoutDiscount, attachment.getDiscountATM()));
         setEncryptedGoods(purchase, attachment.getGoods(), attachment.goodsIsText());
         setDiscountATM(purchase, attachment.getDiscountATM());
 
@@ -347,10 +349,10 @@ public class DGSServiceImpl implements DGSService {
                        EncryptedMessageAppendix encryptedMessage) {
         DGSPurchase purchase = purchaseTable.get(purchaseId);
         purchase.setHeight(blockchain.getHeight());
-        Account seller = Account.getAccount(sellerId);
-        seller.addToBalanceATM(event, eventId, -refundATM);
-        Account buyer = Account.getAccount(purchase.getBuyerId());
-        buyer.addToBalanceAndUnconfirmedBalanceATM(event, eventId, refundATM);
+        Account seller = accountService.getAccount(sellerId);
+        accountService.addToBalanceATM(seller, event, eventId, -refundATM);
+        Account buyer = accountService.getAccount(purchase.getBuyerId());
+        accountService.addToBalanceAndUnconfirmedBalanceATM(buyer, event, eventId, refundATM);
         if (encryptedMessage != null) {
             setRefundNote(purchase, encryptedMessage.getEncryptedData());
         }
@@ -366,9 +368,6 @@ public class DGSServiceImpl implements DGSService {
             addPublicFeedback(purchase, Convert.toString(message.getMessage()));
         }
     }
-
-    private final DbClause inStockClause = new DbClause.BooleanClause("goods.delisted", false)
-            .and(new DbClause.LongClause("goods.quantity", DbClause.Op.GT, 0));
 
     public int getGoodsCount() {
         return goodsTable.getCount();
@@ -429,12 +428,12 @@ public class DGSServiceImpl implements DGSService {
 
     public DbIterator<DGSGoods> searchGoods(String query, boolean inStockOnly, int from, int to) {
         return goodsTable.search(query, inStockOnly ? inStockClause : DbClause.EMPTY_CLAUSE, from, to,
-                " ORDER BY ft.score DESC, goods.timestamp DESC ");
+            " ORDER BY ft.score DESC, goods.timestamp DESC ");
     }
 
     public DbIterator<DGSGoods> searchSellerGoods(String query, long sellerId, boolean inStockOnly, int from, int to) {
         return goodsTable.search(query, new SellerDbClause(sellerId, inStockOnly), from, to,
-                " ORDER BY ft.score DESC, goods.name ASC, goods.timestamp DESC ");
+            " ORDER BY ft.score DESC, goods.name ASC, goods.timestamp DESC ");
     }
 
 }

@@ -20,20 +20,25 @@
 
 package com.apollocurrency.aplwallet.apl.core.monetary;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.service.BlockChainInfoService;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
 
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public final class CurrencySellOffer extends CurrencyExchangeOffer {
+    private static final BlockChainInfoService BLOCK_CHAIN_INFO_SERVICE =
+        CDI.current().select(BlockChainInfoService.class).get();
+
 
     private static final LongKeyFactory<CurrencySellOffer> sellOfferDbKeyFactory = new LongKeyFactory<CurrencySellOffer>("id") {
 
@@ -57,6 +62,19 @@ public final class CurrencySellOffer extends CurrencyExchangeOffer {
         }
 
     };
+    private final DbKey dbKey;
+
+    private CurrencySellOffer(Transaction transaction, MonetarySystemPublishExchangeOffer attachment) {
+        super(transaction.getId(), attachment.getCurrencyId(), transaction.getSenderId(), attachment.getSellRateATM(),
+            attachment.getTotalSellLimit(), attachment.getInitialSellSupply(), attachment.getExpirationHeight(), transaction.getHeight(),
+            transaction.getIndex());
+        this.dbKey = sellOfferDbKeyFactory.newKey(id);
+    }
+
+    private CurrencySellOffer(ResultSet rs, DbKey dbKey) throws SQLException {
+        super(rs);
+        this.dbKey = dbKey;
+    }
 
     public static int getCount() {
         return sellOfferTable.getCount();
@@ -111,23 +129,10 @@ public final class CurrencySellOffer extends CurrencyExchangeOffer {
     }
 
     static void remove(CurrencySellOffer sellOffer) {
-        sellOfferTable.delete(sellOffer);
+        sellOfferTable.deleteAtHeight(sellOffer, BLOCK_CHAIN_INFO_SERVICE.getHeight());
     }
 
-    public static void init() {}
-
-    private final DbKey dbKey;
-
-    private CurrencySellOffer(Transaction transaction, MonetarySystemPublishExchangeOffer attachment) {
-        super(transaction.getId(), attachment.getCurrencyId(), transaction.getSenderId(), attachment.getSellRateATM(),
-                attachment.getTotalSellLimit(), attachment.getInitialSellSupply(), attachment.getExpirationHeight(), transaction.getHeight(),
-                transaction.getIndex());
-        this.dbKey = sellOfferDbKeyFactory.newKey(id);
-    }
-
-    private CurrencySellOffer(ResultSet rs, DbKey dbKey) throws SQLException {
-        super(rs);
-        this.dbKey = dbKey;
+    public static void init() {
     }
 
     @Override

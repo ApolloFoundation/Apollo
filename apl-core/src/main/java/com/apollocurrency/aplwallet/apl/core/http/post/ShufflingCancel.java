@@ -20,33 +20,33 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
+import com.apollocurrency.aplwallet.apl.core.http.APITag;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCancellationAttachment;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class ShufflingCancel extends CreateTransaction {
 
     public ShufflingCancel() {
-        super(new APITag[] {APITag.SHUFFLING, APITag.CREATE_TRANSACTION}, "shuffling", "cancellingAccount", "shufflingStateHash");
+        super(new APITag[]{APITag.SHUFFLING, APITag.CREATE_TRANSACTION}, "shuffling", "cancellingAccount", "shufflingStateHash");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        Shuffling shuffling = ParameterParser.getShuffling(req);
-        long cancellingAccountId = ParameterParser.getAccountId(req, "cancellingAccount", false);
-        byte[] shufflingStateHash = ParameterParser.getBytes(req, "shufflingStateHash", true);
-        long accountId = ParameterParser.getAccountId(req, this.vaultAccountName(), false);
-        byte[] secretBytes = ParameterParser.getSecretBytes(req,accountId, true);
+        Shuffling shuffling = HttpParameterParserUtil.getShuffling(req);
+        long cancellingAccountId = HttpParameterParserUtil.getAccountId(req, "cancellingAccount", false);
+        byte[] shufflingStateHash = HttpParameterParserUtil.getBytes(req, "shufflingStateHash", true);
+        long accountId = HttpParameterParserUtil.getAccountId(req, this.vaultAccountName(), false);
+        byte[] secretBytes = HttpParameterParserUtil.getSecretBytes(req, accountId, true);
         ShufflingCancellationAttachment attachment = shuffling.revealKeySeeds(secretBytes, cancellingAccountId, shufflingStateHash);
-        Account account = ParameterParser.getSenderAccount(req);
+        Account account = HttpParameterParserUtil.getSenderAccount(req);
         return createTransaction(req, account, attachment);
     }
 }

@@ -20,37 +20,36 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountProperty;
-import com.apollocurrency.aplwallet.apl.core.account.AccountPropertyTable;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountProperty;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAccountPropertyDelete;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class DeleteAccountProperty extends CreateTransaction {
 
     public DeleteAccountProperty() {
-        super(new APITag[] {APITag.ACCOUNTS, APITag.CREATE_TRANSACTION}, "recipient", "property", "setter");
+        super(new APITag[]{APITag.ACCOUNTS, APITag.CREATE_TRANSACTION}, "recipient", "property", "setter");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        Account senderAccount = ParameterParser.getSenderAccount(req);
-        long recipientId = ParameterParser.getAccountId(req, "recipient", false);
+        Account senderAccount = HttpParameterParserUtil.getSenderAccount(req);
+        long recipientId = HttpParameterParserUtil.getAccountId(req, "recipient", false);
         if (recipientId == 0) {
             recipientId = senderAccount.getId();
         }
-        long setterId = ParameterParser.getAccountId(req, "setter", false);
+        long setterId = HttpParameterParserUtil.getAccountId(req, "setter", false);
         if (setterId == 0) {
             setterId = senderAccount.getId();
         }
@@ -58,7 +57,7 @@ public final class DeleteAccountProperty extends CreateTransaction {
         if (property.isEmpty()) {
             return JSONResponses.MISSING_PROPERTY;
         }
-        AccountProperty accountProperty = AccountPropertyTable.getProperty(recipientId, property, setterId);
+        AccountProperty accountProperty = lookupAccountPropertyService().getProperty(recipientId, property, setterId);
         if (accountProperty == null) {
             return JSONResponses.UNKNOWN_PROPERTY;
         }

@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -56,27 +56,21 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_S
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_ENOUGH_APL;
 
 public abstract class CreateTransaction extends AbstractAPIRequestHandler {
+    private static final String[] commonParameters = new String[]{"secretPhrase", "publicKey", "feeATM",
+        "deadline", "referencedTransactionFullHash", "broadcast",
+        "message", "messageIsText", "messageIsPrunable",
+        "messageToEncrypt", "messageToEncryptIsText", "encryptedMessageData", "encryptedMessageNonce", "encryptedMessageIsPrunable", "compressMessageToEncrypt",
+        "messageToEncryptToSelf", "messageToEncryptToSelfIsText", "encryptToSelfMessageData", "encryptToSelfMessageNonce", "compressMessageToEncryptToSelf",
+        "phased", "phasingFinishHeight", "phasingVotingModel", "phasingQuorum", "phasingMinBalance", "phasingHolding", "phasingMinBalanceModel",
+        "phasingWhitelisted", "phasingWhitelisted", "phasingWhitelisted",
+        "phasingLinkedFullHash", "phasingLinkedFullHash", "phasingLinkedFullHash",
+        "phasingHashedSecret", "phasingHashedSecretAlgorithm",
+        "recipientPublicKey",
+        "ecBlockId", "ecBlockHeight"};
+    protected TimeService timeService = CDI.current().select(TimeService.class).get();
     private TransactionValidator validator = CDI.current().select(TransactionValidator.class).get();
     private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    protected TimeService timeService = CDI.current().select(TimeService.class).get();
     private FeeCalculator feeCalculator = CDI.current().select(FeeCalculator.class).get();
-    private static final String[] commonParameters = new String[]{"secretPhrase", "publicKey", "feeATM",
-            "deadline", "referencedTransactionFullHash", "broadcast",
-            "message", "messageIsText", "messageIsPrunable",
-            "messageToEncrypt", "messageToEncryptIsText", "encryptedMessageData", "encryptedMessageNonce", "encryptedMessageIsPrunable", "compressMessageToEncrypt",
-            "messageToEncryptToSelf", "messageToEncryptToSelfIsText", "encryptToSelfMessageData", "encryptToSelfMessageNonce", "compressMessageToEncryptToSelf",
-            "phased", "phasingFinishHeight", "phasingVotingModel", "phasingQuorum", "phasingMinBalance", "phasingHolding", "phasingMinBalanceModel",
-            "phasingWhitelisted", "phasingWhitelisted", "phasingWhitelisted",
-            "phasingLinkedFullHash", "phasingLinkedFullHash", "phasingLinkedFullHash",
-            "phasingHashedSecret", "phasingHashedSecretAlgorithm",
-            "recipientPublicKey",
-            "ecBlockId", "ecBlockHeight"};
-
-    private static String[] addCommonParameters(String[] parameters) {
-        String[] result = Arrays.copyOf(parameters, parameters.length + commonParameters.length);
-        System.arraycopy(commonParameters, 0, result, parameters.length, commonParameters.length);
-        return result;
-    }
 
     public CreateTransaction(APITag[] apiTags, String... parameters) {
         super(apiTags, addCommonParameters(parameters));
@@ -92,17 +86,24 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
         }
     }
 
+    private static String[] addCommonParameters(String[] parameters) {
+        String[] result = Arrays.copyOf(parameters, parameters.length + commonParameters.length);
+        System.arraycopy(commonParameters, 0, result, parameters.length, commonParameters.length);
+        return result;
+    }
+
     public JSONStreamAware createTransaction(HttpServletRequest req, Account senderAccount, Attachment attachment)
-            throws AplException {
+        throws AplException {
         return createTransaction(req, senderAccount, 0, 0, attachment);
     }
 
     public JSONStreamAware createTransaction(HttpServletRequest req, Account senderAccount, long recipientId, long amountATM)
-            throws AplException {
+        throws AplException {
         return createTransaction(req, senderAccount, recipientId, amountATM, Attachment.ORDINARY_PAYMENT);
     }
+
     public JSONStreamAware createPrivateTransaction(HttpServletRequest req, Account senderAccount, long recipientId, long amountATM)
-            throws AplException {
+        throws AplException {
         return createTransaction(req, senderAccount, recipientId, amountATM, Attachment.PRIVATE_PAYMENT, true).getJson();
     }
 
@@ -112,7 +113,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
 
     public TransactionResponse createTransaction(HttpServletRequest req, Account senderAccount, long recipientId, long amountATM, Attachment attachment, boolean broadcast) throws AplException.ValidationException, ParameterException {
         CreateTransactionRequest createTransactionRequest = HttpRequestToCreateTransactionRequestConverter
-                .convert(req, senderAccount, recipientId, amountATM, attachment, broadcast);
+            .convert(req, senderAccount, recipientId, amountATM, attachment, broadcast, lookupAccountService());
 
 
         JSONObject response = new JSONObject();
@@ -123,7 +124,8 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
         response.put("transactionJSON", transactionJSON);
         try {
             response.put("unsignedTransactionBytes", Convert.toHexString(transaction.getUnsignedBytes()));
-        } catch (AplException.NotYetEncryptedException ignore) {}
+        } catch (AplException.NotYetEncryptedException ignore) {
+        }
         if (createTransactionRequest.getKeySeed() != null) {
             response.put("transaction", transaction.getStringId());
             response.put("fullHash", transactionJSON.get("fullHash"));
@@ -188,7 +190,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
         Transaction transaction;
         try {
             Transaction.Builder builder = Transaction.newTransactionBuilder(txRequest.getPublicKey(), txRequest.getAmountATM(), txRequest.getFeeATM(),
-                    deadline, txRequest.getAttachment(), timestamp).referencedTransactionFullHash(txRequest.getReferencedTransactionFullHash());
+                deadline, txRequest.getAttachment(), timestamp).referencedTransactionFullHash(txRequest.getReferencedTransactionFullHash());
             if (txRequest.getAttachment().getTransactionType().canHaveRecipient()) {
                 builder.recipientId(txRequest.getRecipientId());
             }
@@ -221,7 +223,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
 
             if (txRequest.isBroadcast()) {
                 lookupTransactionProcessor().broadcast(transaction);
-            } else if (txRequest.isValidate()){
+            } else if (txRequest.isValidate()) {
                 validator.validate(transaction);
             }
         } catch (AplException.NotYetEnabledException e) {

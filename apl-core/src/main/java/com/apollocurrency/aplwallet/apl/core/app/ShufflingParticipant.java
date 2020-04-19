@@ -46,49 +46,15 @@ import java.util.Arrays;
 @Slf4j
 public final class ShufflingParticipant {
 
-    private BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-    private volatile TimeService timeService = CDI.current().select(TimeService.class).get();
+    public static final LinkKeyFactory<ShufflingData> shufflingDataDbKeyFactory = new LinkKeyFactory<ShufflingData>("shuffling_id", "account_id") {
 
-
-    public enum State {
-        REGISTERED((byte)0, new byte[]{1}),
-        PROCESSED((byte)1, new byte[]{2,3}),
-        VERIFIED((byte)2, new byte[]{3}),
-        CANCELLED((byte)3, new byte[]{});
-
-        private final byte code;
-        private final byte[] allowedNext;
-
-        State(byte code, byte[] allowedNext) {
-            this.code = code;
-            this.allowedNext = allowedNext;
+        @Override
+        public DbKey newKey(ShufflingData shufflingData) {
+            return shufflingData.getDbKey();
         }
 
-        static State get(byte code) {
-            for (State state : State.values()) {
-                if (state.code == code) {
-                    return state;
-                }
-            }
-            throw new IllegalArgumentException("No matching state for " + code);
-        }
-
-        public byte getCode() {
-            return code;
-        }
-
-        public boolean canBecome(State nextState) {
-            return Arrays.binarySearch(allowedNext, nextState.code) >= 0;
-        }
-    }
-
-    public enum Event {
-        PARTICIPANT_REGISTERED, PARTICIPANT_PROCESSED, PARTICIPANT_VERIFIED, PARTICIPANT_CANCELLED
-    }
-
+    };
     private static final Listeners<ShufflingParticipant, Event> listeners = new Listeners<>();
-
     private static final LinkKeyFactory<ShufflingParticipant> shufflingParticipantDbKeyFactory = new LinkKeyFactory<ShufflingParticipant>("shuffling_id", "account_id") {
 
         @Override
@@ -97,7 +63,6 @@ public final class ShufflingParticipant {
         }
 
     };
-
     private static final VersionedDeletableEntityDbTable<ShufflingParticipant> shufflingParticipantTable = new VersionedDeletableEntityDbTable<ShufflingParticipant>("shuffling_participant", shufflingParticipantDbKeyFactory) {
 
         @Override
@@ -111,16 +76,6 @@ public final class ShufflingParticipant {
         }
 
     };
-
-    public static final LinkKeyFactory<ShufflingData> shufflingDataDbKeyFactory = new LinkKeyFactory<ShufflingData>("shuffling_id", "account_id") {
-
-        @Override
-        public DbKey newKey(ShufflingData shufflingData) {
-            return shufflingData.getDbKey();
-        }
-
-    };
-
     private static final PrunableDbTable<ShufflingData> shufflingDataTable = new PrunableDbTable<>("shuffling_data", shufflingDataDbKeyFactory) {
         @Override
         public boolean isScanSafe() {
@@ -135,11 +90,11 @@ public final class ShufflingParticipant {
         @Override
         public void save(Connection con, ShufflingData shufflingData) throws SQLException {
             try (
-                    @DatabaseSpecificDml(DmlMarker.SET_ARRAY)
-                    PreparedStatement pstmt = con.prepareStatement(
+                @DatabaseSpecificDml(DmlMarker.SET_ARRAY)
+                PreparedStatement pstmt = con.prepareStatement(
                     "INSERT INTO shuffling_data (shuffling_id, account_id, data, "
-                            + "transaction_timestamp, height) "
-                            + "VALUES (?, ?, ?, ?, ?)")
+                        + "transaction_timestamp, height) "
+                        + "VALUES (?, ?, ?, ?, ?)")
             ) {
                 int i = 0;
                 pstmt.setLong(++i, shufflingData.getShufflingId());
@@ -152,45 +107,13 @@ public final class ShufflingParticipant {
         }
 
     };
-
-    public static boolean addListener(Listener<ShufflingParticipant> listener, Event eventType) {
-        return listeners.addListener(listener, eventType);
-    }
-
-    public static boolean removeListener(Listener<ShufflingParticipant> listener, Event eventType) {
-        return listeners.removeListener(listener, eventType);
-    }
-
-    public static DbIterator<ShufflingParticipant> getParticipants(long shufflingId) {
-        return shufflingParticipantTable.getManyBy(new DbClause.LongClause("shuffling_id", shufflingId), 0, -1, " ORDER BY participant_index ");
-    }
-
-    public static ShufflingParticipant getParticipant(long shufflingId, long accountId) {
-        return shufflingParticipantTable.get(shufflingParticipantDbKeyFactory.newKey(shufflingId, accountId));
-    }
-
-    static ShufflingParticipant getLastParticipant(long shufflingId) {
-        return shufflingParticipantTable.getBy(new DbClause.LongClause("shuffling_id", shufflingId).and(new DbClause.NullClause("next_account_id")));
-    }
-
-    static void addParticipant(long shufflingId, long accountId, int index) {
-        ShufflingParticipant participant = new ShufflingParticipant(shufflingId, accountId, index);
-        shufflingParticipantTable.insert(participant);
-        listeners.notify(participant, Event.PARTICIPANT_REGISTERED);
-    }
-
-    static int getVerifiedCount(long shufflingId) {
-        return shufflingParticipantTable.getCount(new DbClause.LongClause("shuffling_id", shufflingId).and(
-                new DbClause.ByteClause("state", State.VERIFIED.getCode())));
-    }
-
-    public static void init() {}
-
     private final long shufflingId;
     private final long accountId; // sender account
     private final DbKey dbKey;
     private final int index;
-
+    private BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private volatile TimeService timeService = CDI.current().select(TimeService.class).get();
     private long nextAccountId; // pointer to the next shuffling participant updated during registration
     private State state; // tracks the state of the participant in the process
     private byte[][] blameData; // encrypted data saved as intermediate result in the shuffling process
@@ -221,13 +144,58 @@ public final class ShufflingParticipant {
         this.dataHash = rs.getBytes("data_hash");
     }
 
+    public static boolean addListener(Listener<ShufflingParticipant> listener, Event eventType) {
+        return listeners.addListener(listener, eventType);
+    }
+
+    public static boolean removeListener(Listener<ShufflingParticipant> listener, Event eventType) {
+        return listeners.removeListener(listener, eventType);
+    }
+
+    public static DbIterator<ShufflingParticipant> getParticipants(long shufflingId) {
+        return shufflingParticipantTable.getManyBy(new DbClause.LongClause("shuffling_id", shufflingId), 0, -1, " ORDER BY participant_index ");
+    }
+
+    public static ShufflingParticipant getParticipant(long shufflingId, long accountId) {
+        return shufflingParticipantTable.get(shufflingParticipantDbKeyFactory.newKey(shufflingId, accountId));
+    }
+
+    static ShufflingParticipant getLastParticipant(long shufflingId) {
+        return shufflingParticipantTable.getBy(new DbClause.LongClause("shuffling_id", shufflingId).and(new DbClause.NullClause("next_account_id")));
+    }
+
+    static void addParticipant(long shufflingId, long accountId, int index) {
+        ShufflingParticipant participant = new ShufflingParticipant(shufflingId, accountId, index);
+        shufflingParticipantTable.insert(participant);
+        listeners.notify(participant, Event.PARTICIPANT_REGISTERED);
+    }
+
+    static int getVerifiedCount(long shufflingId) {
+        return shufflingParticipantTable.getCount(new DbClause.LongClause("shuffling_id", shufflingId).and(
+            new DbClause.ByteClause("state", State.VERIFIED.getCode())));
+    }
+
+    public static void init() {
+    }
+
+    public static byte[][] getData(long shufflingId, long accountId) {
+        ShufflingData shufflingData = shufflingDataTable.get(shufflingDataDbKeyFactory.newKey(shufflingId, accountId));
+        return shufflingData != null ? shufflingData.getData() : null;
+    }
+
+    public static void restoreData(long shufflingId, long accountId, byte[][] data, int timestamp, int height) {
+        if (data != null && getData(shufflingId, accountId) == null) {
+            shufflingDataTable.insert(new ShufflingData(shufflingId, accountId, data, timestamp, height));
+        }
+    }
+
     private void save(Connection con) throws SQLException {
         try (
-                @DatabaseSpecificDml(DmlMarker.MERGE)
-                PreparedStatement pstmt = con.prepareStatement("MERGE INTO shuffling_participant (shuffling_id, "
-                + "account_id, next_account_id, participant_index, state, blame_data, key_seeds, data_transaction_full_hash, data_hash, height, latest) "
+            @DatabaseSpecificDml(DmlMarker.MERGE)
+            PreparedStatement pstmt = con.prepareStatement("MERGE INTO shuffling_participant (shuffling_id, "
+                + "account_id, next_account_id, participant_index, state, blame_data, key_seeds, data_transaction_full_hash, data_hash, height, latest, deleted) "
                 + "KEY (shuffling_id, account_id, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)")
         ) {
             int i = 0;
             pstmt.setLong(++i, this.shufflingId);
@@ -285,20 +253,9 @@ public final class ShufflingParticipant {
         return getData(shufflingId, accountId);
     }
 
-    public static byte[][] getData(long shufflingId, long accountId) {
-        ShufflingData shufflingData = shufflingDataTable.get(shufflingDataDbKeyFactory.newKey(shufflingId, accountId));
-        return shufflingData != null ? shufflingData.getData() : null;
-    }
-
     void setData(byte[][] data, int timestamp) {
         if (data != null && timeService.getEpochTime() - timestamp < blockchainConfig.getMaxPrunableLifetime() && getData() == null) {
             shufflingDataTable.insert(new ShufflingData(shufflingId, accountId, data, timestamp, blockchain.getHeight()));
-        }
-    }
-
-    public static void restoreData(long shufflingId, long accountId, byte[][] data, int timestamp, int height) {
-        if (data != null && getData(shufflingId, accountId) == null) {
-            shufflingDataTable.insert(new ShufflingData(shufflingId, accountId, data, timestamp, height));
         }
     }
 
@@ -329,6 +286,13 @@ public final class ShufflingParticipant {
         return dataHash;
     }
 
+    private void setDataHash(byte[] dataHash) {
+        if (this.dataHash != null) {
+            throw new IllegalStateException("dataHash already set");
+        }
+        this.dataHash = dataHash;
+    }
+
     void setProcessed(byte[] dataTransactionFullHash, byte[] dataHash) {
         if (this.dataTransactionFullHash != null) {
             throw new IllegalStateException("dataTransactionFullHash already set");
@@ -340,13 +304,6 @@ public final class ShufflingParticipant {
         }
         shufflingParticipantTable.insert(this);
         listeners.notify(this, Event.PARTICIPANT_PROCESSED);
-    }
-
-    private void setDataHash(byte[] dataHash) {
-        if (this.dataHash != null) {
-            throw new IllegalStateException("dataHash already set");
-        }
-        this.dataHash = dataHash;
     }
 
     public ShufflingParticipant getPreviousParticipant() {
@@ -363,7 +320,43 @@ public final class ShufflingParticipant {
     }
 
     void delete() {
-        shufflingParticipantTable.delete(this);
+        shufflingParticipantTable.deleteAtHeight(this, blockchain.getHeight());
+    }
+
+    public enum State {
+        REGISTERED((byte) 0, new byte[]{1}),
+        PROCESSED((byte) 1, new byte[]{2, 3}),
+        VERIFIED((byte) 2, new byte[]{3}),
+        CANCELLED((byte) 3, new byte[]{});
+
+        private final byte code;
+        private final byte[] allowedNext;
+
+        State(byte code, byte[] allowedNext) {
+            this.code = code;
+            this.allowedNext = allowedNext;
+        }
+
+        static State get(byte code) {
+            for (State state : State.values()) {
+                if (state.code == code) {
+                    return state;
+                }
+            }
+            throw new IllegalArgumentException("No matching state for " + code);
+        }
+
+        public byte getCode() {
+            return code;
+        }
+
+        public boolean canBecome(State nextState) {
+            return Arrays.binarySearch(allowedNext, nextState.code) >= 0;
+        }
+    }
+
+    public enum Event {
+        PARTICIPANT_REGISTERED, PARTICIPANT_PROCESSED, PARTICIPANT_VERIFIED, PARTICIPANT_CANCELLED
     }
 
 }

@@ -24,28 +24,29 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionSchedulerService;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.JSON;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class DeleteScheduledTransaction extends AbstractAPIRequestHandler {
 
+    private TransactionSchedulerService schedulerService = CDI.current().select(TransactionSchedulerService.class).get();
+
     public DeleteScheduledTransaction() {
-        super(new APITag[] {APITag.TRANSACTIONS, APITag.ACCOUNTS}, "transaction");
+        super(new APITag[]{APITag.TRANSACTIONS, APITag.ACCOUNTS}, "transaction");
     }
 
-    private TransactionSchedulerService schedulerService = CDI.current().select(TransactionSchedulerService.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
-        long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
+        long transactionId = HttpParameterParserUtil.getUnsignedLong(req, "transaction", true);
         Transaction transaction = schedulerService.deleteScheduledTransaction(transactionId);
         return transaction == null ? JSON.emptyJSON : JSONData.unconfirmedTransaction(transaction);
     }

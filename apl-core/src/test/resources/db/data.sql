@@ -37,6 +37,7 @@ delete from mandatory_transaction;
 delete from dex_contract;
 delete from dex_transaction;
 delete from user_error_message;
+delete from PUBLIC.ACCOUNT_INFO;
 
 INSERT INTO PUBLIC.BLOCK
 (DB_ID,         ID,                HEIGHT,      VERSION,   "TIMESTAMP",  PREVIOUS_BLOCK_ID,  TOTAL_AMOUNT,        TOTAL_FEE,   PAYLOAD_LENGTH,   PREVIOUS_BLOCK_HASH,                                                   CUMULATIVE_DIFFICULTY,  BASE_TARGET,    NEXT_BLOCK_ID,               GENERATION_SIGNATURE,                                                   BLOCK_SIGNATURE,                                                                                                                        PAYLOAD_HASH,                                                           GENERATOR_ID,       TIMEOUT) VALUES
@@ -81,12 +82,22 @@ INSERT INTO PUBLIC.UPDATE_STATUS (transaction_id, updated) VALUES (
 );
 
 insert into account
-(DB_ID  	,ID  	                        ,BALANCE  	        ,UNCONFIRMED_BALANCE  	,HAS_CONTROL_PHASING  	,FORGED_BALANCE  	,ACTIVE_LESSEE_ID  	,HEIGHT  	,LATEST) values
-(10          ,50                            ,555500000000       ,105500000000           ,false                  , 0                 ,null               ,100000     ,TRUE),
-(20          ,100                           ,100000000          , 100000000             ,false                  ,0                  ,null               ,104595     ,true ),
-(30          ,200                           , 250000000         , 200000000             ,false                  ,0                  , null              ,104670     ,true ),
-(40          ,7821792282123976600           , 15025000000000    , 14725000000000        ,false                  ,0                  , null              ,105000     ,true ),
-(50          ,9211698109297098287           , 25100000000000    , 22700000000000        ,false                  ,0                  , null              ,106000     ,true )
+(DB_ID  	,ID  	                        ,BALANCE  	        ,UNCONFIRMED_BALANCE  	,HAS_CONTROL_PHASING  	,FORGED_BALANCE  	,ACTIVE_LESSEE_ID  	,HEIGHT  	,LATEST, DELETED) values
+(10          ,50                            ,555500000000       ,105500000000           ,false                  , 0                 ,null               ,100000     ,TRUE     , false),
+(20          ,100                           ,100000000          , 100000000             ,false                  ,0                  ,null               ,104595     ,true     , false),
+(30          ,200                           , 250000000         , 200000000             ,false                  ,0                  , null              ,104670     ,true     , false),
+(40          ,7821792282123976600           , 15025000000000    , 14725000000000        ,false                  ,0                  , null              ,105000     ,true     , false),
+(50          ,9211698109297098287           , 25100000000000    , 22700000000000        ,false                  ,0                  , null              ,106000     ,true     , false),
+(60          ,500                           ,77182383705332315  ,77182383705332315      ,false                  ,0                  ,null               ,141839     ,false    , false),
+(70          ,500                           ,77216366305332315  ,77216366305332315      ,false                  ,0                  ,null               ,141844     ,false    , false),
+(80          ,500                           ,77798522705332315  ,77798522705332315      ,false                  ,0                  ,null               ,141853     ,true     , false),
+(90          ,600                           ,40767800000000     ,40767800000000         ,false                  ,0                  ,null               ,141855     ,false    , false),
+(100         ,600                           ,41167700000000     ,41167700000000         ,false                  ,0                  ,null               ,141858     ,true     , false),
+(110         ,700                           ,2424711969422000   ,2424711969422000       ,false                  ,1150030000000      ,null               ,141860     ,true     , false),
+(120         ,800                           ,2424711869422000   ,2424711869422000       ,false                  ,1150030000000      ,null               ,141862     ,false    , false),
+(130         ,800                           ,2424711769422000   ,2424711769422000       ,false                  ,1150030000000      ,null               ,141864     ,false    , false),
+(140         ,800                           ,77200915499807515  ,77200915499807515      ,false                  ,0                  ,null               ,141866     ,false    , true ),
+(150         ,800                           ,40367900000000     ,40367900000000         ,false                  ,0                  ,null               ,141868     ,false    , true )
 ;
 
 INSERT INTO PUBLIC.TWO_FACTOR_AUTH (account, secret, confirmed) VALUES
@@ -250,7 +261,7 @@ INSERT into PUBLIC.GOODS
 (64,	8788482956389726350	    ,9211698109297098287	,'test'	            ,'test'	                        ,('test')	                ,TRUE	,'test'	                    ,38189627	,2	        ,100000000	    ,FALSE	    ,542721	    ,TRUE ),
 (65,	4948091426407579194	    ,9211698109297098287	,'qwe'	            ,'qwe'	                        ,('qwe')	                ,TRUE	,'qwe'	                    ,38039976	,12	        ,100000000  	,FALSE	    ,542725	    ,TRUE ),
 (66,	-9127861922199955586    ,9211698109297098287	,'Another product'	,'Just another produc'	        ,('tag','batman')	        ,TRUE	,'tag batman'	            ,41824604	,3	        ,150000000000	,FALSE	    ,542828	    ,TRUE ),
-(67,	-9001112213900824483	,3705364957971254799	,'asdffasdf'	    ,'asdf'	                        ,('asdf')	                ,TRUE	,'asdf'	                    ,37965044	,2	        ,500000000	    ,FALSE	    ,542860	    ,FALSE )
+(67,	-9001112213900824483	,3705364957971254799	,'asdffasdf'	    ,'asdf'	                        ,('asdf')	                ,TRUE	,'asdf'	                    ,37965044	,2	        ,500000000	    ,FALSE	    ,542860	    ,TRUE )
 ;
 
 INSERT INTO purchase
@@ -425,4 +436,12 @@ INSERT INTO user_error_message
 (100,            '0x0398E119419E0D7792c53913d3f370f9202Ae137', 'Invalid transaction' ,'deposit',  '900'                                                             , 1000),
 (200,            '0x8e96e98b32c56115614B64704bA35feFE9e8f7bC', 'Out of gas'          ,'redeem',   '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', 1100),
 (300,            '0x0398E119419E0D7792c53913d3f370f9202Ae137', 'Double spending'     ,'withdraw', '100'                                                              ,1200)
+;
+INSERT INTO PUBLIC.ACCOUNT_INFO (DB_ID, ACCOUNT_ID, NAME, DESCRIPTION, HEIGHT, LATEST) VALUES
+(3, 100, 'Madan Reddy', 'Apollo Community tokens', 2331, true),
+(5, 110, 'ZT', null, 3073, true),
+(6, 120, 'CALIGULA', null, 3559, true),
+(7, 130, 'Adnan Celik', null, 3563, true),
+(10, 140, 'Vasily', 'Front end wallet ui/ux', 26068, true),
+(15, 150, 'CALIGULA shubham nitin bhabad', 'abuse brain fright always', 70858, true)
 ;

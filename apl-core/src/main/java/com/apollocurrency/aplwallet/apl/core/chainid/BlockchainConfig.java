@@ -23,8 +23,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 @Singleton
 public class BlockchainConfig {
-    private static final Logger LOG = getLogger(BlockchainConfig.class);
     static final int DEFAULT_MIN_PRUNABLE_LIFETIME = 14 * 1440 * 60; // two weeks in seconds
+    private static final Logger LOG = getLogger(BlockchainConfig.class);
     private int leasingDelay;
     private int minPrunableLifetime;
     private boolean enablePruning;
@@ -39,7 +39,12 @@ public class BlockchainConfig {
     private Chain chain;
     private volatile boolean isJustUpdated = false;
 
-    public BlockchainConfig() {}
+    public BlockchainConfig() {
+    }
+
+    public BlockchainConfig(Chain chain, PropertiesHolder holder) {
+        updateChain(chain, holder);
+    }
 
     public void updateChain(Chain chain, int minPrunableLifetime, int maxPrunableLifetime) {
 
@@ -66,10 +71,6 @@ public class BlockchainConfig {
         this.guaranteedBalanceConfirmations = 1440;
         this.enablePruning = maxPrunableLifetime >= 0;
         this.maxPrunableLifetime = enablePruning ? Math.max(maxPrunableLifetime, this.minPrunableLifetime) : Integer.MAX_VALUE;
-    }
-
-    public BlockchainConfig(Chain chain, PropertiesHolder holder) {
-        updateChain(chain, holder);
     }
 
     void updateChain(Chain chain, PropertiesHolder holder) {
@@ -150,18 +151,19 @@ public class BlockchainConfig {
         return currentConfig;
     }
 
-    public Chain getChain() {
-        return chain;
-    }
-
     /**
      * For UNIT TEST only!
+     *
      * @param currentConfig
      */
     public void setCurrentConfig(HeightConfig currentConfig) {
         this.previousConfig = this.currentConfig;
         this.currentConfig = currentConfig;
         this.isJustUpdated = true; // setup flag to catch chains.json config change on APPLY_BLOCK
+    }
+
+    public Chain getChain() {
+        return chain;
     }
 
     public Optional<HeightConfig> getPreviousConfig() {
@@ -171,6 +173,7 @@ public class BlockchainConfig {
     /**
      * Flag to catch configuration changing
      * // TODO: YL after separating 'shard' and 'trim' logic, we can remove 'isJustUpdated() + resetJustUpdated()' usage
+     *
      * @return
      */
     public boolean isJustUpdated() {

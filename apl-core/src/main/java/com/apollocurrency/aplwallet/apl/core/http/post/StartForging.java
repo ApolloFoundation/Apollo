@@ -20,28 +20,28 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import javax.servlet.http.HttpServletRequest;
-
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+
+import javax.enterprise.inject.Vetoed;
+import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class StartForging extends AbstractAPIRequestHandler {
 
     public StartForging() {
-        super(new APITag[] {APITag.FORGING}, "secretPhrase");
+        super(new APITag[]{APITag.FORGING}, "secretPhrase");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
-        long accountId = ParameterParser.getAccountId(req, vaultAccountName(), false);
-        byte[] keySeed = ParameterParser.getKeySeed(req, accountId, true);
+        long accountId = HttpParameterParserUtil.getAccountId(req, vaultAccountName(), false);
+        byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, accountId, true);
         Generator generator = Generator.startForging(keySeed);
 
         JSONObject response = new JSONObject();

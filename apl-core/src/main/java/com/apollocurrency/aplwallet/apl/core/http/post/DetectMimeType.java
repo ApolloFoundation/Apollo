@@ -22,31 +22,31 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Search;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.Part;
 import java.io.IOException;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TAGGED_DATA_FILE;
-import javax.enterprise.inject.Vetoed;
 import static org.slf4j.LoggerFactory.getLogger;
 
-
+@Deprecated
 @Vetoed
 public final class DetectMimeType extends AbstractAPIRequestHandler {
     private static final Logger LOG = getLogger(DetectMimeType.class);
 
     public DetectMimeType() {
-        super("file", new APITag[] {APITag.DATA, APITag.UTILS}, "data", "filename", "isText");
+        super("file", new APITag[]{APITag.DATA, APITag.UTILS}, "data", "filename", "isText");
     }
 
     @Override
@@ -60,7 +60,7 @@ public final class DetectMimeType extends AbstractAPIRequestHandler {
                 if (part == null) {
                     throw new ParameterException(INCORRECT_TAGGED_DATA_FILE);
                 }
-                ParameterParser.FileData fileData = new ParameterParser.FileData(part).invoke();
+                HttpParameterParserUtil.FileData fileData = new HttpParameterParserUtil.FileData(part).invoke();
                 data = fileData.getData();
                 // Depending on how the client submits the form, the filename, can be a regular parameter
                 // or encoded in the multipart form. If its not a parameter we take from the form

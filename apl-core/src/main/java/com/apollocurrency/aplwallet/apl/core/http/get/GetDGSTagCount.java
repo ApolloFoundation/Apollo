@@ -24,20 +24,21 @@ import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class GetDGSTagCount extends AbstractAPIRequestHandler {
 
-    public GetDGSTagCount() {
-        super(new APITag[] {APITag.DGS}, "inStockOnly");
-    }
     private DGSService service = CDI.current().select(DGSService.class).get();
+
+    public GetDGSTagCount() {
+        super(new APITag[]{APITag.DGS}, "inStockOnly");
+    }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {

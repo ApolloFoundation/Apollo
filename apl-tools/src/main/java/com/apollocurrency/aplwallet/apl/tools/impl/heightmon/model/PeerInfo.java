@@ -11,11 +11,11 @@ import java.net.UnknownHostException;
 import java.util.Objects;
 
 public class PeerInfo {
+    private static final String HTTP = "http";
+    private static final String HTTPS = "https";
     private String host;
     private String schema;
     private Integer port;
-    private static final String HTTP = "http";
-    private static final String HTTPS = "https";
 
     @JsonCreator
     public PeerInfo(@JsonProperty("host") String host) {
@@ -65,8 +65,8 @@ public class PeerInfo {
         if (!(o instanceof PeerInfo)) return false;
         PeerInfo peerInfo = (PeerInfo) o;
         return Objects.equals(getHost(), peerInfo.getHost()) &&
-                Objects.equals(schema, peerInfo.schema) &&
-                Objects.equals(port, peerInfo.port);
+            Objects.equals(schema, peerInfo.schema) &&
+            Objects.equals(port, peerInfo.port);
     }
 
     @Override

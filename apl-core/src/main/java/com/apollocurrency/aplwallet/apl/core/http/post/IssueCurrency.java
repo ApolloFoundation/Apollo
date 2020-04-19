@@ -20,22 +20,22 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
-
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.http.APITag;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONStreamAware;
+
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * Issue a currency on the APL blockchain
@@ -55,31 +55,31 @@ import org.json.simple.JSONStreamAware;
  * <li>initialSupply - the number of currency units created when the currency is issued (pre-mine)
  * <li>decimals - currency units are divisible to this number of decimals
  * <li>issuanceHeight - the blockchain height at which the currency would become active
- * For {@link com.apollocurrency.aplwallet.apl.CurrencyType#RESERVABLE} currency
+ * For {@link com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType#RESERVABLE} currency
  * <li>minReservePerUnitATM - the minimum APL value per unit to allow the currency to become active
- * For {@link com.apollocurrency.aplwallet.apl.CurrencyType#RESERVABLE} currency
+ * For {@link com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType#RESERVABLE} currency
  * <li>reserveSupply - the number of units that will be distributed to founders when currency becomes active (less initialSupply)
- * For {@link com.apollocurrency.aplwallet.apl.CurrencyType#RESERVABLE} currency
+ * For {@link com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType#RESERVABLE} currency
  * <li>minDifficulty - for mint-able currency, the exponent of the initial difficulty.
- * For {@link com.apollocurrency.aplwallet.apl.CurrencyType#MINTABLE} currency
+ * For {@link com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType#MINTABLE} currency
  * <li>maxDifficulty - for mint-able currency, the exponent of the final difficulty.
- * For {@link com.apollocurrency.aplwallet.apl.CurrencyType#MINTABLE} currency
+ * For {@link com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType#MINTABLE} currency
  * <li>algorithm - the hashing {@link com.apollocurrency.aplwallet.apl.crypto.HashFunction algorithm} used for minting.
- * For {@link com.apollocurrency.aplwallet.apl.CurrencyType#MINTABLE} currency
+ * For {@link com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType#MINTABLE} currency
  * </ul>
  * <p>
  * Constraints
  * <ul>
- * <li>A given currency can not be neither {@link com.apollocurrency.aplwallet.apl.CurrencyType#EXCHANGEABLE} nor {@link com.apollocurrency.aplwallet.apl.CurrencyType#CLAIMABLE}.<br>
- * <li>A {@link com.apollocurrency.aplwallet.apl.CurrencyType#RESERVABLE} currency becomes active once the blockchain height reaches the currency issuance height.<br>
+ * <li>A given currency can not be neither {@link com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType#EXCHANGEABLE} nor {@link com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType#CLAIMABLE}.<br>
+ * <li>A {@link com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType#RESERVABLE} currency becomes active once the blockchain height reaches the currency issuance height.<br>
  * At this time, if the minReservePerUnitATM has not been reached the currency issuance is cancelled and
  * funds are returned to the founders.<br>
  * Otherwise the currency becomes active and remains active until deleted, provided deletion is possible.
- * When a {@link com.apollocurrency.aplwallet.apl.CurrencyType#RESERVABLE} becomes active, in case it is {@link com.apollocurrency.aplwallet.apl.CurrencyType#CLAIMABLE} the APL used for
+ * When a {@link com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType#RESERVABLE} becomes active, in case it is {@link com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType#CLAIMABLE} the APL used for
  * reserving the currency are locked until they are claimed back.
- * When a {@link com.apollocurrency.aplwallet.apl.CurrencyType#RESERVABLE} becomes active, in case it is non {@link com.apollocurrency.aplwallet.apl.CurrencyType#CLAIMABLE} the APL used for
+ * When a {@link com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType#RESERVABLE} becomes active, in case it is non {@link com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType#CLAIMABLE} the APL used for
  * reserving the currency are sent to the issuer account as crowd funding.
- * <li>When issuing a {@link com.apollocurrency.aplwallet.apl.CurrencyType#MINTABLE} currency, the number of units per {@link CurrencyMint} cannot exceed 0.01% of the
+ * <li>When issuing a {@link com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType#MINTABLE} currency, the number of units per {@link CurrencyMint} cannot exceed 0.01% of the
  * total supply. Therefore make sure totalSupply &gt; 10000 or otherwise the currency cannot be minted
  * <li>difficulty is calculated as follows<br>
  * difficulty of minting the first unit is based on 2^minDifficulty<br>
@@ -95,9 +95,9 @@ import org.json.simple.JSONStreamAware;
 public final class IssueCurrency extends CreateTransaction {
 
     public IssueCurrency() {
-        super(new APITag[] {APITag.MS, APITag.CREATE_TRANSACTION},
-                "name", "code", "description", "type", "initialSupply", "reserveSupply", "maxSupply", "issuanceHeight", "minReservePerUnitATM",
-                "minDifficulty", "maxDifficulty", "ruleset", "algorithm", "decimals");
+        super(new APITag[]{APITag.MS, APITag.CREATE_TRANSACTION},
+            "name", "code", "description", "type", "initialSupply", "reserveSupply", "maxSupply", "issuanceHeight", "minReservePerUnitATM",
+            "minDifficulty", "maxDifficulty", "ruleset", "algorithm", "decimals");
     }
 
     @Override
@@ -135,24 +135,24 @@ public final class IssueCurrency extends CreateTransaction {
                 }
             }
         } else {
-            type = ParameterParser.getInt(req, "type", 0, Integer.MAX_VALUE, false);
+            type = HttpParameterParserUtil.getInt(req, "type", 0, Integer.MAX_VALUE, false);
         }
 
-        long maxSupply = ParameterParser.getLong(req, "maxSupply", 1, Constants.MAX_CURRENCY_TOTAL_SUPPLY, false);
-        long reserveSupply = ParameterParser.getLong(req, "reserveSupply", 0, maxSupply, false);
-        long initialSupply = ParameterParser.getLong(req, "initialSupply", 0, maxSupply, false);
-        int issuanceHeight = ParameterParser.getInt(req, "issuanceHeight", 0, Integer.MAX_VALUE, false);
-        long minReservePerUnit = ParameterParser.getLong(req, "minReservePerUnitATM", 1,
-                CDI.current().select(BlockchainConfig.class).get().getCurrentConfig().getMaxBalanceATM(),
-                false);
-        int minDifficulty = ParameterParser.getInt(req, "minDifficulty", 1, 255, false);
-        int maxDifficulty = ParameterParser.getInt(req, "maxDifficulty", 1, 255, false);
-        byte ruleset = ParameterParser.getByte(req, "ruleset", (byte)0, Byte.MAX_VALUE, false);
-        byte algorithm = ParameterParser.getByte(req, "algorithm", (byte)0, Byte.MAX_VALUE, false);
-        byte decimals = ParameterParser.getByte(req, "decimals", (byte)0, Byte.MAX_VALUE, false);
-        Account account = ParameterParser.getSenderAccount(req);
-        Attachment attachment = new MonetarySystemCurrencyIssuance(name, code, description, (byte)type, initialSupply,
-                reserveSupply, maxSupply, issuanceHeight, minReservePerUnit, minDifficulty, maxDifficulty, ruleset, algorithm, decimals);
+        long maxSupply = HttpParameterParserUtil.getLong(req, "maxSupply", 1, Constants.MAX_CURRENCY_TOTAL_SUPPLY, false);
+        long reserveSupply = HttpParameterParserUtil.getLong(req, "reserveSupply", 0, maxSupply, false);
+        long initialSupply = HttpParameterParserUtil.getLong(req, "initialSupply", 0, maxSupply, false);
+        int issuanceHeight = HttpParameterParserUtil.getInt(req, "issuanceHeight", 0, Integer.MAX_VALUE, false);
+        long minReservePerUnit = HttpParameterParserUtil.getLong(req, "minReservePerUnitATM", 1,
+            CDI.current().select(BlockchainConfig.class).get().getCurrentConfig().getMaxBalanceATM(),
+            false);
+        int minDifficulty = HttpParameterParserUtil.getInt(req, "minDifficulty", 1, 255, false);
+        int maxDifficulty = HttpParameterParserUtil.getInt(req, "maxDifficulty", 1, 255, false);
+        byte ruleset = HttpParameterParserUtil.getByte(req, "ruleset", (byte) 0, Byte.MAX_VALUE, false);
+        byte algorithm = HttpParameterParserUtil.getByte(req, "algorithm", (byte) 0, Byte.MAX_VALUE, false);
+        byte decimals = HttpParameterParserUtil.getByte(req, "decimals", (byte) 0, Byte.MAX_VALUE, false);
+        Account account = HttpParameterParserUtil.getSenderAccount(req);
+        Attachment attachment = new MonetarySystemCurrencyIssuance(name, code, description, (byte) type, initialSupply,
+            reserveSupply, maxSupply, issuanceHeight, minReservePerUnit, minDifficulty, maxDifficulty, ruleset, algorithm, decimals);
 
         return createTransaction(req, account, attachment);
     }

@@ -37,22 +37,24 @@
  import java.util.List;
  import java.util.Objects;
  import java.util.stream.Collectors;
+ import java.util.stream.Stream;
 
  import static org.slf4j.LoggerFactory.getLogger;
-@Singleton
+
+ @Singleton
  public class VaultKeyStoreServiceImpl implements KeyStoreService {
      private static final Logger LOG = getLogger(VaultKeyStoreServiceImpl.class);
      private static final Integer CURRENT_KEYSTORE_VERSION = 1;
-     private Path keystoreDirPath;
-     private Integer version;
      private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
      private static final String FORMAT = "v%d_%s---%s";
+     private Path keystoreDirPath;
+     private Integer version;
      private NtpTime ntpTime;
 
-    @Inject
-    public VaultKeyStoreServiceImpl(@Named("keystoreDirPath")Path keystoreDir, NtpTime ntpTime) {
-        this(keystoreDir, CURRENT_KEYSTORE_VERSION, ntpTime);
-    }
+     @Inject
+     public VaultKeyStoreServiceImpl(@Named("keystoreDirPath") Path keystoreDir, NtpTime ntpTime) {
+         this(keystoreDir, CURRENT_KEYSTORE_VERSION, ntpTime);
+     }
 
      public VaultKeyStoreServiceImpl(Path keystoreDir, Integer version, NtpTime ntpTime) {
          if (version < 0) {
@@ -64,8 +66,7 @@
          if (!Files.exists(keystoreDirPath)) {
              try {
                  Files.createDirectories(keystoreDirPath);
-             }
-             catch (IOException e) {
+             } catch (IOException e) {
                  throw new RuntimeException(e.toString(), e);
              }
          }
@@ -78,7 +79,7 @@
 
      @Deprecated
      @Override
-     public SecretBytesDetails getSecretBytesV0(String passphrase, long accountId)  {
+     public SecretBytesDetails getSecretBytesV0(String passphrase, long accountId) {
          Objects.requireNonNull(passphrase);
 
          Path secretPath = findKeyStorePathWithLatestVersion(accountId);
@@ -89,8 +90,8 @@
 
          try {
              EncryptedSecretBytesDetails secretBytesDetails =
-                     JSON.getMapper().readValue(secretPath.toFile(), EncryptedSecretBytesDetails.class);
-         byte[] key = Crypto.getKeySeed(passphrase, secretBytesDetails.getNonce(), Convert.longToBytes(secretBytesDetails.getTimestamp()));
+                 JSON.getMapper().readValue(secretPath.toFile(), EncryptedSecretBytesDetails.class);
+             byte[] key = Crypto.getKeySeed(passphrase, secretBytesDetails.getNonce(), Convert.longToBytes(secretBytesDetails.getTimestamp()));
              byte[] decryptedSecretBytes = Crypto.aesDecrypt(secretBytesDetails.getEncryptedSecretBytes(), key);
 
              long actualAccId = Convert.getId(Crypto.getPublicKey(Crypto.getKeySeed(decryptedSecretBytes)));
@@ -98,11 +99,9 @@
                  return new SecretBytesDetails(null, Status.BAD_CREDENTIALS);
              }
              return new SecretBytesDetails(decryptedSecretBytes, Status.OK);
-         }
-         catch (IOException e) {
+         } catch (IOException e) {
              return new SecretBytesDetails(null, Status.READ_ERROR);
-         }
-         catch (RuntimeException e) {
+         } catch (RuntimeException e) {
              return new SecretBytesDetails(null, Status.DECRYPTION_ERROR);
          }
      }
@@ -115,63 +114,61 @@
 
 
      public Path findKeyStorePathWithLatestVersion(long accountId) {
-         try {
-             Path path = Files.list(keystoreDirPath)
-                     //Find files for this account.
-                     .filter(p -> Objects.equals(
-                             FbWalletUtil.getAccount(p.toString().toUpperCase()),
-                             Convert.defaultRsAccount(accountId).toUpperCase())
-                     )
-                     //Sorted by versions.
-                     .sorted(
-                             Comparator.comparingInt(o -> FbWalletUtil.getWalletFileVersion(o.toString()))
-                                     .reversed()
-                     )
-                     .findFirst()
-                     .orElse(null);
+         try (Stream<Path> files = Files.list(keystoreDirPath)) {
+             Path path = files
+                 //Find files for this account.
+                 .filter(p -> Objects.equals(
+                     FbWalletUtil.getAccount(p.toString().toUpperCase()),
+                     Convert.defaultRsAccount(accountId).toUpperCase())
+                 )
+                 //Sorted by versions.
+                 .sorted(
+                     Comparator.comparingInt(o -> FbWalletUtil.getWalletFileVersion(o.toString()))
+                         .reversed()
+                 )
+                 .findFirst()
+                 .orElse(null);
 
              return path;
-         }
-         catch (IOException e) {
+         } catch (IOException e) {
              LOG.debug("VaultKeyStore IO error while searching path to secret key of account " + accountId, e.getMessage());
              return null;
          }
      }
 
      public List<Path> findKeyStorePaths(long accountId) {
-         try {
-             List<Path> paths = Files.list(keystoreDirPath)
-                     //Find files for this account.
-                     .filter(path -> Objects.equals(
-                             FbWalletUtil.getAccount(path.toString().toUpperCase()),
-                             Convert.defaultRsAccount(accountId).toUpperCase())
-                     )
-                     .collect(Collectors.toList());
+         try (Stream<Path> files = Files.list(keystoreDirPath)) {
+             List<Path> paths = files
+                 //Find files for this account.
+                 .filter(path -> Objects.equals(
+                     FbWalletUtil.getAccount(path.toString().toUpperCase()),
+                     Convert.defaultRsAccount(accountId).toUpperCase())
+                 )
+                 .collect(Collectors.toList());
              return paths;
-         }
-         catch (IOException e) {
+         } catch (IOException e) {
              LOG.debug("VaultKeyStore IO error while searching path to secret key of account " + accountId, e.getMessage());
              return new ArrayList<>();
          }
      }
 
-    @Override
-    public boolean migrateOldKeyStorageToTheNew(String passphrase, long accountId){
-        SecretBytesDetails secretBytesDetails = getSecretBytesV0(passphrase, accountId);
+     @Override
+     public boolean migrateOldKeyStorageToTheNew(String passphrase, long accountId) {
+         SecretBytesDetails secretBytesDetails = getSecretBytesV0(passphrase, accountId);
 
-        if (secretBytesDetails.getExtractStatus() != Status.OK) {
-            return false;
-        }
-        byte [] secretBytes = secretBytesDetails.getSecretBytes();
+         if (secretBytesDetails.getExtractStatus() != Status.OK) {
+             return false;
+         }
+         byte[] secretBytes = secretBytesDetails.getSecretBytes();
 
-        try {
-            Helper2FA.generateUserWallet(passphrase, secretBytes);
-        } catch (ParameterException e) {
-            LOG.error(e.getMessage(), e);
-           return false;
-        }
+         try {
+             Helper2FA.generateUserWallet(passphrase, secretBytes);
+         } catch (ParameterException e) {
+             LOG.error(e.getMessage(), e);
+             return false;
+         }
 
-        return true;
+         return true;
      }
 
 
@@ -194,110 +191,110 @@
          return saved ? Status.OK : Status.WRITE_ERROR;
      }
 
-    public Status saveSecretKeyStore(String passphrase, ApolloFbWallet fbWallet) {
-        String aplKeySecret = fbWallet.getAplKeySecret();
+     public Status saveSecretKeyStore(String passphrase, ApolloFbWallet fbWallet) {
+         String aplKeySecret = fbWallet.getAplKeySecret();
 
-        AplWalletKey aplWalletKey = new AplWalletKey(Convert.parseHexString(aplKeySecret));
+         AplWalletKey aplWalletKey = new AplWalletKey(Convert.parseHexString(aplKeySecret));
 
-        return saveSecretKeyStore(passphrase, aplWalletKey.getId(), fbWallet);
-    }
+         return saveSecretKeyStore(passphrase, aplWalletKey.getId(), fbWallet);
+     }
 
-    @Override
-    public Status saveSecretKeyStore(String passphrase, Long accountId, FbWallet fbWallet) {
-        byte[] salt = generateBytes(12);
-        Path path;
+     @Override
+     public Status saveSecretKeyStore(String passphrase, Long accountId, FbWallet fbWallet) {
+         byte[] salt = generateBytes(12);
+         Path path;
 
-        try {
-            if(isNewVersionOfKeyStoreForAccountExist(accountId)){
-                return Status.DUPLICATE_FOUND;
-            }
+         try {
+             if (isNewVersionOfKeyStoreForAccountExist(accountId)) {
+                 return Status.DUPLICATE_FOUND;
+             }
 
-            byte[] key = fbWallet.keyFromPassPhrase(passphrase, salt);
-            path = makeTargetPathForNewAccount(accountId);
+             byte[] key = fbWallet.keyFromPassPhrase(passphrase, salt);
+             path = makeTargetPathForNewAccount(accountId);
 
-            if(path == null){
-                return Status.BAD_CREDENTIALS;
-            }
+             if (path == null) {
+                 return Status.BAD_CREDENTIALS;
+             }
 
-            fbWallet.saveFile(path.toString(), key, salt);
-        } catch (IOException e) {
-            LOG.error(e.getMessage(), e);
-            return Status.WRITE_ERROR;
-        } catch (CryptoNotValidException e) {
-            LOG.error(e.getMessage(), e);
-            return Status.BAD_CREDENTIALS;
-        }
+             fbWallet.saveFile(path.toString(), key, salt);
+         } catch (IOException e) {
+             LOG.error(e.getMessage(), e);
+             return Status.WRITE_ERROR;
+         } catch (CryptoNotValidException e) {
+             LOG.error(e.getMessage(), e);
+             return Status.BAD_CREDENTIALS;
+         }
 
-        LOG.info("Created new key store for account " + accountId + ", path - " + path.toString());
+         LOG.info("Created new key store for account " + accountId + ", path - " + path.toString());
 
-        return Status.OK;
-    }
+         return Status.OK;
+     }
 
-    @Override
-    public ApolloFbWallet getSecretStore(String passphrase, long accountId) {
-        Objects.requireNonNull(passphrase);
+     @Override
+     public ApolloFbWallet getSecretStore(String passphrase, long accountId) {
+         Objects.requireNonNull(passphrase);
 
-        Path secretPath = findKeyStorePathWithLatestVersion(accountId);
+         Path secretPath = findKeyStorePathWithLatestVersion(accountId);
 
-        if (secretPath == null) {
-            LOG.warn("VaultWallet : " + Status.NOT_FOUND);
-            return null;
-        }
+         if (secretPath == null) {
+             LOG.warn("VaultWallet : " + Status.NOT_FOUND);
+             return null;
+         }
 
-        if(!isStorageVersionLatest(secretPath)){
-            if(migrateOldKeyStorageToTheNew(passphrase, accountId)){
-                secretPath = findKeyStorePathWithLatestVersion(accountId);
-            }
-        }
+         if (!isStorageVersionLatest(secretPath)) {
+             if (migrateOldKeyStorageToTheNew(passphrase, accountId)) {
+                 secretPath = findKeyStorePathWithLatestVersion(accountId);
+             }
+         }
 
-        ApolloFbWallet fbWallet = new ApolloFbWallet();
-        try {
-            fbWallet.readOpenData(secretPath.toString());
-            byte[] salt = fbWallet.getContanerIV();
-            byte[] key = fbWallet.keyFromPassPhrase(passphrase, salt);
+         ApolloFbWallet fbWallet = new ApolloFbWallet();
+         try {
+             fbWallet.readOpenData(secretPath.toString());
+             byte[] salt = fbWallet.getContanerIV();
+             byte[] key = fbWallet.keyFromPassPhrase(passphrase, salt);
 
-            fbWallet.openFile(secretPath.toString(), key);
-        } catch (IOException | CryptoNotValidException e) {
-            LOG.error(e.getMessage(), e);
-            return null;
-        }
+             fbWallet.openFile(secretPath.toString(), key);
+         } catch (IOException | CryptoNotValidException e) {
+             LOG.error(e.getMessage(), e);
+             return null;
+         }
 
-        return fbWallet;
-    }
+         return fbWallet;
+     }
 
-    @Override
-    public WalletKeysInfo getWalletKeysInfo(String passphrase, long accountId) {
-        ApolloFbWallet fbWallet = getSecretStore(passphrase, accountId);
+     @Override
+     public WalletKeysInfo getWalletKeysInfo(String passphrase, long accountId) {
+         ApolloFbWallet fbWallet = getSecretStore(passphrase, accountId);
 
-        if (fbWallet == null) {
-            LOG.warn("VaultWallet : " + Status.NOT_FOUND);
-            return null;
-        }
-        return new WalletKeysInfo(fbWallet, passphrase);
-    }
+         if (fbWallet == null) {
+             LOG.warn("VaultWallet : " + Status.NOT_FOUND);
+             return null;
+         }
+         return new WalletKeysInfo(fbWallet, passphrase);
+     }
 
-    @Override
-    public File getSecretStoreFile(Long accountId, String passphrase) {
-        Path secretPath = findKeyStorePathWithLatestVersion(accountId);
+     @Override
+     public File getSecretStoreFile(Long accountId, String passphrase) {
+         Path secretPath = findKeyStorePathWithLatestVersion(accountId);
 
-        // Check passphrase / migrate keys from old key store to the new.
-        FbWallet fbWallet = getSecretStore(passphrase, accountId);
+         // Check passphrase / migrate keys from old key store to the new.
+         FbWallet fbWallet = getSecretStore(passphrase, accountId);
 
-        if(fbWallet == null || CollectionUtils.isEmpty(fbWallet.getAllKeys())){
-            return null;
-        }
+         if (fbWallet == null || CollectionUtils.isEmpty(fbWallet.getAllKeys())) {
+             return null;
+         }
 
-        return secretPath == null ? null : new File(secretPath.toString());
-    }
+         return secretPath == null ? null : new File(secretPath.toString());
+     }
 
-    @Override
+     @Override
      public Status deleteKeyStore(String passphrase, long accountId) {
          if (!isAvailable()) {
              return Status.NOT_AVAILABLE;
          }
 
          FbWallet fbWallet = getSecretStore(passphrase, accountId);
-         if (fbWallet==null || CollectionUtils.isEmpty(fbWallet.getAllData())) {
+         if (fbWallet == null || CollectionUtils.isEmpty(fbWallet.getAllData())) {
              return Status.BAD_CREDENTIALS;
          }
          List<Path> secretPaths = findKeyStorePaths(accountId);
@@ -310,8 +307,7 @@
              for (Path path : paths) {
                  deleteFile(path);
              }
-         }
-         catch (IOException e) {
+         } catch (IOException e) {
              LOG.debug("Unable to delete file. " + paths.get(0), e);
              return Status.DELETE_ERROR;
          }
@@ -341,7 +337,7 @@
 
      private Path makeTargetPath(long accountId) {
          Instant instant = Instant.now();
-         OffsetDateTime utcTime = instant.atOffset( ZoneOffset.UTC );
+         OffsetDateTime utcTime = instant.atOffset(ZoneOffset.UTC);
          return keystoreDirPath.resolve(String.format(FORMAT, version, FORMATTER.format(utcTime), Convert.defaultRsAccount(accountId)));
      }
 
@@ -351,11 +347,11 @@
          return path != null && isStorageVersionLatest(path);
      }
 
-    public boolean isKeyStoreForAccountExist(long accountId) {
-        Path path = findKeyStorePathWithLatestVersion(accountId);
+     public boolean isKeyStoreForAccountExist(long accountId) {
+         Path path = findKeyStorePathWithLatestVersion(accountId);
 
-        return path != null;
-    }
+         return path != null;
+     }
 
      public boolean storeJSONSecretBytes(Path keyPath, EncryptedSecretBytesDetails secretBytesDetails) {
          try {
@@ -364,15 +360,14 @@
              Files.createFile(keyPath);
              writer.writeValue(keyPath.toFile(), secretBytesDetails);
              return true;
-         }
-         catch (IOException e) {
+         } catch (IOException e) {
              LOG.debug("Unable to save secretBytes to " + keyPath, e);
              return false;
          }
      }
 
 
-     private boolean isStorageVersionLatest(Path path){
-        return CURRENT_KEYSTORE_VERSION.equals(FbWalletUtil.getWalletFileVersion(path));
+     private boolean isStorageVersionLatest(Path path) {
+         return CURRENT_KEYSTORE_VERSION.equals(FbWalletUtil.getWalletFileVersion(path));
      }
  }

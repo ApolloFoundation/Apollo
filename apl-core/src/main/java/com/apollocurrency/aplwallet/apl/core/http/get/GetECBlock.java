@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.app.EcBlockData;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -31,16 +31,17 @@ import org.json.simple.JSONStreamAware;
 import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
+@Deprecated
 @Vetoed
 public final class GetECBlock extends AbstractAPIRequestHandler {
 
     public GetECBlock() {
-        super(new APITag[] {APITag.BLOCKS}, "timestamp");
+        super(new APITag[]{APITag.BLOCKS}, "timestamp");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        int timestamp = ParameterParser.getTimestamp(req);
+        int timestamp = HttpParameterParserUtil.getTimestamp(req);
         if (timestamp == 0) {
             timestamp = timeService.getEpochTime();
         }

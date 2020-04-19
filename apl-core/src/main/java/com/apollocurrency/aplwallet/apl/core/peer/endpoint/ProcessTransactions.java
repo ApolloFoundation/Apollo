@@ -32,7 +32,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 public final class ProcessTransactions extends PeerRequestHandler {
     private static final Logger LOG = getLogger(ProcessTransactions.class);
 
-    public ProcessTransactions() {}
+    public ProcessTransactions() {
+    }
 
 
     @Override

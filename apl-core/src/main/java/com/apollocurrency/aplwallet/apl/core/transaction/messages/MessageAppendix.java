@@ -4,35 +4,26 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
+
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 public class MessageAppendix extends AbstractAppendix {
 
     private static final String appendixName = "Message";
-
-    public static MessageAppendix parse(JSONObject attachmentData) {
-        if (!Appendix.hasAppendix(appendixName, attachmentData)) {
-            return null;
-        }
-        return new MessageAppendix(attachmentData);
-    }
-
     private static final Fee MESSAGE_FEE = new Fee.SizeBasedFee(0, Constants.ONE_APL, 32) {
         @Override
         public int getSize(Transaction transaction, Appendix appendage) {
-            return ((MessageAppendix)appendage).getMessage().length;
+            return ((MessageAppendix) appendage).getMessage().length;
         }
     };
-
     private final byte[] message;
     private final boolean isText;
 
@@ -55,7 +46,7 @@ public class MessageAppendix extends AbstractAppendix {
 
     public MessageAppendix(JSONObject attachmentData) {
         super(attachmentData);
-        String messageString = (String)attachmentData.get("message");
+        String messageString = (String) attachmentData.get("message");
         this.isText = Boolean.TRUE.equals(attachmentData.get("messageIsText"));
         this.message = isText ? Convert.toBytes(messageString) : Convert.parseHexString(messageString);
     }
@@ -75,6 +66,13 @@ public class MessageAppendix extends AbstractAppendix {
     public MessageAppendix(byte[] message, boolean isText) {
         this.message = message;
         this.isText = isText;
+    }
+
+    public static MessageAppendix parse(JSONObject attachmentData) {
+        if (!Appendix.hasAppendix(appendixName, attachmentData)) {
+            return null;
+        }
+        return new MessageAppendix(attachmentData);
     }
 
     @Override
@@ -112,7 +110,8 @@ public class MessageAppendix extends AbstractAppendix {
     }
 
     @Override
-    public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {}
+    public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
+    }
 
     public byte[] getMessage() {
         return message;
@@ -130,8 +129,8 @@ public class MessageAppendix extends AbstractAppendix {
     @Override
     public String toString() {
         return "MessageAppendix{" +
-                "message=" + new String(message) +
-                ", isText=" + isText +
-                '}';
+            "message=" + new String(message) +
+            ", isText=" + isText +
+            '}';
     }
 }

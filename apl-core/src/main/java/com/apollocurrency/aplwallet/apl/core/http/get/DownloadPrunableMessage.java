@@ -20,14 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.PRUNED_TRANSACTION;
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -35,24 +32,28 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
-import java.io.IOException;
-import java.io.OutputStream;
 import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.OutputStream;
+
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.PRUNED_TRANSACTION;
+import static org.slf4j.LoggerFactory.getLogger;
 
 @Vetoed
 public final class DownloadPrunableMessage extends AbstractAPIRequestHandler {
     private static final Logger LOG = getLogger(DownloadPrunableMessage.class);
     private PrunableMessageService prunableMessageService = CDI.current().select(PrunableMessageService.class).get();
+
     public DownloadPrunableMessage() {
-        super(new APITag[] {APITag.MESSAGES}, "transaction", "secretPhrase", "sharedKey", "retrieve", "save", "account", "passphrase");
+        super(new APITag[]{APITag.MESSAGES}, "transaction", "secretPhrase", "sharedKey", "retrieve", "save", "account", "passphrase");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest request, HttpServletResponse response) throws AplException {
-        long transactionId = ParameterParser.getUnsignedLong(request, "transaction", true);
+        long transactionId = HttpParameterParserUtil.getUnsignedLong(request, "transaction", true);
         boolean retrieve = "true".equalsIgnoreCase(request.getParameter("retrieve"));
         PrunableMessage prunableMessage = prunableMessageService.get(transactionId);
         if (prunableMessage == null && retrieve) {
@@ -61,9 +62,9 @@ public final class DownloadPrunableMessage extends AbstractAPIRequestHandler {
             }
             prunableMessage = prunableMessageService.get(transactionId);
         }
-        long accountId = ParameterParser.getAccountId(request, false);
-        byte[] keySeed = ParameterParser.getKeySeed(request, accountId, false);
-        byte[] sharedKey = ParameterParser.getBytes(request, "sharedKey", false);
+        long accountId = HttpParameterParserUtil.getAccountId(request, false);
+        byte[] keySeed = HttpParameterParserUtil.getKeySeed(request, accountId, false);
+        byte[] sharedKey = HttpParameterParserUtil.getBytes(request, "sharedKey", false);
         if (sharedKey.length != 0 && keySeed != null) {
             return JSONResponses.either("secretPhrase", "sharedKey", "passphrase & account");
         }

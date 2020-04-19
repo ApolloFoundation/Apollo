@@ -32,7 +32,7 @@ public class BlockIndexServiceImpl implements BlockIndexService {
     public BlockIndexServiceImpl(BlockIndexDao blockIndexDao,
                                  @CacheProducer
                                  @CacheType(BLOCK_INDEX_CACHE_NAME)
-                                         Cache<Long, BlockIndex> blockIndexCache
+                                     Cache<Long, BlockIndex> blockIndexCache
     ) {
         this.blockIndexDao = blockIndexDao;
         this.blockIndexCache = blockIndexCache;

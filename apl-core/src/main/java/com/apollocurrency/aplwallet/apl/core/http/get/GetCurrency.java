@@ -20,33 +20,33 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_CURRENCY;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_CURRENCY;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public final class GetCurrency extends AbstractAPIRequestHandler {
 
     public GetCurrency() {
-        super(new APITag[] {APITag.MS}, "currency", "code", "includeCounts");
+        super(new APITag[]{APITag.MS}, "currency", "code", "includeCounts");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         boolean includeCounts = "true".equalsIgnoreCase(req.getParameter("includeCounts"));
-        long currencyId = ParameterParser.getUnsignedLong(req, "currency", false);
+        long currencyId = HttpParameterParserUtil.getUnsignedLong(req, "currency", false);
         Currency currency;
         if (currencyId == 0) {
             String currencyCode = Convert.emptyToNull(req.getParameter("code"));

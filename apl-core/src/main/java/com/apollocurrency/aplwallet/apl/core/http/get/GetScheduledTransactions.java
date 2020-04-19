@@ -24,29 +24,31 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionSchedulerService;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public final class GetScheduledTransactions extends AbstractAPIRequestHandler {
 
-    public GetScheduledTransactions() {
-        super(new APITag[] {APITag.TRANSACTIONS, APITag.ACCOUNTS}, "account");
-    }
     private TransactionSchedulerService schedulerService = CDI.current().select(TransactionSchedulerService.class).get();
+
+    public GetScheduledTransactions() {
+        super(new APITag[]{APITag.TRANSACTIONS, APITag.ACCOUNTS}, "account");
+    }
+
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
-        long accountId = ParameterParser.getAccountId(req, false);
+        long accountId = HttpParameterParserUtil.getAccountId(req, false);
         JSONArray jsonArray = new JSONArray();
         List<Transaction> transactions = schedulerService.getScheduledTransactions(accountId);
         for (Transaction transaction : transactions) {

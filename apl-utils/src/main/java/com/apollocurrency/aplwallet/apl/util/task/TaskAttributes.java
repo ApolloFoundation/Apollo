@@ -10,29 +10,27 @@ public interface TaskAttributes {
 
     /**
      * Returns the background thread
+     *
      * @return the class represents the background thread
      */
     Runnable getTask();
 
     /**
-     *
      * @return the task name
      */
     String getName();
 
     /**
-     *
      * @return the initial delay in milliseconds
      */
-    default int getInitialDelay(){
+    default int getInitialDelay() {
         return 0;
     }
 
     /**
-     *
      * @return the delay between starts in milliseconds
      */
-    default int getDelay(){
+    default int getDelay() {
         return 10;
     }
 

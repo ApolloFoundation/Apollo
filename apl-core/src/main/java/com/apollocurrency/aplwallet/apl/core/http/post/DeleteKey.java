@@ -4,31 +4,31 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import javax.servlet.http.HttpServletRequest;
-
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
+import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-//import com.apollocurrency.aplwallet.apl.core.app.VaultKeyStore;
-import javax.enterprise.inject.Vetoed;
-import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
+import javax.servlet.http.HttpServletRequest;
+
 @Vetoed
+@Deprecated
 public class DeleteKey extends AbstractAPIRequestHandler {
-   public DeleteKey() {
-        super(new APITag[] {APITag.ACCOUNTS});
+    public DeleteKey() {
+        super(new APITag[]{APITag.ACCOUNTS});
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
-        long accountId = ParameterParser.getAccountId(request, true);
-        String passphrase = ParameterParser.getPassphrase(request, true);
-        int code = ParameterParser.getInt(request, "code2FA", 0, Integer.MAX_VALUE, false);
+        long accountId = HttpParameterParserUtil.getAccountId(request, true);
+        String passphrase = HttpParameterParserUtil.getPassphrase(request, true);
+        int code = HttpParameterParserUtil.getInt(request, "code2FA", 0, Integer.MAX_VALUE, false);
         KeyStoreService.Status status = Helper2FA.deleteAccount(accountId, passphrase, code);
         JSONObject response = new JSONObject();
         response.put("status", status);

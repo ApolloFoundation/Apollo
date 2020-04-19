@@ -145,7 +145,7 @@ public class ShardObserver {
                 completableFuture = shardService.tryCreateShardAsync(lastTrimBlockHeight, blockchainHeight);
             } else {
                 log.debug("No attempt to create new shard at height '{}' (because lastTrimHeight={}), ({})",
-                        blockchainHeight, lastTrimBlockHeight, blockchainConfig.isJustUpdated());
+                    blockchainHeight, lastTrimBlockHeight, blockchainConfig.isJustUpdated());
             }
             // TODO: YL after separating 'shard' and 'trim' logic, we can remove 'isJustUpdated() + resetJustUpdated()' usage
             if (blockchainConfig.isJustUpdated()) {

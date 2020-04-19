@@ -26,6 +26,7 @@ public class PropertyProducer {
     public void setPropertiesHolder(PropertiesHolder propertiesHolder) {
         this.propertiesHolder = propertiesHolder;
     }
+
     @Property
     @Produces
     public String produceString(final InjectionPoint ip) {
@@ -47,7 +48,7 @@ public class PropertyProducer {
     public int produceInt(final InjectionPoint ip) {
         String defaultValue = getDefaultValue(ip);
         if (defaultValue != null) {
-            return propertiesHolder.getIntProperty((getKey(ip)),Integer.parseInt(defaultValue));
+            return propertiesHolder.getIntProperty((getKey(ip)), Integer.parseInt(defaultValue));
         } else {
             return propertiesHolder.getIntProperty((getKey(ip)));
         }
@@ -63,6 +64,7 @@ public class PropertyProducer {
             return propertiesHolder.getBooleanProperty((getKey(ip)));
         }
     }
+
     @Property
     @Produces
     public List<String> produceListOfStrings(final InjectionPoint ip) {

@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.core.account.GenesisPublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
@@ -53,39 +52,37 @@ import static org.mockito.Mockito.mock;
 public class ReferencedTransactionServiceTest {
 
     @RegisterExtension
-    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("targetDb").toAbsolutePath().toString()));
-    @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
+    @RegisterExtension
+    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("targetDb").toAbsolutePath().toString()));
     BlockchainConfig blockchainConfig = Mockito.mock(BlockchainConfig.class);
-    HeightConfig config = Mockito.mock(HeightConfig.class);
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class, TransactionImpl.class, BlockchainImpl.class, DaoConfig.class,
-            ReferencedTransactionDaoImpl.class,
-            GlobalSync.class,
-            FullTextConfigImpl.class,
-            GlobalSyncImpl.class,
-            DerivedDbTablesRegistryImpl.class,
-            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class, ReferencedTransactionService.class)
-            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
-            .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
-            .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
-            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
-            .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
-            .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
-            .build();
-
+        PropertiesHolder.class, TransactionImpl.class, BlockchainImpl.class, DaoConfig.class,
+        ReferencedTransactionDaoImpl.class,
+        GlobalSync.class,
+        FullTextConfigImpl.class,
+        GlobalSyncImpl.class,
+        DerivedDbTablesRegistryImpl.class,
+        TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class, ReferencedTransactionService.class)
+        .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+        .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
+        .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
+        .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
+        .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
+        .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
+        .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
+        .build();
+    HeightConfig config = Mockito.mock(HeightConfig.class);
     @Inject
     ReferencedTransactionService service;
 
     private Path createPath(String fileName) {
         try {
             return temporaryFolderExtension.newFolder().toPath().resolve(fileName);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -104,6 +101,7 @@ public class ReferencedTransactionServiceTest {
 
         assertTrue(hasAll);
     }
+
     @Test
     void testHasNotAllReferencedTransactionsWhenHeightIsNotEnough() {
         TransactionTestData td = new TransactionTestData();
@@ -112,6 +110,7 @@ public class ReferencedTransactionServiceTest {
 
         assertFalse(hasAll);
     }
+
     @Test
     void testHasNotAllReferencedTransactionsWhenTransactionHeightIsLessThanHeightOfReferencedTransactions() {
         TransactionTestData td = new TransactionTestData();

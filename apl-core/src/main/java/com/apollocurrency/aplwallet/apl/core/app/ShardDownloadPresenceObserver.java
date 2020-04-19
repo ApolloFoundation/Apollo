@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.files.shards.ShardPresentData;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardImporter;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +29,7 @@ import java.util.Objects;
  * In case empty database (node is started from the scratch) it will do:
  * - connect to peers and check if sharding is present in current network
  * - gather statistics info about shard hashes/data from peers
- *
+ * <p>
  * If shard is not present it starts 'old' process importing Genesis data
  */
 @Slf4j
@@ -42,12 +43,13 @@ public class ShardDownloadPresenceObserver {
     private final ShardImporter shardImporter;
     private final BlockchainConfigUpdater blockchainConfigUpdater;
     private final GenesisImporter genesisImporter;
+    private final FullTextSearchService fullTextSearchService;
 
     @Inject
     public ShardDownloadPresenceObserver(DatabaseManager databaseManager, BlockchainProcessor blockchainProcessor,
                                          Blockchain blockchain, DerivedTablesRegistry derivedTablesRegistry,
                                          ShardImporter shardImporter, BlockchainConfigUpdater blockchainConfigUpdater,
-                                         GenesisImporter genesisImporter) {
+                                         GenesisImporter genesisImporter, FullTextSearchService fullTextSearchService) {
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.blockchainProcessor = Objects.requireNonNull(blockchainProcessor, "blockchainProcessor is NULL");
         this.derivedTablesRegistry = Objects.requireNonNull(derivedTablesRegistry, "derivedTablesRegistry is NULL");
@@ -55,6 +57,7 @@ public class ShardDownloadPresenceObserver {
         this.shardImporter = Objects.requireNonNull(shardImporter, "shardImporter is NULL");
         this.blockchainConfigUpdater = Objects.requireNonNull(blockchainConfigUpdater, "blockchainConfigUpdater is NULL");
         this.genesisImporter = Objects.requireNonNull(genesisImporter, "genesisImporter is NULL");
+        this.fullTextSearchService = Objects.requireNonNull(fullTextSearchService, "fullTextSearchService is NULL");
     }
 
     /**
@@ -76,7 +79,7 @@ public class ShardDownloadPresenceObserver {
         } catch (Exception e) {
             log.error("Error on Shard # {}. Zip/CSV importing...", shardPresentData);
             log.error("Node has encountered serious error and import CSV shard data. " +
-                    "Somethings wrong with processing fileId =\n'{}'\n >>> FALL BACK to Genesis importing....", shardPresentData);
+                "Somethings wrong with processing fileId =\n'{}'\n >>> FALL BACK to Genesis importing....", shardPresentData);
             // truncate all partial data potentially imported into database
             cleanUpPreviouslyImportedData();
             // fall back to importing Genesis and starting from beginning
@@ -93,12 +96,13 @@ public class ShardDownloadPresenceObserver {
 
     /**
      * Travers Derived tables and create Lucene search indexes
+     *
      * @param con connection should be opened
      * @throws SQLException possible error
      */
     private void createLuceneSearchIndexes(Connection con) throws SQLException {
         for (DerivedTableInterface table : derivedTablesRegistry.getDerivedTables()) {
-            table.createSearchIndex(con);
+            fullTextSearchService.createSearchIndex(con, table.getName(), table.getFullTextSearchColumns());
         }
     }
 
@@ -130,39 +134,40 @@ public class ShardDownloadPresenceObserver {
      */
     public void onNoShardPresent(@Observes @ShardPresentEvent(ShardPresentEventType.NO_SHARD) ShardPresentData shardPresentData) {
         // start adding old Genesis Data
-            try {
-                log.info("Genesis block not in database, starting from scratch");
-                TransactionalDataSource dataSource = databaseManager.getDataSource();
-                if (!dataSource.isInTransaction()) {
-                    dataSource.begin();
-                }
-                try (Connection con = dataSource.getConnection()) {
-                    // create first genesis block, but do not save it to db here
-                    Block genesisBlock = genesisImporter.newGenesisBlock();
-                    long initialBlockId = genesisBlock.getId();
-                    log.debug("Generated Genesis block with Id = {}", initialBlockId);
-                    // import other genesis data
-                    genesisImporter.importGenesisJson(false);
-                    // first genesis block should be saved only after all genesis data has been imported before
-                    addBlock(dataSource, genesisBlock); // save first genesis block here
-                    // create Lucene search indexes first
-                    createLuceneSearchIndexes(con);
-                    blockchain.commit(genesisBlock);
-                    dataSource.commit();
-                    log.debug("Saved Genesis block = {}", genesisBlock);
-                    blockchain.update();
-                } catch (SQLException e) {
-                    dataSource.rollback();
-                    log.info(e.getMessage());
-                    throw new RuntimeException(e.toString(), e);
-                }
-                // set to start work block download thread (starting from Genesis block here)
-                log.debug("Before updating BlockchainProcessor from Genesis and RESUME block downloading...");
-                blockchainProcessor.resumeBlockchainDownloading(); // IMPORTANT CALL !!!
-
-            } catch (Exception e) {
-                log.error(e.toString(), e);
+        log.trace("Catch event NO_SHARD {}", shardPresentData);
+        try {
+            log.info("Genesis block not in database, starting from scratch");
+            TransactionalDataSource dataSource = databaseManager.getDataSource();
+            if (!dataSource.isInTransaction()) {
+                dataSource.begin();
             }
+            try (Connection con = dataSource.getConnection()) {
+                // create first genesis block, but do not save it to db here
+                Block genesisBlock = genesisImporter.newGenesisBlock();
+                long initialBlockId = genesisBlock.getId();
+                log.debug("Generated Genesis block with Id = {}", initialBlockId);
+                // import other genesis data
+                genesisImporter.importGenesisJson(false);
+                // first genesis block should be saved only after all genesis data has been imported before
+                addBlock(dataSource, genesisBlock); // save first genesis block here
+                // create Lucene search indexes first
+                createLuceneSearchIndexes(con);
+                blockchain.commit(genesisBlock);
+                dataSource.commit();
+                log.debug("Saved Genesis block = {}", genesisBlock);
+                blockchain.update();
+            } catch (SQLException e) {
+                dataSource.rollback();
+                log.info(e.getMessage());
+                throw new RuntimeException(e.toString(), e);
+            }
+            // set to start work block download thread (starting from Genesis block here)
+            log.debug("Before updating BlockchainProcessor from Genesis and RESUME block downloading...");
+            blockchainProcessor.resumeBlockchainDownloading(); // IMPORTANT CALL !!!
+
+        } catch (Exception e) {
+            log.error(e.toString(), e);
+        }
     }
 
     private void addBlock(TransactionalDataSource dataSource, Block block) {

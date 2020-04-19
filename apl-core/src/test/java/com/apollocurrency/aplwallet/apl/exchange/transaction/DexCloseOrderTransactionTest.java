@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
@@ -52,21 +52,21 @@ class DexCloseOrderTransactionTest {
 
     DexCloseOrderAttachment attachment = new DexCloseOrderAttachment(10);
     ExchangeContract contract = new ExchangeContract(
-            1L, 10L, 200L, 300L, 1000L, 2000L,
-            ExchangeContractStatus.STEP_2, new byte[32], "100", null, new byte[32],
-            7200, null, true);
+        1L, 10L, 200L, 300L, 1000L, 2000L,
+        ExchangeContractStatus.STEP_2, new byte[32], "100", null, new byte[32],
+        7200, null, true);
     DexOrder order = new DexOrder(200L, 100L, "from", "to", OrderType.BUY, OrderStatus.OPEN, DexCurrency.APL, 250L, DexCurrency.ETH, BigDecimal.ONE, 500);
     DexService dexService = mock(DexService.class);
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from()
-            .addBeans(
-                    MockBean.of(mock(DexConfig.class), DexConfig.class),
-                    MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class),
-                    MockBean.of(mock(BlockchainImpl.class), Blockchain.class, BlockchainImpl.class),
-                    MockBean.of(mock(PhasingPollService.class), PhasingPollService.class),
-                    MockBean.of(dexService, DexService.class),
-                    MockBean.of(mock(TimeService.class), TimeService.class)
-            ).build();
+        .addBeans(
+            MockBean.of(mock(DexConfig.class), DexConfig.class),
+            MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class),
+            MockBean.of(mock(BlockchainImpl.class), Blockchain.class, BlockchainImpl.class),
+            MockBean.of(mock(PhasingPollService.class), PhasingPollService.class),
+            MockBean.of(dexService, DexService.class),
+            MockBean.of(mock(TimeService.class), TimeService.class)
+        ).build();
     @Inject
     Blockchain blockchain;
     @Inject
@@ -147,23 +147,23 @@ class DexCloseOrderTransactionTest {
 
         order.setStatus(OrderStatus.WAITING_APPROVAL);
 
-        assertThrows(AplException.NotCurrentlyValidException.class, ()-> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
 
         Transaction transferTx = mock(Transaction.class);
 
         doReturn(transferTx).when(blockchain).getTransaction(100);
-        assertThrows(AplException.NotCurrentlyValidException.class, ()-> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
 
         doReturn(DEX.DEX_TRANSFER_MONEY_TRANSACTION).when(transferTx).getType();
-        assertThrows(AplException.NotCurrentlyValidException.class, ()-> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
 
         doReturn(1000L).when(transferTx).getSenderId();
         DexControlOfFrozenMoneyAttachment attachment = new DexControlOfFrozenMoneyAttachment(11L, 100000L);
         doReturn(attachment).when(transferTx).getAttachment();
-        assertThrows(AplException.NotCurrentlyValidException.class, ()-> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
 
         attachment.setContractId(10L);
-        assertThrows(AplException.NotCurrentlyValidException.class, ()-> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
         doReturn(new PhasingPollResult(1L, 1, 1L, 1L, true)).when(phasingPollService).getResult(100);
         transactionType.validateAttachment(tx);
 
@@ -187,7 +187,6 @@ class DexCloseOrderTransactionTest {
         transactionType.applyAttachment(tx, sender, null);
 
         verify(dexService).closeOrder(200);
-
 
 
         doReturn(2000L).when(sender).getId();

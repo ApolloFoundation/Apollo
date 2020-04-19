@@ -142,17 +142,17 @@ public class PeerDiffStat {
         if (!(o instanceof PeerDiffStat)) return false;
         PeerDiffStat that = (PeerDiffStat) o;
         return diff1 == that.diff1 &&
-                diff2 == that.diff2 &&
-                milestoneHeight == that.milestoneHeight &&
-                height1 == that.height1 &&
-                height2 == that.height2 &&
-                Objects.equals(peer1, that.peer1) &&
-                Objects.equals(peer2, that.peer2) &&
-                Objects.equals(version1, that.version1) &&
-                Objects.equals(version2, that.version2) &&
-                Objects.equals(shard1, that.shard1) &&
-                Objects.equals(shard2, that.shard2) &&
-                Objects.equals(shardStatus, that.shardStatus);
+            diff2 == that.diff2 &&
+            milestoneHeight == that.milestoneHeight &&
+            height1 == that.height1 &&
+            height2 == that.height2 &&
+            Objects.equals(peer1, that.peer1) &&
+            Objects.equals(peer2, that.peer2) &&
+            Objects.equals(version1, that.version1) &&
+            Objects.equals(version2, that.version2) &&
+            Objects.equals(shard1, that.shard1) &&
+            Objects.equals(shard2, that.shard2) &&
+            Objects.equals(shardStatus, that.shardStatus);
     }
 
     @Override

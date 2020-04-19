@@ -22,66 +22,63 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.trade.entity.Trade;
+import com.apollocurrency.aplwallet.apl.core.trade.service.TradeService;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectorUtils;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Trade;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
+import java.util.stream.Stream;
 
 @Vetoed
 public final class GetOrderTrades extends AbstractAPIRequestHandler {
+    private final TradeService tradeService = CDI.current().select(TradeService.class).get();
 
     public GetOrderTrades() {
-        super(new APITag[] {APITag.AE}, "askOrder", "bidOrder", "includeAssetInfo", "firstIndex", "lastIndex");
+        super(new APITag[]{APITag.AE}, "askOrder", "bidOrder", "includeAssetInfo", "firstIndex", "lastIndex");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        long askOrderId = ParameterParser.getUnsignedLong(req, "askOrder", false);
-        long bidOrderId = ParameterParser.getUnsignedLong(req, "bidOrder", false);
+        long askOrderId = HttpParameterParserUtil.getUnsignedLong(req, "askOrder", false);
+        long bidOrderId = HttpParameterParserUtil.getUnsignedLong(req, "bidOrder", false);
         boolean includeAssetInfo = "true".equalsIgnoreCase(req.getParameter("includeAssetInfo"));
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
+        int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
+        int lastIndex = HttpParameterParserUtil.getLastIndex(req);
 
         if (askOrderId == 0 && bidOrderId == 0) {
             return JSONResponses.missing("askOrder", "bidOrder");
         }
 
         JSONObject response = new JSONObject();
-        JSONArray tradesData = new JSONArray();
+        JSONArray tradesData;
         if (askOrderId != 0 && bidOrderId != 0) {
-            Trade trade = Trade.getTrade(askOrderId, bidOrderId);
+            tradesData = new JSONArray();
+            Trade trade = tradeService.getTrade(askOrderId, bidOrderId);
             if (trade != null) {
                 tradesData.add(JSONData.trade(trade, includeAssetInfo));
             }
         } else {
-            DbIterator<Trade> trades = null;
-            try {
-                if (askOrderId != 0) {
-                    trades = Trade.getAskOrderTrades(askOrderId, firstIndex, lastIndex);
-                } else {
-                    trades = Trade.getBidOrderTrades(bidOrderId, firstIndex, lastIndex);
-                }
-                while (trades.hasNext()) {
-                    Trade trade = trades.next();
-                    tradesData.add(JSONData.trade(trade, includeAssetInfo));
-                }
-            } finally {
-                DbUtils.close(trades);
+            Stream<Trade> trades;
+            if (askOrderId != 0) {
+                trades = tradeService.getAskOrderTrades(askOrderId, firstIndex, lastIndex);
+            } else {
+                trades = tradeService.getBidOrderTrades(bidOrderId, firstIndex, lastIndex);
             }
+            tradesData = trades.map(t -> JSONData.trade(t, includeAssetInfo))
+                .collect(CollectorUtils.jsonCollector());
         }
         response.put("trades", tradesData);
 
         return response;
     }
-
 }

@@ -31,23 +31,22 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import java.util.List;
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public final class GetExpectedOrderCancellations extends AbstractAPIRequestHandler {
 
 
     public GetExpectedOrderCancellations() {
-        super(new APITag[] {APITag.AE});
+        super(new APITag[]{APITag.AE});
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         Filter<Transaction> filter = transaction -> transaction.getType() == ColoredCoins.ASK_ORDER_CANCELLATION
-                || transaction.getType() == ColoredCoins.BID_ORDER_CANCELLATION;
+            || transaction.getType() == ColoredCoins.BID_ORDER_CANCELLATION;
 
         List<? extends Transaction> transactions = lookupBlockchainProcessor().getExpectedTransactions(filter);
         JSONArray cancellations = new JSONArray();

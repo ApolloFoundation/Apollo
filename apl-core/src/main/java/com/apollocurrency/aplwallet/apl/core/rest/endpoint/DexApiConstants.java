@@ -9,5 +9,6 @@ public class DexApiConstants {
     public static final String COUNTER_ORDER_ID = "counterOrderId";
     public static final String ORDER_ID = "orderId";
 
-    private DexApiConstants() {}
+    private DexApiConstants() {
+    }
 }

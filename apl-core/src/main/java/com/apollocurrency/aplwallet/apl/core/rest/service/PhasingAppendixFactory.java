@@ -8,8 +8,8 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendi
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendixV2;
 import org.json.simple.JSONObject;
 
-import java.nio.ByteBuffer;
 import javax.inject.Singleton;
+import java.nio.ByteBuffer;
 
 @Singleton
 public class PhasingAppendixFactory {
@@ -17,10 +17,10 @@ public class PhasingAppendixFactory {
     public static PhasingAppendix build(ByteBuffer buffer) {
         byte version = buffer.get();
 
-        switch (version)  {
-            case 1 :
+        switch (version) {
+            case 1:
                 return new PhasingAppendix(buffer);
-            case 2 :
+            case 2:
                 return new PhasingAppendixV2(buffer);
             default:
                 throw new UnsupportedOperationException("Version: " + version + ", not supported by PhasingAppendixFactory");
@@ -28,9 +28,9 @@ public class PhasingAppendixFactory {
     }
 
     public static PhasingAppendix parse(JSONObject attachmentData) {
-        if (Appendix.hasAppendix( "Phasing", attachmentData)) {
+        if (Appendix.hasAppendix("Phasing", attachmentData)) {
             return new PhasingAppendix(attachmentData);
-        } else if (Appendix.hasAppendix("Phasing_V2", attachmentData)){
+        } else if (Appendix.hasAppendix("Phasing_V2", attachmentData)) {
             return new PhasingAppendixV2(attachmentData);
         }
         return null;

@@ -8,11 +8,10 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystem
 import com.apollocurrency.aplwallet.apl.util.AplException;
 
 /**
- *
  * @author al
  */
 public abstract class MonetarySystemExchange extends MonetarySystem {
-    
+
     @Override
     public final void validateAttachment(Transaction transaction) throws AplException.ValidationException {
         MonetarySystemExchangeAttachment attachment = (MonetarySystemExchangeAttachment) transaction.getAttachment();
@@ -30,5 +29,5 @@ public abstract class MonetarySystemExchange extends MonetarySystem {
     public final boolean canHaveRecipient() {
         return false;
     }
-    
+
 }

@@ -20,31 +20,31 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Alias;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.alias.entity.Alias;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasDelete;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ALIAS_OWNER;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public final class DeleteAlias extends CreateTransaction {
 
     public DeleteAlias() {
-        super(new APITag[] {APITag.ALIASES, APITag.CREATE_TRANSACTION}, "alias", "aliasName");
+        super(new APITag[]{APITag.ALIASES, APITag.CREATE_TRANSACTION}, "alias", "aliasName");
     }
 
     @Override
     public JSONStreamAware processRequest(final HttpServletRequest req) throws AplException {
-        final Alias alias = ParameterParser.getAlias(req);
-        final Account owner = ParameterParser.getSenderAccount(req);
+        final Alias alias = HttpParameterParserUtil.getAlias(req);
+        final Account owner = HttpParameterParserUtil.getSenderAccount(req);
 
         if (alias.getAccountId() != owner.getId()) {
             return INCORRECT_ALIAS_OWNER;

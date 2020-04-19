@@ -20,8 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
@@ -49,15 +47,41 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
-import java.util.Collections;
-import java.util.Map;
 import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
+import java.util.Collections;
+import java.util.Map;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
+@Deprecated
 @Vetoed
 public final class GetConstants extends AbstractAPIRequestHandler {
     private static final Logger LOG = getLogger(GetConstants.class);
+
+    public GetConstants() {
+        super(new APITag[]{APITag.INFO});
+    }
+
+    public static JSONStreamAware getConstants() {
+        return Holder.CONSTANTS;
+    }
+
+    @Override
+    public JSONStreamAware processRequest(HttpServletRequest req) {
+        return Holder.CONSTANTS;
+    }
+
+    @Override
+    protected boolean allowRequiredBlockParameters() {
+        return false;
+    }
+
+    @Override
+    protected boolean requireBlockchain() {
+        return false;
+    }
 
     private static final class Holder {
 
@@ -81,8 +105,11 @@ public final class GetConstants extends AbstractAPIRequestHandler {
                 response.put("projectName", blockchainConfig.getProjectName());
 
                 response.put("maxImportSecretFileLength", propertiesLoader.getIntProperty("apl.maxKeyStoreFileSize"));
+                // Exchange
                 response.put("gasLimitEth", Constants.GAS_LIMIT_ETHER_TX);
                 response.put("gasLimitERC20", Constants.GAS_LIMIT_FOR_ERC20);
+                // Mixer
+                response.put("mixerUrl", propertiesLoader.getStringProperty("apl.mixer.url"));
 
                 JSONObject transactionJSON = new JSONObject();
                 JSONObject transactionSubTypesJSON = new JSONObject();
@@ -166,6 +193,7 @@ public final class GetConstants extends AbstractAPIRequestHandler {
                 response.put("peerStates", peerStates);
                 response.put("maxTaggedDataDataLength", Constants.MAX_TAGGED_DATA_DATA_LENGTH);
 
+                // Tha part is SKIPPED for generation in NEW REST API
                 JSONObject requestTypes = new JSONObject();
                 for (Map.Entry<String, AbstractAPIRequestHandler> handlerEntry : APIServlet.apiRequestHandlers.entrySet()) {
                     JSONObject handlerJSON = JSONData.apiRequestHandler(handlerEntry.getValue());
@@ -177,7 +205,7 @@ public final class GetConstants extends AbstractAPIRequestHandler {
                     handlerJSON.put("enabled", false);
                     requestTypes.put(handlerEntry.getKey(), handlerJSON);
                 }
-                response.put("requestTypes", requestTypes);
+                response.put("requestTypes", requestTypes); // Tha part is SKIPPED for generation in NEW REST API
 
                 JSONObject holdingTypes = new JSONObject();
                 for (HoldingType holdingType : HoldingType.values()) {
@@ -206,14 +234,16 @@ public final class GetConstants extends AbstractAPIRequestHandler {
                 }
                 response.put("apiTags", apiTags);
 
+                // we will not disable new REST API, so skip that
                 JSONArray disabledAPIs = new JSONArray();
                 Collections.addAll(disabledAPIs, API.disabledAPIs);
                 response.put("disabledAPIs", disabledAPIs);
 
                 JSONArray disabledAPITags = new JSONArray();
                 API.disabledAPITags.forEach(apiTag -> disabledAPITags.add(apiTag.getDisplayName()));
-                response.put("disabledAPITags", disabledAPITags);
+                response.put("disabledAPITags", disabledAPITags); // we will not disable new REST API, so skip that
 
+                // that we will not be implemented in NEW REST API
                 JSONArray notForwardedRequests = new JSONArray();
                 notForwardedRequests.addAll(APIProxy.NOT_FORWARDED_REQUESTS);
                 response.put("proxyNotForwardedRequests", notForwardedRequests);
@@ -223,28 +253,5 @@ public final class GetConstants extends AbstractAPIRequestHandler {
                 throw e;
             }
         }
-    }
-
-    public GetConstants() {
-        super(new APITag[] {APITag.INFO});
-    }
-
-    @Override
-    public JSONStreamAware processRequest(HttpServletRequest req) {
-        return Holder.CONSTANTS;
-    }
-
-    @Override
-    protected boolean allowRequiredBlockParameters() {
-        return false;
-    }
-
-    @Override
-    protected boolean requireBlockchain() {
-        return false;
-    }
-
-    public static JSONStreamAware getConstants() {
-        return Holder.CONSTANTS;
     }
 }

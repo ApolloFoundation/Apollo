@@ -4,9 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.account;
 
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -15,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SetPhasingOnly;
@@ -24,71 +26,27 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import javax.enterprise.inject.spi.CDI;
 
 /**
- *
  * @author al
  */
 public final class PhasingOnly {
-    
-    private BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-    private PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
 
-    public static PhasingOnly get(long accountId) {
-        return AccountRestrictions.phasingControlTable.getBy(new DbClause.LongClause("account_id", accountId).and(new DbClause.ByteClause("voting_model", DbClause.Op.NE, VoteWeighting.VotingModel.NONE.getCode())));
-    }
-
-    public static int getCount() {
-        return AccountRestrictions.phasingControlTable.getCount();
-    }
-
-    public static DbIterator<PhasingOnly> getAll(int from, int to) {
-        return AccountRestrictions.phasingControlTable.getAll(from, to);
-    }
-
-    public static void set(Account senderAccount, SetPhasingOnly attachment) {
-        PhasingParams phasingParams = attachment.getPhasingParams();
-        if (phasingParams.getVoteWeighting().getVotingModel() == VoteWeighting.VotingModel.NONE) {
-            //no voting - remove the control
-            senderAccount.removeControl(Account.ControlType.PHASING_ONLY);
-            PhasingOnly phasingOnly = get(senderAccount.getId());
-            phasingOnly.phasingParams = phasingParams;
-            AccountRestrictions.phasingControlTable.delete(phasingOnly);
-            unset(senderAccount);
-        } else {
-            senderAccount.addControl(Account.ControlType.PHASING_ONLY);
-            PhasingOnly phasingOnly = get(senderAccount.getId());
-            if (phasingOnly == null) {
-                phasingOnly = new PhasingOnly(senderAccount.getId(), phasingParams, attachment.getMaxFees(), attachment.getMinDuration(), attachment.getMaxDuration());
-            } else {
-                phasingOnly.phasingParams = phasingParams;
-                phasingOnly.maxFees = attachment.getMaxFees();
-                phasingOnly.minDuration = attachment.getMinDuration();
-                phasingOnly.maxDuration = attachment.getMaxDuration();
-            }
-            AccountRestrictions.phasingControlTable.insert(phasingOnly);
-        }
-    }
-
-    static void unset(Account account) {
-        account.removeControl(Account.ControlType.PHASING_ONLY);
-        PhasingOnly phasingOnly = get(account.getId());
-        AccountRestrictions.phasingControlTable.delete(phasingOnly);
-    }
+    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     final DbKey dbKey;
     private final long accountId;
+    private BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
     private PhasingParams phasingParams;
     private long maxFees;
     private short minDuration;
     private short maxDuration;
 
-    
     PhasingOnly(long accountId, PhasingParams params, long maxFees, short minDuration, short maxDuration) {
         this.accountId = accountId;
         dbKey = AccountRestrictions.phasingControlDbKeyFactory.newKey(this.accountId);
@@ -106,6 +64,53 @@ public final class PhasingOnly {
         this.maxFees = rs.getLong("max_fees");
         this.minDuration = rs.getShort("min_duration");
         this.maxDuration = rs.getShort("max_duration");
+    }
+
+    public static PhasingOnly get(long accountId) {
+        return AccountRestrictions.phasingControlTable.getBy(new DbClause.LongClause("account_id", accountId).and(new DbClause.ByteClause("voting_model", DbClause.Op.NE, VoteWeighting.VotingModel.NONE.getCode())));
+    }
+
+    public static int getCount() {
+        return AccountRestrictions.phasingControlTable.getCount();
+    }
+
+    public static DbIterator<PhasingOnly> getAll(int from, int to) {
+        return AccountRestrictions.phasingControlTable.getAll(from, to);
+    }
+
+    public static void set(Account senderAccount, SetPhasingOnly attachment) {
+        PhasingParams phasingParams = attachment.getPhasingParams();
+        if (phasingParams.getVoteWeighting().getVotingModel() == VoteWeighting.VotingModel.NONE) {
+            //no voting - remove the control
+            senderAccount.removeControl(AccountControlType.PHASING_ONLY);
+            PhasingOnly phasingOnly = get(senderAccount.getId());
+            phasingOnly.phasingParams = phasingParams;
+            AccountRestrictions.phasingControlTable.deleteAtHeight(phasingOnly, blockchain.getHeight());
+            unset(senderAccount);
+        } else {
+            senderAccount.addControl(AccountControlType.PHASING_ONLY);
+            PhasingOnly phasingOnly = get(senderAccount.getId());
+            if (phasingOnly == null) {
+                phasingOnly = new PhasingOnly(senderAccount.getId(), phasingParams, attachment.getMaxFees(), attachment.getMinDuration(), attachment.getMaxDuration());
+            } else {
+                phasingOnly.phasingParams = phasingParams;
+                phasingOnly.maxFees = attachment.getMaxFees();
+                phasingOnly.minDuration = attachment.getMinDuration();
+                phasingOnly.maxDuration = attachment.getMaxDuration();
+            }
+            AccountRestrictions.phasingControlTable.insert(phasingOnly);
+        }
+        lookupAccountService().update(senderAccount);
+    }
+
+    private static AccountService lookupAccountService() {
+        return CDI.current().select(AccountService.class).get();
+    }
+
+    static void unset(Account account) {
+        account.removeControl(AccountControlType.PHASING_ONLY);
+        PhasingOnly phasingOnly = get(account.getId());
+        AccountRestrictions.phasingControlTable.deleteAtHeight(phasingOnly, blockchain.getHeight());
     }
 
     public long getAccountId() {
@@ -156,8 +161,7 @@ public final class PhasingOnly {
 
     void save(Connection con) throws SQLException {
         try (
-                @DatabaseSpecificDml(DmlMarker.MERGE)
-                final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_control_phasing " + "(account_id, whitelist, voting_model, quorum, min_balance, holding_id, min_balance_model, " + "max_fees, min_duration, max_duration, height, latest) KEY (account_id, height) " + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")
+            @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_control_phasing " + "(account_id, whitelist, voting_model, quorum, min_balance, holding_id, min_balance_model, " + "max_fees, min_duration, max_duration, height, latest, deleted) KEY (account_id, height) " + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)")
         ) {
             int i = 0;
             pstmt.setLong(++i, this.accountId);
@@ -174,5 +178,5 @@ public final class PhasingOnly {
             pstmt.executeUpdate();
         }
     }
-    
+
 }

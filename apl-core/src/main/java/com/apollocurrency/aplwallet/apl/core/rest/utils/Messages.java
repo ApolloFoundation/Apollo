@@ -19,13 +19,13 @@ public class Messages {
     }
 
     public static String format(final String format, final Object... args) {
-        if (args == null || args.length == 0){
+        if (args == null || args.length == 0) {
             return format(format);
         }
-        if (args.length>1) {
+        if (!format.contains("%")) {
             final MessageFormat formatter = new MessageFormat(format, getLocale());
             return formatter.format(args, new StringBuffer(), new FieldPosition(0)).toString();
-        }else{
+        } else {
             return format(format, args[0]);
         }
     }

@@ -20,21 +20,21 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountCurrency;
-import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
+@Deprecated
 public final class GetAccountCurrencies extends AbstractAPIRequestHandler {
 
 //    private static class GetAccountCurrenciesHolder {
@@ -46,29 +46,26 @@ public final class GetAccountCurrencies extends AbstractAPIRequestHandler {
 //    }
 
     public GetAccountCurrencies() {
-        super(new APITag[] {APITag.ACCOUNTS, APITag.MS}, "account", "currency", "height", "includeCurrencyInfo");
+        super(new APITag[]{APITag.ACCOUNTS, APITag.MS}, "account", "currency", "height", "includeCurrencyInfo");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        long accountId = ParameterParser.getAccountId(req, true);
-        int height = ParameterParser.getHeight(req);
-        long currencyId = ParameterParser.getUnsignedLong(req, "currency", false);
+        long accountId = HttpParameterParserUtil.getAccountId(req, true);
+        int height = HttpParameterParserUtil.getHeight(req);
+        long currencyId = HttpParameterParserUtil.getUnsignedLong(req, "currency", false);
         boolean includeCurrencyInfo = "true".equalsIgnoreCase(req.getParameter("includeCurrencyInfo"));
 
         if (currencyId == 0) {
             JSONObject response = new JSONObject();
-            try (DbIterator<AccountCurrency> accountCurrencies = AccountCurrencyTable.getAccountCurrencies(accountId, height, 0, -1)) {
-                JSONArray currencyJSON = new JSONArray();
-                while (accountCurrencies.hasNext()) {
-                    currencyJSON.add(JSONData.accountCurrency(accountCurrencies.next(), false, includeCurrencyInfo));
-                }
-                response.put("accountCurrencies", currencyJSON);
-                return response;
-            }
+            List<AccountCurrency> accountCurrencies = lookupAccountCurrencyService().getCurrenciesByAccount(accountId, height, 0, -1);
+            JSONArray currencyJSON = new JSONArray();
+            accountCurrencies.forEach(accountCurrency -> currencyJSON.add(JSONData.accountCurrency(accountCurrency, false, includeCurrencyInfo)));
+            response.put("accountCurrencies", currencyJSON);
+            return response;
         } else {
-            AccountCurrency accountCurrency = AccountCurrencyTable.getAccountCurrency(accountId, currencyId, height);
+            AccountCurrency accountCurrency = lookupAccountCurrencyService().getAccountCurrency(accountId, currencyId, height);
             if (accountCurrency != null) {
                 return JSONData.accountCurrency(accountCurrency, false, includeCurrencyInfo);
             }

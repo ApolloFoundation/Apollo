@@ -4,13 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
@@ -24,23 +17,30 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 // at least 8 data records required to launch this test
 // 2 deleted record, 1 latest not updated, 2 - 1 latest 1 not latest, 3 (1 latest, 1 not latest, 1 not latest)
 public abstract class VersionedEntityDbTableTest<T extends VersionedDerivedEntity> extends EntityDbTableTest<T> {
+    private VersionedDeletableEntityDbTable<T> table;
+
     public VersionedEntityDbTableTest(Class<T> clazz) {
         super(clazz);
     }
 
-    private VersionedDeletableEntityDbTable<T> table;
     @Override
     @BeforeEach
     public void setUp() {
         super.setUp();
         Map<DbKey, List<T>> dbKeyListMap = groupByDbKey();
-        Assertions.assertTrue(dbKeyListMap.entrySet().stream().anyMatch(e-> e.getValue().size() >= 2 && e.getValue().stream().noneMatch(VersionedDerivedEntity::isLatest)), "At least two blockchain deleted record should exist");
-        Assertions.assertTrue(dbKeyListMap.entrySet().stream().anyMatch(e-> e.getValue().size() == 1 && e.getValue().get(0).isLatest()), "At least one not updated record should exist");
-        Assertions.assertTrue(dbKeyListMap.entrySet().stream().anyMatch(e-> e.getValue().size() == 2 && e.getValue().get(0).isLatest() && !e.getValue().get(1).isLatest()), "At least one updated record should exist");
-        Assertions.assertTrue(dbKeyListMap.entrySet().stream().anyMatch(e-> e.getValue().size() == 3 && e.getValue().get(0).isLatest() && !e.getValue().get(1).isLatest() && !e.getValue().get(2).isLatest()), "At least one updated twice record should exist");
+        Assertions.assertTrue(dbKeyListMap.entrySet().stream().anyMatch(e -> e.getValue().size() >= 2 && e.getValue().stream().noneMatch(VersionedDerivedEntity::isLatest)), "At least two blockchain deleted record should exist");
+        Assertions.assertTrue(dbKeyListMap.entrySet().stream().anyMatch(e -> e.getValue().size() == 1 && e.getValue().get(0).isLatest()), "At least one not updated record should exist");
+        Assertions.assertTrue(dbKeyListMap.entrySet().stream().anyMatch(e -> e.getValue().size() == 2 && e.getValue().get(0).isLatest() && !e.getValue().get(1).isLatest()), "At least one updated record should exist");
+        Assertions.assertTrue(dbKeyListMap.entrySet().stream().anyMatch(e -> e.getValue().size() == 3 && e.getValue().get(0).isLatest() && !e.getValue().get(1).isLatest() && !e.getValue().get(2).isLatest()), "At least one updated twice record should exist");
         table = (VersionedDeletableEntityDbTable<T>) getDerivedDbTable();
     }
 
@@ -61,11 +61,11 @@ public abstract class VersionedEntityDbTableTest<T extends VersionedDerivedEntit
         T valueToDelete = allLatest.get(2);
         int oldHeight = valueToDelete.getHeight();
         long oldDbId = valueToDelete.getDbId();
-        DbUtils.inTransaction(extension, (con)-> {
+        DbUtils.inTransaction(extension, (con) -> {
             List<T> sortedByDbId = sortByHeightDesc(getAll());
             valueToDelete.setHeight(sortedByDbId.get(0).getHeight() + 200);
             valueToDelete.setDbId(sortedByDbId.get(0).getDbId() + 1);
-            boolean deleted = table.delete(valueToDelete, false, valueToDelete.getHeight());
+            boolean deleted = table.delete(valueToDelete, valueToDelete.getHeight());
             assertTrue(deleted, "Value should be deleted");
             T deletedValue = table.get(table.getDbKeyFactory().newKey(valueToDelete));
             assertNull(deletedValue, "Deleted value should not be returned by get call");
@@ -77,8 +77,7 @@ public abstract class VersionedEntityDbTableTest<T extends VersionedDerivedEntit
                 valueToDelete.setHeight(oldHeight);
                 assertTrue(values.contains(valueToDelete), "All values should contain old deleted value");
                 assertEquals(getAll().size() + 1, values.size());
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
         });
@@ -86,38 +85,37 @@ public abstract class VersionedEntityDbTableTest<T extends VersionedDerivedEntit
 
     @Test
     public void testNotDeletedForNullEntity() {
-        DbUtils.inTransaction(getDatabaseManager(), (con)-> {
-            boolean deleted = table.delete(null, false, 0);
+        DbUtils.inTransaction(getDatabaseManager(), (con) -> {
+            boolean deleted = table.delete(null, 0);
             assertFalse(deleted);
         });
     }
 
     @Test
     public void testDeleteNotInTransaction() {
-        assertThrows(IllegalStateException.class, () -> table.delete(getAllLatest().get(1), false, 0));
+        assertThrows(IllegalStateException.class, () -> table.delete(getAllLatest().get(1), 0));
     }
 
     @Test
     public void testDeleteNothingForNonexistentEntity() {
-        DbUtils.inTransaction(getDatabaseManager(), (con)-> {
-            boolean deleted = table.delete(valueToInsert(), false, Integer.MAX_VALUE);
+        DbUtils.inTransaction(getDatabaseManager(), (con) -> {
+            boolean deleted = table.delete(valueToInsert(), Integer.MAX_VALUE);
             assertFalse(deleted);
         });
     }
 
     @Test
     public void testDeleteAllForHeightLessThanEntityHeight() {
-        DbUtils.inTransaction(getDatabaseManager(), (con)-> {
+        DbUtils.inTransaction(getDatabaseManager(), (con) -> {
             List<T> valuesToDelete = sortByHeightAsc(groupByDbKey().values().stream().findAny().get());
-            table.delete(valuesToDelete.get(0), false, valuesToDelete.get(0).getHeight());
+            table.delete(valuesToDelete.get(0), valuesToDelete.get(0).getHeight());
             try {
                 List<T> all = table.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
                 List<T> expected = new ArrayList<>(getAll());
                 expected.removeAll(valuesToDelete);
                 expected = sortByHeightAsc(expected);
                 assertEquals(expected, all);
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 e.printStackTrace();
             }
 

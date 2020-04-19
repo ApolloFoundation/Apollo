@@ -3,21 +3,20 @@
  */
 package com.apollocurrency.aplwallet.apl.core.monetary;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveClaim;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import java.nio.ByteBuffer;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+
 /**
- *
  * @author al
  */
 class MSReverseClaim extends MonetarySystem {
-    
+
     public MSReverseClaim() {
     }
 
@@ -58,8 +57,8 @@ class MSReverseClaim extends MonetarySystem {
     @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         MonetarySystemReserveClaim attachment = (MonetarySystemReserveClaim) transaction.getAttachment();
-        if (senderAccount.getUnconfirmedCurrencyUnits(attachment.getCurrencyId()) >= attachment.getUnits()) {
-            senderAccount.addToUnconfirmedCurrencyUnits(getLedgerEvent(), transaction.getId(), attachment.getCurrencyId(), -attachment.getUnits());
+        if (lookupAccountCurrencyService().getUnconfirmedCurrencyUnits(senderAccount, attachment.getCurrencyId()) >= attachment.getUnits()) {
+            lookupAccountCurrencyService().addToUnconfirmedCurrencyUnits(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getCurrencyId(), -attachment.getUnits());
             return true;
         }
         return false;
@@ -70,7 +69,7 @@ class MSReverseClaim extends MonetarySystem {
         MonetarySystemReserveClaim attachment = (MonetarySystemReserveClaim) transaction.getAttachment();
         Currency currency = Currency.getCurrency(attachment.getCurrencyId());
         if (currency != null) {
-            senderAccount.addToUnconfirmedCurrencyUnits(getLedgerEvent(), transaction.getId(), attachment.getCurrencyId(), attachment.getUnits());
+            lookupAccountCurrencyService().addToUnconfirmedCurrencyUnits(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getCurrencyId(), attachment.getUnits());
         }
     }
 
@@ -84,5 +83,5 @@ class MSReverseClaim extends MonetarySystem {
     public boolean canHaveRecipient() {
         return false;
     }
-    
+
 }

@@ -20,13 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.PRUNED_TRANSACTION;
-
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -37,20 +35,22 @@ import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.PRUNED_TRANSACTION;
+
 @Vetoed
 public final class GetPrunableMessage extends AbstractAPIRequestHandler {
     private PrunableMessageService prunableMessageService = CDI.current().select(PrunableMessageService.class).get();
 
     public GetPrunableMessage() {
-        super(new APITag[] {APITag.MESSAGES}, "transaction", "secretPhrase", "sharedKey", "retrieve", "account", "passphrase");
+        super(new APITag[]{APITag.MESSAGES}, "transaction", "secretPhrase", "sharedKey", "retrieve", "account", "passphrase");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
-        long accountId = ParameterParser.getAccountId(req, false);
-        byte[] keySeed = ParameterParser.getKeySeed(req, accountId, false);
-        byte[] sharedKey = ParameterParser.getBytes(req, "sharedKey", false);
+        long transactionId = HttpParameterParserUtil.getUnsignedLong(req, "transaction", true);
+        long accountId = HttpParameterParserUtil.getAccountId(req, false);
+        byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, accountId, false);
+        byte[] sharedKey = HttpParameterParserUtil.getBytes(req, "sharedKey", false);
         if (sharedKey.length != 0 && keySeed != null) {
             return JSONResponses.either("secretPhrase", "sharedKey", "passphrase & account");
         }

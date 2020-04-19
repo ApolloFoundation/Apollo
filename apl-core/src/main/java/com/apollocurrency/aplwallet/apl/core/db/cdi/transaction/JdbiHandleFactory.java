@@ -68,10 +68,6 @@ public class JdbiHandleFactory {
         return currentHandleOpened() && getCurrentHandle().isReadOnly();
     }
 
-    protected boolean currentHandleOpened() {
-        return getCurrentHandle() != null;
-    }
-
     protected void setReadOnly(boolean readOnly) {
         Handle handle = requireOpenHandle("SetReadOnly");
         if (handle.isInTransaction()) {
@@ -80,6 +76,10 @@ public class JdbiHandleFactory {
         if (readOnly != handle.isReadOnly()) {
             handle.setReadOnly(readOnly);
         }
+    }
+
+    protected boolean currentHandleOpened() {
+        return getCurrentHandle() != null;
     }
 
     protected void commit() {

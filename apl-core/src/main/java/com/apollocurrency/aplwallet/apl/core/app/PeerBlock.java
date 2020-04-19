@@ -10,16 +10,20 @@ import com.apollocurrency.aplwallet.apl.core.peer.Peer;
  */
 class PeerBlock {
 
-    /** Peer */
+    /**
+     * Peer
+     */
     private final Peer peer;
-    /** Block */
+    /**
+     * Block
+     */
     private final Block block;
 
     /**
      * Create the peer block
      *
-     * @param   peer                Peer
-     * @param   block               Block
+     * @param peer  Peer
+     * @param block Block
      */
     public PeerBlock(Peer peer, Block block) {
         this.peer = peer;
@@ -29,7 +33,7 @@ class PeerBlock {
     /**
      * Return the peer
      *
-     * @return                      Peer
+     * @return Peer
      */
     public Peer getPeer() {
         return peer;
@@ -38,10 +42,10 @@ class PeerBlock {
     /**
      * Return the block
      *
-     * @return                      Block
+     * @return Block
      */
     public Block getBlock() {
         return block;
     }
-    
+
 }

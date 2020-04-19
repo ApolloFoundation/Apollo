@@ -4,37 +4,36 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.http.APITag;
+import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.http.JSONData;
+import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONStreamAware;
+
+import javax.enterprise.inject.Vetoed;
+import javax.servlet.http.HttpServletRequest;
+
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TRANSACTION;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_SECRET_PHRASE_AND_PUBLIC_KEY;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_TRANSACTION;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_TRANSACTION;
 
-import javax.servlet.http.HttpServletRequest;
-
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.http.API;
-import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import javax.enterprise.inject.Vetoed;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
-
 @Vetoed
 public final class GetPrivateTransaction extends AbstractAPIRequestHandler {
 
     public GetPrivateTransaction() {
-        super(new APITag[] {APITag.TRANSACTIONS}, "transaction", "fullHash", "secretPhrase", "publicKey");
+        super(new APITag[]{APITag.TRANSACTIONS}, "transaction", "fullHash", "secretPhrase", "publicKey");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        ParameterParser.PrivateTransactionsAPIData data = ParameterParser.parsePrivateTransactionRequest(req);
+        HttpParameterParserUtil.PrivateTransactionsAPIData data = HttpParameterParserUtil.parsePrivateTransactionRequest(req);
         if (data == null) {
             return MISSING_SECRET_PHRASE_AND_PUBLIC_KEY;
         }
@@ -57,14 +56,13 @@ public final class GetPrivateTransaction extends AbstractAPIRequestHandler {
                     return UNKNOWN_TRANSACTION;
                 }
             }
-        }
-        catch (RuntimeException e) {
+        } catch (RuntimeException e) {
             return INCORRECT_TRANSACTION;
         }
         JSONObject response;
         if (transaction == null) {
             transaction = lookupTransactionProcessor().getUnconfirmedTransaction(transactionId);
-            if (transaction == null || !transaction.getType().equals(Payment.PRIVATE) || transaction.getType().equals(Payment.PRIVATE) && (transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId )) {
+            if (transaction == null || !transaction.getType().equals(Payment.PRIVATE) || transaction.getType().equals(Payment.PRIVATE) && (transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId)) {
                 return UNKNOWN_TRANSACTION;
             }
             if (data.isEncrypt()) {
@@ -73,7 +71,7 @@ public final class GetPrivateTransaction extends AbstractAPIRequestHandler {
                 response = JSONData.unconfirmedTransaction(transaction);
             }
         } else {
-            if (!transaction.getType().equals(Payment.PRIVATE) || transaction.getType().equals(Payment.PRIVATE) && (transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId )) {
+            if (!transaction.getType().equals(Payment.PRIVATE) || transaction.getType().equals(Payment.PRIVATE) && (transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId)) {
                 return UNKNOWN_TRANSACTION;
             }
             if (data.isEncrypt()) {
