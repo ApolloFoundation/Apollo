@@ -18,10 +18,11 @@ public class PropertyBasedFileConfig {
     private static final Logger LOG = LoggerFactory.getLogger(PropertyBasedFileConfig.class);
     private final PropertiesHolder propertiesHolder;
     private final DirProvider dirProvider;
+
     @Inject
     public PropertyBasedFileConfig(PropertiesHolder propertiesHolder, DirProvider dirProvider) {
         this.propertiesHolder = propertiesHolder;
-        this.dirProvider=dirProvider;
+        this.dirProvider = dirProvider;
     }
 
     @Produces
@@ -35,7 +36,6 @@ public class PropertyBasedFileConfig {
     public Path getSecureStoreDirPath() {
         return dirProvider.getSecureStorageDir().toAbsolutePath();
     }
-
 
 
     private String getOrDefault(String property, String defaultValue) {

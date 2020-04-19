@@ -58,7 +58,7 @@ import javax.servlet.http.HttpServletRequest;
 public final class BroadcastTransaction extends AbstractAPIRequestHandler {
 
     public BroadcastTransaction() {
-        super(new APITag[] {APITag.TRANSACTIONS}, "transactionJSON", "transactionBytes", "prunableAttachmentJSON");
+        super(new APITag[]{APITag.TRANSACTIONS}, "transactionJSON", "transactionBytes", "prunableAttachmentJSON");
     }
 
     @Override

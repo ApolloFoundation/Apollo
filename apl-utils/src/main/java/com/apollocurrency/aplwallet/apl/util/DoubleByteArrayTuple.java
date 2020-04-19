@@ -16,6 +16,7 @@ public class DoubleByteArrayTuple {
         this.first = first;
         this.second = second;
     }
+
     public DoubleByteArrayTuple(String firstUrlPart, String secondUrlPart) {
         this.first = Convert.parseHexString(firstUrlPart);
         this.second = Convert.parseHexString(secondUrlPart);
@@ -40,7 +41,7 @@ public class DoubleByteArrayTuple {
         if (!(o instanceof DoubleByteArrayTuple)) return false;
         DoubleByteArrayTuple that = (DoubleByteArrayTuple) o;
         return Arrays.equals(first, that.first) &&
-                Arrays.equals(second, that.second);
+            Arrays.equals(second, that.second);
     }
 
     @Override

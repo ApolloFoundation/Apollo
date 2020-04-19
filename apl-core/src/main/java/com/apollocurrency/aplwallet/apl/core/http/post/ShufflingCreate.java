@@ -20,29 +20,29 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
-
 import com.apollocurrency.aplwallet.apl.core.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreation;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONStreamAware;
+
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class ShufflingCreate extends CreateTransaction {
 
     public ShufflingCreate() {
         super(new APITag[]{APITag.SHUFFLING, APITag.CREATE_TRANSACTION},
-                "holding", "holdingType", "amount", "participantCount", "registrationPeriod");
+            "holding", "holdingType", "amount", "participantCount", "registrationPeriod");
     }
 
     @Override
@@ -53,10 +53,10 @@ public final class ShufflingCreate extends CreateTransaction {
         BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
         if (holdingType == HoldingType.APL && amount < blockchainConfig.getShufflingDepositAtm()) {
             return JSONResponses.incorrect("amount",
-                    "Minimum shuffling amount is " + blockchainConfig.getShufflingDepositAtm() / Constants.ONE_APL + " " + blockchainConfig.getCoinSymbol());
+                "Minimum shuffling amount is " + blockchainConfig.getShufflingDepositAtm() / Constants.ONE_APL + " " + blockchainConfig.getCoinSymbol());
         }
         byte participantCount = HttpParameterParserUtil.getByte(req, "participantCount", Constants.MIN_NUMBER_OF_SHUFFLING_PARTICIPANTS,
-                Constants.MAX_NUMBER_OF_SHUFFLING_PARTICIPANTS, true);
+            Constants.MAX_NUMBER_OF_SHUFFLING_PARTICIPANTS, true);
         short registrationPeriod = (short) HttpParameterParserUtil.getInt(req, "registrationPeriod", 0, Constants.MAX_SHUFFLING_REGISTRATION_PERIOD, true);
         Attachment attachment = new ShufflingCreation(holdingId, holdingType, amount, participantCount, registrationPeriod);
         Account account = HttpParameterParserUtil.getSenderAccount(req);

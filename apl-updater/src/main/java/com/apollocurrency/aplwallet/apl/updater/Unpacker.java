@@ -10,6 +10,7 @@ import java.nio.file.Path;
 public interface Unpacker {
     /**
      * Unpack file
+     *
      * @param file - path to file which should be unpacked
      * @return path to unpacked file
      * @throws IOException when I/O error occurred during unpacking

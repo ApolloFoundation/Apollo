@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.apollocurrency</groupId>
   <artifactId>apollo-wallet</artifactId>
-  <version>1.42.6</version>
+  <version>1.43.1</version>
   <packaging>pom</packaging>
   <name>Apollo wallet</name>
 
@@ -72,7 +72,7 @@
     <!-- cross-platform zip distribution -->
     <zipname>apollo-wallet</zipname>
     <!--Dependency Versions-->
-    <web-wallet.version>2.5.57</web-wallet.version>
+    <web-wallet.version>2.5.58</web-wallet.version>
     <!--Web-->
     <servlet-api.version>3.1.0</servlet-api.version>
     <!--  -->
@@ -112,6 +112,7 @@
 
     <!--Tests-->
     <json-simple.version>1.1.1</json-simple.version>
+    <jsonassert.version>1.5.0</jsonassert.version>
     <json-unit.version>1.20.0</json-unit.version>
     <okhttp-eventsource.version>1.8.0</okhttp-eventsource.version>
     <okhttp.version>2.7.5</okhttp.version>
@@ -370,7 +371,7 @@
         <artifactId>resteasy-multipart-provider</artifactId>
         <version>${resteasy.version}</version>
       </dependency>
-<!--      Validation-->
+      <!--      Validation-->
       <dependency>
         <groupId>javax.validation</groupId>
         <artifactId>validation-api</artifactId>
@@ -560,6 +561,12 @@
         <scope>import</scope>
       </dependency>
       <dependency>
+        <groupId>org.skyscreamer</groupId>
+        <artifactId>jsonassert</artifactId>
+        <version>${jsonassert.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
         <groupId>org.junit.jupiter</groupId>
         <artifactId>junit-jupiter-params</artifactId>
         <version>${junit5-bom.version}</version>
@@ -569,16 +576,19 @@
         <groupId>org.mockito</groupId>
         <artifactId>mockito-core</artifactId>
         <version>${mockito.version}</version>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-inline</artifactId>
         <version>${mockito.version}</version>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-junit-jupiter</artifactId>
         <version>${mockito.version}</version>
+        <scope>test</scope>
       </dependency>
       <!-- RESTEasy Validator Provider -->
       <dependency>
@@ -753,14 +763,14 @@
             <useSystemClassLoader>false</useSystemClassLoader>
           </configuration>
           <dependencies>
-<!--
-                        JDK 11
-                        <dependency>
-                            <groupId>org.ow2.asm</groupId>
-                            <artifactId>asm</artifactId>
-                            <version>6.2</version>
-                        </dependency>
--->
+            <!--
+                                    JDK 11
+                                    <dependency>
+                                        <groupId>org.ow2.asm</groupId>
+                                        <artifactId>asm</artifactId>
+                                        <version>6.2</version>
+                                    </dependency>
+            -->
             <dependency>
               <groupId>org.apache.maven.wagon</groupId>
               <artifactId>wagon-webdav-jackrabbit</artifactId>

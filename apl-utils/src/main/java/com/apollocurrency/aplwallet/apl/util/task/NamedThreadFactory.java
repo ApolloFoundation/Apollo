@@ -37,21 +37,21 @@ public class NamedThreadFactory implements ThreadFactory {
      * Create a new ThreadFactory with the given initial parameters
      */
     public NamedThreadFactory(ThreadGroup group, String poolName, boolean daemon) {
-        if (group == null){
+        if (group == null) {
             SecurityManager s = System.getSecurityManager();
             this.group = (s != null) ? s.getThreadGroup() : Thread.currentThread().getThreadGroup();
-        }else{
+        } else {
             this.group = group;
         }
-        this.namePrefix = poolName +"-";
+        this.namePrefix = poolName + "-";
         this.daemon = daemon;
     }
 
     @Override
     public Thread newThread(Runnable r) {
         Thread t = new Thread(group, r,
-                namePrefix + threadNumber.getAndIncrement(),
-                0);
+            namePrefix + threadNumber.getAndIncrement(),
+            0);
         try {
             if (t.isDaemon()) {
                 if (!daemon) {
@@ -66,7 +66,8 @@ public class NamedThreadFactory implements ThreadFactory {
             if (t.getPriority() != Thread.NORM_PRIORITY)
                 t.setPriority(Thread.NORM_PRIORITY);
 
-        } catch (Exception ignored) { }
+        } catch (Exception ignored) {
+        }
 
         return t;
     }

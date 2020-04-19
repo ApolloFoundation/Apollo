@@ -30,16 +30,16 @@ public class DbUtils {
         int dbColumn = -1;
         DatabaseMetaData metaData = connection.getMetaData();
         ResultSet rs = metaData.getColumns(null, schemaName.toUpperCase(), tableName.toUpperCase(), null);
-            int index = 0;
-            while (rs.next()) {
-                String columnName = rs.getString("COLUMN_NAME");
-                int columnType = rs.getInt("DATA_TYPE");
-                columnNames.add(columnName);
-                columnTypes.add(columnType);
-                if (columnName.equalsIgnoreCase("DB_ID")) {
-                    dbColumn = index;
-                }
-                index++;
+        int index = 0;
+        while (rs.next()) {
+            String columnName = rs.getString("COLUMN_NAME");
+            int columnType = rs.getInt("DATA_TYPE");
+            columnNames.add(columnName);
+            columnTypes.add(columnType);
+            if (columnName.equalsIgnoreCase("DB_ID")) {
+                dbColumn = index;
+            }
+            index++;
         }
         List<Integer> indexColumns = getIndexColumns(connection, columnNames, columnTypes, schemaName, tableName);
         return new TableData(dbColumn, tableName, schemaName, columnNames, columnTypes, indexColumns);
@@ -48,7 +48,7 @@ public class DbUtils {
     private static List<Integer> getIndexColumns(Connection con, List<String> columnNames, List<Integer> columnTypes, String schema, String table) {
         List<Integer> indexColumns = new ArrayList<>();
         try (ResultSet rs = con.createStatement().executeQuery(String.format(
-                "SELECT COLUMNS FROM FTL.INDEXES WHERE SCHEMA = '%s' AND \"TABLE\" = '%s'", schema.toUpperCase(), table.toUpperCase()))) {
+            "SELECT COLUMNS FROM FTL.INDEXES WHERE SCHEMA = '%s' AND \"TABLE\" = '%s'", schema.toUpperCase(), table.toUpperCase()))) {
             if (rs.next()) {
                 String[] columns = rs.getString(1).split(",");
                 for (String column : columns) {
@@ -64,8 +64,7 @@ public class DbUtils {
                     }
                 }
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             LOG.error("Cannot process index table", e);
         }
         return indexColumns;

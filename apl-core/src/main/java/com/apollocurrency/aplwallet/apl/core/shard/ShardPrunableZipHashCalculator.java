@@ -29,7 +29,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Slf4j
 @Singleton
@@ -40,9 +39,9 @@ public class ShardPrunableZipHashCalculator {
     private final ShardDao shardDao;
     private final BlockchainConfig blockchainConfig;
     private final DirProvider dirProvider;
-    private int lastPruningTime = 0;
     private final Event<ChunkedFileOps> fileChangedEvent;
     private final CsvEscaper translator;
+    private int lastPruningTime = 0;
 
     @Inject
     public ShardPrunableZipHashCalculator(Event<ChunkedFileOps> fileChangedEvent, DerivedTablesRegistry registry, Zip zip, DatabaseManager databaseManager, ShardDao shardDao, BlockchainConfig blockchainConfig, DirProvider dirProvider, CsvEscaper translator) {
@@ -71,9 +70,9 @@ public class ShardPrunableZipHashCalculator {
     private void recalculatePrunableArchiveHashes() {
         UUID chainId = blockchainConfig.getChain().getChainId();
         List<Shard> allCompletedShards = shardDao.getAllCompletedShards()
-                .stream()
-                .filter(shard -> shard.getPrunableZipHash() != null)
-                .collect(Collectors.toList()); // TODO change to completed and imported
+            .stream()
+            .filter(shard -> shard.getPrunableZipHash() != null)
+            .collect(Collectors.toList()); // TODO change to completed and imported
 
         allCompletedShards.forEach(shard -> {
             try {
@@ -81,17 +80,17 @@ public class ShardPrunableZipHashCalculator {
                 // create new instance of CsvExporter for each directory
                 CsvExporterImpl csvExporter = new CsvExporterImpl(databaseManager, tempDirectory, translator);
                 List<PrunableDbTable> prunableTables = registry.getDerivedTables()
-                        .stream()
-                        .filter(t -> t instanceof PrunableDbTable)
-                        .map(t -> (PrunableDbTable) t)
-                        .collect(Collectors.toList());
+                    .stream()
+                    .filter(t -> t instanceof PrunableDbTable)
+                    .map(t -> (PrunableDbTable) t)
+                    .collect(Collectors.toList());
 
                 prunableTables.forEach(
-                        t -> csvExporter.exportPrunableDerivedTable(t, shard.getShardHeight(), lastPruningTime, 100)
+                    t -> csvExporter.exportPrunableDerivedTable(t, shard.getShardHeight(), lastPruningTime, 100)
                 );
                 long count = FileUtils.countElementsOfDirectory(tempDirectory);
                 ShardNameHelper shardNameHelper = new ShardNameHelper();
-                String prunableArchiveName = shardNameHelper.getPrunableShardArchiveNameByShardId(shard.getShardId(), chainId );
+                String prunableArchiveName = shardNameHelper.getPrunableShardArchiveNameByShardId(shard.getShardId(), chainId);
                 Path prunableArchivePath = dirProvider.getDataExportDir().resolve(prunableArchiveName);
                 ChunkedFileOps ops;
                 if (count == 0) {
@@ -103,11 +102,11 @@ public class ShardPrunableZipHashCalculator {
                 } else {
                     String zipName = "shard-" + shard.getShardId() + ".zip";
                     ops = zip.compressAndHash(
-                            tempDirectory.resolve(zipName).toAbsolutePath().toString(), //zip file abs path
-                            tempDirectory.toAbsolutePath().toString(), //dir to zip abs path
-                            0L, //zip fiules time
-                            null, //filter of file names
-                            false //recursive
+                        tempDirectory.resolve(zipName).toAbsolutePath().toString(), //zip file abs path
+                        tempDirectory.toAbsolutePath().toString(), //dir to zip abs path
+                        0L, //zip fiules time
+                        null, //filter of file names
+                        false //recursive
                     );
                     if (ops == null || !ops.isHashedOK()) {
                         log.error("Can not zip file: {}", zipName);
@@ -123,8 +122,7 @@ public class ShardPrunableZipHashCalculator {
                 }).fireAsync(ops);
                 log.debug("Firing 'FILE_CHANGED' event {}", ops.getFileId());
                 FileUtils.clearDirectorySilently(tempDirectory); // clean is not mandatory, but desirable
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         });

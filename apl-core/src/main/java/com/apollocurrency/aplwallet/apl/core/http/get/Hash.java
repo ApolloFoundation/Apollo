@@ -38,7 +38,7 @@ import javax.servlet.http.HttpServletRequest;
 public final class Hash extends AbstractAPIRequestHandler {
 
     public Hash() {
-        super(new APITag[] {APITag.UTILS}, "hashAlgorithm", "secret", "secretIsText");
+        super(new APITag[]{APITag.UTILS}, "hashAlgorithm", "secret", "secretIsText");
     }
 
     @Override
@@ -48,7 +48,8 @@ public final class Hash extends AbstractAPIRequestHandler {
         HashFunction hashFunction = null;
         try {
             hashFunction = HashFunction.getHashFunction(algorithm);
-        } catch (IllegalArgumentException ignore) {}
+        } catch (IllegalArgumentException ignore) {
+        }
         if (hashFunction == null) {
             return JSONResponses.INCORRECT_HASH_ALGORITHM;
         }
@@ -57,7 +58,7 @@ public final class Hash extends AbstractAPIRequestHandler {
         byte[] secret;
         try {
             secret = secretIsText ? Convert.toBytes(req.getParameter("secret"))
-                    : Convert.parseHexString(req.getParameter("secret"));
+                : Convert.parseHexString(req.getParameter("secret"));
         } catch (RuntimeException e) {
             return JSONResponses.INCORRECT_SECRET;
         }

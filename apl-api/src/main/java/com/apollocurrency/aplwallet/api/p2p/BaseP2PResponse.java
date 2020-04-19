@@ -10,15 +10,15 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- *
  * @author alukin@gmail.com
  */
-@Getter @Setter
+@Getter
+@Setter
 @JsonInclude(Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BaseP2PResponse {
-    public Integer errorCode=0;
+    public Integer errorCode = 0;
     public Integer protocol = 1;
-    public String error=null;
-    public String cause=null;
+    public String error = null;
+    public String cause = null;
 }

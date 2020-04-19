@@ -43,7 +43,6 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -68,26 +67,26 @@ import static org.mockito.Mockito.mock;
 public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
-            GlobalSyncImpl.class,
-            PhasingPollResultTable.class,
-            PhasingPollTable.class,
-            PhasingPollVoterTable.class,
-            PhasingPollLinkedTransactionTable.class,
-            PhasingVoteTable.class,
-            FullTextConfigImpl.class,
-            DerivedDbTablesRegistryImpl.class,
-            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
-            .addBeans(MockBean.of(getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(getDatabaseManager().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
-            .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
-            .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
-            .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
-            .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
-            .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
-            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
-            .build();
+        PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
+        GlobalSyncImpl.class,
+        PhasingPollResultTable.class,
+        PhasingPollTable.class,
+        PhasingPollVoterTable.class,
+        PhasingPollLinkedTransactionTable.class,
+        PhasingVoteTable.class,
+        FullTextConfigImpl.class,
+        DerivedDbTablesRegistryImpl.class,
+        TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
+        .addBeans(MockBean.of(getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(getDatabaseManager().getJdbi(), Jdbi.class))
+        .addBeans(MockBean.of(getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
+        .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
+        .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
+        .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
+        .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
+        .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
+        .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
+        .build();
     @Inject
     Blockchain blockchain;
     @Inject
@@ -155,8 +154,7 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
                 try (ResultSet rs = stmt.executeQuery("SELECT 1 FROM " + tableName + " where  " + condition)) {
                     Assertions.assertFalse(rs.next());
                 }
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
             }
         });
@@ -176,6 +174,7 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
 
         assertTrue(finishingTransactions.isEmpty(), "No transactions should be found at height");
     }
+
     @Test
     void testGetActivePhasingDbIds() throws SQLException {
         List<TransactionDbInfo> transactionDbInfoList = table.getActivePhasedTransactionDbIds(ttd.TRANSACTION_8.getHeight() + 1);
@@ -206,6 +205,7 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
 
         assertEquals(ptd.NUMBER_OF_PHASED_TRANSACTIONS, count);
     }
+
     @Test
     void testGetAccountPhasedTransactionsCountAtLastBlockHeight() throws SQLException {
         int count = table.getAccountPhasedTransactionCount(ttd.TRANSACTION_0.getSenderId(), ptd.POLL_5.getHeight());
@@ -291,6 +291,7 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
         long expectedFee = ttd.TRANSACTION_13.getFeeATM();
         assertEquals(expectedFee, actualFee);
     }
+
     @Test
     void testGetSenderPhasedTransactionFeesForNonExistentAccount() throws SQLException {
         long actualFee = table.getSenderPhasedTransactionFees(1, 0);

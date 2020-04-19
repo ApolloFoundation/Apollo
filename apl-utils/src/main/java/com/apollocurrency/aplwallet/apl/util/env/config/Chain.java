@@ -20,7 +20,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @JsonPropertyOrder({"chainId", "active", "defaultPeers", "wellKnownPeers", "blacklistedPeers", "name", "description", "symbol",
-        "prefix", "project", "genesisLocation", "featuresHeightRequirement", "blockchainProperties"})
+    "prefix", "project", "genesisLocation", "featuresHeightRequirement", "blockchainProperties"})
 public class Chain {
     private UUID chainId;
     private boolean active;
@@ -48,8 +48,9 @@ public class Chain {
                  @JsonProperty("blockchainProperties") List<BlockchainProperties> blockchainProperties
     ) {
         this(chainId, false, Collections.emptyList(), wellKnownPeers, Collections.emptyList(), name, description, symbol, prefix, project, genesisLocation,
-                blockchainProperties, null);
+            blockchainProperties, null);
     }
+
     public Chain(UUID chainId,
                  boolean active,
                  List<String> defaultPeers,
@@ -76,13 +77,16 @@ public class Chain {
         this.project = project;
         this.genesisLocation = genesisLocation;
         this.blockchainProperties =
-                blockchainProperties
-                        .stream()
-                        .sorted(Comparator.comparingInt(BlockchainProperties::getHeight))
-                        .collect(
-                                Collectors.toMap(BlockchainProperties::getHeight, bp -> bp,
-                                        (oldValue, newValue) -> oldValue, LinkedHashMap::new));
+            blockchainProperties
+                .stream()
+                .sorted(Comparator.comparingInt(BlockchainProperties::getHeight))
+                .collect(
+                    Collectors.toMap(BlockchainProperties::getHeight, bp -> bp,
+                        (oldValue, newValue) -> oldValue, LinkedHashMap::new));
         this.featuresHeightRequirement = featuresHeightRequirement;
+    }
+
+    public Chain() {
     }
 
     public FeaturesHeightRequirement getFeaturesHeightRequirement() {
@@ -93,99 +97,92 @@ public class Chain {
         this.featuresHeightRequirement = featuresHeightRequirement;
     }
 
-    public Chain() {
+    public UUID getChainId() {
+        return chainId;
     }
 
     public void setChainId(UUID chainId) {
         this.chainId = chainId;
     }
 
-    public void setActive(boolean active) {
-        this.active = active;
+    public List<String> getDefaultPeers() {
+        return defaultPeers;
     }
 
     public void setDefaultPeers(List<String> defaultPeers) {
         this.defaultPeers = defaultPeers;
     }
 
-    public void setWellKnownPeers(List<String> wellKnownPeers) {
-        this.wellKnownPeers = wellKnownPeers;
-    }
-
-    public void setBlacklistedPeers(List<String> blacklistedPeers) {
-        this.blacklistedPeers = blacklistedPeers;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public void setSymbol(String symbol) {
-        this.symbol = symbol;
-    }
-
-    public void setPrefix(String prefix) {
-        this.prefix = prefix;
-    }
-
-    public void setProject(String project) {
-        this.project = project;
-    }
-
-    public void setGenesisLocation(String genesisLocation) {
-        this.genesisLocation = genesisLocation;
-    }
-
-    public void setBlockchainProperties(Map<Integer, BlockchainProperties> blockchainProperties) {
-        this.blockchainProperties = blockchainProperties;
-    }
-
-    public UUID getChainId() {
-        return chainId;
-    }
-
-    public List<String> getDefaultPeers() {
-        return defaultPeers;
-    }
-
     public List<String> getWellKnownPeers() {
         return wellKnownPeers;
+    }
+
+    public void setWellKnownPeers(List<String> wellKnownPeers) {
+        this.wellKnownPeers = wellKnownPeers;
     }
 
     public List<String> getBlacklistedPeers() {
         return blacklistedPeers;
     }
 
+    public void setBlacklistedPeers(List<String> blacklistedPeers) {
+        this.blacklistedPeers = blacklistedPeers;
+    }
+
     public String getName() {
         return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getDescription() {
         return description;
     }
 
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
     public String getSymbol() {
         return symbol;
+    }
+
+    public void setSymbol(String symbol) {
+        this.symbol = symbol;
     }
 
     public String getPrefix() {
         return prefix;
     }
 
+    public void setPrefix(String prefix) {
+        this.prefix = prefix;
+    }
+
     public String getProject() {
         return project;
+    }
+
+    public void setProject(String project) {
+        this.project = project;
     }
 
     public boolean isActive() {
         return active;
     }
 
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
     public String getGenesisLocation() {
         return genesisLocation;
+    }
+
+    public void setGenesisLocation(String genesisLocation) {
+        this.genesisLocation = genesisLocation;
     }
 
     @Override
@@ -194,18 +191,18 @@ public class Chain {
         if (!(o instanceof Chain)) return false;
         Chain chain = (Chain) o;
         return active == chain.active &&
-                Objects.equals(chainId, chain.chainId) &&
-                Objects.equals(defaultPeers, chain.defaultPeers) &&
-                Objects.equals(wellKnownPeers, chain.wellKnownPeers) &&
-                Objects.equals(blacklistedPeers, chain.blacklistedPeers) &&
-                Objects.equals(name, chain.name) &&
-                Objects.equals(description, chain.description) &&
-                Objects.equals(symbol, chain.symbol) &&
-                Objects.equals(prefix, chain.prefix) &&
-                Objects.equals(project, chain.project) &&
-                Objects.equals(genesisLocation, chain.genesisLocation) &&
-                Objects.equals(blockchainProperties, chain.blockchainProperties) &&
-                Objects.equals(featuresHeightRequirement, chain.featuresHeightRequirement);
+            Objects.equals(chainId, chain.chainId) &&
+            Objects.equals(defaultPeers, chain.defaultPeers) &&
+            Objects.equals(wellKnownPeers, chain.wellKnownPeers) &&
+            Objects.equals(blacklistedPeers, chain.blacklistedPeers) &&
+            Objects.equals(name, chain.name) &&
+            Objects.equals(description, chain.description) &&
+            Objects.equals(symbol, chain.symbol) &&
+            Objects.equals(prefix, chain.prefix) &&
+            Objects.equals(project, chain.project) &&
+            Objects.equals(genesisLocation, chain.genesisLocation) &&
+            Objects.equals(blockchainProperties, chain.blockchainProperties) &&
+            Objects.equals(featuresHeightRequirement, chain.featuresHeightRequirement);
     }
 
     @Override
@@ -219,26 +216,26 @@ public class Chain {
         List<String> blacklistedPeersCopy = new ArrayList<>(blacklistedPeers);
         List<BlockchainProperties> blockchainPropertiesCopy = blockchainProperties.values().stream().map(BlockchainProperties::copy).collect(Collectors.toList());
         return new Chain(chainId, active, defaultPeersCopy, wellKnownPeersCopy, blacklistedPeersCopy, name, description, symbol, prefix, project,
-                genesisLocation, blockchainPropertiesCopy, featuresHeightRequirement != null ? featuresHeightRequirement.copy() : null);
+            genesisLocation, blockchainPropertiesCopy, featuresHeightRequirement != null ? featuresHeightRequirement.copy() : null);
     }
 
     @Override
     public String toString() {
         return "Chain{" +
-                "chainId=" + chainId +
-                ", active=" + active +
-                ", defaultPeers=" + defaultPeers +
-                ", wellKnownPeers=" + wellKnownPeers +
-                ", blacklistedPeers=" + blacklistedPeers +
-                ", name='" + name + '\'' +
-                ", description='" + description + '\'' +
-                ", symbol='" + symbol + '\'' +
-                ", prefix='" + prefix + '\'' +
-                ", project='" + project + '\'' +
-                ", genesisLocation='" + genesisLocation + '\'' +
-                ", featuresHeightRequirement='" + featuresHeightRequirement + '\'' +
-                ", blockchainProperties=" + blockchainProperties +
-                '}';
+            "chainId=" + chainId +
+            ", active=" + active +
+            ", defaultPeers=" + defaultPeers +
+            ", wellKnownPeers=" + wellKnownPeers +
+            ", blacklistedPeers=" + blacklistedPeers +
+            ", name='" + name + '\'' +
+            ", description='" + description + '\'' +
+            ", symbol='" + symbol + '\'' +
+            ", prefix='" + prefix + '\'' +
+            ", project='" + project + '\'' +
+            ", genesisLocation='" + genesisLocation + '\'' +
+            ", featuresHeightRequirement='" + featuresHeightRequirement + '\'' +
+            ", blockchainProperties=" + blockchainProperties +
+            '}';
     }
 
     @JsonGetter("blockchainProperties")
@@ -248,5 +245,9 @@ public class Chain {
 
     public Map<Integer, BlockchainProperties> getBlockchainProperties() {
         return blockchainProperties;
+    }
+
+    public void setBlockchainProperties(Map<Integer, BlockchainProperties> blockchainProperties) {
+        this.blockchainProperties = blockchainProperties;
     }
 }

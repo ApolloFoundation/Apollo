@@ -5,15 +5,15 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.transaction.AccountControl;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-import java.nio.ByteBuffer;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+
 /**
- *
  * @author al
  */
 public final class AccountControlEffectiveBalanceLeasing extends AbstractAttachment {
-    
+
     final int period;
 
     public AccountControlEffectiveBalanceLeasing(ByteBuffer buffer) {
@@ -53,5 +53,5 @@ public final class AccountControlEffectiveBalanceLeasing extends AbstractAttachm
     public int getPeriod() {
         return period;
     }
-    
+
 }

@@ -56,12 +56,12 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
     private static final int BLOCKS_TO_RETRIEVE = 1000;
     private static final Version DEFAULT_VERSION = new Version("0.0.0");
     private static final String URL_FORMAT = "%s://%s:%d";
-    private final AtomicReference<NetworkStats> lastStats = new AtomicReference<>();
 
     static {
         objectMapper.configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
+    private final AtomicReference<NetworkStats> lastStats = new AtomicReference<>();
     private HttpClient client;
     private List<PeerInfo> peers;
     private List<MaxBlocksDiffCounter> maxBlocksDiffCounters;
@@ -69,7 +69,8 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
     private List<String> peerApiUrls;
     private ExecutorService executor;
 
-    public HeightMonitorServiceImpl() {}
+    public HeightMonitorServiceImpl() {
+    }
 
     @PostConstruct
     public void init() {
@@ -77,8 +78,7 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
         try {
             client.start();
             executor = Executors.newFixedThreadPool(30);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -131,8 +131,7 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
         try {
             client.stop();
             executor.shutdownNow();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -211,7 +210,7 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
 
     private String getShardHashFormatted(ShardDTO shardDTO) {
         String prunableZipHash = shardDTO.getPrunableZipHash();
-        return shardDTO.getCoreZipHash().substring(0, 6)  + (prunableZipHash != null ? ":" + prunableZipHash.substring(0, 6) : "");
+        return shardDTO.getCoreZipHash().substring(0, 6) + (prunableZipHash != null ? ":" + prunableZipHash.substring(0, 6) : "");
     }
 
     private String getShardsStatus(PeerMonitoringResult targetMonitoringResult, PeerMonitoringResult comparedMonitoringResult) {
@@ -277,7 +276,7 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
                 }
                 Version version = getPeerVersion(peerUrl);
                 List<ShardDTO> shards = getShards(peerUrl);
-                return new PeerMonitoringResult(shards,height1, version, blocks);
+                return new PeerMonitoringResult(shards, height1, version, blocks);
             }, executor));
         }
         for (int i = 0; i < getBlocksRequests.size(); i++) {
@@ -294,7 +293,7 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
     private List<ShardDTO> getShards(String peerUrl) {
         List<ShardDTO> shards = new ArrayList<>();
         Request request = client.newRequest(peerUrl + "/rest/shards")
-                .method(HttpMethod.GET);
+            .method(HttpMethod.GET);
         ContentResponse response;
         try {
             response = request.send();
@@ -324,6 +323,7 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
         }
         return blockId;
     }
+
     private Block getPeerBlock(String peerUrl, int height) {
         JsonNode node = performRequest(peerUrl + "/apl", Map.of("requestType", "getBlock", "height", height));
         Block block = null;
@@ -341,7 +341,7 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
         JsonNode result = null;
         Request request = client.newRequest(url)
             .method(HttpMethod.GET);
-        params.forEach((name, value)-> request.param(name, value.toString()));
+        params.forEach((name, value) -> request.param(name, value.toString()));
 
         ContentResponse response;
         try {
@@ -367,19 +367,17 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
     private Version getPeerVersion(String peerUrl) {
         Version res = DEFAULT_VERSION;
         Request request = client.newRequest(peerUrl + "/apl")
-                .method(HttpMethod.GET)
-                .param("requestType", "getBlockchainStatus");
+            .method(HttpMethod.GET)
+            .param("requestType", "getBlockchainStatus");
         ContentResponse response = null;
         try {
             response = request.send();
-            JsonNode jsonNode  = objectMapper.readTree(response.getContentAsString());
+            JsonNode jsonNode = objectMapper.readTree(response.getContentAsString());
             res = new Version(jsonNode.get("version").asText());
-        }
-        catch (InterruptedException | TimeoutException | ExecutionException e) {
+        } catch (InterruptedException | TimeoutException | ExecutionException e) {
             log.error("Unable to get response from {} - {}", peerUrl, e.toString());
-        }
-        catch (IOException e) {
-            log.error("Unable to parse peer version from json for {} - {}",peerUrl, e.toString());
+        } catch (IOException e) {
+            log.error("Unable to parse peer version from json for {} - {}", peerUrl, e.toString());
         }
         return res;
     }

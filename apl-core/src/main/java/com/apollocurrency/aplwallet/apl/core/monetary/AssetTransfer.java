@@ -22,21 +22,20 @@ package com.apollocurrency.aplwallet.apl.core.monetary;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import javax.enterprise.inject.spi.CDI;
-
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -44,14 +43,7 @@ import java.sql.SQLException;
 
 public final class AssetTransfer {
 
-    public enum Event {
-        ASSET_TRANSFER
-    }
-
-    private static DatabaseManager databaseManager;
-
-    private static final Listeners<AssetTransfer,Event> listeners = new Listeners<>();
-
+    private static final Listeners<AssetTransfer, Event> listeners = new Listeners<>();
     private static final LongKeyFactory<AssetTransfer> transferDbKeyFactory = new LongKeyFactory<AssetTransfer>("id") {
 
         @Override
@@ -60,7 +52,6 @@ public final class AssetTransfer {
         }
 
     };
-
     private static final EntityDbTable<AssetTransfer> assetTransferTable = new EntityDbTable<AssetTransfer>("asset_transfer", transferDbKeyFactory) {
 
         @Override
@@ -74,6 +65,38 @@ public final class AssetTransfer {
         }
 
     };
+    private static DatabaseManager databaseManager;
+    private final long id;
+    private final DbKey dbKey;
+    private final long assetId;
+    private final int height;
+    private final long senderId;
+    private final long recipientId;
+    private final long quantityATM;
+    private final int timestamp;
+
+    private AssetTransfer(Transaction transaction, ColoredCoinsAssetTransfer attachment) {
+        this.id = transaction.getId();
+        this.dbKey = transferDbKeyFactory.newKey(this.id);
+        Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+        this.height = blockchain.getHeight();
+        this.assetId = attachment.getAssetId();
+        this.senderId = transaction.getSenderId();
+        this.recipientId = transaction.getRecipientId();
+        this.quantityATM = attachment.getQuantityATU();
+        this.timestamp = blockchain.getLastBlockTimestamp();
+    }
+
+    private AssetTransfer(ResultSet rs, DbKey dbKey) throws SQLException {
+        this.id = rs.getLong("id");
+        this.dbKey = dbKey;
+        this.assetId = rs.getLong("asset_id");
+        this.senderId = rs.getLong("sender_id");
+        this.recipientId = rs.getLong("recipient_id");
+        this.quantityATM = rs.getLong("quantity");
+        this.timestamp = rs.getInt("timestamp");
+        this.height = rs.getInt("height");
+    }
 
     public static DbIterator<AssetTransfer> getAllTransfers(int from, int to) {
         return assetTransferTable.getAll(from, to);
@@ -109,8 +132,8 @@ public final class AssetTransfer {
         try {
             con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM asset_transfer WHERE sender_id = ?"
-                    + " UNION ALL SELECT * FROM asset_transfer WHERE recipient_id = ? AND sender_id <> ? ORDER BY height DESC, db_id DESC"
-                    + DbUtils.limitsClause(from, to));
+                + " UNION ALL SELECT * FROM asset_transfer WHERE recipient_id = ? AND sender_id <> ? ORDER BY height DESC, db_id DESC"
+                + DbUtils.limitsClause(from, to));
             int i = 0;
             pstmt.setLong(++i, accountId);
             pstmt.setLong(++i, accountId);
@@ -129,8 +152,8 @@ public final class AssetTransfer {
         try {
             con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM asset_transfer WHERE sender_id = ? AND asset_id = ?"
-                    + " UNION ALL SELECT * FROM asset_transfer WHERE recipient_id = ? AND sender_id <> ? AND asset_id = ? ORDER BY height DESC, db_id DESC"
-                    + DbUtils.limitsClause(from, to));
+                + " UNION ALL SELECT * FROM asset_transfer WHERE recipient_id = ? AND sender_id <> ? AND asset_id = ? ORDER BY height DESC, db_id DESC"
+                + DbUtils.limitsClause(from, to));
             int i = 0;
             pstmt.setLong(++i, accountId);
             pstmt.setLong(++i, assetId);
@@ -160,43 +183,10 @@ public final class AssetTransfer {
         databaseManager = databaseManagerParam;
     }
 
-
-    private final long id;
-    private final DbKey dbKey;
-    private final long assetId;
-    private final int height;
-    private final long senderId;
-    private final long recipientId;
-    private final long quantityATM;
-    private final int timestamp;
-
-    private AssetTransfer(Transaction transaction, ColoredCoinsAssetTransfer attachment) {
-        this.id = transaction.getId();
-        this.dbKey = transferDbKeyFactory.newKey(this.id);
-        Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-        this.height = blockchain.getHeight();
-        this.assetId = attachment.getAssetId();
-        this.senderId = transaction.getSenderId();
-        this.recipientId = transaction.getRecipientId();
-        this.quantityATM = attachment.getQuantityATU();
-        this.timestamp = blockchain.getLastBlockTimestamp();
-    }
-
-    private AssetTransfer(ResultSet rs, DbKey dbKey) throws SQLException {
-        this.id = rs.getLong("id");
-        this.dbKey = dbKey;
-        this.assetId = rs.getLong("asset_id");
-        this.senderId = rs.getLong("sender_id");
-        this.recipientId = rs.getLong("recipient_id");
-        this.quantityATM = rs.getLong("quantity");
-        this.timestamp = rs.getInt("timestamp");
-        this.height = rs.getInt("height");
-    }
-
     private void save(Connection con) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO asset_transfer (id, asset_id, "
-                + "sender_id, recipient_id, quantity, timestamp, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?)")) {
+            + "sender_id, recipient_id, quantity, timestamp, height) "
+            + "VALUES (?, ?, ?, ?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, this.id);
             pstmt.setLong(++i, this.assetId);
@@ -213,7 +203,9 @@ public final class AssetTransfer {
         return id;
     }
 
-    public long getAssetId() { return assetId; }
+    public long getAssetId() {
+        return assetId;
+    }
 
     public long getSenderId() {
         return senderId;
@@ -223,7 +215,9 @@ public final class AssetTransfer {
         return recipientId;
     }
 
-    public long getQuantityATU() { return quantityATM; }
+    public long getQuantityATU() {
+        return quantityATM;
+    }
 
     public int getTimestamp() {
         return timestamp;
@@ -231,6 +225,10 @@ public final class AssetTransfer {
 
     public int getHeight() {
         return height;
+    }
+
+    public enum Event {
+        ASSET_TRANSFER
     }
 
 }

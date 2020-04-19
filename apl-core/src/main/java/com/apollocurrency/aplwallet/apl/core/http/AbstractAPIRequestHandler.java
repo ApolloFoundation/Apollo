@@ -48,18 +48,19 @@ import java.util.Set;
 
 public abstract class AbstractAPIRequestHandler {
 
+    protected BlockchainProcessor blockchainProcessor;
+    protected TimeService timeService = CDI.current().select(TimeService.class).get();
+    protected AdminPasswordVerifier apw = CDI.current().select(AdminPasswordVerifier.class).get();
+    protected ElGamalEncryptor elGamal = CDI.current().select(ElGamalEncryptor.class).get();
+    protected PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    protected TrimService trimService;
     private List<String> parameters;
     private String fileParameter;
     private Set<APITag> apiTags;
     private Blockchain blockchain;
-    protected BlockchainProcessor blockchainProcessor;
     private BlockchainConfig blockchainConfig;
     private TransactionProcessor transactionProcessor;
-    protected TimeService timeService = CDI.current().select(TimeService.class).get();
     private DatabaseManager databaseManager;
-    protected AdminPasswordVerifier apw =  CDI.current().select(AdminPasswordVerifier.class).get();
-    protected ElGamalEncryptor elGamal = CDI.current().select(ElGamalEncryptor.class).get();
-    protected PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private AccountService accountService;
     private AccountPublicKeyService accountPublicKeyService;
     private AccountLedgerService accountLedgerService;
@@ -68,101 +69,7 @@ public abstract class AbstractAPIRequestHandler {
     private AccountInfoService accountInfoService;
     private AccountLeaseService accountLeaseService;
     private AccountPropertyService accountPropertyService;
-    protected TrimService trimService;
     private PeersService peers;
-
-    protected PeersService lookupPeersService() {
-        if (peers == null) peers = CDI.current().select(PeersService.class).get();
-        return peers;
-    }
-
-    protected AccountPropertyService lookupAccountPropertyService(){
-        if (accountPropertyService == null){
-            accountPropertyService = CDI.current().select(AccountPropertyServiceImpl.class).get();
-        }
-        return accountPropertyService;
-    }
-
-    protected AccountLeaseService lookupAccountLeaseService(){
-        if (accountLeaseService == null){
-            accountLeaseService = CDI.current().select(AccountLeaseServiceImpl.class).get();
-        }
-        return accountLeaseService;
-    }
-
-    protected AccountInfoService lookupAccountInfoService(){
-        if (accountInfoService == null){
-            accountInfoService = CDI.current().select(AccountInfoServiceImpl.class).get();
-        }
-        return accountInfoService;
-    }
-
-    protected AccountCurrencyService lookupAccountCurrencyService(){
-        if (accountCurrencyService == null){
-            accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
-        }
-        return accountCurrencyService;
-    }
-
-    protected AccountAssetService lookupAccountAssetService(){
-        if ( accountAssetService == null){
-            accountAssetService = CDI.current().select(AccountAssetServiceImpl.class).get();
-        }
-        return accountAssetService;
-    }
-
-    protected AccountLedgerService lookupAccountLedgerService(){
-        if ( accountLedgerService == null){
-            accountLedgerService = CDI.current().select(AccountLedgerServiceImpl.class).get();
-        }
-        return accountLedgerService;
-    }
-
-    protected AccountService lookupAccountService(){
-        if ( accountService == null) {
-            accountService = CDI.current().select(AccountServiceImpl.class).get();
-        }
-        return accountService;
-    }
-
-    protected AccountPublicKeyService lookupAccountPublickKeyService(){
-        if ( accountPublicKeyService == null) {
-            accountPublicKeyService = CDI.current().select(AccountPublicKeyServiceImpl.class).get();
-        }
-        return accountPublicKeyService;
-    }
-
-    protected Blockchain lookupBlockchain() {
-        if (blockchain == null) blockchain = CDI.current().select(BlockchainImpl.class).get();
-        return blockchain;
-    }
-
-    protected BlockchainConfig lookupBlockchainConfig(){
-        if (blockchainConfig == null) blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-        return blockchainConfig;
-    }
-
-    protected BlockchainProcessor lookupBlockchainProcessor() {
-        if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-        return blockchainProcessor;
-    }
-
-    protected TransactionProcessor lookupTransactionProcessor() {
-        if (transactionProcessor == null) transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
-        return transactionProcessor;
-    }
-
-    protected TransactionalDataSource lookupDataSource() {
-        if (databaseManager == null) {
-            databaseManager = CDI.current().select(DatabaseManager.class).get();
-        }
-        return databaseManager.getDataSource();
-    }
-
-    protected TrimService lookupTrimService() {
-        if (trimService == null) trimService = CDI.current().select(TrimService.class).get();
-        return trimService;
-    }
 
     public AbstractAPIRequestHandler(APITag[] apiTags, String... parameters) {
         this(null, apiTags, parameters);
@@ -171,7 +78,7 @@ public abstract class AbstractAPIRequestHandler {
     public AbstractAPIRequestHandler(String fileParameter, APITag[] apiTags, String... origParameters) {
         List<String> parameters = new ArrayList<>();
         Collections.addAll(parameters, origParameters);
-        if ((requirePassword() || parameters.contains("lastIndex")) && ! apw.isDisabledAdminPassword()) {
+        if ((requirePassword() || parameters.contains("lastIndex")) && !apw.isDisabledAdminPassword()) {
             parameters.add("adminPassword");
         }
         if (allowRequiredBlockParameters()) {
@@ -190,6 +97,101 @@ public abstract class AbstractAPIRequestHandler {
         this.parameters = Collections.unmodifiableList(parameters);
         this.apiTags = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(apiTags)));
         this.fileParameter = fileParameter;
+    }
+
+    protected PeersService lookupPeersService() {
+        if (peers == null) peers = CDI.current().select(PeersService.class).get();
+        return peers;
+    }
+
+    protected AccountPropertyService lookupAccountPropertyService() {
+        if (accountPropertyService == null) {
+            accountPropertyService = CDI.current().select(AccountPropertyServiceImpl.class).get();
+        }
+        return accountPropertyService;
+    }
+
+    protected AccountLeaseService lookupAccountLeaseService() {
+        if (accountLeaseService == null) {
+            accountLeaseService = CDI.current().select(AccountLeaseServiceImpl.class).get();
+        }
+        return accountLeaseService;
+    }
+
+    protected AccountInfoService lookupAccountInfoService() {
+        if (accountInfoService == null) {
+            accountInfoService = CDI.current().select(AccountInfoServiceImpl.class).get();
+        }
+        return accountInfoService;
+    }
+
+    protected AccountCurrencyService lookupAccountCurrencyService() {
+        if (accountCurrencyService == null) {
+            accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
+        }
+        return accountCurrencyService;
+    }
+
+    protected AccountAssetService lookupAccountAssetService() {
+        if (accountAssetService == null) {
+            accountAssetService = CDI.current().select(AccountAssetServiceImpl.class).get();
+        }
+        return accountAssetService;
+    }
+
+    protected AccountLedgerService lookupAccountLedgerService() {
+        if (accountLedgerService == null) {
+            accountLedgerService = CDI.current().select(AccountLedgerServiceImpl.class).get();
+        }
+        return accountLedgerService;
+    }
+
+    protected AccountService lookupAccountService() {
+        if (accountService == null) {
+            accountService = CDI.current().select(AccountServiceImpl.class).get();
+        }
+        return accountService;
+    }
+
+    protected AccountPublicKeyService lookupAccountPublickKeyService() {
+        if (accountPublicKeyService == null) {
+            accountPublicKeyService = CDI.current().select(AccountPublicKeyServiceImpl.class).get();
+        }
+        return accountPublicKeyService;
+    }
+
+    protected Blockchain lookupBlockchain() {
+        if (blockchain == null) blockchain = CDI.current().select(BlockchainImpl.class).get();
+        return blockchain;
+    }
+
+    protected BlockchainConfig lookupBlockchainConfig() {
+        if (blockchainConfig == null) blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+        return blockchainConfig;
+    }
+
+    protected BlockchainProcessor lookupBlockchainProcessor() {
+        if (blockchainProcessor == null)
+            blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+        return blockchainProcessor;
+    }
+
+    protected TransactionProcessor lookupTransactionProcessor() {
+        if (transactionProcessor == null)
+            transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
+        return transactionProcessor;
+    }
+
+    protected TransactionalDataSource lookupDataSource() {
+        if (databaseManager == null) {
+            databaseManager = CDI.current().select(DatabaseManager.class).get();
+        }
+        return databaseManager.getDataSource();
+    }
+
+    protected TrimService lookupTrimService() {
+        if (trimService == null) trimService = CDI.current().select(TrimService.class).get();
+        return trimService;
     }
 
     public final List<String> getParameters() {
@@ -234,7 +236,9 @@ public abstract class AbstractAPIRequestHandler {
         return false;
     }
 
-    protected boolean logRequestTime() { return false; }
+    protected boolean logRequestTime() {
+        return false;
+    }
 
     protected boolean is2FAProtected() {
         return false;

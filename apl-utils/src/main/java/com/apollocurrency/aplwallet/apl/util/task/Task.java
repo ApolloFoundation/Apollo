@@ -14,7 +14,7 @@ import lombok.ToString;
 @Getter
 @Builder
 @ToString
-public class Task implements TaskAttributes, Runnable{
+public class Task implements TaskAttributes, Runnable {
 
     /**
      * To be executed by a thread

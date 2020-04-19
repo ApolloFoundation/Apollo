@@ -52,10 +52,9 @@ public abstract class MigrationExecutor {
     private static final String DELETE_AFTER_MIGRATION_TEMPLATE = "apl.migrator.%s.deleteAfterMigration";
     private static final String DO_MIGRATION_TEMPLATE = "apl.migrator.%s.migrate";
     private static final int ATTEMPT = 0;
-    private DatabaseManager databaseManager;
-
     protected PropertiesHolder holder;
     protected BlockchainConfig config;
+    private DatabaseManager databaseManager;
     private String migrationRequiredPropertyName;
     private String doMigrationPropertyName;
     private String deleteAfterMigrationPropertyName;
@@ -76,10 +75,6 @@ public abstract class MigrationExecutor {
         this.doMigrationPropertyName = String.format(DO_MIGRATION_TEMPLATE, migrationItemName);
         this.migrationItemName = migrationItemName;
         this.databaseManager = databaseManager;
-    }
-
-    public void setAutoCleanup(boolean autoCleanup) {
-        this.autoCleanup = autoCleanup;
     }
 
     protected abstract List<Path> getSrcPaths();
@@ -110,11 +105,15 @@ public abstract class MigrationExecutor {
         return autoCleanup;
     }
 
+    public void setAutoCleanup(boolean autoCleanup) {
+        this.autoCleanup = autoCleanup;
+    }
+
     public void performAfterMigrationCleanup(Path targetPath) throws IOException {
         if (migratedPaths != null) {
             if (isCleanupRequired()) {
                 for (Path migratedPath : migratedPaths) {
-                      delete(migratedPath, targetPath);
+                    delete(migratedPath, targetPath);
                 }
             }
         }
@@ -142,9 +141,11 @@ public abstract class MigrationExecutor {
 
     protected abstract Migrator getMigrator();
 
-    protected void afterMigration() {}
+    protected void afterMigration() {
+    }
 
-    protected void beforeMigration() {}
+    protected void beforeMigration() {
+    }
 
     private boolean isMigrationRequired() {
         return parseBooleanProperty(migrationRequiredPropertyName, true) && holder.getBooleanProperty(doMigrationPropertyName, true);

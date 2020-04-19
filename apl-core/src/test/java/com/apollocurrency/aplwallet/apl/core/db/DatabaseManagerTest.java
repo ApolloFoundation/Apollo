@@ -45,13 +45,13 @@ import static org.mockito.Mockito.verify;
 
 class DatabaseManagerTest {
 
-    private String TEMP_FILE_NAME = "apl-temp-utest-db-name";
-
-    private static PropertiesHolder propertiesHolder = new PropertiesHolder();
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
+    private static PropertiesHolder propertiesHolder = new PropertiesHolder();
+    private String TEMP_FILE_NAME = "apl-temp-utest-db-name";
     private DbProperties baseDbProperties;
     private DatabaseManagerImpl databaseManager;
+
     @BeforeEach
     public void setUp() throws IOException {
         Path dbFilePath = temporaryFolderExtension.newFolder().toPath().resolve(Constants.APPLICATION_DIR_NAME);
@@ -129,7 +129,7 @@ class DatabaseManagerTest {
         assertNotNull(databaseManager);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
-        TransactionalDataSource temporaryDb = ((ShardManagement)databaseManager).createAndAddTemporaryDb(TEMP_FILE_NAME);
+        TransactionalDataSource temporaryDb = ((ShardManagement) databaseManager).createAndAddTemporaryDb(TEMP_FILE_NAME);
         assertNotNull(temporaryDb);
         assertNotNull(temporaryDb.getConnection());
     }

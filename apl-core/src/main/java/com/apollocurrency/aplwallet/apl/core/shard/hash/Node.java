@@ -34,8 +34,8 @@ public class Node {
     @Override
     public String toString() {
         return "Node{" +
-                "value=" + Convert.toHexString(value) +
-                '}';
+            "value=" + Convert.toHexString(value) +
+            '}';
     }
 
     @Override

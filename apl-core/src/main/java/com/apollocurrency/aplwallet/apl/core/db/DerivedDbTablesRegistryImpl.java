@@ -41,7 +41,7 @@ public class DerivedDbTablesRegistryImpl implements DerivedTablesRegistry {
     @Override
     public String toString() {
         return "DerivedDbTablesRegistry { size:" + getDerivedTables().size() +
-                    ", tables:[" + getDerivedTableNames().stream().sorted().collect(Collectors.joining( "," )) +
-                    "] }";
+            ", tables:[" + getDerivedTableNames().stream().sorted().collect(Collectors.joining(",")) +
+            "] }";
     }
 }

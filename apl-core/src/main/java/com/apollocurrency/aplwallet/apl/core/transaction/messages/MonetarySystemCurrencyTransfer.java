@@ -6,15 +6,15 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import java.nio.ByteBuffer;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+
 /**
- *
  * @author al
  */
 public final class MonetarySystemCurrencyTransfer extends AbstractAttachment implements MonetarySystemAttachment {
-    
+
     final long currencyId;
     final long units;
 
@@ -65,5 +65,5 @@ public final class MonetarySystemCurrencyTransfer extends AbstractAttachment imp
     public long getUnits() {
         return units;
     }
-    
+
 }

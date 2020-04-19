@@ -30,16 +30,15 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
     private static final int SECRET_LENGTH = 32;
     private static final int UPPER_BOUND_OF_RANDOM_SUFFIX_NUMBER = 1_000_000;
     private static final String DEFAULT_CHARSET = "UTF-8";
-
-    private TwoFactorAuthRepository repository;
-    private TwoFactorAuthRepository targetFileRepository;
     private final Random random;
     private final String issuerSuffix;
+    private TwoFactorAuthRepository repository;
+    private TwoFactorAuthRepository targetFileRepository;
 
     @Inject
     public TwoFactorAuthServiceImpl(@Named("DBRepository") TwoFactorAuthRepository repository,
                                     @Property("apl.issuerSuffix2FA") String issuerSuffix,
-                                    @Named("FSRepository")TwoFactorAuthRepository targetFileRepository) {
+                                    @Named("FSRepository") TwoFactorAuthRepository targetFileRepository) {
         this(repository, issuerSuffix, new Random(), targetFileRepository);
     }
 
@@ -62,8 +61,8 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
         if (entity != null) {
             if (!entity.isConfirmed()) {
 
-            String existingBase32Secret = BASE_32.encodeToString(entity.getSecret());
-            return new TwoFactorAuthDetails(getQrCodeUrl(Convert2.defaultRsAccount(entity.getAccount()), existingBase32Secret),
+                String existingBase32Secret = BASE_32.encodeToString(entity.getSecret());
+                return new TwoFactorAuthDetails(getQrCodeUrl(Convert2.defaultRsAccount(entity.getAccount()), existingBase32Secret),
                     existingBase32Secret, Status2FA.OK);
             }
             return new TwoFactorAuthDetails(null, null, Status2FA.ALREADY_ENABLED);
@@ -86,8 +85,7 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
             String baseUrl = TimeBasedOneTimePasswordUtil.qrImageUrl(URLEncoder.encode(rsAccount, DEFAULT_CHARSET), base32Secret);
             String issuerUrlPart = String.format(ISSUER_URL_TEMPLATE, issuerSuffix, random.nextInt(UPPER_BOUND_OF_RANDOM_SUFFIX_NUMBER));
             return baseUrl + URLEncoder.encode(issuerUrlPart, DEFAULT_CHARSET);
-        }
-        catch (UnsupportedEncodingException e) {
+        } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -122,10 +120,9 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
                 String base32Secret = BASE_32.encodeToString(entity.getSecret());
                 //window millis should be 0, other parameters will not work properly
                 success = TimeBasedOneTimePasswordUtil.validateCurrentNumber(
-                        base32Secret, authCode, 0);
+                    base32Secret, authCode, 0);
             }
-        }
-        catch (GeneralSecurityException e) {
+        } catch (GeneralSecurityException e) {
             log.error("Unable to create temporal code", e);
         }
         return success;
@@ -171,7 +168,7 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
         boolean isAllImportedIntoFile = true; // store and check if any error has happened on any record
         int countProcesses = 0; // store really processed records
         // loop over all db records if any
-        for (TwoFactorAuthEntity itemRecord: result ) {
+        for (TwoFactorAuthEntity itemRecord : result) {
             log.debug("Start conversion 2fa record = {}...", itemRecord);
             if (targetFileRepository.add(itemRecord)) { // if 2fa file added
                 // added new file, record stored as 2fa file

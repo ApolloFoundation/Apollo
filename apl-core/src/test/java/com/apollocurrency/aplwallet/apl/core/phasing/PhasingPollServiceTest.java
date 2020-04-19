@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.account.dao.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.alias.service.AliasService;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -89,32 +90,33 @@ public class PhasingPollServiceTest {
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
-            PhasingPollServiceImpl.class,
-            GlobalSyncImpl.class,
-            PhasingPollResultTable.class,
-            PhasingPollTable.class,
-            PhasingPollVoterTable.class,
-            PhasingApprovedResultTable.class,
-            PhasingPollLinkedTransactionTable.class,
-            PhasingVoteTable.class,
-            PublicKeyTable.class,
-            FullTextConfigImpl.class,
-            AccountGuaranteedBalanceTable.class,
-            DerivedDbTablesRegistryImpl.class,
-            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
-            BlockchainConfig.class, GenesisPublicKeyTable.class)
-            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
-            .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
-            .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
-            .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
-            .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
-            .addBeans(MockBean.of(mock(AccountTable.class), AccountTable.class))
-            .addBeans(MockBean.of(mock(AccountService.class), AccountService.class, AccountServiceImpl.class))
-            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
-            .build();
+        PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
+        PhasingPollServiceImpl.class,
+        GlobalSyncImpl.class,
+        PhasingPollResultTable.class,
+        PhasingPollTable.class,
+        PhasingPollVoterTable.class,
+        PhasingApprovedResultTable.class,
+        PhasingPollLinkedTransactionTable.class,
+        PhasingVoteTable.class,
+        PublicKeyTable.class,
+        FullTextConfigImpl.class,
+        AccountGuaranteedBalanceTable.class,
+        DerivedDbTablesRegistryImpl.class,
+        TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
+        BlockchainConfig.class, GenesisPublicKeyTable.class)
+        .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
+        .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
+        .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
+        .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
+        .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
+        .addBeans(MockBean.of(mock(AccountTable.class), AccountTable.class))
+        .addBeans(MockBean.of(mock(AccountService.class), AccountService.class, AccountServiceImpl.class))
+        .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
+        .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
+        .build();
     @Inject
     PhasingPollServiceImpl service;
     @Inject
@@ -135,7 +137,7 @@ public class PhasingPollServiceTest {
         ttd = new TransactionTestData();
         btd = new BlockTestData();
 
-        blockchainConfig.setCurrentConfig(new HeightConfig(new BlockchainProperties(1,1,1,1,1,1L)));
+        blockchainConfig.setCurrentConfig(new HeightConfig(new BlockchainProperties(1, 1, 1, 1, 1, 1L)));
     }
 
     @Test
@@ -440,8 +442,7 @@ public class PhasingPollServiceTest {
         try (Connection con = extension.getDatabaseManager().getDataSource().begin()) { // start new transaction
             consumer.accept(con);
             extension.getDatabaseManager().getDataSource().commit();
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             extension.getDatabaseManager().getDataSource().rollback();
             throw e;
         }
@@ -476,6 +477,7 @@ public class PhasingPollServiceTest {
         long expectedFee = ttd.TRANSACTION_13.getFeeATM();
         assertEquals(expectedFee, actualFee);
     }
+
     @Test
     void testGetSenderPhasedTransactionFeesForNonExistentAccount() throws SQLException {
         blockchain.setLastBlock(btd.GENESIS_BLOCK);
@@ -489,6 +491,7 @@ public class PhasingPollServiceTest {
 
         assertTrue(verified);
     }
+
     @Test
     void testVerifyRevealedSecretForWrongPhasingPoll() {
         boolean verified = service.verifySecret(ptd.POLL_1, "fasfas".getBytes());

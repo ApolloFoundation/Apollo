@@ -73,6 +73,7 @@ public class AplWalletKey extends BasicAccount {
     public void setPrivateKey(byte[] privateKey) {
         this.privateKey = privateKey;
     }
+
     public void setPrivateKey(String privateKey) {
         this.privateKey = Convert.parseHexString(privateKey);
     }
@@ -85,12 +86,12 @@ public class AplWalletKey extends BasicAccount {
         this.passphrase = passphrase;
     }
 
-    public void setSecretBytes(byte[] secretBytes) {
-        this.secretBytes = secretBytes;
-    }
-
     public byte[] getSecretBytes() {
         return secretBytes;
+    }
+
+    public void setSecretBytes(byte[] secretBytes) {
+        this.secretBytes = secretBytes;
     }
 
     public JSONObject toJSON() {

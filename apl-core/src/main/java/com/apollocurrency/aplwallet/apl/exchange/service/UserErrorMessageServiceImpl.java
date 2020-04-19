@@ -33,11 +33,11 @@ public class UserErrorMessageServiceImpl implements UserErrorMessageService {
         long offset = propertiesHolder.getIntProperty("apl.userErrorMessage.lifetime", DEFAULT_DELETE_OFFSET) * 1000;
         if (offset > 0) {
             taskDispatchManager.newScheduledDispatcher("UserErrorMessageService")
-                    .schedule(Task.builder()
-                            .name("Expired errors removing")
-                            .delay(DELAY)
-                            .task(() -> deleteByTimestamp(System.currentTimeMillis() - offset))
-                            .build());
+                .schedule(Task.builder()
+                    .name("Expired errors removing")
+                    .delay(DELAY)
+                    .task(() -> deleteByTimestamp(System.currentTimeMillis() - offset))
+                    .build());
         } else {
             log.warn("Will not delete expired user error messages");
         }

@@ -65,7 +65,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
     }
 
     @Override
-    public List<AccountAsset> getAssetsByAssetId(long assetId, int height, int from, int to){
+    public List<AccountAsset> getAssetsByAssetId(long assetId, int height, int from, int to) {
         if (height < 0 || blockChainInfoService.doesNotExceed(height)) {
             return accountAssetTable.getByAssetId(assetId, from, to);
         }
@@ -86,7 +86,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
 
     @Override
     public List<AccountAsset> getAssetsByAccount(long accountId, int height, int from, int to) {
-        if( height<0 ){
+        if (height < 0) {
             return accountAssetTable.getByAccountId(accountId, from, to);
         }
         checkAvailable(height);
@@ -114,7 +114,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
 
     @Override
     public int getCountByAccount(long accountId, int height) {
-        if( height < 0 ) {
+        if (height < 0) {
             return accountAssetTable.getCountByAccountId(accountId);
         }
 
@@ -143,7 +143,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
     }
 
     void checkAvailable(int height) {
-        if (height + Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK < blockChainInfoService.getMinRollbackHeight()){
+        if (height + Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK < blockChainInfoService.getMinRollbackHeight()) {
             throw new IllegalArgumentException("Historical data as of height " + height + " not available.");
         }
         if (height > blockChainInfoService.getHeight()) {
@@ -159,7 +159,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
 
     @Override
     public long getAssetBalanceATU(Account account, long assetId, int height) {
-        return  getAssetBalanceATU(account.getId(), assetId, height);
+        return getAssetBalanceATU(account.getId(), assetId, height);
     }
 
     @Override
@@ -192,7 +192,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
         accountEvent.select(literal(AccountEventType.ASSET_BALANCE)).fire(account);
         accountAssetEvent.select(literal(AccountEventType.ASSET_BALANCE)).fire(accountAsset);
         LedgerEntry entry = new LedgerEntry(event, eventId, account.getId(), LedgerHolding.ASSET_BALANCE, assetId,
-                quantityATU, assetBalance, blockChainInfoService.getLastBlock());
+            quantityATU, assetBalance, blockChainInfoService.getLastBlock());
         logLedgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_ENTRY)).fire(entry);
     }
 
@@ -218,7 +218,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
             return;
         }
         LedgerEntry entry = new LedgerEntry(event, eventId, account.getId(), LedgerHolding.UNCONFIRMED_ASSET_BALANCE, assetId,
-                quantityATU, unconfirmedAssetBalance, blockChainInfoService.getLastBlock());
+            quantityATU, unconfirmedAssetBalance, blockChainInfoService.getLastBlock());
         logLedgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_UNCONFIRMED_ENTRY)).fire(entry);
     }
 
@@ -257,11 +257,11 @@ public class AccountAssetServiceImpl implements AccountAssetService {
         accountAssetEvent.select(literal(AccountEventType.ASSET_BALANCE)).fire(accountAsset);
         accountAssetEvent.select(literal(AccountEventType.UNCONFIRMED_ASSET_BALANCE)).fire(accountAsset);
         LedgerEntry entry = new LedgerEntry(event, eventId, account.getId(), LedgerHolding.UNCONFIRMED_ASSET_BALANCE, assetId,
-                quantityATU, unconfirmedAssetBalance, blockChainInfoService.getLastBlock());
+            quantityATU, unconfirmedAssetBalance, blockChainInfoService.getLastBlock());
         logLedgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_UNCONFIRMED_ENTRY)).fire(entry);
 
         entry = new LedgerEntry(event, eventId, account.getId(), LedgerHolding.ASSET_BALANCE, assetId,
-                quantityATU, assetBalance, blockChainInfoService.getLastBlock());
+            quantityATU, assetBalance, blockChainInfoService.getLastBlock());
         logLedgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_ENTRY)).fire(entry);
     }
 

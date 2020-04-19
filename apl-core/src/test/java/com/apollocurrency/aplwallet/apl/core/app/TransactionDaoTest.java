@@ -1,14 +1,5 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_0_ID;
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
@@ -33,24 +24,32 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_0_ID;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+
 @EnableWeld
 class TransactionDaoTest {
 
     @RegisterExtension
-    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("blockDaoTestDb").toAbsolutePath().toString()));
-    @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
-
+    @RegisterExtension
+    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("blockDaoTestDb").toAbsolutePath().toString()));
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from()
-            .addBeans(MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class))
-            .addBeans(MockBean.of(mock(Blockchain.class), Blockchain.class, BlockchainImpl.class))
-            .addBeans(MockBean.of(mock(TimeServiceImpl.class), TimeServiceImpl.class))
-            .addBeans(MockBean.of(mock(PropertiesHolder.class), PropertiesHolder.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
-            .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
-            .build();
+        .addBeans(MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class))
+        .addBeans(MockBean.of(mock(Blockchain.class), Blockchain.class, BlockchainImpl.class))
+        .addBeans(MockBean.of(mock(PropertiesHolder.class), PropertiesHolder.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
+        .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
+        .addBeans(MockBean.of(mock(TimeService.class), TimeService.class))
+        .build();
 
     private TransactionDao dao;
     private TransactionTestData td;
@@ -58,8 +57,7 @@ class TransactionDaoTest {
     private Path createPath(String fileName) {
         try {
             return temporaryFolderExtension.newFolder().toPath().resolve(fileName);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -150,7 +148,7 @@ class TransactionDaoTest {
 
     @Test
     void getTransactionsFromAccount() {
-        int count = dao.getTransactionCount(9211698109297098287L, (byte)0, (byte)0);
+        int count = dao.getTransactionCount(9211698109297098287L, (byte) 0, (byte) 0);
         assertEquals(9, count);
     }
 
@@ -179,7 +177,7 @@ class TransactionDaoTest {
     void testFindPrunableTransactions() {
         List<Long> expectedIds = List.of(td.TRANSACTION_6.getId(), td.TRANSACTION_13.getId(), td.TRANSACTION_14.getId());
 
-        DbUtils.inTransaction(extension, (con)-> {
+        DbUtils.inTransaction(extension, (con) -> {
             List<PrunableTransaction> prunableTransactions = dao.findPrunableTransactions(con, 0, Integer.MAX_VALUE);
             assertEquals(expectedIds.size(), prunableTransactions.size());
             for (int i = 0; i < prunableTransactions.size(); i++) {
@@ -192,7 +190,7 @@ class TransactionDaoTest {
     void testFindPrunableTransactionsWithTimestampOuterLimit() {
         List<Long> expectedIds = List.of(td.TRANSACTION_6.getId(), td.TRANSACTION_13.getId(), td.TRANSACTION_14.getId());
 
-        DbUtils.inTransaction(extension, (con)-> {
+        DbUtils.inTransaction(extension, (con) -> {
             List<PrunableTransaction> prunableTransactions = dao.findPrunableTransactions(con, td.TRANSACTION_6.getTimestamp(), td.TRANSACTION_14.getTimestamp());
             assertEquals(expectedIds.size(), prunableTransactions.size());
             for (int i = 0; i < prunableTransactions.size(); i++) {
@@ -203,7 +201,7 @@ class TransactionDaoTest {
 
     @Test
     void testFindPrunableTransactionsWithTimestampInnerLimit() {
-        DbUtils.inTransaction(extension, (con)-> {
+        DbUtils.inTransaction(extension, (con) -> {
             List<PrunableTransaction> prunableTransactions = dao.findPrunableTransactions(con, td.TRANSACTION_6.getTimestamp() + 1, td.TRANSACTION_14.getTimestamp() - 1);
             assertEquals(1, prunableTransactions.size());
             assertEquals(td.TRANSACTION_13.getId(), prunableTransactions.get(0).getId());
@@ -212,7 +210,7 @@ class TransactionDaoTest {
 
     @Test
     void testSaveTransactions() {
-        DbUtils.inTransaction(extension, (con)-> dao.saveTransactions(con, List.of(td.NEW_TRANSACTION_1, td.NEW_TRANSACTION_0)));
+        DbUtils.inTransaction(extension, (con) -> dao.saveTransactions(con, List.of(td.NEW_TRANSACTION_1, td.NEW_TRANSACTION_0)));
         List<Transaction> blockTransactions = dao.findBlockTransactions(td.NEW_TRANSACTION_0.getBlockId(), extension.getDatabaseManager().getDataSource());
         assertEquals(List.of(td.NEW_TRANSACTION_1, td.NEW_TRANSACTION_0), blockTransactions);
     }

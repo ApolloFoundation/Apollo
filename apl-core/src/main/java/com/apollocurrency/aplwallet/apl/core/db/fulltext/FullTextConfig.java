@@ -9,9 +9,9 @@ import java.util.Set;
 public interface FullTextConfig {
     void registerTable(String tableName);
 
-    void setSchema(String schema);
-
     Set<String> getTableNames();
 
     String getSchema();
+
+    void setSchema(String schema);
 }

@@ -11,17 +11,16 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 /**
- *
  * @author alukin@gmail.com
  */
 @Singleton
 public class DebugService {
-    @Inject 
+    @Inject
     FileDownloader downloader;
     @Inject
     DownloadableFilesManager fileManager;
-    
-    public FileDownloadInfo startFileDownload(String id, String adminPassword){
+
+    public FileDownloadInfo startFileDownload(String id, String adminPassword) {
 //        downloader.startDownload(id);
 //          downloader.setFileId(id);
 //        FileDownloadDecision decision = downloader.prepareForDownloading(null);

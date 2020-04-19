@@ -1,9 +1,5 @@
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.Mockito.mock;
-
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
@@ -15,6 +11,10 @@ import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.mock;
+
 @EnableWeld
 class TransactionTypeTest {
 
@@ -23,17 +23,17 @@ class TransactionTypeTest {
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(TimeServiceImpl.class)
-            .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
-            .addBeans(MockBean.of(mock(Blockchain.class), Blockchain.class, BlockchainImpl.class))
-            .addBeans(MockBean.of(mock(TimeServiceImpl.class), TimeServiceImpl.class))
-            .addBeans(MockBean.of(time, NtpTime.class))
-            .build();
+        .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
+        .addBeans(MockBean.of(mock(Blockchain.class), Blockchain.class, BlockchainImpl.class))
+        .addBeans(MockBean.of(mock(TimeServiceImpl.class), TimeServiceImpl.class))
+        .addBeans(MockBean.of(time, NtpTime.class))
+        .build();
 
     @Test
     void findTransactionType() {
-        TransactionType transactionType = TransactionType.findTransactionType((byte)-1, (byte)-1);
+        TransactionType transactionType = TransactionType.findTransactionType((byte) -1, (byte) -1);
         assertNull(transactionType);
-        transactionType = TransactionType.findTransactionType((byte)0, (byte)0);
+        transactionType = TransactionType.findTransactionType((byte) 0, (byte) 0);
         assertNotNull(transactionType);
     }
 }

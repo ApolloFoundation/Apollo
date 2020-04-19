@@ -24,9 +24,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 public class DefaultDirectoryMigratorTest {
+    @RegisterExtension
+    TemporaryFolderExtension tmpFolder = new TemporaryFolderExtension();
     private Path firstDirFile1;
     private Path firstDirFile2;
     private Path firstDir;
@@ -45,8 +45,7 @@ public class DefaultDirectoryMigratorTest {
     private byte[] secondFilePayload = "TestPayload-2".getBytes();
     private byte[] thirdFilePayload = "TestPayload-3".getBytes();
     private byte[] targetFilePayload = "TargetPayload".getBytes();
-    @RegisterExtension
-    TemporaryFolderExtension tmpFolder = new TemporaryFolderExtension();
+
     @BeforeEach
     public void init() throws IOException {
         firstDir = tmpFolder.newFolder("d-1_").toPath();
@@ -69,6 +68,7 @@ public class DefaultDirectoryMigratorTest {
         noneExistentDir1 = emptyDir.resolve("nonexistentDir1");
         noneExistentDir2 = targetDir.resolve("nonexistentDir2");
     }
+
     @Test
     public void testMigrateFilesToDirectory() throws IOException {
         List<Path> filesToMigrate = Arrays.asList(firstDirFile1, secondFile);
@@ -82,12 +82,14 @@ public class DefaultDirectoryMigratorTest {
         DefaultDirectoryMigrator defaultDirectoryMigrator = new DefaultDirectoryMigrator();
         Assertions.assertThrows(IllegalArgumentException.class, () -> defaultDirectoryMigrator.migrate(dirsToMigrate, targetFile));
     }
+
     @Test
     public void testMigrateFromFileToFile() {
         List<Path> filesToMigrate = Arrays.asList(firstDirFile1);
         DefaultDirectoryMigrator defaultDirectoryMigrator = new DefaultDirectoryMigrator();
         Assertions.assertThrows(IllegalArgumentException.class, () -> defaultDirectoryMigrator.migrate(filesToMigrate, targetFile));
     }
+
     @Test
     public void testMigrateDirectoryToDirectory() throws IOException {
         List<Path> dirsToMigrate = Arrays.asList(firstDir);
@@ -97,14 +99,15 @@ public class DefaultDirectoryMigratorTest {
         Path firstDirFile1TargetPath = targetDir.resolve(firstDirFile1.getFileName());
         Path firstDirFile2TargetPath = targetDir.resolve(firstDirFile2.getFileName());
         Set<Path> expectedMigratedFilePaths = new HashSet<>(Arrays.asList(
-                firstDirFile1TargetPath, firstDirFile2TargetPath));
+            firstDirFile1TargetPath, firstDirFile2TargetPath));
 
-        try(Stream<Path> pathStream = Files.list(targetDir)) {
+        try (Stream<Path> pathStream = Files.list(targetDir)) {
             Assertions.assertEquals(expectedMigratedFilePaths, pathStream.collect(Collectors.toSet()));
             Assertions.assertArrayEquals(firstFilePayload, Files.readAllBytes(firstDirFile2TargetPath));
             Assertions.assertArrayEquals(firstFilePayload, Files.readAllBytes(firstDirFile1TargetPath));
         }
     }
+
     @Test
     public void testMigrateDirectoriesToDirectory() throws IOException {
         List<Path> dirsToMigrate = Arrays.asList(firstDir, secondDir);
@@ -115,12 +118,12 @@ public class DefaultDirectoryMigratorTest {
         Path secondDirFileTargetPath = targetDir.resolve(secondFile.getFileName());
         Path secondFirstDirTargetPath = targetDir.resolve(secondFirstDir.getFileName());
         Set<Path> expectedMigratedFilePaths = new HashSet<>(Arrays.asList(
-                firstDirFile1TargetPath, firstDirFile2TargetPath, secondDirFileTargetPath, secondFirstDirTargetPath));
+            firstDirFile1TargetPath, firstDirFile2TargetPath, secondDirFileTargetPath, secondFirstDirTargetPath));
 
         List<Path> migratedDirs = defaultDirectoryMigrator.migrate(dirsToMigrate, targetDir);
 
         Assertions.assertEquals(migratedDirs, dirsToMigrate);
-        try(Stream<Path> pathStream = Files.list(targetDir)) {
+        try (Stream<Path> pathStream = Files.list(targetDir)) {
             Assertions.assertEquals(expectedMigratedFilePaths, pathStream.collect(Collectors.toSet()));
             Assertions.assertArrayEquals(firstFilePayload, Files.readAllBytes(firstDirFile2TargetPath));
             Assertions.assertArrayEquals(firstFilePayload, Files.readAllBytes(firstDirFile1TargetPath));
@@ -136,12 +139,12 @@ public class DefaultDirectoryMigratorTest {
         Path thirdDirNestedDirTargetPath = targetDir.resolve(thirdNestedDir.getFileName());
         Path thirdDirFileTargetPath = thirdDirNestedDirTargetPath.resolve(thirdFile.getFileName());
         Set<Path> expectedMigratedFilePaths = new HashSet<>(Arrays.asList(
-                 thirdDirFileTargetPath, thirdDirNestedDirTargetPath, targetFile));
+            thirdDirFileTargetPath, thirdDirNestedDirTargetPath, targetFile));
 
         List<Path> migratedDirs = defaultDirectoryMigrator.migrate(dirsToMigrate, targetDir);
 
         Assertions.assertEquals(migratedDirs, dirsToMigrate);
-        try(Stream<Path> pathStream = Files.walk(targetDir)) {
+        try (Stream<Path> pathStream = Files.walk(targetDir)) {
             Set<Path> actualFilePaths = pathStream.filter(f -> !f.equals(targetDir)).collect(Collectors.toSet());
             Assertions.assertEquals(expectedMigratedFilePaths, actualFilePaths);
             Assertions.assertArrayEquals(thirdFilePayload, Files.readAllBytes(thirdDirFileTargetPath));
@@ -155,17 +158,18 @@ public class DefaultDirectoryMigratorTest {
         DefaultDirectoryMigrator defaultDirectoryMigrator = new DefaultDirectoryMigrator();
 
         Set<Path> expectedMigratedFilePaths = new HashSet<>(Collections.singletonList(
-                targetFile));
+            targetFile));
 
         List<Path> migratedDirs = defaultDirectoryMigrator.migrate(dirsToMigrate, targetDir);
 
         Assertions.assertEquals(Collections.emptyList(), migratedDirs);
-        try(Stream<Path> pathStream = Files.walk(targetDir)) {
+        try (Stream<Path> pathStream = Files.walk(targetDir)) {
             Set<Path> actualFilePaths = pathStream.filter(f -> !f.equals(targetDir)).collect(Collectors.toSet());
             Assertions.assertEquals(expectedMigratedFilePaths, actualFilePaths);
             Assertions.assertArrayEquals(targetFilePayload, Files.readAllBytes(targetFile));
         }
     }
+
     @Test
     public void testMigrateDirectoryToDirectoryWhichNotExist() throws IOException {
         List<Path> dirsToMigrate = Arrays.asList(firstDir);
@@ -174,7 +178,7 @@ public class DefaultDirectoryMigratorTest {
         Path firstDirFile1TargetPath = noneExistentDir1.resolve(firstDirFile1.getFileName());
         Path firstDirFile2TargetPath = noneExistentDir1.resolve(firstDirFile2.getFileName());
         Set<Path> expectedMigratedFilePaths = new HashSet<>(Arrays.asList(
-                firstDirFile1TargetPath, firstDirFile2TargetPath));
+            firstDirFile1TargetPath, firstDirFile2TargetPath));
 
         Assertions.assertFalse(Files.exists(noneExistentDir1));
         Assertions.assertFalse(Files.isDirectory(noneExistentDir1));
@@ -183,7 +187,7 @@ public class DefaultDirectoryMigratorTest {
 
 
         Assertions.assertEquals(dirsToMigrate, actualMigratedPaths);
-        try(Stream<Path> pathStream = Files.walk(noneExistentDir1)) {
+        try (Stream<Path> pathStream = Files.walk(noneExistentDir1)) {
             Set<Path> actualFilePaths = pathStream.filter(f -> !f.equals(noneExistentDir1)).collect(Collectors.toSet());
             Assertions.assertEquals(expectedMigratedFilePaths, actualFilePaths);
         }
@@ -194,6 +198,7 @@ public class DefaultDirectoryMigratorTest {
         Assertions.assertTrue(Files.isDirectory(noneExistentDir1));
 
     }
+
     @Test
     public void testMigrateNonexistentDirectoryDirectory() throws IOException {
         List<Path> dirsToMigrate = Arrays.asList(noneExistentDir1);
@@ -206,6 +211,7 @@ public class DefaultDirectoryMigratorTest {
         Assertions.assertEquals(new HashSet<>(Arrays.asList(targetFile)), actualFilePaths);
         Assertions.assertArrayEquals(targetFilePayload, Files.readAllBytes(targetFile));
     }
+
     @Test
     public void testMigrateNonexistentDirectoryToNonexistentDirectory() throws IOException {
         List<Path> dirsToMigrate = Arrays.asList(noneExistentDir1);
@@ -238,5 +244,4 @@ public class DefaultDirectoryMigratorTest {
     }
 
 
-    
 }

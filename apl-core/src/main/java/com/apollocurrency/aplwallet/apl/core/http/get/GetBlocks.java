@@ -21,27 +21,27 @@
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import javax.enterprise.inject.Vetoed;
-
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
+@Deprecated
 @Slf4j
 @Vetoed
 public final class GetBlocks extends AbstractAPIRequestHandler {
 
     public GetBlocks() {
-        super(new APITag[] {APITag.BLOCKS}, "firstIndex", "lastIndex", "timestamp", "includeTransactions", "includeExecutedPhased");
+        super(new APITag[]{APITag.BLOCKS}, "firstIndex", "lastIndex", "timestamp", "includeTransactions", "includeExecutedPhased");
     }
 
     @Override
@@ -56,10 +56,10 @@ public final class GetBlocks extends AbstractAPIRequestHandler {
         JSONArray blocks = new JSONArray();
         Block lastBlock = lookupBlockchain().getLastBlock();
         if (lastBlock != null) {
-            try (DbIterator<? extends Block> iterator = lookupBlockchain().getBlocks(firstIndex, lastIndex)) {
+            try (DbIterator<? extends Block> iterator = lookupBlockchain().getBlocks(firstIndex, lastIndex, timestamp)) {
                 while (iterator.hasNext()) {
                     Block block = iterator.next();
-                    if (block.getTimestamp() < timestamp) {
+                    if (block.getTimestamp() < timestamp) { // not needed after 'timestamp' is added as SQL param above
                         break;
                     }
                     blocks.add(JSONData.block(block, includeTransactions, includeExecutedPhased));

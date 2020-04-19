@@ -24,10 +24,10 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.dgs.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
@@ -56,7 +56,7 @@ public final class ReadMessage extends AbstractAPIRequestHandler {
     private PrunableMessageService prunableMessageService = CDI.current().select(PrunableMessageService.class).get();
 
     public ReadMessage() {
-        super(new APITag[] {APITag.MESSAGES}, "transaction", "secretPhrase", "sharedKey", "retrieve");
+        super(new APITag[]{APITag.MESSAGES}, "transaction", "secretPhrase", "sharedKey", "retrieve");
     }
 
     @Override
@@ -139,7 +139,7 @@ public final class ReadMessage extends AbstractAPIRequestHandler {
                 byte[] publicKey = Crypto.getPublicKey(keySeed);
                 try {
                     byte[] decrypted = EncryptedDataUtil.decryptFrom(publicKey, encryptToSelfMessage.getEncryptedData(), keySeed,
-                            encryptToSelfMessage.isCompressed());
+                        encryptToSelfMessage.isCompressed());
                     response.put("decryptedMessageToSelf", Convert.toString(decrypted, encryptToSelfMessage.isText()));
                 } catch (RuntimeException e) {
                     LOG.debug("Decryption of message to self failed: " + e.toString());

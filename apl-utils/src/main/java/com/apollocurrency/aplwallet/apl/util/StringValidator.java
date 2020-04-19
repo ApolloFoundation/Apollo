@@ -1,7 +1,7 @@
 package com.apollocurrency.aplwallet.apl.util;
 
-import java.util.Objects;
 import javax.enterprise.inject.Vetoed;
+import java.util.Objects;
 
 /**
  * Util class, which provides common validation of strings without outer dependencies
@@ -20,6 +20,7 @@ public class StringValidator {
         }
         return s;
     }
+
     public static String requireNonBlank(String s) {
         return requireNonBlank(s, DEFAULT_STRING_NAME);
     }

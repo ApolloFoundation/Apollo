@@ -4,24 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.updater.util;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.security.KeyStore;
-import java.security.PrivateKey;
-import java.security.Security;
-import java.security.cert.Certificate;
-import java.security.cert.X509Certificate;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.jar.Attributes;
-import java.util.jar.Manifest;
-import java.util.zip.ZipEntry;
-
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -45,6 +27,24 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
 import org.bouncycastle.util.Store;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.Security;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
+import java.util.zip.ZipEntry;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * Generator of signed Jars. It stores some data in memory therefore it is not suited for creation of large files. The
  * usage:
@@ -62,7 +62,7 @@ import org.bouncycastle.util.Store;
  * </pre>
  *
  * @see <a href="http://docs.oracle.com/javase/7/docs/technotes/guides/jar/jar.html#Signed_JAR_File">JAR format
- *      specification</a>
+ * specification</a>
  */
 public class SimpleSignedJar extends com.apollocurrency.aplwallet.apl.updater.util.SimpleJar {
     private static final String MANIFEST_FN = "META-INF/MANIFEST.MF";
@@ -75,11 +75,10 @@ public class SimpleSignedJar extends com.apollocurrency.aplwallet.apl.updater.ut
 
     private final HashFunction hashFunction;
     private final String hashFunctionName;
-
-    private String manifestHash;
-    private String manifestMainHash;
     private final Map<String, String> fileDigests;
     private final Map<String, String> sectionDigests;
+    private String manifestHash;
+    private String manifestMainHash;
 
     /**
      * Constructor.
@@ -89,7 +88,7 @@ public class SimpleSignedJar extends com.apollocurrency.aplwallet.apl.updater.ut
      * @param keyAlias    the name of the key in the store, this key is used to sign the JAR
      * @param keyPassword the password to access the key
      */
-    public SimpleSignedJar(OutputStream out, KeyStore keyStore,  String keyAlias, String keyPassword) {
+    public SimpleSignedJar(OutputStream out, KeyStore keyStore, String keyAlias, String keyPassword) {
         super(out);
         this.keyStore = checkNotNull(keyStore, "keyStore");
         this.keyAlias = checkNotNull(keyAlias, "keyAlias");
@@ -149,7 +148,9 @@ public class SimpleSignedJar extends com.apollocurrency.aplwallet.apl.updater.ut
     }
 
 
-    /** Creates the beast that can actually sign the data. */
+    /**
+     * Creates the beast that can actually sign the data.
+     */
     private CMSSignedDataGenerator createSignedDataGenerator() throws Exception {
         Security.addProvider(new BouncyCastleProvider());
 
@@ -166,7 +167,9 @@ public class SimpleSignedJar extends com.apollocurrency.aplwallet.apl.updater.ut
         return generator;
     }
 
-    /** Returns the CMS signed data. */
+    /**
+     * Returns the CMS signed data.
+     */
     private byte[] signSigFile(byte[] sigContents) throws Exception {
         CMSSignedDataGenerator gen = createSignedDataGenerator();
         CMSTypedData cmsData = new CMSProcessableByteArray(sigContents);
@@ -224,7 +227,9 @@ public class SimpleSignedJar extends com.apollocurrency.aplwallet.apl.updater.ut
         return baos.toByteArray();
     }
 
-    /** Helper for {@link #writeManifest()} that creates the digest of one entry. */
+    /**
+     * Helper for {@link #writeManifest()} that creates the digest of one entry.
+     */
     private String hashEntrySection(String name, Attributes attributes) throws IOException {
         Manifest manifest = new Manifest();
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
@@ -240,7 +245,9 @@ public class SimpleSignedJar extends com.apollocurrency.aplwallet.apl.updater.ut
         return BaseEncoding.base64().encode(hashFunction.hashBytes(ob).asBytes());
     }
 
-    /** Helper for {@link #writeManifest()} that creates the digest of the main section. */
+    /**
+     * Helper for {@link #writeManifest()} that creates the digest of the main section.
+     */
     private String hashMainSection(Attributes attributes) throws IOException {
         Manifest manifest = new Manifest();
         manifest.getMainAttributes().putAll(attributes);
@@ -288,7 +295,9 @@ public class SimpleSignedJar extends com.apollocurrency.aplwallet.apl.updater.ut
         manifestMainHash = hashMainSection(man.getMainAttributes());
     }
 
-    /** Helper output stream that also sends the data to the given {@link com.google.common.hash.Hasher}. */
+    /**
+     * Helper output stream that also sends the data to the given {@link com.google.common.hash.Hasher}.
+     */
     private static class HashingOutputStream extends OutputStream {
         private final OutputStream out;
         private final Hasher hasher;

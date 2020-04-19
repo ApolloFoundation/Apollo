@@ -4,7 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
+import org.slf4j.Logger;
 
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -18,8 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Shard Recovery information management + retrieving interface
@@ -30,30 +30,12 @@ public class ShardRecoveryDaoJdbcImpl implements ShardRecoveryDaoJdbc {
 
     private ShardRecoveryJdbcMapper rowMapper = new ShardRecoveryJdbcMapper();
 
-    class ShardRecoveryJdbcMapper {
-
-        public ShardRecovery map(ResultSet rs) throws SQLException {
-            ShardRecovery recovery = null;
-            recovery = ShardRecovery.builder()
-                    .shardRecoveryId(rs.getLong("shard_recovery_id"))
-                    .state(rs.getString("state"))
-                    .objectName(rs.getString("object_name"))
-                    .columnName(rs.getString("column_name"))
-                    .lastColumnValue(rs.getLong("last_column_value"))
-                    .processedObject(rs.getString("processed_object"))
-                    .updated(Instant.ofEpochMilli(rs.getDate("updated").getTime()) )
-                    .height(rs.getInt("height"))
-                    .build();
-            return recovery;
-        }
-    }
-
     public ShardRecoveryDaoJdbcImpl() {
     }
 
     public ShardRecovery getShardRecoveryById(Connection con, long shardRecoveryId) {
-        Objects.requireNonNull(con,"connection is NULL");
-        try ( PreparedStatement pstmt = con.prepareStatement("SELECT * FROM shard_recovery where shard_recovery_id=?")) {
+        Objects.requireNonNull(con, "connection is NULL");
+        try (PreparedStatement pstmt = con.prepareStatement("SELECT * FROM shard_recovery where shard_recovery_id=?")) {
             pstmt.setLong(1, shardRecoveryId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 return getIfPresent(rs);
@@ -65,8 +47,8 @@ public class ShardRecoveryDaoJdbcImpl implements ShardRecoveryDaoJdbc {
     }
 
     public ShardRecovery getLatestShardRecovery(TransactionalDataSource sourceDataSource) {
-        Objects.requireNonNull(sourceDataSource,"sourceDataSource is NULL");
-        try ( Connection con = sourceDataSource.getConnection()) {
+        Objects.requireNonNull(sourceDataSource, "sourceDataSource is NULL");
+        try (Connection con = sourceDataSource.getConnection()) {
             return this.getLatestShardRecovery(con);
         } catch (SQLException e) {
             log.error("getLatest recovery error", e);
@@ -75,8 +57,8 @@ public class ShardRecoveryDaoJdbcImpl implements ShardRecoveryDaoJdbc {
     }
 
     public ShardRecovery getLatestShardRecovery(Connection con) {
-        Objects.requireNonNull(con,"connection is NULL");
-        try ( PreparedStatement pstmt = con.prepareStatement("SELECT * FROM shard_recovery limit 1")) {
+        Objects.requireNonNull(con, "connection is NULL");
+        try (PreparedStatement pstmt = con.prepareStatement("SELECT * FROM shard_recovery limit 1")) {
             try (ResultSet rs = pstmt.executeQuery()) {
                 return getIfPresent(rs);
             }
@@ -87,12 +69,12 @@ public class ShardRecoveryDaoJdbcImpl implements ShardRecoveryDaoJdbc {
     }
 
     public List<ShardRecovery> getAllShardRecovery(Connection con) {
-        Objects.requireNonNull(con,"connection is NULL");
+        Objects.requireNonNull(con, "connection is NULL");
         List<ShardRecovery> result = new ArrayList<>();
         try (PreparedStatement pstmt = con.prepareStatement("SELECT * FROM shard_recovery")) {
             try (ResultSet rs = pstmt.executeQuery()) {
                 ShardRecovery recovery = null;
-                while ((recovery =getIfPresent(rs)) != null) {
+                while ((recovery = getIfPresent(rs)) != null) {
                     result.add(recovery);
                 }
                 return result;
@@ -112,7 +94,7 @@ public class ShardRecoveryDaoJdbcImpl implements ShardRecoveryDaoJdbc {
     }
 
     public long countShardRecovery(Connection con) {
-        Objects.requireNonNull(con,"connection is NULL");
+        Objects.requireNonNull(con, "connection is NULL");
         Long recoveryCount = null;
         try (PreparedStatement pstmt = con.prepareStatement("SELECT count(*) FROM shard_recovery")) {
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -128,9 +110,9 @@ public class ShardRecoveryDaoJdbcImpl implements ShardRecoveryDaoJdbc {
     }
 
     public long saveShardRecovery(TransactionalDataSource sourceDataSource, ShardRecovery recovery) {
-        Objects.requireNonNull(sourceDataSource,"source data source is NULL");
-        Objects.requireNonNull(recovery,"recovery is NULL");
-        try ( Connection con = sourceDataSource.getConnection()) {
+        Objects.requireNonNull(sourceDataSource, "source data source is NULL");
+        Objects.requireNonNull(recovery, "recovery is NULL");
+        try (Connection con = sourceDataSource.getConnection()) {
             return this.saveShardRecovery(con, recovery);
         } catch (SQLException e) {
             log.error("Save recovery error", e);
@@ -139,14 +121,14 @@ public class ShardRecoveryDaoJdbcImpl implements ShardRecoveryDaoJdbc {
     }
 
     public long saveShardRecovery(Connection con, ShardRecovery recovery) {
-        Objects.requireNonNull(con,"connection is NULL");
-        Objects.requireNonNull(recovery,"recovery is NULL");
-        Objects.requireNonNull(recovery.getState(),"recovery State is NULL"); // NULL is not permitted !
+        Objects.requireNonNull(con, "connection is NULL");
+        Objects.requireNonNull(recovery, "recovery is NULL");
+        Objects.requireNonNull(recovery.getState(), "recovery State is NULL"); // NULL is not permitted !
         try (PreparedStatement pstmt = con.prepareStatement(
-                "INSERT INTO shard_recovery(" +
-                        "state, object_name, column_name, last_column_value, processed_object, updated, height) " +
-                        "VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP(), ?)",
-                Statement.RETURN_GENERATED_KEYS
+            "INSERT INTO shard_recovery(" +
+                "state, object_name, column_name, last_column_value, processed_object, updated, height) " +
+                "VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP(), ?)",
+            Statement.RETURN_GENERATED_KEYS
         )) {
             int i = 0;
             pstmt.setString(++i, recovery.getState().name()); // recovery.getState() SHOULD NEVER be NULL, field restriction
@@ -161,7 +143,7 @@ public class ShardRecoveryDaoJdbcImpl implements ShardRecoveryDaoJdbc {
             pstmt.setInt(++i, recovery.getHeight());
             int inserted = pstmt.executeUpdate();
             log.trace("recovery inserted = {}", inserted);
-            if(inserted > 0) {
+            if (inserted > 0) {
                 ResultSet rs = pstmt.getGeneratedKeys();
                 rs.next();
                 return rs.getLong(1);
@@ -174,10 +156,10 @@ public class ShardRecoveryDaoJdbcImpl implements ShardRecoveryDaoJdbc {
     }
 
     public int updateShardRecovery(TransactionalDataSource sourceDataSource, ShardRecovery recovery) {
-        Objects.requireNonNull(sourceDataSource,"source data source is NULL");
-        Objects.requireNonNull(recovery,"recovery is NULL");
-        Objects.requireNonNull(recovery.getState(),"recovery State is NULL"); // NULL is not permitted !
-        try ( Connection con = sourceDataSource.getConnection()) {
+        Objects.requireNonNull(sourceDataSource, "source data source is NULL");
+        Objects.requireNonNull(recovery, "recovery is NULL");
+        Objects.requireNonNull(recovery.getState(), "recovery State is NULL"); // NULL is not permitted !
+        try (Connection con = sourceDataSource.getConnection()) {
             return this.updateShardRecovery(con, recovery);
         } catch (SQLException e) {
             log.error("Update recovery error", e);
@@ -186,14 +168,14 @@ public class ShardRecoveryDaoJdbcImpl implements ShardRecoveryDaoJdbc {
     }
 
     public int updateShardRecovery(Connection con, ShardRecovery recovery) {
-        Objects.requireNonNull(con,"connection is NULL");
-        Objects.requireNonNull(recovery,"recovery is NULL");
-        Objects.requireNonNull(recovery.getState(),"recovery State is NULL"); // NULL is not permitted !
+        Objects.requireNonNull(con, "connection is NULL");
+        Objects.requireNonNull(recovery, "recovery is NULL");
+        Objects.requireNonNull(recovery.getState(), "recovery State is NULL"); // NULL is not permitted !
         int updated;
         try (PreparedStatement pstmt = con.prepareStatement(
-                "UPDATE shard_recovery SET state=?, object_name=?, column_name=?, " +
-                        "last_column_value=?, processed_object=?, updated=CURRENT_TIMESTAMP() " +
-                        "where shard_recovery_id=?")
+            "UPDATE shard_recovery SET state=?, object_name=?, column_name=?, " +
+                "last_column_value=?, processed_object=?, updated=CURRENT_TIMESTAMP() " +
+                "where shard_recovery_id=?")
         ) {
             int i = 0;
             pstmt.setString(++i, recovery.getState().name());
@@ -216,9 +198,10 @@ public class ShardRecoveryDaoJdbcImpl implements ShardRecoveryDaoJdbc {
     }
 
     public int hardDeleteShardRecovery(Connection con, long shardRecoveryId) {
-        Objects.requireNonNull(con,"connection is NULL");        int deleted = -1;
+        Objects.requireNonNull(con, "connection is NULL");
+        int deleted = -1;
         try (PreparedStatement pstmt = con.prepareStatement(
-                "DELETE FROM shard_recovery where shard_recovery_id=?")
+            "DELETE FROM shard_recovery where shard_recovery_id=?")
         ) {
             int i = 0;
             pstmt.setLong(++i, shardRecoveryId);
@@ -232,10 +215,10 @@ public class ShardRecoveryDaoJdbcImpl implements ShardRecoveryDaoJdbc {
     }
 
     public int hardDeleteAllShardRecovery(Connection con) {
-        Objects.requireNonNull(con,"connection is NULL");
+        Objects.requireNonNull(con, "connection is NULL");
         int deleted = -1;
         try (PreparedStatement pstmt = con.prepareStatement(
-                "DELETE FROM shard_recovery")
+            "DELETE FROM shard_recovery")
         ) {
             deleted = pstmt.executeUpdate();
             log.trace("All recovery deleted = {}", deleted);
@@ -244,6 +227,24 @@ public class ShardRecoveryDaoJdbcImpl implements ShardRecoveryDaoJdbc {
             throw new RuntimeException(e.toString(), e);
         }
         return deleted;
+    }
+
+    class ShardRecoveryJdbcMapper {
+
+        public ShardRecovery map(ResultSet rs) throws SQLException {
+            ShardRecovery recovery = null;
+            recovery = ShardRecovery.builder()
+                .shardRecoveryId(rs.getLong("shard_recovery_id"))
+                .state(rs.getString("state"))
+                .objectName(rs.getString("object_name"))
+                .columnName(rs.getString("column_name"))
+                .lastColumnValue(rs.getLong("last_column_value"))
+                .processedObject(rs.getString("processed_object"))
+                .updated(Instant.ofEpochMilli(rs.getDate("updated").getTime()))
+                .height(rs.getInt("height"))
+                .build();
+            return recovery;
+        }
     }
 
 }

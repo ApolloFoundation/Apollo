@@ -23,8 +23,8 @@ class TimeServiceTest {
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(NtpTime.class, TimeServiceImpl.class)
-            .addBeans(MockBean.of(genesisImporter, GenesisImporter.class))
-            .build();
+        .addBeans(MockBean.of(genesisImporter, GenesisImporter.class))
+        .build();
 
     @Inject
     private NtpTime ntpTime;

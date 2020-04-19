@@ -1,15 +1,16 @@
 package com.apollocurrency.aplwallet.apl.util.cert;
 
+import org.bouncycastle.util.encoders.Hex;
+
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
-import org.bouncycastle.util.encoders.Hex;
 
 /**
  * Apollo AUthority ID is set of bits that classifies Apollo crypto actors and
  * actor's capabilities.
- * Bytes meaning. Les's number each of 16 bytes as following: 
+ * Bytes meaning. Les's number each of 16 bytes as following:
  * 15 14 13 12 11 10 09 08 07 06 05 04 03 02 01 00
  * So bytes assigned to:
  * 00 01 - actor type (00) and subtype (01), @see ActorType
@@ -18,22 +19,17 @@ import org.bouncycastle.util.encoders.Hex;
  * 06 07 - authority code, planned for usage together with business code for delegation tree
  * 08 09 10 11 - operation code, planned for usage as operations permission mask
  * 12 13 14 15  - supplemental  code, reserved for future use
+ *
  * @author alukin@gmail.com
  */
 public class AuthorityID {
     /**
      * Length of AuthorityID in bytes
      */
-    public static final int LENGHT=16; //16 bytes, 128 bit
-  
-    
-    private byte[] authorityID;
+    public static final int LENGHT = 16; //16 bytes, 128 bit
 
-    private void setup() {
-        authorityID = new byte[LENGHT];
-        byte zero = 0;
-        Arrays.fill(authorityID, zero);
-    }
+
+    private byte[] authorityID;
 
     public AuthorityID() {
         setup();
@@ -61,11 +57,17 @@ public class AuthorityID {
             idx_dst--;
         }
     }
-    
+
+    private void setup() {
+        authorityID = new byte[LENGHT];
+        byte zero = 0;
+        Arrays.fill(authorityID, zero);
+    }
+
     public byte[] get() {
         return authorityID;
     }
-    
+
     public BigInteger getAuthorityID() {
         return new BigInteger(authorityID);
     }
@@ -127,7 +129,7 @@ public class AuthorityID {
      * RegionCode is 2nd and 3rd most significant bytes of AuthorityID
      *
      * @param rc 2 bytes of RegionCode wrapped to 2 least significant bytes of
-     * int
+     *           int
      */
     public void setRegionCode(int rc) {
         ByteBuffer bb = ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putInt(rc);
@@ -150,7 +152,7 @@ public class AuthorityID {
      * BusinessCode is 4th and 5th most significant bytes of AuthorityID
      *
      * @param bc 2 bytes of BusinessCode wrapped to 2 least significant bytes of
-     * int
+     *           int
      */
     public void setBusinessCode(int bc) {
         ByteBuffer bb = ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putInt(bc);
@@ -173,7 +175,7 @@ public class AuthorityID {
      * AuthorityCode is 6th and 7th most significant bytes of AuthorityID
      *
      * @param bc 2 bytes of AuthorityCode wrapped to 2 least significant bytes
-     * of int
+     *           of int
      */
     public void setAuthorityCode(int bc) {
         ByteBuffer bb = ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putInt(bc);

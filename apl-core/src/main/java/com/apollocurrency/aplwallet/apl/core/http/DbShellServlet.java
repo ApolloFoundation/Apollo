@@ -37,79 +37,72 @@ import java.net.URLEncoder;
 import java.sql.SQLException;
 
 public final class DbShellServlet extends HttpServlet {
-    protected  static AdminPasswordVerifier apw =  CDI.current().select(AdminPasswordVerifier.class).get();
-
     private static final String JAVASCRIPT_SECTION = "    <script type=\"text/javascript\">\n" +
-            "        function submitForm(form, adminPassword) {\n" +
-            "            var url = '/dbshell';\n" +
-            "            var params = '';\n" +
-            "            for (i = 0; i < form.elements.length; i++) {\n" +
-            "                if (! form.elements[i].name) {\n" +
-            "                    continue;\n" +
-            "                }\n" +
-            "                if (i > 0) {\n" +
-            "                    params += '&';\n" +
-            "                }\n" +
-            "                params += encodeURIComponent(form.elements[i].name);\n" +
-            "                params += '=';\n" +
-            "                params += encodeURIComponent(form.elements[i].value);\n" +
-            "            }\n" +
-            "            if (adminPassword && form.elements.length > 0) {\n" +
-            "                params += '&adminPassword=' + adminPassword;\n" +
-            "            }\n" +
-            "            var request = new XMLHttpRequest();\n" +
-            "            request.open(\"POST\", url, false);\n" +
-            "            request.setRequestHeader(\"Content-type\", \"application/x-www-form-urlencoded\");\n" +
-            "            request.send(params);\n" +
-            "            form.getElementsByClassName(\"result\")[0].textContent += request.responseText;\n" +
-            "            return false;\n" +
-            "        }\n" +
-            "    </script>\n";
+        "        function submitForm(form, adminPassword) {\n" +
+        "            var url = '/dbshell';\n" +
+        "            var params = '';\n" +
+        "            for (i = 0; i < form.elements.length; i++) {\n" +
+        "                if (! form.elements[i].name) {\n" +
+        "                    continue;\n" +
+        "                }\n" +
+        "                if (i > 0) {\n" +
+        "                    params += '&';\n" +
+        "                }\n" +
+        "                params += encodeURIComponent(form.elements[i].name);\n" +
+        "                params += '=';\n" +
+        "                params += encodeURIComponent(form.elements[i].value);\n" +
+        "            }\n" +
+        "            if (adminPassword && form.elements.length > 0) {\n" +
+        "                params += '&adminPassword=' + adminPassword;\n" +
+        "            }\n" +
+        "            var request = new XMLHttpRequest();\n" +
+        "            request.open(\"POST\", url, false);\n" +
+        "            request.setRequestHeader(\"Content-type\", \"application/x-www-form-urlencoded\");\n" +
+        "            request.send(params);\n" +
+        "            form.getElementsByClassName(\"result\")[0].textContent += request.responseText;\n" +
+        "            return false;\n" +
+        "        }\n" +
+        "    </script>\n";
     private static final String HEADER =
-            "<!DOCTYPE html>\n" +
-                    "<html>\n" +
-                    "<head>\n" +
-                    "    <meta charset=\"UTF-8\"/>\n" +
-                    "    <title>Apl H2 Database Shell</title>\n" +
-                    JAVASCRIPT_SECTION +
-                    "</head>\n" +
-                    "<body>\n";
-
+        "<!DOCTYPE html>\n" +
+            "<html>\n" +
+            "<head>\n" +
+            "    <meta charset=\"UTF-8\"/>\n" +
+            "    <title>Apl H2 Database Shell</title>\n" +
+            JAVASCRIPT_SECTION +
+            "</head>\n" +
+            "<body>\n";
     private static final String FOOTER =
-                    "</body>\n" +
-                    "</html>\n";
-
-    private static final String FORM =
-            "<form action=\"/dbshell\" method=\"POST\" onsubmit=\"return submitForm(this" +
-                    (apw.isDisabledAdminPassword() ? "" : ", '{adminPassword}'") + ");\">" +
-                    "<table class=\"table\" style=\"width:90%;\">" +
-                    "<tr><td><pre class=\"result\" style=\"float:top;width:90%;\">" +
-                    "This is a database shell. Enter SQL to be evaluated, or \"help\" for help:" +
-                    "</pre></td></tr>" +
-                    "<tr><td><b>&gt;</b> <input type=\"text\" name=\"line\" style=\"width:90%;\"/></td></tr>" +
-                    "</table>" +
-                    "</form>";
-
+        "</body>\n" +
+            "</html>\n";
     private static final String ERROR_NO_PASSWORD_IS_CONFIGURED =
-            "This page is password-protected, but no password is configured in apl-blockchain.properties. " +
-                    "Please set apl.adminPassword or disable the password protection with apl.disableAdminPassword";
-
+        "This page is password-protected, but no password is configured in apl-blockchain.properties. " +
+            "Please set apl.adminPassword or disable the password protection with apl.disableAdminPassword";
     private static final String PASSWORD_FORM_TEMPLATE =
-            "<form action=\"/dbshell\" method=\"POST\">" +
-                    "<table class=\"table\">" +
-                    "<tr><td colspan=\"3\">%s</td></tr>" +
-                    "<tr>" +
-                    "<td>Password:</td>" +
-                    "<td><input type=\"password\" name=\"adminPassword\"/>" +
-                    "<input type=\"submit\" value=\"Go!\"/></td>" +
-                    "</tr>" +
-                    "</table>" +
-                    "<input type=\"hidden\" name=\"showShell\" value=\"true\"/>" +
-                    "</form>";
-
+        "<form action=\"/dbshell\" method=\"POST\">" +
+            "<table class=\"table\">" +
+            "<tr><td colspan=\"3\">%s</td></tr>" +
+            "<tr>" +
+            "<td>Password:</td>" +
+            "<td><input type=\"password\" name=\"adminPassword\"/>" +
+            "<input type=\"submit\" value=\"Go!\"/></td>" +
+            "</tr>" +
+            "</table>" +
+            "<input type=\"hidden\" name=\"showShell\" value=\"true\"/>" +
+            "</form>";
     private static final String PASSWORD_FORM = String.format(PASSWORD_FORM_TEMPLATE,
-            "<p>This page is password-protected. Please enter the administrator's password</p>");
-
+        "<p>This page is password-protected. Please enter the administrator's password</p>");
+    protected static AdminPasswordVerifier apw = CDI.current().select(AdminPasswordVerifier.class).get();
+    private static final String FORM =
+        "<form action=\"/dbshell\" method=\"POST\" onsubmit=\"return submitForm(this" +
+            (apw.isDisabledAdminPassword() ? "" : ", '{adminPassword}'") + ");\">" +
+            "<table class=\"table\" style=\"width:90%;\">" +
+            "<tr><td><pre class=\"result\" style=\"float:top;width:90%;\">" +
+            "This is a database shell. Enter SQL to be evaluated, or \"help\" for help:" +
+            "</pre></td></tr>" +
+            "<tr><td><b>&gt;</b> <input type=\"text\" name=\"line\" style=\"width:90%;\"/></td></tr>" +
+            "</table>" +
+            "</form>";
     private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
 
     @Override
@@ -117,7 +110,7 @@ public final class DbShellServlet extends HttpServlet {
         resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate, private");
         resp.setHeader("Pragma", "no-cache");
         resp.setDateHeader("Expires", 0);
-        if (! API.isAllowed(req.getRemoteHost())) {
+        if (!API.isAllowed(req.getRemoteHost())) {
             resp.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
@@ -145,7 +138,7 @@ public final class DbShellServlet extends HttpServlet {
         resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate, private");
         resp.setHeader("Pragma", "no-cache");
         resp.setDateHeader("Expires", 0);
-        if (! API.isAllowed(req.getRemoteHost())) {
+        if (!API.isAllowed(req.getRemoteHost())) {
             resp.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
@@ -158,10 +151,10 @@ public final class DbShellServlet extends HttpServlet {
                 try {
                     apw.verifyPassword(req);
                     if ("true".equals(req.getParameter("showShell"))) {
-                        body = FORM.replace("{adminPassword}", URLEncoder.encode(req.getParameter("adminPassword"), "UTF-8") );
+                        body = FORM.replace("{adminPassword}", URLEncoder.encode(req.getParameter("adminPassword"), "UTF-8"));
                     }
                 } catch (ParameterException exc) {
-                    String desc = (String)((JSONObject)JSONValue.parse(JSON.toString(exc.getErrorResponse()))).get("errorDescription");
+                    String desc = (String) ((JSONObject) JSONValue.parse(JSON.toString(exc.getErrorResponse()))).get("errorDescription");
                     body = String.format(PASSWORD_FORM_TEMPLATE, "<p style=\"color:red\">" + desc + "</p>");
                 }
             }

@@ -23,19 +23,32 @@ package com.apollocurrency.aplwallet.apl.core.monetary;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemAttachment;
+
 import java.util.Map;
 
 public abstract class MonetarySystem extends TransactionType {
 
-    public  static final byte SUBTYPE_MONETARY_SYSTEM_CURRENCY_ISSUANCE = 0;
-    public  static final byte SUBTYPE_MONETARY_SYSTEM_RESERVE_INCREASE = 1;
-    public  static final byte SUBTYPE_MONETARY_SYSTEM_RESERVE_CLAIM = 2;
-    public  static final byte SUBTYPE_MONETARY_SYSTEM_CURRENCY_TRANSFER = 3;
-    public  static final byte SUBTYPE_MONETARY_SYSTEM_PUBLISH_EXCHANGE_OFFER = 4;
-    public  static final byte SUBTYPE_MONETARY_SYSTEM_EXCHANGE_BUY = 5;
-    public  static final byte SUBTYPE_MONETARY_SYSTEM_EXCHANGE_SELL = 6;
-    public  static final byte SUBTYPE_MONETARY_SYSTEM_CURRENCY_MINTING = 7;
-    public  static final byte SUBTYPE_MONETARY_SYSTEM_CURRENCY_DELETION = 8;
+    public static final byte SUBTYPE_MONETARY_SYSTEM_CURRENCY_ISSUANCE = 0;
+    public static final byte SUBTYPE_MONETARY_SYSTEM_RESERVE_INCREASE = 1;
+    public static final byte SUBTYPE_MONETARY_SYSTEM_RESERVE_CLAIM = 2;
+    public static final byte SUBTYPE_MONETARY_SYSTEM_CURRENCY_TRANSFER = 3;
+    public static final byte SUBTYPE_MONETARY_SYSTEM_PUBLISH_EXCHANGE_OFFER = 4;
+    public static final byte SUBTYPE_MONETARY_SYSTEM_EXCHANGE_BUY = 5;
+    public static final byte SUBTYPE_MONETARY_SYSTEM_EXCHANGE_SELL = 6;
+    public static final byte SUBTYPE_MONETARY_SYSTEM_CURRENCY_MINTING = 7;
+    public static final byte SUBTYPE_MONETARY_SYSTEM_CURRENCY_DELETION = 8;
+    public static final TransactionType CURRENCY_ISSUANCE = new MonetarySystemCurrIssuance();
+    public static final TransactionType RESERVE_INCREASE = new MSReverseIncrease();
+    public static final TransactionType RESERVE_CLAIM = new MSReverseClaim();
+    public static final TransactionType CURRENCY_TRANSFER = new MSCurrencyTransfer();
+    public static final TransactionType PUBLISH_EXCHANGE_OFFER = new MSPublishExchangeOffer();
+    public static final TransactionType EXCHANGE_BUY = new MSExchangeBuy();
+    public static final TransactionType EXCHANGE_SELL = new MSExchangeSell();
+    public static final TransactionType CURRENCY_MINTING = new MSCurrencyMinting();
+    public static final TransactionType CURRENCY_DELETION = new MSCurrencyDeletion();
+
+    public MonetarySystem() {
+    }
 
     public static TransactionType findTransactionType(byte subtype) {
         switch (subtype) {
@@ -62,8 +75,6 @@ public abstract class MonetarySystem extends TransactionType {
         }
     }
 
-    public MonetarySystem() {}
-
     @Override
     public final byte getType() {
         return TransactionType.TYPE_MONETARY_SYSTEM;
@@ -76,7 +87,7 @@ public abstract class MonetarySystem extends TransactionType {
         String nameLower = currency.getName().toLowerCase();
         String codeLower = currency.getCode().toLowerCase();
         boolean isDuplicate = TransactionType.isDuplicate(CURRENCY_ISSUANCE, nameLower, duplicates, false);
-        if (! nameLower.equals(codeLower)) {
+        if (!nameLower.equals(codeLower)) {
             isDuplicate = isDuplicate || TransactionType.isDuplicate(CURRENCY_ISSUANCE, codeLower, duplicates, false);
         }
         return isDuplicate;
@@ -86,25 +97,6 @@ public abstract class MonetarySystem extends TransactionType {
     public final boolean isPhasingSafe() {
         return false;
     }
-
-    public static final TransactionType CURRENCY_ISSUANCE = new MonetarySystemCurrIssuance();
-
-    public static final TransactionType RESERVE_INCREASE = new MSReverseIncrease();
-
-    public static final TransactionType RESERVE_CLAIM = new MSReverseClaim();
-
-    public static final TransactionType CURRENCY_TRANSFER = new MSCurrencyTransfer();
-
-    public static final TransactionType PUBLISH_EXCHANGE_OFFER = new MSPublishExchangeOffer();
-
-
-    public static final TransactionType EXCHANGE_BUY = new MSExchangeBuy();
-
-    public static final TransactionType EXCHANGE_SELL = new MSExchangeSell();
-
-    public static final TransactionType CURRENCY_MINTING = new MSCurrencyMinting();
-
-    public static final TransactionType CURRENCY_DELETION = new MSCurrencyDeletion();
 
 
 }

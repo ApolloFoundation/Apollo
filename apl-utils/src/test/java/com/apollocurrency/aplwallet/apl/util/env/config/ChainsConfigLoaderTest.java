@@ -29,42 +29,38 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ChainsConfigLoaderTest {
-    private static UUID chainId1 = UUID.fromString("3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6");
-    private static UUID chainId2 = UUID.fromString("ff3bfa13-3711-4f23-8f7b-4fccaa87c4c1");
     private static final List<BlockchainProperties> BLOCKCHAIN_PROPERTIES1 = Arrays.asList(
         new BlockchainProperties(0, 255, 60, 67, 53, 30000000000L),
-            new BlockchainProperties(2000, 300, 2, 4, 1,  30000000000L, new ConsensusSettings(ConsensusSettings.Type.POS,
-                    new AdaptiveForgingSettings(true, 60, 0))),
-            new BlockchainProperties(42300, 300, 2, 4, 1, 30000000000L, new ShardingSettings(true), new ConsensusSettings(new AdaptiveForgingSettings(true, 10, 0))),
-            new BlockchainProperties(100000, 300, 2, 4, 1, 30000000000L, new ShardingSettings(true, 1_000_000),
-                    new ConsensusSettings(new AdaptiveForgingSettings(true, 10, 0))),
-            new BlockchainProperties(100100, 300, 5, 7, 2, 30000000000L, new ShardingSettings(true, "SHA-512"))
+        new BlockchainProperties(2000, 300, 2, 4, 1, 30000000000L, new ConsensusSettings(ConsensusSettings.Type.POS,
+            new AdaptiveForgingSettings(true, 60, 0))),
+        new BlockchainProperties(42300, 300, 2, 4, 1, 30000000000L, new ShardingSettings(true), new ConsensusSettings(new AdaptiveForgingSettings(true, 10, 0))),
+        new BlockchainProperties(100000, 300, 2, 4, 1, 30000000000L, new ShardingSettings(true, 1_000_000),
+            new ConsensusSettings(new AdaptiveForgingSettings(true, 10, 0))),
+        new BlockchainProperties(100100, 300, 5, 7, 2, 30000000000L, new ShardingSettings(true, "SHA-512"))
     );
     private static final List<BlockchainProperties> BLOCKCHAIN_PROPERTIES2 = Collections.singletonList(
-            new BlockchainProperties(0, 2000, 2, 3, 1, (long) 1e8)
+        new BlockchainProperties(0, 2000, 2, 3, 1, (long) 1e8)
     );
-
-    private static final Chain CHAIN1 = new Chain(chainId1, true, Collections.emptyList(), Arrays.asList("51.15.250.32",
-            "51.15.253.171",
-            "51.15.210.116",
-            "51.15.242.197",
-            "51.15.218.241"),
-            Collections.emptyList(),
-            "Apollo experimental testnet",
-            "NOT STABLE testnet for experiments. Don't use it if you don't know what is it", "Apollo",
-            "APL", "Apollo", "conf/data/genesisAccounts-testnet.json", BLOCKCHAIN_PROPERTIES1, new FeaturesHeightRequirement());
-
-    private static final Chain CHAIN2 = new Chain(chainId2, Arrays.asList("51.15.0.1",
-            "51.15.1.0"),
-            "Gotham",
-            "Batman's chain", "BTM",
-            "BTM", "I am batman!", "conf/data/batman-genesis.json", BLOCKCHAIN_PROPERTIES2);
-
-    private static final Chain CHAIN3 = new Chain(chainId2, false, Arrays.asList("51.15.1.1",
-            "51.15.0.0"), Collections.emptyList(), Collections.emptyList(), "1", "2", "3", "4", "5", "6", BLOCKCHAIN_PROPERTIES1.subList(0, 3), new FeaturesHeightRequirement(150, 150));
     private static final String CONFIG_NAME = "test-chains.json";
     private static final String OLD_CONFIG_NAME = "old-chains.json";
-
+    private static UUID chainId1 = UUID.fromString("3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6");
+    private static final Chain CHAIN1 = new Chain(chainId1, true, Collections.emptyList(), Arrays.asList("51.15.250.32",
+        "51.15.253.171",
+        "51.15.210.116",
+        "51.15.242.197",
+        "51.15.218.241"),
+        Collections.emptyList(),
+        "Apollo experimental testnet",
+        "NOT STABLE testnet for experiments. Don't use it if you don't know what is it", "Apollo",
+        "APL", "Apollo", "conf/data/genesisAccounts-testnet.json", BLOCKCHAIN_PROPERTIES1, new FeaturesHeightRequirement());
+    private static UUID chainId2 = UUID.fromString("ff3bfa13-3711-4f23-8f7b-4fccaa87c4c1");
+    private static final Chain CHAIN2 = new Chain(chainId2, Arrays.asList("51.15.0.1",
+        "51.15.1.0"),
+        "Gotham",
+        "Batman's chain", "BTM",
+        "BTM", "I am batman!", "conf/data/batman-genesis.json", BLOCKCHAIN_PROPERTIES2);
+    private static final Chain CHAIN3 = new Chain(chainId2, false, Arrays.asList("51.15.1.1",
+        "51.15.0.0"), Collections.emptyList(), Collections.emptyList(), "1", "2", "3", "4", "5", "6", BLOCKCHAIN_PROPERTIES1.subList(0, 3), new FeaturesHeightRequirement(150, 150));
     private Path tempRootPath;
 
 
@@ -72,6 +68,7 @@ public class ChainsConfigLoaderTest {
     public void setUp() throws IOException {
         tempRootPath = Files.createTempDirectory("chains-config-loader-test-root");
     }
+
     @AfterEach
     public void tearDown() throws IOException {
         Files.walkFileTree(tempRootPath, new SimpleFileVisitor<>() {
@@ -88,13 +85,14 @@ public class ChainsConfigLoaderTest {
             }
         });
     }
+
     @Test
     public void testLoadConfig() {
         ChainsConfigLoader chainsConfigLoader = new ChainsConfigLoader(CONFIG_NAME);
         Map<UUID, Chain> loadedChains = chainsConfigLoader.load();
         Assertions.assertEquals(2, loadedChains.size());
-        Map<UUID, Chain> expectedChains = Arrays.stream(new Chain[] {CHAIN1, CHAIN2}).collect(Collectors.toMap(Chain::getChainId,
-                Function.identity()));
+        Map<UUID, Chain> expectedChains = Arrays.stream(new Chain[]{CHAIN1, CHAIN2}).collect(Collectors.toMap(Chain::getChainId,
+            Function.identity()));
         Assertions.assertNotNull(loadedChains);
         Assertions.assertEquals(expectedChains, loadedChains);
     }
@@ -211,7 +209,7 @@ public class ChainsConfigLoaderTest {
         Map<UUID, Chain> actualChains = chainsConfigLoader.load();
         Assertions.assertEquals(4, actualChains.size());
         Map<UUID, Chain> expectedChains = Stream.of(chain4, chain3, chain6, CHAIN2).collect(Collectors.toMap(Chain::getChainId,
-                Function.identity()));
+            Function.identity()));
         Assertions.assertEquals(expectedChains, actualChains);
     }
 

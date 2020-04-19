@@ -9,33 +9,34 @@ package com.apollocurrency.aplwallet.apl.core.rest.service;
 import com.apollocurrency.aplwallet.api.response.TransportStatusResponse;
 
 public interface TransportInteractionService {
-    
+
     /**
-     * Get transport status     
+     * Get transport status
+     *
      * @return TransportStatusResponse <i>null</i>
      */
 
     TransportStatusResponse getTransportStatusResponse();
-    
+
     /**
-     * Starting up with secure transport     
+     * Starting up with secure transport
      */
 
     void startSecureTransport();
-    
+
     /**
-     * Stopping secure transport     
+     * Stopping secure transport
      */
 
     void stopSecureTransport();
-        
-    /** 
+
+    /**
      * Start transport interaction service
      */
 
     void start();
-   
-    /** 
+
+    /**
      * Start transport interaction service
      */
 

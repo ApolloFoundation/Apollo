@@ -22,10 +22,10 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 @Deprecated
@@ -33,7 +33,7 @@ import javax.servlet.http.HttpServletRequest;
 public final class GetTime extends AbstractAPIRequestHandler {
 
     public GetTime() {
-        super(new APITag[] {APITag.INFO});
+        super(new APITag[]{APITag.INFO});
     }
 
     @Override

@@ -4,21 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.observer;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-
-import javax.enterprise.event.Event;
-import javax.enterprise.util.AnnotationLiteral;
-import javax.inject.Inject;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
-
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.TrimService;
@@ -40,6 +25,21 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mockito;
 
+import javax.enterprise.event.Event;
+import javax.enterprise.util.AnnotationLiteral;
+import javax.inject.Inject;
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 @Slf4j
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
@@ -50,23 +50,22 @@ class TrimObserverScheduleLogicTest {
     HeightConfig config = Mockito.mock(HeightConfig.class);
     Random random = new Random();
     Blockchain blockchain = mock(Blockchain.class);
-    {
-        doReturn(config).when(blockchainConfig).getCurrentConfig();
-    }
-
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from(TrimObserver.class)
-            .addBeans(MockBean.of(trimService, TrimService.class))
-            .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
-            .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
-            .addBeans(MockBean.of(random, Random.class))
-            .addBeans(MockBean.of(blockchain, Blockchain.class))
-            .build();
-
+        .addBeans(MockBean.of(trimService, TrimService.class))
+        .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
+        .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
+        .addBeans(MockBean.of(random, Random.class))
+        .addBeans(MockBean.of(blockchain, Blockchain.class))
+        .build();
     @Inject
     Event<Block> blockEvent;
     @Inject
     TrimObserver observer;
+
+    {
+        doReturn(config).when(blockchainConfig).getCurrentConfig();
+    }
 
     @BeforeEach
     void setUp() {

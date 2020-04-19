@@ -20,26 +20,26 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
+import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_TRANSACTION;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public final class GetExchangesByExchangeRequest extends AbstractAPIRequestHandler {
 
     public GetExchangesByExchangeRequest() {
-        super(new APITag[] {APITag.MS}, "transaction", "includeCurrencyInfo");
+        super(new APITag[]{APITag.MS}, "transaction", "includeCurrencyInfo");
     }
 
     @Override

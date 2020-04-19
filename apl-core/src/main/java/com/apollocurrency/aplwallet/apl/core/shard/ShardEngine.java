@@ -86,6 +86,7 @@ public interface ShardEngine {
 
     /**
      * Remove recovery data, so the process is finished and ready for next time
+     *
      * @param paramInfo empty, left for compatibility
      * @return COMPLETED usually
      */

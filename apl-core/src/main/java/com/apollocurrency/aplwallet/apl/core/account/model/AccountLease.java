@@ -14,7 +14,8 @@ import java.sql.SQLException;
 
 
 @ToString(callSuper = true)
-@Getter @Setter
+@Getter
+@Setter
 public final class AccountLease extends VersionedDeletableEntity {
 
     private final long lessorId;

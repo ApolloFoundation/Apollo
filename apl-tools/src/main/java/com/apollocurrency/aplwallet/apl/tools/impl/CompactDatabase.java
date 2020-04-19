@@ -20,17 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.tools.impl;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-import java.io.File;
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Map;
-import java.util.UUID;
-
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
@@ -44,17 +33,28 @@ import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
+import java.io.File;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Map;
+import java.util.UUID;
+
+import static org.slf4j.LoggerFactory.getLogger;
+
 /**
  * Compact and reorganize the ARS database.  The ARS application must not be
  * running.
- *
+ * <p>
  * To run the database compact tool on Linux or Mac:
- *
- *   java -cp "classes:lib/*:conf" com.apollocurrency.aplwallet.apl.tools.CompactDatabase
- *
+ * <p>
+ * java -cp "classes:lib/*:conf" com.apollocurrency.aplwallet.apl.tools.CompactDatabase
+ * <p>
  * To run the database compact tool on Windows:
- *
- *   java -cp "classes;lib/*;conf" -Dapl.runtime.mode=desktop com.apollocurrency.aplwallet.apl.tools.CompactDatabase
+ * <p>
+ * java -cp "classes;lib/*;conf" -Dapl.runtime.mode=desktop com.apollocurrency.aplwallet.apl.tools.CompactDatabase
  */
 public class CompactDatabase {
     private static final Logger LOG = getLogger(CompactDatabase.class);
@@ -62,18 +62,19 @@ public class CompactDatabase {
     // TODO: YL remove static instance later
     private final PropertiesHolder propertiesHolder;
     private final DirProvider dirProvider;
-    
-//TODO: Check and test this class
-    public CompactDatabase(PropertiesHolder propertiesHolder, DirProvider dirProvider) {        
+
+    //TODO: Check and test this class
+    public CompactDatabase(PropertiesHolder propertiesHolder, DirProvider dirProvider) {
         this.propertiesHolder = propertiesHolder;
         this.dirProvider = dirProvider;
     }
-  
+
     /**
      * Compact the database
+     *
      * @return exit code indication error or success
      */
-    public  int compactDatabase() {
+    public int compactDatabase() {
         int exitCode = PosixExitCodes.OK.exitCode();
         //
         // Get the database URL
@@ -81,7 +82,7 @@ public class CompactDatabase {
         ConfigDirProvider configDirProvider = ConfigDirProviderFactory.getConfigDirProvider();
         ChainsConfigHolder chainsConfigHolder = new ChainsConfigHolder();
         Map<UUID, Chain> loadedChains = new ChainsConfigLoader(configDirProvider, false).load();
-        DbProperties dbProperties  = new DbConfig(propertiesHolder, chainsConfigHolder).getDbConfig();
+        DbProperties dbProperties = new DbConfig(propertiesHolder, chainsConfigHolder).getDbConfig();
         chainsConfigHolder.setChains(loadedChains);
         if (!"h2".equals(dbProperties.getDbType())) {
             LOG.error("Database type must be 'h2'");
@@ -115,7 +116,7 @@ public class CompactDatabase {
                 }
             }
             try (Connection conn = getConnection(dbProperties.getDbUrl(), dbProperties.getDbUsername(), dbProperties.getDbPassword());
-                Statement s = conn.createStatement()) {
+                 Statement s = conn.createStatement()) {
                 s.execute("SCRIPT TO '" + sqlFile.getPath() + "' COMPRESSION GZIP CHARSET 'UTF-8'");
             }
             //
@@ -124,11 +125,11 @@ public class CompactDatabase {
             LOG.info("Creating the new database");
             if (!dbFile.renameTo(oldFile)) {
                 throw new IOException(String.format("Unable to rename '%s' to '%s'",
-                                                    dbFile.getPath(), oldFile.getPath()));
+                    dbFile.getPath(), oldFile.getPath()));
             }
             phase = 1;
             try (Connection conn = getConnection(dbProperties.getDbUrl(), dbProperties.getDbUsername(), dbProperties.getDbPassword());
-                Statement s = conn.createStatement()) {
+                 Statement s = conn.createStatement()) {
                 s.execute("RUNSCRIPT FROM '" + sqlFile.getPath() + "' COMPRESSION GZIP CHARSET 'UTF-8'");
                 s.execute("ANALYZE");
             }
@@ -171,7 +172,7 @@ public class CompactDatabase {
                     }
                     if (!oldFile.renameTo(dbFile)) {
                         LOG.error(String.format("Unable to rename '%s' to '%s'",
-                                                             oldFile.getPath(), dbFile.getPath()));
+                            oldFile.getPath(), dbFile.getPath()));
                     }
                     break;
                 case 2:
@@ -193,8 +194,7 @@ public class CompactDatabase {
     public Connection getConnection(String url, String user, String password) {
         try {
             return DriverManager.getConnection(url, user, password);
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             LOG.error("Unable to connect to database", e);
         }
         return null;

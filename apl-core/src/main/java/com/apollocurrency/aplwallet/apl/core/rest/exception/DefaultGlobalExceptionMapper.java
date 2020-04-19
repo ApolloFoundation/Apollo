@@ -18,10 +18,13 @@ public class DefaultGlobalExceptionMapper implements ExceptionMapper<Exception> 
     @Override
     public Response toResponse(Exception exception) {
         String stacktrace = ThreadUtils.getStackTraceSilently(exception);
+        String message = exception.getMessage();
+        log.debug("GlobalErrorHandler error = {}", message);
         if (exception instanceof javax.ws.rs.NotFoundException) {
             log.warn("REST API NotFoundException", exception);
-            return ResponseBuilder.apiError(ApiErrors.REST_API_SERVER_ERROR, exception.getMessage()).build();
+            return ResponseBuilder.apiError(ApiErrors.REST_API_SERVER_ERROR, message).build();
         }
-        return ResponseBuilder.detailedApiError(ApiErrors.UNKNOWN_SERVER_ERROR, stacktrace, exception.getMessage()).build();
+        log.debug("GlobalErrorHandler stacktrace = {}", stacktrace);
+        return ResponseBuilder.detailedApiError(ApiErrors.UNKNOWN_SERVER_ERROR, stacktrace, message).build();
     }
 }

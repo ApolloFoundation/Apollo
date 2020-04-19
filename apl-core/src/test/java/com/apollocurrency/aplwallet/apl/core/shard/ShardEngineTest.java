@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.shard;
 
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.alias.service.AliasService;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -123,70 +124,58 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 @EnableWeld
 class ShardEngineTest {
-    private static final Logger log = getLogger(ShardEngineTest.class);
     static final String GOODS_TABLE_NAME = "goods";
     static final String PHASING_POLL_TABLE_NAME = "phasing_poll";
     static final String PRUNABLE_MESSAGE_TABLE_NAME = "prunable_message";
+    private static final Logger log = getLogger(ShardEngineTest.class);
 
-/*
-  // YL  DO NOT REMOVE THAT PLEASE, it can be used for manual testing
-    private static String BASE_SUB_DIR = "unit-test-db";
-    private static Path pathToDb = FileSystems.getDefault().getPath(System.getProperty("user.dir") + File.separator  + BASE_SUB_DIR);;
-    @RegisterExtension
-    DbExtension extension = new DbExtension(baseDbProperties, propertiesHolder);
-    private static DbProperties baseDbProperties;
-    private static PropertiesHolder propertiesHolder;
-*/
-
-    @RegisterExtension
-    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("targetDb").toAbsolutePath().toString()));
+    /*
+      // YL  DO NOT REMOVE THAT PLEASE, it can be used for manual testing
+        private static String BASE_SUB_DIR = "unit-test-db";
+        private static Path pathToDb = FileSystems.getDefault().getPath(System.getProperty("user.dir") + File.separator  + BASE_SUB_DIR);;
+        @RegisterExtension
+        DbExtension extension = new DbExtension(baseDbProperties, propertiesHolder);
+        private static DbProperties baseDbProperties;
+        private static PropertiesHolder propertiesHolder;
+    */
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
-
     private final Path dataExportDirPath = createPath("targetDb");
     private final Bean<Path> dataExportDir = MockBean.of(dataExportDirPath.toAbsolutePath(), Path.class);
+    @RegisterExtension
+    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("targetDb").toAbsolutePath().toString()));
+    Weld weld = WeldInitiator.createWeld();
+    @Inject
+    DGSGoodsTable goodsTable;
+    @Inject
+    TransactionDao transactionDao;
+    @Inject
+    PhasingPollTable phasingPollTable;
+    @Inject
+    PrunableMessageTable messageTable;
     private DirProvider dirProvider = mock(DirProvider.class);
     private Zip zip = spy(new ZipImpl());
     private CsvEscaper translator = new CsvEscaperImpl();
-
     private CsvExporter csvExporter = spy(new CsvExporterImpl(extension.getDatabaseManager(), dataExportDirPath, translator));
-    Weld weld = WeldInitiator.createWeld();
-    {
-        weld.addInterceptor(JdbiTransactionalInterceptor.class);
-        weld.addBeanClasses(PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class, ReferencedTransactionDao.class, ShardDao.class, ShardRecoveryDao.class,
-                DerivedDbTablesRegistryImpl.class, JdbiTransactionalInterceptor.class,
-                TransactionTestData.class, PropertyProducer.class, ShardRecoveryDaoJdbcImpl.class,
-                GlobalSyncImpl.class, FullTextConfigImpl.class, FullTextConfig.class,
-                DGSGoodsTable.class, PrunableMessageServiceImpl.class, PrunableMessageTable.class,
-                PhasingPollTable.class,
-                DerivedTablesRegistry.class,
-                ShardEngineImpl.class, AplAppStatus.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class, TrimDao.class
-                );
-
-        // return the same dir for both CDI components
-        dataExportDir.getQualifiers().add(new NamedLiteral("dataExportDir")); // for CsvExporter
-        doReturn(dataExportDirPath).when(dirProvider).getDataExportDir(); // for Zip
-    }
-
     @WeldSetup
     public WeldInitiator weldInitiator = WeldInitiator.from(weld)
-            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
-            .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
-            .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
-            .addBeans(MockBean.of(mock(ConfigDirProvider.class), ConfigDirProvider.class))
-            .addBeans(MockBean.of(dirProvider, DirProvider.class))
-            .addBeans(MockBean.of(csvExporter, CsvExporter.class))
-            .addBeans(MockBean.of(zip, Zip.class))
-            .addBeans(dataExportDir)
-            .addBeans(MockBean.of(mock(TimeService.class), TimeService.class))
-            .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyService.class, AccountPublicKeyServiceImpl.class))
-            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
-            .addBeans(MockBean.of(translator, CsvEscaperImpl.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
+        .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
+        .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
+        .addBeans(MockBean.of(mock(ConfigDirProvider.class), ConfigDirProvider.class))
+        .addBeans(MockBean.of(dirProvider, DirProvider.class))
+        .addBeans(MockBean.of(csvExporter, CsvExporter.class))
+        .addBeans(MockBean.of(zip, Zip.class))
+        .addBeans(dataExportDir)
+        .addBeans(MockBean.of(mock(TimeService.class), TimeService.class))
+        .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyService.class, AccountPublicKeyServiceImpl.class))
+        .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
+        .addBeans(MockBean.of(translator, CsvEscaperImpl.class))
 //            .addBeans(MockBean.of(baseDbProperties, DbProperties.class)) // YL  DO NOT REMOVE THAT PLEASE, it can be used for manual testing
-            .build();
-
+        .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
+        .build();
     @Inject
     private ShardEngine shardEngine;
     @Inject
@@ -206,25 +195,33 @@ class ShardEngineTest {
     @Inject
     private CsvExporter cvsExporter;
 
-    @Inject
-    DGSGoodsTable goodsTable;
-    @Inject
-    TransactionDao transactionDao;
-    @Inject
-    PhasingPollTable phasingPollTable;
-    @Inject
-    PrunableMessageTable messageTable;
+    {
+        weld.addInterceptor(JdbiTransactionalInterceptor.class);
+        weld.addBeanClasses(PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class, ReferencedTransactionDao.class, ShardDao.class, ShardRecoveryDao.class,
+            DerivedDbTablesRegistryImpl.class, JdbiTransactionalInterceptor.class,
+            TransactionTestData.class, PropertyProducer.class, ShardRecoveryDaoJdbcImpl.class,
+            GlobalSyncImpl.class, FullTextConfigImpl.class, FullTextConfig.class,
+            DGSGoodsTable.class, PrunableMessageServiceImpl.class, PrunableMessageTable.class,
+            PhasingPollTable.class,
+            DerivedTablesRegistry.class,
+            ShardEngineImpl.class, AplAppStatus.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class, TrimDao.class
+        );
+
+        // return the same dir for both CDI components
+        dataExportDir.getQualifiers().add(new NamedLiteral("dataExportDir")); // for CsvExporter
+        doReturn(dataExportDirPath).when(dirProvider).getDataExportDir(); // for Zip
+    }
 
 
-    public ShardEngineTest() throws Exception {}
+    public ShardEngineTest() throws Exception {
+    }
 
     private Path createPath(String fileName) {
         try {
             Path path = temporaryFolderExtension.newFolder().toPath().resolve(fileName);
             Files.createDirectories(path);
             return path;
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -258,7 +255,7 @@ class ShardEngineTest {
         assertEquals(SHARD_SCHEMA_CREATED, state);
 
         checkDbVersion(5, 3);
-        checkTableExist(new String[] {"block", "option", "transaction"}, 3);
+        checkTableExist(new String[]{"block", "option", "transaction"}, 3);
     }
 
     private void checkTableExist(String[] strings, int shardId) {
@@ -266,7 +263,7 @@ class ShardEngineTest {
         assertNotNull(dataSource, "Shard datasource should be initialized");
         for (String table : strings) {
             DbUtils.inTransaction(dataSource, (con) -> {
-                try  {
+                try {
                     con.createStatement().executeQuery("select 1 from " + table);
                 } catch (SQLException e) {
                     throw new RuntimeException(e.toString(), e);
@@ -278,13 +275,12 @@ class ShardEngineTest {
     private void checkDbVersion(int version, int shardId) {
         TransactionalDataSource dataSource = ((ShardManagement) extension.getDatabaseManager()).getShardDataSourceById(shardId);
         assertNotNull(dataSource, "Shard datasource should be initialized");
-        DbUtils.inTransaction(dataSource, (con)-> {
-            try(PreparedStatement pstmt = con.prepareStatement("select * from version");
-                ResultSet rs = pstmt.executeQuery()) {
+        DbUtils.inTransaction(dataSource, (con) -> {
+            try (PreparedStatement pstmt = con.prepareStatement("select * from version");
+                 ResultSet rs = pstmt.executeQuery()) {
                 assertTrue(rs.next(), "Version table should contain rows");
                 assertEquals(version, rs.getInt(1));
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
             }
         });
@@ -301,14 +297,14 @@ class ShardEngineTest {
         Integer[] timestamps = {4, 5, 6};
         Integer[] timeouts = {7, 8, 9};
         PrevBlockData prevBlockData = PrevBlockData.builder()
-                .prevBlockTimestamps(timestamps)
-                .prevBlockTimeouts(timeouts)
-                .generatorIds(generators)
-                .build();
+            .prevBlockTimestamps(timestamps)
+            .prevBlockTimeouts(timeouts)
+            .generatorIds(generators)
+            .build();
         state = shardEngine.addOrCreateShard(new ShardAddConstraintsSchemaVersion(), CommandParamInfo.builder().shardHash(shardHash).shardId(3L).prevBlockData(prevBlockData).build());
         assertEquals(SHARD_SCHEMA_FULL, state);
         checkDbVersion(24, 3);
-        checkTableExist(new String[] {"block", "option", "transaction"}, 3);
+        checkTableExist(new String[]{"block", "option", "transaction"}, 3);
         Shard lastShard = shardDao.getLastShard();
         assertArrayEquals(generators, Convert.toArray(lastShard.getGeneratorIds()));
         assertArrayEquals(timeouts, Convert.toArray(lastShard.getBlockTimeouts()));
@@ -389,18 +385,18 @@ class ShardEngineTest {
         tableNameList.add(new TableInfo(TRANSACTION_TABLE_NAME));
         TransactionTestData td = new TransactionTestData();
         ExcludeInfo excludeInfo = new ExcludeInfo(
-                List.of(new TransactionDbInfo(td.DB_ID_0, td.TRANSACTION_0.getId())),
-                List.of(new TransactionDbInfo(td.DB_ID_2, td.TRANSACTION_2.getId())),
-                List.of(new TransactionDbInfo(td.DB_ID_5, td.TRANSACTION_5.getId()))
+            List.of(new TransactionDbInfo(td.DB_ID_0, td.TRANSACTION_0.getId())),
+            List.of(new TransactionDbInfo(td.DB_ID_2, td.TRANSACTION_2.getId())),
+            List.of(new TransactionDbInfo(td.DB_ID_5, td.TRANSACTION_5.getId()))
         );
 
         CommandParamInfo paramInfo = CommandParamInfo.builder()
-                .shardId(4L)
-                .tableInfoList(tableNameList)
-                .commitBatchSize(2)
-                .snapshotBlockHeight(snapshotBlockHeight)
-                .excludeInfo(excludeInfo)
-                .build();
+            .shardId(4L)
+            .tableInfoList(tableNameList)
+            .commitBatchSize(2)
+            .snapshotBlockHeight(snapshotBlockHeight)
+            .excludeInfo(excludeInfo)
+            .build();
 
 //3-4.      // copy block + transaction data from main db into shard
         state = shardEngine.copyDataToShard(paramInfo);
@@ -421,15 +417,15 @@ class ShardEngineTest {
         assertEquals(td.TRANSACTION_5, transactionDao.findTransaction(td.TRANSACTION_5.getId(), shardDataSource));
 
         //5.        // create shard db FULL schema + add shard hash info
-        state = shardEngine.addOrCreateShard(new ShardAddConstraintsSchemaVersion(), CommandParamInfo.builder().shardHash(shardHash).shardId(4L).prevBlockData( PrevBlockData.builder().generatorIds(new Long[]{1L, 2L}).prevBlockTimeouts(new Integer[] {3, 4}).prevBlockTimestamps(new Integer[] {5, 6}).build()).build());
+        state = shardEngine.addOrCreateShard(new ShardAddConstraintsSchemaVersion(), CommandParamInfo.builder().shardHash(shardHash).shardId(4L).prevBlockData(PrevBlockData.builder().generatorIds(new Long[]{1L, 2L}).prevBlockTimeouts(new Integer[]{3, 4}).prevBlockTimestamps(new Integer[]{5, 6}).build()).build());
         assertEquals(SHARD_SCHEMA_FULL, state);
         // check 'merkle tree hash' is stored in shard record
         Shard shard = shardDao.getShardById(shardId);
         assertNotNull(shard);
         assertArrayEquals(shardHash, shard.getShardHash());
-        assertArrayEquals(new long[] {1, 2}, shard.getGeneratorIds());
-        assertArrayEquals(new int[] {3, 4}, shard.getBlockTimeouts());
-        assertArrayEquals(new int[] {5, 6}, shard.getBlockTimestamps());
+        assertArrayEquals(new long[]{1, 2}, shard.getGeneratorIds());
+        assertArrayEquals(new int[]{3, 4}, shard.getBlockTimeouts());
+        assertArrayEquals(new int[]{5, 6}, shard.getBlockTimestamps());
 
 
         tableNameList.clear();
@@ -473,13 +469,13 @@ class ShardEngineTest {
         state = shardEngine.exportCsv(paramInfo);
 
         assertEquals(MigrateState.CSV_EXPORT_FINISHED, state);
-        assertFalse(Files.exists(dataExportDirPath.resolve(tableToCsvFile(PHASING_POLL_TABLE_NAME ))));
-        assertEquals(5, Files.readAllLines(dataExportDirPath.resolve(tableToCsvFile(SHARD_TABLE_NAME )))                  .size());
-        assertEquals(10,Files.readAllLines(dataExportDirPath.resolve(tableToCsvFile(TRANSACTION_INDEX_TABLE_NAME )))      .size());
-        assertEquals(9, Files.readAllLines(dataExportDirPath.resolve(tableToCsvFile(BLOCK_INDEX_TABLE_NAME )))            .size());
-        assertEquals(10, Files.readAllLines(dataExportDirPath.resolve(tableToCsvFile(GOODS_TABLE_NAME )))                  .size());
-        assertEquals(4, Files.readAllLines(dataExportDirPath.resolve(tableToCsvFile(TRANSACTION_TABLE_NAME )))            .size());
-        assertEquals(2, Files.readAllLines(dataExportDirPath.resolve(tableToCsvFile(BLOCK_TABLE_NAME )))                  .size());
+        assertFalse(Files.exists(dataExportDirPath.resolve(tableToCsvFile(PHASING_POLL_TABLE_NAME))));
+        assertEquals(5, Files.readAllLines(dataExportDirPath.resolve(tableToCsvFile(SHARD_TABLE_NAME))).size());
+        assertEquals(10, Files.readAllLines(dataExportDirPath.resolve(tableToCsvFile(TRANSACTION_INDEX_TABLE_NAME))).size());
+        assertEquals(9, Files.readAllLines(dataExportDirPath.resolve(tableToCsvFile(BLOCK_INDEX_TABLE_NAME))).size());
+        assertEquals(10, Files.readAllLines(dataExportDirPath.resolve(tableToCsvFile(GOODS_TABLE_NAME))).size());
+        assertEquals(4, Files.readAllLines(dataExportDirPath.resolve(tableToCsvFile(TRANSACTION_TABLE_NAME))).size());
+        assertEquals(2, Files.readAllLines(dataExportDirPath.resolve(tableToCsvFile(BLOCK_TABLE_NAME))).size());
 
 
         paramInfo = CommandParamInfo.builder().snapshotBlockHeight(snapshotBlockHeight).excludeInfo(excludeInfo).shardId(4L).tableInfoList(tableNameList).build();
@@ -539,9 +535,9 @@ class ShardEngineTest {
         int batchLimit = 1;
         List<TableInfo> tables = List.of(SHARD_TABLE_NAME, TRANSACTION_INDEX_TABLE_NAME, TRANSACTION_TABLE_NAME, BLOCK_TABLE_NAME, ShardConstants.GOODS_TABLE_NAME, BLOCK_INDEX_TABLE_NAME, ShardConstants.PHASING_POLL_TABLE_NAME).stream().map(TableInfo::new).collect(Collectors.toList());
         ExcludeInfo excludeInfo = new ExcludeInfo(
-                List.of(),
-                List.of(new TransactionDbInfo(ttd.DB_ID_3, ttd.TRANSACTION_3.getId())),
-                List.of(new TransactionDbInfo(ttd.DB_ID_5, ttd.TRANSACTION_5.getId()))
+            List.of(),
+            List.of(new TransactionDbInfo(ttd.DB_ID_3, ttd.TRANSACTION_3.getId())),
+            List.of(new TransactionDbInfo(ttd.DB_ID_5, ttd.TRANSACTION_5.getId()))
         );
         CommandParamInfo paramInfo = CommandParamInfo.builder().tableInfoList(tables).commitBatchSize(batchLimit).snapshotBlockHeight(snaphotBlockHeight).excludeInfo(excludeInfo).build();
         doThrow(IllegalStateException.class).when(csvExporter).exportBlock(snaphotBlockHeight);
@@ -559,7 +555,7 @@ class ShardEngineTest {
         verify(csvExporter, never()).exportDerivedTable(goodsTable, snaphotBlockHeight, batchLimit);
         verify(csvExporter, never()).exportDerivedTable(phasingPollTable, snaphotBlockHeight, batchLimit);
         ShardRecovery latestShardRecovery = shardRecoveryDaoJdbc.getLatestShardRecovery(extension.getDatabaseManager().getDataSource());
-        assertEquals(String.join(",",SHARD_TABLE_NAME, TRANSACTION_INDEX_TABLE_NAME, TRANSACTION_TABLE_NAME), latestShardRecovery.getProcessedObject());
+        assertEquals(String.join(",", SHARD_TABLE_NAME, TRANSACTION_INDEX_TABLE_NAME, TRANSACTION_TABLE_NAME), latestShardRecovery.getProcessedObject());
     }
 
     @Test
@@ -569,14 +565,14 @@ class ShardEngineTest {
         blockchain.setLastBlock(btd.BLOCK_12);
         int snaphotBlockHeight = btd.BLOCK_10.getHeight() - 1;
         int batchLimit = 1;
-        DbUtils.inTransaction(extension, (con)-> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
+        DbUtils.inTransaction(extension, (con) -> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
         shardRecoveryDaoJdbc.saveShardRecovery(extension.getDatabaseManager().getDataSource(), new ShardRecovery(MigrateState.CSV_EXPORT_STARTED, null, null, null, "block,transaction_shard_index,shard"));
         List<TableInfo> tables = List.of(SHARD_TABLE_NAME, TRANSACTION_INDEX_TABLE_NAME, TRANSACTION_TABLE_NAME, BLOCK_TABLE_NAME, ShardConstants.GOODS_TABLE_NAME, BLOCK_INDEX_TABLE_NAME, ShardConstants.PHASING_POLL_TABLE_NAME).stream().map(TableInfo::new).collect(Collectors.toList());
 
         ExcludeInfo excludeInfo = new ExcludeInfo(
-                List.of(),
-                List.of(new TransactionDbInfo(ttd.DB_ID_3, ttd.TRANSACTION_3.getId())),
-                List.of(new TransactionDbInfo(ttd.DB_ID_5, ttd.TRANSACTION_5.getId()))
+            List.of(),
+            List.of(new TransactionDbInfo(ttd.DB_ID_3, ttd.TRANSACTION_3.getId())),
+            List.of(new TransactionDbInfo(ttd.DB_ID_5, ttd.TRANSACTION_5.getId()))
         );
         CommandParamInfo paramInfo = CommandParamInfo.builder().tableInfoList(tables).commitBatchSize(batchLimit).snapshotBlockHeight(snaphotBlockHeight).excludeInfo(excludeInfo).build();
         Path transactionPath = dataExportDirPath.resolve("transaction.csv");
@@ -586,13 +582,13 @@ class ShardEngineTest {
         MigrateState state = shardEngine.exportCsv(paramInfo);
 
         assertEquals(MigrateState.CSV_EXPORT_FINISHED, state);
-        assertFalse(Files.exists(dataExportDirPath.resolve(tableToCsvFile(SHARD_TABLE_NAME)))                  );
+        assertFalse(Files.exists(dataExportDirPath.resolve(tableToCsvFile(SHARD_TABLE_NAME))));
         assertFalse(Files.exists(dataExportDirPath.resolve(tableToCsvFile(TRANSACTION_INDEX_TABLE_NAME))));
-        assertFalse(Files.exists(dataExportDirPath.resolve(tableToCsvFile(BLOCK_TABLE_NAME)))                  );
+        assertFalse(Files.exists(dataExportDirPath.resolve(tableToCsvFile(BLOCK_TABLE_NAME))));
         assertFalse(Files.exists(dataExportDirPath.resolve(tableToCsvFile(GOODS_TABLE_NAME))));
 
-        assertEquals(3, Files.readAllLines(transactionPath)             .size());
-        assertEquals(4, Files.readAllLines(dataExportDirPath.resolve(tableToCsvFile(BLOCK_INDEX_TABLE_NAME)))            .size());
+        assertEquals(3, Files.readAllLines(transactionPath).size());
+        assertEquals(4, Files.readAllLines(dataExportDirPath.resolve(tableToCsvFile(BLOCK_INDEX_TABLE_NAME))).size());
 //        assertEquals(3, Files.readAllLines(dataExportDirPath.resolve(tableToCsvFile(PHASING_POLL_TABLE_NAME)))            .size());
         verify(csvExporter, never()).exportBlock(snaphotBlockHeight);
         verify(csvExporter, never()).exportShardTable(snaphotBlockHeight, batchLimit);
@@ -610,7 +606,7 @@ class ShardEngineTest {
         BlockTestData btd = new BlockTestData();
         int snaphotBlockHeight = btd.BLOCK_10.getHeight();
         int batchLimit = 1;
-        DbUtils.inTransaction(extension, (con)-> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
+        DbUtils.inTransaction(extension, (con) -> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
         shardRecoveryDaoJdbc.saveShardRecovery(extension.getDatabaseManager().getDataSource(), new ShardRecovery(MigrateState.ZIP_ARCHIVE_STARTED, null, null, null, "block,transaction_shard_index,shard"));
         List<TableInfo> tables = List.of(SHARD_TABLE_NAME, TRANSACTION_INDEX_TABLE_NAME, TRANSACTION_TABLE_NAME, BLOCK_TABLE_NAME, ShardConstants.GOODS_TABLE_NAME, BLOCK_INDEX_TABLE_NAME, ShardConstants.PHASING_POLL_TABLE_NAME).stream().map(TableInfo::new).collect(Collectors.toList());
         CommandParamInfo paramInfo = CommandParamInfo.builder().tableInfoList(tables).commitBatchSize(batchLimit).snapshotBlockHeight(snaphotBlockHeight).build();
@@ -644,7 +640,7 @@ class ShardEngineTest {
         int snaphotBlockHeight = btd.BLOCK_10.getHeight() - 1;
         int batchLimit = 1;
         List<TableInfo> tables = List.of(new TableInfo(GOODS_TABLE_NAME));
-        DbUtils.inTransaction(extension, (con)-> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
+        DbUtils.inTransaction(extension, (con) -> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
         CommandParamInfo paramInfo = CommandParamInfo.builder().tableInfoList(tables).commitBatchSize(batchLimit).snapshotBlockHeight(snaphotBlockHeight).build();
 
         MigrateState state = shardEngine.exportCsv(paramInfo);
@@ -666,7 +662,7 @@ class ShardEngineTest {
         int snaphotBlockHeight = btd.BLOCK_10.getHeight() - 1;
         int batchLimit = 1;
         List<TableInfo> tables = List.of(new TableInfo(GOODS_TABLE_NAME));
-        DbUtils.inTransaction(extension, (con)-> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
+        DbUtils.inTransaction(extension, (con) -> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
         CommandParamInfo paramInfo = CommandParamInfo.builder().tableInfoList(tables).commitBatchSize(batchLimit).snapshotBlockHeight(snaphotBlockHeight).build();
         Path csvFile = Files.createFile(dataExportDirPath.resolve("old.csv"));
         Path emptyDir = Files.createDirectory(dataExportDirPath.resolve("empty-dir"));
@@ -699,7 +695,7 @@ class ShardEngineTest {
         Files.createFile(dataExportDirPath.resolve(GOODS_TABLE_NAME + CSV_FILE_EXTENSION));
         Files.createFile(dataExportDirPath.resolve(PRUNABLE_MESSAGE_TABLE_NAME + CSV_FILE_EXTENSION));
         Files.createFile(dataExportDirPath.resolve("another-file.txt"));
-        DbUtils.inTransaction(extension, (con)-> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
+        DbUtils.inTransaction(extension, (con) -> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
         CommandParamInfo paramInfo = CommandParamInfo.builder().shardId(4L).tableInfoList(List.of(new TableInfo(PRUNABLE_MESSAGE_TABLE_NAME, true), new TableInfo(GOODS_TABLE_NAME))).build();
 
         MigrateState state = shardEngine.archiveCsv(paramInfo);
@@ -721,7 +717,7 @@ class ShardEngineTest {
     void verifyZip(Path path, String... files) throws IOException {
         assertTrue(Files.exists(path));
         Path output = dataExportDirPath.resolve("output-" + path.getFileName());
-        zip.extract(path.toAbsolutePath().toString(), output.toAbsolutePath().toString());
+        zip.extract(path.toAbsolutePath().toString(), output.toAbsolutePath().toString(), true);
         assertEquals(files.length, FileUtils.countElementsOfDirectory(output));
         for (String file : files) {
             Files.exists(output.resolve(file));
@@ -732,7 +728,7 @@ class ShardEngineTest {
     void testArchiveCsvWithException() throws IOException {
         Files.createFile(dataExportDirPath.resolve(GOODS_TABLE_NAME + CSV_FILE_EXTENSION));
         Files.createFile(dataExportDirPath.resolve(PRUNABLE_MESSAGE_TABLE_NAME + CSV_FILE_EXTENSION));
-        DbUtils.inTransaction(extension, (con)-> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
+        DbUtils.inTransaction(extension, (con) -> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
         TableInfo prunableTableInfo = spy(new TableInfo(PRUNABLE_MESSAGE_TABLE_NAME, true));
         CommandParamInfo paramInfo = CommandParamInfo.builder().shardId(4L).tableInfoList(List.of(prunableTableInfo, new TableInfo(GOODS_TABLE_NAME))).build();
         doThrow(new RuntimeException()).when(prunableTableInfo).getName();
@@ -752,7 +748,7 @@ class ShardEngineTest {
 
     @Test
     void testArchiveAlreadyFinished() {
-        DbUtils.inTransaction(extension, (con)-> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
+        DbUtils.inTransaction(extension, (con) -> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
         CommandParamInfo paramInfo = CommandParamInfo.builder().shardId(4L).tableInfoList(List.of(new TableInfo(PRUNABLE_MESSAGE_TABLE_NAME, true), new TableInfo(GOODS_TABLE_NAME))).build();
         shardRecoveryDaoJdbc.saveShardRecovery(extension.getDatabaseManager().getDataSource(), new ShardRecovery(MigrateState.ZIP_ARCHIVE_FINISHED));
 
@@ -770,7 +766,7 @@ class ShardEngineTest {
         Files.createFile(dataExportDirPath.resolve("another-file.txt"));
         Files.createFile(dataExportDirPath.resolve("apl-blockchain-shardprun-4-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip"));
 
-        DbUtils.inTransaction(extension, (con)-> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
+        DbUtils.inTransaction(extension, (con) -> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
         shardRecoveryDaoJdbc.saveShardRecovery(extension.getDatabaseManager().getDataSource(), new ShardRecovery(MigrateState.ZIP_ARCHIVE_STARTED, null, null, null, "apl-blockchain-shard-4-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip"));
 
         CommandParamInfo paramInfo = CommandParamInfo.builder().shardId(4L).tableInfoList(List.of(new TableInfo(PRUNABLE_MESSAGE_TABLE_NAME, true), new TableInfo(GOODS_TABLE_NAME))).build();
@@ -796,7 +792,7 @@ class ShardEngineTest {
         Files.createFile(dataExportDirPath.resolve("another-file.txt"));
         Files.createFile(dataExportDirPath.resolve("apl-blockchain-shardprun-4-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip"));
 
-        DbUtils.inTransaction(extension, (con)-> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
+        DbUtils.inTransaction(extension, (con) -> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
 
         CommandParamInfo paramInfo = CommandParamInfo.builder().shardId(4L).tableInfoList(List.of(new TableInfo(PRUNABLE_MESSAGE_TABLE_NAME, true), new TableInfo("goods"))).build();
 

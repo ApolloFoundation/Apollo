@@ -16,8 +16,8 @@ public class BlockTimeScaledConfig {
     private final int referencedTransactionHeightSpan;
 
     public BlockTimeScaledConfig(int blockTime) {
-        this.leasingDelay = (int) (1440 * (60 / (double)blockTime));
-        this.guaranteedBalanceConfirmations = (int) (1440 * (60 / (double)blockTime));
+        this.leasingDelay = (int) (1440 * (60 / (double) blockTime));
+        this.guaranteedBalanceConfirmations = (int) (1440 * (60 / (double) blockTime));
         this.referencedTransactionHeightSpan = Constants.MAX_REFERENCED_TRANSACTION_TIMESPAN / blockTime;
     }
 

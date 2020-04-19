@@ -20,8 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
@@ -44,6 +42,9 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 
+import javax.enterprise.event.Observes;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -51,28 +52,46 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.enterprise.event.Observes;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 public final class Shuffler {
     private static final Logger LOG = getLogger(Shuffler.class);
 
     // TODO: YL remove static instance later
-
-    private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
-    private static final int MAX_SHUFFLERS = propertiesLoader.getIntProperty("apl.maxNumberOfShufflers");
     private static final Map<String, Map<Long, Shuffler>> shufflingsMap = new HashMap<>();
     private static final Map<Integer, Set<String>> expirations = new HashMap<>();
+    private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
+    private static final int MAX_SHUFFLERS = propertiesLoader.getIntProperty("apl.maxNumberOfShufflers");
     private static TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
     private static FeeCalculator feeCalculator = new FeeCalculator();
     private static BlockchainProcessor blockchainProcessor;
     private static AccountService accountService;
+    private final long accountId;
+    private final byte[] secretBytes;
+    private final byte[] recipientPublicKey;
+    private final byte[] shufflingFullHash;
+    private volatile Transaction failedTransaction;
+    private volatile AplException.NotCurrentlyValidException failureCause;
 
-    private static AccountService lookupAccountService(){
-        if ( accountService == null) {
+    private Shuffler(byte[] secretBytes, byte[] recipientPublicKey, byte[] shufflingFullHash) {
+        this.secretBytes = secretBytes;
+        this.accountId = AccountService.getId(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)));
+        this.recipientPublicKey = recipientPublicKey;
+        this.shufflingFullHash = shufflingFullHash;
+    }
+
+    private Shuffler(long accountId, byte[] secretBytes, byte[] recipientPublicKey, byte[] shufflingFullHash) {
+        this.accountId = accountId;
+        this.secretBytes = secretBytes;
+        this.recipientPublicKey = recipientPublicKey;
+        this.shufflingFullHash = shufflingFullHash;
+    }
+
+    private static AccountService lookupAccountService() {
+        if (accountService == null) {
             accountService = CDI.current().select(AccountServiceImpl.class).get();
         }
         return accountService;
@@ -125,7 +144,7 @@ public final class Shuffler {
                 }
                 map.put(accountId, shuffler);
                 LOG.info("Started shuffler for account {}, shuffling {}",
-                        Long.toUnsignedString(accountId), Long.toUnsignedString(Convert.fullHashToId(shufflingFullHash)));
+                    Long.toUnsignedString(accountId), Long.toUnsignedString(Convert.fullHashToId(shufflingFullHash)));
             } else if (!Arrays.equals(shuffler.recipientPublicKey, recipientPublicKey)) {
                 throw new DuplicateShufflerException("A shuffler with different recipientPublicKey already started");
             } else if (!Arrays.equals(shuffler.shufflingFullHash, shufflingFullHash)) {
@@ -221,7 +240,7 @@ public final class Shuffler {
     private static Shuffler getRecipientShuffler(long recipientId) {
         globalSync.readLock();
         try {
-            for (Map<Long,Shuffler> shufflerMap : shufflingsMap.values()) {
+            for (Map<Long, Shuffler> shufflerMap : shufflingsMap.values()) {
                 for (Shuffler shuffler : shufflerMap.values()) {
                     if (AccountService.getId(shuffler.recipientPublicKey) == recipientId) {
                         return shuffler;
@@ -300,46 +319,6 @@ public final class Shuffler {
         Shuffling.addListener(Shuffler::scheduleExpiration, Shuffling.Event.SHUFFLING_CANCELLED);
     }
 
-    @Singleton
-    @Slf4j
-    public static class ShufflerObserver {
-        public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
-            log.trace(":accept:ShufflerObserver: START onBlockApply AFTER_BLOCK_APPLY, block={}", block.getHeight());
-            Set<String> expired = expirations.get(block.getHeight());
-            if (expired != null) {
-                expired.forEach(shufflingsMap::remove);
-                expirations.remove(block.getHeight());
-                log.trace(":accept:ShufflerObserver:  onBlockApply AFTER_BLOCK_APPLY, block={}, expired=[{}]",
-                        block.getHeight(), expired.size());
-            }
-            log.trace(":accept:ShufflerObserver: END onBlockApplaid AFTER_BLOCK_APPLY, block={}", block.getHeight());
-        }
-        public void onBlockAccepted(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_ACCEPT) Block block) {
-            log.debug(":accept:ShufflerObserver: START onAfterBlockAccept AFTER_BLOCK_ACCEPT, block height={}, shufflingsMap=[{}]",
-                    block.getHeight(), shufflingsMap.size());
-            shufflingsMap.values().forEach(shufflerMap -> shufflerMap.values().forEach(shuffler -> {
-                if (shuffler.failedTransaction != null) {
-                    try {
-                        transactionProcessor.broadcast(shuffler.failedTransaction);
-                        shuffler.failedTransaction = null;
-                        shuffler.failureCause = null;
-                    }
-                    catch (AplException.ValidationException ignore) {
-                    }
-                }
-            }));
-        }
-
-        public void onRescanBegan(@Observes @BlockEvent(BlockEventType.RESCAN_BEGIN) Block block) {
-            stopAllShufflers();
-        }
-
-        public void onDbHotSwapBegin(@Observes DbHotSwapConfig config) {
-            stopAllShufflers();
-        }
-    }
-
-
     private static Map<Long, Shuffler> getShufflers(Shuffling shuffling) {
         return shufflingsMap.get(Convert.toHexString(shuffling.getFullHash()));
     }
@@ -360,27 +339,6 @@ public final class Shuffler {
                 return;
             }
         }
-    }
-
-    private final long accountId;
-    private final byte[] secretBytes;
-    private final byte[] recipientPublicKey;
-    private final byte[] shufflingFullHash;
-    private volatile Transaction failedTransaction;
-    private volatile AplException.NotCurrentlyValidException failureCause;
-
-    private Shuffler(byte[] secretBytes, byte[] recipientPublicKey, byte[] shufflingFullHash) {
-        this.secretBytes = secretBytes;
-        this.accountId = AccountService.getId(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)));
-        this.recipientPublicKey = recipientPublicKey;
-        this.shufflingFullHash = shufflingFullHash;
-    }
-
-    private Shuffler(long accountId, byte[] secretBytes, byte[] recipientPublicKey, byte[] shufflingFullHash) {
-        this.accountId = accountId;
-        this.secretBytes = secretBytes;
-        this.recipientPublicKey = recipientPublicKey;
-        this.shufflingFullHash = shufflingFullHash;
     }
 
     public long getAccountId() {
@@ -506,7 +464,7 @@ public final class Shuffler {
     private void submitCancel(Shuffling shuffling) {
         LOG.debug("Account {} cancelling shuffling {}", Long.toUnsignedString(accountId), Long.toUnsignedString(shuffling.getId()));
         ShufflingCancellationAttachment attachment = shuffling.revealKeySeeds(secretBytes, shuffling.getAssigneeAccountId(),
-                shuffling.getStateHash());
+            shuffling.getStateHash());
         submitTransaction(attachment);
     }
 
@@ -526,7 +484,7 @@ public final class Shuffler {
         }
         try {
             Transaction.Builder builder = Transaction.newTransactionBuilder(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)), 0, 0,
-                    (short) 1440, attachment, blockchain.getLastBlockTimestamp());
+                (short) 1440, attachment, blockchain.getLastBlockTimestamp());
 
             Transaction transaction = builder.build(null);
             transaction.setFeeATM(feeCalculator.getMinimumFeeATM(transaction, blockchain.getHeight()));
@@ -542,7 +500,7 @@ public final class Shuffler {
             try {
                 transactionProcessor.broadcast(transaction);
                 LOG.trace("Submitted Shuffling Tx: id: {}, participantAccount:{}, atm: {}, deadline: {}",
-                        transaction.getId(), participantAccount, transaction.getAmountATM(), transaction.getDeadline());
+                    transaction.getId(), participantAccount, transaction.getAmountATM(), transaction.getDeadline());
             } catch (AplException.NotCurrentlyValidException e) {
                 failedTransaction = transaction;
                 failureCause = e;
@@ -562,11 +520,50 @@ public final class Shuffler {
             if (!attachment.getClass().equals(shufflingAttachment.getClass())) {
                 continue;
             }
-            if (Arrays.equals(shufflingAttachment.getShufflingStateHash(), ((ShufflingAttachment)attachment).getShufflingStateHash())) {
+            if (Arrays.equals(shufflingAttachment.getShufflingStateHash(), ((ShufflingAttachment) attachment).getShufflingStateHash())) {
                 return true;
             }
         }
         return false;
+    }
+
+    @Singleton
+    @Slf4j
+    public static class ShufflerObserver {
+        public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
+            log.trace(":accept:ShufflerObserver: START onBlockApply AFTER_BLOCK_APPLY, block={}", block.getHeight());
+            Set<String> expired = expirations.get(block.getHeight());
+            if (expired != null) {
+                expired.forEach(shufflingsMap::remove);
+                expirations.remove(block.getHeight());
+                log.trace(":accept:ShufflerObserver:  onBlockApply AFTER_BLOCK_APPLY, block={}, expired=[{}]",
+                    block.getHeight(), expired.size());
+            }
+            log.trace(":accept:ShufflerObserver: END onBlockApplaid AFTER_BLOCK_APPLY, block={}", block.getHeight());
+        }
+
+        public void onBlockAccepted(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_ACCEPT) Block block) {
+            log.debug(":accept:ShufflerObserver: START onAfterBlockAccept AFTER_BLOCK_ACCEPT, block height={}, shufflingsMap=[{}]",
+                block.getHeight(), shufflingsMap.size());
+            shufflingsMap.values().forEach(shufflerMap -> shufflerMap.values().forEach(shuffler -> {
+                if (shuffler.failedTransaction != null) {
+                    try {
+                        transactionProcessor.broadcast(shuffler.failedTransaction);
+                        shuffler.failedTransaction = null;
+                        shuffler.failureCause = null;
+                    } catch (AplException.ValidationException ignore) {
+                    }
+                }
+            }));
+        }
+
+        public void onRescanBegan(@Observes @BlockEvent(BlockEventType.RESCAN_BEGIN) Block block) {
+            stopAllShufflers();
+        }
+
+        public void onDbHotSwapBegin(@Observes DbHotSwapConfig config) {
+            stopAllShufflers();
+        }
     }
 
     public static class ShufflerException extends AplException {

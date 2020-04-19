@@ -41,7 +41,7 @@ import java.util.concurrent.Executor;
 
 /**
  * Wrapper for a SQL Connection
- *
+ * <p>
  * The wrapper forwards all methods to the wrapped connection.  The supplied factory is
  * used to create wrappers for statements and prepared statements that are created for
  * this connection.
@@ -77,13 +77,13 @@ public class FilteredConnection implements Connection {
     }
 
     @Override
-    public void setAutoCommit(boolean autoCommit) throws SQLException {
-        con.setAutoCommit(autoCommit);
+    public boolean getAutoCommit() throws SQLException {
+        return con.getAutoCommit();
     }
 
     @Override
-    public boolean getAutoCommit() throws SQLException {
-        return con.getAutoCommit();
+    public void setAutoCommit(boolean autoCommit) throws SQLException {
+        con.setAutoCommit(autoCommit);
     }
 
     @Override
@@ -112,18 +112,13 @@ public class FilteredConnection implements Connection {
     }
 
     @Override
-    public void setReadOnly(boolean readOnly) throws SQLException {
-        con.setReadOnly(readOnly);
-    }
-
-    @Override
     public boolean isReadOnly() throws SQLException {
         return con.isReadOnly();
     }
 
     @Override
-    public void setCatalog(String catalog) throws SQLException {
-        con.setCatalog(catalog);
+    public void setReadOnly(boolean readOnly) throws SQLException {
+        con.setReadOnly(readOnly);
     }
 
     @Override
@@ -132,13 +127,18 @@ public class FilteredConnection implements Connection {
     }
 
     @Override
-    public void setTransactionIsolation(int level) throws SQLException {
-        con.setTransactionIsolation(level);
+    public void setCatalog(String catalog) throws SQLException {
+        con.setCatalog(catalog);
     }
 
     @Override
     public int getTransactionIsolation() throws SQLException {
         return con.getTransactionIsolation();
+    }
+
+    @Override
+    public void setTransactionIsolation(int level) throws SQLException {
+        con.setTransactionIsolation(level);
     }
 
     @Override
@@ -177,13 +177,13 @@ public class FilteredConnection implements Connection {
     }
 
     @Override
-    public void setHoldability(int holdability) throws SQLException {
-        con.setHoldability(holdability);
+    public int getHoldability() throws SQLException {
+        return con.getHoldability();
     }
 
     @Override
-    public int getHoldability() throws SQLException {
-        return con.getHoldability();
+    public void setHoldability(int holdability) throws SQLException {
+        con.setHoldability(holdability);
     }
 
     @Override
@@ -267,11 +267,6 @@ public class FilteredConnection implements Connection {
     }
 
     @Override
-    public void setClientInfo(Properties properties) throws SQLClientInfoException {
-        con.setClientInfo(properties);
-    }
-
-    @Override
     public String getClientInfo(String name) throws SQLException {
         return con.getClientInfo(name);
     }
@@ -279,6 +274,11 @@ public class FilteredConnection implements Connection {
     @Override
     public Properties getClientInfo() throws SQLException {
         return con.getClientInfo();
+    }
+
+    @Override
+    public void setClientInfo(Properties properties) throws SQLClientInfoException {
+        con.setClientInfo(properties);
     }
 
     @Override
@@ -292,13 +292,13 @@ public class FilteredConnection implements Connection {
     }
 
     @Override
-    public void setSchema(String schema) throws SQLException {
-        con.setSchema(schema);
+    public String getSchema() throws SQLException {
+        return con.getSchema();
     }
 
     @Override
-    public String getSchema() throws SQLException {
-        return con.getSchema();
+    public void setSchema(String schema) throws SQLException {
+        con.setSchema(schema);
     }
 
     @Override

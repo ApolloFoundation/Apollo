@@ -48,32 +48,27 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 @EnableWeld
-class AccountDaoTest  {
+class AccountDaoTest {
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension(DbTestData.getInMemDbProps(), "db/acc-data.sql", "db/schema.sql");
-
-    private Blockchain blockchain = mock(BlockchainImpl.class);
-    private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
-
-
-    @WeldSetup
-    public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class, EntityProducer.class, AccountTable.class
-            )
-            .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
-            .addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class))
-
-            .addBeans(MockBean.of(mock(FullTextConfig.class), FullTextConfig.class, FullTextConfigImpl.class))
-            .addBeans(MockBean.of(mock(DerivedTablesRegistry.class), DerivedTablesRegistry.class, DerivedDbTablesRegistryImpl.class))
-            .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
-            .build();
-
     @Inject
     AccountTable table;
-
     AccountTestData td;
+    private Blockchain blockchain = mock(BlockchainImpl.class);
+    private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+    @WeldSetup
+    public WeldInitiator weld = WeldInitiator.from(
+        PropertiesHolder.class, EntityProducer.class, AccountTable.class
+    )
+        .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
+        .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
+        .addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class))
+
+        .addBeans(MockBean.of(mock(FullTextConfig.class), FullTextConfig.class, FullTextConfigImpl.class))
+        .addBeans(MockBean.of(mock(DerivedTablesRegistry.class), DerivedTablesRegistry.class, DerivedDbTablesRegistryImpl.class))
+        .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
+        .build();
 
     @BeforeEach
     void setUp() {
@@ -133,7 +128,7 @@ class AccountDaoTest  {
 
     @Test
     void testDeleteAndTrim() throws SQLException {
-        DbUtils.inTransaction(dbExtension, (con)-> {
+        DbUtils.inTransaction(dbExtension, (con) -> {
             td.ACC_10.setHeight(td.ACC_10.getHeight() + 1);
             boolean deleted = table.deleteAtHeight(td.ACC_10, td.ACC_10.getHeight() + 1);
             assertTrue(deleted);
@@ -153,13 +148,13 @@ class AccountDaoTest  {
         assertFalse(deletedPreviousAcc.isLatest());
 
         // Trim latest=false none of deleted record
-        DbUtils.inTransaction(dbExtension, (con)-> table.trim(td.ACC_10.getHeight()));
+        DbUtils.inTransaction(dbExtension, (con) -> table.trim(td.ACC_10.getHeight()));
 
         int afterTrimSize = table.getRowCount();
         assertEquals(14, afterTrimSize); // 1 updated id=700, 2 updated for id=500
 
         // Trim another deleted record for ACC_10
-        DbUtils.inTransaction(dbExtension, (con)-> {
+        DbUtils.inTransaction(dbExtension, (con) -> {
             table.trim(td.ACC_10.getHeight() + 1); // delete 'deleted' record
         });
 
@@ -176,11 +171,12 @@ class AccountDaoTest  {
         td.ACC_13.setDeleted(false);
         assertEquals(td.ACC_13, account);
     }
+
     @Test
     void testRollback_deleted_no_updated() throws SQLException {
         td.ACC_14.setHeight(td.ACC_14.getHeight() + 1);
         td.ACC_14.setBalanceATM(td.ACC_14.getBalanceATM() - 100);
-        DbUtils.inTransaction(dbExtension, (con)-> table.insert(td.ACC_14));
+        DbUtils.inTransaction(dbExtension, (con) -> table.insert(td.ACC_14));
         DbUtils.inTransaction(dbExtension, (con) -> table.rollback(td.ACC_14.getHeight() - 1));
 
         Account account = table.get(new LongKey(td.ACC_14.getId()));
@@ -194,11 +190,11 @@ class AccountDaoTest  {
     @Test
     void testRollback_update_latest_for_prev_not_deleted() throws SQLException {
         Account newAcc1 = new Account(td.ACC_14.getId(), td.ACC_14.getBalanceATM() - 100, td.ACC_14.getUnconfirmedBalanceATM(), 0, 0, td.ACC_14.getHeight() + 1);
-        DbUtils.inTransaction(dbExtension, (con)-> table.insert(newAcc1));
+        DbUtils.inTransaction(dbExtension, (con) -> table.insert(newAcc1));
 
         Account newAcc2 = new Account(td.ACC_14.getId(), td.ACC_14.getBalanceATM() - 100, td.ACC_14.getUnconfirmedBalanceATM(), 0, 0, td.ACC_14.getHeight() + 2);
         newAcc2.setDbId(td.ACC_14.getDbId() + 2);
-        DbUtils.inTransaction(dbExtension, (con)-> table.insert(newAcc2));
+        DbUtils.inTransaction(dbExtension, (con) -> table.insert(newAcc2));
 
         DbUtils.inTransaction(dbExtension, (con) -> table.rollback(newAcc2.getHeight() - 1));
 

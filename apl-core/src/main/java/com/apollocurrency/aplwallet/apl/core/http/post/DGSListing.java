@@ -21,33 +21,50 @@
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsListing;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsListing;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.Search;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DGS_LISTING_DESCRIPTION;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DGS_LISTING_NAME;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DGS_LISTING_TAGS;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_NAME;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public final class DGSListing extends CreateTransaction {
 
+    private static final JSONStreamAware MESSAGE_NOT_BINARY;
+    private static final JSONStreamAware MESSAGE_NOT_IMAGE;
+
+    static {
+        JSONObject response = new JSONObject();
+        response.put("errorCode", 8);
+        response.put("errorDescription", "Only binary message attachments accepted as DGS listing images");
+        MESSAGE_NOT_BINARY = JSON.prepare(response);
+    }
+
+    static {
+        JSONObject response = new JSONObject();
+        response.put("errorCode", 9);
+        response.put("errorDescription", "Message attachment is not an image");
+        MESSAGE_NOT_IMAGE = JSON.prepare(response);
+    }
+
     public DGSListing() {
-        super("messageFile", new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION},
-                "name", "description", "tags", "quantity", "priceATM");
+        super("messageFile", new APITag[]{APITag.DGS, APITag.CREATE_TRANSACTION},
+            "name", "description", "tags", "quantity", "priceATM");
     }
 
     @Override
@@ -91,22 +108,6 @@ public final class DGSListing extends CreateTransaction {
         Attachment attachment = new DigitalGoodsListing(name, description, tags, quantity, priceATM);
         return createTransaction(req, account, attachment);
 
-    }
-
-    private static final JSONStreamAware MESSAGE_NOT_BINARY;
-    static {
-        JSONObject response = new JSONObject();
-        response.put("errorCode", 8);
-        response.put("errorDescription", "Only binary message attachments accepted as DGS listing images");
-        MESSAGE_NOT_BINARY = JSON.prepare(response);
-    }
-
-    private static final JSONStreamAware MESSAGE_NOT_IMAGE;
-    static {
-        JSONObject response = new JSONObject();
-        response.put("errorCode", 9);
-        response.put("errorDescription", "Message attachment is not an image");
-        MESSAGE_NOT_IMAGE = JSON.prepare(response);
     }
 
 }

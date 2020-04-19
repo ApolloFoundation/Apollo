@@ -11,14 +11,14 @@ import lombok.Setter;
 import lombok.ToString;
 
 /**
- *
  * @author alukin@gmail.com
  */
-@Getter @Setter
+@Getter
+@Setter
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class FileDownloadInfoResponse extends BaseP2PResponse {
-    public FileDownloadInfo downloadInfo=new FileDownloadInfo(); 
+    public FileDownloadInfo downloadInfo = new FileDownloadInfo();
 }

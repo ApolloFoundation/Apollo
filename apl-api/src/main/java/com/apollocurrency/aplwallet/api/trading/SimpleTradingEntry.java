@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.api.trading;
 
 /**
- *
  * @author Serhiy Lymar
  */
 
@@ -16,6 +15,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 import java.util.Objects;
 
@@ -35,9 +35,9 @@ public class SimpleTradingEntry {
 
     @JsonIgnore
     public boolean isZero() {
-        return open.equals(BigDecimal.ZERO)&&close.equals(BigDecimal.ZERO)&&
-                low.equals(BigDecimal.ZERO)&&high.equals(BigDecimal.ZERO)&&
-                volumefrom.equals(BigDecimal.ZERO)&&volumeto.equals(BigDecimal.ZERO);
+        return open.equals(BigDecimal.ZERO) && close.equals(BigDecimal.ZERO) &&
+            low.equals(BigDecimal.ZERO) && high.equals(BigDecimal.ZERO) &&
+            volumefrom.equals(BigDecimal.ZERO) && volumeto.equals(BigDecimal.ZERO);
     }
 
     @Override

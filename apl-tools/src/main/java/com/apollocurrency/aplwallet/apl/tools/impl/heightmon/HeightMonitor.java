@@ -23,6 +23,7 @@ public class HeightMonitor {
     private ScheduledExecutorService executor;
     private int delay;
     private AplContainer container;
+
     public HeightMonitor(Integer delay) {
         this.executor = Executors.newScheduledThreadPool(1);
         this.delay = delay == null ? DEFAULT_DELAY : delay;
@@ -34,18 +35,17 @@ public class HeightMonitor {
 
     public void start(HeightMonitorConfig config) {
         try {
-            this.container =  AplContainer.builder().containerId("MAIN-APL-CDI")
-                    .annotatedDiscoveryMode()
+            this.container = AplContainer.builder().containerId("MAIN-APL-CDI")
+                .annotatedDiscoveryMode()
 //                    .recursiveScanPackages(JettyServer.class)
-                    .devMode() // enable for dev only
-                    .build();
+                .devMode() // enable for dev only
+                .build();
             HeightMonitorService service = CDI.current().select(HeightMonitorService.class).get();
             CDI.current().select(JettyServer.class).get();
             Runtime.getRuntime().addShutdownHook(new Thread(this::stop));
             service.setUp(config);
             executor.scheduleWithFixedDelay(service::updateStats, 0, delay, TimeUnit.SECONDS);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
@@ -54,8 +54,7 @@ public class HeightMonitor {
         try {
             executor.shutdown();
             container.shutdown();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }

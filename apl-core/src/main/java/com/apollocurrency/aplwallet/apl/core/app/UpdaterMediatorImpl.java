@@ -25,12 +25,12 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Singleton
 public class UpdaterMediatorImpl implements UpdaterMediator {
     private static final Logger LOG = getLogger(UpdaterMediatorImpl.class);
-
+    private final PeersService peers = CDI.current().select(PeersService.class).get();
+    private final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private TransactionProcessor transactionProcessor;
     private BlockchainProcessor blockchainProcessor;
     private Blockchain blockchain;
-    private final PeersService peers = CDI.current().select(PeersService.class).get();
-    private final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+
     //    @Inject
 /*
     public UpdaterMediatorImpl(Blockchain blockchain) {
@@ -43,12 +43,12 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
     @Override
     public void shutdownApplication() {
         AplCoreRuntime aplCoreRuntime = CDI.current().select(AplCoreRuntime.class).get();
-        if(aplCoreRuntime!=null){
+        if (aplCoreRuntime != null) {
             aplCoreRuntime.shutdown();
-        }else{
+        } else {
             LOG.error("Can not shutdown application");
         }
- //       AplCore.removeShutdownHook();
+        //       AplCore.removeShutdownHook();
     }
 
     @Override
@@ -121,7 +121,7 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
 
     @Override
     public PropertiesHolder getPropertyHolder() {
-       return propertiesHolder;
+        return propertiesHolder;
     }
 
     @Override

@@ -26,18 +26,17 @@ import static org.mockito.Mockito.times;
 
 @EnableWeld
 public class ShardObserverIntegrationTest {
+    static final int DEFAULT_SHARDING_FREQUENCY = 100;
+    private final ShardService shardService = mock(ShardService.class);
     BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     HeightConfig heightConfig = mock(HeightConfig.class);
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
-    static final int DEFAULT_SHARDING_FREQUENCY = 100;
-
-    private final ShardService shardService = mock(ShardService.class);
     @WeldSetup
     WeldInitiator weldInitiator = WeldInitiator.from(ShardObserver.class)
-            .addBeans(MockBean.of(shardService, ShardService.class))
-            .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
-            .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
-            .build();
+        .addBeans(MockBean.of(shardService, ShardService.class))
+        .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
+        .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
+        .build();
     @Inject
     Event<TrimData> trimEvent;
     @Inject
@@ -46,7 +45,7 @@ public class ShardObserverIntegrationTest {
     @Test
     void testDoShardByAsyncEvent() {
         Mockito.doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
-        Mockito.doReturn(4072*1024*1024L).when(mock(Runtime.class)).totalMemory(); // give it more then 3 GB
+        //Mockito.doReturn(4072*1024*1024L).when(mock(Runtime.class)).totalMemory(); // give it more then 3 GB
         trimEvent.select(new AnnotationLiteral<TrimEvent>() {
         }).fireAsync(new TrimData(100, 100, 0));
         try {
@@ -63,7 +62,7 @@ public class ShardObserverIntegrationTest {
         doReturn(true).when(heightConfig).isShardingEnabled();
         doReturn(false).when(propertiesHolder).getBooleanProperty("apl.noshardcreate", false);
         doReturn(DEFAULT_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
-        Mockito.doReturn(4072*1024*1024L).when(mock(Runtime.class)).totalMemory(); // give it more then 3 GB
+        //Mockito.doReturn(4072*1024*1024L).when(mock(Runtime.class)).totalMemory(); // give it more then 3 GB
         trimEvent.select(new AnnotationLiteral<TrimEvent>() {
         }).fire(new TrimData(100, 100, 0));
 

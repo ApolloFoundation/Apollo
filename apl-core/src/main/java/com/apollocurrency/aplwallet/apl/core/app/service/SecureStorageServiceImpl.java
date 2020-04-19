@@ -35,17 +35,14 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Singleton
 public class SecureStorageServiceImpl implements SecureStorageService {
     private static final Logger LOG = getLogger(SecureStorageServiceImpl.class);
-
-    private Path secureStoragePath;
-    private Path secureStoragePathCopy;
-
     private static final String SECURE_STORE_FILE_NAME = "secure_store";
     private static final String SECURE_STORE_FILE_COPY_NAME = "secure_store_copy";
-
-    private Map<Long, String> store = new ConcurrentHashMap<>();
     private final OptionDAO optionDAO;
     private final PropertyStorageService propertyStorageService;
     private final boolean isEnabled;
+    private Path secureStoragePath;
+    private Path secureStoragePathCopy;
+    private Map<Long, String> store = new ConcurrentHashMap<>();
 
     @Inject
     public SecureStorageServiceImpl(@Named("secureStoreDirPath") Path secureStorageDirPath, PropertiesHolder propertiesHolder, OptionDAO optionDAO,
@@ -76,7 +73,7 @@ public class SecureStorageServiceImpl implements SecureStorageService {
     }
 
     @Override
-    public void addUserPassPhrase(Long accountId, String passPhrase){
+    public void addUserPassPhrase(Long accountId, String passPhrase) {
         if (isEnabled) {
             store.put(accountId, passPhrase);
 
@@ -85,7 +82,7 @@ public class SecureStorageServiceImpl implements SecureStorageService {
     }
 
     @Override
-    public String getUserPassPhrase(Long accountId){
+    public String getUserPassPhrase(Long accountId) {
         return store.get(accountId);
     }
 
@@ -96,6 +93,7 @@ public class SecureStorageServiceImpl implements SecureStorageService {
 
     /**
      * Store storage.
+     *
      * @return true - stored successfully.
      */
     @Override
@@ -117,7 +115,7 @@ public class SecureStorageServiceImpl implements SecureStorageService {
 
     public boolean storeSecretStorage(String keyName, Path secureStoragePath) {
         log.trace("storeSecretStorage 1, keyName='{}', secureStoragePathCopy = '{}'", keyName, secureStoragePathCopy);
-        String privateKey = getPK(keyName);
+        String privateKey = getKeyOrCreateIfNotExist(keyName);
         SecureStorage secureStore;
         try {
             secureStore = collectAllDataToTempStore();
@@ -131,19 +129,20 @@ public class SecureStorageServiceImpl implements SecureStorageService {
 
     /**
      * Restore storage.
+     *
      * @return true - restored successfully.
      */
     @Override
     public boolean restoreSecretStorage(Path file) {
-        String privateKey = getPK(SECURE_STORE_KEY);
+        String privateKey = getKeyOrCreateIfNotExist(SECURE_STORE_KEY);
         log.trace("restoreSecretStorage, file='{}', privateKey not empty = '{}'", file, privateKey != null);
-        if(privateKey == null){
+        if (privateKey == null) {
             return false;
         }
 
         SecureStorage fbWallet = SecureStorage.get(privateKey, file.toString());
 
-        if(fbWallet == null){
+        if (fbWallet == null) {
             return false;
         }
 
@@ -156,6 +155,7 @@ public class SecureStorageServiceImpl implements SecureStorageService {
 
     /**
      * Delete storage and secret key.
+     *
      * @return true deleted successfully.
      */
     @Override
@@ -167,7 +167,7 @@ public class SecureStorageServiceImpl implements SecureStorageService {
 
     @Override
     public String createPrivateKeyForStorage() {
-        byte [] secretBytes = new byte[32];
+        byte[] secretBytes = new byte[32];
         Random random = new Random();
         random.nextBytes(secretBytes);
         return Convert.toHexString(secretBytes);
@@ -176,6 +176,7 @@ public class SecureStorageServiceImpl implements SecureStorageService {
 
     /**
      * Restore storage if it exist.
+     *
      * @return true if file restored.
      */
     public boolean restoreSecretStorageIfExist() {
@@ -214,8 +215,8 @@ public class SecureStorageServiceImpl implements SecureStorageService {
         LOG.debug("flushAccountKeys entry point");
         if (isEnabled && store.containsKey(accountID)) {
             String extractedPass = store.get(accountID);
-            if ( extractedPass!=null && extractedPass.equals(passPhrase)) {
-                LOG.debug("flushed key for account: {}",accountID);
+            if (extractedPass != null && extractedPass.equals(passPhrase)) {
+                LOG.debug("flushed key for account: {}", accountID);
                 store.remove(accountID);
 
                 storeSecretStorage();
@@ -233,18 +234,18 @@ public class SecureStorageServiceImpl implements SecureStorageService {
     }
 
 
-    private String getPK(String keyName){
+    private String getKeyOrCreateIfNotExist(String keyName) {
         String privateKey;
 
-        if(propertyStorageService.isExist()){
+        if (propertyStorageService.isExist()) {
             Properties properties = propertyStorageService.loadProperties();
             log.trace("getPK, properties = {}", properties);
             privateKey = (String) properties.get(new String(Base64.getDecoder().decode(PropertyStorageService.SS_KEY_NAME)));
             log.trace("getPK, privateKey ? = '{}'", privateKey != null);
 
-            if(privateKey == null){
+            if (privateKey == null) {
                 String pk = optionDAO.get(keyName);
-                if(pk == null) {
+                if (pk == null) {
                     pk = createPrivateKeyForStorage();
                 }
 
@@ -256,7 +257,7 @@ public class SecureStorageServiceImpl implements SecureStorageService {
             // For users with old version.
             privateKey = optionDAO.get(keyName);
             log.trace("getPK - optionDAO, privateKey ? = {}", privateKey != null);
-            if(privateKey == null){
+            if (privateKey == null) {
                 privateKey = createPrivateKeyForStorage();
                 log.trace("getPK - createPrivateKeyForStorage, privateKey ? = {}", privateKey != null);
             }

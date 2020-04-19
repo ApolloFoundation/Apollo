@@ -9,6 +9,7 @@ import com.google.common.cache.CacheLoader;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+
 @Singleton
 public class DexOrderFreezingCacheLoaderProducer {
     private DexOrderTable table;

@@ -4,11 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import org.slf4j.Logger;
 
 import javax.sql.DataSource;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 public class ShardAddConstraintsSchemaVersion extends ShardInitTableSchemaVersion {
     private static final Logger log = getLogger(ShardAddConstraintsSchemaVersion.class);
@@ -19,7 +19,7 @@ public class ShardAddConstraintsSchemaVersion extends ShardInitTableSchemaVersio
             nextUpdate = super.update(nextUpdate);
         }
         switch (nextUpdate) {
-/*  ---------------------- BLOCK -------------------    */
+            /*  ---------------------- BLOCK -------------------    */
             case startNumber:
                 log.trace("Starting adding BLOCK constraint = {}", nextUpdate);
                 apply("ALTER TABLE block ADD CONSTRAINT IF NOT EXISTS chk_timeout CHECK (timeout >= 0)");
@@ -50,7 +50,7 @@ public class ShardAddConstraintsSchemaVersion extends ShardInitTableSchemaVersio
             case startNumber + 9:
                 log.trace("Starting adding BLOCK constraint = {}", nextUpdate);
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS block_timestamp_idx ON block (timestamp DESC)");
-/*  ---------------------- TRANSACTION -------------------    */
+                /*  ---------------------- TRANSACTION -------------------    */
             case startNumber + 10:
                 apply(null); //left for compatibility with existing dbs
             case startNumber + 11:
@@ -78,7 +78,7 @@ public class ShardAddConstraintsSchemaVersion extends ShardInitTableSchemaVersio
                 return startNumber + 19;
             default:
                 throw new RuntimeException("Shard ADD CONSTRAINTS/INDEXES database is inconsistent with code, at update " + nextUpdate
-                        + ", probably trying to run older code on newer database");
+                    + ", probably trying to run older code on newer database");
         }
     }
 

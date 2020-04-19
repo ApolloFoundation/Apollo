@@ -47,7 +47,7 @@ public class PhasingVoteTable extends EntityDbTable<PhasingVote> {
     @Override
     public void save(Connection con, PhasingVote vote) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_vote (vote_id, transaction_id, "
-                + "voter_id, height) VALUES (?, ?, ?, ?)")) {
+            + "voter_id, height) VALUES (?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, vote.getVoteId());
             pstmt.setLong(++i, vote.getPhasedTransactionId());

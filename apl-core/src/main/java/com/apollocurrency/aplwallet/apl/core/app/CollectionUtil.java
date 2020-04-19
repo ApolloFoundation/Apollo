@@ -18,8 +18,7 @@ public class CollectionUtil {
                 list.add(element);
             }
             return list;
-        }
-        finally {
+        } finally {
             dbIterator.close();
         }
     }

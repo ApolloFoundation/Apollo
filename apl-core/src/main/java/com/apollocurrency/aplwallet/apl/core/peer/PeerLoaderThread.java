@@ -14,24 +14,23 @@ import java.util.Set;
 import java.util.concurrent.Future;
 
 /**
- *
  * @author alukin@gmail.com
  */
 class PeerLoaderThread implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(PeerLoaderThread.class);
     private final List<String> defaultPeers;
-    private TimeService timeService;
     private final List<Future<String>> unresolvedPeers;
+    private final Set<PeerDb.Entry> entries = new HashSet<>();
+    private TimeService timeService;
     private PeersService peers;
+    private PeerDb peerDb;
 
     public PeerLoaderThread(List<String> defaultPeers, List<Future<String>> unresolvedPeers, TimeService timeService, PeersService peers) {
         this.defaultPeers = defaultPeers;
         this.unresolvedPeers = unresolvedPeers;
-        this.timeService=timeService;
+        this.timeService = timeService;
         this.peers = peers;
     }
-    private final Set<PeerDb.Entry> entries = new HashSet<>();
-    private PeerDb peerDb;
 
     @Override
     public void run() {
@@ -82,5 +81,5 @@ class PeerLoaderThread implements Runnable {
         LOG.trace("'Peer loader': thread finished. Peers [{}]", entries.size());
         peers.getAllPeers().stream().forEach((peerHost) -> LOG.trace("'Peer loader': dump = {}", peerHost));
     }
-    
+
 }

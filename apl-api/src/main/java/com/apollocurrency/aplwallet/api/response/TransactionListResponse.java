@@ -19,7 +19,7 @@ public class TransactionListResponse extends ResponseBase {
     @Override
     public String toString() {
         return "TransactionListResponse{" +
-                "transactions=[" + (transactions != null ? transactions.size() : -1) +
-                "]}";
+            "transactions=[" + (transactions != null ? transactions.size() : -1) +
+            "]}";
     }
 }

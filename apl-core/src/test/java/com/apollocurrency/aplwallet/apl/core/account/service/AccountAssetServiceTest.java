@@ -55,6 +55,12 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class AccountAssetServiceTest {
 
+    AccountAssetServiceImpl accountAssetService;
+    AccountTestData testData;
+    long quantity;
+    long assetId;
+    LedgerEvent event;
+    long eventId;
     @Mock
     private AccountAssetTable accountAssetTable;
     @Mock
@@ -63,26 +69,15 @@ class AccountAssetServiceTest {
     private AssetDividendService assetDividendService;
     @Mock
     private BlockChainInfoService blockChainInfoService = mock(BlockChainInfoService.class);
-
+    @WeldSetup
+    public WeldInitiator weld = WeldInitiator.from(
+        PropertiesHolder.class
+    )
+        .addBeans(MockBean.of(blockChainInfoService, BlockchainImpl.class))
+        .build();
     private Event accountEvent = mock(Event.class);
     private Event accountAssetEvent = mock(Event.class);
     private Event ledgerEvent = mock(Event.class);
-
-    @WeldSetup
-    public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class
-    )
-            .addBeans(MockBean.of(blockChainInfoService, BlockchainImpl.class))
-            .build();
-
-    AccountAssetServiceImpl accountAssetService;
-
-    AccountTestData testData;
-
-    long quantity;
-    long assetId;
-    LedgerEvent event;
-    long eventId;
 
     @BeforeEach
     void setUp() {
@@ -158,7 +153,7 @@ class AccountAssetServiceTest {
     void addToUnconfirmedAssetBalanceATU_expectedException() {
         doReturn(testData.ACC_ASSET_0).when(accountAssetTable).get(any());
         assertThrows(DoubleSpendingException.class, () ->
-                accountAssetService.addToUnconfirmedAssetBalanceATU(testData.ACC_1, event, eventId, assetId, quantity));
+            accountAssetService.addToUnconfirmedAssetBalanceATU(testData.ACC_1, event, eventId, assetId, quantity));
     }
 
     @Test
@@ -192,15 +187,15 @@ class AccountAssetServiceTest {
     void addToUnconfirmedAssetBalanceATU_newAssetWithException() {
         doReturn(null).when(accountAssetTable).get(any());
 
-        assertThrows(DoubleSpendingException.class,() ->
-                accountAssetService.addToUnconfirmedAssetBalanceATU(testData.ACC_0, event, eventId, assetId, quantity));
+        assertThrows(DoubleSpendingException.class, () ->
+            accountAssetService.addToUnconfirmedAssetBalanceATU(testData.ACC_0, event, eventId, assetId, quantity));
 
     }
 
     @Test
     void testUpdate_as_insert() {
         AccountAsset newAsset = new AccountAsset(testData.newAsset.getAccountId(), testData.newAsset.getAssetId(),
-                1000L, 1000L,testData.ASS_BLOCKCHAIN_HEIGHT);
+            1000L, 1000L, testData.ASS_BLOCKCHAIN_HEIGHT);
         accountAssetService.update(newAsset);
         verify(accountAssetTable, times(1)).insert(newAsset);
         verify(accountAssetTable, never()).deleteAtHeight(any(AccountAsset.class), anyInt());
@@ -255,20 +250,20 @@ class AccountAssetServiceTest {
         long amountATMPerATU = 100L;
         final int height = 115621;
         Comparator<AccountAsset> assetComparator = Comparator
-                .comparing(AccountAsset::getQuantityATU, Comparator.reverseOrder())
-                .thenComparing(AccountAsset::getAccountId)
-                .thenComparing(AccountAsset::getAssetId);
+            .comparing(AccountAsset::getQuantityATU, Comparator.reverseOrder())
+            .thenComparing(AccountAsset::getAccountId)
+            .thenComparing(AccountAsset::getAssetId);
 
         ColoredCoinsDividendPayment attachment = new ColoredCoinsDividendPayment(testData.ACC_ASSET_6.getAssetId(), height, amountATMPerATU);
 
         List<AccountAsset> expected = testData.ALL_ASSETS.stream()
-                .filter(ass -> ass.getAssetId()==testData.ACC_ASSET_6.getAssetId())
-                .sorted(assetComparator).collect(Collectors.toList());
+            .filter(ass -> ass.getAssetId() == testData.ACC_ASSET_6.getAssetId())
+            .sorted(assetComparator).collect(Collectors.toList());
 
         long numCount = expected.size();
         long totalDivident = expected.stream()
-                .collect(Collectors.summingLong(
-                        accountAsset -> Math.multiplyExact(accountAsset.getQuantityATU(), amountATMPerATU)));
+            .collect(Collectors.summingLong(
+                accountAsset -> Math.multiplyExact(accountAsset.getQuantityATU(), amountATMPerATU)));
 
         doReturn(testData.ACC_0).when(accountService).getAccount(any(long.class));
         doReturn(expected).when(accountAssetTable).getByAssetId(testData.ACC_ASSET_6.getAssetId(), height, 0, -1);

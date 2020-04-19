@@ -25,9 +25,9 @@ import com.apollocurrency.aplwallet.apl.core.dgs.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -46,12 +46,11 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Vetoed
 public final class GetDGSPurchase extends AbstractAPIRequestHandler {
     private static final Logger LOG = getLogger(GetDGSPurchase.class);
+    private DGSService service = CDI.current().select(DGSService.class).get();
 
     public GetDGSPurchase() {
-        super(new APITag[] {APITag.DGS}, "purchase", "secretPhrase", "sharedKey", "account", "passphrase");
+        super(new APITag[]{APITag.DGS}, "purchase", "secretPhrase", "sharedKey", "account", "passphrase");
     }
-
-    private DGSService service = CDI.current().select(DGSService.class).get();
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {

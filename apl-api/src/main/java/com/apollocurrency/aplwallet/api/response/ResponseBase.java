@@ -12,12 +12,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * Base class for all responses
+ *
  * @author alukin@gmail.com
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @ApiResponse(responseCode = "200", description = "Successful execution",
-        content = @Content(mediaType = "application/json",
-                schema = @Schema(implementation = ResponseBase.class)))
+    content = @Content(mediaType = "application/json",
+        schema = @Schema(implementation = ResponseBase.class)))
 public class ResponseBase {
     @JsonIgnore
     public static final String PROTOCOL_VERSION = "1";
@@ -27,7 +28,7 @@ public class ResponseBase {
      * major or minor version. Compatible changes should increment
      * revision only.
      */
-    @Schema(name="Protocol version", description="Information about Protocol version")
+    @Schema(name = "Protocol version", description = "Information about Protocol version")
     public String protocol = PROTOCOL_VERSION;
 
     /**
@@ -65,7 +66,7 @@ public class ResponseBase {
         this(newErrorCode, errorDescription, null, errorCode);
     }
 
-    public ResponseBase(ResponseBase response){
+    public ResponseBase(ResponseBase response) {
         this.errorCode = response.errorCode;
         this.errorDescription = response.errorDescription;
         this.errorDetails = response.errorDetails;

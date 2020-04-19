@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.converter.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDao;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -56,6 +57,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Singleton
 @Slf4j
@@ -74,6 +76,7 @@ public class BlockchainImpl implements Blockchain {
     private final DatabaseManager databaseManager;
     private final ShardDao shardDao;
     private final ShardRecoveryDao shardRecoveryDao;
+    private final IteratorToStreamConverter<Block> blockConverter = new IteratorToStreamConverter<>();
 
     private final AtomicReference<Block> lastBlock;
     private final AtomicReference<Block> shardInitialBlock;
@@ -92,13 +95,18 @@ public class BlockchainImpl implements Blockchain {
         this.databaseManager = databaseManager;
         this.shardDao = shardDao;
         this.shardRecoveryDao = shardRecoveryDao;
-        lastBlock = new AtomicReference<>();
-        shardInitialBlock = new AtomicReference<>();
+        this.lastBlock = new AtomicReference<>();
+        this.shardInitialBlock = new AtomicReference<>();
     }
 
     @Override
     public Block getLastBlock() {
         return lastBlock.get();
+    }
+
+    @Override
+    public void setLastBlock(Block block) {
+        lastBlock.set(block);
     }
 
     @PostConstruct
@@ -107,12 +115,7 @@ public class BlockchainImpl implements Blockchain {
         this.lastBlock.set(findLastBlock());
         this.shardInitialBlock.set(findFirstBlock());
         ((ShardManagement) this.databaseManager).initFullShards(
-                shardDao.getAllCompletedShards().stream().map(Shard::getShardId).collect(Collectors.toList()));
-    }
-
-    @Override
-    public void setLastBlock(Block block) {
-        lastBlock.set(block);
+            shardDao.getAllCompletedShards().stream().map(Shard::getShardId).collect(Collectors.toList()));
     }
 
     @Override
@@ -158,11 +161,63 @@ public class BlockchainImpl implements Blockchain {
 
     @Transactional(readOnly = true)
     @Override
-    public DbIterator<Block> getBlocks(int from, int to) {
+    public DbIterator<Block> getBlocks(int from, int to, int timestamp) {
         int blockchainHeight = getHeight();
         int calculatedFrom = blockchainHeight - from;
         int calculatedTo = blockchainHeight - to;
-        return blockDao.getBlocks(calculatedFrom, calculatedTo);
+        return blockDao.getBlocks(null, calculatedFrom, calculatedTo, timestamp);
+    }
+
+    /**
+     * Retrieve records from correct shard AND main database.
+     *
+     * @param from height index
+     * @param to height index
+     * @param timestamp optional block timestamp
+     * @return composed block's stream
+     */
+    @Transactional(readOnly = true)
+    @Override
+    public Stream<Block> getBlocksStream(int from, int to, int timestamp) {
+        int blockchainHeight = getHeight();
+        int calculatedFrom = blockchainHeight - from;
+        int calculatedTo = blockchainHeight - to;
+        log.trace("start getBlocksStream( from={} / {}, to={} / {}, timestamp={} ): , currentHeight={}",
+            from, calculatedFrom, to, calculatedTo, timestamp, blockchainHeight);
+        Stream<Block> allSourcesStream = null; // complete stream from all sources
+        // select possibly - none, one, two shard's records by specified height range
+        List<Shard> foundShards = shardDao.getCompletedBetweenBlockHeight(calculatedTo, calculatedFrom); // reverse params
+        log.trace("getBlocksStream( from={}, to={} ): foundShards=[{}] / shardIds={}, currentHeight={}",
+            calculatedFrom, calculatedTo, foundShards.size(), foundShards.stream().map(Shard::getShardId).collect(Collectors.toList()), blockchainHeight);
+        if (foundShards.size() == 0) {
+            // select blocks from main database only
+            DbIterator<Block> iterator = blockDao.getBlocks(null, calculatedFrom, calculatedTo, timestamp);
+            allSourcesStream = blockConverter.apply(iterator);
+        } else {
+            // loop over ONE or SEVERAL available shards
+            for (Shard shard: foundShards) {
+                // get shard data source trying to fetch records
+                TransactionalDataSource dataSource =
+                    ((ShardManagement) databaseManager).getOrInitFullShardDataSourceById(shard.getShardId());
+                // make select on blocks from shard
+                log.trace("getBlocksStream -> getBlocks( from={}, to={} ): shardIds={}",
+                    calculatedFrom, calculatedTo, dataSource.getDbIdentity());
+                DbIterator<Block> iterator = blockDao.getBlocks(dataSource, calculatedFrom, calculatedTo, timestamp);
+                Stream<Block> toCompose = blockConverter.apply(iterator); // create a stream from list
+                if (allSourcesStream == null) {
+                    allSourcesStream = toCompose; // assign first stream
+                } else {
+                    // compose next stream with previous one
+                    allSourcesStream = Stream.concat(allSourcesStream, toCompose);
+                }
+            }
+            // add possible blocks from main database (if any)
+            DbIterator<Block> iterator = blockDao.getBlocks(null, calculatedFrom, calculatedTo, timestamp);
+            allSourcesStream = Stream.concat(allSourcesStream, blockConverter.apply(iterator));
+        }
+        log.trace("DONE getBlocksStream( from={}, to={} ): foundShards=[{}] / shardIds={}, currentHeight={}",
+            calculatedFrom, calculatedTo, foundShards.size(), foundShards.stream().map(Shard::getShardId).collect(Collectors.toList()), blockchainHeight);
+        return allSourcesStream;
     }
 
     @Transactional
@@ -173,7 +228,7 @@ public class BlockchainImpl implements Blockchain {
 
     @Transactional(readOnly = true)
     @Override
-    public DbIterator<Block> getBlocks(long accountId, int timestamp, int from, int to) {
+    public DbIterator<Block> getBlocksByAccount(long accountId, int timestamp, int from, int to) {
         return blockDao.getBlocks(accountId, timestamp, from, to);
     }
 
@@ -259,7 +314,6 @@ public class BlockchainImpl implements Blockchain {
     }
 
 
-
     private Integer getBlockHeight(long blockId) {
         Integer height = blockIndexService.getHeight(blockId);
         if (height == null) {
@@ -304,8 +358,7 @@ public class BlockchainImpl implements Blockchain {
                     if (result.size() - 1 >= 0) {
                         fromBlockHeight = getBlockHeight(blockIdList.get(result.size() - 1));
                     }
-                }
-                catch (SQLException e) {
+                } catch (SQLException e) {
                     throw new RuntimeException(e.toString(), e);
                 }
             } while (result.size() != prevSize && dataSource != databaseManager.getDataSource() && getDataSourceWithShardingByHeight(fromBlockHeight + 1) != dataSource);
@@ -429,7 +482,7 @@ public class BlockchainImpl implements Blockchain {
     @Transactional(readOnly = true)
     public boolean hasTransaction(long transactionId) {
         return transactionDao.hasTransaction(transactionId, databaseManager.getDataSource()) ||
-                transactionIndexDao.countByTransactionId(transactionId) == 1;
+            transactionIndexDao.countByTransactionId(transactionId) == 1;
     }
 
     @Override
@@ -461,7 +514,7 @@ public class BlockchainImpl implements Blockchain {
         TransactionIndex transactionIndex = transactionIndexDao.getByTransactionId(id);
         byte[] hash = getTransactionIndexFullHash(transactionIndex);
         return Arrays.equals(hash, fullHash)
-                && transactionIndexDao.getTransactionHeightByTransactionId(id) <= height;
+            && transactionIndexDao.getTransactionHeightByTransactionId(id) <= height;
     }
 
 
@@ -478,7 +531,7 @@ public class BlockchainImpl implements Blockchain {
         Integer txHeight = null;
         if (transaction != null) {
             txHeight = transaction.getHeight();
-        } else if (hasShardTransactionByFullHash(fullHash, heightLimit)){
+        } else if (hasShardTransactionByFullHash(fullHash, heightLimit)) {
             txHeight = transactionIndexDao.getTransactionHeightByTransactionId(Convert.fullHashToId(fullHash));
         }
         return txHeight;
@@ -522,16 +575,16 @@ public class BlockchainImpl implements Blockchain {
     @Transactional(readOnly = true)
     @Override
     public List<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
-                                                   int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
-                                                   int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate) {
+                                             int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
+                                             int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate) {
         long start = System.currentTimeMillis();
         int height = numberOfConfirmations > 0 ? getHeight() - numberOfConfirmations : Integer.MAX_VALUE;
         int prunableExpiration = Math.max(0, propertiesHolder.INCLUDE_EXPIRED_PRUNABLE() && includeExpiredPrunable ?
-                timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime() :
-                timeService.getEpochTime() - blockchainConfig.getMinPrunableLifetime());
+            timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime() :
+            timeService.getEpochTime() - blockchainConfig.getMinPrunableLifetime());
         int limit = to == Integer.MAX_VALUE ? Integer.MAX_VALUE : to - from + 1;
         log.trace("getTx() 1. from={}, to={}, initialLimit={}, accountId={}, type={}, subtype={}",
-                from, to, limit, accountId, type, subtype);
+            from, to, limit, accountId, type, subtype);
         if (limit > 500) { // warn for too big values
             log.warn("Computed limit is BIGGER then 500 = {} !!", limit);
         }
@@ -539,16 +592,16 @@ public class BlockchainImpl implements Blockchain {
         // start fetch from main db
         TransactionalDataSource currentDataSource = databaseManager.getDataSource();
         List<Transaction> transactions = transactionDao.getTransactions(
-                currentDataSource,
-                accountId, numberOfConfirmations, type, subtype,
-                blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
-                from, to, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
+            currentDataSource,
+            accountId, numberOfConfirmations, type, subtype,
+            blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
+            from, to, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
         int foundCount = transactionDao.getTransactionCountByFilter(currentDataSource,
-                accountId, numberOfConfirmations, type, subtype,
-                blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
-                includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
+            accountId, numberOfConfirmations, type, subtype,
+            blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
+            includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
         log.trace("getTx() 2. fetched from mainDb, fetch=[{}] / foundCount={}, initLimit={}, accountId={}, type={}, subtype={}",
-                transactions.size(), foundCount, limit, accountId, type, subtype);
+            transactions.size(), foundCount, limit, accountId, type, subtype);
 
         // check if all Txs are fetched from main db, continue inside shard dbs otherwise
         if (transactions.size() < limit) {
@@ -566,26 +619,26 @@ public class BlockchainImpl implements Blockchain {
                 TransactionalDataSource dataSource = fullDataSources.next();
                 // count Tx records before fetch Tx records
                 foundCount = transactionDao.getTransactionCountByFilter(dataSource,
-                        accountId, numberOfConfirmations, type, subtype,
-                        blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
-                        includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
+                    accountId, numberOfConfirmations, type, subtype,
+                    blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
+                    includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
                 log.trace("countTx 3. DS={}, from={} to={}, foundCount={} (skip='{}')\naccountId={}, type={}, subtype={}",
-                        dataSource.getDbIdentity(), from, to, foundCount, (foundCount <= 0),
-                        accountId, type, subtype);
+                    dataSource.getDbIdentity(), from, to, foundCount, (foundCount <= 0),
+                    accountId, type, subtype);
                 if (foundCount == 0) {
                     continue; // skip shard without any suitable records
                 }
                 // because count is > 0 then try to fetch Tx records from shard db
                 List<Transaction> fetchedTxs = transactionDao.getTransactions(
-                        dataSource,
-                        accountId, numberOfConfirmations, type, subtype,
-                        blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
-                        from, to, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
+                    dataSource,
+                    accountId, numberOfConfirmations, type, subtype,
+                    blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
+                    from, to, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
                 log.trace("getTx() 4. DS={} fetched [{}] (foundCount={}) from={}, to={}", dataSource.getDbIdentity(),
-                        fetchedTxs.size(), foundCount, from, to);
+                    fetchedTxs.size(), foundCount, from, to);
                 if (fetchedTxs.isEmpty()) {
-                     to -= foundCount;
-                     from  -= foundCount;
+                    to -= foundCount;
+                    from -= foundCount;
                 } else {
                     to -= (fetchedTxs.size() + from);
                     from = 0;

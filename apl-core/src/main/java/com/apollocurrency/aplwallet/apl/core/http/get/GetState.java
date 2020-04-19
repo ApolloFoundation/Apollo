@@ -21,12 +21,10 @@
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
-import com.apollocurrency.aplwallet.apl.core.app.Alias;
+import com.apollocurrency.aplwallet.apl.core.alias.service.AliasService;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
-import com.apollocurrency.aplwallet.apl.core.app.Order;
 import com.apollocurrency.aplwallet.apl.core.app.Poll;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
-import com.apollocurrency.aplwallet.apl.core.app.Trade;
 import com.apollocurrency.aplwallet.apl.core.app.Vote;
 import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
@@ -39,7 +37,18 @@ import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
+import com.apollocurrency.aplwallet.apl.core.order.entity.AskOrder;
+import com.apollocurrency.aplwallet.apl.core.order.entity.BidOrder;
+import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.AskOrderService;
+import com.apollocurrency.aplwallet.apl.core.order.service.impl.AskOrderServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.BidOrderService;
+import com.apollocurrency.aplwallet.apl.core.order.service.impl.BidOrderServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.order.service.OrderService;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
+import com.apollocurrency.aplwallet.apl.core.trade.service.TradeService;
+import com.apollocurrency.aplwallet.apl.core.trade.service.impl.TradeServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -52,13 +61,19 @@ import java.net.InetAddress;
 @Deprecated
 @Vetoed
 public final class GetState extends AbstractAPIRequestHandler {
+    private final AliasService aliasService = CDI.current().select(AliasService.class).get();
+    private final OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService =
+        CDI.current().select(AskOrderServiceImpl.class, AskOrderService.Literal.INSTANCE).get();
+    private final OrderService<BidOrder, ColoredCoinsBidOrderPlacement> bidOrderService =
+        CDI.current().select(BidOrderServiceImpl.class, BidOrderService.Literal.INSTANCE).get();
+    private final TradeService tradeService = CDI.current().select(TradeService.class).get();
     private UPnP upnp = CDI.current().select(UPnP.class).get();
     private DGSService service = CDI.current().select(DGSService.class).get();
     private TaggedDataService taggedDataService = CDI.current().select(TaggedDataService.class).get();
     private PrunableMessageService prunableMessageService = CDI.current().select(PrunableMessageService.class).get();
 
     public GetState() {
-        super(new APITag[] {APITag.INFO}, "includeCounts", "adminPassword");
+        super(new APITag[]{APITag.INFO}, "includeCounts", "adminPassword");
     }
 
     @Override
@@ -70,19 +85,19 @@ public final class GetState extends AbstractAPIRequestHandler {
             response.put("numberOfTransactions", lookupBlockchain().getTransactionCount());
             response.put("numberOfAccounts", lookupAccountPublickKeyService().getCount());
             response.put("numberOfAssets", Asset.getCount());
-            int askCount = Order.Ask.getCount();
-            int bidCount = Order.Bid.getCount();
+            int askCount = askOrderService.getCount();
+            int bidCount = bidOrderService.getCount();
             response.put("numberOfOrders", askCount + bidCount);
             response.put("numberOfAskOrders", askCount);
             response.put("numberOfBidOrders", bidCount);
-            response.put("numberOfTrades", Trade.getCount());
+            response.put("numberOfTrades", tradeService.getCount());
             response.put("numberOfTransfers", AssetTransfer.getCount());
-	        response.put("numberOfCurrencies", Currency.getCount());
-    	    response.put("numberOfOffers", CurrencyBuyOffer.getCount());
+            response.put("numberOfCurrencies", Currency.getCount());
+            response.put("numberOfOffers", CurrencyBuyOffer.getCount());
             response.put("numberOfExchangeRequests", ExchangeRequest.getCount());
-        	response.put("numberOfExchanges", Exchange.getCount());
-        	response.put("numberOfCurrencyTransfers", CurrencyTransfer.getCount());
-            response.put("numberOfAliases", Alias.getCount());
+            response.put("numberOfExchanges", Exchange.getCount());
+            response.put("numberOfCurrencyTransfers", CurrencyTransfer.getCount());
+            response.put("numberOfAliases", aliasService.getCount());
             response.put("numberOfGoods", service.getGoodsCount());
             response.put("numberOfPurchases", service.getPurchaseCount());
             response.put("numberOfTags", service.getTagsCount());

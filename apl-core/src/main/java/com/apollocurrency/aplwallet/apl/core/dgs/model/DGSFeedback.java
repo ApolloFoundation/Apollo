@@ -13,6 +13,12 @@ public class DGSFeedback extends VersionedDerivedEntity {
     private Long purchaseId;
     private EncryptedData feedbackEncryptedData;
 
+    public DGSFeedback(Long dbId, Integer height, Long purchaseId, EncryptedData feedbackEncryptedData) {
+        super(dbId, height);
+        this.purchaseId = purchaseId;
+        this.feedbackEncryptedData = feedbackEncryptedData;
+    }
+
     public Long getPurchaseId() {
         return purchaseId;
     }
@@ -29,12 +35,6 @@ public class DGSFeedback extends VersionedDerivedEntity {
         this.feedbackEncryptedData = feedbackEncryptedData;
     }
 
-    public DGSFeedback(Long dbId, Integer height, Long purchaseId, EncryptedData feedbackEncryptedData) {
-        super(dbId, height);
-        this.purchaseId = purchaseId;
-        this.feedbackEncryptedData = feedbackEncryptedData;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -42,7 +42,7 @@ public class DGSFeedback extends VersionedDerivedEntity {
         if (!super.equals(o)) return false;
         DGSFeedback that = (DGSFeedback) o;
         return Objects.equals(purchaseId, that.purchaseId) &&
-                Objects.equals(feedbackEncryptedData, that.feedbackEncryptedData);
+            Objects.equals(feedbackEncryptedData, that.feedbackEncryptedData);
     }
 
     @Override

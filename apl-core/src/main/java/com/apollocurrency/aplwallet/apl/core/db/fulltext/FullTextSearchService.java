@@ -66,7 +66,7 @@ public interface FullTextSearchService {
      * to {@link FullTextSearchEngine#search(String, String, String, int, int)}
      */
     ResultSet search(String schema, String table, String queryText, int limit, int offset)
-            throws SQLException;
+        throws SQLException;
 
     /**
      * Shutdown fulltext search service.
@@ -78,8 +78,8 @@ public interface FullTextSearchService {
      * Creates a new index for table to support fulltext search.
      * Note that a schema is always PUBLIC.
      *
-     * @param con       DB connection
-     * @param table      name of table for indexing
+     * @param con                   DB connection
+     * @param table                 name of table for indexing
      * @param fullTextSearchColumns list of columns for indexing separated by comma
      * @throws SQLException when unable to create index
      */

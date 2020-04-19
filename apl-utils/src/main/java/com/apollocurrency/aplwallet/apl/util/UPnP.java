@@ -14,25 +14,25 @@
  *
  */
 
- /*
+/*
  * Copyright © 2018-2019 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.util;
 
-import java.io.IOException;
 import org.bitlet.weupnp.GatewayDevice;
 import org.bitlet.weupnp.GatewayDiscover;
+import org.bitlet.weupnp.PortMappingEntry;
 import org.slf4j.Logger;
+import org.xml.sax.SAXException;
 
-import java.net.InetAddress;
-import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.xml.parsers.ParserConfigurationException;
-import org.bitlet.weupnp.PortMappingEntry;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.util.Map;
 
 import static org.slf4j.LoggerFactory.getLogger;
-import org.xml.sax.SAXException;
 
 /**
  * Forward ports using the UPnP protocol.
@@ -40,28 +40,24 @@ import org.xml.sax.SAXException;
 @Singleton
 public class UPnP {
 
+    public static final int MAX_PORTS_TO_TRY = 999;
     private static final Logger LOG = getLogger(UPnP.class);
-    public static final int MAX_PORTS_TO_TRY=999;
-
+    public static int TIMEOUT = 1500; //1,5 secons
     /**
      * UPnP gateway device
      */
     private GatewayDevice gateway = null;
-
     /**
      * Local address
      */
     private InetAddress localAddress;
-
     /**
      * External address
      */
     private InetAddress externalAddress;
-
-    public static int TIMEOUT = 1500; //1,5 secons
     private boolean inited = false;
 
-//TODO: Inject with properties    
+    //TODO: Inject with properties
     @Inject
     public UPnP() {
     }
@@ -70,23 +66,23 @@ public class UPnP {
         int port = desiredExternalPort;
         PortMappingEntry portMappingEntry = new PortMappingEntry();
         boolean busy = true;
-        int count =0;
-        while(busy){
-         busy = gateway.getSpecificPortMappingEntry(port, "TCP", portMappingEntry);
-         if(busy){
-             String mapAddr = portMappingEntry.getInternalClient();
-             String myAddr = localAddress.getHostAddress();
-             if(mapAddr.equalsIgnoreCase(myAddr)){
-                 //it is my mapping lost somehow
-                 break;
-             }
-             port++;
-             count++;
-             if(count>MAX_PORTS_TO_TRY){
-                 port=-1;
-                 break;
-             }
-         }
+        int count = 0;
+        while (busy) {
+            busy = gateway.getSpecificPortMappingEntry(port, "TCP", portMappingEntry);
+            if (busy) {
+                String mapAddr = portMappingEntry.getInternalClient();
+                String myAddr = localAddress.getHostAddress();
+                if (mapAddr.equalsIgnoreCase(myAddr)) {
+                    //it is my mapping lost somehow
+                    break;
+                }
+                port++;
+                count++;
+                if (count > MAX_PORTS_TO_TRY) {
+                    port = -1;
+                    break;
+                }
+            }
         }
         return port;
     }
@@ -94,12 +90,12 @@ public class UPnP {
     /**
      * Add a port to the UPnP mapping
      *
-     * @param localPort Port to add
+     * @param localPort   Port to add
      * @param description Description of port mapping
      * @return assigned external port number or -1 if no success
      */
     public synchronized int addPort(int localPort, String description) {
-        if(!inited){
+        if (!inited) {
             init();
         }
         int externalPort = -1;
@@ -119,9 +115,9 @@ public class UPnP {
             }
 
             if (gateway.addPortMapping(extPortRQ, localPort, localAddress.getHostAddress(), "TCP",
-                    "Apollo(" + localAddress.getHostAddress() + "): " + description)) {
+                "Apollo(" + localAddress.getHostAddress() + "): " + description)) {
                 LOG.debug("Mapped port [" + externalAddress.getHostAddress() + "]:" + localPort
-                        + " to: " + externalAddress.getHostAddress() + ":" + extPortRQ.toString());
+                    + " to: " + externalAddress.getHostAddress() + ":" + extPortRQ.toString());
                 externalPort = extPortRQ;
             } else {
                 LOG.debug("Unable to map port " + localPort);
@@ -138,7 +134,7 @@ public class UPnP {
      * @param externalPort EXTERNAL port to delete
      */
     public synchronized void deletePort(int externalPort) {
-        if(!inited){
+        if (!inited) {
             init();
         }
         try {
@@ -170,12 +166,14 @@ public class UPnP {
         //TODO: set externalAddress from properties if we unable to do UPnP
         return externalAddress;
     }
-    public boolean isAvailable(){
-        if(!inited){
+
+    public boolean isAvailable() {
+        if (!inited) {
             init();
         }
-        return (gateway!=null);
+        return (gateway != null);
     }
+
     /**
      * Initialize the UPnP support
      */
@@ -195,7 +193,7 @@ public class UPnP {
                 LOG.debug("There are no UPnP gateway devices");
             } else {
                 gatewayMap.forEach((addr, device)
-                        -> LOG.debug("UPnP gateway device found on " + addr.getHostAddress()));
+                    -> LOG.debug("UPnP gateway device found on " + addr.getHostAddress()));
                 gateway = discover.getValidGateway();
                 if (gateway == null) {
                     LOG.debug("There is no connected UPnP gateway device");

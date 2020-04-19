@@ -9,7 +9,7 @@ import javax.enterprise.util.AnnotationLiteral;
 /**
  * @author andrew.zinchenko@gmail.com
  */
-public abstract class AccountLedgerEventBinding extends AnnotationLiteral<AccountLedgerEvent> implements AccountLedgerEvent{
+public abstract class AccountLedgerEventBinding extends AnnotationLiteral<AccountLedgerEvent> implements AccountLedgerEvent {
 
     public static AnnotationLiteral<AccountLedgerEvent> literal(final AccountLedgerEventType accountLedgerEventType) {
         return new AccountLedgerEventBinding() {
