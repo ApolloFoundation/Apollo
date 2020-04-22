@@ -220,6 +220,9 @@ public class ShardService {
     }
 
     public MigrateState performSharding(int minRollbackHeight, long shardId, MigrateState initialState) {
+        if (shardId==16L){
+            System.out.println("1111");
+        }
         MigrateState resultState = MigrateState.FAILED;
         log.debug(">> performSharding '{}' at minRollbackHeight={}", shardId, minRollbackHeight);
         if (!shouldPerformSharding()) {

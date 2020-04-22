@@ -35,6 +35,8 @@ public class AccountParametersParser {
     public static final String FEE_PARAM_NAME ="feeATM";
     public static final String RECIPIENT_PARAM_NAME ="recipientId";
     public static final String PUBLIC_KEY_PARAM_NAME ="recipientId";
+    public static final String TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME = "twoFactorAuthParameters";
+
 
     private final ElGamalEncryptor elGamal;
     private final AccountService accountService;
@@ -57,7 +59,7 @@ public class AccountParametersParser {
     }
 
     public static TwoFactorAuthParameters get2FARequestAttribute(org.jboss.resteasy.spi.HttpRequest request) {
-        TwoFactorAuthParameters params2FA = (TwoFactorAuthParameters) request.getAttribute(RestParametersParser.TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME);
+        TwoFactorAuthParameters params2FA = (TwoFactorAuthParameters) request.getAttribute(TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME);
         if(params2FA == null){
             throw new RestParameterException(ApiErrors.INTERNAL_SERVER_EXCEPTION, "Can't locate the 2FA request attribute.");
         }
