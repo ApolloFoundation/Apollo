@@ -31,11 +31,13 @@ import com.apollocurrency.aplwallet.apl.core.order.entity.BidOrder;
 import com.apollocurrency.aplwallet.apl.core.order.service.OrderService;
 import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.BidOrderService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.stream.Stream;
 
+@Slf4j
 @Singleton
 @BidOrderService
 public class BidOrderServiceImpl implements OrderService<BidOrder, ColoredCoinsBidOrderPlacement> {
@@ -131,17 +133,26 @@ public class BidOrderServiceImpl implements OrderService<BidOrder, ColoredCoinsB
     @Override
     public void addOrder(Transaction transaction, ColoredCoinsBidOrderPlacement attachment) {
         final BidOrder order = new BidOrder(transaction, attachment, blockchain.getHeight());
+        log.trace(">> addOrder() bidOrder={}", order);
         bidOrderTable.insert(order);
     }
 
     @Override
     public void removeOrder(long orderId) {
-        bidOrderTable.deleteAtHeight(getOrder(orderId), blockchain.getHeight());
+        int height = blockchain.getHeight();
+        boolean result = bidOrderTable.deleteAtHeight(getOrder(orderId), height);
+        log.trace(">> removeOrder() result={}, bidOrderId={}, height={}", result, orderId, height);
     }
 
     @Override
     public void updateQuantityATU(long quantityATU, BidOrder orderBid) {
         orderBid.setQuantityATU(quantityATU);
+        int height = blockchain.getHeight();
+        if (quantityATU > 0) {
+            log.trace("Update POSITIVE quantity = {}, height={}", orderBid, height);
+        } else if (quantityATU == 0) {
+            log.trace("Delete ZERO quantity = {}, height={}", orderBid, height);
+        }
         insertOrDeleteOrder(bidOrderTable, quantityATU, orderBid, blockchain.getHeight());
     }
 }

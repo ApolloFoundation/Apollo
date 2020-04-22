@@ -206,7 +206,7 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
                     }
                 }
                 dataSource.commit(false);
-                LOG.trace("Delete time {} for table {}: stm - {}, deleted - {}", System.currentTimeMillis() - startDeleteTime, table,
+                LOG.trace("Delete time {} for table {}: stm - {}, deleted - [{}]", System.currentTimeMillis() - startDeleteTime, table,
                     deleteStm, deleted);
             }
             long trimTime = System.currentTimeMillis() - startTime;

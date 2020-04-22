@@ -32,12 +32,14 @@ import com.apollocurrency.aplwallet.apl.core.order.entity.BidOrder;
 import com.apollocurrency.aplwallet.apl.core.trade.dao.TradeTable;
 import com.apollocurrency.aplwallet.apl.core.trade.entity.Trade;
 import com.apollocurrency.aplwallet.apl.core.trade.service.TradeService;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
 import java.util.stream.Stream;
 
+@Slf4j
 @Singleton
 public class TradeServiceImpl implements TradeService {
     private final DatabaseManager databaseManager;
@@ -157,6 +159,7 @@ public class TradeServiceImpl implements TradeService {
             block.getHeight(),
             block.getTimestamp()
         );
+        log.trace("addTrade/listener... assetId={}, askOrder={}, bidOrder={}, trade={}", assetId, askOrder, bidOrder, trade);
         tradeTable.insert(trade);
         return trade;
     }

@@ -31,11 +31,13 @@ import com.apollocurrency.aplwallet.apl.core.order.entity.AskOrder;
 import com.apollocurrency.aplwallet.apl.core.order.service.OrderService;
 import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.AskOrderService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.stream.Stream;
 
+@Slf4j
 @Singleton
 @AskOrderService
 public class AskOrderServiceImpl implements OrderService<AskOrder, ColoredCoinsAskOrderPlacement> {
@@ -132,17 +134,26 @@ public class AskOrderServiceImpl implements OrderService<AskOrder, ColoredCoinsA
     @Override
     public void addOrder(Transaction transaction, ColoredCoinsAskOrderPlacement attachment) {
         final AskOrder order = new AskOrder(transaction, attachment, blockchain.getHeight());
+        log.trace(">> addOrder() askOrder={}", order);
         askOrderTable.insert(order);
     }
 
     @Override
     public void removeOrder(long orderId) {
-        askOrderTable.deleteAtHeight(getOrder(orderId), blockchain.getHeight());
+        int height = blockchain.getHeight();
+        boolean result = askOrderTable.deleteAtHeight(getOrder(orderId), height);
+        log.trace(">> removeOrder() result={}, askOrderId={}, height={}", result, orderId, height);
     }
 
     @Override
     public void updateQuantityATU(long quantityATU, AskOrder orderAsk) {
         orderAsk.setQuantityATU(quantityATU);
-        insertOrDeleteOrder(askOrderTable, quantityATU, orderAsk, blockchain.getHeight());
+        int height = blockchain.getHeight();
+        if (quantityATU > 0) {
+            log.trace("Update POSITIVE quantity = {}, height={}", orderAsk, height);
+        } else if (quantityATU == 0) {
+            log.trace("Delete ZERO quantity = {}, height={}", orderAsk, height);
+        }
+        insertOrDeleteOrder(askOrderTable, quantityATU, orderAsk, height);
     }
 }
