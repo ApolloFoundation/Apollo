@@ -53,6 +53,7 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
     }
 
     private int doMultiversionRollback(int height) {
+        LOG.trace("doMultiversionRollback(), height={}", height);
         int deletedRecordsCount;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
@@ -174,7 +175,7 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
      *               </p>
      */
     private void doMultiversionTrim(final int height) {
-        LOG.trace("doMultiversionTrim(), height {}", height);
+        LOG.trace("doMultiversionTrim(), height={}", height);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
