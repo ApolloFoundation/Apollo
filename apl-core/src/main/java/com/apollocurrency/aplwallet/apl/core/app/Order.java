@@ -37,6 +37,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAs
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.util.StackTraceUtils;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
@@ -250,7 +251,7 @@ public abstract class Order {
 
             @Override
             public void save(Connection con, Ask ask) throws SQLException {
-                log.debug("Save ask = {}", ask);
+                log.debug("Save ask = {}, stack = {}", ask, ThreadUtils.last5Stacktrace());
                 ask.save(con, table);
             }
 
