@@ -83,4 +83,12 @@ public enum LedgerEvent {
         return event;
     }
 
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("LedgerEvent{");
+        sb.append("code=").append(code);
+        sb.append(", isTransaction=").append(isTransaction);
+        sb.append('}');
+        return sb.toString();
+    }
 }

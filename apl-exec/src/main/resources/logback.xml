@@ -79,6 +79,22 @@
       <pattern>%d [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
     </encoder>
   </appender>
+  <appender name="ask-bid-order" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${LOGDIR}/ask-bid-order.log</file>
+    <immediateFlush>true</immediateFlush>
+    <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+      <fileNamePattern>${LOGDIR}/ask-bid-order_%i.log.zip</fileNamePattern>
+      <minIndex>1</minIndex>
+      <maxIndex>100</maxIndex>
+    </rollingPolicy>
+
+    <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+      <maxFileSize>1000MB</maxFileSize>
+    </triggeringPolicy>
+    <encoder>
+      <pattern>%d [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
+    </encoder>
+  </appender>
     <logger name="com.apollocurrency.aplwallet" level="INFO"/>
     <!--<logger name="com.apollocurrency.aplwallet.apl.core.peer" level="TRACE"/>-->
     <!--Uncomment next line to enable trim duration logging-->
@@ -98,6 +114,15 @@
       <appender-ref ref="account-file"/>
     </logger>
 -->
+  <logger name="com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetServiceImpl" level="trace" additivity="false">
+    <appender-ref ref="ask-bid-order"/>
+  </logger>
+  <logger name="com.apollocurrency.aplwallet.apl.core.app.Order" level="trace" additivity="false">
+    <appender-ref ref="ask-bid-order"/>
+  </logger>
+  <logger name="com.apollocurrency.aplwallet.apl.core.app.Trade" level="trace" additivity="false">
+    <appender-ref ref="ask-bid-order"/>
+  </logger>
     <logger name="jdbc" level="off" additivity="false"/>
     <logger name="jdbc.connection" level="info" additivity="false"/>
     <logger name="jdbc.sqltiming" level="info" additivity="false"/>

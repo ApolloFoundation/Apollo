@@ -38,7 +38,9 @@ import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public final class Trade {
 
     public enum Event {
@@ -74,6 +76,7 @@ public final class Trade {
 
         @Override
         public void save(Connection con, Trade trade) throws SQLException {
+            log.debug(">> save() trade={}", trade);
             trade.save(con);
         }
 
@@ -175,6 +178,7 @@ public final class Trade {
 
     static Trade addTrade(long assetId, Order.Ask askOrder, Order.Bid bidOrder) {
         Trade trade = new Trade(assetId, askOrder, bidOrder);
+        log.debug("addTrade/listener... assetId={}, askOrder={}, bidOrder={}, trade={}", assetId, askOrder, bidOrder, trade);
         tradeTable.insert(trade);
         listeners.notify(trade, Event.TRADE);
         return trade;
@@ -316,8 +320,8 @@ public final class Trade {
 
     @Override
     public String toString() {
-        return "Trade asset: " + Long.toUnsignedString(assetId) + " ask: " + Long.toUnsignedString(askOrderId)
-                + " bid: " + Long.toUnsignedString(bidOrderId) + " price: " + priceATM + " quantity: " + quantityATU + " height: " + height;
+        return "Trade: assetId=" + assetId + ", askOrderId=" + askOrderId + ", bidOrderId=" + bidOrderId
+            + ", price=" + priceATM + ", quantity=" + quantityATU + ", height=" + height + ", dbKey=" + dbKey;
     }
 
 }

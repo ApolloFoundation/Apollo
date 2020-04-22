@@ -36,8 +36,10 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntity
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderPlacementAttachment;
+import com.apollocurrency.aplwallet.apl.util.StackTraceUtils;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
@@ -45,6 +47,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+@Slf4j
 public abstract class Order {
 
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
@@ -86,11 +89,13 @@ public abstract class Order {
 
         Order.Ask askOrder;
         Order.Bid bidOrder;
-
+        log.debug(">> match orders, assetId={}, stack={}", assetId, StackTraceUtils.lastNStacktrace(5));
+        int index = 0;
         while ((askOrder = Ask.getNextOrder(assetId)) != null
                 && (bidOrder = Bid.getNextOrder(assetId)) != null) {
-
+            log.debug(">> match orders LOOP, assetId={}, index={}", assetId, index);
             if (askOrder.getPriceATM() > bidOrder.getPriceATM()) {
+                log.debug(">> match orders, STOP LOOP, assetId={}", assetId);
                 break;
             }
 
@@ -110,8 +115,10 @@ public abstract class Order {
                     -Math.multiplyExact(trade.getQuantityATU(), trade.getPriceATM()));
             accountService.addToUnconfirmedBalanceATM(bidAccount, LedgerEvent.ASSET_TRADE, bidOrder.getId(),
                     Math.multiplyExact(trade.getQuantityATU(), (bidOrder.getPriceATM() - trade.getPriceATM())));
+            log.debug("<< match orders, END LOOP, assetId={}, index={}", assetId, index);
+            index++;
         }
-
+        log.debug("<< DONE match orders, assetId={}", assetId);
     }
 
     public static void init() {
@@ -138,17 +145,21 @@ public abstract class Order {
     }
     */
     static <T extends Order> void insertOrDeleteOrder(VersionedDeletableEntityDbTable<T> table, long quantityATU, T order) {
+        int height = blockchain.getHeight();
         if (quantityATU > 0) {
+            log.debug("Update POSITIVE quantity = {}, height={}", order, height);
             table.insert(order);
         } else if (quantityATU == 0) {
-            table.deleteAtHeight(order, blockchain.getHeight());
+            log.debug("Delete ZERO quantity = {}, height={}", order, height);
+            table.deleteAtHeight(order, height);
         } else {
             throw new IllegalArgumentException("Negative quantity: " + quantityATU
-                    + " for order: " + Long.toUnsignedString(order.getId()));
+                    + " for order: " + order.getId());
         }
     }
 
     private void save(Connection con, String table) throws SQLException {
+        log.debug("save table={}, entity={}", table, this);
         try (
                 @DatabaseSpecificDml(DmlMarker.MERGE)
                 PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (id, account_id, asset_id, "
@@ -206,9 +217,9 @@ public abstract class Order {
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + " id: " + Long.toUnsignedString(id) + " account: " + Long.toUnsignedString(accountId)
-                + " asset: " + Long.toUnsignedString(assetId) + " price: " + priceATM + " quantity: " + quantityATU
-                + " height: " + creationHeight + " transactionIndex: " + transactionIndex + " transactionHeight: " + transactionHeight;
+        return getClass().getSimpleName() + ": id=" + id + ", account=" + accountId
+                + ", asset=" + assetId + ", price=" + priceATM + ", quantity=" + quantityATU
+                + ", height=" + creationHeight + ", transactionIndex=" + transactionIndex + ", transactionHeight=" + transactionHeight;
     }
 
     private static TransactionalDataSource lookupDataSource() {
@@ -218,6 +229,7 @@ public abstract class Order {
         return databaseManager.getDataSource();
     }
 
+    @Slf4j
     public static final class Ask extends Order {
 
         private static final LongKeyFactory<Ask> askOrderDbKeyFactory = new LongKeyFactory<Ask>("id") {
@@ -238,6 +250,7 @@ public abstract class Order {
 
             @Override
             public void save(Connection con, Ask ask) throws SQLException {
+                log.debug("Save ask = {}", ask);
                 ask.save(con, table);
             }
 
@@ -305,12 +318,17 @@ public abstract class Order {
 
         public static void addOrder(Transaction transaction, ColoredCoinsAskOrderPlacement attachment) {
             Ask order = new Ask(transaction, attachment);
+            log.debug(">> addOrder() askOrder={}", order);
             askOrderTable.insert(order);
+            int height = blockchain.getHeight();
+            log.debug("<< addOrder() askOrder={}, height={}", order, height);
             matchOrders(attachment.getAssetId());
         }
 
         public static void removeOrder(long orderId) {
-            askOrderTable.deleteAtHeight(getAskOrder(orderId), blockchain.getHeight());
+            int height = blockchain.getHeight();
+            log.debug(">> removeOrder() askOrderId={}, height={}", orderId, height);
+            askOrderTable.deleteAtHeight(getAskOrder(orderId), height);
         }
 
         public static void init() {}
@@ -337,6 +355,21 @@ public abstract class Order {
         }
         */
 
+        @Override
+        public String toString() {
+            final StringBuffer sb = new StringBuffer("Ask{");
+            sb.append("id=").append(super.id);
+            sb.append(", accountId=").append(super.accountId);
+            sb.append(", assetId=").append(super.assetId);
+            sb.append(", priceATM=").append(super.priceATM);
+            sb.append(", creationHeight=").append(super.creationHeight);
+            sb.append(", transactionIndex=").append(super.transactionIndex);
+            sb.append(", transactionHeight=").append(super.transactionHeight);
+            sb.append(", quantityATU=").append(super.quantityATU);
+            sb.append(", dbKey=").append(dbKey);
+            sb.append('}');
+            return sb.toString();
+        }
     }
 
     public static final class Bid extends Order {
@@ -359,6 +392,7 @@ public abstract class Order {
 
             @Override
             public void save(Connection con, Bid bid) throws SQLException {
+                log.debug("Save bid = {}", bid);
                 bid.save(con, table);
             }
 
@@ -426,12 +460,17 @@ public abstract class Order {
 
         public static void addOrder(Transaction transaction, ColoredCoinsBidOrderPlacement attachment) {
             Bid order = new Bid(transaction, attachment);
+            log.debug(">> addOrder() bidOrder={}", order);
+            int height = blockchain.getHeight();
             bidOrderTable.insert(order);
+            log.debug("<< addOrder() BidOrder={}, height={}", order, height);
             matchOrders(attachment.getAssetId());
         }
 
         public static void removeOrder(long orderId) {
-            bidOrderTable.deleteAtHeight(getBidOrder(orderId), blockchain.getHeight());
+            int height = blockchain.getHeight();
+            log.debug(">> removeOrder() bidOrderId={}, height={}", orderId, height);
+            bidOrderTable.deleteAtHeight(getBidOrder(orderId), height);
         }
 
         public static void init() {}
@@ -457,5 +496,21 @@ public abstract class Order {
             }
         }
         */
+
+        @Override
+        public String toString() {
+            final StringBuffer sb = new StringBuffer("Bid{");
+            sb.append("id=").append(super.id);
+            sb.append(", accountId=").append(super.accountId);
+            sb.append(", assetId=").append(super.assetId);
+            sb.append(", priceATM=").append(super.priceATM);
+            sb.append(", creationHeight=").append(super.creationHeight);
+            sb.append(", transactionIndex=").append(super.transactionIndex);
+            sb.append(", transactionHeight=").append(super.transactionHeight);
+            sb.append(", quantityATU=").append(super.quantityATU);
+            sb.append(", dbKey=").append(dbKey);
+            sb.append('}');
+            return sb.toString();
+        }
     }
 }
