@@ -141,7 +141,10 @@ public class AskOrderServiceImpl implements OrderService<AskOrder, ColoredCoinsA
     @Override
     public void removeOrder(long orderId) {
         int height = blockchain.getHeight();
-        boolean result = askOrderTable.deleteAtHeight(getOrder(orderId), height);
+        AskOrder order = getOrder(orderId);
+        // IMPORTANT! update new height in order for correct saving duplicated record and correct trim
+        order.setHeight(height); // do not remove
+        boolean result = askOrderTable.deleteAtHeight(order, height);
         log.trace(">> removeOrder() result={}, askOrderId={}, height={}", result, orderId, height);
     }
 

@@ -140,8 +140,11 @@ public class BidOrderServiceImpl implements OrderService<BidOrder, ColoredCoinsB
     @Override
     public void removeOrder(long orderId) {
         int height = blockchain.getHeight();
-        boolean result = bidOrderTable.deleteAtHeight(getOrder(orderId), height);
-        log.trace(">> removeOrder() result={}, bidOrderId={}, height={}", result, orderId, height);
+        BidOrder order = getOrder(orderId);
+        // IMPORTANT! update new height in order for correct saving duplicated record and correct trim
+        order.setHeight(height); // do not remove
+        boolean result = bidOrderTable.deleteAtHeight(order, height);
+        log.trace("<< removeOrder() result={}, bidOrderId={}, height={}", result, orderId, height);
     }
 
     @Override

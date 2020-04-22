@@ -23,6 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.order.dao;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.order.entity.Order;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
@@ -43,7 +44,8 @@ public abstract class OrderTable<T extends Order> extends VersionedDeletableEnti
 
     @Override
     public void save(Connection con, T order) throws SQLException {
-        log.trace("save table={}, entity={}", super.getTableName(), order);
+        log.trace("save table={}, entity={}, stack = {}",
+            super.getTableName(), order, ThreadUtils.last5Stacktrace());
         try (
             @DatabaseSpecificDml(DmlMarker.MERGE)
             PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (id, account_id, asset_id, "
