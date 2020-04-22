@@ -53,6 +53,7 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
     }
 
     private int doMultiversionRollback(int height) {
+        LOG.trace("doMultiversionRollback(), height={}", height);
         int deletedRecordsCount;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
@@ -174,6 +175,7 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
      * </p>
      */
     private void doMultiversionTrim(final int height) {
+        LOG.trace("doMultiversionTrim(), height={}", height);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
@@ -197,8 +199,8 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
                     Set<Long> keysToDelete = selectDbIds(selectDbIdStatement, rs);
                     // TODO migrate to PreparedStatement.addBatch for another db
                     for (Long id : keysToDelete) {
-                        deleteByDbId(pstmtDeleteById, id);
-                        deleted++;
+                        deleted += deleteByDbId(pstmtDeleteById, id);
+//                        deleted++;
                         deleteStm++;
                         if (deleted % 100 == 0) {
                             dataSource.commit(false);
@@ -206,8 +208,8 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
                     }
                 }
                 dataSource.commit(false);
-                LOG.trace("Delete time {} for table {}: stm - {}, deleted - {}", System.currentTimeMillis() - startDeleteTime, table,
-                        deleteStm, deleted);
+                LOG.trace("Delete time {} for table '{}': deleteStm=[{}], deleted=[{}]", System.currentTimeMillis() - startDeleteTime, table,
+                    deleteStm, deleted);
             }
             long trimTime = System.currentTimeMillis() - startTime;
             if (trimTime > 1000) {
@@ -222,8 +224,9 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
     private String getDeletedColumnIfSupported() {
         return supportDelete() ? ", deleted" : "";
     }
+
     private String getDeletedSetStatementIfSupported(boolean deleted) {
-        return supportDelete() ? ", deleted = " + deleted + " ": "";
+        return supportDelete() ? ", deleted = " + deleted + " " : "";
     }
 
     private Set<Long> selectDbIds(PreparedStatement selectDbIdStatement, ResultSet rs) throws SQLException {
@@ -257,9 +260,9 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
         return keys;
     }
 
-    private void deleteByDbId(PreparedStatement pstmtDeleteByDbId, long dbId) throws SQLException {
+    private int deleteByDbId(PreparedStatement pstmtDeleteByDbId, long dbId) throws SQLException {
         pstmtDeleteByDbId.setLong(1, dbId);
-        pstmtDeleteByDbId.executeUpdate();
+        return pstmtDeleteByDbId.executeUpdate();
 
     }
 }

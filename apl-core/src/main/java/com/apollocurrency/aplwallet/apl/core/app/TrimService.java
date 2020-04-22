@@ -16,8 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.observer.TrimData;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import lombok.Getter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Event;
 import javax.enterprise.util.AnnotationLiteral;
@@ -28,9 +27,9 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static com.apollocurrency.aplwallet.apl.util.Constants.DEFAULT_PRUNABLE_UPDATE_PERIOD;
 
+@Slf4j
 @Singleton
 public class TrimService {
-    private static final Logger log = LoggerFactory.getLogger(TrimService.class);
     @Getter
     private final int maxRollback;
     private final int trimFrequency;
