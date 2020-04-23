@@ -1,20 +1,4 @@
 /*
- * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016-2017 Jelurida IP B.V.
- *
- * See the LICENSE.txt file at the top-level directory of this distribution
- * for licensing information.
- *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
- * no part of the Nxt software, including this file, may be copied, modified,
- * propagated, or distributed except according to the terms contained in the
- * LICENSE.txt file.
- *
- * Removal or modification of this copyright notice is prohibited.
- *
- */
-
-/*
  * Copyright © 2018-2020 Apollo Foundation
  */
 
@@ -150,6 +134,8 @@ public class TradeServiceImpl implements TradeService {
     public Trade addTrade(long assetId, AskOrder askOrder, BidOrder bidOrder) {
         final Block block = blockchain.getLastBlock();
         final DbKey dbKey = tradeTable.getDbKey(askOrder.getId(), bidOrder.getId());
+        log.trace(">> addTrade() newDbKey={}, assetId={}, askOrder={}, bidOrder={}, height={}",
+            dbKey, assetId, askOrder, bidOrder, block.getHeight());
         Trade trade = new Trade(
             assetId,
             askOrder,
@@ -159,8 +145,8 @@ public class TradeServiceImpl implements TradeService {
             block.getHeight(),
             block.getTimestamp()
         );
-        log.trace("addTrade/listener... assetId={}, askOrder={}, bidOrder={}, trade={}", assetId, askOrder, bidOrder, trade);
         tradeTable.insert(trade);
+        log.trace("<< addTrade() assetId={}, askOrder={}, bidOrder={}, trade={}", assetId, askOrder, bidOrder, trade);
         return trade;
     }
 }
