@@ -157,6 +157,7 @@ public class AskOrderServiceImpl implements OrderService<AskOrder, ColoredCoinsA
         } else if (quantityATU == 0) {
             log.trace("Delete ZERO quantity = {}, height={}", orderAsk, height);
         }
+        orderAsk.setHeight(height);
         insertOrDeleteOrder(askOrderTable, quantityATU, orderAsk, height);
     }
 }

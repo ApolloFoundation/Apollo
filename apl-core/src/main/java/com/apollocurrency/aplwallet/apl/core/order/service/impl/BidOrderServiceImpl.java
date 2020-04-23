@@ -156,6 +156,7 @@ public class BidOrderServiceImpl implements OrderService<BidOrder, ColoredCoinsB
         } else if (quantityATU == 0) {
             log.trace("Delete ZERO quantity = {}, height={}", orderBid, height);
         }
-        insertOrDeleteOrder(bidOrderTable, quantityATU, orderBid, blockchain.getHeight());
+        orderBid.setHeight(height);
+        insertOrDeleteOrder(bidOrderTable, quantityATU, orderBid, height);
     }
 }
