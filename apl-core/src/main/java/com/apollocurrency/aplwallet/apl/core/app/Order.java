@@ -94,13 +94,15 @@ public abstract class Order {
         int index = 0;
         while ((askOrder = Ask.getNextOrder(assetId)) != null
                 && (bidOrder = Bid.getNextOrder(assetId)) != null) {
-            log.debug(">> match orders LOOP, assetId={}, index={}", assetId, index);
+            log.debug(">> match orders LOOP, assetId={}, index={}, askOrder={}, bidOrder={}",
+                assetId, index, askOrder, bidOrder);
             if (askOrder.getPriceATM() > bidOrder.getPriceATM()) {
                 log.debug(">> match orders, STOP LOOP, assetId={}", assetId);
                 break;
             }
 
             Trade trade = Trade.addTrade(assetId, askOrder, bidOrder);
+            log.debug("match orders TRADE, assetId={}, trade={}", assetId, trade);
 
             askOrder.updateQuantityATU(Math.subtractExact(askOrder.getQuantityATU(), trade.getQuantityATU()));
             Account askAccount = accountService.getAccount(askOrder.getAccountId());
@@ -148,11 +150,13 @@ public abstract class Order {
     static <T extends Order> void insertOrDeleteOrder(VersionedDeletableEntityDbTable<T> table, long quantityATU, T order) {
         int height = blockchain.getHeight();
         if (quantityATU > 0) {
-            log.debug("Update POSITIVE quantity = {}, height={}", order, height);
+            log.debug(">> Update POSITIVE quantity = {}, height={}", order, height);
             table.insert(order);
+            log.debug("<< Update POSITIVE quantity = {}, height={}", order, height);
         } else if (quantityATU == 0) {
-            log.debug("Delete ZERO quantity = {}, height={}", order, height);
+            log.debug(">> Delete ZERO quantity = {}, height={}", order, height);
             table.deleteAtHeight(order, height);
+            log.debug("<< Delete ZERO quantity = {}, height={}", order, height);
         } else {
             throw new IllegalArgumentException("Negative quantity: " + quantityATU
                     + " for order: " + order.getId());

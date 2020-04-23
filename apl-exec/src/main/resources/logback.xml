@@ -114,9 +114,11 @@
       <appender-ref ref="account-file"/>
     </logger>
 -->
+<!--
   <logger name="com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetServiceImpl" level="trace" additivity="false">
     <appender-ref ref="ask-bid-order"/>
   </logger>
+-->
   <logger name="com.apollocurrency.aplwallet.apl.core.app.Order" level="trace" additivity="false">
     <appender-ref ref="ask-bid-order"/>
   </logger>

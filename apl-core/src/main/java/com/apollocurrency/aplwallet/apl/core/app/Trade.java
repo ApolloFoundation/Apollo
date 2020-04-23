@@ -38,6 +38,7 @@ import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
+import com.apollocurrency.aplwallet.apl.util.StackTraceUtils;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -76,7 +77,7 @@ public final class Trade {
 
         @Override
         public void save(Connection con, Trade trade) throws SQLException {
-            log.debug(">> save() trade={}", trade);
+            log.debug(">> save() trade={}, stack = {}", trade.toString(), StackTraceUtils.lastNStacktrace(6));
             trade.save(con);
         }
 
@@ -178,9 +179,10 @@ public final class Trade {
 
     static Trade addTrade(long assetId, Order.Ask askOrder, Order.Bid bidOrder) {
         Trade trade = new Trade(assetId, askOrder, bidOrder);
-        log.debug("addTrade/listener... assetId={}, askOrder={}, bidOrder={}, trade={}", assetId, askOrder, bidOrder, trade);
+        log.debug(">> addTrade() assetId={}, askOrder={}, bidOrder={}, trade={}", assetId, askOrder, bidOrder, trade);
         tradeTable.insert(trade);
         listeners.notify(trade, Event.TRADE);
+        log.debug("<< addTrade() assetId={}, askOrder={}, bidOrder={}, trade={}", assetId, askOrder, bidOrder, trade);
         return trade;
     }
 
@@ -222,6 +224,7 @@ public final class Trade {
                         (askOrder.getTransactionHeight() < bidOrder.getTransactionHeight() ||
                                 (askOrder.getTransactionHeight() == bidOrder.getTransactionHeight() && askOrder.getTransactionIndex() < bidOrder.getTransactionIndex()));
         this.priceATM = isBuy ? askOrder.getPriceATM() : bidOrder.getPriceATM();
+        log.trace("create Trade = {}, stack ={}", this.toString(), StackTraceUtils.lastNStacktrace(5));
     }
 
     private Trade(ResultSet rs, DbKey dbKey) throws SQLException {
@@ -259,6 +262,7 @@ public final class Trade {
     }
 
     private void save(Connection con) throws SQLException {
+        log.trace("save TRADE = {}", this.toString());
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO trade (asset_id, block_id, "
                 + "ask_order_id, bid_order_id, ask_order_height, bid_order_height, seller_id, buyer_id, quantity, price, is_buy, timestamp, height) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
@@ -321,6 +325,7 @@ public final class Trade {
     @Override
     public String toString() {
         return "Trade: assetId=" + assetId + ", askOrderId=" + askOrderId + ", bidOrderId=" + bidOrderId
+            + ", askOrderHeight=" + askOrderHeight + ", bidOrderHeight=" + bidOrderHeight
             + ", price=" + priceATM + ", quantity=" + quantityATU + ", height=" + height + ", dbKey=" + dbKey;
     }
 
