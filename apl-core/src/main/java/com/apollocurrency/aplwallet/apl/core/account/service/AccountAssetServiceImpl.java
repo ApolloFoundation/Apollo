@@ -237,6 +237,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
             accountAssetTable.insert(accountAsset);
         } else {
             int height = blockChainInfoService.getHeight();
+            //NOTE in case of issues: accountAsset.setHeight(height);
             log.debug("<< update() DELETE, height={}, accountAsset = {}", height, accountAsset);
             accountAssetTable.deleteAtHeight(accountAsset, height);
         }
