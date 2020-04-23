@@ -1,20 +1,4 @@
 /*
- * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016-2017 Jelurida IP B.V.
- *
- * See the LICENSE.txt file at the top-level directory of this distribution
- * for licensing information.
- *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
- * no part of the Nxt software, including this file, may be copied, modified,
- * propagated, or distributed except according to the terms contained in the
- * LICENSE.txt file.
- *
- * Removal or modification of this copyright notice is prohibited.
- *
- */
-
-/*
  * Copyright © 2018-2020 Apollo Foundation
  */
 
@@ -152,11 +136,6 @@ public class AskOrderServiceImpl implements OrderService<AskOrder, ColoredCoinsA
     public void updateQuantityATU(long quantityATU, AskOrder orderAsk) {
         orderAsk.setQuantityATU(quantityATU);
         int height = blockchain.getHeight();
-        if (quantityATU > 0) {
-            log.trace("Update POSITIVE quantity = {}, height={}", orderAsk, height);
-        } else if (quantityATU == 0) {
-            log.trace("Delete ZERO quantity = {}, height={}", orderAsk, height);
-        }
         orderAsk.setHeight(height);
         insertOrDeleteOrder(askOrderTable, quantityATU, orderAsk, height);
     }
