@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.order.entity.Order;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderPlacementAttachment;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.stream.Stream;
 
@@ -31,8 +32,12 @@ import java.util.stream.Stream;
  * @author silaev-firstbridge on 4/8/2020
  */
 public interface OrderService<T extends Order, C extends ColoredCoinsOrderPlacementAttachment> {
+    @Slf4j
+    final class LogHolder {}
 
     default void insertOrDeleteOrder(VersionedDeletableEntityDbTable<T> table, long quantityATU, T order, int height) {
+        LogHolder.log.trace("insertOrDeleteOrder: order: {}, height: {}", order, height);
+
         if (quantityATU > 0) {
             table.insert(order);
         } else if (quantityATU == 0) {
