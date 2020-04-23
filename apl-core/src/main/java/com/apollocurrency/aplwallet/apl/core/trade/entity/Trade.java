@@ -64,8 +64,8 @@ public class Trade {
         this.timestamp = timestamp;
         this.askOrderId = askOrder.getId();
         this.bidOrderId = bidOrder.getId();
-        this.askOrderHeight = askOrder.getHeight();
-        this.bidOrderHeight = bidOrder.getHeight();
+        this.askOrderHeight = askOrder.getCreationHeight();
+        this.bidOrderHeight = bidOrder.getCreationHeight();
         this.sellerId = askOrder.getAccountId();
         this.buyerId = bidOrder.getAccountId();
         this.dbKey = dbKey;
