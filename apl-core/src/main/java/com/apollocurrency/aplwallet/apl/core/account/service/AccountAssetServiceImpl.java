@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.account.service;
@@ -18,6 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.db.service.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.monetary.service.AssetDividendService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -29,6 +30,7 @@ import static com.apollocurrency.aplwallet.apl.core.account.observer.events.Acco
 /**
  * @author andrew.zinchenko@gmail.com
  */
+@Slf4j
 @Singleton
 public class AccountAssetServiceImpl implements AccountAssetService {
 
@@ -176,6 +178,8 @@ public class AccountAssetServiceImpl implements AccountAssetService {
 
     @Override
     public void addToAssetBalanceATU(Account account, LedgerEvent event, long eventId, long assetId, long quantityATU) {
+        log.trace(">> addToAssetBalanceATU(..), account={}, event={}, eventId={}, assetId={}, quantityATU={}",
+            account, event, eventId, assetId, quantityATU);
         if (quantityATU == 0) {
             return;
         }
@@ -198,6 +202,8 @@ public class AccountAssetServiceImpl implements AccountAssetService {
 
     @Override
     public void addToUnconfirmedAssetBalanceATU(Account account, LedgerEvent event, long eventId, long assetId, long quantityATU) {
+        log.trace(">> addToUnconfirmedAssetBalanceATU(..), account={}, event={}, eventId={}, assetId={}, quantityATU={}",
+            account, event, eventId, assetId, quantityATU);
         if (quantityATU == 0) {
             return;
         }
@@ -224,16 +230,23 @@ public class AccountAssetServiceImpl implements AccountAssetService {
 
     @Override
     public void update(AccountAsset accountAsset) {
+        log.trace(">> update() accountAsset = {}", accountAsset);
         AccountService.checkBalance(accountAsset.getAccountId(), accountAsset.getQuantityATU(), accountAsset.getUnconfirmedQuantityATU());
         if (accountAsset.getQuantityATU() > 0 || accountAsset.getUnconfirmedQuantityATU() > 0) {
             accountAssetTable.insert(accountAsset);
+            log.trace("<< update() INSERT accountAsset = {}", accountAsset);
         } else {
-            accountAssetTable.deleteAtHeight(accountAsset, blockChainInfoService.getHeight());
+            int height = blockChainInfoService.getHeight();
+            //NOTE in case of issues: accountAsset.setHeight(height);
+            accountAssetTable.deleteAtHeight(accountAsset, height);
+            log.trace("<< update() DELETE, height={}, accountAsset = {}", height, accountAsset);
         }
     }
 
     @Override
     public void addToAssetAndUnconfirmedAssetBalanceATU(Account account, LedgerEvent event, long eventId, long assetId, long quantityATU) {
+        log.trace(">> addToAssetAndUnconfirmedAssetBalanceATU(..), account={}, event={}, eventId={}, assetId={}, quantityATU={}",
+            account, event, eventId, assetId, quantityATU);
         if (quantityATU == 0) {
             return;
         }
@@ -267,6 +280,8 @@ public class AccountAssetServiceImpl implements AccountAssetService {
 
     @Override
     public void payDividends(Account account, final long transactionId, ColoredCoinsDividendPayment attachment) {
+        log.trace(">> payDividends(..), account={}, transactionId={}, attachment={}",
+            account, transactionId, attachment);
         long totalDividend = 0;
         List<AccountAsset> accountAssets = getAssetsByAssetId(attachment.getAssetId(), attachment.getHeight());
         final long amountATMPerATU = attachment.getAmountATMPerATU();
