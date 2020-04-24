@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.chainid;
@@ -10,16 +10,18 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDao;
 import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
+import com.apollocurrency.aplwallet.apl.util.env.config.ShardingSettings;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * <p>To provide height-based config changing as described in conf/chains.json it used special listener that, depending
@@ -31,13 +33,19 @@ import java.util.Optional;
  * <p>Typically config should be updated to the latest height at application startup to provide correct config values for blockchain logic, such as
  * blockTime, adaptiveBlockTime, maxBalance and so on</p>
  */
+@Slf4j
 @Singleton
 public class BlockchainConfigUpdater {
-    private static final Logger LOG = LoggerFactory.getLogger(BlockchainConfigUpdater.class);
 
     private BlockDao blockDao;
     private BlockchainConfig blockchainConfig;
     private Chain chain;
+    /**
+     * Map for storing all ENABLED 'shard setting' instances available for current 'chain' config
+     * The unmodified map stored 'height' and 'sharding setting' corresponding it.
+     * Present shard settings are enabled ONLY !
+     */
+    private Map<Integer, ShardingSettings> enabledShardingSettingsMap;
 
     @Inject
     public BlockchainConfigUpdater(BlockchainConfig blockchainConfig, BlockDao blockDao) {
@@ -47,6 +55,9 @@ public class BlockchainConfigUpdater {
 
     public void updateChain(Chain chain, PropertiesHolder propertiesHolder) {
         this.chain = chain;
+        if (chain != null) {
+            enabledShardingSettingsMap = null;// reset map for initialization again with new data
+        }
         blockchainConfig.updateChain(chain, propertiesHolder);
     }
 
@@ -63,13 +74,15 @@ public class BlockchainConfigUpdater {
 
     public void reset() {
         updateToHeight(0);
+        if (chain != null) {
+            enabledShardingSettingsMap = null;// reset map for initialization again with new data
+        }
     }
-
 
     public void updateToLatestConfig() {
         Block lastBlock = blockDao.findLastBlock();
         if (lastBlock == null) {
-            LOG.debug("Nothing to update. No blocks");
+            log.debug("Nothing to update. No blocks");
             return;
         }
         updateToHeight(lastBlock.getHeight());
@@ -80,7 +93,7 @@ public class BlockchainConfigUpdater {
         HeightConfig latestConfig = getConfigAtHeight(height);
         HeightConfig currentConfig = blockchainConfig.getCurrentConfig();
         if (currentConfig != null && latestConfig != null && currentConfig.getHeight() != latestConfig.getHeight()) {
-            LOG.debug("Update to {} at height {}", latestConfig, height);
+            log.debug("Update to {} at height {}", latestConfig, height);
             blockchainConfig.setCurrentConfig(latestConfig);
         }
     }
@@ -90,6 +103,11 @@ public class BlockchainConfigUpdater {
     }
 
     private HeightConfig getConfigAtHeight(int targetHeight) {
+        if (this.chain == null) {
+            String error = "Chain configuration is not initialized ! That's strange actually...";
+            log.error(error);
+            throw new RuntimeException(error);
+        }
         Map<Integer, BlockchainProperties> blockchainProperties = chain.getBlockchainProperties();
         BlockchainProperties bpAtHeight = blockchainProperties.get(targetHeight);
         if (bpAtHeight != null) {
@@ -104,5 +122,59 @@ public class BlockchainConfigUpdater {
         return maxHeight
             .map(height -> new HeightConfig(blockchainProperties.get(height)))
             .orElse(null);
+    }
+
+    public HeightConfig getCurrentConfig() {
+        return blockchainConfig.getCurrentConfig();
+    }
+
+    /**
+     * Return correct ShardingSetting by specified (trim) height. We should find only ENABLED shard settings with height
+     * lower when value passed into method.
+     *
+     * @param trimHeight target height (trim height usually)
+     * @return found ShardingSettings value OR Optional.Empty value if not found
+     */
+    public Optional<ShardingSettings> getShardingSettingsByTrimHeight(int trimHeight) {
+        if (this.chain == null) {
+            String error = "Can't get 'ShardingSettings', because Chain configuration is not initialized ! That's strange actually...";
+            log.warn(error);
+            return Optional.empty();
+        }
+        Map<Integer, BlockchainProperties> blockchainProperties = chain.getBlockchainProperties();
+        if (blockchainProperties == null) { // very small chance, but who knows...?
+            String error = String.format("Missing any 'BlockchainProperties' by trimHeight '%s' !", trimHeight);
+            log.warn(error);
+            return Optional.empty();
+        }
+        if (enabledShardingSettingsMap == null) {
+            // lazy initialization
+            enabledShardingSettingsMap =
+                blockchainProperties
+                    .values()
+                    .stream()
+//                    .filter(
+//                        blockchainProperty -> blockchainProperty.getShardingSettings() != null
+//                        && blockchainProperty.getShardingSettings().isEnabled()
+//                    )
+                    .collect(Collectors.toUnmodifiableMap(
+                        BlockchainProperties::getHeight,
+                        BlockchainProperties::getShardingSettings));
+        }
+        return enabledShardingSettingsMap
+            .entrySet().stream()
+            // reverse order for the higher 'height' values in beginning
+            .sorted(Map.Entry.comparingByKey(Comparator.reverseOrder()))
+            .filter(entry -> entry.getKey() <= trimHeight && entry.getValue() != null)
+            .map(Map.Entry::getValue)
+            .findFirst();
+    }
+
+    /**
+     * Used by unit tests mostly.
+     * @return Return UNMODIFIED map
+     */
+    public Map<Integer, ShardingSettings> getEnabledShardingSettingsMap() {
+        return enabledShardingSettingsMap;
     }
 }

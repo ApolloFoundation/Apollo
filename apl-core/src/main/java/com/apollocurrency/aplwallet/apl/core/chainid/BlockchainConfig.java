@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.chainid;
@@ -35,7 +35,7 @@ public class BlockchainConfig {
     private long shufflingDepositAtm;
     private int guaranteedBalanceConfirmations;
     private volatile HeightConfig currentConfig;
-    private volatile HeightConfig previousConfig; // keep previous config for easy access
+    private volatile HeightConfig previousConfig; // keep a previous config for easy access
     private Chain chain;
     private volatile boolean isJustUpdated = false;
 

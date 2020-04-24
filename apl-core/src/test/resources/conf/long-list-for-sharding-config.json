@@ -1,0 +1,87 @@
+[
+  {
+    "chainId": "3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6",
+    "active": true,
+    "wellKnownPeers": [
+      "51.15.250.32",
+      "51.15.130.37"
+    ],
+    "name": "Apollo experimental testnet",
+    "description": "NOT STABLE testnet for experiments. Don't use it if you don't know what is it",
+    "symbol": "Apollo",
+    "prefix": "APL",
+    "project": "Apollo",
+    "genesisLocation": "conf/data/genesisAccounts-testnet.json",
+    "featuresHeightRequirement": {
+      "dexReopenPendingOrdersHeight": 3000,
+      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 5000
+    },
+    "blockchainProperties": [
+      {
+        "height": 0,
+        "blockTime": 60,
+        "maxBlockTimeLimit": 67,
+        "minBlockTimeLimit": 53,
+        "maxBalance": 30000000000
+      },
+      {
+        "height": 1,
+        "shardingSettings": {
+          "enabled": false,
+          "frequency": 1
+        }
+      },
+      {
+        "height": 2,
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 2
+        }
+      },
+      {
+        "height": 3,
+        "shardingSettings": {
+          "frequency": 3
+        }
+      },
+      {
+        "height": 5,
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 5
+        }
+      },
+      {
+        "height": 10
+      },
+      {
+        "height": 15,
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 15
+        }
+      },
+      {
+        "height": 20,
+        "shardingSettings": {
+          "enabled": false,
+          "frequency": 20
+        }
+      },
+      {
+        "height": 30,
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 30
+        }
+      },
+      {
+        "height": 40,
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 40
+        }
+      }
+    ]
+  }
+]
