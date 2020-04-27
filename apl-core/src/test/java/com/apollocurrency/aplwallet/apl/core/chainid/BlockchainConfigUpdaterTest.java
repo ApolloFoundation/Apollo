@@ -53,31 +53,47 @@ class BlockchainConfigUpdaterTest {
     }
 
     @Test
-    void testGetEmptyByZeroHeight() {
+    void testGetMissingShardSettingsByZeroHeight() {
         prepareAndInitConfigUpdater();
         Optional<ShardingSettings> result = configUpdater.getShardingSettingsByTrimHeight(0);
         log.trace("result = {}", result);
-        assertTrue(result.isEmpty());
+        assertTrue(result.isPresent());
         assertNotNull(configUpdater.getEnabledShardingSettingsMap());
+        assertNotNull(result.get());
+        assertFalse(result.get().isEnabled());
     }
 
     @Test
-    void testGetEmptyByOne() {
+    void testGetDisabledConfigByOne() {
         prepareAndInitConfigUpdater();
         Optional<ShardingSettings> result = configUpdater.getShardingSettingsByTrimHeight(1);
         log.trace("result = {}", result);
-        assertTrue(result.isEmpty());
+        assertTrue(result.isPresent());
         assertNotNull(configUpdater.getEnabledShardingSettingsMap());
+        assertNotNull(result.get());
+        assertFalse(result.get().isEnabled());
     }
 
     @ParameterizedTest
-    @ValueSource(ints = {Integer.MIN_VALUE, -100, -1, 0, 1 })
-    void testAllZeroConfigs(int trimHeight) {
+    @ValueSource(ints = {Integer.MIN_VALUE, -100, -1 })
+    void test_Negative_Height_Configs(int trimHeight) {
         prepareAndInitConfigUpdater();
         Optional<ShardingSettings> result = configUpdater.getShardingSettingsByTrimHeight(trimHeight);
         log.trace("result = {}", result);
-        assertTrue(result.isEmpty());
+        assertFalse(result.isPresent());
+        assertNull(configUpdater.getEnabledShardingSettingsMap());
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1, 3, 10, 20 })
+    void test_Positive_Disabled_Configs(int trimHeight) {
+        prepareAndInitConfigUpdater();
+        Optional<ShardingSettings> result = configUpdater.getShardingSettingsByTrimHeight(trimHeight);
+        log.trace("result = {}", result);
+        assertTrue(result.isPresent());
         assertNotNull(configUpdater.getEnabledShardingSettingsMap());
+        assertNotNull(result.get());
+        assertFalse(result.get().isEnabled());
     }
 
     @Test
@@ -100,8 +116,9 @@ class BlockchainConfigUpdaterTest {
         log.trace("result = {}", result);
         assertTrue(result.isPresent());
         assertNotNull(result.get());
-        assertTrue(result.get().isEnabled());
-        assertEquals(shardFrequency, result.get().getFrequency());
+        assertTrue(result.get().isEnabled(), "got = " + result.get());
+        assertEquals(shardFrequency, result.get().getFrequency(),
+            String.format("expected = %d , got = %d", shardFrequency, result.get().getFrequency()));
         assertNotNull(configUpdater.getEnabledShardingSettingsMap());
     }
 
@@ -112,17 +129,18 @@ class BlockchainConfigUpdaterTest {
     static Stream<Arguments> provideTrimHeightAndFrequency() {
         return Stream.of(
             arguments(2, 2), // trim height 2 corresponds to configured frequency = 2
-            arguments(3, 2), // trim height 3 corresponds to configured frequency = 2
-            arguments(4, 2), // trim height 4 corresponds to configured frequency = 2
+//---            arguments(3, 2), // should be NOT correct
+//---            arguments(4, 2), // should be NOT correct
             arguments(5, 5), // trim height 5 corresponds to configured frequency = 5
             arguments(6, 5), // trim height 6 corresponds to configured frequency = 5
-            arguments(10, 5),
-            arguments(13, 5),
+            arguments(9, 5),
+//---            arguments(10, 5), // should be NOT correct
+//---            arguments(13, 5), // should be NOT correct
             arguments(15, 15),
             arguments(16, 15),
             arguments(19, 15),
-            arguments(20, 15), // shard config at height = 20 is DISABLE
-            arguments(29, 15), // shard config at height = 20 is DISABLE
+//---            arguments(20, 15), // should be NOT correct
+//---            arguments(29, 15), // should be NOT correct
             arguments(30, 30),
             arguments(31, 30),
             arguments(39, 30),
@@ -132,6 +150,38 @@ class BlockchainConfigUpdaterTest {
             arguments(Integer.MAX_VALUE, 40)
         );
     }
+
+    @ParameterizedTest
+    @MethodSource("provideDisabledResponseForTrimHeightAndFrequency")
+    void testAll_INCorrect_ConfigsWithFrequency(int trimHeight, int shardFrequency) {
+        prepareAndInitConfigUpdater();
+        Optional<ShardingSettings> result = configUpdater.getShardingSettingsByTrimHeight(trimHeight);
+        log.trace("result = {}", result);
+        assertTrue(result.isPresent());
+        assertNotNull(result.get());
+        assertFalse(result.get().isEnabled(), "got = " + result.get());
+        assertNotEquals(shardFrequency, result.get().getFrequency(),
+            String.format("expected = %d , got = %d", shardFrequency, result.get().getFrequency()));
+        assertNotNull(configUpdater.getEnabledShardingSettingsMap());
+    }
+
+    /**
+     * Height and target Frequency are supplied into unit test method
+     * @return height + frequency value for test
+     */
+    static Stream<Arguments> provideDisabledResponseForTrimHeightAndFrequency() {
+        return Stream.of(
+            // ALL should be NOT correct
+            arguments(3, 2), // trim height 3 corresponds to configured frequency = 2
+            arguments(4, 2), // trim height 4 corresponds to configured frequency = 2
+            arguments(10, 5),
+            arguments(13, 5),
+            arguments(20, 15),
+            arguments(21, 15),
+            arguments(29, 15)
+        );
+    }
+
     private void prepareAndInitConfigUpdater() {
         Chain chain = loadedChains.get(UUID.fromString("3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6"));
         assertNotNull(chain);

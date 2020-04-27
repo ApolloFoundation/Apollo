@@ -157,6 +157,10 @@
       <artifactId>janino</artifactId>
       <scope>test</scope>
     </dependency>
+      <dependency>
+          <groupId>com.fasterxml.jackson.module</groupId>
+          <artifactId>jackson-module-paranamer</artifactId>
+      </dependency>
   </dependencies>
 
   <build>

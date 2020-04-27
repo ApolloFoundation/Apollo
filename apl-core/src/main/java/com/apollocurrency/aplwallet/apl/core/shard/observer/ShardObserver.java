@@ -1,11 +1,12 @@
 /*
- *  Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.shard.observer;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
@@ -25,11 +26,13 @@ public class ShardObserver {
     private static final Logger log = LoggerFactory.getLogger(ShardObserver.class);
 
     private final BlockchainConfig blockchainConfig;
+//    private final BlockchainConfigUpdater blockchainConfig;
     private final ShardService shardService;
     private PropertiesHolder propertiesHolder;
 
     @Inject
     public ShardObserver(BlockchainConfig blockchainConfig, ShardService shardService, PropertiesHolder propertiesHolder) {
+//    public ShardObserver(BlockchainConfigUpdater blockchainConfig, ShardService shardService, PropertiesHolder propertiesHolder) {
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
         this.shardService = Objects.requireNonNull(shardService, "shardService is NULL");
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder, "propertiesHolder is NULL");

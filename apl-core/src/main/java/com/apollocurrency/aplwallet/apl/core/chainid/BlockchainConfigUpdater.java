@@ -18,7 +18,7 @@ import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.Comparator;
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -147,27 +147,57 @@ public class BlockchainConfigUpdater {
             log.warn(error);
             return Optional.empty();
         }
+        if (trimHeight < 0) { // no chance to look for negative height value in configs
+            String error = String.format("'trimHeight' is negative trimHeight '%s' !", trimHeight);
+            log.warn(error);
+            return Optional.empty();
+        }
         if (enabledShardingSettingsMap == null) {
             // lazy initialization
             enabledShardingSettingsMap =
                 blockchainProperties
-                    .values()
-                    .stream()
+                    .values().stream()
+//                    .entrySet().stream()
+//                    .sorted(Map.Entry.comparingByKey(new BlockchainProperties()).reversed())
 //                    .filter(
 //                        blockchainProperty -> blockchainProperty.getShardingSettings() != null
 //                        && blockchainProperty.getShardingSettings().isEnabled()
 //                    )
-                    .collect(Collectors.toUnmodifiableMap(
-                        BlockchainProperties::getHeight,
-                        BlockchainProperties::getShardingSettings));
+//                    .collect(Collectors.toMap(
+//                        BlockchainProperties::getHeight,
+//                        BlockchainProperties::getShardingSettings));
+
+            .collect(Collectors.toMap(BlockchainProperties::getHeight, BlockchainProperties::getShardingSettings,
+                (oldValue, newValue) -> oldValue, LinkedHashMap::new));
         }
+        System.out.println("enabledShardingSettingsMap = " + enabledShardingSettingsMap.toString());
         return enabledShardingSettingsMap
             .entrySet().stream()
             // reverse order for the higher 'height' values in beginning
-            .sorted(Map.Entry.comparingByKey(Comparator.reverseOrder()))
-            .filter(entry -> entry.getKey() <= trimHeight && entry.getValue() != null)
-            .map(Map.Entry::getValue)
-            .findFirst();
+//            .sorted(Map.Entry.comparingByKey(Comparator.reverseOrder()))
+            .sorted(Map.Entry.comparingByKey(Comparator.naturalOrder()))
+//            .filter(entry -> entry.getKey() <= trimHeight)
+//            .filter(entry -> entry.getKey() < trimHeight)
+//            .filter(entry -> entry.getKey() >= trimHeight)
+//            .map(entry -> new ShardingSettings( entry.getKey(), entry.getValue()))
+//            .collect(Collectors.toList());
+//            .findFirst();
+//            .reduce((sh1, sh2 ) -> sh1.getStartHeight() >= trimHeight && trimHeight < sh2.getStartHeight() ? sh1 : sh2 );
+            .reduce((sh1, sh2 ) -> {
+//                System.out.println("trimHeight = " + trimHeight + " sh1(" + sh1.getStartHeight() + ") VS sh2(" + sh2.getStartHeight() + ")");
+                System.out.println("trimHeight = " + trimHeight + " sh1(" + sh1.getKey() + ") VS sh2(" + sh2.getKey() + ")");
+//                if (sh1.getStartHeight() <= trimHeight && trimHeight < sh2.getStartHeight()) {
+                if (sh1.getKey() <= trimHeight && trimHeight < sh2.getKey()) {
+//                    System.out.println("return sh1 = " + sh1.getStartHeight());
+                    System.out.println("return sh1 = " + sh1.getKey());
+                    return sh1;
+                } else {
+//                    System.out.println("return sh2 = " + sh2.getStartHeight());
+                    System.out.println("return sh2 = " + sh2.getKey());
+                    return sh2;
+                }
+            }).map(entry -> new ShardingSettings( entry.getKey(), entry.getValue()))
+            ;
     }
 
     /**
