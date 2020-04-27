@@ -27,7 +27,11 @@ public class ShardingSettings {
         int frequency,
         String digestAlgorithm /* it is not used in json configs actually */) {
         this.enabled = enabled;
-        this.frequency = frequency;
+        if (frequency > 0) {
+            this.frequency = frequency;
+        } else {
+            this.frequency = DEFAULT_SHARDING_FREQUENCY;
+        }
         this.digestAlgorithm = StringValidator.requireNonBlank(digestAlgorithm);
         this.startHeight = 0; // optional and used for test purpose only!
     }
