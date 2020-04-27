@@ -58,7 +58,7 @@ class BlockchainConfigUpdaterTest {
         Optional<ShardingSettings> result = configUpdater.getShardingSettingsByTrimHeight(0);
         log.trace("result = {}", result);
         assertTrue(result.isPresent());
-        assertNotNull(configUpdater.getEnabledShardingSettingsMap());
+        assertNotNull(configUpdater.getShardingSettingsMap());
         assertNotNull(result.get());
         assertFalse(result.get().isEnabled());
     }
@@ -69,7 +69,7 @@ class BlockchainConfigUpdaterTest {
         Optional<ShardingSettings> result = configUpdater.getShardingSettingsByTrimHeight(1);
         log.trace("result = {}", result);
         assertTrue(result.isPresent());
-        assertNotNull(configUpdater.getEnabledShardingSettingsMap());
+        assertNotNull(configUpdater.getShardingSettingsMap());
         assertNotNull(result.get());
         assertFalse(result.get().isEnabled());
     }
@@ -81,7 +81,7 @@ class BlockchainConfigUpdaterTest {
         Optional<ShardingSettings> result = configUpdater.getShardingSettingsByTrimHeight(trimHeight);
         log.trace("result = {}", result);
         assertFalse(result.isPresent());
-        assertNull(configUpdater.getEnabledShardingSettingsMap());
+        assertNull(configUpdater.getShardingSettingsMap());
     }
 
     @ParameterizedTest
@@ -91,7 +91,7 @@ class BlockchainConfigUpdaterTest {
         Optional<ShardingSettings> result = configUpdater.getShardingSettingsByTrimHeight(trimHeight);
         log.trace("result = {}", result);
         assertTrue(result.isPresent());
-        assertNotNull(configUpdater.getEnabledShardingSettingsMap());
+        assertNotNull(configUpdater.getShardingSettingsMap());
         assertNotNull(result.get());
         assertFalse(result.get().isEnabled());
     }
@@ -105,7 +105,7 @@ class BlockchainConfigUpdaterTest {
         assertNotNull(result.get());
         assertTrue(result.get().isEnabled());
         assertEquals(2, result.get().getFrequency());
-        assertNotNull(configUpdater.getEnabledShardingSettingsMap());
+        assertNotNull(configUpdater.getShardingSettingsMap());
     }
 
     @ParameterizedTest
@@ -119,7 +119,7 @@ class BlockchainConfigUpdaterTest {
         assertTrue(result.get().isEnabled(), "got = " + result.get());
         assertEquals(shardFrequency, result.get().getFrequency(),
             String.format("expected = %d , got = %d", shardFrequency, result.get().getFrequency()));
-        assertNotNull(configUpdater.getEnabledShardingSettingsMap());
+        assertNotNull(configUpdater.getShardingSettingsMap());
     }
 
     /**
@@ -162,7 +162,7 @@ class BlockchainConfigUpdaterTest {
         assertFalse(result.get().isEnabled(), "got = " + result.get());
         assertNotEquals(shardFrequency, result.get().getFrequency(),
             String.format("expected = %d , got = %d", shardFrequency, result.get().getFrequency()));
-        assertNotNull(configUpdater.getEnabledShardingSettingsMap());
+        assertNotNull(configUpdater.getShardingSettingsMap());
     }
 
     /**

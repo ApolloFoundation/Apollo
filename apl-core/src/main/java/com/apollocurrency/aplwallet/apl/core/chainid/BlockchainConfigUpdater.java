@@ -41,11 +41,10 @@ public class BlockchainConfigUpdater {
     private BlockchainConfig blockchainConfig;
     private Chain chain;
     /**
-     * Map for storing all ENABLED 'shard setting' instances available for current 'chain' config
-     * The unmodified map stored 'height' and 'sharding setting' corresponding it.
-     * Present shard settings are enabled ONLY !
+     * Map for storing all 'shard setting' instances available for current 'chain' config
+     * The map stores config 'height' as key and 'sharding setting' corresponding it as value.
      */
-    private Map<Integer, ShardingSettings> enabledShardingSettingsMap;
+    private Map<Integer, ShardingSettings> shardingSettingsMap;
 
     @Inject
     public BlockchainConfigUpdater(BlockchainConfig blockchainConfig, BlockDao blockDao) {
@@ -56,7 +55,7 @@ public class BlockchainConfigUpdater {
     public void updateChain(Chain chain, PropertiesHolder propertiesHolder) {
         this.chain = chain;
         if (chain != null) {
-            enabledShardingSettingsMap = null;// reset map for initialization again with new data
+            shardingSettingsMap = null;// reset map for initialization again by new data
         }
         blockchainConfig.updateChain(chain, propertiesHolder);
     }
@@ -75,7 +74,7 @@ public class BlockchainConfigUpdater {
     public void reset() {
         updateToHeight(0);
         if (chain != null) {
-            enabledShardingSettingsMap = null;// reset map for initialization again with new data
+            shardingSettingsMap = null;// reset map for initialization again with new data
         }
     }
 
@@ -152,18 +151,18 @@ public class BlockchainConfigUpdater {
             log.warn(error);
             return Optional.empty();
         }
-        if (enabledShardingSettingsMap == null) {
+        if (shardingSettingsMap == null) {
             // lazy initialization and caching data inside LinkedMap for correct ordering
-            enabledShardingSettingsMap =
+            shardingSettingsMap =
                 blockchainProperties
                     .values().stream()
             .collect(Collectors.toMap(BlockchainProperties::getHeight, BlockchainProperties::getShardingSettings,
                 (oldValue, newValue) -> oldValue, LinkedHashMap::new));
         }
         if (log.isTraceEnabled()) {
-            log.trace("enabledShardingSettingsMap = " + enabledShardingSettingsMap.toString());
+            log.trace("enabledShardingSettingsMap = " + shardingSettingsMap.toString());
         }
-        return enabledShardingSettingsMap
+        return shardingSettingsMap
             .entrySet().stream()
             .sorted(Map.Entry.comparingByKey(Comparator.naturalOrder()))
             .reduce((setting1, setting2 ) -> {
@@ -183,7 +182,7 @@ public class BlockchainConfigUpdater {
      * Used by unit tests mostly.
      * @return Return UNMODIFIED map
      */
-    public Map<Integer, ShardingSettings> getEnabledShardingSettingsMap() {
-        return enabledShardingSettingsMap;
+    public Map<Integer, ShardingSettings> getShardingSettingsMap() {
+        return shardingSettingsMap;
     }
 }
