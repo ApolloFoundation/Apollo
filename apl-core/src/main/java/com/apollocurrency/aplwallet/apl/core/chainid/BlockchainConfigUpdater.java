@@ -153,51 +153,30 @@ public class BlockchainConfigUpdater {
             return Optional.empty();
         }
         if (enabledShardingSettingsMap == null) {
-            // lazy initialization
+            // lazy initialization and caching data inside LinkedMap for correct ordering
             enabledShardingSettingsMap =
                 blockchainProperties
                     .values().stream()
-//                    .entrySet().stream()
-//                    .sorted(Map.Entry.comparingByKey(new BlockchainProperties()).reversed())
-//                    .filter(
-//                        blockchainProperty -> blockchainProperty.getShardingSettings() != null
-//                        && blockchainProperty.getShardingSettings().isEnabled()
-//                    )
-//                    .collect(Collectors.toMap(
-//                        BlockchainProperties::getHeight,
-//                        BlockchainProperties::getShardingSettings));
-
             .collect(Collectors.toMap(BlockchainProperties::getHeight, BlockchainProperties::getShardingSettings,
                 (oldValue, newValue) -> oldValue, LinkedHashMap::new));
         }
-        System.out.println("enabledShardingSettingsMap = " + enabledShardingSettingsMap.toString());
+        if (log.isTraceEnabled()) {
+            log.trace("enabledShardingSettingsMap = " + enabledShardingSettingsMap.toString());
+        }
         return enabledShardingSettingsMap
             .entrySet().stream()
-            // reverse order for the higher 'height' values in beginning
-//            .sorted(Map.Entry.comparingByKey(Comparator.reverseOrder()))
             .sorted(Map.Entry.comparingByKey(Comparator.naturalOrder()))
-//            .filter(entry -> entry.getKey() <= trimHeight)
-//            .filter(entry -> entry.getKey() < trimHeight)
-//            .filter(entry -> entry.getKey() >= trimHeight)
-//            .map(entry -> new ShardingSettings( entry.getKey(), entry.getValue()))
-//            .collect(Collectors.toList());
-//            .findFirst();
-//            .reduce((sh1, sh2 ) -> sh1.getStartHeight() >= trimHeight && trimHeight < sh2.getStartHeight() ? sh1 : sh2 );
-            .reduce((sh1, sh2 ) -> {
-//                System.out.println("trimHeight = " + trimHeight + " sh1(" + sh1.getStartHeight() + ") VS sh2(" + sh2.getStartHeight() + ")");
-                System.out.println("trimHeight = " + trimHeight + " sh1(" + sh1.getKey() + ") VS sh2(" + sh2.getKey() + ")");
-//                if (sh1.getStartHeight() <= trimHeight && trimHeight < sh2.getStartHeight()) {
-                if (sh1.getKey() <= trimHeight && trimHeight < sh2.getKey()) {
-//                    System.out.println("return sh1 = " + sh1.getStartHeight());
-                    System.out.println("return sh1 = " + sh1.getKey());
-                    return sh1;
+            .reduce((setting1, setting2 ) -> {
+                log.trace("trimHeight = {}: {} VS {}", trimHeight, setting1, setting2);
+                // we want to select ONE shard config between two correct height values inside Map
+                if (setting1.getKey() <= trimHeight && trimHeight < setting2.getKey()) {
+                    log.trace("return setting1 = {}", setting1);
+                    return setting1;
                 } else {
-//                    System.out.println("return sh2 = " + sh2.getStartHeight());
-                    System.out.println("return sh2 = " + sh2.getKey());
-                    return sh2;
+                    log.trace("return setting2 = {}", setting2);
+                    return setting2;
                 }
-            }).map(entry -> new ShardingSettings( entry.getKey(), entry.getValue()))
-            ;
+            }).map(entry -> new ShardingSettings( entry.getKey(), entry.getValue()));
     }
 
     /**
