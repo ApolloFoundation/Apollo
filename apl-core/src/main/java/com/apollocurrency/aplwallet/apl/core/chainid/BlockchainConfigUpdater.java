@@ -128,8 +128,8 @@ public class BlockchainConfigUpdater {
     }
 
     /**
-     * Return correct ShardingSetting by specified (trim) height. We should find only ENABLED shard settings with height
-     * lower when value passed into method.
+     * Return correct ShardingSetting by specified (trim) height. We find any shard settings with height
+     * associated with height.
      *
      * @param trimHeight target height (trim height usually)
      * @return found ShardingSettings value OR Optional.Empty value if not found

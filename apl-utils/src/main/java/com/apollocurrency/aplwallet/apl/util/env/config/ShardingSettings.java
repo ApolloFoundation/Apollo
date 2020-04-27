@@ -51,7 +51,7 @@ public class ShardingSettings {
     }
 
     /**
-     * Used for unit test amn by BlockchainConfigUpdater
+     * Used for unit test and by BlockchainConfigUpdater
      * @param startHeight configured height
      * @param shardingSettings corresponding shard settings
      */
