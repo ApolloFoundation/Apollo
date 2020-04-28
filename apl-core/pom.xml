@@ -14,6 +14,7 @@
   <packaging>jar</packaging>
 
   <dependencies>
+    <!-- CORE BOM DEPENDENCIES -->
     <dependency>
       <groupId>com.apollocurrency</groupId>
       <artifactId>apl-utils</artifactId>
@@ -24,6 +25,8 @@
       <artifactId>apl-api</artifactId>
       <version>${project.version}</version>
     </dependency>
+
+    <!-- EXT BOM DEPENDENCIES -->
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>

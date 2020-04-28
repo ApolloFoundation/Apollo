@@ -14,6 +14,7 @@
   <packaging>jar</packaging>
 
   <dependencies>
+    <!-- CORE BOM DEPENDENCIES -->
     <dependency>
       <groupId>com.apollocurrency</groupId>
       <artifactId>apl-crypto</artifactId>
@@ -39,6 +40,8 @@
       <artifactId>apl-core</artifactId>
       <version>${project.version}</version>
     </dependency>
+
+    <!-- CORE BOM DEPENDENCIES -->
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>

@@ -1,1 +1,0 @@
-./mvnw clean verify -P integration-test
