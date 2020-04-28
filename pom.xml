@@ -46,6 +46,7 @@
     <module>apl-utils</module>
     <module>apl-core</module>
     <module>apl-updater</module>
+    <module>apl-bom</module>
   </modules>
 
   <properties>

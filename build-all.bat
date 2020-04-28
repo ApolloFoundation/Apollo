@@ -1,13 +1,10 @@
 @echo off
-@REM common functions for Apollo scrtips
+@echo *********** BUILD Apollo **********
+@echo ----------------------------------------
 @echo *********** BUILD apl-bom-ext **********
 cd apl-bom-ext
 call mvnw clean install
 
-@echo *********** BUILD apollo-wallet **********
+@echo *********** BUILD apollo-wallet (including apl-bom) **********
 cd ..
-call mvnw clean install
-
-@echo *********** BUILD apl-bom **********
-cd apl-bom
-call mvnw clean install
+call mvnw clean install %1
