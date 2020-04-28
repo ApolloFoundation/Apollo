@@ -58,18 +58,12 @@ mvnw -v
 ## Linux/MacOS
    * Clone repository using git command `git clone` or download archive file of source code
    * go to source directory
-   * run ___mvn install___ 
-   * go to bin directory and run ___apl-run-desktop.sh___ 
-   * application should start in desktop mode
-   * if you require command line mode -> use ___apl-run.sh___ instead of ___apl-run-desktop.sh___
+   * run `./build-all.sh` (or `./build-all.sh -DskipTests` for skipping tests)
 
 ## Windows
    * Clone repository using git command `git clone` or download archive file of source code
    * go to source directory
-   * run ___mvn install___ 
-   * go to bin directory and run ___apl-run-desktop.bat___
-   * application should start in desktop mode
-   * if you require command line mode -> use ___apl-run.bat___ instead of ___apl-run-desktop.bat___
+   * run `build-all.bat` (or `build-all.bat -DskipTests` for skipping tests)  
 
 ## IDE
 
