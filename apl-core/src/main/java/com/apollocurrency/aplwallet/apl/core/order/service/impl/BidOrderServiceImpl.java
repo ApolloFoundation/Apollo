@@ -1,20 +1,4 @@
 /*
- * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016-2017 Jelurida IP B.V.
- *
- * See the LICENSE.txt file at the top-level directory of this distribution
- * for licensing information.
- *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
- * no part of the Nxt software, including this file, may be copied, modified,
- * propagated, or distributed except according to the terms contained in the
- * LICENSE.txt file.
- *
- * Removal or modification of this copyright notice is prohibited.
- *
- */
-
-/*
  * Copyright © 2018-2020 Apollo Foundation
  */
 
@@ -31,11 +15,13 @@ import com.apollocurrency.aplwallet.apl.core.order.entity.BidOrder;
 import com.apollocurrency.aplwallet.apl.core.order.service.OrderService;
 import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.BidOrderService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.stream.Stream;
 
+@Slf4j
 @Singleton
 @BidOrderService
 public class BidOrderServiceImpl implements OrderService<BidOrder, ColoredCoinsBidOrderPlacement> {
@@ -131,17 +117,25 @@ public class BidOrderServiceImpl implements OrderService<BidOrder, ColoredCoinsB
     @Override
     public void addOrder(Transaction transaction, ColoredCoinsBidOrderPlacement attachment) {
         final BidOrder order = new BidOrder(transaction, attachment, blockchain.getHeight());
+        log.trace(">> addOrder() bidOrder={}", order);
         bidOrderTable.insert(order);
     }
 
     @Override
     public void removeOrder(long orderId) {
-        bidOrderTable.deleteAtHeight(getOrder(orderId), blockchain.getHeight());
+        int height = blockchain.getHeight();
+        BidOrder order = getOrder(orderId);
+        // IMPORTANT! update new height in order for correct saving duplicated record and correct trim
+        order.setHeight(height); // do not remove
+        boolean result = bidOrderTable.deleteAtHeight(order, height);
+        log.trace("<< removeOrder() result={}, bidOrderId={}, height={}", result, orderId, height);
     }
 
     @Override
     public void updateQuantityATU(long quantityATU, BidOrder orderBid) {
         orderBid.setQuantityATU(quantityATU);
-        insertOrDeleteOrder(bidOrderTable, quantityATU, orderBid, blockchain.getHeight());
+        int height = blockchain.getHeight();
+        orderBid.setHeight(height);
+        insertOrDeleteOrder(bidOrderTable, quantityATU, orderBid, height);
     }
 }
