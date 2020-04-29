@@ -37,8 +37,9 @@ import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FAInterceptor;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.SecurityInterceptor;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
-import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.SecurityHandler;
@@ -64,7 +65,6 @@ import org.slf4j.Logger;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.MultipartConfigElement;
-import java.io.File;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.URI;
@@ -82,8 +82,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 
 @Singleton
+@Slf4j
 public final class API {
-    public final static String WEB_UI_DIR = "webui";
     private static final Logger LOG = getLogger(API.class);
     private static final String[] DISABLED_HTTP_METHODS = {"TRACE", "OPTIONS", "HEAD"};
     public static int openAPIPort;
@@ -176,14 +176,11 @@ public final class API {
     }
 
     public static String findWebUiDir() {
-        String dir = DirProvider.getBinDir() + File.separator + WEB_UI_DIR;
-        dir = dir + File.separator + "build";
-        File res = new File(dir);
-        if (!res.exists()) { //we are in develop IDE or tests
-            dir = DirProvider.getBinDir() + "/apl-exec/target/" + WEB_UI_DIR + "/build";
-            res = new File(dir);
+        final String webUIDir = propertiesHolder.getStringProperty("apl.webUIDir");
+        if (StringUtils.isBlank(webUIDir)) {
+            log.debug("webUIDir is not set in apl.webUIDir property");
         }
-        return res.getAbsolutePath();
+        return webUIDir;
     }
 
     public static boolean isAllowed(String remoteHost) {

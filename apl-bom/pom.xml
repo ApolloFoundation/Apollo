@@ -63,22 +63,22 @@
       <dependency>
         <groupId>com.apollocurrency</groupId>
         <artifactId>apl-core</artifactId>
-        <version>1.43.1</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.apollocurrency</groupId>
         <artifactId>apl-crypto</artifactId>
-        <version>1.43.1</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.apollocurrency</groupId>
         <artifactId>apl-updater</artifactId>
-        <version>1.43.1</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.apollocurrency</groupId>
         <artifactId>apl-utils</artifactId>
-        <version>1.43.1</version>
+        <version>${project.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
