@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonSetter;
 
 import java.util.Objects;
 
@@ -37,6 +38,7 @@ public class BlockchainProperties {
      * @param minBlockTimeLimit
      * @param maxBalance
      */
+    @JsonCreator
     public BlockchainProperties(
         @JsonProperty("height") int height,
         @JsonProperty("maxNumberOfTransactions") int maxNumberOfTransactions,
@@ -48,7 +50,7 @@ public class BlockchainProperties {
     }
 
     /**
-     * Constructor used for JSON loading and Jackson deserialization.
+     * All fields Constructor.
      * @param height
      * @param maxNumberOfTransactions
      * @param blockTime
@@ -58,16 +60,15 @@ public class BlockchainProperties {
      * @param shardingSettings
      * @param consensusSettings
      */
-    @JsonCreator
     public BlockchainProperties(
-        @JsonProperty("height") int height,
-        @JsonProperty("maxNumberOfTransactions") int maxNumberOfTransactions,
-        @JsonProperty("blockTime") int blockTime,
-        @JsonProperty("maxBlockTimeLimit") int maxBlockTimeLimit,
-        @JsonProperty("minBlockTimeLimit") int minBlockTimeLimit,
-        @JsonProperty("maxBalance") long maxBalance,
-        @JsonProperty("shardingSettings") ShardingSettings shardingSettings,
-        @JsonProperty("consensusSettings") ConsensusSettings consensusSettings) {
+        int height,
+        int maxNumberOfTransactions,
+        int blockTime,
+        int maxBlockTimeLimit,
+        int minBlockTimeLimit,
+        long maxBalance,
+        ShardingSettings shardingSettings,
+        ConsensusSettings consensusSettings) {
         this.height = height;
         this.maxNumberOfTransactions = maxNumberOfTransactions;
         this.blockTime = blockTime;
@@ -170,7 +171,7 @@ public class BlockchainProperties {
         return shardingSettings;
     }
 
-    @JsonProperty
+    @JsonSetter
     public void setShardingSettings(ShardingSettings shardingSettings) {
         this.shardingSettings = shardingSettings;
     }

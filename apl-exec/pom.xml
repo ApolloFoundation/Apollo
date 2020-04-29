@@ -139,7 +139,7 @@
             </goals>
             <configuration>
               <excludeTypes>zip</excludeTypes>
-              <excludeArtifactIds>weld-junit5,weld-junit-common,jsonassert,jackson-module-paranamer</excludeArtifactIds>
+              <excludeArtifactIds>weld-junit5,weld-junit-common,jsonassert</excludeArtifactIds>
               <excludeGroupIds>org.junit,org.mockito,org.opentest4j,org.hibernate.javax.persistence</excludeGroupIds>
               <outputDirectory>${project.build.directory}/lib</outputDirectory>
             </configuration>
