@@ -17,7 +17,6 @@ import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.config.ChainsConfigLoader;
 import com.apollocurrency.aplwallet.apl.util.env.config.ShardingSettings;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import com.fasterxml.jackson.module.paranamer.ParanamerModule;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,9 +40,6 @@ class BlockchainConfigUpdaterTest {
     @BeforeEach
     void setup() {
         chainsConfigLoader = new ChainsConfigLoader(CONFIG_NAME);
-        // module registration is needed for reading sub-components like
-        //  blockchainProperties -> 'shardSettings' / 'consensusSettings' in UNIT test
-        ChainsConfigLoader.getMAPPER().registerModule(new ParanamerModule());
         loadedChains = chainsConfigLoader.load();
         assertEquals(1, loadedChains.size());
         assertNotNull(loadedChains.get(UUID.fromString("3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6")));
@@ -56,7 +52,6 @@ class BlockchainConfigUpdaterTest {
         // NOT CALLED prepareAndInitComponents();
         // so it's not properly initialized component
         configUpdater = new BlockchainConfigUpdater(null, null);
-        ChainsConfigLoader.getMAPPER().registerModule(new ParanamerModule());
         Optional<ShardingSettings> result = configUpdater.getShardingSettingsByTrimHeight(0);
         assertTrue(result.isEmpty());
     }
@@ -219,7 +214,6 @@ class BlockchainConfigUpdaterTest {
         assertNotNull(chain);
         assertNotNull(chain.getBlockchainProperties());
         blockchainConfig = new BlockchainConfig(chain, holder);
-        ChainsConfigLoader.getMAPPER().registerModule(new ParanamerModule());
         configUpdater = new BlockchainConfigUpdater(blockchainConfig, null);
         configUpdater.updateChain(chain, holder);
     }

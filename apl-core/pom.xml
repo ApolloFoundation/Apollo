@@ -53,11 +53,6 @@
       <groupId>com.fasterxml.jackson.datatype</groupId>
       <artifactId>jackson-datatype-joda</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.fasterxml.jackson.module</groupId>
-      <artifactId>jackson-module-paranamer</artifactId>
-      <scope>test</scope>
-    </dependency>
 
     <!-- json-simple should be gone after new REST completion -->
     <dependency>

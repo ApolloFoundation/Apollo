@@ -6,7 +6,6 @@ package com.apollocurrency.aplwallet.apl.util.env.config;
 
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
-import com.fasterxml.jackson.module.paranamer.ParanamerModule;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -90,9 +89,6 @@ public class ChainsConfigLoaderTest {
     @Test
     public void testLoadConfig() {
         ChainsConfigLoader chainsConfigLoader = new ChainsConfigLoader(CONFIG_NAME);
-        // module registration is needed for reading sub-components like
-        //  blockchainProperties -> 'shardSettings' / 'consensusSettings' in UNIT test
-        ChainsConfigLoader.getMAPPER().registerModule(new ParanamerModule());
         Map<UUID, Chain> loadedChains = chainsConfigLoader.load();
         Assertions.assertEquals(2, loadedChains.size());
         Map<UUID, Chain> expectedChains = Arrays.stream(new Chain[]{CHAIN1, CHAIN2}).collect(Collectors.toMap(Chain::getChainId,
@@ -104,9 +100,6 @@ public class ChainsConfigLoaderTest {
     @Test
     public void testLoadOldConfig() {
         ChainsConfigLoader chainsConfigLoader = new ChainsConfigLoader(false, null, OLD_CONFIG_NAME);
-        // module registration is needed for reading sub-components like
-        //  blockchainProperties -> 'shardSettings' / 'consensusSettings' in UNIT test
-        ChainsConfigLoader.getMAPPER().registerModule(new ParanamerModule());
         Map<UUID, Chain> loadedChains = chainsConfigLoader.load();
         Assertions.assertEquals(1, loadedChains.size());
         Assertions.assertEquals(Map.of(CHAIN3.getChainId(), CHAIN3), loadedChains);
@@ -117,9 +110,6 @@ public class ChainsConfigLoaderTest {
         Path oldConfigFile = tempRootPath.resolve("test-chains.json");
         JSON.getMapper().writerWithDefaultPrettyPrinter().writeValue(oldConfigFile.toFile(), Arrays.asList(CHAIN3));
         ChainsConfigLoader chainsConfigLoader = new ChainsConfigLoader(false, tempRootPath.toAbsolutePath().toString(), CONFIG_NAME);
-        // module registration is needed for reading sub-components like
-        //  blockchainProperties -> 'shardSettings' / 'consensusSettings' in UNIT test
-        ChainsConfigLoader.getMAPPER().registerModule(new ParanamerModule());
         Map<UUID, Chain> loadedChains = chainsConfigLoader.load();
         Assertions.assertEquals(2, loadedChains.size());
         Assertions.assertEquals(Map.of(CHAIN3.getChainId(), CHAIN3, CHAIN1.getChainId(), CHAIN1), loadedChains);
@@ -133,9 +123,6 @@ public class ChainsConfigLoaderTest {
         Path file = tempRootPath.resolve("new-config");
         JSON.getMapper().writerWithDefaultPrettyPrinter().writeValue(file.toFile(), loadedChains.values());
         chainsConfigLoader = new ChainsConfigLoader(true, tempRootPath.toAbsolutePath().toString(), "new-config");
-        // module registration is needed for reading sub-components like
-        //  blockchainProperties -> 'shardSettings' / 'consensusSettings' in UNIT test
-        ChainsConfigLoader.getMAPPER().registerModule(new ParanamerModule());
         Map<UUID, Chain> reloadedChains = chainsConfigLoader.load();
         Assertions.assertEquals(loadedChains, reloadedChains);
     }
@@ -153,9 +140,6 @@ public class ChainsConfigLoaderTest {
         Path userConfigFile = tempRootPath.resolve(CONFIG_NAME);
         JSON.getMapper().writerWithDefaultPrettyPrinter().writeValue(userConfigFile.toFile(), chainsToWrite);
         ChainsConfigLoader chainsConfigLoader = new ChainsConfigLoader(false, tempRootPath.toAbsolutePath().toString(), CONFIG_NAME);
-        // module registration is needed for reading sub-components like
-        //  blockchainProperties -> 'shardSettings' / 'consensusSettings' in UNIT test
-        ChainsConfigLoader.getMAPPER().registerModule(new ParanamerModule());
         Map<UUID, Chain> actualChains = chainsConfigLoader.load();
         Assertions.assertEquals(3, actualChains.size());
         Map<UUID, Chain> expectedChains = chainsToWrite.stream().collect(Collectors.toMap(Chain::getChainId, Function.identity()));
@@ -173,9 +157,6 @@ public class ChainsConfigLoaderTest {
         Path userConfigFile = tempRootPath.resolve(CONFIG_NAME);
         JSON.getMapper().writerWithDefaultPrettyPrinter().writeValue(userConfigFile.toFile(), chainsToWrite);
         ChainsConfigLoader chainsConfigLoader = new ChainsConfigLoader(true, tempRootPath.toAbsolutePath().toString(), CONFIG_NAME);
-        // module registration is needed for reading sub-components like
-        //  blockchainProperties -> 'shardSettings' / 'consensusSettings' in UNIT test
-        ChainsConfigLoader.getMAPPER().registerModule(new ParanamerModule());
         Map<UUID, Chain> actualChains = chainsConfigLoader.load();
         Assertions.assertEquals(1, actualChains.size());
         Map<UUID, Chain> expectedChains = chainsToWrite.stream().collect(Collectors.toMap(Chain::getChainId, Function.identity()));
@@ -186,9 +167,6 @@ public class ChainsConfigLoaderTest {
     void testLoadConfigWhichWasNotFound() throws IOException {
         String wrongFileName = CONFIG_NAME + ".wrongName";
         ChainsConfigLoader chainsConfigLoader = new ChainsConfigLoader(false, tempRootPath.toAbsolutePath().toString(), wrongFileName);
-        // module registration is needed for reading sub-components like
-        //  blockchainProperties -> 'shardSettings' / 'consensusSettings' in UNIT test
-        ChainsConfigLoader.getMAPPER().registerModule(new ParanamerModule());
         Map<UUID, Chain> actualChains = chainsConfigLoader.load();
         Assertions.assertNull(actualChains);
     }
