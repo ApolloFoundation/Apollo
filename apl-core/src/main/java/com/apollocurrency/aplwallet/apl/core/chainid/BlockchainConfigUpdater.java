@@ -40,11 +40,6 @@ public class BlockchainConfigUpdater {
     private BlockDao blockDao;
     private BlockchainConfig blockchainConfig;
     private Chain chain;
-    /**
-     * Map for storing all 'shard setting' instances available for current 'chain' config
-     * The map stores config 'height' as key and 'sharding setting' corresponding it as value.
-     */
-    private Map<Integer, ShardingSettings> shardingSettingsMap;
 
     @Inject
     public BlockchainConfigUpdater(BlockchainConfig blockchainConfig, BlockDao blockDao) {
@@ -53,9 +48,6 @@ public class BlockchainConfigUpdater {
     }
 
     public void updateChain(Chain chain, PropertiesHolder propertiesHolder) {
-        if (this.chain != null && !this.chain.equals(chain)) {
-            shardingSettingsMap = null;// reset map for initialization again by new data
-        }
         this.chain = chain;
         blockchainConfig.updateChain(chain, propertiesHolder);
     }
@@ -73,9 +65,6 @@ public class BlockchainConfigUpdater {
 
     public synchronized void reset() {
         updateToHeight(0);
-        if (chain != null) {
-            shardingSettingsMap = null;// reset map for initialization again with new data
-        }
     }
 
     public void updateToLatestConfig() {
@@ -101,54 +90,4 @@ public class BlockchainConfigUpdater {
         updateToHeight(height);
     }
 
-
-    /**
-     * Return correct ShardingSetting by specified (trim) height. We find any shard settings with height
-     * associated with height.
-     *
-     * @param trimHeight target height (trim height usually)
-     * @return found ShardingSettings value OR Optional.Empty value if not found
-     */
-    public synchronized Optional<ShardingSettings> getShardingSettingsByTrimHeight(int trimHeight) {
-        if (this.chain == null) {
-            String error = "Can't get 'ShardingSettings', because Chain configuration is not initialized ! That's strange actually...";
-            log.warn(error);
-            return Optional.empty();
-        }
-        Map<Integer, BlockchainProperties> blockchainProperties = chain.getBlockchainProperties();
-        if (blockchainProperties == null) { // very small chance, but who knows...?
-            String error = String.format("Missing any 'BlockchainProperties' by trimHeight '%s' !", trimHeight);
-            throw new RuntimeException(error);
-        }
-        if (trimHeight < 0) { // no chance to look for negative height value in configs
-            String error = String.format("'trimHeight' is negative trimHeight '%s' !", trimHeight);
-            throw new RuntimeException(error);
-        }
-        if (shardingSettingsMap == null) {
-            // lazy initialization and caching data inside LinkedMap for correct ordering
-            shardingSettingsMap =
-                blockchainProperties
-                    .values().stream()
-            .collect(Collectors.toMap(BlockchainProperties::getHeight, BlockchainProperties::getShardingSettings,
-                (oldValue, newValue) -> oldValue, LinkedHashMap::new));
-        }
-        if (log.isTraceEnabled()) {
-            log.trace("enabledShardingSettingsMap = " + shardingSettingsMap.toString());
-        }
-        Optional<Integer> maxHeight =
-            blockchainProperties
-                .keySet()
-                .stream()
-                .filter(height -> trimHeight >= height)
-                .max(Comparator.naturalOrder());
-        return maxHeight.map(height -> shardingSettingsMap.get(height));
-    }
-
-    /**
-     * Used by unit tests mostly.
-     * @return Return map
-     */
-    public Map<Integer, ShardingSettings> getShardingSettingsMap() {
-        return shardingSettingsMap;
-    }
 }

@@ -41,7 +41,7 @@ public class BlockchainConfig {
     private volatile HeightConfig currentConfig;
     private volatile HeightConfig previousConfig; // keep a previous config for easy access
     private Chain chain;
-    private Map<Integer, HeightConfig> heightConfigMap = new LinkedHashMap<>();
+    private Map<Integer, HeightConfig> heightConfigMap = new LinkedHashMap<>(0);
     private volatile boolean isJustUpdated = false;
 
     public BlockchainConfig() {
