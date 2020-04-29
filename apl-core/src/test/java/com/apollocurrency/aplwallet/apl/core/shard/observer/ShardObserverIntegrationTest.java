@@ -54,8 +54,7 @@ public class ShardObserverIntegrationTest {
 
     @Test
     void testDoShardByAsyncEvent() {
-        heightConfig = Optional.of(new ShardingSettings(
-            DEFAULT_TRIM_HEIGHT, new ShardingSettings(false, DEFAULT_SHARDING_FREQUENCY)));
+        heightConfig = Optional.of(new ShardingSettings(false, DEFAULT_SHARDING_FREQUENCY));
 
         Mockito.doReturn(heightConfig).when(blockchainConfigUpdater).getShardingSettingsByTrimHeight(DEFAULT_SHARDING_FREQUENCY);
         trimEvent.select(new AnnotationLiteral<TrimEvent>() {
@@ -69,8 +68,7 @@ public class ShardObserverIntegrationTest {
 
     @Test
     void testDoShardBySyncEvent() {
-        heightConfig = Optional.of(new ShardingSettings(
-            DEFAULT_TRIM_HEIGHT, new ShardingSettings(true, DEFAULT_SHARDING_FREQUENCY)));
+        heightConfig = Optional.of(new ShardingSettings(true, DEFAULT_SHARDING_FREQUENCY));
         Mockito.doReturn(heightConfig).when(blockchainConfigUpdater).getShardingSettingsByTrimHeight(DEFAULT_SHARDING_FREQUENCY);
         doReturn(false).when(propertiesHolder).getBooleanProperty("apl.noshardcreate", false);
         //Mockito.doReturn(4072*1024*1024L).when(mock(Runtime.class)).totalMemory(); // give it more then 3 GB

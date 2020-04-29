@@ -39,8 +39,6 @@ public class ShardObserverTest {
     public static final int NOT_MULTIPLE_SHARDING_FREQUENCY = 4_999;
     public static final int DEFAULT_TRIM_HEIGHT = 100_000;
     @Mock
-    BlockDao blockDao;
-    @Mock
     BlockchainConfigUpdater blockchainConfigUpdater;
     @Mock
     ShardService shardService;
@@ -62,7 +60,7 @@ public class ShardObserverTest {
     @Test
     void testSkipShardingWhenShardingIsDisabled() {
         prepare();
-        shardingSettings = Optional.of (new ShardingSettings(DEFAULT_TRIM_HEIGHT, new ShardingSettings(false, DEFAULT_SHARDING_FREQUENCY)));
+        shardingSettings = Optional.of (new ShardingSettings(false, DEFAULT_SHARDING_FREQUENCY));
         doReturn(shardingSettings).when(blockchainConfigUpdater).getShardingSettingsByTrimHeight(DEFAULT_TRIM_HEIGHT);
 
         CompletableFuture<MigrateState> c = shardObserver.tryCreateShardAsync(DEFAULT_TRIM_HEIGHT, Integer.MAX_VALUE);
@@ -74,7 +72,7 @@ public class ShardObserverTest {
     @Test
     void testDoNotShardWhenMinRollbackHeightIsNotMultipleOfShardingFrequency() {
         prepare();
-        shardingSettings = Optional.of (new ShardingSettings(DEFAULT_TRIM_HEIGHT, new ShardingSettings(true, NOT_MULTIPLE_SHARDING_FREQUENCY)));
+        shardingSettings = Optional.of (new ShardingSettings(true, NOT_MULTIPLE_SHARDING_FREQUENCY));
         doReturn(shardingSettings).when(blockchainConfigUpdater).getShardingSettingsByTrimHeight(DEFAULT_TRIM_HEIGHT);
 
         CompletableFuture<MigrateState> c = shardObserver.tryCreateShardAsync(DEFAULT_TRIM_HEIGHT, Integer.MAX_VALUE);
@@ -86,7 +84,7 @@ public class ShardObserverTest {
     @Test
     void testDoNotShardWhenLastTrimHeightIsZero() {
         prepare();
-        shardingSettings = Optional.of (new ShardingSettings(DEFAULT_TRIM_HEIGHT, new ShardingSettings(true, NOT_MULTIPLE_SHARDING_FREQUENCY)));
+        shardingSettings = Optional.of (new ShardingSettings(true, NOT_MULTIPLE_SHARDING_FREQUENCY));
         doReturn(shardingSettings).when(blockchainConfigUpdater).getShardingSettingsByTrimHeight(0);
 
         CompletableFuture<MigrateState> c = shardObserver.tryCreateShardAsync(0, Integer.MAX_VALUE);
@@ -98,7 +96,7 @@ public class ShardObserverTest {
     @Test
     void testShardSuccessful() throws ExecutionException, InterruptedException {
         prepare();
-        shardingSettings = Optional.of (new ShardingSettings(DEFAULT_TRIM_HEIGHT, new ShardingSettings(true, DEFAULT_SHARDING_FREQUENCY)));
+        shardingSettings = Optional.of (new ShardingSettings(true, DEFAULT_SHARDING_FREQUENCY));
         doReturn(shardingSettings).when(blockchainConfigUpdater).getShardingSettingsByTrimHeight(DEFAULT_TRIM_HEIGHT);
 
         CompletableFuture<MigrateState> completableFuture = Mockito.mock(CompletableFuture.class);
