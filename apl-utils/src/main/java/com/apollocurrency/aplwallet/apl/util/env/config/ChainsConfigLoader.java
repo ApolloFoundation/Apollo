@@ -8,7 +8,6 @@ import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.module.paranamer.ParanamerModule;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,37 +24,30 @@ public class ChainsConfigLoader extends AbstractConfigLoader<Map<UUID, Chain>> {
 
     public ChainsConfigLoader(boolean ignoreResources, String configDir, String resourceName) {
         super(ignoreResources, configDir, resourceName);
-        MAPPER.registerModule(new ParanamerModule());
     }
 
     public ChainsConfigLoader(String resourceName) {
         super(resourceName);
-        MAPPER.registerModule(new ParanamerModule());
     }
 
     public ChainsConfigLoader(ConfigDirProvider dirProvider, boolean ignoreResources, String resourceName) {
         super(dirProvider, ignoreResources, resourceName);
-        MAPPER.registerModule(new ParanamerModule());
     }
 
     public ChainsConfigLoader(boolean ignoreResources, String configDir) {
         super(ignoreResources, configDir, DEFAULT_CHAINS_FILENAME);
-        MAPPER.registerModule(new ParanamerModule());
     }
 
     public ChainsConfigLoader() {
         super(DEFAULT_CHAINS_FILENAME);
-        MAPPER.registerModule(new ParanamerModule());
     }
 
     public ChainsConfigLoader(ConfigDirProvider dirProvider, boolean ignoreResources) {
         super(dirProvider, ignoreResources, DEFAULT_CHAINS_FILENAME);
-        MAPPER.registerModule(new ParanamerModule());
     }
 
     public ChainsConfigLoader(ConfigDirProvider dirProvider, String configDir, boolean ignoreResources) {
         super(dirProvider, ignoreResources, configDir, DEFAULT_CHAINS_FILENAME);
-        MAPPER.registerModule(new ParanamerModule());
     }
 
 
@@ -83,4 +75,7 @@ public class ChainsConfigLoader extends AbstractConfigLoader<Map<UUID, Chain>> {
         return chains.stream().collect(Collectors.toMap(Chain::getChainId, Function.identity()));
     }
 
+    public static ObjectMapper getMAPPER() {
+        return MAPPER;
+    }
 }

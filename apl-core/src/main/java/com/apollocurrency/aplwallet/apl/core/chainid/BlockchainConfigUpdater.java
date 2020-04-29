@@ -53,10 +53,10 @@ public class BlockchainConfigUpdater {
     }
 
     public void updateChain(Chain chain, PropertiesHolder propertiesHolder) {
-        this.chain = chain;
-        if (chain != null) {
+        if (this.chain != null && !this.chain.equals(chain)) {
             shardingSettingsMap = null;// reset map for initialization again by new data
         }
+        this.chain = chain;
         blockchainConfig.updateChain(chain, propertiesHolder);
     }
 
@@ -71,7 +71,7 @@ public class BlockchainConfigUpdater {
         updateToHeight(block.getHeight() - 1);
     }
 
-    public void reset() {
+    public synchronized void reset() {
         updateToHeight(0);
         if (chain != null) {
             shardingSettingsMap = null;// reset map for initialization again with new data
@@ -101,7 +101,7 @@ public class BlockchainConfigUpdater {
         updateToHeight(height);
     }
 
-    private HeightConfig getConfigAtHeight(int targetHeight) {
+    public HeightConfig getConfigAtHeight(int targetHeight) {
         if (this.chain == null) {
             String error = "Chain configuration is not initialized ! That's strange actually...";
             log.error(error);
@@ -134,7 +134,7 @@ public class BlockchainConfigUpdater {
      * @param trimHeight target height (trim height usually)
      * @return found ShardingSettings value OR Optional.Empty value if not found
      */
-    public Optional<ShardingSettings> getShardingSettingsByTrimHeight(int trimHeight) {
+    public synchronized Optional<ShardingSettings> getShardingSettingsByTrimHeight(int trimHeight) {
         if (this.chain == null) {
             String error = "Can't get 'ShardingSettings', because Chain configuration is not initialized ! That's strange actually...";
             log.warn(error);
@@ -162,25 +162,18 @@ public class BlockchainConfigUpdater {
         if (log.isTraceEnabled()) {
             log.trace("enabledShardingSettingsMap = " + shardingSettingsMap.toString());
         }
-        return shardingSettingsMap
-            .entrySet().stream()
-            .sorted(Map.Entry.comparingByKey(Comparator.naturalOrder()))
-            .reduce((setting1, setting2 ) -> {
-                log.trace("trimHeight = {}: {} VS {}", trimHeight, setting1, setting2);
-                // we want to select ONE shard config between two correct height values inside Map
-                if (setting1.getKey() <= trimHeight && trimHeight < setting2.getKey()) {
-                    log.trace("return setting1 = {}", setting1);
-                    return setting1;
-                } else {
-                    log.trace("return setting2 = {}", setting2);
-                    return setting2;
-                }
-            }).map(entry -> new ShardingSettings( entry.getKey(), entry.getValue()));
+        Optional<Integer> maxHeight =
+            blockchainProperties
+                .keySet()
+                .stream()
+                .filter(height -> trimHeight >= height)
+                .max(Comparator.naturalOrder());
+        return maxHeight.map(height -> shardingSettingsMap.get(height));
     }
 
     /**
      * Used by unit tests mostly.
-     * @return Return UNMODIFIED map
+     * @return Return map
      */
     public Map<Integer, ShardingSettings> getShardingSettingsMap() {
         return shardingSettingsMap;

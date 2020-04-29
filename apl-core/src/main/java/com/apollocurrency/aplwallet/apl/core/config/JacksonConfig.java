@@ -19,7 +19,7 @@ import java.io.IOException;
 public class JacksonConfig implements ContextResolver<ObjectMapper> {
     private final ObjectMapper objectMapper;
 
-    public JacksonConfig() throws Exception {
+    public JacksonConfig() {
 
         objectMapper = new ObjectMapper()
             .setDateFormat(new RFC3339DateFormat())

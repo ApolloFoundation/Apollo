@@ -19,13 +19,15 @@
     "blockchainProperties": [
       {
         "height": 0,
-        "blockTime": 60,
+        "blockTime": 1,
         "maxBlockTimeLimit": 67,
         "minBlockTimeLimit": 53,
         "maxBalance": 30000000000
       },
       {
         "height": 1,
+        "blockTime": 1,
+        "maxBalance": 30000000000,
         "shardingSettings": {
           "enabled": false,
           "frequency": 1
@@ -33,6 +35,8 @@
       },
       {
         "height": 2,
+        "blockTime": 2,
+        "maxBalance": 30000000000,
         "shardingSettings": {
           "enabled": true,
           "frequency": 2
@@ -40,22 +44,30 @@
       },
       {
         "height": 3,
+        "blockTime": 3,
+        "maxBalance": 30000000000,
         "shardingSettings": {
           "frequency": 3
         }
       },
       {
         "height": 5,
+        "blockTime": 5,
+        "maxBalance": 30000000000,
         "shardingSettings": {
           "enabled": true,
           "frequency": 5
         }
       },
       {
-        "height": 10
+        "height": 10,
+        "blockTime": 10,
+        "maxBalance": 30000000000
       },
       {
         "height": 15,
+        "blockTime": 15,
+        "maxBalance": 30000000000,
         "shardingSettings": {
           "enabled": true,
           "frequency": 15
@@ -63,6 +75,8 @@
       },
       {
         "height": 20,
+        "blockTime": 20,
+        "maxBalance": 30000000000,
         "shardingSettings": {
           "enabled": false,
           "frequency": 20
@@ -70,6 +84,8 @@
       },
       {
         "height": 30,
+        "blockTime": 30,
+        "maxBalance": 30000000000,
         "shardingSettings": {
           "enabled": true,
           "frequency": 30
@@ -77,6 +93,8 @@
       },
       {
         "height": 40,
+        "blockTime": 40,
+        "maxBalance": 30000000000,
         "shardingSettings": {
           "enabled": true,
           "frequency": 40

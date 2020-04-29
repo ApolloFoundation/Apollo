@@ -17,6 +17,7 @@ import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.config.ChainsConfigLoader;
 import com.apollocurrency.aplwallet.apl.util.env.config.ShardingSettings;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.fasterxml.jackson.module.paranamer.ParanamerModule;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,10 +35,15 @@ class BlockchainConfigUpdaterTest {
     private PropertiesHolder holder = mock(PropertiesHolder.class);
     private ChainsConfigLoader chainsConfigLoader;
     private Map<UUID, Chain> loadedChains;
+    private BlockchainConfig blockchainConfig;
+    private Chain chain;
 
     @BeforeEach
     void setup() {
         chainsConfigLoader = new ChainsConfigLoader(CONFIG_NAME);
+        // module registration is needed for reading sub-components like
+        //  blockchainProperties -> 'shardSettings' / 'consensusSettings' in UNIT test
+        ChainsConfigLoader.getMAPPER().registerModule(new ParanamerModule());
         loadedChains = chainsConfigLoader.load();
         assertEquals(1, loadedChains.size());
         assertNotNull(loadedChains.get(UUID.fromString("3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6")));
@@ -47,38 +53,44 @@ class BlockchainConfigUpdaterTest {
 
     @Test
     void testUninitializedUpdater() {
+        // NOT CALLED prepareAndInitComponents();
+        // so it's not properly initialized component
         configUpdater = new BlockchainConfigUpdater(null, null);
+        ChainsConfigLoader.getMAPPER().registerModule(new ParanamerModule());
         Optional<ShardingSettings> result = configUpdater.getShardingSettingsByTrimHeight(0);
         assertTrue(result.isEmpty());
     }
 
     @Test
     void testGetMissingShardSettingsByZeroHeight() {
-        prepareAndInitConfigUpdater();
+        prepareAndInitComponents();
         Optional<ShardingSettings> result = configUpdater.getShardingSettingsByTrimHeight(0);
+        ChainsConfigLoader.getMAPPER().registerModule(new ParanamerModule());
         log.trace("result = {}", result);
         assertTrue(result.isPresent());
-        assertNotNull(configUpdater.getShardingSettingsMap());
         assertNotNull(result.get());
         assertFalse(result.get().isEnabled());
+        assertNotNull(configUpdater.getShardingSettingsMap());
     }
 
     @Test
     void testGetDisabledConfigByOne() {
-        prepareAndInitConfigUpdater();
+        prepareAndInitComponents();
         Optional<ShardingSettings> result = configUpdater.getShardingSettingsByTrimHeight(1);
+        ChainsConfigLoader.getMAPPER().registerModule(new ParanamerModule());
         log.trace("result = {}", result);
         assertTrue(result.isPresent());
-        assertNotNull(configUpdater.getShardingSettingsMap());
         assertNotNull(result.get());
         assertFalse(result.get().isEnabled());
+        assertNotNull(configUpdater.getShardingSettingsMap());
     }
 
     @ParameterizedTest
     @ValueSource(ints = {Integer.MIN_VALUE, -100, -1 })
     void test_Negative_Height_Configs(int trimHeight) {
-        prepareAndInitConfigUpdater();
+        prepareAndInitComponents();
         Optional<ShardingSettings> result = configUpdater.getShardingSettingsByTrimHeight(trimHeight);
+        ChainsConfigLoader.getMAPPER().registerModule(new ParanamerModule());
         log.trace("result = {}", result);
         assertFalse(result.isPresent());
         assertNull(configUpdater.getShardingSettingsMap());
@@ -87,19 +99,21 @@ class BlockchainConfigUpdaterTest {
     @ParameterizedTest
     @ValueSource(ints = {0, 1, 3, 10, 20 })
     void test_Positive_Disabled_Configs(int trimHeight) {
-        prepareAndInitConfigUpdater();
+        prepareAndInitComponents();
         Optional<ShardingSettings> result = configUpdater.getShardingSettingsByTrimHeight(trimHeight);
+        ChainsConfigLoader.getMAPPER().registerModule(new ParanamerModule());
         log.trace("result = {}", result);
         assertTrue(result.isPresent());
-        assertNotNull(configUpdater.getShardingSettingsMap());
         assertNotNull(result.get());
         assertFalse(result.get().isEnabled());
+        assertNotNull(configUpdater.getShardingSettingsMap());
     }
 
     @Test
     void testGetEmptyByTwo() {
-        prepareAndInitConfigUpdater();
+        prepareAndInitComponents();
         Optional<ShardingSettings> result = configUpdater.getShardingSettingsByTrimHeight(2);
+        ChainsConfigLoader.getMAPPER().registerModule(new ParanamerModule());
         log.trace("result = {}", result);
         assertTrue(result.isPresent());
         assertNotNull(result.get());
@@ -111,8 +125,9 @@ class BlockchainConfigUpdaterTest {
     @ParameterizedTest
     @MethodSource("provideTrimHeightAndFrequency")
     void testAllCorrectConfigsWithFrequency(int trimHeight, int shardFrequency) {
-        prepareAndInitConfigUpdater();
+        prepareAndInitComponents();
         Optional<ShardingSettings> result = configUpdater.getShardingSettingsByTrimHeight(trimHeight);
+        ChainsConfigLoader.getMAPPER().registerModule(new ParanamerModule());
         log.trace("result = {}", result);
         assertTrue(result.isPresent());
         assertNotNull(result.get());
@@ -120,6 +135,19 @@ class BlockchainConfigUpdaterTest {
         assertEquals(shardFrequency, result.get().getFrequency(),
             String.format("expected = %d , got = %d", shardFrequency, result.get().getFrequency()));
         assertNotNull(configUpdater.getShardingSettingsMap());
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideTrimHeightAndFrequency")
+    void test_atHeight_AllCorrectConfigsWithFrequency(int trimHeight, int shardFrequency) {
+        prepareAndInitComponents();
+        HeightConfig  result = configUpdater.getConfigAtHeight(trimHeight);  // checked method
+        ChainsConfigLoader.getMAPPER().registerModule(new ParanamerModule());
+        log.trace("result = {}", result);
+        assertNotNull(result);
+        assertTrue(result.isShardingEnabled(), "got = " + result.isShardingEnabled());
+        assertEquals(shardFrequency, result.getShardingFrequency(),
+            String.format("expected = %d , got = %d", shardFrequency, result.getShardingFrequency()));
     }
 
     /**
@@ -154,8 +182,9 @@ class BlockchainConfigUpdaterTest {
     @ParameterizedTest
     @MethodSource("provideDisabledResponseForTrimHeightAndFrequency")
     void testAll_INCorrect_ConfigsWithFrequency(int trimHeight, int shardFrequency) {
-        prepareAndInitConfigUpdater();
+        prepareAndInitComponents();
         Optional<ShardingSettings> result = configUpdater.getShardingSettingsByTrimHeight(trimHeight);
+        ChainsConfigLoader.getMAPPER().registerModule(new ParanamerModule());
         log.trace("result = {}", result);
         assertTrue(result.isPresent());
         assertNotNull(result.get());
@@ -163,6 +192,19 @@ class BlockchainConfigUpdaterTest {
         assertNotEquals(shardFrequency, result.get().getFrequency(),
             String.format("expected = %d , got = %d", shardFrequency, result.get().getFrequency()));
         assertNotNull(configUpdater.getShardingSettingsMap());
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideDisabledResponseForTrimHeightAndFrequency")
+    void test_AtHeight_INCorrect_ConfigsWithFrequency(int trimHeight, int shardFrequency) {
+        prepareAndInitComponents();
+        HeightConfig result = configUpdater.getConfigAtHeight(trimHeight);  // checked method
+        ChainsConfigLoader.getMAPPER().registerModule(new ParanamerModule());
+        log.trace("result = {}", result);
+        assertNotNull(result);
+        assertFalse(result.isShardingEnabled(), "got = " + result.isShardingEnabled());
+        assertNotEquals(shardFrequency, result.getShardingFrequency(),
+            String.format("expected = %d , got = %d", shardFrequency, result.getShardingFrequency()));
     }
 
     /**
@@ -182,11 +224,12 @@ class BlockchainConfigUpdaterTest {
         );
     }
 
-    private void prepareAndInitConfigUpdater() {
-        Chain chain = loadedChains.get(UUID.fromString("3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6"));
+    private void prepareAndInitComponents() {
+        chain = loadedChains.get(UUID.fromString("3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6"));
         assertNotNull(chain);
         assertNotNull(chain.getBlockchainProperties());
-        configUpdater = new BlockchainConfigUpdater(new BlockchainConfig(chain, holder), null);
+        blockchainConfig = new BlockchainConfig(chain, holder);
+        configUpdater = new BlockchainConfigUpdater(blockchainConfig, null);
         configUpdater.updateChain(chain, holder);
     }
 

@@ -27,7 +27,16 @@ public class BlockchainProperties {
     private ShardingSettings shardingSettings;
     private ConsensusSettings consensusSettings;
 
-//    @JsonCreator
+    /**
+     * Constructor for unit tests. Should not be used by JSON loading.
+     *
+     * @param height
+     * @param maxNumberOfTransactions
+     * @param blockTime
+     * @param maxBlockTimeLimit
+     * @param minBlockTimeLimit
+     * @param maxBalance
+     */
     public BlockchainProperties(
         @JsonProperty("height") int height,
         @JsonProperty("maxNumberOfTransactions") int maxNumberOfTransactions,
@@ -38,6 +47,17 @@ public class BlockchainProperties {
         this(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, null, null);
     }
 
+    /**
+     * Constructor used for JSON loading and Jackson deserialization.
+     * @param height
+     * @param maxNumberOfTransactions
+     * @param blockTime
+     * @param maxBlockTimeLimit
+     * @param minBlockTimeLimit
+     * @param maxBalance
+     * @param shardingSettings
+     * @param consensusSettings
+     */
     @JsonCreator
     public BlockchainProperties(
         @JsonProperty("height") int height,
@@ -47,7 +67,7 @@ public class BlockchainProperties {
         @JsonProperty("minBlockTimeLimit") int minBlockTimeLimit,
         @JsonProperty("maxBalance") long maxBalance,
         @JsonProperty("shardingSettings") ShardingSettings shardingSettings,
-        /*@JsonProperty("consensusSettings") */ConsensusSettings consensusSettings) {
+        @JsonProperty("consensusSettings") ConsensusSettings consensusSettings) {
         this.height = height;
         this.maxNumberOfTransactions = maxNumberOfTransactions;
         this.blockTime = blockTime;
@@ -55,7 +75,6 @@ public class BlockchainProperties {
         this.minBlockTimeLimit = minBlockTimeLimit;
         this.maxBalance = maxBalance;
         this.shardingSettings = shardingSettings == null ? new ShardingSettings() : shardingSettings;
-        this.shardingSettings.setStartHeight(height); // needed for unit tests mostly
         this.consensusSettings = consensusSettings == null ? new ConsensusSettings() : consensusSettings;
     }
 
