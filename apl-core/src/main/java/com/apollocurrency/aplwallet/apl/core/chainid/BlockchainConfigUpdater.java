@@ -104,7 +104,6 @@ public class BlockchainConfigUpdater {
     public HeightConfig getConfigAtHeight(int targetHeight) {
         if (this.chain == null) {
             String error = "Chain configuration is not initialized ! That's strange actually...";
-            log.error(error);
             throw new RuntimeException(error);
         }
         Map<Integer, BlockchainProperties> blockchainProperties = chain.getBlockchainProperties();
@@ -143,13 +142,11 @@ public class BlockchainConfigUpdater {
         Map<Integer, BlockchainProperties> blockchainProperties = chain.getBlockchainProperties();
         if (blockchainProperties == null) { // very small chance, but who knows...?
             String error = String.format("Missing any 'BlockchainProperties' by trimHeight '%s' !", trimHeight);
-            log.warn(error);
-            return Optional.empty();
+            throw new RuntimeException(error);
         }
         if (trimHeight < 0) { // no chance to look for negative height value in configs
             String error = String.format("'trimHeight' is negative trimHeight '%s' !", trimHeight);
-            log.warn(error);
-            return Optional.empty();
+            throw new RuntimeException(error);
         }
         if (shardingSettingsMap == null) {
             // lazy initialization and caching data inside LinkedMap for correct ordering
