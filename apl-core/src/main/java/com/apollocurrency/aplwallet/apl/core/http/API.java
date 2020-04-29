@@ -179,6 +179,8 @@ public final class API {
         final String webUIDir = propertiesHolder.getStringProperty("apl.webUIDir");
         if (StringUtils.isBlank(webUIDir)) {
             log.debug("webUIDir is not set in apl.webUIDir property");
+        } else {
+            log.debug("webUIDir: {}", webUIDir);
         }
         return webUIDir;
     }
