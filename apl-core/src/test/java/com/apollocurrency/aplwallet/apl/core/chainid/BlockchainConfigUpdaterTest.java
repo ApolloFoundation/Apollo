@@ -3,16 +3,6 @@
  */
 package com.apollocurrency.aplwallet.apl.core.chainid;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.params.provider.Arguments.arguments;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Stream;
-
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.config.ChainsConfigLoader;
 import com.apollocurrency.aplwallet.apl.util.env.config.ShardingSettings;
@@ -25,6 +15,21 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
+
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Stream;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 
 @Slf4j
 class BlockchainConfigUpdaterTest {
@@ -134,7 +139,7 @@ class BlockchainConfigUpdaterTest {
     @MethodSource("provideTrimHeightAndFrequency")
     void test_atHeight_AllCorrectConfigsWithFrequency(int trimHeight, int shardFrequency) {
         prepareAndInitComponents();
-        HeightConfig  result = configUpdater.getConfigAtHeight(trimHeight);  // checked method
+        HeightConfig  result = blockchainConfig.getConfigAtHeight(trimHeight);  // checked method
         log.trace("result = {}", result);
         assertNotNull(result);
         assertTrue(result.isShardingEnabled(), "got = " + result.isShardingEnabled());
@@ -189,7 +194,7 @@ class BlockchainConfigUpdaterTest {
     @MethodSource("provideDisabledResponseForTrimHeightAndFrequency")
     void test_AtHeight_INCorrect_ConfigsWithFrequency(int trimHeight, int shardFrequency) {
         prepareAndInitComponents();
-        HeightConfig result = configUpdater.getConfigAtHeight(trimHeight);  // checked method
+        HeightConfig result = blockchainConfig.getConfigAtHeight(trimHeight);  // checked method
         log.trace("result = {}", result);
         assertNotNull(result);
         assertFalse(result.isShardingEnabled(), "got = " + result.isShardingEnabled());

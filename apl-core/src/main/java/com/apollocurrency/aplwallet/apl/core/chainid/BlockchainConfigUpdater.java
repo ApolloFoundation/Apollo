@@ -61,9 +61,9 @@ public class BlockchainConfigUpdater {
     }
 
     public void onBlockAccepted(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_ACCEPT) Block block) {
-        BlockchainProperties bp = chain.getBlockchainProperties().get(block.getHeight());
-        if (bp != null) {
-            blockchainConfig.setCurrentConfig(new HeightConfig(bp));
+        HeightConfig config = blockchainConfig.getConfigAtHeight(block.getHeight());
+        if (config != null) {
+            blockchainConfig.setCurrentConfig(config);
         }
     }
 
@@ -89,7 +89,7 @@ public class BlockchainConfigUpdater {
 
     void updateToHeight(int height) {
 
-        HeightConfig latestConfig = getConfigAtHeight(height);
+        HeightConfig latestConfig = blockchainConfig.getConfigAtHeight(height);
         HeightConfig currentConfig = blockchainConfig.getCurrentConfig();
         if (currentConfig != null && latestConfig != null && currentConfig.getHeight() != latestConfig.getHeight()) {
             log.debug("Update to {} at height {}", latestConfig, height);
@@ -101,30 +101,6 @@ public class BlockchainConfigUpdater {
         updateToHeight(height);
     }
 
-    public HeightConfig getConfigAtHeight(int targetHeight) {
-        if (this.chain == null) {
-            String error = "Chain configuration is not initialized ! That's strange actually...";
-            throw new RuntimeException(error);
-        }
-        Map<Integer, BlockchainProperties> blockchainProperties = chain.getBlockchainProperties();
-        BlockchainProperties bpAtHeight = blockchainProperties.get(targetHeight);
-        if (bpAtHeight != null) {
-            return new HeightConfig(bpAtHeight);
-        }
-        Optional<Integer> maxHeight =
-            blockchainProperties
-                .keySet()
-                .stream()
-                .filter(height -> targetHeight >= height)
-                .max(Comparator.naturalOrder());
-        return maxHeight
-            .map(height -> new HeightConfig(blockchainProperties.get(height)))
-            .orElse(null);
-    }
-
-    public HeightConfig getCurrentConfig() {
-        return blockchainConfig.getCurrentConfig();
-    }
 
     /**
      * Return correct ShardingSetting by specified (trim) height. We find any shard settings with height
