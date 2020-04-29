@@ -37,9 +37,9 @@ import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FAInterceptor;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.SecurityInterceptor;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.SecurityHandler;
@@ -72,6 +72,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -178,20 +179,26 @@ public final class API {
     }
 
     public static String findWebUiDir() {
-        final String webUIDir = propertiesHolder.getStringProperty("apl.webUIDir");
-        if (StringUtils.isBlank(webUIDir)) {
-            log.debug("webUIDir is not set in apl.webUIDir property");
-        } else {
-            final Path path = Path.of(webUIDir);
-            if (!Files.exists(path) || !Files.isDirectory(path)){
-                final String errorMsg = String.format("webUIDir: %s does not exist or is not a directory", webUIDir);
-                log.error(errorMsg);
-                throw new IllegalStateException(errorMsg);
-            }
+        final Path htmlStubPath = Path.of("apl-exec", "src", "html-stub").toAbsolutePath();
+        final String webUIProperty = propertiesHolder.getStringProperty("apl.webUIDir");
+        final Path binDir = DirProvider.getBinDir();
+        Path webUiPath;
+        try {
+            webUiPath = binDir.resolve(webUIProperty);
 
-            log.debug("webUIDir: {}", webUIDir);
+            if (!Files.exists(webUiPath)
+                || !Files.isDirectory(webUiPath)
+                || !Files.exists(Path.of(webUiPath.toString(), "index.html"))
+            ) {
+                log.debug("Cannot find index.html in: {}. Gonna use html-stub.", webUiPath.toString());
+                webUiPath = htmlStubPath;
+            }
+        } catch (InvalidPathException ipe){
+            log.debug("Cannot resolve apl.webUIDir: {} within DirProvider.getBinDir(): {}. Gonna use html-stub.", webUIProperty, binDir.toString());
+            webUiPath = htmlStubPath;
         }
-        return webUIDir;
+        log.debug("webUIDir: {}", webUiPath.toString());
+        return webUiPath.toString();
     }
 
     public static boolean isAllowed(String remoteHost) {
