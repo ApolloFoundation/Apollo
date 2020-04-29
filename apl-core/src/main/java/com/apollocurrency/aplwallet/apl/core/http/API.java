@@ -71,6 +71,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -180,6 +182,13 @@ public final class API {
         if (StringUtils.isBlank(webUIDir)) {
             log.debug("webUIDir is not set in apl.webUIDir property");
         } else {
+            final Path path = Path.of(webUIDir);
+            if (!Files.exists(path) || !Files.isDirectory(path)){
+                final String errorMsg = String.format("webUIDir: %s does not exist or is not a directory", webUIDir);
+                log.error(errorMsg);
+                throw new IllegalStateException(errorMsg);
+            }
+
             log.debug("webUIDir: {}", webUIDir);
         }
         return webUIDir;
