@@ -30,3 +30,4 @@ nbactions.xml
 /apl-blockchain-vault-keystore/
 /trace.db/
 
+/apl-crypto/testdata/out/
