@@ -113,7 +113,6 @@
     <commons-fileupload.version>1.4</commons-fileupload.version>
     <org.web3j.core.version>4.5.6</org.web3j.core.version>
     <ethereumj-core.version>1.7.2-RELEASE</ethereumj-core.version>
-    <jackson-datatype-joda.version>2.9.8</jackson-datatype-joda.version>
   </properties>
 
   <dependencyManagement>
@@ -723,7 +722,7 @@
       <dependency>
         <groupId>com.fasterxml.jackson.datatype</groupId>
         <artifactId>jackson-datatype-joda</artifactId>
-        <version>${jackson-datatype-joda.version}</version>
+        <version>${jackson.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
