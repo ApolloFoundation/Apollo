@@ -5,7 +5,7 @@
 
   <groupId>com.apollocurrency</groupId>
   <artifactId>apollo-wallet</artifactId>
-  <version>1.43.1</version>
+  <version>1.43.2</version>
   <packaging>pom</packaging>
   <name>Apollo wallet</name>
 
@@ -72,7 +72,7 @@
     <!-- cross-platform zip distribution -->
     <zipname>apollo-wallet</zipname>
     <!--Dependency Versions-->
-    <web-wallet.version>2.6.2</web-wallet.version>
+    <web-wallet.version>2.7.4</web-wallet.version>
     <!--Web-->
     <servlet-api.version>3.1.0</servlet-api.version>
     <!--  -->
@@ -277,6 +277,11 @@
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-databind</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.datatype</groupId>
+        <artifactId>jackson-datatype-joda</artifactId>
         <version>${jackson.version}</version>
       </dependency>
 
