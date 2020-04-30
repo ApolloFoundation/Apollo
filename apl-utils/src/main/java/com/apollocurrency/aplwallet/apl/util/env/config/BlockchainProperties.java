@@ -1,18 +1,23 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ *  Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.util.env.config;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonSetter;
 
 import java.util.Objects;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonPropertyOrder({"height", "maxNumberOfTransactions", "blockTime", "maxBlockTimeLimit", "minBlockTimeLimit", "maxBalance",
-    "consensusSettings", "featuresHeightRequirement"})
+    "shardingSettings", "consensusSettings", "featuresHeightRequirement"})
 public class BlockchainProperties {
     private int height;
     private int maxNumberOfTransactions;
@@ -23,6 +28,16 @@ public class BlockchainProperties {
     private ShardingSettings shardingSettings;
     private ConsensusSettings consensusSettings;
 
+    /**
+     * Constructor for unit tests. Should not be used by JSON loading.
+     *
+     * @param height
+     * @param maxNumberOfTransactions
+     * @param blockTime
+     * @param maxBlockTimeLimit
+     * @param minBlockTimeLimit
+     * @param maxBalance
+     */
     @JsonCreator
     public BlockchainProperties(
         @JsonProperty("height") int height,
@@ -34,7 +49,26 @@ public class BlockchainProperties {
         this(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, null, null);
     }
 
-    public BlockchainProperties(int height, int maxNumberOfTransactions, int blockTime, int maxBlockTimeLimit, int minBlockTimeLimit, long maxBalance, ShardingSettings shardingSettings, ConsensusSettings consensusSettings) {
+    /**
+     * All fields Constructor.
+     * @param height
+     * @param maxNumberOfTransactions
+     * @param blockTime
+     * @param maxBlockTimeLimit
+     * @param minBlockTimeLimit
+     * @param maxBalance
+     * @param shardingSettings
+     * @param consensusSettings
+     */
+    public BlockchainProperties(
+        int height,
+        int maxNumberOfTransactions,
+        int blockTime,
+        int maxBlockTimeLimit,
+        int minBlockTimeLimit,
+        long maxBalance,
+        ShardingSettings shardingSettings,
+        ConsensusSettings consensusSettings) {
         this.height = height;
         this.maxNumberOfTransactions = maxNumberOfTransactions;
         this.blockTime = blockTime;
@@ -132,10 +166,12 @@ public class BlockchainProperties {
         this.minBlockTimeLimit = minBlockTimeLimit;
     }
 
+    @JsonProperty
     public ShardingSettings getShardingSettings() {
         return shardingSettings;
     }
 
+    @JsonSetter
     public void setShardingSettings(ShardingSettings shardingSettings) {
         this.shardingSettings = shardingSettings;
     }

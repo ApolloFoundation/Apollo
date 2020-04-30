@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.chainid;
@@ -11,9 +11,13 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
 import javax.inject.Singleton;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -35,8 +39,9 @@ public class BlockchainConfig {
     private long shufflingDepositAtm;
     private int guaranteedBalanceConfirmations;
     private volatile HeightConfig currentConfig;
-    private volatile HeightConfig previousConfig; // keep previous config for easy access
+    private volatile HeightConfig previousConfig; // keep a previous config for easy access
     private Chain chain;
+    private Map<Integer, HeightConfig> heightConfigMap = new LinkedHashMap<>(0);
     private volatile boolean isJustUpdated = false;
 
     public BlockchainConfig() {
@@ -54,8 +59,29 @@ public class BlockchainConfig {
         if (blockchainProperties.isEmpty() || blockchainProperties.get(0) == null) {
             throw new IllegalArgumentException("Chain has no initial blockchain properties at height 0! ChainId = " + chain.getChainId());
         }
-        currentConfig = new HeightConfig(blockchainProperties.get(0));
+        heightConfigMap = blockchainProperties.values()
+            .stream()
+            .map(HeightConfig::new)
+            .sorted(Comparator.comparing(HeightConfig::getHeight))
+            .collect(Collectors.toMap(HeightConfig::getHeight, Function.identity(), (old, newv)-> newv, LinkedHashMap::new));
+        currentConfig = heightConfigMap.get(0);
         LOG.debug("Switch to chain {} - {}. ChainId - {}", chain.getName(), chain.getDescription(), chain.getChainId());
+    }
+
+    public HeightConfig getConfigAtHeight(int targetHeight) {
+        HeightConfig heightConfig = heightConfigMap.get(targetHeight);
+        if (heightConfig != null) {
+            return heightConfig;
+        }
+        Optional<Integer> maxHeight =
+            heightConfigMap
+                .keySet()
+                .stream()
+                .filter(height -> targetHeight >= height)
+                .max(Comparator.naturalOrder());
+        return maxHeight
+            .map(height -> heightConfigMap.get(height))
+            .orElse(null);
     }
 
     private void setFields(Chain chain, int minPrunableLifetime, int maxPrunableLifetime) {
