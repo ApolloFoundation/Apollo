@@ -1,3 +1,6 @@
+/*
+ * Copyright © 2020 Apollo Foundation
+ */
 package com.apollocurrency.aplwallet.apl.util.supervisor.client.impl;
 
 import com.apollocurrency.aplwallet.apl.util.supervisor.client.MessageDispatcher;
@@ -39,10 +42,10 @@ public class MessageDispatcherImpl implements MessageDispatcher {
 
     public static long RESPONSE_WAIT_TIMEOUT_MS = 500L; // TODO need to make it configurable
 
-    private final SvConnections connections = new SvConnections();
+    private final SvConnections connections;
     private final PathParamProcessor pathMatcher;
     private final Deque<SvChannelMessage> outgoingQueue = new LinkedList<>();
-    private  SvBusHello hello;
+    private SvBusHello hello;
     @Getter
     private URI myAddress = null;
     //TODO
@@ -52,6 +55,7 @@ public class MessageDispatcherImpl implements MessageDispatcher {
 
     public MessageDispatcherImpl() {
         pathMatcher = new PathParamProcessor();
+        connections = new SvConnections(this);
     }
 
     public Map<URI, SvBusClient> getConnections() {
@@ -141,8 +145,8 @@ public class MessageDispatcherImpl implements MessageDispatcher {
         CompletableFuture<SvBusResponse> res = CompletableFuture.supplyAsync(() -> sendSync(rq, path, addr), executor);
         return res;
     }
-    
-    void sendHello(URI addr){
+
+    void sendHello(URI addr) {
         sendSync(hello, "/hello", addr);
     }
 
@@ -169,8 +173,7 @@ public class MessageDispatcherImpl implements MessageDispatcher {
             log.error("Can not map response to JSON");
         }
     }
-    
-    
+
     void handleResponse(JsonNode body, SvChannelHeader header) {
         ResponseLatch rl = waiting.get(header.inResponseTo);
         if (rl == null) {
@@ -178,9 +181,9 @@ public class MessageDispatcherImpl implements MessageDispatcher {
         } else {
             HandlerRecord hr = pathMatcher.find(header.path);
             if (hr == null) { // Maybe set here error response to unlock latch?
-                if(header.path.equals(MessageDispatcher.ERROR_PATH)){
-                    log.error("Error reply without destination path: Header: {}, Body: {}",header,body);
-                }else{
+                if (header.path.equals(MessageDispatcher.ERROR_PATH)) {
+                    log.error("Error reply without destination path: Header: {}, Body: {}", header, body);
+                } else {
                     log.error("No response mapper found for path: {}", header.path);
                 }
             } else {
@@ -221,23 +224,22 @@ public class MessageDispatcherImpl implements MessageDispatcher {
             }
         }
     }
-    
-    
+
     void onConnectionUp(URI uri) {
-        
+
         SvBusClient client = connections.get(uri);
         //should never happend
         if (client == null) {
-            log.error("Connection {} was not added",uri);
+            log.error("Connection {} was not added", uri);
             return;
         }
         List<SvChannelMessage> toRemove = new ArrayList<>();
         //first, say Hello
         sendHello(uri);
-        
-        boolean def = connections.isDefault(uri);        
+
+        boolean def = connections.isDefault(uri);
         for (SvChannelMessage m : outgoingQueue) {
-            if(def || m.header.to.equals(uri.toString())){
+            if (def || m.header.to.equals(uri.toString())) {
                 try {
                     if (client.sendMessage(m)) {
                         toRemove.add(m);
@@ -255,7 +257,7 @@ public class MessageDispatcherImpl implements MessageDispatcher {
         executor.shutdown();
         connections.close();
     }
-    
+
     void setMyInfo(SvBusHello info) {
         hello = info;
         myAddress = URI.create(info.clientAddr);
@@ -264,6 +266,5 @@ public class MessageDispatcherImpl implements MessageDispatcher {
     private int routeMessage(SvChannelHeader header, JsonNode body) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-
 
 }

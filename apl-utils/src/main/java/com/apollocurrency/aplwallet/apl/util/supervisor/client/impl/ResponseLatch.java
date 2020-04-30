@@ -1,3 +1,6 @@
+/*
+ * Copyright © 2020 Apollo Foundation
+ */
 package com.apollocurrency.aplwallet.apl.util.supervisor.client.impl;
 
 import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusResponse;
@@ -7,12 +10,14 @@ import java.net.SocketTimeoutException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-
 /**
- * @author al
+ * Latch to response waiting
+ *
+ * @author alukin@gmail.com
  */
 @Slf4j
 public class ResponseLatch {
+
     /**
      * time to live of entry. Entry should de deleted if it is older
      */

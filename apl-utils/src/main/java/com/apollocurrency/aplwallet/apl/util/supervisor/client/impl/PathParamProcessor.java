@@ -1,3 +1,6 @@
+/*
+ * Copyright © 2020 Apollo Foundation
+ */
 package com.apollocurrency.aplwallet.apl.util.supervisor.client.impl;
 
 import com.apollocurrency.aplwallet.apl.util.supervisor.client.SvRequestHandler;
@@ -15,9 +18,9 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * JAX-RS -like path specification9 processor
+ * JAX-RS -like path specifications processor
  *
- * @author al
+ * @author alukin@gmail.com
  */
 @Slf4j
 public class PathParamProcessor {

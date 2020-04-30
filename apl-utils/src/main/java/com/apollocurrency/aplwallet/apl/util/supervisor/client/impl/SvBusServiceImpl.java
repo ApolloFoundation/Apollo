@@ -1,3 +1,6 @@
+/*
+ * Copyright © 2020 Apollo Foundation
+ */
 package com.apollocurrency.aplwallet.apl.util.supervisor.client.impl;
 
 import com.apollocurrency.aplwallet.apl.util.supervisor.client.ConnectionStatus;
@@ -12,19 +15,20 @@ import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 
 /**
+ * Implementation of bus service
  *
- * @author al
+ * @author alukin@gmail.com
  */
-public class SvBusServiceImpl implements SvBusService{
+public class SvBusServiceImpl implements SvBusService {
 
     private final MessageDispatcherImpl dispatcher;
 
     public SvBusServiceImpl() {
-         SvBusHello hello = new SvBusHello();
-         hello.clientPID = ProcessHandle.current().pid();
-         hello.clientExePath="";
-         hello.clientInfo="SvClient";
-         dispatcher = new MessageDispatcherImpl();        
+        SvBusHello hello = new SvBusHello();
+        hello.clientPID = ProcessHandle.current().pid();
+        hello.clientExePath = "";
+        hello.clientInfo = "SvClient";
+        dispatcher = new MessageDispatcherImpl();
     }
 
     @Override
@@ -34,17 +38,17 @@ public class SvBusServiceImpl implements SvBusService{
 
     @Override
     public Map<URI, ConnectionStatus> getConnections() {
-         Map<URI, SvBusClient> clients = dispatcher.getConnections();
-         Map<URI,ConnectionStatus> statuses = new HashMap<>();
-         for(URI key:clients.keySet()){
-             statuses.put(key, clients.get(key).getState());
-         }
-         return statuses;
+        Map<URI, SvBusClient> clients = dispatcher.getConnections();
+        Map<URI, ConnectionStatus> statuses = new HashMap<>();
+        for (URI key : clients.keySet()) {
+            statuses.put(key, clients.get(key).getState());
+        }
+        return statuses;
     }
 
     @Override
     public MessageDispatcher getDispatcher() {
-       return dispatcher;
+        return dispatcher;
     }
 
     @Override
@@ -60,7 +64,7 @@ public class SvBusServiceImpl implements SvBusService{
 
     @Override
     public ConnectionStatus getConnectionStaus(URI uri) {
-        Map<URI,ConnectionStatus> statuses = getConnections();
+        Map<URI, ConnectionStatus> statuses = getConnections();
         ConnectionStatus res = statuses.get(uri);
         return res;
     }
@@ -72,12 +76,12 @@ public class SvBusServiceImpl implements SvBusService{
 
     @Override
     public URI getMyAddress() {
-       return  dispatcher.getMyAddress();
+        return dispatcher.getMyAddress();
     }
 
     @Override
     public void setMyInfo(SvBusHello info) {
         dispatcher.setMyInfo(info);
     }
-    
+
 }

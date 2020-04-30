@@ -1,3 +1,6 @@
+/*
+ * Copyright © 2020 Apollo Foundation
+ */
 package com.apollocurrency.aplwallet.apl.util.supervisor.client.impl;
 
 import com.apollocurrency.aplwallet.apl.util.supervisor.client.ConnectionStatus;
@@ -11,16 +14,20 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Set of all connections inited
+ *
  * @author alukin@gmail.com
  */
 @Slf4j
 public class SvConnections {
+
     private final Map<URI, SvBusClient> connections = new ConcurrentHashMap<>();
     private final Timer timer;
     public static final long CONNECT_INTERVAL_MS = 5000;
-    private Map.Entry<URI,SvBusClient> defaultConnection;
-    
-    public SvConnections() {
+    private Map.Entry<URI, SvBusClient> defaultConnection;
+    private final MessageDispatcherImpl dispatecher;
+
+    public SvConnections(MessageDispatcherImpl dispatecher) {
+        this.dispatecher = dispatecher;
         //init connection restore timer task
         //TODO: use our thread pool manager maybe
         //TODO: ScheduledThreadPoolExecutor is preferred to Timer, better to use it
@@ -32,44 +39,44 @@ public class SvConnections {
                     SvBusClient client = connections.get(key);
                     if (!client.isConnected() && client.getState() != ConnectionStatus.CONNECTING) {
                         boolean res = client.connect();
-                        log.debug("Connection attempt to URI {} result: {}, state: {}", key, res, 
+                        log.debug("Connection attempt to URI {} result: {}, state: {}", key, res,
                                 client.getState()
                         );
-                        if(res){
-                            //TODO: say dispatcher
+                        if (res) {
+                            dispatecher.onConnectionUp(key);
                         }
                     }
                 }
             }
 
-        }, 0, CONNECT_INTERVAL_MS);        
+        }, 0, CONNECT_INTERVAL_MS);
     }
-    
-    public Map<URI, SvBusClient> getAll(){
+
+    public Map<URI, SvBusClient> getAll() {
         return connections;
     }
 
     void put(URI uri, SvBusClient client, boolean isDefault) {
         boolean setDefault = false;
         //first one is default even if isDefault is false
-        if(connections.isEmpty()){
-           setDefault=true;   
+        if (connections.isEmpty()) {
+            setDefault = true;
         }
         connections.putIfAbsent(uri, client);
-        if(setDefault||isDefault){
+        if (setDefault || isDefault) {
             defaultConnection = connections.entrySet().iterator().next();
         }
     }
-    
-    boolean isDefault(URI addr){
-       return  defaultConnection!=null && defaultConnection.getKey().equals(addr);
+
+    boolean isDefault(URI addr) {
+        return defaultConnection != null && defaultConnection.getKey().equals(addr);
     }
-    
+
     SvBusClient get(URI addr) {
         return connections.get(addr);
     }
-    
-    Map.Entry<URI,SvBusClient> getDefault() {
+
+    Map.Entry<URI, SvBusClient> getDefault() {
         return defaultConnection;
     }
 
@@ -79,6 +86,5 @@ public class SvConnections {
             c.close();
         });
     }
-    
-    
+
 }

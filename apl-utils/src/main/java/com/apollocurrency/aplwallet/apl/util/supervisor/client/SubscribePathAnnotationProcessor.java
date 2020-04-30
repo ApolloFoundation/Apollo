@@ -1,3 +1,6 @@
+/*
+ * Copyright © 2020 Apollo Foundation
+ */
 package com.apollocurrency.aplwallet.apl.util.supervisor.client;
 
 import java.util.LinkedHashSet;
@@ -14,22 +17,24 @@ import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 
 /**
+ * Attention! Not complete, annotations do not work yet
  *
- * @author al
+ * @author alukin@gmail.com
  */
 public class SubscribePathAnnotationProcessor extends AbstractProcessor {
+
     private Messager messager;
     private Types typesUtil;
     private Elements elementsUtil;
     private Filer filer;
-    
+
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
         super.init(processingEnv);
         messager = processingEnv.getMessager();
         typesUtil = processingEnv.getTypeUtils();
         elementsUtil = processingEnv.getElementUtils();
-        filer = processingEnv.getFiler();        
+        filer = processingEnv.getFiler();
     }
 
     @Override
@@ -37,17 +42,17 @@ public class SubscribePathAnnotationProcessor extends AbstractProcessor {
         messager.printMessage(Diagnostic.Kind.WARNING, "========== processing subscribePath ============");
         return true;
     }
-    
+
     @Override
     public Set<String> getSupportedAnnotationTypes() {
         Set<String> annotations = new LinkedHashSet<>();
         annotations.add(SubscribePath.class.getCanonicalName());
         return annotations;
-    }  
-    
+    }
+
     @Override
     public SourceVersion getSupportedSourceVersion() {
         return SourceVersion.latestSupported();
     }
-    
+
 }
