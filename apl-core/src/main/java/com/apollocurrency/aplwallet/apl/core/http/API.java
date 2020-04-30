@@ -179,9 +179,16 @@ public final class API {
     }
 
     public static String findWebUiDir() {
-        final Path htmlStubPath = Path.of("apl-exec", "src", "html-stub").toAbsolutePath();
-        final String webUIProperty = propertiesHolder.getStringProperty("apl.webUIDir");
         final Path binDir = DirProvider.getBinDir();
+
+        final Path htmlStubPath =
+            binDir.resolve("bin").resolve("html-stub").toAbsolutePath();
+        if (!Files.exists(htmlStubPath)) {
+            log.error("Cannot find dir: {}. Gonna proceed without any html-stub.", htmlStubPath);
+            return htmlStubPath.toString();
+        }
+
+        final String webUIProperty = propertiesHolder.getStringProperty("apl.webUIDir");
         Path webUiPath;
         try {
             webUiPath = binDir.resolve(webUIProperty);
@@ -193,10 +200,11 @@ public final class API {
                 log.debug("Cannot find index.html in: {}. Gonna use html-stub.", webUiPath.toString());
                 webUiPath = htmlStubPath;
             }
-        } catch (InvalidPathException ipe){
+        } catch (InvalidPathException ipe) {
             log.debug("Cannot resolve apl.webUIDir: {} within DirProvider.getBinDir(): {}. Gonna use html-stub.", webUIProperty, binDir.toString());
             webUiPath = htmlStubPath;
         }
+
         log.debug("webUIDir: {}", webUiPath.toString());
         return webUiPath.toString();
     }
