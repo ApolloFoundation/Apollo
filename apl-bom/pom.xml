@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-core-modules</artifactId>
-    <version>1.43.1</version>
+    <version>1.43.3</version>
   </parent>
 
   <artifactId>apl-bom</artifactId>
@@ -56,7 +56,7 @@
       <dependency>
         <groupId>com.apollocurrency</groupId>
         <artifactId>apl-bom-ext</artifactId>
-        <version>1.43.1</version>
+        <version>1.43.3</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
