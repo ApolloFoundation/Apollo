@@ -26,7 +26,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 @Slf4j
-class BlockchainConfigUpdaterTest {
+class BlockchainConfigAndHeightConfigTest {
 
     // config is used for simulating complex shard settings
     private static final String CONFIG_NAME = "long-list-for-sharding-config.json";
