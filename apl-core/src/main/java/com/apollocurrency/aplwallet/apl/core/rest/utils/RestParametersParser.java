@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.resteasy.core.interception.jaxrs.PostMatchContainerRequestContext;
 
+import javax.enterprise.inject.Vetoed;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.MultivaluedMap;
 import java.util.Arrays;
@@ -20,6 +21,7 @@ import java.util.Map;
 import static com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper.TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME;
 
 @Slf4j
+@Vetoed
 public class RestParametersParser {
 
     private RestParametersParser() {

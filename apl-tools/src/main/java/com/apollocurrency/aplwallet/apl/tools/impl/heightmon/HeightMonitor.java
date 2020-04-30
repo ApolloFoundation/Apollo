@@ -44,7 +44,13 @@ public class HeightMonitor {
             CDI.current().select(JettyServer.class).get();
             Runtime.getRuntime().addShutdownHook(new Thread(this::stop));
             service.setUp(config);
-            executor.scheduleWithFixedDelay(service::updateStats, 0, delay, TimeUnit.SECONDS);
+            executor.scheduleWithFixedDelay(()->{
+                try {
+                service.updateStats();
+            } catch (Throwable e) {
+                    log.info("Unknown error", e);
+            }
+            }, 0, delay, TimeUnit.SECONDS);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

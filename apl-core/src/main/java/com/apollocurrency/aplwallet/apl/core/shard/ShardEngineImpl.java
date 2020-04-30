@@ -84,7 +84,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class ShardEngineImpl implements ShardEngine {
     private static final Logger log = getLogger(ShardEngineImpl.class);
 
-    private MigrateState state = MigrateState.INIT;
+    private MigrateState state;
     private DatabaseManager databaseManager;
     private TrimService trimService;
     private HelperFactory<BatchedPaginationOperation> helperFactory = new HelperFactoryImpl();
@@ -119,6 +119,11 @@ public class ShardEngineImpl implements ShardEngine {
         this.zipComponent = Objects.requireNonNull(zipComponent, "zipComponent is NULL");
         this.aplAppStatus = Objects.requireNonNull(aplAppStatus, "aplAppStatus is NULL");
         this.shardDao = Objects.requireNonNull(shardDao, "shardDao is NULL");
+    }
+
+    public void prepare() {
+        durableStatusTaskId = null;
+        state = MigrateState.INIT;
     }
 
     /**
