@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author alukin@gmail.com
  */
 @Slf4j
-public class SvConnections {
+public class SvSessions {
 
     private final Map<URI, SvBusClient> connections = new ConcurrentHashMap<>();
     private final Timer timer;
@@ -26,7 +26,7 @@ public class SvConnections {
     private Map.Entry<URI, SvBusClient> defaultConnection;
     private final MessageDispatcherImpl dispatecher;
 
-    public SvConnections(MessageDispatcherImpl dispatecher) {
+    public SvSessions(MessageDispatcherImpl dispatecher) {
         this.dispatecher = dispatecher;
         //init connection restore timer task
         //TODO: use our thread pool manager maybe

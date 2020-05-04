@@ -18,4 +18,5 @@ public class SvBusErrorCodes {
     public static final int INVALID_HEADER = 5;
     public static final int INVALID_MESSAGE = 6;
     public static final int INVALID_BODY = 7;
+    public static final int RESPONSE_TIMEOUT = 8;
 }

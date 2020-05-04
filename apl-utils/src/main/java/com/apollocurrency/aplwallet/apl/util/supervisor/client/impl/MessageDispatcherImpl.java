@@ -42,7 +42,7 @@ public class MessageDispatcherImpl implements MessageDispatcher {
 
     public static long RESPONSE_WAIT_TIMEOUT_MS = 500L; // TODO need to make it configurable
 
-    private final SvConnections connections;
+    private final SvSessions connections;
     private final PathParamProcessor pathMatcher;
     private final Deque<SvChannelMessage> outgoingQueue = new LinkedList<>();
     private SvBusHello hello;
@@ -55,7 +55,7 @@ public class MessageDispatcherImpl implements MessageDispatcher {
 
     public MessageDispatcherImpl() {
         pathMatcher = new PathParamProcessor();
-        connections = new SvConnections(this);
+        connections = new SvSessions(this);
     }
 
     public Map<URI, SvBusClient> getConnections() {
@@ -135,8 +135,16 @@ public class MessageDispatcherImpl implements MessageDispatcher {
 
         } catch (SocketTimeoutException ex) {
             log.warn("Responce wait timeout", ex);
-        } catch (JsonProcessingException e) {
-            log.error("Can not map response to JSON");
+            res = new SvBusResponse();
+            res.error = new SvBusError();
+            res.error.error_code = SvBusErrorCodes.RESPONSE_TIMEOUT;
+            res.error.descritption = ex.getMessage();
+        } catch (JsonProcessingException ex) {
+            log.error("Can not map response to JSON", ex);
+            res = new SvBusResponse();
+            res.error = new SvBusError();
+            res.error.error_code = SvBusErrorCodes.PROCESSING_ERROR;
+            res.error.descritption = ex.getMessage();
         }
         return res;
     }
