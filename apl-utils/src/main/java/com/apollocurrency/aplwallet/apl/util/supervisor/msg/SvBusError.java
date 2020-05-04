@@ -13,6 +13,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class SvBusError {
 
-    public Integer error_code;
+    public Integer errorCode;
     public String descritption;
 }

@@ -92,7 +92,7 @@ public class MessageDispatcherImpl implements MessageDispatcher {
     public SvBusResponse errornousRequestsHandler(JsonNode rqBody, SvChannelHeader rqHeader, int code, String errorInfo) {
         SvBusResponse resp = new SvBusResponse();
         resp.error = new SvBusError();
-        resp.error.error_code = code;
+        resp.error.errorCode = code;
         resp.error.descritption = errorInfo + " Request path: " + rqHeader.path;
         return resp;
     }
@@ -137,13 +137,13 @@ public class MessageDispatcherImpl implements MessageDispatcher {
             log.warn("Responce wait timeout", ex);
             res = new SvBusResponse();
             res.error = new SvBusError();
-            res.error.error_code = SvBusErrorCodes.RESPONSE_TIMEOUT;
+            res.error.errorCode = SvBusErrorCodes.RESPONSE_TIMEOUT;
             res.error.descritption = ex.getMessage();
         } catch (JsonProcessingException ex) {
             log.error("Can not map response to JSON", ex);
             res = new SvBusResponse();
             res.error = new SvBusError();
-            res.error.error_code = SvBusErrorCodes.PROCESSING_ERROR;
+            res.error.errorCode = SvBusErrorCodes.PROCESSING_ERROR;
             res.error.descritption = ex.getMessage();
         }
         return res;
