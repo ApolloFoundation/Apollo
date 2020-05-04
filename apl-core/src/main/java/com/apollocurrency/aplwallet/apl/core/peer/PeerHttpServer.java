@@ -24,11 +24,14 @@ import org.slf4j.Logger;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.DispatcherType;
+import java.io.IOException;
 import java.net.Inet6Address;
 import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -58,6 +61,7 @@ public class PeerHttpServer {
     private PeerAddress myExtAddress;
     private PeerServlet peerServlet;
     private TaskDispatchManager taskDispatchManager;
+    private List<ServerSocket> p2pPortHolders = new ArrayList<>();
 
     @Inject
     public PeerHttpServer(PropertiesHolder propertiesHolder, UPnP upnp, JettyConnectorCreator conCreator, TaskDispatchManager taskDispatchManager) {
@@ -88,7 +92,7 @@ public class PeerHttpServer {
 
             conCreator.addHttpConnector(host, myPeerServerPort, peerServer, idleTimeout);
             if (useTLS) {
-                conCreator.addHttpSConnector(host, myPeerServerPort, peerServer, idleTimeout);
+                conCreator.addHttpSConnector(host, myPeerServerPortTLS, peerServer, idleTimeout);
             }
 
             ServletContextHandler ctxHandler = new ServletContextHandler();
@@ -198,6 +202,7 @@ public class PeerHttpServer {
     public void shutdown() {
         if (peerServer != null) {
             try {
+                releaseReservedPorts(); // close reserved ports if any
                 if (enablePeerUPnP) {
                     for (int extPort : externalPorts) {
                         upnp.deletePort(extPort);
@@ -210,11 +215,12 @@ public class PeerHttpServer {
         }
     }
 
-    public boolean suspend() {
+    public synchronized boolean suspend() {
         boolean res = false;
         if (peerServer != null) {
             try {
                 peerServer.stop();
+                captureReservedPorts(); // hold p2p ports until server will be resumed
                 res = true;
             } catch (Exception e) {
                 LOG.info("Failed to stop peer server", e);
@@ -223,10 +229,26 @@ public class PeerHttpServer {
         return res;
     }
 
-    public boolean resume() {
+    private void captureReservedPorts() throws IOException {
+        LOG.debug("Reserve p2p ports {} until resumption", myPeerServerPort + (useTLS ? "," + myPeerServerPortTLS : ""));
+        p2pPortHolders.clear();
+        p2pPortHolders.add(capturePort(myPeerServerPort));
+        if (useTLS) {
+            p2pPortHolders.add(capturePort(myPeerServerPortTLS));
+        }
+    }
+
+    private ServerSocket capturePort(int port) throws IOException {
+        ServerSocket socket = new ServerSocket(port);
+        socket.setReuseAddress(true);
+        return socket;
+    }
+
+    public synchronized boolean resume() {
         boolean res = false;
         if (peerServer != null) {
             try {
+                releaseReservedPorts(); // finish p2p ports reserve
                 LOG.debug("Starting peer server");
                 peerServer.start();
                 LOG.debug("peer server started");
@@ -236,6 +258,16 @@ public class PeerHttpServer {
             }
         }
         return res;
+    }
+
+    private void releaseReservedPorts() throws IOException {
+        if (!p2pPortHolders.isEmpty()) {
+            LOG.debug("Release p2p server ports from temporal capturing {}", p2pPortHolders.stream().map(ServerSocket::getLocalPort).map(Object::toString).collect(Collectors.joining(",")));
+            for (ServerSocket portHolder : p2pPortHolders) {
+                portHolder.close();
+            }
+            p2pPortHolders.clear();
+        }
     }
 
     public InetAddress getExternalAddress() {

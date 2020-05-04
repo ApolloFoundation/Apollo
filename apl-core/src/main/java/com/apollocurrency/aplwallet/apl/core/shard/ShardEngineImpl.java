@@ -96,7 +96,7 @@ public class ShardEngineImpl implements ShardEngine {
     private ShardDao shardDao;
     private Zip zipComponent;
     private AplAppStatus aplAppStatus;
-    private String durableStatusTaskId;
+    private volatile String durableStatusTaskId;
 
 
     @Inject
@@ -824,7 +824,7 @@ public class ShardEngineImpl implements ShardEngine {
     private void checkOrInitAppStatus() {
         if (durableStatusTaskId == null) {
             Optional<DurableTaskInfo> taskInfo = aplAppStatus.findTaskByName("sharding");
-            if (taskInfo.isEmpty()) {
+            if (taskInfo.isEmpty() || taskInfo.get().stateOfTask.equalsIgnoreCase(DurableTaskInfo.TASK_STATES[3]) || taskInfo.get().stateOfTask.equalsIgnoreCase(DurableTaskInfo.TASK_STATES[2])) {
                 durableStatusTaskId = aplAppStatus.durableTaskStart(
                     "sharding",
                     "Blockchain db sharding process takes some time, pls be patient...",
@@ -832,8 +832,6 @@ public class ShardEngineImpl implements ShardEngine {
             } else {
                 durableStatusTaskId = taskInfo.get().getId();
             }
-        } else {
-            aplAppStatus.findTaskByName("sharding");
         }
     }
 

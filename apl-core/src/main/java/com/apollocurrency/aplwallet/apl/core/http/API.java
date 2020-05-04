@@ -232,7 +232,7 @@ public final class API {
             //
 
             if (enableSSL) {
-                jettyConnectorCreator.addHttpSConnector(host, port, apiServer, apiServerIdleTimeout);
+                jettyConnectorCreator.addHttpSConnector(host, sslPort, apiServer, apiServerIdleTimeout);
             }
 
             HandlerList apiHandlers = new HandlerList();
