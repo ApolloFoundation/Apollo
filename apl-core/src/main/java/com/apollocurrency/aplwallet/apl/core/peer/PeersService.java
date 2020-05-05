@@ -418,9 +418,9 @@ public class PeersService {
 
     public void suspend() {
         LOG.debug("peerHttpServer suspend...");
-//        if(peerHttpServer!=null){
-//           suspend = peerHttpServer.suspend();
-//        }
+        if(peerHttpServer!=null){
+           suspend = peerHttpServer.suspend();
+        }
         TaskDispatcher dispatcher = taskDispatchManager.getDispatcher(BACKGROUND_SERVICE_NAME);
         dispatcher.suspend();
         getActivePeers().forEach((p) -> {
@@ -430,9 +430,9 @@ public class PeersService {
 
     public void resume() {
         LOG.debug("peerHttpServer resume...");
-//        if (suspend && peerHttpServer!=null) {
-//            suspend = !peerHttpServer.resume();
-//        }
+        if (suspend && peerHttpServer!=null) {
+            suspend = !peerHttpServer.resume();
+        }
         TaskDispatcher dispatcher = taskDispatchManager.getDispatcher(BACKGROUND_SERVICE_NAME);
         dispatcher.resume();
     }

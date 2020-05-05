@@ -6,7 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.shard;
 
 
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
-import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
@@ -39,7 +38,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Singleton
 @Slf4j
@@ -194,7 +192,7 @@ public class ShardService {
                 // here we are able to recover from stored record
                 aplAppStatus.durableTaskStart("sharding", "Blockchain db sharding process takes some time, pls be patient...", true);
                 Shard lastShard = shardDao.getLastShard();
-                shardMigrationExecutor.cleanCommands();
+                shardMigrationExecutor.prepare();
                 shardMigrationExecutor.createAllCommands(lastShard.getShardHeight(), lastShard.getShardId(), recovery.getState());
                 shardMigrationExecutor.executeAllOperations();
                 aplAppStatus.durableTaskFinished("sharding", false, "Shard process finished");
@@ -229,7 +227,7 @@ public class ShardService {
             log.info("Start sharding '{}'....", shardId);
 
             try {
-                shardMigrationExecutor.cleanCommands();
+                shardMigrationExecutor.prepare();
                 shardMigrationExecutor.createAllCommands(minRollbackHeight, shardId, initialState);
                 resultState = shardMigrationExecutor.executeAllOperations();
             } catch (Exception t) {
