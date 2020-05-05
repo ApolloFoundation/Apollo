@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.tools.impl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;

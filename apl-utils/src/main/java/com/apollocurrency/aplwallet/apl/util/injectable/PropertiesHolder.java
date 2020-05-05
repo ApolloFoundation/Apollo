@@ -6,7 +6,6 @@ package com.apollocurrency.aplwallet.apl.util.injectable;
 
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Singleton;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -14,7 +13,6 @@ import java.util.List;
 import java.util.Properties;
 
 @Slf4j
-@Singleton
 public class PropertiesHolder {
 
     private Properties properties;
