@@ -78,6 +78,7 @@ import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jboss.weld.literal.NamedLiteral;
 import org.jdbi.v3.core.Jdbi;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.slf4j.Logger;
@@ -212,6 +213,10 @@ class ShardEngineTest {
         doReturn(dataExportDirPath).when(dirProvider).getDataExportDir(); // for Zip
     }
 
+    @BeforeEach
+    void setUp() {
+        shardEngine.prepare();
+    }
 
     public ShardEngineTest() throws Exception {
     }

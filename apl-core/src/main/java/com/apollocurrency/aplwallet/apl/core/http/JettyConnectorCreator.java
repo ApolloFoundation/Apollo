@@ -60,7 +60,6 @@ public class JettyConnectorCreator {
 
     public boolean addHttpSConnector(String host, int port, Server apiServer, int idleTimeout) {
 
-        boolean res = true;
         ServerConnector connector;
         HttpConfiguration https_config = new HttpConfiguration();
         https_config.setSendDateHeader(false);
@@ -74,7 +73,7 @@ public class JettyConnectorCreator {
         sslContextFactory.setKeyStorePassword(keyStorePassword);
         sslContextFactory.addExcludeProtocols("SSLv3", "TLSv1", "TLSv1.1"); //TLS 1.2 or 1.3 only
 
-        // we need to trust self-signed certificates in TLS but we do verify cerificate
+        // we need to trust self-signed certificates in TLS but we do verify certificate
         // of node using Apollo's own CA on peer-ro-peer connection establishment
         sslContextFactory.setTrustAll(true);
         sslContextFactory.setCertAlias(keyStoreAlias);
@@ -89,6 +88,6 @@ public class JettyConnectorCreator {
         apiServer.addConnector(connector);
         String proto = connector.getDefaultProtocol();
         LOG.debug("API protocol: {} configured", proto);
-        return res;
+        return true;
     }
 }
