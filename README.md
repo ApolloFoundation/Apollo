@@ -7,7 +7,12 @@ This repository contains core classes of Apollo blockchain platform. For executa
 ## Requirements
 Java 11 is required to run the desktop clients.
 
+##Other modules required to build Apollo components
 
+    1. Apollo-bom-ext
+    2. Apollo-web-ui
+    3. Apollo-exec
+    
 
 # Build instruction #
 
