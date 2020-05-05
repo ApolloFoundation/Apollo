@@ -150,16 +150,16 @@ public final class AplCore {
     public void shutdown() {
         log.info("Shutting down...");
         AddOns.shutdown();
-        apiServer.shutdown();
+        if (apiServer != null) apiServer.shutdown();
         FundingMonitor.shutdown();
         log.info("Background tasks shutdown...");
-        taskDispatchManager.shutdown();
+        if (taskDispatchManager != null) taskDispatchManager.shutdown();
 
         if (blockchainProcessor != null) {
             blockchainProcessor.shutdown();
             log.info("blockchainProcessor Shutdown...");
         }
-        fullTextSearchService.shutdown();
+        if (fullTextSearchService != null) fullTextSearchService.shutdown();
         log.info("full text service shutdown...");
 
         if (databaseManager != null) {
@@ -172,12 +172,12 @@ public final class AplCore {
             transportInteractionService.stop();
         }
 
-        peers.shutdown();
+        if (peers != null) peers.shutdown();
         log.info(Constants.APPLICATION + " server " + Constants.VERSION + " stopped.");
 
         AplCore.shutdown = true;
 
-        tcs.deinitialize();
+        if (tcs != null) tcs.deinitialize();
     }
 
     private void startUp() {
