@@ -1,0 +1,110 @@
+<configuration scan="true" scanPeriod="30 seconds">
+  <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <define name="LOGDIR" class="com.apollocurrency.aplwallet.apl.exec.LogDirPropertyDefiner">
+    <logDirectory>
+      apollo
+    </logDirectory>
+  </define>
+  <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${LOGDIR}/apl.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+      <!-- rollover daily -->
+      <fileNamePattern>${LOGDIR}/apl-%d{yyyy-MM-dd}_%i.gz</fileNamePattern>
+      <maxHistory>30</maxHistory>
+      <maxFileSize>100MB</maxFileSize>
+      <totalSizeCap>3GB</totalSizeCap>
+    </rollingPolicy>
+
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
+    </encoder>
+  </appender>
+  <!--
+      <appender name="shuffling-file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+          <file>${LOGDIR}/apl-shuffling.log</file>
+          <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+              &lt;!&ndash; rollover daily &ndash;&gt;
+              <fileNamePattern>${LOGDIR}/apl-shuffling-%d{yyyy-MM-dd}_%i.gz</fileNamePattern>
+              <maxHistory>30</maxHistory>
+              <maxFileSize>100MB</maxFileSize>
+              <totalSizeCap>3GB</totalSizeCap>
+          </rollingPolicy>
+          <encoder>
+              <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
+          </encoder>
+      </appender>
+  -->
+  <appender name="poll-file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${LOGDIR}/apl-poll.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+      <!-- rollover daily -->
+      <fileNamePattern>${LOGDIR}/apl-poll-%d{yyyy-MM-dd}_%i.gz</fileNamePattern>
+      <maxHistory>30</maxHistory>
+      <maxFileSize>100MB</maxFileSize>
+      <totalSizeCap>3GB</totalSizeCap>
+    </rollingPolicy>
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
+    </encoder>
+  </appender>
+  <appender name="account-file" class="ch.qos.logback.core.FileAppender">
+    <file>account.log</file>
+    <append>true</append>
+    <!-- set immediateFlush to false for much higher logging throughput -->
+    <immediateFlush>true</immediateFlush>
+    <!-- encoders are assigned the type
+         ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
+    </encoder>
+  </appender>
+  <appender name="account-file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${LOGDIR}/account.log</file>
+    <immediateFlush>true</immediateFlush>
+    <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+      <fileNamePattern>${LOGDIR}/account_%i.log.zip</fileNamePattern>
+      <minIndex>1</minIndex>
+      <maxIndex>100</maxIndex>
+    </rollingPolicy>
+
+    <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+      <maxFileSize>1000MB</maxFileSize>
+    </triggeringPolicy>
+    <encoder>
+      <pattern>%d [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
+    </encoder>
+  </appender>
+  <logger name="com.apollocurrency.aplwallet" level="INFO"/>
+  <!--<logger name="com.apollocurrency.aplwallet.apl.core.peer" level="TRACE"/>-->
+  <!--Uncomment next line to enable trim duration logging-->
+  <!--<logger name="com.apollocurrency.aplwallet.apl.db.VersionedDeletableEntityDbTable" level="trace"/>-->
+  <logger name="org.eclipse.jetty" level="off" additivity="false"/>
+  <logger name="javax.servlet.level" level="off" additivity="false"/>
+  <logger name="com.apollocurrency.aplwallet.apl.core.http.APIProxyServlet" level="info" additivity="false"/>
+  <!--    <logger name="com.apollocurrency.aplwallet.apl.core.account.Account" level="trace"/> -->
+  <!--    <logger name="com.apollocurrency.aplwallet.apl.core.app.Shuffling" level="trace" additivity="false">-->
+  <!--        <appender-ref ref="shuffling-file"/>-->
+  <!--    </logger>-->
+  <!--
+      <logger name="com.apollocurrency.aplwallet.apl.core.app.Poll" level="trace" additivity="false">
+          <appender-ref ref="poll-file"/>
+      </logger>
+      <logger name="com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl" level="trace" additivity="false">
+        <appender-ref ref="account-file"/>
+      </logger>
+  -->
+  <logger name="jdbc" level="off" additivity="false"/>
+  <logger name="jdbc.connection" level="info" additivity="false"/>
+  <logger name="jdbc.sqltiming" level="info" additivity="false"/>
+  <logger name="com.zaxxer" level="warn"/>
+  <logger name="p6spy" level="trace"/>
+  <root level="warn">
+    <appender-ref ref="console"/>
+    <appender-ref ref="file"/>
+  </root>
+</configuration>

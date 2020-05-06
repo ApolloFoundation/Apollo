@@ -4,10 +4,10 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.apollocurrency</groupId>
-  <artifactId>apollo-core-modules</artifactId>
+  <artifactId>apollo-blockchain</artifactId>
   <version>1.44.0</version>
   <packaging>pom</packaging>
-  <name>apollo-core-modules</name>
+  <name>apollo-blockchain</name>
 
   <organization>
     <name>Apollo Foundation</name>
@@ -47,6 +47,8 @@
     <module>apl-core</module>
     <module>apl-updater</module>
     <module>apl-bom</module>
+    <module>apl-conf</module>
+    <module>apl-exec</module>
   </modules>
 
   <properties>
@@ -58,7 +60,41 @@
     <maven.compiler.target>11</maven.compiler.target>
     <surefire-plugin.version>2.22.2</surefire-plugin.version>
     <compile-plugin.version>3.8.1</compile-plugin.version>
+    <!-- cross-platform zip distribution -->
+    <zip-file-name>apollo-blockchain</zip-file-name>
+    <ext-deps-zip-file-name>${zip-file-name}-ext-deps</ext-deps-zip-file-name>
+    <zip-format>zip</zip-format>
+    <!--Dependency Versions-->
+    <apl-bom.version>1.44.0</apl-bom.version>
+    <!-- We have to define this property ancd change it accordingly for correct version of packages -->
+    <apl-bom-ext.version>1.0.0</apl-bom-ext.version>
+    <base-dist-dir>apollo-wallet</base-dist-dir>
+
   </properties>
+  <!-- We have following profiles: prod, dev, debug
+       1. prod: profile for release with build of all zips and sha-256 sums
+       2. dev:  profile for development, no extra build artefacts, faster builds for developers
+  -->
+
+  <profiles>
+    <!-- The Configuration of the development profile -->
+    <profile>
+      <id>dev</id>
+      <properties>
+        <zipExecutionPhase>none</zipExecutionPhase>
+      </properties>
+    </profile>
+    <!-- The Configuration of the production profile -->
+    <profile>
+      <id>prod</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <zipExecutionPhase>package</zipExecutionPhase>
+      </properties>
+    </profile>
+  </profiles>
 
   <dependencyManagement>
     <dependencies>

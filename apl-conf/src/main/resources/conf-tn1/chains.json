@@ -1,0 +1,89 @@
+[
+  {
+    "chainId": "a2e9b946-290b-48b6-9985-dc2e5a5860a1",
+    "active": true,
+    "wellKnownPeers": [
+      "51.15.235.41",
+      "51.15.69.39",
+      "51.15.59.37",
+      "51.15.114.68",
+      "51.15.140.80",
+      "51.15.100.44",
+      "51.15.233.93"
+    ],
+    "name": "Apollo public testnet",
+    "description": "Apollo main test chain, running on last stable release",
+    "symbol": "Apollo",
+    "prefix": "APL",
+    "project": "Apollo",
+    "genesisLocation": "conf/data/genesisAccounts-testnet.json",
+    "featuresHeightRequirement": {
+      "dexReopenPendingOrdersHeight": 1100000,
+      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 1900000
+    },
+    "blockchainProperties": [
+      {
+        "height": 0,
+        "maxNumberOfTransactions": 255,
+        "blockTime": 60,
+        "maxBlockTimeLimit": 67,
+        "minBlockTimeLimit": 53,
+        "maxBalance": 30000000000
+      },
+      {
+        "height": 2000,
+        "maxNumberOfTransactions": 300,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 4,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 30000000000,
+        "consensusSettings": {
+          "adaptiveForgingSettings": {
+            "enabled": "true",
+            "adaptiveBlockTime": 60
+          }
+        }
+      },
+      {
+        "height": 42300,
+        "maxNumberOfTransactions": 300,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 4,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 30000000000,
+        "consensusSettings": {
+          "adaptiveForgingSettings": {
+            "enabled": "true",
+            "adaptiveBlockTime": 10
+          }
+        }
+      },
+      {
+        "height": 552500,
+        "maxNumberOfTransactions": 300,
+        "blockTime": 60,
+        "maxBlockTimeLimit": 70,
+        "minBlockTimeLimit": 50,
+        "maxBalance": 30000000000
+      },
+      {
+        "height": 624999,
+        "maxNumberOfTransactions": 255,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 5,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 30000000000,
+        "consensusSettings": {
+          "adaptiveForgingSettings": {
+            "enabled": "true",
+            "adaptiveBlockTime": 10
+          }
+        },
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 655000
+        }
+      }
+    ]
+  }
+]

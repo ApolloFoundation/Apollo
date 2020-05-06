@@ -1,0 +1,72 @@
+[
+  {
+    "chainId": "2f2b6149-d29e-41ca-8c0d-f3343f5540c6",
+    "active": true,
+    "wellKnownPeers": [
+      "51.15.37.165",
+      "51.15.209.252",
+      "51.15.228.90",
+      "51.15.228.126",
+      "51.15.228.171",
+      "51.15.46.25",
+      "51.15.72.23"
+    ],
+    "name": "Apollo development testnet",
+    "description": "Apollo development test chain, running on latest development version",
+    "symbol": "Apollo",
+    "prefix": "APL",
+    "project": "Apollo",
+    "genesisLocation": "conf/data/genesisAccounts-testnet.json",
+    "featuresHeightRequirement": {
+      "dexReopenPendingOrdersHeight": 300000,
+      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 750000
+    },
+    "blockchainProperties": [
+      {
+        "height": 0,
+        "maxNumberOfTransactions": 255,
+        "blockTime": 60,
+        "maxBlockTimeLimit": 67,
+        "minBlockTimeLimit": 53,
+        "maxBalance": 30000000000
+      },
+      {
+        "height": 1,
+        "maxNumberOfTransactions": 255,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 3,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 30000000000,
+        "consensusSettings": {
+          "adaptiveForgingSettings": {
+            "enabled": "true",
+            "adaptiveBlockTime": 10
+          }
+        },
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 300000
+        }
+      },
+      {
+        "height": 600000,
+        "maxNumberOfTransactions": 255,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 3,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 30000000000,
+        "consensusSettings": {
+          "adaptiveForgingSettings": {
+            "enabled": "true",
+            "adaptiveBlockTime": 10
+          }
+        },
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 10000
+        }
+      }
+    ]
+  }
+]
+
