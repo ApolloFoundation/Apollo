@@ -4,6 +4,7 @@ import javax.enterprise.inject.Vetoed;
 
 import org.json.simple.JSONArray;
 
+import javax.enterprise.inject.Vetoed;
 import java.util.List;
 import java.util.stream.Collector;
 

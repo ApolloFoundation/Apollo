@@ -236,6 +236,7 @@ class ShardMigrationExecutorTest {
     @BeforeEach
     void setUp() {
         blockchain.setLastBlock(new BlockTestData().LAST_BLOCK);
+        shardMigrationExecutor.prepare();
     }
 
     @AfterEach

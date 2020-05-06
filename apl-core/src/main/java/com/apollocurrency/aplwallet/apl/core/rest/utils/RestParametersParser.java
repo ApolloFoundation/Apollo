@@ -20,8 +20,8 @@ import java.util.Map;
 
 import static com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper.TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME;
 
-@Vetoed
 @Slf4j
+@Vetoed
 public class RestParametersParser {
 
     private RestParametersParser() {

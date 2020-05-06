@@ -3,13 +3,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <parent>
-    <groupId>com.apollocurrency</groupId>
-    <artifactId>apollo-core-modules</artifactId>
-    <version>1.43.3</version>
-  </parent>
-
+  <groupId>com.apollocurrency</groupId>
   <artifactId>apl-bom</artifactId>
+  <version>1.44.0</version>
   <packaging>pom</packaging>
   <name>apl-bom</name>
 
