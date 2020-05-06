@@ -1,11 +1,37 @@
 <?xml version="1.0"?>
-<beans xmlns="http://java.sun.com/xml/ns/javaee"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="http://xmlns.jcp.org/xml/ns/javaee"
        xmlns:weld="http://jboss.org/schema/weld/beans"
        xsi:schemaLocation="
           http://java.sun.com/xml/ns/javaee http://docs.jboss.org/cdi/beans_1_0.xsd
-          http://jboss.org/schema/weld/beans http://jboss.org/schema/weld/beans_1_1.xsd">
-    <weld:scan>
-        <weld:exclude name="org.jboss.weld.**" />
-    </weld:scan>
+          http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/beans_1_1.xsd"
+       version="1.1" bean-discovery-mode="all">
+  <weld:scan>
+    <weld:include name="org.jboss.resteasy.cdi.**" />
+    <weld:include name="com.apollocurrency.**" />
+
+    <weld:exclude name="org.jboss.resteasy.plugins.providers.jaxb.**" />
+    <weld:exclude name="org.jboss.resteasy.plugins.providers.jackson.**" />
+    <weld:exclude name="org.bouncycastle.**" />
+    <weld:exclude name="org.apache.**" />
+    <weld:exclude name="org.h2.**" />
+    <weld:exclude name="com.sun.**" />
+    <weld:exclude name="io.smallrye.**" />
+    <weld:exclude name="io.netty.**" />
+    <weld:exclude name="org.codehaus.**" />
+    <weld:exclude name="com.zaxxer.**" />
+    <weld:exclude name="org.hibernate.validator.internal.**" />
+    <weld:exclude name="org.spongycastle.**" />
+    <weld:exclude name="org.yaml.**" />
+    <weld:exclude name="org.web3j.**" />
+    <weld:exclude name="javassist.**" />
+    <weld:exclude name="com.google.**" />
+    <weld:exclude name="jnr.**" />
+    <weld:exclude name="org.ethereum.**" />
+    <weld:exclude name="io.swagger.**" />
+    <weld:exclude name="org.jdbi.**" />
+    <weld:exclude name="com.fasterxml.**" />
+    <weld:exclude name="javax.mail.**" />
+    <weld:exclude name="com.cedarsoftware.**" />
+  </weld:scan>
 </beans>

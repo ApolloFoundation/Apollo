@@ -191,7 +191,6 @@
       <plugin>
         <groupId>ca.szc.maven</groupId>
         <artifactId>jsonpath-maven-plugin</artifactId>
-        <version>1.2.0</version>
         <executions>
           <execution>
             <id>update-version</id>

@@ -182,7 +182,7 @@ public final class API {
         final Path binDir = DirProvider.getBinDir();
 
         final Path htmlStubPath =
-            binDir.resolve("bin").resolve("html-stub").toAbsolutePath();
+            binDir.resolve("conf").resolve("html-stub").toAbsolutePath();
         if (!Files.exists(htmlStubPath)) {
             log.error("Cannot find dir: {}. Gonna proceed without any html-stub.", htmlStubPath);
             return htmlStubPath.toString();
@@ -195,7 +195,7 @@ public final class API {
 
             if (!Files.exists(webUiPath)
                 || !Files.isDirectory(webUiPath)
-                || !Files.exists(Path.of(webUiPath.toString(), "index.html"))
+                || !Files.exists(webUiPath.resolve("index.html"))
             ) {
                 log.debug("Cannot find index.html in: {}. Gonna use html-stub.", webUiPath.toString());
                 webUiPath = htmlStubPath;
