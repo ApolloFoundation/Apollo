@@ -119,14 +119,6 @@
             <useSystemClassLoader>false</useSystemClassLoader>
           </configuration>
           <dependencies>
-            <!--
-                                    JDK 11
-                                    <dependency>
-                                        <groupId>org.ow2.asm</groupId>
-                                        <artifactId>asm</artifactId>
-                                        <version>6.2</version>
-                                    </dependency>
-            -->
             <dependency>
               <groupId>org.apache.maven.wagon</groupId>
               <artifactId>wagon-webdav-jackrabbit</artifactId>
@@ -159,7 +151,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-assembly-plugin</artifactId>
-          <version>3.1.0</version>
+          <version>3.3.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -175,6 +167,21 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-dependency-plugin</artifactId>
           <version>3.1.2</version>
+        </plugin>
+        <plugin>
+          <groupId>net.nicoulaj.maven.plugins</groupId>
+          <artifactId>checksum-maven-plugin</artifactId>
+          <version>1.8</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-shade-plugin</artifactId>
+          <version>3.2.3</version>
+        </plugin>
+        <plugin>
+          <groupId>ca.szc.maven</groupId>
+          <artifactId>jsonpath-maven-plugin</artifactId>
+          <version>1.2.0</version>
         </plugin>
       </plugins>
     </pluginManagement>
