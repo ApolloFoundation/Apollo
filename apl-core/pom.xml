@@ -90,6 +90,21 @@
       <artifactId>resteasy-multipart-provider</artifactId>
     </dependency>
 
+<!--
+    <dependency> &lt;!&ndash; may be NEEDED by FAT JAR in run-time &ndash;&gt;
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-jaxrs</artifactId>
+    </dependency>
+    <dependency> &lt;!&ndash; NEEDED by FAT JAR in run-time&ndash;&gt;
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-tracing-api</artifactId>
+    </dependency>
+    <dependency> &lt;!&ndash; NEEDED by FAT JAR in run-time&ndash;&gt;
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpcore-nio</artifactId>
+    </dependency>
+-->
+
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
       <artifactId>resteasy-cdi</artifactId>
