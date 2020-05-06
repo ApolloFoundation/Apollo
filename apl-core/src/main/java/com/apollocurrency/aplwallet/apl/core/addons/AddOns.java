@@ -38,16 +38,23 @@ public final class AddOns {
     private static final Logger LOG = getLogger(AddOns.class);
 
     // TODO: YL remove static instance later
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private static PropertiesHolder propertiesHolder;
     private static List<AddOn> addOns = new ArrayList<>(0);
 
     private AddOns() {
     }
 
+    private static PropertiesHolder lookupPropertiesHolder() {
+        if (propertiesHolder == null) {
+            propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+        }
+        return propertiesHolder;
+    }
+
     public static void init() {
         List<AddOn> addOnsList = new ArrayList<>(10);
 
-        propertiesHolder.getStringListProperty("apl.addOns").forEach(addOn -> {
+        lookupPropertiesHolder().getStringListProperty("apl.addOns").forEach(addOn -> {
             try {
                 addOnsList.add((AddOn) Class.forName(addOn).newInstance());
             } catch (ReflectiveOperationException e) {

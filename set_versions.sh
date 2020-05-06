@@ -11,6 +11,9 @@ echo "New version is: $NEW_VERSION"
 echo $NEW_VERSION > $VF
 echo "Changing Maven's POM files"
 ./mvnw versions:set -DnewVersion=${NEW_VERSION}
+cd apl-bom || exit
+./mvnw versions:set -DnewVersion=${NEW_VERSION}
+cd ..
 
 # set verions in Constants.java (application hardcoded version)
 CONST_PATH=apl-utils/src/main/java/com/apollocurrency/aplwallet/apl/util/Constants.java

@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.model;
 import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.json.simple.JSONObject;
 
 import java.util.Objects;
@@ -26,7 +26,7 @@ public class Balances {
      * Account RS
      **/
 
-    @ApiModelProperty(value = "Account RS")
+    @Schema(name = "Account RS")
     @JsonProperty("accountRS")
     public String getAccountRS() {
         return accountRS;
@@ -40,7 +40,7 @@ public class Balances {
      * Account Number
      **/
 
-    @ApiModelProperty(value = "Account Number")
+    @Schema(name = "Account Number")
     @JsonProperty("account")
     public long getAccount() {
         return account;
@@ -54,7 +54,7 @@ public class Balances {
      * Apollo account balance in Atoms
      **/
 
-    @ApiModelProperty(value = "Apollo account balance in Atoms")
+    @Schema(name = "Apollo account balance in Atoms")
     @JsonProperty("balanceATM")
     public long getBalanceATM() {
         return balanceATM;

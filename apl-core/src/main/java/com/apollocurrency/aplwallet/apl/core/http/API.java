@@ -39,6 +39,7 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.SecurityHandler;
@@ -64,13 +65,15 @@ import org.slf4j.Logger;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.MultipartConfigElement;
-import java.io.File;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -82,8 +85,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 
 @Singleton
+@Slf4j
 public final class API {
-    public final static String WEB_UI_DIR = "webui";
     private static final Logger LOG = getLogger(API.class);
     private static final String[] DISABLED_HTTP_METHODS = {"TRACE", "OPTIONS", "HEAD"};
     public static int openAPIPort;
@@ -176,14 +179,34 @@ public final class API {
     }
 
     public static String findWebUiDir() {
-        String dir = DirProvider.getBinDir() + File.separator + WEB_UI_DIR;
-        dir = dir + File.separator + "build";
-        File res = new File(dir);
-        if (!res.exists()) { //we are in develop IDE or tests
-            dir = DirProvider.getBinDir() + "/apl-exec/target/" + WEB_UI_DIR + "/build";
-            res = new File(dir);
+        final Path binDir = DirProvider.getBinDir();
+
+        final Path htmlStubPath =
+            binDir.resolve("conf").resolve("html-stub").toAbsolutePath();
+        if (!Files.exists(htmlStubPath)) {
+            log.error("Cannot find dir: {}. Gonna proceed without any html-stub.", htmlStubPath);
+            return htmlStubPath.toString();
         }
-        return res.getAbsolutePath();
+
+        final String webUIProperty = propertiesHolder.getStringProperty("apl.webUIDir");
+        Path webUiPath;
+        try {
+            webUiPath = binDir.resolve(webUIProperty);
+
+            if (!Files.exists(webUiPath)
+                || !Files.isDirectory(webUiPath)
+                || !Files.exists(webUiPath.resolve("index.html"))
+            ) {
+                log.debug("Cannot find index.html in: {}. Gonna use html-stub.", webUiPath.toString());
+                webUiPath = htmlStubPath;
+            }
+        } catch (InvalidPathException ipe) {
+            log.debug("Cannot resolve apl.webUIDir: {} within DirProvider.getBinDir(): {}. Gonna use html-stub.", webUIProperty, binDir.toString());
+            webUiPath = htmlStubPath;
+        }
+
+        log.debug("webUIDir: {}", webUiPath.toString());
+        return webUiPath.toString();
     }
 
     public static boolean isAllowed(String remoteHost) {
