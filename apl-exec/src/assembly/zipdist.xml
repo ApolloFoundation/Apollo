@@ -52,6 +52,7 @@
   </files>
   <dependencySets>
     <dependencySet>
+      <useProjectArtifact>false</useProjectArtifact>
       <outputDirectory>${base-dist-dir}/lib</outputDirectory>
       <includes>
         <include>${project.groupId}:apl-*:jar:*</include>
