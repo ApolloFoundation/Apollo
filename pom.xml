@@ -5,7 +5,7 @@
 
   <groupId>com.apollocurrency</groupId>
   <artifactId>apollo-core-modules</artifactId>
-  <version>1.43.3</version>
+  <version>1.44.0</version>
   <packaging>pom</packaging>
   <name>apollo-core-modules</name>
 
