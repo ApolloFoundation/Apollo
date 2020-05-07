@@ -88,6 +88,7 @@ public final class API {
 
     private static final Logger LOG = getLogger(API.class);
     private static final String[] DISABLED_HTTP_METHODS = {"TRACE", "OPTIONS", "HEAD"};
+    public static final String INDEX_HTML = "index.html";
     public static int openAPIPort;
     public static int openAPISSLPort;
     public static boolean isOpenAPI;
@@ -179,35 +180,36 @@ public final class API {
 
     public static String findWebUiDir() {
         final Path binDir = DirProvider.getBinDir();
-
-        final Path htmlStubPath
-                = binDir.resolve("conf").resolve("html-stub").toAbsolutePath();
-        if (!Files.exists(htmlStubPath)) {
-            log.error("Cannot find dir: {}. Gonna proceed without any html-stub.", htmlStubPath);
-            return htmlStubPath.toString();
-        }
-
-        final String webUIlocaton = propertiesHolder.getStringProperty("apl.apiResourceBase");
-        Path webUiPath;
+        boolean useHtmlStub = false;
+        final String webUIlocation = propertiesHolder.getStringProperty("apl.apiResourceBase");
+        Path webUiPath = null;
         try {
-            Path lp = Path.of(webUIlocaton);
-            if (!lp.isAbsolute()) {
-                webUiPath = binDir.resolve(webUIlocaton);
-            } else {
+            Path lp = Path.of(webUIlocation);
+            if (lp.isAbsolute()) {
                 webUiPath = lp;
+            } else {
+                webUiPath = binDir.resolve(webUIlocation);
             }
             if (!Files.exists(webUiPath)
                     || !Files.isDirectory(webUiPath)
-                    || !Files.exists(webUiPath.resolve("index.html"))) {
+                    || !Files.exists(webUiPath.resolve(INDEX_HTML))) {
                 log.debug("Cannot find index.html in: {}. Gonna use html-stub.", webUiPath.toString());
-                webUiPath = htmlStubPath;
+                useHtmlStub = true;
             }
         } catch (InvalidPathException ipe) {
-            log.debug("Cannot resolve apl.webUIDir: {} within DirProvider.getBinDir(): {}. Gonna use html-stub.", webUIlocaton, binDir.toString());
-            webUiPath = htmlStubPath;
+            log.debug("Cannot resolve apl.webUIDir: {} within DirProvider.getBinDir(): {}. Gonna use html-stub.", webUIlocation, binDir.toString());
+            useHtmlStub = true;
         }
 
-        log.debug("webUIDir: {}", webUiPath.toString());
+        if (useHtmlStub) {
+            webUiPath = binDir.resolve("html-stub").toAbsolutePath();
+            if (Files.exists(webUiPath.resolve(INDEX_HTML))) {
+                log.debug("webUIDir: {}", webUiPath.toString());
+            } else {
+                log.error("Cannot find dir with index.html: {}. Gonna proceed without any html-stub.", webUiPath);
+            }
+        }
+
         return webUiPath.toString();
     }
 
@@ -362,7 +364,7 @@ public final class API {
                 ContextHandler contextHandler = new ContextHandler("/swagger");
                 ResourceHandler swFileHandler = new ResourceHandler();
                 swFileHandler.setDirectoriesListed(false);
-                swFileHandler.setWelcomeFiles(new String[]{"index.html"});
+                swFileHandler.setWelcomeFiles(new String[]{INDEX_HTML});
                 swFileHandler.setResourceBase(resourceBasePath);
                 contextHandler.setHandler(swFileHandler);
                 apiHandlers.addHandler(contextHandler);
