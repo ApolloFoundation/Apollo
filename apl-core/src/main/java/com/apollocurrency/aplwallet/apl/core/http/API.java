@@ -14,10 +14,9 @@
  *
  */
 
-/*
+ /*
  * Copyright © 2018-2019 Apollo Foundation
  */
-
 package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
@@ -83,10 +82,10 @@ import java.util.StringJoiner;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-
 @Singleton
 @Slf4j
 public final class API {
+
     private static final Logger LOG = getLogger(API.class);
     private static final String[] DISABLED_HTTP_METHODS = {"TRACE", "OPTIONS", "HEAD"};
     public static int openAPIPort;
@@ -181,27 +180,30 @@ public final class API {
     public static String findWebUiDir() {
         final Path binDir = DirProvider.getBinDir();
 
-        final Path htmlStubPath =
-            binDir.resolve("conf").resolve("html-stub").toAbsolutePath();
+        final Path htmlStubPath
+                = binDir.resolve("conf").resolve("html-stub").toAbsolutePath();
         if (!Files.exists(htmlStubPath)) {
             log.error("Cannot find dir: {}. Gonna proceed without any html-stub.", htmlStubPath);
             return htmlStubPath.toString();
         }
 
-        final String webUIProperty = propertiesHolder.getStringProperty("apl.webUIDir");
+        final String webUIlocaton = propertiesHolder.getStringProperty("apl.apiResourceBase");
         Path webUiPath;
         try {
-            webUiPath = binDir.resolve(webUIProperty);
-
+            Path lp = Path.of(webUIlocaton);
+            if (!lp.isAbsolute()) {
+                webUiPath = binDir.resolve(webUIlocaton);
+            } else {
+                webUiPath = lp;
+            }
             if (!Files.exists(webUiPath)
-                || !Files.isDirectory(webUiPath)
-                || !Files.exists(webUiPath.resolve("index.html"))
-            ) {
+                    || !Files.isDirectory(webUiPath)
+                    || !Files.exists(webUiPath.resolve("index.html"))) {
                 log.debug("Cannot find index.html in: {}. Gonna use html-stub.", webUiPath.toString());
                 webUiPath = htmlStubPath;
             }
         } catch (InvalidPathException ipe) {
-            log.debug("Cannot resolve apl.webUIDir: {} within DirProvider.getBinDir(): {}. Gonna use html-stub.", webUIProperty, binDir.toString());
+            log.debug("Cannot resolve apl.webUIDir: {} within DirProvider.getBinDir(): {}. Gonna use html-stub.", webUIlocaton, binDir.toString());
             webUiPath = htmlStubPath;
         }
 
@@ -233,7 +235,6 @@ public final class API {
     }
 
     public final void start() {
-
 
         if (enableAPIServer) {
 
@@ -278,13 +279,13 @@ public final class API {
             apiHandler.addEventListener(new Listener());
             ServletHolder servletHolder = apiHandler.addServlet(APIServlet.class, "/apl");
             servletHolder.getRegistration().setMultipartConfig(new MultipartConfigElement(
-                null, Math.max(propertiesHolder.getIntProperty("apl.maxUploadFileSize"), Constants.MAX_TAGGED_DATA_DATA_LENGTH), -1L, 0));
+                    null, Math.max(propertiesHolder.getIntProperty("apl.maxUploadFileSize"), Constants.MAX_TAGGED_DATA_DATA_LENGTH), -1L, 0));
 
             servletHolder = apiHandler.addServlet(APIProxyServlet.class, "/apl-proxy");
             servletHolder.setInitParameters(Collections.singletonMap("idleTimeout",
-                "" + Math.max(apiServerIdleTimeout - APIProxyServlet.PROXY_IDLE_TIMEOUT_DELTA, 0)));
+                    "" + Math.max(apiServerIdleTimeout - APIProxyServlet.PROXY_IDLE_TIMEOUT_DELTA, 0)));
             servletHolder.getRegistration().setMultipartConfig(new MultipartConfigElement(
-                null, Math.max(propertiesHolder.getIntProperty("apl.maxUploadFileSize"), Constants.MAX_TAGGED_DATA_DATA_LENGTH), -1L, 0));
+                    null, Math.max(propertiesHolder.getIntProperty("apl.maxUploadFileSize"), Constants.MAX_TAGGED_DATA_DATA_LENGTH), -1L, 0));
 
             GzipHandler gzipHandler = new GzipHandler();
             if (!propertiesHolder.getBooleanProperty("apl.enableAPIServerGZIPFilter", isOpenAPI)) {
@@ -302,7 +303,6 @@ public final class API {
 
 //TODO: do we need it at all?
 //            apiHandler.addServlet(DbShellServlet.class, "/dbshell");
-
             apiHandler.addEventListener(new ApiContextListener());
             // Filter to forward requests to new API
             {
@@ -330,20 +330,20 @@ public final class API {
             //restEasyServletHolder.setInitParameter("resteasy.role.based.security", "true");
 
             restEasyServletHolder.setInitParameter(ResteasyContextParameters.RESTEASY_PROVIDERS,
-                new StringJoiner(",")
-                    .add(ConstraintViolationExceptionMapper.class.getName())
-                    .add(ClientErrorExceptionMapper.class.getName())
-                    .add(ParameterExceptionMapper.class.getName())
-                    .add(LegacyParameterExceptionMapper.class.getName())
-                    .add(SecurityInterceptor.class.getName())
-                    .add(Secured2FAInterceptor.class.getName())
-                    .add(RestParameterExceptionMapper.class.getName())
-                    .add(DefaultGlobalExceptionMapper.class.getName())
-                    .add(CharsetRequestFilter.class.getName())
-                    .add(IllegalArgumentExceptionMapper.class.getName())
-                    .add(PlatformSpecConverterProvider.class.getName())
-                    .add(ByteArrayConverterProvider.class.getName())
-                    .toString()
+                    new StringJoiner(",")
+                            .add(ConstraintViolationExceptionMapper.class.getName())
+                            .add(ClientErrorExceptionMapper.class.getName())
+                            .add(ParameterExceptionMapper.class.getName())
+                            .add(LegacyParameterExceptionMapper.class.getName())
+                            .add(SecurityInterceptor.class.getName())
+                            .add(Secured2FAInterceptor.class.getName())
+                            .add(RestParameterExceptionMapper.class.getName())
+                            .add(DefaultGlobalExceptionMapper.class.getName())
+                            .add(CharsetRequestFilter.class.getName())
+                            .add(IllegalArgumentExceptionMapper.class.getName())
+                            .add(PlatformSpecConverterProvider.class.getName())
+                            .add(ByteArrayConverterProvider.class.getName())
+                            .toString()
             );
 
             String restEasyAppClassName = RestEasyApplication.class.getName();
@@ -356,7 +356,6 @@ public final class API {
 
             //--------- ADD swagger generated docs and API test page
             // Set the path to our static (Swagger UI) resources
-
             URL su = API.class.getResource("/swaggerui");
             if (su != null) {
                 String resourceBasePath = su.toExternalForm();
@@ -371,7 +370,6 @@ public final class API {
                 LOG.warn("Swagger html/js resources not found, swagger UI is off.");
             }
 
-
             apiHandlers.addHandler(apiHandler);
             apiHandlers.addHandler(new DefaultHandler());
 
@@ -385,8 +383,9 @@ public final class API {
                 if (enableAPIUPnP && upnp.isAvailable()) {
                     Connector[] apiConnectors = apiServer.getConnectors();
                     for (Connector apiConnector : apiConnectors) {
-                        if (apiConnector instanceof ServerConnector)
+                        if (apiConnector instanceof ServerConnector) {
                             externalPorts.add(upnp.addPort(((ServerConnector) apiConnector).getPort(), "API"));
+                        }
                     }
                     if (!externalPorts.isEmpty()) {
                         openAPIPort = externalPorts.get(0);
