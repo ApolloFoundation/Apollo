@@ -194,8 +194,9 @@ public class ShardMigrationExecutor {
     }
 
     @Transactional
-    public void cleanCommands() {
+    public void prepare() {
         dataMigrateOperations.clear();
+        shardEngine.prepare();
     }
 
     public void addOperation(DataMigrateOperation shardOperation) {

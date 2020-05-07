@@ -1,0 +1,6 @@
+{
+  "name": "apollo-blockchain-ext-deps",
+  "description": "Apollo blockchain external dependencies (jars), defined in apollo-bom-ext",
+  "version": "1.0.0",
+  "dependencies": [ ]
+}

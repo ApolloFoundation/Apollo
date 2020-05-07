@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.chainid;
@@ -10,16 +10,18 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDao;
 import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
+import com.apollocurrency.aplwallet.apl.util.env.config.ShardingSettings;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * <p>To provide height-based config changing as described in conf/chains.json it used special listener that, depending
@@ -31,9 +33,9 @@ import java.util.Optional;
  * <p>Typically config should be updated to the latest height at application startup to provide correct config values for blockchain logic, such as
  * blockTime, adaptiveBlockTime, maxBalance and so on</p>
  */
+@Slf4j
 @Singleton
 public class BlockchainConfigUpdater {
-    private static final Logger LOG = LoggerFactory.getLogger(BlockchainConfigUpdater.class);
 
     private BlockDao blockDao;
     private BlockchainConfig blockchainConfig;
@@ -51,9 +53,9 @@ public class BlockchainConfigUpdater {
     }
 
     public void onBlockAccepted(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_ACCEPT) Block block) {
-        BlockchainProperties bp = chain.getBlockchainProperties().get(block.getHeight());
-        if (bp != null) {
-            blockchainConfig.setCurrentConfig(new HeightConfig(bp));
+        HeightConfig config = blockchainConfig.getConfigAtHeight(block.getHeight());
+        if (config != null) {
+            blockchainConfig.setCurrentConfig(config);
         }
     }
 
@@ -61,15 +63,14 @@ public class BlockchainConfigUpdater {
         updateToHeight(block.getHeight() - 1);
     }
 
-    public void reset() {
+    public synchronized void reset() {
         updateToHeight(0);
     }
-
 
     public void updateToLatestConfig() {
         Block lastBlock = blockDao.findLastBlock();
         if (lastBlock == null) {
-            LOG.debug("Nothing to update. No blocks");
+            log.debug("Nothing to update. No blocks");
             return;
         }
         updateToHeight(lastBlock.getHeight());
@@ -77,10 +78,10 @@ public class BlockchainConfigUpdater {
 
     void updateToHeight(int height) {
 
-        HeightConfig latestConfig = getConfigAtHeight(height);
+        HeightConfig latestConfig = blockchainConfig.getConfigAtHeight(height);
         HeightConfig currentConfig = blockchainConfig.getCurrentConfig();
         if (currentConfig != null && latestConfig != null && currentConfig.getHeight() != latestConfig.getHeight()) {
-            LOG.debug("Update to {} at height {}", latestConfig, height);
+            log.debug("Update to {} at height {}", latestConfig, height);
             blockchainConfig.setCurrentConfig(latestConfig);
         }
     }
@@ -89,20 +90,4 @@ public class BlockchainConfigUpdater {
         updateToHeight(height);
     }
 
-    private HeightConfig getConfigAtHeight(int targetHeight) {
-        Map<Integer, BlockchainProperties> blockchainProperties = chain.getBlockchainProperties();
-        BlockchainProperties bpAtHeight = blockchainProperties.get(targetHeight);
-        if (bpAtHeight != null) {
-            return new HeightConfig(bpAtHeight);
-        }
-        Optional<Integer> maxHeight =
-            blockchainProperties
-                .keySet()
-                .stream()
-                .filter(height -> targetHeight >= height)
-                .max(Comparator.naturalOrder());
-        return maxHeight
-            .map(height -> new HeightConfig(blockchainProperties.get(height)))
-            .orElse(null);
-    }
 }

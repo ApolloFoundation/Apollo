@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+Created-By: Apache Maven 3.6.0
+Built-By: Apollo
+Build-Jdk: 11.0.6
+Main-Class: com.apollocurrency.aplwallet.apl.exec.Apollo

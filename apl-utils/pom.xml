@@ -5,8 +5,8 @@
 
   <parent>
     <groupId>com.apollocurrency</groupId>
-    <artifactId>apollo-wallet</artifactId>
-    <version>1.43.1</version>
+    <artifactId>apollo-blockchain</artifactId>
+    <version>1.44.0</version>
   </parent>
 
   <artifactId>apl-utils</artifactId>
@@ -14,7 +14,7 @@
   <packaging>jar</packaging>
 
   <dependencies>
-    <!-- POPJO <-> JSON -->
+    <!-- CORE BOM DEPENDENCIES -->
     <dependency>
       <groupId>com.apollocurrency</groupId>
       <artifactId>apl-crypto</artifactId>
@@ -31,6 +31,7 @@
       </exclusions>
     </dependency>
 
+    <!-- EXT BOM DEPENDENCIES -->
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
