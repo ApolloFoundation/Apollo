@@ -32,3 +32,5 @@ nbactions.xml
 
 /apl-crypto/testdata/out/
 /webui/
+/build
+/webui
