@@ -4,6 +4,7 @@
 package com.apollocurrency.aplwallet.apl.util.supervisor.client;
 
 import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusMessage;
+import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusResponse;
 
 /**
  * Public interface to message dispatcher. Though dispatcher is a core of
@@ -29,6 +30,8 @@ public interface MessageDispatcher {
      * @param handler handler routine
      */
     public void registerRqHandler(String pathSpec, Class<? extends SvBusMessage> rqMapping, Class<? extends SvBusMessage> respMapping, SvRequestHandler handler);
+
+    void registerResponseMapping(String pathSpec, Class<? extends SvBusResponse> respClass);
 
     /**
      * Unregister handler for incoming messages

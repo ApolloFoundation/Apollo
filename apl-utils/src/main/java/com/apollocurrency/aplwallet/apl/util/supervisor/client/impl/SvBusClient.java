@@ -73,8 +73,8 @@ public class SvBusClient implements Listener, Closeable {
         setState(ConnectionStatus.CONNECTING);
         try {
             webSocket = httpClient.newWebSocketBuilder()
-                    .buildAsync(serverURI, this)
-                    .join();
+                .buildAsync(serverURI, this)
+                .join();
             res = !webSocket.isInputClosed();
             if (res) {
                 dispatcher.onConnectionUp(serverURI);
@@ -83,6 +83,10 @@ public class SvBusClient implements Listener, Closeable {
             setState(ConnectionStatus.ERROR);
             log.info("Can not connect to {}", serverURI);
             res = false;
+        } catch (Exception e) {
+            res = false;
+            setState(ConnectionStatus.ERROR);
+            log.error("Unknown error occurred during connection to " + serverURI, e);
         }
         return res;
     }

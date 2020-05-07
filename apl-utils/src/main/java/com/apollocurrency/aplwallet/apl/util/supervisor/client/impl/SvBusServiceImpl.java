@@ -4,14 +4,16 @@
 package com.apollocurrency.aplwallet.apl.util.supervisor.client.impl;
 
 import com.apollocurrency.aplwallet.apl.util.supervisor.client.ConnectionStatus;
-import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusRequest;
-import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusResponse;
-import java.net.URI;
-import java.util.Map;
 import com.apollocurrency.aplwallet.apl.util.supervisor.client.MessageDispatcher;
 import com.apollocurrency.aplwallet.apl.util.supervisor.client.SvBusService;
 import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusHello;
+import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusRequest;
+import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusResponse;
+
+import java.net.SocketTimeoutException;
+import java.net.URI;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -37,6 +39,11 @@ public class SvBusServiceImpl implements SvBusService {
     }
 
     @Override
+    public <T extends SvBusResponse> void addResponseMapping(String path, Class<T> tClass) {
+        dispatcher.registerResponseMapping(path, tClass);
+    }
+
+    @Override
     public Map<URI, ConnectionStatus> getConnections() {
         Map<URI, SvBusClient> clients = dispatcher.getConnections();
         Map<URI, ConnectionStatus> statuses = new HashMap<>();
@@ -52,8 +59,8 @@ public class SvBusServiceImpl implements SvBusService {
     }
 
     @Override
-    public SvBusResponse sendSync(SvBusRequest rq, String path, URI addr) {
-        SvBusResponse resp = dispatcher.sendSync(rq, path, addr);
+    public <T extends SvBusResponse> T sendSync(SvBusRequest rq, String path, URI addr) throws SocketTimeoutException {
+        T resp = dispatcher.sendSync(rq, path, addr);
         return resp;
     }
 

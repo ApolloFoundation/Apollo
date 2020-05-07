@@ -7,6 +7,7 @@ import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusHello;
 import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusRequest;
 import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusResponse;
 
+import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -18,21 +19,23 @@ import java.util.concurrent.CompletableFuture;
  */
 public interface SvBusService {
 
-    public void addConnection(URI uri, boolean isDefault);
+    void addConnection(URI uri, boolean isDefault);
 
-    public Map<URI, ConnectionStatus> getConnections();
+    <T extends SvBusResponse> void addResponseMapping(String path, Class<T> tClass);
 
-    public MessageDispatcher getDispatcher();
+    Map<URI, ConnectionStatus> getConnections();
 
-    public SvBusResponse sendSync(SvBusRequest rq, String path, URI addr);
+    MessageDispatcher getDispatcher();
 
-    public CompletableFuture<SvBusResponse> sendAsync(SvBusRequest msg, String path, URI addr);
+    <T extends SvBusResponse> T sendSync(SvBusRequest rq, String path, URI addr) throws SocketTimeoutException;
 
-    public ConnectionStatus getConnectionStaus(URI uri);
+    CompletableFuture<SvBusResponse> sendAsync(SvBusRequest msg, String path, URI addr);
 
-    public void shutdown();
+    ConnectionStatus getConnectionStaus(URI uri);
 
-    public void setMyInfo(SvBusHello info);
+    void shutdown();
 
-    public URI getMyAddress();
+    void setMyInfo(SvBusHello info);
+
+    URI getMyAddress();
 }
