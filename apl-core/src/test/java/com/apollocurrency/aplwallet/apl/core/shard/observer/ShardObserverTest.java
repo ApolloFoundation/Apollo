@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -48,7 +49,6 @@ public class ShardObserverTest {
 
     @BeforeEach
     void setUp() {
-        doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
         doReturn(false).when(propertiesHolder).getBooleanProperty("apl.noshardcreate", false);
 //        Mockito.doReturn(4072*1024*1024L).when(mock(Runtime.class)).totalMemory(); // give it more then 3 GB
     }
@@ -61,6 +61,7 @@ public class ShardObserverTest {
     void testSkipShardingWhenShardingIsDisabled() {
         prepare();
         doReturn(false).when(heightConfig).isShardingEnabled();
+        doReturn(heightConfig).when(blockchainConfig).getConfigAtHeight(DEFAULT_TRIM_HEIGHT);
 
         CompletableFuture<MigrateState> c = shardObserver.tryCreateShardAsync(DEFAULT_TRIM_HEIGHT, Integer.MAX_VALUE);
 
@@ -73,6 +74,7 @@ public class ShardObserverTest {
         prepare();
         doReturn(true).when(heightConfig).isShardingEnabled();
         doReturn(NOT_MULTIPLE_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
+        doReturn(heightConfig).when(blockchainConfig).getConfigAtHeight(DEFAULT_TRIM_HEIGHT);
 
         CompletableFuture<MigrateState> c = shardObserver.tryCreateShardAsync(DEFAULT_TRIM_HEIGHT, Integer.MAX_VALUE);
 
@@ -83,8 +85,7 @@ public class ShardObserverTest {
     @Test
     void testDoNotShardWhenLastTrimHeightIsZero() {
         prepare();
-        doReturn(true).when(heightConfig).isShardingEnabled();
-        doReturn(NOT_MULTIPLE_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
+        doReturn(heightConfig).when(blockchainConfig).getConfigAtHeight(0);
 
         CompletableFuture<MigrateState> c = shardObserver.tryCreateShardAsync(0, Integer.MAX_VALUE);
 
@@ -97,7 +98,8 @@ public class ShardObserverTest {
         prepare();
         doReturn(true).when(heightConfig).isShardingEnabled();
         doReturn(DEFAULT_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
-        CompletableFuture<MigrateState> completableFuture = Mockito.mock(CompletableFuture.class);
+        doReturn(heightConfig).when(blockchainConfig).getConfigAtHeight(DEFAULT_TRIM_HEIGHT);
+        CompletableFuture<MigrateState> completableFuture = mock(CompletableFuture.class);
         when(completableFuture.get()).thenReturn(MigrateState.COMPLETED);
         doReturn(completableFuture).when(shardService).tryCreateShardAsync(DEFAULT_TRIM_HEIGHT, Integer.MAX_VALUE);
 

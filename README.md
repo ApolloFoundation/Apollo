@@ -1,32 +1,18 @@
-# Apollo Blockchain Platform 
+# Apollo Blockchain Platform  Core
 
 Apollo is being developed by the Apollo Foundation and supporting members of the community.
 
+This repository contains core classes of Apollo blockchain platform. For executable builds please refer Apollo-exec repository.
 
 ## Requirements
 Java 11 is required to run the desktop clients.
 
-# Links #
-- [website](https://Apollocurrency.com)
-- [twitter](https://Twitter.com/Apollocurrency)
-- [telegram](https://T.me/apollocommunity)
-- [facebook](https://www.facebook.com/Apolloprivacycoin)
-- [youtube](https://www.youtube.com/channel/UCZbB3PAUlkSKuBYEMG-l_CQ)
+##Other modules required to build Apollo components
 
-- [releases and installers] (https://github.com/ApolloFoundation/Apollo/releases)
-
-# Specifications #
-
-
-    Concensus: POS (Proof of Stake)
+    1. Apollo-bom-ext
+    2. Apollo-web-ui
+    3. Apollo-exec
     
-    Total Supply: 21 Billion
-    
-    Circulating: 15 Billion
-    
-    Mining: Pre-Mined
-    
-    Inflation: 0%
 
 # Build instruction #
 
@@ -36,8 +22,8 @@ your software versions using instructions from __"Preparation steps" section__
 ## Preparation steps ##
    1. Download [Java Development Kit (jdk), version 11](https://www.oracle.com/technetwork/java/javase/downloads/jdk11-downloads-5066655.html)
    2. Setup `JAVA_HOME` variable to point on unpacked jdk if not set
-   3. Add to `PATH` variable path to java binaries -> `JAVA_HOME/bin`
-      > NOTE: if your computer has jdk 8, jdk 9 or jdk 10, you should remove it from `PATH` variable
+   3. Add to `PATH` variable path to java binaries -> `$JAVA_HOME/bin`
+      > NOTE: if your computer has jdk 8, jdk 9 or jdk 10, you should remove path from `PATH` variable
    4. Open command line and execute: `java -version`. 
         
     Output example: 
@@ -77,43 +63,13 @@ mvnw -v
 ## Linux/MacOS
    * Clone repository using git command `git clone` or download archive file of source code
    * go to source directory
-   * run ___mvn install___ 
-   * go to bin directory and run ___apl-run-desktop.sh___ 
-   * application should start in desktop mode
-   * if you require command line mode -> use ___apl-run.sh___ instead of ___apl-run-desktop.sh___
+   * run `./build-all.sh` (or `./build-all.sh -DskipTests` for skipping tests)
 
 ## Windows
    * Clone repository using git command `git clone` or download archive file of source code
    * go to source directory
-   * run ___mvn install___ 
-   * go to bin directory and run ___apl-run-desktop.bat___
-   * application should start in desktop mode
-   * if you require command line mode -> use ___apl-run.bat___ instead of ___apl-run-desktop.bat___
-
-## Command-line options
-
-apl-exec.jar and all scripts accept command line options. To get list of available options, run with --help switch.
-Most important options:
-
-        --net, -n index of network to run with. 0 is main net, 1 is 1st public test net with stable release,
-        2 is 2nd testnet with development/staging code and 3 is 3rd test net with experimental features
-        --testnet means run with 1st test net. Higher priority then --net switch
-
-        --debug, -d  from 0 to 4. 0 is ERROR level of logs, 4 is TRACE
-
-Example:
-
-    bin/apl-run.sh -d 4 -n 2
-
-This command runs blockchain application with 2nd test net and debug level TRACE
+   * run `build-all.bat` (or `build-all.bat -DskipTests` for skipping tests)  
 
 ## IDE
 
 Project is entirely on Maven v3 and could be loaded in any IDE that supports Maven.
-
-
-## DEX
-
-#### Generate eth smart contract class.
-
-`$ web3j solidity generate --javaTypes -b dex.bin -a dex.abi -o $Path/Apollo/apl-core/src/main/java/com/apollocurrency/aplwallet/apl/eth/contracts/ -p com.apollocurrency.aplwallet.apl.eth.contracts`
