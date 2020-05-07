@@ -333,7 +333,7 @@ class BlockchainTest {
 
     @Test
     void testGetAccountBlocksAsStream() {
-        Stream<Block> blocks = blockchain.getBlocksByAccountStream(btd.BLOCK_12.getGeneratorId(), 0, Integer.MAX_VALUE, 0);
+        Stream<Block> blocks = blockchain.getBlocksByAccountStream(btd.BLOCK_12.getGeneratorId(), 0, 10, 0);
         List<Block> result = blocks.collect(Collectors.toList());
         assertEquals(List.of(btd.BLOCK_13, btd.BLOCK_12, btd.SHARD_2_BLOCK_3, btd.SHARD_2_BLOCK_2), result);
     }

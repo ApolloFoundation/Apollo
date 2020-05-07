@@ -35,15 +35,11 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
-import org.slf4j.Logger;
 
-import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author al
@@ -488,8 +484,8 @@ public abstract class Messaging extends TransactionType {
             return true;
         }
     };
-    private static final Logger log = getLogger(Messaging.class);
-    private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
+
+    private static PhasingPollService phasingPollService;// lazy init
     public static final TransactionType PHASING_VOTE_CASTING = new Messaging() {
         private final Fee PHASING_VOTE_FEE = (transaction, appendage) -> {
             MessagingPhasingVoteCasting attachment = (MessagingPhasingVoteCasting) transaction.getAttachment();
