@@ -200,7 +200,7 @@ public final class API {
         }
 
         if (useHtmlStub) {
-            webUiPath = binDir.resolve("conf").resolve("html-stub").toAbsolutePath();
+            webUiPath = binDir.resolve("html-stub").toAbsolutePath();
             if (Files.exists(webUiPath.resolve(INDEX_HTML))) {
                 log.debug("webUIDir: {}", webUiPath.toString());
             } else

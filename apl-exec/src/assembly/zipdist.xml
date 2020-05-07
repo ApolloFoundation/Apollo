@@ -18,6 +18,10 @@
       <fileMode>0755</fileMode>
     </fileSet>
     <fileSet>
+      <directory>${project.basedir}/../html-stub</directory>
+      <outputDirectory>${base-dist-dir}/html-stub</outputDirectory>
+    </fileSet>
+    <fileSet>
       <directory>${project.basedir}</directory>
       <outputDirectory>./</outputDirectory>
       <includes>
