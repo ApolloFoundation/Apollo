@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.account.dao;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
 
 import javax.inject.Inject;
@@ -87,6 +88,8 @@ class AccountControlPhasingTableTest {
     }
 
     @Test
-    void save() {
+    void load_returnNull_ifNotExist() {
+        AccountControlPhasing phasing = table.get(table.getDbKeyFactory().newKey(td.NEW_AC_CONT_PHAS));
+        assertNull(phasing);
     }
 }

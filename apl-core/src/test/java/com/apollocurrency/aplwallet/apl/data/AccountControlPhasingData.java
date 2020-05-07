@@ -24,4 +24,8 @@ public class AccountControlPhasingData {
     public final AccountControlPhasing AC_CONT_PHAS_3 = new AccountControlPhasing(new LongKey(40), 2728325718715804811L,
         new PhasingParams((byte)0, 0L, 1L, 0L, (byte)0, new long[]{-8446656647637444484L, 1344527020205736624L, -6724281675870110558L}),
         300000000, (short)12, (short)113, 3000);
+
+    public final AccountControlPhasing NEW_AC_CONT_PHAS = new AccountControlPhasing(2728325718715804811L,
+        new PhasingParams((byte)0, 0L, 1L, 1L, (byte)0, new long[]{-6724281675870110558L}),
+        300000000, (short)12, (short)113, 4000);
 }
