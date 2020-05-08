@@ -339,11 +339,14 @@ insert into tag
 ;
 
 INSERT INTO PUBLIC.ACCOUNT_CONTROL_PHASING
-(DB_ID, ACCOUNT_ID, WHITELIST, VOTING_MODEL, QUORUM, MIN_BALANCE, HOLDING_ID, MIN_BALANCE_MODEL, MAX_FEES, MIN_DURATION, MAX_DURATION, HEIGHT, LATEST) VALUES
-(10, 7995581942006468815, null, 0, 1, null, null, 0, 300000000, 12, 113, 500, true),
-(20, 2728325718715804811, (-8446656647637444484), 0, 1, null, null, 0, 300000000, 12, 113, 1000, true),
-(30, -8446384352342482748, (2728325718715804811, 1344527020205736624), 0, 1, null, null, 0, 300000000, 12, 113, 2000, true),
-(40, -4013722529644937202, (-8446656647637444484, 1344527020205736624, -6724281675870110558), 0, 1, null, null, 0, 300000000, 12, 113, 3000, true)
+(DB_ID, ACCOUNT_ID,                         WHITELIST,              VOTING_MODEL,   QUORUM, MIN_BALANCE, HOLDING_ID, MIN_BALANCE_MODEL, MAX_FEES,   MIN_DURATION, MAX_DURATION, HEIGHT, LATEST) VALUES
+(10,    7995581942006468815,                    null,                       0,      1,      null,           null,       0,              300000000,  12,         113,            500,    true),
+(20,    2728325718715804811, (-8446656647637444484),            0,      1,      null,           null,       0,              300000000,  12,         113,            1000,   true),
+(30,    -8446384352342482748,
+        (2728325718715804811, 1344527020205736624),             0,      1,      null,           null,       0,              300000000,  12,         113,            2000,   true),
+(40,    -4013722529644937202,
+    (-8446656647637444484, 1344527020205736624, -6724281675870110558),
+                                                                            0,      1,      null,           null,       0,              300000000,  12,         113,            3000,   true)
 ;
 
 INSERT into shuffling_data

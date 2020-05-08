@@ -1,3 +1,7 @@
+/*
+ *  Copyright © 2018-2020 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.account.dao;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -24,13 +28,13 @@ import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.data.AccountControlPhasingData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -40,12 +44,11 @@ class AccountControlPhasingTableTest {
 
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension(DbTestData.getInMemDbProps(), "db/data.sql", "db/schema.sql");
-//    static DbExtension dbExtension = new DbExtension(DbTestData.getDbFileProperties(accCtrlPhaseTestDbPath), "db/data.sql", "db/schema.sql");
-    //    private static final Path accCtrlPhaseTestDbPath = createPath("accCtrlPhaseTestDbPath");
-    AccountControlPhasingData td;
 
     @Inject
     AccountControlPhasingTable table;
+    AccountControlPhasingData td;
+
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     private BlockchainProcessor blockchainProcessor = mock(BlockchainProcessor.class);
@@ -75,11 +78,6 @@ class AccountControlPhasingTableTest {
         td = new AccountControlPhasingData();
     }
 
-    @AfterEach
-    void cleanUp() throws IOException {
-//        Files.deleteIfExists(accCtrlPhaseTestDbPath.toAbsolutePath());
-    }
-
     @Test
     void testLoad() {
         AccountControlPhasing phasing = table.get(table.getDbKeyFactory().newKey(td.AC_CONT_PHAS_0));
@@ -92,4 +90,44 @@ class AccountControlPhasingTableTest {
         AccountControlPhasing phasing = table.get(table.getDbKeyFactory().newKey(td.NEW_AC_CONT_PHAS));
         assertNull(phasing);
     }
+
+    @Test
+    void testSave() {
+        DbUtils.inTransaction(dbExtension, (con) -> table.insert(td.NEW_AC_CONT_PHAS));
+        AccountControlPhasing phasing = table.get(table.getDbKeyFactory().newKey(td.NEW_AC_CONT_PHAS));
+        assertNotNull(phasing);
+        assertTrue(phasing.getDbId() != 0);
+        assertEquals(td.NEW_AC_CONT_PHAS.getAccountId(), phasing.getAccountId());
+        assertEquals(td.NEW_AC_CONT_PHAS.getHeight(), phasing.getHeight());
+    }
+
+    @Test
+    void testSave_update_existing_entity() {
+        AccountControlPhasing previous = table.get(table.getDbKeyFactory().newKey(td.AC_CONT_PHAS_1));
+        assertNotNull(previous);
+        long value = 100L;
+        previous.setMaxFees(value);
+
+        DbUtils.inTransaction(dbExtension, (con) -> table.insert(previous));
+        AccountControlPhasing actual = table.get(table.getDbKeyFactory().newKey(td.AC_CONT_PHAS_1));
+
+        assertNotNull(actual);
+        assertEquals(value, actual.getMaxFees());
+    }
+
+    @Test
+    void test_delete_entity() {
+        AccountControlPhasing found = table.get(table.getDbKeyFactory().newKey(td.AC_CONT_PHAS_3));
+        assertNotNull(found);
+
+        DbUtils.inTransaction(dbExtension, (con) -> {
+            boolean result = table.deleteAtHeight(found, td.AC_CONT_PHAS_3.getHeight());
+            assertTrue(result);
+        });
+        AccountControlPhasing actual = table.get(table.getDbKeyFactory().newKey(td.AC_CONT_PHAS_3));
+
+        assertNull(actual);
+    }
+
+
 }

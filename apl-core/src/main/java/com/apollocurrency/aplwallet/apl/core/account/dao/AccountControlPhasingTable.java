@@ -25,8 +25,11 @@ public class AccountControlPhasingTable extends VersionedDeletableEntityDbTable<
     public static final LongKeyFactory<AccountControlPhasing> accountControlPhasingDbKeyFactory =
         new LongKeyFactory<>("account_id") {
             @Override
-            public DbKey newKey(AccountControlPhasing rule) {
-                return rule.getDbKey();
+            public DbKey newKey(AccountControlPhasing accountControlPhasing) {
+                if (accountControlPhasing.getDbKey() == null) {
+                    accountControlPhasing.setDbKey(super.newKey(accountControlPhasing.getAccountId()));
+                }
+                return accountControlPhasing.getDbKey();
             }
         };
 
