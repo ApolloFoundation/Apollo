@@ -34,7 +34,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 @EnableWeld
-class AccountGuaranteedBalanceDaoTest {
+class AccountGuaranteedBalanceTableTest {
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension(DbTestData.getInMemDbProps(), "db/acc-data.sql", "db/schema.sql");
     @Inject

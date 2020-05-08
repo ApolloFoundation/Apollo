@@ -43,7 +43,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 @EnableWeld
-class AccountLedgerDaoTest {
+class AccountLedgerTableTest {
 
     public static final int TRIM_KEEP = 300;
     @RegisterExtension

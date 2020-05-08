@@ -41,7 +41,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 @EnableWeld
-class AccountLeaseDaoTest {
+class AccountLeaseTableTest {
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension(DbTestData.getInMemDbProps(), "db/acc-data.sql", "db/schema.sql");
     @Inject
