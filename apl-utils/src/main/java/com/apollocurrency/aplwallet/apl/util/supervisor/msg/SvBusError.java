@@ -4,6 +4,7 @@
 package com.apollocurrency.aplwallet.apl.util.supervisor.msg;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.Data;
 
 /**
  * Error message body on the bus
@@ -11,8 +12,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @author alukin@gmail.com
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Data
 public class SvBusError {
 
-    public Integer errorCode;
-    public String descritption;
+    private final Integer errorCode;
+    private final String description;
 }

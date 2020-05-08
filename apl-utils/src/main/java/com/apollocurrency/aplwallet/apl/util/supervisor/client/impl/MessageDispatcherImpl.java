@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusResponse;
 import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvChannelHeader;
 import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvChannelMessage;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -79,7 +80,12 @@ public class MessageDispatcherImpl implements MessageDispatcher {
 
     @Override
     public void registerResponseMapping(String pathSpec, Class<? extends SvBusResponse> respClass) {
-        pathMatcher.registerResponseMapping(pathSpec, respClass);
+        pathMatcher.registerResponseMapping(pathSpec, respClass, null);
+    }
+
+    @Override
+    public void registerParametrizedResponseMapping(String pathSpec, Class<? extends SvBusResponse> responseClass, Class<?> paramClass) {
+        pathMatcher.registerResponseMapping(pathSpec, responseClass, paramClass);
     }
 
     @Override
@@ -96,10 +102,9 @@ public class MessageDispatcherImpl implements MessageDispatcher {
     }
 
     public SvBusResponse errornousRequestsHandler(JsonNode rqBody, SvChannelHeader rqHeader, int code, String errorInfo) {
-        SvBusResponse resp = new SvBusResponse();
-        resp.error = new SvBusError();
-        resp.error.errorCode = code;
-        resp.error.descritption = errorInfo + " Request path: " + rqHeader.path;
+        SvBusError error = new SvBusError(code, errorInfo + " Request path: " + rqHeader.path);
+        SvBusResponse resp = new SvBusResponse(error);
+
         return resp;
     }
 
@@ -189,15 +194,15 @@ public class MessageDispatcherImpl implements MessageDispatcher {
         if (rl == null) {
             log.warn("Got responce that is not in waiting map. Header: {}", header);
         } else {
-            Class<? extends SvBusResponse> responseClass = pathMatcher.findResponseMappingClass(header.path);
-            if (responseClass == null) { // Maybe set here error response to unlock latch?
+            JavaType responseType = pathMatcher.findResponseMappingClass(header.path);
+            if (responseType == null) { // Maybe set here error response to unlock latch?
                 if (header.path.equals(MessageDispatcher.ERROR_PATH)) {
                     log.error("Error reply without destination path: Header: {}, Body: {}", header, body);
                 } else {
                     log.error("No response mapper found for path: {}", header.path);
                 }
             } else {
-                SvBusResponse response = pathMatcher.convertResponse(body, responseClass);
+                SvBusResponse response = pathMatcher.convertResponse(body, responseType);
                 rl.setResponse(response);
             }
         }

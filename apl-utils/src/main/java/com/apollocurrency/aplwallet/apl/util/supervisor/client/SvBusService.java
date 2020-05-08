@@ -23,6 +23,8 @@ public interface SvBusService {
 
     <T extends SvBusResponse> void addResponseMapping(String path, Class<T> tClass);
 
+    <T extends SvBusResponse> void addParametrizedResponseMapping(String path, Class<T> tClass, Class<?> paramClass);
+
     Map<URI, ConnectionStatus> getConnections();
 
     MessageDispatcher getDispatcher();

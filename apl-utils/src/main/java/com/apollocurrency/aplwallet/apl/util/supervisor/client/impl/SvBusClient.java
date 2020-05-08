@@ -112,10 +112,8 @@ public class SvBusClient implements Listener, Closeable {
     }
 
     public void sendError(int code, String message, SvChannelHeader rqheader) {
-        SvBusResponse resp = new SvBusResponse();
-        resp.error = new SvBusError();
-        resp.error.errorCode = code;
-        resp.error.descritption = message;
+        SvBusError error = new SvBusError(code, message);
+        SvBusResponse resp = new SvBusResponse(error);
         SvChannelHeader hdr = new SvChannelHeader();
         hdr.from = dispatcher.getMyAddress().toString();
         if (rqheader != null) {

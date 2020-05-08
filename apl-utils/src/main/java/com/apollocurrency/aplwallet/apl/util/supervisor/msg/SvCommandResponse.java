@@ -17,4 +17,8 @@ public class SvCommandResponse extends SvBusResponse {
 
     public List<String> out = new ArrayList<>();
     public List<String> err = new ArrayList<>();
+
+    public SvCommandResponse(SvBusError error) {
+        super(error);
+    }
 }

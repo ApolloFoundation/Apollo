@@ -44,6 +44,11 @@ public class SvBusServiceImpl implements SvBusService {
     }
 
     @Override
+    public <T extends SvBusResponse> void addParametrizedResponseMapping(String path, Class<T> tClass, Class<?> paramClass) {
+        dispatcher.registerParametrizedResponseMapping(path, tClass, paramClass);
+    }
+
+    @Override
     public Map<URI, ConnectionStatus> getConnections() {
         Map<URI, SvBusClient> clients = dispatcher.getConnections();
         Map<URI, ConnectionStatus> statuses = new HashMap<>();

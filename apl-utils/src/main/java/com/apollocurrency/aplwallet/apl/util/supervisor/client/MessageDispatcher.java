@@ -33,6 +33,8 @@ public interface MessageDispatcher {
 
     void registerResponseMapping(String pathSpec, Class<? extends SvBusResponse> respClass);
 
+    void registerParametrizedResponseMapping(String pathSpec, Class<? extends SvBusResponse> responseClass, Class<?> paramClass);
+
     /**
      * Unregister handler for incoming messages
      *

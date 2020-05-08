@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusRequest;
 import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusResponse;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -27,7 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class PathParamProcessor {
 
     private final Map<PathSpecification, HandlerRecord> rqHandlers = new ConcurrentHashMap<>();
-    private final Map<PathSpecification, Class<? extends SvBusResponse>> responseMappingClasses = new ConcurrentHashMap<>();
+    private final Map<PathSpecification, JavaType> responseMappingClasses = new ConcurrentHashMap<>();
     @Getter
     private final ObjectMapper mapper;
 
@@ -60,13 +61,19 @@ public class PathParamProcessor {
         return res;
     }
 
-    public <T extends SvBusResponse> boolean  registerResponseMapping(String pathSpec, Class<? extends SvBusResponse> respMapping) {
+    public <T extends SvBusResponse> boolean  registerResponseMapping(String pathSpec, Class<? extends SvBusResponse> respMapping, Class<?> parametrizedClass) {
         PathSpecification spec = PathSpecification.fromSpecString(pathSpec);
         boolean success = findResponseMappingClass(spec.prefix) != null;
         if (!success) {
             log.error("Response class for path specification with prefix {} is already registered", spec.prefix);
         } else {
-            responseMappingClasses.put(spec, respMapping);
+            JavaType typeToRegister;
+            if (parametrizedClass != null) {
+                typeToRegister = mapper.getTypeFactory().constructParametricType(respMapping, parametrizedClass);
+            } else {
+                typeToRegister = mapper.constructType(respMapping);
+            }
+                responseMappingClasses.put(spec, typeToRegister);
         }
         return success;
     }
@@ -101,8 +108,8 @@ public class PathParamProcessor {
     public HandlerRecord findHandler(String path) {
         return findOneBySpec(path, rqHandlers);
     }
-    public Class<? extends SvBusResponse> findResponseMappingClass(String path) {
-        Class<? extends SvBusResponse> oneBySpec = findOneBySpec(path, responseMappingClasses);
+    public JavaType findResponseMappingClass(String path) {
+        JavaType oneBySpec = findOneBySpec(path, responseMappingClasses);
         return oneBySpec;
     }
 
@@ -115,7 +122,7 @@ public class PathParamProcessor {
         return null;
     }
 
-    public <T extends SvBusResponse> T  convertResponse(JsonNode body, Class<T> responseClass) {
+    public <T extends SvBusResponse> T  convertResponse(JsonNode body, JavaType responseClass) {
         T res = mapper.convertValue(body, responseClass);
         return res;
     }
