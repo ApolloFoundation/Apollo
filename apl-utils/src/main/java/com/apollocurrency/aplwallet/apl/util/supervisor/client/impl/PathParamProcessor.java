@@ -63,8 +63,8 @@ public class PathParamProcessor {
 
     public <T extends SvBusResponse> boolean  registerResponseMapping(String pathSpec, Class<? extends SvBusResponse> respMapping, Class<?> parametrizedClass) {
         PathSpecification spec = PathSpecification.fromSpecString(pathSpec);
-        boolean success = findResponseMappingClass(spec.prefix) != null;
-        if (!success) {
+        boolean alreadyExist = findResponseMappingClass(spec.prefix) != null;
+        if (alreadyExist) {
             log.error("Response class for path specification with prefix {} is already registered", spec.prefix);
         } else {
             JavaType typeToRegister;
@@ -75,7 +75,7 @@ public class PathParamProcessor {
             }
                 responseMappingClasses.put(spec, typeToRegister);
         }
-        return success;
+        return alreadyExist;
     }
 
     public HandlerRecord findAndParse(String path) {

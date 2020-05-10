@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.util.supervisor.client.impl;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.supervisor.client.MessageDispatcher;
 import com.apollocurrency.aplwallet.apl.util.supervisor.client.SvRequestHandler;
-import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusError;
+import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusStatus;
 import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusErrorCodes;
 import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusHello;
 import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusMessage;
@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.net.SocketTimeoutException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedList;
@@ -58,6 +59,11 @@ public class MessageDispatcherImpl implements MessageDispatcher {
     public MessageDispatcherImpl() {
         pathMatcher = new PathParamProcessor();
         connections = new SvSessions(this);
+        registerRqHandler("/hello", SvBusRequest.class, SvBusResponse.class, (req, header)-> {
+            log.info("Hello received from {}" + header.from);
+            return new SvBusResponse(new SvBusStatus(0, "Hello OK"));
+        });
+        registerResponseMapping("/hello", SvBusResponse.class);
     }
 
     public Map<URI, SvBusClient> getConnections() {
@@ -97,12 +103,12 @@ public class MessageDispatcherImpl implements MessageDispatcher {
         return Math.round(Math.random() * (Long.MAX_VALUE - 1));
     }
 
-    boolean isMyAddress(String to) {
-        return myAddress.equals(to);
+    boolean isMyAddress(String to) throws URISyntaxException {
+        return myAddress.equals(new URI(to));
     }
 
     public SvBusResponse errornousRequestsHandler(JsonNode rqBody, SvChannelHeader rqHeader, int code, String errorInfo) {
-        SvBusError error = new SvBusError(code, errorInfo + " Request path: " + rqHeader.path);
+        SvBusStatus error = new SvBusStatus(code, errorInfo + " Request path: " + rqHeader.path);
         SvBusResponse resp = new SvBusResponse(error);
 
         return resp;
@@ -142,9 +148,6 @@ public class MessageDispatcherImpl implements MessageDispatcher {
             }
             waiting.put(header.messageId, new ResponseLatch());
             return getResponse(header.messageId);
-
-        } catch (SocketTimeoutException ex) {
-            throw new MessageSendingException("Response wait timeout: " + ex.getMessage(), ex);
         } catch (JsonProcessingException ex) {
             throw new MessageSendingException("Can not map response to JSON", ex);
         }
@@ -227,16 +230,19 @@ public class MessageDispatcherImpl implements MessageDispatcher {
     }
 
     void handleIncoming(SvChannelHeader header, JsonNode body) {
-
-        if (!isMyAddress(header.to)) {
-            int res = routeMessage(header, body);
-        } else {
-            //TODO maybe better to encapsulate such logic inside header?
-            if (header.inResponseTo != null) { //this is response
-                handleResponse(body, header);
+        try {
+            if (!isMyAddress(header.to)) {
+                int res = routeMessage(header, body);
             } else {
-                handleRequest(body, header);
+                //TODO maybe better to encapsulate such logic inside header?
+                if (header.inResponseTo != null) { //this is response
+                    handleResponse(body, header);
+                } else {
+                    handleRequest(body, header);
+                }
             }
+        } catch (URISyntaxException e) {
+            replyTo(header, new SvBusResponse(new SvBusStatus(1, "Incorrect target uri: " + header.to)));
         }
     }
 

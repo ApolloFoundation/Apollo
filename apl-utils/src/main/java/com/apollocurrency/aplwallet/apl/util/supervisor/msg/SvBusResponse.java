@@ -3,10 +3,13 @@
  */
 package com.apollocurrency.aplwallet.apl.util.supervisor.msg;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 /**
  * This class represents REST response in the channel
@@ -16,14 +19,18 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @JsonInclude(Include.NON_NULL)
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class SvBusResponse extends SvBusMessage {
 
     /**
      * Error code, 0 or null means success
      */
-    private final SvBusError error;
+    private SvBusStatus status;
 
+
+    @JsonIgnore
     public boolean isSuccessful() {
-        return error == null || error.getErrorCode() == 0;
+        return status == null || status.getCode() == 0;
     }
 }

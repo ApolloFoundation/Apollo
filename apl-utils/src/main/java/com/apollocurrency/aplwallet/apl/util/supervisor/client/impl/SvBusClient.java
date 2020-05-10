@@ -5,7 +5,7 @@ package com.apollocurrency.aplwallet.apl.util.supervisor.client.impl;
 
 import com.apollocurrency.aplwallet.apl.util.supervisor.client.ConnectionStatus;
 import com.apollocurrency.aplwallet.apl.util.supervisor.client.MessageDispatcher;
-import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusError;
+import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusStatus;
 import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusErrorCodes;
 import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusResponse;
 import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvChannelHeader;
@@ -112,7 +112,7 @@ public class SvBusClient implements Listener, Closeable {
     }
 
     public void sendError(int code, String message, SvChannelHeader rqheader) {
-        SvBusError error = new SvBusError(code, message);
+        SvBusStatus error = new SvBusStatus(code, message);
         SvBusResponse resp = new SvBusResponse(error);
         SvChannelHeader hdr = new SvChannelHeader();
         hdr.from = dispatcher.getMyAddress().toString();
@@ -199,6 +199,7 @@ public class SvBusClient implements Listener, Closeable {
     @Override
     public void onError(WebSocket webSocket, Throwable error) {
         setState(state.ERROR); //TODO maybe save or print error stacktrace
+        log.debug("Error: ", error);
         Listener.super.onError(webSocket, error);
     }
 

@@ -4,17 +4,21 @@
 package com.apollocurrency.aplwallet.apl.util.supervisor.msg;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
- * Error message body on the bus
+ * Status message body on the bus
  *
  * @author alukin@gmail.com
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Data
-public class SvBusError {
+@AllArgsConstructor
+@NoArgsConstructor
+public class SvBusStatus {
 
-    private final Integer errorCode;
-    private final String description;
+    private Integer code = 0;
+    private String description = "OK";
 }
