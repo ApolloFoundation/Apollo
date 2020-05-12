@@ -87,6 +87,7 @@ public class AccountControlPhasingServiceImpl implements AccountControlPhasingSe
             senderAccount.removeControl(AccountControlType.PHASING_ONLY);
             AccountControlPhasing phasingOnly = this.get(senderAccount.getId());
             phasingOnly.setPhasingParams(phasingParams);
+            phasingOnly.setHeight(blockChainInfoService.getHeight());// height should be updated for shard's hash match
             accountControlPhasingTable.deleteAtHeight(phasingOnly, blockChainInfoService.getHeight());
             unset(senderAccount);
         } else {
