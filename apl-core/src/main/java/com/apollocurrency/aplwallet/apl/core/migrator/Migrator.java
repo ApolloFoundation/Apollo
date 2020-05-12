@@ -14,6 +14,7 @@ import java.util.List;
 public interface Migrator {
     /**
      * Migrate application data from list of paths to target path
+     *
      * @param srcPaths list of paths where data for migration stored sorted by importance descending
      * @param destPath path to the target data location, where migration should be performed
      * @return list of migrated data paths or null when migration was not performed

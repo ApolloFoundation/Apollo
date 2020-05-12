@@ -20,15 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
 import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 
 public interface Attachment extends Appendix {
-
-    public TransactionType getTransactionType();
-
-
 
     EmptyAttachment ORDINARY_PAYMENT = new EmptyAttachment() {
 
@@ -38,7 +34,6 @@ public interface Attachment extends Appendix {
         }
 
     };
-
     EmptyAttachment PRIVATE_PAYMENT = new EmptyAttachment() {
 
         @Override
@@ -47,9 +42,6 @@ public interface Attachment extends Appendix {
         }
 
     };
-
-
-
     // the message payload is in the Appendix
     EmptyAttachment ARBITRARY_MESSAGE = new EmptyAttachment() {
 
@@ -59,5 +51,7 @@ public interface Attachment extends Appendix {
         }
 
     };
+
+    public TransactionType getTransactionType();
 
 }

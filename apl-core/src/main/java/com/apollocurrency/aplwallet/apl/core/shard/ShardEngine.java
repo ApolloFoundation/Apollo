@@ -32,6 +32,10 @@ public interface ShardEngine {
     MigrateState createBackup();
 
     /**
+     * Prepare shard engine before sharding process beginning
+     */
+    void prepare();
+    /**
      * Create either 'initial' shard db with tables only or full schema with all indexes/constrains/PK/FK
      *
      * @param dbVersion supplied schema name class
@@ -86,6 +90,7 @@ public interface ShardEngine {
 
     /**
      * Remove recovery data, so the process is finished and ready for next time
+     *
      * @param paramInfo empty, left for compatibility
      * @return COMPLETED usually
      */

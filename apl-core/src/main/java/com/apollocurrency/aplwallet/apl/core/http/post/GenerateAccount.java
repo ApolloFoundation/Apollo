@@ -14,11 +14,12 @@ import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
+
 @Deprecated
 @Vetoed
 public class GenerateAccount extends AbstractAPIRequestHandler {
     public GenerateAccount() {
-        super(new APITag[] {APITag.ACCOUNTS}, "passphrase");
+        super(new APITag[]{APITag.ACCOUNTS}, "passphrase");
 
     }
 

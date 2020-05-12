@@ -35,26 +35,16 @@ public class EthChainGasInfoImpl implements EthGasInfo {
         return ethGasInfoDto;
     }
 
-    @JsonProperty("fast")
-    public void setFastSpeedPrice(Double fastSpeedPrice) {
-        this.fastSpeedPrice = fastSpeedPrice;
-    }
-
-    @JsonProperty("standard")
-    public void setAverageSpeedPrice(Double averageSpeedPrice) {
-        this.averageSpeedPrice = averageSpeedPrice;
-    }
-
-    @JsonProperty("safeLow")
-    public void setSafeLowSpeedPrice(Double safeLowSpeedPrice) {
-        this.safeLowSpeedPrice = safeLowSpeedPrice;
-    }
-
     /**
      * Gwei
      */
     public Long getFastSpeedPrice() {
         return Double.valueOf(fastSpeedPrice).longValue();
+    }
+
+    @JsonProperty("fast")
+    public void setFastSpeedPrice(Double fastSpeedPrice) {
+        this.fastSpeedPrice = fastSpeedPrice;
     }
 
     /**
@@ -64,10 +54,20 @@ public class EthChainGasInfoImpl implements EthGasInfo {
         return Double.valueOf(averageSpeedPrice).longValue();
     }
 
+    @JsonProperty("standard")
+    public void setAverageSpeedPrice(Double averageSpeedPrice) {
+        this.averageSpeedPrice = averageSpeedPrice;
+    }
+
     /**
      * Gwei
      */
     public Long getSafeLowSpeedPrice() {
         return Double.valueOf(safeLowSpeedPrice).longValue();
+    }
+
+    @JsonProperty("safeLow")
+    public void setSafeLowSpeedPrice(Double safeLowSpeedPrice) {
+        this.safeLowSpeedPrice = safeLowSpeedPrice;
     }
 }

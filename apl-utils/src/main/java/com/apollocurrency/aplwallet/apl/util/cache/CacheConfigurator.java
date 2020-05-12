@@ -56,7 +56,7 @@ public class CacheConfigurator<K, V> implements CacheConfiguration<K, V> {
     @Override
     public void setMaxSize(int maxSize) {
         Preconditions.checkState(this.maxSize == -1,
-                "maximum size was already set to %s", this.maxSize);
+            "maximum size was already set to %s", this.maxSize);
         this.maxSize = maxSize;
     }
 
@@ -73,11 +73,11 @@ public class CacheConfigurator<K, V> implements CacheConfiguration<K, V> {
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)
-                .add("name", name)
-                .add("elementSize", elementSize)
-                .add("cachePriority", cachePriority)
-                .add("maxSize", maxSize)
-                .add("cacheBuilder", cacheBuilder().toString())
-                .toString();
+            .add("name", name)
+            .add("elementSize", elementSize)
+            .add("cachePriority", cachePriority)
+            .add("maxSize", maxSize)
+            .add("cacheBuilder", cacheBuilder().toString())
+            .toString();
     }
 }

@@ -26,10 +26,12 @@ public class BlockApplier {
     @Setter
     private ShardDao shardDao;
 
-    @Inject @Setter
+    @Inject
+    @Setter
     private AccountService accountService;
 
-    @Inject @Setter
+    @Inject
+    @Setter
     private AccountPublicKeyService accountPublicKeyService;
 
     public void apply(Block block) {
@@ -38,7 +40,7 @@ public class BlockApplier {
         if (height > 3) {
             long[] backFees = new long[3];
             for (Transaction transaction : block.getOrLoadTransactions()) {
-                long[] fees = ((TransactionImpl)transaction).getBackFees();
+                long[] fees = ((TransactionImpl) transaction).getBackFees();
                 for (int i = 0; i < fees.length; i++) {
                     backFees[i] += fees[i];
                 }
@@ -61,14 +63,14 @@ public class BlockApplier {
                 } else {
                     previousGeneratorAccount = accountService.getAccount(blockchain.getBlockAtHeight(blockHeight).getGeneratorId());
                 }
-                log.trace("Back fees {} to forger at height {}", ((double)backFees[i])/ Constants.ONE_APL,
-                        height - i - 1);
+                log.trace("Back fees {} to forger at height {}", ((double) backFees[i]) / Constants.ONE_APL,
+                    height - i - 1);
                 accountService.addToBalanceAndUnconfirmedBalanceATM(previousGeneratorAccount, LedgerEvent.BLOCK_GENERATED, block.getId(), backFees[i]);
                 accountService.addToForgedBalanceATM(previousGeneratorAccount, backFees[i]);
             }
         }
         if (totalBackFees != 0) {
-            log.trace("Fee reduced by {} at height {}", ((double)totalBackFees)/Constants.ONE_APL, height);
+            log.trace("Fee reduced by {} at height {}", ((double) totalBackFees) / Constants.ONE_APL, height);
         }
         //fetch generatorAccount after a possible change in previousGeneratorAccount
         Account generatorAccount = accountService.addOrGetAccount(block.getGeneratorId());

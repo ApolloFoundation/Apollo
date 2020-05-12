@@ -4,7 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.core.migrator.Migrator;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -14,16 +15,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import com.apollocurrency.aplwallet.apl.core.migrator.Migrator;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Implement db migration specific algorithm
  */
 public class DbMigrator implements Migrator {
+    private static final Logger LOG = getLogger(DbMigrator.class);
     private final DbInfoExtractor dbInfoExtractor;
 
-    private static final Logger LOG = getLogger(DbMigrator.class);
+    public DbMigrator(DbInfoExtractor dbInfoExtractor) {
+        Objects.requireNonNull(dbInfoExtractor, "Db info extractor cannot be null");
+        this.dbInfoExtractor = dbInfoExtractor;
+    }
 
     /**
      * {@inheritDoc}
@@ -44,11 +48,21 @@ public class DbMigrator implements Migrator {
             int actualDbHeight = dbInfoExtractor.getHeight(destPath.toAbsolutePath().toString());
             if (actualDbHeight != height) {
                 throw new RuntimeException(String.format("Db was migrated with errors. Expected height - %d, actual - %d. Application restart is " +
-                        "needed.", height, actualDbHeight));
+                    "needed.", height, actualDbHeight));
             }
             migratedDbsPaths.add(oldDbInfo.dbDir);
         }
         return migratedDbsPaths;
+    }
+
+    public DbInfo getOldDbInfo(List<Path> paths) {
+        for (Path dbPath : paths) {
+            int height = dbInfoExtractor.getHeight(dbPath.toAbsolutePath().toString());
+            if (height > 0) {
+                return new DbInfo(dbInfoExtractor.getPath(dbPath.toAbsolutePath().toString()), dbPath.getParent(), height);
+            }
+        }
+        return null;
     }
 
     private static class DbInfo {
@@ -61,22 +75,6 @@ public class DbMigrator implements Migrator {
             this.dbDir = dbDir;
             this.height = height;
         }
-    }
-
-    public DbMigrator(DbInfoExtractor dbInfoExtractor) {
-        Objects.requireNonNull(dbInfoExtractor, "Db info extractor cannot be null");
-        this.dbInfoExtractor = dbInfoExtractor;
-    }
-
-
-    public DbInfo getOldDbInfo(List<Path> paths) {
-        for (Path dbPath : paths) {
-            int height = dbInfoExtractor.getHeight(dbPath.toAbsolutePath().toString());
-            if (height > 0) {
-                return new DbInfo(dbInfoExtractor.getPath(dbPath.toAbsolutePath().toString()), dbPath.getParent(), height);
-            }
-        }
-        return null;
     }
 }
 

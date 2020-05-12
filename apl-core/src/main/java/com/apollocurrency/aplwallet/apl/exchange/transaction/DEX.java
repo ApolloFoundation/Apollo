@@ -3,9 +3,16 @@
  */
 package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
+import javax.enterprise.inject.spi.CDI;
+
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.exchange.DexConfig;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 
 public abstract class DEX extends TransactionType {
+
+    private DexService dexService;// = CDI.current().select(DexService.class).get();
+    private DexConfig dexConfig;// = CDI.current().select(DexConfig.class).get();
 
     @Override
     public byte getType() {
@@ -18,5 +25,19 @@ public abstract class DEX extends TransactionType {
     public static final TransactionType DEX_CONTRACT_TRANSACTION = new DexContractTransaction();
     public static final TransactionType DEX_TRANSFER_MONEY_TRANSACTION = new DexTransferMoneyTransaction();
     public static final TransactionType DEX_CLOSE_ORDER = new DexCloseOrderTransaction();
+
+    public DexService lookupDexService(){
+        if ( dexService == null) {
+            dexService = CDI.current().select(DexService.class).get();
+        }
+        return dexService;
+    }
+
+    public DexConfig lookupDexConfig(){
+        if ( dexConfig == null) {
+            dexConfig = CDI.current().select(DexConfig.class).get();
+        }
+        return dexConfig;
+    }
 
 }

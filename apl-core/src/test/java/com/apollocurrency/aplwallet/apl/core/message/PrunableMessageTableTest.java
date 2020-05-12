@@ -4,12 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.message;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -30,27 +24,34 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import java.util.List;
 import javax.inject.Inject;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @EnableWeld
 class PrunableMessageTableTest {
     @RegisterExtension
-    DbExtension extension = new DbExtension(DbTestData.getInMemDbProps(), null, null,  "db/prunable-message-data.sql");
+    DbExtension extension = new DbExtension(DbTestData.getInMemDbProps(), null, null, "db/prunable-message-data.sql");
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from(
-            PrunableMessageTable.class,
-            DerivedDbTablesRegistryImpl.class,
-            FullTextConfigImpl.class,
-            TimeServiceImpl.class,
-            NtpTime.class,
-            BlockchainConfig.class,
-            PropertiesHolder.class
+        PrunableMessageTable.class,
+        DerivedDbTablesRegistryImpl.class,
+        FullTextConfigImpl.class,
+        TimeServiceImpl.class,
+        NtpTime.class,
+        BlockchainConfig.class,
+        PropertiesHolder.class
     ).addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-            .build();
+        .build();
     @Inject
     PrunableMessageTable table;
     PrunableMessageTestData data = new PrunableMessageTestData();
+
     @Test
     void testGetByTransactionId() {
         long id = data.MESSAGE_1.getId();
@@ -93,6 +94,7 @@ class PrunableMessageTableTest {
         assertNotNull(saved);
         assertEquals(data.NEW_MESSAGE, saved);
     }
+
     @Test
     void testInsertWithEncryptedData() {
         data.NEW_MESSAGE.setEncryptedData(data.DATA_1_ABTC);
@@ -157,6 +159,7 @@ class PrunableMessageTableTest {
         boolean pruned = table.isPruned(data.MESSAGE_5.getId(), false, false);
         assertFalse(pruned);
     }
+
     @Test
     void testIsPrunedForMessageWithPrunableEncryptedDataAndWithoutPublicData() {
         boolean pruned = table.isPruned(data.MESSAGE_11.getId(), false, true);

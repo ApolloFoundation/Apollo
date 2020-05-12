@@ -22,11 +22,11 @@ public abstract class AbstractRestParameter<T> implements RestParameter<T> {
     }
 
     @Override
-    public T getIfPresent(){
-        if(value == null){
+    public T getIfPresent() {
+        if (value == null) {
             try {
                 value = parse();
-            }catch (Exception ignored){
+            } catch (Exception ignored) {
             }
         }
         return value;
@@ -34,7 +34,7 @@ public abstract class AbstractRestParameter<T> implements RestParameter<T> {
 
     @Override
     public T get() throws RestParameterException {
-        if(value == null){
+        if (value == null) {
             value = parse();
         }
         return value;

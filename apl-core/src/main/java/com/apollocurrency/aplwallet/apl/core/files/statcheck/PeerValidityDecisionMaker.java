@@ -14,30 +14,25 @@ import java.util.Set;
 
 
 /**
- *
  * @author alukin@gmail.com
  */
 @Slf4j
 public class PeerValidityDecisionMaker {
 
-    public final static int MAX_TRIES_TO_GET_NEW=30;
-    public final static int MIN_PEERS=20;
-    public final static double MIN_PEERS_PRCENT=10.0;
-    
-    
-    static int peersFirst=20;
-    static int peersAddedLater=30;
-     
+    public final static int MAX_TRIES_TO_GET_NEW = 30;
+    public final static int MIN_PEERS = 20;
+    public final static double MIN_PEERS_PRCENT = 10.0;
+    private static final double trasholdAbsOK = 0.95D;
+    private static final double trasholdOK = 0.8D;
+    private static final double trasholdRisky = 0.6D;
+    private static final double trasholdInvestigation = 0.5D;//0.5 is critical probability value
+    static int peersFirst = 20;
+    static int peersAddedLater = 30;
     private final PeersList peers;
     PeerInfoStatistics stats = new PeerInfoStatistics();
-
     private Map<String, ProbabInfo> initialProbabilities;
     private Map<String, ProbabInfo> currentProbabilities = new HashMap<>();
-    private static final double trasholdAbsOK=0.95D; 
-    private static final double trasholdOK=0.8D; 
-    private static final double trasholdRisky=0.6D;
-    private static final double trasholdInvestigation=0.5D;//0.5 is critical probability value
-     
+
     public PeerValidityDecisionMaker(PeersList peers) {
         this.peers = peers;
     }
@@ -80,10 +75,10 @@ public class PeerValidityDecisionMaker {
         boolean isNew = false;
         int nTries = 0;
         PeerFileHashSum pi = null;
-        while(isNew){
+        while (isNew) {
             pi = peers.getRandomPeer();
             isNew = !stats.isAlreadyCounted(pi);
-            if(!isNew){
+            if (!isNew) {
                 continue;
             }
             nTries++;
@@ -95,7 +90,7 @@ public class PeerValidityDecisionMaker {
         return pi;
     }
 
-    public Map<String, ProbabInfo> calculateByAddingPeers(int nPeers) throws NotEnoughDataException{
+    public Map<String, ProbabInfo> calculateByAddingPeers(int nPeers) throws NotEnoughDataException {
         for (int i = 0; i < nPeers; i++) {
             PeerFileHashSum pi = getOneMorePeer();
             //re-calculate frequencies/probabilities simply adding more peers.
@@ -104,90 +99,97 @@ public class PeerValidityDecisionMaker {
         currentProbabilities = stats.getFrequences();
         return currentProbabilities;
     }
-    
+
     /**
      * Gets all peers that have most probable hash value
+     *
      * @return list of peers with most probable hash value
      */
     public Set<PeerFileHashSum> getValidPeers() {
         Map.Entry<String, ProbabInfo> mp = getMostProbable();
         return stats.getByHash(mp.getKey());
     }
-    
+
     /**
      * Gets all peers that have hash values different from most probale
+     *
      * @return list of bad peers
      */
     public Set<PeerFileHashSum> getInvalidPeers() {
         Map.Entry<String, ProbabInfo> mp = getMostProbable();
-        return stats.getAllExceptHash(mp.getKey());      
+        return stats.getAllExceptHash(mp.getKey());
     }
-    
+
     /**
      * Calculates network statistics and tells
      * can we use it or can not
+     *
      * @return true is network is usable;
      */
-    public boolean isNetworkUsable(){
+    public boolean isNetworkUsable() {
         FileDownloadDecision d = calcualteNetworkState();
         boolean usable = false;
-        switch(d){
-            case AbsOK: usable = true;
-            break;
-            case OK: usable = true;
-            break;
-            case Risky: usable = true;
-            break;             
+        switch (d) {
+            case AbsOK:
+                usable = true;
+                break;
+            case OK:
+                usable = true;
+                break;
+            case Risky:
+                usable = true;
+                break;
         }
         return usable;
     }
-    
+
     /**
      * Calculates usability of network by sampling
+     *
      * @return Decision from AbsOK to Bad
      */
-    public FileDownloadDecision calcualteNetworkState(){
-         stats.crlear();
+    public FileDownloadDecision calcualteNetworkState() {
+        stats.crlear();
         try {
             calculateInitialProb(peersFirst);
         } catch (NotEnoughDataException ex) {
             log.debug("Not enough statistics");
             return FileDownloadDecision.NoPeers;
         }
-         Map.Entry<String, ProbabInfo> mp = getMostProbable();
-         //check most probable hash higher value
-         double pMin=mp.getValue().frequency-mp.getValue().confidenceEpsilon;
-         if(pMin>=trasholdAbsOK){
-             return FileDownloadDecision.AbsOK;
-         }
+        Map.Entry<String, ProbabInfo> mp = getMostProbable();
+        //check most probable hash higher value
+        double pMin = mp.getValue().frequency - mp.getValue().confidenceEpsilon;
+        if (pMin >= trasholdAbsOK) {
+            return FileDownloadDecision.AbsOK;
+        }
         try {
             calculateByAddingPeers(peersAddedLater);
         } catch (NotEnoughDataException ex) {
             log.debug("Not enough statistics");
             return FileDownloadDecision.NoPeers;
         }
-         Map.Entry<String, ProbabInfo> mp2 = getMostProbable();
-         double pMin2=mp2.getValue().frequency-mp2.getValue().confidenceEpsilon;
-         if(mp2.getKey()!=mp.getKey()){ //second portion of peers gives differrent most probable hash
-             if(pMin2>trasholdInvestigation){
-                return FileDownloadDecision.NeedsInvestigation; 
-             }else{
+        Map.Entry<String, ProbabInfo> mp2 = getMostProbable();
+        double pMin2 = mp2.getValue().frequency - mp2.getValue().confidenceEpsilon;
+        if (mp2.getKey() != mp.getKey()) { //second portion of peers gives differrent most probable hash
+            if (pMin2 > trasholdInvestigation) {
+                return FileDownloadDecision.NeedsInvestigation;
+            } else {
                 return FileDownloadDecision.Bad;
-             }
-         }
-         //second portion of peers gives the same most probable hash
-         if(pMin2>=trasholdAbsOK){
-             return FileDownloadDecision.AbsOK;
-         }
-         if(pMin2>=trasholdOK){
-             return FileDownloadDecision.OK;
-         }
-         if(pMin2>=trasholdRisky){
-             return FileDownloadDecision.Risky;
-         }
-         if(pMin2>=trasholdInvestigation){
-             return FileDownloadDecision.NeedsInvestigation;
-         }
-         return FileDownloadDecision.Bad;
+            }
+        }
+        //second portion of peers gives the same most probable hash
+        if (pMin2 >= trasholdAbsOK) {
+            return FileDownloadDecision.AbsOK;
+        }
+        if (pMin2 >= trasholdOK) {
+            return FileDownloadDecision.OK;
+        }
+        if (pMin2 >= trasholdRisky) {
+            return FileDownloadDecision.Risky;
+        }
+        if (pMin2 >= trasholdInvestigation) {
+            return FileDownloadDecision.NeedsInvestigation;
+        }
+        return FileDownloadDecision.Bad;
     }
 }

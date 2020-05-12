@@ -8,12 +8,14 @@ import javax.ws.rs.core.UriInfo;
 
 /**
  * Strategy to match an URI
+ *
  * @author andrew.zinchenko@gmail.com
  */
 public interface RequestUriMatcher {
 
     /**
      * Implements the match strategy to the supplied URI
+     *
      * @param uriInfo
      * @return true if the URI matches, false otherwise
      */

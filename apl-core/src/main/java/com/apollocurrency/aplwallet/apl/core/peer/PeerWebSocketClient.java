@@ -16,24 +16,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- *
  * @author alukin@gmail.com
  */
 @Slf4j
-public class PeerWebSocketClient extends PeerWebSocket{
+public class PeerWebSocketClient extends PeerWebSocket {
 
     private static WebSocketClient client = null;
     private Monitor startMonitor = new Monitor();
     private Session session = null;
-
-    private static void init() throws Exception {
-        client = new WebSocketClient();
-        client.getPolicy().setIdleTimeout(PeersService.webSocketIdleTimeout);
-        client.setConnectTimeout(PeersService.connectTimeout);
-        client.getPolicy().setMaxBinaryMessageSize(PeersService.MAX_MESSAGE_SIZE);
-        client.setStopAtShutdown(true);
-        client.start();
-    }
 
     public PeerWebSocketClient(Peer2PeerTransport peer) {
         super(peer);
@@ -44,6 +34,34 @@ public class PeerWebSocketClient extends PeerWebSocket{
                 log.error("Can not start wesocket client", ex);
             }
         }
+    }
+
+    private static void init() throws Exception {
+        client = new WebSocketClient();
+        client.getPolicy().setIdleTimeout(PeersService.webSocketIdleTimeout);
+        client.setConnectTimeout(PeersService.connectTimeout);
+        client.getPolicy().setMaxBinaryMessageSize(PeersService.MAX_MESSAGE_SIZE);
+        client.setStopAtShutdown(true);
+        client.start();
+    }
+
+    public static void destroyClient() {
+        if (client == null) {
+            return;
+        }
+        try {
+            //if (client.isRunning()) {
+            //need to stop the client anyway
+            client.stop();
+            //}
+
+        } catch (Exception ex) {
+            log.trace("Exception on websocket client stop", ex);
+        }
+        if (client != null) {
+            client.destroy();
+        }
+        client = null;
     }
 
     public boolean startClient(URI uri) {
@@ -72,7 +90,7 @@ public class PeerWebSocketClient extends PeerWebSocket{
             log.trace("I/O error while connecting as client to: {}", which());
         } catch (Exception ex) {
             log.trace("Generic error while connecting as client to: {}", which());
-        }finally {
+        } finally {
             startMonitor.leave();
         }
 
@@ -91,25 +109,6 @@ public class PeerWebSocketClient extends PeerWebSocket{
         } catch (IOException ex) {
             log.warn("Can not close websocket");
         }
-    }
-
-    public static void destroyClient() {
-        if (client == null) {
-            return;
-        }
-        try {
-            //if (client.isRunning()) {
-            //need to stop the client anyway
-                client.stop();
-            //}
-
-        } catch (Exception ex) {
-            log.trace("Exception on websocket client stop", ex);
-        }
-        if (client != null) {
-            client.destroy();
-        }
-        client = null;
     }
 
     boolean isClientConnected() {

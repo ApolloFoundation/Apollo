@@ -20,7 +20,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
- *
  * @author al
  */
 @Singleton
@@ -36,12 +35,12 @@ public class AccountCurrencyTable extends VersionedDeletableEntityDbTable<Accoun
         }
     };
 
-    public static DbKey newKey(long idA, long idB){
-        return accountCurrencyDbKeyFactory.newKey(idA,idB);
-    }
-
     public AccountCurrencyTable() {
         super("account_currency", accountCurrencyDbKeyFactory, false);
+    }
+
+    public static DbKey newKey(long idA, long idB) {
+        return accountCurrencyDbKeyFactory.newKey(idA, idB);
     }
 
     @Override
@@ -52,8 +51,7 @@ public class AccountCurrencyTable extends VersionedDeletableEntityDbTable<Accoun
     @Override
     public void save(Connection con, AccountCurrency accountCurrency) throws SQLException {
         try (
-            @DatabaseSpecificDml(DmlMarker.MERGE)
-            final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_currency " + "(account_id, currency_id, units, unconfirmed_units, height, latest, deleted) " + "KEY (account_id, currency_id, height) VALUES (?, ?, ?, ?, ?, TRUE, FALSE)")
+            @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_currency " + "(account_id, currency_id, units, unconfirmed_units, height, latest, deleted) " + "KEY (account_id, currency_id, height) VALUES (?, ?, ?, ?, ?, TRUE, FALSE)")
         ) {
             int i = 0;
             pstmt.setLong(++i, accountCurrency.getAccountId());

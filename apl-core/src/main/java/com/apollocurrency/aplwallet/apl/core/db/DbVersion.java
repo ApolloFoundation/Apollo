@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import org.slf4j.Logger;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -29,18 +30,19 @@ import java.sql.Statement;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.sql.DataSource;
-
 /**
  * Abstract base classs for running database migration process.
  */
 public abstract class DbVersion {
     private static final Logger log = getLogger(DbVersion.class);
+    protected DataSource basicDataSource;
 
     public DbVersion() {
     }
 
-    protected DataSource basicDataSource;
+    protected DbVersion(DataSourceWrapper db) {
+        init(db);
+    }
 
     void init(DataSource dataSource) {
         this.basicDataSource = dataSource;
@@ -52,11 +54,11 @@ public abstract class DbVersion {
             int nextUpdate = 1;
             try {
                 ResultSet rs = stmt.executeQuery("SELECT next_update FROM version");
-                if (! rs.next()) {
+                if (!rs.next()) {
                     throw new RuntimeException("Invalid version table");
                 }
                 nextUpdate = rs.getInt("next_update");
-                if (! rs.isLast()) {
+                if (!rs.isLast()) {
                     throw new RuntimeException("Invalid version table");
                 }
                 rs.close();
@@ -77,10 +79,6 @@ public abstract class DbVersion {
             DbUtils.close(stmt, con);
         }
 
-    }
-
-    protected DbVersion(DataSourceWrapper db) {
-        init(db);
     }
 
     protected void apply(String sql) {

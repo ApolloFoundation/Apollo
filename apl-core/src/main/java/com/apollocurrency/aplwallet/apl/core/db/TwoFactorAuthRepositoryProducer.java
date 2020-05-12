@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import lombok.extern.slf4j.Slf4j;
 
@@ -28,10 +27,9 @@ public class TwoFactorAuthRepositoryProducer {
 
     @Inject
     public TwoFactorAuthRepositoryProducer(DatabaseManager databaseManager,
-                                           DirProvider dirProvider,
-                                           @Property("apl.store2FAInFileSystem") boolean isStoreInFileSystem) {
+                                           DirProvider dirProvider) {
 
-        log.info("The 2FA store is allocated {}.", isStoreInFileSystem? "on the file system" : "in the data base");
+        log.info("The 2FA store is allocated on the file system");
         Path path2FADir = dirProvider.get2FADir();
         TransactionalDataSource dataSource = databaseManager.getDataSource();
 
@@ -39,13 +37,15 @@ public class TwoFactorAuthRepositoryProducer {
         this.repositoryDB = new TwoFactorAuthRepositoryImpl(dataSource);
     }
 
-    @Produces @Named("FSRepository")
-    public TwoFactorAuthRepository getTwoFactorAuthFSRepository(){
+    @Produces
+    @Named("FSRepository")
+    public TwoFactorAuthRepository getTwoFactorAuthFSRepository() {
         return repositoryFS;
     }
 
-    @Produces @Named("DBRepository")
-    public TwoFactorAuthRepository getTwoFactorAuthDBRepository(){
+    @Produces
+    @Named("DBRepository")
+    public TwoFactorAuthRepository getTwoFactorAuthDBRepository() {
         return repositoryDB;
     }
 

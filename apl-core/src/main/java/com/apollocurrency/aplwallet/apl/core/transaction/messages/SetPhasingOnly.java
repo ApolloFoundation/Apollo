@@ -7,19 +7,19 @@ import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.transaction.AccountControl;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import java.nio.ByteBuffer;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+
 /**
- *
  * @author al
  */
 public final class SetPhasingOnly extends AbstractAttachment {
-    
-    private final PhasingParams phasingParams;
+
     final long maxFees;
     final short minDuration;
     final short maxDuration;
+    private final PhasingParams phasingParams;
 
     public SetPhasingOnly(PhasingParams params, long maxFees, short minDuration, short maxDuration) {
         phasingParams = params;
@@ -88,5 +88,5 @@ public final class SetPhasingOnly extends AbstractAttachment {
     public short getMaxDuration() {
         return maxDuration;
     }
-    
+
 }

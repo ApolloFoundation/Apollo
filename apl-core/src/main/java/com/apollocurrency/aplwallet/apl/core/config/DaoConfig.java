@@ -100,8 +100,8 @@ public class DaoConfig {
 
     private <T> T createDaoInterfaceProxy(Class<T> daoClass) {
         return JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(
-                jdbiHandleFactory,
-                daoClass
+            jdbiHandleFactory,
+            daoClass
         );
     }
 

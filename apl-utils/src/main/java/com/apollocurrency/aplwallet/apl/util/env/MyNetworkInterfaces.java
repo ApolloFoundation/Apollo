@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *
  * @author alukin@gmail.com
  */
 public class MyNetworkInterfaces {

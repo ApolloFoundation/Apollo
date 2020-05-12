@@ -7,15 +7,15 @@ import com.apollocurrency.aplwallet.apl.core.transaction.ColoredCoins;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import java.nio.ByteBuffer;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+
 /**
- *
  * @author al
  */
 public final class ColoredCoinsAssetTransfer extends AbstractAttachment {
-    
+
     final long assetId;
     final long quantityATU;
 
@@ -65,5 +65,5 @@ public final class ColoredCoinsAssetTransfer extends AbstractAttachment {
     public long getQuantityATU() {
         return quantityATU;
     }
-    
+
 }

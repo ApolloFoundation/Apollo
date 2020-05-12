@@ -43,14 +43,14 @@ public final class DecryptFrom extends AbstractAPIRequestHandler {
     private static final Logger LOG = getLogger(DecryptFrom.class);
 
     public DecryptFrom() {
-        super(new APITag[] {APITag.MESSAGES}, "participantAccount", "data", "nonce", "decryptedMessageIsText", "uncompressDecryptedMessage",
-                "secretPhrase");
+        super(new APITag[]{APITag.MESSAGES}, "participantAccount", "data", "nonce", "decryptedMessageIsText", "uncompressDecryptedMessage",
+            "secretPhrase");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        byte[] publicKey = lookupAccountService().getPublicKeyByteArray(HttpParameterParserUtil.getAccountId(req, "participantAccount",true));
+        byte[] publicKey = lookupAccountService().getPublicKeyByteArray(HttpParameterParserUtil.getAccountId(req, "participantAccount", true));
         if (publicKey == null) {
             return INCORRECT_ACCOUNT;
         }

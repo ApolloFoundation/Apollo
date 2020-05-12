@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.tagged.model;
 
-import javax.enterprise.inject.spi.CDI;
-
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.core.transaction.Data;
@@ -13,22 +11,17 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
 import org.json.simple.JSONObject;
 
+import javax.enterprise.inject.spi.CDI;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+
 /**
- *
  * @author al
  */
 public final class TaggedDataUploadAttachment extends TaggedDataAttachment {
 
-    public static TaggedDataUploadAttachment parse(JSONObject attachmentData) {
-        if (!Appendix.hasAppendix(Data.TAGGED_DATA_UPLOAD.getName(), attachmentData)) {
-            return null;
-        }
-        return new TaggedDataUploadAttachment(attachmentData);
-    }
     final byte[] hash;
 
     public TaggedDataUploadAttachment(ByteBuffer buffer) {
@@ -54,6 +47,13 @@ public final class TaggedDataUploadAttachment extends TaggedDataAttachment {
         if (isText && !Arrays.equals(data, Convert.toBytes(Convert.toString(data)))) {
             throw new AplException.NotValidException("Data is not UTF-8 text");
         }
+    }
+
+    public static TaggedDataUploadAttachment parse(JSONObject attachmentData) {
+        if (!Appendix.hasAppendix(Data.TAGGED_DATA_UPLOAD.getName(), attachmentData)) {
+            return null;
+        }
+        return new TaggedDataUploadAttachment(attachmentData);
     }
 
     @Override

@@ -14,10 +14,12 @@ import com.apollocurrency.aplwallet.apl.core.rest.ErrorInfo;
 public class RestParameterException extends RuntimeException {
 
     /**
+     *
      */
     private ErrorInfo errorInfo;
 
     /**
+     *
      */
     private Object[] args;
 
@@ -41,13 +43,13 @@ public class RestParameterException extends RuntimeException {
         };
     }
 
-    public RestParameterException(ErrorInfo errorInfo, Object ... args) {
+    public RestParameterException(ErrorInfo errorInfo, Object... args) {
         super(errorInfo.getErrorDescription());
         this.errorInfo = errorInfo;
         this.args = args;
     }
 
-    public RestParameterException(Throwable cause, ErrorInfo errorInfo, Object ... args) {
+    public RestParameterException(Throwable cause, ErrorInfo errorInfo, Object... args) {
         super(errorInfo.getErrorDescription(), cause);
         this.errorInfo = errorInfo;
         this.args = args;

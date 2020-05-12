@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.phasing.dao;
 
+import com.apollocurrency.aplwallet.apl.core.alias.service.AliasService;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
@@ -48,21 +49,22 @@ import static org.mockito.Mockito.mock;
 public class PhasingPollVoterTableTest extends ValuesDbTableTest<PhasingPollVoter> {
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
-            GlobalSyncImpl.class,
-            PhasingPollVoterTable.class,
-            FullTextConfigImpl.class,
-            DerivedDbTablesRegistryImpl.class,
-            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
-            .addBeans(MockBean.of(getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(getDatabaseManager().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
-            .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
-            .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
-            .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
-            .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
-            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
-            .build();
+        PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
+        GlobalSyncImpl.class,
+        PhasingPollVoterTable.class,
+        FullTextConfigImpl.class,
+        DerivedDbTablesRegistryImpl.class,
+        TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
+        .addBeans(MockBean.of(getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(getDatabaseManager().getJdbi(), Jdbi.class))
+        .addBeans(MockBean.of(getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
+        .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
+        .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
+        .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
+        .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
+        .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
+        .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
+        .build();
     @Inject
     PhasingPollVoterTable table;
     PhasingTestData ptd;

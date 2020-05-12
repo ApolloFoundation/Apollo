@@ -33,6 +33,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.data.ShardTestData.NOT_SAVED_SHARD;
@@ -53,17 +54,17 @@ class ShardDaoTest {
     static DbExtension extension = new DbExtension();
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(NtpTime.class,
-            PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class, ShardDao.class,
-            GlobalSync.class,
-            GlobalSyncImpl.class,
-            DerivedDbTablesRegistryImpl.class,
-            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
-            .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
-            .build();
+        PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class, ShardDao.class,
+        GlobalSync.class,
+        GlobalSyncImpl.class,
+        DerivedDbTablesRegistryImpl.class,
+        TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
+        .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+        .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
+        .build();
 
     @Inject
     private ShardDao dao;
@@ -199,5 +200,12 @@ class ShardDaoTest {
     void testGetLatestShardHeight() {
         int latestShardHeight = dao.getLatestShardHeight();
         assertEquals(SHARD_2.getShardHeight(), latestShardHeight);
+    }
+
+    @Test
+    void testGetCompletedBetweenBlockHeight() {
+        List<Shard> result = dao.getCompletedBetweenBlockHeight(2, 4);
+        assertEquals(1, result.size());
+        assertEquals(Collections.singletonList(SHARD_1), result);
     }
 }

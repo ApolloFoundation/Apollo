@@ -16,11 +16,7 @@ public class RuntimeParams {
         Long pid = ProcessHandle.current().pid();
         return pid.toString();
     }
-    
-    public String getUserName(){
-        return System.getProperty("user.name");
-    }
-    
+
     public static boolean isTcpPortAvailable(int port) {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             serverSocket.setReuseAddress(true);
@@ -29,9 +25,13 @@ public class RuntimeParams {
             return false;
         }
     }
-    
+
     public static boolean isAMD64Architecture() {
         String arch = System.getProperty("os.arch");
         return arch.equalsIgnoreCase("amd64") || arch.equalsIgnoreCase("x86_64");
+    }
+
+    public String getUserName() {
+        return System.getProperty("user.name");
     }
 }

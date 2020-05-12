@@ -54,7 +54,7 @@ public class PrunableArchiveMigrator {
         this.zip = zip;
         this.databaseManager = databaseManager;
         this.registry = registry;
-        this.fileChangedEvent=fileChangedEvent;
+        this.fileChangedEvent = fileChangedEvent;
         this.translator = translator;
     }
 
@@ -79,7 +79,7 @@ public class PrunableArchiveMigrator {
                     Path shardArchivePath = dirProvider.getDataExportDir().resolve(shardNameHelper.getCoreShardArchiveNameByShardId(shard.getShardId(), chainId));
 
                     String tempDirectoryString = tempDirectory.toAbsolutePath().toString();
-                    zip.extract(shardArchivePath.toAbsolutePath().toString(), tempDirectoryString);
+                    zip.extract(shardArchivePath.toAbsolutePath().toString(), tempDirectoryString, true);
                     CsvExporter csvExporter = createExporter(tempDirectory);
                     csvExporter.exportShardTableIgnoringLastZipHashes(shard.getShardHeight(), 100);
                     String zipName = "shard-" + shard.getShardId() + ".zip";
@@ -103,8 +103,7 @@ public class PrunableArchiveMigrator {
                         log.error("Can not comperess prunable zip: {}", zipName);
                     }
                     FileUtils.clearDirectorySilently(tempDirectory); // clean is not mandatory, but desirable
-                }
-                catch (IOException e) {
+                } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
             }

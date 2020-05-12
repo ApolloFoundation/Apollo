@@ -20,19 +20,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.mint;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.TrustAllSSLProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONObject;
@@ -40,7 +37,6 @@ import org.json.simple.JSONValue;
 import org.slf4j.Logger;
 
 import javax.net.ssl.HttpsURLConnection;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -68,23 +64,41 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class MintWorker implements Runnable{
-    private boolean done = false;
-    
+public class MintWorker implements Runnable {
     private static final Logger LOG = getLogger(MintWorker.class);
+    private boolean done = false;
     // TODO: YL remove static instance later
     private PropertiesHolder propertiesHolder;
     private BlockchainConfig blockchainConfig;
 
     public MintWorker(PropertiesHolder propertiesHolder, BlockchainConfig blockchainConfig) {
-        this.blockchainConfig=blockchainConfig;
-        this.propertiesHolder=propertiesHolder;
+        this.blockchainConfig = blockchainConfig;
+        this.propertiesHolder = propertiesHolder;
     }
-    
-    public void stop(){
+
+    private static String getUrlParams(Map<String, String> params) {
+        if (params == null) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (String key : params.keySet()) {
+            try {
+                sb.append(key).append("=").append(URLEncoder.encode(params.get(key), "utf8")).append("&");
+            } catch (UnsupportedEncodingException e) {
+                throw new IllegalStateException(e);
+            }
+        }
+        String rc = sb.toString();
+        if (rc.endsWith("&")) {
+            rc = rc.substring(0, rc.length() - 1);
+        }
+        return rc;
+    }
+
+    public void stop() {
         done = true;
     }
 
@@ -120,18 +134,18 @@ public class MintWorker implements Runnable{
         if (currency.get("algorithm") == null) {
             throw new IllegalArgumentException("Minting algorithm not specified, currency " + currencyCode + " is not mintable");
         }
-        byte algorithm = (byte)(long) currency.get("algorithm");
-        byte decimal = (byte)(long) currency.get("decimals");
+        byte algorithm = (byte) (long) currency.get("algorithm");
+        byte decimal = (byte) (long) currency.get("decimals");
         String unitsStr = propertiesHolder.getStringProperty("apl.mint.unitsPerMint");
         double wholeUnits = 1;
         if (unitsStr != null && unitsStr.length() > 0) {
             wholeUnits = Double.parseDouble(unitsStr);
         }
-        long units = (long)(wholeUnits * Math.pow(10, decimal));
+        long units = (long) (wholeUnits * Math.pow(10, decimal));
         JSONObject mintingTarget = getMintingTarget(currencyId, rsAccount, units);
         long counter = (long) mintingTarget.get("counter");
         byte[] target = Convert.parseHexString((String) mintingTarget.get("targetBytes"));
-        BigInteger difficulty = new BigInteger((String)mintingTarget.get("difficulty"));
+        BigInteger difficulty = new BigInteger((String) mintingTarget.get("difficulty"));
         long initialNonce = propertiesHolder.getIntProperty("apl.mint.initialNonce");
         if (initialNonce == 0) {
             initialNonce = new Random().nextLong();
@@ -160,7 +174,7 @@ public class MintWorker implements Runnable{
             }
             mintingTarget = getMintingTarget(currencyId, rsAccount, units);
             target = Convert.parseHexString((String) mintingTarget.get("targetBytes"));
-            difficulty = new BigInteger((String)mintingTarget.get("difficulty"));
+            difficulty = new BigInteger((String) mintingTarget.get("difficulty"));
         }
     }
 
@@ -168,7 +182,7 @@ public class MintWorker implements Runnable{
                                 long counter, byte[] target, long initialNonce, int threadPoolSize, ExecutorService executorService, BigInteger difficulty, boolean isSubmitted) {
         long startTime = System.currentTimeMillis();
         List<Callable<Long>> workersList = new ArrayList<>();
-        for (int i=0; i < threadPoolSize; i++) {
+        for (int i = 0; i < threadPoolSize; i++) {
             HashSolver hashSolver = new HashSolver(algorithm, currencyId, accountId, counter, units, initialNonce + i, target, threadPoolSize);
             workersList.add(hashSolver);
         }
@@ -180,7 +194,7 @@ public class MintWorker implements Runnable{
         long hashes = solution - initialNonce;
         float hashesPerDifficulty = BigInteger.valueOf(-1).equals(difficulty) ? 0 : (float) hashes / difficulty.floatValue();
         LOG.info("solution nonce %d unitsATM %d counter %d computed hashes %d time [sec] %.2f hash rate [KH/Sec] %d actual time vs. expected %.2f is submitted %b",
-                solution, units, counter, hashes, (float) computationTime / 1000, hashes / computationTime, hashesPerDifficulty, isSubmitted);
+            solution, units, counter, hashes, (float) computationTime / 1000, hashes / computationTime, hashesPerDifficulty, isSubmitted);
         JSONObject response;
         if (isSubmitted) {
             response = currencyMint(keySeed, currencyId, solution, units, counter);
@@ -211,9 +225,9 @@ public class MintWorker implements Runnable{
         Attachment attachment = new MonetarySystemCurrencyMinting(nonce, currencyId, units, counter);
         int timestamp = ((Long) ecBlock.get("timestamp")).intValue();
         Transaction.Builder builder = Transaction.newTransactionBuilder(Crypto.getPublicKey(keySeed), 0, Constants.ONE_APL,
-                (short) 120, attachment, timestamp)
-                .ecBlockHeight(((Long) ecBlock.get("ecBlockHeight")).intValue())
-                .ecBlockId(Convert.parseUnsignedLong((String) ecBlock.get("ecBlockId")));
+            (short) 120, attachment, timestamp)
+            .ecBlockHeight(((Long) ecBlock.get("ecBlockHeight")).intValue())
+            .ecBlockId(Convert.parseUnsignedLong((String) ecBlock.get("ecBlockId")));
         try {
             Transaction transaction = builder.build(keySeed);
             Map<String, String> params = new HashMap<>();
@@ -300,32 +314,13 @@ public class MintWorker implements Runnable{
         }
         if (response.get("errorCode") != null) {
             throw new IllegalStateException(String.format("Request %s produced error response code %s message \"%s\"",
-                    url, response.get("errorCode"), response.get("errorDescription")));
+                url, response.get("errorCode"), response.get("errorDescription")));
         }
         if (response.get("error") != null) {
             throw new IllegalStateException(String.format("Request %s produced error %s",
-                    url, response.get("error")));
+                url, response.get("error")));
         }
         return response;
-    }
-
-    private static String getUrlParams(Map<String, String> params) {
-        if (params == null) {
-            return "";
-        }
-        StringBuilder sb = new StringBuilder();
-        for (String key : params.keySet()) {
-            try {
-                sb.append(key).append("=").append(URLEncoder.encode(params.get(key), "utf8")).append("&");
-            } catch (UnsupportedEncodingException e) {
-                throw new IllegalStateException(e);
-            }
-        }
-        String rc = sb.toString();
-        if (rc.endsWith("&")) {
-            rc = rc.substring(0, rc.length() - 1);
-        }
-        return rc;
     }
 
     private static class HashSolver implements Callable<Long> {
@@ -359,11 +354,11 @@ public class MintWorker implements Runnable{
                 if (CurrencyMinting.meetsTarget(hash, target)) {
                     LOG.debug("%s found solution hash %s nonce %d currencyId %d units %d counter %d accountId %d" +
                             " hash %s meets target %s",
-                            Thread.currentThread().getName(), hashFunction, n, currencyId, units, counter, accountId,
-                            Arrays.toString(hash), Arrays.toString(target));
+                        Thread.currentThread().getName(), hashFunction, n, currencyId, units, counter, accountId,
+                        Arrays.toString(hash), Arrays.toString(target));
                     return n;
                 }
-                n+=poolSize;
+                n += poolSize;
                 if (((n - nonce) % (poolSize * 1000000)) == 0) {
                     LOG.info("%s computed %d [MH]", Thread.currentThread().getName(), (n - nonce) / poolSize / 1000000);
                 }

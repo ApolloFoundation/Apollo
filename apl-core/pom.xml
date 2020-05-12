@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>com.apollocurrency</groupId>
-    <artifactId>apollo-wallet</artifactId>
-    <version>1.42.9</version>
+    <artifactId>apollo-blockchain</artifactId>
+    <version>1.44.0</version>
   </parent>
 
   <artifactId>apl-core</artifactId>
@@ -13,21 +14,7 @@
   <packaging>jar</packaging>
 
   <dependencies>
-    <dependency>
-      <groupId>com.apollocurrency</groupId>
-      <artifactId>apl-crypto</artifactId>
-      <version>${project.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-log4j12</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.junit</groupId>
-          <artifactId>junit-bom</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
+    <!-- CORE BOM DEPENDENCIES -->
     <dependency>
       <groupId>com.apollocurrency</groupId>
       <artifactId>apl-utils</artifactId>
@@ -38,20 +25,8 @@
       <artifactId>apl-api</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <dependency>
-      <groupId>io.firstbridge</groupId>
-      <artifactId>cryptolib</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-log4j12</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.junit</groupId>
-          <artifactId>junit-bom</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
+
+    <!-- EXT BOM DEPENDENCIES -->
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
@@ -98,7 +73,6 @@
     <dependency>
       <groupId>commons-fileupload</groupId>
       <artifactId>commons-fileupload</artifactId>
-      <version>1.4</version>
     </dependency>
 
     <dependency>
@@ -115,6 +89,21 @@
       <groupId>org.jboss.resteasy</groupId>
       <artifactId>resteasy-multipart-provider</artifactId>
     </dependency>
+
+<!--
+    <dependency> &lt;!&ndash; may be NEEDED by FAT JAR in run-time &ndash;&gt;
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-jaxrs</artifactId>
+    </dependency>
+    <dependency> &lt;!&ndash; NEEDED by FAT JAR in run-time&ndash;&gt;
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-tracing-api</artifactId>
+    </dependency>
+    <dependency> &lt;!&ndash; NEEDED by FAT JAR in run-time&ndash;&gt;
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpcore-nio</artifactId>
+    </dependency>
+-->
 
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
@@ -133,7 +122,7 @@
       <artifactId>jboss-logging-processor</artifactId>
     </dependency>
 
-  <!--Validation dependencies-->
+    <!--Validation dependencies-->
     <dependency>
       <groupId>javax.validation</groupId>
       <artifactId>validation-api</artifactId>
@@ -217,6 +206,11 @@
     <dependency>
       <groupId>org.junit.platform</groupId>
       <artifactId>junit-platform-engine</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.skyscreamer</groupId>
+      <artifactId>jsonassert</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -309,21 +303,18 @@
     <dependency>
       <groupId>com.apollocurrency.antifraud</groupId>
       <artifactId>antifraud</artifactId>
-      <version>1.0.7</version>
     </dependency>
 
     <!-- Ethereum API -->
     <dependency>
       <groupId>org.web3j</groupId>
       <artifactId>core</artifactId>
-      <version>4.5.6</version>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/org.ethereum/ethereumj-core -->
     <dependency>
       <groupId>org.ethereum</groupId>
       <artifactId>ethereumj-core</artifactId>
-      <version>1.7.2-RELEASE</version>
       <exclusions>
         <exclusion>
           <groupId>org.springframework</groupId>
@@ -351,14 +342,6 @@
     <dependency>
       <groupId>com.fasterxml.jackson.datatype</groupId>
       <artifactId>jackson-datatype-joda</artifactId>
-      <version>2.9.8</version>
-    </dependency>
-
-    <dependency>
-      <groupId>io.swagger</groupId>
-      <artifactId>swagger-annotations</artifactId>
-      <version>1.5.21</version>
-      <type>jar</type>
     </dependency>
 
     <dependency>
@@ -391,7 +374,8 @@
               <goal>copy-resources</goal>
             </goals>
             <configuration>
-              <outputDirectory>${basedir}/src/main/resources/com/apollocurrency/aplwallet/apl/core/rest/i18n</outputDirectory>
+              <outputDirectory>${basedir}/src/main/resources/com/apollocurrency/aplwallet/apl/core/rest/i18n
+              </outputDirectory>
               <resources>
                 <resource>
                   <directory>${basedir}/src/test/resources/i18n</directory>

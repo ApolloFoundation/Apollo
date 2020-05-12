@@ -53,6 +53,7 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
     }
 
     private int doMultiversionRollback(int height) {
+        LOG.trace("doMultiversionRollback(), height={}", height);
         int deletedRecordsCount;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
@@ -60,14 +61,14 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
         }
         long startTime = System.currentTimeMillis();
         String sql = "UPDATE " + table
-                + " SET latest = TRUE " + (getDeletedSetStatementIfSupported(false)) + keyFactory.getPKClause() + " AND height ="
-                + " (SELECT MAX(height) FROM " + table + keyFactory.getPKClause() + ")";
+            + " SET latest = TRUE " + (getDeletedSetStatementIfSupported(false)) + keyFactory.getPKClause() + " AND height ="
+            + " (SELECT MAX(height) FROM " + table + keyFactory.getPKClause() + ")";
         LOG.trace(sql);
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmtSelectToDelete = con.prepareStatement("SELECT DISTINCT " + keyFactory.getPKColumns()
-                     + " FROM " + table + " WHERE height > ?");
+                 + " FROM " + table + " WHERE height > ?");
              PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM " + table
-                     + " WHERE height > ?");
+                 + " WHERE height > ?");
              PreparedStatement pstmtSetLatest = con.prepareStatement(sql)) {
             pstmtSelectToDelete.setInt(1, height);
             List<DbKey> dbKeys = new ArrayList<>();
@@ -113,8 +114,7 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
                 dbKey.setPK(pstmtSetLatest, i);
                 pstmtSetLatest.executeUpdate();
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             LOG.error("Error", e);
             throw new RuntimeException(e.toString(), e);
         }
@@ -136,44 +136,46 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
      * <p>Delete old data from db before target height. Leave last actual entry for each entity to allow rollback to target height</p>
      * <p>Also will completely delete blockchain 'deleted' entries with latest=false & deleted=true (applies only for paired 'deleted' records to ensure rollback availability)</p>
      * <p>WARNING! Do not trim to your current blockchain height! It will delete all history data and you will not be able to rollback and switch to another fork</p>
-     * @param height       target height of blockchain for trimming, should be less or equal to minRollbackHeight to allow rollback to such height
-     * <p>Example:</p>
-     *                     <pre>{@code
-     *                     db_id     account   balance    height    latest deleted
-     *                     10         1          10         0       true   false
-     *                     11         2          10         1       false  false
-     *                     11         2          10         2       false  true
-     *                     15         2           0         3       false  true
-     *                     30         3          50         3       false  false
-     *                     40         3           5         4       true   false
-     *                     42         2          11         4       false  false
-     *                     44         2          12         5       false  true
-     *                     50         4         125         5       false  false
-     *                     70         6           6         5       false  false
-     *                     80         6           6         6       true   false
-     *                     81         5           5         6       false  false
-     *                     82         2           0         6       false   true
-     *                     90         5          80         7       true   false
-     *                     100        4         100         7       true   false
-     *                     }</pre>
-     * <p>
-     *                     Trim to height 6 will result in
-     *                     <pre>{@code
-     *                     db_id     account   balance    height    latest deleted
-     *                     10         1           10        0       true   false
-     *                     40         3            5        4       true   false
-     *                     44         2           12        5       false  true
-     *                     50         4          125        5       false  false
-     *                     70         6            6        5       false  false
-     *                     80         6            6        6       true   false
-     *                     81         5            5        6       false  false
-     *                     82         2            0        6       false  true
-     *                     90         5           80        7       true   false
-     *                     100        4          100        7       true   false
-     *                     }</pre>
-     * </p>
+     *
+     * @param height target height of blockchain for trimming, should be less or equal to minRollbackHeight to allow rollback to such height
+     *               <p>Example:</p>
+     *               <pre>{@code
+     *                                                               db_id     account   balance    height    latest deleted
+     *                                                               10         1          10         0       true   false
+     *                                                               11         2          10         1       false  false
+     *                                                               11         2          10         2       false  true
+     *                                                               15         2           0         3       false  true
+     *                                                               30         3          50         3       false  false
+     *                                                               40         3           5         4       true   false
+     *                                                               42         2          11         4       false  false
+     *                                                               44         2          12         5       false  true
+     *                                                               50         4         125         5       false  false
+     *                                                               70         6           6         5       false  false
+     *                                                               80         6           6         6       true   false
+     *                                                               81         5           5         6       false  false
+     *                                                               82         2           0         6       false   true
+     *                                                               90         5          80         7       true   false
+     *                                                               100        4         100         7       true   false
+     *                                                               }</pre>
+     *               <p>
+     *               Trim to height 6 will result in
+     *               <pre>{@code
+     *                                                               db_id     account   balance    height    latest deleted
+     *                                                               10         1           10        0       true   false
+     *                                                               40         3            5        4       true   false
+     *                                                               44         2           12        5       false  true
+     *                                                               50         4          125        5       false  false
+     *                                                               70         6            6        5       false  false
+     *                                                               80         6            6        6       true   false
+     *                                                               81         5            5        6       false  false
+     *                                                               82         2            0        6       false  true
+     *                                                               90         5           80        7       true   false
+     *                                                               100        4          100        7       true   false
+     *                                                               }</pre>
+     *               </p>
      */
     private void doMultiversionTrim(final int height) {
+        LOG.trace("doMultiversionTrim(), height={}", height);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
@@ -182,14 +184,14 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
         try (Connection con = dataSource.getConnection();
              //find acc and max_height of last written record (accounts with one record will be omitted)
              PreparedStatement pstmtSelect = con.prepareStatement("SELECT " + keyFactory.getPKColumns() + ", MAX(height) AS max_height"
-                     + " FROM " + table + " WHERE height < ? GROUP BY " + keyFactory.getPKColumns() + " HAVING COUNT(DISTINCT height) > 1")) {
+                 + " FROM " + table + " WHERE height < ? GROUP BY " + keyFactory.getPKColumns() + " HAVING COUNT(DISTINCT height) > 1")) {
             pstmtSelect.setInt(1, height);
             long startDeleteTime, deleted = 0L, deleteStm = 0L, startSelectTime = System.currentTimeMillis();
             try (ResultSet rs = pstmtSelect.executeQuery();
                  PreparedStatement pstmtDeleteById =
-                         con.prepareStatement("DELETE FROM " + table + " WHERE db_id = ?");
+                     con.prepareStatement("DELETE FROM " + table + " WHERE db_id = ?");
                  PreparedStatement selectDbIdStatement =
-                         con.prepareStatement("SELECT db_id, height " + getDeletedColumnIfSupported() + " FROM " + table + " " + keyFactory.getPKClause())) {
+                     con.prepareStatement("SELECT db_id, height " + getDeletedColumnIfSupported() + " FROM " + table + " " + keyFactory.getPKClause())) {
                 LOG.trace("Select {} time: {}", table, System.currentTimeMillis() - startSelectTime);
                 startDeleteTime = System.currentTimeMillis();
 
@@ -197,8 +199,8 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
                     Set<Long> keysToDelete = selectDbIds(selectDbIdStatement, rs);
                     // TODO migrate to PreparedStatement.addBatch for another db
                     for (Long id : keysToDelete) {
-                        deleteByDbId(pstmtDeleteById, id);
-                        deleted++;
+                        deleted += deleteByDbId(pstmtDeleteById, id);
+//                        deleted++;
                         deleteStm++;
                         if (deleted % 100 == 0) {
                             dataSource.commit(false);
@@ -206,15 +208,14 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
                     }
                 }
                 dataSource.commit(false);
-                LOG.trace("Delete time {} for table {}: stm - {}, deleted - {}", System.currentTimeMillis() - startDeleteTime, table,
-                        deleteStm, deleted);
+                LOG.trace("Delete time {} for table '{}': deleteStm=[{}], deleted=[{}]", System.currentTimeMillis() - startDeleteTime, table,
+                    deleteStm, deleted);
             }
             long trimTime = System.currentTimeMillis() - startTime;
             if (trimTime > 1000) {
                 LOG.debug("Trim for table {} took {} ms", table, trimTime);
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -222,8 +223,9 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
     private String getDeletedColumnIfSupported() {
         return supportDelete() ? ", deleted" : "";
     }
+
     private String getDeletedSetStatementIfSupported(boolean deleted) {
-        return supportDelete() ? ", deleted = " + deleted + " ": "";
+        return supportDelete() ? ", deleted = " + deleted + " " : "";
     }
 
     private Set<Long> selectDbIds(PreparedStatement selectDbIdStatement, ResultSet rs) throws SQLException {
@@ -257,9 +259,9 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
         return keys;
     }
 
-    private void deleteByDbId(PreparedStatement pstmtDeleteByDbId, long dbId) throws SQLException {
+    private int deleteByDbId(PreparedStatement pstmtDeleteByDbId, long dbId) throws SQLException {
         pstmtDeleteByDbId.setLong(1, dbId);
-        pstmtDeleteByDbId.executeUpdate();
+        return pstmtDeleteByDbId.executeUpdate();
 
     }
 }

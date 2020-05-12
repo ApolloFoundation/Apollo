@@ -13,14 +13,14 @@ import java.security.cert.Certificate;
 import java.util.Random;
 
 public class JarGenerator implements AutoCloseable {
-    private com.apollocurrency.aplwallet.apl.updater.util.SimpleJar jar;
     private static final String KEY_ALIAS = "test";
     private static final String KEY_PASSWORD = "test";
+    private com.apollocurrency.aplwallet.apl.updater.util.SimpleJar jar;
 
 
     public JarGenerator(OutputStream outputStream, Certificate certificate, PrivateKey privateKey) throws GeneralSecurityException, IOException {
         KeyStore keyStore = initKeyStore(certificate, privateKey);
-        this.jar = new com.apollocurrency.aplwallet.apl.updater.util.SimpleSignedJar(outputStream, keyStore, KEY_ALIAS,  KEY_PASSWORD);
+        this.jar = new com.apollocurrency.aplwallet.apl.updater.util.SimpleSignedJar(outputStream, keyStore, KEY_ALIAS, KEY_PASSWORD);
     }
 
     public JarGenerator(OutputStream outputStream) {
@@ -31,7 +31,7 @@ public class JarGenerator implements AutoCloseable {
     private KeyStore initKeyStore(Certificate certificate, PrivateKey privateKey) throws GeneralSecurityException, IOException {
         KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
         keyStore.load(null, null);
-        keyStore.setEntry(KEY_ALIAS, new KeyStore.PrivateKeyEntry(privateKey, new Certificate[] {certificate}), new KeyStore.PasswordProtection(KEY_PASSWORD.toCharArray()));
+        keyStore.setEntry(KEY_ALIAS, new KeyStore.PrivateKeyEntry(privateKey, new Certificate[]{certificate}), new KeyStore.PasswordProtection(KEY_PASSWORD.toCharArray()));
         return keyStore;
     }
 

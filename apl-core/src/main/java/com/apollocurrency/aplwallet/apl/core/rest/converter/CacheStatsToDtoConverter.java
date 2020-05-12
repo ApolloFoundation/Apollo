@@ -11,12 +11,12 @@ public class CacheStatsToDtoConverter implements Converter<CacheStats, CacheStat
     @Override
     public CacheStatsDTO apply(CacheStats cacheStats) {
         CacheStatsDTO dto = new CacheStatsDTO(
-                cacheStats.hitCount(), cacheStats.hitRate(),
-                cacheStats.missCount(), cacheStats.missRate(),
-                cacheStats.loadSuccessCount(),
-                cacheStats.loadSuccessCount(),
-                cacheStats.totalLoadTime(),
-                cacheStats.evictionCount()
+            cacheStats.hitCount(), cacheStats.hitRate(),
+            cacheStats.missCount(), cacheStats.missRate(),
+            cacheStats.loadSuccessCount(),
+            cacheStats.loadSuccessCount(),
+            cacheStats.totalLoadTime(),
+            cacheStats.evictionCount()
         );
 
         return dto;

@@ -27,21 +27,19 @@ public class DbUtils {
         try (Connection con = dataSource.begin()) { // start new transaction
             consumer.accept(con);
             dataSource.commit();
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             dataSource.rollback();
             throw new RuntimeException(e);
         }
     }
 
-    public static<T> T getInTransaction(DbExtension extension, Function<Connection, T> function) {
+    public static <T> T getInTransaction(DbExtension extension, Function<Connection, T> function) {
         TransactionalDataSource dataSource = extension.getDatabaseManager().getDataSource();
         try (Connection con = dataSource.begin()) { // start new transaction
             T res = function.apply(con);
             dataSource.commit();
             return res;
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             dataSource.rollback();
             throw new RuntimeException(e);
         }

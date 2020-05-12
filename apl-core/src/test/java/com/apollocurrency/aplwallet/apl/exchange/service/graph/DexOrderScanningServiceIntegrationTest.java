@@ -40,29 +40,28 @@ class DexOrderScanningServiceIntegrationTest {
 
     Blockchain blockchain = mock(Blockchain.class);
     TaskDispatchManager dispatchManager = mock(TaskDispatchManager.class);
-    {
-        doReturn(mock(TaskDispatcher.class)).when(dispatchManager).newScheduledDispatcher(SERVICE_NAME);
-    }
-
-    private DexOrderDao orderDao = mock(DexOrderDao.class);
-    private ScanPerformer scanPerformer = mock(ScanPerformer.class);
-    private OrderScanDao orderScanDao = mock(OrderScanDao.class);
-    private DexCandlestickDao candlestickDao = mock(DexCandlestickDao.class);
     @Inject
     DexOrderScanningService service;
     @Inject
     Event<Block> blockEvent;
+    private DexOrderDao orderDao = mock(DexOrderDao.class);
+    private ScanPerformer scanPerformer = mock(ScanPerformer.class);
+    private OrderScanDao orderScanDao = mock(OrderScanDao.class);
+    private DexCandlestickDao candlestickDao = mock(DexCandlestickDao.class);
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from(DexOrderScanningService.class)
-            .addBeans(
-                    MockBean.of(orderDao, DexOrderDao.class)
-                    , MockBean.of(scanPerformer, ScanPerformer.class)
-                    , MockBean.of(orderScanDao, OrderScanDao.class)
-                    , MockBean.of(blockchain, Blockchain.class)
-                    , MockBean.of(dispatchManager, TaskDispatchManager.class)
-                    , MockBean.of(candlestickDao, DexCandlestickDao.class))
-            .build();
+        .addBeans(
+            MockBean.of(orderDao, DexOrderDao.class)
+            , MockBean.of(scanPerformer, ScanPerformer.class)
+            , MockBean.of(orderScanDao, OrderScanDao.class)
+            , MockBean.of(blockchain, Blockchain.class)
+            , MockBean.of(dispatchManager, TaskDispatchManager.class)
+            , MockBean.of(candlestickDao, DexCandlestickDao.class))
+        .build();
 
+    {
+        doReturn(mock(TaskDispatcher.class)).when(dispatchManager).newScheduledDispatcher(SERVICE_NAME);
+    }
 
     @Test
     void testStartBlockchainScan() {
@@ -78,7 +77,7 @@ class DexOrderScanningServiceIntegrationTest {
             waitFor(state, 2, 3);
             return 100;
         }).when(scanPerformer).doIteration(DexCurrency.ETH, 1000, 100);
-        doAsync(()-> {
+        doAsync(() -> {
             service.tryScan();
             state.set(4);
         });
@@ -87,7 +86,7 @@ class DexOrderScanningServiceIntegrationTest {
         doReturn(8000).when(block).getTimestamp();
         doReturn(eOrder(10L, 10_000, dec("3.22"), 1000, 50000)).when(orderDao).getLastClosedOrderBeforeHeight(DexCurrency.ETH, 50901);
         waitFor(state, 1); // wait until doIteration method will be started
-        doAsync(()-> state.set(2)); // interrupt waiting in doIteration method
+        doAsync(() -> state.set(2)); // interrupt waiting in doIteration method
 
         blockEvent.select(literal(BlockEventType.RESCAN_BEGIN)).fire(block);
         verify(candlestickDao).removeAfterTimestamp(7999);
@@ -128,6 +127,7 @@ class DexOrderScanningServiceIntegrationTest {
     private void waitFor(AtomicInteger integer, int state) {
         waitFor(integer, state, state);
     }
+
     private void waitFor(AtomicInteger integer, int expected, int newValue) {
         while (!integer.compareAndSet(expected, newValue)) {
             ThreadUtils.sleep(10);

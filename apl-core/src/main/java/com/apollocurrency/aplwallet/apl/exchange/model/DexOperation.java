@@ -25,7 +25,7 @@ public class DexOperation {
         private final byte code;
 
         Stage(int code) {
-            this.code = (byte)code;
+            this.code = (byte) code;
         }
 
         public static Stage from(int code) {

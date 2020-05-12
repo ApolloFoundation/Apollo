@@ -5,23 +5,23 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.slf4j.Logger;
 
-import java.util.Objects;
 import javax.inject.Inject;
+import java.util.Objects;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 public abstract class AbstractBlockValidator implements BlockValidator {
     private static final Logger LOG = getLogger(AbstractBlockValidator.class);
-    private Blockchain blockchain;
     protected BlockchainConfig blockchainConfig;
+    private Blockchain blockchain;
     private AccountService accountService;
-    
+
     @Inject
     public AbstractBlockValidator(Blockchain blockchain, BlockchainConfig blockchainConfig, AccountService accountService) {
         Objects.requireNonNull(blockchain, "Blockchain is null");
@@ -38,13 +38,13 @@ public abstract class AbstractBlockValidator implements BlockValidator {
         }
         if (block.getTimestamp() > curTime + Constants.MAX_TIMEDRIFT) {
             LOG.warn("Received block " + block.getStringId() + " from the future, timestamp " + block.getTimestamp()
-                    + " generator " + Long.toUnsignedString(block.getGeneratorId()) + " current time " + curTime + ", system clock may be off");
+                + " generator " + Long.toUnsignedString(block.getGeneratorId()) + " current time " + curTime + ", system clock may be off");
             throw new BlockchainProcessor.BlockOutOfOrderException("Invalid timestamp: " + block.getTimestamp()
-                    + " current time is " + curTime, block);
+                + " current time is " + curTime, block);
         }
         if (block.getTimestamp() <= previousLastBlock.getTimestamp()) {
             throw new BlockchainProcessor.BlockNotAcceptedException("Block timestamp " + block.getTimestamp() + " is before previous block timestamp "
-                    + previousLastBlock.getTimestamp(), block);
+                + previousLastBlock.getTimestamp(), block);
         }
         verifySignature(block);
         validatePreviousHash(block, previousLastBlock);

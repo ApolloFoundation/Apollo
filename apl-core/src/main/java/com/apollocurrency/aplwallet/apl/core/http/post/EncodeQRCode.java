@@ -22,10 +22,10 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
 import com.google.zxing.MultiFormatWriter;
@@ -37,6 +37,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
+import javax.enterprise.inject.Vetoed;
 import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletRequest;
 import java.awt.image.BufferedImage;
@@ -45,7 +46,6 @@ import java.io.IOException;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
-import javax.enterprise.inject.Vetoed;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -94,12 +94,12 @@ public final class EncodeQRCode extends AbstractAPIRequestHandler {
     private static final Logger LOG = getLogger(EncodeQRCode.class);
 
     public EncodeQRCode() {
-        super(new APITag[] {APITag.UTILS}, "qrCodeData", "width", "height");
+        super(new APITag[]{APITag.UTILS}, "qrCodeData", "width", "height");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest request)
-            throws AplException {
+        throws AplException {
 
         JSONObject response = new JSONObject();
 
@@ -115,10 +115,10 @@ public final class EncodeQRCode extends AbstractAPIRequestHandler {
             hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
 
             BitMatrix matrix = new MultiFormatWriter().encode(qrCodeData,
-                    BarcodeFormat.QR_CODE,
-                    width,
-                    height,
-                    hints
+                BarcodeFormat.QR_CODE,
+                width,
+                height,
+                hints
             );
             BufferedImage bufferedImage = MatrixToImageWriter.toBufferedImage(matrix);
             ByteArrayOutputStream os = new ByteArrayOutputStream();
@@ -127,7 +127,7 @@ public final class EncodeQRCode extends AbstractAPIRequestHandler {
             os.close();
             String base64 = Base64.getEncoder().encodeToString(bytes);
             response.put("qrCodeBase64", base64);
-        } catch(WriterException|IOException ex) {
+        } catch (WriterException | IOException ex) {
             String errorMessage = "Error creating image from qrCodeData";
             LOG.error(errorMessage, ex);
             JSONData.putException(response, ex, errorMessage);

@@ -3,21 +3,6 @@
  */
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
-import javax.annotation.security.PermitAll;
-import javax.annotation.security.RolesAllowed;
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
-
-import java.util.Map;
-import java.util.Objects;
-
 import com.apollocurrency.aplwallet.api.dto.info.BlockchainConstantsDto;
 import com.apollocurrency.aplwallet.api.dto.info.BlockchainStateDto;
 import com.apollocurrency.aplwallet.api.dto.info.BlockchainStatusDto;
@@ -32,22 +17,38 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
+import javax.inject.Inject;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
+import java.util.Map;
+import java.util.Objects;
+
 @Slf4j
 @Path("/server")
 public class ServerInfoController {
+    @Context
+    SecurityContext context;
     private ServerInfoService serverInfoService;
-    @Context SecurityContext context;
 
     @Inject
     public ServerInfoController(ServerInfoService serverInfoService) {
-        this.serverInfoService = Objects.requireNonNull(serverInfoService,"serverInfoService is NULL");
+        this.serverInfoService = Objects.requireNonNull(serverInfoService, "serverInfoService is NULL");
     }
 
     public ServerInfoController() {
     }
 
     @Path("/blockchain/status")
-    @GET
+    @GET // for backward compatibility
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
         summary = "Returns status information",
@@ -60,7 +61,29 @@ public class ServerInfoController {
         }
     )
     @PermitAll
-    public Response blockchainStatus() {
+    public Response blockchainStatusGet() {
+        return getResponseStatus();
+    }
+
+    @Path("/blockchain/status")
+    @POST // for backward compatibility
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+        summary = "Returns status information",
+        description = "Returns status information about node settings",
+        tags = {"info"},
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Successful execution",
+                content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = BlockchainStatusDto.class)))
+        }
+    )
+    @PermitAll
+    public Response blockchainStatusPost() {
+        return getResponseStatus();
+    }
+
+    private Response getResponseStatus() {
         log.trace("Started blockchain Status");
         ResponseBuilder response = ResponseBuilder.startTiming();
         BlockchainStatusDto dto = serverInfoService.getBlockchainStatus();
@@ -106,9 +129,9 @@ public class ServerInfoController {
     @RolesAllowed("admin")
     public Response blockchainState(
         @Parameter(name = "includeCounts", description = "true for including additional data", allowEmptyValue = true)
-            @QueryParam("includeCounts") Boolean includeCounts,
+        @QueryParam("includeCounts") Boolean includeCounts,
         @Parameter(description = "The admin password.", required = true) @QueryParam("adminPassword") String adminPassword
-        ) {
+    ) {
         log.trace("Started blockchain State: \t includeCounts = {}", includeCounts);
         ResponseBuilder response = ResponseBuilder.startTiming();
         // that dto is BlockchainStatusDto + additional fields in BlockchainStateDto

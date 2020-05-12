@@ -23,11 +23,8 @@ import java.util.List;
 @Singleton
 public class TaggedDataExtendDao extends ValuesDbTable<TaggedDataExtend> {
 
-    protected DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
-
     private static final String DB_TABLE = "tagged_data_extend";
     private static final TaggedDataExtendDataMapper MAPPER = new TaggedDataExtendDataMapper();
-
     private static final LongKeyFactory<TaggedDataExtend> taggedDataKeyFactory = new LongKeyFactory<>("id") {
         @Override
         public DbKey newKey(TaggedDataExtend taggedData) {
@@ -37,6 +34,7 @@ public class TaggedDataExtendDao extends ValuesDbTable<TaggedDataExtend> {
             return taggedData.getDbKey();
         }
     };
+    protected DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
 
 
     public TaggedDataExtendDao() {
@@ -47,15 +45,15 @@ public class TaggedDataExtendDao extends ValuesDbTable<TaggedDataExtend> {
         return this.get(taggedDataKeyFactory.newKey(taggedDataId));
     }
 
-    public List<TaggedDataExtend> get(Long id){
+    public List<TaggedDataExtend> get(Long id) {
         return get(taggedDataKeyFactory.newKey(id));
     }
 
     @Override
     public void save(Connection con, TaggedDataExtend taggedData) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement(
-                "INSERT INTO tagged_data_extend (id, extend_id, "
-                        + "height, latest) VALUES (?, ?, ?, TRUE)")) {
+            "INSERT INTO tagged_data_extend (id, extend_id, "
+                + "height, latest) VALUES (?, ?, ?, TRUE)")) {
             int i = 0;
             pstmt.setLong(++i, taggedData.getTaggedDataId());
             pstmt.setLong(++i, taggedData.getExtendId());

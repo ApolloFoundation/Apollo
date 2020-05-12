@@ -14,30 +14,16 @@ import java.util.Objects;
 
 public class PhasingPoll extends AbstractPoll {
 
+    private final long quorum;
+    private final byte[] hashedSecret;
+    private final byte algorithm;
     private long[] whitelist;
     /**
      * Time in seconds.
      */
     private int finishTime;
-    private final long quorum;
-    private final byte[] hashedSecret;
-    private final byte algorithm;
     private byte[][] linkedFullHashes;
     private byte[] fullHash;
-
-    public List<byte[]> getLinkedFullHashes() {
-        return linkedFullHashes == null ? null : Arrays.asList(linkedFullHashes);
-    }
-
-    public void setLinkedFullHashes(List<byte[]> linkedFullHashes) {
-        Objects.requireNonNull(linkedFullHashes);
-        this.linkedFullHashes = linkedFullHashes.toArray(Convert.EMPTY_BYTES);
-    }
-
-    public void setFullHash(byte[] fullHash) {
-        this.fullHash = fullHash;
-    }
-
 
     public PhasingPoll(Long dbId, long id, long accountId, long[] whitelist, byte[] fullHash, int finishHeight, int finishTime,
                        long quorum, VoteWeighting voteWeighting, byte[] hashedSecret, byte algorithm, byte[][] linkedFullhashes, Integer height) {
@@ -51,8 +37,22 @@ public class PhasingPoll extends AbstractPoll {
         this.linkedFullHashes = linkedFullhashes;
     }
 
+    public List<byte[]> getLinkedFullHashes() {
+        return linkedFullHashes == null ? null : Arrays.asList(linkedFullHashes);
+    }
+
+    public void setLinkedFullHashes(List<byte[]> linkedFullHashes) {
+        Objects.requireNonNull(linkedFullHashes);
+        this.linkedFullHashes = linkedFullHashes.toArray(Convert.EMPTY_BYTES);
+    }
+
     public long[] getWhitelist() {
         return whitelist;
+    }
+
+    public void setWhitelist(long[] whitelist) {
+        Objects.requireNonNull(whitelist, "Whitelist should not be null");
+        this.whitelist = whitelist;
     }
 
     public long getQuorum() {
@@ -63,6 +63,9 @@ public class PhasingPoll extends AbstractPoll {
         return fullHash;
     }
 
+    public void setFullHash(byte[] fullHash) {
+        this.fullHash = fullHash;
+    }
 
     public byte[] getHashedSecret() {
         return hashedSecret;
@@ -76,11 +79,6 @@ public class PhasingPoll extends AbstractPoll {
         return finishTime;
     }
 
-    public void setWhitelist(long[] whitelist) {
-        Objects.requireNonNull(whitelist, "Whitelist should not be null");
-        this.whitelist = whitelist;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -88,8 +86,8 @@ public class PhasingPoll extends AbstractPoll {
         if (!super.equals(o)) return false;
         PhasingPoll that = (PhasingPoll) o;
         return quorum == that.quorum &&
-                algorithm == that.algorithm &&
-                Arrays.equals(hashedSecret, that.hashedSecret);
+            algorithm == that.algorithm &&
+            Arrays.equals(hashedSecret, that.hashedSecret);
     }
 
     public boolean fullEquals(PhasingPoll poll) {
@@ -97,9 +95,9 @@ public class PhasingPoll extends AbstractPoll {
             return false;
         }
         return
-                Arrays.equals(whitelist, poll.whitelist) &&
-                        Arrays.deepEquals(linkedFullHashes, poll.linkedFullHashes) &&
-                        Arrays.equals(fullHash, poll.fullHash);
+            Arrays.equals(whitelist, poll.whitelist) &&
+                Arrays.deepEquals(linkedFullHashes, poll.linkedFullHashes) &&
+                Arrays.equals(fullHash, poll.fullHash);
     }
 
     @Override

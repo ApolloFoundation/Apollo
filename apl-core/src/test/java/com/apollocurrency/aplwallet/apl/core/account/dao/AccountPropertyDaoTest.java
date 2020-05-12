@@ -45,28 +45,24 @@ class AccountPropertyDaoTest {
 
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension(DbTestData.getInMemDbProps(), "db/acc-data.sql", "db/schema.sql");
-
+    @Inject
+    AccountPropertyTable table;
+    AccountTestData testData;
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     private BlockchainProcessor blockchainProcessor = mock(BlockchainProcessor.class);
-
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class, AccountPropertyTable.class
+        PropertiesHolder.class, AccountPropertyTable.class
     )
-            .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
-            .addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class))
-            .addBeans(MockBean.of(blockchainProcessor, BlockchainProcessor.class, BlockchainProcessorImpl.class))
-            .addBeans(MockBean.of(mock(FullTextConfig.class), FullTextConfig.class, FullTextConfigImpl.class))
-            .addBeans(MockBean.of(mock(DerivedTablesRegistry.class), DerivedTablesRegistry.class, DerivedDbTablesRegistryImpl.class))
-            .build();
-
-    @Inject
-    AccountPropertyTable table;
-
-    AccountTestData testData;
+        .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
+        .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
+        .addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class))
+        .addBeans(MockBean.of(blockchainProcessor, BlockchainProcessor.class, BlockchainProcessorImpl.class))
+        .addBeans(MockBean.of(mock(FullTextConfig.class), FullTextConfig.class, FullTextConfigImpl.class))
+        .addBeans(MockBean.of(mock(DerivedTablesRegistry.class), DerivedTablesRegistry.class, DerivedDbTablesRegistryImpl.class))
+        .build();
 
     @BeforeEach
     void setUp() {
@@ -105,7 +101,7 @@ class AccountPropertyDaoTest {
     @Test
     void getProperties() {
         List<AccountProperty> expected = List.of(testData.ACC_PROP_0, testData.ACC_PROP_4, testData.ACC_PROP_8)
-                .stream().sorted(Comparator.comparing(AccountProperty::getProperty)).collect(Collectors.toList());
+            .stream().sorted(Comparator.comparing(AccountProperty::getProperty)).collect(Collectors.toList());
         List<AccountProperty> actual = toList(table.getProperties(testData.ACC_PROP_0.getRecipientId(), 0, null, 0, Integer.MAX_VALUE));
         assertEquals(expected, actual);
     }
@@ -114,8 +110,8 @@ class AccountPropertyDaoTest {
     void getProperty() {
         AccountProperty expected = testData.ACC_PROP_6;
         AccountProperty actual = table.getProperty(testData.ACC_PROP_6.getRecipientId(),
-                testData.ACC_PROP_6.getProperty(),
-                testData.ACC_PROP_6.getSetterId());
+            testData.ACC_PROP_6.getProperty(),
+            testData.ACC_PROP_6.getSetterId());
         assertEquals(expected, actual);
     }
 }

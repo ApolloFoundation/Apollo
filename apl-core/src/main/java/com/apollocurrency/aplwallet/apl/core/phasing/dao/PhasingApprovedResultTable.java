@@ -7,14 +7,14 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.mapper.PhasingApprovedResultMapper;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingApprovalResult;
 
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import javax.inject.Singleton;
 
 @Singleton
-public class PhasingApprovedResultTable  extends EntityDbTable<PhasingApprovalResult> {
+public class PhasingApprovedResultTable extends EntityDbTable<PhasingApprovalResult> {
 
     private static final String TABLE_NAME = "phasing_approval_tx";
     private static final LongKeyFactory<PhasingApprovalResult> KEY_FACTORY = new LongKeyFactory<>("phasing_tx") {

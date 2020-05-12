@@ -11,27 +11,28 @@ public interface CsvEscaper {
     char DEFAULT_FIELD_DELIMITER = '\"';
     String QUOTE = "\'";
     String DOUBLE_QUOTE = QUOTE + QUOTE;
-    String BYTE_ARRAY_PREFIX = "b"+QUOTE;
+    String BYTE_ARRAY_PREFIX = "b" + QUOTE;
 
 
     Map<Character, CharSequence> CTRL_CHARS_UNESCAPE = Map.of(
-            'b', "\b",
-            'n', "\n",
-            't', "\t",
-            'f', "\f",
-            'r', "\r");
+        'b', "\b",
+        'n', "\n",
+        't', "\t",
+        'f', "\f",
+        'r', "\r");
 
     Map<Character, CharSequence> CTRL_CHARS_ESCAPE = Map.of(
-                    '\\', "\\\\",
-                    '\b', "\\b",
-                    '\n', "\\n",
-                    '\t', "\\t",
-                    '\f', "\\f",
-                    '\r', "\\r");
+        '\\', "\\\\",
+        '\b', "\\b",
+        '\n', "\\n",
+        '\t', "\\t",
+        '\f', "\\f",
+        '\r', "\\r");
 
     /**
      * Translate all control characters to Escaped non control characters
      * Example: LF (#10) symbol is translated to sequence "\\n"
+     *
      * @param data that is being translated
      * @return string output of translation
      */
@@ -39,6 +40,7 @@ public interface CsvEscaper {
 
     /**
      * Translate all Escaped characters to control characters
+     *
      * @param data that is being translated
      * @return string output of translation
      */
@@ -46,6 +48,7 @@ public interface CsvEscaper {
 
     /**
      * Translate byte array into string representation
+     *
      * @param data that is being translated
      * @return string output of translation
      */

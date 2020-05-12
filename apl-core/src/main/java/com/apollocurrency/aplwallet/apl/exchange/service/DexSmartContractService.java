@@ -33,10 +33,7 @@ import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
 import lombok.extern.slf4j.Slf4j;
 import org.ethereum.util.blockchain.EtherUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.web3j.crypto.Credentials;
-import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.RemoteCall;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.protocol.core.methods.response.Transaction;
@@ -47,7 +44,6 @@ import org.web3j.tx.ChainId;
 import org.web3j.tx.ClientTransactionManager;
 import org.web3j.tx.TransactionManager;
 import org.web3j.tx.gas.ContractGasProvider;
-import org.web3j.tx.response.TransactionReceiptProcessor;
 import org.web3j.utils.Numeric;
 
 import javax.annotation.PostConstruct;
@@ -91,10 +87,10 @@ public class DexSmartContractService {
     @Inject
     public DexSmartContractService(PropertiesHolder propertiesHolder, KeyStoreService keyStoreService, DexEthService dexEthService,
                                    EthereumWalletService ethereumWalletService, DexTransactionDao dexTransactionDao,
-                                   DexBeanProducer dexBeanProducer,TaskDispatchManager taskDispatchManager) {
+                                   DexBeanProducer dexBeanProducer, TaskDispatchManager taskDispatchManager) {
         this.keyStoreService = keyStoreService;
         this.smartContractAddress = propertiesHolder.getStringProperty("apl.eth.swap.proxy.contract.address");
-        this.paxContractAddress   = propertiesHolder.getStringProperty("apl.eth.pax.contract.address");
+        this.paxContractAddress = propertiesHolder.getStringProperty("apl.eth.pax.contract.address");
         this.dexEthService = dexEthService;
         this.ethereumWalletService = ethereumWalletService;
         this.dexTransactionDao = dexTransactionDao;
@@ -123,18 +119,19 @@ public class DexSmartContractService {
     }
 
     /**
-     *  Deposit(freeze) money(eth or pax) on the contract.
+     * Deposit(freeze) money(eth or pax) on the contract.
+     *
      * @param currency Eth or Pax
      * @return String transaction hash.
      */
     public String deposit(String passphrase, Long offerId, Long accountId, String fromAddress, BigInteger weiValue, Long gas, DexCurrency currency) throws AplException.ExecutiveProcessException {
         EthWalletKey ethWalletKey = getEthWalletKey(passphrase, accountId, fromAddress);
         Long gasPrice = gas;
-        if(gasPrice == null){
+        if (gasPrice == null) {
             gasPrice = getEthGasPrice();
         }
 
-        if(!currency.isEthOrPax()){
+        if (!currency.isEthOrPax()) {
             throw new UnsupportedOperationException("This function not supported this currency " + currency.name());
         }
 
@@ -162,15 +159,16 @@ public class DexSmartContractService {
     }
 
 
-        /**
-         *  Withdraw money(eth or pax) from the contract.
-         * @return String transaction hash.
-         */
-        public String withdraw(String passphrase, long accountId, String fromAddress, BigInteger orderId, Long gas) throws AplException.ExecutiveProcessException {
+    /**
+     * Withdraw money(eth or pax) from the contract.
+     *
+     * @return String transaction hash.
+     */
+    public String withdraw(String passphrase, long accountId, String fromAddress, BigInteger orderId, Long gas) throws AplException.ExecutiveProcessException {
         EthWalletKey ethWalletKey = getEthWalletKey(passphrase, accountId, fromAddress);
 
         Long gasPrice = gas;
-        if(gasPrice == null){
+        if (gasPrice == null) {
             gasPrice = getEthGasPrice();
         }
 
@@ -181,7 +179,7 @@ public class DexSmartContractService {
     public String initiate(String passphrase, long accountId, String fromAddress, Long orderId, byte[] secretHash, String recipient, Integer refundTimestamp, Long gas) throws AplException.ExecutiveProcessException {
         EthWalletKey ethWalletKey = getEthWalletKey(passphrase, accountId, fromAddress);
         Long gasPrice = gas;
-        if(gasPrice == null){
+        if (gasPrice == null) {
             gasPrice = getEthGasPrice();
         }
 
@@ -200,7 +198,7 @@ public class DexSmartContractService {
 
         String params = Numeric.toHexString(secretHash);
         String identifier = fromAddress + params + DexTransaction.Op.REFUND;
-        synchronized (idLocks.compute(identifier, (k, v)-> v == null ? new Object() : v)) {
+        synchronized (idLocks.compute(identifier, (k, v) -> v == null ? new Object() : v)) {
             String txHash = checkExistingTx(dexTransactionDao.get(params, fromAddress, DexTransaction.Op.REFUND), waitConfirmation);
             if (txHash == null) {
                 ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EtherUtil.convert(getEthGasPrice(), EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
@@ -218,7 +216,7 @@ public class DexSmartContractService {
 
         String params = Numeric.toHexString(secretHash);
         String identifier = fromAddress + params + DexTransaction.Op.REFUND;
-        synchronized (idLocks.compute(identifier, (k, v)-> v == null ? new Object() : v)) {
+        synchronized (idLocks.compute(identifier, (k, v) -> v == null ? new Object() : v)) {
             String txHash = checkExistingTx(dexTransactionDao.get(params, fromAddress, DexTransaction.Op.REFUND), waitConfirmation);
             if (txHash == null) {
                 ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EtherUtil.convert(getEthGasPrice(), EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
@@ -243,11 +241,11 @@ public class DexSmartContractService {
     }
 
     public SwapDataInfo getSwapData(Credentials credentials, byte[] secretHash) throws AplException.ExecutiveProcessException {
-        DexContract  dexContract = new DexContractImpl(smartContractAddress, dexBeanProducer.web3j(), credentials, null);
+        DexContract dexContract = new DexContractImpl(smartContractAddress, dexBeanProducer.web3j(), credentials, null);
         try {
             SwapDataInfo swapDataInfo = SwapDataInfoMapper.map(dexContract.getSwapData(secretHash).sendAsync().get());
             return swapDataInfo;
-        } catch (Exception e){
+        } catch (Exception e) {
             throw new AplException.ExecutiveProcessException(e.getMessage());
         }
     }
@@ -298,8 +296,6 @@ public class DexSmartContractService {
     }
 
 
-
-
     public boolean isDepositForOrderExist(String userAddress, Long orderId) {
         DepositedOrderDetails depositedOrderDetails = getDepositedOrderDetails(userAddress, orderId);
 
@@ -316,14 +312,14 @@ public class DexSmartContractService {
         WalletKeysInfo walletKeysInfo = keyStoreService.getWalletKeysInfo(passphrase, accountId);
 
         return walletKeysInfo.getEthWalletKeys().stream()
-                .map(k -> k.getCredentials().getAddress())
-                .collect(Collectors.toList());
+            .map(k -> k.getCredentials().getAddress())
+            .collect(Collectors.toList());
     }
 
     private String approve(Credentials credentials, byte[] secret, Long gasPrice) {
         String params = Numeric.toHexString(secret);
         String identifier = credentials.getAddress() + params + DexTransaction.Op.REDEEM;
-        synchronized (idLocks.compute(identifier, (k, v)-> v == null ? new Object() : v)) {
+        synchronized (idLocks.compute(identifier, (k, v) -> v == null ? new Object() : v)) {
             String txHash = checkExistingTx(dexTransactionDao.get(params, credentials.getAddress(), DexTransaction.Op.REDEEM));
             if (txHash == null) {
                 ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
@@ -341,15 +337,16 @@ public class DexSmartContractService {
     }
 
     /**
-     *  Deposit some eth/erc20.
-     * @param orderId  is Long but then will use as unsign value.
+     * Deposit some eth/erc20.
+     *
+     * @param orderId is Long but then will use as unsign value.
      * @param token
      * @return link on tx.
      */
     private String deposit(Credentials credentials, Long orderId, BigInteger weiValue, Long gasPrice, String token) {
         String params = orderId.toString(); // assume that order id is unique
         String identifier = credentials.getAddress() + orderId.toString() + DexTransaction.Op.DEPOSIT;
-        synchronized (idLocks.compute(identifier, (k, v)-> v == null ? new Object() : v)) {
+        synchronized (idLocks.compute(identifier, (k, v) -> v == null ? new Object() : v)) {
             DexTransaction existingTx = dexTransactionDao.get(params, credentials.getAddress(), DexTransaction.Op.DEPOSIT);
             String txHash = checkExistingTx(existingTx);
             if (txHash == null) {
@@ -373,7 +370,7 @@ public class DexSmartContractService {
     }
 
     DexContract createDexContract(ContractGasProvider gasProvider, DexTransaction dexTransaction, Credentials credentials) {
-       return new DexContractImpl(smartContractAddress, dexBeanProducer.web3j(), createTransactionManager(dexTransaction, credentials), gasProvider, ethereumWalletService);
+        return new DexContractImpl(smartContractAddress, dexBeanProducer.web3j(), createTransactionManager(dexTransaction, credentials), gasProvider, ethereumWalletService);
     }
 
     private String checkExistingTx(DexTransaction tx) {
@@ -418,13 +415,14 @@ public class DexSmartContractService {
         }
         return txHash;
     }
+
     // set of methods to allow mocking of web3j interactions
     Optional<Transaction> getTxByHash(String hash) throws IOException {
-        return  dexBeanProducer.web3j().ethGetTransactionByHash(hash).send().getTransaction();
+        return dexBeanProducer.web3j().ethGetTransactionByHash(hash).send().getTransaction();
     }
 
     Optional<TransactionReceipt> getTxReceipt(String hash) throws IOException {
-        return  dexBeanProducer.web3j().ethGetTransactionReceipt(hash).send().getTransactionReceipt();
+        return dexBeanProducer.web3j().ethGetTransactionReceipt(hash).send().getTransactionReceipt();
     }
 
     String sendRawTransaction(String encodedTx, boolean waitConfirmation) throws IOException, NotValidTransactionException {
@@ -455,7 +453,7 @@ public class DexSmartContractService {
         ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
         String identifier = credentials.getAddress() + orderId.toString() + DexTransaction.Op.WITHDRAW;
 
-        synchronized (idLocks.compute(identifier, (k, v)-> v == null ? new Object() : v)) {
+        synchronized (idLocks.compute(identifier, (k, v) -> v == null ? new Object() : v)) {
             String txHash = checkExistingTx(dexTransactionDao.get(orderId.toString(), credentials.getAddress(), DexTransaction.Op.WITHDRAW));
             if (txHash == null) {
                 DexTransaction dexTransaction = createDexTransaction(DexTransaction.Op.WITHDRAW, orderId.toString(), credentials.getAddress());
@@ -472,13 +470,14 @@ public class DexSmartContractService {
     }
 
     /**
-     *  Initiate atomic swap.
+     * Initiate atomic swap.
+     *
      * @return link on tx.
      */
     private String initiate(Credentials credentials, BigInteger orderId, byte[] secretHash, String recipient, Integer refundTimestamp, Long gasPrice) {
         ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
-        String identifier = credentials.getAddress() + Numeric.toHexString(secretHash)  + DexTransaction.Op.INITIATE;
-        synchronized (idLocks.compute(identifier, (k, v)-> v == null ? new Object() : v)) {
+        String identifier = credentials.getAddress() + Numeric.toHexString(secretHash) + DexTransaction.Op.INITIATE;
+        synchronized (idLocks.compute(identifier, (k, v) -> v == null ? new Object() : v)) {
             String txHash = checkExistingTx(dexTransactionDao.get(orderId.toString(), credentials.getAddress(), DexTransaction.Op.INITIATE));
             if (txHash == null) {
                 DexContract dexContract = createDexContract(contractGasProvider,
@@ -493,7 +492,7 @@ public class DexSmartContractService {
 
     public DepositedOrderDetails getDepositedOrderDetails(String address, Long orderId) {
         TransactionManager transactionManager = new ClientTransactionManager(dexBeanProducer.web3j(), address);
-        DexContract  dexContract = new DexContractImpl(smartContractAddress, dexBeanProducer.web3j(), transactionManager, null, null);
+        DexContract dexContract = new DexContractImpl(smartContractAddress, dexBeanProducer.web3j(), transactionManager, null, null);
         try {
             return DepositedOrderDetailsMapper.map(dexContract.getOrderDetails(new BigInteger(Long.toUnsignedString(orderId)), address).sendAsync().get());
         } catch (Exception e) {
@@ -504,11 +503,11 @@ public class DexSmartContractService {
 
     private EthWalletKey getEthWalletKey(String passphrase, Long accountId, String fromAddress) throws AplException.ExecutiveProcessException {
         WalletKeysInfo keyStore = keyStoreService.getWalletKeysInfo(passphrase, accountId);
-        if(keyStore==null){
+        if (keyStore == null) {
             throw new AplException.ExecutiveProcessException("User wallet wasn't found.");
         }
         EthWalletKey ethWalletKey = keyStore.getEthWalletForAddress(fromAddress);
-        if(ethWalletKey==null){
+        if (ethWalletKey == null) {
             throw new AplException.ExecutiveProcessException("Wallet's address wasn't found. " + fromAddress);
         }
         return ethWalletKey;
@@ -523,7 +522,7 @@ public class DexSmartContractService {
             throw new AplException.ExecutiveProcessException("Third service is not available, try later.");
         }
 
-        if(gasPrice == null){
+        if (gasPrice == null) {
             throw new AplException.ThirdServiceIsNotAvailable("Eth Price Info is not available.");
         }
         return gasPrice;

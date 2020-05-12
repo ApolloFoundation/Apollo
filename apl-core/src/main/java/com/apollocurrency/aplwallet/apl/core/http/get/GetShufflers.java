@@ -42,8 +42,8 @@ import java.util.List;
 public final class GetShufflers extends AbstractAPIRequestHandler {
 
     public GetShufflers() {
-        super(new APITag[] {APITag.SHUFFLING}, "account", "shufflingFullHash", "secretPhrase", "adminPassword", "includeParticipantState",
-                "passphrase");
+        super(new APITag[]{APITag.SHUFFLING}, "account", "shufflingFullHash", "secretPhrase", "adminPassword", "includeParticipantState",
+            "passphrase");
     }
 
     @Override

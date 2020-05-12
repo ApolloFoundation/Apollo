@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.chainid;
@@ -11,9 +11,13 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
 import javax.inject.Singleton;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -23,8 +27,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 @Singleton
 public class BlockchainConfig {
-    private static final Logger LOG = getLogger(BlockchainConfig.class);
     static final int DEFAULT_MIN_PRUNABLE_LIFETIME = 14 * 1440 * 60; // two weeks in seconds
+    private static final Logger LOG = getLogger(BlockchainConfig.class);
     private int leasingDelay;
     private int minPrunableLifetime;
     private boolean enablePruning;
@@ -35,11 +39,17 @@ public class BlockchainConfig {
     private long shufflingDepositAtm;
     private int guaranteedBalanceConfirmations;
     private volatile HeightConfig currentConfig;
-    private volatile HeightConfig previousConfig; // keep previous config for easy access
+    private volatile HeightConfig previousConfig; // keep a previous config for easy access
     private Chain chain;
+    private Map<Integer, HeightConfig> heightConfigMap = new LinkedHashMap<>(0);
     private volatile boolean isJustUpdated = false;
 
-    public BlockchainConfig() {}
+    public BlockchainConfig() {
+    }
+
+    public BlockchainConfig(Chain chain, PropertiesHolder holder) {
+        updateChain(chain, holder);
+    }
 
     public void updateChain(Chain chain, int minPrunableLifetime, int maxPrunableLifetime) {
 
@@ -49,8 +59,29 @@ public class BlockchainConfig {
         if (blockchainProperties.isEmpty() || blockchainProperties.get(0) == null) {
             throw new IllegalArgumentException("Chain has no initial blockchain properties at height 0! ChainId = " + chain.getChainId());
         }
-        currentConfig = new HeightConfig(blockchainProperties.get(0));
+        heightConfigMap = blockchainProperties.values()
+            .stream()
+            .map(HeightConfig::new)
+            .sorted(Comparator.comparing(HeightConfig::getHeight))
+            .collect(Collectors.toMap(HeightConfig::getHeight, Function.identity(), (old, newv)-> newv, LinkedHashMap::new));
+        currentConfig = heightConfigMap.get(0);
         LOG.debug("Switch to chain {} - {}. ChainId - {}", chain.getName(), chain.getDescription(), chain.getChainId());
+    }
+
+    public HeightConfig getConfigAtHeight(int targetHeight) {
+        HeightConfig heightConfig = heightConfigMap.get(targetHeight);
+        if (heightConfig != null) {
+            return heightConfig;
+        }
+        Optional<Integer> maxHeight =
+            heightConfigMap
+                .keySet()
+                .stream()
+                .filter(height -> targetHeight >= height)
+                .max(Comparator.naturalOrder());
+        return maxHeight
+            .map(height -> heightConfigMap.get(height))
+            .orElse(null);
     }
 
     private void setFields(Chain chain, int minPrunableLifetime, int maxPrunableLifetime) {
@@ -66,10 +97,6 @@ public class BlockchainConfig {
         this.guaranteedBalanceConfirmations = 1440;
         this.enablePruning = maxPrunableLifetime >= 0;
         this.maxPrunableLifetime = enablePruning ? Math.max(maxPrunableLifetime, this.minPrunableLifetime) : Integer.MAX_VALUE;
-    }
-
-    public BlockchainConfig(Chain chain, PropertiesHolder holder) {
-        updateChain(chain, holder);
     }
 
     void updateChain(Chain chain, PropertiesHolder holder) {
@@ -150,18 +177,19 @@ public class BlockchainConfig {
         return currentConfig;
     }
 
-    public Chain getChain() {
-        return chain;
-    }
-
     /**
      * For UNIT TEST only!
+     *
      * @param currentConfig
      */
     public void setCurrentConfig(HeightConfig currentConfig) {
         this.previousConfig = this.currentConfig;
         this.currentConfig = currentConfig;
         this.isJustUpdated = true; // setup flag to catch chains.json config change on APPLY_BLOCK
+    }
+
+    public Chain getChain() {
+        return chain;
     }
 
     public Optional<HeightConfig> getPreviousConfig() {
@@ -171,6 +199,7 @@ public class BlockchainConfig {
     /**
      * Flag to catch configuration changing
      * // TODO: YL after separating 'shard' and 'trim' logic, we can remove 'isJustUpdated() + resetJustUpdated()' usage
+     *
      * @return
      */
     public boolean isJustUpdated() {

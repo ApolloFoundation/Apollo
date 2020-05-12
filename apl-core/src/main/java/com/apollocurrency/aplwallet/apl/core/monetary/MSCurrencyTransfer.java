@@ -9,15 +9,15 @@ import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import java.nio.ByteBuffer;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+
 /**
- *
  * @author al
  */
 class MSCurrencyTransfer extends MonetarySystem {
-    
+
     public MSCurrencyTransfer() {
     }
 
@@ -92,5 +92,5 @@ class MSCurrencyTransfer extends MonetarySystem {
     public boolean canHaveRecipient() {
         return true;
     }
-    
+
 }

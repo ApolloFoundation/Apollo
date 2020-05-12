@@ -9,36 +9,33 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.PostConstruct;
+import javax.enterprise.event.ObservesAsync;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.annotation.PostConstruct;
-import javax.enterprise.event.ObservesAsync;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 public class ActiveGenerators {
     private static final Logger LOG = LoggerFactory.getLogger(ActiveGenerators.class);
     private static final int MAX_TRACKED_GENERATORS = 50;
-    private Blockchain blockchain;
     /**
      * Active block generators
      */
     private static final Set<Long> activeGeneratorIds = new HashSet<>();
-
-    /**
-     * Active block identifier
-     */
-    private long activeBlockId;
-
     /**
      * Sorted list of generators for the next block
      */
     private final List<ActiveGenerator> activeGenerators = new ArrayList<>();
-
+    private Blockchain blockchain;
+    /**
+     * Active block identifier
+     */
+    private long activeBlockId;
     /**
      * Generator list has been initialized
      */
@@ -61,6 +58,7 @@ public class ActiveGenerators {
             throw new IllegalStateException("Active generators already initialized");
         }
     }
+
     /**
      * Return a list of generators for the next block.  The caller must hold the blockchain
      * read lock to ensure the integrity of the returned list.
@@ -85,9 +83,10 @@ public class ActiveGenerators {
         return generatorList;
 
     }
+
     public synchronized void onBlockPushed(@ObservesAsync @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
         long generatorId = block.getGeneratorId();
-        synchronized(activeGenerators) {
+        synchronized (activeGenerators) {
             if (!activeGeneratorIds.contains(generatorId)) {
                 activeGeneratorIds.add(generatorId);
                 activeGenerators.add(new ActiveGenerator(generatorId));

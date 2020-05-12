@@ -23,8 +23,8 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtend;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtendAttachment;
@@ -35,11 +35,11 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import java.util.List;
-import java.util.stream.Collectors;
 import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Vetoed
 public final class GetTaggedDataExtendTransactions extends AbstractAPIRequestHandler {
@@ -47,7 +47,7 @@ public final class GetTaggedDataExtendTransactions extends AbstractAPIRequestHan
     private TaggedDataService taggedDataService = CDI.current().select(TaggedDataService.class).get();
 
     public GetTaggedDataExtendTransactions() {
-        super(new APITag[] {APITag.DATA}, "transaction");
+        super(new APITag[]{APITag.DATA}, "transaction");
     }
 
     @Override
@@ -58,7 +58,7 @@ public final class GetTaggedDataExtendTransactions extends AbstractAPIRequestHan
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();
         Blockchain blockchain = lookupBlockchain();
-        Filter<Appendix> filter = (appendix) -> ! (appendix instanceof TaggedDataExtendAttachment);
+        Filter<Appendix> filter = (appendix) -> !(appendix instanceof TaggedDataExtendAttachment);
         extendTransactions.forEach(transactionId -> jsonArray.add(JSONData.transaction(blockchain.getTransaction(transactionId), filter, false)));
         response.put("extendTransactions", jsonArray);
         return response;

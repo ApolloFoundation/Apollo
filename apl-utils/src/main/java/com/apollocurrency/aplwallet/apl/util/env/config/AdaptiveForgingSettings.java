@@ -60,10 +60,10 @@ public class AdaptiveForgingSettings {
     @Override
     public String toString() {
         return "AdaptiveForgingSettings{" +
-                "enabled=" + enabled +
-                ", adaptiveBlockTime=" + adaptiveBlockTime +
-                ", numberOfTransactions=" + numberOfTransactions +
-                '}';
+            "enabled=" + enabled +
+            ", adaptiveBlockTime=" + adaptiveBlockTime +
+            ", numberOfTransactions=" + numberOfTransactions +
+            '}';
     }
 
     @Override
@@ -72,8 +72,8 @@ public class AdaptiveForgingSettings {
         if (!(o instanceof AdaptiveForgingSettings)) return false;
         AdaptiveForgingSettings that = (AdaptiveForgingSettings) o;
         return enabled == that.enabled &&
-                adaptiveBlockTime == that.adaptiveBlockTime &&
-                numberOfTransactions == that.numberOfTransactions;
+            adaptiveBlockTime == that.adaptiveBlockTime &&
+            numberOfTransactions == that.numberOfTransactions;
     }
 
     @Override

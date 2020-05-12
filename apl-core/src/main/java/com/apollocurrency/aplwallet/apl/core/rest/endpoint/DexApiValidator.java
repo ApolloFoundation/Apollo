@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.math.BigInteger;
+
 @Singleton
 public class DexApiValidator {
     private final EthereumWalletService walletService;
@@ -53,13 +54,13 @@ public class DexApiValidator {
     }
 
 
-
     private void validateEthPaxAccountBalance(BigInteger haveToPay, String walletAddress, DexCurrency currency) throws ParameterException {
         BigInteger balanceWei = walletService.getEthOrPaxBalanceWei(walletAddress, currency);
         if (haveToPay.compareTo(balanceWei) >= 0) {
             throw new ParameterException(JSONResponses.notEnoughCurrency(currency));
         }
     }
+
     public void validateVaultAccount(long sender, String passphrase) throws ParameterException {
         WalletKeysInfo walletKeysInfo = keyStoreService.getWalletKeysInfo(passphrase, sender);
         if (walletKeysInfo == null) {

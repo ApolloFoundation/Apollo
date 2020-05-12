@@ -19,7 +19,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
  * @author Serhiy Lymar
  */
 
@@ -31,35 +30,32 @@ public class EthGasStationInfoDaoTest {
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-            DexEthService.class,
-            EthGasStationInfoDao.class)
-            .build();
-
+        DexEthService.class,
+        EthGasStationInfoDao.class)
+        .build();
+    @Inject
+    DexEthService dexEthService;
+    Logger logger = Logger.getLogger(EthGasStationInfoDaoTest.class.getName());
     @Inject
     private EthGasStationInfoDao ethGasStationInfoDao;
-
-    @Inject DexEthService dexEthService;
-
-
-    Logger logger = Logger.getLogger(EthGasStationInfoDaoTest.class.getName());
 
     @Test
     void testQuery() {
 
-        logger.log(Level.INFO,"Teting ETH Gas station query: ");
+        logger.log(Level.INFO, "Teting ETH Gas station query: ");
 
         try {
 
-            for (int i = 0; i<nTests; i++) {
+            for (int i = 0; i < nTests; i++) {
 
-                logger.log(Level.INFO,"test " + (i+1) + " out of " + nTests );
+                logger.log(Level.INFO, "test " + (i + 1) + " out of " + nTests);
 
                 EthGasInfo ethGasInfo = ethGasStationInfoDao.getEthPriceInfo();
                 assert (ethGasInfo != null);
 
                 logger.log(Level.INFO, "average : " + ethGasInfo.getAverageSpeedPrice());
-                logger.log(Level.INFO,  "fast : " + ethGasInfo.getFastSpeedPrice());
-                logger.log(Level.INFO,  "low  : " + ethGasInfo.getSafeLowSpeedPrice());
+                logger.log(Level.INFO, "fast : " + ethGasInfo.getFastSpeedPrice());
+                logger.log(Level.INFO, "low  : " + ethGasInfo.getSafeLowSpeedPrice());
 
             }
 
@@ -70,13 +66,13 @@ public class EthGasStationInfoDaoTest {
 
     @Test
     void testService() {
-        logger.log(Level.INFO,"Teting ETH Gas station service: ");
+        logger.log(Level.INFO, "Teting ETH Gas station service: ");
 
-        for (int i = 0; i<nTests; i++) {
+        for (int i = 0; i < nTests; i++) {
 
-            logger.log(Level.INFO,"test " + (i+1) + " out of " + nTests );
+            logger.log(Level.INFO, "test " + (i + 1) + " out of " + nTests);
 
-            EthGasInfo ethGasInfo=null;
+            EthGasInfo ethGasInfo = null;
             try {
                 ethGasInfo = dexEthService.getEthPriceInfo();
             } catch (ExecutionException ex) {
@@ -85,32 +81,31 @@ public class EthGasStationInfoDaoTest {
             assert (ethGasInfo != null);
 
             logger.log(Level.INFO, "average : " + ethGasInfo.getAverageSpeedPrice());
-            logger.log(Level.INFO,  "fast : " + ethGasInfo.getFastSpeedPrice());
-            logger.log(Level.INFO,  "low  : " + ethGasInfo.getSafeLowSpeedPrice());
+            logger.log(Level.INFO, "fast : " + ethGasInfo.getFastSpeedPrice());
+            logger.log(Level.INFO, "low  : " + ethGasInfo.getSafeLowSpeedPrice());
 
         }
 
     }
 
 
-
     @Test
     void testChainQuery() {
 
-        logger.log(Level.INFO,"Teting ETH Chain Gas station query: ");
+        logger.log(Level.INFO, "Teting ETH Chain Gas station query: ");
 
         try {
 
-            for (int i = 0; i<nTests; i++) {
+            for (int i = 0; i < nTests; i++) {
 
-                logger.log(Level.INFO,"test " + (i+1) + " out of " + nTests );
+                logger.log(Level.INFO, "test " + (i + 1) + " out of " + nTests);
 
                 EthGasInfo ethGasInfo = ethGasStationInfoDao.getEthChainPriceInfo();
                 assert (ethGasInfo != null);
 
                 logger.log(Level.INFO, "average : " + ethGasInfo.getAverageSpeedPrice());
-                logger.log(Level.INFO,  "fast : " + ethGasInfo.getFastSpeedPrice());
-                logger.log(Level.INFO,  "low  : " + ethGasInfo.getSafeLowSpeedPrice());
+                logger.log(Level.INFO, "fast : " + ethGasInfo.getFastSpeedPrice());
+                logger.log(Level.INFO, "low  : " + ethGasInfo.getSafeLowSpeedPrice());
 
             }
 
@@ -118,9 +113,6 @@ public class EthGasStationInfoDaoTest {
             logger.log(Level.SEVERE, null, ex);
         }
     }
-
-
-
 
 
 }

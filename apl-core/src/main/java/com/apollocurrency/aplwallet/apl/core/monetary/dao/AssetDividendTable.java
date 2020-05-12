@@ -21,7 +21,7 @@ import java.util.List;
 import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
 
 @Singleton
-public final class AssetDividendTable extends EntityDbTable<AssetDividend>{
+public final class AssetDividendTable extends EntityDbTable<AssetDividend> {
 
     private static final LongKeyFactory<AssetDividend> dividendDbKeyFactory = new LongKeyFactory<>("id") {
         @Override
@@ -46,8 +46,8 @@ public final class AssetDividendTable extends EntityDbTable<AssetDividend>{
     @Override
     public void save(Connection con, AssetDividend assetDividend) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO asset_dividend (id, asset_id, "
-                + "amount, dividend_height, total_dividend, num_accounts, timestamp, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
+            + "amount, dividend_height, total_dividend, num_accounts, timestamp, height) "
+            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, assetDividend.getId());
             pstmt.setLong(++i, assetDividend.getAssetId());

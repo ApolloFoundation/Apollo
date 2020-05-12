@@ -47,8 +47,7 @@ public class FileSystemCertificatePairsProvider implements CertificatePairsProvi
     public Set<CertificatePair> getPairs() {
         try {
             return UpdaterUtil.buildCertificatePairs(certificateDir, firstCertificatePrefix, secondCertificatePrefix, certificateSuffix);
-        }
-        catch (IOException | CertificateException e) {
+        } catch (IOException | CertificateException e) {
             throw new RuntimeException("Unable to load certificate pairs from " + certificateDir, e);
         }
     }

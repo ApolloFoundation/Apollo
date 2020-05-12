@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.hash;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
@@ -21,9 +19,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 
-class MerkleTreeTest {
-    private static final Logger log = getLogger(MerkleTreeTest.class);
+import static org.slf4j.LoggerFactory.getLogger;
 
+class MerkleTreeTest {
     static final String data1 = "123";
     static final String data2 = "1234";
     static final String data3 = "12345";
@@ -33,33 +31,34 @@ class MerkleTreeTest {
     static final String data7 = "123456789";
     static final String data8 = "1234567890";
     static final String data9 = "12345678901";
-    static byte[] hash1 = Convert.parseHexString(
-            "A665A45920422F9D417E4867EFDC4FB8A04A1F3FFF1FA07E998E86F7F7A27AE3".toLowerCase());
-    static byte[] hash2 = Convert.parseHexString(
-            "03AC674216F3E15C761EE1A5E255F067953623C8B388B4459E13F978D7C846F4".toLowerCase());
-    static byte[] hash3 = Convert.parseHexString(
-            "5994471ABB01112AFCC18159F6CC74B4F511B99806DA59B3CAF5A9C173CACFC5".toLowerCase());
     static final byte[] hash4 = Convert.parseHexString(
-            "8D969EEF6ECAD3C29A3A629280E686CF0C3F5D5A86AFF3CA12020C923ADC6C92".toLowerCase());
+        "8D969EEF6ECAD3C29A3A629280E686CF0C3F5D5A86AFF3CA12020C923ADC6C92".toLowerCase());
     static final byte[] hash5 = Convert.parseHexString(
-            "8BB0CF6EB9B17D0F7D22B456F121257DC1254E1F01665370476383EA776DF414".toLowerCase());
+        "8BB0CF6EB9B17D0F7D22B456F121257DC1254E1F01665370476383EA776DF414".toLowerCase());
     static final byte[] hash6 = Convert.parseHexString(
-            "EF797C8118F02DFB649607DD5D3F8C7623048C9C063D532CC95C5ED7A898A64F".toLowerCase());
+        "EF797C8118F02DFB649607DD5D3F8C7623048C9C063D532CC95C5ED7A898A64F".toLowerCase());
     static final byte[] hash7 = Convert.parseHexString(
-            "15E2B0D3C33891EBB0F1EF609EC419420C20E320CE94C65FBC8C3312448EB225".toLowerCase());
+        "15E2B0D3C33891EBB0F1EF609EC419420C20E320CE94C65FBC8C3312448EB225".toLowerCase());
     static final byte[] hash8 = Convert.parseHexString(
-            "C775E7B757EDE630CD0AA1113BD102661AB38829CA52A6422AB782862F268646".toLowerCase());
+        "C775E7B757EDE630CD0AA1113BD102661AB38829CA52A6422AB782862F268646".toLowerCase());
     static final byte[] hash9 = Convert.parseHexString(
-            "254AA248ACB47DD654CA3EA53F48C2C26D641D23D7E2E93A1EC56258DF7674C4".toLowerCase());
-    static final Node leaf1 = new Node(hash1);
-    static final Node leaf2 = new Node(hash2);
-    static final Node leaf3 = new Node(hash3);
+        "254AA248ACB47DD654CA3EA53F48C2C26D641D23D7E2E93A1EC56258DF7674C4".toLowerCase());
     static final Node leaf4 = new Node(hash4);
     static final Node leaf5 = new Node(hash5);
     static final Node leaf6 = new Node(hash6);
     static final Node leaf7 = new Node(hash7);
     static final Node leaf8 = new Node(hash8);
     static final Node leaf9 = new Node(hash9);
+    private static final Logger log = getLogger(MerkleTreeTest.class);
+    static byte[] hash1 = Convert.parseHexString(
+        "A665A45920422F9D417E4867EFDC4FB8A04A1F3FFF1FA07E998E86F7F7A27AE3".toLowerCase());
+    static final Node leaf1 = new Node(hash1);
+    static byte[] hash2 = Convert.parseHexString(
+        "03AC674216F3E15C761EE1A5E255F067953623C8B388B4459E13F978D7C846F4".toLowerCase());
+    static final Node leaf2 = new Node(hash2);
+    static byte[] hash3 = Convert.parseHexString(
+        "5994471ABB01112AFCC18159F6CC74B4F511B99806DA59B3CAF5A9C173CACFC5".toLowerCase());
+    static final Node leaf3 = new Node(hash3);
 
     private byte[] getHash(byte[] hash1, byte[] hash2) {
         MessageDigest md = sha256();
@@ -175,7 +174,7 @@ class MerkleTreeTest {
     @Test
     public void testCreateTreeWithSevenLeafs() {
         List<byte[]> dataList = Arrays.asList(data1.getBytes(), data2.getBytes(), data3.getBytes(), data4.getBytes(), data5.getBytes(),
-                data6.getBytes(), data7.getBytes());
+            data6.getBytes(), data7.getBytes());
         Node leftLeft = new Node(getHash(hash1, hash5));
         Node leftRight = new Node(getHash(hash3, hash6));
         Node left = new Node(getHash(leftLeft.getValue(), leftRight.getValue()));
@@ -193,7 +192,7 @@ class MerkleTreeTest {
     @Test
     public void testCreateTreeWithEightLeafs() {
         List<byte[]> dataList = Arrays.asList(data1.getBytes(), data2.getBytes(), data3.getBytes(), data4.getBytes(), data5.getBytes(),
-                data6.getBytes(), data7.getBytes(), data8.getBytes());
+            data6.getBytes(), data7.getBytes(), data8.getBytes());
         Node leftLeft = new Node(getHash(hash1, hash5));
         Node leftRight = new Node(getHash(hash3, hash6));
         Node left = new Node(getHash(leftLeft.getValue(), leftRight.getValue()));
@@ -202,7 +201,7 @@ class MerkleTreeTest {
         Node right = new Node(getHash(rightLeft.getValue(), rightRight.getValue()));
         Node root = new Node(getHash(left.getValue(), right.getValue()));
         List<Node> expectedNodes = Arrays.asList(root, left, right, leftLeft, leftRight, rightLeft, rightRight, leaf1, leaf5, leaf3, leaf6, leaf2,
-                leaf7, leaf4, leaf8);
+            leaf7, leaf4, leaf8);
 
         MerkleTree appendTree = new MerkleTree(sha256());
         dataList.forEach(appendTree::appendLeaf);
@@ -213,7 +212,7 @@ class MerkleTreeTest {
     @Test
     public void testCreateTreeWithNineLeafs() {
         List<byte[]> dataList = Arrays.asList(data1.getBytes(), data2.getBytes(), data3.getBytes(), data4.getBytes(), data5.getBytes(),
-                data6.getBytes(), data7.getBytes(), data8.getBytes(), data9.getBytes());
+            data6.getBytes(), data7.getBytes(), data8.getBytes(), data9.getBytes());
         List<Node> expectedNodes = getExpectedNodesForTreeWithNineLeaves();
 
         MerkleTree appendTree = new MerkleTree(sha256());
@@ -222,10 +221,11 @@ class MerkleTreeTest {
         compareTrees(expectedNodes, Arrays.asList(appendTree, buildTree));
 
     }
+
     @Test
     public void testCreateDifferentPartiallyBuildTrees() {
         List<byte[]> dataList = Arrays.asList(data1.getBytes(), data2.getBytes(), data3.getBytes(), data4.getBytes(), data5.getBytes(),
-                data6.getBytes(), data7.getBytes(), data8.getBytes(), data9.getBytes());
+            data6.getBytes(), data7.getBytes(), data8.getBytes(), data9.getBytes());
         List<Node> expectedNodes = getExpectedNodesForTreeWithNineLeaves();
 
         MerkleTree appendTree = new MerkleTree(sha256());
@@ -261,40 +261,40 @@ class MerkleTreeTest {
         Node right = new Node(getHash(rightLeft.getValue(), rightRight.getValue()));
         Node root = new Node(getHash(left.getValue(), right.getValue()));
         List<Node> expectedNodes = Arrays.asList(root, left, right, leftLeft, leftRight, rightLeft, rightRight, leftLeftLeft, leaf5, leaf3,
-                leaf6, leaf2,
-                leaf7, leaf4, leaf8, leaf1, leaf9);
+            leaf6, leaf2,
+            leaf7, leaf4, leaf8, leaf1, leaf9);
         return expectedNodes;
     }
 
     @Test
     public void testGetNodeIndexes() {
         int[][] nodeIndexes = MerkleTree.getNodeIndexes(8);
-        Assertions.assertArrayEquals(new int[][] {{0, 2, 4, 5}, {1, 3, 6, 7}}, nodeIndexes);
+        Assertions.assertArrayEquals(new int[][]{{0, 2, 4, 5}, {1, 3, 6, 7}}, nodeIndexes);
         nodeIndexes = MerkleTree.getNodeIndexes(16);
-        Assertions.assertArrayEquals(new int[][] {{0, 2, 4, 5, 8, 9, 10, 11}, {1, 3, 6, 7, 12, 13, 14, 15}}, nodeIndexes);
+        Assertions.assertArrayEquals(new int[][]{{0, 2, 4, 5, 8, 9, 10, 11}, {1, 3, 6, 7, 12, 13, 14, 15}}, nodeIndexes);
     }
 
     @Test
     public void testGetNodeOrderedNodeIndexes() {
-        int[] ordered = MerkleTree.orderNodeIndexes(new int[] {0, 2, 4, 5}, new int[] {1, 3, 6, 7});
-        Assertions.assertArrayEquals(new int[] {0, 4, 2, 5, 1, 6, 3, 7}, ordered);
-        ordered = MerkleTree.orderNodeIndexes(new int[] {0, 2, 4, 5, 8, 9, 10, 11}, new int[] {1, 3, 6, 7, 12, 13, 14, 15});
-        Assertions.assertArrayEquals(new int[] {0, 8, 4, 9, 2, 10, 5, 11, 1, 12, 6, 13, 3, 14, 7, 15}, ordered);
-        ordered = MerkleTree.orderNodeIndexes(new int[] {0, 2, 4, 5, 8, 9, 10, 11, 16, 17, 18, 19, 20, 21, 22, 23}, new int[] {
-                1, 3, 6, 7, 12, 13, 14,
-                15, 24, 25, 26, 27, 28, 29, 30, 31});
-        Assertions.assertArrayEquals(new int[] {
-                0, 16, 8, 17, 4, 18, 9, 19, 2, 20, 10, 21, 5, 22, 11, 23, 1, 24, 12, 25, 6, 26, 13, 27, 3, 28,
-                14, 29, 7, 30, 15, 31}, ordered);
+        int[] ordered = MerkleTree.orderNodeIndexes(new int[]{0, 2, 4, 5}, new int[]{1, 3, 6, 7});
+        Assertions.assertArrayEquals(new int[]{0, 4, 2, 5, 1, 6, 3, 7}, ordered);
+        ordered = MerkleTree.orderNodeIndexes(new int[]{0, 2, 4, 5, 8, 9, 10, 11}, new int[]{1, 3, 6, 7, 12, 13, 14, 15});
+        Assertions.assertArrayEquals(new int[]{0, 8, 4, 9, 2, 10, 5, 11, 1, 12, 6, 13, 3, 14, 7, 15}, ordered);
+        ordered = MerkleTree.orderNodeIndexes(new int[]{0, 2, 4, 5, 8, 9, 10, 11, 16, 17, 18, 19, 20, 21, 22, 23}, new int[]{
+            1, 3, 6, 7, 12, 13, 14,
+            15, 24, 25, 26, 27, 28, 29, 30, 31});
+        Assertions.assertArrayEquals(new int[]{
+            0, 16, 8, 17, 4, 18, 9, 19, 2, 20, 10, 21, 5, 22, 11, 23, 1, 24, 12, 25, 6, 26, 13, 27, 3, 28,
+            14, 29, 7, 30, 15, 31}, ordered);
 
     }
 
     @Test
     public void testOrderNodes() {
-        int[] ordered = MerkleTree.orderNodes(new int[] {0, 2, 4, 5, 8, 9, 10, 11});
-        Assertions.assertArrayEquals(new int[] {0, 8, 4, 9, 2, 10, 5, 11}, ordered);
-        ordered = MerkleTree.orderNodes(new int[] {0, 2, 4, 5, 8, 9, 10, 11, 16, 17, 18, 19, 20, 21, 22, 23});
-        Assertions.assertArrayEquals(new int[] {0, 16, 8, 17, 4, 18, 9, 19, 2, 20, 10, 21, 5, 22, 11, 23}, ordered);
+        int[] ordered = MerkleTree.orderNodes(new int[]{0, 2, 4, 5, 8, 9, 10, 11});
+        Assertions.assertArrayEquals(new int[]{0, 8, 4, 9, 2, 10, 5, 11}, ordered);
+        ordered = MerkleTree.orderNodes(new int[]{0, 2, 4, 5, 8, 9, 10, 11, 16, 17, 18, 19, 20, 21, 22, 23});
+        Assertions.assertArrayEquals(new int[]{0, 16, 8, 17, 4, 18, 9, 19, 2, 20, 10, 21, 5, 22, 11, 23}, ordered);
     }
 
     @Test
@@ -341,8 +341,7 @@ class MerkleTreeTest {
     private MessageDigest sha256() {
         try {
             return MessageDigest.getInstance("SHA-256");
-        }
-        catch (NoSuchAlgorithmException e) {
+        } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }

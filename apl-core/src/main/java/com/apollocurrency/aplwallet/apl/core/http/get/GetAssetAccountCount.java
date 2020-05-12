@@ -34,7 +34,7 @@ import javax.servlet.http.HttpServletRequest;
 public final class GetAssetAccountCount extends AbstractAPIRequestHandler {
 
     public GetAssetAccountCount() {
-        super(new APITag[] {APITag.AE}, "asset", "height");
+        super(new APITag[]{APITag.AE}, "asset", "height");
     }
 
     @Override

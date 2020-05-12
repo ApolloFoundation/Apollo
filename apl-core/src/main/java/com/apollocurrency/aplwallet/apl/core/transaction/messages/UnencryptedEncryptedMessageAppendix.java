@@ -4,14 +4,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import java.nio.ByteBuffer;
-
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
+
+import java.nio.ByteBuffer;
 
 public class UnencryptedEncryptedMessageAppendix extends EncryptedMessageAppendix implements Encryptable {
 
@@ -21,10 +21,10 @@ public class UnencryptedEncryptedMessageAppendix extends EncryptedMessageAppendi
     public UnencryptedEncryptedMessageAppendix(JSONObject attachmentData) {
         super(attachmentData);
         setEncryptedData(null);
-        JSONObject encryptedMessageJSON = (JSONObject)attachmentData.get("encryptedMessage");
-        String messageToEncryptString = (String)encryptedMessageJSON.get("messageToEncrypt");
+        JSONObject encryptedMessageJSON = (JSONObject) attachmentData.get("encryptedMessage");
+        String messageToEncryptString = (String) encryptedMessageJSON.get("messageToEncrypt");
         messageToEncrypt = isText() ? Convert.toBytes(messageToEncryptString) : Convert.parseHexString(messageToEncryptString);
-        recipientPublicKey = Convert.parseHexString((String)attachmentData.get("recipientPublicKey"));
+        recipientPublicKey = Convert.parseHexString((String) attachmentData.get("recipientPublicKey"));
     }
 
     public UnencryptedEncryptedMessageAppendix(byte[] messageToEncrypt, boolean isText, boolean isCompressed, byte[] recipientPublicKey) {

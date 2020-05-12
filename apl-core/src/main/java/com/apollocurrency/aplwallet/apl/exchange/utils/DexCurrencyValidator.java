@@ -7,10 +7,10 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 
 /**
  * Examples of latest approach of working with currency pairs.
- *
+ * <p>
  * BUY | ALP-ETH
  * SEL | APL-ETH
- *
+ * <p>
  * BUY | ALP-PAX
  * SEL | APL-PAX
  */
@@ -24,9 +24,9 @@ public class DexCurrencyValidator {
     public static boolean haveFreezeOrRefundApl(OrderType orderType, DexCurrency offerCurrencies, DexCurrency pairCurrencies) {
         if ((orderType.isSell() && offerCurrencies.isApl())) {
             return true;
-         }
+        }
 
-         return false;
+        return false;
     }
 
     public static boolean haveFreezeOrRefundEthOrPax(DexOrder order) {
@@ -43,13 +43,13 @@ public class DexCurrencyValidator {
     }
 
     public static void requireEthOrPaxRefundable(DexOrder offer) throws AplException.ExecutiveProcessException {
-        if(!haveFreezeOrRefundEthOrPax(offer)){
+        if (!haveFreezeOrRefundEthOrPax(offer)) {
             throw new AplException.ExecutiveProcessException("Withdraw not supported for " + offer.getType() + " | " + offer.getOrderCurrency() + "-" + offer.getPairCurrency());
         }
     }
 
     public static void requireAplRefundable(DexOrder order) throws AplException.ExecutiveProcessException {
-        if(!haveFreezeOrRefundApl(order)){
+        if (!haveFreezeOrRefundApl(order)) {
             throw new AplException.ExecutiveProcessException("Withdraw not supported for " + order.getType() + " | " + order.getOrderCurrency() + "-" + order.getPairCurrency());
         }
     }
@@ -58,7 +58,6 @@ public class DexCurrencyValidator {
     public static boolean isEthOrPaxAddress(String address) {
         return address.contains("0x");
     }
-
 
 
 }

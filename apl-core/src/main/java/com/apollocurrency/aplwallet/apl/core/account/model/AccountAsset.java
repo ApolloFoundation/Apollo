@@ -13,11 +13,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
- *
  * @author al
  */
 @ToString(callSuper = true)
-@Getter @Setter
+@Getter
+@Setter
 public final class AccountAsset extends VersionedDeletableEntity {
 
     private final long accountId;

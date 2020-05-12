@@ -20,11 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.DUPLICATE_REFUND;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.GOODS_NOT_DELIVERED;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DGS_REFUND;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_PURCHASE;
-
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
@@ -41,14 +36,21 @@ import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.DUPLICATE_REFUND;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.GOODS_NOT_DELIVERED;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DGS_REFUND;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_PURCHASE;
+
 @Vetoed
 public final class DGSRefund extends CreateTransaction {
 
-    public DGSRefund() {
-        super(new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION},
-                "purchase", "refundATM");
-    }
     private DGSService service = CDI.current().select(DGSService.class).get();
+
+    public DGSRefund() {
+        super(new APITag[]{APITag.DGS, APITag.CREATE_TRANSACTION},
+            "purchase", "refundATM");
+    }
+
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 

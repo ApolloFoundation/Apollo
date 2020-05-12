@@ -21,19 +21,19 @@ public class DexEthService {
     private EthGasStationInfoDao ethGasStationInfoDao;
 
     private LoadingCache<String, Object> cache = CacheBuilder.newBuilder()
-            .maximumSize(10)
-            .expireAfterWrite(3, TimeUnit.MINUTES)
-            .build(
-                    new CacheLoader<>() {
-                        public EthGasInfo load(String id) throws InvalidCacheLoadException {
-                            EthGasInfo ethGasInfo = initEthPriceInfo();
-                            if(ethGasInfo==null){
-                                throw new InvalidCacheLoadException("Value can't be null");
-                            }
-                            return ethGasInfo;
-                        }
+        .maximumSize(10)
+        .expireAfterWrite(3, TimeUnit.MINUTES)
+        .build(
+            new CacheLoader<>() {
+                public EthGasInfo load(String id) throws InvalidCacheLoadException {
+                    EthGasInfo ethGasInfo = initEthPriceInfo();
+                    if (ethGasInfo == null) {
+                        throw new InvalidCacheLoadException("Value can't be null");
                     }
-            );
+                    return ethGasInfo;
+                }
+            }
+        );
 
     @Inject
     public DexEthService(EthGasStationInfoDao ethGasStationInfoDao) {
@@ -44,7 +44,7 @@ public class DexEthService {
         return (EthGasInfo) cache.get(ETH_GAS_INFO_KEY);
     }
 
-    private EthGasInfo initEthPriceInfo(){
+    private EthGasInfo initEthPriceInfo() {
         EthGasInfo ethGasInfo;
         Integer counter = 0;
         while (counter < ATTEMPTS) {

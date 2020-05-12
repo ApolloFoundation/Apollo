@@ -28,7 +28,7 @@ public class ZipArchiveCommand implements DataMigrateOperation {
 
     public ZipArchiveCommand(long shardId, List<TableInfo> tableInfoList, ShardEngine shardEngine) {
         this.shardEngine = Objects.requireNonNull(
-                shardEngine, "shardEngine is NULL");
+            shardEngine, "shardEngine is NULL");
         this.tableInfoList = Objects.requireNonNull(tableInfoList, "tableInfoList is null");
         this.shardId = shardId;
     }

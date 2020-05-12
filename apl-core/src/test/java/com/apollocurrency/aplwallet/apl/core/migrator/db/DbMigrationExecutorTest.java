@@ -57,49 +57,46 @@ import static org.mockito.Mockito.mock;
 @EnableWeld
 public class DbMigrationExecutorTest {
 
-    private LegacyDbLocationsProvider legacyDbLocationsProvider = Mockito.mock(LegacyDbLocationsProvider.class);
-
-    private FullTextSearchService fullTextSearchProvider = Mockito.mock(FullTextSearchService.class);
-    private PropertiesHolder propertiesHolder = mockPropertiesHolder();
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolder = new TemporaryFolderExtension();
-
+    @Inject
+    JdbiHandleFactory jdbiHandleFactory;
+    @Inject
+    Jdbi jdbi;
+    private LegacyDbLocationsProvider legacyDbLocationsProvider = Mockito.mock(LegacyDbLocationsProvider.class);
+    private FullTextSearchService fullTextSearchProvider = Mockito.mock(FullTextSearchService.class);
+    private PropertiesHolder propertiesHolder = mockPropertiesHolder();
     private Path targetDbDir = createTempDir();
     private Path targetDbPath = targetDbDir.resolve(Constants.APPLICATION_DIR_NAME);
     private DbProperties targetDbProperties = DbTestData.getDbFileProperties(targetDbPath.toAbsolutePath().toString());
-    
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(H2DbInfoExtractor.class, PropertyProducer.class,
-            TransactionalDataSource.class, DatabaseManagerImpl.class, TransactionDaoImpl.class, JdbiHandleFactory.class,
-            GlobalSyncImpl.class,
-            BlockDaoImpl.class, DerivedDbTablesRegistryImpl.class, BlockchainConfig.class,
-            FullTextConfigImpl.class, TimeServiceImpl.class, NtpTime.class)
-            .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
-            .addBeans(MockBean.of(Mockito.mock(Blockchain.class), Blockchain.class, BlockchainImpl.class))
-            .addBeans(MockBean.of(Mockito.mock(PhasingPollService.class), PhasingPollService.class))
-            .addBeans(MockBean.of(targetDbProperties, DbProperties.class))
-            .addBeans(MockBean.of(fullTextSearchProvider, FullTextSearchService.class))
-            .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
-            .build();
+        TransactionalDataSource.class, DatabaseManagerImpl.class, TransactionDaoImpl.class, JdbiHandleFactory.class,
+        GlobalSyncImpl.class,
+        BlockDaoImpl.class, DerivedDbTablesRegistryImpl.class, BlockchainConfig.class,
+        FullTextConfigImpl.class, TimeServiceImpl.class, NtpTime.class)
+        .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
+        .addBeans(MockBean.of(Mockito.mock(Blockchain.class), Blockchain.class, BlockchainImpl.class))
+        .addBeans(MockBean.of(Mockito.mock(PhasingPollService.class), PhasingPollService.class))
+        .addBeans(MockBean.of(targetDbProperties, DbProperties.class))
+        .addBeans(MockBean.of(fullTextSearchProvider, FullTextSearchService.class))
+        .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
+        .build();
     @Inject
     private H2DbInfoExtractor h2DbInfoExtractor;
     private Path pathToDbForMigration;
     private DbManipulator manipulator;
     @Inject
     private DatabaseManager databaseManager;
-    @Inject
-    JdbiHandleFactory jdbiHandleFactory;
-    @Inject
-    Jdbi jdbi;
 
     private Path createTempDir() {
         try {
             return temporaryFolder.newFolder().toPath();
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException("Unable to create dbMigration TARGET dir");
         }
     }
+
     @BeforeEach
     void setUp() throws IOException {
         this.pathToDbForMigration = temporaryFolder.newFolder().toPath().resolve(
@@ -130,7 +127,7 @@ public class DbMigrationExecutorTest {
     @Test
     public void testDbMigrationWhenNoDbsFound() throws IOException {
         DbMigrationExecutor migrationExecutor = new DbMigrationExecutor(
-                propertiesHolder, legacyDbLocationsProvider, h2DbInfoExtractor, databaseManager, fullTextSearchProvider, jdbiHandleFactory);
+            propertiesHolder, legacyDbLocationsProvider, h2DbInfoExtractor, databaseManager, fullTextSearchProvider, jdbiHandleFactory);
         Mockito.doReturn(Collections.emptyList()).when(legacyDbLocationsProvider).getDbLocations();
         migrationExecutor.performMigration(targetDbPath);
         OptionDAO optionDAO = new OptionDAO(databaseManager);
@@ -144,14 +141,14 @@ public class DbMigrationExecutorTest {
         jdbiHandleFactory.close();
         databaseManager.shutdown();
         int migratedHeight = h2DbInfoExtractor
-                .getHeight(targetDbPath.toAbsolutePath().toString());
+            .getHeight(targetDbPath.toAbsolutePath().toString());
         Assertions.assertEquals(0, migratedHeight);
     }
 
     @Test
     public void testDbMigration() throws IOException {
         DbMigrationExecutor migrationExecutor = new DbMigrationExecutor(
-                propertiesHolder, legacyDbLocationsProvider, h2DbInfoExtractor, databaseManager, fullTextSearchProvider, jdbiHandleFactory);
+            propertiesHolder, legacyDbLocationsProvider, h2DbInfoExtractor, databaseManager, fullTextSearchProvider, jdbiHandleFactory);
         Mockito.doReturn(Arrays.asList(pathToDbForMigration)).when(legacyDbLocationsProvider).getDbLocations();
         migrationExecutor.performMigration(targetDbPath);
         OptionDAO optionDAO = new OptionDAO(databaseManager);

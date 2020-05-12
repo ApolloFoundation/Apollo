@@ -20,15 +20,15 @@ public class SwapDataInfoMapper {
             .addressAsset(response.component7())
             .status(response.component9().intValue())
             .amount(EthUtil.weiToEther(response.component8()))
-                .build();
+            .build();
     }
 
-    private static boolean isEmpty(byte[] array){
-        if(array == null){
+    private static boolean isEmpty(byte[] array) {
+        if (array == null) {
             return true;
         }
         for (byte b : array) {
-            if(b != 0) {
+            if (b != 0) {
                 return false;
             }
         }

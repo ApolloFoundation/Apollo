@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+
 import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -19,7 +20,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
- *
  * @author al
  */
 @Singleton
@@ -28,19 +28,19 @@ public class AccountPropertyTable extends VersionedDeletableEntityDbTable<Accoun
     private static final LongKeyFactory<AccountProperty> accountPropertyDbKeyFactory = new LongKeyFactory<AccountProperty>("id") {
         @Override
         public DbKey newKey(AccountProperty accountProperty) {
-            if(accountProperty.getDbKey() == null){
+            if (accountProperty.getDbKey() == null) {
                 accountProperty.setDbKey(super.newKey(accountProperty.getId()));
             }
             return accountProperty.getDbKey();
         }
     };
 
-    public static DbKey newKey(long id){
-        return accountPropertyDbKeyFactory.newKey(id);
-    }
-
     private AccountPropertyTable() {
         super("account_property", accountPropertyDbKeyFactory, false);
+    }
+
+    public static DbKey newKey(long id) {
+        return accountPropertyDbKeyFactory.newKey(id);
     }
 
     @Override
@@ -51,8 +51,7 @@ public class AccountPropertyTable extends VersionedDeletableEntityDbTable<Accoun
     @Override
     public void save(Connection con, AccountProperty accountProperty) throws SQLException {
         try (
-                @DatabaseSpecificDml(DmlMarker.MERGE)
-                final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_property " + "(id, recipient_id, setter_id, property, \"VALUE\", height, latest, deleted) " + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, TRUE, FALSE)")
+            @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_property " + "(id, recipient_id, setter_id, property, \"VALUE\", height, latest, deleted) " + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, TRUE, FALSE)")
         ) {
             int i = 0;
             pstmt.setLong(++i, accountProperty.getId());

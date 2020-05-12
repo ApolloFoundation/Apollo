@@ -4,9 +4,9 @@
 
 package com.apollocurrency.aplwallet.api.dto;
 
-import java.util.List;
-
 import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
+
+import java.util.List;
 
 public class AccountsStatisticDTO {
     private long totalSupply;
@@ -15,36 +15,36 @@ public class AccountsStatisticDTO {
     private int totalNumberOfAccounts;
     private List<AccountDTO> topHolders;
 
-    public void setTotalSupply(long totalSupply) {
-        this.totalSupply = totalSupply;
-    }
-
-    public void setTotalAmountOnTopAccounts(long totalAmountOnTopAccounts) {
-        this.totalAmountOnTopAccounts = totalAmountOnTopAccounts;
-    }
-
-    public void setNumberOfTopAccounts(long numberOfTopAccounts) {
-        this.numberOfTopAccounts = numberOfTopAccounts;
-    }
-
-    public void setTotalNumberOfAccounts(int totalNumberOfAccounts) {
-        this.totalNumberOfAccounts = totalNumberOfAccounts;
-    }
-
     public long getTotalSupply() {
         return totalSupply;
+    }
+
+    public void setTotalSupply(long totalSupply) {
+        this.totalSupply = totalSupply;
     }
 
     public long getTotalAmountOnTopAccounts() {
         return totalAmountOnTopAccounts;
     }
 
+    public void setTotalAmountOnTopAccounts(long totalAmountOnTopAccounts) {
+        this.totalAmountOnTopAccounts = totalAmountOnTopAccounts;
+    }
+
     public long getNumberOfTopAccounts() {
         return numberOfTopAccounts;
     }
 
+    public void setNumberOfTopAccounts(long numberOfTopAccounts) {
+        this.numberOfTopAccounts = numberOfTopAccounts;
+    }
+
     public int getTotalNumberOfAccounts() {
         return totalNumberOfAccounts;
+    }
+
+    public void setTotalNumberOfAccounts(int totalNumberOfAccounts) {
+        this.totalNumberOfAccounts = totalNumberOfAccounts;
     }
 
     public List<AccountDTO> getTopHolders() {

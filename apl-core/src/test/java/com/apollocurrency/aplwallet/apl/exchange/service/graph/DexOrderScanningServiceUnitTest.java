@@ -74,21 +74,21 @@ class DexOrderScanningServiceUnitTest {
         doReturn(50100).when(blockchain).getHeight();
 
         List<DexOrder> orders = List.of(
-                eOrder(1L, 3801, dec("1.2"), apl(100_000), 80),
-                eOrder(2L, 3605, dec("1.25"), apl(150_000), 85),
-                eOrder(3L, 4621, dec("1.3"), apl(200_000), 90),
-                eOrder(4L, 3602, dec("1.35"), apl(250_000), 91),
-                eOrder(5L, 4620, dec("1.5"), apl(300_000), 91),
-                eOrder(6L, 4602, dec("1.35"), apl(250_000), 96),
-                eOrder(7L, 5600, dec("1.5"), apl(20_000), 100),
+            eOrder(1L, 3801, dec("1.2"), apl(100_000), 80),
+            eOrder(2L, 3605, dec("1.25"), apl(150_000), 85),
+            eOrder(3L, 4621, dec("1.3"), apl(200_000), 90),
+            eOrder(4L, 3602, dec("1.35"), apl(250_000), 91),
+            eOrder(5L, 4620, dec("1.5"), apl(300_000), 91),
+            eOrder(6L, 4602, dec("1.35"), apl(250_000), 96),
+            eOrder(7L, 5600, dec("1.5"), apl(20_000), 100),
 
-                pOrder(8L, 2702,  dec("2.2"), apl(10_000) , 2  ),
-                pOrder(9L, 2802,  dec("2.5"), apl(50_000) , 10 ),
-                pOrder(10L, 3599, dec("0.3"), apl(400_000), 42 ),
-                pOrder(11L, 3606, dec("2.3"), apl(350_000), 42 ),
-                pOrder(12L, 3720, dec("2.5"), apl(200_000), 42 ),
-                pOrder(13L, 3900, dec("2.4"), apl(150_000), 96 ),
-                pOrder(14L, 4400, dec("1.1"), apl(200_000), 100) // last candlestick was not finished
+            pOrder(8L, 2702, dec("2.2"), apl(10_000), 2),
+            pOrder(9L, 2802, dec("2.5"), apl(50_000), 10),
+            pOrder(10L, 3599, dec("0.3"), apl(400_000), 42),
+            pOrder(11L, 3606, dec("2.3"), apl(350_000), 42),
+            pOrder(12L, 3720, dec("2.5"), apl(200_000), 42),
+            pOrder(13L, 3900, dec("2.4"), apl(150_000), 96),
+            pOrder(14L, 4400, dec("1.1"), apl(200_000), 100) // last candlestick was not finished
         );
         orderDao.add(orders);
 
@@ -104,40 +104,35 @@ class DexOrderScanningServiceUnitTest {
         assertEquals(new OrderScan(DexCurrency.ETH, 6), ethOrderScan);
         List<DexCandlestick> ethCandlesticks = candlestickDao.getForTimespan(0, Integer.MAX_VALUE, DexCurrency.ETH);
         assertEquals(List.of(
-                eCandlestick("1.2", "1.35", "1.35", "1.2", "500000", "645000.00", 3600, 3602, 3801 ),
-                eCandlestick("1.3", "1.5", "1.35", "1.3", "750000", "1047500.00", 4500, 4602, 4620 )
+            eCandlestick("1.2", "1.35", "1.35", "1.2", "500000", "645000.00", 3600, 3602, 3801),
+            eCandlestick("1.3", "1.5", "1.35", "1.3", "750000", "1047500.00", 4500, 4602, 4620)
         ), ethCandlesticks);
         List<DexCandlestick> paxCandlesticks = candlestickDao.getForTimespan(0, Integer.MAX_VALUE, DexCurrency.PAX);
         assertEquals(List.of(
-                pCandlestick("0.3", "2.5", "2.2", "0.3", "460000", "267000.0", 2700, 2701, 3599 ),
-                pCandlestick("2.3", "2.5", "2.3", "2.4", "700000", "1665000.0", 3600, 3605, 3900 )
+            pCandlestick("0.3", "2.5", "2.2", "0.3", "460000", "267000.0", 2700, 2701, 3599),
+            pCandlestick("2.3", "2.5", "2.3", "2.4", "700000", "1665000.0", 3600, 3605, 3900)
         ), paxCandlesticks);
 
 
     }
+
     private HeightDbIdRequest request(long fromDbId, int toHeight, int limit) {
         return HeightDbIdRequest.builder()
-                .fromDbId(fromDbId)
-                .toHeight(toHeight)
-                .limit(limit)
-                .coin(DexCurrency.ETH)
-                .build();
+            .fromDbId(fromDbId)
+            .toHeight(toHeight)
+            .limit(limit)
+            .coin(DexCurrency.ETH)
+            .build();
     }
+
     // In memory dao impls to simulate database
     // Act as a real dao, but without db transactions
-   private static class InMemoryDexCandlestickDao implements DexCandlestickDao {
-        @Data
-        @AllArgsConstructor
-        private static class CurrencyAndTime {
-            private DexCurrency currency;
-            private int timestamp;
-
-        }
+    private static class InMemoryDexCandlestickDao implements DexCandlestickDao {
         private Map<CurrencyAndTime, DexCandlestick> candlesticks = new ConcurrentHashMap<>();
 
         @Override
         public List<DexCandlestick> getForTimespan(int fromTimestamp, int toTimestamp, DexCurrency pairedCoin) {
-            return candlesticks.values().stream().filter(c-> c.getTimestamp() >= fromTimestamp && c.getTimestamp() <= toTimestamp && c.getCoin() == pairedCoin).sorted(Comparator.comparing(DexCandlestick::getTimestamp)).collect(Collectors.toList());
+            return candlesticks.values().stream().filter(c -> c.getTimestamp() >= fromTimestamp && c.getTimestamp() <= toTimestamp && c.getCoin() == pairedCoin).sorted(Comparator.comparing(DexCandlestick::getTimestamp)).collect(Collectors.toList());
         }
 
         @Override
@@ -185,9 +180,19 @@ class DexOrderScanningServiceUnitTest {
             }
             candlesticks.replace(new CurrencyAndTime(candlestick.getCoin(), candlestick.getTimestamp()), candlestick);
         }
+
+        @Data
+        @AllArgsConstructor
+        private static class CurrencyAndTime {
+            private DexCurrency currency;
+            private int timestamp;
+
+        }
     }
-    private static class InMemoryOrderScanDao implements OrderScanDao{
+
+    private static class InMemoryOrderScanDao implements OrderScanDao {
         private Map<DexCurrency, OrderScan> scans = new ConcurrentHashMap<>();
+
         @Override
         public void add(OrderScan orderScan) {
             if (get(orderScan.getCoin()) != null) {
@@ -212,6 +217,7 @@ class DexOrderScanningServiceUnitTest {
 
     private static class InMemoryOrderDao implements DexOrderDao {
         List<DexOrder> orders = Collections.synchronizedList(new ArrayList<>());
+
         @Override
         public List<DexOrder> getOrders(DexOrderDBRequest dexOrderDBRequest, DexOrderSortBy sortBy, DBSortOrder sort) {
             throw new UnsupportedOperationException();
@@ -225,13 +231,13 @@ class DexOrderScanningServiceUnitTest {
         @Override
         public List<DexOrder> getClosedOrdersFromDbId(HeightDbIdRequest heightDbIdRequest) {
             return orders.stream()
-                    .filter(o ->
-                            o.getHeight() < heightDbIdRequest.getToHeight()
-                    && o.getPairCurrency() == heightDbIdRequest.getCoin()
-                    && o.getDbId() > heightDbIdRequest.getFromDbId())
-                    .sorted(Comparator.comparing(DexOrder::getDbId))
-                    .limit(heightDbIdRequest.getLimit())
-                    .collect(Collectors.toList());
+                .filter(o ->
+                    o.getHeight() < heightDbIdRequest.getToHeight()
+                        && o.getPairCurrency() == heightDbIdRequest.getCoin()
+                        && o.getDbId() > heightDbIdRequest.getFromDbId())
+                .sorted(Comparator.comparing(DexOrder::getDbId))
+                .limit(heightDbIdRequest.getLimit())
+                .collect(Collectors.toList());
         }
 
         @Override

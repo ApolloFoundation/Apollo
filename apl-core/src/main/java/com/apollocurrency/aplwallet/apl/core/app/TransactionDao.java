@@ -51,10 +51,10 @@ public interface TransactionDao {
 //    DbIterator<Transaction> getAllTransactions();
 
     List<Transaction> getTransactions(TransactionalDataSource dataSource,
-            long accountId, int numberOfConfirmations, byte type, byte subtype,
-            int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
-            int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate,
-            int height, int prunableExpiration);
+                                      long accountId, int numberOfConfirmations, byte type, byte subtype,
+                                      int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
+                                      int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate,
+                                      int height, int prunableExpiration);
 
     int getTransactionCountByFilter(TransactionalDataSource dataSource,
                                     long accountId, int numberOfConfirmations, byte type, byte subtype,

@@ -59,18 +59,18 @@ class ShardPrunableZipHashCalculatorTest {
     DbExtension dbExtension = new DbExtension();
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from(PrunableMessageTable.class,
-            Event.class,
-            ShardPrunableZipHashCalculator.class,
-            PropertiesHolder.class,
-            FullTextConfigImpl.class,
-            CsvEscaperImpl.class)
-            .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
-            .addBeans(MockBean.of(registry, DerivedTablesRegistry.class))
-            .addBeans(MockBean.of(zip, Zip.class))
-            .addBeans(MockBean.of(shardDao, ShardDao.class))
-            .addBeans(MockBean.of(dirProvider, DirProvider.class))
-            .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
-            .build();
+        Event.class,
+        ShardPrunableZipHashCalculator.class,
+        PropertiesHolder.class,
+        FullTextConfigImpl.class,
+        CsvEscaperImpl.class)
+        .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
+        .addBeans(MockBean.of(registry, DerivedTablesRegistry.class))
+        .addBeans(MockBean.of(zip, Zip.class))
+        .addBeans(MockBean.of(shardDao, ShardDao.class))
+        .addBeans(MockBean.of(dirProvider, DirProvider.class))
+        .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
+        .build();
     @Inject
     PrunableMessageTable prunableMessageTable;
     @Inject
@@ -113,7 +113,7 @@ class ShardPrunableZipHashCalculatorTest {
 
         assertFalse(Files.exists(secondZipPath));
         assertTrue(Files.exists(thirdZipPath));
-        zip.extract(thirdZipPath.toAbsolutePath().toString(), dataExportDir.toAbsolutePath().toString());
+        zip.extract(thirdZipPath.toAbsolutePath().toString(), dataExportDir.toAbsolutePath().toString(), true);
         assertEquals(2, FileUtils.countElementsOfDirectory(dataExportDir));
         assertTrue(Files.exists(dataExportDir.resolve("prunable_message.csv")));
         assertNull(shard2.getPrunableZipHash());

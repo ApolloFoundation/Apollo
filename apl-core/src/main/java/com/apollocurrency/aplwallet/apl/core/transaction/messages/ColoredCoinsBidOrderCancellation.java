@@ -5,15 +5,15 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.transaction.ColoredCoins;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-import java.nio.ByteBuffer;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+
 /**
- *
  * @author al
  */
 public final class ColoredCoinsBidOrderCancellation extends ColoredCoinsOrderCancellationAttachment {
-    
+
     public ColoredCoinsBidOrderCancellation(ByteBuffer buffer) {
         super(buffer);
     }
@@ -30,5 +30,5 @@ public final class ColoredCoinsBidOrderCancellation extends ColoredCoinsOrderCan
     public TransactionType getTransactionType() {
         return ColoredCoins.BID_ORDER_CANCELLATION;
     }
-    
+
 }

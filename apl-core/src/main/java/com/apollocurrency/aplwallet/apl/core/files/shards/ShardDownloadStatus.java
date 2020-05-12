@@ -3,11 +3,12 @@
  */
 package com.apollocurrency.aplwallet.apl.core.files.shards;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import lombok.Getter;
-import lombok.Setter;
 
 /**
  * @author alukin@gmail.com
@@ -17,9 +18,9 @@ public class ShardDownloadStatus {
     public final static int FOUND_IN_PEERS = 1;
     public final static int DNLD_STARTED = 2;
     public final static int OK = 3;
-    public final static int FAILED=4;
+    public final static int FAILED = 4;
     //fileId::state
-    private final Map<String,Integer> status;
+    private final Map<String, Integer> status;
     @Getter
     @Setter
     private boolean sigalFired = false;

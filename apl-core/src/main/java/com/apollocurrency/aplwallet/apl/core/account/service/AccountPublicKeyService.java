@@ -23,22 +23,26 @@ public interface AccountPublicKeyService {
     int getGenesisPublicKeysCount();
 
     List<PublicKey> loadPublicKeyList(int from, int to, boolean isGenesis);
+
     /**
      * Returns the public key from cache, or load from the data base if necessary.
+     *
      * @param accountId get entity from the cache for specified account Id
-     * @return  public key or null
+     * @return public key or null
      */
     PublicKey getPublicKey(long accountId);
 
     /**
      * Returns the public key from cache, or load from the data base if necessary.
+     *
      * @param dbKey the key to getting an entity from the cache
-     * @return  public key or null
+     * @return public key or null
      */
     PublicKey getPublicKey(DbKey dbKey);
 
     /**
      * Load public key from the data base
+     *
      * @param dbKey the primary key to load entity from the data base
      * @return public key or null
      */
@@ -46,7 +50,8 @@ public interface AccountPublicKeyService {
 
     /**
      * Load public key for specified height from the data base
-     * @param dbKey the primary key to load entity
+     *
+     * @param dbKey  the primary key to load entity
      * @param height block height
      * @return public key or null
      */

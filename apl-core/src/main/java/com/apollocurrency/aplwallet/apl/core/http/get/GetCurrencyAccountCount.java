@@ -34,7 +34,7 @@ import javax.servlet.http.HttpServletRequest;
 public final class GetCurrencyAccountCount extends AbstractAPIRequestHandler {
 
     public GetCurrencyAccountCount() {
-        super(new APITag[] {APITag.MS}, "currency", "height");
+        super(new APITag[]{APITag.MS}, "currency", "height");
     }
 
     @Override

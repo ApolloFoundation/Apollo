@@ -51,7 +51,7 @@ public class AccountPropertyServiceImpl implements AccountPropertyService {
 
     @Override
     public List<AccountProperty> getProperties(long recipientId, long setterId, String property, int from, int to) {
-        return toList( accountPropertyTable.getProperties(recipientId, setterId, property, from, to));
+        return toList(accountPropertyTable.getProperties(recipientId, setterId, property, from, to));
     }
 
     @Override
@@ -71,7 +71,7 @@ public class AccountPropertyServiceImpl implements AccountPropertyService {
     }
 
     @Override
-    public  void deleteProperty(Account account, long propertyId) {
+    public void deleteProperty(Account account, long propertyId) {
         AccountProperty accountProperty = accountPropertyTable.get(AccountPropertyTable.newKey(propertyId));
         if (accountProperty == null) {
             return;

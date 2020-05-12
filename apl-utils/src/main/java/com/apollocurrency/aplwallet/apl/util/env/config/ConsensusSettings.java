@@ -46,17 +46,13 @@ public class ConsensusSettings {
         this.adaptiveForgingSettings = adaptiveForgingSettings;
     }
 
-    public enum Type {
-        POS
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof ConsensusSettings)) return false;
         ConsensusSettings that = (ConsensusSettings) o;
         return type == that.type &&
-                Objects.equals(adaptiveForgingSettings, that.adaptiveForgingSettings);
+            Objects.equals(adaptiveForgingSettings, that.adaptiveForgingSettings);
     }
 
     @Override
@@ -67,12 +63,17 @@ public class ConsensusSettings {
     public ConsensusSettings copy() {
         return new ConsensusSettings(type, adaptiveForgingSettings.copy());
     }
+
     @Override
     public String toString() {
         return "ConsensusSettings{" +
-                "type=" + type +
-                ", adaptiveForgingSettings=" + adaptiveForgingSettings +
-                '}';
+            "type=" + type +
+            ", adaptiveForgingSettings=" + adaptiveForgingSettings +
+            '}';
+    }
+
+    public enum Type {
+        POS
     }
 
 }
