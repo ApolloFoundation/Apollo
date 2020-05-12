@@ -31,3 +31,6 @@ nbactions.xml
 /trace.db/
 
 /apl-crypto/testdata/out/
+/webui/
+/build
+/webui
