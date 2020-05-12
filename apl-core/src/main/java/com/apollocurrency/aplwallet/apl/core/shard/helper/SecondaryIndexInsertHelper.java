@@ -50,6 +50,9 @@ public class SecondaryIndexInsertHelper extends AbstractHelper {
         log.debug("'{}' bottomBound = {}, upperBound = {}", currentTableName, lowerBoundIdValue, upperBoundIdValue);
 
         // turn OFF HEIGHT constraint for specified table
+/*
+       // after moving from old H2 PageStore engine into new engine MVStore (1.4.199)
+       // we no longer need DROP and CREATE index(s) for performance
         if (ShardConstants.BLOCK_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
             executeUpdateQuery(sourceConnect, "drop index IF EXISTS block_index_block_id_idx");
             executeUpdateQuery(sourceConnect, "drop index IF EXISTS block_index_block_height_idx");
@@ -57,6 +60,7 @@ public class SecondaryIndexInsertHelper extends AbstractHelper {
             executeUpdateQuery(sourceConnect, "drop index IF EXISTS transaction_shard_index_height_transaction_index_idx");
             executeUpdateQuery(sourceConnect, "drop index IF EXISTS transaction_shard_index_transaction_id_height_idx");
         }
+*/
         Set<Long> exludeDbIds = operationParams.excludeInfo != null ? operationParams.excludeInfo.getNotCopyDbIds() : Set.of();
 
         PaginateResultWrapper paginateResultWrapper = new PaginateResultWrapper();
@@ -76,12 +80,11 @@ public class SecondaryIndexInsertHelper extends AbstractHelper {
             if (this.preparedInsertStatement != null /*&& !this.preparedInsertStatement.isClosed()*/) {
                 log.trace("preparedInsertStatement will be CLOSED!");
                 DbUtils.close(this.preparedInsertStatement);
-//                this.preparedInsertStatement.close();
             }
         }
         log.debug("Inserted '{}' = [{}] within {} secs", operationParams.tableName, totalSelectedRows, (System.currentTimeMillis() - startSelect) / 1000);
 
-        // turn ON HEIGHT constraint for specified table
+        // create HEIGHT constraint for specified table if NOT EXISTS
         if (ShardConstants.BLOCK_INDEX_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
             executeUpdateQuery(sourceConnect,
                 "CREATE UNIQUE INDEX IF NOT EXISTS block_index_block_id_idx ON block_index (block_id)");
