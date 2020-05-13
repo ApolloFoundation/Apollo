@@ -18,21 +18,25 @@ import java.util.concurrent.CompletableFuture;
  */
 public interface SvBusService {
 
-    public void addConnection(URI uri, boolean isDefault);
+    void addConnection(URI uri, boolean isDefault);
 
-    public Map<URI, ConnectionStatus> getConnections();
+    <T extends SvBusResponse> void addResponseMapping(String path, Class<T> tClass);
 
-    public MessageDispatcher getDispatcher();
+    <T extends SvBusResponse> void addParametrizedResponseMapping(String path, Class<T> tClass, Class<?> paramClass);
 
-    public SvBusResponse sendSync(SvBusRequest rq, String path, URI addr);
+    Map<URI, ConnectionStatus> getConnections();
 
-    public CompletableFuture<SvBusResponse> sendAsync(SvBusRequest msg, String path, URI addr);
+    MessageDispatcher getDispatcher();
 
-    public ConnectionStatus getConnectionStaus(URI uri);
+    <T extends SvBusResponse> T sendSync(SvBusRequest rq, String path, URI addr);
 
-    public void shutdown();
+    CompletableFuture<SvBusResponse> sendAsync(SvBusRequest msg, String path, URI addr);
 
-    public void setMyInfo(SvBusHello info);
+    ConnectionStatus getConnectionStaus(URI uri);
 
-    public URI getMyAddress();
+    void shutdown();
+
+    void setMyInfo(SvBusHello info);
+
+    URI getMyAddress();
 }

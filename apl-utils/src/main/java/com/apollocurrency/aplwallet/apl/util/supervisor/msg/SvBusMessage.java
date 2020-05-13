@@ -5,6 +5,8 @@ package com.apollocurrency.aplwallet.apl.util.supervisor.msg;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Simple message on bus
@@ -12,7 +14,9 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
  * @author alukin@gmail.com
  */
 @JsonInclude(Include.NON_NULL)
+@Getter
+@Setter
 public class SvBusMessage {
 
-    public String message;
+    private String message;
 }

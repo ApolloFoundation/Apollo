@@ -4,6 +4,7 @@
 package com.apollocurrency.aplwallet.apl.util.supervisor.client;
 
 import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusMessage;
+import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusResponse;
 
 /**
  * Public interface to message dispatcher. Though dispatcher is a core of
@@ -18,7 +19,7 @@ public interface MessageDispatcher {
      * path to error handler. If not handler is not defined, default logging
      * handler is used
      */
-    public static final String ERROR_PATH = "/error";
+    String ERROR_PATH = "/error";
 
     /**
      * Register handler for incoming messages
@@ -28,12 +29,27 @@ public interface MessageDispatcher {
      * @param respMapping mapping class for response
      * @param handler handler routine
      */
-    public void registerRqHandler(String pathSpec, Class<? extends SvBusMessage> rqMapping, Class<? extends SvBusMessage> respMapping, SvRequestHandler handler);
+    void registerRqHandler(String pathSpec, Class<? extends SvBusMessage> rqMapping, Class<? extends SvBusMessage> respMapping, SvRequestHandler handler);
+
+    /**
+     * Register response mapping class for specified path
+     * @param pathSpec path for which given response class should be mapped
+     * @param respClass class to which response for given path should be mapped
+     */
+    void registerResponseMapping(String pathSpec, Class<? extends SvBusResponse> respClass);
+
+    /**
+     * Register response mapping class for specifed path, which is parametrized by another class
+     * @param pathSpec path for which given response mapping is intended
+     * @param responseClass base parametrized mapping class
+     * @param paramClass parameter class for base class
+     */
+    void registerParametrizedResponseMapping(String pathSpec, Class<? extends SvBusResponse> responseClass, Class<?> paramClass);
 
     /**
      * Unregister handler for incoming messages
      *
      * @param pathSpec exactly as in registration call
      */
-    public void unregisterRqHandler(String pathSpec);
+     void unregisterRqHandler(String pathSpec);
 }

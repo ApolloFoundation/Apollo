@@ -5,7 +5,7 @@ package com.apollocurrency.aplwallet.apl.util.supervisor.client.impl;
 
 import com.apollocurrency.aplwallet.apl.util.supervisor.client.ConnectionStatus;
 import com.apollocurrency.aplwallet.apl.util.supervisor.client.MessageDispatcher;
-import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusError;
+import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusStatus;
 import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusErrorCodes;
 import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusResponse;
 import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvChannelHeader;
@@ -73,8 +73,8 @@ public class SvBusClient implements Listener, Closeable {
         setState(ConnectionStatus.CONNECTING);
         try {
             webSocket = httpClient.newWebSocketBuilder()
-                    .buildAsync(serverURI, this)
-                    .join();
+                .buildAsync(serverURI, this)
+                .join();
             res = !webSocket.isInputClosed();
             if (res) {
                 dispatcher.onConnectionUp(serverURI);
@@ -83,6 +83,10 @@ public class SvBusClient implements Listener, Closeable {
             setState(ConnectionStatus.ERROR);
             log.info("Can not connect to {}", serverURI);
             res = false;
+        } catch (Exception e) {
+            res = false;
+            setState(ConnectionStatus.ERROR);
+            log.error("Unknown error occurred during connection to " + serverURI, e);
         }
         return res;
     }
@@ -108,10 +112,8 @@ public class SvBusClient implements Listener, Closeable {
     }
 
     public void sendError(int code, String message, SvChannelHeader rqheader) {
-        SvBusResponse resp = new SvBusResponse();
-        resp.error = new SvBusError();
-        resp.error.errorCode = code;
-        resp.error.descritption = message;
+        SvBusStatus error = new SvBusStatus(code, message);
+        SvBusResponse resp = new SvBusResponse(error);
         SvChannelHeader hdr = new SvChannelHeader();
         hdr.from = dispatcher.getMyAddress().toString();
         if (rqheader != null) {
@@ -197,6 +199,7 @@ public class SvBusClient implements Listener, Closeable {
     @Override
     public void onError(WebSocket webSocket, Throwable error) {
         setState(state.ERROR); //TODO maybe save or print error stacktrace
+        log.debug("Error: ", error);
         Listener.super.onError(webSocket, error);
     }
 
