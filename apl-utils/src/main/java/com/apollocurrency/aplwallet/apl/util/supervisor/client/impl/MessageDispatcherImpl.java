@@ -5,6 +5,7 @@ package com.apollocurrency.aplwallet.apl.util.supervisor.client.impl;
 
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.supervisor.client.MessageDispatcher;
+import com.apollocurrency.aplwallet.apl.util.supervisor.client.ResponseTimeoutException;
 import com.apollocurrency.aplwallet.apl.util.supervisor.client.SvRequestHandler;
 import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusStatus;
 import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusErrorCodes;
@@ -129,7 +130,7 @@ public class MessageDispatcherImpl implements MessageDispatcher {
         return res;
     }
 
-    public <T extends SvBusResponse> T sendSync(SvBusMessage rq, String path, URI addr) throws MessageSendingException, SocketTimeoutException {
+    public <T extends SvBusResponse> T sendSync(SvBusMessage rq, String path, URI addr) throws MessageSendingException, ResponseTimeoutException {
         SvBusClient client = connections.get(addr);
         if (client == null) {
             client = connections.getDefault().getValue();
@@ -147,20 +148,18 @@ public class MessageDispatcherImpl implements MessageDispatcher {
                 outgoingQueue.addLast(env);
             }
             waiting.put(header.messageId, new ResponseLatch());
-            return getResponse(header.messageId);
+            try {
+                return getResponse(header.messageId);
+            } catch (SocketTimeoutException e) {
+                throw new ResponseTimeoutException("Unable to get response after waiting for " + RESPONSE_WAIT_TIMEOUT_MS + " ms", e);
+            }
         } catch (JsonProcessingException ex) {
             throw new MessageSendingException("Can not map response to JSON", ex);
         }
     }
 
     public CompletableFuture<SvBusResponse> sendAsync(SvBusRequest rq, String path, URI addr) {
-        CompletableFuture<SvBusResponse> res = CompletableFuture.supplyAsync(() -> {
-            try {
-                return sendSync(rq, path, addr);
-            } catch (SocketTimeoutException e) {
-                throw new MessageSendingException(e.getMessage(), e);
-            }
-        }, executor);
+        CompletableFuture<SvBusResponse> res = CompletableFuture.supplyAsync(() -> sendSync(rq, path, addr), executor);
         return res;
     }
 
