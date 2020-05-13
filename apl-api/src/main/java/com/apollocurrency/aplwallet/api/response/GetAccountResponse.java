@@ -1,5 +1,6 @@
 package com.apollocurrency.aplwallet.api.response;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -29,5 +30,10 @@ public class GetAccountResponse extends ResponseBase {
     private Long currentLeasingHeightTo;
     private Long currentLeasingHeightFrom;
     private String description;
+    private String nextLesseeRS;
+    private Long nextLeasingHeightTo;
+    private String nextLessee;
+    private Long nextLeasingHeightFrom;
+
 
 }
