@@ -3,9 +3,11 @@
  */
 package com.apollocurrency.aplwallet.apl.util.supervisor.client.impl;
 
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.supervisor.client.MessageDispatcher;
+import com.apollocurrency.aplwallet.apl.util.supervisor.client.ResponseTimeoutException;
 import com.apollocurrency.aplwallet.apl.util.supervisor.client.SvRequestHandler;
-import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusError;
+import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusStatus;
 import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusErrorCodes;
 import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusHello;
 import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusMessage;
@@ -14,11 +16,14 @@ import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusResponse;
 import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvChannelHeader;
 import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvChannelMessage;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.SocketTimeoutException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedList;
@@ -28,7 +33,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import lombok.Getter;
 
 /**
  * Implementation of MessageDispoatcher. Actually it is the core of messaging
@@ -41,7 +45,7 @@ import lombok.Getter;
 public class MessageDispatcherImpl implements MessageDispatcher {
 
     public static long RESPONSE_WAIT_TIMEOUT_MS = 500L; // TODO need to make it configurable
-
+    public static final int SAY_HELLO_ATTEMPTS = 5;
     private final SvSessions connections;
     private final PathParamProcessor pathMatcher;
     private final Deque<SvChannelMessage> outgoingQueue = new LinkedList<>();
@@ -56,6 +60,11 @@ public class MessageDispatcherImpl implements MessageDispatcher {
     public MessageDispatcherImpl() {
         pathMatcher = new PathParamProcessor();
         connections = new SvSessions(this);
+        registerRqHandler("/hello", SvBusRequest.class, SvBusResponse.class, (req, header)-> {
+            log.info("Hello received from {}" + header.from);
+            return new SvBusResponse(new SvBusStatus(0, "Hello OK"));
+        });
+        registerResponseMapping("/hello", SvBusResponse.class);
     }
 
     public Map<URI, SvBusClient> getConnections() {
@@ -77,6 +86,16 @@ public class MessageDispatcherImpl implements MessageDispatcher {
     }
 
     @Override
+    public void registerResponseMapping(String pathSpec, Class<? extends SvBusResponse> respClass) {
+        pathMatcher.registerResponseMapping(pathSpec, respClass, null);
+    }
+
+    @Override
+    public void registerParametrizedResponseMapping(String pathSpec, Class<? extends SvBusResponse> responseClass, Class<?> paramClass) {
+        pathMatcher.registerResponseMapping(pathSpec, responseClass, paramClass);
+    }
+
+    @Override
     public void unregisterRqHandler(String pathSpec) {
         pathMatcher.remove(pathSpec);
     }
@@ -85,15 +104,14 @@ public class MessageDispatcherImpl implements MessageDispatcher {
         return Math.round(Math.random() * (Long.MAX_VALUE - 1));
     }
 
-    boolean isMyAddress(String to) {
-        return myAddress.equals(to);
+    boolean isMyAddress(String to) throws URISyntaxException {
+        return myAddress.equals(new URI(to));
     }
 
     public SvBusResponse errornousRequestsHandler(JsonNode rqBody, SvChannelHeader rqHeader, int code, String errorInfo) {
-        SvBusResponse resp = new SvBusResponse();
-        resp.error = new SvBusError();
-        resp.error.errorCode = code;
-        resp.error.descritption = errorInfo + " Request path: " + rqHeader.path;
+        SvBusStatus error = new SvBusStatus(code, errorInfo + " Request path: " + rqHeader.path);
+        SvBusResponse resp = new SvBusResponse(error);
+
         return resp;
     }
 
@@ -103,8 +121,8 @@ public class MessageDispatcherImpl implements MessageDispatcher {
         client.connect();
     }
 
-    private SvBusResponse getResponse(Long rqId) throws SocketTimeoutException {
-        SvBusResponse res = null;
+    private <T extends SvBusResponse> T getResponse(Long rqId) throws SocketTimeoutException {
+        T res = null;
         ResponseLatch l = waiting.get(rqId);
         if (l != null) {
             res = l.get(RESPONSE_WAIT_TIMEOUT_MS);
@@ -112,8 +130,17 @@ public class MessageDispatcherImpl implements MessageDispatcher {
         return res;
     }
 
-    public SvBusResponse sendSync(SvBusMessage rq, String path, URI addr) {
-        SvBusResponse res = null;
+    /**
+     * Send message to the specified address and wait for response
+     * @param rq message payload
+     * @param path url path to which request will be sent. For url 'ws://127.0.0.1:8080/path/to/resource' path is 'path/to/resource'
+     * @param addr network address which recipient's websocket server listen to. Example: 'ws://127.0.0.1:8080'
+     * @param <T> type of returned response
+     * @return received response for sent message
+     * @throws ResponseTimeoutException when recipient did not respond to sent message in {@link MessageDispatcherImpl#RESPONSE_WAIT_TIMEOUT_MS} ms
+     * @throws MessageSendingException when response or message payload could not be serialized/deserialized
+     */
+    public <T extends SvBusResponse> T sendSync(SvBusMessage rq, String path, URI addr)  {
         SvBusClient client = connections.get(addr);
         if (client == null) {
             client = connections.getDefault().getValue();
@@ -131,22 +158,14 @@ public class MessageDispatcherImpl implements MessageDispatcher {
                 outgoingQueue.addLast(env);
             }
             waiting.put(header.messageId, new ResponseLatch());
-            res = getResponse(header.messageId);
-
-        } catch (SocketTimeoutException ex) {
-            log.warn("Responce wait timeout", ex);
-            res = new SvBusResponse();
-            res.error = new SvBusError();
-            res.error.errorCode = SvBusErrorCodes.RESPONSE_TIMEOUT;
-            res.error.descritption = ex.getMessage();
+            try {
+                return getResponse(header.messageId);
+            } catch (SocketTimeoutException e) {
+                throw new ResponseTimeoutException("Unable to get response after waiting for " + RESPONSE_WAIT_TIMEOUT_MS + " ms", e);
+            }
         } catch (JsonProcessingException ex) {
-            log.error("Can not map response to JSON", ex);
-            res = new SvBusResponse();
-            res.error = new SvBusError();
-            res.error.errorCode = SvBusErrorCodes.PROCESSING_ERROR;
-            res.error.descritption = ex.getMessage();
+            throw new MessageSendingException("Can not map response to JSON", ex);
         }
-        return res;
     }
 
     public CompletableFuture<SvBusResponse> sendAsync(SvBusRequest rq, String path, URI addr) {
@@ -182,20 +201,20 @@ public class MessageDispatcherImpl implements MessageDispatcher {
         }
     }
 
-    void handleResponse(JsonNode body, SvChannelHeader header) {
+    void  handleResponse(JsonNode body, SvChannelHeader header) {
         ResponseLatch rl = waiting.get(header.inResponseTo);
         if (rl == null) {
             log.warn("Got responce that is not in waiting map. Header: {}", header);
         } else {
-            HandlerRecord hr = pathMatcher.find(header.path);
-            if (hr == null) { // Maybe set here error response to unlock latch?
+            JavaType responseType = pathMatcher.findResponseMappingClass(header.path);
+            if (responseType == null) { // Maybe set here error response to unlock latch?
                 if (header.path.equals(MessageDispatcher.ERROR_PATH)) {
                     log.error("Error reply without destination path: Header: {}, Body: {}", header, body);
                 } else {
                     log.error("No response mapper found for path: {}", header.path);
                 }
             } else {
-                SvBusResponse response = pathMatcher.convertResponse(body, hr);
+                SvBusResponse response = pathMatcher.convertResponse(body, responseType);
                 rl.setResponse(response);
             }
         }
@@ -220,16 +239,19 @@ public class MessageDispatcherImpl implements MessageDispatcher {
     }
 
     void handleIncoming(SvChannelHeader header, JsonNode body) {
-
-        if (!isMyAddress(header.to)) {
-            int res = routeMessage(header, body);
-        } else {
-            //TODO maybe better to encapsulate such logic inside header?
-            if (header.inResponseTo != null) { //this is response
-                handleResponse(body, header);
+        try {
+            if (!isMyAddress(header.to)) {
+                int res = routeMessage(header, body);
             } else {
-                handleRequest(body, header);
+                //TODO maybe better to encapsulate such logic inside header?
+                if (header.inResponseTo != null) { //this is response
+                    handleResponse(body, header);
+                } else {
+                    handleRequest(body, header);
+                }
             }
+        } catch (URISyntaxException e) {
+            replyTo(header, new SvBusResponse(new SvBusStatus(1, "Incorrect target uri: " + header.to)));
         }
     }
 
@@ -242,9 +264,7 @@ public class MessageDispatcherImpl implements MessageDispatcher {
             return;
         }
         List<SvChannelMessage> toRemove = new ArrayList<>();
-        //first, say Hello
-        sendHello(uri);
-
+        trySayHello(uri);
         boolean def = connections.isDefault(uri);
         for (SvChannelMessage m : outgoingQueue) {
             if (def || m.header.to.equals(uri.toString())) {
@@ -259,6 +279,22 @@ public class MessageDispatcherImpl implements MessageDispatcher {
         }
 
         outgoingQueue.removeAll(toRemove);
+    }
+
+    private void trySayHello(URI uri) {
+        int attempts = SAY_HELLO_ATTEMPTS;
+        while (true) {
+            attempts--;
+            try {
+                sendHello(uri);
+                break;
+            } catch (ResponseTimeoutException e) {
+                if (attempts == 0) {
+                    throw new MessageSendingException("Unable to send hello to " + uri + " due to response timeout", e);
+                }
+                ThreadUtils.sleep(500);
+            }
+        }
     }
 
     void shutdown() {

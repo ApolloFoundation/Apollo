@@ -219,6 +219,7 @@ public class ShardMigrationExecutor {
 
     public MigrateState executeAllOperations() {
         stopNetOperations();
+        long start = System.currentTimeMillis();
         log.debug("START SHARDING...");
         MigrateState state = MigrateState.INIT;
         for (DataMigrateOperation dataMigrateOperation : dataMigrateOperations) {
@@ -231,7 +232,7 @@ public class ShardMigrationExecutor {
                 break;
             }
         }
-        log.debug("FINISHED SHARDING '{}'..", state);
+        log.debug("FINISHED SHARDING ----- '{}' in {} ms", state, System.currentTimeMillis() - start);
         resumeNetOperations();
         return state;
     }
