@@ -130,7 +130,17 @@ public class MessageDispatcherImpl implements MessageDispatcher {
         return res;
     }
 
-    public <T extends SvBusResponse> T sendSync(SvBusMessage rq, String path, URI addr) throws MessageSendingException, ResponseTimeoutException {
+    /**
+     * Send message to the specified address and wait for response
+     * @param rq message payload
+     * @param path url path to which request will be sent. For url 'ws://127.0.0.1:8080/path/to/resource' path is 'path/to/resource'
+     * @param addr network address which recipient's websocket server listen to. Example: 'ws://127.0.0.1:8080'
+     * @param <T> type of returned response
+     * @return received response for sent message
+     * @throws ResponseTimeoutException when recipient did not respond to sent message in {@link MessageDispatcherImpl#RESPONSE_WAIT_TIMEOUT_MS} ms
+     * @throws MessageSendingException when response or message payload could not be serialized/deserialized
+     */
+    public <T extends SvBusResponse> T sendSync(SvBusMessage rq, String path, URI addr)  {
         SvBusClient client = connections.get(addr);
         if (client == null) {
             client = connections.getDefault().getValue();
@@ -163,7 +173,7 @@ public class MessageDispatcherImpl implements MessageDispatcher {
         return res;
     }
 
-    void sendHello(URI addr) throws SocketTimeoutException {
+    void sendHello(URI addr) {
         sendSync(hello, "/hello", addr);
     }
 
@@ -278,7 +288,7 @@ public class MessageDispatcherImpl implements MessageDispatcher {
             try {
                 sendHello(uri);
                 break;
-            } catch (SocketTimeoutException e) {
+            } catch (ResponseTimeoutException e) {
                 if (attempts == 0) {
                     throw new MessageSendingException("Unable to send hello to " + uri + " due to response timeout", e);
                 }

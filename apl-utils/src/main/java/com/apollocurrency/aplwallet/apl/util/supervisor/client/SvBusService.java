@@ -7,7 +7,6 @@ import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusHello;
 import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusRequest;
 import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusResponse;
 
-import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -29,7 +28,7 @@ public interface SvBusService {
 
     MessageDispatcher getDispatcher();
 
-    <T extends SvBusResponse> T sendSync(SvBusRequest rq, String path, URI addr) throws SocketTimeoutException;
+    <T extends SvBusResponse> T sendSync(SvBusRequest rq, String path, URI addr);
 
     CompletableFuture<SvBusResponse> sendAsync(SvBusRequest msg, String path, URI addr);
 
