@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.account.service;
 
 import java.util.Map;
+import java.util.stream.Stream;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountControlPhasing;
@@ -21,6 +22,8 @@ public interface AccountControlPhasingService {
     int getCount();
 
     DbIterator<AccountControlPhasing> getAll(int from, int to);
+
+    Stream<AccountControlPhasing> getAllStream(int from, int to);
 
     void unset(Account account);
 

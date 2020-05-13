@@ -75,6 +75,9 @@ public class NewApiRegistry {
 //        apis.put("getBlocks", "/rest/blocks"); //GET
 //        apis.put("getECBlock", "/rest/blocks/ec"); //GET
 
+//        apis.put("getAllPhasingOnlyControls", "/rest/accounts/control/list"); //GET
+//        apis.put("getPhasingOnlyControl", "/rest/accounts/control/id"); //GET
+
         //TODO: add new implemented endpoints
     }
 

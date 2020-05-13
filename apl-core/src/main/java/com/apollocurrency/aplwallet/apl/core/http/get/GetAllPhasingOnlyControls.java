@@ -34,6 +34,7 @@ import org.json.simple.JSONStreamAware;
 import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
+@Deprecated
 @Vetoed
 public final class GetAllPhasingOnlyControls extends AbstractAPIRequestHandler {
 

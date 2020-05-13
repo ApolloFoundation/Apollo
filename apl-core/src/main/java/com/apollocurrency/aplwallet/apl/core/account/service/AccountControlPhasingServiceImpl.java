@@ -10,6 +10,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import java.util.Map;
+import java.util.stream.Stream;
 
 import com.apollocurrency.aplwallet.apl.core.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountControlPhasingTable;
@@ -18,6 +19,7 @@ import com.apollocurrency.aplwallet.apl.core.account.model.AccountControlPhasing
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.converter.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.service.BlockChainInfoService;
@@ -40,6 +42,8 @@ public class AccountControlPhasingServiceImpl implements AccountControlPhasingSe
     private final BlockChainInfoService blockChainInfoService;
     private final PhasingPollService phasingPollService;
     private final BlockchainConfig blockchainConfig;
+    private final IteratorToStreamConverter<AccountControlPhasing> accountControlPhasingIteratorToStreamConverter =
+        new IteratorToStreamConverter<>();
 
     @Inject
     public AccountControlPhasingServiceImpl(AccountControlPhasingTable accountControlPhasingTable,
@@ -70,6 +74,11 @@ public class AccountControlPhasingServiceImpl implements AccountControlPhasingSe
     @Override
     public DbIterator<AccountControlPhasing> getAll(int from, int to) {
         return accountControlPhasingTable.getAll(from, to);
+    }
+
+    @Override
+    public Stream<AccountControlPhasing> getAllStream(int from, int to) {
+        return accountControlPhasingIteratorToStreamConverter.apply(accountControlPhasingTable.getAll(from, to));
     }
 
     @Override

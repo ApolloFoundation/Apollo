@@ -53,6 +53,8 @@ import javax.servlet.http.HttpServletRequest;
  *
  * @see SetPhasingOnlyControl
  */
+
+@Deprecated
 @Vetoed
 public final class GetPhasingOnlyControl extends AbstractAPIRequestHandler {
 
