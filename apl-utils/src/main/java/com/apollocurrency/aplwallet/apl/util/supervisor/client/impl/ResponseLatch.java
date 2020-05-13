@@ -38,7 +38,7 @@ public class ResponseLatch {
      * @return Response message
      * @throws java.net.SocketTimeoutException
      */
-    public SvBusResponse get(long timeoutMs) throws SocketTimeoutException {
+    public<T extends SvBusResponse> T get(long timeoutMs) throws SocketTimeoutException {
         try {
             if (!latch.await(timeoutMs, TimeUnit.MILLISECONDS)) {
                 throw new SocketTimeoutException("WebSocket response wait timeout (" + timeoutMs + "ms) exceeded");
@@ -47,10 +47,10 @@ public class ResponseLatch {
             log.debug("Interruptrd exception while waiting for response", ex);
             Thread.currentThread().interrupt();
         }
-        return response;
+        return (T) response;
     }
 
-    public void setResponse(SvBusResponse response) {
+    public <T extends SvBusResponse> void setResponse(T response) {
         this.response = response;
         latch.countDown();
     }

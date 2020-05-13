@@ -15,5 +15,20 @@ import java.util.Map;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class SvBusRequest extends SvBusMessage {
 
-    Map<String, String> parameters = new HashMap<>();
+    private final Map<String, String> parameters = new HashMap<>();
+
+    public SvBusRequest(Map<String, String> parameters) {
+        this.parameters.putAll(parameters);
+    }
+
+    public SvBusRequest() {}
+
+    public  <T, V> void add(T t, V v) {
+        parameters.put(t.toString(), v.toString());
+    }
+
+    public String get(String param) {
+        return parameters.get(param);
+    }
+
 }

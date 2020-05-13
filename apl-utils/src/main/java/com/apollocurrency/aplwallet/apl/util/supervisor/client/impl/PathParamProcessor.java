@@ -9,13 +9,15 @@ import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusRequest;
 import com.apollocurrency.aplwallet.apl.util.supervisor.msg.SvBusResponse;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * JAX-RS -like path specifications processor
@@ -26,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 public class PathParamProcessor {
 
     private final Map<PathSpecification, HandlerRecord> rqHandlers = new ConcurrentHashMap<>();
+    private final Map<PathSpecification, JavaType> responseMappingClasses = new ConcurrentHashMap<>();
     @Getter
     private final ObjectMapper mapper;
 
@@ -44,8 +47,8 @@ public class PathParamProcessor {
     public boolean registerRqHandler(String pathSpec, Class<? extends SvBusMessage> rqMapping, Class<? extends SvBusMessage> respMapping, SvRequestHandler handler) {
         boolean res = false;
         PathSpecification spec = PathSpecification.fromSpecString(pathSpec);
-        if (find(spec.prefix) != null) {
-            log.error("Path specification with prefix {} is already registered", spec.prefix);
+        if (findHandler(spec.prefix) != null) {
+            log.error("Request handler for path specification with prefix {} is already registered", spec.prefix);
         } else {
             res = true;
             HandlerRecord hrec = new HandlerRecord();
@@ -56,6 +59,23 @@ public class PathParamProcessor {
             rqHandlers.putIfAbsent(spec, hrec);
         }
         return res;
+    }
+
+    public <T extends SvBusResponse> boolean  registerResponseMapping(String pathSpec, Class<? extends SvBusResponse> respMapping, Class<?> parametrizedClass) {
+        PathSpecification spec = PathSpecification.fromSpecString(pathSpec);
+        boolean alreadyExist = findResponseMappingClass(spec.prefix) != null;
+        if (alreadyExist) {
+            log.error("Response class for path specification with prefix {} is already registered", spec.prefix);
+        } else {
+            JavaType typeToRegister;
+            if (parametrizedClass != null) {
+                typeToRegister = mapper.getTypeFactory().constructParametricType(respMapping, parametrizedClass);
+            } else {
+                typeToRegister = mapper.constructType(respMapping);
+            }
+                responseMappingClasses.put(spec, typeToRegister);
+        }
+        return alreadyExist;
     }
 
     public HandlerRecord findAndParse(String path) {
@@ -85,19 +105,25 @@ public class PathParamProcessor {
         return res;
     }
 
-    public HandlerRecord find(String path) {
-        HandlerRecord res = null;
-        for (PathSpecification ps : rqHandlers.keySet()) {
-            if (ps.matches(path)) {
-                res = rqHandlers.get(ps);
-                break;
-            }
-        }
-        return res;
+    public HandlerRecord findHandler(String path) {
+        return findOneBySpec(path, rqHandlers);
+    }
+    public JavaType findResponseMappingClass(String path) {
+        JavaType oneBySpec = findOneBySpec(path, responseMappingClasses);
+        return oneBySpec;
     }
 
-    public SvBusResponse convertResponse(JsonNode body, HandlerRecord hr) {
-        SvBusResponse res = mapper.convertValue(body, hr.respMapping);
+    private <T> T findOneBySpec(String path, Map<PathSpecification, T> map) {
+        for (PathSpecification ps : map.keySet()) {
+            if (ps.matches(path)) {
+                return map.get(ps);
+            }
+        }
+        return null;
+    }
+
+    public <T extends SvBusResponse> T  convertResponse(JsonNode body, JavaType responseClass) {
+        T res = mapper.convertValue(body, responseClass);
         return res;
     }
 }
