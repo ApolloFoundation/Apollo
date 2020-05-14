@@ -31,8 +31,18 @@ public class AccountControlPhasingDTO extends BaseDTO {
     private Short maxDuration;
     private Long quorum;
 
-    private List<String> whitelist;
+    private List<WhileListEntity> whitelist;
 
     private PhasingParamsDTO phasingParams;
+
+    @Getter
+    @Setter
+    @ToString
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class WhileListEntity {
+        private String whitelisted;
+        private String whitelistedRS;
+    }
 
 }

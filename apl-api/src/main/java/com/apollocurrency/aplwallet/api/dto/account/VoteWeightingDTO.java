@@ -15,10 +15,11 @@ import lombok.ToString;
 @ToString
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class PhasingParamsDTO {
+public class VoteWeightingDTO {
 
-    private Long quorum;
-    private long[] whitelist;
-    private VoteWeightingDTO voteWeighting;
+    private String holdingId; //either asset id or MS coin id
+    private Long minBalance;
+    private Byte votingModel; // enum value
+    private Byte minBalanceModel; // enum value
 
 }

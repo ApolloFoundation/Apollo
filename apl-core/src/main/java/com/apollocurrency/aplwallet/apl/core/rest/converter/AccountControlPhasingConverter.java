@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -12,6 +13,8 @@ import com.apollocurrency.aplwallet.apl.core.account.model.AccountControlPhasing
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 
 public class AccountControlPhasingConverter implements Converter<AccountControlPhasing, AccountControlPhasingDTO> {
+
+    private PhasingParamsConverter phasingParamsConverter = new PhasingParamsConverter();
 
     @Override
     public AccountControlPhasingDTO apply(AccountControlPhasing model) {
@@ -23,7 +26,21 @@ public class AccountControlPhasingConverter implements Converter<AccountControlP
         dto.setMinDuration(model.getMinDuration());
         dto.setMaxFees(model.getMaxFees());
         dto.setQuorum(model.getPhasingParams() != null ? model.getPhasingParams().getQuorum() : 0);
-
+//        dto.setPhasingParams(model.getPhasingParams() != null ?
+//            phasingParamsConverter.apply(model.getPhasingParams()) : null);
+        if (model.getPhasingParams() != null
+            && model.getPhasingParams().getWhitelist() != null
+            && model.getPhasingParams().getWhitelist().length > 0) {
+            List<AccountControlPhasingDTO.WhileListEntity> whileList = new ArrayList<>(model.getPhasingParams().getWhitelist().length);
+            for (int i = 0; i < model.getPhasingParams().getWhitelist().length; i++) {
+                long accountId = model.getPhasingParams().getWhitelist()[i];
+                AccountControlPhasingDTO.WhileListEntity listEntity = new AccountControlPhasingDTO.WhileListEntity();
+                listEntity.setWhitelisted(Long.toUnsignedString(accountId));
+                listEntity.setWhitelistedRS(Convert2.rsAccount(accountId));
+                whileList.add(listEntity);
+            }
+            dto.setWhitelist(whileList);
+        }
         return dto;
     }
 
