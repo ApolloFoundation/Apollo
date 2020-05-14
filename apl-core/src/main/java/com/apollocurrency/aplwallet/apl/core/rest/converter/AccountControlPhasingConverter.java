@@ -14,7 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 
 public class AccountControlPhasingConverter implements Converter<AccountControlPhasing, AccountControlPhasingDTO> {
 
-    private PhasingParamsConverter phasingParamsConverter = new PhasingParamsConverter();
+//    private PhasingParamsConverter phasingParamsConverter = new PhasingParamsConverter(); // not needed now
 
     @Override
     public AccountControlPhasingDTO apply(AccountControlPhasing model) {

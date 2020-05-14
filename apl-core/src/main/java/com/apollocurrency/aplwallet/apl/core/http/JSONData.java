@@ -829,6 +829,7 @@ public final class JSONData {
         return json;
     }
 
+    @Deprecated
     private static void putVoteWeighting(JSONObject json, VoteWeighting voteWeighting) {
         json.put("votingModel", voteWeighting.getVotingModel().getCode());
         json.put("minBalance", String.valueOf(voteWeighting.getMinBalance()));

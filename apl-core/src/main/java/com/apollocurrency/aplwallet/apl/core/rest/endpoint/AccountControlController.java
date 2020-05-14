@@ -48,15 +48,15 @@ import lombok.extern.slf4j.Slf4j;
 @Path("/accounts/control")
 public class AccountControlController {
 
-    private Blockchain blockchain;
+//    private Blockchain blockchain;
     private FirstLastIndexParser indexParser;
     private AccountControlPhasingService accountControlPhasingService;
     private AccountControlPhasingConverter accountControlPhasingConverter = new AccountControlPhasingConverter();
 
     @Inject
-    public AccountControlController(Blockchain blockchain, FirstLastIndexParser indexParser,
+    public AccountControlController(/*Blockchain blockchain,*/ FirstLastIndexParser indexParser,
                                     AccountControlPhasingService accountControlPhasingService) {
-        this.blockchain = blockchain;
+//        this.blockchain = blockchain;
         this.indexParser = indexParser;
         this.accountControlPhasingService = accountControlPhasingService;
     }

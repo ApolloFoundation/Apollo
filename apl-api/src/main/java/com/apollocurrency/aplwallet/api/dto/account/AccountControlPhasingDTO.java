@@ -24,7 +24,6 @@ public class AccountControlPhasingDTO extends BaseDTO {
 
     private String account;
     private String accountRS;
-//    private String publicKey;
 
     private Long maxFees;
     private Short minDuration;
@@ -32,8 +31,7 @@ public class AccountControlPhasingDTO extends BaseDTO {
     private Long quorum;
 
     private List<WhileListEntity> whitelist;
-
-    private PhasingParamsDTO phasingParams;
+//    private PhasingParamsDTO phasingParams;// not needed now
 
     @Getter
     @Setter
