@@ -80,7 +80,7 @@
       <artifactId>resteasy-jackson2-provider</artifactId>
     </dependency>
     <!-- we do not need validation at the moment, but keep in mind that it is interface
-         only and requires implementation laso, e.g hybernate-validator -->
+    only and requires implementation laso, e.g hybernate-validator -->
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
       <artifactId>resteasy-validator-provider</artifactId>
@@ -90,20 +90,20 @@
       <artifactId>resteasy-multipart-provider</artifactId>
     </dependency>
 
-<!--
-    <dependency> &lt;!&ndash; may be NEEDED by FAT JAR in run-time &ndash;&gt;
-      <groupId>org.jboss.resteasy</groupId>
-      <artifactId>resteasy-jaxrs</artifactId>
-    </dependency>
-    <dependency> &lt;!&ndash; NEEDED by FAT JAR in run-time&ndash;&gt;
-      <groupId>org.jboss.resteasy</groupId>
-      <artifactId>resteasy-tracing-api</artifactId>
-    </dependency>
-    <dependency> &lt;!&ndash; NEEDED by FAT JAR in run-time&ndash;&gt;
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpcore-nio</artifactId>
-    </dependency>
--->
+    <!--
+        <dependency> &lt;!&ndash; may be NEEDED by FAT JAR in run-time &ndash;&gt;
+          <groupId>org.jboss.resteasy</groupId>
+          <artifactId>resteasy-jaxrs</artifactId>
+        </dependency>
+        <dependency> &lt;!&ndash; NEEDED by FAT JAR in run-time&ndash;&gt;
+          <groupId>org.jboss.resteasy</groupId>
+          <artifactId>resteasy-tracing-api</artifactId>
+        </dependency>
+        <dependency> &lt;!&ndash; NEEDED by FAT JAR in run-time&ndash;&gt;
+          <groupId>org.apache.httpcomponents</groupId>
+          <artifactId>httpcore-nio</artifactId>
+        </dependency>
+    -->
 
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
