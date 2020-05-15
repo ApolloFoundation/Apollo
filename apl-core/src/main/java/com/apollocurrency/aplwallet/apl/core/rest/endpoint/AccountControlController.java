@@ -134,7 +134,7 @@ public class AccountControlController {
     @PermitAll
     public Response getPhasingOnlyControl(
         @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
-        @QueryParam("accounts") @NotNull AccountIdParameter accountIdParameter
+        @QueryParam("account") @NotNull AccountIdParameter accountIdParameter
     ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         log.trace("Started getPhasingOnlyControl, accountIdParameter = {}", accountIdParameter);

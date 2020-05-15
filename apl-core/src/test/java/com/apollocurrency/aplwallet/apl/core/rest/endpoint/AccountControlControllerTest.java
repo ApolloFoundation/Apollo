@@ -17,6 +17,7 @@ import com.apollocurrency.aplwallet.api.response.AccountControlPhasingResponse;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
+import com.apollocurrency.aplwallet.apl.core.rest.provider.WhiteListedAccountConverterProvider;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.FirstLastIndexParser;
 import com.apollocurrency.aplwallet.apl.data.AccountControlPhasingData;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -45,6 +46,7 @@ class AccountControlControllerTest extends AbstractEndpointTest {
     void setUp() {
         super.setUp();
         endpoint = new AccountControlController(indexParser, accountControlPhasingService, blockchainConfig, txCreator);
+        dispatcher.getProviderFactory().register(WhiteListedAccountConverterProvider.class);
         dispatcher.getRegistry().addSingletonResource(endpoint);
         actd = new AccountControlPhasingData();
     }
