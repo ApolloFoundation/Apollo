@@ -20,8 +20,8 @@
 package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
-import com.apollocurrency.aplwallet.apl.core.rest.ByteArrayConverterProvider;
-import com.apollocurrency.aplwallet.apl.core.rest.PlatformSpecConverterProvider;
+import com.apollocurrency.aplwallet.apl.core.rest.provider.ByteArrayConverterProvider;
+import com.apollocurrency.aplwallet.apl.core.rest.provider.PlatformSpecConverterProvider;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ClientErrorExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ConstraintViolationExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.DefaultGlobalExceptionMapper;
@@ -34,6 +34,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.CharsetRequestFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FAInterceptor;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.SecurityInterceptor;
+import com.apollocurrency.aplwallet.apl.core.rest.provider.WhiteListedAccountConverterProvider;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
@@ -345,6 +346,7 @@ public final class API {
                             .add(IllegalArgumentExceptionMapper.class.getName())
                             .add(PlatformSpecConverterProvider.class.getName())
                             .add(ByteArrayConverterProvider.class.getName())
+                            .add(WhiteListedAccountConverterProvider.class.getName())
                             .toString()
             );
 

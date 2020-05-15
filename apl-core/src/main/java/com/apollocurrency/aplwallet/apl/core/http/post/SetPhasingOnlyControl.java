@@ -66,6 +66,8 @@ import javax.servlet.http.HttpServletRequest;
  * <li>controlHolding - The maximum allowed phasing duration.</li>
  * </ul>
  */
+
+@Deprecated
 @Vetoed
 public final class SetPhasingOnlyControl extends CreateTransaction {
 
@@ -79,7 +81,8 @@ public final class SetPhasingOnlyControl extends CreateTransaction {
     public JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
         Account account = HttpParameterParserUtil.getSenderAccount(request);
         PhasingParams phasingParams = HttpParameterParserUtil.parsePhasingParams(request, "control");
-        long maxFees = HttpParameterParserUtil.getLong(request, "controlMaxFees", 0, CDI.current().select(BlockchainConfig.class).get().getCurrentConfig().getMaxBalanceATM(), false);
+        long maxBalanceATM = CDI.current().select(BlockchainConfig.class).get().getCurrentConfig().getMaxBalanceATM();
+        long maxFees = HttpParameterParserUtil.getLong(request, "controlMaxFees", 0, maxBalanceATM, false);
         short minDuration = (short) HttpParameterParserUtil.getInt(request, "controlMinDuration", 0, Constants.MAX_PHASING_DURATION - 1, false);
         short maxDuration = (short) HttpParameterParserUtil.getInt(request, "controlMaxDuration", 0, Constants.MAX_PHASING_DURATION - 1, false);
         return createTransaction(request, account, new SetPhasingOnly(phasingParams, maxFees, minDuration, maxDuration));
