@@ -17,8 +17,10 @@ import javax.servlet.http.HttpServletRequest;
 public class HttpRequestToCreateTransactionRequestConverter {
 
 
-    public static CreateTransactionRequest convert(HttpServletRequest req, Account senderAccount, Account recipientAccount, long recipientId, long amountATM, long feeATM,
-                                                   Attachment attachment, boolean broadcast) throws ParameterException {
+    public static CreateTransactionRequest convert(
+        HttpServletRequest req, Account senderAccount, Account recipientAccount, long recipientId, long amountATM, long feeATM,
+        Attachment attachment, boolean broadcast) throws ParameterException {
+
         String passphrase = Convert.emptyToNull(HttpParameterParserUtil.getPassphrase(req, false));
         String secretPhrase = HttpParameterParserUtil.getSecretPhrase(req, false);
         Boolean encryptedMessageIsPrunable = Boolean.valueOf(req.getParameter("encryptedMessageIsPrunable"));

@@ -30,7 +30,7 @@ public class AccountControlPhasingDTO extends BaseDTO {
     private Short maxDuration;
     private Long quorum;
 
-    private List<WhiteListedAccount> whitelist;
+    private List<Long> whitelist;
 //    private PhasingParamsDTO phasingParams;// not needed now
 
 }

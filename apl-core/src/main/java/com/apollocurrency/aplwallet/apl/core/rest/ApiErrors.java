@@ -40,6 +40,7 @@ public enum ApiErrors implements ErrorInfo {
     FEATURE_NOT_ENABLED(9, 2027, "Feature not available, '{0}'"),
     NOT_ENOUGH_FUNDS(6, 2028, "Not enough %s funds"),
     TX_VALIDATION_FAILED(-1, 2029, "Failed to validate tx: %s"),
+    CUSTOM_ERROR_MESSAGE(8, 2030, "{0}"),
     ;
 
     private int oldErrorCode;

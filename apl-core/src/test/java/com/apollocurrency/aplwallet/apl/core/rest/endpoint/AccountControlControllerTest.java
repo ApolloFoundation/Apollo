@@ -1,39 +1,60 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.util.stream.Stream;
 
 import com.apollocurrency.aplwallet.api.dto.account.AccountControlPhasingDTO;
 import com.apollocurrency.aplwallet.api.response.AccountControlPhasingResponse;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountControlPhasingService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.http.ElGamalEncryptor;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
-import com.apollocurrency.aplwallet.apl.core.rest.provider.WhiteListedAccountConverterProvider;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.FirstLastIndexParser;
 import com.apollocurrency.aplwallet.apl.data.AccountControlPhasingData;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.jboss.resteasy.mock.MockHttpResponse;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class AccountControlControllerTest extends AbstractEndpointTest {
 
     private AccountControlController endpoint;
-//    private AccountControlPhasingConverter converter = mock(AccountControlPhasingConverter.class);
     private FirstLastIndexParser indexParser = new FirstLastIndexParser(100);
     private AccountControlPhasingData actd;
     private static final String accCtrlPhaseListUri = "/accounts/control/list";
     private static final String accCtrlPhaseIdUri = "/accounts/control/id";
+    private static final String accCtrlLeaseBalanceUri = "/accounts/control/lease";
+
+    private static String senderRS = "APL-Q6U9-FWH3-LA6G-D3F88";
+    private static Long senderId = -5541220367884151993L;
+
+    private static String recipientRS = "APL-FXHG-6KHM-23LE-42ACU";
+    private static Long recipientId = -5541220367884151993L;
 
     @Mock
     private AccountControlPhasingService accountControlPhasingService = mock(AccountControlPhasingService.class);
@@ -41,13 +62,21 @@ class AccountControlControllerTest extends AbstractEndpointTest {
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     @Mock
     private TransactionCreator txCreator = mock(TransactionCreator.class);
+    @Mock
+    private AccountService accountService = mock(AccountService.class);
+    @Mock
+    ElGamalEncryptor elGamal = mock(ElGamalEncryptor.class);
+    @Mock
+    TransactionProcessor processor;
+    @Mock
+    HttpServletRequest req;
 
     @BeforeEach
     void setUp() {
         super.setUp();
-        endpoint = new AccountControlController(indexParser, accountControlPhasingService, blockchainConfig, txCreator);
-        dispatcher.getProviderFactory().register(WhiteListedAccountConverterProvider.class);
+        endpoint = new AccountControlController(indexParser, accountControlPhasingService, blockchainConfig, txCreator, accountService);
         dispatcher.getRegistry().addSingletonResource(endpoint);
+        dispatcher.getDefaultContextObjects().put(HttpServletRequest.class, req);
         actd = new AccountControlPhasingData();
     }
 
@@ -99,7 +128,7 @@ class AccountControlControllerTest extends AbstractEndpointTest {
         assertNotNull(respondJson);
         Error error = mapper.readValue(respondJson, new TypeReference<>(){});
         assertNotNull(error.getErrorDescription());
-        assertEquals(2005, error.getNewErrorCode());
+        assertEquals(2005, error.getNewErrorCode(), error.getErrorDescription());
         //verify
         verify(accountControlPhasingService, never()).get(actd.AC_CONT_PHAS_2.getAccountId());
     }
@@ -119,6 +148,82 @@ class AccountControlControllerTest extends AbstractEndpointTest {
         assertEquals(String.valueOf( Long.toUnsignedString(actd.AC_CONT_PHAS_2.getAccountId())), dtoResult.getAccount());
         //verify
         verify(accountControlPhasingService, times(1)).get(actd.AC_CONT_PHAS_2.getAccountId());
+    }
+
+    @Test
+    void testLeaseBalance_missingSenderAccount()
+        throws URISyntaxException, UnsupportedEncodingException,
+        AplException.ValidationException, JsonProcessingException {
+
+        MockHttpResponse response = sendPostRequest(accCtrlLeaseBalanceUri,
+            "passphrase=" + PASSPHRASE);
+        String respondJson = response.getContentAsString();
+
+        Error error = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(error.getErrorDescription());
+        assertEquals(2001, error.getNewErrorCode(), error.getErrorDescription());
+        assertTrue(error.getErrorDescription().contains("Constraint violation: leaseBalance.senderIdParameter"), error.getErrorDescription());
+
+        verify(processor, never()).broadcast(any(Transaction.class));
+    }
+
+    @Test
+    void testLeaseBalance_missingRecipientAccount()
+        throws URISyntaxException, UnsupportedEncodingException,
+        AplException.ValidationException, JsonProcessingException {
+
+        MockHttpResponse response = sendPostRequest(accCtrlLeaseBalanceUri,
+            "passphrase=" + PASSPHRASE + "&sender=" + senderRS
+                + "");
+        String respondJson = response.getContentAsString();
+
+        Error error = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(error.getErrorDescription());
+        assertEquals(2001, error.getNewErrorCode(), error.getErrorDescription());
+        assertTrue(error.getErrorDescription().contains("Constraint violation: leaseBalance.recipientIdParameter"), error.getErrorDescription());
+
+        verify(processor, never()).broadcast(any(Transaction.class));
+    }
+
+    @Test
+    void testLeaseBalance_incorrect_period()
+        throws URISyntaxException, UnsupportedEncodingException,
+        AplException.ValidationException, JsonProcessingException {
+        Account recipient = new Account(recipientId, 10000 * Constants.ONE_APL, 10000 * Constants.ONE_APL, 0, 0, CURRENT_HEIGHT);
+        recipient.setPublicKey(new PublicKey(recipient.getId(), new byte[]{}, 0));
+
+        MockHttpResponse response = sendPostRequest(accCtrlLeaseBalanceUri,
+            "passphrase=" + PASSPHRASE + "&sender=" + senderRS
+                + "&recipient=" + recipientRS + "&period=-1");
+        String respondJson = response.getContentAsString();
+
+        Error error = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(error.getErrorDescription());
+        assertEquals(2001, error.getNewErrorCode(), error.getErrorDescription());
+        assertTrue(error.getErrorDescription().contains("Constraint violation: leaseBalance.period"));
+
+        verify(processor, never()).broadcast(any(Transaction.class));
+    }
+
+    @Disabled
+    void testLeaseBalance_OK()
+        throws URISyntaxException, UnsupportedEncodingException,
+        AplException.ValidationException, JsonProcessingException {
+        Account recipient = new Account(recipientId, 10000 * Constants.ONE_APL, 10000 * Constants.ONE_APL, 0, 0, CURRENT_HEIGHT);
+        recipient.setPublicKey(new PublicKey(recipient.getId(), new byte[]{}, 0));
+//        doReturn(recipient).when(accountService).getAccount(recipient);
+
+        MockHttpResponse response = sendPostRequest(accCtrlLeaseBalanceUri,
+            "passphrase=" + PASSPHRASE + "&sender=" + senderRS
+                + "&recipient=" + recipientRS);
+        String respondJson = response.getContentAsString();
+
+        Error error = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(error.getErrorDescription());
+        assertEquals(2001, error.getNewErrorCode(), error.getErrorDescription());
+        assertTrue(error.getErrorDescription().contains("Constraint violation: leaseBalance.period"));
+
+        verify(processor, never()).broadcast(any(Transaction.class));
     }
 
 }

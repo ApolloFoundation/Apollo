@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.apollocurrency.aplwallet.api.dto.account.AccountControlPhasingDTO;
-import com.apollocurrency.aplwallet.api.dto.account.WhiteListedAccount;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 
@@ -32,13 +31,10 @@ public class AccountControlPhasingConverter implements Converter<AccountControlP
         if (model.getPhasingParams() != null
             && model.getPhasingParams().getWhitelist() != null
             && model.getPhasingParams().getWhitelist().length > 0) {
-            List<WhiteListedAccount> whileList = new ArrayList<>(model.getPhasingParams().getWhitelist().length);
+            List<Long> whileList = new ArrayList<>(model.getPhasingParams().getWhitelist().length);
             for (int i = 0; i < model.getPhasingParams().getWhitelist().length; i++) {
                 long accountId = model.getPhasingParams().getWhitelist()[i];
-                WhiteListedAccount listEntity = new WhiteListedAccount();
-                listEntity.setWhitelisted(Long.toUnsignedString(accountId));
-                listEntity.setWhitelistedRS(Convert2.rsAccount(accountId));
-                whileList.add(listEntity);
+                whileList.add(accountId);
             }
             dto.setWhitelist(whileList);
         }

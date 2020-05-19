@@ -30,22 +30,30 @@ import java.util.stream.Collectors;
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import com.apollocurrency.aplwallet.api.dto.UnconfirmedTransactionDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountControlPhasingDTO;
-import com.apollocurrency.aplwallet.api.dto.account.WhiteListedAccount;
 import com.apollocurrency.aplwallet.api.response.AccountControlPhasingResponse;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountControlPhasingService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
+import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountControlPhasingConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.HttpRequestToCreateTransactionRequestConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FA;
 import com.apollocurrency.aplwallet.apl.core.rest.parameter.AccountIdParameter;
-import com.apollocurrency.aplwallet.apl.core.rest.provider.WhiteListedAccountList;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.FirstLastIndexParser;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AccountControlEffectiveBalanceLeasing;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.SetPhasingOnly;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
@@ -74,18 +82,21 @@ public class AccountControlController {
     private AccountControlPhasingConverter accountControlPhasingConverter = new AccountControlPhasingConverter();
     private UnconfirmedTransactionConverter unconfirmedTransactionConverter = new UnconfirmedTransactionConverter();
     private TransactionCreator txCreator;
+    private AccountService accountService;
 
     @Inject
     public AccountControlController(/*Blockchain blockchain,*/
         FirstLastIndexParser indexParser,
         AccountControlPhasingService accountControlPhasingService,
         BlockchainConfig blockchainConfig,
-        TransactionCreator txCreator) {
+        TransactionCreator txCreator,
+        AccountService accountService) {
 //        this.blockchain = blockchain;
         this.indexParser = indexParser;
         this.accountControlPhasingService = accountControlPhasingService;
         this.blockchainConfig = blockchainConfig;
         this.txCreator = txCreator;
+        this.accountService = accountService;
     }
 
     @Path("/list")
@@ -145,7 +156,7 @@ public class AccountControlController {
         return response.bind(dto).build();
     }
 
-    @Path("/control")
+    @Path("/new")
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes({MediaType.APPLICATION_FORM_URLENCODED})
@@ -157,30 +168,100 @@ public class AccountControlController {
     @PermitAll
     @Secured2FA
     public Response setPhasingOnlyControl(
-        @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
-            @FormParam("account") @NotNull AccountIdParameter accountIdParameter,
-        @Parameter(description = "The expected voting model of the phasing. Possible values: NONE(-1), ACCOUNT(0), ATM(1), ASSET(2), CURRENCY(3)",
-            required = true, schema = @Schema(implementation = VoteWeighting.VotingModel.class))
-            @FormParam("controlVotingModel") VoteWeighting.VotingModel controlVotingModel,
-        @Parameter(description = "The expected quorum", schema = @Schema(implementation = Long.class))
+        @Parameter(required = true, schema = @Schema(implementation = String.class)) @Schema(description = "The sender account ID.")
+            @FormParam("sender") @NotNull AccountIdParameter senderAccountIdParameter,
+        @Parameter @Schema(description = "The expected voting model of the phasing. Possible values: NONE(-1), ACCOUNT(0), ATM(1), ASSET(2), CURRENCY(3)",
+            required = true, implementation = VoteWeighting.VotingModel.class)
+            @FormParam("controlVotingModel") @DefaultValue("NONE") VoteWeighting.VotingModel controlVotingModel,
+        @Parameter @Schema(required = true, description = "The expected quorum", implementation = Long.class)
             @FormParam("controlQuorum") Long controlQuorum,
-        @Parameter(description = "The expected minimum balance", schema = @Schema(implementation = Long.class))
+        @Parameter @Schema(required = true, description = "The expected minimum balance", implementation = Long.class)
             @FormParam("controlMinBalance") Long controlMinBalance,
-        @Parameter(description = "The expected minimum balance model. Possible values: NONE(0), ATM(1), ASSET(2), CURRENCY(3)",
-            required = true, schema = @Schema(implementation = VoteWeighting.MinBalanceModel.class))
-        @FormParam("controlMinBalanceModel") VoteWeighting.VotingModel controlMinBalanceModel,
-        @Parameter(description = "The expected holding ID - asset ID or currency ID", schema = @Schema(implementation = Long.class))
-            @FormParam("controlHolding") Long controlHolding,
-        @Parameter(description = "multiple values - the expected whitelisted accounts", schema = @Schema(implementation = WhiteListedAccountList.class))
-            @FormParam("controlWhitelisted") List<WhiteListedAccount> controlWhitelisted,
-        @Parameter(description = "The maximum allowed accumulated total fees for not yet finished phased transactions", schema = @Schema(implementation = Long.class))
+        @Parameter @Schema(required = true, description = "The expected minimum balance model. Possible values: NONE(0), ATM(1), ASSET(2), CURRENCY(3)",
+            implementation = VoteWeighting.MinBalanceModel.class)
+            @FormParam("controlMinBalanceModel") @DefaultValue("NONE") VoteWeighting.VotingModel controlMinBalanceModel,
+        @Parameter @Schema(required = true, description = "The expected holding ID - asset ID or currency ID", implementation = Long.class)
+            @FormParam("controlHolding") Long controlHoldingId,
+
+        @Parameter @Schema(description = "multiple values - the expected whitelisted account", implementation = String.class)
+            @FormParam("controlWhitelisted") List<AccountIdParameter> controlWhitelisted,
+        @Parameter @Schema(description = "The maximum allowed accumulated total fees for not yet finished phased transactions", implementation = Long.class)
             @FormParam("controlMaxFees") Long controlMaxFees,
-        @Parameter(description = "The minimum phasing duration (finish height minus current height)", schema = @Schema(implementation = Long.class))
-            @FormParam("controlMinDuration") @Min(0) @Max(Constants.MAX_PHASING_DURATION - 1) Long controlMinDuration,
-        @Parameter(description = "The maximum allowed phasing duration", schema = @Schema(implementation = Long.class))
-            @FormParam("controlMaxDuration") @Min(0) @Max(Constants.MAX_PHASING_DURATION - 1) Long controlMaxDuration,
+        @Parameter @Schema(description = "The minimum phasing duration (finish height minus current height)", implementation = Long.class)
+            @FormParam("controlMinDuration") @DefaultValue("0") @Min(0) @Max(Constants.MAX_PHASING_DURATION - 1) Long controlMinDuration,
+        @Parameter @Schema(description = "The maximum allowed phasing duration", implementation = Long.class)
+            @FormParam("controlMaxDuration") @DefaultValue("0") @Min(0) @Max(Constants.MAX_PHASING_DURATION - 1) Long controlMaxDuration,
+
         @Parameter @Schema(description = "Passphrase to vault account, should be specified if sender account is vault")
             @FormParam("passphrase") String passphrase,
+        @Parameter @Schema(description = "account publicKey")
+            @FormParam("publicKey") String publicKey,
+        @Parameter @Schema(description = "free ATM value")
+            @FormParam("feeATM") Long feeATM,
+        @Parameter @Schema(description = "deadline value")
+            @FormParam("deadline") @DefaultValue("1440") String deadline,
+        @Parameter @Schema(description = "referenced Transaction FullHash")
+            @FormParam("referencedTransactionFullHash") String referencedTransactionFullHash,
+        @Parameter @Schema(description = "broadcast")
+            @FormParam("broadcast") Boolean broadcast,
+        @Parameter @Schema(description = "message")
+            @FormParam("message") String message,
+        @Parameter @Schema(description = "Is message Text?")
+            @FormParam("messageIsText") Boolean messageIsText,
+        @Parameter @Schema(description = "Is message Prunable?")
+            @FormParam("messageIsPrunable") Boolean messageIsPrunable,
+        @Parameter @Schema(description = "message To Encrypt")
+            @FormParam("messageToEncrypt") String messageToEncrypt,
+            @Parameter @Schema(description = "Is messageToEncrypt Text?")
+            @FormParam("messageToEncryptIsText") Boolean messageToEncryptIsText,
+        @Parameter @Schema(description = "encrypted Message Data")
+            @FormParam("encryptedMessageData") String encryptedMessageData,
+        @Parameter @Schema(description = "encrypted Message Nonce")
+            @FormParam("encryptedMessageNonce") String encryptedMessageNonce,
+        @Parameter @Schema(description = "Is encryptedMessage Prunable?")
+            @FormParam("encryptedMessageIsPrunable") Boolean encryptedMessageIsPrunable,
+        @Parameter @Schema(description = "compressMessageToEncrypt")
+            @FormParam("compressMessageToEncrypt") Boolean compressMessageToEncrypt,
+        @Parameter @Schema(description = "messageToEncryptToSelf")
+            @FormParam("messageToEncryptToSelf") String messageToEncryptToSelf,
+        @Parameter @Schema(description = "messageToEncryptToSelfIsText ?")
+            @FormParam("messageToEncryptToSelfIsText") Boolean messageToEncryptToSelfIsText,
+        @Parameter @Schema(description = "encryptToSelfMessageData")
+            @FormParam("encryptToSelfMessageData") String encryptToSelfMessageData,
+        @Parameter @Schema(description = "encryptToSelfMessageNonce")
+            @FormParam("encryptToSelfMessageNonce") String encryptToSelfMessageNonce,
+        @Parameter @Schema(description = "compressMessageToEncryptToSelf")
+            @FormParam("compressMessageToEncryptToSelf") Boolean compressMessageToEncryptToSelf,
+        @Parameter @Schema(description = "phased")
+            @FormParam("phased") Boolean phased,
+        @Parameter @Schema(description = "phasingFinishHeight")
+            @FormParam("phasingFinishHeight") Integer phasingFinishHeight,
+        @Parameter @Schema(description = "The expected voting model of the phasing", implementation = VoteWeighting.VotingModel.class)
+            @FormParam("phasingVotingModel") @DefaultValue("NONE") VoteWeighting.VotingModel phasingVotingModel,
+        @Parameter @Schema(description = "The expected phasing quorum", implementation = Long.class)
+            @FormParam("phasingQuorum") Long phasingQuorum,
+        @Parameter @Schema(description = "The minimum phasing quorum", implementation = Long.class)
+            @FormParam("phasingMinBalance") Long phasingMinBalance,
+        @Parameter @Schema(description = "Phasing holding id", implementation = Long.class)
+            @FormParam("phasingHolding") Long phasingHolding,
+        @Parameter @Schema(required = true, description = "The expected minimum balance model. Possible values: NONE(0), ATM(1), ASSET(2), CURRENCY(3)",
+            implementation = VoteWeighting.MinBalanceModel.class)
+            @FormParam("phasingMinBalanceModel") @DefaultValue("NONE") VoteWeighting.VotingModel phasingMinBalanceModel,
+        @Parameter @Schema(description = "multiple values - the expected phasing whitelisted account", implementation = String.class)
+            @FormParam("phasingWhitelisted") List<AccountIdParameter> phasingWhitelisted,
+        @Parameter @Schema(description = "multiple values - the expected 'phasing Full Hash' as string", implementation = String.class)
+            @FormParam("phasingLinkedFullHash") List<String> phasingLinkedFullHash,
+        @Parameter @Schema(description = "phasing 'Hashed Secret' as HEX string", implementation = String.class)
+            @FormParam("phasingHashedSecret") String phasingHashedSecret,
+        @Parameter @Schema(description = "phasing Hashed 'Secret Algorithm' as byte", implementation = Byte.class)
+            @FormParam("phasingHashedSecretAlgorithm") Byte phasingHashedSecretAlgorithm,
+        @Parameter @Schema(description = "recipient Public Key as HEX string", implementation = String.class)
+            @FormParam("recipientPublicKey") String recipientPublicKey,
+        @Parameter @Schema(description = "ec Block Id", implementation = Long.class)
+            @FormParam("ecBlockId") Long ecBlockId,
+        @Parameter @Schema(description = "ec Block Height", implementation = Integer.class)
+            @FormParam("ecBlockHeight") Integer ecBlockHeight,
+
         @Parameter @Schema(description = "Secret phrase of standard account, when specified - passphrase param will be ignored")
             @FormParam("secretPhrase") String secretPhrase,
         @Parameter @Schema(description = "Two-factor auth code, if 2fa enabled")
@@ -188,25 +269,191 @@ public class AccountControlController {
         @Context HttpServletRequest servletRequest
     ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
-        log.trace("Started setPhasingOnlyControl, accountIdParameter = {}", accountIdParameter);
-        long accountId = accountIdParameter.get();
+        log.trace("Started setPhasingOnlyControl, accountIdParameter = {}", senderAccountIdParameter);
+        long accountId = senderAccountIdParameter.get();
 
+        long[] whitelistedAccountIds = new long[controlWhitelisted.size()];
+        for (int i = 0; i < controlWhitelisted.size(); i++) {
+            AccountIdParameter idParameter = controlWhitelisted.get(i);
+            whitelistedAccountIds[i] = idParameter.parse();
+        }
+        long maxBalanceATM = blockchainConfig.getCurrentConfig().getMaxBalanceATM();
+        long maxFees = controlMaxFees != null ? Math.max(controlMaxFees, maxBalanceATM) : 0;
+
+        PhasingParams phasingParams = new PhasingParams(
+            controlVotingModel.getCode(), controlHoldingId, controlQuorum,
+            controlMinBalance, controlMinBalanceModel.getCode(), whitelistedAccountIds);
+        Account senderAccount = accountService.getAccount(accountId);
+
+        SetPhasingOnly attachment = new SetPhasingOnly(phasingParams, maxFees, controlMinDuration.shortValue(), controlMaxDuration.shortValue());
+        CreateTransactionRequest txRequest;
+        try {
+            txRequest = HttpRequestToCreateTransactionRequestConverter
+                .convert(servletRequest, senderAccount, 0, 0, attachment, broadcast, feeATM);
+        } catch (ParameterException e) {
+            log.debug("Tx conversion exception", e);
+            return response.error(ApiErrors.CUSTOM_ERROR_MESSAGE, e.getErrorResponse()).build();
+        }
+/*
         CreateTransactionRequest txRequest = CreateTransactionRequest.builder()
-//            .attachment(attachment)
+            .attachment(setPhasingOnly)
 //            .timestamp(timestamp)
-//            .senderAccount(senderAccount)
+            .senderAccount(senderAccount)
 //            .broadcast(true)
             .feeATM(Constants.ONE_APL)
             .deadlineValue("1440")
 //            .keySeed(keySeed)
-//            .publicKeyValue(Convert.toHexString(senderAccount.getPublicKey().getPublicKey()))
-//            .publicKey(senderAccount.getPublicKey().getPublicKey())
+            .publicKeyValue(Convert.toHexString(senderAccount.getPublicKey().getPublicKey()))
+            .publicKey(senderAccount.getPublicKey().getPublicKey())
             .secretPhrase(secretPhrase)
             .passphrase(passphrase)
             .build();
+*/
 
+//        createTransaction(servletRequest, senderAccount, setPhasingOnly);
         Transaction transaction = txCreator.createTransactionThrowingException(txRequest);
         UnconfirmedTransactionDTO txDto = unconfirmedTransactionConverter.convert(transaction);
+        return response.bind(txDto).build();
+    }
+
+    @Path("/lease")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes({MediaType.APPLICATION_FORM_URLENCODED})
+    @Operation(
+        summary = "Leasing balance from sender to recipient account",
+        description = "Leasing balance from sender to recipient account.",
+        tags = {"accounts"})
+    @ApiResponse(description = "Transaction in json format", content = @Content(schema = @Schema(implementation = TransactionDTO.class)))
+    @PermitAll
+    @Secured2FA
+    public Response leaseBalance(
+        @Parameter @Schema(description = "Leasing period, min/default = 1440, max = 65535 blocks", required = true, implementation = Integer.class)
+            @FormParam("period") @NotNull @DefaultValue("1440") @Min(1440)  @Max(65535) Integer period,
+        @Parameter(required = true, schema = @Schema(implementation = String.class)) @Schema(description = "The sender account ID.")
+            @FormParam("sender") @NotNull AccountIdParameter senderIdParameter,
+        @Parameter(required = true, schema = @Schema(implementation = String.class)) @Schema(description = "The recipient account ID.")
+            @FormParam("recipient") @NotNull AccountIdParameter recipientIdParameter,
+
+        @Parameter @Schema(description = "Secret phrase of standard account, when specified - passphrase param will be ignored")
+            @FormParam("secretPhrase") String secretPhrase,
+        @Parameter @Schema(description = "account publicKey")
+            @FormParam("publicKey") String publicKey,
+        @Parameter @Schema(description = "free ATM value")
+            @FormParam("feeATM") Long feeATM,
+        @Parameter @Schema(description = "deadline value")
+            @FormParam("deadline") @DefaultValue("1440") String deadline,
+        @Parameter @Schema(description = "referenced Transaction FullHash")
+            @FormParam("referencedTransactionFullHash") String referencedTransactionFullHash,
+        @Parameter @Schema(description = "broadcast")
+            @FormParam("broadcast") Boolean broadcast,
+        @Parameter @Schema(description = "message")
+            @FormParam("message") String message,
+        @Parameter @Schema(description = "Is message Text?")
+            @FormParam("messageIsText") Boolean messageIsText,
+        @Parameter @Schema(description = "Is message Prunable?")
+            @FormParam("messageIsPrunable") Boolean messageIsPrunable,
+        @Parameter @Schema(description = "message To Encrypt")
+            @FormParam("messageToEncrypt") String messageToEncrypt,
+        @Parameter @Schema(description = "Is messageToEncrypt Text?")
+            @FormParam("messageToEncryptIsText") Boolean messageToEncryptIsText,
+        @Parameter @Schema(description = "encrypted Message Data")
+            @FormParam("encryptedMessageData") String encryptedMessageData,
+        @Parameter @Schema(description = "encrypted Message Nonce")
+            @FormParam("encryptedMessageNonce") String encryptedMessageNonce,
+        @Parameter @Schema(description = "Is encryptedMessage Prunable?")
+            @FormParam("encryptedMessageIsPrunable") Boolean encryptedMessageIsPrunable,
+        @Parameter @Schema(description = "compressMessageToEncrypt")
+            @FormParam("compressMessageToEncrypt") Boolean compressMessageToEncrypt,
+        @Parameter @Schema(description = "messageToEncryptToSelf")
+            @FormParam("messageToEncryptToSelf") String messageToEncryptToSelf,
+        @Parameter @Schema(description = "messageToEncryptToSelfIsText ?")
+            @FormParam("messageToEncryptToSelfIsText") Boolean messageToEncryptToSelfIsText,
+        @Parameter @Schema(description = "encryptToSelfMessageData")
+            @FormParam("encryptToSelfMessageData") String encryptToSelfMessageData,
+        @Parameter @Schema(description = "encryptToSelfMessageNonce")
+            @FormParam("encryptToSelfMessageNonce") String encryptToSelfMessageNonce,
+        @Parameter @Schema(description = "compressMessageToEncryptToSelf")
+            @FormParam("compressMessageToEncryptToSelf") Boolean compressMessageToEncryptToSelf,
+        @Parameter @Schema(description = "phased")
+            @FormParam("phased") Boolean phased,
+        @Parameter @Schema(description = "phasingFinishHeight")
+            @FormParam("phasingFinishHeight") Integer phasingFinishHeight,
+        @Parameter @Schema(description = "The expected voting model of the phasing", implementation = VoteWeighting.VotingModel.class)
+            @FormParam("phasingVotingModel") @DefaultValue("NONE") VoteWeighting.VotingModel phasingVotingModel,
+        @Parameter @Schema(description = "The expected phasing quorum", implementation = Long.class)
+            @FormParam("phasingQuorum") Long phasingQuorum,
+        @Parameter @Schema(description = "The minimum phasing quorum", implementation = Long.class)
+            @FormParam("phasingMinBalance") Long phasingMinBalance,
+        @Parameter @Schema(description = "Phasing holding id", implementation = Long.class)
+            @FormParam("phasingHolding") Long phasingHolding,
+        @Parameter @Schema(required = true, description = "The expected minimum balance model. Possible values: NONE(0), ATM(1), ASSET(2), CURRENCY(3)",
+            implementation = VoteWeighting.MinBalanceModel.class)
+            @FormParam("phasingMinBalanceModel") @DefaultValue("NONE") VoteWeighting.VotingModel phasingMinBalanceModel,
+        @Parameter @Schema(description = "multiple values - the expected phasing whitelisted account", implementation = String.class)
+            @FormParam("phasingWhitelisted") List<AccountIdParameter> phasingWhitelisted,
+        @Parameter @Schema(description = "multiple values - the expected 'phasing Full Hash' as string", implementation = String.class)
+            @FormParam("phasingLinkedFullHash") List<String> phasingLinkedFullHash,
+        @Parameter @Schema(description = "phasing 'Hashed Secret' as HEX string", implementation = String.class)
+            @FormParam("phasingHashedSecret") String phasingHashedSecret,
+        @Parameter @Schema(description = "phasing Hashed 'Secret Algorithm' as byte", implementation = Byte.class)
+            @FormParam("phasingHashedSecretAlgorithm") Byte phasingHashedSecretAlgorithm,
+        @Parameter @Schema(description = "recipient Public Key as HEX string", implementation = String.class)
+            @FormParam("recipientPublicKey") String recipientPublicKey,
+        @Parameter @Schema(description = "ec Block Id", implementation = Long.class)
+            @FormParam("ecBlockId") Long ecBlockId,
+        @Parameter @Schema(description = "ec Block Height", implementation = Integer.class)
+            @FormParam("ecBlockHeight") Integer ecBlockHeight,
+
+        @Parameter @Schema(description = "Passphrase to vault account, should be specified if sender account is vault")
+            @FormParam("passphrase") String passphrase,
+        @Parameter @Schema(description = "Two-factor auth code, if 2fa enabled")
+            @FormParam("code2FA") @DefaultValue("0") Integer code2FA,
+        @Context HttpServletRequest servletRequest
+    ) {
+        ResponseBuilder response = ResponseBuilder.startTiming();
+        log.trace("Started leaseBalance, recipientIdParameter = {}, senderIdParameter={}, period={}",
+            recipientIdParameter, senderIdParameter, period);
+
+        long recipientAccountId = recipientIdParameter.get();
+        Account recipientAccount = accountService.getAccount(recipientAccountId);
+        if (recipientAccount == null || accountService.getPublicKeyByteArray(recipientAccount.getId()) == null) {
+            return response.error(ApiErrors.CUSTOM_ERROR_MESSAGE, "recipient account does not have public key").build();
+        }
+        long senderAccountId = senderIdParameter.get();
+        Account senderAccount = accountService.getAccount(senderAccountId);
+
+        Attachment attachment = new AccountControlEffectiveBalanceLeasing(period);
+
+        CreateTransactionRequest txRequest;
+        try {
+            txRequest = HttpRequestToCreateTransactionRequestConverter
+                .convert(servletRequest, senderAccount, recipientAccount, recipientAccountId, 0, feeATM, attachment, broadcast);
+        } catch (ParameterException e) {
+            log.debug("Tx conversion exception", e);
+            return response.error(ApiErrors.CUSTOM_ERROR_MESSAGE, e.getErrorResponse()).build();
+        }
+/*
+        CreateTransactionRequest txRequest = CreateTransactionRequest.builder()
+            .attachment(attachment)
+//            .timestamp(timestamp)
+            .senderAccount(senderAccount)
+            .broadcast(true)
+            .feeATM(feeATM)
+            .deadlineValue(deadline)
+//            .keySeed(keySeed)
+//            .publicKeyValue(Convert.toHexString(senderAccount.getPublicKey().getPublicKey()))
+            .publicKey(senderAccount.getPublicKey().getPublicKey())
+            .secretPhrase(secretPhrase)
+            .passphrase(passphrase)
+            .build();
+*/
+
+//        createTransaction(servletRequest, senderAccount, setPhasingOnly);
+        Transaction transaction = txCreator.createTransactionThrowingException(txRequest);
+        log.trace("leaseBalance transaction = {}", transaction);
+        UnconfirmedTransactionDTO txDto = unconfirmedTransactionConverter.convert(transaction);
+        log.trace("DONE leaseBalance, dto = {}", txDto);
         return response.bind(txDto).build();
     }
 
