@@ -3,16 +3,16 @@ package com.apollocurrency.aplwallet.apl.util.env;
 import java.util.Objects;
 
 public class PlatformSpec {
-    private final Platform platform;
-    private final Architecture architecture;
+    private final OS os;
+    private final Arch architecture;
 
-    public PlatformSpec(Platform platform, Architecture architecture) {
-        this.platform = platform;
+    public PlatformSpec(OS os, Arch architecture) {
+        this.os = os;
         this.architecture = architecture;
     }
 
     public static PlatformSpec current() {
-        return new PlatformSpec(Platform.current(), Architecture.current());
+        return new PlatformSpec(OS.current(), Arch.current());
     }
 
     @Override
@@ -20,20 +20,20 @@ public class PlatformSpec {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         PlatformSpec that = (PlatformSpec) o;
-        return platform == that.platform &&
+        return os == that.os &&
             architecture == that.architecture;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(platform, architecture);
+        return Objects.hash(os, architecture);
     }
 
-    public Platform getPlatform() {
-        return platform;
+    public OS getOS() {
+        return os;
     }
 
-    public Architecture getArchitecture() {
+    public Arch getArchitecture() {
         return architecture;
     }
 }

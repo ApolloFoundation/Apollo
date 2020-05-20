@@ -12,8 +12,8 @@ import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterService;
 import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.util.Version;
-import com.apollocurrency.aplwallet.apl.util.env.Architecture;
-import com.apollocurrency.aplwallet.apl.util.env.Platform;
+import com.apollocurrency.aplwallet.apl.util.env.Arch;
+import com.apollocurrency.aplwallet.apl.util.env.OS;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
@@ -57,10 +57,10 @@ public class UpdateTransactionVerifierImpl implements UpdateTransactionVerifier 
 
             UpdateAttachment updateAttachment = (UpdateAttachment) attachment;
             if (updateAttachment.getAppVersion().greaterThan(updaterMediator.getWalletVersion())) {
-                Platform currentPlatform = Platform.current();
-                Architecture currentArchitecture = Architecture.current();
-                if (currentPlatform != null && currentPlatform.isAppropriate(updateAttachment.getPlatform()) && updateAttachment.getArchitecture() == currentArchitecture) {
-                    Pattern urlPattern = getUrlPattern(updateAttachment.getAppVersion(), updateAttachment.getPlatform());
+                OS currentOS = OS.current();
+                Arch currentArchitecture = Arch.current();
+                if (currentOS != null && currentOS.isAppropriate(updateAttachment.getOS()) && updateAttachment.getArchitecture() == currentArchitecture) {
+                    Pattern urlPattern = getUrlPattern(updateAttachment.getAppVersion(), updateAttachment.getOS());
                     DoubleByteArrayTuple encryptedUrl = updateAttachment.getUrl();
                     byte[] urlEncryptedBytes = UpdaterUtil.concatArrays(encryptedUrl.getFirst(), encryptedUrl.getSecond());
                     String url = updaterService.extractUrl(urlEncryptedBytes, urlPattern);
@@ -83,10 +83,10 @@ public class UpdateTransactionVerifierImpl implements UpdateTransactionVerifier 
         return null;
     }
 
-    private Pattern getUrlPattern(Version version, Platform platform) {
+    private Pattern getUrlPattern(Version version, OS OS) {
         String resultUrl = urlTemplate;
         if (resultUrl.contains(PLATFORM_PLACEHOLDER)) {
-            resultUrl = resultUrl.replace(PLATFORM_PLACEHOLDER, String.valueOf(platform));
+            resultUrl = resultUrl.replace(PLATFORM_PLACEHOLDER, String.valueOf(OS));
         }
         if (resultUrl.contains(VERSION_PLACEHOLDER)) {
             resultUrl = resultUrl.replace(VERSION_PLACEHOLDER, version.toString());

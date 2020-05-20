@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.util.cache;
 
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -11,7 +12,6 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.CacheStats;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.jboss.weld.environment.util.Collections;
 
 import javax.enterprise.inject.Produces;
@@ -68,7 +68,7 @@ public class InMemoryCacheManager {
             , "The available memory is less than %s bytes.", MIN_MEMORY_SIZE_FOR_CACHES);
 
         cfg.getConfiguredCaches().stream().forEach(cacheConfiguration -> {
-            Preconditions.checkArgument(StringUtils.isNotEmpty(cacheConfiguration.getCacheName()), "Cache name cant be empty.");
+            Preconditions.checkArgument(StringUtils.isNotBlank(cacheConfiguration.getCacheName()), "Cache name cant be empty.");
             Preconditions.checkArgument(cacheConfiguration.getExpectedElementSize() > 0, "Element size must not be negative or zero.");
             Preconditions.checkArgument(cacheConfiguration.getCachePriority() > 0, "Cache priority must be greater than zero.");
         });

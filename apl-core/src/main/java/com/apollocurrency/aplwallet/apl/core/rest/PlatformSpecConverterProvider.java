@@ -2,8 +2,8 @@ package com.apollocurrency.aplwallet.apl.core.rest;
 
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
-import com.apollocurrency.aplwallet.apl.util.env.Architecture;
-import com.apollocurrency.aplwallet.apl.util.env.Platform;
+import com.apollocurrency.aplwallet.apl.util.env.Arch;
+import com.apollocurrency.aplwallet.apl.util.env.OS;
 import com.apollocurrency.aplwallet.apl.util.env.PlatformSpec;
 import lombok.AllArgsConstructor;
 
@@ -38,28 +38,28 @@ public class PlatformSpecConverterProvider implements ParamConverterProvider {
         @Override
         public PlatformSpecs fromString(String value) {
             if (StringUtils.isBlank(value)) {
-                throw new RestParameterException(ApiErrors.INCORRECT_PARAM_VALUE, paramName, " should not be blank");
+                throw new RestParameterException(ApiErrors.INCORRECT_PARAM, paramName, " should not be blank");
             }
             String[] platforms = value.split(",");
             PlatformSpecs platformSpecs = new PlatformSpecs();
             for (String spec : platforms) {
                 String[] platformAndArch = spec.split("-");
                 if (platformAndArch.length != 2) {
-                    throw new RestParameterException(ApiErrors.INCORRECT_PARAM_VALUE, paramName, "value should consist of two platform params separated by hyphen, got " + spec);
+                    throw new RestParameterException(ApiErrors.INCORRECT_PARAM, paramName, "value should consist of two platform params separated by hyphen, got " + spec);
                 }
-                Platform platform;
+                OS os;
                 try {
-                    platform = Platform.valueOf(platformAndArch[0].toUpperCase());
+                    os = OS.from(platformAndArch[0].toUpperCase());
                 } catch (IllegalArgumentException e) {
-                    throw new RestParameterException(ApiErrors.INCORRECT_PARAM_VALUE, paramName, "first part of value should be a platform like the following " + Arrays.toString(Platform.values()) + " got " + platformAndArch[0]);
+                    throw new RestParameterException(ApiErrors.INCORRECT_PARAM, paramName, "first part of value should be a platform like the following " + Arrays.toString(OS.values()) + " got " + platformAndArch[0]);
                 }
-                Architecture architecture;
+                Arch architecture;
                 try {
-                    architecture = Architecture.valueOf(platformAndArch[1].toUpperCase());
+                    architecture = Arch.from(platformAndArch[1].toUpperCase());
                 } catch (IllegalArgumentException e) {
-                    throw new RestParameterException(ApiErrors.INCORRECT_PARAM_VALUE, paramName, "second part of value should be an architecture like the following " + Arrays.toString(Architecture.values()) + " got " + platformAndArch[1]);
+                    throw new RestParameterException(ApiErrors.INCORRECT_PARAM, paramName, "second part of value should be an architecture like the following " + Arrays.toString(Arch.values()) + " got " + platformAndArch[1]);
                 }
-                platformSpecs.getSpecList().add(new PlatformSpec(platform, architecture));
+                platformSpecs.getSpecList().add(new PlatformSpec(os, architecture));
             }
             return platformSpecs;
         }
@@ -68,7 +68,7 @@ public class PlatformSpecConverterProvider implements ParamConverterProvider {
         public String toString(PlatformSpecs value) {
             StringBuilder builder = new StringBuilder();
             for (PlatformSpec platformSpec : value.getSpecList()) {
-                builder.append(platformSpec.getPlatform()).append("-").append(platformSpec.getArchitecture());
+                builder.append(platformSpec.getOS()).append("-").append(platformSpec.getArchitecture());
             }
             return builder.toString();
         }
