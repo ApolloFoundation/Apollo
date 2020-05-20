@@ -31,6 +31,7 @@ import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import com.apollocurrency.aplwallet.api.dto.UnconfirmedTransactionDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountControlPhasingDTO;
 import com.apollocurrency.aplwallet.api.response.AccountControlPhasingResponse;
+import com.apollocurrency.aplwallet.api.response.LeaseBalanceResponse;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountControlPhasingService;
@@ -83,6 +84,7 @@ public class AccountControlController {
     private UnconfirmedTransactionConverter unconfirmedTransactionConverter = new UnconfirmedTransactionConverter();
     private TransactionCreator txCreator;
     private AccountService accountService;
+    private HttpRequestToCreateTransactionRequestConverter transactionRequestConverter;
 
     @Inject
     public AccountControlController(/*Blockchain blockchain,*/
@@ -90,13 +92,19 @@ public class AccountControlController {
         AccountControlPhasingService accountControlPhasingService,
         BlockchainConfig blockchainConfig,
         TransactionCreator txCreator,
-        AccountService accountService) {
+        AccountService accountService,
+        HttpRequestToCreateTransactionRequestConverter transactionRequestConverter) {
 //        this.blockchain = blockchain;
         this.indexParser = indexParser;
         this.accountControlPhasingService = accountControlPhasingService;
         this.blockchainConfig = blockchainConfig;
         this.txCreator = txCreator;
         this.accountService = accountService;
+        if (transactionRequestConverter != null) {
+            this.transactionRequestConverter = transactionRequestConverter;
+        } else {
+            transactionRequestConverter = new HttpRequestToCreateTransactionRequestConverter();
+        }
     }
 
     @Path("/list")
@@ -175,7 +183,7 @@ public class AccountControlController {
             @FormParam("controlVotingModel") @DefaultValue("NONE") VoteWeighting.VotingModel controlVotingModel,
         @Parameter @Schema(required = true, description = "The expected quorum", implementation = Long.class)
             @FormParam("controlQuorum") Long controlQuorum,
-        @Parameter @Schema(required = true, description = "The expected minimum balance", implementation = Long.class)
+        @Parameter(required = true) @Schema(required = true, description = "The expected minimum balance", implementation = Long.class)
             @FormParam("controlMinBalance") Long controlMinBalance,
         @Parameter @Schema(required = true, description = "The expected minimum balance model. Possible values: NONE(0), ATM(1), ASSET(2), CURRENCY(3)",
             implementation = VoteWeighting.MinBalanceModel.class)
@@ -196,7 +204,7 @@ public class AccountControlController {
             @FormParam("passphrase") String passphrase,
         @Parameter @Schema(description = "account publicKey")
             @FormParam("publicKey") String publicKey,
-        @Parameter @Schema(description = "free ATM value")
+        @Parameter(required = true) @Schema(description = "fee ATM value")
             @FormParam("feeATM") Long feeATM,
         @Parameter @Schema(description = "deadline value")
             @FormParam("deadline") @DefaultValue("1440") String deadline,
@@ -269,7 +277,7 @@ public class AccountControlController {
         @Context HttpServletRequest servletRequest
     ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
-        log.trace("Started setPhasingOnlyControl, accountIdParameter = {}", senderAccountIdParameter);
+        log.debug("Started setPhasingOnlyControl, accountIdParameter = {}", senderAccountIdParameter);
         long accountId = senderAccountIdParameter.get();
 
         long[] whitelistedAccountIds = new long[controlWhitelisted.size()];
@@ -288,11 +296,15 @@ public class AccountControlController {
         SetPhasingOnly attachment = new SetPhasingOnly(phasingParams, maxFees, controlMinDuration.shortValue(), controlMaxDuration.shortValue());
         CreateTransactionRequest txRequest;
         try {
-            txRequest = HttpRequestToCreateTransactionRequestConverter
-                .convert(servletRequest, senderAccount, 0, 0, attachment, broadcast, feeATM);
+            txRequest = HttpRequestToCreateTransactionRequestConverter.convert(
+                servletRequest, senderAccount, 0, 0, attachment, broadcast, feeATM);
         } catch (ParameterException e) {
             log.debug("Tx conversion exception", e);
             return response.error(ApiErrors.CUSTOM_ERROR_MESSAGE, e.getErrorResponse()).build();
+        } catch (Exception e) {
+//            e.printStackTrace();
+            log.error("Tx conversion exception", e);
+            return response.error(ApiErrors.CUSTOM_ERROR_MESSAGE, "global exception: " + e.getMessage()).build();
         }
 /*
         CreateTransactionRequest txRequest = CreateTransactionRequest.builder()
@@ -324,12 +336,12 @@ public class AccountControlController {
         summary = "Leasing balance from sender to recipient account",
         description = "Leasing balance from sender to recipient account.",
         tags = {"accounts"})
-    @ApiResponse(description = "Transaction in json format", content = @Content(schema = @Schema(implementation = TransactionDTO.class)))
+    @ApiResponse(description = "Transaction in json format", content = @Content(schema = @Schema(implementation = LeaseBalanceResponse.class)))
     @PermitAll
     @Secured2FA
     public Response leaseBalance(
-        @Parameter @Schema(description = "Leasing period, min/default = 1440, max = 65535 blocks", required = true, implementation = Integer.class)
-            @FormParam("period") @NotNull @DefaultValue("1440") @Min(1440)  @Max(65535) Integer period,
+        @Parameter(required = true) @Schema(description = "Leasing period, min/default = 1440, max = 65535 blocks", implementation = Integer.class)
+            @FormParam("period") @NotNull @Min(1440)  @Max(65535) Integer period,
         @Parameter(required = true, schema = @Schema(implementation = String.class)) @Schema(description = "The sender account ID.")
             @FormParam("sender") @NotNull AccountIdParameter senderIdParameter,
         @Parameter(required = true, schema = @Schema(implementation = String.class)) @Schema(description = "The recipient account ID.")
@@ -339,14 +351,14 @@ public class AccountControlController {
             @FormParam("secretPhrase") String secretPhrase,
         @Parameter @Schema(description = "account publicKey")
             @FormParam("publicKey") String publicKey,
-        @Parameter @Schema(description = "free ATM value")
+        @Parameter(required = true) @Schema(description = "fee ATM value")
             @FormParam("feeATM") Long feeATM,
         @Parameter @Schema(description = "deadline value")
             @FormParam("deadline") @DefaultValue("1440") String deadline,
         @Parameter @Schema(description = "referenced Transaction FullHash")
             @FormParam("referencedTransactionFullHash") String referencedTransactionFullHash,
         @Parameter @Schema(description = "broadcast")
-            @FormParam("broadcast") Boolean broadcast,
+            @FormParam("broadcast") @DefaultValue("true") Boolean broadcast,
         @Parameter @Schema(description = "message")
             @FormParam("message") String message,
         @Parameter @Schema(description = "Is message Text?")
@@ -412,12 +424,12 @@ public class AccountControlController {
         @Context HttpServletRequest servletRequest
     ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
-        log.trace("Started leaseBalance, recipientIdParameter = {}, senderIdParameter={}, period={}",
+        log.info("Started leaseBalance, recipientIdParameter = {}, senderIdParameter={}, period={}",
             recipientIdParameter, senderIdParameter, period);
 
         long recipientAccountId = recipientIdParameter.get();
         Account recipientAccount = accountService.getAccount(recipientAccountId);
-        if (recipientAccount == null || accountService.getPublicKeyByteArray(recipientAccount.getId()) == null) {
+        if (recipientAccount == null || accountService.getPublicKeyByteArray(recipientAccountId) == null) {
             return response.error(ApiErrors.CUSTOM_ERROR_MESSAGE, "recipient account does not have public key").build();
         }
         long senderAccountId = senderIdParameter.get();
@@ -427,34 +439,31 @@ public class AccountControlController {
 
         CreateTransactionRequest txRequest;
         try {
-            txRequest = HttpRequestToCreateTransactionRequestConverter
-                .convert(servletRequest, senderAccount, recipientAccount, recipientAccountId, 0, feeATM, attachment, broadcast);
-        } catch (ParameterException e) {
-            log.debug("Tx conversion exception", e);
+            txRequest = HttpRequestToCreateTransactionRequestConverter.convert(
+                servletRequest, senderAccount, recipientAccount, recipientAccountId, 0, feeATM, attachment, broadcast);
+            log.info("txRequest = {}", txRequest);
+        } catch(ParameterException e) {
+            log.error("Tx conversion param exception", e);
             return response.error(ApiErrors.CUSTOM_ERROR_MESSAGE, e.getErrorResponse()).build();
+        } catch(Exception e) {
+            log.error("Tx conversion exception", e);
+            return response.error(ApiErrors.CUSTOM_ERROR_MESSAGE, "global exception: " + e.getMessage()).build();
         }
-/*
-        CreateTransactionRequest txRequest = CreateTransactionRequest.builder()
-            .attachment(attachment)
-//            .timestamp(timestamp)
-            .senderAccount(senderAccount)
-            .broadcast(true)
-            .feeATM(feeATM)
-            .deadlineValue(deadline)
-//            .keySeed(keySeed)
-//            .publicKeyValue(Convert.toHexString(senderAccount.getPublicKey().getPublicKey()))
-            .publicKey(senderAccount.getPublicKey().getPublicKey())
-            .secretPhrase(secretPhrase)
-            .passphrase(passphrase)
-            .build();
-*/
 
-//        createTransaction(servletRequest, senderAccount, setPhasingOnly);
         Transaction transaction = txCreator.createTransactionThrowingException(txRequest);
-        log.trace("leaseBalance transaction = {}", transaction);
+        log.info("leaseBalance transaction = {}", transaction);
         UnconfirmedTransactionDTO txDto = unconfirmedTransactionConverter.convert(transaction);
-        log.trace("DONE leaseBalance, dto = {}", txDto);
-        return response.bind(txDto).build();
+        log.info("leaseBalance txDto = {}", txDto);
+        LeaseBalanceResponse leaseBalanceResponse = new LeaseBalanceResponse();
+        leaseBalanceResponse.setTransactionJSON(txDto);
+        leaseBalanceResponse.setUnsignedTransactionBytes(Convert.toHexString(transaction.getUnsignedBytes()));
+        leaseBalanceResponse.setTransaction(transaction.getStringId());
+        leaseBalanceResponse.setFullHash(transaction.getFullHashString());
+        leaseBalanceResponse.setTransactionBytes(Convert.toHexString(transaction.getBytes()));
+        leaseBalanceResponse.setBroadcasted(txRequest.isBroadcast());
+
+        log.info("DONE leaseBalance, response = {}", leaseBalanceResponse);
+        return response.bind(leaseBalanceResponse).build();
     }
 
 }

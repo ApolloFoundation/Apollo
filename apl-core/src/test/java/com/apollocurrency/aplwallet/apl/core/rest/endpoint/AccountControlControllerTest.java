@@ -3,6 +3,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -25,7 +26,10 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.ElGamalEncryptor;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.HttpRequestToCreateTransactionRequestConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.FirstLastIndexParser;
 import com.apollocurrency.aplwallet.apl.data.AccountControlPhasingData;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -54,7 +58,7 @@ class AccountControlControllerTest extends AbstractEndpointTest {
     private static Long senderId = -5541220367884151993L;
 
     private static String recipientRS = "APL-FXHG-6KHM-23LE-42ACU";
-    private static Long recipientId = -5541220367884151993L;
+    private static Long recipientId = 3254132361968154094L;
 
     @Mock
     private AccountControlPhasingService accountControlPhasingService = mock(AccountControlPhasingService.class);
@@ -69,12 +73,15 @@ class AccountControlControllerTest extends AbstractEndpointTest {
     @Mock
     TransactionProcessor processor;
     @Mock
+    HttpRequestToCreateTransactionRequestConverter converter;
+    @Mock
     HttpServletRequest req;
 
     @BeforeEach
     void setUp() {
         super.setUp();
-        endpoint = new AccountControlController(indexParser, accountControlPhasingService, blockchainConfig, txCreator, accountService);
+        endpoint = new AccountControlController(
+            indexParser, accountControlPhasingService, blockchainConfig, txCreator, accountService, /*converter*/ null);
         dispatcher.getRegistry().addSingletonResource(endpoint);
         dispatcher.getDefaultContextObjects().put(HttpServletRequest.class, req);
         actd = new AccountControlPhasingData();
@@ -208,14 +215,38 @@ class AccountControlControllerTest extends AbstractEndpointTest {
     @Disabled
     void testLeaseBalance_OK()
         throws URISyntaxException, UnsupportedEncodingException,
-        AplException.ValidationException, JsonProcessingException {
-        Account recipient = new Account(recipientId, 10000 * Constants.ONE_APL, 10000 * Constants.ONE_APL, 0, 0, CURRENT_HEIGHT);
-        recipient.setPublicKey(new PublicKey(recipient.getId(), new byte[]{}, 0));
-//        doReturn(recipient).when(accountService).getAccount(recipient);
+        AplException.ValidationException, JsonProcessingException, ParameterException {
+        long feeATM = 20000 * Constants.ONE_APL;
+        Account recipientAcc = new Account(recipientId, feeATM, 10000 * Constants.ONE_APL, 0, 0, CURRENT_HEIGHT);
+        recipientAcc.setPublicKey(new PublicKey(recipientAcc.getId(), new byte[]{1,2,3}, 0));
+        Account senderAcc = new Account(senderId, 10000 * Constants.ONE_APL, feeATM, 0, 0, CURRENT_HEIGHT);
+        senderAcc.setPublicKey(new PublicKey(recipientAcc.getId(), new byte[]{2,3,4}, 0));
+
+        lenient().doReturn(recipientAcc).when(accountService).getAccount(recipientId);
+        lenient().doReturn(senderAcc).when(accountService).getAccount(senderId);
+        lenient().doReturn(new byte[]{2,3,4}).when(accountService).getPublicKeyByteArray(recipientId);
+//        CreateTransactionRequest txRequest = CreateTransactionRequest.builder().amountATM(feeATM).senderAccount(senderAcc).recipientId(recipientId).build();
+        CreateTransactionRequest txRequest = mock(CreateTransactionRequest.class);
+        HttpRequestToCreateTransactionRequestConverter converter = new HttpRequestToCreateTransactionRequestConverter();
+//        doReturn(txRequest).when(converter).convertInstance(
+//            any(HttpServletRequest.class), any(Account.class), any(Account.class),
+//                any(Long.class), any(Long.class), any(Long.class), any(AccountControlEffectiveBalanceLeasing.class), any(Boolean.class));
+        doReturn(txRequest).when(converter).convert(
+            req, senderAcc, recipientAcc, recipientId, 0, feeATM, null, null);
+
+/*        doAnswer(invocation -> {
+            String argument = invocation.getArgument(0);
+            if ("passphrase".equals(argument)) {
+                return SECRET;
+            } else if ("account".equals(argument)) {
+                return "" + ACCOUNT_ID_WITH_SECRET;
+            }
+            return "";
+        }).when(req).getParameter(anyString());*/
 
         MockHttpResponse response = sendPostRequest(accCtrlLeaseBalanceUri,
             "passphrase=" + PASSPHRASE + "&sender=" + senderRS
-                + "&recipient=" + recipientRS);
+                + "&recipient=" + recipientRS + "&period=1440&feeATM=" + feeATM);
         String respondJson = response.getContentAsString();
 
         Error error = mapper.readValue(respondJson, new TypeReference<>(){});
