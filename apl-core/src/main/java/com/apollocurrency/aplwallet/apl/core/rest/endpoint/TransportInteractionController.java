@@ -12,8 +12,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.Setter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
@@ -22,11 +21,9 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-
+@Slf4j
 @Path("/transport")
 public class TransportInteractionController {
-
-    private static final Logger log = LoggerFactory.getLogger(TransportInteractionController.class);
 
     @Inject
     @Setter

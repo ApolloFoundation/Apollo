@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.api.transport.TransportStopRequest;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
@@ -19,8 +20,6 @@ import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -32,13 +31,10 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-
+@Slf4j
 @WebSocket(maxTextMessageSize = 64 * 1024, maxIdleTime = Integer.MAX_VALUE)
 public class TransportInteractionWebSocket {
-
-
     public static final int CONNECTION_WAIT_MS = 300;
-    private static final Logger log = LoggerFactory.getLogger(TransportInteractionWebSocket.class);
     private static Random rand = new Random();
     private static ObjectMapper mapper = new ObjectMapper();
     @Getter

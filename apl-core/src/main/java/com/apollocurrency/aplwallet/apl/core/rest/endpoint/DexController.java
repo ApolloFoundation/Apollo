@@ -54,9 +54,9 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.resteasy.annotations.jaxrs.FormParam;
 import org.json.simple.JSONStreamAware;
-import org.slf4j.Logger;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -88,13 +88,12 @@ import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
 import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
-import static org.slf4j.LoggerFactory.getLogger;
 
+@Slf4j
 @Path("/dex")
 @OpenAPIDefinition(info = @Info(description = "Operations with exchange."))
 @Singleton
 public class DexController {
-    private static final Logger log = getLogger(DexController.class);
     private static final Integer DEFAULT_DEADLINE_MIN = 60 * 2;
     private static final String TX_DEADLINE = "1440";
     private DexService service;
