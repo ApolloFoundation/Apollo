@@ -77,7 +77,7 @@ public class NewApiRegistry {
 
         apis.put("getAllPhasingOnlyControls", "/rest/accounts/control/list"); //GET
         apis.put("getPhasingOnlyControl", "/rest/accounts/control/id"); //GET
-        apis.put("setPhasingOnlyControl", "/rest/accounts/control/new"); //POST
+        apis.put("setPhasingOnlyControl", "/rest/accounts/control/phasing"); //POST
         apis.put("leaseBalance", "/rest/accounts/control/lease"); //POST
 
         //TODO: add new implemented endpoints

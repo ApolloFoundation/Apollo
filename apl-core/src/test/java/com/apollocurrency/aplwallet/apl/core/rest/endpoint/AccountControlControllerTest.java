@@ -1,3 +1,7 @@
+/*
+ * Copyright © 2018-2020 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -25,6 +29,7 @@ import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.http.ElGamalEncryptor;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
@@ -53,6 +58,7 @@ class AccountControlControllerTest extends AbstractEndpointTest {
     private static final String accCtrlPhaseListUri = "/accounts/control/list";
     private static final String accCtrlPhaseIdUri = "/accounts/control/id";
     private static final String accCtrlLeaseBalanceUri = "/accounts/control/lease";
+    private static final String accCtrlPhasingUri = "/accounts/control/phasing";
 
     private static String senderRS = "APL-Q6U9-FWH3-LA6G-D3F88";
     private static Long senderId = -5541220367884151993L;
@@ -63,25 +69,23 @@ class AccountControlControllerTest extends AbstractEndpointTest {
     @Mock
     private AccountControlPhasingService accountControlPhasingService = mock(AccountControlPhasingService.class);
     @Mock
+    private HeightConfig heightConfig = mock(HeightConfig.class);
+    @Mock
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     @Mock
     private TransactionCreator txCreator = mock(TransactionCreator.class);
     @Mock
     private AccountService accountService = mock(AccountService.class);
     @Mock
-    ElGamalEncryptor elGamal = mock(ElGamalEncryptor.class);
-    @Mock
-    TransactionProcessor processor;
-    @Mock
-    HttpRequestToCreateTransactionRequestConverter converter;
-    @Mock
     HttpServletRequest req;
 
     @BeforeEach
     void setUp() {
         super.setUp();
+        doReturn(100L).when(heightConfig).getMaxBalanceATM();
+        doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
         endpoint = new AccountControlController(
-            indexParser, accountControlPhasingService, blockchainConfig, txCreator, accountService, /*converter*/ null);
+            indexParser, accountControlPhasingService, blockchainConfig, txCreator, accountService);
         dispatcher.getRegistry().addSingletonResource(endpoint);
         dispatcher.getDefaultContextObjects().put(HttpServletRequest.class, req);
         actd = new AccountControlPhasingData();
@@ -169,9 +173,8 @@ class AccountControlControllerTest extends AbstractEndpointTest {
         Error error = mapper.readValue(respondJson, new TypeReference<>(){});
         assertNotNull(error.getErrorDescription());
         assertEquals(2001, error.getNewErrorCode(), error.getErrorDescription());
-        assertTrue(error.getErrorDescription().contains("Constraint violation: leaseBalance.senderIdParameter"), error.getErrorDescription());
-
-        verify(processor, never()).broadcast(any(Transaction.class));
+        // several 'Constraint violation: ... '
+        assertTrue(error.getErrorDescription().contains("Constraint violation:"), error.getErrorDescription());
     }
 
     @Test
@@ -188,8 +191,6 @@ class AccountControlControllerTest extends AbstractEndpointTest {
         assertNotNull(error.getErrorDescription());
         assertEquals(2001, error.getNewErrorCode(), error.getErrorDescription());
         assertTrue(error.getErrorDescription().contains("Constraint violation: leaseBalance.recipientIdParameter"), error.getErrorDescription());
-
-        verify(processor, never()).broadcast(any(Transaction.class));
     }
 
     @Test
@@ -208,53 +209,38 @@ class AccountControlControllerTest extends AbstractEndpointTest {
         assertNotNull(error.getErrorDescription());
         assertEquals(2001, error.getNewErrorCode(), error.getErrorDescription());
         assertTrue(error.getErrorDescription().contains("Constraint violation: leaseBalance.period"));
-
-        verify(processor, never()).broadcast(any(Transaction.class));
     }
 
-    @Disabled
-    void testLeaseBalance_OK()
-        throws URISyntaxException, UnsupportedEncodingException,
-        AplException.ValidationException, JsonProcessingException, ParameterException {
-        long feeATM = 20000 * Constants.ONE_APL;
-        Account recipientAcc = new Account(recipientId, feeATM, 10000 * Constants.ONE_APL, 0, 0, CURRENT_HEIGHT);
-        recipientAcc.setPublicKey(new PublicKey(recipientAcc.getId(), new byte[]{1,2,3}, 0));
-        Account senderAcc = new Account(senderId, 10000 * Constants.ONE_APL, feeATM, 0, 0, CURRENT_HEIGHT);
-        senderAcc.setPublicKey(new PublicKey(recipientAcc.getId(), new byte[]{2,3,4}, 0));
+    @Test
+    void testSetPhasingOnlyControl_NO_PARAMS()
+        throws URISyntaxException, UnsupportedEncodingException, JsonProcessingException {
 
-        lenient().doReturn(recipientAcc).when(accountService).getAccount(recipientId);
-        lenient().doReturn(senderAcc).when(accountService).getAccount(senderId);
-        lenient().doReturn(new byte[]{2,3,4}).when(accountService).getPublicKeyByteArray(recipientId);
-//        CreateTransactionRequest txRequest = CreateTransactionRequest.builder().amountATM(feeATM).senderAccount(senderAcc).recipientId(recipientId).build();
-        CreateTransactionRequest txRequest = mock(CreateTransactionRequest.class);
-        HttpRequestToCreateTransactionRequestConverter converter = new HttpRequestToCreateTransactionRequestConverter();
-//        doReturn(txRequest).when(converter).convertInstance(
-//            any(HttpServletRequest.class), any(Account.class), any(Account.class),
-//                any(Long.class), any(Long.class), any(Long.class), any(AccountControlEffectiveBalanceLeasing.class), any(Boolean.class));
-        doReturn(txRequest).when(converter).convert(
-            req, senderAcc, recipientAcc, recipientId, 0, feeATM, null, null);
-
-/*        doAnswer(invocation -> {
-            String argument = invocation.getArgument(0);
-            if ("passphrase".equals(argument)) {
-                return SECRET;
-            } else if ("account".equals(argument)) {
-                return "" + ACCOUNT_ID_WITH_SECRET;
-            }
-            return "";
-        }).when(req).getParameter(anyString());*/
-
-        MockHttpResponse response = sendPostRequest(accCtrlLeaseBalanceUri,
-            "passphrase=" + PASSPHRASE + "&sender=" + senderRS
-                + "&recipient=" + recipientRS + "&period=1440&feeATM=" + feeATM);
+        MockHttpResponse response = sendPostRequest(accCtrlPhasingUri,
+            "passphrase=" + PASSPHRASE);
         String respondJson = response.getContentAsString();
 
         Error error = mapper.readValue(respondJson, new TypeReference<>(){});
         assertNotNull(error.getErrorDescription());
         assertEquals(2001, error.getNewErrorCode(), error.getErrorDescription());
-        assertTrue(error.getErrorDescription().contains("Constraint violation: leaseBalance.period"));
-
-        verify(processor, never()).broadcast(any(Transaction.class));
+        // several Constraint violation:
+        assertTrue(error.getErrorDescription().contains("Constraint violation:"), error.getErrorDescription());
     }
+
+    @Test
+    void testSetPhasingOnlyControl_minimal_params()
+        throws URISyntaxException, UnsupportedEncodingException,
+        AplException.ValidationException, JsonProcessingException {
+
+        MockHttpResponse response = sendPostRequest(accCtrlPhasingUri,
+            "passphrase=" + PASSPHRASE + "&sender=" + senderRS
+                + "&controlVotingModel=NONE" + "&controlQuorum=1");
+        String respondJson = response.getContentAsString();
+
+        Error error = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(error.getErrorDescription());
+        assertEquals(2030, error.getNewErrorCode(), error.getErrorDescription());
+        assertTrue(error.getErrorDescription().contains("Constraint violation:"), error.getErrorDescription());
+    }
+
 
 }
