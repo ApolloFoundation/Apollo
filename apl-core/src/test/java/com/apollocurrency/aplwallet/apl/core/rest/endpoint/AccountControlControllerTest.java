@@ -5,9 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -26,15 +24,9 @@ import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
-import com.apollocurrency.aplwallet.apl.core.http.ElGamalEncryptor;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.HttpRequestToCreateTransactionRequestConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.FirstLastIndexParser;
 import com.apollocurrency.aplwallet.apl.data.AccountControlPhasingData;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -43,7 +35,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.jboss.resteasy.mock.MockHttpResponse;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -82,8 +73,6 @@ class AccountControlControllerTest extends AbstractEndpointTest {
     @BeforeEach
     void setUp() {
         super.setUp();
-        doReturn(100L).when(heightConfig).getMaxBalanceATM();
-        doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
         endpoint = new AccountControlController(
             indexParser, accountControlPhasingService, blockchainConfig, txCreator, accountService);
         dispatcher.getRegistry().addSingletonResource(endpoint);
@@ -183,14 +172,14 @@ class AccountControlControllerTest extends AbstractEndpointTest {
         AplException.ValidationException, JsonProcessingException {
 
         MockHttpResponse response = sendPostRequest(accCtrlLeaseBalanceUri,
-            "passphrase=" + PASSPHRASE + "&sender=" + senderRS
+            "passphrase=" + PASSPHRASE + "&feeATM=100" + "&sender=" + senderRS
                 + "");
         String respondJson = response.getContentAsString();
 
         Error error = mapper.readValue(respondJson, new TypeReference<>(){});
         assertNotNull(error.getErrorDescription());
         assertEquals(2001, error.getNewErrorCode(), error.getErrorDescription());
-        assertTrue(error.getErrorDescription().contains("Constraint violation: leaseBalance.recipientIdParameter"), error.getErrorDescription());
+        assertTrue(error.getErrorDescription().contains("Constraint violation:"), error.getErrorDescription());
     }
 
     @Test
@@ -202,13 +191,13 @@ class AccountControlControllerTest extends AbstractEndpointTest {
 
         MockHttpResponse response = sendPostRequest(accCtrlLeaseBalanceUri,
             "passphrase=" + PASSPHRASE + "&sender=" + senderRS
-                + "&recipient=" + recipientRS + "&period=-1");
+                + "&recipient=" + recipientRS + "&feeATM=100" + "&period=-1");
         String respondJson = response.getContentAsString();
 
         Error error = mapper.readValue(respondJson, new TypeReference<>(){});
         assertNotNull(error.getErrorDescription());
         assertEquals(2001, error.getNewErrorCode(), error.getErrorDescription());
-        assertTrue(error.getErrorDescription().contains("Constraint violation: leaseBalance.period"));
+        assertTrue(error.getErrorDescription().contains("Constraint violation: leaseBalance.period"), error.getErrorDescription());
     }
 
     @Test
@@ -228,18 +217,20 @@ class AccountControlControllerTest extends AbstractEndpointTest {
 
     @Test
     void testSetPhasingOnlyControl_minimal_params()
-        throws URISyntaxException, UnsupportedEncodingException,
-        AplException.ValidationException, JsonProcessingException {
+        throws URISyntaxException, UnsupportedEncodingException, JsonProcessingException {
+        doReturn(100L).when(heightConfig).getMaxBalanceATM();
+        doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
 
         MockHttpResponse response = sendPostRequest(accCtrlPhasingUri,
             "passphrase=" + PASSPHRASE + "&sender=" + senderRS
-                + "&controlVotingModel=NONE" + "&controlQuorum=1");
+                + "&controlVotingModel=NONE" + "&feeATM=100" + "&controlQuorum=1");
         String respondJson = response.getContentAsString();
 
         Error error = mapper.readValue(respondJson, new TypeReference<>(){});
         assertNotNull(error.getErrorDescription());
+        // here we have 2030 - global error, because all input params are OK !
         assertEquals(2030, error.getNewErrorCode(), error.getErrorDescription());
-        assertTrue(error.getErrorDescription().contains("Constraint violation:"), error.getErrorDescription());
+        assertFalse(error.getErrorDescription().contains("Constraint violation:"), error.getErrorDescription());
     }
 
 
