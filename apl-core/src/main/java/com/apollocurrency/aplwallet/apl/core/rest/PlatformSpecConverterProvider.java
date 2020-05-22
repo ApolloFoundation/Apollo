@@ -68,7 +68,7 @@ public class PlatformSpecConverterProvider implements ParamConverterProvider {
         public String toString(PlatformSpecs value) {
             StringBuilder builder = new StringBuilder();
             for (PlatformSpec platformSpec : value.getSpecList()) {
-                builder.append(platformSpec.getOS()).append("-").append(platformSpec.getArchitecture());
+                builder.append(platformSpec.getOS()).append("-").append(platformSpec.getArch());
             }
             return builder.toString();
         }

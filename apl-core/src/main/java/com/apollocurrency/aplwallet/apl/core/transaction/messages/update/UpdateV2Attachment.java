@@ -99,7 +99,7 @@ public class UpdateV2Attachment extends AbstractAttachment {
         buffer.put((byte) platforms.size());
         for (PlatformSpec platformSpec : platforms) {
             buffer.put(platformSpec.getOS().code);
-            buffer.put(platformSpec.getArchitecture().code);
+            buffer.put(platformSpec.getArch().code);
         }
         buffer.putShort((short) releaseVersion.getMajorVersion());
         buffer.putShort((short) releaseVersion.getIntermediateVersion());
@@ -131,7 +131,7 @@ public class UpdateV2Attachment extends AbstractAttachment {
         attachment.put("level", updateLevel.code);
         JSONArray platformArray = new JSONArray();
         for (PlatformSpec platformSpec : this.platforms) {
-            platformArray.add(new JSONObject(Map.of("platform", platformSpec.getOS().code, "architecture", platformSpec.getArchitecture().code)));
+            platformArray.add(new JSONObject(Map.of("platform", platformSpec.getOS().code, "architecture", platformSpec.getArch().code)));
         }
         attachment.put("platforms", platformArray);
         attachment.put("version", releaseVersion.toString());

@@ -1,14 +1,21 @@
 package com.apollocurrency.aplwallet.apl.util.env;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+
 import java.util.Objects;
 
+@JsonSerialize(using = ToStringSerializer.class)
 public class PlatformSpec {
     private final OS os;
-    private final Arch architecture;
+    private final Arch arch;
 
-    public PlatformSpec(OS os, Arch architecture) {
+    @JsonCreator
+    public PlatformSpec(@JsonProperty("os") OS os, @JsonProperty("arch") Arch arch) {
         this.os = os;
-        this.architecture = architecture;
+        this.arch = arch;
     }
 
     public static PlatformSpec current() {
@@ -21,20 +28,26 @@ public class PlatformSpec {
         if (o == null || getClass() != o.getClass()) return false;
         PlatformSpec that = (PlatformSpec) o;
         return os == that.os &&
-            architecture == that.architecture;
+            arch == that.arch;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(os, architecture);
+        return Objects.hash(os, arch);
     }
 
     public OS getOS() {
         return os;
     }
 
-    public Arch getArchitecture() {
-        return architecture;
+    public Arch getArch() {
+        return arch;
+    }
+
+    @Override
+    public String toString() {
+        return os +
+            "-" + arch;
     }
 }
 
