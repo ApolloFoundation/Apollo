@@ -40,11 +40,11 @@ public class NewApiRegistry {
 
         apis.put("getAccount", "/rest/accounts/account"); //GET
         apis.put("generateAccount", "/rest/accounts/account"); //POST
-        apis.put("enable2FA", "/rest/accounts/enable2fa"); //POST
-        apis.put("disable2FA", "/rest/accounts/disable2fa"); //POST
-        apis.put("confirm2FA", "/rest/accounts/confirm2fa"); //POST
-        apis.put("deleteKey", "/rest/accounts/delete-key"); //POST
-        apis.put("exportKey", "/rest/accounts/export-key"); //POST
+        apis.put("enable2FA", "/rest/2fa/enable"); //POST
+        apis.put("disable2FA", "/rest/2fa/disable"); //POST
+        apis.put("confirm2FA", "/rest/2fa/confirm"); //POST
+        apis.put("deleteKey", "/rest/2fa/delete-key"); //POST
+        apis.put("exportKey", "/rest/2fa/export-key"); //POST
         apis.put("getAccountAssetCount", "/rest/accounts/asset-count"); //GET
         apis.put("getAccountAssets", "/rest/accounts/assets"); //GET
         apis.put("getAccountBlockCount", "/rest/accounts/block-count"); //GET

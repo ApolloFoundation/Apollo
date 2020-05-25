@@ -1,6 +1,5 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
-import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountEffectiveBalanceDto;
 import com.apollocurrency.aplwallet.api.dto.account.AccountsCountDto;
@@ -13,14 +12,10 @@ import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyServ
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
-import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
-import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.core.order.entity.AskOrder;
 import com.apollocurrency.aplwallet.apl.core.order.service.OrderService;
-import com.apollocurrency.aplwallet.apl.core.order.service.impl.AskOrderServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FAConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FADetailsConverter;
@@ -51,7 +46,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.Mockito;
 
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
@@ -64,7 +58,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper.TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_0_GENERATOR;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_0_HEIGHT;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_0_ID;
@@ -86,7 +79,6 @@ import static com.apollocurrency.aplwallet.apl.data.BlockTestData.GENESIS_BLOCK_
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.GENESIS_BLOCK_ID;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.GENESIS_BLOCK_TIMESTAMP;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.buildBlock;
-import static org.jboss.resteasy.mock.MockHttpRequest.post;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -95,7 +87,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AccountControllerTest extends AbstractEndpointTest {
@@ -103,7 +94,6 @@ class AccountControllerTest extends AbstractEndpointTest {
     public static final String PUBLIC_KEY_HEX = "e03f00485cabc82491d05297acd9d140f62d61d86f16ba4bcf2a922482a4617d";
     public static final String ACCOUNT_RS = "APL-5MRD-NBKX-X5EJ-3UP2M";
     public static final long ACCOUNT_ID = 1838236804542746347L;
-    public static final String QR_CODE_URL = "https://url.google.com/qrcode";
 
     public static final long ASSET_ID = 8180990979457659735L;
     public static final long CURRENCY_ID = 784842454721729391L;
@@ -245,166 +235,6 @@ class AccountControllerTest extends AbstractEndpointTest {
         assertNotNull(result.get("publicKey"));
         //verify
         verify(account2FAHelper, times(1)).generateUserWallet(pass);
-    }
-
-    @Test
-    void enable2FA_withoutMandatoryParameters_thenGetError_2002() throws URISyntaxException, IOException {
-        when(account2FAHelper.create2FAParameters(null, null, null, null)).thenCallRealMethod();
-        MockHttpResponse response = sendPostRequest("/accounts/enable2fa", "wrong=value");
-
-        checkMandatoryParameterMissingErrorCode(response, 2002);
-        verify(account2FAHelper, times(1)).create2FAParameters(null, null, null, null);
-    }
-
-    @Test
-    void enable2FA_withBothSecretPhraseAndPassPhrase_thenGetError_2011() throws URISyntaxException, IOException {
-        when(account2FAHelper.create2FAParameters(null, PASSPHRASE, SECRET, null)).thenCallRealMethod();
-        MockHttpResponse response = sendPostRequest("/accounts/enable2fa", "passphrase=" + PASSPHRASE + "&secretPhrase=" + SECRET);
-
-        checkMandatoryParameterMissingErrorCode(response, 2011);
-        verify(account2FAHelper, times(1)).create2FAParameters(null, PASSPHRASE, SECRET, null);
-    }
-
-    @Test
-    void enable2FA_withoutMandatoryParameter_Account_thenGetError_2003() throws URISyntaxException, IOException {
-        when(account2FAHelper.create2FAParameters(null, PASSPHRASE, null, null)).thenCallRealMethod();
-        MockHttpResponse response = sendPostRequest("/accounts/enable2fa", "passphrase=" + PASSPHRASE);
-
-        checkMandatoryParameterMissingErrorCode(response, 2003);
-        verify(account2FAHelper, times(1)).create2FAParameters(null, PASSPHRASE, null, null);
-    }
-
-    @Test
-    void enable2FA_withPassPhraseAndAccount() throws URISyntaxException, IOException {
-        TwoFactorAuthParameters params2FA = new TwoFactorAuthParameters(ACCOUNT_ID, PASSPHRASE, null);
-        TwoFactorAuthDetails authDetails = new TwoFactorAuthDetails(QR_CODE_URL, SECRET, Status2FA.OK);
-
-        doReturn(params2FA).when(account2FAHelper).create2FAParameters(ACCOUNT_RS, PASSPHRASE, null, null);
-        doReturn(authDetails).when(account2FAHelper).enable2FA(params2FA);
-        MockHttpResponse response = sendPostRequest("/accounts/enable2fa", "passphrase=" + PASSPHRASE + "&account=" + ACCOUNT_RS);
-
-        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
-
-        String content = response.getContentAsString();
-        print(content);
-        Map result = mapper.readValue(content, Map.class);
-        assertFalse(result.containsKey("newErrorCode"), "Unexpected error code:" + result.get("newErrorCode"));
-
-        assertEquals(Long.toUnsignedString(ACCOUNT_ID), result.get("account"));
-        assertEquals(ACCOUNT_RS, result.get("accountRS"));
-        assertEquals(QR_CODE_URL, result.get("qrCodeUrl"));
-        assertEquals(SECRET, result.get("secret"));
-        verify(account2FAHelper, times(1)).create2FAParameters(ACCOUNT_RS, PASSPHRASE, null, null);
-        verify(account2FAHelper, times(1)).enable2FA(params2FA);
-    }
-
-    @Test
-    void enable2FA_withSecretPhrase() throws URISyntaxException, IOException {
-        TwoFactorAuthParameters params2FA = new TwoFactorAuthParameters(ACCOUNT_ID, null, SECRET);
-        TwoFactorAuthDetails authDetails = new TwoFactorAuthDetails(QR_CODE_URL, SECRET, Status2FA.OK);
-
-        doReturn(params2FA).when(account2FAHelper).create2FAParameters(null, null, SECRET, null);
-        doReturn(authDetails).when(account2FAHelper).enable2FA(params2FA);
-        MockHttpResponse response = sendPostRequest("/accounts/enable2fa", "secretPhrase=" + SECRET);
-
-        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
-
-        String content = response.getContentAsString();
-        print(content);
-        Map result = mapper.readValue(content, Map.class);
-        assertFalse(result.containsKey("newErrorCode"), "Unexpected error code:" + result.get("newErrorCode"));
-
-        assertEquals(Long.toUnsignedString(ACCOUNT_ID), result.get("account"));
-        assertEquals(ACCOUNT_RS, result.get("accountRS"));
-        assertEquals(QR_CODE_URL, result.get("qrCodeUrl"));
-        assertEquals(SECRET, result.get("secret"));
-        verify(account2FAHelper, times(1)).create2FAParameters(null, null, SECRET, null);
-        verify(account2FAHelper, times(1)).enable2FA(params2FA);
-    }
-
-    @Test
-    void disable2FA_withPassPhraseAndAccountAndCode2FA() throws URISyntaxException, IOException {
-        String uri = "/accounts/disable2fa";
-        TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(ACCOUNT_ID, PASSPHRASE, null);
-        twoFactorAuthParameters.setCode2FA(CODE_2FA);
-
-        doReturn(Status2FA.OK).when(account2FAHelper).disable2FA(twoFactorAuthParameters);
-        check2FA_withPassPhraseAndAccountAndCode2FA(uri, twoFactorAuthParameters);
-        verify(account2FAHelper, times(1)).disable2FA(twoFactorAuthParameters);
-    }
-
-    @Test
-    void disable2FA_withSecretPhraseAndCode2FA() throws URISyntaxException, IOException {
-        String uri = "/accounts/disable2fa";
-        TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(ACCOUNT_ID, null, SECRET);
-        twoFactorAuthParameters.setCode2FA(CODE_2FA);
-
-        doReturn(Status2FA.OK).when(account2FAHelper).disable2FA(twoFactorAuthParameters);
-        check2FA_withSecretPhraseAndCode2FA(uri, twoFactorAuthParameters);
-        verify(account2FAHelper, times(1)).disable2FA(twoFactorAuthParameters);
-    }
-
-    @Test
-    void confirm2FA_withPassPhraseAndAccountAndCode2FA() throws URISyntaxException, IOException {
-        String uri = "/accounts/confirm2fa";
-        TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(ACCOUNT_ID, PASSPHRASE, null);
-        twoFactorAuthParameters.setCode2FA(CODE_2FA);
-
-        doReturn(Status2FA.OK).when(account2FAHelper).confirm2FA(twoFactorAuthParameters);
-        check2FA_withPassPhraseAndAccountAndCode2FA(uri, twoFactorAuthParameters);
-        verify(account2FAHelper, times(1)).confirm2FA(twoFactorAuthParameters);
-    }
-
-    @Test
-    void confirm2FA_withSecretPhraseAndCode2FA() throws URISyntaxException, IOException {
-        String uri = "/accounts/confirm2fa";
-        TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(ACCOUNT_ID, null, SECRET);
-        twoFactorAuthParameters.setCode2FA(CODE_2FA);
-
-        doReturn(Status2FA.OK).when(account2FAHelper).confirm2FA(twoFactorAuthParameters);
-        check2FA_withSecretPhraseAndCode2FA(uri, twoFactorAuthParameters);
-        verify(account2FAHelper, times(1)).confirm2FA(twoFactorAuthParameters);
-    }
-
-    @Test
-    void deleteKey_withPassPhraseAndAccountAndCode2FA() throws URISyntaxException, IOException {
-        String uri = "/accounts/delete-key";
-        TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(ACCOUNT_ID, PASSPHRASE, null);
-        twoFactorAuthParameters.setCode2FA(CODE_2FA);
-
-        doReturn(KeyStoreService.Status.OK).when(account2FAHelper).deleteAccount(twoFactorAuthParameters);
-        check2FA_withPassPhraseAndAccountAndCode2FA(uri, twoFactorAuthParameters);
-        verify(account2FAHelper, times(1)).deleteAccount(twoFactorAuthParameters);
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"wrong=value", "passphrase=" + PASSPHRASE + "&wrongAccount=" + ACCOUNT_RS, "wrongPassphrase=" + PASSPHRASE + "&account=" + ACCOUNT_RS})
-    void deleteKey_withoutMandatoryParameters_thenGetError_2001(String bodyParams) throws URISyntaxException, IOException {
-        MockHttpResponse response = sendPostRequest("/accounts/delete-key", bodyParams);
-
-        checkMandatoryParameterMissingErrorCode(response, 2001);
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"wrong=value", "passphrase=" + PASSPHRASE + "&wrongAccount=" + ACCOUNT_RS, "wrongPassphrase=" + PASSPHRASE + "&account=" + ACCOUNT_RS})
-    void exportKey_withoutMandatoryParameters_thenGetError_2001(String bodyParams) throws URISyntaxException, IOException {
-        MockHttpResponse response = sendPostRequest("/accounts/export-key", bodyParams);
-
-        checkMandatoryParameterMissingErrorCode(response, 2001);
-    }
-
-    @Test
-    void exportKey_withPassPhraseAndAccountAndCode2FA() throws URISyntaxException, IOException {
-        String uri = "/accounts/export-key";
-        byte[] secretBytes = SECRET.getBytes();
-        TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(ACCOUNT_ID, PASSPHRASE, null);
-        twoFactorAuthParameters.setCode2FA(CODE_2FA);
-        doReturn(twoFactorAuthParameters).when(account2FAHelper).create2FAParameters(ACCOUNT_RS, PASSPHRASE, null, null);
-
-        doReturn(secretBytes).when(account2FAHelper).findAplSecretBytes(twoFactorAuthParameters);
-        check2FA_withPassPhraseAndAccountAndCode2FA(uri, twoFactorAuthParameters);
-        verify(account2FAHelper, times(1)).create2FAParameters(ACCOUNT_RS, PASSPHRASE, null, null);
-        verify(account2FAHelper, times(1)).findAplSecretBytes(twoFactorAuthParameters);
     }
 
     @Test
@@ -725,14 +555,6 @@ class AccountControllerTest extends AbstractEndpointTest {
         verify(accountService, times(1)).getAccountBlocks(ACCOUNT_ID, timestamp, from, 99);
     }
 
-    @ParameterizedTest(name = "{index} url={arguments}")
-    @ValueSource(strings = {"/accounts/disable2fa", "/accounts/confirm2fa", "/accounts/delete-key"})
-    public void check2FA_withoutRequestAttribute_thenGetError_2001(String uri) throws URISyntaxException, IOException {
-        MockHttpResponse response = sendPostRequest(uri, "wrong=value");
-
-        checkMandatoryParameterMissingErrorCode(response, 2001);
-    }
-
     @ParameterizedTest
     @ValueSource(strings = {"?numberOfAccounts=" + Constants.MIN_TOP_ACCOUNTS_NUMBER, "?numberOfAccounts="})
     void counts_SUCCESS(String numberOfAccounts) throws URISyntaxException, IOException {
@@ -763,44 +585,6 @@ class AccountControllerTest extends AbstractEndpointTest {
 
         // verify
         verify(accountStatisticsService, times(1)).getAccountsStatistic(Constants.MIN_TOP_ACCOUNTS_NUMBER);
-    }
-
-
-    private void check2FA_withPassPhraseAndAccountAndCode2FA(String uri, TwoFactorAuthParameters twoFactorAuthParameters) throws URISyntaxException, IOException {
-        //doCallRealMethod().when(account2FAHelper).validate2FAParameters(twoFactorAuthParameters);
-
-        MockHttpRequest request = post(uri);
-        request.setAttribute(TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME, twoFactorAuthParameters);
-        MockHttpResponse response = sendPostRequest(request, "passphrase=" + PASSPHRASE + "&account=" + ACCOUNT_RS + "&code2FA=" + CODE_2FA);
-
-        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
-
-        String content = response.getContentAsString();
-        print(content);
-        Map result = mapper.readValue(content, Map.class);
-        assertFalse(result.containsKey("newErrorCode"), "Unexpected error code:" + result.get("newErrorCode"));
-
-        assertEquals(Long.toUnsignedString(ACCOUNT_ID), result.get("account"));
-        assertEquals(ACCOUNT_RS, result.get("accountRS"));
-    }
-
-    private void check2FA_withSecretPhraseAndCode2FA(String uri, TwoFactorAuthParameters twoFactorAuthParameters) throws URISyntaxException, IOException {
-        //doCallRealMethod().when(account2FAHelper).validate2FAParameters(twoFactorAuthParameters);
-
-        MockHttpRequest request = post(uri);
-        request.setAttribute(TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME, twoFactorAuthParameters);
-
-        MockHttpResponse response = sendPostRequest(request, "secretPhrase=" + SECRET + "&code2FA=" + CODE_2FA);
-
-        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
-
-        String content = response.getContentAsString();
-        print(content);
-        Map result = mapper.readValue(content, Map.class);
-        assertFalse(result.containsKey("newErrorCode"), "Unexpected error code:" + result.get("newErrorCode"));
-
-        assertEquals(Long.toUnsignedString(ACCOUNT_ID), result.get("account"));
-        assertEquals(ACCOUNT_RS, result.get("accountRS"));
     }
 
     private void setupBlocks() {

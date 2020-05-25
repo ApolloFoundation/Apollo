@@ -18,6 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ServerInfoController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ShardController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.TradingDataController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.TransportInteractionController;
+import com.apollocurrency.aplwallet.apl.core.rest.endpoint.TwoFactorManageController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.UpdateController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.UserErrorMessageController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.UtilsController;
@@ -54,6 +55,7 @@ public class RestEasyApplication extends Application {
         set.add(TransportInteractionController.class);
         set.add(ShardController.class);
         set.add(AccountController.class);
+        set.add(TwoFactorManageController.class);
         set.add(MandatoryTransactionController.class);
         set.add(UserErrorMessageController.class);
         set.add(TradingDataController.class);
