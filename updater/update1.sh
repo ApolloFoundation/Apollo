@@ -228,7 +228,7 @@ then
     then
         notify "Starting desktop application..."
         cd bin
-        nohup ./apl-run-desktop.sh ${APLCMDLINE} 2>&1 >/dev/null
+        nohup ./apl-start-desktop.sh ${APLCMDLINE} 2>&1 >/dev/null
     else
         notify "Starting command line application..."
         cd bin
