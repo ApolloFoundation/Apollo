@@ -10,7 +10,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.PositiveOrZero;
+import javax.ws.rs.BeanParam;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.FormParam;
@@ -39,6 +39,7 @@ import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
@@ -49,7 +50,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.converter.HttpRequestToCreateT
 import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FA;
 import com.apollocurrency.aplwallet.apl.core.rest.parameter.AccountIdParameter;
-import com.apollocurrency.aplwallet.apl.core.rest.utils.FirstLastIndexParser;
+import com.apollocurrency.aplwallet.apl.core.rest.parameter.FirstLastIndexBeanParam;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AccountControlEffectiveBalanceLeasing;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
@@ -77,25 +78,26 @@ import lombok.extern.slf4j.Slf4j;
 public class AccountControlController {
 
     private BlockchainConfig blockchainConfig;
-    private FirstLastIndexParser indexParser;
     private AccountControlPhasingService accountControlPhasingService;
     private AccountControlPhasingConverter accountControlPhasingConverter = new AccountControlPhasingConverter();
     private UnconfirmedTransactionConverter unconfirmedTransactionConverter = new UnconfirmedTransactionConverter();
     private TransactionCreator txCreator;
     private AccountService accountService;
 
+    public static int maxAPIFetchRecords;
+
     @Inject
     public AccountControlController(
-        FirstLastIndexParser indexParser,
         AccountControlPhasingService accountControlPhasingService,
         BlockchainConfig blockchainConfig,
         TransactionCreator txCreator,
-        AccountService accountService) {
-        this.indexParser = indexParser;
+        AccountService accountService,
+        @Property(name = "apl.maxAPIRecords", defaultValue = "100") int maxAPIrecords) {
         this.accountControlPhasingService = accountControlPhasingService;
         this.blockchainConfig = blockchainConfig;
         this.txCreator = txCreator;
         this.accountService = accountService;
+        maxAPIFetchRecords = maxAPIrecords;
     }
 
     @Path("/list")
@@ -112,18 +114,14 @@ public class AccountControlController {
         })
     @PermitAll
     public Response getAllPhasingOnlyControls(
-        @Parameter(description = "A zero-based index to the first asset ID to retrieve (optional).")
-        @QueryParam("firstIndex") @DefaultValue("0") @PositiveOrZero int firstIndex,
-        @Parameter(description = "A zero-based index to the last asset ID to retrieve (optional).")
-        @QueryParam("lastIndex") @DefaultValue("-1") int lastIndex
-    ) {
+        @Parameter(description = "A zero-based index to the first, last asset ID to retrieve (optional).", schema = @Schema(implementation = FirstLastIndexBeanParam.class))
+            @BeanParam FirstLastIndexBeanParam indexBeanParam
+        ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
-        FirstLastIndexParser.FirstLastIndex flIndex = indexParser.adjustIndexes(firstIndex, lastIndex);
-        log.trace("Started getAllPhasingOnlyControls : \t firstIndex={}, lastIndex={}, " +
-            "flIndex.firstIndex={}, flIndex.lastIndex={}", firstIndex, lastIndex,
-            flIndex.getFirstIndex(), flIndex.getLastIndex());
+        indexBeanParam.adjustIndexes(maxAPIFetchRecords);
+        log.trace("Started getAllPhasingOnlyControls : \t indexBeanParam={}", indexBeanParam);
         AccountControlPhasingResponse dto = new AccountControlPhasingResponse();
-        dto.phasingOnlyControls = accountControlPhasingService.getAllStream(flIndex.getFirstIndex(), flIndex.getLastIndex())
+        dto.phasingOnlyControls = accountControlPhasingService.getAllStream(indexBeanParam.getFirstIndex(), indexBeanParam.getLastIndex())
             .map(item -> accountControlPhasingConverter.convert(item)).collect(Collectors.toList());
         log.trace("getAllPhasingOnlyControls result: {}", dto);
         return response.bind(dto).build();
@@ -266,7 +264,7 @@ public class AccountControlController {
         @Parameter @Schema(description = "Two-factor auth code, if 2fa enabled")
             @FormParam("code2FA") @DefaultValue("0") Integer code2FA,
         @Context HttpServletRequest servletRequest
-    ) {
+    ) throws ParameterException {
         ResponseBuilder response = ResponseBuilder.startTiming();
         if (log.isTraceEnabled()) {
             log.trace("Started setPhasingOnlyControl, senderAccountIdParameter = {}, controlVotingModel={}, controlQuorum={}," +
@@ -301,9 +299,6 @@ public class AccountControlController {
                 servletRequest, senderAccount, 0, 0, attachment,
                 broadcast != null ? broadcast : false, feeATM != null ? feeATM : Constants.ONE_APL);
             log.trace("txRequest = {}", txRequest);
-        } catch (ParameterException e) {
-            log.warn("Tx conversion param exception", e);
-            return response.error(ApiErrors.CUSTOM_ERROR_MESSAGE, e.getErrorResponse()).build();
         } catch (Exception e) {
             log.warn("Tx global exception", e);
             return response.error(ApiErrors.CUSTOM_ERROR_MESSAGE, "global exception: " + e.getMessage()).build();
@@ -412,7 +407,7 @@ public class AccountControlController {
         @Parameter @Schema(description = "Two-factor auth code, if 2fa enabled")
             @FormParam("code2FA") @DefaultValue("0") Integer code2FA,
         @Context HttpServletRequest servletRequest
-    ) {
+    ) throws ParameterException {
         ResponseBuilder response = ResponseBuilder.startTiming();
         log.trace("Started leaseBalance, recipientIdParameter = {}, senderIdParameter={}, period={}",
             recipientIdParameter, senderIdParameter, period);
@@ -435,9 +430,6 @@ public class AccountControlController {
             txRequest = HttpRequestToCreateTransactionRequestConverter.convert(
                 servletRequest, senderAccount, recipientAccount, recipientAccountId, 0, feeATM, attachment, broadcast);
             log.trace("txRequest = {}", txRequest);
-        } catch(ParameterException e) {
-            log.warn("Tx conversion param exception", e);
-            return response.error(ApiErrors.CUSTOM_ERROR_MESSAGE, e.getErrorResponse()).build();
         } catch(Exception e) {
             log.warn("Tx global exception", e);
             return response.error(ApiErrors.CUSTOM_ERROR_MESSAGE, "global exception: " + e.getMessage()).build();

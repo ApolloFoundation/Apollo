@@ -5,8 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.api.dto.ShardDTO;
+import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.ShardToDtoConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.utils.FirstLastIndexParser;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,6 +19,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.security.PermitAll;
@@ -40,6 +41,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
+@NoArgsConstructor
 @OpenAPIDefinition(info = @Info(description = "Provide shard information and manipulation methods"))
 @SecurityScheme(type = SecuritySchemeType.APIKEY, name = "admin_api_key", in = SecuritySchemeIn.QUERY, paramName = "adminPassword")
 @Path("/shards")
@@ -48,15 +50,12 @@ public class ShardController {
 
     private ShardService shardService;
     private ShardToDtoConverter shardConverter = new ShardToDtoConverter();
-    private FirstLastIndexParser indexParser;
+    public static int maxAPIFetchRecords;
 
     @Inject
-    public ShardController(ShardService shardService, FirstLastIndexParser indexParser) {
+    public ShardController(ShardService shardService, @Property(name = "apl.maxAPIRecords", defaultValue = "100") int maxAPIrecords) {
         this.shardService = shardService;
-        this.indexParser = Objects.requireNonNull(indexParser);
-    }
-
-    public ShardController() {
+        maxAPIFetchRecords = maxAPIrecords;
     }
 
     @GET
@@ -111,9 +110,8 @@ public class ShardController {
         @Parameter(description = "A zero-based index to the 'last height' to retrieve (optional)." )
         @QueryParam("lastIndex") @DefaultValue("-1") int lastIndex
     ) {
-        FirstLastIndexParser.FirstLastIndex flIndex = indexParser.adjustIndexes(firstIndex, lastIndex);
-        log.debug("getBlocksFromShards( firstIndex = {} / {}, lastIndex = {} / {} ) = ",
-            firstIndex, flIndex.getFirstIndex(), lastIndex, flIndex.getLastIndex());
+//        FirstLastIndexParser.FirstLastIndex flIndex = indexParser.adjustIndexes(firstIndex, lastIndex);
+        log.debug("getBlocksFromShards( firstIndex = {}, lastIndex = {} ) = ", firstIndex, lastIndex);
         List<ShardDTO> foundShardsWithBlock = shardService
 //            .getShardsByBlockHeightRange(flIndex.getFirstIndex(), flIndex.getLastIndex()).stream() // recalculated
             .getShardsByBlockHeightRange(firstIndex, lastIndex).stream() // straight values

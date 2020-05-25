@@ -169,7 +169,7 @@ class AccountControllerTest extends AbstractEndpointTest {
             new Account2FADetailsConverter(),
             new Account2FAConverter(),
             orderService,
-            indexParser,
+            100,
             accountStatisticsService
         );
 

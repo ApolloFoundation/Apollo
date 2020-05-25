@@ -6,7 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.apollocurrency.aplwallet.api.dto.account.AccountControlPhasingDTO;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountControlPhasing;
@@ -46,8 +45,4 @@ public class AccountControlPhasingConverter implements Converter<AccountControlP
         return apply(model);
     }
 
-    @Override
-    public List<AccountControlPhasingDTO> convert(List<AccountControlPhasing> models) {
-        return models.stream().map(this).collect(Collectors.toList());
-    }
 }
