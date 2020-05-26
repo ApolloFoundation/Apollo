@@ -115,7 +115,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Singleton
@@ -134,7 +137,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private final DexService dexService;
     private final DatabaseManager databaseManager;
-    private final ExecutorService networkService = Executors.newCachedThreadPool(new NamedThreadFactory("BlockchainProcessor:networkService"));
+    private final ExecutorService networkService;
     private final int defaultNumberOfForkConfirmations = propertiesHolder.getIntProperty("apl.numberOfForkConfirmations");
     private final Set<Long> prunableTransactions = new HashSet<>();
     private final javax.enterprise.event.Event<Block> blockEvent;
@@ -198,6 +201,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.referencedTransactionService = referencedTransactionService;
         this.databaseManager = databaseManager;
         this.dexService = dexService;
+        this.networkService = getNetworkServiceExecutor();
         this.blockApplier = blockApplier;
         this.aplAppStatus = aplAppStatus;
         this.shardDownloader = shardDownloader;
@@ -210,6 +214,24 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
         configureBackgroundTasks();
 
+    }
+
+    private ExecutorService getNetworkServiceExecutor() {
+        final NamedThreadFactory threadFactory = new NamedThreadFactory("BlockchainProcessor:networkService");
+        ExecutorService executorService;
+        if (propertiesHolder.getBooleanProperty("apl.limitHardwareResources", false)) {
+            executorService = new ThreadPoolExecutor(
+                propertiesHolder.getIntProperty("apl.networkServiceCorePoolSize"),
+                propertiesHolder.getIntProperty("apl.networkServiceMaximumPoolSize"),
+                60L, TimeUnit.MILLISECONDS,
+                new SynchronousQueue<>(),
+                threadFactory,
+                new ThreadPoolExecutor.CallerRunsPolicy()
+            );
+        } else {
+            executorService = Executors.newCachedThreadPool(threadFactory);
+        }
+        return executorService;
     }
 
     private TransactionProcessor lookupTransactionProcessor() {
