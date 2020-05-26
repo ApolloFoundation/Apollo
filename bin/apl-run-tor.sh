@@ -5,8 +5,11 @@
 TOR_DIST_DIR=tor
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+#"
 
  . ${DIR}/apl-common.sh
+
+unamestr=`uname`
 
 # WARNING: java still bypasses the tor proxy when sending DNS queries and
 # this can reveal the fact that you are running Apl, however blocks and
@@ -24,6 +27,12 @@ else
   else
     TOR_CMD=""
   fi
+fi
+
+if [[ ${unamestr} = "Darwin" ]]
+then
+    ${JAVA_CMD} -DsocksProxyHost=localhost -DsocksProxyPort=9050  -jar ${MAIN_JAR} &
+    exit 0
 fi
 
 if [ -z "${TOR_CMD}" ]; then
