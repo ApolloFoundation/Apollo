@@ -17,6 +17,7 @@ import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.core.order.entity.AskOrder;
 import com.apollocurrency.aplwallet.apl.core.order.service.OrderService;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FAConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FADetailsConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountAssetConverter;
@@ -131,6 +132,8 @@ class AccountControllerTest extends AbstractEndpointTest {
     private FirstLastIndexParser indexParser = new FirstLastIndexParser(100);
     @Mock
     private AccountStatisticsService accountStatisticsService = Mockito.mock(AccountStatisticsService.class);
+    @Mock
+    private TransactionCreator txCreator = mock(TransactionCreator.class);
 
     private Block GENESIS_BLOCK, LAST_BLOCK, NEW_BLOCK;
     private Block BLOCK_0, BLOCK_1, BLOCK_2, BLOCK_3;
@@ -152,11 +155,10 @@ class AccountControllerTest extends AbstractEndpointTest {
             accountConverter,
             blockConverter,
             new WalletKeysConverter(),
-            new Account2FADetailsConverter(),
-            new Account2FAConverter(),
             orderService,
             indexParser,
-            accountStatisticsService
+            accountStatisticsService,
+            txCreator
         );
 
         dispatcher.getRegistry().addSingletonResource(endpoint);

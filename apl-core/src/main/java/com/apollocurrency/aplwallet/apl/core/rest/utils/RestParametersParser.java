@@ -110,4 +110,20 @@ public class RestParametersParser {
         return accountId;
     }
 
+    public static long parseAccountId(String paramValue, String paramName) throws RestParameterException {
+        long accountId;
+        if (paramValue == null) {
+            throw new RestParameterException(ApiErrors.MISSING_PARAM, paramName);
+        }
+        try {
+            accountId = Convert.parseAccountId(paramValue);
+            if (accountId == 0) {
+                throw new NumberFormatException();
+            }
+        } catch (Exception e) {
+            throw new RestParameterException(ApiErrors.UNKNOWN_VALUE, paramName, paramValue);
+        }
+        return accountId;
+    }
+
 }

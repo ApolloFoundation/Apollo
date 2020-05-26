@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
+import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
+import com.apollocurrency.aplwallet.api.dto.UnconfirmedTransactionDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountAssetDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountCurrencyDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
@@ -18,6 +20,7 @@ import com.apollocurrency.aplwallet.api.response.AccountCurrencyResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrentAskOrderIdsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountNotFoundResponse;
 import com.apollocurrency.aplwallet.api.response.BlocksResponse;
+import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
@@ -29,6 +32,10 @@ import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
@@ -36,13 +43,18 @@ import com.apollocurrency.aplwallet.apl.core.order.entity.AskOrder;
 import com.apollocurrency.aplwallet.apl.core.order.service.OrderService;
 import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.AskOrderService;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FAConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FADetailsConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountAssetConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountCurrencyConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.CreateTransactionRespondBuilder;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.HttpRequestToCreateTransactionRequestConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.WalletKeysConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FA;
+import com.apollocurrency.aplwallet.apl.core.rest.form.SendMoneyForm;
 import com.apollocurrency.aplwallet.apl.core.rest.parameter.AccountIdParameter;
 import com.apollocurrency.aplwallet.apl.core.rest.parameter.LongParameter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.AccountStatisticsService;
@@ -51,6 +63,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.utils.FirstLastIndexParser;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.core.rest.validation.ValidBlockchainHeight;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -68,9 +81,11 @@ import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.jboss.resteasy.annotations.Form;
 
 import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.PositiveOrZero;
 import javax.ws.rs.Consumes;
@@ -81,6 +96,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
@@ -121,15 +137,14 @@ public class AccountController {
 
     private WalletKeysConverter walletKeysConverter;
 
-    private Account2FADetailsConverter faDetailsConverter;
-
-    private Account2FAConverter faConverter;
-
     private OrderService<AskOrder, ColoredCoinsAskOrderPlacement> orderService;
 
     private FirstLastIndexParser indexParser;
 
     private AccountStatisticsService accountStatisticsService;
+    private TransactionCreator txCreator;
+    private UnconfirmedTransactionConverter unconfirmedTransactionConverter = new UnconfirmedTransactionConverter();
+    private TransactionConverter transactionConverter;
 
     @Inject
     public AccountController(Blockchain blockchain,
@@ -143,11 +158,10 @@ public class AccountController {
                              AccountConverter converter,
                              BlockConverter blockConverter,
                              WalletKeysConverter walletKeysConverter,
-                             Account2FADetailsConverter faDetailsConverter,
-                             Account2FAConverter faConverter,
                              @AskOrderService OrderService<AskOrder, ColoredCoinsAskOrderPlacement> orderService,
                              FirstLastIndexParser indexParser,
-                             AccountStatisticsService accountStatisticsService) {
+                             AccountStatisticsService accountStatisticsService,
+                             TransactionCreator txCreator) {
 
         this.blockchain = blockchain;
         this.account2FAHelper = account2FAHelper;
@@ -160,11 +174,11 @@ public class AccountController {
         this.converter = converter;
         this.blockConverter = blockConverter;
         this.walletKeysConverter = walletKeysConverter;
-        this.faDetailsConverter = faDetailsConverter;
-        this.faConverter = faConverter;
         this.orderService = Objects.requireNonNull(orderService, "orderService is NULL");
         this.indexParser = indexParser;
         this.accountStatisticsService = accountStatisticsService;
+        this.transactionConverter =  new TransactionConverter(this.blockchain, unconfirmedTransactionConverter);
+        this.txCreator = txCreator;
     }
 
     @Path("/account")
@@ -606,5 +620,140 @@ public class AccountController {
         return response.bind(dto).build();
     }
 
+    @Path("/sendmoney")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes({MediaType.APPLICATION_FORM_URLENCODED})
+    @Operation(
+        summary = "Send money from sender to recipient account specified by 'amount ATM'",
+        description = "Send money from sender to recipient account specified by 'amount ATM'",
+        tags = {"accounts"})
+    @ApiResponse(description = "Transaction in json format", content = @Content(schema = @Schema(implementation = CreateTransactionResponse.class)))
+    @PermitAll
+    @Secured2FA
+    public Response sendMoney(
+        @Form SendMoneyForm sendMoneyForm,
+/*
+        @Parameter(schema = @Schema(implementation = String.class))
+            @Schema(description = "The sender account ID. Should be specified if sender account is Vault, optional for Standard account")
+            @FormParam("sender") SenderIdParameter senderIdParameter,
+*/
+
+/*
+        @Parameter @Schema(description = "Secret phrase of standard account, when specified - passphrase param will be ignored", format = "password")
+            @FormParam("secretPhrase") String secretPhrase,
+        @Parameter @Schema(description = "account publicKey")
+            @FormParam("publicKey") String publicKey,
+        @Parameter(required = true, schema = @Schema(implementation = Long.class)) @Schema(description = "fee ATM value, minimum 100000000 APL")
+            @FormParam("feeATM") @NotNull @DefaultValue("100000000") @Positive Long feeATM,
+        @Parameter(required = true) @Schema(description = "deadline value, minimum 1440")
+            @FormParam("deadline") @NotNull @DefaultValue("1440") String deadline,
+        @Parameter @Schema(description = "referenced Transaction FullHash")
+            @FormParam("referencedTransactionFullHash") String referencedTransactionFullHash,
+        @Parameter @Schema(description = "broadcast")
+            @FormParam("broadcast") @DefaultValue("true") Boolean broadcast,
+        @Parameter @Schema(description = "message")
+            @FormParam("message") String message,
+        @Parameter @Schema(description = "Is message Text?")
+            @FormParam("messageIsText") Boolean messageIsText,
+        @Parameter @Schema(description = "Is message Prunable?")
+            @FormParam("messageIsPrunable") Boolean messageIsPrunable,
+        @Parameter @Schema(description = "message To Encrypt")
+            @FormParam("messageToEncrypt") String messageToEncrypt,
+        @Parameter @Schema(description = "Is messageToEncrypt Text?")
+            @FormParam("messageToEncryptIsText") Boolean messageToEncryptIsText,
+        @Parameter @Schema(description = "encrypted Message Data")
+            @FormParam("encryptedMessageData") String encryptedMessageData,
+        @Parameter @Schema(description = "encrypted Message Nonce")
+            @FormParam("encryptedMessageNonce") String encryptedMessageNonce,
+        @Parameter @Schema(description = "Is encryptedMessage Prunable?")
+            @FormParam("encryptedMessageIsPrunable") Boolean encryptedMessageIsPrunable,
+        @Parameter @Schema(description = "compressMessageToEncrypt")
+            @FormParam("compressMessageToEncrypt") Boolean compressMessageToEncrypt,
+        @Parameter @Schema(description = "messageToEncryptToSelf")
+            @FormParam("messageToEncryptToSelf") String messageToEncryptToSelf,
+        @Parameter @Schema(description = "messageToEncryptToSelfIsText ?")
+            @FormParam("messageToEncryptToSelfIsText") Boolean messageToEncryptToSelfIsText,
+        @Parameter @Schema(description = "encryptToSelfMessageData")
+            @FormParam("encryptToSelfMessageData") String encryptToSelfMessageData,
+        @Parameter @Schema(description = "encryptToSelfMessageNonce")
+            @FormParam("encryptToSelfMessageNonce") String encryptToSelfMessageNonce,
+        @Parameter @Schema(description = "compressMessageToEncryptToSelf")
+            @FormParam("compressMessageToEncryptToSelf") Boolean compressMessageToEncryptToSelf,
+        @Parameter @Schema(description = "phased")
+            @FormParam("phased") Boolean phased,
+        @Parameter @Schema(description = "phasingFinishHeight")
+            @FormParam("phasingFinishHeight") @DefaultValue("-1") Integer phasingFinishHeight,
+        @Parameter @Schema(description = "The expected voting model of the phasing", implementation = VoteWeighting.VotingModel.class)
+            @FormParam("phasingVotingModel") @DefaultValue("NONE") VoteWeighting.VotingModel phasingVotingModel,
+        @Parameter(description = "The expected phasing quorum")
+            @DefaultValue("0") @FormParam("phasingQuorum") Long phasingQuorum,
+        @Parameter(description = "The minimum phasing quorum")
+            @DefaultValue("0") @FormParam("phasingMinBalance") Long phasingMinBalance,
+        @Parameter(description = "Phasing holding id")
+            @DefaultValue("0") @FormParam("phasingHolding") Long phasingHolding,
+        @Parameter @Schema(required = true, description = "The expected minimum balance model. Possible values: NONE(0), ATM(1), ASSET(2), CURRENCY(3)",
+            implementation = VoteWeighting.MinBalanceModel.class)
+            @FormParam("phasingMinBalanceModel") @DefaultValue("NONE") VoteWeighting.VotingModel phasingMinBalanceModel,
+        @Parameter @Schema(description = "multiple values - the expected phasing whitelisted account", implementation = String.class)
+            @FormParam("phasingWhitelisted") List<AccountIdParameter> phasingWhitelisted,
+        @Parameter @Schema(description = "multiple values - the expected 'phasing Full Hash' as string", implementation = String.class)
+            @FormParam("phasingLinkedFullHash") List<String> phasingLinkedFullHash,
+        @Parameter @Schema(description = "phasing 'Hashed Secret' as HEX string", implementation = String.class)
+            @FormParam("phasingHashedSecret") String phasingHashedSecret,
+        @Parameter(description = "phasing Hashed 'Secret Algorithm' as byte")
+            @DefaultValue("0") @FormParam("phasingHashedSecretAlgorithm") Byte phasingHashedSecretAlgorithm,
+        @Parameter @Schema(description = "recipient Public Key as HEX string", implementation = String.class)
+            @FormParam("recipientPublicKey") String recipientPublicKey,
+        @Parameter(description = "ec Block Id")
+            @DefaultValue("0") @FormParam("ecBlockId") Long ecBlockId,
+        @Parameter(description = "ec Block Height")
+            @DefaultValue("0") @FormParam("ecBlockHeight") Integer ecBlockHeight,
+
+        @Parameter @Schema(description = "Passphrase to vault account, should be specified if sender account is vault", format = "password")
+            @FormParam("passphrase") String passphrase,
+        @Parameter(description = "Two-factor auth code, if 2fa enabled")
+            @FormParam("code2FA") @DefaultValue("0") Integer code2FA,
+        @Context HttpServletRequest servletRequest
+*/
+
+    @Context HttpServletRequest servletRequest
+
+    ) throws ParameterException {
+        ResponseBuilder response = ResponseBuilder.startTiming();
+        log.trace("Started sendMoney, recipientIdParameter = {}, sendMoneyForm={}, amountATM={}",
+            sendMoneyForm.getRecipient(), sendMoneyForm, sendMoneyForm.getAmountATM());
+
+        long recipientAccountId = sendMoneyForm.getRecipient().get();
+        Account recipientAccount = accountService.getAccount(recipientAccountId);
+        log.trace("recipientAccountId = {}, recipientAccount={}", recipientAccountId, recipientAccount);
+        if (recipientAccount == null || accountService.getPublicKeyByteArray(recipientAccountId) == null) {
+            return response.error(ApiErrors.CUSTOM_ERROR_MESSAGE,
+                "recipient account not found OR it does not have public key").build();
+        }
+        Account senderAccount = HttpParameterParserUtil.getSenderAccount(servletRequest);
+        log.trace("senderAccount={}", senderAccount);
+
+        CreateTransactionRequest txRequest;
+        try {
+            txRequest = HttpRequestToCreateTransactionRequestConverter.convert(
+                servletRequest, senderAccount, recipientAccount, recipientAccountId, sendMoneyForm.getAmountATM(),
+                sendMoneyForm.getFeeATM(), Attachment.ORDINARY_PAYMENT, sendMoneyForm.getBroadcast());
+            log.trace("txRequest = {}", txRequest);
+        } catch(Exception e) {
+            log.warn("Send Money Tx global exception", e);
+            return response.error(ApiErrors.CUSTOM_ERROR_MESSAGE, "send money exception: " + e.getMessage()).build();
+        }
+
+        Transaction transaction = txCreator.createTransactionThrowingException(txRequest);
+        log.trace("sendMoney transaction = {}", transaction);
+//        TransactionDTO txDto = transactionConverter.convert(transaction);
+        UnconfirmedTransactionDTO txDto = unconfirmedTransactionConverter.convert(transaction);
+        log.trace("sendMoney txDto = {}", txDto);
+        CreateTransactionResponse createTransactionResponse = new CreateTransactionRespondBuilder(txRequest, transaction, txDto).build();
+
+        log.trace("DONE sendMoney, response = {}", createTransactionResponse);
+        return response.bind(createTransactionResponse).build();
+    }
 
 }

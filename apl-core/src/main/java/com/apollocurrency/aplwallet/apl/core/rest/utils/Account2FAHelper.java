@@ -78,6 +78,7 @@ public class Account2FAHelper {
         String passphrase = null;
         if (StringUtils.isNotBlank(passphraseParam)) {
             if (StringUtils.isBlank(accountStr)) {
+                log.warn("2fa 'account' param is not present in request = {}", accountStr);
                 throw new RestParameterException(ApiErrors.MISSING_PARAM, "account");
             }
             passphrase = elGamal.elGamalDecrypt(passphraseParam);
