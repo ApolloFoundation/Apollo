@@ -148,9 +148,10 @@ then
 	chmod 755 "$1/../ApolloWallet+Secure Transport.app/secureTransport/runClient.sh"
 	chmod 755 "$1/../ApolloWallet+Tor.app/Contents/MacOS/apl"
 	chmod 755 "$1/../ApolloWallet+Tor.app/tor/bin/tor"
-#	rm -rf "$1/ApolloWallet+Secure Transport.app"
-#	rm -rf "$1/ApolloWallet+Tor.app"
-#	rm -rf "$1/ApolloWallet.app"
+	chmod 755 "$1/../ApolloWallet.app/Contents/MacOS/apl"
+	rm -rf "$1/ApolloWallet+Secure Transport.app"
+	rm -rf "$1/ApolloWallet+Tor.app"
+	rm -rf "$1/ApolloWallet.app"
 
     fi
 
