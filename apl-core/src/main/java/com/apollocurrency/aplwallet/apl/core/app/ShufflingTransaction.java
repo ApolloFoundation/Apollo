@@ -244,9 +244,9 @@ public abstract class ShufflingTransaction extends TransactionType {
             if (holdingType != HoldingType.APL) {
                 BlockchainConfig blockchainConfig = lookupBlockchainConfig();
                 if (holdingType.getUnconfirmedBalance(senderAccount, shuffling.getHoldingId()) >= shuffling.getAmount()
-                    && senderAccount.getUnconfirmedBalanceATM() >= lookupBlockchainConfig().getShufflingDepositAtm()) {
+                    && senderAccount.getUnconfirmedBalanceATM() >= blockchainConfig.getShufflingDepositAtm()) {
                     holdingType.addToUnconfirmedBalance(senderAccount, getLedgerEvent(), transaction.getId(), shuffling.getHoldingId(), -shuffling.getAmount());
-                    lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -lookupBlockchainConfig().getShufflingDepositAtm());
+                    lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -blockchainConfig.getShufflingDepositAtm());
                     return true;
                 }
             } else {

@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Singleton;
+import java.util.stream.Stream;
 
 /**
  * @author silaev-firstbridge on 1/31/2020
@@ -85,7 +86,13 @@ public class BlockChainInfoServiceImpl implements BlockChainInfoService {
     }
 
     @Override
-    public DbIterator<Block> getBlocks(long accountId, int timestamp, int from, int to) {
-        return blockchain.getBlocksByAccount(accountId, timestamp, from, to);
+    public DbIterator<Block> getBlocks(long accountId, int from, int to, int timestamp) {
+        return blockchain.getBlocksByAccount(accountId, from, to, timestamp);
     }
+
+    @Override
+    public Stream<Block> getBlocksByAccountStream(long accountId, int from, int to, int timestamp) {
+        return blockchain.getBlocksByAccountStream(accountId, from, to, timestamp);
+    }
+
 }

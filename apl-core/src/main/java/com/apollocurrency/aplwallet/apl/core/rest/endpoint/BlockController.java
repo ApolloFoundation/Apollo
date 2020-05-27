@@ -10,6 +10,7 @@ import javax.inject.Singleton;
 import javax.validation.constraints.PositiveOrZero;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
@@ -67,7 +68,7 @@ public class BlockController {
         this.timeService = Objects.requireNonNull(timeService);
     }
 
-    @Path("/")
+    @Path("/one")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
@@ -93,6 +94,40 @@ public class BlockController {
         @Parameter(description = "Include phased transactions detail info" )
             @QueryParam("includeExecutedPhased") @DefaultValue("false") boolean includeExecutedPhased
     ) {
+        return getBlockResponse(blockId, height, timestamp, includeTransactions, includeExecutedPhased);
+    }
+
+    @Path("/one")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+        summary = "The API returns Block information",
+        description = "The API returns Block information with transaction info depending on specified params",
+        tags = {"block"},
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Successful execution",
+                content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = BlockDTO.class)))
+        })
+    @PermitAll
+    public Response getBlockPost(
+        @Parameter(description = "Block id (optional, default is last block)",
+            schema = @Schema(implementation = Long.class, description="Block id (optional, default is last block"))
+            @QueryParam("block") LongParameter blockId,
+        @Parameter(description = "The block height (optional, default is last block).")
+            @QueryParam("height") @DefaultValue("-1") @ValidBlockchainHeight int height,
+        @Parameter(description = "The earliest block (in seconds since the genesis block) to retrieve (optional)." )
+            @QueryParam("timestamp") @DefaultValue("-1") @ValidTimestamp int timestamp,
+        @Parameter(description = "Include transactions detail info" )
+            @QueryParam("includeTransactions") @DefaultValue("false") boolean includeTransactions,
+        @Parameter(description = "Include phased transactions detail info" )
+            @QueryParam("includeExecutedPhased") @DefaultValue("false") boolean includeExecutedPhased
+    ) {
+        return getBlockResponse(blockId, height, timestamp, includeTransactions, includeExecutedPhased);
+    }
+
+    private Response getBlockResponse(LongParameter blockId, int height, int timestamp,
+                                      boolean includeTransactions, boolean includeExecutedPhased) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         log.trace("Started getBlock : \t blockId={}, height={}, timestamp={}, includeTransactions={}, includeExecutedPhased={}",
             blockId, height, timestamp, includeTransactions, includeExecutedPhased);
@@ -138,6 +173,30 @@ public class BlockController {
         @Parameter(description = "The block height, mandatory", required = true)
             @QueryParam("height") @ValidBlockchainHeight int height
     ) {
+        return getBlockByIdResponse(height);
+    }
+
+    @Path("/id")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+        summary = "The API returns Block ID by height",
+        description = "The API returns Block ID only by specified height",
+        tags = {"block"},
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Successful execution",
+                content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = BlockDTO.class))) // ONLY ONE field is returned actually !!
+        })
+    @PermitAll
+    public Response getBlockIdPost(
+        @Parameter(description = "The block height, mandatory", required = true)
+            @QueryParam("height") @ValidBlockchainHeight int height
+    ) {
+        return getBlockByIdResponse(height);
+    }
+
+    private Response getBlockByIdResponse(int height) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         log.trace("Started getBlockId : \t height={}", height);
         Long blockId = null;
@@ -185,6 +244,41 @@ public class BlockController {
             @QueryParam("includeExecutedPhased") @DefaultValue("false") boolean includeExecutedPhased
 
     ) {
+        return getBlockListResponse(firstIndex, lastIndex, timestamp, includeTransactions, includeExecutedPhased);
+    }
+
+    @Path("/list")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+        summary = "The API returns List of Block information using first/last indexes",
+        description = "The API returns List of Block information with transaction info depending on specified params."
+            + " first/last index specifies height limits, blocks are selected for timestamp bigger then specified 'timestamp'",
+        tags = {"block"},
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Successful execution",
+                content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = BlocksResponse.class)))
+        })
+    @PermitAll
+    public Response getBlocksPost(
+        @Parameter(description = "A zero-based index to the 'first height' to retrieve (optional)." )
+            @QueryParam("firstIndex") @DefaultValue("0") @PositiveOrZero int firstIndex,
+        @Parameter(description = "A zero-based index to the 'last height' to retrieve (optional)." )
+            @QueryParam("lastIndex") @DefaultValue("-1") int lastIndex,
+        @Parameter(description = "The earliest block (in seconds since the genesis block) to retrieve (optional)." )
+            @QueryParam("timestamp") @DefaultValue("-1") @ValidTimestamp int timestamp,
+        @Parameter(description = "Include transactions detail info" )
+            @QueryParam("includeTransactions") @DefaultValue("false") boolean includeTransactions,
+        @Parameter(description = "Include phased transactions detail info" )
+            @QueryParam("includeExecutedPhased") @DefaultValue("false") boolean includeExecutedPhased
+
+    ) {
+        return getBlockListResponse(firstIndex, lastIndex, timestamp, includeTransactions, includeExecutedPhased);
+    }
+
+    private Response getBlockListResponse(int firstIndex, int lastIndex, int timestamp,
+                                          boolean includeTransactions, boolean includeExecutedPhased) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         log.trace("Started getBlocks : \t firstIndex={}, lastIndex={}, timestamp={}, includeTransactions={}, includeExecutedPhased={}",
             firstIndex, lastIndex, timestamp, includeTransactions, includeExecutedPhased);
@@ -226,6 +320,30 @@ public class BlockController {
         @Parameter(description = "The earliest block (in seconds since the genesis block) to retrieve (optional)." )
             @QueryParam("timestamp") @DefaultValue("-1") @ValidTimestamp int timestamp
     ) {
+        return getBlockByEcResponse(timestamp);
+    }
+
+    @Path("/ec")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+        summary = "The API returns ECBlock info by timestamp",
+        description = "The API returns ECBlockDTO by specified timestamp",
+        tags = {"block"},
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Successful execution",
+                content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = ECBlockDTO.class)))
+        })
+    @PermitAll
+    public Response getECBlockPost(
+        @Parameter(description = "The earliest block (in seconds since the genesis block) to retrieve (optional)." )
+            @QueryParam("timestamp") @DefaultValue("-1") @ValidTimestamp int timestamp
+    ) {
+        return getBlockByEcResponse(timestamp);
+    }
+
+    private Response getBlockByEcResponse(int timestamp) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         log.trace("Started getECBlock : \t timestamp={}", timestamp);
         if (timestamp <= 0) {
