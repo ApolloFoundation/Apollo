@@ -32,7 +32,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPhasi
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPollCreation;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteCasting;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;

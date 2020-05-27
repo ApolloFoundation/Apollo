@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.order.service.impl.AskOrderServiceI
 import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.AskOrderService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderCancellation;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import org.json.simple.JSONObject;
 
 import javax.enterprise.inject.spi.CDI;

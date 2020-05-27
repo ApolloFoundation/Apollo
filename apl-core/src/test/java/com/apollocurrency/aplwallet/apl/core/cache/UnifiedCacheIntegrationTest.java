@@ -7,7 +7,6 @@ package com.apollocurrency.aplwallet.apl.core.cache;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderFreezing;
 import com.apollocurrency.aplwallet.apl.util.cache.CacheProducer;
 import com.apollocurrency.aplwallet.apl.util.cache.CacheType;
-import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheLoader;
 import org.jboss.weld.junit5.EnableWeld;
@@ -29,7 +28,7 @@ import static org.mockito.Mockito.mock;
 public class UnifiedCacheIntegrationTest {
 
     @WeldSetup
-    WeldInitiator weld = WeldInitiator.from(AplCacheConfig.class, InMemoryCacheManager.class, CacheLoaderProducer.class).build();
+    WeldInitiator weld = WeldInitiator.from(AplCacheConfig.class, InMemoryCDICacheFactory.class, CacheLoaderProducer.class).build();
 
     @Inject
     @CacheProducer

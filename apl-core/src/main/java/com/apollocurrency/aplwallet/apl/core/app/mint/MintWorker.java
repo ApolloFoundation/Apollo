@@ -28,7 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystem
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.TrustAllSSLProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;

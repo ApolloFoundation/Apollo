@@ -22,7 +22,6 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.slf4j.Logger;
 

@@ -18,7 +18,7 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.util;
+package com.apollocurrency.aplwallet.apl.util.io;
 
 import java.io.FilterReader;
 import java.io.IOException;
@@ -113,12 +113,12 @@ public class CountingInputReader extends FilterReader {
      * Increment the character count and check if the maximum count has been exceeded
      *
      * @param c Number of characters read
-     * @throws AplIOException Maximum count exceeded
+     * @throws LimitExceededException Maximum count exceeded
      */
-    private void incCount(long c) throws AplException.AplIOException {
+    private void incCount(long c) throws LimitExceededException {
         count += c;
         if (count > limit)
-            throw new AplException.AplIOException("Maximum size exceeded: " + count);
+            throw new LimitExceededException("Maximum size exceeded: " + count);
     }
 
     @Override

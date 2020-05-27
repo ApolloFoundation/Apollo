@@ -1,6 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.app.service;
 
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 
 import java.nio.file.Path;
 import java.util.List;

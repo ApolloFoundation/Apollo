@@ -30,7 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.order.service.impl.AskOrderServiceI
 import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.AskOrderService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectorUtils;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
