@@ -4,29 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
-import javax.annotation.security.PermitAll;
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.BeanParam;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.FormParam;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
-
-import java.util.List;
-import java.util.stream.Collectors;
-
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import com.apollocurrency.aplwallet.api.dto.UnconfirmedTransactionDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountControlPhasingDTO;
@@ -69,6 +46,27 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import javax.annotation.security.PermitAll;
+import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
+import javax.ws.rs.BeanParam;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.FormParam;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @OpenAPIDefinition(info = @Info(description = "Provide methods to operate with accounts"))
 @SecurityScheme(type = SecuritySchemeType.APIKEY, name = "admin_api_key", in = SecuritySchemeIn.QUERY, paramName = "adminPassword")
@@ -293,16 +291,10 @@ public class AccountControlController {
         log.trace("phasingParams = {}, senderAccountId={}, senderAccount={}", phasingParams, senderAccountId, senderAccount);
 
         SetPhasingOnly attachment = new SetPhasingOnly(phasingParams, maxFees, controlMinDuration.shortValue(), controlMaxDuration.shortValue());
-        CreateTransactionRequest txRequest;
-        try {
-            txRequest = HttpRequestToCreateTransactionRequestConverter.convert(
-                servletRequest, senderAccount, 0, 0, attachment,
-                broadcast != null ? broadcast : false, feeATM != null ? feeATM : Constants.ONE_APL);
-            log.trace("txRequest = {}", txRequest);
-        } catch (Exception e) {
-            log.warn("Tx global exception", e);
-            return response.error(ApiErrors.CUSTOM_ERROR_MESSAGE, "global exception: " + e.getMessage()).build();
-        }
+        CreateTransactionRequest txRequest = HttpRequestToCreateTransactionRequestConverter.convert(
+            servletRequest, senderAccount, 0, 0, attachment,
+            broadcast != null ? broadcast : false, feeATM != null ? feeATM : Constants.ONE_APL);
+        log.trace("txRequest = {}", txRequest);
 
         Transaction transaction = txCreator.createTransactionThrowingException(txRequest);
         log.trace("setPhasingOnlyControl transaction = {}", transaction);
@@ -425,15 +417,9 @@ public class AccountControlController {
 
         Attachment attachment = new AccountControlEffectiveBalanceLeasing(period);
 
-        CreateTransactionRequest txRequest;
-        try {
-            txRequest = HttpRequestToCreateTransactionRequestConverter.convert(
-                servletRequest, senderAccount, recipientAccount, recipientAccountId, 0, feeATM, attachment, broadcast);
-            log.trace("txRequest = {}", txRequest);
-        } catch(Exception e) {
-            log.warn("Tx global exception", e);
-            return response.error(ApiErrors.CUSTOM_ERROR_MESSAGE, "global exception: " + e.getMessage()).build();
-        }
+        CreateTransactionRequest txRequest = HttpRequestToCreateTransactionRequestConverter.convert(
+            servletRequest, senderAccount, recipientAccount, recipientAccountId, 0, feeATM, attachment, broadcast);
+        log.trace("txRequest = {}", txRequest);
 
         Transaction transaction = txCreator.createTransactionThrowingException(txRequest);
         log.trace("leaseBalance transaction = {}", transaction);
