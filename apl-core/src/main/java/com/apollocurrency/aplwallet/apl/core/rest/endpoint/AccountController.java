@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
-import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import com.apollocurrency.aplwallet.api.dto.UnconfirmedTransactionDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountAssetDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountCurrencyDTO;
@@ -64,6 +63,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.core.rest.validation.ValidBlockchainHeight;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.rest.validation.ValidTimestamp;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -411,7 +411,7 @@ public class AccountController {
         @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
         @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
         @Parameter(description = "The earliest block (in seconds since the genesis block) to retrieve (optional).")
-        @QueryParam("timestamp") @PositiveOrZero int timestamp,
+        @QueryParam("timestamp") @DefaultValue("-1") @ValidTimestamp int timestamp,
         @Parameter(description = "A zero-based index to the first block ID to retrieve (optional).")
         @QueryParam("firstIndex") @DefaultValue("0") @PositiveOrZero int firstIndex,
         @Parameter(description = "A zero-based index to the last block ID to retrieve (optional).")
@@ -422,7 +422,7 @@ public class AccountController {
         long accountId = accountIdParameter.get();
         FirstLastIndexParser.FirstLastIndex flIndex = indexParser.adjustIndexes(firstIndex, lastIndex);
 
-        List<Block> blocks = accountService.getAccountBlocks(accountId, timestamp, flIndex.getFirstIndex(), flIndex.getLastIndex());
+        List<Block> blocks = accountService.getAccountBlocks(accountId, flIndex.getFirstIndex(), flIndex.getLastIndex(), timestamp);
         List<String> blockIds = blocks.stream().map(Block::getStringId).collect(Collectors.toList());
 
         AccountBlockIdsResponse dto = new AccountBlockIdsResponse();
@@ -449,7 +449,7 @@ public class AccountController {
         @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
         @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
         @Parameter(description = "The earliest block (in seconds since the genesis block) to retrieve (optional).")
-        @QueryParam("timestamp") @PositiveOrZero int timestamp,
+        @QueryParam("timestamp") @DefaultValue("-1") @ValidTimestamp int timestamp,
         @Parameter(description = "A zero-based index to the first block ID to retrieve (optional).")
         @QueryParam("firstIndex") @DefaultValue("0") @PositiveOrZero int firstIndex,
         @Parameter(description = "A zero-based index to the last block ID to retrieve (optional).")
@@ -461,7 +461,7 @@ public class AccountController {
         long accountId = accountIdParameter.get();
         FirstLastIndexParser.FirstLastIndex flIndex = indexParser.adjustIndexes(firstIndex, lastIndex);
 
-        List<Block> blocks = accountService.getAccountBlocks(accountId, timestamp, flIndex.getFirstIndex(), flIndex.getLastIndex());
+        List<Block> blocks = accountService.getAccountBlocks(accountId, flIndex.getFirstIndex(), flIndex.getLastIndex(), timestamp);
 
         BlocksResponse dto = new BlocksResponse();
         dto.setBlocks(blockConverter.convert(blocks));

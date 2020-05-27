@@ -494,7 +494,7 @@ class AccountControllerTest extends AbstractEndpointTest {
         int from = 0;
         int to = 99;
 
-        doReturn(BLOCKS).when(accountService).getAccountBlocks(ACCOUNT_ID, timestamp, from, to);
+        doReturn(BLOCKS).when(accountService).getAccountBlocks(ACCOUNT_ID, from, to, timestamp);
 
         MockHttpResponse response = sendGetRequest("/accounts/block-ids?account=" + ACCOUNT_ID
             + "&timestamp=" + timestamp
@@ -512,7 +512,7 @@ class AccountControllerTest extends AbstractEndpointTest {
         JsonNode root = mapper.readTree(content);
         assertTrue(root.get("blockIds").isArray());
         assertEquals(BLOCKS.size(), root.withArray("blockIds").size());
-        verify(accountService, times(1)).getAccountBlocks(ACCOUNT_ID, timestamp, from, to);
+        verify(accountService, times(1)).getAccountBlocks(ACCOUNT_ID, from, to, timestamp);
     }
 
     @Test
@@ -535,7 +535,7 @@ class AccountControllerTest extends AbstractEndpointTest {
         int from = 0;
         int to = 200;
 
-        doReturn(BLOCKS).when(accountService).getAccountBlocks(ACCOUNT_ID, timestamp, from, 99);
+        doReturn(BLOCKS).when(accountService).getAccountBlocks(ACCOUNT_ID, from, 99, timestamp);
 
         MockHttpResponse response = sendGetRequest("/accounts/blocks?account=" + ACCOUNT_ID
             + "&timestamp=" + timestamp
@@ -554,7 +554,7 @@ class AccountControllerTest extends AbstractEndpointTest {
         assertTrue(root.get("blocks").isArray());
         assertEquals(BLOCKS.size(), root.withArray("blocks").size());
         assertEquals(Long.toUnsignedString(BLOCK_0.getGeneratorId()), root.withArray("blocks").get(1).get("generator").asText());
-        verify(accountService, times(1)).getAccountBlocks(ACCOUNT_ID, timestamp, from, 99);
+        verify(accountService, times(1)).getAccountBlocks(ACCOUNT_ID, from, 99, timestamp);
     }
 
     @ParameterizedTest

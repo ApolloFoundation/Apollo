@@ -21,7 +21,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsQu
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsRefund;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.UnencryptedDigitalGoodsDelivery;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.apache.tika.Tika;
 import org.apache.tika.mime.MediaType;

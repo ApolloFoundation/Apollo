@@ -3,9 +3,6 @@ package com.apollocurrency.aplwallet.apl.util;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
-import org.jboss.weld.junit5.EnableWeld;
-import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledOnOs;
@@ -13,7 +10,6 @@ import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 
-import javax.inject.Inject;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -34,21 +30,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.slf4j.LoggerFactory.getLogger;
 
-@EnableWeld
 class ZipTest {
     private static final Logger log = getLogger(ZipTest.class);
     private static final String APL_BLOCKCHAIN_ARCH_1_ZIP_HASH = "f3b51cb318c7de39c345ba6344f2bb0068a2627e92a8d6466a7a98bf3fd3e1a2";
 
-    @WeldSetup
-    public WeldInitiator weld = WeldInitiator.from(ZipImpl.class)
-        .build();
-
-    @Inject
     private Zip zipComponent;
     private Path csvResourcesPath;
 
     @BeforeEach
     void setUp() {
+        zipComponent = new ZipImpl();
         ResourceFileLoader resourceFileLoader = new ResourceFileLoader();
         csvResourcesPath = resourceFileLoader.getResourcePath();
         assertNotNull(csvResourcesPath);

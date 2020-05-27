@@ -18,7 +18,7 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.util;
+package com.apollocurrency.aplwallet.apl.util.io;
 
 import java.io.FilterInputStream;
 import java.io.IOException;
@@ -70,10 +70,10 @@ public class CountingInputStream extends FilterInputStream {
         return count;
     }
 
-    private void incCount(long n) throws AplException.AplIOException {
+    private void incCount(long n) throws LimitExceededException {
         count += n;
         if (count > limit) {
-            throw new AplException.AplIOException("Maximum size exceeded: " + count);
+            throw new LimitExceededException("Maximum size exceeded: " + count);
         }
     }
 
