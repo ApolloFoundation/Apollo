@@ -35,7 +35,7 @@ public class DbTestData {
     }
 
     public static DbProperties getDbFileProperties(String fileName) {
-        DbProperties dbProperties = getDbUrlProps(String.format("jdbc:h2:%s;TRACE_LEVEL_FILE=0;MV_STORE=TRUE;CACHE_SIZE=16000", fileName));
+        DbProperties dbProperties = getDbUrlProps(String.format("jdbc:h2:%s;TRACE_LEVEL_FILE=0;MV_STORE=TRUE;CACHE_SIZE=16000;AUTO_SERVER=TRUE", fileName));
         Path filePath = Paths.get(fileName).toAbsolutePath();
         dbProperties.dbDir(filePath.getParent().toString());
         dbProperties.dbFileName(filePath.getFileName().toString());
@@ -45,7 +45,7 @@ public class DbTestData {
 
     public static DbProperties getDbFileProperties(Path dbPath) {
         dbPath = dbPath.toAbsolutePath().toAbsolutePath();
-        DbProperties dbProperties = getDbUrlProps(String.format("jdbc:h2:%s;TRACE_LEVEL_FILE=0;MV_STORE=TRUE;CACHE_SIZE=16000", dbPath));
+        DbProperties dbProperties = getDbUrlProps(String.format("jdbc:h2:%s;TRACE_LEVEL_FILE=0;MV_STORE=TRUE;CACHE_SIZE=16000;AUTO_SERVER=TRUE", dbPath));
         dbProperties.dbDir(dbPath.getParent().toString());
         dbProperties.dbFileName(dbPath.getFileName().toString());
         return dbProperties;

@@ -20,8 +20,8 @@
 package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
-import com.apollocurrency.aplwallet.apl.core.rest.ByteArrayConverterProvider;
-import com.apollocurrency.aplwallet.apl.core.rest.PlatformSpecConverterProvider;
+import com.apollocurrency.aplwallet.apl.core.rest.provider.ByteArrayConverterProvider;
+import com.apollocurrency.aplwallet.apl.core.rest.provider.PlatformSpecConverterProvider;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ClientErrorExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ConstraintViolationExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.DefaultGlobalExceptionMapper;

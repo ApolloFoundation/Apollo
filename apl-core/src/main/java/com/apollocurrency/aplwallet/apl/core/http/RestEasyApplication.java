@@ -1,8 +1,10 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
+
 package com.apollocurrency.aplwallet.apl.core.http;
 
+import com.apollocurrency.aplwallet.apl.core.rest.endpoint.AccountControlController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.AccountController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.BlockController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.DebugController;
@@ -62,6 +64,7 @@ public class RestEasyApplication extends Application {
         set.add(ServerInfoController.class);
         set.add(UpdateController.class);
         set.add(BlockController.class);
+        set.add(AccountControlController.class);
 
 
         //TODO: add all endpoints below

@@ -1,17 +1,18 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
-import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountAssetTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountControlPhasingTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountCurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountInfoTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountLedgerTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.PublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
@@ -207,6 +208,7 @@ class CsvExporterTest {
         .addBeans(MockBean.of(mock(AccountTable.class), AccountTable.class))
         .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
         .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
+        .addBeans(MockBean.of(mock(AccountControlPhasingService.class), AccountControlPhasingService.class))
         .build();
     private HeightConfig config = Mockito.mock(HeightConfig.class);
     private Chain chain = Mockito.mock(Chain.class);
@@ -264,10 +266,13 @@ class CsvExporterTest {
         //Account.init(extension.getDatabaseManager(), propertiesHolder, null, null, blockchain, null, null, accountTable, null);
         AccountInfoTable accountInfoTable = new AccountInfoTable();
         accountInfoTable.init();
-        PhasingOnly.get(7995581942006468815L); // works OK!
-        PhasingOnly.get(2728325718715804811L); // check 1
-        PhasingOnly.get(-8446384352342482748L); // check 2
-        PhasingOnly.get(-4013722529644937202L); // works OK!
+        AccountControlPhasingTable accountControlPhasingTable = new AccountControlPhasingTable();
+        accountControlPhasingTable.init();
+
+//        PhasingOnly.get(7995581942006468815L); // works OK!
+//        PhasingOnly.get(2728325718715804811L); // check 1
+//        PhasingOnly.get(-8446384352342482748L); // check 2
+//        PhasingOnly.get(-4013722529644937202L); // works OK!
         AccountAssetTable accountAssetTable = new AccountAssetTable();
         accountAssetTable.init();
         PublicKeyTable publicKeyTable = new PublicKeyTable(blockchain);

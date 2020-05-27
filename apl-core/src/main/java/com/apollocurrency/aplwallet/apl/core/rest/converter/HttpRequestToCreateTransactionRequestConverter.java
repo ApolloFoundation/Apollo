@@ -16,9 +16,10 @@ import javax.servlet.http.HttpServletRequest;
 
 public class HttpRequestToCreateTransactionRequestConverter {
 
+    public static CreateTransactionRequest convert(
+        HttpServletRequest req, Account senderAccount, Account recipientAccount, long recipientId, long amountATM, long feeATM,
+        Attachment attachment, Boolean broadcast) throws ParameterException {
 
-    public static CreateTransactionRequest convert(HttpServletRequest req, Account senderAccount, Account recipientAccount, long recipientId, long amountATM, long feeATM,
-                                                   Attachment attachment, boolean broadcast) throws ParameterException {
         String passphrase = Convert.emptyToNull(HttpParameterParserUtil.getPassphrase(req, false));
         String secretPhrase = HttpParameterParserUtil.getSecretPhrase(req, false);
         Boolean encryptedMessageIsPrunable = Boolean.valueOf(req.getParameter("encryptedMessageIsPrunable"));
@@ -26,7 +27,8 @@ public class HttpRequestToCreateTransactionRequestConverter {
         Boolean isPhased = Boolean.valueOf(req.getParameter("phased"));
 
         CreateTransactionRequest createTransactionRequest = CreateTransactionRequest.builder()
-            .broadcast(!"false".equalsIgnoreCase(req.getParameter("broadcast")) && broadcast && (secretPhrase != null || passphrase != null))
+            .broadcast(!"false".equalsIgnoreCase(req.getParameter("broadcast"))
+                && (broadcast != null ? broadcast : false)  && (secretPhrase != null || passphrase != null))
             .secretPhrase(secretPhrase)
             .passphrase(passphrase)
             .deadlineValue(req.getParameter("deadline"))

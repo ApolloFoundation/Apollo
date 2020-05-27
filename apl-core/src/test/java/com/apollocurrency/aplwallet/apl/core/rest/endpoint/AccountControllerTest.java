@@ -1,3 +1,7 @@
+/*
+ * Copyright © 2018-2020 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
@@ -164,7 +168,7 @@ class AccountControllerTest extends AbstractEndpointTest {
             new Account2FADetailsConverter(),
             new Account2FAConverter(),
             orderService,
-            indexParser,
+            100,
             accountStatisticsService
         );
 

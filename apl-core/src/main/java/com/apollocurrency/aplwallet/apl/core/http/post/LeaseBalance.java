@@ -34,6 +34,7 @@ import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
+@Deprecated
 @Vetoed
 public final class LeaseBalance extends CreateTransaction {
 

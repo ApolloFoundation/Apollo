@@ -23,7 +23,7 @@ public interface Converter<S, T> extends Function<S, T> {
     default List<T> convert(List<S> models) {
         List<T> dtos = new ArrayList<>();
         if (models != null && !models.isEmpty()) {
-            dtos = models.stream().map(this::apply).collect(toList());
+            dtos = models.stream().map(this).collect(toList());
         }
         return dtos;
     }

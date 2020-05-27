@@ -153,7 +153,7 @@ public class ShardServiceIntegrationTest {
         assertTrue(reset);
         assertThrows(IllegalStateException.class, () -> databaseManager.getDataSource().commit()); //previous datasource was closed
         assertThrows(SQLException.class, shardDatasource::getConnection); //shard datasource was closed
-        assertEquals(4, FileUtils.countElementsOfDirectory(dbDir));
+        assertEquals(4, FileUtils.countElementsOfDirectory(dbDir, (dir) -> dir.toFile().isFile())); // files only
         Files.exists(zipPath);
         Files.exists(backupDir);
         Files.exists(dbDir.resolve(Constants.APPLICATION_DIR_NAME + DbProperties.DB_EXTENSION_WITH_DOT));

@@ -7,19 +7,16 @@ package com.apollocurrency.aplwallet.apl.core.rest.service;
 import com.apollocurrency.aplwallet.api.response.TransportStatusResponse;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.Setter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+@Slf4j
 @Singleton
 public class TransportInteractionServiceImpl implements TransportInteractionService {
-
-
-    private static final Logger log = LoggerFactory.getLogger(TransportInteractionServiceImpl.class);
     private String wsUrl;
 
     private TransportInteractionWebSocket transportInteractionWebSocket;

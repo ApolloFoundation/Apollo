@@ -1,5 +1,10 @@
-package com.apollocurrency.aplwallet.apl.core.rest;
+/*
+ * Copyright © 2018-2020 Apollo Foundation
+ */
 
+package com.apollocurrency.aplwallet.apl.core.rest.provider;
+
+import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.env.Architecture;
