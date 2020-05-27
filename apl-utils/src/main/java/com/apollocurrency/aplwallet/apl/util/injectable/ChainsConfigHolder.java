@@ -1,8 +1,10 @@
 /*
- *  Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.util.injectable;
+
+import javax.enterprise.inject.Vetoed;
 
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.config.ChainUtils;
@@ -13,6 +15,7 @@ import java.util.UUID;
 /**
  * Holds all available chains
  */
+@Vetoed
 public class ChainsConfigHolder {
     private Map<UUID, Chain> chains;
 

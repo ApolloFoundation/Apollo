@@ -26,7 +26,7 @@ public class SendMoneyForm extends CreateTransactionSenderRecipientForm {
     @Parameter(required = true/*, schema = @Schema(implementation = String.class)*/) @Schema(description = "Mandatory recipient account ID.", implementation = String.class)
     @FormParam("recipient") @NotNull RecipientIdParameter recipient;
 
-    @Parameter(required = true/*, schema = @Schema(implementation = Long.class)*/) @Schema(description = "amount ATM", implementation = Long.class)
+    @Parameter(required = true/*, schema = @Schema(implementation = Long.class)*/) @Schema(description = "amount ATM, minimal value 100000000", implementation = Long.class)
     @FormParam("amountATM") @NotNull @DefaultValue("1") @Positive Long amountATM = 1L;
 
 }

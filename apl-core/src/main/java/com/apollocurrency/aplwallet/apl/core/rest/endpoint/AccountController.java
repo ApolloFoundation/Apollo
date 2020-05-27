@@ -683,18 +683,18 @@ public class AccountController {
         @Parameter @Schema(description = "phased")
             @FormParam("phased") Boolean phased,
         @Parameter @Schema(description = "phasingFinishHeight")
-            @FormParam("phasingFinishHeight") @DefaultValue("-1") Integer phasingFinishHeight,
+            @FormParam("phasingFinishHeight") @DefaultValue("-1") @Valid Integer phasingFinishHeight,
         @Parameter @Schema(description = "The expected voting model of the phasing", implementation = VoteWeighting.VotingModel.class)
-            @FormParam("phasingVotingModel") @DefaultValue("NONE") VoteWeighting.VotingModel phasingVotingModel,
+            @FormParam("phasingVotingModel") @DefaultValue("NONE") @Valid VoteWeighting.VotingModel phasingVotingModel,
         @Parameter(description = "The expected phasing quorum")
-            @DefaultValue("0") @FormParam("phasingQuorum") Long phasingQuorum,
+            @DefaultValue("0") @FormParam("phasingQuorum") @Valid Long phasingQuorum,
         @Parameter(description = "The minimum phasing quorum")
-            @DefaultValue("0") @FormParam("phasingMinBalance") Long phasingMinBalance,
+            @DefaultValue("0") @FormParam("phasingMinBalance") @Valid Long phasingMinBalance,
         @Parameter(description = "Phasing holding id")
-            @DefaultValue("0") @FormParam("phasingHolding") Long phasingHolding,
+            @DefaultValue("0") @FormParam("phasingHolding") @Valid Long phasingHolding,
         @Parameter @Schema(required = true, description = "The expected minimum balance model. Possible values: NONE(0), ATM(1), ASSET(2), CURRENCY(3)",
             implementation = VoteWeighting.MinBalanceModel.class)
-            @FormParam("phasingMinBalanceModel") @DefaultValue("NONE") VoteWeighting.VotingModel phasingMinBalanceModel,
+            @FormParam("phasingMinBalanceModel") @DefaultValue("NONE") @Valid VoteWeighting.VotingModel phasingMinBalanceModel,
         @Parameter @Schema(description = "multiple values - the expected phasing whitelisted account", implementation = String.class)
             @FormParam("phasingWhitelisted") List<AccountIdParameter> phasingWhitelisted,
         @Parameter @Schema(description = "multiple values - the expected 'phasing Full Hash' as string", implementation = String.class)
@@ -702,18 +702,18 @@ public class AccountController {
         @Parameter @Schema(description = "phasing 'Hashed Secret' as HEX string", implementation = String.class)
             @FormParam("phasingHashedSecret") String phasingHashedSecret,
         @Parameter(description = "phasing Hashed 'Secret Algorithm' as byte")
-            @DefaultValue("0") @FormParam("phasingHashedSecretAlgorithm") Byte phasingHashedSecretAlgorithm,
+            @DefaultValue("0") @FormParam("phasingHashedSecretAlgorithm") @Valid Byte phasingHashedSecretAlgorithm,
         @Parameter @Schema(description = "recipient Public Key as HEX string", implementation = String.class)
             @FormParam("recipientPublicKey") String recipientPublicKey,
         @Parameter(description = "ec Block Id")
-            @DefaultValue("0") @FormParam("ecBlockId") Long ecBlockId,
+            @DefaultValue("0") @FormParam("ecBlockId") @Valid Long ecBlockId,
         @Parameter(description = "ec Block Height")
-            @DefaultValue("0") @FormParam("ecBlockHeight") Integer ecBlockHeight,
+            @DefaultValue("0") @FormParam("ecBlockHeight") @Valid Integer ecBlockHeight,
 
         @Parameter @Schema(description = "Passphrase to vault account, should be specified if sender account is vault", format = "password")
             @FormParam("passphrase") String passphrase,
         @Parameter(description = "Two-factor auth code, if 2fa enabled")
-            @FormParam("code2FA") @DefaultValue("0") Integer code2FA,
+            @FormParam("code2FA") @DefaultValue("0") @Valid Integer code2FA,
         @Context HttpServletRequest servletRequest
 */
 
