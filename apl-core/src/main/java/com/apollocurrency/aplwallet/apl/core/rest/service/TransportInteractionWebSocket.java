@@ -8,10 +8,12 @@ import com.apollocurrency.aplwallet.api.transport.TransportEventDescriptor;
 import com.apollocurrency.aplwallet.api.transport.TransportStartRequest;
 import com.apollocurrency.aplwallet.api.transport.TransportStatusReply;
 import com.apollocurrency.aplwallet.api.transport.TransportStopRequest;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.Getter;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
@@ -64,16 +66,14 @@ public class TransportInteractionWebSocket {
      *
      * @param endpointURI - link to connect to transport daemon
      */
-    public TransportInteractionWebSocket(URI endpointURI) {
-
+    public TransportInteractionWebSocket(URI endpointURI, PropertiesHolder propertiesHolder) {
         try {
 
             secureTransportStatus = SecureTransportStatus.INITIAL;
             cleanupComParams();
 
             this.closeLatch = new CountDownLatch(1);
-            client = new WebSocketClient();
-            client.setMaxIdleTimeout(Long.MAX_VALUE);
+            this.client = getWebSocketClient(propertiesHolder);
 
             client.start();
             ClientUpgradeRequest request = new ClientUpgradeRequest();
@@ -85,6 +85,22 @@ public class TransportInteractionWebSocket {
             log.error("WS connection exception: ", ex);
         }
 
+    }
+
+    private WebSocketClient getWebSocketClient(PropertiesHolder propertiesHolder) {
+
+        final WebSocketClient socketClient = new WebSocketClient();
+        socketClient.setMaxIdleTimeout(Long.MAX_VALUE);
+
+        if (propertiesHolder.getBooleanProperty("apl.limitHardwareResources", false)) {
+            final QueuedThreadPool threadPool = new QueuedThreadPool();
+            threadPool.setMaxThreads(propertiesHolder.getIntProperty("apl.wsMaxThreadPoolSize"));
+            threadPool.setMinThreads(propertiesHolder.getIntProperty("apl.wsMinThreadPoolSize"));
+            threadPool.setName(socketClient.getHttpClient().getName());
+            socketClient.setExecutor(threadPool);
+        }
+
+        return socketClient;
     }
 
     /**

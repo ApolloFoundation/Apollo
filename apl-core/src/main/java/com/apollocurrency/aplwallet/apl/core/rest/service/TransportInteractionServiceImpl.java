@@ -27,10 +27,12 @@ public class TransportInteractionServiceImpl implements TransportInteractionServ
     @Setter
     private volatile boolean done;
 
+    private final PropertiesHolder propertiesHolder;
 
     @Inject
     TransportInteractionServiceImpl(PropertiesHolder prop) {
         log.debug("Initializing TransportInteractionServiceImpl");
+        this.propertiesHolder = prop;
         wsUrl = prop.getStringProperty("apl.securetransporturl", "ws://localhost:8888/");
         done = false;
     }
@@ -58,7 +60,7 @@ public class TransportInteractionServiceImpl implements TransportInteractionServ
 
         try {
             // open websocket
-            transportInteractionWebSocket = new TransportInteractionWebSocket(new URI(wsUrl));
+            transportInteractionWebSocket = new TransportInteractionWebSocket(new URI(wsUrl), propertiesHolder);
             Runnable task = () -> {
                 for (; ; ) {
                     try {
