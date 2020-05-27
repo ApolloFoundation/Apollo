@@ -49,7 +49,7 @@ public class NewApiRegistry {
         apis.put("getAccountAssets", "/rest/accounts/assets"); //GET
         apis.put("getAccountBlockCount", "/rest/accounts/block-count"); //GET
         apis.put("getAccountBlockIds", "/rest/accounts/block-ids"); //GET
-//        apis.put("getAccountBlocks", "/rest/accounts/blocks"); //GET
+        apis.put("getAccountBlocks", "/rest/accounts/blocks"); //GET
         apis.put("getAccountCurrencyCount", "/rest/accounts/currency-count"); //GET
         apis.put("getAccountCurrencies", "/rest/accounts/currencies"); //GET
         apis.put("getAccountCurrentAskOrderIds", "/rest/accounts/current-ask-order-ids"); //GET
