@@ -56,9 +56,10 @@ public class ReferencedTransactionServiceTest {
     @RegisterExtension
     DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("targetDb").toAbsolutePath().toString()));
     BlockchainConfig blockchainConfig = Mockito.mock(BlockchainConfig.class);
+    private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-        PropertiesHolder.class, TransactionImpl.class, BlockchainImpl.class, DaoConfig.class,
+        TransactionImpl.class, BlockchainImpl.class, DaoConfig.class,
         ReferencedTransactionDaoImpl.class,
         GlobalSync.class,
         FullTextConfigImpl.class,
@@ -74,6 +75,7 @@ public class ReferencedTransactionServiceTest {
         .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
         .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
         .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
+        .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
         .build();
     HeightConfig config = Mockito.mock(HeightConfig.class);
     @Inject
