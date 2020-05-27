@@ -188,6 +188,7 @@ public class ShardService {
         );
         if (doRecovery) {
             isSharding = true;
+            long start = System.currentTimeMillis();
             try {
                 // here we are able to recover from stored record
                 aplAppStatus.durableTaskStart("sharding", "Blockchain db sharding process takes some time, pls be patient...", true);
@@ -195,6 +196,7 @@ public class ShardService {
                 shardMigrationExecutor.prepare();
                 shardMigrationExecutor.createAllCommands(lastShard.getShardHeight(), lastShard.getShardId(), recovery.getState());
                 shardMigrationExecutor.executeAllOperations();
+                log.info("Finished sharding by recovery, height='{}' in {} ms", recovery.getHeight(), System.currentTimeMillis() - start);
                 aplAppStatus.durableTaskFinished("sharding", false, "Shard process finished");
             } finally {
                 isSharding = false;
@@ -230,6 +232,7 @@ public class ShardService {
                 shardMigrationExecutor.prepare();
                 shardMigrationExecutor.createAllCommands(minRollbackHeight, shardId, initialState);
                 resultState = shardMigrationExecutor.executeAllOperations();
+                log.info("Finished sharding '{}' in {} ms", shardId, System.currentTimeMillis() - start);
             } catch (Exception t) {
                 log.error("Error occurred while trying create shard " + shardId + " at height " + minRollbackHeight, t);
             }

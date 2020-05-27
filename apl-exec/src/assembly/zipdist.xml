@@ -2,39 +2,36 @@
           xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2"
           xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
   <id>zipdist</id>
-  <includeBaseDirectory>true</includeBaseDirectory>
+  <includeBaseDirectory>false</includeBaseDirectory>
   <formats>
-    <format>tar.gz</format>
+    <format>${zip-format}</format>
   </formats>
   <fileSets>
     <fileSet>
       <directory>${project.basedir}/../bin</directory>
-      <outputDirectory>bin</outputDirectory>
-      <fileMode>0755</fileMode>
-    </fileSet>
-    <fileSet>
-      <directory>${project.basedir}/../sbin</directory>
-      <outputDirectory>sbin</outputDirectory>
+      <outputDirectory>${base-dist-dir}/bin</outputDirectory>
       <fileMode>0755</fileMode>
     </fileSet>
     <fileSet>
       <directory>${project.basedir}/../updater</directory>
-      <outputDirectory>updater</outputDirectory>
+      <outputDirectory>${base-dist-dir}/updater</outputDirectory>
       <fileMode>0755</fileMode>
     </fileSet>
     <fileSet>
-      <directory>${project.basedir}/../release-notes/</directory>
-      <outputDirectory>doc</outputDirectory>
-      <fileMode>0644</fileMode>
+      <directory>${project.basedir}/../html-stub</directory>
+      <outputDirectory>${base-dist-dir}/html-stub</outputDirectory>
     </fileSet>
     <fileSet>
-      <directory>${project.basedir}/../doc/</directory>
-      <outputDirectory>doc</outputDirectory>
+      <directory>${project.basedir}</directory>
+      <outputDirectory>./</outputDirectory>
+      <includes>
+        <include>pkg-apollo-blockchain.json</include>
+      </includes>
       <fileMode>0644</fileMode>
     </fileSet>
     <fileSet>
       <directory>${project.basedir}/../</directory>
-      <outputDirectory>/</outputDirectory>
+      <outputDirectory>${base-dist-dir}/</outputDirectory>
       <includes>
         <include>README*</include>
         <include>LICENSE*</include>
@@ -46,28 +43,24 @@
       </includes>
     </fileSet>
     <fileSet>
-      <directory>${project.build.directory}/webui/</directory>
-      <outputDirectory>webui</outputDirectory>
-      <fileMode>0644</fileMode>
-    </fileSet>
-    <fileSet>
       <directory>${project.build.directory}/classes/conf/</directory>
       <outputDirectory>doc</outputDirectory>
     </fileSet>
 
   </fileSets>
-  <files> <!-- we need main jar to stay in top dir because we have classpath in it pointiung to lib dir -->
+  <files> <!-- we need main jar to stay in top dir because we have classpath in it pointing to lib dir -->
     <file>
       <source>${project.build.directory}/apl-exec-${project.version}.jar</source>
-      <outputDirectory>/</outputDirectory>
+      <outputDirectory>${base-dist-dir}/</outputDirectory>
     </file>
   </files>
   <dependencySets>
     <dependencySet>
-      <outputDirectory>lib</outputDirectory>
-      <excludes>
-        <exclude>${project.groupId}:*:zip:*</exclude>
-      </excludes>
+      <useProjectArtifact>false</useProjectArtifact>
+      <outputDirectory>${base-dist-dir}/lib</outputDirectory>
+      <includes>
+        <include>${project.groupId}:apl-*:jar:*</include>
+      </includes>
     </dependencySet>
   </dependencySets>
 </assembly>

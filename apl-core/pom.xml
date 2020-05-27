@@ -5,8 +5,8 @@
 
   <parent>
     <groupId>com.apollocurrency</groupId>
-    <artifactId>apollo-wallet</artifactId>
-    <version>1.43.3</version>
+    <artifactId>apollo-blockchain</artifactId>
+    <version>1.45.0</version>
   </parent>
 
   <artifactId>apl-core</artifactId>
@@ -14,6 +14,7 @@
   <packaging>jar</packaging>
 
   <dependencies>
+    <!-- CORE BOM DEPENDENCIES -->
     <dependency>
       <groupId>com.apollocurrency</groupId>
       <artifactId>apl-utils</artifactId>
@@ -24,6 +25,8 @@
       <artifactId>apl-api</artifactId>
       <version>${project.version}</version>
     </dependency>
+
+    <!-- EXT BOM DEPENDENCIES -->
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
@@ -49,11 +52,6 @@
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.fasterxml.jackson.datatype</groupId>
-      <artifactId>jackson-datatype-joda</artifactId>
-    </dependency>
-
     <!-- json-simple should be gone after new REST completion -->
     <dependency>
       <groupId>com.googlecode.json-simple</groupId>
@@ -80,7 +78,6 @@
     <dependency>
       <groupId>commons-fileupload</groupId>
       <artifactId>commons-fileupload</artifactId>
-      <version>1.4</version>
     </dependency>
 
     <dependency>
@@ -88,7 +85,7 @@
       <artifactId>resteasy-jackson2-provider</artifactId>
     </dependency>
     <!-- we do not need validation at the moment, but keep in mind that it is interface
-         only and requires implementation laso, e.g hybernate-validator -->
+    only and requires implementation laso, e.g hybernate-validator -->
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
       <artifactId>resteasy-validator-provider</artifactId>
@@ -97,6 +94,21 @@
       <groupId>org.jboss.resteasy</groupId>
       <artifactId>resteasy-multipart-provider</artifactId>
     </dependency>
+
+    <!--
+        <dependency> &lt;!&ndash; may be NEEDED by FAT JAR in run-time &ndash;&gt;
+          <groupId>org.jboss.resteasy</groupId>
+          <artifactId>resteasy-jaxrs</artifactId>
+        </dependency>
+        <dependency> &lt;!&ndash; NEEDED by FAT JAR in run-time&ndash;&gt;
+          <groupId>org.jboss.resteasy</groupId>
+          <artifactId>resteasy-tracing-api</artifactId>
+        </dependency>
+        <dependency> &lt;!&ndash; NEEDED by FAT JAR in run-time&ndash;&gt;
+          <groupId>org.apache.httpcomponents</groupId>
+          <artifactId>httpcore-nio</artifactId>
+        </dependency>
+    -->
 
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
@@ -296,21 +308,18 @@
     <dependency>
       <groupId>com.apollocurrency.antifraud</groupId>
       <artifactId>antifraud</artifactId>
-      <version>1.0.7</version>
     </dependency>
 
     <!-- Ethereum API -->
     <dependency>
       <groupId>org.web3j</groupId>
       <artifactId>core</artifactId>
-      <version>4.5.6</version>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/org.ethereum/ethereumj-core -->
     <dependency>
       <groupId>org.ethereum</groupId>
       <artifactId>ethereumj-core</artifactId>
-      <version>1.7.2-RELEASE</version>
       <exclusions>
         <exclusion>
           <groupId>org.springframework</groupId>
@@ -336,10 +345,8 @@
     </dependency>
 
     <dependency>
-      <groupId>io.swagger</groupId>
-      <artifactId>swagger-annotations</artifactId>
-      <version>1.5.21</version>
-      <type>jar</type>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-joda</artifactId>
     </dependency>
 
     <dependency>

@@ -28,12 +28,12 @@ import java.util.Map;
  */
 @Slf4j
 public class ApiSplitFilter implements Filter {
+
     /**
-     * this is just a "fuse" to disable API calls while core is starting.
-     * Should be removed as soon as all API will be on RestEasy
+     * this is just a "fuse" to disable API calls while core is starting. Should
+     * be removed as soon as all API will be on RestEasy
      */
     public static boolean isCoreReady = false;
-
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
@@ -70,8 +70,9 @@ public class ApiSplitFilter implements Filter {
             return;
         }
         if (!isCoreReady) {
-            // Core is not signaled that is is ready to serve requests, so old API
-            // implementation shoud wait
+            // Core is not signaled that is is ready to serve requests,
+            // so old API implementation shoud wait
+            rq.getRequestDispatcher("/starting.html").forward(request, response);
             resp.sendError(Response.Status.SERVICE_UNAVAILABLE.getStatusCode(), "Application is starting, please wait!");
             return;
         }
@@ -87,14 +88,14 @@ public class ApiSplitFilter implements Filter {
     private void logRequest(HttpServletRequest rq) {
         if (log.isTraceEnabled()) {
             log.trace("Request from: {} Method: {} User: {}\n\t Request URI: {} \n\t Request session ID: {}",
-                rq.getRemoteAddr(), rq.getMethod(), rq.getRemoteUser(), rq.getRequestURI(), rq.getRequestedSessionId());
+                    rq.getRemoteAddr(), rq.getMethod(), rq.getRemoteUser(), rq.getRequestURI(), rq.getRequestedSessionId());
             //print all headers
             Enumeration<String> hdre = rq.getHeaderNames();
             StringBuilder hdrs = new StringBuilder();
             while (hdre.hasMoreElements()) {
                 String name = hdre.nextElement();
                 hdrs.append("\n\tName:>").append(name)
-                    .append("< Value:>").append(rq.getHeader(name)).append("<");
+                        .append("< Value:>").append(rq.getHeader(name)).append("<");
             }
             log.trace("HTTP request headers:{}", hdrs);
             //print all request parameters

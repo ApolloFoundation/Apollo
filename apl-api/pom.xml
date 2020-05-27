@@ -5,8 +5,8 @@
 
   <parent>
     <groupId>com.apollocurrency</groupId>
-    <artifactId>apollo-wallet</artifactId>
-    <version>1.43.3</version>
+    <artifactId>apollo-blockchain</artifactId>
+    <version>1.45.0</version>
   </parent>
 
   <artifactId>apl-api</artifactId>
@@ -14,23 +14,7 @@
   <packaging>jar</packaging>
 
   <dependencies>
-    <!-- TODO: remove this dependency later. API must not depend on anything except JSOM annotations and Swagger -->
-    <dependency>
-      <groupId>com.apollocurrency</groupId>
-      <artifactId>apl-crypto</artifactId>
-      <version>${project.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-log4j12</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.junit</groupId>
-          <artifactId>junit-bom</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
+    <!-- EXT BOM DEPENDENCIES -->
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
       <artifactId>resteasy-multipart-provider</artifactId>
@@ -62,7 +46,6 @@
     <dependency>
       <groupId>io.swagger.core.v3</groupId>
       <artifactId>swagger-models</artifactId>
-      <version>${swagger.version}</version>
     </dependency>
 
     <!-- unit tests -->

@@ -1,5 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.utils;
 
+import javax.enterprise.inject.Vetoed;
+
 import org.json.simple.JSONArray;
 
 import javax.enterprise.inject.Vetoed;
