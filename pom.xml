@@ -68,7 +68,7 @@
     <apl-bom.version>1.44.0</apl-bom.version>
     <!-- We have to define this property ancd change it accordingly for correct version of packages -->
     <apl-bom-ext.version>1.0.0</apl-bom-ext.version>
-    <base-dist-dir>apollo-wallet</base-dist-dir>
+    <base-dist-dir>ApolloWallet</base-dist-dir>
 
   </properties>
   <!-- We have following profiles: prod, dev, debug

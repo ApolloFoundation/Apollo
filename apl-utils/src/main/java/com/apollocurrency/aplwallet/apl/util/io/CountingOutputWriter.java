@@ -18,7 +18,7 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.util;
+package com.apollocurrency.aplwallet.apl.util.io;
 
 import java.io.FilterWriter;
 import java.io.IOException;

@@ -40,15 +40,22 @@ public interface BlockDao {
 
     DbIterator<Block> getBlocks(Connection con, PreparedStatement pstmt);
 
-    DbIterator<Block> getBlocks(long accountId, int timestamp, int from, int to);
+    @Deprecated
+    DbIterator<Block> getBlocksByAccount(long accountId, int from, int to, int timestamp);
+
+    DbIterator<Block> getBlocksByAccount(TransactionalDataSource dataSource, long accountId, int from, int to, int timestamp);
 
     DbIterator<Block> getBlocks(TransactionalDataSource dataSource, int from, int to, int timestamp);
 
+    @Deprecated
     Long getBlockCount(int from, int to);
 
     Long getBlockCount(TransactionalDataSource dataSource, int from, int to);
 
+    @Deprecated
     int getBlockCount(long accountId);
+
+    int getBlockCount(TransactionalDataSource dataSource, long accountId);
 
     List<Long> getBlockIdsAfter(int height, int limit);
 

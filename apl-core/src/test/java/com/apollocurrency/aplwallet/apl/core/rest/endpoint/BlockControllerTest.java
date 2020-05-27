@@ -47,6 +47,10 @@ class BlockControllerTest extends AbstractEndpointTest {
     private BlockConverter blockConverter = mock(BlockConverter.class);
     private FirstLastIndexParser indexParser = mock(FirstLastIndexParser.class);
     private TimeService timeService = mock(TimeService.class);
+    private static final String getOneUri = "/block/one";
+    private static final String getByIdUri = "/block/id";
+    private static final String getBlocksUri = "/block/list";
+    private static final String getBlockEcUri = "/block/ec";
 
 //    private TransactionTestData txd;
     private BlockTestData btd;
@@ -67,7 +71,7 @@ class BlockControllerTest extends AbstractEndpointTest {
         blockDTO = createBlockDTO(btd.BLOCK_13, false, false);
         doReturn(blockDTO).when(blockConverter).convert(btd.BLOCK_13);
 
-        MockHttpResponse response = super.sendGetRequest("/block");
+        MockHttpResponse response = super.sendGetRequest(getOneUri);
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         String respondJson = response.getContentAsString();
         assertNotNull(respondJson);
@@ -87,7 +91,7 @@ class BlockControllerTest extends AbstractEndpointTest {
         blockDTO = createBlockDTO(btd.BLOCK_10, true, false);
         doReturn(blockDTO).when(blockConverter).convert(btd.BLOCK_10);
 
-        MockHttpResponse response = super.sendGetRequest("/block?block=" + btd.BLOCK_10.getStringId());
+        MockHttpResponse response = super.sendGetRequest(getOneUri + "?block=" + btd.BLOCK_10.getStringId());
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         String respondJson = response.getContentAsString();
         assertNotNull(respondJson);
@@ -108,7 +112,7 @@ class BlockControllerTest extends AbstractEndpointTest {
         blockDTO = createBlockDTO(btd.BLOCK_10, true, false);
         doReturn(blockDTO).when(blockConverter).convert(btd.BLOCK_10);
 
-        MockHttpResponse response = super.sendGetRequest("/block?height=" + btd.BLOCK_10.getHeight());
+        MockHttpResponse response = super.sendGetRequest(getOneUri + "?height=" + btd.BLOCK_10.getHeight());
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         String respondJson = response.getContentAsString();
         assertNotNull(respondJson);
@@ -129,7 +133,7 @@ class BlockControllerTest extends AbstractEndpointTest {
         blockDTO = createBlockDTO(btd.BLOCK_10, true, false);
         doReturn(blockDTO).when(blockConverter).convert(btd.BLOCK_10);
 
-        MockHttpResponse response = super.sendGetRequest("/block?timestamp=" + btd.BLOCK_10.getTimestamp());
+        MockHttpResponse response = super.sendGetRequest(getOneUri + "?timestamp=" + btd.BLOCK_10.getTimestamp());
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         String respondJson = response.getContentAsString();
         assertNotNull(respondJson);
@@ -150,7 +154,7 @@ class BlockControllerTest extends AbstractEndpointTest {
         blockDTO = createBlockDTO(btd.BLOCK_10, true, false);
         doReturn(blockDTO).when(blockConverter).convert(btd.BLOCK_10);
 
-        MockHttpResponse response = super.sendGetRequest("/block/id?height=" + btd.BLOCK_10.getHeight());
+        MockHttpResponse response = super.sendGetRequest(getByIdUri + "?height=" + btd.BLOCK_10.getHeight());
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         String respondJson = response.getContentAsString();
         assertNotNull(respondJson);
@@ -169,13 +173,13 @@ class BlockControllerTest extends AbstractEndpointTest {
         blockDTO = createBlockDTO(btd.BLOCK_10, true, false);
         doReturn(blockDTO).when(blockConverter).convert(btd.BLOCK_10);
 
-        MockHttpResponse response = super.sendGetRequest("/block/id");
+        MockHttpResponse response = super.sendGetRequest(getOneUri);
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         String respondJson = response.getContentAsString();
         assertNotNull(respondJson);
         Error error = mapper.readValue(respondJson, new TypeReference<>(){});
         assertNotNull(error.getErrorDescription());
-        assertEquals(2001, error.getNewErrorCode());
+        assertEquals(2005, error.getNewErrorCode());
 
         //verify
         verify(blockConverter, times(0)).convert(btd.BLOCK_10);
@@ -195,7 +199,7 @@ class BlockControllerTest extends AbstractEndpointTest {
         List<BlockDTO> blockDTOList = createDtoList(blockStream3);
         doReturn(blockDTOList).when(blockConverter).convert(blockList);
 
-        MockHttpResponse response = super.sendGetRequest("/block/list");
+        MockHttpResponse response = super.sendGetRequest(getBlocksUri);
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         String respondJson = response.getContentAsString();
         assertNotNull(respondJson);
@@ -215,7 +219,7 @@ class BlockControllerTest extends AbstractEndpointTest {
         doReturn(ecBlockData).when(blockchain).getECBlock(btd.BLOCK_10.getTimestamp());
         doReturn(btd.BLOCK_10.getTimestamp()).when(timeService).getEpochTime();
 
-        MockHttpResponse response = super.sendGetRequest("/block/ec?timestamp=-1");
+        MockHttpResponse response = super.sendGetRequest(getBlockEcUri+ "?timestamp=-1");
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         String respondJson = response.getContentAsString();
         assertNotNull(respondJson);
@@ -235,7 +239,7 @@ class BlockControllerTest extends AbstractEndpointTest {
         doReturn(ecBlockData).when(blockchain).getECBlock(btd.BLOCK_10.getTimestamp());
         doReturn(btd.BLOCK_10.getTimestamp()).when(timeService).getEpochTime();
 
-        MockHttpResponse response = super.sendGetRequest("/block/ec");
+        MockHttpResponse response = super.sendGetRequest(getBlockEcUri);
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         String respondJson = response.getContentAsString();
         assertNotNull(respondJson);

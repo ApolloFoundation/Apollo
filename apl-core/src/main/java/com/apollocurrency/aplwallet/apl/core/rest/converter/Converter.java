@@ -1,3 +1,7 @@
+/*
+ * Copyright (c)  2018-2010 Apollo Foundation.
+ */
+
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
 import java.util.ArrayList;

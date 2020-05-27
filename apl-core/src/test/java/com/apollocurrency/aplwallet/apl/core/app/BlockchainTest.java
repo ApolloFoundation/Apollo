@@ -22,7 +22,6 @@ import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbPopulator;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.apache.commons.io.FileUtils;
@@ -51,6 +50,8 @@ import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_0_ID;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_10_ID;
@@ -324,9 +325,16 @@ class BlockchainTest {
 
     @Test
     void testGetAccountBlocks() {
-        List<Block> blocks = CollectionUtil.toList(blockchain.getBlocksByAccount(btd.BLOCK_12.getGeneratorId(), 0, 0, Integer.MAX_VALUE));
+        List<Block> blocks = CollectionUtil.toList(blockchain.getBlocksByAccount(btd.BLOCK_12.getGeneratorId(), 0, Integer.MAX_VALUE, 0));
 
         assertEquals(List.of(btd.BLOCK_13, btd.BLOCK_12), blocks);
+    }
+
+    @Test
+    void testGetAccountBlocksAsStream() {
+        Stream<Block> blocks = blockchain.getBlocksByAccountStream(btd.BLOCK_12.getGeneratorId(), 0, 10, 0);
+        List<Block> result = blocks.collect(Collectors.toList());
+        assertEquals(List.of(btd.BLOCK_13, btd.BLOCK_12, btd.SHARD_2_BLOCK_3, btd.SHARD_2_BLOCK_2), result);
     }
 
     @Test
@@ -387,8 +395,7 @@ class BlockchainTest {
     @Test
     void testGetBlockCount() {
         int blockCount = blockchain.getBlockCount(btd.BLOCK_12.getGeneratorId());
-
-        assertEquals(2, blockCount);
+        assertEquals(4, blockCount); // 2 + 2 records from all databases
     }
 
     @Test

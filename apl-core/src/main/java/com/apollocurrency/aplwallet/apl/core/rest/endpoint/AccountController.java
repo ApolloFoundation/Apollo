@@ -59,6 +59,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.core.rest.validation.ValidBlockchainHeight;
+import com.apollocurrency.aplwallet.apl.core.rest.validation.ValidTimestamp;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -405,7 +406,7 @@ public class AccountController {
         @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
         @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
         @Parameter(description = "The earliest block (in seconds since the genesis block) to retrieve (optional).")
-        @QueryParam("timestamp") @PositiveOrZero int timestamp,
+        @QueryParam("timestamp") @DefaultValue("-1") @ValidTimestamp int timestamp,
         @Parameter(description = "A zero-based index to the first, last asset ID to retrieve (optional).", schema = @Schema(implementation = FirstLastIndexBeanParam.class))
             @BeanParam FirstLastIndexBeanParam indexBeanParam
     ) {
@@ -414,7 +415,7 @@ public class AccountController {
         long accountId = accountIdParameter.get();
         indexBeanParam.adjustIndexes(maxAPIFetchRecords);
 
-        List<Block> blocks = accountService.getAccountBlocks(accountId, timestamp, indexBeanParam.getFirstIndex(), indexBeanParam.getLastIndex());
+        List<Block> blocks = accountService.getAccountBlocks(accountId, indexBeanParam.getFirstIndex(), indexBeanParam.getLastIndex(), timestamp);
         List<String> blockIds = blocks.stream().map(Block::getStringId).collect(Collectors.toList());
 
         AccountBlockIdsResponse dto = new AccountBlockIdsResponse();
@@ -441,7 +442,7 @@ public class AccountController {
         @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
         @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
         @Parameter(description = "The earliest block (in seconds since the genesis block) to retrieve (optional).")
-        @QueryParam("timestamp") @PositiveOrZero int timestamp,
+        @QueryParam("timestamp") @DefaultValue("-1") @ValidTimestamp int timestamp,
         @Parameter(description = "A zero-based index to the first, last asset ID to retrieve (optional).", schema = @Schema(implementation = FirstLastIndexBeanParam.class))
             @BeanParam FirstLastIndexBeanParam indexBeanParam,
         @Parameter(description = "Include transactions detail info")
@@ -451,7 +452,7 @@ public class AccountController {
         long accountId = accountIdParameter.get();
         indexBeanParam.adjustIndexes(maxAPIFetchRecords);
 
-        List<Block> blocks = accountService.getAccountBlocks(accountId, timestamp, indexBeanParam.getFirstIndex(), indexBeanParam.getLastIndex());
+        List<Block> blocks = accountService.getAccountBlocks(accountId, indexBeanParam.getFirstIndex(), indexBeanParam.getLastIndex(), timestamp);
 
         BlocksResponse dto = new BlocksResponse();
         dto.setBlocks(blockConverter.convert(blocks));

@@ -25,7 +25,6 @@ import com.apollocurrency.aplwallet.api.dto.account.AccountAssetDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountCurrencyDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerHolding;
-import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountControlPhasing;
@@ -438,6 +437,9 @@ public final class JSONData {
         return result;
     }
 
+    /**
+     * Replaced by {@link com.apollocurrency.aplwallet.apl.core.rest.service.AccountStatisticsService#getAccountsStatistic(int)}
+     */
     @Deprecated
     public static JSONObject getAccountsStatistic(int numberOfAccounts) {
         long totalSupply = accountService.getTotalSupply();
@@ -829,6 +831,9 @@ public final class JSONData {
         return json;
     }
 
+    /**
+     * Use {@link com.apollocurrency.aplwallet.apl.core.rest.converter.VoteWeightingConverter#apply(VoteWeighting)}
+     */
     @Deprecated
     private static void putVoteWeighting(JSONObject json, VoteWeighting voteWeighting) {
         json.put("votingModel", voteWeighting.getVotingModel().getCode());
@@ -860,6 +865,9 @@ public final class JSONData {
     }
 */
 
+    /**
+     * Use {@link com.apollocurrency.aplwallet.apl.core.rest.converter.AccountControlPhasingConverter#apply(AccountControlPhasing)}
+     */
     @Deprecated
     public static JSONObject phasingOnly(AccountControlPhasing phasingOnly) {
         JSONObject json = new JSONObject();
@@ -1334,6 +1342,9 @@ public final class JSONData {
         json.put("errorDescription", error + e.getMessage());
     }
 
+    /**
+     * Use {@link com.apollocurrency.aplwallet.apl.core.rest.converter.AccountConverter#apply(Account)}
+     */
     @Deprecated
     static void putAccount(JSONObject json, String name, long accountId, boolean isPrivate) {
         if (isPrivate) {
