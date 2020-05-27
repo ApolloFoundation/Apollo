@@ -25,6 +25,7 @@ import org.bitlet.weupnp.PortMappingEntry;
 import org.slf4j.Logger;
 import org.xml.sax.SAXException;
 
+import javax.enterprise.inject.Vetoed;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -35,6 +36,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 /**
  * Forward ports using the UPnP protocol.
  */
+@Vetoed
 public class UPnP {
 
     public static final int MAX_PORTS_TO_TRY = 999;

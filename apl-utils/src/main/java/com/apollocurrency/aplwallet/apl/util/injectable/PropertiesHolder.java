@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.util.injectable;
 
+import javax.enterprise.inject.Vetoed;
+
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.UnsupportedEncodingException;
@@ -13,6 +15,7 @@ import java.util.List;
 import java.util.Properties;
 
 @Slf4j
+@Vetoed
 public class PropertiesHolder {
 
     private Properties properties;
