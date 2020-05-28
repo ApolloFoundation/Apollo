@@ -164,6 +164,8 @@ class ShardEngineTest {
     private Zip zip = spy(new ZipImpl());
     private CsvEscaper translator = new CsvEscaperImpl();
     private CsvExporter csvExporter = spy(new CsvExporterImpl(extension.getDatabaseManager(), dataExportDirPath, translator));
+    private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+
     @WeldSetup
     public WeldInitiator weldInitiator = WeldInitiator.from(weld)
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
@@ -184,6 +186,7 @@ class ShardEngineTest {
         .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
         .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
+        .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
         .build();
     @Inject
     private ShardEngine shardEngine;
@@ -206,7 +209,7 @@ class ShardEngineTest {
 
     {
         weld.addInterceptor(JdbiTransactionalInterceptor.class);
-        weld.addBeanClasses(PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class, ReferencedTransactionDao.class, ShardDao.class, ShardRecoveryDao.class,
+        weld.addBeanClasses(BlockchainImpl.class, DaoConfig.class, ReferencedTransactionDao.class, ShardDao.class, ShardRecoveryDao.class,
             DerivedDbTablesRegistryImpl.class, JdbiTransactionalInterceptor.class,
             TransactionTestData.class, PropertyProducer.class, ShardRecoveryDaoJdbcImpl.class,
             GlobalSyncImpl.class, FullTextConfigImpl.class, FullTextConfig.class,
@@ -216,7 +219,7 @@ class ShardEngineTest {
             ShardEngineImpl.class, AplAppStatus.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class, TrimDao.class
         );
 
-        // return the same dir for both CDI components //blockchainConfig.getMinPrunableLifetime()
+        // return the same dir for both CDI components //
         dataExportDir.getQualifiers().add(new NamedLiteral("dataExportDir")); // for CsvExporter
         doReturn(dataExportDirPath).when(dirProvider).getDataExportDir(); // for Zip
     }
@@ -356,6 +359,8 @@ class ShardEngineTest {
 
     @Test
     void createShardDbDoAllOperations() throws IOException, SQLException {
+        doReturn(86400).when(blockchainConfig).getMaxPrunableLifetime();
+        doReturn(1590667190).when(blockchainConfig).getMinPrunableLifetime();
         // folder to backup step
         doReturn(temporaryFolderExtension.newFolder("backup").toPath()).when(dirProvider).getDbDir();
         blockIndexDao.hardDeleteAllBlockIndex();
