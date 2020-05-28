@@ -16,8 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.observer.TrimData;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import lombok.Getter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Event;
 import javax.enterprise.util.AnnotationLiteral;
@@ -28,9 +27,9 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static com.apollocurrency.aplwallet.apl.util.Constants.DEFAULT_PRUNABLE_UPDATE_PERIOD;
 
+@Slf4j
 @Singleton
 public class TrimService {
-    private static final Logger log = LoggerFactory.getLogger(TrimService.class);
     @Getter
     private final int maxRollback;
     private final int trimFrequency;
@@ -84,7 +83,7 @@ public class TrimService {
             }
             int lastTrimHeight = trimEntry.getHeight();
             log.info("Last trim height '{}' was done? ='{}', supplied height {}",
-                    lastTrimHeight, trimEntry.isDone(), height);
+                lastTrimHeight, trimEntry.isDone(), height);
             if (lastTrimHeight < shardInitialBlockHeight) {
                 //we need to change the lastTrimHeight value according to the first block in the latest shard
                 lastTrimHeight = shardInitialBlockHeight;
@@ -118,7 +117,7 @@ public class TrimService {
                 doTrimDerivedTablesOnBlockchainHeight(height, async);
                 dataSource.commit(!inTransaction);
                 log.info("Total trim time: {} ms on height '{}', InTr?=('{}')",
-                        (System.currentTimeMillis() - startTime), height, inTransaction);
+                    (System.currentTimeMillis() - startTime), height, inTransaction);
             } catch (Exception e) {
                 log.warn(e.toString(), e);
                 dataSource.rollback(!inTransaction);
@@ -214,7 +213,7 @@ public class TrimService {
 
         TransactionalDataSource dataSource = dbManager.getDataSource();
         boolean inTransaction = dataSource.isInTransaction();
-        log.debug("doTrimDerivedTablesOnHeight height = '{}', inTransaction = '{}'",  height, inTransaction);
+        log.debug("doTrimDerivedTablesOnHeight height = '{}', inTransaction = '{}'", height, inTransaction);
         if (!inTransaction) {
             dataSource.begin();
         }
@@ -222,26 +221,26 @@ public class TrimService {
         int epochTime = timeService.getEpochTime();
         int pruningTime = epochTime - epochTime % DEFAULT_PRUNABLE_UPDATE_PERIOD;
 
-            for (DerivedTableInterface table : dbTablesRegistry.getDerivedTables()) {
-                log.trace("Try to acquire lock...");
-                globalSync.readLock();
-                log.trace("Got it.");
-                try {
-                    long startTime = System.currentTimeMillis();
-                    table.prune(pruningTime);
-                    table.trim(height, isSharding);
-                    dataSource.commit(false);
-                    long duration = System.currentTimeMillis() - startTime;
-                    // do not log trim duration here, instead go to the logback config and enable trace logs for BasicDbTable class
-                    //                    log.trace("Trim of {} took {} ms", table.getName(), duration);
-                    onlyTrimTime += duration;
-                } finally {
-                    globalSync.readUnlock();
-                }
+        for (DerivedTableInterface table : dbTablesRegistry.getDerivedTables()) {
+            log.trace("Try to acquire lock...");
+            globalSync.readLock();
+            log.trace("Got it.");
+            try {
+                long startTime = System.currentTimeMillis();
+                table.prune(pruningTime);
+                table.trim(height, isSharding);
+                dataSource.commit(false);
+                long duration = System.currentTimeMillis() - startTime;
+                // do not log trim duration here, instead go to the logback config and enable trace logs for BasicDbTable class
+                //                    log.trace("Trim of {} took {} ms", table.getName(), duration);
+                onlyTrimTime += duration;
+            } finally {
+                globalSync.readUnlock();
             }
+        }
 
         log.info("Trim time onlyTrim/full: {} / {} ms, pruning='{}' on height='{}'",
-                onlyTrimTime, System.currentTimeMillis() - start, pruningTime, height);
+            onlyTrimTime, System.currentTimeMillis() - start, pruningTime, height);
         return pruningTime;
     }
 
@@ -257,12 +256,12 @@ public class TrimService {
 
     public void waitTrimming() {
         log.debug("Waiting for the end of the latest trim");
-        int count =0;
-        while ( isTrimming() ) {
+        int count = 0;
+        while (isTrimming()) {
             ThreadUtils.sleep(100);
-            if(count%10==0){
-              log.debug("--- WaitingTrim [{}]. . . Lock: isLocked={}, isFair={}, isHeldByCurrentThread={}, holdCount={}",
-                  count, lock.isLocked(), lock.isFair(), lock.isHeldByCurrentThread(), lock.getHoldCount());
+            if (count % 10 == 0) {
+                log.debug("--- WaitingTrim [{}]. . . Lock: isLocked={}, isFair={}, isHeldByCurrentThread={}, holdCount={}",
+                    count, lock.isLocked(), lock.isFair(), lock.isHeldByCurrentThread(), lock.getHoldCount());
             }
             count++;
         }

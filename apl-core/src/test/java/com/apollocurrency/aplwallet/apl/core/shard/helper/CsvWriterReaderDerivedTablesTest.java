@@ -126,70 +126,67 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Execution(ExecutionMode.CONCURRENT)
 class CsvWriterReaderDerivedTablesTest {
     private static final Logger log = getLogger(CsvWriterReaderDerivedTablesTest.class);
-
-    @RegisterExtension
-    DbExtension extension = new DbExtension(Map.of("currency", List.of("code","name", "description"), "tagged_data", List.of("name","description","tags")));
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
+    @RegisterExtension
+    DbExtension extension = new DbExtension(Map.of("currency", List.of("code", "name", "description"), "tagged_data", List.of("name", "description", "tags")));
+    @Inject
+    DerivedTablesRegistry registry;
     private NtpTime time = mock(NtpTime.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     private HeightConfig config = Mockito.mock(HeightConfig.class);
     private Chain chain = Mockito.mock(Chain.class);
     private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(temporaryFolderExtension.newFolder("keystorePath").toPath(), time);
-
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class, BlockchainImpl.class, DaoConfig.class,
-            PropertyProducer.class, TransactionApplier.class, ServiceModeDirProvider.class,
-            TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
-            GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
-            ReferencedTransactionDaoImpl.class,
-            TaggedDataDao.class, PropertyBasedFileConfig.class,
-            DGSGoodsTable.class,
-            DataTagDao.class,
-            KeyFactoryProducer.class, FeeCalculator.class,
-            TaggedDataTimestampDao.class,
-            TaggedDataExtendDao.class,
-            FullTextConfigImpl.class,
-            DerivedDbTablesRegistryImpl.class,
-            DirProvider.class,
-            AplAppStatus.class,
-            PhasingPollResultTable.class,
-            PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class,
-            PhasingVoteTable.class, PhasingPollTable.class,
-            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
-            CsvEscaperImpl.class)
-            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
-            .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
-            .addBeans(MockBean.of(mock(TrimService.class), TrimService.class))
-            .addBeans(MockBean.of(time, NtpTime.class))
-            .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessorImpl.class, BlockchainProcessor.class))
-            .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
-            .addBeans(MockBean.of(mock(DirProvider.class), DirProvider.class))
-            .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
-            .addBeans(MockBean.of(keyStore, KeyStoreService.class))
-            .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
-            .addBeans(MockBean.of(mock(AccountService.class), AccountServiceImpl.class, AccountService.class))
-            .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyServiceImpl.class, AccountPublicKeyService.class))
-            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
-            .build();
-
+        PropertiesHolder.class, BlockchainImpl.class, DaoConfig.class,
+        PropertyProducer.class, TransactionApplier.class, ServiceModeDirProvider.class,
+        TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
+        GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
+        ReferencedTransactionDaoImpl.class,
+        TaggedDataDao.class, PropertyBasedFileConfig.class,
+        DGSGoodsTable.class,
+        DataTagDao.class,
+        KeyFactoryProducer.class, FeeCalculator.class,
+        TaggedDataTimestampDao.class,
+        TaggedDataExtendDao.class,
+        FullTextConfigImpl.class,
+        DerivedDbTablesRegistryImpl.class,
+        DirProvider.class,
+        AplAppStatus.class,
+        PhasingPollResultTable.class,
+        PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class,
+        PhasingVoteTable.class, PhasingPollTable.class,
+        TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
+        CsvEscaperImpl.class)
+        .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
+        .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
+        .addBeans(MockBean.of(mock(TrimService.class), TrimService.class))
+        .addBeans(MockBean.of(time, NtpTime.class))
+        .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessorImpl.class, BlockchainProcessor.class))
+        .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
+        .addBeans(MockBean.of(mock(DirProvider.class), DirProvider.class))
+        .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
+        .addBeans(MockBean.of(keyStore, KeyStoreService.class))
+        .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
+        .addBeans(MockBean.of(mock(AccountService.class), AccountServiceImpl.class, AccountService.class))
+        .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyServiceImpl.class, AccountPublicKeyService.class))
+        .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
+        .build();
     @Inject
     private Blockchain blockchain;
     @Inject
-    DerivedTablesRegistry registry;
-    @Inject
     private CsvEscaper translator;
 
-    public CsvWriterReaderDerivedTablesTest() throws Exception {}
+    public CsvWriterReaderDerivedTablesTest() throws Exception {
+    }
 
     private Path createPath(String fileName) {
         try {
             return temporaryFolderExtension.newFolder().toPath().resolve(fileName);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -219,7 +216,7 @@ class CsvWriterReaderDerivedTablesTest {
     }
 
     @DisplayName("Gather all derived tables, export data up to height = 8000," +
-            " delete rows up to height = 8000, import data back into db table")
+        " delete rows up to height = 8000, import data back into db table")
     @Test
     void testExportAndImportData() {
         DirProvider dirProvider = mock(DirProvider.class);
@@ -247,7 +244,7 @@ class CsvWriterReaderDerivedTablesTest {
             try (Connection con = extension.getDatabaseManager().getDataSource().getConnection();
                  PreparedStatement pstmt = con.prepareStatement("select * from " + item.toString() + " where db_id BETWEEN ? and  ? limit ?");
                  CsvWriter csvWriter = new CsvWriterImpl(dirProvider.getDataExportDir(), excludeColumnNames, translator);
-                 ) {
+            ) {
                 csvWriter.setOptions("fieldDelimiter="); // do not put ""
                 // select Min, Max DbId + rows count
                 MinMaxValue minMaxValue = item.getMinMaxValue(targetHeight);
@@ -260,7 +257,7 @@ class CsvWriterReaderDerivedTablesTest {
                 if (minMaxValue.getCount() > 0) {
                     do { // do exporting into csv with pagination
                         CsvExportData csvExportData = csvWriter.append(item.toString(),
-                                item.getRangeByDbId(con, pstmt, minMaxValue, batchLimit));
+                            item.getRangeByDbId(con, pstmt, minMaxValue, batchLimit));
 
                         processedCount = csvExportData.getProcessCount();
                         if (processedCount > 0) {
@@ -293,7 +290,7 @@ class CsvWriterReaderDerivedTablesTest {
     /**
      * Example for  real implementation importing data
      *
-     * @param itemName table name
+     * @param itemName   table name
      * @param batchLimit rows in batch before commit
      * @return processed rows number
      * @throws Exception
@@ -320,7 +317,7 @@ class CsvWriterReaderDerivedTablesTest {
             StringBuffer columnsValues = new StringBuffer(200);
             sqlInsert.append("INSERT INTO ").append(itemName.toString()).append(" (");
             for (int i = 0; i < columnsCount; i++) {
-                columnNames.append( meta.getColumnLabel(i + 1));
+                columnNames.append(meta.getColumnLabel(i + 1));
                 columnsValues.append("?");
                 if (i != columnsCount - 1) {
                     columnNames.append(",");
@@ -341,7 +338,7 @@ class CsvWriterReaderDerivedTablesTest {
                     if (object != null && (meta.getColumnType(i + 1) == Types.BINARY || meta.getColumnType(i + 1) == Types.VARBINARY)) {
                         InputStream is = null;
                         try {
-                            is = new ByteArrayInputStream( parser.parseBinaryObject(object) );
+                            is = new ByteArrayInputStream(parser.parseBinaryObject(object));
                             preparedInsertStatement.setBinaryStream(i + 1, is, meta.getPrecision(i + 1));
                         } catch (SQLException e) {
                             log.error("Binary/Varbinary reading error = " + object, e);
@@ -350,7 +347,8 @@ class CsvWriterReaderDerivedTablesTest {
                             if (is != null) {
                                 try {
                                     is.close();
-                                } catch (IOException e) {} // ignore error here
+                                } catch (IOException e) {
+                                } // ignore error here
                             }
                         }
                     } else if (object != null && (meta.getColumnType(i + 1) == Types.ARRAY)) {
@@ -379,9 +377,10 @@ class CsvWriterReaderDerivedTablesTest {
 
     /**
      * Delete rows in table
+     *
      * @param minDbValue min db id
      * @param maxDbValue max db id
-     * @param itemName derived table name
+     * @param itemName   derived table name
      * @return deleted rows quantity
      */
     private int dropDataByName(long minDbValue, long maxDbValue, String itemName) {
@@ -455,7 +454,7 @@ class CsvWriterReaderDerivedTablesTest {
         while (rs.next()) {
             Object publicKey = rs.getObject("public_key");
             assertNull(publicKey);
-            Object accountId= rs.getObject("account_id");
+            Object accountId = rs.getObject("account_id");
             assertEquals("batman", accountId);
         }
     }

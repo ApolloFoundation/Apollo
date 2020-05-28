@@ -25,6 +25,7 @@ import java.net.URISyntaxException;
 import static com.apollocurrency.aplwallet.apl.exchange.service.graph.CandlestickTestUtil.dec;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.doReturn;
+
 @ExtendWith(MockitoExtension.class)
 class TradingDataControllerTest {
     private static ObjectMapper mapper = new ObjectMapper();
@@ -34,7 +35,7 @@ class TradingDataControllerTest {
     private TradingDataOutput tradingDataOutput = new TradingDataOutput();
 
     @BeforeEach
-    void setup(){
+    void setup() {
         dispatcher = MockDispatcherFactory.createDispatcher();
         TradingDataController tradingDataController = new TradingDataController(service, null, null);
         dispatcher.getRegistry().addSingletonResource(tradingDataController);

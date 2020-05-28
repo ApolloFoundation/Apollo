@@ -137,9 +137,9 @@ then
     if [[ "$unamestr" == 'Darwin' ]]; then
         
         cp -rf "$2/ApolloWallet.app" $1/../
-        rm -rf "$1/../ApolloWallet+Secure Transport.app"
+#        rm -rf "$1/../ApolloWallet+Secure Transport.app"
         cp -rf "$2/ApolloWallet+Secure Transport.app" $1/../
-        rm -rf "$1/../ApolloWallet+Tor.app"
+#        rm -rf "$1/../ApolloWallet+Tor.app"
         cp -rf "$2/ApolloWallet+Tor.app" $1/../
         
         
@@ -148,6 +148,7 @@ then
 	chmod 755 "$1/../ApolloWallet+Secure Transport.app/secureTransport/runClient.sh"
 	chmod 755 "$1/../ApolloWallet+Tor.app/Contents/MacOS/apl"
 	chmod 755 "$1/../ApolloWallet+Tor.app/tor/bin/tor"
+	chmod 755 "$1/../ApolloWallet.app/Contents/MacOS/apl"
 	rm -rf "$1/ApolloWallet+Secure Transport.app"
 	rm -rf "$1/ApolloWallet+Tor.app"
 	rm -rf "$1/ApolloWallet.app"
@@ -200,19 +201,19 @@ then
     esac    
 
 # TODO: ! refactor and ncomment that block
-    if [ "$#" -eq 3 ]
-    then
-	if [ ${NOSHARD} == false ]
-	then
-	    bash ./update3.sh $1 $2 $3 true ${NETID}
-	fi
-    else
-	bash ./update3.sh $1 $2 $3 $4 $5
-    fi
+#    if [ "$#" -eq 3 ]
+#    then
+#	if [ ${NOSHARD} == false ]
+#	then
+#	    bash ./update3.sh $1 $2 $3 true ${NETID}
+#	fi
+#    else
+#	bash ./update3.sh $1 $2 $3 $4 $5
+#    fi
 
     
 
-    notify "Downloading db shards..."
+#    notify "Downloading db shards..."
     
 
     cd $1 
@@ -228,7 +229,7 @@ then
     then
         notify "Starting desktop application..."
         cd bin
-        nohup ./apl-run-desktop.sh ${APLCMDLINE} 2>&1 >/dev/null
+        nohup ./apl-start-desktop.sh ${APLCMDLINE} 2>&1 >/dev/null
     else
         notify "Starting command line application..."
         cd bin

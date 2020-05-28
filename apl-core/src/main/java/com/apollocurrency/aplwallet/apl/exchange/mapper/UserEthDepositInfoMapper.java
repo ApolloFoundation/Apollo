@@ -22,9 +22,9 @@ public class UserEthDepositInfoMapper {
         for (int i = 0; i < data.component1().size(); i++) {
             ethDepositsWithOffset.getDeposits().add(new EthDepositInfo(Long.parseUnsignedLong(
                 data.component1().get(i).toString()),
-                EthUtil.weiToEther(data.component2().get(i)),
-                data.component3().get(i).longValue()
-                    )
+                    EthUtil.weiToEther(data.component2().get(i)),
+                    data.component3().get(i).longValue()
+                )
             );
         }
         ethDepositsWithOffset.setOffset(data.component4().longValue());

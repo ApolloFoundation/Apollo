@@ -22,7 +22,15 @@ nbactions.xml
 **/apl.log
 **/pom.xml.versionsBackup
 /apl-core/nbproject/
-/apl-integration-tests/allure-results
-/apl-integration-tests/.allure
 /apl-utils/nbproject/
 /.mvn/
+/apl-blockchain-db/
+/apl-blockchain-logs/
+/apl-blockchain-secure-storage/
+/apl-blockchain-vault-keystore/
+/trace.db/
+
+/apl-crypto/testdata/out/
+/webui/
+/build
+/webui

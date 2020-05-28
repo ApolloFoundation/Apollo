@@ -31,21 +31,21 @@ public class DGSPublicFeedbackTable extends ValuesDbTable<DGSPublicFeedback> {
 
     };
     private static final String TABLE_NAME = "purchase_public_feedback";
+    private static final DGSPublicFeedbackMapper MAPPER = new DGSPublicFeedbackMapper(KEY_FACTORY);
 
     protected DGSPublicFeedbackTable() {
         super(TABLE_NAME, false, KEY_FACTORY, true);
     }
 
-    private static final DGSPublicFeedbackMapper MAPPER = new DGSPublicFeedbackMapper(KEY_FACTORY);
     @Override
     public DGSPublicFeedback load(Connection connection, ResultSet rs, DbKey dbKey) throws SQLException {
         return MAPPER.map(rs, null);
     }
 
     @Override
-    public void save(Connection con,  DGSPublicFeedback feedback) throws SQLException {
+    public void save(Connection con, DGSPublicFeedback feedback) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO purchase_public_feedback (id, public_feedback, "
-                + "height, latest) VALUES (?, ?, ?, TRUE)")) {
+            + "height, latest) VALUES (?, ?, ?, TRUE)")) {
             int i = 0;
             pstmt.setLong(++i, feedback.getId());
             pstmt.setString(++i, feedback.getFeedback());

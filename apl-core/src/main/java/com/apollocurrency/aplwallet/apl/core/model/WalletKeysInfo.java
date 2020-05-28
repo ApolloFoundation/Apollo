@@ -1,6 +1,6 @@
 /*
-* Copyright © 2019 Apollo Foundation
-*/
+ * Copyright © 2019 Apollo Foundation
+ */
 
 package com.apollocurrency.aplwallet.apl.core.model;
 
@@ -49,10 +49,10 @@ public class WalletKeysInfo {
         this.passphrase = passphrase;
     }
 
-    public EthWalletKey getEthWalletForAddress(String address){
+    public EthWalletKey getEthWalletForAddress(String address) {
         for (EthWalletKey ethWalletKey : ethWalletKeys) {
-            if(ethWalletKey.getCredentials().getAddress().equals(address)){
-               return ethWalletKey;
+            if (ethWalletKey.getCredentials().getAddress().equals(address)) {
+                return ethWalletKey;
             }
         }
         return null;
@@ -71,7 +71,7 @@ public class WalletKeysInfo {
 
         jsonObject.put("eth", ethWallets);
 
-         //For backward compatibility.
+        //For backward compatibility.
         jsonObject.put("account", getAplId());
         jsonObject.put("accountRS", Convert2.rsAccount(getAplId()));
         jsonObject.put("publicKey", Convert.toHexString(getAplWalletKey().getPublicKey()));

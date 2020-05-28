@@ -29,12 +29,12 @@ class DataSourceWrapperTest {
         final String pass = "pass";
         final String dbParams = "AUTO_SERVER=TRUE;TRACE_LEVEL_FILE=1";
         final DbProperties dbProperties = new DbProperties()
-                .dbPassword(pass)
-                .dbUsername(user)
-                .dbDir(dbDir)
-                .dbFileName(dbFileName)
-                .dbParams(dbParams)
-                .dbType(dbType);
+            .dbPassword(pass)
+            .dbUsername(user)
+            .dbDir(dbDir)
+            .dbFileName(dbFileName)
+            .dbParams(dbParams)
+            .dbType(dbType);
 
         //WHEN
         final DataSourceWrapper dataSourceWrapperActual = new DataSourceWrapper(dbProperties);
@@ -44,11 +44,11 @@ class DataSourceWrapperTest {
         final String urlActual = dataSourceWrapperActual.getUrl();
         assertNotNull(urlActual);
         assertEquals(
-                String.format(
-                        "jdbc:%s:file:%s/%s;%s",
-                        dbType, dbDir, dbFileName, dbParams + ";MV_STORE=TRUE;CACHE_SIZE="
-                ),
-                urlActual.substring(0, urlActual.lastIndexOf("=")+1)
+            String.format(
+                "jdbc:%s:file:%s/%s;%s",
+                dbType, dbDir, dbFileName, dbParams + ";MV_STORE=TRUE;CACHE_SIZE="
+            ),
+            urlActual.substring(0, urlActual.lastIndexOf("=") + 1)
         );
 
     }

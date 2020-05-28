@@ -47,7 +47,7 @@ public class DGSObserver {
         for (DGSPurchase purchase : expiredPurchases) {
             Account buyer = accountService.getAccount(purchase.getBuyerId());
             accountService.addToUnconfirmedBalanceATM(buyer, LedgerEvent.DIGITAL_GOODS_PURCHASE_EXPIRED, purchase.getId(),
-                    Math.multiplyExact(purchase.getQuantity(), purchase.getPriceATM()));
+                Math.multiplyExact(purchase.getQuantity(), purchase.getPriceATM()));
             DGSGoods goods = service.getGoods(purchase.getGoodsId());
             goods.setHeight(block.getHeight());
             service.changeQuantity(goods, purchase.getQuantity());

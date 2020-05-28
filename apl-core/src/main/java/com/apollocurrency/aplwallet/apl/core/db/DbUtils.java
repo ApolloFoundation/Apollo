@@ -34,12 +34,16 @@ import static org.slf4j.LoggerFactory.getLogger;
 public final class DbUtils {
     private static final Logger log = getLogger(DbUtils.class);
 
+    private DbUtils() {
+    } // never
+
     public static void close(AutoCloseable... closeables) {
         for (AutoCloseable closeable : closeables) {
             if (closeable != null) {
                 try {
                     closeable.close();
-                } catch (Exception ignore) {}
+                } catch (Exception ignore) {
+                }
             }
         }
     }
@@ -53,7 +57,8 @@ public final class DbUtils {
         if (rs != null) {
             try {
                 rs.close();
-            } catch (SQLException ignore) {}
+            } catch (SQLException ignore) {
+            }
         }
     }
 
@@ -107,6 +112,7 @@ public final class DbUtils {
             pstmt.setNull(index, Types.INTEGER);
         }
     }
+
     public static void setByteZeroToNull(PreparedStatement pstmt, int index, byte n) throws SQLException {
         if (n != 0) {
             pstmt.setByte(index, n);
@@ -154,7 +160,7 @@ public final class DbUtils {
     }
 
     public static int calculateLimit(int from, int to) {
-        return to >=0 && to >= from && to < Integer.MAX_VALUE ? to - from + 1 : 0;
+        return to >= 0 && to >= from && to < Integer.MAX_VALUE ? to - from + 1 : 0;
     }
 
     public static String limitsClause(int from, int to) {
@@ -180,7 +186,5 @@ public final class DbUtils {
         }
         return index;
     }
-
-    private DbUtils() {} // never
 
 }

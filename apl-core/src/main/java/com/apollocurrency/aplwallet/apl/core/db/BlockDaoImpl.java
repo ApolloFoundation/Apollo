@@ -84,8 +84,7 @@ public class BlockDaoImpl implements BlockDao {
                 }
                 return block;
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -108,8 +107,7 @@ public class BlockDaoImpl implements BlockDao {
                 }
                 return block;
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -121,13 +119,12 @@ public class BlockDaoImpl implements BlockDao {
         // Search the database
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(
-                     "SELECT height FROM block WHERE id = ? AND (next_block_id <> 0 OR next_block_id IS NULL)")) {
+                 "SELECT height FROM block WHERE id = ? AND (next_block_id <> 0 OR next_block_id IS NULL)")) {
             pstmt.setLong(1, blockId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 return rs.next() && rs.getInt("height") <= height;
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -146,8 +143,7 @@ public class BlockDaoImpl implements BlockDao {
                 }
                 return rs.getLong("id");
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -169,8 +165,7 @@ public class BlockDaoImpl implements BlockDao {
                 }
                 return block;
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -181,7 +176,7 @@ public class BlockDaoImpl implements BlockDao {
         try (Connection con = dataSource.getConnection();
              @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
              PreparedStatement pstmt = con.prepareStatement(
-                     "SELECT * FROM block WHERE next_block_id <> 0 OR next_block_id IS NULL ORDER BY timestamp DESC LIMIT 1")) {
+                 "SELECT * FROM block WHERE next_block_id <> 0 OR next_block_id IS NULL ORDER BY timestamp DESC LIMIT 1")) {
             Block block = null;
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
@@ -189,8 +184,7 @@ public class BlockDaoImpl implements BlockDao {
                 }
             }
             return block;
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -217,7 +211,7 @@ public class BlockDaoImpl implements BlockDao {
         List<byte[]> blockSignatures = new ArrayList<>();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT block_signature FROM block "
-                     + "WHERE height >= ? AND height < ? ")) {
+                 + "WHERE height >= ? AND height < ? ")) {
             pstmt.setInt(1, fromHeight);
             pstmt.setInt(2, toHeight);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -225,8 +219,7 @@ public class BlockDaoImpl implements BlockDao {
                     blockSignatures.add(rs.getBytes("block_signature"));
                 }
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
         return blockSignatures;
@@ -240,12 +233,12 @@ public class BlockDaoImpl implements BlockDao {
     @Override
     public DbIterator<Block> getBlocks(long accountId, int timestamp, int from, int to) {
         Connection con = null;
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        TransactionalDataSource dataSource = databaseManager.getDataSource(); // TODO: YL implement partial fetch from main + shard db
         try {
             con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE generator_id = ? "
-                    + (timestamp > 0 ? " AND timestamp >= ? " : " ") + "ORDER BY height DESC"
-                    + DbUtils.limitsClause(from, to));
+                + (timestamp > 0 ? " AND timestamp >= ? " : " ") + "ORDER BY height DESC"
+                + DbUtils.limitsClause(from, to));
             int i = 0;
             pstmt.setLong(++i, accountId);
             if (timestamp > 0) {
@@ -253,25 +246,28 @@ public class BlockDaoImpl implements BlockDao {
             }
             DbUtils.setLimits(++i, pstmt, from, to);
             return getBlocks(con, pstmt);
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
         }
     }
 
     @Override
-    public DbIterator<Block> getBlocks(int from, int to) {
+    public DbIterator<Block> getBlocks(TransactionalDataSource dataSource, int from, int to, int timestamp) {
+        LOG.debug("start getBlocks DbIter( from={}, to={}, timestamp={} )...", from, to, timestamp);
         Connection con = null;
-        TransactionalDataSource dataSource = databaseManager.getDataSource(); // TODO: YL implement partial fetch from main + shard db
+        if (dataSource == null) {
+            dataSource = databaseManager.getDataSource();
+        }
         try {
             con = dataSource.getConnection();
-            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE height <= ? AND height >= ? ORDER BY height DESC");
+            PreparedStatement pstmt = con.prepareStatement(
+                "SELECT * FROM block WHERE height <= ? AND height >= ? and timestamp >= ? ORDER BY height DESC");
             pstmt.setInt(1, from);
             pstmt.setInt(2, to);
+            pstmt.setInt(3, timestamp);
             return getBlocks(con, pstmt);
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
         }
@@ -298,8 +294,7 @@ public class BlockDaoImpl implements BlockDao {
                     return rs.getLong("blockCount");
                 }
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
         return 0L;
@@ -307,7 +302,7 @@ public class BlockDaoImpl implements BlockDao {
 
     @Override
     public int getBlockCount(long accountId) {
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        TransactionalDataSource dataSource = databaseManager.getDataSource(); // TODO: YL implement partial fetch from main + shard db
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM block WHERE generator_id = ?")) {
             pstmt.setLong(1, accountId);
@@ -315,8 +310,7 @@ public class BlockDaoImpl implements BlockDao {
                 rs.next();
                 return rs.getInt(1);
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -327,18 +321,17 @@ public class BlockDaoImpl implements BlockDao {
         List<Long> result;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection()) {
-                result = new ArrayList<>(limit);
-                try (PreparedStatement pstmt = con.prepareStatement("SELECT id FROM block WHERE height > ? ORDER BY height ASC LIMIT ?")) {
-                    pstmt.setLong(1, height);
-                    pstmt.setInt(2, limit);
-                    try (ResultSet rs = pstmt.executeQuery()) {
-                        while (rs.next()) {
-                            result.add(rs.getLong("id"));
-                        }
+            result = new ArrayList<>(limit);
+            try (PreparedStatement pstmt = con.prepareStatement("SELECT id FROM block WHERE height > ? ORDER BY height ASC LIMIT ?")) {
+                pstmt.setLong(1, height);
+                pstmt.setInt(2, limit);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    while (rs.next()) {
+                        result.add(rs.getLong("id"));
                     }
                 }
-        }
-        catch (SQLException e) {
+            }
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
         return result;
@@ -358,8 +351,8 @@ public class BlockDaoImpl implements BlockDao {
     public List<Block> getBlocksAfter(int height, List<Long> blockIdList, List<Block> result, Connection con, int index) {
         // Search the database
         try (PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block "
-                     + "WHERE height > ? "
-                     + "ORDER BY height ASC LIMIT ?")) {
+            + "WHERE height > ? "
+            + "ORDER BY height ASC LIMIT ?")) {
             pstmt.setLong(1, height);
             pstmt.setInt(2, blockIdList.size() - index);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -383,7 +376,7 @@ public class BlockDaoImpl implements BlockDao {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(
-                     "SELECT * FROM block WHERE version = ? ORDER BY timestamp DESC LIMIT 1 OFFSET ?")) {
+                 "SELECT * FROM block WHERE version = ? ORDER BY timestamp DESC LIMIT 1 OFFSET ?")) {
             int i = 0;
             pstmt.setInt(++i, version);
             pstmt.setInt(++i, skipCount);
@@ -394,8 +387,7 @@ public class BlockDaoImpl implements BlockDao {
                 }
             }
             return block;
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -413,8 +405,7 @@ public class BlockDaoImpl implements BlockDao {
                 }
             }
             return block;
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -425,7 +416,7 @@ public class BlockDaoImpl implements BlockDao {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(
-                     "SELECT generator_id, COUNT(generator_id) AS count FROM block WHERE height >= ? GROUP BY generator_id having count > 1 limit ?")) {
+                 "SELECT generator_id, COUNT(generator_id) AS count FROM block WHERE height >= ? GROUP BY generator_id having count > 1 limit ?")) {
             pstmt.setInt(1, startHeight);
             pstmt.setInt(2, limit);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -433,8 +424,7 @@ public class BlockDaoImpl implements BlockDao {
                     generators.add(rs.getLong("generator_id"));
                 }
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
         return generators;
@@ -464,11 +454,10 @@ public class BlockDaoImpl implements BlockDao {
             long id = rs.getLong("id");
             int timeout = rs.getInt("timeout");
             return new BlockImpl(version, timestamp, previousBlockId, totalAmountATM, totalFeeATM, payloadLength, payloadHash,
-                    generatorId, generationSignature, blockSignature, previousBlockHash,
-                    cumulativeDifficulty, baseTarget, nextBlockId, height, id, timeout,
-                    null);
-        }
-        catch (SQLException e) {
+                generatorId, generationSignature, blockSignature, previousBlockHash,
+                cumulativeDifficulty, baseTarget, nextBlockId, height, id, timeout,
+                null);
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -477,9 +466,9 @@ public class BlockDaoImpl implements BlockDao {
     public void saveBlock(Connection con, Block block) {
         try {
             try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO block (id, version, timestamp, previous_block_id, "
-                    + "total_amount, total_fee, payload_length, previous_block_hash, next_block_id, cumulative_difficulty, "
-                    + "base_target, height, generation_signature, block_signature, payload_hash, generator_id, timeout) "
-                    + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                + "total_amount, total_fee, payload_length, previous_block_hash, next_block_id, cumulative_difficulty, "
+                + "base_target, height, generation_signature, block_signature, payload_hash, generator_id, timeout) "
+                + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
                 int i = 0;
                 pstmt.setLong(++i, block.getId());
                 pstmt.setInt(++i, block.getVersion());
@@ -515,8 +504,7 @@ public class BlockDaoImpl implements BlockDao {
 //                    previousBlock.setNextBlockId(block.getId());
 //                }
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -529,8 +517,7 @@ public class BlockDaoImpl implements BlockDao {
              PreparedStatement pstmt = con.prepareStatement("UPDATE block SET next_block_id = NULL WHERE id = ?")) {
             pstmt.setLong(1, block.getId());
             pstmt.executeUpdate();
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -548,8 +535,7 @@ public class BlockDaoImpl implements BlockDao {
                 }
                 blockId = rs.getLong("id");
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
         LOG.debug("Deleting blocks starting from height %s", height);
@@ -569,8 +555,7 @@ public class BlockDaoImpl implements BlockDao {
                 dataSource.begin();
                 lastBlock = deleteBlocksFrom(blockId);
                 dataSource.commit();
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 dataSource.rollback();
                 throw e;
             }
@@ -580,7 +565,7 @@ public class BlockDaoImpl implements BlockDao {
              @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
              @DatabaseSpecificDml(DmlMarker.IFNULL_USE)
              PreparedStatement pstmtBlockSelect = con.prepareStatement("SELECT db_id, id FROM block WHERE timestamp >= "
-                     + "IFNULL ((SELECT timestamp FROM block WHERE id = ?), " + Integer.MAX_VALUE + ") ORDER BY timestamp DESC");
+                 + "IFNULL ((SELECT timestamp FROM block WHERE id = ?), " + Integer.MAX_VALUE + ") ORDER BY timestamp DESC");
              PreparedStatement pstmtBlockDelete = con.prepareStatement("DELETE FROM block WHERE db_id = ?");
              PreparedStatement pstmtTransactionDelete = con.prepareStatement("DELETE FROM transaction WHERE db_id = ?");
              PreparedStatement pstmtTransactionSelect = con.prepareStatement("SELECT db_id FROM transaction WHERE block_id = ?")
@@ -616,16 +601,13 @@ public class BlockDaoImpl implements BlockDao {
                 // do not end existing transaction
                 dataSource.commit(false);
                 return lastBlock;
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 dataSource.rollback(false);
                 throw e;
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
-        }
-        finally {
+        } finally {
 //            clearBlockCache();
         }
     }
@@ -638,8 +620,7 @@ public class BlockDaoImpl implements BlockDao {
                 dataSource.begin();
                 deleteAll();
                 dataSource.commit();
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 dataSource.rollback();
                 throw e;
             }

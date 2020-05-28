@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>com.apollocurrency</groupId>
-    <artifactId>apollo-wallet</artifactId>
-    <version>1.42.9</version>
+    <artifactId>apollo-blockchain</artifactId>
+    <version>1.44.1</version>
   </parent>
 
   <artifactId>apl-exec</artifactId>
@@ -32,28 +33,6 @@
       <groupId>com.apollocurrency</groupId>
       <artifactId>apl-conf</artifactId>
       <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.apollocurrency</groupId>
-      <artifactId>apl-desktop</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.apollocurrency</groupId>
-      <artifactId>apl-tools</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.apollocurrency</groupId>
-      <artifactId>apl-html</artifactId>
-      <version>${project.version}</version>
-      <type>zip</type>
-    </dependency>
-    <dependency>
-      <groupId>com.apollocurrency</groupId>
-      <artifactId>web-wallet</artifactId>
-      <version>${web-wallet.version}</version>
-      <type>zip</type>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -114,7 +93,6 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
-        <version>3.1.0</version>
         <configuration>
           <archive>
             <manifest>
@@ -138,40 +116,9 @@
             </goals>
             <configuration>
               <excludeTypes>zip</excludeTypes>
-              <excludeArtifactIds>weld-junit5,weld-junit-common</excludeArtifactIds>
+              <excludeArtifactIds>weld-junit5,weld-junit-common,jsonassert</excludeArtifactIds>
               <excludeGroupIds>org.junit,org.mockito,org.opentest4j,org.hibernate.javax.persistence</excludeGroupIds>
               <outputDirectory>${project.build.directory}/lib</outputDirectory>
-            </configuration>
-          </execution>
-          <!-- Unpack 2 webUI components -->
-          <execution>
-            <id>unpack</id>
-            <phase>package</phase>
-            <goals>
-              <goal>unpack</goal>
-            </goals>
-            <configuration>
-              <artifactItems>
-                <artifactItem>
-                  <groupId>com.apollocurrency</groupId>
-                  <artifactId>apl-html</artifactId>
-                  <version>${project.version}</version>
-                  <type>zip</type>
-                  <overWrite>true</overWrite>
-                  <outputDirectory>${project.build.directory}/webui</outputDirectory>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>com.apollocurrency</groupId>
-                  <artifactId>web-wallet</artifactId>
-                  <version>${web-wallet.version}</version>
-                  <type>zip</type>
-                  <overWrite>true</overWrite>
-                  <outputDirectory>${project.build.directory}/webui</outputDirectory>
-                </artifactItem>
-              </artifactItems>
-
-              <overWriteReleases>true</overWriteReleases>
-              <overWriteSnapshots>true</overWriteSnapshots>
             </configuration>
           </execution>
         </executions>
@@ -191,7 +138,7 @@
                 <descriptor>src/assembly/zipdist.xml</descriptor>
               </descriptors>
               <appendAssemblyId>false</appendAssemblyId>
-              <finalName>${zipname}-${project.version}</finalName>
+              <finalName>${zip-file-name}-${project.version}</finalName>
             </configuration>
           </execution>
           <execution>
@@ -205,7 +152,7 @@
                 <descriptor>src/assembly/zipdistlibs.xml</descriptor>
               </descriptors>
               <appendAssemblyId>false</appendAssemblyId>
-              <finalName>${zipname}-deps-${project.version}</finalName>
+              <finalName>${ext-deps-zip-file-name}-${apl-bom-ext.version}</finalName>
             </configuration>
           </execution>
         </executions>
@@ -214,22 +161,22 @@
       <plugin>
         <groupId>net.nicoulaj.maven.plugins</groupId>
         <artifactId>checksum-maven-plugin</artifactId>
-        <version>1.8</version>
-
         <executions>
           <execution>
+            <phase>${zipExecutionPhase}</phase>
             <goals>
-              <goal>artifacts</goal>
               <goal>files</goal>
-              <goal>file</goal>
             </goals>
           </execution>
         </executions>
         <configuration>
-          <file>${project.build.finalName}.jar</file>
           <fileSets>
             <fileSet>
-              <directory>${project.build.directory}/lib</directory>
+              <directory>${project.build.directory}</directory>
+              <includes>
+                <include>${zip-file-name}-${project.version}.${zip-format}</include>
+                <include>${ext-deps-zip-file-name}-${apl-bom-ext.version}.${zip-format}</include>
+              </includes>
             </fileSet>
           </fileSets>
           <algorithms>
@@ -237,14 +184,107 @@
           </algorithms>
           <individualFiles>true</individualFiles>
           <types>
-            <type>jar</type>
             <type>zip</type>
-            <type>tar.gz</type>
           </types>
-          <csvSummary>true</csvSummary>
-          <csvSummaryFile>${project.build.finalName}-checksums.csv</csvSummaryFile>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>ca.szc.maven</groupId>
+        <artifactId>jsonpath-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>update-version</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>modify</goal>
+            </goals>
+            <configuration>
+              <file>${basedir}/pkg-apollo-blockchain.json</file>
+              <formatter>conventional</formatter>
+              <modifications>
+                <modification>
+                  <expression>$.version</expression>
+                  <value>${project.version}</value>
+                </modification>
+              </modifications>
+            </configuration>
+          </execution>
+          <execution>
+            <id>update-version-deps</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>modify</goal>
+            </goals>
+            <configuration>
+              <file>${basedir}/pkg-apollo-blockchain-ext-deps.json</file>
+              <formatter>conventional</formatter>
+              <modifications>
+                <modification>
+                  <expression>$.version</expression>
+                  <value>${apl-bom-ext.version}</value>
+                </modification>
+              </modifications>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <!--
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-shade-plugin</artifactId>
+              <configuration>
+                <filters>
+                  <filter>
+                    <artifact>*:*</artifact>
+                    <excludes>
+                      <exclude>META-INF/*.SF</exclude>
+                      <exclude>META-INF/*.DSA</exclude>
+                      <exclude>META-INF/*.RSA</exclude>
+                    </excludes>
+                  </filter>
+                </filters>
+                <transformers>
+                  &lt;!&ndash; Add a transformer to exclude any other manifest files (possibly from dependencies). &ndash;&gt;
+                  <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
+                    <resource>MANIFEST.MF</resource>
+                  </transformer>
+                  &lt;!&ndash; Add a transformer to include your custom manifest file. &ndash;&gt;
+                  <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
+                    <resource>META-INF/MANIFEST.MF</resource>
+                    <file>src/main/resources/META-INF/MANIFEST.MF</file>
+                  </transformer>
+                  &lt;!&ndash; add Main-Class to manifest file &ndash;&gt;
+      &lt;!&ndash;
+                  <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                    <mainClass>com.apollocurrency.aplwallet.apl.exec.Apollo</mainClass>
+                  </transformer>
+      &ndash;&gt;
+                </transformers>
+                <artifactSet>
+                  <excludes>
+                    <exclude>org.jboss.weld:junit5</exclude>
+                    <exclude>org.jboss.weld:weld-junit-common</exclude>
+                    <exclude>junit:junit</exclude>
+                    <exclude>org.skyscreamer:jsonassert</exclude>
+                    <exclude>com.fasterxml.jackson.module:jackson-module-paranamer</exclude>
+                    <exclude>org.mockito:*</exclude>
+                    <exclude>org.opentest4j:*</exclude>
+                    <exclude>org.hibernate.javax.persistence:*</exclude>
+                    <exclude>org.apache.maven:lib:tests</exclude>
+                    <exclude>log4j:log4j:jar:</exclude>
+                  </excludes>
+                </artifactSet>
+              </configuration>
+              <executions>
+                <execution>
+                  <phase>package</phase>
+                  <goals>
+                    <goal>shade</goal>
+                  </goals>
+                </execution>
+              </executions>
+            </plugin>
+      -->
     </plugins>
   </build>
 </project>

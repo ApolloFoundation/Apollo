@@ -31,20 +31,20 @@ public class DexOperationService {
     private long entryLifetime; //ms
     private TaskDispatchManager dispatchManager;
 
-    @Transactional(readOnly = true)
-    public List<DexOperation> getAll(long fromDbId, int limit) {
-        return dao.getAll(fromDbId, limit);
-    }
-
     @Inject
-    public DexOperationService(@Property(name = "apl.dex.operations.lifetime", defaultValue = "" + DEFAULT_ENTRY_LIFETIME)  int entryLifetime,
-                               @Property(name = "apl.dex.operations.deleteOld", defaultValue = "true")  boolean deleteOldEntries,
+    public DexOperationService(@Property(name = "apl.dex.operations.lifetime", defaultValue = "" + DEFAULT_ENTRY_LIFETIME) int entryLifetime,
+                               @Property(name = "apl.dex.operations.deleteOld", defaultValue = "true") boolean deleteOldEntries,
                                DexOperationDao dao,
                                TaskDispatchManager dispatchManager) {
         this.dao = Objects.requireNonNull(dao);
         this.dispatchManager = Objects.requireNonNull(dispatchManager);
         this.deleteOldEntries = deleteOldEntries;
-        this.entryLifetime = (long)Math.max(entryLifetime, MIN_ENTRY_LIFETIME) * 1000; // do not let set less than specified limit to prevent confusions and complications related to this feature
+        this.entryLifetime = (long) Math.max(entryLifetime, MIN_ENTRY_LIFETIME) * 1000; // do not let set less than specified limit to prevent confusions and complications related to this feature
+    }
+
+    @Transactional(readOnly = true)
+    public List<DexOperation> getAll(long fromDbId, int limit) {
+        return dao.getAll(fromDbId, limit);
     }
 
     @PostConstruct

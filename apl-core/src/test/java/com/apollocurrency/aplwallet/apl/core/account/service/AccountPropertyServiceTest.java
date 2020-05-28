@@ -44,10 +44,10 @@ class AccountPropertyServiceTest {
     void setUp() {
         testData = new AccountTestData();
         accountPropertyService = spy(new AccountPropertyServiceImpl(
-                blockchain,
-                accountPropertyTable,
-                accountEvent,
-                accountPropertyEvent
+            blockchain,
+            accountPropertyTable,
+            accountEvent,
+            accountPropertyEvent
         ));
     }
 

@@ -17,52 +17,13 @@ public class PrunableMessage extends DerivedEntity {
     private final long id;
     private final long senderId;
     private final long recipientId;
+    private final int transactionTimestamp;
+    private final int blockTimestamp;
     private byte[] message;
     private EncryptedData encryptedData;
     private boolean messageIsText;
     private boolean encryptedMessageIsText;
     private boolean isCompressed;
-    private final int transactionTimestamp;
-    private final int blockTimestamp;
-    public byte[] getMessage() {
-        return message;
-    }
-
-    public EncryptedData getEncryptedData() {
-        return encryptedData;
-    }
-
-    public boolean messageIsText() {
-        return messageIsText;
-    }
-
-    public boolean encryptedMessageIsText() {
-        return encryptedMessageIsText;
-    }
-
-    public boolean isCompressed() {
-        return isCompressed;
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public long getSenderId() {
-        return senderId;
-    }
-
-    public long getRecipientId() {
-        return recipientId;
-    }
-
-    public int getTransactionTimestamp() {
-        return transactionTimestamp;
-    }
-
-    public int getBlockTimestamp() {
-        return blockTimestamp;
-    }
 
     public PrunableMessage(Transaction transaction, int blockTimestamp, int height) {
         super(null, height);
@@ -87,6 +48,58 @@ public class PrunableMessage extends DerivedEntity {
         this.blockTimestamp = blockTimestamp;
     }
 
+    public byte[] getMessage() {
+        return message;
+    }
+
+    public void setMessage(byte[] message) {
+        this.message = message;
+    }
+
+    public EncryptedData getEncryptedData() {
+        return encryptedData;
+    }
+
+    public void setEncryptedData(EncryptedData encryptedData) {
+        this.encryptedData = encryptedData;
+    }
+
+    public boolean messageIsText() {
+        return messageIsText;
+    }
+
+    public boolean encryptedMessageIsText() {
+        return encryptedMessageIsText;
+    }
+
+    public boolean isCompressed() {
+        return isCompressed;
+    }
+
+    public void setCompressed(boolean compressed) {
+        isCompressed = compressed;
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public long getSenderId() {
+        return senderId;
+    }
+
+    public long getRecipientId() {
+        return recipientId;
+    }
+
+    public int getTransactionTimestamp() {
+        return transactionTimestamp;
+    }
+
+    public int getBlockTimestamp() {
+        return blockTimestamp;
+    }
+
     public void setPlain(PrunablePlainMessageAppendix appendix) {
         this.message = appendix.getMessage();
         this.messageIsText = appendix.isText();
@@ -105,15 +118,15 @@ public class PrunableMessage extends DerivedEntity {
         if (!super.equals(o)) return false;
         PrunableMessage that = (PrunableMessage) o;
         return id == that.id &&
-                senderId == that.senderId &&
-                recipientId == that.recipientId &&
-                messageIsText == that.messageIsText &&
-                encryptedMessageIsText == that.encryptedMessageIsText &&
-                isCompressed == that.isCompressed &&
-                transactionTimestamp == that.transactionTimestamp &&
-                blockTimestamp == that.blockTimestamp &&
-                Arrays.equals(message, that.message) &&
-                Objects.equals(encryptedData, that.encryptedData);
+            senderId == that.senderId &&
+            recipientId == that.recipientId &&
+            messageIsText == that.messageIsText &&
+            encryptedMessageIsText == that.encryptedMessageIsText &&
+            isCompressed == that.isCompressed &&
+            transactionTimestamp == that.transactionTimestamp &&
+            blockTimestamp == that.blockTimestamp &&
+            Arrays.equals(message, that.message) &&
+            Objects.equals(encryptedData, that.encryptedData);
     }
 
     @Override
@@ -121,14 +134,6 @@ public class PrunableMessage extends DerivedEntity {
         int result = Objects.hash(super.hashCode(), id, senderId, recipientId, encryptedData, messageIsText, encryptedMessageIsText, isCompressed, transactionTimestamp, blockTimestamp);
         result = 31 * result + Arrays.hashCode(message);
         return result;
-    }
-
-    public void setMessage(byte[] message) {
-        this.message = message;
-    }
-
-    public void setEncryptedData(EncryptedData encryptedData) {
-        this.encryptedData = encryptedData;
     }
 
     public boolean isMessageIsText() {
@@ -147,23 +152,19 @@ public class PrunableMessage extends DerivedEntity {
         this.encryptedMessageIsText = encryptedMessageIsText;
     }
 
-    public void setCompressed(boolean compressed) {
-        isCompressed = compressed;
-    }
-
     @Override
     public String toString() {
         return "PrunableMessage{" +
-                "id=" + id +
-                ", senderId=" + senderId +
-                ", recipientId=" + recipientId +
-                ", message=" + Arrays.toString(message) +
-                ", encryptedData=" + encryptedData +
-                ", messageIsText=" + messageIsText +
-                ", encryptedMessageIsText=" + encryptedMessageIsText +
-                ", isCompressed=" + isCompressed +
-                ", transactionTimestamp=" + transactionTimestamp +
-                ", blockTimestamp=" + blockTimestamp +
-                '}';
+            "id=" + id +
+            ", senderId=" + senderId +
+            ", recipientId=" + recipientId +
+            ", message=" + Arrays.toString(message) +
+            ", encryptedData=" + encryptedData +
+            ", messageIsText=" + messageIsText +
+            ", encryptedMessageIsText=" + encryptedMessageIsText +
+            ", isCompressed=" + isCompressed +
+            ", transactionTimestamp=" + transactionTimestamp +
+            ", blockTimestamp=" + blockTimestamp +
+            '}';
     }
 }

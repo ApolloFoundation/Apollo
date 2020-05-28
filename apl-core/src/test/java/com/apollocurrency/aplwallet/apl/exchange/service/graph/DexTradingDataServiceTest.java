@@ -55,25 +55,25 @@ class DexTradingDataServiceTest {
 
         assertEquals(expected, tradingEntries);
     }
+
     @Test
     void testGetForTimeFrameFromCandlesticksFor1HTimeFrame() {
         int fromTimestamp = 1574848800;
-        int toTimestamp   = 1574863200;
+        int toTimestamp = 1574863200;
         List<DexCandlestick> candlesticks = List.of(td.ETH_0_CANDLESTICK, td.ETH_1_CANDLESTICK, td.ETH_2_CANDLESTICK, td.ETH_3_CANDLESTICK, td.ETH_4_CANDLESTICK, td.ETH_5_CANDLESTICK, td.ETH_6_CANDLESTICK, td.ETH_7_CANDLESTICK, td.ETH_8_CANDLESTICK);
 
         doReturn(candlesticks).when(candlestickDao).getForTimespan(fromTimestamp, toTimestamp, DexCurrency.ETH);
         List<SimpleTradingEntry> tradingEntries = service.getFromCandlesticks(fromTimestamp, toTimestamp, DexCurrency.ETH, TimeFrame.HOUR);
 
         List<SimpleTradingEntry> expected = List.of(
-                fromRawData("0.0000032"    ,"0.0000041" ,"0.0000034"   ,"0.0000039" ,"1559000"          , "1114.9034283" , 1574848800),
-                fromRawData("0.0000031", "0.0000043", "0.0000039", "0.0000034", "2447800","1579.469088", 1574852400),
-                fromRawData("0.0000031", "0.0000036", "0.0000035", "0.0000033", "945246","636.790145", 1574856000),
-                fromRawData("0.0000025", "0.0000036", "0.0000033", "0.0000031", "3464000","2254.168052", 1574859600)
+            fromRawData("0.0000032", "0.0000041", "0.0000034", "0.0000039", "1559000", "1114.9034283", 1574848800),
+            fromRawData("0.0000031", "0.0000043", "0.0000039", "0.0000034", "2447800", "1579.469088", 1574852400),
+            fromRawData("0.0000031", "0.0000036", "0.0000035", "0.0000033", "945246", "636.790145", 1574856000),
+            fromRawData("0.0000025", "0.0000036", "0.0000033", "0.0000031", "3464000", "2254.168052", 1574859600)
         );
 
         assertEquals(expected, tradingEntries);
     }
-
 
 
     @Test
@@ -94,9 +94,9 @@ class DexTradingDataServiceTest {
         List<SimpleTradingEntry> orders = service.getForTimeFrameFromDexOrders(initialTimestamp, toTimestamp, DexCurrency.ETH, TimeFrame.HOUR);
 
         List<SimpleTradingEntry> expected = List.of(
-                fromRawData("1", "1.5", "1", "1", "1300000", "1430000.0", initialTimestamp),
-                fromRawData("1.1", "2", "1.1", "2", "250000", "410000.0", 14400),
-                fromRawData("2", "3", "3", "2", "700000", "1600000", 18000)
+            fromRawData("1", "1.5", "1", "1", "1300000", "1430000.0", initialTimestamp),
+            fromRawData("1.1", "2", "1.1", "2", "250000", "410000.0", 14400),
+            fromRawData("2", "3", "3", "2", "700000", "1600000", 18000)
         );
         assertEquals(expected, orders);
     }
@@ -113,7 +113,7 @@ class DexTradingDataServiceTest {
         List<SimpleTradingEntry> orders = service.getForTimeFrameFromDexOrders(initialTimestamp, toTimestamp, DexCurrency.ETH, TimeFrame.FOUR_HOURS);
 
         List<SimpleTradingEntry> expected = List.of(
-                fromRawData("1", "1.2", "1.2", "1", "700000", "740000.0", initialTimestamp)
+            fromRawData("1", "1.2", "1.2", "1", "700000", "740000.0", initialTimestamp)
         );
         assertEquals(expected, orders);
     }
@@ -142,8 +142,8 @@ class DexTradingDataServiceTest {
         TradingDataOutput dataOutput = service.getBars(initialTimestamp, toTimestamp, DexCurrency.ETH, TimeFrame.HOUR);
 
         List<SimpleTradingEntry> expected = List.of(
-                fromRawData("1.4", "2.5", "2", "1.4", "510000", "1057000.0", 7200),
-                fromRawData("1.2", "1.2", "1.2", "1.2", "150000", "180000.0", 10800)
+            fromRawData("1.4", "2.5", "2", "1.4", "510000", "1057000.0", 7200),
+            fromRawData("1.2", "1.2", "1.2", "1.2", "150000", "180000.0", 10800)
         );
         assertEquals(expected, fromTable(dataOutput));
     }
@@ -185,16 +185,16 @@ class DexTradingDataServiceTest {
         TradingDataOutput dataOutput = service.getBars(initialTimestamp, toTimestamp, DexCurrency.ETH, TimeFrame.QUARTER);
 
         List<SimpleTradingEntry> expected = List.of(
-                fromRawData("2", "2.2", "2", "2.2", "300000", "640000.0", 7200),
-                fromRawData("1.2", "2.5", "1.8", "2.5", "570000", "1146000.0", 8100)
-                );
+            fromRawData("2", "2.2", "2", "2.2", "300000", "640000.0", 7200),
+            fromRawData("1.2", "2.5", "1.8", "2.5", "570000", "1146000.0", 8100)
+        );
         assertEquals(expected, fromTable(dataOutput));
     }
 
     @Test
     void testGetForTimeFrameOnlyFromCandlesticks() {
         int fromTimestamp = 1_574_852_399;
-        int toTimestamp   = 1_574_866_799;
+        int toTimestamp = 1_574_866_799;
         List<DexCandlestick> candlesticks = List.of(td.ETH_1_CANDLESTICK, td.ETH_2_CANDLESTICK, td.ETH_3_CANDLESTICK, td.ETH_4_CANDLESTICK, td.ETH_5_CANDLESTICK, td.ETH_6_CANDLESTICK, td.ETH_7_CANDLESTICK, td.ETH_8_CANDLESTICK);
 
         doReturn(new DexCandlestick(DexCurrency.ETH, dec("2"), dec("2"), dec("2"), dec("2"), dec("100000"), dec("20000"), 1_574_866_800, 1_574_866_820, 1_574_866_900)).when(candlestickDao).getLast(DexCurrency.ETH);
@@ -203,9 +203,9 @@ class DexTradingDataServiceTest {
         TradingDataOutput dataOutput = service.getBars(fromTimestamp, toTimestamp, DexCurrency.ETH, TimeFrame.HOUR);
 
         List<SimpleTradingEntry> expected = List.of(
-                fromRawData("0.0000031", "0.0000043", "0.0000039", "0.0000034", "2447800","1579.469088", 1574852400),
-                fromRawData("0.0000031", "0.0000036", "0.0000035", "0.0000033", "945246","636.790145", 1574856000),
-                fromRawData("0.0000025", "0.0000036", "0.0000033", "0.0000031", "3464000","2254.168052", 1574859600)
+            fromRawData("0.0000031", "0.0000043", "0.0000039", "0.0000034", "2447800", "1579.469088", 1574852400),
+            fromRawData("0.0000031", "0.0000036", "0.0000035", "0.0000033", "945246", "636.790145", 1574856000),
+            fromRawData("0.0000025", "0.0000036", "0.0000033", "0.0000031", "3464000", "2254.168052", 1574859600)
         );
 
         assertEquals(expected, fromTable(dataOutput));
@@ -214,38 +214,38 @@ class DexTradingDataServiceTest {
     @Test
     void testGetForTimeFrameFromOrdersAndCandlesticks() {
         int fromTimestamp = 1_574_851_800;
-        int toTimestamp   = 1_574_877_000;
+        int toTimestamp = 1_574_877_000;
         int candlestickOrderSeparationTime = 1_574_863_200;
         List<DexCandlestick> candlesticks = List.of(td.ETH_1_CANDLESTICK, td.ETH_2_CANDLESTICK, td.ETH_3_CANDLESTICK, td.ETH_4_CANDLESTICK, td.ETH_5_CANDLESTICK, td.ETH_6_CANDLESTICK, td.ETH_7_CANDLESTICK, td.ETH_8_CANDLESTICK);
 
         doReturn(td.ETH_9_CANDLESTICK).when(candlestickDao).getLast(DexCurrency.ETH);
         doReturn(candlesticks).when(candlestickDao).getForTimespan(fromTimestamp + 600, candlestickOrderSeparationTime - 1, DexCurrency.ETH);
         // +1 for order finishTime to coup with fromEpochTime/toEpochTime offset (500ms)
-        doReturn(List.of(CandlestickTestUtil.eOrder(1, 1_574_863_201, dec("2.5") , apl(120_000)), CandlestickTestUtil.eOrder(3, 1_574_865_200, dec("2.3"),      apl(100_000)))).when(orderDao).getOrdersFromDbIdBetweenTimestamps(request(0,  candlestickOrderSeparationTime, toTimestamp, 2));
-        doReturn(List.of(CandlestickTestUtil.eOrder(4, 1_574_870_801, dec("2.2") , apl(150_000)), CandlestickTestUtil.eOrder(5, 1_574_872_333, dec("2.1"),      apl(300_000)))).when(orderDao).getOrdersFromDbIdBetweenTimestamps(request(3,  candlestickOrderSeparationTime, toTimestamp, 2));
-        doReturn(List.of(CandlestickTestUtil.eOrder(6, 1_574_865_200, dec("2.15"), apl(200_000)), CandlestickTestUtil.eOrder(7, 1_574_866_100, dec("2.33333"), apl(400_000)))).when(orderDao).getOrdersFromDbIdBetweenTimestamps(request(5,  candlestickOrderSeparationTime, toTimestamp, 2));
+        doReturn(List.of(CandlestickTestUtil.eOrder(1, 1_574_863_201, dec("2.5"), apl(120_000)), CandlestickTestUtil.eOrder(3, 1_574_865_200, dec("2.3"), apl(100_000)))).when(orderDao).getOrdersFromDbIdBetweenTimestamps(request(0, candlestickOrderSeparationTime, toTimestamp, 2));
+        doReturn(List.of(CandlestickTestUtil.eOrder(4, 1_574_870_801, dec("2.2"), apl(150_000)), CandlestickTestUtil.eOrder(5, 1_574_872_333, dec("2.1"), apl(300_000)))).when(orderDao).getOrdersFromDbIdBetweenTimestamps(request(3, candlestickOrderSeparationTime, toTimestamp, 2));
+        doReturn(List.of(CandlestickTestUtil.eOrder(6, 1_574_865_200, dec("2.15"), apl(200_000)), CandlestickTestUtil.eOrder(7, 1_574_866_100, dec("2.33333"), apl(400_000)))).when(orderDao).getOrdersFromDbIdBetweenTimestamps(request(5, candlestickOrderSeparationTime, toTimestamp, 2));
 
 
         TradingDataOutput dataOutput = service.getBars(fromTimestamp, toTimestamp, DexCurrency.ETH, TimeFrame.HOUR);
 
         List<SimpleTradingEntry> expected = List.of(
-                fromRawData("0.0000031", "0.0000043", "0.0000039", "0.0000034", "2447800","1579.469088", 1574852400),
-                fromRawData("0.0000031", "0.0000036", "0.0000035", "0.0000033", "945246","636.790145", 1574856000),
-                fromRawData("0.0000025", "0.0000036", "0.0000033", "0.0000031", "3464000","2254.168052", 1574859600),
-                fromRawData("2.15", "2.5", "2.5", "2.33333", "820000", "1893332.00000", 1_574_863_200),
-                fromRawData("2.1", "2.2", "2.2", "2.1", "450000", "960000.0", 1_574_870_400)
-                );
+            fromRawData("0.0000031", "0.0000043", "0.0000039", "0.0000034", "2447800", "1579.469088", 1574852400),
+            fromRawData("0.0000031", "0.0000036", "0.0000035", "0.0000033", "945246", "636.790145", 1574856000),
+            fromRawData("0.0000025", "0.0000036", "0.0000033", "0.0000031", "3464000", "2254.168052", 1574859600),
+            fromRawData("2.15", "2.5", "2.5", "2.33333", "820000", "1893332.00000", 1_574_863_200),
+            fromRawData("2.1", "2.2", "2.2", "2.1", "450000", "960000.0", 1_574_870_400)
+        );
 
         assertEquals(expected, fromTable(dataOutput));
     }
 
     private OrderDbIdPaginationDbRequest request(long fromDbId, int fromTimestamp, int toTimestamp, int limit) {
         return OrderDbIdPaginationDbRequest.builder()
-                .fromTime(fromTimestamp )
-                .fromDbId(fromDbId)
-                .toTime(toTimestamp)
-                .limit(limit)
-                .coin(DexCurrency.ETH)
-                .build();
+            .fromTime(fromTimestamp)
+            .fromDbId(fromDbId)
+            .toTime(toTimestamp)
+            .limit(limit)
+            .coin(DexCurrency.ETH)
+            .build();
     }
 }

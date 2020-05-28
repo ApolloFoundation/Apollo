@@ -58,33 +58,28 @@ import java.util.UUID;
  */
 // @Singleton
 public class Apollo {
-//    System properties to load by PropertiesConfigLoader
-    public static final String PID_FILE="apl.pid";
-    public static final String CMD_FILE="apl.cmdline";
-    public static final String APP_FILE="apl.app";
+    //    System properties to load by PropertiesConfigLoader
+    public static final String PID_FILE = "apl.pid";
+    public static final String CMD_FILE = "apl.cmdline";
+    public static final String APP_FILE = "apl.app";
 
     private static final List<String> SYSTEM_PROPERTY_NAMES = Arrays.asList(
-            "socksProxyHost",
-            "socksProxyPort",
-            "apl.enablePeerUPnP",
-            "apl.enableAPIUPnP"
+        "socksProxyHost",
+        "socksProxyPort",
+        "apl.enablePeerUPnP",
+        "apl.enableAPIUPnP"
     );
-
+    private final static String[] VALID_LOG_LEVELS = {"ERROR", "WARN", "INFO", "DEBUG", "TRACE"};
     //This variable is used in LogDirPropertyDefiner configured in logback.xml
     public static Path logDirPath = Paths.get("");
-    //We have dir provider configured in logback.xml so should init log later
-    private static Logger log;
-
     public static RuntimeMode runtimeMode;
     public static DirProvider dirProvider;
-
+    //We have dir provider configured in logback.xml so should init log later
+    private static Logger log;
     private static AplContainer container;
-
+    private static AplCoreRuntime aplCoreRuntime;
     private PropertiesHolder propertiesHolder;
     private TaskDispatchManager taskDispatchManager;
-    private static AplCoreRuntime aplCoreRuntime;
-
-    private final static String[] VALID_LOG_LEVELS = {"ERROR", "WARN", "INFO", "DEBUG", "TRACE"};
 
     private static void setLogLevel(int logLevel) {
         // let's SET LEVEL EXPLOCITLY only when it was passed via command line params
@@ -92,13 +87,13 @@ public class Apollo {
         if (logLevel >= VALID_LOG_LEVELS.length - 1) {
             logLevel = VALID_LOG_LEVELS.length - 1;
         }
-            LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
 
-            ch.qos.logback.classic.Logger logger = loggerContext.getLogger(packageName);
-            System.out.println(packageName + " current logger level: " + logger.getLevel()
-                    + " New level: " + VALID_LOG_LEVELS[logLevel]);
+        ch.qos.logback.classic.Logger logger = loggerContext.getLogger(packageName);
+        System.out.println(packageName + " current logger level: " + logger.getLevel()
+            + " New level: " + VALID_LOG_LEVELS[logLevel]);
 
-            logger.setLevel(Level.toLevel(VALID_LOG_LEVELS[logLevel]));
+        logger.setLevel(Level.toLevel(VALID_LOG_LEVELS[logLevel]));
         // otherwise we want to load usual logback.xml settings
     }
 
@@ -109,52 +104,44 @@ public class Apollo {
             cmdline = cmdline + s + " ";
         }
         Path hp = Paths.get(configDirProvider.getUserConfigDirectory()).getParent();
-        String home = hp.toString()+ File.separator;
+        String home = hp.toString() + File.separator;
         File dir = new File(home);
-        if(!dir.exists()){
+        if (!dir.exists()) {
             dir.mkdirs();
         }
         String path = pidPath.isEmpty() ? home + PID_FILE : pidPath;
         try (PrintWriter out = new PrintWriter(path)) {
             out.println(RuntimeParams.getProcessId());
         } catch (FileNotFoundException ex) {
-            System.err.println("Can not write PID to: "+path);
-            res=false;
+            System.err.println("Can not write PID to: " + path);
+            res = false;
         }
-        path=home + CMD_FILE;
+        path = home + CMD_FILE;
         try (PrintWriter out = new PrintWriter(path)) {
             out.println(cmdline);
         } catch (FileNotFoundException ex) {
-            System.err.println("Can not write command line args file to: "+path);
-            res=false;
+            System.err.println("Can not write command line args file to: " + path);
+            res = false;
         }
-        path=home + APP_FILE;
+        path = home + APP_FILE;
         try (PrintWriter out = new PrintWriter(home + APP_FILE)) {
             out.println(DirProvider.getBinDir());
         } catch (FileNotFoundException ex) {
-            System.err.println("Can not write Apollo start path file to: "+path);
-            res=false;
+            System.err.println("Can not write Apollo start path file to: " + path);
+            res = false;
         }
         return res;
     }
 
-    private void initUpdater(String attachmentFilePath, boolean debug) {
-        if (!propertiesHolder.getBooleanProperty("apl.allowUpdates", false)) {
-            return;
-        }
-        UpdaterCore updaterCore = CDI.current().select(UpdaterCoreImpl.class).get();
-        updaterCore.init(attachmentFilePath, debug);
-    }
-
     public static PredefinedDirLocations merge(CmdLineArgs args, EnvironmentVariables vars, CustomDirLocations customDirLocations) {
         return new PredefinedDirLocations(
-                customDirLocations.getDbDir().isEmpty() ? StringUtils.isBlank(args.dbDir) ? vars.dbDir : args.dbDir : customDirLocations.getDbDir().get(),
-                StringUtils.isBlank(args.logDir) ? vars.logDir : args.logDir,
-                customDirLocations.getKeystoreDir().isEmpty() ? StringUtils.isBlank(args.vaultKeystoreDir) ? vars.vaultKeystoreDir : args.vaultKeystoreDir : customDirLocations.getKeystoreDir().get(),
-                StringUtils.isBlank(args.pidFile) ? vars.pidFile : args.pidFile,
-                StringUtils.isBlank(args.twoFactorAuthDir) ? vars.twoFactorAuthDir : args.twoFactorAuthDir,
-                StringUtils.isBlank(args.dataExportDir) ? vars.dataExportDir : args.dataExportDir,
-                StringUtils.isBlank(args.dexKeystoreDir) ? vars.dexKeystoreDir : args.dexKeystoreDir
+            customDirLocations.getDbDir().isEmpty() ? StringUtils.isBlank(args.dbDir) ? vars.dbDir : args.dbDir : customDirLocations.getDbDir().get(),
+            StringUtils.isBlank(args.logDir) ? vars.logDir : args.logDir,
+            customDirLocations.getKeystoreDir().isEmpty() ? StringUtils.isBlank(args.vaultKeystoreDir) ? vars.vaultKeystoreDir : args.vaultKeystoreDir : customDirLocations.getKeystoreDir().get(),
+            StringUtils.isBlank(args.pidFile) ? vars.pidFile : args.pidFile,
+            StringUtils.isBlank(args.twoFactorAuthDir) ? vars.twoFactorAuthDir : args.twoFactorAuthDir,
+            StringUtils.isBlank(args.dataExportDir) ? vars.dataExportDir : args.dataExportDir,
+            StringUtils.isBlank(args.dexKeystoreDir) ? vars.dexKeystoreDir : args.dexKeystoreDir
         );
     }
 
@@ -167,8 +154,8 @@ public class Apollo {
 
         CmdLineArgs args = new CmdLineArgs();
         JCommander jc = JCommander.newBuilder()
-                .addObject(args)
-                .build();
+            .addObject(args)
+            .build();
         jc.setProgramName(Constants.APPLICATION);
         try {
             jc.parse(argv);
@@ -203,16 +190,16 @@ public class Apollo {
         ConfigDirProvider configDirProvider = ConfigDirProviderFactory.getConfigDirProvider();
 
         PropertiesConfigLoader propertiesLoader = new PropertiesConfigLoader(
-                configDirProvider,
-                args.isResourceIgnored(),
-                StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir,
-                Constants.APPLICATION_DIR_NAME + ".properties",
-                SYSTEM_PROPERTY_NAMES);
+            configDirProvider,
+            args.isResourceIgnored(),
+            StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir,
+            Constants.APPLICATION_DIR_NAME + ".properties",
+            SYSTEM_PROPERTY_NAMES);
 
         ChainsConfigLoader chainsConfigLoader = new ChainsConfigLoader(
-                configDirProvider,
-                StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir,
-                args.isResourceIgnored()
+            configDirProvider,
+            StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir,
+            args.isResourceIgnored()
         );
 // init application data dir provider
 
@@ -220,11 +207,11 @@ public class Apollo {
         UUID chainId = ChainUtils.getActiveChain(chains).getChainId();
         Properties props = propertiesLoader.load();
 //over-write config options from command line if set
-        if(args.noShardImport!=null){
-            props.setProperty("apl.noshardimport", ""+args.noShardImport);
+        if (args.noShardImport != null) {
+            props.setProperty("apl.noshardimport", "" + args.noShardImport);
         }
-        if(args.noShardCreate!=null){
-            props.setProperty("apl.noshardcreate", ""+args.noShardCreate);
+        if (args.noShardCreate != null) {
+            props.setProperty("apl.noshardcreate", "" + args.noShardCreate);
         }
 
         CustomDirLocations customDirLocations = new CustomDirLocations(getCustomDbPath(chainId, props), props.getProperty(CustomDirLocations.KEYSTORE_DIR_PROPERTY_NAME));
@@ -234,8 +221,8 @@ public class Apollo {
         //init logging
         logDirPath = dirProvider.getLogsDir().toAbsolutePath();
         log = LoggerFactory.getLogger(Apollo.class);
-        if(args.debug!=CmdLineArgs.DEFAULT_DEBUG_LEVEL){
-           setLogLevel(args.debug);
+        if (args.debug != CmdLineArgs.DEFAULT_DEBUG_LEVEL) {
+            setLogLevel(args.debug);
         }
 
 //check webUI
@@ -252,7 +239,7 @@ public class Apollo {
         runtimeMode.init(); // instance is NOT PROXIED by CDI !!
 
         //save command line params and PID
-        if(!saveStartParams(argv, args.pidFile,configDirProvider)){
+        if (!saveStartParams(argv, args.pidFile, configDirProvider)) {
             System.exit(PosixExitCodes.EX_CANTCREAT.exitCode());
         }
 
@@ -264,11 +251,11 @@ public class Apollo {
             // See https://docs.jboss.org/cdi/spec/2.0.EDR2/cdi-spec.html#se_bootstrap for more details
             // we already have it in beans.xml in core
             .annotatedDiscoveryMode();
-            //TODO:  turn it on periodically in development process to check CDI errors
-            // Enable for development only, see http://weld.cdi-spec.org/news/2015/11/10/weld-probe-jmx/
-            // run with ./bin/apl-run-jmx.sh
-            //.devMode()
-        if(args.disableWeldConcurrentDeployment) {
+        //TODO:  turn it on periodically in development process to check CDI errors
+        // Enable for development only, see http://weld.cdi-spec.org/news/2015/11/10/weld-probe-jmx/
+        // run with ./bin/apl-run-jmx.sh
+        //.devMode()
+        if (args.disableWeldConcurrentDeployment) {
             //It's very helpful when the application is stuck during the Weld Container building.
             log.info("The concurrent deployment of Weld container is disabled.");
             aplContainerBuilder.disableConcurrentDeployment();
@@ -310,10 +297,10 @@ public class Apollo {
         }
     }
 
-    public static void shutdownWeldContainer(){
+    public static void shutdownWeldContainer() {
         try {
             container.shutdown();
-        } catch (Exception ex){
+        } catch (Exception ex) {
             log.error(ex.getMessage(), ex);
         }
     }
@@ -327,6 +314,14 @@ public class Apollo {
             return customDbPath.toAbsolutePath().toString();
         }
         return null;
+    }
+
+    private void initUpdater(String attachmentFilePath, boolean debug) {
+        if (!propertiesHolder.getBooleanProperty("apl.allowUpdates", false)) {
+            return;
+        }
+        UpdaterCore updaterCore = CDI.current().select(UpdaterCoreImpl.class).get();
+        updaterCore.init(attachmentFilePath, debug);
     }
 
 }

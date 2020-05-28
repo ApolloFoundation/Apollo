@@ -28,12 +28,11 @@ public class DefaultDownloadExecutor implements DownloadExecutor {
         Path downloadedFilePath = tempDir.resolve(Paths.get(downloadedFileName));
         URL webUrl = new URL(url);
         try (
-                ReadableByteChannel rbc = Channels.newChannel(webUrl.openStream());
-                FileOutputStream fos = new FileOutputStream(downloadedFilePath.toFile())) {
+            ReadableByteChannel rbc = Channels.newChannel(webUrl.openStream());
+            FileOutputStream fos = new FileOutputStream(downloadedFilePath.toFile())) {
 
             fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             //delete failed file and directory
             Files.deleteIfExists(downloadedFilePath);
             Files.deleteIfExists(tempDir);

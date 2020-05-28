@@ -10,10 +10,10 @@ import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.model.ExcludeInfo;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.List;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Singleton
@@ -36,7 +36,7 @@ public class ExcludedTransactionDbIdExtractor {
         log.trace("get activePhasedTransactions: {}", activePhasedTransactions);
         List<TransactionDbInfo> transactionsBeforeHeight = blockchain.getTransactionsBeforeHeight(startHeight);
         log.trace("get transactionsBeforeHeight: {}", transactionsBeforeHeight);
-        List<TransactionDbInfo> deleteNotExportNotCopy = transactionsBeforeHeight.stream().filter(tdi->!activePhasedTransactions.contains(tdi)).collect(Collectors.toList());
+        List<TransactionDbInfo> deleteNotExportNotCopy = transactionsBeforeHeight.stream().filter(tdi -> !activePhasedTransactions.contains(tdi)).collect(Collectors.toList());
         log.trace("get deleteNotExportNotCopy: {}", deleteNotExportNotCopy);
         List<TransactionDbInfo> notDeleteExportNotCopy = transactionsBeforeHeight.stream().filter(activePhasedTransactions::contains).collect(Collectors.toList());
         log.trace("get notDeleteExportNotCopy: {}", notDeleteExportNotCopy);

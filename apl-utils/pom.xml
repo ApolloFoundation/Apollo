@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>com.apollocurrency</groupId>
-    <artifactId>apollo-wallet</artifactId>
-    <version>1.42.9</version>
+    <artifactId>apollo-blockchain</artifactId>
+    <version>1.44.1</version>
   </parent>
 
   <artifactId>apl-utils</artifactId>
@@ -13,7 +14,7 @@
   <packaging>jar</packaging>
 
   <dependencies>
-    <!-- POPJO <-> JSON -->
+    <!-- CORE BOM DEPENDENCIES -->
     <dependency>
       <groupId>com.apollocurrency</groupId>
       <artifactId>apl-crypto</artifactId>
@@ -30,6 +31,7 @@
       </exclusions>
     </dependency>
 
+    <!-- EXT BOM DEPENDENCIES -->
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>

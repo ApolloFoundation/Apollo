@@ -3,20 +3,19 @@
  */
 package com.apollocurrency.aplwallet.apl.core.tagged.model;
 
-import javax.enterprise.inject.spi.CDI;
-
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import java.nio.ByteBuffer;
-import java.security.MessageDigest;
 import org.json.simple.JSONObject;
 
+import javax.enterprise.inject.spi.CDI;
+import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+
 /**
- *
  * @author al
  */
 public abstract class TaggedDataAttachment extends AbstractAttachment implements Prunable {

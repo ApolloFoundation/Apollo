@@ -4,6 +4,9 @@ import io.firstbridge.cryptolib.KeyReader;
 import io.firstbridge.cryptolib.KeyWriter;
 import io.firstbridge.cryptolib.impl.KeyReaderImpl;
 import io.firstbridge.cryptolib.impl.KeyWriterImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,8 +15,6 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Represents X.509 certificate with Apollo-specific attributes and signed by
@@ -28,22 +29,7 @@ public class ApolloCertificate extends CertBase {
     private final X509Certificate certificate;
     private final CertAttributes cert_attr;
     private final CertAttributes issuer_attr;
-    
-    public static ApolloCertificate loadPEMFromPath(String path) throws  ApolloCertificateException, IOException {
-        ApolloCertificate res = null;
-        try(FileInputStream fis = new FileInputStream(path)){
-           res = ApolloCertificate.loadPEMFromStream(fis);
-        }
-        return res;
-    }
-    
-    public static ApolloCertificate loadPEMFromStream(InputStream is) throws IOException, ApolloCertificateException {
-        KeyReader kr = new KeyReaderImpl();
-        X509Certificate cert = kr.readX509CertPEMorDER(is);
-        ApolloCertificate ac = new ApolloCertificate(cert);
-        return ac;
-    }
-    
+
     public ApolloCertificate(X509Certificate certificate) throws ApolloCertificateException {
         if (certificate == null) {
             throw new ApolloCertificateException("Null certificate");
@@ -56,6 +42,20 @@ public class ApolloCertificate extends CertBase {
         issuer_attr.setSubjectStr(certificate.getIssuerX500Principal().toString());
     }
 
+    public static ApolloCertificate loadPEMFromPath(String path) throws ApolloCertificateException, IOException {
+        ApolloCertificate res = null;
+        try (FileInputStream fis = new FileInputStream(path)) {
+            res = ApolloCertificate.loadPEMFromStream(fis);
+        }
+        return res;
+    }
+
+    public static ApolloCertificate loadPEMFromStream(InputStream is) throws IOException, ApolloCertificateException {
+        KeyReader kr = new KeyReaderImpl();
+        X509Certificate cert = kr.readX509CertPEMorDER(is);
+        ApolloCertificate ac = new ApolloCertificate(cert);
+        return ac;
+    }
 
     public BigInteger getApolloId() {
         return cert_attr.getApolloId();
@@ -127,16 +127,16 @@ public class ApolloCertificate extends CertBase {
         }
         return res;
     }
-    
+
     @Override
     public String toString() {
         String res = "Apollo X.509 Certificate:\n";
         res += "CN=" + cert_attr.getCn() + "\n"
-                + "ApolloID=" + getApolloId().toString(16) + "\n";
+            + "ApolloID=" + getApolloId().toString(16) + "\n";
 
         res += "emailAddress=" + getEmail() + "\n";
         res += "Country=" + getCountry() + " State/Province=" + getStateOrProvince()
-                + " City=" + getCity();
+            + " City=" + getCity();
         res += "Organization=" + getOrganization() + " Org. Unit=" + getOrganizationUnit() + "\n";
         res += "IP address=" + fromList(getIPAddresses()) + "\n";
         res += "DNS names=" + fromList(getDNSNames()) + "\n";
@@ -155,7 +155,7 @@ public class ApolloCertificate extends CertBase {
     }
 
     public boolean isValid(Date date) {
-        boolean dateOK=false;
+        boolean dateOK = false;
         Date start = certificate.getNotBefore();
         Date end = certificate.getNotAfter();
         if (date != null && start != null && end != null) {
@@ -172,12 +172,12 @@ public class ApolloCertificate extends CertBase {
     public BigInteger getSerial() {
         return certificate.getSerialNumber();
     }
-    
-    public CertAttributes getIssuerAttrinutes(){
+
+    public CertAttributes getIssuerAttrinutes() {
         return issuer_attr;
     }
-    
-    public boolean verify(){
+
+    public boolean verify() {
         boolean res = true;
         //TODO: implement
         return res;

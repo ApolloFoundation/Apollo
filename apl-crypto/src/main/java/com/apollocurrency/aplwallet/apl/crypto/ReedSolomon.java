@@ -17,13 +17,16 @@ final class ReedSolomon {
     private static final int base_32_length = 13;
     private static final int base_10_length = 20;
 
+    private ReedSolomon() {
+    } // never
+
     static String encode(long plain) {
 
         String plain_string = Long.toUnsignedString(plain);
         int length = plain_string.length();
         int[] plain_string_10 = new int[ReedSolomon.base_10_length];
         for (int i = 0; i < length; i++) {
-            plain_string_10[i] = (int)plain_string.charAt(i) - (int)'0';
+            plain_string_10[i] = (int) plain_string.charAt(i) - (int) '0';
         }
 
         int codeword_length = 0;
@@ -46,7 +49,7 @@ final class ReedSolomon {
             length = new_length;
             codeword[codeword_length] = digit_32;
             codeword_length += 1;
-        } while(length > 0);
+        } while (length > 0);
 
         int[] p = {0, 0, 0, 0};
         for (int i = ReedSolomon.base_32_length - 1; i >= 0; i--) {
@@ -54,7 +57,7 @@ final class ReedSolomon {
             p[3] = p[2] ^ ReedSolomon.gmult(30, fb);
             p[2] = p[1] ^ ReedSolomon.gmult(6, fb);
             p[1] = p[0] ^ ReedSolomon.gmult(9, fb);
-            p[0] =        ReedSolomon.gmult(17, fb);
+            p[0] = ReedSolomon.gmult(17, fb);
         }
 
         System.arraycopy(p, 0, codeword, ReedSolomon.base_32_length, ReedSolomon.initial_codeword.length - ReedSolomon.base_32_length);
@@ -122,7 +125,7 @@ final class ReedSolomon {
                 }
             }
             length = new_length;
-            plain_string_builder.append((char)(digit_10 + (int)'0'));
+            plain_string_builder.append((char) (digit_10 + (int) '0'));
         } while (length > 0);
 
         return Long.parseUnsignedLong(plain_string_builder.reverse().toString());
@@ -171,8 +174,6 @@ final class ReedSolomon {
 
     static final class CodewordInvalidException extends DecodeException {
     }
-
-    private ReedSolomon() {} // never
 }
 
 

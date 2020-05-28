@@ -4,8 +4,16 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
-import java.util.Objects;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.deser.std.FromStringDeserializer;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 
+import java.io.IOException;
+import java.util.Objects;
+@JsonDeserialize(using = Version.VersionDeserializer.class)
+@JsonSerialize(using = ToStringSerializer.class)
 public class Version implements Comparable<Version> {
     private final int majorVersion;
     private final int intermediateVersion;
@@ -27,9 +35,24 @@ public class Version implements Comparable<Version> {
         intermediateVersion = Integer.parseInt(versionNumbers[1]);
         minorVersion = (Integer.parseInt(versionNumbers[2]));
     }
+
+    public static boolean isOldVersion(Version version, Version minVersion) {
+        if (version == null) {
+            return true;
+        }
+        return version.lessThan(minVersion);
+    }
+
+    public static boolean isNewVersion(Version version) {
+        if (version == null) {
+            return true;
+        }
+        return version.greaterThan(Constants.VERSION);
+    }
+
     @Override
     public String toString() {
-        return majorVersion +"."+ intermediateVersion + "." + minorVersion;
+        return majorVersion + "." + intermediateVersion + "." + minorVersion;
     }
 
     @Override
@@ -38,8 +61,8 @@ public class Version implements Comparable<Version> {
         if (!(o instanceof Version)) return false;
         Version version = (Version) o;
         return majorVersion == version.majorVersion &&
-                intermediateVersion == version.intermediateVersion &&
-                minorVersion == version.minorVersion;
+            intermediateVersion == version.intermediateVersion &&
+            minorVersion == version.minorVersion;
     }
 
     @Override
@@ -63,10 +86,10 @@ public class Version implements Comparable<Version> {
     @Override
     public int compareTo(Version v) {
         int majorVersionCompare = Integer.compare(majorVersion, v.getMajorVersion());
-        if (majorVersionCompare != 0 )
+        if (majorVersionCompare != 0)
             return majorVersionCompare;
         int intermediateVersionCompare = Integer.compare(intermediateVersion, v.getIntermediateVersion());
-        if (intermediateVersionCompare != 0 )
+        if (intermediateVersionCompare != 0)
             return intermediateVersionCompare;
         return Integer.compare(minorVersion, v.getMinorVersion());
     }
@@ -78,22 +101,18 @@ public class Version implements Comparable<Version> {
     public Version incrementVersion() {
         return new Version(getMajorVersion(), getIntermediateVersion(), getMinorVersion() + 1);
     }
+
     public boolean lessThan(Version v) {
         return compareTo(v) < 0;
     }
 
-    public static boolean isOldVersion(Version version, Version minVersion) {
-        if (version == null) {
-            return true;
+    public static class VersionDeserializer extends FromStringDeserializer<Version> {
+        protected VersionDeserializer() {
+            super(Version.class);
         }
-        return version.lessThan(minVersion);
+        @Override
+        protected Version _deserialize(String value, DeserializationContext ctxt) throws IOException {
+            return new Version(value);
+        }
     }
-
-
-    public static boolean isNewVersion(Version version) {
-        if (version == null) {
-            return true;
-        }
-        return version.greaterThan(Constants.VERSION);
-    }    
 }

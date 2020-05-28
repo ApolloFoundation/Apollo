@@ -20,7 +20,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
- *
  * @author al
  */
 @Singleton
@@ -29,20 +28,20 @@ public class AccountInfoTable extends VersionedDeletableEntityDbTable<AccountInf
     private static final LongKeyFactory<AccountInfo> accountInfoDbKeyFactory = new LongKeyFactory<AccountInfo>("account_id") {
         @Override
         public DbKey newKey(AccountInfo accountInfo) {
-            if(accountInfo.getDbKey() == null){
+            if (accountInfo.getDbKey() == null) {
                 accountInfo.setDbKey(super.newKey(accountInfo.getAccountId()));
             }
             return accountInfo.getDbKey();
         }
     };
 
-    public static DbKey newKey(long id){
-        return accountInfoDbKeyFactory.newKey(id);
-    }
-
     public AccountInfoTable() {
         super("account_info",
             accountInfoDbKeyFactory, "name,description");
+    }
+
+    public static DbKey newKey(long id) {
+        return accountInfoDbKeyFactory.newKey(id);
     }
 
     @Override
@@ -53,9 +52,8 @@ public class AccountInfoTable extends VersionedDeletableEntityDbTable<AccountInf
     @Override
     public void save(Connection con, AccountInfo accountInfo) throws SQLException {
         try (
-                @DatabaseSpecificDml(DmlMarker.MERGE)
-                @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
-                final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_info " + "(account_id, name, description, height, latest, deleted) " + "KEY (account_id, height) VALUES (?, ?, ?, ?, TRUE, FALSE)")
+            @DatabaseSpecificDml(DmlMarker.MERGE)
+            @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE) final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_info " + "(account_id, name, description, height, latest, deleted) " + "KEY (account_id, height) VALUES (?, ?, ?, ?, TRUE, FALSE)")
         ) {
             int i = 0;
             pstmt.setLong(++i, accountInfo.getAccountId());

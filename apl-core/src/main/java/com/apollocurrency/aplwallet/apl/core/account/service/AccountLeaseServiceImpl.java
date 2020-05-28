@@ -41,14 +41,14 @@ public class AccountLeaseServiceImpl implements AccountLeaseService {
         this.accountLeaseEvent = accountLeaseEvent;
     }
 
-    public void onLeaseStarted(@Observes @AccountEvent(AccountEventType.LEASE_STARTED) AccountLease accountLease ){
-        if(log.isTraceEnabled()) {
+    public void onLeaseStarted(@Observes @AccountEvent(AccountEventType.LEASE_STARTED) AccountLease accountLease) {
+        if (log.isTraceEnabled()) {
             log.trace("--lease-- Catch event (LEASE_STARTED) lessor={} at height {}", accountLease, blockchain.getHeight());
         }
     }
 
-    public void onLeaseEnded(@Observes @AccountEvent(AccountEventType.LEASE_ENDED) AccountLease accountLease ){
-        if(log.isTraceEnabled()) {
+    public void onLeaseEnded(@Observes @AccountEvent(AccountEventType.LEASE_ENDED) AccountLease accountLease) {
+        if (log.isTraceEnabled()) {
             log.trace("--lease-- Catch event (LEASE_ENDED) lessor={} at height {}", accountLease, blockchain.getHeight());
         }
     }
@@ -67,14 +67,14 @@ public class AccountLeaseServiceImpl implements AccountLeaseService {
     public void insertLease(AccountLease lease) {
         lease.setHeight(blockchain.getHeight());
         accountLeaseTable.insert(lease);
-        if (log.isTraceEnabled()){
+        if (log.isTraceEnabled()) {
             log.trace("--lease-- Insert lease AccountLease={} at height {}", lease, blockchain.getHeight());
         }
     }
 
     @Override
     public boolean deleteLease(AccountLease lease) {
-        if (log.isTraceEnabled()){
+        if (log.isTraceEnabled()) {
             log.trace("--lease-- Delete lease AccountLease={} at height {}", lease, blockchain.getHeight());
         }
         lease.setHeight(blockchain.getHeight());
@@ -93,8 +93,8 @@ public class AccountLeaseServiceImpl implements AccountLeaseService {
         int leasingDelay = blockchainConfig.getLeasingDelay();
         if (accountLease == null) {
             accountLease = new AccountLease(account.getId(),
-                    height + leasingDelay,
-                    height + leasingDelay + period,
+                height + leasingDelay,
+                height + leasingDelay + period,
                 lesseeId, blockchain.getHeight());
         } else if (accountLease.getCurrentLesseeId() == 0) {
             accountLease.setCurrentLeasingHeightFrom(height + leasingDelay);
@@ -109,7 +109,7 @@ public class AccountLeaseServiceImpl implements AccountLeaseService {
             accountLease.setNextLesseeId(lesseeId);
         }
         insertLease(accountLease);
-        if (log.isTraceEnabled()){
+        if (log.isTraceEnabled()) {
             log.trace("--lease-- Scheduled lease AccountLease={} at height {}", accountLease, blockchain.getHeight());
         }
         accountLeaseEvent.select(literal(AccountEventType.LEASE_SCHEDULED)).fire(accountLease);

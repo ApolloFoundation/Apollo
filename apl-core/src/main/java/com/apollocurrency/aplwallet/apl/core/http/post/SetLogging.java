@@ -72,35 +72,40 @@ import javax.servlet.http.HttpServletRequest;
 public class SetLogging extends AbstractAPIRequestHandler {
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(SetLogging.class);
 
-    /** Logging updated */
+    /**
+     * Logging updated
+     */
     private static final JSONStreamAware LOGGING_UPDATED;
+    /**
+     * Incorrect log level
+     */
+    private static final JSONStreamAware INCORRECT_LEVEL =
+        JSONResponses.incorrect("logLevel", "Log level must be DEBUG, INFO, WARN or ERROR");
+    /**
+     * Incorrect communication event
+     */
+    private static final JSONStreamAware INCORRECT_EVENT =
+        JSONResponses.incorrect("communicationEvent",
+            "Communication event must be EXCEPTION, HTTP-ERROR or HTTP-OK");
+
     static {
         JSONObject response = new JSONObject();
         response.put("loggingUpdated", true);
         LOGGING_UPDATED = JSON.prepare(response);
     }
 
-    /** Incorrect log level */
-    private static final JSONStreamAware INCORRECT_LEVEL =
-            JSONResponses.incorrect("logLevel", "Log level must be DEBUG, INFO, WARN or ERROR");
-
-    /** Incorrect communication event */
-    private static final JSONStreamAware INCORRECT_EVENT =
-            JSONResponses.incorrect("communicationEvent",
-                                    "Communication event must be EXCEPTION, HTTP-ERROR or HTTP-OK");
-
     /**
      * Create the SetLogging instance
      */
     public SetLogging() {
-        super(new APITag[] {APITag.DEBUG}, "logLevel", "communicationEvent", "communicationEvent", "communicationEvent");
+        super(new APITag[]{APITag.DEBUG}, "logLevel", "communicationEvent", "communicationEvent", "communicationEvent");
     }
 
     /**
      * Process the SetLogging API request
      *
-     * @param   req                 API request
-     * @return                      API response
+     * @param req API request
+     * @return API response
      */
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) {
@@ -148,7 +153,7 @@ public class SetLogging extends AbstractAPIRequestHandler {
     /**
      * Require the administrator password
      *
-     * @return                      TRUE if the admin password is required
+     * @return TRUE if the admin password is required
      */
     @Override
     protected boolean requirePassword() {

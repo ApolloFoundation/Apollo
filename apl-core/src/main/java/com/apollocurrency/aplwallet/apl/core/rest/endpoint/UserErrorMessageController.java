@@ -46,27 +46,29 @@ public class UserErrorMessageController {
     public UserErrorMessageController(UserErrorMessageService service) {
         this.service = service;
     }
+
     @Path("/{address}")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"user-errors"}, summary = "Return last user errors for specified user",
-            description = "Extract descending ordered user errors to specified db_id exclusive. Limit and user address are specified by parameters")
+        description = "Extract descending ordered user errors to specified db_id exclusive. Limit and user address are specified by parameters")
     public Response getForUser(@Parameter(description = "db id to which user-errors should be extracted. By default is Long.MAX_VALUE") @QueryParam("toDbId") @DefaultValue("" + Long.MAX_VALUE) long toDbId,
                                @Parameter(description = "Number of entries to extract. By default is 100. Cannot be greater than 100.") @QueryParam("limit") @DefaultValue("100") int limit,
                                @Parameter(description = "User address", required = true) @PathParam("address") String address
-                               ) {
+    ) {
         int correctedLimit = Math.min(100, limit);
         return Response.ok(service.getAllByAddress(address, toDbId, correctedLimit)).build();
     }
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"user-errors"}, summary = "Return last user errors for all users",
-            description = "Extract descending ordered user errors until the specified db_id reached. Limit is specified by parameter",
-    security = @SecurityRequirement(name = "admin_api_key"),
-    responses = @ApiResponse(description = "User error message representation. Timestamp corresponds to UTC time.", responseCode = "200", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserErrorMessage.class))))
+        description = "Extract descending ordered user errors until the specified db_id reached. Limit is specified by parameter",
+        security = @SecurityRequirement(name = "admin_api_key"),
+        responses = @ApiResponse(description = "User error message representation. Timestamp corresponds to UTC time.", responseCode = "200", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserErrorMessage.class))))
     @RolesAllowed("admin")
     public Response getAll(@Parameter(description = "db id to which user-errors should be extracted. By default is Long.MAX_VALUE") @QueryParam("toDbId") @DefaultValue("" + Long.MAX_VALUE) long toDbId,
-                               @Parameter(description = "Number of entries to extract. By default is 100.") @QueryParam("limit") @DefaultValue("100") int limit) {
+                           @Parameter(description = "Number of entries to extract. By default is 100.") @QueryParam("limit") @DefaultValue("100") int limit) {
         int correctedLimit = Math.max(0, limit);
         return Response.ok(service.getAll(toDbId, correctedLimit)).build();
     }
@@ -74,17 +76,18 @@ public class UserErrorMessageController {
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"user-errors"}, summary = "Delete user errors for all users",
-            description = "Will delete all user errors before specified timestamp",
-            security = @SecurityRequirement(name = "admin_api_key"),
-            responses = @ApiResponse(description = "Number of deleted entries", responseCode = "200", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserErrorsDeleteResponse.class))))
+        description = "Will delete all user errors before specified timestamp",
+        security = @SecurityRequirement(name = "admin_api_key"),
+        responses = @ApiResponse(description = "Number of deleted entries", responseCode = "200", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserErrorsDeleteResponse.class))))
     @RolesAllowed("admin")
     public Response deleteByTimestamp(@Parameter(description = "Timestamp before which all user errors should be deleted ", required = true) @QueryParam("timestamp") long timestamp) {
         return Response.ok(new UserErrorsDeleteResponse(service.deleteByTimestamp(timestamp))).build();
     }
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     static class UserErrorsDeleteResponse {
-       private int deleted;
+        private int deleted;
     }
 }

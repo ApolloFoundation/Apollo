@@ -8,18 +8,18 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- *
  * @author al
  */
 public final class MessagingPhasingVoteCasting extends AbstractAttachment {
-    
+
     final List<byte[]> transactionFullHashes;
     final byte[] revealedSecret;
 
@@ -93,5 +93,5 @@ public final class MessagingPhasingVoteCasting extends AbstractAttachment {
     public byte[] getRevealedSecret() {
         return revealedSecret;
     }
-    
+
 }

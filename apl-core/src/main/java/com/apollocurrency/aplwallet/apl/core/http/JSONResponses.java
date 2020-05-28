@@ -173,6 +173,49 @@ public final class JSONResponses {
     public static final JSONStreamAware MISSING_SECRET_PHRASE_AND_PUBLIC_KEY = missing("Secret phrase", "Public key");
 
     public static final JSONStreamAware NOT_ENOUGH_APL;
+    public static final JSONStreamAware NOT_ENOUGH_ETH;
+    public static final JSONStreamAware NOT_ENOUGH_PAX;
+    public static final JSONStreamAware NOT_ENOUGH_ASSETS;
+    public static final JSONStreamAware ASSET_NOT_ISSUED_YET;
+    public static final JSONStreamAware NOT_ENOUGH_CURRENCY;
+    public static final JSONStreamAware ACCOUNT_GENERATION_ERROR;
+    public static final JSONStreamAware ERROR_NOT_ALLOWED;
+    public static final JSONStreamAware ERROR_DISABLED;
+    public static final JSONStreamAware ERROR_INCORRECT_REQUEST;
+    public static final JSONStreamAware ERROR_AMOUNT_OR_RATE_IS_TOO_HIGH;
+    public static final JSONStreamAware NOT_FORGING;
+    public static final JSONStreamAware POST_REQUIRED;
+    public static final JSONStreamAware REQUIRED_2FA;
+    public static final JSONStreamAware FEATURE_NOT_AVAILABLE;
+    public static final JSONStreamAware DECRYPTION_FAILED;
+    public static final JSONStreamAware ALREADY_DELIVERED;
+    public static final JSONStreamAware DUPLICATE_REFUND;
+    public static final JSONStreamAware GOODS_NOT_DELIVERED;
+    public static final JSONStreamAware NO_MESSAGE;
+    public static final JSONStreamAware HEIGHT_NOT_AVAILABLE;
+    public static final JSONStreamAware CANNOT_DELETE_CURRENCY;
+    public static final JSONStreamAware NO_PASSWORD_IN_CONFIG;
+    public static final JSONStreamAware POLL_RESULTS_NOT_AVAILABLE;
+    public static final JSONStreamAware POLL_FINISHED;
+    public static final JSONStreamAware PHASING_TRANSACTION_FINISHED;
+    public static final JSONStreamAware TOO_MANY_PHASING_VOTES;
+    public static final JSONStreamAware HASHES_MISMATCH;
+    public static final JSONStreamAware REQUIRED_BLOCK_NOT_FOUND;
+    public static final JSONStreamAware REQUIRED_LAST_BLOCK_NOT_FOUND;
+    public static final JSONStreamAware MISSING_SECRET_PHRASE;
+    public static final JSONStreamAware PRUNED_TRANSACTION;
+    public static final JSONStreamAware PROXY_MISSING_REQUEST_TYPE;
+    public static final JSONStreamAware PROXY_SECRET_DATA_DETECTED;
+    public static final JSONStreamAware API_PROXY_NO_OPEN_API_PEERS;
+    public static final JSONStreamAware LIGHT_CLIENT_DISABLED_API;
+    public static final JSONStreamAware PEER_NOT_CONNECTED;
+    public static final JSONStreamAware PEER_NOT_OPEN_API;
+    public static final JSONStreamAware ACCOUNT_LEDGER_PRIVATE_TRANSACTIONS_ACCESS_DENIED;
+    public static final JSONStreamAware PRIVATE_TRANSACTIONS_ACCESS_DENIED;
+    public static final JSONStreamAware DEX_SELF_ORDER_MATCHING_DENIED;
+    public static final JSONStreamAware MONITOR_ALREADY_STARTED;
+    public static final JSONStreamAware MONITOR_NOT_STARTED;
+
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 6);
@@ -180,7 +223,6 @@ public final class JSONResponses {
         NOT_ENOUGH_APL = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware NOT_ENOUGH_ETH;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 6);
@@ -188,7 +230,6 @@ public final class JSONResponses {
         NOT_ENOUGH_ETH = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware NOT_ENOUGH_PAX;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 6);
@@ -196,7 +237,6 @@ public final class JSONResponses {
         NOT_ENOUGH_PAX = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware NOT_ENOUGH_ASSETS;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 6);
@@ -204,7 +244,6 @@ public final class JSONResponses {
         NOT_ENOUGH_ASSETS = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware ASSET_NOT_ISSUED_YET;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 6);
@@ -212,7 +251,6 @@ public final class JSONResponses {
         ASSET_NOT_ISSUED_YET = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware NOT_ENOUGH_CURRENCY;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 6);
@@ -220,7 +258,6 @@ public final class JSONResponses {
         NOT_ENOUGH_CURRENCY = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware ACCOUNT_GENERATION_ERROR;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 6);
@@ -228,7 +265,6 @@ public final class JSONResponses {
         ACCOUNT_GENERATION_ERROR = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware ERROR_NOT_ALLOWED;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 7);
@@ -236,31 +272,27 @@ public final class JSONResponses {
         ERROR_NOT_ALLOWED = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware ERROR_DISABLED;
     static {
-        JSONObject response  = new JSONObject();
+        JSONObject response = new JSONObject();
         response.put("errorCode", 16);
         response.put("errorDescription", "This API has been disabled");
         ERROR_DISABLED = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware ERROR_INCORRECT_REQUEST;
     static {
-        JSONObject response  = new JSONObject();
+        JSONObject response = new JSONObject();
         response.put("errorCode", 1);
         response.put("errorDescription", "Incorrect request");
         ERROR_INCORRECT_REQUEST = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware ERROR_AMOUNT_OR_RATE_IS_TOO_HIGH;
     static {
-        JSONObject response  = new JSONObject();
+        JSONObject response = new JSONObject();
         response.put("errorCode", 1);
         response.put("errorDescription", " Amount or rate is too high.");
         ERROR_AMOUNT_OR_RATE_IS_TOO_HIGH = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware NOT_FORGING;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 5);
@@ -268,7 +300,6 @@ public final class JSONResponses {
         NOT_FORGING = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware POST_REQUIRED;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 1);
@@ -276,7 +307,6 @@ public final class JSONResponses {
         POST_REQUIRED = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware REQUIRED_2FA;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 1);
@@ -284,7 +314,6 @@ public final class JSONResponses {
         REQUIRED_2FA = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware FEATURE_NOT_AVAILABLE;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 9);
@@ -292,7 +321,6 @@ public final class JSONResponses {
         FEATURE_NOT_AVAILABLE = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware DECRYPTION_FAILED;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 8);
@@ -300,7 +328,6 @@ public final class JSONResponses {
         DECRYPTION_FAILED = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware ALREADY_DELIVERED;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 8);
@@ -308,7 +335,6 @@ public final class JSONResponses {
         ALREADY_DELIVERED = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware DUPLICATE_REFUND;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 8);
@@ -316,7 +342,6 @@ public final class JSONResponses {
         DUPLICATE_REFUND = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware GOODS_NOT_DELIVERED;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 8);
@@ -324,7 +349,6 @@ public final class JSONResponses {
         GOODS_NOT_DELIVERED = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware NO_MESSAGE;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 8);
@@ -332,7 +356,6 @@ public final class JSONResponses {
         NO_MESSAGE = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware HEIGHT_NOT_AVAILABLE;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 8);
@@ -340,7 +363,6 @@ public final class JSONResponses {
         HEIGHT_NOT_AVAILABLE = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware CANNOT_DELETE_CURRENCY;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 8);
@@ -348,7 +370,6 @@ public final class JSONResponses {
         CANNOT_DELETE_CURRENCY = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware NO_PASSWORD_IN_CONFIG;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 8);
@@ -356,7 +377,6 @@ public final class JSONResponses {
         NO_PASSWORD_IN_CONFIG = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware POLL_RESULTS_NOT_AVAILABLE;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 8);
@@ -364,7 +384,6 @@ public final class JSONResponses {
         POLL_RESULTS_NOT_AVAILABLE = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware POLL_FINISHED;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 8);
@@ -372,7 +391,6 @@ public final class JSONResponses {
         POLL_FINISHED = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware PHASING_TRANSACTION_FINISHED;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 8);
@@ -380,7 +398,6 @@ public final class JSONResponses {
         PHASING_TRANSACTION_FINISHED = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware TOO_MANY_PHASING_VOTES;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 10);
@@ -388,7 +405,6 @@ public final class JSONResponses {
         TOO_MANY_PHASING_VOTES = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware HASHES_MISMATCH;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 10);
@@ -396,7 +412,6 @@ public final class JSONResponses {
         HASHES_MISMATCH = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware REQUIRED_BLOCK_NOT_FOUND;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 13);
@@ -404,7 +419,6 @@ public final class JSONResponses {
         REQUIRED_BLOCK_NOT_FOUND = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware REQUIRED_LAST_BLOCK_NOT_FOUND;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 14);
@@ -412,7 +426,6 @@ public final class JSONResponses {
         REQUIRED_LAST_BLOCK_NOT_FOUND = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware MISSING_SECRET_PHRASE;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 3);
@@ -420,7 +433,6 @@ public final class JSONResponses {
         MISSING_SECRET_PHRASE = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware PRUNED_TRANSACTION;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 15);
@@ -428,7 +440,6 @@ public final class JSONResponses {
         PRUNED_TRANSACTION = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware PROXY_MISSING_REQUEST_TYPE;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 17);
@@ -436,7 +447,6 @@ public final class JSONResponses {
         PROXY_MISSING_REQUEST_TYPE = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware PROXY_SECRET_DATA_DETECTED;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 18);
@@ -444,7 +454,6 @@ public final class JSONResponses {
         PROXY_SECRET_DATA_DETECTED = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware API_PROXY_NO_OPEN_API_PEERS;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 19);
@@ -452,7 +461,6 @@ public final class JSONResponses {
         API_PROXY_NO_OPEN_API_PEERS = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware LIGHT_CLIENT_DISABLED_API;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 20);
@@ -460,7 +468,6 @@ public final class JSONResponses {
         LIGHT_CLIENT_DISABLED_API = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware PEER_NOT_CONNECTED;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 5);
@@ -468,7 +475,6 @@ public final class JSONResponses {
         PEER_NOT_CONNECTED = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware PEER_NOT_OPEN_API;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 5);
@@ -476,7 +482,6 @@ public final class JSONResponses {
         PEER_NOT_OPEN_API = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware ACCOUNT_LEDGER_PRIVATE_TRANSACTIONS_ACCESS_DENIED;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 3);
@@ -484,7 +489,6 @@ public final class JSONResponses {
         ACCOUNT_LEDGER_PRIVATE_TRANSACTIONS_ACCESS_DENIED = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware PRIVATE_TRANSACTIONS_ACCESS_DENIED;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 3);
@@ -492,7 +496,6 @@ public final class JSONResponses {
         PRIVATE_TRANSACTIONS_ACCESS_DENIED = JSON.prepare(response);
     }
 
-    public static final JSONStreamAware DEX_SELF_ORDER_MATCHING_DENIED;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 5001);
@@ -500,6 +503,22 @@ public final class JSONResponses {
         DEX_SELF_ORDER_MATCHING_DENIED = JSON.prepare(response);
     }
 
+    static {
+        JSONObject response = new JSONObject();
+        response.put("errorCode", 5);
+        response.put("errorDescription", "Account monitor already started");
+        MONITOR_ALREADY_STARTED = JSON.prepare(response);
+    }
+
+    static {
+        JSONObject response = new JSONObject();
+        response.put("errorCode", 5);
+        response.put("errorDescription", "Account monitor not started");
+        MONITOR_NOT_STARTED = JSON.prepare(response);
+    }
+
+    private JSONResponses() {
+    } // never
 
     public static JSONStreamAware missing(String... paramNames) {
         JSONObject response = new JSONObject();
@@ -600,14 +619,6 @@ public final class JSONResponses {
         }
     }
 
-    public static final JSONStreamAware MONITOR_ALREADY_STARTED;
-    static {
-        JSONObject response = new JSONObject();
-        response.put("errorCode", 5);
-        response.put("errorDescription", "Account monitor already started");
-        MONITOR_ALREADY_STARTED = JSON.prepare(response);
-    }
-
     public static JSONStreamAware error2FA(Status2FA status2FA, long accountId) {
         return accountError(accountId, String.valueOf(status2FA));
     }
@@ -625,15 +636,5 @@ public final class JSONResponses {
         }
         return JSON.prepare(response);
     }
-
-    public static final JSONStreamAware MONITOR_NOT_STARTED;
-    static {
-        JSONObject response = new JSONObject();
-        response.put("errorCode", 5);
-        response.put("errorDescription", "Account monitor not started");
-        MONITOR_NOT_STARTED = JSON.prepare(response);
-    }
-
-    private JSONResponses() {} // never
 
 }

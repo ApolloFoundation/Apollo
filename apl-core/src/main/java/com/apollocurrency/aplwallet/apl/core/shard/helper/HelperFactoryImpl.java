@@ -6,8 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
 import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 
-import java.util.Optional;
-
 /**
  * {@inheritDoc}
  */
@@ -17,14 +15,14 @@ public class HelperFactoryImpl implements HelperFactory<BatchedPaginationOperati
      * {@inheritDoc}
      */
     @Override
-    public BatchedPaginationOperation createSelectInsertHelper(String helperTableName) throws IllegalArgumentException{
+    public BatchedPaginationOperation createSelectInsertHelper(String helperTableName) throws IllegalArgumentException {
         switch (helperTableName.toLowerCase()) {
-            case ShardConstants.BLOCK_TABLE_NAME :
-            case ShardConstants.TRANSACTION_TABLE_NAME : {
-                    return (new BlockTransactionInsertHelper());
+            case ShardConstants.BLOCK_TABLE_NAME:
+            case ShardConstants.TRANSACTION_TABLE_NAME: {
+                return (new BlockTransactionInsertHelper());
             }
-            case ShardConstants.BLOCK_INDEX_TABLE_NAME :
-            case ShardConstants.TRANSACTION_INDEX_TABLE_NAME : {
+            case ShardConstants.BLOCK_INDEX_TABLE_NAME:
+            case ShardConstants.TRANSACTION_INDEX_TABLE_NAME: {
                 return (new SecondaryIndexInsertHelper());
             }
             default: {

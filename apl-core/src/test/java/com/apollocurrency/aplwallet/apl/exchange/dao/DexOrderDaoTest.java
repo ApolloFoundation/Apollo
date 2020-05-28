@@ -69,11 +69,11 @@ class DexOrderDaoTest {
     @Test
     void testGetClosedOrders() {
         List<DexOrder> orders = dexOrderDao.getClosedOrdersFromDbId(HeightDbIdRequest.builder()
-                .coin(DexCurrency.ETH)
-                .fromDbId(999)
-                .limit(2)
-                .toHeight(123)
-                .build());
+            .coin(DexCurrency.ETH)
+            .fromDbId(999)
+            .limit(2)
+            .toHeight(123)
+            .build());
 
         assertEquals(List.of(td.ORDER_BEA_1), orders);
     }
@@ -81,11 +81,11 @@ class DexOrderDaoTest {
     @Test
     void testGetClosedOrdersWithPagination() {
         List<DexOrder> orders = dexOrderDao.getClosedOrdersFromDbId(HeightDbIdRequest.builder()
-                .coin(DexCurrency.ETH)
-                .fromDbId(999)
-                .limit(2)
-                .toHeight(125)
-                .build());
+            .coin(DexCurrency.ETH)
+            .fromDbId(999)
+            .limit(2)
+            .toHeight(125)
+            .build());
 
         assertEquals(List.of(td.ORDER_BEA_1, td.ORDER_BEA_8), orders);
     }
@@ -100,12 +100,12 @@ class DexOrderDaoTest {
     @Test
     void testGetNoClosedBuyOrdersBetweenTimestamps() {
         List<DexOrder> orders = dexOrderDao.getOrdersFromDbIdBetweenTimestamps(OrderDbIdPaginationDbRequest.builder()
-                .limit(3)
-                .coin(DexCurrency.ETH)
-                .fromDbId(0)
-                .fromTime(11_000)
-                .toTime(17_000)
-                .build());
+            .limit(3)
+            .coin(DexCurrency.ETH)
+            .fromDbId(0)
+            .fromTime(11_000)
+            .toTime(17_000)
+            .build());
 
         assertEquals(List.of(), orders);
 
@@ -114,12 +114,12 @@ class DexOrderDaoTest {
     @Test
     void testGetClosedBuyOrdersBetweenTimestamps() {
         List<DexOrder> orders = dexOrderDao.getOrdersFromDbIdBetweenTimestamps(OrderDbIdPaginationDbRequest.builder()
-                .limit(3)
-                .coin(DexCurrency.ETH)
-                .fromDbId(1030)
-                .fromTime(6_001)
-                .toTime(19_001)
-                .build());
+            .limit(3)
+            .coin(DexCurrency.ETH)
+            .fromDbId(1030)
+            .fromTime(6_001)
+            .toTime(19_001)
+            .build());
 
         assertEquals(List.of(td.ORDER_BEA_8), orders);
 

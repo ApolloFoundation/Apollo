@@ -45,9 +45,9 @@ public class ParameterExceptionMapper implements ExceptionMapper<ParameterExcept
         }
 
         return Response.status(Response.Status.OK)
-                .entity(responseEntity)
-                .type(MediaType.APPLICATION_JSON)
-                .build();
+            .entity(responseEntity)
+            .type(MediaType.APPLICATION_JSON)
+            .build();
     }
 
 }

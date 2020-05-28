@@ -38,7 +38,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 public abstract class PrunableDbTable<T> extends EntityDbTable<T> {
     private static final Logger LOG = getLogger(PrunableDbTable.class);
     private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    public  PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    public PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
 
     protected PrunableDbTable(String table, KeyFactory<T> dbKeyFactory) {
         super(table, dbKeyFactory);
@@ -74,7 +74,7 @@ public abstract class PrunableDbTable<T> extends EntityDbTable<T> {
         // select MIN and MAX dbId values in one query
         @DatabaseSpecificDml(DmlMarker.IFNULL_USE)
         String selectMinSql = String.format("SELECT IFNULL(min(DB_ID), 0) as min_id, " +
-                "IFNULL(max(DB_ID), 0) as max_id, IFNULL(count(*), 0) as count, max(height) as max_height from %s where HEIGHT <= ? and transaction_timestamp >= ?", table);
+            "IFNULL(max(DB_ID), 0) as max_id, IFNULL(count(*), 0) as count, max(height) as max_height from %s where HEIGHT <= ? and transaction_timestamp >= ?", table);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(selectMinSql)) {
@@ -83,8 +83,7 @@ public abstract class PrunableDbTable<T> extends EntityDbTable<T> {
             MinMaxValue minMaxValue = this.getMinMaxValue(pstmt);
             minMaxValue.setColumn("db_id");
             return minMaxValue;
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }

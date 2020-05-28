@@ -7,11 +7,10 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 /**
- *
  * @author al
  */
 public final class StringKey implements DbKey {
-    
+
     private final String id;
 
     StringKey(String id) {

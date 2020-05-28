@@ -1,3 +1,7 @@
+/*
+ *  Copyright © 2018-2020 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.util.env.config;
 
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -71,4 +75,7 @@ public class ChainsConfigLoader extends AbstractConfigLoader<Map<UUID, Chain>> {
         return chains.stream().collect(Collectors.toMap(Chain::getChainId, Function.identity()));
     }
 
+    public static ObjectMapper getMAPPER() {
+        return MAPPER;
+    }
 }

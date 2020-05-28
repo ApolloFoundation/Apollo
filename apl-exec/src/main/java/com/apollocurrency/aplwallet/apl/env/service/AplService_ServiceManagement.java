@@ -20,12 +20,13 @@
 
 package com.apollocurrency.aplwallet.apl.env.service;
 
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.exec.Apollo;
-//TODO: Make it work again in Future
-//import com.apollocurrency.aplwallet.apldesktop.LookAndFeel;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 
 import javax.swing.*;
+
+//TODO: Make it work again in Future
+//import com.apollocurrency.aplwallet.apldesktop.LookAndFeel;
 
 @SuppressWarnings("UnusedDeclaration")
 public class AplService_ServiceManagement {
@@ -43,18 +44,18 @@ public class AplService_ServiceManagement {
     // Invoked when registering the service
     public static String[] serviceGetInfo() {
         return new String[]{
-                Constants.APPLICATION + " Server", // Long name
-                "Manages the " + Constants.APPLICATION + " cryptographic currency protocol", // Description
-                "true", // IsAutomatic
-                "true", // IsAcceptStop
-                "", // failure exe
-                "", // args failure
-                "", // dependencies
-                "NONE/NONE/NONE", // ACTION = NONE | REBOOT | RESTART | RUN
-                "0/0/0", // ActionDelay in seconds
-                "-1", // Reset time in seconds
-                "", // Boot Message
-                "false" // IsAutomatic Delayed
+            Constants.APPLICATION + " Server", // Long name
+            "Manages the " + Constants.APPLICATION + " cryptographic currency protocol", // Description
+            "true", // IsAutomatic
+            "true", // IsAcceptStop
+            "", // failure exe
+            "", // args failure
+            "", // dependencies
+            "NONE/NONE/NONE", // ACTION = NONE | REBOOT | RESTART | RUN
+            "0/0/0", // ActionDelay in seconds
+            "-1", // Reset time in seconds
+            "", // Boot Message
+            "false" // IsAutomatic Delayed
         };
     }
 

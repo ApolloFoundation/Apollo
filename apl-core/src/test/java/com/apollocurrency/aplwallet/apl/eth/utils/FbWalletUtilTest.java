@@ -4,20 +4,20 @@
 
 package com.apollocurrency.aplwallet.apl.eth.utils;
 
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.Objects;
 
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FbWalletUtilTest {
 
     @Test
     void getWalletFileVersion() {
         Integer version1 = FbWalletUtil.getWalletFileVersion(String.join(File.separator, "a2e9b9", "v1_2019-03-19_13-58-16---APL-9ES6-JTW3-JBN4" +
-                "-7LLZQ"));
+            "-7LLZQ"));
         Integer version0 = FbWalletUtil.getWalletFileVersion(String.join(File.separator, "a2e9b9", "v0_2019-03-19_13-58-16---APL-9ES6-JTW3-JBN4-7LLZQ"));
 
         assertTrue(Objects.equals(1, version1));

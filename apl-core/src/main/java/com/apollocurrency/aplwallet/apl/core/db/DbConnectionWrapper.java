@@ -2,7 +2,6 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -10,10 +9,9 @@ import java.util.Set;
  */
 public class DbConnectionWrapper extends FilteredConnection {
 
+    long txStart = 0;
     private ThreadLocal<DbConnectionWrapper> localConnection;
     private ThreadLocal<Set<TransactionCallback>> transactionCallback;
-
-    long txStart = 0;
 
     public DbConnectionWrapper(Connection con, FilteredFactoryImpl factory, ThreadLocal<DbConnectionWrapper> localConnection,
                                ThreadLocal<Set<TransactionCallback>> transactionCallback) {

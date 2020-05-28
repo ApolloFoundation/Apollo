@@ -6,15 +6,15 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 import com.apollocurrency.aplwallet.apl.core.transaction.ColoredCoins;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import java.nio.ByteBuffer;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+
 /**
- *
  * @author al
  */
 public final class ColoredCoinsAssetDelete extends AbstractAttachment {
-    
+
     final long assetId;
     final long quantityATU;
 
@@ -65,5 +65,5 @@ public final class ColoredCoinsAssetDelete extends AbstractAttachment {
     public long getQuantityATU() {
         return quantityATU;
     }
-    
+
 }

@@ -4,6 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.AccountController;
+import com.apollocurrency.aplwallet.apl.core.rest.endpoint.BlockController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.DebugController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.DexController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.DexTransactionSendingController;
@@ -17,6 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ServerInfoController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ShardController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.TradingDataController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.TransportInteractionController;
+import com.apollocurrency.aplwallet.apl.core.rest.endpoint.UpdateController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.UserErrorMessageController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.UtilsController;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexMatcherServiceImpl;
@@ -29,10 +31,11 @@ import java.util.Set;
 
 /**
  * REST and Swagger configuration and fire-up
+ *
  * @author alukin@gmail.com
  */
 @ApplicationPath("/rest")
-public class RestEasyApplication extends Application  {
+public class RestEasyApplication extends Application {
 
     @Override
     public Set<Class<?>> getClasses() {
@@ -57,6 +60,8 @@ public class RestEasyApplication extends Application  {
         set.add(DexTransactionSendingController.class);
         set.add(UtilsController.class);
         set.add(ServerInfoController.class);
+        set.add(UpdateController.class);
+        set.add(BlockController.class);
 
 
         //TODO: add all endpoints below

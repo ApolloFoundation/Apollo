@@ -5,9 +5,11 @@ package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtendAttachment;
@@ -18,24 +20,14 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 
-import java.nio.ByteBuffer;
 import javax.enterprise.inject.spi.CDI;
+import java.nio.ByteBuffer;
 
 /**
- *
  * @author al
  */
 @Slf4j
 public abstract class Data extends TransactionType {
-
-    private static TaggedDataService taggedDataService;
-
-    private static TaggedDataService lookupTaggedDataService() {
-        if (taggedDataService == null) {
-            taggedDataService = CDI.current().select(TaggedDataService.class).get();
-        }
-        return taggedDataService;
-    }
 
     private static final Fee TAGGED_DATA_FEE = new Fee.SizeBasedFee(Constants.ONE_APL, Constants.ONE_APL / 10) {
         @Override
@@ -43,44 +35,7 @@ public abstract class Data extends TransactionType {
             return appendix.getFullSize();
         }
     };
-
-    private Data() {
-    }
-
-    @Override
-    public final byte getType() {
-        return TransactionType.TYPE_DATA;
-    }
-
-    @Override
-    public Fee getBaselineFee(Transaction transaction) {
-        return TAGGED_DATA_FEE;
-    }
-
-    @Override
-    public final boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        return true;
-    }
-
-    @Override
-    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-    }
-
-    @Override
-    public final boolean canHaveRecipient() {
-        return false;
-    }
-
-    @Override
-    public final boolean isPhasingSafe() {
-        return false;
-    }
-
-    @Override
-    public final boolean isPhasable() {
-        return false;
-    }
-
+    private static TaggedDataService taggedDataService;
     public static final TransactionType TAGGED_DATA_UPLOAD = new Data() {
         @Override
         public byte getSubtype() {
@@ -105,7 +60,7 @@ public abstract class Data extends TransactionType {
         @Override
         public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
             TaggedDataUploadAttachment attachment = (TaggedDataUploadAttachment) transaction.getAttachment();
-            if (attachment.getData() == null && timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMinPrunableLifetime()) {
+            if (attachment.getData() == null && lookupTimeService().getEpochTime() - transaction.getTimestamp() < lookupBlockchainConfig().getMinPrunableLifetime()) {
                 throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
             }
             if (attachment.getData() != null) {
@@ -150,7 +105,6 @@ public abstract class Data extends TransactionType {
             return lookupTaggedDataService().isPruned(transactionId);
         }
     };
-
     public static final TransactionType TAGGED_DATA_EXTEND = new Data() {
         @Override
         public byte getSubtype() {
@@ -175,14 +129,17 @@ public abstract class Data extends TransactionType {
         @Override
         public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
             TaggedDataExtendAttachment attachment = (TaggedDataExtendAttachment) transaction.getAttachment();
-            if ((attachment.jsonIsPruned() || attachment.getData() == null) && timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMinPrunableLifetime()) {
+            BlockchainConfig blockchainConfig = lookupBlockchainConfig();
+            TimeService timeService = lookupTimeService();
+            if ((attachment.jsonIsPruned() || attachment.getData() == null) && Data.lookupTimeService().getEpochTime() - transaction.getTimestamp() < Data.lookupBlockchainConfig().getMinPrunableLifetime()) {
                 throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
             }
-            if (!blockchain.hasTransaction(attachment.getTaggedDataId(), blockchain.getHeight())) {
+            Blockchain blockchain = lookupBlockchain();
+            if (!lookupBlockchain().hasTransaction(attachment.getTaggedDataId(), lookupBlockchain().getHeight())) {
                 throw new AplException.NotCurrentlyValidException("No such tagged data upload " + Long.toUnsignedString(attachment.getTaggedDataId()));
             }
             TaggedData taggedData = lookupTaggedDataService().getData(attachment.getTaggedDataId());
-            if (taggedData != null && taggedData.getTransactionTimestamp() > timeService.getEpochTime() + 6 * blockchainConfig.getMinPrunableLifetime()) {
+            if (taggedData != null && taggedData.getTransactionTimestamp() > Data.lookupTimeService().getEpochTime() + 6 * lookupBlockchainConfig().getMinPrunableLifetime()) {
                 throw new AplException.NotCurrentlyValidException("Data already extended, timestamp is " + taggedData.getTransactionTimestamp());
             }
         }
@@ -204,5 +161,49 @@ public abstract class Data extends TransactionType {
             return false;
         }
     };
+
+    private Data() {
+    }
+
+    private static TaggedDataService lookupTaggedDataService() {
+        if (taggedDataService == null) {
+            taggedDataService = CDI.current().select(TaggedDataService.class).get();
+        }
+        return taggedDataService;
+    }
+
+    @Override
+    public final byte getType() {
+        return TransactionType.TYPE_DATA;
+    }
+
+    @Override
+    public Fee getBaselineFee(Transaction transaction) {
+        return TAGGED_DATA_FEE;
+    }
+
+    @Override
+    public final boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+        return true;
+    }
+
+    @Override
+    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+    }
+
+    @Override
+    public final boolean canHaveRecipient() {
+        return false;
+    }
+
+    @Override
+    public final boolean isPhasingSafe() {
+        return false;
+    }
+
+    @Override
+    public final boolean isPhasable() {
+        return false;
+    }
 
 }

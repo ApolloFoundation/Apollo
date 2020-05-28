@@ -6,15 +6,15 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import java.nio.ByteBuffer;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+
 /**
- *
  * @author al
  */
 public final class ShufflingRegistration extends AbstractAttachment implements ShufflingAttachment {
-    
+
     final byte[] shufflingFullHash;
 
     public ShufflingRegistration(ByteBuffer buffer) {
@@ -61,5 +61,5 @@ public final class ShufflingRegistration extends AbstractAttachment implements S
     public byte[] getShufflingStateHash() {
         return shufflingFullHash;
     }
-    
+
 }

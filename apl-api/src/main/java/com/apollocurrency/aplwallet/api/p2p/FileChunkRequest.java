@@ -11,22 +11,22 @@ import lombok.Setter;
 import lombok.ToString;
 
 /**
- *
  * @author alukin@gmail.com
  */
-@Getter @Setter
+@Getter
+@Setter
 @ToString
 @EqualsAndHashCode(callSuper = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class FileChunkRequest extends BaseP2PRequest{
+public class FileChunkRequest extends BaseP2PRequest {
     public String fileId;
     public int id;
     public Long offset;
-    public Long size;   
+    public Long size;
 
     public FileChunkRequest() {
-        requestType="getFileChunk";
+        requestType = "getFileChunk";
     }
-    
+
 }

@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import org.slf4j.Logger;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 public class ConsoleSecurityAlertSender implements SecurityAlertSender {
     private static final Logger LOG = getLogger(ConsoleSecurityAlertSender.class);
@@ -16,6 +16,7 @@ public class ConsoleSecurityAlertSender implements SecurityAlertSender {
     public void send(Transaction invalidUpdateTransaction) {
         LOG.info("Transaction: " + invalidUpdateTransaction.getJSONObject().toJSONString() + " is invalid");
     }
+
     @Override
     public void send(String message) {
         LOG.warn(message);

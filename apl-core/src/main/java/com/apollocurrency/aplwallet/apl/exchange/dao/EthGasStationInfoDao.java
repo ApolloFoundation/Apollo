@@ -51,8 +51,8 @@ public class EthGasStationInfoDao {
             if (con.getResponseCode() == HttpURLConnection.HTTP_OK) {
                 try (Reader reader = new BufferedReader(new InputStreamReader(con.getInputStream(), "UTF-8"))) {
                     ethGasInfo = new ObjectMapper()
-                            .readerFor(EthStationGasInfo.class)
-                            .readValue(reader);
+                        .readerFor(EthStationGasInfo.class)
+                        .readValue(reader);
                 }
             }
         } finally {
@@ -87,8 +87,8 @@ public class EthGasStationInfoDao {
             if (con.getResponseCode() == HttpURLConnection.HTTP_OK) {
                 try (Reader reader = new BufferedReader(new InputStreamReader(con.getInputStream(), "UTF-8"))) {
                     ethGasInfo = new ObjectMapper()
-                            .readerFor(EthChainGasInfoImpl.class)
-                            .readValue(reader);
+                        .readerFor(EthChainGasInfoImpl.class)
+                        .readValue(reader);
                 }
             }
         } finally {

@@ -41,16 +41,15 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ShardsDownloadService {
 
+    public static final String FORCED_SHARD_ID_ENV = "APOLLO_FORCE_IMPORT_SHARD_ID";
+    private static final int MIN_SHARDING_PEERS = 2;
     private final ShardInfoDownloader shardInfoDownloader;
     private final UUID myChainId;
-
     private final Event<ShardPresentData> presentDataEvent;
     private final FileDownloadService fileDownloadService;
     private final PropertiesHolder propertiesHolder;
     private final ShardNameHelper shardNameHelper = new ShardNameHelper();
     private final Map<Long, ShardDownloadStatus> shardDownloadStatuses = new HashMap<>();
-    private static final int MIN_SHARDING_PEERS = 2;
-    public static final String FORCED_SHARD_ID_ENV = "APOLLO_FORCE_IMPORT_SHARD_ID";
 
     @Inject
     public ShardsDownloadService(ShardInfoDownloader shardInfoDownloader,
@@ -66,6 +65,18 @@ public class ShardsDownloadService {
         this.propertiesHolder = propertiesHolder;
     }
 
+    private static boolean isAcceptable(FileDownloadDecision d) {
+        boolean res = (d == FileDownloadDecision.AbsOK || d == FileDownloadDecision.OK);
+        return res;
+    }
+
+    public static Map<Long, Double> sortByValue(final Map<Long, Double> w) {
+        return w.entrySet()
+            .stream()
+            .sorted((Map.Entry.<Long, Double>comparingByValue().reversed()))
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+    }
+
     public boolean getShardingInfoFromPeers() {
         Map<String, ShardingInfo> shardInfoByPeers = shardInfoDownloader.getShardInfoFromPeers();
         if (shardInfoByPeers.size() < MIN_SHARDING_PEERS) {
@@ -73,9 +84,9 @@ public class ShardsDownloadService {
         }
         shardInfoDownloader.processAllPeersShardingInfo();
         Set<Long> shardIds = shardInfoDownloader.getSortedByIdShards().keySet();
-        for(Long sId: shardIds){
+        for (Long sId : shardIds) {
             ShardInfo si = shardInfoDownloader.getShardInfo(sId);
-            if(si==null){
+            if (si == null) {
                 //very strange situation, but it could happend
                 continue;
             }
@@ -92,29 +103,24 @@ public class ShardsDownloadService {
         //TODO: process events carefully
         for (Long shardId : shardDownloadStatuses.keySet()) {
             ShardDownloadStatus status = shardDownloadStatuses.get(shardId);
-            if(fileData.fileOk){
-              status.setStatus(fileData.fileId, ShardDownloadStatus.OK);
-            }else{
-              status.setStatus(fileData.fileId, ShardDownloadStatus.FAILED);
-              log.debug("File {} download failed. reason: {}",fileData.fileId, fileData.reason);
+            if (fileData.fileOk) {
+                status.setStatus(fileData.fileId, ShardDownloadStatus.OK);
+            } else {
+                status.setStatus(fileData.fileId, ShardDownloadStatus.FAILED);
+                log.debug("File {} download failed. reason: {}", fileData.fileId, fileData.reason);
             }
-            if(status.isDowloadedOK()){
-                if(!status.isSigalFired()){
+            if (status.isDowloadedOK()) {
+                if (!status.isSigalFired()) {
                     fireShardPresentEvent(shardId);
                     status.setSigalFired(true);
                 }
-            }else if(status.isDownloadCompleted()) {
-                if(!status.isSigalFired()){
-                    fireNoShardEvent(shardId,"SHARDING: shard download failed");
+            } else if (status.isDownloadCompleted()) {
+                if (!status.isSigalFired()) {
+                    fireNoShardEvent(shardId, "SHARDING: shard download failed");
                     status.setSigalFired(true);
                 }
             }
         }
-    }
-
-    private static boolean isAcceptable(FileDownloadDecision d) {
-        boolean res = (d == FileDownloadDecision.AbsOK || d == FileDownloadDecision.OK);
-        return res;
     }
 
     private AnnotationLiteral<ShardPresentEvent> literal(ShardPresentEventType shardPresentEventType) {
@@ -128,7 +134,7 @@ public class ShardsDownloadService {
 
     private void fireNoShardEvent(Long shardId, String reason) {
         ShardPresentData shardPresentData = new ShardPresentData();
-        log.warn("Firing 'NO_SHARD' event. shard: {} reason: {}",shardId, reason);
+        log.warn("Firing 'NO_SHARD' event. shard: {} reason: {}", shardId, reason);
         presentDataEvent.select(literal(ShardPresentEventType.NO_SHARD)).fire(shardPresentData); // data is ignored
     }
 
@@ -137,13 +143,13 @@ public class ShardsDownloadService {
         String fileId = snh.getFullShardId(shardId, myChainId);
         ShardInfo si = shardInfoDownloader.getShardInfo(shardId);
 
-        if(si==null){//forced shard import
+        if (si == null) {//forced shard import
             si = new ShardInfo(); //TODO: forced additional files
         }
         ShardPresentData shardPresentData = new ShardPresentData(
-                shardId,
-                fileId,
-                si.additionalFiles
+            shardId,
+            fileId,
+            si.additionalFiles
         );
         log.debug("Firing 'SHARD_PRESENT' event {}...", shardPresentData);
         presentDataEvent.select(literal(ShardPresentEventType.SHARD_PRESENT)).fireAsync(shardPresentData); // data is used
@@ -200,22 +206,15 @@ public class ShardsDownloadService {
         return result;
     }
 
-    public static Map<Long, Double> sortByValue(final Map<Long, Double> w) {
-        return w.entrySet()
-                .stream()
-                .sorted((Map.Entry.<Long, Double>comparingByValue().reversed()))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
-    }
-
-    private Long readForcedShardId(){
+    private Long readForcedShardId() {
         Long res = null;
         String envVal = System.getProperty(FORCED_SHARD_ID_ENV);
-        if(envVal!=null){
-           try{
-             res = Long.parseLong(envVal);
-           }catch(NumberFormatException ex){
-               log.debug("Invalid shard ID:{}",envVal);
-           }
+        if (envVal != null) {
+            try {
+                res = Long.parseLong(envVal);
+            } catch (NumberFormatException ex) {
+                log.debug("Invalid shard ID:{}", envVal);
+            }
         }
         return res;
     }
@@ -231,12 +230,12 @@ public class ShardsDownloadService {
             return result;
         }
         Long forcedShardImportId = readForcedShardId();
-        if(forcedShardImportId!=null){
-            log.debug("Defined {} to {}. Reading shard from disk",FORCED_SHARD_ID_ENV,forcedShardImportId);
+        if (forcedShardImportId != null) {
+            log.debug("Defined {} to {}. Reading shard from disk", FORCED_SHARD_ID_ENV, forcedShardImportId);
             fireShardPresentEvent(forcedShardImportId);
             return FileDownloadDecision.AbsOK;
         }
-        if(!getShardingInfoFromPeers()){
+        if (!getShardingInfoFromPeers()) {
             fireNoShardEvent(-1L, "SHARDING: no good shards foud in the network");
             result = FileDownloadDecision.NoPeers;
             return result;
@@ -249,9 +248,9 @@ public class ShardsDownloadService {
             return result;
         } else {
             //we have some shards available on the networks, let's decide what to do
-            Map<Long,Double> shardWeights = shardInfoDownloader.getShardRelativeWeights();
+            Map<Long, Double> shardWeights = shardInfoDownloader.getShardRelativeWeights();
             shardWeights.keySet().forEach((k) -> {
-                log.debug("Shard: {} Weight: {}",k,shardWeights.get(k));
+                log.debug("Shard: {} Weight: {}", k, shardWeights.get(k));
             });
             for (Long shardId : sortByValue(shardWeights).keySet()) {
                 double w = shardWeights.get(shardId);

@@ -13,6 +13,7 @@ public interface TaskExecutorService {
 
     /**
      * Returns <code>true</code> if specified task is valid for execution.
+     *
      * @param task the task to validate
      * @return <code>true</code> if task is valid for execution
      */
@@ -20,6 +21,7 @@ public interface TaskExecutorService {
 
     /**
      * Submit a task for execution
+     *
      * @param task the task to submit
      */
     void invoke(Task task);
@@ -36,6 +38,7 @@ public interface TaskExecutorService {
 
     /**
      * The main executor that executes submitted background tasks.
+     *
      * @return the task executor
      */
     ExecutorService executor();

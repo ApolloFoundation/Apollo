@@ -20,29 +20,29 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_FILE;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TOKEN;
+import com.apollocurrency.aplwallet.apl.core.app.Token;
+import com.apollocurrency.aplwallet.apl.core.http.APITag;
+import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.http.JSONData;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.Part;
 import java.io.IOException;
 
-import com.apollocurrency.aplwallet.apl.core.app.Token;
-import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
-import javax.enterprise.inject.Vetoed;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_FILE;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TOKEN;
 
 @Vetoed
 public final class GenerateFileToken extends AbstractAPIRequestHandler {
 
-   public GenerateFileToken() {
-        super("file", new APITag[] {APITag.TOKENS}, "secretPhrase", "account", "passphrase");
+    public GenerateFileToken() {
+        super("file", new APITag[]{APITag.TOKENS}, "secretPhrase", "account", "passphrase");
     }
 
     @Override

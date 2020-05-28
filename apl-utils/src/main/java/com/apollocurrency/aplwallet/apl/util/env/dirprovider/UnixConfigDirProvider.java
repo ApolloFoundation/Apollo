@@ -6,12 +6,12 @@ package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
 
 public class UnixConfigDirProvider extends DefaultConfigDirProvider {
 
-    public UnixConfigDirProvider(String applicationName, boolean isService,int netIdx) {
-        super(applicationName, isService,netIdx);
+    public UnixConfigDirProvider(String applicationName, boolean isService, int netIdx) {
+        super(applicationName, isService, netIdx);
     }
 
     @Override
     public String getSysConfigDirectory() {
-        return "/etc/" + applicationName+"/"+getConfigDirectoryName();
+        return "/etc/" + applicationName + "/" + getConfigDirectoryName();
     }
 }

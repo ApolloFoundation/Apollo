@@ -4,12 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import com.apollocurrency.aplwallet.apl.core.db.derived.ValuesDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
@@ -22,7 +16,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 public abstract class ValuesDbTableTest<T extends DerivedEntity> extends BasicDbTableTest<T> {
+    ValuesDbTable<T> table;
     private DbKey INCORRECT_DB_KEY = new DbKey() {
         @Override
         public int setPK(PreparedStatement pstmt) throws SQLException {
@@ -50,11 +50,9 @@ public abstract class ValuesDbTableTest<T extends DerivedEntity> extends BasicDb
     public void setUp() {
         super.setUp();
         table = getTable();
-        assertNotNull(getEntryWithListOfSize(getAllLatest(), table.getDbKeyFactory(),2));
-        assertNotNull(getEntryWithListOfSize(getAllLatest(), table.getDbKeyFactory(),3));
+        assertNotNull(getEntryWithListOfSize(getAllLatest(), table.getDbKeyFactory(), 2));
+        assertNotNull(getEntryWithListOfSize(getAllLatest(), table.getDbKeyFactory(), 3));
     }
-
-    ValuesDbTable<T> table ;
 
     @Test
     public void testGetByDbKey() {

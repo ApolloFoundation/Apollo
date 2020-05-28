@@ -49,8 +49,8 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 @Singleton
 public class ShardMigrationExecutor {
-    private static final Logger log = getLogger(ShardMigrationExecutor.class);
     public static final String ACCOUNT_LEDGER = "account_ledger";
+    private static final Logger log = getLogger(ShardMigrationExecutor.class);
     private final List<DataMigrateOperation> dataMigrateOperations = new ArrayList<>();
 
     private final javax.enterprise.event.Event<MigrateState> migrateStateEvent;
@@ -63,13 +63,6 @@ public class ShardMigrationExecutor {
     private volatile boolean backupDb;
     private BlockchainProcessor blockchainProcessor;
     private PeersService peers;
-    public boolean backupDb() {
-        return backupDb;
-    }
-
-    public void setBackupDb(boolean backupDb) {
-        this.backupDb = backupDb;
-    }
 
     @Inject
     public ShardMigrationExecutor(ShardEngine shardEngine,
@@ -94,9 +87,17 @@ public class ShardMigrationExecutor {
         this.blockchainProcessor = blockchainProcessor;
     }
 
+    public boolean backupDb() {
+        return backupDb;
+    }
+
+    public void setBackupDb(boolean backupDb) {
+        this.backupDb = backupDb;
+    }
+
     private void addCreateSchemaCommand(long shardId) {
         CreateShardSchemaCommand createShardSchemaCommand = new CreateShardSchemaCommand(shardId, shardEngine,
-                new ShardInitTableSchemaVersion(), /*hash should be null here*/ null, null);
+            new ShardInitTableSchemaVersion(), /*hash should be null here*/ null, null);
         this.addOperation(createShardSchemaCommand);
     }
 
@@ -130,13 +131,13 @@ public class ShardMigrationExecutor {
                 log.debug("SHARD HASH = {}", hash.length);
                 PrevBlockData prevBlockData = prevBlockInfoExtractor.extractPrevBlockData(height, 3);
                 CreateShardSchemaCommand createShardConstraintsCommand = new CreateShardSchemaCommand(shardId, shardEngine,
-                        new ShardAddConstraintsSchemaVersion(), /*hash should be correct value*/ hash, prevBlockData);
+                    new ShardAddConstraintsSchemaVersion(), /*hash should be correct value*/ hash, prevBlockData);
                 this.addOperation(createShardConstraintsCommand);
             case SHARD_SCHEMA_FULL:
             case SECONDARY_INDEX_STARTED:
                 excludeInfo = getOrInitExcludeInfo(excludeInfo, shardStartHeight, height);
                 UpdateSecondaryIndexCommand updateSecondaryIndexCommand = new UpdateSecondaryIndexCommand
-                        (shardEngine, height, excludeInfo);
+                    (shardEngine, height, excludeInfo);
                 this.addOperation(updateSecondaryIndexCommand);
             case SECONDARY_INDEX_FINISHED:
             case CSV_EXPORT_STARTED:
@@ -148,13 +149,13 @@ public class ShardMigrationExecutor {
             case CSV_EXPORT_FINISHED:
             case ZIP_ARCHIVE_STARTED:
                 tableInfoList = getOrInitTableList(tableInfoList);
-                ZipArchiveCommand zipArchiveCommand = new ZipArchiveCommand(shardId,tableInfoList, shardEngine);
+                ZipArchiveCommand zipArchiveCommand = new ZipArchiveCommand(shardId, tableInfoList, shardEngine);
                 this.addOperation(zipArchiveCommand);
             case ZIP_ARCHIVE_FINISHED:
             case DATA_REMOVE_STARTED:
                 excludeInfo = getOrInitExcludeInfo(excludeInfo, shardStartHeight, height);
                 DeleteCopiedDataCommand deleteCopiedDataCommand =
-                        new DeleteCopiedDataCommand(shardEngine, ShardConstants.DEFAULT_COMMIT_BATCH_SIZE, height, excludeInfo);
+                    new DeleteCopiedDataCommand(shardEngine, ShardConstants.DEFAULT_COMMIT_BATCH_SIZE, height, excludeInfo);
                 this.addOperation(deleteCopiedDataCommand);
             case DATA_REMOVED_FROM_MAIN:
                 FinishShardingCommand finishShardingCommand = new FinishShardingCommand(shardEngine, shardId);
@@ -170,14 +171,14 @@ public class ShardMigrationExecutor {
             return existingList;
         }
         List<TableInfo> tableInfoList = derivedTablesRegistry.getDerivedTables()
-                .stream()
-                .filter(t -> !t.getName().equalsIgnoreCase(ACCOUNT_LEDGER))
-                .map(t -> new TableInfo(t.getName(), t instanceof PrunableDbTable))
-                .collect(Collectors.toList());
+            .stream()
+            .filter(t -> !t.getName().equalsIgnoreCase(ACCOUNT_LEDGER))
+            .map(t -> new TableInfo(t.getName(), t instanceof PrunableDbTable))
+            .collect(Collectors.toList());
         List<TableInfo> coreTableInfoList = List.of(
-                new TableInfo(ShardConstants.BLOCK_TABLE_NAME), new TableInfo(ShardConstants.TRANSACTION_TABLE_NAME),
-                new TableInfo(ShardConstants.BLOCK_INDEX_TABLE_NAME), new TableInfo(ShardConstants.TRANSACTION_INDEX_TABLE_NAME),
-                new TableInfo(ShardConstants.SHARD_TABLE_NAME));
+            new TableInfo(ShardConstants.BLOCK_TABLE_NAME), new TableInfo(ShardConstants.TRANSACTION_TABLE_NAME),
+            new TableInfo(ShardConstants.BLOCK_INDEX_TABLE_NAME), new TableInfo(ShardConstants.TRANSACTION_INDEX_TABLE_NAME),
+            new TableInfo(ShardConstants.SHARD_TABLE_NAME));
         tableInfoList.addAll(coreTableInfoList);
         return tableInfoList;
     }
@@ -193,8 +194,9 @@ public class ShardMigrationExecutor {
     }
 
     @Transactional
-    public void cleanCommands() {
+    public void prepare() {
         dataMigrateOperations.clear();
+        shardEngine.prepare();
     }
 
     public void addOperation(DataMigrateOperation shardOperation) {
@@ -217,6 +219,7 @@ public class ShardMigrationExecutor {
 
     public MigrateState executeAllOperations() {
         stopNetOperations();
+        long start = System.currentTimeMillis();
         log.debug("START SHARDING...");
         MigrateState state = MigrateState.INIT;
         for (DataMigrateOperation dataMigrateOperation : dataMigrateOperations) {
@@ -229,7 +232,7 @@ public class ShardMigrationExecutor {
                 break;
             }
         }
-        log.debug("FINISHED SHARDING '{}'..", state);
+        log.debug("FINISHED SHARDING ----- '{}' in {} ms", state, System.currentTimeMillis() - start);
         resumeNetOperations();
         return state;
     }

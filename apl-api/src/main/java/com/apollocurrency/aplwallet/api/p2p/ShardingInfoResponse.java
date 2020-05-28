@@ -11,14 +11,14 @@ import lombok.Setter;
 import lombok.ToString;
 
 /**
- *
  * @author alukin@gmail.com
  */
-@Getter @Setter
+@Getter
+@Setter
 @ToString
 @EqualsAndHashCode(callSuper = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ShardingInfoResponse extends BaseP2PResponse {
-    public ShardingInfo shardingInfo=new ShardingInfo(); 
+    public ShardingInfo shardingInfo = new ShardingInfo();
 }

@@ -89,7 +89,11 @@ public enum MigrateState {
 
     private final int id; // internal value for compare operation
 
-    MigrateState(int id) { this.id = id; }
+    MigrateState(int id) {
+        this.id = id;
+    }
 
-    public int getValue() { return id; }
+    public int getValue() {
+        return id;
+    }
 }

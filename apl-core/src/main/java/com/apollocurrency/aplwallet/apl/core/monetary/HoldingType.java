@@ -22,7 +22,12 @@ package com.apollocurrency.aplwallet.apl.core.monetary;
 
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.account.service.*;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 
 import javax.enterprise.inject.spi.CDI;
 
@@ -130,23 +135,32 @@ public enum HoldingType {
     private static AccountService accountService;
     private static AccountAssetService accountAssetService;
     private static AccountCurrencyService accountCurrencyService;
+    private final byte code;
 
-    private static AccountService lookupAccountService(){
-        if ( accountService == null) {
+    HoldingType(byte code) {
+        this.code = code;
+    }
+
+    HoldingType() {
+        this.code = 0;
+    }
+
+    private static AccountService lookupAccountService() {
+        if (accountService == null) {
             accountService = CDI.current().select(AccountServiceImpl.class).get();
         }
         return accountService;
     }
 
-    private static AccountAssetService lookupAccountAssetService(){
-        if ( accountAssetService == null) {
+    private static AccountAssetService lookupAccountAssetService() {
+        if (accountAssetService == null) {
             accountAssetService = CDI.current().select(AccountAssetServiceImpl.class).get();
         }
         return accountAssetService;
     }
 
-    private static AccountCurrencyService lookupAccountCurrencyService(){
-        if ( accountCurrencyService == null) {
+    private static AccountCurrencyService lookupAccountCurrencyService() {
+        if (accountCurrencyService == null) {
             accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
         }
         return accountCurrencyService;
@@ -159,16 +173,6 @@ public enum HoldingType {
             }
         }
         throw new IllegalArgumentException("Invalid holdingType code: " + code);
-    }
-
-    private final byte code;
-
-    HoldingType(byte code) {
-        this.code = code;
-    }
-
-    HoldingType() {
-        this.code = 0;
     }
 
     public byte getCode() {

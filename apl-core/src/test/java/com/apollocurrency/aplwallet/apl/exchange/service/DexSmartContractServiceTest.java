@@ -66,11 +66,16 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class DexSmartContractServiceTest {
+    private static final long ALICE_ID = 100;
+    private static final String ALICE_PASS = "PASS";
+    private static final String ALICE_ETH_ADDRESS = "0x155b6577d5b73d779ce7ef4d397821dde1f6d26c";
+    private static final String PAX_ETH_ADDRESS = "0xc3188f569Ec3fD52335B8BcDB4A57A3cc377c221";
+    private static final String SWAP_ETH_ADDRESS = "0x64A2759A779d0928A00082621c0BB4b8050144f9";
+    private static final String ALICE_PRIV_KEY = "f47759941904a9bf6f89736c4541d850107c9be6ec619e7e65cf80a14ff7e8e4";
     @Mock
     private Web3j web3j;
     @Mock
     private KeyStoreService keyStoreService;
-
     @Mock
     private DexEthService dexEthService;
     @Mock
@@ -83,15 +88,7 @@ class DexSmartContractServiceTest {
     private TransactionReceiptProcessor receiptProcessor;
     @Mock
     private DexBeanProducer dexBeanProducer;
-
     private DexSmartContractService service;
-    private static final long ALICE_ID = 100;
-    private static final String ALICE_PASS = "PASS";
-    private static final String ALICE_ETH_ADDRESS = "0x155b6577d5b73d779ce7ef4d397821dde1f6d26c";
-    private static final String PAX_ETH_ADDRESS = "0xc3188f569Ec3fD52335B8BcDB4A57A3cc377c221";
-    private static final String SWAP_ETH_ADDRESS = "0x64A2759A779d0928A00082621c0BB4b8050144f9";
-    private static final String ALICE_PRIV_KEY = "f47759941904a9bf6f89736c4541d850107c9be6ec619e7e65cf80a14ff7e8e4";
-
     private EthWalletKey aliceWalletKey;
     private WalletKeysInfo aliceWalletKeysInfo;
     private EthGasInfo gasInfo;
@@ -157,6 +154,7 @@ class DexSmartContractServiceTest {
 
         assertEquals("hash", hash);
     }
+
     @Test
     void testDepositEthWithException() throws ExecutionException, AplException.ExecutiveProcessException {
         doReturn(new EthStationGasInfo(25.0, 20.0, 18.0)).when(dexEthService).getEthPriceInfo();
@@ -166,7 +164,7 @@ class DexSmartContractServiceTest {
 
         String hash = service.deposit(ALICE_PASS, 100L, ALICE_ID, ALICE_ETH_ADDRESS, BigInteger.TEN, null, DexCurrency.ETH);
 
-        assertNull( hash);
+        assertNull(hash);
     }
 
     @Test
@@ -446,6 +444,7 @@ class DexSmartContractServiceTest {
         doReturn(request).when(web3j).ethSendRawTransaction(encodedTx);
         doReturn(response).when(request).send();
     }
+
     private void mockEthSendTransactionWithErrorResponse(String encodedTx) throws IOException {
         EthSendTransaction response = mock(EthSendTransaction.class);
         doReturn(true).when(response).hasError();

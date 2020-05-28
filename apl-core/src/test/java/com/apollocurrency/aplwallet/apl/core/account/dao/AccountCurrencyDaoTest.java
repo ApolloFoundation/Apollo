@@ -45,33 +45,28 @@ import static org.mockito.Mockito.mock;
 class AccountCurrencyDaoTest {
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension(DbTestData.getInMemDbProps(), "db/acc-data.sql", "db/schema.sql");
-
+    @Inject
+    AccountCurrencyTable table;
+    AccountTestData testData = new AccountTestData();
+    Comparator<AccountCurrency> currencyComparator = Comparator
+        .comparing(AccountCurrency::getUnits, Comparator.reverseOrder())
+        .thenComparing(AccountCurrency::getAccountId)
+        .thenComparing(AccountCurrency::getCurrencyId);
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     private BlockchainProcessor blockchainProcessor = mock(BlockchainProcessor.class);
-
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class, AccountCurrencyTable.class
+        PropertiesHolder.class, AccountCurrencyTable.class
     )
-            .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
-            .addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class))
-            .addBeans(MockBean.of(blockchainProcessor, BlockchainProcessor.class, BlockchainProcessorImpl.class))
-            .addBeans(MockBean.of(mock(FullTextConfig.class), FullTextConfig.class, FullTextConfigImpl.class))
-            .addBeans(MockBean.of(mock(DerivedTablesRegistry.class), DerivedTablesRegistry.class, DerivedDbTablesRegistryImpl.class))
-            .build();
-
-    @Inject
-    AccountCurrencyTable table;
-
-    AccountTestData testData = new AccountTestData();
-
-    Comparator<AccountCurrency> currencyComparator = Comparator
-            .comparing(AccountCurrency::getUnits, Comparator.reverseOrder())
-            .thenComparing(AccountCurrency::getAccountId)
-            .thenComparing(AccountCurrency::getCurrencyId);
+        .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
+        .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
+        .addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class))
+        .addBeans(MockBean.of(blockchainProcessor, BlockchainProcessor.class, BlockchainProcessorImpl.class))
+        .addBeans(MockBean.of(mock(FullTextConfig.class), FullTextConfig.class, FullTextConfigImpl.class))
+        .addBeans(MockBean.of(mock(DerivedTablesRegistry.class), DerivedTablesRegistry.class, DerivedDbTablesRegistryImpl.class))
+        .build();
 
     @Test
     void testLoad() {
@@ -104,13 +99,13 @@ class AccountCurrencyDaoTest {
     void testSave_update_existing_entity() {//SQL MERGE -> UPDATE
         AccountCurrency previous = table.get(table.getDbKeyFactory().newKey(testData.CUR_0));
         assertNotNull(previous);
-        previous.setUnconfirmedUnits(previous.getUnconfirmedUnits()+50000);
+        previous.setUnconfirmedUnits(previous.getUnconfirmedUnits() + 50000);
 
         DbUtils.inTransaction(dbExtension, (con) -> table.insert(previous));
         AccountCurrency actual = table.get(table.getDbKeyFactory().newKey(previous));
 
         assertNotNull(actual);
-        assertTrue(actual.getUnconfirmedUnits()-testData.CUR_0.getUnconfirmedUnits() == 50000);
+        assertTrue(actual.getUnconfirmedUnits() - testData.CUR_0.getUnconfirmedUnits() == 50000);
         assertEquals(previous.getUnits(), actual.getUnits());
         assertEquals(previous.getCurrencyId(), actual.getCurrencyId());
     }
@@ -120,8 +115,8 @@ class AccountCurrencyDaoTest {
     void testDefaultSort() {
         assertNotNull(table.defaultSort());
         List<AccountCurrency> expectedAll = testData.ALL_CURRENCY.stream()
-                .sorted(currencyComparator)
-                .collect(Collectors.toList());
+            .sorted(currencyComparator)
+            .collect(Collectors.toList());
         List<AccountCurrency> actualAll = toList(table.getAll(0, Integer.MAX_VALUE));
         assertEquals(expectedAll, actualAll);
     }
@@ -131,8 +126,8 @@ class AccountCurrencyDaoTest {
         List<AccountCurrency> actual = toList(table.getByAccount(testData.CUR_2.getAccountId(), 0, Integer.MAX_VALUE));
         assertEquals(2, actual.size());
         List<AccountCurrency> expected = testData.ALL_CURRENCY.stream()
-                .filter(cur -> cur.getAccountId()==testData.CUR_2.getAccountId())
-                .sorted(currencyComparator).collect(Collectors.toList());
+            .filter(cur -> cur.getAccountId() == testData.CUR_2.getAccountId())
+            .sorted(currencyComparator).collect(Collectors.toList());
         assertEquals(expected, actual);
     }
 
@@ -150,8 +145,8 @@ class AccountCurrencyDaoTest {
         List<AccountCurrency> actual = toList(table.getByCurrency(testData.CUR_2.getCurrencyId(), 0, Integer.MAX_VALUE));
         assertEquals(7, actual.size());
         List<AccountCurrency> expected = testData.ALL_CURRENCY.stream()
-                .filter(cur -> cur.getCurrencyId()==testData.CUR_2.getCurrencyId())
-                .sorted(currencyComparator).collect(Collectors.toList());
+            .filter(cur -> cur.getCurrencyId() == testData.CUR_2.getCurrencyId())
+            .sorted(currencyComparator).collect(Collectors.toList());
         assertEquals(expected, actual);
     }
 

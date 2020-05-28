@@ -5,7 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.db;
 
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.util.JSON;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -14,9 +15,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Objects;
-
-import com.apollocurrency.aplwallet.apl.util.JSON;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class TwoFactorAuthFileSystemRepository implements TwoFactorAuthRepository {

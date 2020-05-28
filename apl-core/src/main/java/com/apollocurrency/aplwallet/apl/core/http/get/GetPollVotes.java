@@ -20,27 +20,27 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Poll;
 import com.apollocurrency.aplwallet.apl.core.app.Vote;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.core.http.APITag;
+import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.http.JSONData;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
 public class GetPollVotes extends AbstractAPIRequestHandler {
 
     public GetPollVotes() {
-        super(new APITag[] {APITag.VS}, "poll", "firstIndex", "lastIndex", "includeWeights");
+        super(new APITag[]{APITag.VS}, "poll", "firstIndex", "lastIndex", "includeWeights");
     }
 
     @Override
@@ -53,7 +53,7 @@ public class GetPollVotes extends AbstractAPIRequestHandler {
         int countHeight;
         JSONData.VoteWeighter weighter = null;
         if (includeWeights && (countHeight = Math.min(poll.getFinishHeight(), lookupBlockchain().getHeight()))
-                >= lookupBlockchainProcessor().getMinRollbackHeight()) {
+            >= lookupBlockchainProcessor().getMinRollbackHeight()) {
             VoteWeighting voteWeighting = poll.getVoteWeighting();
             VoteWeighting.VotingModel votingModel = voteWeighting.getVotingModel();
             weighter = voterId -> votingModel.calcWeight(voteWeighting, voterId, countHeight);

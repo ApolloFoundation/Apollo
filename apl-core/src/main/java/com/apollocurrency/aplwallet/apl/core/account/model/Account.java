@@ -112,8 +112,9 @@ public class Account extends VersionedDeletableEntity {
 
     /**
      * Add control into account
+     *
      * @param control - the control type
-     * @return  true if a control was added successfully and false otherwise.
+     * @return true if a control was added successfully and false otherwise.
      * In case of success, the account needs to be updated in the repository.
      */
     public boolean addControl(AccountControlType control) {
@@ -128,8 +129,9 @@ public class Account extends VersionedDeletableEntity {
 
     /**
      * Remove control from account
+     *
      * @param control - the control type
-     * @return  true if a control was removed successfully and false otherwise.
+     * @return true if a control was removed successfully and false otherwise.
      * In case of success, the account needs to be updated in the repository.
      */
     public boolean removeControl(AccountControlType control) {

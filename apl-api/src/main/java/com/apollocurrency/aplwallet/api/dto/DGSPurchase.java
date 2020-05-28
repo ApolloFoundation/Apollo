@@ -30,22 +30,22 @@ public class DGSPurchase {
     @Override
     public String toString() {
         return "DGSPurchase{" +
-                "id=" + id +
-                ", buyerId=" + buyerId +
-                ", goodsId=" + goodsId +
-                ", sellerId=" + sellerId +
-                ", quantity=" + quantity +
-                ", priceATM=" + priceATM +
-                ", deadline=" + deadline +
-                ", timestamp=" + timestamp +
-                ", isPending=" + isPending +
-                ", goodsIsText=" + goodsIsText +
-                ", hasFeedbackNotes=" + hasFeedbackNotes +
-                ", hasPublicFeedbacks=" + hasPublicFeedbacks +
-                ", publicFeedbacks=" + publicFeedbacks +
-                ", discountATM=" + discountATM +
-                ", refundATM=" + refundATM +
-                '}';
+            "id=" + id +
+            ", buyerId=" + buyerId +
+            ", goodsId=" + goodsId +
+            ", sellerId=" + sellerId +
+            ", quantity=" + quantity +
+            ", priceATM=" + priceATM +
+            ", deadline=" + deadline +
+            ", timestamp=" + timestamp +
+            ", isPending=" + isPending +
+            ", goodsIsText=" + goodsIsText +
+            ", hasFeedbackNotes=" + hasFeedbackNotes +
+            ", hasPublicFeedbacks=" + hasPublicFeedbacks +
+            ", publicFeedbacks=" + publicFeedbacks +
+            ", discountATM=" + discountATM +
+            ", refundATM=" + refundATM +
+            '}';
     }
 
     @Override
@@ -54,20 +54,20 @@ public class DGSPurchase {
         if (!(o instanceof DGSPurchase)) return false;
         DGSPurchase that = (DGSPurchase) o;
         return id == that.id &&
-                buyerId == that.buyerId &&
-                goodsId == that.goodsId &&
-                sellerId == that.sellerId &&
-                quantity == that.quantity &&
-                priceATM == that.priceATM &&
-                deadline == that.deadline &&
-                timestamp == that.timestamp &&
-                isPending == that.isPending &&
-                goodsIsText == that.goodsIsText &&
-                hasFeedbackNotes == that.hasFeedbackNotes &&
-                hasPublicFeedbacks == that.hasPublicFeedbacks &&
-                discountATM == that.discountATM &&
-                refundATM == that.refundATM &&
-                Objects.equals(publicFeedbacks, that.publicFeedbacks);
+            buyerId == that.buyerId &&
+            goodsId == that.goodsId &&
+            sellerId == that.sellerId &&
+            quantity == that.quantity &&
+            priceATM == that.priceATM &&
+            deadline == that.deadline &&
+            timestamp == that.timestamp &&
+            isPending == that.isPending &&
+            goodsIsText == that.goodsIsText &&
+            hasFeedbackNotes == that.hasFeedbackNotes &&
+            hasPublicFeedbacks == that.hasPublicFeedbacks &&
+            discountATM == that.discountATM &&
+            refundATM == that.refundATM &&
+            Objects.equals(publicFeedbacks, that.publicFeedbacks);
     }
 
     @Override

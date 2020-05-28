@@ -57,13 +57,13 @@ public abstract class VersionedDeletableValuesDbTable<T extends VersionedDerived
         DbKey dbKey = getDbKeyFactory().newKey(t);
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmtCount = con.prepareStatement("SELECT 1 FROM " + table + getDbKeyFactory().getPKClause()
-                     + " AND height < ? LIMIT 1")) {
+                 + " AND height < ? LIMIT 1")) {
             int i = dbKey.setPK(pstmtCount);
             pstmtCount.setInt(i, height);
             try (ResultSet rs = pstmtCount.executeQuery()) {
                 if (rs.next()) {
                     try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
-                            + " SET latest = FALSE, deleted = TRUE " + getDbKeyFactory().getPKClause() + " AND height = ? AND latest = TRUE")) {
+                        + " SET latest = FALSE, deleted = TRUE " + getDbKeyFactory().getPKClause() + " AND height = ? AND latest = TRUE")) {
                         int j = dbKey.setPK(pstmt);
                         pstmt.setInt(j, height);
                         if (pstmt.executeUpdate() > 0) {
@@ -79,7 +79,7 @@ public abstract class VersionedDeletableValuesDbTable<T extends VersionedDerived
                         save(con, v);
                     }
                     try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
-                            + " SET latest = FALSE, deleted = TRUE " + getDbKeyFactory().getPKClause() + " AND latest = TRUE")) {
+                        + " SET latest = FALSE, deleted = TRUE " + getDbKeyFactory().getPKClause() + " AND latest = TRUE")) {
                         dbKey.setPK(pstmt);
                         if (pstmt.executeUpdate() == 0) {
                             throw new RuntimeException(); // should not happen

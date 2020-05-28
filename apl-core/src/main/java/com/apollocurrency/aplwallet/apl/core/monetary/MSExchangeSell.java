@@ -8,15 +8,15 @@ import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeSell;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import java.nio.ByteBuffer;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
+
 /**
- *
  * @author al
  */
 class MSExchangeSell extends MonetarySystemExchange {
-    
+
     public MSExchangeSell() {
     }
 
@@ -70,5 +70,5 @@ class MSExchangeSell extends MonetarySystemExchange {
         ExchangeRequest.addExchangeRequest(transaction, attachment);
         CurrencyExchangeOffer.exchangeCurrencyForAPL(transaction, senderAccount, attachment.getCurrencyId(), attachment.getRateATM(), attachment.getUnits());
     }
-    
+
 }

@@ -30,6 +30,7 @@ public class SimpleJar {
         this.zos = new ZipOutputStream(os);
         manifestAttributes = Maps.newLinkedHashMap();
     }
+
     /**
      * Adds a header to the manifest of the JAR.
      *
@@ -92,6 +93,7 @@ public class SimpleJar {
         finish();
         zos.close();
     }
+
     /**
      * Writes the manifest to the JAR. It also calculates the digests that are required to be placed in the the signature
      * file.

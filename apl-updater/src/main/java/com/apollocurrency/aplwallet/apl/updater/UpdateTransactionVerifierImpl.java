@@ -4,29 +4,28 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.UpdateAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateAttachment;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateData;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterService;
-import com.apollocurrency.aplwallet.apl.util.Architecture;
 import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
-import com.apollocurrency.aplwallet.apl.util.Platform;
 import com.apollocurrency.aplwallet.apl.util.Version;
+import com.apollocurrency.aplwallet.apl.util.env.Architecture;
+import com.apollocurrency.aplwallet.apl.util.env.Platform;
 import org.slf4j.Logger;
 
-import java.util.regex.Pattern;
 import javax.inject.Inject;
+import java.util.regex.Pattern;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 
 public class UpdateTransactionVerifierImpl implements UpdateTransactionVerifier {
-        private static final Logger LOG = getLogger(UpdateTransactionVerifierImpl.class);
-
     public static final String VERSION_PLACEHOLDER = "$version$";
     public static final String PLATFORM_PLACEHOLDER = "$platform$";
+    private static final Logger LOG = getLogger(UpdateTransactionVerifierImpl.class);
     private static final String DEFAULT_URL_TEMPLATE = "((http)|(https))://.+/Apollo.*-" + VERSION_PLACEHOLDER + "-" + PLATFORM_PLACEHOLDER + ".jar";
     private UpdaterMediator updaterMediator;
     private UpdaterService updaterService;
@@ -94,4 +93,4 @@ public class UpdateTransactionVerifierImpl implements UpdateTransactionVerifier 
         }
         return Pattern.compile(resultUrl);
     }
-    }
+}

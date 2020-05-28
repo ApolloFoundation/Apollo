@@ -4,13 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.FIRST_DECRYPTION_CERTIFICATE_PREFIX;
-import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.INTERMEDIATE_CERTIFICATE_NAME;
-import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.SECOND_DECRYPTION_CERTIFICATE_PREFIX;
-import static com.apollocurrency.aplwallet.apl.updater.UpdaterUtil.readCertificate;
-import static com.apollocurrency.aplwallet.apl.updater.UpdaterUtil.readCertificates;
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.updater.downloader.DefaultDownloadExecutor;
 import org.slf4j.Logger;
 
@@ -27,13 +20,20 @@ import java.security.cert.X509Certificate;
 import java.util.Set;
 import java.util.jar.JarFile;
 
+import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.FIRST_DECRYPTION_CERTIFICATE_PREFIX;
+import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.INTERMEDIATE_CERTIFICATE_NAME;
+import static com.apollocurrency.aplwallet.apl.updater.UpdaterConstants.SECOND_DECRYPTION_CERTIFICATE_PREFIX;
+import static com.apollocurrency.aplwallet.apl.updater.UpdaterUtil.readCertificate;
+import static com.apollocurrency.aplwallet.apl.updater.UpdaterUtil.readCertificates;
+import static org.slf4j.LoggerFactory.getLogger;
+
 public class AuthorityCheckerImpl implements AuthorityChecker {
     private static final Logger LOG = getLogger(AuthorityCheckerImpl.class);
 
     private Certificate caCertificate;
     private String caCertificateUrl;
     private String certificateSuffix = UpdaterConstants.CERTIFICATE_SUFFIX;
-    private String[] certificatePrefixes = new String[] {FIRST_DECRYPTION_CERTIFICATE_PREFIX, SECOND_DECRYPTION_CERTIFICATE_PREFIX};
+    private String[] certificatePrefixes = new String[]{FIRST_DECRYPTION_CERTIFICATE_PREFIX, SECOND_DECRYPTION_CERTIFICATE_PREFIX};
     private String intermediateCertificateName = INTERMEDIATE_CERTIFICATE_NAME;
 
     public AuthorityCheckerImpl(Certificate caCertificate) {
@@ -48,6 +48,7 @@ public class AuthorityCheckerImpl implements AuthorityChecker {
         this.certificatePrefixes = certificatePrefixes;
 
     }
+
     public AuthorityCheckerImpl(Certificate rootCertificate, String certificateSuffix, String intermediateCertificateName,
                                 String... certificatePrefixes) {
         this.certificateSuffix = certificateSuffix;
@@ -95,11 +96,9 @@ public class AuthorityCheckerImpl implements AuthorityChecker {
             }
             intermediateCertificate.verify(caCertificate.getPublicKey());
             return true;
-        }
-        catch (CertificateException | IOException | URISyntaxException e) {
+        } catch (CertificateException | IOException | URISyntaxException e) {
             LOG.error("Unable to read or load certificate", e);
-        }
-        catch (NoSuchAlgorithmException | SignatureException | NoSuchProviderException | InvalidKeyException e) {
+        } catch (NoSuchAlgorithmException | SignatureException | NoSuchProviderException | InvalidKeyException e) {
             LOG.error("Unable to verify certificate signature", e);
         }
         return false;
@@ -125,8 +124,7 @@ public class AuthorityCheckerImpl implements AuthorityChecker {
             try {
                 verifyJarSignature(certificate, jarFilePath);
                 return true;
-            }
-            catch (SecurityException | IOException e) {
+            } catch (SecurityException | IOException e) {
                 LOG.debug("Certificate is not appropriate." + UpdaterUtil.getStringRepresentation(certificate));
             }
         }

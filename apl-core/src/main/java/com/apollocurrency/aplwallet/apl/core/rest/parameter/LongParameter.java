@@ -18,7 +18,7 @@ public class LongParameter extends AbstractRestParameter<Long> {
         Long value;
         try {
             value = Convert.parseLong(getRawData());
-        }catch (NumberFormatException e){
+        } catch (NumberFormatException e) {
             throw new RestParameterException(ApiErrors.INCORRECT_PARAM_VALUE, getRawData());
         }
         return value;

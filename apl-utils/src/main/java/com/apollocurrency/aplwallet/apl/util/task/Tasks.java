@@ -18,9 +18,10 @@ public class Tasks {
     /**
      * Initiates an orderly shutdown and blocks until all tasks have completed execution after a shutdown
      * request, or the timeout occurs.
-     * @param name the executor name for logging
+     *
+     * @param name     the executor name for logging
      * @param executor executor
-     * @param timeout the maximum time to wait in SECONDS
+     * @param timeout  the maximum time to wait in SECONDS
      */
     public static void shutdownExecutor(String name, ExecutorService executor, int timeout) {
         if (executor != null) {

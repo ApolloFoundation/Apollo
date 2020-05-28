@@ -4,14 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.cdi.transaction;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
@@ -30,12 +22,27 @@ import org.slf4j.LoggerFactory;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 @EnableWeld
 public class JdbiInterceptorTest {
     @RegisterExtension
     DbExtension extension = new DbExtension();
     JdbiHandleFactory factory = spy(new JdbiHandleFactory());
     private Weld weld = AbstractWeldInitiator.createWeld();
+    @WeldSetup
+    public WeldInitiator weldInitiator = WeldInitiator.from(weld)
+        .addBeans(MockBean.of(factory, JdbiHandleFactory.class)).build();
+    @Inject
+    private TransactionTestClass testClass;
+
     {
         factory.setJdbi(extension.getDatabaseManager().getJdbi());
         weld.addInterceptor(JdbiTransactionalInterceptor.class);
@@ -43,12 +50,6 @@ public class JdbiInterceptorTest {
         weld.addBeanClasses(JdbiTransactionalInterceptor.class, TransactionTestClass.class, AnotherTransactionTestClass.class);
     }
 
-    @WeldSetup
-    public WeldInitiator weldInitiator = WeldInitiator.from(weld)
-            .addBeans(MockBean.of(factory, JdbiHandleFactory.class)).build();
-
-    @Inject
-    private TransactionTestClass testClass;
     @Test
     void testOpenTransaction() {
         testClass.requireTransaction();
@@ -99,6 +100,7 @@ public class JdbiInterceptorTest {
         verify(factory).setReadOnly(true);
         verify(factory).close();
     }
+
     @Test
     void testOpenReadOnlyTransactionAndCallWriteTransactionForH2() {
         testClass.readOnlyCallNotReadonly();
@@ -139,7 +141,8 @@ public class JdbiInterceptorTest {
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
 
         ch.qos.logback.classic.Logger logger = loggerContext.getLogger("com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiTransactionalInterceptor");
-        logger.setLevel(Level.TRACE);;
+        logger.setLevel(Level.TRACE);
+        ;
         doThrow(new RuntimeException("Test exception")).when(factory).setReadOnly(true);
         assertThrows(RuntimeException.class, () -> testClass.requireReadOnlyTransaction());
         verify(factory).isInTransaction();
@@ -165,7 +168,8 @@ public class JdbiInterceptorTest {
         }
 
         @Transactional(readOnly = true)
-        void requireReadOnlyTransaction() {}
+        void requireReadOnlyTransaction() {
+        }
 
         @Transactional(readOnly = true)
         void readOnlyCallReadOnlyFromAnotherClass() {
@@ -182,6 +186,7 @@ public class JdbiInterceptorTest {
             CDI.current().select(AnotherTransactionTestClass.class).get().requireTransaction();
         }
     }
+
     @Singleton
     public static class AnotherTransactionTestClass {
         private static final Logger LOG = LoggerFactory.getLogger(TransactionTestClass.class);
@@ -192,7 +197,8 @@ public class JdbiInterceptorTest {
         }
 
         @Transactional(readOnly = true)
-        void requireReadOnlyTransaction() {}
+        void requireReadOnlyTransaction() {
+        }
 
     }
 }

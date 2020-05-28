@@ -11,22 +11,23 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.resteasy.core.interception.jaxrs.PostMatchContainerRequestContext;
 
+import javax.enterprise.inject.Vetoed;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.MultivaluedMap;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper.TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME;
+
 @Slf4j
+@Vetoed
 public class RestParametersParser {
-    public static final String TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME = "twoFactorAuthParameters";
 
-    public static final String HEIGHT_PARAM_NAME = "height";
-    public static final String PASSPHRASE_PARAM_NAME="passphrase";
-    public static final String SECRET_PHRASE_PARAM_NAME ="secretPhrase";
-    public static final String CODE2FA_PARAM_NAME="code2FA";
+    private RestParametersParser() {
+    }
 
-    public static Map<String, String> parseRequestParameters(ContainerRequestContext requestContext, String ... params){
+    public static Map<String, String> parseRequestParameters(ContainerRequestContext requestContext, String... params) {
         Map<String, String> parsedParams = new HashMap<>();
         MultivaluedMap<String, String> requestParams;
         requestParams = ((PostMatchContainerRequestContext) requestContext).getHttpRequest().getDecodedFormParameters();
@@ -38,8 +39,8 @@ public class RestParametersParser {
     }
 
     public static TwoFactorAuthParameters get2FARequestAttribute(org.jboss.resteasy.spi.HttpRequest request) {
-        TwoFactorAuthParameters params2FA = (TwoFactorAuthParameters) request.getAttribute(RestParametersParser.TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME);
-        if(params2FA == null){
+        TwoFactorAuthParameters params2FA = (TwoFactorAuthParameters) request.getAttribute(TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME);
+        if (params2FA == null) {
             throw new RestParameterException(ApiErrors.INTERNAL_SERVER_EXCEPTION, "Can't locate the 2FA request attribute.");
         }
         return params2FA;
@@ -96,14 +97,14 @@ public class RestParametersParser {
     public static long parseAccountId(String account) throws RestParameterException {
         long accountId;
         if (account == null) {
-            throw new RestParameterException( ApiErrors.MISSING_PARAM, "account");
+            throw new RestParameterException(ApiErrors.MISSING_PARAM, "account");
         }
-        try{
+        try {
             accountId = Convert.parseAccountId(account);
-            if (accountId == 0){
+            if (accountId == 0) {
                 throw new NumberFormatException();
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             throw new RestParameterException(ApiErrors.UNKNOWN_VALUE, "account", account);
         }
         return accountId;

@@ -17,7 +17,7 @@ class NtpTimeTest {
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(NtpTime.class)
-            .build();
+        .build();
 
     private NtpTime ntpTime;
     private long currentTime;

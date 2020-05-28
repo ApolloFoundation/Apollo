@@ -21,13 +21,15 @@ import java.util.List;
 /**
  * Response that contains node status including
  * running tasks and other information
+ *
  * @author alukin@gmail.com
  */
-@Getter @Setter
+@Getter
+@Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @ApiResponse(responseCode = "200", description = "Successful execution",
-        content = @Content(mediaType = "application/json",
-                schema = @Schema(implementation = NodeStatusResponse.class)))
+    content = @Content(mediaType = "application/json",
+        schema = @Schema(implementation = NodeStatusResponse.class)))
 public class NodeStatusResponse extends ResponseBase {
     public String message = "";
     public List<DurableTaskInfo> tasks = new ArrayList<>();
