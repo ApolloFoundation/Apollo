@@ -53,6 +53,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Positive;
 import javax.ws.rs.BeanParam;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
@@ -192,7 +193,7 @@ public class AccountControlController {
         @Parameter @Schema(description = "account publicKey")
             @FormParam("publicKey") String publicKey,
         @Parameter(required = true, schema = @Schema(implementation = Long.class)) @Schema(description = "fee ATM value")
-            @FormParam("feeATM") @NotNull Long feeATM,
+            @FormParam("feeATM") @NotNull @Positive Long feeATM,
         @Parameter @Schema(description = "deadline value")
             @FormParam("deadline") @DefaultValue("1440") String deadline,
         @Parameter @Schema(description = "referenced Transaction FullHash")

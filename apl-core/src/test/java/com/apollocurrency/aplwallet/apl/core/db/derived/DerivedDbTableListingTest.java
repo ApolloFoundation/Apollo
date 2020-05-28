@@ -112,7 +112,7 @@ class DerivedDbTableListingTest {
     @Inject
     GlobalSync globalSync;
     @Inject
-    PropertiesHolder propertiesHolder;
+    private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     @Inject
     DerivedTablesRegistry registry;
     private NtpTime time = mock(NtpTime.class);
@@ -120,7 +120,7 @@ class DerivedDbTableListingTest {
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-        PropertiesHolder.class, BlockchainImpl.class, DaoConfig.class,
+        BlockchainImpl.class, DaoConfig.class,
         PropertyProducer.class, TransactionApplier.class,// DirProvider.class, //ServiceModeDirProvider.class,
         EntityProducer.class, AccountTable.class,
         TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
@@ -153,6 +153,7 @@ class DerivedDbTableListingTest {
         .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyServiceImpl.class, AccountPublicKeyService.class))
         .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
         .addBeans(MockBean.of(mock(AccountControlPhasingService.class), AccountControlPhasingService.class))
+        .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
         .build();
     private HeightConfig config = Mockito.mock(HeightConfig.class);
     private Chain chain = Mockito.mock(Chain.class);

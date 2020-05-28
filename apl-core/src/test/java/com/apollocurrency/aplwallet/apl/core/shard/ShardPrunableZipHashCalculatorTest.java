@@ -1,3 +1,7 @@
+/*
+ *  Copyright © 2018-2020 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.shard;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -52,6 +56,7 @@ class ShardPrunableZipHashCalculatorTest {
     ShardDao shardDao = mock(ShardDao.class);
     BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     DirProvider dirProvider = mock(DirProvider.class);
+    private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
 
     @RegisterExtension
     TemporaryFolderExtension tempFolder = new TemporaryFolderExtension();
@@ -70,6 +75,7 @@ class ShardPrunableZipHashCalculatorTest {
         .addBeans(MockBean.of(shardDao, ShardDao.class))
         .addBeans(MockBean.of(dirProvider, DirProvider.class))
         .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
         .build();
     @Inject
     PrunableMessageTable prunableMessageTable;

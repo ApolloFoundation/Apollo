@@ -49,8 +49,7 @@ class AccountControlControllerTest extends AbstractEndpointTest {
     private static final String accCtrlLeaseBalanceUri = "/accounts/control/lease";
     private static final String accCtrlPhasingUri = "/accounts/control/phasing";
 
-    private static String senderRS = "APL-Q6U9-FWH3-LA6G-D3F88";
-    private static Long senderId = -5541220367884151993L;
+    private static String senderRS = "APL-Q6U9-FWH3-LA6G-D3F88"; // id = -5541220367884151993L
 
     private static String recipientRS = "APL-FXHG-6KHM-23LE-42ACU";
     private static Long recipientId = 3254132361968154094L;
@@ -214,21 +213,19 @@ class AccountControlControllerTest extends AbstractEndpointTest {
     }
 
     @Test
-    void testSetPhasingOnlyControl_minimal_params()
+    void testSetPhasingOnlyControl_incorrect_fee()
         throws URISyntaxException, UnsupportedEncodingException, JsonProcessingException {
-        doReturn(100L).when(heightConfig).getMaxBalanceATM();
-        doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
 
         MockHttpResponse response = sendPostRequest(accCtrlPhasingUri,
             "passphrase=" + PASSPHRASE + "&sender=" + senderRS
-                + "&controlVotingModel=NONE" + "&feeATM=100" + "&controlQuorum=1");
+                + "&controlVotingModel=NONE" + "&feeATM=-100" + "&controlQuorum=1");
         String respondJson = response.getContentAsString();
 
         Error error = mapper.readValue(respondJson, new TypeReference<>(){});
         assertNotNull(error.getErrorDescription());
-        // here we have 2030 - global error, because all input params are OK !
-        assertEquals(2030, error.getNewErrorCode(), error.getErrorDescription());
-        assertFalse(error.getErrorDescription().contains("Constraint violation:"), error.getErrorDescription());
+        // Constraint violation:
+        assertEquals(2001, error.getNewErrorCode(), error.getErrorDescription());
+        assertTrue(error.getErrorDescription().contains("Constraint violation:"), error.getErrorDescription());
     }
 
 
