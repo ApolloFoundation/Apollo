@@ -37,7 +37,8 @@ delete from mandatory_transaction;
 delete from dex_contract;
 delete from dex_transaction;
 delete from user_error_message;
-delete from PUBLIC.ACCOUNT_INFO;
+delete from ACCOUNT_INFO;
+delete from ASSET;
 
 INSERT INTO PUBLIC.BLOCK
 (DB_ID,         ID,                HEIGHT,      VERSION,   "TIMESTAMP",  PREVIOUS_BLOCK_ID,  TOTAL_AMOUNT,        TOTAL_FEE,   PAYLOAD_LENGTH,   PREVIOUS_BLOCK_HASH,                                                   CUMULATIVE_DIFFICULTY,  BASE_TARGET,    NEXT_BLOCK_ID,               GENERATION_SIGNATURE,                                                   BLOCK_SIGNATURE,                                                                                                                        PAYLOAD_HASH,                                                           GENERATOR_ID,       TIMEOUT) VALUES
@@ -440,11 +441,23 @@ INSERT INTO user_error_message
 (200,            '0x8e96e98b32c56115614B64704bA35feFE9e8f7bC', 'Out of gas'          ,'redeem',   '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', 1100),
 (300,            '0x0398E119419E0D7792c53913d3f370f9202Ae137', 'Double spending'     ,'withdraw', '100'                                                              ,1200)
 ;
-INSERT INTO PUBLIC.ACCOUNT_INFO (DB_ID, ACCOUNT_ID, NAME, DESCRIPTION, HEIGHT, LATEST) VALUES
+INSERT INTO ACCOUNT_INFO (DB_ID, ACCOUNT_ID, NAME, DESCRIPTION, HEIGHT, LATEST) VALUES
 (3, 100, 'Madan Reddy', 'Apollo Community tokens', 2331, true),
 (5, 110, 'ZT', null, 3073, true),
 (6, 120, 'CALIGULA', null, 3559, true),
 (7, 130, 'Adnan Celik', null, 3563, true),
 (10, 140, 'Vasily', 'Front end wallet ui/ux', 26068, true),
 (15, 150, 'CALIGULA shubham nitin bhabad', 'abuse brain fright always', 70858, true)
+;
+
+INSERT INTO ASSET
+(DB_ID, ID,                     ACCOUNT_ID,  NAME,       DESCRIPTION,           QUANTITY, DECIMALS, INITIAL_QUANTITY, HEIGHT, LATEST) VALUES
+(1,     -1072880289966859852,   100,        'Assets1.1', 'ThisisSecretCoin1.1',   10,        1,        1,               10,    true),
+(3,     -1698552298114458330,   100,        'Assets1.2', 'ThisisSecretCoin1.2',   20,        3,        2,               30,    true),
+(4,     -174530643920308495,    100,        'Assets1.3', 'ThisisSecretCoin1.3',   30,        4,        3,               40,    true),
+(5,     8180990979457659735,    200,        'Assets2.1', 'ThisisSecretCoin2.1',   10,        5,        1,               50,    true),
+(6,     -7411869947092956999,   200,        'Assets2.2', 'ThisisSecretCoin2.2',   20,        6,        2,               60,    true),
+(8,     -2591338258392940629,   500,        'Assets3.1', 'ThisisSecretCoin3.1',   10,        8,        1,               80,    true),
+(9,     1272486048634857248,    500,        'Assets3.2', 'ThisisSecretCoin3.2',   20,        9,        2,               90,    true),
+(10,   -7671470345148527248,    500,        'Assets3.3', 'ThisisSecretCoin3.3',   30,        10,       3,               100,   true)
 ;

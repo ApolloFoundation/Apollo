@@ -1,20 +1,10 @@
-/*
- *  Copyright © 2018-2020 Apollo Foundation
- */
-
-package com.apollocurrency.aplwallet.apl.core.account.dao;
+package com.apollocurrency.aplwallet.apl.core.monetary.dao;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
 
 import javax.inject.Inject;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
@@ -25,10 +15,10 @@ import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
-import com.apollocurrency.aplwallet.apl.data.AccountControlPhasingData;
+import com.apollocurrency.aplwallet.apl.core.monetary.model.Asset;
+import com.apollocurrency.aplwallet.apl.data.AssetData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
-import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
@@ -40,21 +30,22 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 @EnableWeld
-class AccountControlPhasingTableTest {
+class AssetTableTest {
 
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension(DbTestData.getInMemDbProps(), "db/data.sql", "db/schema.sql");
 
     @Inject
-    AccountControlPhasingTable table;
-    AccountControlPhasingData td;
+    AssetTable table;
+    AssetData td;
 
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     private BlockchainProcessor blockchainProcessor = mock(BlockchainProcessor.class);
+
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-        PropertiesHolder.class, AccountControlPhasingTable.class
+        PropertiesHolder.class, AssetTable.class
     )
         .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
@@ -67,59 +58,14 @@ class AccountControlPhasingTableTest {
 
     @BeforeEach
     void setUp() {
-        td = new AccountControlPhasingData();
+        td = new AssetData();
     }
 
     @Test
     void testLoad() {
-        AccountControlPhasing phasing = table.get(table.getDbKeyFactory().newKey(td.AC_CONT_PHAS_0));
-        assertNotNull(phasing);
-        assertEquals(td.AC_CONT_PHAS_0, phasing);
+        Asset asset = table.get(table.getDbKeyFactory().newKey(td.ASSET_1));
+        assertNotNull(asset);
+        assertEquals(td.ASSET_1, asset);
     }
-
-    @Test
-    void load_returnNull_ifNotExist() {
-        AccountControlPhasing phasing = table.get(table.getDbKeyFactory().newKey(td.NEW_AC_CONT_PHAS));
-        assertNull(phasing);
-    }
-
-    @Test
-    void testSave() {
-        DbUtils.inTransaction(dbExtension, (con) -> table.insert(td.NEW_AC_CONT_PHAS));
-        AccountControlPhasing phasing = table.get(table.getDbKeyFactory().newKey(td.NEW_AC_CONT_PHAS));
-        assertNotNull(phasing);
-        assertTrue(phasing.getDbId() != 0);
-        assertEquals(td.NEW_AC_CONT_PHAS.getAccountId(), phasing.getAccountId());
-        assertEquals(td.NEW_AC_CONT_PHAS.getHeight(), phasing.getHeight());
-    }
-
-    @Test
-    void testSave_update_existing_entity() {
-        AccountControlPhasing previous = table.get(table.getDbKeyFactory().newKey(td.AC_CONT_PHAS_1));
-        assertNotNull(previous);
-        long value = 100L;
-        previous.setMaxFees(value);
-
-        DbUtils.inTransaction(dbExtension, (con) -> table.insert(previous));
-        AccountControlPhasing actual = table.get(table.getDbKeyFactory().newKey(td.AC_CONT_PHAS_1));
-
-        assertNotNull(actual);
-        assertEquals(value, actual.getMaxFees());
-    }
-
-    @Test
-    void test_delete_entity() {
-        AccountControlPhasing found = table.get(table.getDbKeyFactory().newKey(td.AC_CONT_PHAS_3));
-        assertNotNull(found);
-
-        DbUtils.inTransaction(dbExtension, (con) -> {
-            boolean result = table.deleteAtHeight(found, td.AC_CONT_PHAS_3.getHeight());
-            assertTrue(result);
-        });
-        AccountControlPhasing actual = table.get(table.getDbKeyFactory().newKey(td.AC_CONT_PHAS_3));
-
-        assertNull(actual);
-    }
-
 
 }
