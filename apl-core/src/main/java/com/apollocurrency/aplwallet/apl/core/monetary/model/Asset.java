@@ -12,15 +12,13 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.monetary.dao.AssetTable;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetIssuance;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Getter
+@Setter
 @ToString(callSuper = true)
-@EqualsAndHashCode(callSuper = true)
 public class Asset extends VersionedDerivedEntity {
 
     private long assetId;
@@ -49,7 +47,7 @@ public class Asset extends VersionedDerivedEntity {
     public Asset(long assetId, long senderAccountId, ColoredCoinsAssetIssuance attachment, int height) {
         super(null, height);
         this.assetId = assetId;
-        this.setDbKey(AssetTable.assetDbKeyFactory.newKey(this.assetId));
+//        this.setDbKey(AssetTable.assetDbKeyFactory.newKey(this.assetId));
         this.accountId = senderAccountId;
         this.name = attachment.getName();
         this.description = attachment.getDescription();

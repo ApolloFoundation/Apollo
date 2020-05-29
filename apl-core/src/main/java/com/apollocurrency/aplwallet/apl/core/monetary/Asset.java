@@ -37,6 +37,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+@Deprecated
 public final class Asset {
 
     private static final BlockChainInfoService BLOCK_CHAIN_INFO_SERVICE =
@@ -51,7 +52,8 @@ public final class Asset {
 
     };
 
-    private static final VersionedDeletableEntityDbTable<Asset> assetTable = new VersionedDeletableEntityDbTable<Asset>("asset", assetDbKeyFactory, "name,description") {
+    private static final VersionedDeletableEntityDbTable<Asset> assetTable
+        = new VersionedDeletableEntityDbTable<Asset>("asset", assetDbKeyFactory, "name,description") {
 
         @Override
         public Asset load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {

@@ -452,12 +452,12 @@ INSERT INTO ACCOUNT_INFO (DB_ID, ACCOUNT_ID, NAME, DESCRIPTION, HEIGHT, LATEST) 
 
 INSERT INTO ASSET
 (DB_ID, ID,                     ACCOUNT_ID,  NAME,       DESCRIPTION,           QUANTITY, DECIMALS, INITIAL_QUANTITY, HEIGHT, LATEST) VALUES
-(1,     -1072880289966859852,   100,        'Assets1.1', 'ThisisSecretCoin1.1',   10,        1,        1,               10,    true),
-(3,     -1698552298114458330,   100,        'Assets1.2', 'ThisisSecretCoin1.2',   20,        3,        2,               30,    true),
-(4,     -174530643920308495,    100,        'Assets1.3', 'ThisisSecretCoin1.3',   30,        4,        3,               40,    true),
-(5,     8180990979457659735,    200,        'Assets2.1', 'ThisisSecretCoin2.1',   10,        5,        1,               50,    true),
-(6,     -7411869947092956999,   200,        'Assets2.2', 'ThisisSecretCoin2.2',   20,        6,        2,               60,    true),
-(8,     -2591338258392940629,   500,        'Assets3.1', 'ThisisSecretCoin3.1',   10,        8,        1,               80,    true),
-(9,     1272486048634857248,    500,        'Assets3.2', 'ThisisSecretCoin3.2',   20,        9,        2,               90,    true),
-(10,   -7671470345148527248,    500,        'Assets3.3', 'ThisisSecretCoin3.3',   30,        10,       3,               100,   true)
+(1,     -1072880289966859852,   100,        'Assets1.1', 'ThisisSecretCoin1.1',   10,        1,        10,               10,    true),
+(3,     -1698552298114458330,   100,        'Assets1.2', 'ThisisSecretCoin1.2',   20,        3,        20,               30,    true),
+(4,     -174530643920308495,    100,        'Assets1.3', 'ThisisSecretCoin1.3',   30,        4,        30,               40,    true),
+(5,     8180990979457659735,    200,        'Assets2.1', 'ThisisSecretCoin2.1',   10,        5,        10,               50,    true),
+(6,     -7411869947092956999,   200,        'Assets2.2', 'ThisisSecretCoin2.2',   20,        6,        20,               60,    true),
+(8,     -2591338258392940629,   500,        'Assets3.1', 'ThisisSecretCoin3.1',   10,        8,        10,               80,    true),
+(9,     1272486048634857248,    500,        'Assets3.2', 'ThisisSecretCoin3.2',   20,        9,        20,               90,    true),
+(10,   -7671470345148527248,    500,        'Assets3.3', 'ThisisSecretCoin3.3',   30,        10,       30,               100,   true)
 ;

@@ -140,9 +140,9 @@ public class TableRegistryInitializer {
     public void init() {
         transactionProcessor.init();
 
-        Asset.init();
+//        Asset.init();
         Poll.init();
-        AssetDelete.init();
+//        AssetDelete.init();
         AssetDividend.init();
         Vote.init();
         Currency.init();

@@ -37,6 +37,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+@Deprecated
 public final class AssetDelete {
 
     private static final Listeners<AssetDelete, Event> listeners = new Listeners<>();

@@ -21,7 +21,6 @@
 package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.api.dto.BlockDTO;
-import com.apollocurrency.aplwallet.api.dto.account.AccountAssetDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountCurrencyDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerHolding;
@@ -63,8 +62,8 @@ import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSTag;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
-import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
-import com.apollocurrency.aplwallet.apl.core.monetary.AssetDelete;
+import com.apollocurrency.aplwallet.apl.core.monetary.model.Asset;
+import com.apollocurrency.aplwallet.apl.core.monetary.model.AssetDelete;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
@@ -76,6 +75,7 @@ import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
+import com.apollocurrency.aplwallet.apl.core.monetary.service.AssetService;
 import com.apollocurrency.aplwallet.apl.core.order.entity.AskOrder;
 import com.apollocurrency.aplwallet.apl.core.order.entity.BidOrder;
 import com.apollocurrency.aplwallet.apl.core.order.entity.Order;
@@ -129,6 +129,7 @@ public final class JSONData {
     private static AccountLeaseService accountLeaseService = CDI.current().select(AccountLeaseService.class).get();
     private static AccountAssetService accountAssetService = CDI.current().select(AccountAssetService.class).get();
     private static DGSService dgsService = CDI.current().select(DGSService.class).get();
+    private static AssetService assetService = CDI.current().select(AssetService.class).get();
 
     private JSONData() {
     } // never
@@ -221,11 +222,11 @@ public final class JSONData {
         json.put("decimals", asset.getDecimals());
         json.put("initialQuantityATU", String.valueOf(asset.getInitialQuantityATU()));
         json.put("quantityATU", String.valueOf(asset.getQuantityATU()));
-        json.put("asset", Long.toUnsignedString(asset.getId()));
+        json.put("asset", Long.toUnsignedString(asset.getAssetId()));
         if (includeCounts) {
-            json.put("numberOfTrades", TRADE_SERVICE.getTradeCount(asset.getId()));
-            json.put("numberOfTransfers", AssetTransfer.getTransferCount(asset.getId()));
-            json.put("numberOfAccounts", accountAssetService.getCountByAsset(asset.getId()));
+            json.put("numberOfTrades", TRADE_SERVICE.getTradeCount(asset.getAssetId()));
+            json.put("numberOfTransfers", AssetTransfer.getTransferCount(asset.getAssetId()));
+            json.put("numberOfAccounts", accountAssetService.getCountByAsset(asset.getAssetId()));
         }
         return json;
     }
@@ -725,7 +726,7 @@ public final class JSONData {
         JSONObject json = new JSONObject();
         json.put("poll", Long.toUnsignedString(poll.getId()));
         if (voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.ASSET) {
-            json.put("decimals", Asset.getAsset(voteWeighting.getHoldingId()).getDecimals());
+            json.put("decimals", assetService.getAsset(voteWeighting.getHoldingId()).getDecimals());
         } else if (voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.CURRENCY) {
             Currency currency = Currency.getCurrency(voteWeighting.getHoldingId());
             if (currency != null) {
@@ -1391,11 +1392,11 @@ public final class JSONData {
     }
 
     /**
-     * Use {@link com.apollocurrency.aplwallet.apl.core.rest.converter.AccountAssetConverter#addAsset(AccountAssetDTO, Asset)}
+     * Use {@link com.apollocurrency.aplwallet.apl.core.rest.converter.AccountAssetConverter#apply(AccountAsset)}
      */
     @Deprecated
     private static void putAssetInfo(JSONObject json, long assetId) {
-        Asset asset = Asset.getAsset(assetId);
+        Asset asset = assetService.getAsset(assetId);
         if (asset != null) {
             json.put("name", asset.getName());
             json.put("decimals", asset.getDecimals());
