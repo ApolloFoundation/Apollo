@@ -23,7 +23,7 @@ if [ -x "${TOR_DIR}" ];  then
 else
   if [[ -n $(type -p tor) ]]
   then
-    TOR_CMD="tor &"
+    TOR_CMD="./tor &"
   else
     TOR_CMD=""
   fi
@@ -41,9 +41,11 @@ if [ -z "${TOR_CMD}" ]; then
     echo " it in ${APL_TOP_DIR}"
 else
     echo "Starting tor"
+    cd "${TOR_DIR}"
     "$TOR_CMD" &
     if [ "$?" == 0 ] ; then
       echo "Starting Apollo"
+      cd "${DIR}"
       "${JAVA_CMD}" -DsocksProxyHost=localhost -DsocksProxyPort=9050  -jar "${MAIN_JAR}"
     else
       echo
