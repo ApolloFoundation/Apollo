@@ -224,7 +224,7 @@ then
     chmod 755 bin/*.sh
     
 #    ./replace_dbdir.sh
-    
+    APLCMDLINE=$(echo ${APLCMDLINE} | sed s/shards/shard/g)
     if [ $3 == true ]
     then
         notify "Starting desktop application..."
