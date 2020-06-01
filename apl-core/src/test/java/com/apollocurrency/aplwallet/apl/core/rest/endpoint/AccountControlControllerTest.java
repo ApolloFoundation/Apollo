@@ -20,10 +20,10 @@ import java.util.stream.Stream;
 
 import com.apollocurrency.aplwallet.api.dto.account.AccountControlPhasingDTO;
 import com.apollocurrency.aplwallet.api.response.AccountControlPhasingResponse;
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountControlPhasingService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.entity.operation.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.operation.account.PublicKey;
+import com.apollocurrency.aplwallet.apl.core.service.operation.account.AccountControlPhasingService;
+import com.apollocurrency.aplwallet.apl.core.service.operation.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;

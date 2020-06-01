@@ -4,19 +4,19 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountInfo;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountInfoService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountInfoServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.alias.service.AliasService;
+import com.apollocurrency.aplwallet.apl.core.entity.operation.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.operation.account.AccountAsset;
+import com.apollocurrency.aplwallet.apl.core.entity.operation.account.AccountCurrency;
+import com.apollocurrency.aplwallet.apl.core.entity.operation.account.AccountInfo;
+import com.apollocurrency.aplwallet.apl.core.service.operation.account.AccountAssetService;
+import com.apollocurrency.aplwallet.apl.core.service.operation.account.impl.AccountAssetServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.operation.account.AccountCurrencyService;
+import com.apollocurrency.aplwallet.apl.core.service.operation.account.impl.AccountCurrencyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.operation.account.AccountInfoService;
+import com.apollocurrency.aplwallet.apl.core.service.operation.account.impl.AccountInfoServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.operation.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.operation.account.impl.AccountServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.operation.AliasService;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;

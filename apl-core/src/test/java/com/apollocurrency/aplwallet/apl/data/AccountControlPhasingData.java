@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.data;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountControlPhasing;
+import com.apollocurrency.aplwallet.apl.core.entity.operation.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
 
 public class AccountControlPhasingData {

@@ -4,9 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer.observer;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountEventType;
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEvent;
+import com.apollocurrency.aplwallet.apl.core.model.account.AccountEventType;
+import com.apollocurrency.aplwallet.apl.core.entity.operation.account.Account;
+import com.apollocurrency.aplwallet.apl.core.observer.events.AccountEvent;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import lombok.extern.slf4j.Slf4j;
 

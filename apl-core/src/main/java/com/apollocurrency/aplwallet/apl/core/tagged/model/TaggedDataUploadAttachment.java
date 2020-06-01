@@ -5,7 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.tagged.model;
 
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
+import com.apollocurrency.aplwallet.apl.core.entity.operation.tagged.TaggedDataAttachment;
+import com.apollocurrency.aplwallet.apl.core.service.operation.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.core.transaction.Data;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;

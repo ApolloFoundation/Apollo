@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.apollocurrency.aplwallet.api.dto.account.AccountControlPhasingDTO;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountControlPhasing;
+import com.apollocurrency.aplwallet.apl.core.entity.operation.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 
 public class AccountControlPhasingConverter implements Converter<AccountControlPhasing, AccountControlPhasingDTO> {
