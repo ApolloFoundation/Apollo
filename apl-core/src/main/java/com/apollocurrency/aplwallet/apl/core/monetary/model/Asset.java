@@ -47,7 +47,6 @@ public class Asset extends VersionedDerivedEntity {
     public Asset(long assetId, long senderAccountId, ColoredCoinsAssetIssuance attachment, int height) {
         super(null, height);
         this.assetId = assetId;
-//        this.setDbKey(AssetTable.assetDbKeyFactory.newKey(this.assetId));
         this.accountId = senderAccountId;
         this.name = attachment.getName();
         this.description = attachment.getDescription();

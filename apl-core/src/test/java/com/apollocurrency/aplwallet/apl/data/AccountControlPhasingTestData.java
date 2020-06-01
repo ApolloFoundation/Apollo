@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.data;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
 
-public class AccountControlPhasingData {
+public class AccountControlPhasingTestData {
     public final AccountControlPhasing AC_CONT_PHAS_0 = createAccountControlPhasing(10, 7995581942006468815L,
         new PhasingParams((byte)0, 0L, 1L, 0L, (byte)0, null),
         300000000, (short)12, (short)113, 500, true, false);

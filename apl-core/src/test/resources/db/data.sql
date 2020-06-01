@@ -39,6 +39,7 @@ delete from dex_transaction;
 delete from user_error_message;
 delete from ACCOUNT_INFO;
 delete from ASSET;
+delete from ASSET_DELETE;
 
 INSERT INTO PUBLIC.BLOCK
 (DB_ID,         ID,                HEIGHT,      VERSION,   "TIMESTAMP",  PREVIOUS_BLOCK_ID,  TOTAL_AMOUNT,        TOTAL_FEE,   PAYLOAD_LENGTH,   PREVIOUS_BLOCK_HASH,                                                   CUMULATIVE_DIFFICULTY,  BASE_TARGET,    NEXT_BLOCK_ID,               GENERATION_SIGNATURE,                                                   BLOCK_SIGNATURE,                                                                                                                        PAYLOAD_HASH,                                                           GENERATOR_ID,       TIMEOUT) VALUES
@@ -460,4 +461,16 @@ INSERT INTO ASSET
 (8,     -2591338258392940629,   500,        'Assets3.1', 'ThisisSecretCoin3.1',   10,        8,        10,               80,    true),
 (9,     1272486048634857248,    500,        'Assets3.2', 'ThisisSecretCoin3.2',   20,        9,        20,               90,    true),
 (10,   -7671470345148527248,    500,        'Assets3.3', 'ThisisSecretCoin3.3',   30,        10,       30,               100,   true)
+;
+
+INSERT INTO ASSET_DELETE
+(DB_ID,     ID,                         ASSET_ID,               ACCOUNT_ID,         QUANTITY, "TIMESTAMP",  HEIGHT) VALUES
+(1,         3444674909301056677,    -1072880289966859852,           100,            5,          45690782,   12),
+(2,         2402544248051582903,    -1698552298114458330,           100,            10,         45690782,   32),
+(3,         5373370077664349170,    -174530643920308495,            100,            10,         45712001,   42),
+(4,         -780794814210884355,    -8180990979457659735,           200,            5,          45712647,   55),
+(5,         -9128485677221760321,   -7411869947092956999,           200,            10,         45712817,   66),
+(6,         3746857886535243786,    -2591338258392940629,           500,            5,          45712884,   81),
+(7,         5471926494854938613,    1272486048634857248,            500,            12,         45712896,   94),
+(8,         2083198303623116770,    -7671470345148527248,           500,            16,         45712907,   103)
 ;

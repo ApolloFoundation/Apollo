@@ -37,6 +37,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+@Deprecated
 public final class AssetDividend {
 
     private static final Listeners<AssetDividend, Event> listeners = new Listeners<>();

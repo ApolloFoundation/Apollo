@@ -10,10 +10,6 @@ import static org.mockito.Mockito.mock;
 
 import javax.inject.Inject;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -25,7 +21,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
-import com.apollocurrency.aplwallet.apl.data.AccountControlPhasingData;
+import com.apollocurrency.aplwallet.apl.data.AccountControlPhasingTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
@@ -47,7 +43,7 @@ class AccountControlPhasingTableTest {
 
     @Inject
     AccountControlPhasingTable table;
-    AccountControlPhasingData td;
+    AccountControlPhasingTestData td;
 
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
@@ -67,7 +63,7 @@ class AccountControlPhasingTableTest {
 
     @BeforeEach
     void setUp() {
-        td = new AccountControlPhasingData();
+        td = new AccountControlPhasingTestData();
     }
 
     @Test

@@ -43,7 +43,7 @@ public class AssetDeleteTable extends EntityDbTable<AssetDelete> {
             int i = 0;
             pstmt.setLong(++i, assetDelete.getId());
             pstmt.setLong(++i, assetDelete.getAssetId());
-            pstmt.setLong(++i, assetDelete.getAssetId());
+            pstmt.setLong(++i, assetDelete.getAccountId());
             pstmt.setLong(++i, assetDelete.getQuantityATU());
             pstmt.setInt(++i, assetDelete.getTimestamp());
             pstmt.setInt(++i, assetDelete.getHeight());

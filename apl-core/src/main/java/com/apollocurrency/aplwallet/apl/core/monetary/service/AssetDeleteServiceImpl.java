@@ -19,8 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 public class AssetDeleteServiceImpl implements AssetDeleteService {
 
-    private AssetDeleteTable assetDeleteTable;
-    private BlockChainInfoService blockChainInfoService;
+    private final AssetDeleteTable assetDeleteTable;
+    private final BlockChainInfoService blockChainInfoService;
 
     @Inject
     public AssetDeleteServiceImpl(AssetDeleteTable assetDeleteTable, BlockChainInfoService blockChainInfoService) {
@@ -48,6 +48,7 @@ public class AssetDeleteServiceImpl implements AssetDeleteService {
     public AssetDelete addAssetDelete(Transaction transaction, long assetId, long quantityATU) {
         AssetDelete assetDelete = new AssetDelete(transaction, assetId, quantityATU,
             blockChainInfoService.getLastBlock().getTimestamp(), blockChainInfoService.getHeight());
+        assetDelete.setHeight(blockChainInfoService.getHeight());
         assetDeleteTable.insert(assetDelete);
         return assetDelete;
     }

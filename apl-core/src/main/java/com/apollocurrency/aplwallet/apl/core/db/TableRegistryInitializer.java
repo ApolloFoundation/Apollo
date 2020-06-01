@@ -143,7 +143,7 @@ public class TableRegistryInitializer {
 //        Asset.init();
         Poll.init();
 //        AssetDelete.init();
-        AssetDividend.init();
+//        AssetDividend.init();
         Vote.init();
         Currency.init();
         CurrencyFounder.init();

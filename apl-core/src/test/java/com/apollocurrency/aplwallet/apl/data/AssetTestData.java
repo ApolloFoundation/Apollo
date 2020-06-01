@@ -9,7 +9,7 @@ import java.util.List;
 import com.apollocurrency.aplwallet.apl.core.monetary.model.Asset;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetIssuance;
 
-public class AssetData {
+public class AssetTestData {
 
     public AccountTestData accountTestData = new AccountTestData();
 
