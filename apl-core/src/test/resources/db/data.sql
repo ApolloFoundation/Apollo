@@ -40,6 +40,7 @@ delete from user_error_message;
 delete from ACCOUNT_INFO;
 delete from ASSET;
 delete from ASSET_DELETE;
+delete from ASSET_DIVIDEND;
 
 INSERT INTO PUBLIC.BLOCK
 (DB_ID,         ID,                HEIGHT,      VERSION,   "TIMESTAMP",  PREVIOUS_BLOCK_ID,  TOTAL_AMOUNT,        TOTAL_FEE,   PAYLOAD_LENGTH,   PREVIOUS_BLOCK_HASH,                                                   CUMULATIVE_DIFFICULTY,  BASE_TARGET,    NEXT_BLOCK_ID,               GENERATION_SIGNATURE,                                                   BLOCK_SIGNATURE,                                                                                                                        PAYLOAD_HASH,                                                           GENERATOR_ID,       TIMEOUT) VALUES
@@ -473,4 +474,12 @@ INSERT INTO ASSET_DELETE
 (6,         3746857886535243786,    -2591338258392940629,           500,            5,          45712884,   81),
 (7,         5471926494854938613,    1272486048634857248,            500,            12,         45712896,   94),
 (8,         2083198303623116770,    -7671470345148527248,           500,            16,         45712907,   103)
+;
+
+INSERT INTO ASSET_DIVIDEND
+(DB_ID, ID,                     ASSET_ID,               AMOUNT,     DIVIDEND_HEIGHT, TOTAL_DIVIDEND, NUM_ACCOUNTS, TIMESTAMP, HEIGHT) VALUES
+(1,     7584440193513719551,    8076646017490321411,    1,          61449,           0,              0,             36559619, 61468),
+(2,     -7390004979265954310,   8804302123230545017,    1000,       61449,           0,              0,             36559807, 61487),
+(3,     9191632407374355191,    9065918785929852826,    1000,       61449,           0,              0,             36560092, 61516),
+(4,     8033155246743541720,    9065918785929852826,    100,        61449,           0,              0,             36564916, 62007)
 ;

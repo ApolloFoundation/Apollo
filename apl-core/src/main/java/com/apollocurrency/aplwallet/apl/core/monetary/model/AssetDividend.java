@@ -49,6 +49,20 @@ public class AssetDividend extends DerivedEntity {
         this.numAccounts = numAccounts;
     }
 
+    /**
+     * For unit tests mostly
+     */
+    public AssetDividend(long transactionId, long assetId, long amountATMPerATU, int dividendHeight,
+                         long totalDividend, long numAccounts, int timestamp, int height) {
+        this(transactionId, height, timestamp);
+
+        this.assetId = assetId;
+        this.amountATMPerATU = amountATMPerATU;
+        this.dividendHeight = dividendHeight;
+        this.totalDividend = totalDividend;
+        this.numAccounts = numAccounts;
+    }
+
     public AssetDividend(ResultSet rs, DbKey dbKey) throws SQLException {
         super(rs);
         this.id = rs.getLong("id");

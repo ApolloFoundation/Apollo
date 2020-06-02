@@ -7,7 +7,10 @@ package com.apollocurrency.aplwallet.apl.core.monetary.service;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import java.util.stream.Stream;
+
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.converter.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -24,19 +27,31 @@ public class AssetServiceImpl implements AssetService {
     private AssetTable assetTable;
     private BlockChainInfoService blockChainInfoService;
     private AssetDeleteService assetDeleteService;
+    private IteratorToStreamConverter<Asset> assetIteratorToStreamConverter =
+        new IteratorToStreamConverter<>();
 
     @Inject
     public AssetServiceImpl(AssetTable assetTable,
                             BlockChainInfoService blockChainInfoService,
-                            AssetDeleteService assetDeleteService) {
+                            AssetDeleteService assetDeleteService,
+                            IteratorToStreamConverter<Asset> assetIteratorToStreamConverter // for unit tests mostly
+    ) {
         this.assetTable = assetTable;
         this.blockChainInfoService = blockChainInfoService;
         this.assetDeleteService = assetDeleteService;
+        if (assetIteratorToStreamConverter != null) { // for unit tests
+            this.assetIteratorToStreamConverter = assetIteratorToStreamConverter;
+        }
     }
 
     @Override
     public DbIterator<Asset> getAllAssets(int from, int to) {
         return assetTable.getAll(from, to);
+    }
+
+    @Override
+    public Stream<Asset> getAllAssetsStream(int from, int to) {
+        return assetIteratorToStreamConverter.apply(assetTable.getAll(from, to));
     }
 
     @Override
@@ -65,8 +80,21 @@ public class AssetServiceImpl implements AssetService {
     }
 
     @Override
+    public Stream<Asset> getAssetsIssuedByStream(long accountId, int from, int to) {
+        return assetIteratorToStreamConverter.apply(
+            assetTable.getManyBy(
+                new DbClause.LongClause("account_id", accountId), from, to));
+    }
+
+    @Override
     public DbIterator<Asset> searchAssets(String query, int from, int to) {
         return assetTable.search(query, DbClause.EMPTY_CLAUSE, from, to, " ORDER BY ft.score DESC ");
+    }
+
+    @Override
+    public Stream<Asset> searchAssetsStream(String query, int from, int to) {
+        return assetIteratorToStreamConverter.apply(
+            assetTable.search(query, DbClause.EMPTY_CLAUSE, from, to, " ORDER BY ft.score DESC "));
     }
 
     @Override
