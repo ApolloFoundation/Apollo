@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.data;
 
 import com.apollocurrency.aplwallet.apl.core.entity.operation.account.AccountControlPhasing;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
+import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
 
 public class AccountControlPhasingData {
     //DB_ID, ACCOUNT_ID,          WHITELIST,          VOTING_MODEL, QUORUM, MIN_BALANCE, HOLDING_ID, MIN_BALANCE_MODEL, MAX_FEES, MIN_DURATION, MAX_DURATION, HEIGHT, LATEST

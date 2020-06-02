@@ -32,7 +32,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Vote;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMinting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DGSService;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
@@ -55,7 +55,7 @@ import com.apollocurrency.aplwallet.apl.core.service.operation.qualifier.BidOrde
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.operation.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.operation.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.core.service.operation.TradeService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;

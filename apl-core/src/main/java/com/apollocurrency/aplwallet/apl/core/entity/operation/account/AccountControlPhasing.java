@@ -10,7 +10,7 @@ import java.sql.SQLException;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDeletableEntity;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
+import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
