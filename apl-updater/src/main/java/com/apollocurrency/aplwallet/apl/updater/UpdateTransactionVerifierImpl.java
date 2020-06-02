@@ -59,7 +59,7 @@ public class UpdateTransactionVerifierImpl implements UpdateTransactionVerifier 
             if (updateAttachment.getAppVersion().greaterThan(updaterMediator.getWalletVersion())) {
                 OS currentOS = OS.current();
                 Arch currentArchitecture = Arch.current();
-                if (currentOS != null && currentOS.isAppropriate(updateAttachment.getOS()) && updateAttachment.getArchitecture() == currentArchitecture) {
+                if (currentOS.isAppropriate(updateAttachment.getOS()) && updateAttachment.getArchitecture() == currentArchitecture) {
                     Pattern urlPattern = getUrlPattern(updateAttachment.getAppVersion(), updateAttachment.getOS());
                     DoubleByteArrayTuple encryptedUrl = updateAttachment.getUrl();
                     byte[] urlEncryptedBytes = UpdaterUtil.concatArrays(encryptedUrl.getFirst(), encryptedUrl.getSecond());

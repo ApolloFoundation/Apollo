@@ -27,7 +27,7 @@ class ArchTest {
     void testCurrentArch() {
         Arch current = Arch.current();
         log.info("Current arch: {}", current);
-        assertNotEquals(Arch.ALL, current);
+        assertNotEquals(Arch.NO_ARCH, current);
     }
 
     @Test
@@ -49,7 +49,7 @@ class ArchTest {
         testNewName("arm32", Arch.ARM_32);
         testNewName("aarch64", Arch.ARM_64);
         testNewName("arm64", Arch.ARM_64);
-        testNewName("NoArch", Arch.ALL);
+        testNewName("NoArch", Arch.NO_ARCH);
 
         testEx("x86_16");
         testEx("i386");

@@ -45,6 +45,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateV2Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -135,6 +136,7 @@ public abstract class TransactionType {
     private static AccountAssetService accountAssetService;
     private static AccountPropertyService accountPropertyService;
     private static AccountInfoService accountInfoService;
+    private static UpdateV2Transaction updateV2TransactionType;
 
     public TransactionType() {
     }
@@ -144,6 +146,14 @@ public abstract class TransactionType {
             accountService = CDI.current().select(AccountServiceImpl.class).get();
         }
         return accountService;
+    }
+
+    // Should be removed when TransactionType hierarchy will be refactored
+    public static synchronized UpdateV2Transaction updateV2Transaction() {
+        if (updateV2TransactionType == null) {
+            updateV2TransactionType = CDI.current().select(UpdateV2Transaction.class).get();
+        }
+        return updateV2TransactionType;
     }
 
     public static synchronized AccountCurrencyService lookupAccountCurrencyService() {
@@ -339,7 +349,7 @@ public abstract class TransactionType {
                     case SUBTYPE_UPDATE_MINOR:
                         return Update.MINOR;
                     case SUBTYPE_UPDATE_V2:
-                        return Update.UPDATE_V2;
+                        return updateV2Transaction();
                     default:
                         return null;
                 }

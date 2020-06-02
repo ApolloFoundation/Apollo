@@ -1,7 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages.update;
 
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.Update;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
@@ -142,7 +141,7 @@ public class UpdateV2Attachment extends AbstractAttachment {
 
     @Override
     public TransactionType getTransactionType() {
-        return Update.UPDATE_V2;
+        return TransactionType.updateV2Transaction();
     }
 
 }

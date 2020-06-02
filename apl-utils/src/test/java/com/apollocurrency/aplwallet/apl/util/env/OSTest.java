@@ -14,7 +14,7 @@ class OSTest {
         testCompatibility(OS.WINDOWS, "WINDOWS");
         testCompatibility(OS.LINUX, "LINUX");
         testCompatibility(OS.MAC_OS, "MAC_OS");
-        testCompatibility(OS.ALL, "ALL");
+        testCompatibility(OS.NO_OS, "ALL");
         testCompatibility(OS.OSX, "OSX");
     }
 
@@ -22,7 +22,7 @@ class OSTest {
     void testCurrent() {
         OS current = OS.current();
         log.info("Current os detected: {}", current);
-        assertNotEquals(current, OS.ALL);
+        assertNotEquals(current, OS.NO_OS);
     }
 
     @Test
@@ -30,7 +30,7 @@ class OSTest {
         testNameAndCode(OS.WINDOWS, "Windows");
         testNameAndCode(OS.LINUX, "Linux");
         testNameAndCode(OS.MAC_OS, "Darwin");
-        testNameAndCode(OS.ALL, "NoOS");
+        testNameAndCode(OS.NO_OS, "NoOS");
         testNameAndCode(OS.OSX, "OS_X");
     }
 
@@ -65,7 +65,7 @@ class OSTest {
         testFromEx("macosx");
         testFrom(OS.OSX, "os_x");
         testFrom(OS.OSX, "os x");
-        testFrom(OS.ALL, "NoOS");
+        testFrom(OS.NO_OS, "NoOS");
         testFromEx("All");
         testFromEx("all");
     }

@@ -49,6 +49,10 @@ public class PlatformSpec {
         return os +
             "-" + arch;
     }
+
+    public boolean isAppropriate(PlatformSpec other) {
+        return os.isAppropriate(other.os) && arch.isAppropriate(other.arch);
+    }
 }
 
 

@@ -42,7 +42,7 @@ public class UpdateTransactionTest {
 
     @BeforeEach
     void setUp() {
-        type = Update.UPDATE_V2;
+//        type = Update.UPDATE_V2;
     }
 
     @ParameterizedTest
@@ -71,7 +71,7 @@ public class UpdateTransactionTest {
     private Transaction createUpdateTx(String v) {
         Transaction tx = mock(Transaction.class);
         Version version = new Version(v);
-        UpdateV2Attachment attachment = new UpdateV2Attachment("htpps://update.zip", Level.CRITICAL, version, "somesite.com", BigInteger.ONE, new byte[128], Set.of(new PlatformSpec(OS.ALL, Arch.X86_64), new PlatformSpec(OS.ALL, Arch.X86_32), new PlatformSpec(OS.MAC_OS, Arch.ARM_32)));
+        UpdateV2Attachment attachment = new UpdateV2Attachment("htpps://update.zip", Level.CRITICAL, version, "somesite.com", BigInteger.ONE, new byte[128], Set.of(new PlatformSpec(OS.NO_OS, Arch.X86_64), new PlatformSpec(OS.NO_OS, Arch.X86_32), new PlatformSpec(OS.MAC_OS, Arch.ARM_32)));
         when(tx.getAttachment()).thenReturn(attachment);
         return tx;
     }

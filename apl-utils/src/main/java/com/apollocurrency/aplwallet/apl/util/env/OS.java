@@ -21,7 +21,7 @@ public enum OS {
     WINDOWS(1, "Windows", "WINDOWS"),
     MAC_OS(2, "Darwin", "MAC_OS","Mac", "Mac OS"),
     OSX(3, "OS_X", "OSX", "OS X"), // left for backward compatibility with existing blockchain,
-    ALL(-1, "NoOS", "ALL");
+    NO_OS(-1, "NoOS", "ALL");
 
     public final byte code;
     private final List<String> aliases = new ArrayList<>();
@@ -48,7 +48,7 @@ public enum OS {
     public static OS current() {
         for (OS value : values()) {
             if (contains(value.aliases)) {
-                if (value == ALL) { // should not happen
+                if (value == NO_OS) { // should not happen
                     throw new IllegalStateException("Generic OS detected as current OS for '" + OS_VALUE + "'");
                 }
                 return value;
@@ -89,7 +89,7 @@ public enum OS {
     }
 
     public boolean isAppropriate(OS os) {
-        return this == os || os == ALL;
+        return this == os || os == NO_OS;
     }
 
     private boolean eq(String str) {

@@ -21,7 +21,7 @@ public enum Arch {
     X86_64(1, "X86_64", "AMD64","Amd64"),
     ARM_64(2, "ARM64","ARM","aarch64"),
     ARM_32(3, "ARM32", null,"ARM"),
-    ALL(4, "NoArch", null);
+    NO_ARCH(4, "NoArch", null);
 
     public final byte code;
     private final List<String> aliases = new ArrayList<>();
@@ -47,13 +47,17 @@ public enum Arch {
     public static Arch current() {
         for (Arch value : values()) {
             if (matches(value.aliases)) {
-                if (value == ALL) {
+                if (value == NO_ARCH) {
                     throw new IllegalStateException("Unknown architecture mapped to generic type: " + ARCH);
                 }
                 return value;
             }
         }
         throw new IllegalStateException("Unknown architecture, unable to detect arch for: '" + ARCH + "'");
+    }
+
+    public boolean isAppropriate(Arch arch) {
+        return this == arch || arch == NO_ARCH;
     }
 
     private static boolean matches(List<String> aliases) {
