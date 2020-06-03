@@ -36,6 +36,7 @@ import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.monetary.service.AssetService;
+import com.apollocurrency.aplwallet.apl.core.monetary.service.AssetTransferService;
 import com.apollocurrency.aplwallet.apl.core.order.entity.AskOrder;
 import com.apollocurrency.aplwallet.apl.core.order.entity.BidOrder;
 import com.apollocurrency.aplwallet.apl.core.order.service.OrderService;
@@ -100,6 +101,7 @@ public abstract class AbstractAPIRequestHandler {
     private AccountPropertyService accountPropertyService;
     private PeersService peers;
     private AccountControlPhasingService accountControlPhasingService;
+    private AssetTransferService assetTransferService;
 
     public AbstractAPIRequestHandler(APITag[] apiTags, String... parameters) {
         this(null, apiTags, parameters);
@@ -229,6 +231,13 @@ public abstract class AbstractAPIRequestHandler {
             accountControlPhasingService = CDI.current().select(AccountControlPhasingService.class).get();
         }
         return accountControlPhasingService;
+    }
+
+    public AssetTransferService lookupAssetTransferService() {
+        if (assetTransferService == null) {
+            assetTransferService = CDI.current().select(AssetTransferService.class).get();
+        }
+        return assetTransferService;
     }
 
     public final List<String> getParameters() {

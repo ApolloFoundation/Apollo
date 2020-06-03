@@ -41,6 +41,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+@Deprecated
 public final class AssetTransfer {
 
     private static final Listeners<AssetTransfer, Event> listeners = new Listeners<>();

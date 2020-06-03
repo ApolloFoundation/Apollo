@@ -150,6 +150,6 @@ public class TableRegistryInitializer {
         Shuffling.init();
         ShufflingParticipant.init();
         CurrencyExchangeOffer.init();
-        AssetTransfer.init(databaseManager);
+//        AssetTransfer.init(databaseManager);
     }
 }
