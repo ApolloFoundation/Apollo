@@ -2,14 +2,14 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.monetary.dao;
+package com.apollocurrency.aplwallet.apl.core.dao.state.asset;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
-import com.apollocurrency.aplwallet.apl.core.monetary.model.AssetDividend;
+import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetDividend;
 
 import javax.inject.Singleton;
 import java.sql.Connection;

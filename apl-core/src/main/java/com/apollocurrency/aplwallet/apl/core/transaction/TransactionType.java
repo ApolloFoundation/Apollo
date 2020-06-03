@@ -20,35 +20,38 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountAssetServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountCurrencyServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountInfoService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountInfoServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountLeaseService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountLeaseServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPropertyService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPropertyServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetDividendService;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.impl.AssetServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountInfoService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountLeaseService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPropertyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountAssetServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountCurrencyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountInfoServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountLeaseServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPropertyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import lombok.Setter;
 import org.json.simple.JSONObject;
 
@@ -206,8 +209,8 @@ public abstract class TransactionType {
         return blockchainConfig;
     }
 
-    public static synchronized PhasingPollService lookupPhasingPollService(){
-        if ( phasingPollService == null) {
+    public static synchronized PhasingPollService lookupPhasingPollService() {
+        if (phasingPollService == null) {
             phasingPollService = CDI.current().select(PhasingPollService.class).get();
         }
         return phasingPollService;
@@ -221,7 +224,7 @@ public abstract class TransactionType {
      */
     protected static synchronized AliasService lookupAliasService() {
         if (ALIAS_SERVICE == null) {
-            synchronized(Messaging.class) {
+            synchronized (Messaging.class) {
                 if (ALIAS_SERVICE == null) {
                     ALIAS_SERVICE = CDI.current().select(AliasService.class).get();
                 }
@@ -230,7 +233,7 @@ public abstract class TransactionType {
         return ALIAS_SERVICE;
     }
 
-    public static synchronized AccountControlPhasingService lookupAccountControlPhasingService(){
+    public static synchronized AccountControlPhasingService lookupAccountControlPhasingService() {
         if (accountControlPhasingService == null) {
             accountControlPhasingService = CDI.current().select(AccountControlPhasingService.class).get();
         }

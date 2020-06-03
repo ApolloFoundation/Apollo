@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction;
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.monetary.model.Asset;
+import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetDelete;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import org.json.simple.JSONObject;

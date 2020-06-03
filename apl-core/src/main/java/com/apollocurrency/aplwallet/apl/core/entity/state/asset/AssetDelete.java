@@ -1,7 +1,7 @@
 /*
  *  Copyright © 2018-2020 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.core.monetary.model;
+package com.apollocurrency.aplwallet.apl.core.entity.state.asset;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -9,7 +9,7 @@ import java.sql.SQLException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
-import com.apollocurrency.aplwallet.apl.core.monetary.dao.AssetDeleteTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.asset.AssetDeleteTable;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;

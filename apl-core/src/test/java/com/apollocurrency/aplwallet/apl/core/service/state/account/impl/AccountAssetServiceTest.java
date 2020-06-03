@@ -16,7 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventType;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
-import com.apollocurrency.aplwallet.apl.core.monetary.service.AssetDividendService;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetDividendService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;

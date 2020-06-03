@@ -2,7 +2,7 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.monetary.model;
+package com.apollocurrency.aplwallet.apl.core.entity.state.asset;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;

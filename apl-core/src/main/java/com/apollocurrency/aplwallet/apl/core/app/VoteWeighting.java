@@ -20,14 +20,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountAssetServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountCurrencyServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.impl.AssetServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountAssetServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountCurrencyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
 
 import javax.enterprise.inject.spi.CDI;
 
@@ -36,11 +37,11 @@ public final class VoteWeighting {
     private static AccountService accountService;
     private static AccountAssetService accountAssetService;
     private static AccountCurrencyService accountCurrencyService;
+    private static AssetService assetService;
     private final VotingModel votingModel;
     private final long holdingId; //either asset id or MS coin id
     private final long minBalance;
     private final MinBalanceModel minBalanceModel;
-    private static AssetService assetService;
 
     public VoteWeighting(byte votingModel, long holdingId, long minBalance, byte minBalanceModel) {
         this.votingModel = VotingModel.get(votingModel);

@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.data;
 
-import com.apollocurrency.aplwallet.apl.core.monetary.model.AssetDelete;
+import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetDelete;
 
 import java.util.List;
 

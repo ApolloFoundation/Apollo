@@ -20,39 +20,22 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.app.Poll;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.Vote;
-import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
-import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
-import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
-import com.apollocurrency.aplwallet.apl.core.entity.state.order.BidOrder;
-import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.AskOrderService;
-import com.apollocurrency.aplwallet.apl.core.service.state.order.impl.AskOrderServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.BidOrderService;
-import com.apollocurrency.aplwallet.apl.core.service.state.order.impl.BidOrderServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
-import com.apollocurrency.aplwallet.apl.core.service.state.TaggedDataService;
-import com.apollocurrency.aplwallet.apl.core.service.state.TradeService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
-import com.apollocurrency.aplwallet.apl.util.UPnP;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 import java.net.InetAddress;
 

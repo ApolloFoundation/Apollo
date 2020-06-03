@@ -2,9 +2,9 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.monetary.service;
+package com.apollocurrency.aplwallet.apl.core.service.state.asset;
 
-import com.apollocurrency.aplwallet.apl.core.monetary.model.AssetDividend;
+import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetDividend;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
 
 import java.util.List;

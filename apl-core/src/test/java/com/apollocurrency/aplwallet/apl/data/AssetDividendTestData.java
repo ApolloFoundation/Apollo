@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.data;
 
-import com.apollocurrency.aplwallet.apl.core.monetary.model.AssetDividend;
+import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetDividend;
 
 import java.util.List;
 

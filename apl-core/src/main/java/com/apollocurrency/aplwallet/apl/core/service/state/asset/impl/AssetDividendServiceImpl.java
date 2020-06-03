@@ -2,13 +2,14 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.monetary.service;
+package com.apollocurrency.aplwallet.apl.core.service.state.asset.impl;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.monetary.dao.AssetDividendTable;
-import com.apollocurrency.aplwallet.apl.core.monetary.model.AssetDividend;
+import com.apollocurrency.aplwallet.apl.core.dao.state.asset.AssetDividendTable;
+import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetDividend;
 import com.apollocurrency.aplwallet.apl.core.monetary.observer.AssetEventType;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetDividendService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
 
 import javax.enterprise.event.Event;

@@ -2,7 +2,7 @@
  *  Copyright © 2018-2020 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.monetary.model;
+package com.apollocurrency.aplwallet.apl.core.entity.state.asset;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -10,7 +10,7 @@ import java.sql.SQLException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
-import com.apollocurrency.aplwallet.apl.core.monetary.dao.AssetTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.asset.AssetTable;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetIssuance;
 import lombok.Getter;
 import lombok.Setter;
