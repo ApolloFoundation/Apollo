@@ -27,9 +27,22 @@ public class AssetServiceImpl implements AssetService {
     private final AssetTable assetTable;
     private final BlockChainInfoService blockChainInfoService;
     private final AssetDeleteService assetDeleteService;
-    private final IteratorToStreamConverter<Asset> assetIteratorToStreamConverter;
+    private IteratorToStreamConverter<Asset> assetIteratorToStreamConverter;
 
     @Inject
+    public AssetServiceImpl(AssetTable assetTable,
+                            BlockChainInfoService blockChainInfoService,
+                            AssetDeleteService assetDeleteService
+    ) {
+        this.assetTable = assetTable;
+        this.blockChainInfoService = blockChainInfoService;
+        this.assetDeleteService = assetDeleteService;
+        this.assetIteratorToStreamConverter = new IteratorToStreamConverter<>();
+    }
+
+    /**
+     * Constructor for unit tests
+     */
     public AssetServiceImpl(AssetTable assetTable,
                             BlockChainInfoService blockChainInfoService,
                             AssetDeleteService assetDeleteService,
