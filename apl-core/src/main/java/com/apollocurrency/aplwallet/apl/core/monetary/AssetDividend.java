@@ -41,6 +41,9 @@ import java.sql.SQLException;
 public final class AssetDividend {
 
     private static final Listeners<AssetDividend, Event> listeners = new Listeners<>();
+    /**
+     * @deprecated
+     */
     private static final LongKeyFactory<AssetDividend> dividendDbKeyFactory = new LongKeyFactory<AssetDividend>("id") {
 
         @Override
@@ -49,6 +52,9 @@ public final class AssetDividend {
         }
 
     };
+    /**
+     * @deprecated
+     */
     private static final EntityDbTable<AssetDividend> assetDividendTable = new EntityDbTable<AssetDividend>("asset_dividend", dividendDbKeyFactory) {
 
         @Override
@@ -99,26 +105,44 @@ public final class AssetDividend {
         this.height = rs.getInt("height");
     }
 
+    /**
+     * @deprecated
+     */
     public static boolean addListener(Listener<AssetDividend> listener, Event eventType) {
         return listeners.addListener(listener, eventType);
     }
 
+    /**
+     * @deprecated
+     */
     public static boolean removeListener(Listener<AssetDividend> listener, Event eventType) {
         return listeners.removeListener(listener, eventType);
     }
 
+    /**
+     * @deprecated
+     */
     public static boolean addListener(Listener<AssetDividend> listener) {
         return addListener(listener, Event.ASSET_DIVIDEND);
     }
 
+    /**
+     * @deprecated
+     */
     public static boolean removeListener(Listener<AssetDividend> listener) {
         return removeListener(listener, Event.ASSET_DIVIDEND);
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<AssetDividend> getAssetDividends(long assetId, int from, int to) {
         return assetDividendTable.getManyBy(new DbClause.LongClause("asset_id", assetId), from, to);
     }
 
+    /**
+     * @deprecated
+     */
     public static AssetDividend getLastDividend(long assetId) {
         try (DbIterator<AssetDividend> dividends = assetDividendTable.getManyBy(new DbClause.LongClause("asset_id", assetId), 0, 0)) {
             if (dividends.hasNext()) {
@@ -128,6 +152,9 @@ public final class AssetDividend {
         return null;
     }
 
+    /**
+     * @deprecated
+     */
     public static AssetDividend addAssetDividend(long transactionId, ColoredCoinsDividendPayment attachment,
                                                  long totalDividend, long numAccounts) {
         AssetDividend assetDividend = new AssetDividend(transactionId, attachment, totalDividend, numAccounts);
@@ -136,6 +163,9 @@ public final class AssetDividend {
         return assetDividend;
     }
 
+    /**
+     * @deprecated
+     */
     public static void init() {
     }
 

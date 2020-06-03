@@ -43,6 +43,9 @@ public final class Asset {
     private static final BlockChainInfoService BLOCK_CHAIN_INFO_SERVICE =
         CDI.current().select(BlockChainInfoService.class).get();
 
+    /**
+     * @deprecated
+     */
     private static final LongKeyFactory<Asset> assetDbKeyFactory = new LongKeyFactory<Asset>("id") {
 
         @Override
@@ -52,6 +55,9 @@ public final class Asset {
 
     };
 
+    /**
+     * @deprecated
+     */
     private static final VersionedDeletableEntityDbTable<Asset> assetTable
         = new VersionedDeletableEntityDbTable<Asset>("asset", assetDbKeyFactory, "name,description") {
 
@@ -74,6 +80,9 @@ public final class Asset {
     private final byte decimals;
     private long quantityATU;
 
+    /**
+     * @deprecated
+     */
     private Asset(Transaction transaction, ColoredCoinsAssetIssuance attachment) {
         this.assetId = transaction.getId();
         this.dbKey = assetDbKeyFactory.newKey(this.assetId);
@@ -85,7 +94,9 @@ public final class Asset {
         this.decimals = attachment.getDecimals();
     }
 
-
+    /**
+     * @deprecated
+     */
     private Asset(ResultSet rs, DbKey dbKey) throws SQLException {
         this.assetId = rs.getLong("id");
         this.dbKey = dbKey;
@@ -97,18 +108,30 @@ public final class Asset {
         this.decimals = rs.getByte("decimals");
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<Asset> getAllAssets(int from, int to) {
         return assetTable.getAll(from, to);
     }
 
+    /**
+     * @deprecated
+     */
     public static int getCount() {
         return assetTable.getCount();
     }
 
+    /**
+     * @deprecated
+     */
     public static Asset getAsset(long id) {
         return assetTable.get(assetDbKeyFactory.newKey(id));
     }
 
+    /**
+     * @deprecated
+     */
     public static Asset getAsset(long id, int height) {
         final DbKey dbKey = assetDbKeyFactory.newKey(id);
         if (height < 0 || BLOCK_CHAIN_INFO_SERVICE.doesNotExceed(height)) {
@@ -119,18 +142,30 @@ public final class Asset {
         return assetTable.get(dbKey, height);
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<Asset> getAssetsIssuedBy(long accountId, int from, int to) {
         return assetTable.getManyBy(new DbClause.LongClause("account_id", accountId), from, to);
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<Asset> searchAssets(String query, int from, int to) {
         return assetTable.search(query, DbClause.EMPTY_CLAUSE, from, to, " ORDER BY ft.score DESC ");
     }
 
+    /**
+     * @deprecated
+     */
     public static void addAsset(Transaction transaction, ColoredCoinsAssetIssuance attachment) {
         assetTable.insert(new Asset(transaction, attachment));
     }
 
+    /**
+     * @deprecated
+     */
     public static void deleteAsset(Transaction transaction, long assetId, long quantityATU) {
         Asset asset = getAsset(assetId);
         asset.quantityATU = Math.max(0, asset.quantityATU - quantityATU);
@@ -138,6 +173,9 @@ public final class Asset {
         AssetDelete.addAssetDelete(transaction, assetId, quantityATU);
     }
 
+    /**
+     * @deprecated
+     */
     public static void init() {
     }
 
