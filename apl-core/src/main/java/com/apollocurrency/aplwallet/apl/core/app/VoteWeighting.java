@@ -20,12 +20,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.service.operation.account.AccountAssetService;
-import com.apollocurrency.aplwallet.apl.core.service.operation.account.impl.AccountAssetServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.operation.account.AccountCurrencyService;
-import com.apollocurrency.aplwallet.apl.core.service.operation.account.impl.AccountCurrencyServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.operation.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.operation.account.impl.AccountServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountAssetServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountCurrencyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 

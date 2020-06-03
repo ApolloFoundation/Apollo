@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.dao;
 
-import com.apollocurrency.aplwallet.apl.core.service.operation.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.operation.account.impl.AccountServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
@@ -26,13 +26,13 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.model.ReferencedTransaction;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.impl.PrunableMessageServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.operation.impl.PhasingPollServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.dao.operation.phasing.PhasingApprovedResultTable;
-import com.apollocurrency.aplwallet.apl.core.dao.operation.phasing.PhasingPollLinkedTransactionTable;
-import com.apollocurrency.aplwallet.apl.core.dao.operation.phasing.PhasingPollResultTable;
-import com.apollocurrency.aplwallet.apl.core.dao.operation.phasing.PhasingPollTable;
-import com.apollocurrency.aplwallet.apl.core.dao.operation.phasing.PhasingPollVoterTable;
-import com.apollocurrency.aplwallet.apl.core.dao.operation.phasing.PhasingVoteTable;
+import com.apollocurrency.aplwallet.apl.core.service.state.impl.PhasingPollServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingApprovedResultTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollLinkedTransactionTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollResultTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollVoterTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingVoteTable;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;

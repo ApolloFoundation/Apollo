@@ -1,6 +1,6 @@
 package com.apollocurrency.aplwallet.apl.data;
 
-import com.apollocurrency.aplwallet.apl.core.entity.operation.phasing.PhasingApprovalResult;
+import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingApprovalResult;
 
 public class PhasingApprovedResultTestData {
     public final PhasingApprovalResult RESULT_1 = new PhasingApprovalResult(110L, 510, 5, 120);

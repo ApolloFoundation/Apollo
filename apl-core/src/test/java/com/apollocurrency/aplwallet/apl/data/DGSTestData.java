@@ -4,11 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.data;
 
-import com.apollocurrency.aplwallet.apl.core.entity.appdata.dgs.DGSFeedback;
-import com.apollocurrency.aplwallet.apl.core.entity.appdata.dgs.DGSGoods;
-import com.apollocurrency.aplwallet.apl.core.entity.appdata.dgs.DGSPublicFeedback;
-import com.apollocurrency.aplwallet.apl.core.entity.appdata.dgs.DGSPurchase;
-import com.apollocurrency.aplwallet.apl.core.entity.appdata.dgs.DGSTag;
+import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSFeedback;
+import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSGoods;
+import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSPublicFeedback;
+import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSPurchase;
+import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSTag;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 

@@ -4,9 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.entity.operation.account.Account;
-import com.apollocurrency.aplwallet.apl.core.service.operation.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.operation.account.impl.AccountServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
 
 import javax.enterprise.inject.spi.CDI;
 import java.math.BigInteger;

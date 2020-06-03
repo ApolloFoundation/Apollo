@@ -1,13 +1,13 @@
 package com.apollocurrency.aplwallet.apl.core.observer;
 
 import com.apollocurrency.aplwallet.apl.core.model.account.AccountEventType;
-import com.apollocurrency.aplwallet.apl.core.entity.operation.account.Account;
-import com.apollocurrency.aplwallet.apl.core.entity.operation.account.AccountLease;
-import com.apollocurrency.aplwallet.apl.core.entity.operation.account.LedgerEntry;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountLease;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.observer.events.AccountEventBinding;
-import com.apollocurrency.aplwallet.apl.core.service.operation.account.AccountLeaseService;
-import com.apollocurrency.aplwallet.apl.core.service.operation.account.AccountLedgerService;
-import com.apollocurrency.aplwallet.apl.core.service.operation.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountLeaseService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountLedgerService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventType;

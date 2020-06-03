@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
-import com.apollocurrency.aplwallet.apl.core.entity.operation.tagged.TaggedDataAttachment;
+import com.apollocurrency.aplwallet.apl.core.entity.state.tagged.TaggedDataAttachment;
 import com.apollocurrency.aplwallet.apl.util.Search;
 
 import java.sql.ResultSet;

@@ -20,15 +20,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.entity.operation.account.Account;
-import com.apollocurrency.aplwallet.apl.core.entity.operation.account.AccountAsset;
-import com.apollocurrency.aplwallet.apl.core.entity.operation.account.AccountCurrency;
-import com.apollocurrency.aplwallet.apl.core.entity.operation.account.AccountInfo;
-import com.apollocurrency.aplwallet.apl.core.entity.operation.account.AccountLease;
-import com.apollocurrency.aplwallet.apl.core.service.operation.account.AccountAssetService;
-import com.apollocurrency.aplwallet.apl.core.service.operation.account.AccountCurrencyService;
-import com.apollocurrency.aplwallet.apl.core.service.operation.account.AccountInfoService;
-import com.apollocurrency.aplwallet.apl.core.service.operation.account.AccountLeaseService;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountAsset;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountCurrency;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountInfo;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountLease;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountInfoService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountLeaseService;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;

@@ -7,11 +7,11 @@ package com.apollocurrency.aplwallet.apl.data;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.PhasingCreator;
 import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
-import com.apollocurrency.aplwallet.apl.core.entity.operation.phasing.PhasingPoll;
-import com.apollocurrency.aplwallet.apl.core.entity.operation.phasing.PhasingPollLinkedTransaction;
-import com.apollocurrency.aplwallet.apl.core.entity.operation.phasing.PhasingPollResult;
-import com.apollocurrency.aplwallet.apl.core.entity.operation.phasing.PhasingPollVoter;
-import com.apollocurrency.aplwallet.apl.core.entity.operation.phasing.PhasingVote;
+import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollLinkedTransaction;
+import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollResult;
+import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollVoter;
+import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingVote;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendixV2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
