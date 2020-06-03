@@ -28,6 +28,17 @@ public class AssetTransferServiceImpl implements AssetTransferService {
 
     @Inject
     public AssetTransferServiceImpl(AssetTransferTable assetTransferTable,
+                                    BlockChainInfoService blockChainInfoService
+    ) {
+        this.assetTransferTable = assetTransferTable;
+        this.blockChainInfoService = blockChainInfoService;
+        this.assetIteratorToStreamConverter = new IteratorToStreamConverter<>();
+    }
+
+    /**
+     * Constructor for unit tests
+     */
+    public AssetTransferServiceImpl(AssetTransferTable assetTransferTable,
                                     BlockChainInfoService blockChainInfoService,
                                     IteratorToStreamConverter<AssetTransfer> assetIteratorToStreamConverter
     ) {
