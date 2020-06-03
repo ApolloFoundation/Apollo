@@ -22,7 +22,7 @@ public class AssetTable extends VersionedDeletableEntityDbTable<Asset> {
         @Override
         public DbKey newKey(Asset asset) {
             if (asset.getDbKey() == null) {
-                asset.setDbKey(super.newKey(asset.getAssetId()));
+                asset.setDbKey(super.newKey(asset.getId()));
             }
             return asset.getDbKey();
         }
@@ -48,7 +48,7 @@ public class AssetTable extends VersionedDeletableEntityDbTable<Asset> {
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)")
         ) {
             int i = 0;
-            pstmt.setLong(++i, asset.getAssetId());
+            pstmt.setLong(++i, asset.getId());
             pstmt.setLong(++i, asset.getAccountId());
             pstmt.setString(++i, asset.getName());
             pstmt.setString(++i, asset.getDescription());

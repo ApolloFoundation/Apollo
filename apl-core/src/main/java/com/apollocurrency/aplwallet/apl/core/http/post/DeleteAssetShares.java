@@ -48,7 +48,7 @@ public final class DeleteAssetShares extends CreateTransaction {
         long quantityATU = HttpParameterParserUtil.getQuantityATU(req);
         Account account = HttpParameterParserUtil.getSenderAccount(req);
 
-        Attachment attachment = new ColoredCoinsAssetDelete(asset.getAssetId(), quantityATU);
+        Attachment attachment = new ColoredCoinsAssetDelete(asset.getId(), quantityATU);
         try {
             return createTransaction(req, account, attachment);
         } catch (AplException.InsufficientBalanceException e) {

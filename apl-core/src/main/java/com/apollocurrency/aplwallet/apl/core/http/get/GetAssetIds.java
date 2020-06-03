@@ -51,7 +51,7 @@ public final class GetAssetIds extends AbstractAPIRequestHandler {
         AssetService assetService = CDI.current().select(AssetService.class).get();
         try (DbIterator<Asset> assets = assetService.getAllAssets(firstIndex, lastIndex)) {
             while (assets.hasNext()) {
-                assetIds.add(Long.toUnsignedString(assets.next().getAssetId()));
+                assetIds.add(Long.toUnsignedString(assets.next().getId()));
             }
         }
         JSONObject response = new JSONObject();

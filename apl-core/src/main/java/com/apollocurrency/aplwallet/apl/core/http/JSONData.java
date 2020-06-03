@@ -222,11 +222,11 @@ public final class JSONData {
         json.put("decimals", asset.getDecimals());
         json.put("initialQuantityATU", String.valueOf(asset.getInitialQuantityATU()));
         json.put("quantityATU", String.valueOf(asset.getQuantityATU()));
-        json.put("asset", Long.toUnsignedString(asset.getAssetId()));
+        json.put("asset", Long.toUnsignedString(asset.getId()));
         if (includeCounts) {
-            json.put("numberOfTrades", TRADE_SERVICE.getTradeCount(asset.getAssetId()));
-            json.put("numberOfTransfers", AssetTransfer.getTransferCount(asset.getAssetId()));
-            json.put("numberOfAccounts", accountAssetService.getCountByAsset(asset.getAssetId()));
+            json.put("numberOfTrades", TRADE_SERVICE.getTradeCount(asset.getId()));
+            json.put("numberOfTransfers", AssetTransfer.getTransferCount(asset.getId()));
+            json.put("numberOfAccounts", accountAssetService.getCountByAsset(asset.getId()));
         }
         return json;
     }

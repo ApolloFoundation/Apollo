@@ -55,7 +55,7 @@ class AssetTableTest {
     AccountTestData accountTestData;
 
     Comparator<Asset> assetComparator = Comparator
-        .comparing(Asset::getAssetId)
+        .comparing(Asset::getId)
         .thenComparing(Asset::getAccountId);
 
     private Blockchain blockchain = mock(BlockchainImpl.class);
@@ -107,7 +107,7 @@ class AssetTableTest {
         assertNotNull(actual);
         assertTrue(actual.getDbId() != 0);
         assertEquals(td.ASSET_NEW.getAccountId(), actual.getAccountId());
-        assertEquals(td.ASSET_NEW.getAssetId(), actual.getAssetId());
+        assertEquals(td.ASSET_NEW.getId(), actual.getId());
     }
 
     @Test
@@ -122,7 +122,7 @@ class AssetTableTest {
         assertNotNull(actual);
         assertEquals(100, actual.getQuantityATU() - td.ASSET_1.getQuantityATU());
         assertEquals(previous.getQuantityATU(), actual.getQuantityATU());
-        assertEquals(previous.getAssetId(), actual.getAssetId());
+        assertEquals(previous.getId(), actual.getId());
     }
 
     @Test

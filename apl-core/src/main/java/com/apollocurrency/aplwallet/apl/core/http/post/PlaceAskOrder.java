@@ -49,7 +49,7 @@ public final class PlaceAskOrder extends CreateTransaction {
         long quantityATU = HttpParameterParserUtil.getQuantityATU(req);
         Account account = HttpParameterParserUtil.getSenderAccount(req);
 
-        Attachment attachment = new ColoredCoinsAskOrderPlacement(asset.getAssetId(), quantityATU, priceATM);
+        Attachment attachment = new ColoredCoinsAskOrderPlacement(asset.getId(), quantityATU, priceATM);
         try {
             return createTransaction(req, account, attachment);
         } catch (AplException.InsufficientBalanceException e) {

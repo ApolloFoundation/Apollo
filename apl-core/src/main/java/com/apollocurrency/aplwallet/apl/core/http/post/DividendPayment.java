@@ -50,10 +50,10 @@ public class DividendPayment extends CreateTransaction {
         final Account account = HttpParameterParserUtil.getSenderAccount(request);
         final Asset asset = HttpParameterParserUtil.getAsset(request);
         AssetService assetService = CDI.current().select(AssetService.class).get();
-        if (assetService.getAsset(asset.getAssetId(), height) == null) {
+        if (assetService.getAsset(asset.getId(), height) == null) {
             return JSONResponses.ASSET_NOT_ISSUED_YET;
         }
-        final Attachment attachment = new ColoredCoinsDividendPayment(asset.getAssetId(), height, amountATMPerATU);
+        final Attachment attachment = new ColoredCoinsDividendPayment(asset.getId(), height, amountATMPerATU);
         try {
             return this.createTransaction(request, account, attachment);
         } catch (AplException.InsufficientBalanceException e) {

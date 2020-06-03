@@ -95,7 +95,7 @@ class AssetServiceTest {
         doReturn(td.ASSET_0).when(table).get(any(DbKey.class));
 
         //WHEN
-        Asset result = service.getAsset(td.ASSET_0.getAssetId());
+        Asset result = service.getAsset(td.ASSET_0.getId());
         assertNotNull(result);
 
         //THEN
@@ -108,7 +108,7 @@ class AssetServiceTest {
         doReturn(td.ASSET_0).when(table).get(any(DbKey.class), any(Integer.class));
 
         //WHEN
-        Asset result = service.getAsset(td.ASSET_0.getAssetId(), 10);
+        Asset result = service.getAsset(td.ASSET_0.getId(), 10);
         assertNotNull(result);
 
         //THEN
@@ -170,15 +170,15 @@ class AssetServiceTest {
         doReturn(td.ASSET_0).when(table).get(any(DbKey.class));
         doNothing().when(table).insert(any(Asset.class));
         AssetDelete assetDelete = mock(AssetDelete.class);
-        doReturn(assetDelete).when(assetDeleteService).addAssetDelete(tr, td.ASSET_0.getAssetId(), 10);
+        doReturn(assetDelete).when(assetDeleteService).addAssetDelete(tr, td.ASSET_0.getId(), 10);
         doReturn(100).when(blockChainInfoService).getHeight();
 
         //WHEN
-        service.deleteAsset(tr, td.ASSET_0.getAssetId(), 10L);
+        service.deleteAsset(tr, td.ASSET_0.getId(), 10L);
 
         //THEN
         verify(table).get(any(DbKey.class));
         verify(table).insert(any(Asset.class));
-        verify(assetDeleteService).addAssetDelete(tr, td.ASSET_0.getAssetId(), 10);
+        verify(assetDeleteService).addAssetDelete(tr, td.ASSET_0.getId(), 10);
     }
 }

@@ -21,7 +21,7 @@ import lombok.ToString;
 @ToString(callSuper = true)
 public class Asset extends VersionedDerivedEntity {
 
-    private long assetId;
+    private long id;
     private long accountId;
     private String name;
     private String description;
@@ -31,8 +31,8 @@ public class Asset extends VersionedDerivedEntity {
 
     public Asset(Transaction transaction, ColoredCoinsAssetIssuance attachment, int height) {
         super(null, height);
-        this.assetId = transaction.getId();
-        this.setDbKey(AssetTable.assetDbKeyFactory.newKey(this.assetId));
+        this.id = transaction.getId();
+        this.setDbKey(AssetTable.assetDbKeyFactory.newKey(this.id));
         this.accountId = transaction.getSenderId();
         this.name = attachment.getName();
         this.description = attachment.getDescription();
@@ -44,9 +44,9 @@ public class Asset extends VersionedDerivedEntity {
     /**
      * For unit tests
      */
-    public Asset(long assetId, long senderAccountId, ColoredCoinsAssetIssuance attachment, int height) {
+    public Asset(long id, long senderAccountId, ColoredCoinsAssetIssuance attachment, int height) {
         super(null, height);
-        this.assetId = assetId;
+        this.id = id;
         this.accountId = senderAccountId;
         this.name = attachment.getName();
         this.description = attachment.getDescription();
@@ -57,7 +57,7 @@ public class Asset extends VersionedDerivedEntity {
 
     public Asset(ResultSet rs, DbKey dbKey) throws SQLException {
         super(rs);
-        this.assetId = rs.getLong("id");
+        this.id = rs.getLong("id");
         setDbKey(dbKey);
         this.accountId = rs.getLong("account_id");
         this.name = rs.getString("name");

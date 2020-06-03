@@ -49,7 +49,7 @@ public final class PlaceBidOrder extends CreateTransaction {
         long quantityATU = HttpParameterParserUtil.getQuantityATU(req);
         Account account = HttpParameterParserUtil.getSenderAccount(req);
 
-        Attachment attachment = new ColoredCoinsBidOrderPlacement(asset.getAssetId(), quantityATU, priceATM);
+        Attachment attachment = new ColoredCoinsBidOrderPlacement(asset.getId(), quantityATU, priceATM);
         try {
             return createTransaction(req, account, attachment);
         } catch (AplException.InsufficientBalanceException e) {

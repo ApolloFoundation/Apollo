@@ -50,7 +50,7 @@ public final class TransferAsset extends CreateTransaction {
         long quantityATU = HttpParameterParserUtil.getQuantityATU(req);
         Account account = HttpParameterParserUtil.getSenderAccount(req);
 
-        Attachment attachment = new ColoredCoinsAssetTransfer(asset.getAssetId(), quantityATU);
+        Attachment attachment = new ColoredCoinsAssetTransfer(asset.getId(), quantityATU);
         try {
             return createTransaction(req, account, recipient, 0, attachment);
         } catch (AplException.InsufficientBalanceException e) {
