@@ -10,8 +10,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.monetary.model.AssetTransfer;
 
@@ -54,5 +57,48 @@ public final class AssetTransferTable extends EntityDbTable<AssetTransfer> {
             pstmt.executeUpdate();
         }
     }
+
+    public DbIterator<AssetTransfer> getAccountAssetTransfers(long accountId, int from, int to) {
+        Connection con = null;
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try {
+            con = dataSource.getConnection();
+            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM asset_transfer WHERE sender_id = ?"
+                + " UNION ALL SELECT * FROM asset_transfer WHERE recipient_id = ? AND sender_id <> ? ORDER BY height DESC, db_id DESC"
+                + DbUtils.limitsClause(from, to));
+            int i = 0;
+            pstmt.setLong(++i, accountId);
+            pstmt.setLong(++i, accountId);
+            pstmt.setLong(++i, accountId);
+            DbUtils.setLimits(++i, pstmt, from, to);
+            return getManyBy(con, pstmt, false);
+        } catch (SQLException e) {
+            DbUtils.close(con);
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    public DbIterator<AssetTransfer> getAccountAssetTransfers(long accountId, long assetId, int from, int to) {
+        Connection con = null;
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try {
+            con = dataSource.getConnection();
+            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM asset_transfer WHERE sender_id = ? AND asset_id = ?"
+                + " UNION ALL SELECT * FROM asset_transfer WHERE recipient_id = ? AND sender_id <> ? AND asset_id = ? ORDER BY height DESC, db_id DESC"
+                + DbUtils.limitsClause(from, to));
+            int i = 0;
+            pstmt.setLong(++i, accountId);
+            pstmt.setLong(++i, assetId);
+            pstmt.setLong(++i, accountId);
+            pstmt.setLong(++i, accountId);
+            pstmt.setLong(++i, assetId);
+            DbUtils.setLimits(++i, pstmt, from, to);
+            return getManyBy(con, pstmt, false);
+        } catch (SQLException e) {
+            DbUtils.close(con);
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
 
 }

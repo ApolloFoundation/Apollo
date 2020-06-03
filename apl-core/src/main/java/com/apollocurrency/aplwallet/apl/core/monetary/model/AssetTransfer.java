@@ -43,6 +43,20 @@ public class AssetTransfer extends DerivedEntity {
         this.timestamp = timestamp;
     }
 
+    /**
+     * for unit tests
+     */
+    public AssetTransfer(long id, long assetId, long senderAccountId, long recipientAccountId,
+                         int quantity, int timestamp, int height) {
+        super(null, height);
+        this.id = id;
+        this.assetId = assetId;
+        this.senderId = senderAccountId;
+        this.recipientId = recipientAccountId;
+        this.quantityATM = quantity;
+        this.timestamp = timestamp;
+    }
+
     public AssetTransfer(ResultSet rs, DbKey dbKey) throws SQLException {
         super(rs);
         this.id = rs.getLong("id");
