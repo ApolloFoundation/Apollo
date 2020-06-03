@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
@@ -7,8 +7,8 @@ import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
-import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
+import com.apollocurrency.aplwallet.apl.core.monetary.model.Asset;
+import com.apollocurrency.aplwallet.apl.core.monetary.model.AssetDividend;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -54,7 +54,7 @@ class CCCoinsDividentPayment extends ColoredCoins {
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         ColoredCoinsDividendPayment attachment = (ColoredCoinsDividendPayment) transaction.getAttachment();
         long assetId = attachment.getAssetId();
-        Asset asset = Asset.getAsset(assetId, attachment.getHeight());
+        Asset asset = lookupAssetService().getAsset(assetId, attachment.getHeight());
         if (asset == null) {
             return true;
         }
@@ -77,7 +77,7 @@ class CCCoinsDividentPayment extends ColoredCoins {
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         ColoredCoinsDividendPayment attachment = (ColoredCoinsDividendPayment) transaction.getAttachment();
         long assetId = attachment.getAssetId();
-        Asset asset = Asset.getAsset(assetId, attachment.getHeight());
+        Asset asset = lookupAssetService().getAsset(assetId, attachment.getHeight());
         if (asset == null) {
             return;
         }
@@ -96,14 +96,14 @@ class CCCoinsDividentPayment extends ColoredCoins {
         if (attachment.getHeight() <= attachment.getFinishValidationHeight(transaction) - Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK) {
             throw new AplException.NotCurrentlyValidException("Invalid dividend payment height: " + attachment.getHeight() + ", must be less than " + Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK + " blocks before " + attachment.getFinishValidationHeight(transaction));
         }
-        Asset asset = Asset.getAsset(attachment.getAssetId(), attachment.getHeight());
+        Asset asset = lookupAssetService().getAsset(attachment.getAssetId(), attachment.getHeight());
         if (asset == null) {
             throw new AplException.NotCurrentlyValidException("Asset " + Long.toUnsignedString(attachment.getAssetId()) + " for dividend payment doesn't exist yet");
         }
         if (asset.getAccountId() != transaction.getSenderId() || attachment.getAmountATMPerATU() <= 0) {
             throw new AplException.NotValidException("Invalid dividend payment sender or amount " + attachment.getJSONObject());
         }
-        AssetDividend lastDividend = AssetDividend.getLastDividend(attachment.getAssetId());
+        AssetDividend lastDividend = lookupAssetDividendService().getLastDividend(attachment.getAssetId());
         if (lastDividend != null && lastDividend.getHeight() > blockchain.getHeight() - 60) {
             throw new AplException.NotCurrentlyValidException("Last dividend payment for asset " + Long.toUnsignedString(attachment.getAssetId()) + " was less than 60 blocks ago at " + lastDividend.getHeight() + ", current height is " + lookupBlockchain().getHeight() + ", limit is one dividend per 60 blocks");
         }

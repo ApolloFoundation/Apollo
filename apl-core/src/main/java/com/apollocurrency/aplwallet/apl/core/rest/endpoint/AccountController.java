@@ -37,8 +37,8 @@ import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
-import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.monetary.service.AssetService;
 import com.apollocurrency.aplwallet.apl.core.order.entity.AskOrder;
 import com.apollocurrency.aplwallet.apl.core.order.service.OrderService;
 import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.AskOrderService;
@@ -141,6 +141,7 @@ public class AccountController {
     public static int maxAPIFetchRecords;
 
     private AccountStatisticsService accountStatisticsService;
+    private AssetService assetService;
 
     @Inject
     public AccountController(Blockchain blockchain,
@@ -158,7 +159,8 @@ public class AccountController {
                              Account2FAConverter faConverter,
                              @AskOrderService OrderService<AskOrder, ColoredCoinsAskOrderPlacement> orderService,
                              @Property(name = "apl.maxAPIRecords", defaultValue = "100") int maxAPIrecords,
-                             AccountStatisticsService accountStatisticsService) {
+                             AccountStatisticsService accountStatisticsService,
+                             AssetService assetService) {
 
         this.blockchain = blockchain;
         this.account2FAHelper = account2FAHelper;
@@ -176,6 +178,7 @@ public class AccountController {
         this.orderService = Objects.requireNonNull(orderService, "orderService is NULL");
         maxAPIFetchRecords = maxAPIrecords;
         this.accountStatisticsService = accountStatisticsService;
+        this.assetService = assetService;
     }
 
     @Path("/account")
@@ -343,7 +346,7 @@ public class AccountController {
                 indexBeanParam.getLastIndex());
             List<AccountAssetDTO> accountAssetDTOList = accountAssetConverter.convert(accountAssets);
             if (includeAssetInfo) {
-                accountAssetDTOList.forEach(dto -> accountAssetConverter.addAsset(dto, Asset.getAsset(dto.getAssetId())));
+                accountAssetDTOList.forEach(dto -> accountAssetConverter.addAsset(dto, assetService.getAsset(dto.getAssetId())));
             }
 
             return response.bind(new AccountAssetsResponse(accountAssetDTOList)).build();
@@ -352,7 +355,7 @@ public class AccountController {
             AccountAssetDTO dto = accountAssetConverter.convert(accountAsset);
             if (dto != null) {
                 if (includeAssetInfo) {
-                    accountAssetConverter.addAsset(dto, Asset.getAsset(assetId.get()));
+                    accountAssetConverter.addAsset(dto, assetService.getAsset(assetId.get()));
                 }
 
                 return response.bind(dto).build();
