@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
+import com.apollocurrency.aplwallet.apl.core.monetary.model.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
@@ -90,7 +90,7 @@ public abstract class ShufflingTransaction extends TransactionType {
                         + ", minimum is " + blockchainConfig.getShufflingDepositAtm());
                 }
             } else if (holdingType == HoldingType.ASSET) {
-                Asset asset = Asset.getAsset(attachment.getHoldingId());
+                Asset asset = lookupAssetService().getAsset(attachment.getHoldingId());
                 if (asset == null) {
                     throw new AplException.NotCurrentlyValidException("Unknown asset " + Long.toUnsignedString(attachment.getHoldingId()));
                 }

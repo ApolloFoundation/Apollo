@@ -102,6 +102,7 @@ public class ServerInfoService {
     private final OrderService<BidOrder, ColoredCoinsBidOrderPlacement> bidOrderService;
     private final TradeService tradeService;
     private final AccountControlPhasingService accountControlPhasingService;
+    private final AssetService assetService;
 
     @Inject
     public ServerInfoService(BlockchainConfig blockchainConfig, Blockchain blockchain,
@@ -120,7 +121,8 @@ public class ServerInfoService {
                              @AskOrderService OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService,
                              @BidOrderService OrderService<BidOrder, ColoredCoinsBidOrderPlacement> bidOrderService,
                              TradeService tradeService,
-                             AccountControlPhasingService accountControlPhasingService
+                             AccountControlPhasingService accountControlPhasingService,
+                             AssetService assetService
     ) {
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
         this.blockchain = Objects.requireNonNull(blockchain, "blockchain is NULL");
@@ -142,6 +144,7 @@ public class ServerInfoService {
         this.bidOrderService = Objects.requireNonNull(bidOrderService, "bidOrderService is NULL");
         this.tradeService = Objects.requireNonNull(tradeService, "tradeService is NULL");
         this.accountControlPhasingService = Objects.requireNonNull(accountControlPhasingService, "accountControlPhasingService is NULL");
+        this.assetService = Objects.requireNonNull(assetService, "assetService is NULL");
     }
 
     public ApolloX509Info getX509Info() {
@@ -321,7 +324,7 @@ public class ServerInfoService {
         if (includeCounts != null && includeCounts) {
             dto.numberOfTransactions = blockchain.getTransactionCount();
             dto.numberOfAccounts = accountPublicKeyService.getCount();
-            dto.numberOfAssets = Asset.getCount();
+            dto.numberOfAssets = assetService.getCount();
             int askCount = askOrderService.getCount();
             int bidCount = bidOrderService.getCount();
             dto.numberOfOrders = askCount + bidCount;

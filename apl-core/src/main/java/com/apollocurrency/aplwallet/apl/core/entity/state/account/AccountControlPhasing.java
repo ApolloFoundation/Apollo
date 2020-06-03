@@ -41,6 +41,7 @@ public class AccountControlPhasing extends VersionedDeletableEntity {
     public AccountControlPhasing(long accountId, PhasingParams params, long maxFees, short minDuration, short maxDuration, int height) {
         super(null, height);
         this.accountId = accountId;
+//        this.setDbKey(AccountControlPhasingTable.accountControlPhasingDbKeyFactory.newKey(this.accountId));
         this.phasingParams = params;
         this.maxFees = maxFees;
         this.minDuration = minDuration;

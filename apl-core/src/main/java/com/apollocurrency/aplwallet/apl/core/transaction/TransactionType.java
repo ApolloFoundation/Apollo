@@ -137,6 +137,8 @@ public abstract class TransactionType {
     private static AccountPropertyService accountPropertyService;
     private static AccountInfoService accountInfoService;
     private static AccountControlPhasingService accountControlPhasingService;
+    private static AssetService assetService;
+    private static AssetDividendService assetDividendService;
 
     public TransactionType() {
     }
@@ -233,6 +235,20 @@ public abstract class TransactionType {
             accountControlPhasingService = CDI.current().select(AccountControlPhasingService.class).get();
         }
         return accountControlPhasingService;
+    }
+
+    public static synchronized AssetService lookupAssetService() {
+        if (assetService == null) {
+            assetService = CDI.current().select(AssetServiceImpl.class).get();
+        }
+        return assetService;
+    }
+
+    public static synchronized AssetDividendService lookupAssetDividendService() {
+        if (assetDividendService == null) {
+            assetDividendService = CDI.current().select(AssetDividendService.class).get();
+        }
+        return assetDividendService;
     }
 
     public static TransactionType findTransactionType(byte type, byte subtype) {

@@ -143,6 +143,8 @@ class AccountControllerTest extends AbstractEndpointTest {
     private FirstLastIndexParser indexParser = new FirstLastIndexParser(100);
     @Mock
     private AccountStatisticsService accountStatisticsService = Mockito.mock(AccountStatisticsService.class);
+    @Mock
+    private AssetService assetService = Mockito.mock(AssetService.class);
 
     private Block GENESIS_BLOCK, LAST_BLOCK, NEW_BLOCK;
     private Block BLOCK_0, BLOCK_1, BLOCK_2, BLOCK_3;
@@ -168,7 +170,8 @@ class AccountControllerTest extends AbstractEndpointTest {
             new Account2FAConverter(),
             orderService,
             100,
-            accountStatisticsService
+            accountStatisticsService,
+            assetService
         );
 
         dispatcher.getRegistry().addSingletonResource(endpoint);

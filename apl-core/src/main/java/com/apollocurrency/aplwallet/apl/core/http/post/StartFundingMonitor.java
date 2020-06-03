@@ -27,15 +27,17 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
+import com.apollocurrency.aplwallet.apl.core.monetary.model.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.monetary.service.AssetService;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MONITOR_ALREADY_STARTED;
@@ -99,9 +101,10 @@ public final class StartFundingMonitor extends AbstractAPIRequestHandler {
         }
         int interval = HttpParameterParserUtil.getInt(req, "interval", FundingMonitor.MIN_FUND_INTERVAL, Integer.MAX_VALUE, true);
         byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, accountId, true);
+        AssetService assetService = CDI.current().select(AssetService.class).get();
         switch (holdingType) {
             case ASSET:
-                Asset asset = Asset.getAsset(holdingId);
+                Asset asset = assetService.getAsset(holdingId);
                 if (asset == null) {
                     throw new ParameterException(JSONResponses.UNKNOWN_ASSET);
                 }

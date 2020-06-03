@@ -40,6 +40,7 @@ public final class VoteWeighting {
     private final long holdingId; //either asset id or MS coin id
     private final long minBalance;
     private final MinBalanceModel minBalanceModel;
+    private static AssetService assetService;
 
     public VoteWeighting(byte votingModel, long holdingId, long minBalance, byte minBalanceModel) {
         this.votingModel = VotingModel.get(votingModel);
@@ -76,6 +77,13 @@ public final class VoteWeighting {
         return accountCurrencyService;
     }
 
+    public static AssetService lookupAssetService() {
+        if (assetService == null) {
+            assetService = CDI.current().select(AssetServiceImpl.class).get();
+        }
+        return assetService;
+    }
+
     public VotingModel getVotingModel() {
         return votingModel;
     }
@@ -105,7 +113,8 @@ public final class VoteWeighting {
         if (votingModel == VotingModel.CURRENCY && Currency.getCurrency(holdingId) == null) {
             throw new AplException.NotCurrentlyValidException("Currency " + Long.toUnsignedString(holdingId) + " not found");
         }
-        if (votingModel == VotingModel.ASSET && Asset.getAsset(holdingId) == null) {
+        lookupAssetService();
+        if (votingModel == VotingModel.ASSET && assetService.getAsset(holdingId) == null) {
             throw new AplException.NotCurrentlyValidException("Asset " + Long.toUnsignedString(holdingId) + " not found");
         }
         if (minBalance < 0) {
@@ -121,7 +130,7 @@ public final class VoteWeighting {
             if ((minBalanceModel == MinBalanceModel.ASSET || minBalanceModel == MinBalanceModel.CURRENCY) && holdingId == 0) {
                 throw new AplException.NotValidException("No holdingId provided");
             }
-            if (minBalanceModel == MinBalanceModel.ASSET && Asset.getAsset(holdingId) == null) {
+            if (minBalanceModel == MinBalanceModel.ASSET && assetService.getAsset(holdingId) == null) {
                 throw new AplException.NotCurrentlyValidException("Invalid min balance asset: " + Long.toUnsignedString(holdingId));
             }
             if (minBalanceModel == MinBalanceModel.CURRENCY && Currency.getCurrency(holdingId) == null) {

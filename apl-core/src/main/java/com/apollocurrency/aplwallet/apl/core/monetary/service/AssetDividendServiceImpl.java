@@ -20,9 +20,9 @@ import static com.apollocurrency.aplwallet.apl.core.monetary.observer.event.Asse
 
 @Singleton
 public class AssetDividendServiceImpl implements AssetDividendService {
-    private Blockchain blockchain;
-    private Event<AssetDividend> assetEvent;
-    private AssetDividendTable assetDividendTable;
+    private final Blockchain blockchain;
+    private final Event<AssetDividend> assetEvent;
+    private final AssetDividendTable assetDividendTable;
 
     @Inject
     public AssetDividendServiceImpl(Blockchain blockchain, AssetDividendTable assetDividendTable, Event<AssetDividend> assetEvent) {

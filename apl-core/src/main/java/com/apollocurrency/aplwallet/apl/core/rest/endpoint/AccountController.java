@@ -32,16 +32,16 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.KeyStoreService;
-import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthDetails;
+import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
+import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
-import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
-import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.AskOrderService;
+import com.apollocurrency.aplwallet.apl.core.order.entity.AskOrder;
+import com.apollocurrency.aplwallet.apl.core.order.service.OrderService;
+import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.AskOrderService;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FAConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FADetailsConverter;
@@ -81,6 +81,7 @@ import lombok.extern.slf4j.Slf4j;
 import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.PositiveOrZero;
 import javax.ws.rs.BeanParam;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
@@ -140,6 +141,7 @@ public class AccountController {
     public static int maxAPIFetchRecords;
 
     private AccountStatisticsService accountStatisticsService;
+    private AssetService assetService;
 
     @Inject
     public AccountController(Blockchain blockchain,
@@ -157,7 +159,8 @@ public class AccountController {
                              Account2FAConverter faConverter,
                              @AskOrderService OrderService<AskOrder, ColoredCoinsAskOrderPlacement> orderService,
                              @Property(name = "apl.maxAPIRecords", defaultValue = "100") int maxAPIrecords,
-                             AccountStatisticsService accountStatisticsService) {
+                             AccountStatisticsService accountStatisticsService,
+                             AssetService assetService) {
 
         this.blockchain = blockchain;
         this.account2FAHelper = account2FAHelper;
@@ -175,6 +178,7 @@ public class AccountController {
         this.orderService = Objects.requireNonNull(orderService, "orderService is NULL");
         maxAPIFetchRecords = maxAPIrecords;
         this.accountStatisticsService = accountStatisticsService;
+        this.assetService = assetService;
     }
 
     @Path("/account")
@@ -342,7 +346,7 @@ public class AccountController {
                 indexBeanParam.getLastIndex());
             List<AccountAssetDTO> accountAssetDTOList = accountAssetConverter.convert(accountAssets);
             if (includeAssetInfo) {
-                accountAssetDTOList.forEach(dto -> accountAssetConverter.addAsset(dto, Asset.getAsset(dto.getAssetId())));
+                accountAssetDTOList.forEach(dto -> accountAssetConverter.addAsset(dto, assetService.getAsset(dto.getAssetId())));
             }
 
             return response.bind(new AccountAssetsResponse(accountAssetDTOList)).build();
@@ -351,7 +355,7 @@ public class AccountController {
             AccountAssetDTO dto = accountAssetConverter.convert(accountAsset);
             if (dto != null) {
                 if (includeAssetInfo) {
-                    accountAssetConverter.addAsset(dto, Asset.getAsset(assetId.get()));
+                    accountAssetConverter.addAsset(dto, assetService.getAsset(assetId.get()));
                 }
 
                 return response.bind(dto).build();

@@ -59,16 +59,6 @@ import java.net.InetAddress;
 @Deprecated
 @Vetoed
 public final class GetState extends AbstractAPIRequestHandler {
-    private final AliasService aliasService = CDI.current().select(AliasService.class).get();
-    private final OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService =
-        CDI.current().select(AskOrderServiceImpl.class, AskOrderService.Literal.INSTANCE).get();
-    private final OrderService<BidOrder, ColoredCoinsBidOrderPlacement> bidOrderService =
-        CDI.current().select(BidOrderServiceImpl.class, BidOrderService.Literal.INSTANCE).get();
-    private final TradeService tradeService = CDI.current().select(TradeService.class).get();
-    private UPnP upnp = CDI.current().select(UPnP.class).get();
-    private DGSService service = CDI.current().select(DGSService.class).get();
-    private TaggedDataService taggedDataService = CDI.current().select(TaggedDataService.class).get();
-    private PrunableMessageService prunableMessageService = CDI.current().select(PrunableMessageService.class).get();
 
     public GetState() {
         super(new APITag[]{APITag.INFO}, "includeCounts", "adminPassword");
@@ -82,7 +72,7 @@ public final class GetState extends AbstractAPIRequestHandler {
         if ("true".equalsIgnoreCase(req.getParameter("includeCounts")) && apw.checkPassword(req)) {
             response.put("numberOfTransactions", lookupBlockchain().getTransactionCount());
             response.put("numberOfAccounts", lookupAccountPublickKeyService().getCount());
-            response.put("numberOfAssets", Asset.getCount());
+            response.put("numberOfAssets", assetService.getCount());
             int askCount = askOrderService.getCount();
             int bidCount = bidOrderService.getCount();
             response.put("numberOfOrders", askCount + bidCount);

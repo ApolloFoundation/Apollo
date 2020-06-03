@@ -140,10 +140,7 @@ public class TableRegistryInitializer {
     public void init() {
         transactionProcessor.init();
 
-        Asset.init();
         Poll.init();
-        AssetDelete.init();
-        AssetDividend.init();
         Vote.init();
         Currency.init();
         CurrencyFounder.init();
@@ -156,7 +153,6 @@ public class TableRegistryInitializer {
         Shuffling.init();
         ShufflingParticipant.init();
         CurrencyExchangeOffer.init();
-//        AccountRestrictions.init();
         AssetTransfer.init(databaseManager);
     }
 }

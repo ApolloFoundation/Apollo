@@ -82,7 +82,7 @@ class CCAssetIssuance extends ColoredCoins {
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         ColoredCoinsAssetIssuance attachment = (ColoredCoinsAssetIssuance) transaction.getAttachment();
         long assetId = transaction.getId();
-        Asset.addAsset(transaction, attachment);
+        lookupAssetService().addAsset(transaction, attachment);
         lookupAccountAssetService().addToAssetAndUnconfirmedAssetBalanceATU(senderAccount, getLedgerEvent(), assetId, assetId, attachment.getQuantityATU());
     }
 

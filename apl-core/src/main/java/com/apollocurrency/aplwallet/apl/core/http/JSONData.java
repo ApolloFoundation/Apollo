@@ -129,6 +129,7 @@ public final class JSONData {
     private static AccountLeaseService accountLeaseService = CDI.current().select(AccountLeaseService.class).get();
     private static AccountAssetService accountAssetService = CDI.current().select(AccountAssetService.class).get();
     private static DGSService dgsService = CDI.current().select(DGSService.class).get();
+    private static AssetService assetService = CDI.current().select(AssetService.class).get();
 
     private JSONData() {
     } // never
@@ -725,7 +726,7 @@ public final class JSONData {
         JSONObject json = new JSONObject();
         json.put("poll", Long.toUnsignedString(poll.getId()));
         if (voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.ASSET) {
-            json.put("decimals", Asset.getAsset(voteWeighting.getHoldingId()).getDecimals());
+            json.put("decimals", assetService.getAsset(voteWeighting.getHoldingId()).getDecimals());
         } else if (voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.CURRENCY) {
             Currency currency = Currency.getCurrency(voteWeighting.getHoldingId());
             if (currency != null) {
@@ -1014,6 +1015,7 @@ public final class JSONData {
         return json;
     }
 
+    @Deprecated
     public static JSONObject assetDividend(AssetDividend assetDividend) {
         JSONObject json = new JSONObject();
         json.put("assetDividend", Long.toUnsignedString(assetDividend.getId()));
@@ -1391,11 +1393,11 @@ public final class JSONData {
     }
 
     /**
-     * Use {@link com.apollocurrency.aplwallet.apl.core.rest.converter.AccountAssetConverter#addAsset(AccountAssetDTO, Asset)}
+     * Use {@link com.apollocurrency.aplwallet.apl.core.rest.converter.AccountAssetConverter#apply(AccountAsset)}
      */
     @Deprecated
     private static void putAssetInfo(JSONObject json, long assetId) {
-        Asset asset = Asset.getAsset(assetId);
+        Asset asset = assetService.getAsset(assetId);
         if (asset != null) {
             json.put("name", asset.getName());
             json.put("decimals", asset.getDecimals());

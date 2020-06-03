@@ -70,6 +70,13 @@ class AccountPropertyTableTest {
     }
 
     @Test
+    void testLoad() {
+        AccountProperty accountProperty = table.get(table.getDbKeyFactory().newKey(testData.ACC_PROP_2));
+        assertNotNull(accountProperty);
+        assertEquals(testData.ACC_PROP_2, accountProperty);
+    }
+
+    @Test
     void testSave_insert_new_entity() {//SQL MERGE -> INSERT
         AccountProperty previous = table.get(table.getDbKeyFactory().newKey(testData.newProperty));
         assertNull(previous);

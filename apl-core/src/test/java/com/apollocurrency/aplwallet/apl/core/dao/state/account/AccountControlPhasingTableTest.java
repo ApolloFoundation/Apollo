@@ -25,7 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
-import com.apollocurrency.aplwallet.apl.data.AccountControlPhasingData;
+import com.apollocurrency.aplwallet.apl.data.AccountControlPhasingTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
@@ -47,7 +47,7 @@ class AccountControlPhasingTableTest {
 
     @Inject
     AccountControlPhasingTable table;
-    AccountControlPhasingData td;
+    AccountControlPhasingTestData td;
 
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
@@ -65,17 +65,9 @@ class AccountControlPhasingTableTest {
         .addBeans(MockBean.of(mock(DerivedTablesRegistry.class), DerivedTablesRegistry.class, DerivedDbTablesRegistryImpl.class))
         .build();
 
-    private static Path createPath(String fileName) {
-        try {
-            return Files.createTempDirectory(fileName);
-        } catch (IOException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
-
     @BeforeEach
     void setUp() {
-        td = new AccountControlPhasingData();
+        td = new AccountControlPhasingTestData();
     }
 
     @Test

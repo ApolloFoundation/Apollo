@@ -42,7 +42,7 @@ import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
-import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
@@ -135,6 +135,7 @@ public final class HttpParameterParserUtil {
     private static Blockchain blockchain;
     private static AccountService accountService;
     private static AccountPublicKeyService accountPublicKeyService;
+    private static AssetService assetService;
 
     private HttpParameterParserUtil() {
     } // never
@@ -368,7 +369,7 @@ public final class HttpParameterParserUtil {
     }
 
     public static Asset getAsset(HttpServletRequest req) throws ParameterException {
-        Asset asset = Asset.getAsset(getUnsignedLong(req, "asset", true));
+        Asset asset = lookupAssetService().getAsset(getUnsignedLong(req, "asset", true));
         if (asset == null) {
             throw new ParameterException(UNKNOWN_ASSET);
         }
@@ -1269,4 +1270,11 @@ public final class HttpParameterParserUtil {
         }
         return accountPublicKeyService;
     }
+    private static AssetService lookupAssetService() {
+        if (assetService == null) {
+            assetService = CDI.current().select(AssetService.class).get();
+        }
+        return assetService;
+    }
+
 }

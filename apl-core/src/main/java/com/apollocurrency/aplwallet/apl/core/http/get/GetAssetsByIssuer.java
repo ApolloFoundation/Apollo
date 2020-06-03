@@ -26,12 +26,14 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
+import com.apollocurrency.aplwallet.apl.core.monetary.model.Asset;
+import com.apollocurrency.aplwallet.apl.core.monetary.service.AssetService;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
@@ -51,9 +53,10 @@ public final class GetAssetsByIssuer extends AbstractAPIRequestHandler {
         JSONObject response = new JSONObject();
         JSONArray accountsJSONArray = new JSONArray();
         response.put("assets", accountsJSONArray);
+        AssetService assetService = CDI.current().select(AssetService.class).get();
         for (long accountId : accountIds) {
             JSONArray assetsJSONArray = new JSONArray();
-            try (DbIterator<Asset> assets = Asset.getAssetsIssuedBy(accountId, firstIndex, lastIndex)) {
+            try (DbIterator<Asset> assets = assetService.getAssetsIssuedBy(accountId, firstIndex, lastIndex)) {
                 while (assets.hasNext()) {
                     assetsJSONArray.add(JSONData.asset(assets.next(), includeCounts));
                 }
