@@ -27,8 +27,7 @@ public class AssetServiceImpl implements AssetService {
     private final AssetTable assetTable;
     private final BlockChainInfoService blockChainInfoService;
     private final AssetDeleteService assetDeleteService;
-    private IteratorToStreamConverter<Asset> assetIteratorToStreamConverter =
-        new IteratorToStreamConverter<>();
+    private final IteratorToStreamConverter<Asset> assetIteratorToStreamConverter;
 
     @Inject
     public AssetServiceImpl(AssetTable assetTable,
@@ -41,6 +40,8 @@ public class AssetServiceImpl implements AssetService {
         this.assetDeleteService = assetDeleteService;
         if (assetIteratorToStreamConverter != null) { // for unit tests
             this.assetIteratorToStreamConverter = assetIteratorToStreamConverter;
+        } else {
+            this.assetIteratorToStreamConverter = new IteratorToStreamConverter<>();
         }
     }
 
