@@ -27,7 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
-import com.apollocurrency.aplwallet.apl.data.AccountControlPhasingData;
+import com.apollocurrency.aplwallet.apl.data.AccountControlPhasingTestData;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -43,7 +43,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class AccountControlControllerTest extends AbstractEndpointTest {
 
     private AccountControlController endpoint;
-    private AccountControlPhasingData actd;
+    private AccountControlPhasingTestData actd;
     private static final String accCtrlPhaseListUri = "/accounts/control/list";
     private static final String accCtrlPhaseIdUri = "/accounts/control/id";
     private static final String accCtrlLeaseBalanceUri = "/accounts/control/lease";
@@ -74,7 +74,7 @@ class AccountControlControllerTest extends AbstractEndpointTest {
             accountControlPhasingService, blockchainConfig, txCreator, accountService, 100);
         dispatcher.getRegistry().addSingletonResource(endpoint);
         dispatcher.getDefaultContextObjects().put(HttpServletRequest.class, req);
-        actd = new AccountControlPhasingData();
+        actd = new AccountControlPhasingTestData();
     }
 
     @Test

@@ -21,6 +21,7 @@ import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeySer
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.alias.service.AliasService;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
@@ -32,8 +33,23 @@ import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
+import com.apollocurrency.aplwallet.apl.core.monetary.service.AssetService;
+import com.apollocurrency.aplwallet.apl.core.order.entity.AskOrder;
+import com.apollocurrency.aplwallet.apl.core.order.entity.BidOrder;
+import com.apollocurrency.aplwallet.apl.core.order.service.OrderService;
+import com.apollocurrency.aplwallet.apl.core.order.service.impl.AskOrderServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.order.service.impl.BidOrderServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.AskOrderService;
+import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.BidOrderService;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
+import com.apollocurrency.aplwallet.apl.core.trade.service.TradeService;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
+import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONStreamAware;
 
@@ -54,6 +70,18 @@ public abstract class AbstractAPIRequestHandler {
     protected AdminPasswordVerifier apw = CDI.current().select(AdminPasswordVerifier.class).get();
     protected ElGamalEncryptor elGamal = CDI.current().select(ElGamalEncryptor.class).get();
     protected PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    protected final AliasService aliasService = CDI.current().select(AliasService.class).get();
+    protected final OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService =
+        CDI.current().select(AskOrderServiceImpl.class, AskOrderService.Literal.INSTANCE).get();
+    protected final OrderService<BidOrder, ColoredCoinsBidOrderPlacement> bidOrderService =
+        CDI.current().select(BidOrderServiceImpl.class, BidOrderService.Literal.INSTANCE).get();
+    protected final TradeService tradeService = CDI.current().select(TradeService.class).get();
+    protected UPnP upnp = CDI.current().select(UPnP.class).get();
+    protected DGSService service = CDI.current().select(DGSService.class).get();
+    protected TaggedDataService taggedDataService = CDI.current().select(TaggedDataService.class).get();
+    protected PrunableMessageService prunableMessageService = CDI.current().select(PrunableMessageService.class).get();
+    protected AssetService assetService = CDI.current().select(AssetService.class).get();
+
     protected TrimService trimService;
     private List<String> parameters;
     private String fileParameter;

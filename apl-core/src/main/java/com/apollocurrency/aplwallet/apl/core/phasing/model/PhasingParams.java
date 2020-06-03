@@ -4,9 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.phasing.model;
 
+import javax.enterprise.inject.spi.CDI;
+
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
-import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
+import com.apollocurrency.aplwallet.apl.core.monetary.model.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.monetary.service.AssetService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.AplException.ValidationException;
@@ -18,7 +21,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 /**
- * Class for handling phasing parameters shared between {@link Phasing} and {@link AccountRestrictions.PhasingOnly}
+ * Class for handling phasing parameters
  */
 public final class PhasingParams {
 
@@ -140,6 +143,7 @@ public final class PhasingParams {
         }
 
         voteWeighting.validate();
+        AssetService assetService = CDI.current().select(AssetService.class).get();
 
         if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.CURRENCY) {
             Currency currency = Currency.getCurrency(voteWeighting.getHoldingId());
@@ -155,7 +159,7 @@ public final class PhasingParams {
                     + " exceeds max currency supply " + currency.getMaxSupply());
             }
         } else if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.ASSET) {
-            Asset asset = Asset.getAsset(voteWeighting.getHoldingId());
+            Asset asset = assetService.getAsset(voteWeighting.getHoldingId());
             if (quorum > asset.getInitialQuantityATU()) {
                 throw new AplException.NotCurrentlyValidException("Quorum of " + quorum
                     + " exceeds total initial asset quantity " + asset.getInitialQuantityATU());
@@ -166,7 +170,7 @@ public final class PhasingParams {
             }
         } else if (voteWeighting.getMinBalance() > 0) {
             if (voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.ASSET) {
-                Asset asset = Asset.getAsset(voteWeighting.getHoldingId());
+                Asset asset = assetService.getAsset(voteWeighting.getHoldingId());
                 if (voteWeighting.getMinBalance() > asset.getInitialQuantityATU()) {
                     throw new AplException.NotCurrentlyValidException("MinBalance of " + voteWeighting.getMinBalance()
                         + " exceeds total initial asset quantity " + asset.getInitialQuantityATU());
