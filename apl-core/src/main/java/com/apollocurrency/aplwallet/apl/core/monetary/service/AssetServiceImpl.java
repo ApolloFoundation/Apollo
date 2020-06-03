@@ -24,9 +24,9 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 public class AssetServiceImpl implements AssetService {
 
-    private AssetTable assetTable;
-    private BlockChainInfoService blockChainInfoService;
-    private AssetDeleteService assetDeleteService;
+    private final AssetTable assetTable;
+    private final BlockChainInfoService blockChainInfoService;
+    private final AssetDeleteService assetDeleteService;
     private IteratorToStreamConverter<Asset> assetIteratorToStreamConverter =
         new IteratorToStreamConverter<>();
 

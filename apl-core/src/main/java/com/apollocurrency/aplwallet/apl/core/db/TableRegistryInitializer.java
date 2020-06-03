@@ -28,9 +28,6 @@ import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSPublicFeedbackTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSPurchaseTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSTagTable;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageTable;
-import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
-import com.apollocurrency.aplwallet.apl.core.monetary.AssetDelete;
-import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
@@ -140,10 +137,7 @@ public class TableRegistryInitializer {
     public void init() {
         transactionProcessor.init();
 
-//        Asset.init();
         Poll.init();
-//        AssetDelete.init();
-//        AssetDividend.init();
         Vote.init();
         Currency.init();
         CurrencyFounder.init();
@@ -156,7 +150,6 @@ public class TableRegistryInitializer {
         Shuffling.init();
         ShufflingParticipant.init();
         CurrencyExchangeOffer.init();
-//        AccountRestrictions.init();
         AssetTransfer.init(databaseManager);
     }
 }

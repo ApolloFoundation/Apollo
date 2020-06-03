@@ -30,7 +30,8 @@ public class AssetDeleteServiceImpl implements AssetDeleteService {
     @Inject
     public AssetDeleteServiceImpl(AssetDeleteTable assetDeleteTable,
                                   BlockChainInfoService blockChainInfoService,
-                                  IteratorToStreamConverter<AssetDelete> assetDeleteIteratorToStreamConverter) {
+                                  IteratorToStreamConverter<AssetDelete> assetDeleteIteratorToStreamConverter // for unit tests mostly
+    ) {
         this.assetDeleteTable = assetDeleteTable;
         this.blockChainInfoService = blockChainInfoService;
         if (assetDeleteIteratorToStreamConverter != null) { // for unit test only
