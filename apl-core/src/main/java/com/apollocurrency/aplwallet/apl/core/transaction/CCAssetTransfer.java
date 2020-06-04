@@ -7,10 +7,10 @@ import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
+import com.apollocurrency.aplwallet.apl.core.monetary.model.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -64,7 +64,7 @@ class CCAssetTransfer extends ColoredCoins {
         ColoredCoinsAssetTransfer attachment = (ColoredCoinsAssetTransfer) transaction.getAttachment();
         lookupAccountAssetService().addToAssetBalanceATU(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getAssetId(), -attachment.getQuantityATU());
         if (recipientAccount.getId() == GenesisImporter.CREATOR_ID) {
-            Asset.deleteAsset(transaction, attachment.getAssetId(), attachment.getQuantityATU());
+            lookupAssetService().deleteAsset(transaction, attachment.getAssetId(), attachment.getQuantityATU());
         } else {
             lookupAccountAssetService().addToAssetAndUnconfirmedAssetBalanceATU(recipientAccount, getLedgerEvent(), transaction.getId(), attachment.getAssetId(), attachment.getQuantityATU());
             AssetTransfer.addAssetTransfer(transaction, attachment);
@@ -86,7 +86,7 @@ class CCAssetTransfer extends ColoredCoins {
         if (transaction.getRecipientId() == GenesisImporter.CREATOR_ID) {
             throw new AplException.NotValidException("Asset transfer to Genesis not allowed, " + "use asset delete attachment instead");
         }
-        Asset asset = Asset.getAsset(attachment.getAssetId());
+        Asset asset = lookupAssetService().getAsset(attachment.getAssetId());
         if (attachment.getQuantityATU() <= 0 || (asset != null && attachment.getQuantityATU() > asset.getInitialQuantityATU())) {
             throw new AplException.NotValidException("Invalid asset transfer asset or quantity: " + attachment.getJSONObject());
         }

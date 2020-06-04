@@ -1,7 +1,11 @@
+/*
+ * Copyright © 2018-2020 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountAssetTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountControlPhasingTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountCurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountInfoTable;
@@ -24,9 +28,6 @@ import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSPublicFeedbackTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSPurchaseTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSTagTable;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageTable;
-import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
-import com.apollocurrency.aplwallet.apl.core.monetary.AssetDelete;
-import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
@@ -129,15 +130,14 @@ public class TableRegistryInitializer {
     private BidOrderTable bidOrderTable;
     @Inject
     private TradeTable tradeTable;
+    @Inject
+    private AccountControlPhasingTable accountControlPhasingTable;
 
     @PostConstruct
     public void init() {
         transactionProcessor.init();
 
-        Asset.init();
         Poll.init();
-        AssetDelete.init();
-        AssetDividend.init();
         Vote.init();
         Currency.init();
         CurrencyFounder.init();
@@ -150,7 +150,6 @@ public class TableRegistryInitializer {
         Shuffling.init();
         ShufflingParticipant.init();
         CurrencyExchangeOffer.init();
-        AccountRestrictions.init();
         AssetTransfer.init(databaseManager);
     }
 }

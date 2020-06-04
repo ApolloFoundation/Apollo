@@ -20,19 +20,21 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.monetary.model.AssetDividend;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.monetary.service.AssetDividendService;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 @Vetoed
 public final class GetAssetDividends extends AbstractAPIRequestHandler {
@@ -51,6 +53,8 @@ public final class GetAssetDividends extends AbstractAPIRequestHandler {
 
         JSONObject response = new JSONObject();
         JSONArray dividendsData = new JSONArray();
+        AssetDividendService assetDividendService = CDI.current().select(AssetDividendService.class).get();
+/*
         try (DbIterator<AssetDividend> dividends = AssetDividend.getAssetDividends(assetId, firstIndex, lastIndex)) {
             while (dividends.hasNext()) {
                 AssetDividend assetDividend = dividends.next();
@@ -59,6 +63,15 @@ public final class GetAssetDividends extends AbstractAPIRequestHandler {
                 }
                 dividendsData.add(JSONData.assetDividend(assetDividend));
             }
+        }
+*/
+        List<AssetDividend> dividends = assetDividendService.getAssetDividends(assetId, firstIndex, lastIndex);
+        for (int i = 0; i < dividends.size(); i++) {
+            AssetDividend assetDividend = dividends.get(i);
+            if (assetDividend.getTimestamp() < timestamp) {
+                break;
+            }
+            dividendsData.add(JSONData.assetDividend(assetDividend));
         }
         response.put("dividends", dividendsData);
         return response;

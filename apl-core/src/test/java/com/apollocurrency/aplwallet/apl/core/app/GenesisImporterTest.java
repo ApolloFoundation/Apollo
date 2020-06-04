@@ -63,6 +63,7 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.UUID;
 
+import static com.apollocurrency.aplwallet.apl.core.app.GenesisImporter.BALANCE_NUMBER_TOTAL_PROPERTY_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -100,6 +101,7 @@ class GenesisImporterTest {
     private Chain chain = Mockito.mock(Chain.class);
     private AplAppStatus aplAppStatus = mock(AplAppStatus.class);
     private GenesisImporterProducer genesisImporterProducer = mock(GenesisImporterProducer.class);
+    private PropertiesHolder envConfig = mock(PropertiesHolder.class);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -121,6 +123,7 @@ class GenesisImporterTest {
         .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
         .addBeans(MockBean.of(aplAppStatus, AplAppStatus.class))
         .addBeans(MockBean.of(genesisImporterProducer, GenesisImporterProducer.class))
+        .addBeans(MockBean.of(envConfig, PropertiesHolder.class))
         .addBeans(MockBean.of(mock(GlobalSync.class), GlobalSync.class, GlobalSyncImpl.class))
         .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
         .build();
@@ -242,7 +245,7 @@ class GenesisImporterTest {
         final PropertiesHolder mockedPropertiesHolder = mock(PropertiesHolder.class);
         when(mockedPropertiesHolder.getIntProperty(GenesisImporter.PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME))
             .thenReturn(10);
-        when(mockedPropertiesHolder.getIntProperty(GenesisImporter.BALANCE_NUMBER_TOTAL_PROPERTY_NAME))
+        when(mockedPropertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME))
             .thenReturn(10);
         genesisImporter = new GenesisImporter(
             blockchainConfig,
@@ -307,7 +310,7 @@ class GenesisImporterTest {
         final PropertiesHolder mockedPropertiesHolder = mock(PropertiesHolder.class);
         when(mockedPropertiesHolder.getIntProperty(GenesisImporter.PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME))
             .thenReturn(10);
-        when(mockedPropertiesHolder.getIntProperty(GenesisImporter.BALANCE_NUMBER_TOTAL_PROPERTY_NAME))
+        when(mockedPropertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME))
             .thenReturn(10);
         genesisImporter = new GenesisImporter(
             blockchainConfig,
@@ -394,7 +397,7 @@ class GenesisImporterTest {
         final PropertiesHolder mockedPropertiesHolder = mock(PropertiesHolder.class);
         when(mockedPropertiesHolder.getIntProperty(GenesisImporter.PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME))
             .thenReturn(10);
-        when(mockedPropertiesHolder.getIntProperty(GenesisImporter.BALANCE_NUMBER_TOTAL_PROPERTY_NAME))
+        when(mockedPropertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME))
             .thenReturn(10);
         genesisImporter = new GenesisImporter(
             blockchainConfig,
@@ -418,6 +421,7 @@ class GenesisImporterTest {
     void loadGenesisAccountsIncorrectKey() {
         doReturn("conf/data/genesisParameters.json").when(genesisImporterProducer).genesisParametersLocation();
         doReturn("conf/data/genesisAccounts-testnet-MISSING-BALANCES.json").when(chain).getGenesisLocation();
+        doReturn(10).when(propertiesHolder).getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME);
         genesisImporter = new GenesisImporter(
             blockchainConfig,
             blockchainConfigUpdater,
@@ -486,7 +490,7 @@ class GenesisImporterTest {
         final PropertiesHolder mockedPropertiesHolder = mock(PropertiesHolder.class);
         when(mockedPropertiesHolder.getIntProperty(GenesisImporter.PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME))
             .thenReturn(0);
-        when(mockedPropertiesHolder.getIntProperty(GenesisImporter.BALANCE_NUMBER_TOTAL_PROPERTY_NAME))
+        when(mockedPropertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME))
             .thenReturn(10);
         genesisImporter = new GenesisImporter(
             blockchainConfig,
@@ -522,7 +526,7 @@ class GenesisImporterTest {
         final PropertiesHolder mockedPropertiesHolder = mock(PropertiesHolder.class);
         when(mockedPropertiesHolder.getIntProperty(GenesisImporter.PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME))
             .thenReturn(10);
-        when(mockedPropertiesHolder.getIntProperty(GenesisImporter.BALANCE_NUMBER_TOTAL_PROPERTY_NAME))
+        when(mockedPropertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME))
             .thenReturn(10);
         genesisImporter = new GenesisImporter(
             blockchainConfig,
@@ -551,7 +555,7 @@ class GenesisImporterTest {
     ) {
         Properties properties = new Properties();
         properties.put(GenesisImporter.PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME, publicKeyNumberTotal);
-        properties.put(GenesisImporter.BALANCE_NUMBER_TOTAL_PROPERTY_NAME, balanceNumberTotal);
+        properties.put(BALANCE_NUMBER_TOTAL_PROPERTY_NAME, balanceNumberTotal);
         return properties;
     }
 

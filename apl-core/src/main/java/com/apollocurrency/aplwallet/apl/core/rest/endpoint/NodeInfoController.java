@@ -14,8 +14,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -32,10 +31,10 @@ import javax.ws.rs.core.Response;
  * @author alukin@gmail.com
  */
 
+@Slf4j
 @Path("/nodeinfo")
 @SecurityScheme(type = SecuritySchemeType.APIKEY, name = "admin_api_key", in = SecuritySchemeIn.QUERY, paramName = "adminPassword")
 public class NodeInfoController {
-    private static final Logger log = LoggerFactory.getLogger(NodeInfoController.class);
     private ServerInfoService siService;
 
     @Inject

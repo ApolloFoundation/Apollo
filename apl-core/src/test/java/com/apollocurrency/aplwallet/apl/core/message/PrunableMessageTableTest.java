@@ -1,12 +1,14 @@
 /*
- *  Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.message;
 
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
@@ -15,7 +17,6 @@ import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.PrunableMessageTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
-import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
@@ -32,21 +33,27 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 
 @EnableWeld
 class PrunableMessageTableTest {
     @RegisterExtension
     DbExtension extension = new DbExtension(DbTestData.getInMemDbProps(), null, null, "db/prunable-message-data.sql");
+    private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
+    private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
+    private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
+
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from(
         PrunableMessageTable.class,
         DerivedDbTablesRegistryImpl.class,
         FullTextConfigImpl.class,
-        TimeServiceImpl.class,
-        NtpTime.class,
         BlockchainConfig.class,
-        PropertiesHolder.class
-    ).addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+        PropertiesHolder.class)
+        .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
+        .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
+        .addBeans(MockBean.of(timeService, TimeService.class))
         .build();
     @Inject
     PrunableMessageTable table;

@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
+import com.apollocurrency.aplwallet.apl.core.monetary.model.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
@@ -39,7 +39,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRegis
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingVerificationAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 
@@ -91,7 +90,7 @@ public abstract class ShufflingTransaction extends TransactionType {
                         + ", minimum is " + blockchainConfig.getShufflingDepositAtm());
                 }
             } else if (holdingType == HoldingType.ASSET) {
-                Asset asset = Asset.getAsset(attachment.getHoldingId());
+                Asset asset = lookupAssetService().getAsset(attachment.getHoldingId());
                 if (asset == null) {
                     throw new AplException.NotCurrentlyValidException("Unknown asset " + Long.toUnsignedString(attachment.getHoldingId()));
                 }
@@ -245,9 +244,9 @@ public abstract class ShufflingTransaction extends TransactionType {
             if (holdingType != HoldingType.APL) {
                 BlockchainConfig blockchainConfig = lookupBlockchainConfig();
                 if (holdingType.getUnconfirmedBalance(senderAccount, shuffling.getHoldingId()) >= shuffling.getAmount()
-                    && senderAccount.getUnconfirmedBalanceATM() >= lookupBlockchainConfig().getShufflingDepositAtm()) {
+                    && senderAccount.getUnconfirmedBalanceATM() >= blockchainConfig.getShufflingDepositAtm()) {
                     holdingType.addToUnconfirmedBalance(senderAccount, getLedgerEvent(), transaction.getId(), shuffling.getHoldingId(), -shuffling.getAmount());
-                    lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -lookupBlockchainConfig().getShufflingDepositAtm());
+                    lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -blockchainConfig.getShufflingDepositAtm());
                     return true;
                 }
             } else {

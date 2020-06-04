@@ -1,3 +1,7 @@
+/*
+ * Copyright © 2018-2020 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
@@ -18,9 +22,9 @@ import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
 import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
+import com.apollocurrency.aplwallet.apl.core.monetary.service.AssetService;
 import com.apollocurrency.aplwallet.apl.core.order.entity.AskOrder;
 import com.apollocurrency.aplwallet.apl.core.order.service.OrderService;
-import com.apollocurrency.aplwallet.apl.core.order.service.impl.AskOrderServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FAConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FADetailsConverter;
@@ -51,7 +55,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.Mockito;
 
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
@@ -141,6 +144,8 @@ class AccountControllerTest extends AbstractEndpointTest {
     private FirstLastIndexParser indexParser = new FirstLastIndexParser(100);
     @Mock
     private AccountStatisticsService accountStatisticsService = Mockito.mock(AccountStatisticsService.class);
+    @Mock
+    private AssetService assetService = Mockito.mock(AssetService.class);
 
     private Block GENESIS_BLOCK, LAST_BLOCK, NEW_BLOCK;
     private Block BLOCK_0, BLOCK_1, BLOCK_2, BLOCK_3;
@@ -165,8 +170,9 @@ class AccountControllerTest extends AbstractEndpointTest {
             new Account2FADetailsConverter(),
             new Account2FAConverter(),
             orderService,
-            indexParser,
-            accountStatisticsService
+            100,
+            accountStatisticsService,
+            assetService
         );
 
         dispatcher.getRegistry().addSingletonResource(endpoint);
@@ -662,7 +668,7 @@ class AccountControllerTest extends AbstractEndpointTest {
         int from = 0;
         int to = 99;
 
-        doReturn(BLOCKS).when(accountService).getAccountBlocks(ACCOUNT_ID, timestamp, from, to);
+        doReturn(BLOCKS).when(accountService).getAccountBlocks(ACCOUNT_ID, from, to, timestamp);
 
         MockHttpResponse response = sendGetRequest("/accounts/block-ids?account=" + ACCOUNT_ID
             + "&timestamp=" + timestamp
@@ -680,7 +686,7 @@ class AccountControllerTest extends AbstractEndpointTest {
         JsonNode root = mapper.readTree(content);
         assertTrue(root.get("blockIds").isArray());
         assertEquals(BLOCKS.size(), root.withArray("blockIds").size());
-        verify(accountService, times(1)).getAccountBlocks(ACCOUNT_ID, timestamp, from, to);
+        verify(accountService, times(1)).getAccountBlocks(ACCOUNT_ID, from, to, timestamp);
     }
 
     @Test
@@ -703,7 +709,7 @@ class AccountControllerTest extends AbstractEndpointTest {
         int from = 0;
         int to = 200;
 
-        doReturn(BLOCKS).when(accountService).getAccountBlocks(ACCOUNT_ID, timestamp, from, 99);
+        doReturn(BLOCKS).when(accountService).getAccountBlocks(ACCOUNT_ID, from, 99, timestamp);
 
         MockHttpResponse response = sendGetRequest("/accounts/blocks?account=" + ACCOUNT_ID
             + "&timestamp=" + timestamp
@@ -722,7 +728,7 @@ class AccountControllerTest extends AbstractEndpointTest {
         assertTrue(root.get("blocks").isArray());
         assertEquals(BLOCKS.size(), root.withArray("blocks").size());
         assertEquals(Long.toUnsignedString(BLOCK_0.getGeneratorId()), root.withArray("blocks").get(1).get("generator").asText());
-        verify(accountService, times(1)).getAccountBlocks(ACCOUNT_ID, timestamp, from, 99);
+        verify(accountService, times(1)).getAccountBlocks(ACCOUNT_ID, from, 99, timestamp);
     }
 
     @ParameterizedTest(name = "{index} url={arguments}")

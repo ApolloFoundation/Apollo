@@ -19,7 +19,7 @@ import com.apollocurrency.aplwallet.apl.core.trade.entity.Trade;
 import com.apollocurrency.aplwallet.apl.core.trade.service.TradeService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
-import com.apollocurrency.aplwallet.apl.util.StackTraceUtils;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -55,7 +55,7 @@ public class OrderMatchServiceImpl implements OrderMatchService {
     void matchOrders(long assetId) {
         AskOrder askOrder;
         BidOrder bidOrder;
-        log.trace(">> match orders, assetId={}, stack={}", assetId, StackTraceUtils.lastNStacktrace(5));
+        log.trace(">> match orders, assetId={}, stack={}", assetId, ThreadUtils.last5Stacktrace());
         int index = 0;
         while ((askOrder = orderAskService.getNextOrder(assetId)) != null
             && (bidOrder = orderBidService.getNextOrder(assetId)) != null) {

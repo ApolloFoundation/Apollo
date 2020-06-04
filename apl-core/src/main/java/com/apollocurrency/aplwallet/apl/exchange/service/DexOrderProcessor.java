@@ -44,7 +44,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.TransferTransactionInfo;
 import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import com.apollocurrency.aplwallet.apl.util.task.Task;

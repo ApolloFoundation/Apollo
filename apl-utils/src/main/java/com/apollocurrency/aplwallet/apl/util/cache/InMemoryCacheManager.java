@@ -14,25 +14,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.jboss.weld.environment.util.Collections;
 
-import javax.enterprise.inject.Produces;
-import javax.enterprise.inject.spi.Annotated;
-import javax.enterprise.inject.spi.InjectionPoint;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
-@Singleton
 public class InMemoryCacheManager {
 
     private static final long MIN_MEMORY_SIZE_FOR_CACHES = 16 * 1024 * 1024;//in bytes
 
     private ConcurrentHashMap<String, Cache> inMemoryCaches;
 
-    @Inject
     public InMemoryCacheManager(InMemoryCacheConfigurator configurator) {
         Objects.requireNonNull(configurator, "Configurator is NULL.");
         validateConfigurations(configurator);
@@ -44,14 +37,6 @@ public class InMemoryCacheManager {
      */
     public static MemoryUsageCalculator newCalc() {
         return new MemoryUsageCalculator().startObject();
-    }
-
-    @Produces
-    @CacheProducer
-    public <K, V> Cache<K, V> acquireCache(InjectionPoint injectionPoint) {
-        Annotated annotated = injectionPoint.getAnnotated();
-        CacheType cacheTypeAnnotation = annotated.getAnnotation(CacheType.class);
-        return acquireCache(cacheTypeAnnotation.value());
     }
 
     @SuppressWarnings("unchecked")

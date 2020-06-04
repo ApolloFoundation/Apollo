@@ -120,5 +120,4 @@ public interface ShardDao {
     @SqlQuery("select * from SHARD where SHARD_STATE = 100 and (SHARD_HEIGHT between :heightFrom - 1 and :heightTo) order by SHARD_HEIGHT")
     @RegisterRowMapper(ShardRowMapper.class)
     List<Shard> getCompletedBetweenBlockHeight(@Bind("heightFrom") long heightFrom, @Bind("heightTo") long heightTo);
-
 }

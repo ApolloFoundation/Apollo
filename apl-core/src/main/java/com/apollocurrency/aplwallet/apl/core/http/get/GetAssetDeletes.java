@@ -27,13 +27,15 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.monetary.AssetDelete;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.monetary.model.AssetDelete;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.monetary.service.AssetDeleteService;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
@@ -58,14 +60,15 @@ public final class GetAssetDeletes extends AbstractAPIRequestHandler {
 
         JSONObject response = new JSONObject();
         JSONArray deletesData = new JSONArray();
+        AssetDeleteService assetDeleteService = CDI.current().select(AssetDeleteService.class).get();
         DbIterator<AssetDelete> deletes = null;
         try {
             if (accountId == 0) {
-                deletes = AssetDelete.getAssetDeletes(assetId, firstIndex, lastIndex);
+                deletes = assetDeleteService.getAssetDeletes(assetId, firstIndex, lastIndex);
             } else if (assetId == 0) {
-                deletes = AssetDelete.getAccountAssetDeletes(accountId, firstIndex, lastIndex);
+                deletes = assetDeleteService.getAccountAssetDeletes(accountId, firstIndex, lastIndex);
             } else {
-                deletes = AssetDelete.getAccountAssetDeletes(accountId, assetId, firstIndex, lastIndex);
+                deletes = assetDeleteService.getAccountAssetDeletes(accountId, assetId, firstIndex, lastIndex);
             }
             while (deletes.hasNext()) {
                 AssetDelete assetDelete = deletes.next();

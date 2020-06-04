@@ -39,7 +39,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryp
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -117,7 +117,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
 
 
         JSONObject response = new JSONObject();
-//do not eat exception here, it is used for error message displying in UI
+//do not eat exception here, it is used for error message displaying on UI
         Transaction transaction = createTransaction(createTransactionRequest);
 
         JSONObject transactionJSON = JSONData.unconfirmedTransaction(transaction);

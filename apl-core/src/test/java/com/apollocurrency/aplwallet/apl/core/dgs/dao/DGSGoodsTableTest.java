@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.dgs.dao;
@@ -11,11 +11,13 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
+import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
@@ -30,7 +32,6 @@ import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.data.DGSTestData;
-import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
@@ -49,25 +50,31 @@ import static org.mockito.Mockito.mock;
 
 @EnableWeld
 public class DGSGoodsTableTest extends EntityDbTableTest<DGSGoods> {
+    private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
+    private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
+    private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
+
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-        PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
+        BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
         GlobalSyncImpl.class,
         FullTextConfigImpl.class,
         DGSGoodsTable.class,
         DerivedDbTablesRegistryImpl.class,
-        TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
+        BlockDaoImpl.class, TransactionDaoImpl.class,
         GenesisPublicKeyTable.class)
         .addBeans(MockBean.of(getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
         .addBeans(MockBean.of(getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
         .addBeans(MockBean.of(getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
-        .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
         .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
         .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
         .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
         .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
+        .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
+        .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
+        .addBeans(MockBean.of(timeService, TimeService.class))
         .build();
     @Inject
     DGSGoodsTable table;

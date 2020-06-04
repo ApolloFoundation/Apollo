@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
@@ -11,8 +11,8 @@ import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 
 public abstract class DEX extends TransactionType {
 
-    private DexService dexService;// = CDI.current().select(DexService.class).get();
-    private DexConfig dexConfig;// = CDI.current().select(DexConfig.class).get();
+    private DexService dexService;
+    private DexConfig dexConfig;
 
     @Override
     public byte getType() {

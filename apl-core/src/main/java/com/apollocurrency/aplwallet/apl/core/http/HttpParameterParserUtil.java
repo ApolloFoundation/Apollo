@@ -37,11 +37,12 @@ import com.apollocurrency.aplwallet.apl.core.dgs.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
-import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
+import com.apollocurrency.aplwallet.apl.core.monetary.model.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.monetary.service.AssetService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
@@ -58,7 +59,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.UnencryptedPru
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Search;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
@@ -126,15 +127,16 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Deprecated
 public final class HttpParameterParserUtil {
     private static final Logger LOG = getLogger(HttpParameterParserUtil.class);
-    private static final AliasService ALIAS_SERVICE = CDI.current().select(AliasService.class).get();
+    private static AliasService ALIAS_SERVICE;// = CDI.current().select(AliasService.class).get();
     private static final int DEFAULT_LAST_INDEX = 250;
-    protected static AdminPasswordVerifier apw = CDI.current().select(AdminPasswordVerifier.class).get();
-    protected static ElGamalEncryptor elGamal = CDI.current().select(ElGamalEncryptor.class).get();
-    protected static TimeService timeService = CDI.current().select(TimeService.class).get();
-    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
-    private static AccountService accountService = CDI.current().select(AccountService.class).get();
-    private static AccountPublicKeyService accountPublicKeyService = CDI.current().select(AccountPublicKeyService.class).get();
+    protected static AdminPasswordVerifier apw;
+    protected static ElGamalEncryptor elGamal;
+    protected static TimeService timeService;
+    private static BlockchainConfig blockchainConfig;
+    private static Blockchain blockchain;
+    private static AccountService accountService;
+    private static AccountPublicKeyService accountPublicKeyService;
+    private static AssetService assetService;
 
     private HttpParameterParserUtil() {
     } // never
@@ -334,6 +336,7 @@ public final class HttpParameterParserUtil {
         }
         String aliasName = Convert.emptyToNull(req.getParameter("aliasName"));
         Alias alias;
+        AliasService ALIAS_SERVICE = lookupAliasService();
         if (aliasId != 0) {
             alias = ALIAS_SERVICE.getAliasById(aliasId);
         } else if (aliasName != null) {
@@ -346,17 +349,16 @@ public final class HttpParameterParserUtil {
         }
         return alias;
     }
-
     public static long getAmountATM(HttpServletRequest req) throws ParameterException {
-        return getLong(req, "amountATM", 1L, blockchainConfig.getCurrentConfig().getMaxBalanceATM(), true);
+        return getLong(req, "amountATM", 1L, lookupBlockchainConfig().getCurrentConfig().getMaxBalanceATM(), true);
     }
 
     public static long getFeeATM(HttpServletRequest req) throws ParameterException {
-        return getLong(req, "feeATM", 0L, blockchainConfig.getCurrentConfig().getMaxBalanceATM(), true);
+        return getLong(req, "feeATM", 0L, lookupBlockchainConfig().getCurrentConfig().getMaxBalanceATM(), true);
     }
 
     public static long getPriceATM(HttpServletRequest req) throws ParameterException {
-        return getLong(req, "priceATM", 1L, blockchainConfig.getCurrentConfig().getMaxBalanceATM(), true);
+        return getLong(req, "priceATM", 1L, lookupBlockchainConfig().getCurrentConfig().getMaxBalanceATM(), true);
     }
 
     public static Poll getPoll(HttpServletRequest req) throws ParameterException {
@@ -368,7 +370,7 @@ public final class HttpParameterParserUtil {
     }
 
     public static Asset getAsset(HttpServletRequest req) throws ParameterException {
-        Asset asset = Asset.getAsset(getUnsignedLong(req, "asset", true));
+        Asset asset = lookupAssetService().getAsset(getUnsignedLong(req, "asset", true));
         if (asset == null) {
             throw new ParameterException(UNKNOWN_ASSET);
         }
@@ -416,7 +418,7 @@ public final class HttpParameterParserUtil {
     }
 
     public static long getAmountATMPerATU(HttpServletRequest req) throws ParameterException {
-        return getLong(req, "amountATMPerATU", 1L, blockchainConfig.getCurrentConfig().getMaxBalanceATM(), true);
+        return getLong(req, "amountATMPerATU", 1L, lookupBlockchainConfig().getCurrentConfig().getMaxBalanceATM(), true);
     }
 
     public static DGSGoods getGoods(DGSService dgsService, HttpServletRequest req) throws ParameterException {
@@ -539,8 +541,7 @@ public final class HttpParameterParserUtil {
         if (secretPhrase == null && isMandatory) {
             throw new ParameterException(MISSING_SECRET_PHRASE);
         }
-        return elGamal.elGamalDecrypt(secretPhrase);
-
+        return lookupElGamalEncryptor().elGamalDecrypt(secretPhrase);
     }
 
     public static byte[] getPublicKey(HttpServletRequest req) throws ParameterException {
@@ -610,7 +611,7 @@ public final class HttpParameterParserUtil {
         if (publicKey == null) {
             throw new ParameterException(UNKNOWN_PUBLIC_KEY);
         }
-        Account account = accountService.getAccount(publicKey);
+        Account account = lookupAccountService().getAccount(publicKey);
         if (account == null) {
             throw new ParameterException(UNKNOWN_ACCOUNT);
         }
@@ -634,7 +635,7 @@ public final class HttpParameterParserUtil {
         if (accountId == 0 && !isMandatory) {
             return null;
         }
-        Account account = accountService.getAccount(accountId);
+        Account account = lookupAccountService().getAccount(accountId);
         if (account == null) {
             throw new ParameterException(JSONResponses.unknownAccount(accountId));
         }
@@ -656,19 +657,19 @@ public final class HttpParameterParserUtil {
 
     public static String getPassphrase(HttpServletRequest req, boolean isMandatory) throws ParameterException {
         String secretPhrase = getStringParameter(req, "passphrase", isMandatory);
-        return elGamal.elGamalDecrypt(secretPhrase);
+        return lookupElGamalEncryptor().elGamalDecrypt(secretPhrase);
     }
 
     public static String getPassphrase(String passphrase, boolean isMandatory) throws ParameterException {
         if (StringUtils.isBlank(passphrase) && isMandatory) {
             throw new ParameterException(missing("passphrase"));
         }
-        return elGamal.elGamalDecrypt(passphrase);
+        return lookupElGamalEncryptor().elGamalDecrypt(passphrase);
     }
 
     public static String getPassphrase(HttpServletRequest req, String parameterName, boolean isMandatory) throws ParameterException {
         String secretPhrase = getStringParameter(req, parameterName, isMandatory);
-        return elGamal.elGamalDecrypt(secretPhrase);
+        return lookupElGamalEncryptor().elGamalDecrypt(secretPhrase);
     }
 
     public static byte[] getKeySeed(HttpServletRequest req, String parameterName, boolean isMandatory) throws ParameterException {
@@ -694,7 +695,7 @@ public final class HttpParameterParserUtil {
                 continue;
             }
             try {
-                Account account = accountService.getAccount(Convert.parseAccountId(accountValue));
+                Account account = lookupAccountService().getAccount(Convert.parseAccountId(accountValue));
                 if (account == null) {
                     throw new ParameterException(UNKNOWN_ACCOUNT);
                 }
@@ -731,7 +732,7 @@ public final class HttpParameterParserUtil {
             }
         } catch (NumberFormatException ignored) {
         }
-        if (!apw.checkPassword(req)) {
+        if (!lookupAdminPasswordVerifier().checkPassword(req)) {
             int firstIndex = Math.min(getFirstIndex(req), Integer.MAX_VALUE - API.maxRecords + 1);
             lastIndex = Math.min(lastIndex, firstIndex + API.maxRecords - 1);
             if (lastIndex < firstIndex) {
@@ -742,7 +743,7 @@ public final class HttpParameterParserUtil {
     }
 
     public static int getNumberOfConfirmations(HttpServletRequest req) throws ParameterException {
-        return getInt(req, "numberOfConfirmations", 0, blockchain.getHeight(), false);
+        return getInt(req, "numberOfConfirmations", 0, lookupBlockchain().getHeight(), false);
     }
 
     public static int getHeight(HttpServletRequest req) throws ParameterException {
@@ -750,7 +751,7 @@ public final class HttpParameterParserUtil {
         if (heightValue != null) {
             try {
                 int height = Integer.parseInt(heightValue);
-                if (height < 0 || height > blockchain.getHeight()) {
+                if (height < 0 || height > lookupBlockchain().getHeight()) {
                     throw new ParameterException(INCORRECT_HEIGHT);
                 }
                 return height;
@@ -769,7 +770,7 @@ public final class HttpParameterParserUtil {
         long holdingId = HttpParameterParserUtil.getUnsignedLong(req, "holding", holdingType != HoldingType.APL);
         if (holdingType == HoldingType.APL && holdingId != 0) {
             throw new ParameterException(incorrect("holding",
-                "holding id should not be specified if holdingType is " + blockchainConfig.getCoinSymbol()));
+                "holding id should not be specified if holdingType is " + lookupBlockchainConfig().getCoinSymbol()));
         }
         return holdingId;
     }
@@ -912,7 +913,7 @@ public final class HttpParameterParserUtil {
                 }
             }
             if (recipient != null) {
-                recipientPublicKey = accountService.getPublicKeyByteArray(recipient.getId());
+                recipientPublicKey = lookupAccountService().getPublicKeyByteArray(recipient.getId());
             }
             if (recipientPublicKey == null) {
                 recipientPublicKey = Convert.parseHexString(Convert.emptyToNull(req.getParameter("recipientPublicKey")));
@@ -1036,7 +1037,7 @@ public final class HttpParameterParserUtil {
             publicKey = Crypto.getPublicKey(keySeed);
         }
         long accountId = AccountService.getId(publicKey);
-        byte[] sharedKey = Crypto.getSharedKey(elGamal.getServerPrivateKey(), publicKey);
+        byte[] sharedKey = Crypto.getSharedKey(lookupElGamalEncryptor().getServerPrivateKey(), publicKey);
         return new PrivateTransactionsAPIData(encrypt, publicKey, sharedKey, accountId);
     }
 
@@ -1063,7 +1064,7 @@ public final class HttpParameterParserUtil {
     public static PhasingAppendixV2 parsePhasing(HttpServletRequest req) throws ParameterException {
         int phasingTimeLockDuration = -1;
         int phasingFinishHeight = HttpParameterParserUtil.getInt(req, "phasingFinishHeight",
-            -1, blockchain.getHeight() + Constants.MAX_PHASING_DURATION + 1, true);
+            -1, lookupBlockchain().getHeight() + Constants.MAX_PHASING_DURATION + 1, true);
 
         if (req.getParameter("phasingFinishTime") != null) {
             phasingTimeLockDuration = HttpParameterParserUtil.getInt(req, "phasingFinishTime",
@@ -1078,11 +1079,11 @@ public final class HttpParameterParserUtil {
         int phasingFinishTime = -1;
         if (phasingTimeLockDuration == -1) {
             phasingFinishHeight = HttpParameterParserUtil.getInt(req, "phasingFinishHeight",
-                blockchain.getHeight() + 1,
-                blockchain.getHeight() + Constants.MAX_PHASING_DURATION + 1,
+                lookupBlockchain().getHeight() + 1,
+                lookupBlockchain().getHeight() + Constants.MAX_PHASING_DURATION + 1,
                 true);
         } else {
-            phasingFinishTime = timeService.getEpochTime() + phasingTimeLockDuration;
+            phasingFinishTime = lookupTimeService().getEpochTime() + phasingTimeLockDuration;
         }
 
         PhasingParams phasingParams = parsePhasingParams(req, "phasing");
@@ -1214,4 +1215,67 @@ public final class HttpParameterParserUtil {
             return this;
         }
     }
+
+    private static AliasService lookupAliasService() {
+        if (ALIAS_SERVICE == null) {
+            ALIAS_SERVICE = CDI.current().select(AliasService.class).get();
+        }
+        return ALIAS_SERVICE;
+    }
+
+    private static AdminPasswordVerifier lookupAdminPasswordVerifier() {
+        if (apw == null) {
+            apw = CDI.current().select(AdminPasswordVerifier.class).get();
+        }
+        return apw;
+    }
+
+    private static ElGamalEncryptor lookupElGamalEncryptor() {
+        if (elGamal == null) {
+            elGamal = CDI.current().select(ElGamalEncryptor.class).get();
+        }
+        return elGamal;
+    }
+
+    private static TimeService lookupTimeService() {
+        if (timeService == null) {
+            timeService = CDI.current().select(TimeService.class).get();
+        }
+        return timeService;
+    }
+
+    private static BlockchainConfig lookupBlockchainConfig() {
+        if (blockchainConfig == null) {
+            blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+        }
+        return blockchainConfig;
+    }
+
+    private static Blockchain lookupBlockchain() {
+        if (blockchain == null) {
+            blockchain = CDI.current().select(Blockchain.class).get();
+        }
+        return blockchain;
+    }
+
+    private static AccountService lookupAccountService() {
+        if (accountService == null) {
+            accountService = CDI.current().select(AccountService.class).get();
+        }
+        return accountService;
+    }
+
+    private static AccountPublicKeyService lookupAccountPublicKeyService() {
+        if (accountPublicKeyService == null) {
+            accountPublicKeyService = CDI.current().select(AccountPublicKeyService.class).get();
+        }
+        return accountPublicKeyService;
+    }
+    private static AssetService lookupAssetService() {
+        if (assetService == null) {
+            assetService = CDI.current().select(AssetService.class).get();
+        }
+        return assetService;
+    }
+
 }

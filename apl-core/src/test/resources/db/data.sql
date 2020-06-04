@@ -37,7 +37,10 @@ delete from mandatory_transaction;
 delete from dex_contract;
 delete from dex_transaction;
 delete from user_error_message;
-delete from PUBLIC.ACCOUNT_INFO;
+delete from ACCOUNT_INFO;
+delete from ASSET;
+delete from ASSET_DELETE;
+delete from ASSET_DIVIDEND;
 
 INSERT INTO PUBLIC.BLOCK
 (DB_ID,         ID,                HEIGHT,      VERSION,   "TIMESTAMP",  PREVIOUS_BLOCK_ID,  TOTAL_AMOUNT,        TOTAL_FEE,   PAYLOAD_LENGTH,   PREVIOUS_BLOCK_HASH,                                                   CUMULATIVE_DIFFICULTY,  BASE_TARGET,    NEXT_BLOCK_ID,               GENERATION_SIGNATURE,                                                   BLOCK_SIGNATURE,                                                                                                                        PAYLOAD_HASH,                                                           GENERATOR_ID,       TIMEOUT) VALUES
@@ -339,11 +342,14 @@ insert into tag
 ;
 
 INSERT INTO PUBLIC.ACCOUNT_CONTROL_PHASING
-(DB_ID, ACCOUNT_ID, WHITELIST, VOTING_MODEL, QUORUM, MIN_BALANCE, HOLDING_ID, MIN_BALANCE_MODEL, MAX_FEES, MIN_DURATION, MAX_DURATION, HEIGHT, LATEST) VALUES
-(10, 7995581942006468815, null, 0, 1, null, null, 0, 300000000, 12, 113, 500, true),
-(20, 2728325718715804811, (-8446656647637444484), 0, 1, null, null, 0, 300000000, 12, 113, 1000, true),
-(30, -8446384352342482748, (2728325718715804811, 1344527020205736624), 0, 1, null, null, 0, 300000000, 12, 113, 2000, true),
-(40, -4013722529644937202, (-8446656647637444484, 1344527020205736624, -6724281675870110558), 0, 1, null, null, 0, 300000000, 12, 113, 3000, true)
+(DB_ID, ACCOUNT_ID,                         WHITELIST,              VOTING_MODEL,   QUORUM, MIN_BALANCE, HOLDING_ID, MIN_BALANCE_MODEL, MAX_FEES,   MIN_DURATION, MAX_DURATION, HEIGHT, LATEST) VALUES
+(10,    7995581942006468815,                    null,                       0,      1,      null,           null,       0,              300000000,  12,         113,            500,    true),
+(20,    2728325718715804811, (-8446656647637444484),            0,      1,      null,           null,       0,              300000000,  12,         113,            1000,   true),
+(30,    -8446384352342482748,
+        (2728325718715804811, 1344527020205736624),             0,      1,      null,           null,       0,              300000000,  12,         113,            2000,   true),
+(40,    -4013722529644937202,
+    (-8446656647637444484, 1344527020205736624, -6724281675870110558),
+                                                                            0,      1,      null,           null,       0,              300000000,  12,         113,            3000,   true)
 ;
 
 INSERT into shuffling_data
@@ -437,11 +443,43 @@ INSERT INTO user_error_message
 (200,            '0x8e96e98b32c56115614B64704bA35feFE9e8f7bC', 'Out of gas'          ,'redeem',   '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', 1100),
 (300,            '0x0398E119419E0D7792c53913d3f370f9202Ae137', 'Double spending'     ,'withdraw', '100'                                                              ,1200)
 ;
-INSERT INTO PUBLIC.ACCOUNT_INFO (DB_ID, ACCOUNT_ID, NAME, DESCRIPTION, HEIGHT, LATEST) VALUES
+INSERT INTO ACCOUNT_INFO (DB_ID, ACCOUNT_ID, NAME, DESCRIPTION, HEIGHT, LATEST) VALUES
 (3, 100, 'Madan Reddy', 'Apollo Community tokens', 2331, true),
 (5, 110, 'ZT', null, 3073, true),
 (6, 120, 'CALIGULA', null, 3559, true),
 (7, 130, 'Adnan Celik', null, 3563, true),
 (10, 140, 'Vasily', 'Front end wallet ui/ux', 26068, true),
 (15, 150, 'CALIGULA shubham nitin bhabad', 'abuse brain fright always', 70858, true)
+;
+
+INSERT INTO ASSET
+(DB_ID, ID,                     ACCOUNT_ID,  NAME,       DESCRIPTION,           QUANTITY, DECIMALS, INITIAL_QUANTITY, HEIGHT, LATEST) VALUES
+(1,     -1072880289966859852,   100,        'Assets1.1', 'ThisisSecretCoin1.1',   10,        1,        10,               10,    true),
+(3,     -1698552298114458330,   100,        'Assets1.2', 'ThisisSecretCoin1.2',   20,        3,        20,               30,    true),
+(4,     -174530643920308495,    100,        'Assets1.3', 'ThisisSecretCoin1.3',   30,        4,        30,               40,    true),
+(5,     8180990979457659735,    200,        'Assets2.1', 'ThisisSecretCoin2.1',   10,        5,        10,               50,    true),
+(6,     -7411869947092956999,   200,        'Assets2.2', 'ThisisSecretCoin2.2',   20,        6,        20,               60,    true),
+(8,     -2591338258392940629,   500,        'Assets3.1', 'ThisisSecretCoin3.1',   10,        8,        10,               80,    true),
+(9,     1272486048634857248,    500,        'Assets3.2', 'ThisisSecretCoin3.2',   20,        9,        20,               90,    true),
+(10,   -7671470345148527248,    500,        'Assets3.3', 'ThisisSecretCoin3.3',   30,        10,       30,               100,   true)
+;
+
+INSERT INTO ASSET_DELETE
+(DB_ID,     ID,                         ASSET_ID,               ACCOUNT_ID,         QUANTITY, "TIMESTAMP",  HEIGHT) VALUES
+(1,         3444674909301056677,    -1072880289966859852,           100,            5,          45690782,   12),
+(2,         2402544248051582903,    -1698552298114458330,           100,            10,         45690782,   32),
+(3,         5373370077664349170,    -174530643920308495,            100,            10,         45712001,   42),
+(4,         -780794814210884355,    -8180990979457659735,           200,            5,          45712647,   55),
+(5,         -9128485677221760321,   -7411869947092956999,           200,            10,         45712817,   66),
+(6,         3746857886535243786,    -2591338258392940629,           500,            5,          45712884,   81),
+(7,         5471926494854938613,    1272486048634857248,            500,            12,         45712896,   94),
+(8,         2083198303623116770,    -7671470345148527248,           500,            16,         45712907,   103)
+;
+
+INSERT INTO ASSET_DIVIDEND
+(DB_ID, ID,                     ASSET_ID,               AMOUNT,     DIVIDEND_HEIGHT, TOTAL_DIVIDEND, NUM_ACCOUNTS, TIMESTAMP, HEIGHT) VALUES
+(1,     7584440193513719551,    8076646017490321411,    1,          61449,           0,              0,             36559619, 61468),
+(2,     -7390004979265954310,   8804302123230545017,    1000,       61449,           0,              0,             36559807, 61487),
+(3,     9191632407374355191,    9065918785929852826,    1000,       61449,           0,              0,             36560092, 61516),
+(4,     8033155246743541720,    9065918785929852826,    100,        61449,           0,              0,             36564916, 62007)
 ;

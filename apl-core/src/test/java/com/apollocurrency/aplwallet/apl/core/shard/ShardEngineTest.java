@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDao;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
@@ -21,6 +22,7 @@ import com.apollocurrency.aplwallet.apl.core.app.TrimDao;
 import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
+import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -145,6 +147,10 @@ class ShardEngineTest {
     private final Bean<Path> dataExportDir = MockBean.of(dataExportDirPath.toAbsolutePath(), Path.class);
     @RegisterExtension
     DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("targetDb").toAbsolutePath().toString()));
+    private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
+    private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
+    private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
+
     Weld weld = WeldInitiator.createWeld();
     @Inject
     DGSGoodsTable goodsTable;
@@ -158,6 +164,8 @@ class ShardEngineTest {
     private Zip zip = spy(new ZipImpl());
     private CsvEscaper translator = new CsvEscaperImpl();
     private CsvExporter csvExporter = spy(new CsvExporterImpl(extension.getDatabaseManager(), dataExportDirPath, translator));
+    private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+
     @WeldSetup
     public WeldInitiator weldInitiator = WeldInitiator.from(weld)
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
@@ -170,12 +178,15 @@ class ShardEngineTest {
         .addBeans(MockBean.of(csvExporter, CsvExporter.class))
         .addBeans(MockBean.of(zip, Zip.class))
         .addBeans(dataExportDir)
-        .addBeans(MockBean.of(mock(TimeService.class), TimeService.class))
+        .addBeans(MockBean.of(timeService, TimeService.class))
         .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyService.class, AccountPublicKeyServiceImpl.class))
         .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
         .addBeans(MockBean.of(translator, CsvEscaperImpl.class))
 //            .addBeans(MockBean.of(baseDbProperties, DbProperties.class)) // YL  DO NOT REMOVE THAT PLEASE, it can be used for manual testing
         .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
+        .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
+        .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
+        .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
         .build();
     @Inject
     private ShardEngine shardEngine;
@@ -198,7 +209,7 @@ class ShardEngineTest {
 
     {
         weld.addInterceptor(JdbiTransactionalInterceptor.class);
-        weld.addBeanClasses(PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class, ReferencedTransactionDao.class, ShardDao.class, ShardRecoveryDao.class,
+        weld.addBeanClasses(BlockchainImpl.class, DaoConfig.class, ReferencedTransactionDao.class, ShardDao.class, ShardRecoveryDao.class,
             DerivedDbTablesRegistryImpl.class, JdbiTransactionalInterceptor.class,
             TransactionTestData.class, PropertyProducer.class, ShardRecoveryDaoJdbcImpl.class,
             GlobalSyncImpl.class, FullTextConfigImpl.class, FullTextConfig.class,
@@ -208,7 +219,7 @@ class ShardEngineTest {
             ShardEngineImpl.class, AplAppStatus.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class, TrimDao.class
         );
 
-        // return the same dir for both CDI components
+        // return the same dir for both CDI components //
         dataExportDir.getQualifiers().add(new NamedLiteral("dataExportDir")); // for CsvExporter
         doReturn(dataExportDirPath).when(dirProvider).getDataExportDir(); // for Zip
     }
@@ -348,6 +359,8 @@ class ShardEngineTest {
 
     @Test
     void createShardDbDoAllOperations() throws IOException, SQLException {
+        doReturn(86400).when(blockchainConfig).getMaxPrunableLifetime();
+        doReturn(1590667190).when(blockchainConfig).getMinPrunableLifetime();
         // folder to backup step
         doReturn(temporaryFolderExtension.newFolder("backup").toPath()).when(dirProvider).getDbDir();
         blockIndexDao.hardDeleteAllBlockIndex();

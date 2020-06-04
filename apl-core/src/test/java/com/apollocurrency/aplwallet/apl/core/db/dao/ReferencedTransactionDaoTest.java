@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
@@ -16,6 +17,7 @@ import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
+import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
@@ -65,9 +67,13 @@ class ReferencedTransactionDaoTest {
 
     @RegisterExtension
     static DbExtension extension = new DbExtension();
+    private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
+    private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
+    private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
+
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-        PropertiesHolder.class, TransactionImpl.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
+        TransactionImpl.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
         ReferencedTransactionDaoImpl.class,
         GlobalSync.class, TransactionTestData.class,
         GlobalSyncImpl.class,
@@ -77,7 +83,7 @@ class ReferencedTransactionDaoTest {
         PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class,
         PhasingVoteTable.class, PhasingPollTable.class,
         FullTextConfigImpl.class,
-        TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
+        BlockDaoImpl.class, TransactionDaoImpl.class)
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
@@ -86,12 +92,13 @@ class ReferencedTransactionDaoTest {
         .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
         .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
         .addBeans(MockBean.of(mock(AccountService.class), AccountService.class, AccountServiceImpl.class))
+        .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
+        .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
+        .addBeans(MockBean.of(timeService, TimeService.class))
         .build();
-
 
     @Inject
     private ReferencedTransactionDao dao;
-
 
     @Test
     void testGetAll() {

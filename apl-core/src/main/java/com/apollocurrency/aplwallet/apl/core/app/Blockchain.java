@@ -24,7 +24,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -59,13 +58,17 @@ public interface Blockchain {
 
     boolean hasBlockInShards(long blockId);
 
+    @Deprecated
     DbIterator<Block> getBlocks(int from, int to, int timestamp);
 
     Stream<Block> getBlocksStream(int from, int to, int timestamp);
 
     Block findFirstBlock();
 
-    DbIterator<Block> getBlocksByAccount(long accountId, int timestamp, int from, int to);
+    @Deprecated
+    DbIterator<Block> getBlocksByAccount(long accountId, int from, int to, int timestamp);
+
+    Stream<Block> getBlocksByAccountStream(long accountId, int from, int to, int timestamp);
 
     Block findLastBlock();
 

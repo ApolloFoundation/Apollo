@@ -1,12 +1,18 @@
+/*
+ *  Copyright © 2018-2020 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.db.fulltext;
 
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
+import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
@@ -20,7 +26,6 @@ import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataDao;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataExtendDao;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataTimestampDao;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
-import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
@@ -44,10 +49,13 @@ class FullTextSearchServiceTest {
     DbExtension extension = new DbExtension(Map.of("currency", List.of("code", "name", "description"), "tagged_data", List.of("name", "description", "tags")));
     @Inject
     FullTextSearchService ftl;
-    private NtpTime time = mock(NtpTime.class);
+    private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
+    private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
+    private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
+
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-        PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
+        BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
         TaggedDataServiceImpl.class,
         GlobalSyncImpl.class,
         TaggedDataDao.class,
@@ -57,15 +65,17 @@ class FullTextSearchServiceTest {
         TaggedDataExtendDao.class,
         FullTextConfigImpl.class,
         DerivedDbTablesRegistryImpl.class,
-        TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
+        BlockDaoImpl.class, TransactionDaoImpl.class)
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
-        .addBeans(MockBean.of(time, NtpTime.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
         .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
         .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
         .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
+        .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
+        .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
+        .addBeans(MockBean.of(timeService, TimeService.class))
         .build();
 
     public FullTextSearchServiceTest() throws IOException {

@@ -7,10 +7,12 @@ package com.apollocurrency.aplwallet.apl.core.db.dao;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
+import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
@@ -21,7 +23,6 @@ import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.data.IndexTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
-import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
@@ -45,19 +46,25 @@ import static org.mockito.Mockito.mock;
 public class TransactionIndexDaoTest {
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension();
+    private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
+    private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
+    private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
 
     @WeldSetup
-    public WeldInitiator weld = WeldInitiator.from(NtpTime.class,
-        PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
+    public WeldInitiator weld = WeldInitiator.from(
+        BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
         GlobalSync.class,
         GlobalSyncImpl.class,
         DerivedDbTablesRegistryImpl.class, BlockIndexDao.class, TransactionIndexDao.class,
-        TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
+        BlockDaoImpl.class, TransactionDaoImpl.class)
         .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
         .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
         .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
+        .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
+        .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
+        .addBeans(MockBean.of(timeService, TimeService.class))
         .build();
 
     @Inject

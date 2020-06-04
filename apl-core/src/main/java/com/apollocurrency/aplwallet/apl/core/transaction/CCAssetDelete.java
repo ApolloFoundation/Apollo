@@ -6,9 +6,9 @@ package com.apollocurrency.aplwallet.apl.core.transaction;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
+import com.apollocurrency.aplwallet.apl.core.monetary.model.Asset;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetDelete;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -61,7 +61,7 @@ class CCAssetDelete extends ColoredCoins {
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         ColoredCoinsAssetDelete attachment = (ColoredCoinsAssetDelete) transaction.getAttachment();
         lookupAccountAssetService().addToAssetBalanceATU(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getAssetId(), -attachment.getQuantityATU());
-        Asset.deleteAsset(transaction, attachment.getAssetId(), attachment.getQuantityATU());
+        lookupAssetService().deleteAsset(transaction, attachment.getAssetId(), attachment.getQuantityATU());
     }
 
     @Override
@@ -76,7 +76,7 @@ class CCAssetDelete extends ColoredCoins {
         if (attachment.getAssetId() == 0) {
             throw new AplException.NotValidException("Invalid asset identifier: " + attachment.getJSONObject());
         }
-        Asset asset = Asset.getAsset(attachment.getAssetId());
+        Asset asset = lookupAssetService().getAsset(attachment.getAssetId());
         if (attachment.getQuantityATU() <= 0 || (asset != null && attachment.getQuantityATU() > asset.getInitialQuantityATU())) {
             throw new AplException.NotValidException("Invalid asset delete asset or quantity: " + attachment.getJSONObject());
         }

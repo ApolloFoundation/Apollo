@@ -1,17 +1,18 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
-import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountAssetTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountControlPhasingTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountCurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountInfoTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountLedgerTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.PublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
@@ -26,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.app.DefaultBlockValidator;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.app.ReferencedTransactionService;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
@@ -35,6 +37,7 @@ import com.apollocurrency.aplwallet.apl.core.app.VaultKeyStoreServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
+import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyBasedFileConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
@@ -82,7 +85,6 @@ import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
-import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ServiceModeDirProvider;
@@ -147,8 +149,6 @@ class CsvExporterTest {
     @Inject
     TaggedDataDao taggedDataDao;
     @Inject
-    PropertiesHolder propertiesHolder;
-    @Inject
     DGSGoodsTable goodsTable;
     @Inject
     DerivedTablesRegistry registry;
@@ -157,16 +157,19 @@ class CsvExporterTest {
     CsvExporter csvExporter;
     @Inject
     CsvEscaper translator;
-    private NtpTime time = mock(NtpTime.class);
     //    private LuceneFullTextSearchEngine ftlEngine = new LuceneFullTextSearchEngine(time, createPath("indexDirPath")); // prod data test
 //    private FullTextSearchService ftlService = new FullTextSearchServiceImpl(extension.getDatabaseManager(),
 //        ftlEngine, Set.of("tagged_data", "currency"), "PUBLIC"); // prod data test
-    private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(temporaryFolderExtension.newFolder("keystorePath").toPath(), time);
     //    private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(createPath("keystorePath"), time); // prod data test
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+    private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
+    private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
+    private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
+    private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(temporaryFolderExtension.newFolder("keystorePath").toPath(), ntpTimeConfig.time());
+
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-        PropertiesHolder.class, BlockchainImpl.class, DaoConfig.class,
+        BlockchainImpl.class, DaoConfig.class,
         PropertyProducer.class, TransactionApplier.class, ServiceModeDirProvider.class,
         TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
         GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
@@ -184,7 +187,7 @@ class CsvExporterTest {
         PhasingVoteTable.class, PhasingPollTable.class,
         AccountLedgerTable.class, DGSPurchaseTable.class,
         DerivedDbTablesRegistryImpl.class,
-        TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
+        BlockDaoImpl.class, TransactionDaoImpl.class,
         DexOrderTable.class,
         CsvEscaperImpl.class)
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
@@ -193,7 +196,6 @@ class CsvExporterTest {
         .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
         .addBeans(MockBean.of(mock(AccountGuaranteedBalanceTable.class), AccountGuaranteedBalanceTable.class))
         .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
-        .addBeans(MockBean.of(time, NtpTime.class))
         .addBeans(MockBean.of(mock(TrimService.class), TrimService.class))
         .addBeans(MockBean.of(mock(DirProvider.class), DirProvider.class))
         .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
@@ -207,6 +209,10 @@ class CsvExporterTest {
         .addBeans(MockBean.of(mock(AccountTable.class), AccountTable.class))
         .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
         .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
+        .addBeans(MockBean.of(mock(AccountControlPhasingService.class), AccountControlPhasingService.class))
+        .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
+        .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
+        .addBeans(MockBean.of(timeService, TimeService.class))
         .build();
     private HeightConfig config = Mockito.mock(HeightConfig.class);
     private Chain chain = Mockito.mock(Chain.class);
@@ -264,10 +270,13 @@ class CsvExporterTest {
         //Account.init(extension.getDatabaseManager(), propertiesHolder, null, null, blockchain, null, null, accountTable, null);
         AccountInfoTable accountInfoTable = new AccountInfoTable();
         accountInfoTable.init();
-        PhasingOnly.get(7995581942006468815L); // works OK!
-        PhasingOnly.get(2728325718715804811L); // check 1
-        PhasingOnly.get(-8446384352342482748L); // check 2
-        PhasingOnly.get(-4013722529644937202L); // works OK!
+        AccountControlPhasingTable accountControlPhasingTable = new AccountControlPhasingTable();
+        accountControlPhasingTable.init();
+
+//        PhasingOnly.get(7995581942006468815L); // works OK!
+//        PhasingOnly.get(2728325718715804811L); // check 1
+//        PhasingOnly.get(-8446384352342482748L); // check 2
+//        PhasingOnly.get(-4013722529644937202L); // works OK!
         AccountAssetTable accountAssetTable = new AccountAssetTable();
         accountAssetTable.init();
         PublicKeyTable publicKeyTable = new PublicKeyTable(blockchain);

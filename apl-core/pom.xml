@@ -6,9 +6,8 @@
   <parent>
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-blockchain</artifactId>
-    <version>1.44.2</version>
+    <version>1.45.0</version>
   </parent>
-
   <artifactId>apl-core</artifactId>
   <name>apl-core</name>
   <packaging>jar</packaging>
@@ -64,6 +63,11 @@
       <groupId>javax.ws.rs</groupId>
       <artifactId>javax.ws.rs-api</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>org.jboss.weld.servlet</groupId>
+      <artifactId>weld-servlet-shaded</artifactId>
+    </dependency>
     <!-- RESTEasy runtime dependencies -->
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
@@ -80,7 +84,7 @@
       <artifactId>resteasy-jackson2-provider</artifactId>
     </dependency>
     <!-- we do not need validation at the moment, but keep in mind that it is interface
-         only and requires implementation laso, e.g hybernate-validator -->
+    only and requires implementation laso, e.g hybernate-validator -->
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
       <artifactId>resteasy-validator-provider</artifactId>
@@ -90,20 +94,20 @@
       <artifactId>resteasy-multipart-provider</artifactId>
     </dependency>
 
-<!--
-    <dependency> &lt;!&ndash; may be NEEDED by FAT JAR in run-time &ndash;&gt;
-      <groupId>org.jboss.resteasy</groupId>
-      <artifactId>resteasy-jaxrs</artifactId>
-    </dependency>
-    <dependency> &lt;!&ndash; NEEDED by FAT JAR in run-time&ndash;&gt;
-      <groupId>org.jboss.resteasy</groupId>
-      <artifactId>resteasy-tracing-api</artifactId>
-    </dependency>
-    <dependency> &lt;!&ndash; NEEDED by FAT JAR in run-time&ndash;&gt;
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpcore-nio</artifactId>
-    </dependency>
--->
+    <!--
+        <dependency> &lt;!&ndash; may be NEEDED by FAT JAR in run-time &ndash;&gt;
+          <groupId>org.jboss.resteasy</groupId>
+          <artifactId>resteasy-jaxrs</artifactId>
+        </dependency>
+        <dependency> &lt;!&ndash; NEEDED by FAT JAR in run-time&ndash;&gt;
+          <groupId>org.jboss.resteasy</groupId>
+          <artifactId>resteasy-tracing-api</artifactId>
+        </dependency>
+        <dependency> &lt;!&ndash; NEEDED by FAT JAR in run-time&ndash;&gt;
+          <groupId>org.apache.httpcomponents</groupId>
+          <artifactId>httpcore-nio</artifactId>
+        </dependency>
+    -->
 
     <dependency>
       <groupId>org.jboss.resteasy</groupId>

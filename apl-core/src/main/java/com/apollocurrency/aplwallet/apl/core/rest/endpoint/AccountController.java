@@ -34,10 +34,11 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
+import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
-import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.monetary.service.AssetService;
 import com.apollocurrency.aplwallet.apl.core.order.entity.AskOrder;
 import com.apollocurrency.aplwallet.apl.core.order.service.OrderService;
 import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.AskOrderService;
@@ -51,13 +52,14 @@ import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.WalletKeysConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FA;
 import com.apollocurrency.aplwallet.apl.core.rest.parameter.AccountIdParameter;
+import com.apollocurrency.aplwallet.apl.core.rest.parameter.FirstLastIndexBeanParam;
 import com.apollocurrency.aplwallet.apl.core.rest.parameter.LongParameter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.AccountStatisticsService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
-import com.apollocurrency.aplwallet.apl.core.rest.utils.FirstLastIndexParser;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.core.rest.validation.ValidBlockchainHeight;
+import com.apollocurrency.aplwallet.apl.core.rest.validation.ValidTimestamp;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -80,6 +82,7 @@ import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.PositiveOrZero;
+import javax.ws.rs.BeanParam;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.FormParam;
@@ -135,9 +138,10 @@ public class AccountController {
 
     private OrderService<AskOrder, ColoredCoinsAskOrderPlacement> orderService;
 
-    private FirstLastIndexParser indexParser;
+    public static int maxAPIFetchRecords;
 
     private AccountStatisticsService accountStatisticsService;
+    private AssetService assetService;
 
     @Inject
     public AccountController(Blockchain blockchain,
@@ -154,8 +158,9 @@ public class AccountController {
                              Account2FADetailsConverter faDetailsConverter,
                              Account2FAConverter faConverter,
                              @AskOrderService OrderService<AskOrder, ColoredCoinsAskOrderPlacement> orderService,
-                             FirstLastIndexParser indexParser,
-                             AccountStatisticsService accountStatisticsService) {
+                             @Property(name = "apl.maxAPIRecords", defaultValue = "100") int maxAPIrecords,
+                             AccountStatisticsService accountStatisticsService,
+                             AssetService assetService) {
 
         this.blockchain = blockchain;
         this.account2FAHelper = account2FAHelper;
@@ -171,8 +176,9 @@ public class AccountController {
         this.faDetailsConverter = faDetailsConverter;
         this.faConverter = faConverter;
         this.orderService = Objects.requireNonNull(orderService, "orderService is NULL");
-        this.indexParser = indexParser;
+        maxAPIFetchRecords = maxAPIrecords;
         this.accountStatisticsService = accountStatisticsService;
+        this.assetService = assetService;
     }
 
     @Path("/account")
@@ -325,24 +331,22 @@ public class AccountController {
         @QueryParam("height") @DefaultValue("-1") @ValidBlockchainHeight int height,
         @Parameter(description = "Include asset information (optional).")
         @QueryParam("includeAssetInfo") @DefaultValue("false") boolean includeAssetInfo,
-        @Parameter(description = "A zero-based index to the first asset ID to retrieve (optional).")
-        @QueryParam("firstIndex") @DefaultValue("0") @PositiveOrZero int firstIndex,
-        @Parameter(description = "A zero-based index to the last asset ID to retrieve (optional).")
-        @QueryParam("lastIndex") @DefaultValue("-1") int lastIndex
+        @Parameter(description = "A zero-based index to the first, last asset ID to retrieve (optional).", schema = @Schema(implementation = FirstLastIndexBeanParam.class))
+            @BeanParam FirstLastIndexBeanParam indexBeanParam
     ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
         long accountId = accountIdParameter.get();
 
-        FirstLastIndexParser.FirstLastIndex flIndex = indexParser.adjustIndexes(firstIndex, lastIndex);
+        indexBeanParam.adjustIndexes(maxAPIFetchRecords);
 
         if (assetId == null || assetId.get() == 0) {
             List<AccountAsset> accountAssets = accountAssetService.getAssetsByAccount(accountId, height,
-                flIndex.getFirstIndex(),
-                flIndex.getLastIndex());
+                indexBeanParam.getFirstIndex(),
+                indexBeanParam.getLastIndex());
             List<AccountAssetDTO> accountAssetDTOList = accountAssetConverter.convert(accountAssets);
             if (includeAssetInfo) {
-                accountAssetDTOList.forEach(dto -> accountAssetConverter.addAsset(dto, Asset.getAsset(dto.getAssetId())));
+                accountAssetDTOList.forEach(dto -> accountAssetConverter.addAsset(dto, assetService.getAsset(dto.getAssetId())));
             }
 
             return response.bind(new AccountAssetsResponse(accountAssetDTOList)).build();
@@ -351,7 +355,7 @@ public class AccountController {
             AccountAssetDTO dto = accountAssetConverter.convert(accountAsset);
             if (dto != null) {
                 if (includeAssetInfo) {
-                    accountAssetConverter.addAsset(dto, Asset.getAsset(assetId.get()));
+                    accountAssetConverter.addAsset(dto, assetService.getAsset(assetId.get()));
                 }
 
                 return response.bind(dto).build();
@@ -405,18 +409,16 @@ public class AccountController {
         @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
         @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
         @Parameter(description = "The earliest block (in seconds since the genesis block) to retrieve (optional).")
-        @QueryParam("timestamp") @PositiveOrZero int timestamp,
-        @Parameter(description = "A zero-based index to the first block ID to retrieve (optional).")
-        @QueryParam("firstIndex") @DefaultValue("0") @PositiveOrZero int firstIndex,
-        @Parameter(description = "A zero-based index to the last block ID to retrieve (optional).")
-        @QueryParam("lastIndex") @DefaultValue("-1") int lastIndex
+        @QueryParam("timestamp") @DefaultValue("-1") @ValidTimestamp int timestamp,
+        @Parameter(description = "A zero-based index to the first, last asset ID to retrieve (optional).", schema = @Schema(implementation = FirstLastIndexBeanParam.class))
+            @BeanParam FirstLastIndexBeanParam indexBeanParam
     ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
         long accountId = accountIdParameter.get();
-        FirstLastIndexParser.FirstLastIndex flIndex = indexParser.adjustIndexes(firstIndex, lastIndex);
+        indexBeanParam.adjustIndexes(maxAPIFetchRecords);
 
-        List<Block> blocks = accountService.getAccountBlocks(accountId, timestamp, flIndex.getFirstIndex(), flIndex.getLastIndex());
+        List<Block> blocks = accountService.getAccountBlocks(accountId, indexBeanParam.getFirstIndex(), indexBeanParam.getLastIndex(), timestamp);
         List<String> blockIds = blocks.stream().map(Block::getStringId).collect(Collectors.toList());
 
         AccountBlockIdsResponse dto = new AccountBlockIdsResponse();
@@ -443,19 +445,17 @@ public class AccountController {
         @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
         @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
         @Parameter(description = "The earliest block (in seconds since the genesis block) to retrieve (optional).")
-        @QueryParam("timestamp") @PositiveOrZero int timestamp,
-        @Parameter(description = "A zero-based index to the first block ID to retrieve (optional).")
-        @QueryParam("firstIndex") @DefaultValue("0") @PositiveOrZero int firstIndex,
-        @Parameter(description = "A zero-based index to the last block ID to retrieve (optional).")
-        @QueryParam("lastIndex") @DefaultValue("-1") int lastIndex,
+        @QueryParam("timestamp") @DefaultValue("-1") @ValidTimestamp int timestamp,
+        @Parameter(description = "A zero-based index to the first, last asset ID to retrieve (optional).", schema = @Schema(implementation = FirstLastIndexBeanParam.class))
+            @BeanParam FirstLastIndexBeanParam indexBeanParam,
         @Parameter(description = "Include transactions detail info")
         @QueryParam("includeTransaction") @DefaultValue("false") boolean includeTransaction
     ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         long accountId = accountIdParameter.get();
-        FirstLastIndexParser.FirstLastIndex flIndex = indexParser.adjustIndexes(firstIndex, lastIndex);
+        indexBeanParam.adjustIndexes(maxAPIFetchRecords);
 
-        List<Block> blocks = accountService.getAccountBlocks(accountId, timestamp, flIndex.getFirstIndex(), flIndex.getLastIndex());
+        List<Block> blocks = accountService.getAccountBlocks(accountId, indexBeanParam.getFirstIndex(), indexBeanParam.getLastIndex(), timestamp);
 
         BlocksResponse dto = new BlocksResponse();
         dto.setBlocks(blockConverter.convert(blocks));
@@ -513,18 +513,17 @@ public class AccountController {
         @QueryParam("height") @DefaultValue("-1") @ValidBlockchainHeight int height,
         @Parameter(description = "Include additional currency info (optional)")
         @QueryParam("includeCurrencyInfo") @DefaultValue("false") boolean includeCurrencyInfo,
-        @Parameter(description = "A zero-based index to the first currency ID to retrieve (optional).")
-        @QueryParam("firstIndex") @DefaultValue("0") @PositiveOrZero int firstIndex,
-        @Parameter(description = "A zero-based index to the last currency ID to retrieve (optional).")
-        @QueryParam("lastIndex") @DefaultValue("-1") int lastIndex
+        @Parameter(description = "A zero-based index to the first, last asset ID to retrieve (optional).", schema = @Schema(implementation = FirstLastIndexBeanParam.class))
+            @BeanParam FirstLastIndexBeanParam indexBeanParam
     ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
         long accountId = accountIdParameter.get();
-        FirstLastIndexParser.FirstLastIndex flIndex = indexParser.adjustIndexes(firstIndex, lastIndex);
+        indexBeanParam.adjustIndexes(maxAPIFetchRecords);
 
         if (currencyId == null || currencyId.get() == 0) {
-            List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrenciesByAccount(accountId, height, flIndex.getFirstIndex(), flIndex.getLastIndex());
+            List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrenciesByAccount(
+                accountId, height, indexBeanParam.getFirstIndex(), indexBeanParam.getLastIndex());
             List<AccountCurrencyDTO> accountCurrencyDTOList = accountCurrencyConverter.convert(accountCurrencies);
             if (includeCurrencyInfo) {
                 accountCurrencyDTOList.forEach(dto -> accountCurrencyConverter
@@ -564,21 +563,20 @@ public class AccountController {
     public Response getAccountCurrentAskOrderIds(
         @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
         @Parameter(description = "The asset ID.") @QueryParam("asset") LongParameter assetId,
-        @Parameter(description = "A zero-based index to the first order ID to retrieve (optional).")
-        @QueryParam("firstIndex") @DefaultValue("0") @PositiveOrZero int firstIndex,
-        @Parameter(description = "A zero-based index to the last order ID to retrieve (optional).")
-        @QueryParam("lastIndex") @DefaultValue("-1") int lastIndex
+        @Parameter(description = "A zero-based index to the first, last asset ID to retrieve (optional).", schema = @Schema(implementation = FirstLastIndexBeanParam.class))
+            @BeanParam FirstLastIndexBeanParam indexBeanParam
     ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
         long accountId = accountIdParameter.get();
-        FirstLastIndexParser.FirstLastIndex flIndex = indexParser.adjustIndexes(firstIndex, lastIndex);
+        indexBeanParam.adjustIndexes(maxAPIFetchRecords);
 
         Stream<AskOrder> ordersByAccount;
         if (assetId == null || assetId.get() == 0) {
-            ordersByAccount = orderService.getOrdersByAccount(accountId, flIndex.getFirstIndex(), flIndex.getLastIndex());
+            ordersByAccount = orderService.getOrdersByAccount(accountId, indexBeanParam.getFirstIndex(), indexBeanParam.getLastIndex());
         } else {
-            ordersByAccount = orderService.getOrdersByAccountAsset(accountId, assetId.get(), flIndex.getFirstIndex(), flIndex.getLastIndex());
+            ordersByAccount = orderService.getOrdersByAccountAsset(
+                accountId, assetId.get(), indexBeanParam.getFirstIndex(), indexBeanParam.getLastIndex());
         }
         List<String> ordersIdList = ordersByAccount.map(ask -> Long.toUnsignedString(ask.getId())).collect(Collectors.toList());
 

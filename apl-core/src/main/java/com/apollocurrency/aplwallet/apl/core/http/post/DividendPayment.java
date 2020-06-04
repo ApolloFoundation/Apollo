@@ -24,13 +24,15 @@ import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
+import com.apollocurrency.aplwallet.apl.core.monetary.model.Asset;
+import com.apollocurrency.aplwallet.apl.core.monetary.service.AssetService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
@@ -47,7 +49,8 @@ public class DividendPayment extends CreateTransaction {
         final long amountATMPerATU = HttpParameterParserUtil.getAmountATMPerATU(request);
         final Account account = HttpParameterParserUtil.getSenderAccount(request);
         final Asset asset = HttpParameterParserUtil.getAsset(request);
-        if (Asset.getAsset(asset.getId(), height) == null) {
+        AssetService assetService = CDI.current().select(AssetService.class).get();
+        if (assetService.getAsset(asset.getId(), height) == null) {
             return JSONResponses.ASSET_NOT_ISSUED_YET;
         }
         final Attachment attachment = new ColoredCoinsDividendPayment(asset.getId(), height, amountATMPerATU);

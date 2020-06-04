@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
@@ -25,12 +25,14 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
+import com.apollocurrency.aplwallet.apl.core.monetary.model.Asset;
+import com.apollocurrency.aplwallet.apl.core.monetary.service.AssetService;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
@@ -50,7 +52,8 @@ public final class GetAllAssets extends AbstractAPIRequestHandler {
         JSONObject response = new JSONObject();
         JSONArray assetsJSONArray = new JSONArray();
         response.put("assets", assetsJSONArray);
-        try (DbIterator<Asset> assets = Asset.getAllAssets(firstIndex, lastIndex)) {
+        AssetService assetService = CDI.current().select(AssetService.class).get();
+        try (DbIterator<Asset> assets = assetService.getAllAssets(firstIndex, lastIndex)) {
             while (assets.hasNext()) {
                 assetsJSONArray.add(JSONData.asset(assets.next(), includeCounts));
             }

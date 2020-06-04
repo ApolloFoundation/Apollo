@@ -9,8 +9,6 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
-
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -22,12 +20,11 @@ class TimeServiceTest {
     private GenesisImporter genesisImporter = mock(GenesisImporter.class);
 
     @WeldSetup
-    public WeldInitiator weld = WeldInitiator.from(NtpTime.class, TimeServiceImpl.class)
+    public WeldInitiator weld = WeldInitiator.from()
         .addBeans(MockBean.of(genesisImporter, GenesisImporter.class))
         .build();
 
-    @Inject
-    private NtpTime ntpTime;
+    private NtpTime ntpTime = new NtpTime();
     private TimeService timeService;
 
     @BeforeEach

@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.transaction;
@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountInfoService;
@@ -43,11 +44,14 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
+import com.apollocurrency.aplwallet.apl.core.monetary.service.AssetDividendService;
+import com.apollocurrency.aplwallet.apl.core.monetary.service.AssetService;
+import com.apollocurrency.aplwallet.apl.core.monetary.service.AssetServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import lombok.Setter;
 import org.json.simple.JSONObject;
 
@@ -135,6 +139,9 @@ public abstract class TransactionType {
     private static AccountAssetService accountAssetService;
     private static AccountPropertyService accountPropertyService;
     private static AccountInfoService accountInfoService;
+    private static AccountControlPhasingService accountControlPhasingService;
+    private static AssetService assetService;
+    private static AssetDividendService assetDividendService;
 
     public TransactionType() {
     }
@@ -224,6 +231,27 @@ public abstract class TransactionType {
             }
         }
         return ALIAS_SERVICE;
+    }
+
+    public static synchronized AccountControlPhasingService lookupAccountControlPhasingService(){
+        if (accountControlPhasingService == null) {
+            accountControlPhasingService = CDI.current().select(AccountControlPhasingService.class).get();
+        }
+        return accountControlPhasingService;
+    }
+
+    public static synchronized AssetService lookupAssetService() {
+        if (assetService == null) {
+            assetService = CDI.current().select(AssetServiceImpl.class).get();
+        }
+        return assetService;
+    }
+
+    public static synchronized AssetDividendService lookupAssetDividendService() {
+        if (assetDividendService == null) {
+            assetDividendService = CDI.current().select(AssetDividendService.class).get();
+        }
+        return assetDividendService;
     }
 
     public static TransactionType findTransactionType(byte type, byte subtype) {

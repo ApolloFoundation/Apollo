@@ -5,7 +5,9 @@
 package com.apollocurrency.aplwallet.apl.core.rest.parameter;
 
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
+import lombok.ToString;
 
+@ToString
 public abstract class AbstractRestParameter<T> implements RestParameter<T> {
 
     protected String rawData;
@@ -39,4 +41,5 @@ public abstract class AbstractRestParameter<T> implements RestParameter<T> {
         }
         return value;
     }
+
 }
