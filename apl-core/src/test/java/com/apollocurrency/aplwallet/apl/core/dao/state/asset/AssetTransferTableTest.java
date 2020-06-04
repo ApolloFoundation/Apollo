@@ -101,7 +101,6 @@ class AssetTransferTableTest {
     void testSave_update_existing_entity() {//SQL MERGE -> UPDATE
         AssetTransfer previous = table.get(table.getDbKeyFactory().newKey(td.ASSET_TRANSFER_1));
         assertNotNull(previous);
-//        previous.setQuantityATU(previous.getQuantityATU() + 100);
 
         assertThrows(RuntimeException.class, () -> // not permitted by DB constraints
             DbUtils.inTransaction(dbExtension, (con) -> table.insert(previous))
