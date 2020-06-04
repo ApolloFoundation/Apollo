@@ -9,18 +9,18 @@ import com.apollocurrency.aplwallet.api.dto.account.AccountAssetUnconfirmedBalan
 import com.apollocurrency.aplwallet.api.dto.account.AccountCurrencyDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountLeaseDTO;
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountInfo;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountLease;
-import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountInfoService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountLeaseService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountAsset;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountCurrency;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountInfo;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountLease;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountInfoService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountLeaseService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TwoFactorAuthService;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -89,7 +89,7 @@ public class AccountConverter implements Converter<Account, AccountDTO> {
         random.nextBytes(b);
         return Convert.toHexString(b);
     }
-                
+
     @Override
     public AccountDTO apply(Account account) {
         AccountDTO dto = new AccountDTO();

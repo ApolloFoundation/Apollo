@@ -21,27 +21,20 @@ import com.apollocurrency.aplwallet.api.response.AccountCurrencyResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrentAskOrderIdsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountNotFoundResponse;
 import com.apollocurrency.aplwallet.api.response.BlocksResponse;
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
-import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
-import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.apl.core.config.Property;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountAsset;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountCurrency;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
+import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
+import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.monetary.service.AssetService;
-import com.apollocurrency.aplwallet.apl.core.order.entity.AskOrder;
-import com.apollocurrency.aplwallet.apl.core.order.service.OrderService;
-import com.apollocurrency.aplwallet.apl.core.order.service.qualifier.AskOrderService;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FAConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FADetailsConverter;
@@ -60,6 +53,13 @@ import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.core.rest.validation.ValidBlockchainHeight;
 import com.apollocurrency.aplwallet.apl.core.rest.validation.ValidTimestamp;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.KeyStoreService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
+import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.AskOrderService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -81,7 +81,6 @@ import lombok.extern.slf4j.Slf4j;
 import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.PositiveOrZero;
 import javax.ws.rs.BeanParam;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
@@ -110,36 +109,21 @@ import java.util.stream.Stream;
 @Setter
 public class AccountController {
 
-    private Blockchain blockchain;
-
-    private Account2FAHelper account2FAHelper;
-
-    private AccountService accountService;
-
-    private AccountPublicKeyService accountPublicKeyService;
-
-    private AccountAssetService accountAssetService;
-
-    private AccountCurrencyService accountCurrencyService;
-
-    private AccountAssetConverter accountAssetConverter;
-
-    private AccountCurrencyConverter accountCurrencyConverter;
-
-    private AccountConverter converter;
-
-    private BlockConverter blockConverter;
-
-    private WalletKeysConverter walletKeysConverter;
-
-    private Account2FADetailsConverter faDetailsConverter;
-
-    private Account2FAConverter faConverter;
-
-    private OrderService<AskOrder, ColoredCoinsAskOrderPlacement> orderService;
-
     public static int maxAPIFetchRecords;
-
+    private Blockchain blockchain;
+    private Account2FAHelper account2FAHelper;
+    private AccountService accountService;
+    private AccountPublicKeyService accountPublicKeyService;
+    private AccountAssetService accountAssetService;
+    private AccountCurrencyService accountCurrencyService;
+    private AccountAssetConverter accountAssetConverter;
+    private AccountCurrencyConverter accountCurrencyConverter;
+    private AccountConverter converter;
+    private BlockConverter blockConverter;
+    private WalletKeysConverter walletKeysConverter;
+    private Account2FADetailsConverter faDetailsConverter;
+    private Account2FAConverter faConverter;
+    private OrderService<AskOrder, ColoredCoinsAskOrderPlacement> orderService;
     private AccountStatisticsService accountStatisticsService;
     private AssetService assetService;
 
@@ -332,7 +316,7 @@ public class AccountController {
         @Parameter(description = "Include asset information (optional).")
         @QueryParam("includeAssetInfo") @DefaultValue("false") boolean includeAssetInfo,
         @Parameter(description = "A zero-based index to the first, last asset ID to retrieve (optional).", schema = @Schema(implementation = FirstLastIndexBeanParam.class))
-            @BeanParam FirstLastIndexBeanParam indexBeanParam
+        @BeanParam FirstLastIndexBeanParam indexBeanParam
     ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
@@ -411,7 +395,7 @@ public class AccountController {
         @Parameter(description = "The earliest block (in seconds since the genesis block) to retrieve (optional).")
         @QueryParam("timestamp") @DefaultValue("-1") @ValidTimestamp int timestamp,
         @Parameter(description = "A zero-based index to the first, last asset ID to retrieve (optional).", schema = @Schema(implementation = FirstLastIndexBeanParam.class))
-            @BeanParam FirstLastIndexBeanParam indexBeanParam
+        @BeanParam FirstLastIndexBeanParam indexBeanParam
     ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
@@ -447,7 +431,7 @@ public class AccountController {
         @Parameter(description = "The earliest block (in seconds since the genesis block) to retrieve (optional).")
         @QueryParam("timestamp") @DefaultValue("-1") @ValidTimestamp int timestamp,
         @Parameter(description = "A zero-based index to the first, last asset ID to retrieve (optional).", schema = @Schema(implementation = FirstLastIndexBeanParam.class))
-            @BeanParam FirstLastIndexBeanParam indexBeanParam,
+        @BeanParam FirstLastIndexBeanParam indexBeanParam,
         @Parameter(description = "Include transactions detail info")
         @QueryParam("includeTransaction") @DefaultValue("false") boolean includeTransaction
     ) {
@@ -514,7 +498,7 @@ public class AccountController {
         @Parameter(description = "Include additional currency info (optional)")
         @QueryParam("includeCurrencyInfo") @DefaultValue("false") boolean includeCurrencyInfo,
         @Parameter(description = "A zero-based index to the first, last asset ID to retrieve (optional).", schema = @Schema(implementation = FirstLastIndexBeanParam.class))
-            @BeanParam FirstLastIndexBeanParam indexBeanParam
+        @BeanParam FirstLastIndexBeanParam indexBeanParam
     ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
@@ -564,7 +548,7 @@ public class AccountController {
         @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
         @Parameter(description = "The asset ID.") @QueryParam("asset") LongParameter assetId,
         @Parameter(description = "A zero-based index to the first, last asset ID to retrieve (optional).", schema = @Schema(implementation = FirstLastIndexBeanParam.class))
-            @BeanParam FirstLastIndexBeanParam indexBeanParam
+        @BeanParam FirstLastIndexBeanParam indexBeanParam
     ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();

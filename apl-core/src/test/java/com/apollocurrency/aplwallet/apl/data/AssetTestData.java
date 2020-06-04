@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.data;
 
 import java.util.List;
 
-import com.apollocurrency.aplwallet.apl.core.monetary.model.Asset;
+import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetIssuance;
 
 public class AssetTestData {

@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
 import com.apollocurrency.aplwallet.api.dto.account.PhasingParamsDTO;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
+import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
 
 public class PhasingParamsConverter implements Converter<PhasingParams, PhasingParamsDTO> {
 

@@ -5,8 +5,8 @@
 package com.apollocurrency.aplwallet.apl.testutil;
 
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
-import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
-import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthService;
+import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthDetails;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TwoFactorAuthService;
 import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
 
 import java.security.GeneralSecurityException;

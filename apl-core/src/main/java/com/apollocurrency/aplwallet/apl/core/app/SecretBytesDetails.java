@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.service.appdata.KeyStoreService;
+
 import java.util.Arrays;
 import java.util.Objects;
 

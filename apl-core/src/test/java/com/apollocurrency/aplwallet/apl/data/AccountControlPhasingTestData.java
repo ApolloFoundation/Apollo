@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.data;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountControlPhasing;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
+import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
 
 public class AccountControlPhasingTestData {
     public final AccountControlPhasing AC_CONT_PHAS_0 = createAccountControlPhasing(10, 7995581942006468815L,

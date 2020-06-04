@@ -20,31 +20,31 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.alias.entity.Alias;
-import com.apollocurrency.aplwallet.apl.core.alias.service.AliasService;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.Poll;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
-import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
-import com.apollocurrency.aplwallet.apl.core.dgs.EncryptedDataUtil;
-import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
-import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.alias.Alias;
+import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSGoods;
+import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSPurchase;
+import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
-import com.apollocurrency.aplwallet.apl.core.monetary.model.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
-import com.apollocurrency.aplwallet.apl.core.monetary.service.AssetService;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
+import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.RestParametersParser;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
+import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
@@ -56,10 +56,10 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainM
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.UnencryptedEncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.UnencryptedEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.UnencryptedPrunableEncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.utils.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Search;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
@@ -127,11 +127,11 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Deprecated
 public final class HttpParameterParserUtil {
     private static final Logger LOG = getLogger(HttpParameterParserUtil.class);
-    private static AliasService ALIAS_SERVICE;// = CDI.current().select(AliasService.class).get();
     private static final int DEFAULT_LAST_INDEX = 250;
     protected static AdminPasswordVerifier apw;
     protected static ElGamalEncryptor elGamal;
     protected static TimeService timeService;
+    private static AliasService ALIAS_SERVICE;// = CDI.current().select(AliasService.class).get();
     private static BlockchainConfig blockchainConfig;
     private static Blockchain blockchain;
     private static AccountService accountService;
@@ -349,6 +349,7 @@ public final class HttpParameterParserUtil {
         }
         return alias;
     }
+
     public static long getAmountATM(HttpServletRequest req) throws ParameterException {
         return getLong(req, "amountATM", 1L, lookupBlockchainConfig().getCurrentConfig().getMaxBalanceATM(), true);
     }
@@ -1131,6 +1132,69 @@ public final class HttpParameterParserUtil {
 
     }
 
+    private static AliasService lookupAliasService() {
+        if (ALIAS_SERVICE == null) {
+            ALIAS_SERVICE = CDI.current().select(AliasService.class).get();
+        }
+        return ALIAS_SERVICE;
+    }
+
+    private static AdminPasswordVerifier lookupAdminPasswordVerifier() {
+        if (apw == null) {
+            apw = CDI.current().select(AdminPasswordVerifier.class).get();
+        }
+        return apw;
+    }
+
+    private static ElGamalEncryptor lookupElGamalEncryptor() {
+        if (elGamal == null) {
+            elGamal = CDI.current().select(ElGamalEncryptor.class).get();
+        }
+        return elGamal;
+    }
+
+    private static TimeService lookupTimeService() {
+        if (timeService == null) {
+            timeService = CDI.current().select(TimeService.class).get();
+        }
+        return timeService;
+    }
+
+    private static BlockchainConfig lookupBlockchainConfig() {
+        if (blockchainConfig == null) {
+            blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+        }
+        return blockchainConfig;
+    }
+
+    private static Blockchain lookupBlockchain() {
+        if (blockchain == null) {
+            blockchain = CDI.current().select(Blockchain.class).get();
+        }
+        return blockchain;
+    }
+
+    private static AccountService lookupAccountService() {
+        if (accountService == null) {
+            accountService = CDI.current().select(AccountService.class).get();
+        }
+        return accountService;
+    }
+
+    private static AccountPublicKeyService lookupAccountPublicKeyService() {
+        if (accountPublicKeyService == null) {
+            accountPublicKeyService = CDI.current().select(AccountPublicKeyService.class).get();
+        }
+        return accountPublicKeyService;
+    }
+
+    private static AssetService lookupAssetService() {
+        if (assetService == null) {
+            assetService = CDI.current().select(AssetService.class).get();
+        }
+        return assetService;
+    }
+
     public static class PrivateTransactionsAPIData {
         private boolean encrypt;
         private byte[] publicKey;
@@ -1214,68 +1278,6 @@ public final class HttpParameterParserUtil {
             }
             return this;
         }
-    }
-
-    private static AliasService lookupAliasService() {
-        if (ALIAS_SERVICE == null) {
-            ALIAS_SERVICE = CDI.current().select(AliasService.class).get();
-        }
-        return ALIAS_SERVICE;
-    }
-
-    private static AdminPasswordVerifier lookupAdminPasswordVerifier() {
-        if (apw == null) {
-            apw = CDI.current().select(AdminPasswordVerifier.class).get();
-        }
-        return apw;
-    }
-
-    private static ElGamalEncryptor lookupElGamalEncryptor() {
-        if (elGamal == null) {
-            elGamal = CDI.current().select(ElGamalEncryptor.class).get();
-        }
-        return elGamal;
-    }
-
-    private static TimeService lookupTimeService() {
-        if (timeService == null) {
-            timeService = CDI.current().select(TimeService.class).get();
-        }
-        return timeService;
-    }
-
-    private static BlockchainConfig lookupBlockchainConfig() {
-        if (blockchainConfig == null) {
-            blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-        }
-        return blockchainConfig;
-    }
-
-    private static Blockchain lookupBlockchain() {
-        if (blockchain == null) {
-            blockchain = CDI.current().select(Blockchain.class).get();
-        }
-        return blockchain;
-    }
-
-    private static AccountService lookupAccountService() {
-        if (accountService == null) {
-            accountService = CDI.current().select(AccountService.class).get();
-        }
-        return accountService;
-    }
-
-    private static AccountPublicKeyService lookupAccountPublicKeyService() {
-        if (accountPublicKeyService == null) {
-            accountPublicKeyService = CDI.current().select(AccountPublicKeyService.class).get();
-        }
-        return accountPublicKeyService;
-    }
-    private static AssetService lookupAssetService() {
-        if (assetService == null) {
-            assetService = CDI.current().select(AssetService.class).get();
-        }
-        return assetService;
     }
 
 }

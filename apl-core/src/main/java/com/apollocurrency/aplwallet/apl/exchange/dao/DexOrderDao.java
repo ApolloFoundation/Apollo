@@ -5,7 +5,7 @@ package com.apollocurrency.aplwallet.apl.exchange.dao;
 
 
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.DexOrderMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.DexOrderMapper;
 import com.apollocurrency.aplwallet.apl.exchange.model.DBSortOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;

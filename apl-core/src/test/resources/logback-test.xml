@@ -38,10 +38,10 @@
       <logger name="com.apollocurrency.aplwallet.apl.core.shard.ShardImporter" level="off" additivity="false">
         <appender-ref ref="STDOUT"/>
       </logger>
-      <logger name="com.apollocurrency.aplwallet.apl.core.app.TrimService" level="off" additivity="false">
+      <logger name="com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService" level="off" additivity="false">
         <appender-ref ref="STDOUT"/>
       </logger>
-      <logger name="com.apollocurrency.aplwallet.apl.core.app.VaultKeyStoreServiceImpl" level="off"
+      <logger name="com.apollocurrency.aplwallet.apl.core.service.appdata.impl.VaultKeyStoreServiceImpl" level="off"
               additivity="false">
         <appender-ref ref="STDOUT"/>
       </logger>

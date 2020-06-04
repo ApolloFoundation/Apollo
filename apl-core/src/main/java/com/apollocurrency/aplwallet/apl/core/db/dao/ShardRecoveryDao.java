@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.db.dao;
 
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.ShardRecoveryRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.ShardRecoveryRowMapper;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
