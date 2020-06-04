@@ -1352,14 +1352,17 @@ public final class JSONData {
         if (isPrivate) {
             Random random = new Random();
             accountId = random.nextLong();
-            if (name.equals("sender")) {
+
+            if (name.equals("sender"))
+            {
                 byte[] b = new byte[32];
                 random.nextBytes(b);
-                json.put(name + "PublicKey", Convert.toHexString(b));
+                json.put(name +"PublicKey", Convert.toHexString(b));
             }
+            
         }
+        json.put(name, accountId);
 
-        json.put(name, Long.toUnsignedString(accountId));
         json.put(name + "RS", Convert2.rsAccount(accountId));
     }
 

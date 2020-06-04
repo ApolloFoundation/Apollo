@@ -8,7 +8,6 @@
     <artifactId>apollo-blockchain</artifactId>
     <version>1.45.0</version>
   </parent>
-
   <artifactId>apl-core</artifactId>
   <name>apl-core</name>
   <packaging>jar</packaging>
