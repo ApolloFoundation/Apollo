@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.data;
 
 import java.util.List;
 
-import com.apollocurrency.aplwallet.apl.core.monetary.model.AssetTransfer;
+import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetTransfer;
 
 public class AssetTransferTestData {
 

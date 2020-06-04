@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.DerivedEntityMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.DerivedEntityMapper;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 import org.jdbi.v3.core.statement.StatementContext;
 

@@ -5,7 +5,7 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
- . ${DIR}/apl-common.sh
+ . "${DIR}"/apl-common.sh
 
 if [[ ! -d "${APPLICATION}" ]] ; then
   mkdir -p  ${APPLICATION}
@@ -21,6 +21,6 @@ if [ -e ${APPLICATION}/apl.pid ]; then
     fi
 fi
 
-nohup ${JAVA_CMD} ${JAVA_OPT} -jar ${MAIN_JAR} $@ > /dev/null 2>&1 &
+nohup "${JAVA_CMD}" ${JAVA_OPT} -jar "${MAIN_JAR}" $@ > /dev/null 2>&1 &
 
 #cd - > /dev/null

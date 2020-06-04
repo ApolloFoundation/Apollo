@@ -6,9 +6,8 @@
   <parent>
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-blockchain</artifactId>
-    <version>1.45.0</version>
+    <version>1.45.1</version>
   </parent>
-
   <artifactId>apl-core</artifactId>
   <name>apl-core</name>
   <packaging>jar</packaging>

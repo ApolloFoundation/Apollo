@@ -4,7 +4,7 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
- . ${DIR}/apl-common.sh 
+ . "${DIR}"/apl-common.sh 
 
 # WARNING: java still bypasses the tor proxy when sending DNS queries and
 # this can reveal the fact that you are running Apl, however blocks and
@@ -16,7 +16,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 #if [[ "$unamestr" == 'Linux' ]]; then
 
 #    cd secureTransport
-    sudo ${APL_TOP_DIR}/secureTransport/runClient.sh 
+    sudo "${APL_TOP_DIR}"/secureTransport/runClient.sh 
     cd ..
 #fi
 
@@ -26,6 +26,6 @@ if [[ "$unamestr" == 'Darwin' ]]; then
   xdock=-Xdock:icon=./favicon.ico
 fi
 
-${JAVA_CMD} $xdock -DsocksProxyHost=10.75.110.1 -DsocksProxyPort=1088 -Dapl.runtime.mode=desktop -Dapl.enablePeerUPnP=false -jar ${MAIN_JAR}
+"${JAVA_CMD}" $xdock -DsocksProxyHost=10.75.110.1 -DsocksProxyPort=1088 -Dapl.runtime.mode=desktop -Dapl.enablePeerUPnP=false -jar "${MAIN_JAR}"
 
 
