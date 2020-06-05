@@ -44,6 +44,7 @@ delete from ASSET_DIVIDEND;
 delete from ACCOUNT_INFO;
 delete from ASSET_TRANSFER;
 delete from BUY_OFFER;
+delete from SELL_OFFER;
 
 INSERT INTO PUBLIC.BLOCK
 (DB_ID,         ID,                HEIGHT,      VERSION,   "TIMESTAMP",  PREVIOUS_BLOCK_ID,  TOTAL_AMOUNT,        TOTAL_FEE,   PAYLOAD_LENGTH,   PREVIOUS_BLOCK_HASH,                                                   CUMULATIVE_DIFFICULTY,  BASE_TARGET,    NEXT_BLOCK_ID,               GENERATION_SIGNATURE,                                                   BLOCK_SIGNATURE,                                                                                                                        PAYLOAD_HASH,                                                           GENERATOR_ID,       TIMEOUT) VALUES
@@ -503,14 +504,14 @@ INSERT INTO ASSET_TRANSFER
 INSERT INTO BUY_OFFER
 (DB_ID, ID,                     CURRENCY_ID,            ACCOUNT_ID,         RATE, UNIT_LIMIT, SUPPLY, EXPIRATION_HEIGHT, CREATION_HEIGHT, TRANSACTION_INDEX, TRANSACTION_HEIGHT, HEIGHT, LATEST, DELETED) VALUES
 (1,     -5520700017789034517,   9017193931881541951,    -208393164898941117, 1,     999,        1,      999999999,          1383307,        0,                  1383307,         1383308, true, false),
-(2,     3697010724017064611,    1829902366663355623,    7477442401604846627, 1,     999,        1,      999999999,          1383322,        0,                  1383322,         1383324, true, false),
+(2,     3697010724017064611,    -4132128809614485872,   7477442401604846627, 1,     999,        1,      999999999,          1383322,        0,                  1383322,         1383324, true, false),
 (3,     1046772637338198685,    -4132128809614485872,   -208393164898941117, 1,     999,        1,      999999999,          1383359,        0,                  1383359,         1383360, true, false),
 (4,     -9125532320230757097,   -4649061333745309738,   7477442401604846627, 1,     999,        1,      999999999,          1383373,        0,                  1383373,         1383376, true, false),
 (5,     -4337072943953941839,   4231781207816121683,    -208393164898941117, 1,     999,        1,      999999999,          1383416,        0,                  1383416,         1383418, true, false),
 (6,     8038994817996483094,    -8186806310139197,      7477442401604846627, 1,     999,        1,      999999999,          1383432,        0,                  1383432,         1383435, true, false),
 (7,     5036980205787824994,    -3205373316822570812,   -208393164898941117, 1,     999,        1,      999999999,          1400531,        0,                  1400531,         1400532, true, false),
 (8,     7703713759586800965,    -3773624717939326451,   7477442401604846627, 1,     999,        1,      999999999,          1400544,        0,                  1400544,         1400545, true, false),
-(9,     -4255505590921443908,   -3282567595267018659,   -208393164898941117, 1,     999,        1,      999999999,          1400579,        0,                  1400579,         1400580, true, false)
+(9,     -4255505590921443908,   -3205373316822570812,   -208393164898941117, 1,     999,        1,      999999999,          1400579,        0,                  1400579,         1400580, true, false)
 ;
 
 INSERT INTO SELL_OFFER

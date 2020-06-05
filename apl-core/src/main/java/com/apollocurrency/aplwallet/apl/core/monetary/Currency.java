@@ -178,7 +178,12 @@ public final class Currency {
         this.decimals = rs.getByte("decimals");
     }
 
-    private Currency(long currencyId, DbKey dbKey, long accountId, String name, String code, String description, int type, long maxSupply, long reserveSupply, int creationHeight, int issuanceHeight, long minReservePerUnitATM, int minDifficulty, int maxDifficulty, byte ruleset, byte algorithm, byte decimals, long initialSupply) {
+    /**
+     * @deprecated use for unit test  only
+     */
+    public Currency(long currencyId, DbKey dbKey, long accountId, String name, String code, String description,
+                     int type, long maxSupply, long reserveSupply, int creationHeight, int issuanceHeight,
+                     long minReservePerUnitATM, int minDifficulty, int maxDifficulty, byte ruleset, byte algorithm, byte decimals, long initialSupply) {
         this.currencyId = currencyId;
         this.dbKey = dbKey;
         this.accountId = accountId;
