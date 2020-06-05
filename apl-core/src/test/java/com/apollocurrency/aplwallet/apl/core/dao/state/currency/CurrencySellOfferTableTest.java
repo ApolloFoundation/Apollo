@@ -4,7 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.currency;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import javax.inject.Inject;
@@ -20,8 +23,8 @@ import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
-import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyBuyOffer;
-import com.apollocurrency.aplwallet.apl.data.CurrencyBuyOfferTestData;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySellOffer;
+import com.apollocurrency.aplwallet.apl.data.CurrencySellOfferTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -35,18 +38,18 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 @EnableWeld
-class CurrencyBuyOfferTableTest {
+class CurrencySellOfferTableTest {
 
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension();
 
     @Inject
-    CurrencyBuyOfferTable table;
-    CurrencyBuyOfferTestData td;
+    CurrencySellOfferTable table;
+    CurrencySellOfferTestData td;
 
-    Comparator<CurrencyBuyOffer> currencyBuyOfferComparator = Comparator
-        .comparing(CurrencyBuyOffer::getId)
-        .thenComparing(CurrencyBuyOffer::getAccountId);
+    Comparator<CurrencySellOffer> currencySellOfferComparator = Comparator
+        .comparing(CurrencySellOffer::getId)
+        .thenComparing(CurrencySellOffer::getAccountId);
 
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
@@ -54,7 +57,7 @@ class CurrencyBuyOfferTableTest {
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-        PropertiesHolder.class, CurrencyBuyOfferTable.class
+        PropertiesHolder.class, CurrencySellOfferTable.class
     )
         .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
@@ -67,29 +70,29 @@ class CurrencyBuyOfferTableTest {
 
     @BeforeEach
     void setUp() {
-        td = new CurrencyBuyOfferTestData();
+        td = new CurrencySellOfferTestData();
     }
 
     @Test
     void testLoad() {
-        CurrencyBuyOffer offer = table.get(table.getDbKeyFactory().newKey(td.OFFER_0));
+        CurrencySellOffer offer = table.get(table.getDbKeyFactory().newKey(td.OFFER_0));
         assertNotNull(offer);
         assertEquals(td.OFFER_0, offer);
     }
 
     @Test
     void testLoad_returnNull_ifNotExist() {
-        CurrencyBuyOffer offer = table.get(table.getDbKeyFactory().newKey(td.OFFER_NEW));
+        CurrencySellOffer offer = table.get(table.getDbKeyFactory().newKey(td.OFFER_NEW));
         assertNull(offer);
     }
 
     @Test
     void testSave_insert_new_entity() {//SQL MERGE -> INSERT
-        CurrencyBuyOffer previous = table.get(table.getDbKeyFactory().newKey(td.OFFER_NEW));
+        CurrencySellOffer previous = table.get(table.getDbKeyFactory().newKey(td.OFFER_NEW));
         assertNull(previous);
 
         DbUtils.inTransaction(dbExtension, (con) -> table.insert(td.OFFER_NEW));
-        CurrencyBuyOffer actual = table.get(table.getDbKeyFactory().newKey(td.OFFER_NEW));
+        CurrencySellOffer actual = table.get(table.getDbKeyFactory().newKey(td.OFFER_NEW));
 
         assertNotNull(actual);
         assertTrue(actual.getDbId() != 0);
@@ -99,12 +102,12 @@ class CurrencyBuyOfferTableTest {
 
     @Test
     void testSave_update_existing_entity() {//SQL MERGE -> UPDATE
-        CurrencyBuyOffer previous = table.get(table.getDbKeyFactory().newKey(td.OFFER_1));
+        CurrencySellOffer previous = table.get(table.getDbKeyFactory().newKey(td.OFFER_1));
         assertNotNull(previous);
         previous.setLimit(previous.getLimit() + 10);
 
         DbUtils.inTransaction(dbExtension, (con) -> table.insert(previous));
-        CurrencyBuyOffer actual = table.get(table.getDbKeyFactory().newKey(previous));
+        CurrencySellOffer actual = table.get(table.getDbKeyFactory().newKey(previous));
 
         assertNotNull(actual);
         assertEquals(10, actual.getLimit() - td.OFFER_1.getLimit());
@@ -120,7 +123,7 @@ class CurrencyBuyOfferTableTest {
 
     @Test
     void test_getOffer() {
-        CurrencyBuyOffer result = table.get(CurrencyBuyOfferTable.buyOfferDbKeyFactory.newKey(td.OFFER_2));
+        CurrencySellOffer result = table.get(CurrencySellOfferTable.buyOfferDbKeyFactory.newKey(td.OFFER_2));
         assertNotNull(result);
         assertEquals(td.OFFER_2, result);
     }
