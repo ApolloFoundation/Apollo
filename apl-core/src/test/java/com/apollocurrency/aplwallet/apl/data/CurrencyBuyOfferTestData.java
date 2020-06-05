@@ -17,6 +17,14 @@ public class CurrencyBuyOfferTestData {
         2L,     3697010724017064611L,    1829902366663355623L,    7477442401604846627L, 1,
         999,        1,      999999999,           (short)1383322,         (short)0,
         1383322,         1383324, true, false);
+    public CurrencyBuyOffer OFFER_2 = createOffer(
+        3L,     1046772637338198685L,    -4132128809614485872L,   -208393164898941117L, 1,
+        999,        1,      999999999,          (short)1383359,        (short)0,
+        1383359,         1383360, true, false);
+    public CurrencyBuyOffer OFFER_3 = createOffer(
+        4L,     -9125532320230757097L,   -4649061333745309738L,   7477442401604846627L, 1,
+        999,        1,      999999999,          (short)1383373,        (short)0,
+        1383373,         1383376, true, false);
 
     public CurrencyBuyOffer OFFER_NEW = createNewOffer(
         3697010724017000011L,    1029902366663005623L,    7000442401604846627L, 1,

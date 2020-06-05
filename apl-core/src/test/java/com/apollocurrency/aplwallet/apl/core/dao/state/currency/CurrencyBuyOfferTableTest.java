@@ -20,7 +20,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
-import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.data.CurrencyBuyOfferTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
@@ -44,7 +43,6 @@ class CurrencyBuyOfferTableTest {
     @Inject
     CurrencyBuyOfferTable table;
     CurrencyBuyOfferTestData td;
-//    AccountTestData accountTestData;
 
     Comparator<CurrencyBuyOffer> currencyBuyOfferComparator = Comparator
         .comparing(CurrencyBuyOffer::getId)
@@ -64,15 +62,12 @@ class CurrencyBuyOfferTableTest {
         .addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class))
         .addBeans(MockBean.of(blockchainProcessor, BlockchainProcessor.class, BlockchainProcessorImpl.class))
         .addBeans(MockBean.of(mock(FullTextConfig.class), FullTextConfig.class, FullTextConfigImpl.class))
-//        .addBeans(MockBean.of(dbExtension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
-//        .addBeans(MockBean.of(dbExtension.getFtl(), FullTextSearchService.class))
         .addBeans(MockBean.of(mock(DerivedTablesRegistry.class), DerivedTablesRegistry.class, DerivedDbTablesRegistryImpl.class))
         .build();
 
     @BeforeEach
     void setUp() {
         td = new CurrencyBuyOfferTestData();
-//        accountTestData = new AccountTestData();
     }
 
     @Test
@@ -117,6 +112,16 @@ class CurrencyBuyOfferTableTest {
         assertEquals(previous.getId(), actual.getId());
     }
 
+    @Test
+    void test_getCount() {
+        int result = table.getCount();
+        assertEquals(9, result);
+    }
 
-
+    @Test
+    void test_getOffer() {
+        CurrencyBuyOffer result = table.get(CurrencyBuyOfferTable.buyOfferDbKeyFactory.newKey(td.OFFER_2));
+        assertNotNull(result);
+        assertEquals(td.OFFER_2, result);
+    }
 }
