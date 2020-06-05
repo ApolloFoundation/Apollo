@@ -24,7 +24,6 @@ public class CurrencyBuyOffer extends CurrencyExchangeOffer {
         super(transaction.getId(), attachment.getCurrencyId(), transaction.getSenderId(), attachment.getBuyRateATM(),
             attachment.getTotalBuyLimit(), attachment.getInitialBuySupply(), attachment.getExpirationHeight(), transaction.getHeight(),
             transaction.getIndex(), height);
-//        this.dbKey = buyOfferDbKeyFactory.newKey(id);
         super.setDbKey( CurrencyBuyOfferTable.buyOfferDbKeyFactory.newKey(this.getId()));
     }
 
@@ -35,7 +34,6 @@ public class CurrencyBuyOffer extends CurrencyExchangeOffer {
                             int expirationHeight, int transactionHeight, short transactionIndex, int height) {
         super(id, currencyId, accountId, rateATM, limit, supply, expirationHeight, transactionHeight,
             transactionIndex, height);
-//        super.setDbKey( CurrencyBuyOfferTable.buyOfferDbKeyFactory.newKey(this.getId()));
     }
 
     public CurrencyBuyOffer(ResultSet rs, DbKey dbKey) throws SQLException {
