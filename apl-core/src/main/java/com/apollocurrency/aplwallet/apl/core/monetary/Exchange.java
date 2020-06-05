@@ -212,7 +212,8 @@ public final class Exchange {
         return exchangeTable.getCount(new DbClause.LongClause("currency_id", currencyId));
     }
 
-    static Exchange addExchange(Transaction transaction, long currencyId, CurrencyExchangeOffer offer,
+    static Exchange addExchange(Transaction transaction, long currencyId,
+                                CurrencyExchangeOffer offer,
                                 long sellerId, long buyerId, long units,
                                 Block lastBlock) {
         Exchange exchange = new Exchange(transaction.getId(), currencyId, offer, sellerId, buyerId, units, lastBlock);
