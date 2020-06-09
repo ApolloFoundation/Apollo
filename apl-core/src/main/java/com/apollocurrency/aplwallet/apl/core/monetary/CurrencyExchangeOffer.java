@@ -34,6 +34,7 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -49,6 +50,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Deprecated
 @Slf4j
 public abstract class CurrencyExchangeOffer {
 
@@ -57,6 +59,8 @@ public abstract class CurrencyExchangeOffer {
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
     private static AccountCurrencyService accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
+    private static CurrencyExchangeOfferFacade currencyExchangeOfferFacade = CDI.current().select(CurrencyExchangeOfferFacade.class).get();
+
     final long id;
     private final long currencyId;
     private final long accountId;
@@ -95,10 +99,15 @@ public abstract class CurrencyExchangeOffer {
         this.transactionHeight = rs.getInt("transaction_height");
     }
 
-    //    static {
+    /**
+     * @deprecated
+     */
     public static void init() {
     }
 
+    /**
+     * @deprecated
+     */
     static void publishOffer(Transaction transaction, MonetarySystemPublishExchangeOffer attachment) {
         CurrencyBuyOffer previousOffer = CurrencyBuyOffer.getOffer(attachment.getCurrencyId(), transaction.getSenderId());
         if (previousOffer != null) {
@@ -108,6 +117,9 @@ public abstract class CurrencyExchangeOffer {
         CurrencySellOffer.addOffer(transaction, attachment);
     }
 
+    /**
+     * @deprecated
+     */
     private static AvailableOffers calculateTotal(List<CurrencyExchangeOffer> offers, final long units) {
         long totalAmountATM = 0;
         long remainingUnits = units;
@@ -125,10 +137,16 @@ public abstract class CurrencyExchangeOffer {
         return new AvailableOffers(rateATM, Math.subtractExact(units, remainingUnits), totalAmountATM);
     }
 
+    /**
+     * @deprecated
+     */
     public static AvailableOffers getAvailableToSell(final long currencyId, final long units) {
         return calculateTotal(getAvailableBuyOffers(currencyId, 0L), units);
     }
 
+    /**
+     * @deprecated
+     */
     private static List<CurrencyExchangeOffer> getAvailableBuyOffers(long currencyId, long minRateATM) {
         List<CurrencyExchangeOffer> currencyExchangeOffers = new ArrayList<>();
         DbClause dbClause = new DbClause.LongClause("currency_id", currencyId).and(availableOnlyDbClause);
@@ -144,6 +162,9 @@ public abstract class CurrencyExchangeOffer {
         return currencyExchangeOffers;
     }
 
+    /**
+     * @deprecated
+     */
     static void exchangeCurrencyForAPL(Transaction transaction, Account account, final long currencyId, final long rateATM, final long units) {
         List<CurrencyExchangeOffer> currencyBuyOffers = getAvailableBuyOffers(currencyId, rateATM);
         log.trace("account === 0 exchangeCurrencyForAPL account={}, currencyId={}, rateATM={}, units={}", account, currencyId, rateATM, units);
@@ -180,10 +201,16 @@ public abstract class CurrencyExchangeOffer {
         log.trace("account === 4 exchangeCurrencyForAPL account={}", account);
     }
 
+    /**
+     * @deprecated
+     */
     public static AvailableOffers getAvailableToBuy(final long currencyId, final long units) {
         return calculateTotal(getAvailableSellOffers(currencyId, 0L), units);
     }
 
+    /**
+     * @deprecated
+     */
     private static List<CurrencyExchangeOffer> getAvailableSellOffers(long currencyId, long maxRateATM) {
         List<CurrencyExchangeOffer> currencySellOffers = new ArrayList<>();
         DbClause dbClause = new DbClause.LongClause("currency_id", currencyId).and(availableOnlyDbClause);
@@ -199,6 +226,9 @@ public abstract class CurrencyExchangeOffer {
         return currencySellOffers;
     }
 
+    /**
+     * @deprecated
+     */
     static void exchangeAPLForCurrency(Transaction transaction, Account account, final long currencyId, final long rateATM, final long units) {
         List<CurrencyExchangeOffer> currencySellOffers = getAvailableSellOffers(currencyId, rateATM);
         long totalAmountATM = 0;
@@ -241,6 +271,9 @@ public abstract class CurrencyExchangeOffer {
         log.trace("account === 4 exchangeAPLForCurrency account={}", account);
     }
 
+    /**
+     * @deprecated
+     */
     static void removeOffer(LedgerEvent event, CurrencyBuyOffer buyOffer) {
         CurrencySellOffer sellOffer = buyOffer.getCounterOffer();
 
@@ -252,6 +285,9 @@ public abstract class CurrencyExchangeOffer {
         accountCurrencyService.addToUnconfirmedCurrencyUnits(account, event, buyOffer.getId(), buyOffer.getCurrencyId(), sellOffer.getSupply());
     }
 
+    /**
+     * @deprecated
+     */
     void save(Connection con, String table) throws SQLException {
         try (
             @DatabaseSpecificDml(DmlMarker.MERGE)
@@ -307,14 +343,23 @@ public abstract class CurrencyExchangeOffer {
         return creationHeight;
     }
 
+    /**
+     * @deprecated
+     */
     public abstract CurrencyExchangeOffer getCounterOffer();
 
+    /**
+     * @deprecated
+     */
     long increaseSupply(long delta) {
         long excess = Math.max(Math.addExact(supply, Math.subtractExact(delta, limit)), 0);
         supply += delta - excess;
         return excess;
     }
 
+    /**
+     * @deprecated
+     */
     void decreaseLimitAndSupply(long delta) {
         limit -= delta;
         supply -= delta;
@@ -336,6 +381,7 @@ public abstract class CurrencyExchangeOffer {
             '}';
     }
 
+    @Deprecated
     public static final class AvailableOffers {
 
         private final long rateATM;
@@ -362,6 +408,7 @@ public abstract class CurrencyExchangeOffer {
 
     }
 
+    @Deprecated
     @Singleton
     @Slf4j
     public static class CurrencyExchangeOfferObserver {

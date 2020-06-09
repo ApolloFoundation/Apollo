@@ -18,26 +18,24 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.service.state.currency.impl.CurrencyBuyOfferServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.currency.impl.CurrencyExchangeOfferFacadeImpl;
 import lombok.extern.slf4j.Slf4j;
 
 @Singleton
 @Slf4j
 public class CurrencyExchangeOfferObserver {
 
-    private final CurrencyExchangeOfferFacadeImpl currencyExchangeOfferFacade;
-    private final CurrencyBuyOfferServiceImpl currencyBuyOfferService;
+    private final CurrencyExchangeOfferFacade currencyExchangeOfferFacade;
+    private final CurrencyBuyOfferService currencyBuyOfferService;
 
     @Inject
-    public CurrencyExchangeOfferObserver(CurrencyExchangeOfferFacadeImpl currencyExchangeOfferFacade,
-                                         CurrencyBuyOfferServiceImpl currencyBuyOfferService) {
+    public CurrencyExchangeOfferObserver(CurrencyExchangeOfferFacade currencyExchangeOfferFacade,
+                                         CurrencyBuyOfferService currencyBuyOfferService) {
         this.currencyExchangeOfferFacade = currencyExchangeOfferFacade;
         this.currencyBuyOfferService = currencyBuyOfferService;
     }
 
     public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
-        log.trace(":accept:CurrencyExchangeOfferObserver: START onBlockApplaid AFTER_BLOCK_APPLY. block={}", block.getHeight());
+        log.trace(":accept:CurrencyExchangeOfferObserver: START onBlockApplied AFTER_BLOCK_APPLY. block={}", block.getHeight());
         List<CurrencyBuyOffer> expired = new ArrayList<>();
         try (DbIterator<CurrencyBuyOffer> offers = currencyBuyOfferService.getOffers(
             new DbClause.IntClause("expiration_height", block.getHeight()), 0, -1)) {
@@ -45,8 +43,10 @@ public class CurrencyExchangeOfferObserver {
                 expired.add(offer);
             }
         }
+        log.trace(":accept:CurrencyExchangeOfferObserver: onBlockApplied AFTER_BLOCK_APPLY. Remove=[{}] offer(s) at height={}",
+            expired.size(), block.getHeight());
         expired.forEach((offer) -> currencyExchangeOfferFacade.removeOffer(LedgerEvent.CURRENCY_OFFER_EXPIRED, offer));
-        log.trace(":accept:CurrencyExchangeOfferObserver: END onBlockApplaid AFTER_BLOCK_APPLY. block={}", block.getHeight());
+        log.trace(":accept:CurrencyExchangeOfferObserver: END onBlockApplied AFTER_BLOCK_APPLY. block={}", block.getHeight());
     }
 
 }

@@ -23,26 +23,28 @@ import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyBuyOfferService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencySellOfferService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Singleton
-public class CurrencyExchangeOfferFacadeImpl {
+public class CurrencyExchangeOfferFacadeImpl implements CurrencyExchangeOfferFacade {
 
     public static final DbClause availableOnlyDbClause = new DbClause.LongClause("unit_limit", DbClause.Op.NE, 0)
         .and(new DbClause.LongClause("supply", DbClause.Op.NE, 0));
 
-    private final CurrencyBuyOfferServiceImpl currencyBuyOfferService;
-    private final CurrencySellOfferServiceImpl currencySellOfferService;
+    private final CurrencyBuyOfferService currencyBuyOfferService;
+    private final CurrencySellOfferService currencySellOfferService;
     private final BlockChainInfoService blockChainInfoService;
     private final AccountService accountService;
     private final AccountCurrencyService accountCurrencyService;
 
-
     @Inject
-    public CurrencyExchangeOfferFacadeImpl(CurrencyBuyOfferServiceImpl currencyBuyOfferService,
-                                           CurrencySellOfferServiceImpl currencySellOfferService,
+    public CurrencyExchangeOfferFacadeImpl(CurrencyBuyOfferService currencyBuyOfferService,
+                                           CurrencySellOfferService currencySellOfferService,
                                            BlockChainInfoService blockChainInfoService,
                                            AccountService accountService,
                                            AccountCurrencyService accountCurrencyService) {
@@ -53,6 +55,7 @@ public class CurrencyExchangeOfferFacadeImpl {
         this.accountCurrencyService = accountCurrencyService;
     }
 
+    @Override
     public void publishOffer(Transaction transaction, MonetarySystemPublishExchangeOffer attachment) {
         CurrencyBuyOffer previousOffer = currencyBuyOfferService.getOffer(attachment.getCurrencyId(), transaction.getSenderId());
         if (previousOffer != null) {
@@ -62,8 +65,8 @@ public class CurrencyExchangeOfferFacadeImpl {
         currencySellOfferService.addOffer(transaction, attachment);
     }
 
+    @Override
     public void removeOffer(LedgerEvent event, CurrencyBuyOffer buyOffer) {
-//        CurrencySellOffer sellOffer =  buyOffer.getCounterOffer();
         CurrencySellOffer sellOffer = currencySellOfferService.getOffer(buyOffer.getId());
 
         currencyBuyOfferService.remove(buyOffer);
@@ -74,6 +77,7 @@ public class CurrencyExchangeOfferFacadeImpl {
         accountCurrencyService.addToUnconfirmedCurrencyUnits(account, event, buyOffer.getId(), buyOffer.getCurrencyId(), sellOffer.getSupply());
     }
 
+    @Override
     public AvailableOffers calculateTotal(List<CurrencyExchangeOffer> offers, final long units) {
         long totalAmountATM = 0;
         long remainingUnits = units;
@@ -91,11 +95,34 @@ public class CurrencyExchangeOfferFacadeImpl {
         return new AvailableOffers(rateATM, Math.subtractExact(units, remainingUnits), totalAmountATM);
     }
 
-    AvailableOffers getAvailableToSell(final long currencyId, final long units) {
+    @Override
+    public AvailableOffers getAvailableToBuy(final long currencyId, final long units) {
+        return calculateTotal(getAvailableSellOffers(currencyId, 0L), units);
+    }
+
+    @Override
+    public List<CurrencyExchangeOffer> getAvailableSellOffers(long currencyId, long maxRateATM) {
+        List<CurrencyExchangeOffer> currencySellOffers = new ArrayList<>();
+        DbClause dbClause = new DbClause.LongClause("currency_id", currencyId).and(availableOnlyDbClause);
+        if (maxRateATM > 0) {
+            dbClause = dbClause.and(new DbClause.LongClause("rate", DbClause.Op.LTE, maxRateATM));
+        }
+        try (DbIterator<CurrencySellOffer> offers = currencySellOfferService.getOffers(dbClause, 0, -1,
+            " ORDER BY rate ASC, creation_height ASC, transaction_height ASC, transaction_index ASC ")) {
+            for (CurrencySellOffer offer : offers) {
+                currencySellOffers.add(offer);
+            }
+        }
+        return currencySellOffers;
+    }
+
+    @Override
+    public AvailableOffers getAvailableToSell(final long currencyId, final long units) {
         return calculateTotal(getAvailableBuyOffers(currencyId, 0L), units);
     }
 
-    List<CurrencyExchangeOffer> getAvailableBuyOffers(long currencyId, long minRateATM) {
+    @Override
+    public List<CurrencyExchangeOffer> getAvailableBuyOffers(long currencyId, long minRateATM) {
         List<CurrencyExchangeOffer> currencyExchangeOffers = new ArrayList<>();
         DbClause dbClause = new DbClause.LongClause("currency_id", currencyId).and(availableOnlyDbClause);
         if (minRateATM > 0) {
@@ -110,30 +137,43 @@ public class CurrencyExchangeOfferFacadeImpl {
         return currencyExchangeOffers;
     }
 
+    @Override
     public void exchangeCurrencyForAPL(Transaction transaction, Account account, final long currencyId, final long rateATM, final long units) {
         List<CurrencyExchangeOffer> currencyBuyOffers = getAvailableBuyOffers(currencyId, rateATM);
         log.trace("account === 0 exchangeCurrencyForAPL account={}, currencyId={}, rateATM={}, units={}", account, currencyId, rateATM, units);
         long totalAmountATM = 0;
         long remainingUnits = units;
-        for (CurrencyExchangeOffer offer : currencyBuyOffers) {
+        for (CurrencyExchangeOffer asBuyOffer : currencyBuyOffers) {
             if (remainingUnits == 0) {
                 break;
             }
-            long curUnits = Math.min(Math.min(remainingUnits, offer.getSupply()), offer.getLimit());
-            long curAmountATM = Math.multiplyExact(curUnits, offer.getRateATM());
+            long curUnits = Math.min(Math.min(remainingUnits, asBuyOffer.getSupply()), asBuyOffer.getLimit());
+            long curAmountATM = Math.multiplyExact(curUnits, asBuyOffer.getRateATM());
 
             totalAmountATM = Math.addExact(totalAmountATM, curAmountATM);
             remainingUnits = Math.subtractExact(remainingUnits, curUnits);
 
-//            offer.decreaseLimitAndSupply(curUnits); //TODO: YL - fix that
-//            long excess = offer.getCounterOffer().increaseSupply(curUnits);
-            long excess = 0; // prevent compile error
+            asBuyOffer.decreaseLimitAndSupply(curUnits);
+            currencyBuyOfferService.insert((CurrencyBuyOffer)asBuyOffer); // store new buy values
+            CurrencySellOffer sellOffer = currencySellOfferService.getOffer(asBuyOffer.getId());
+            long excess = sellOffer.increaseSupply(curUnits);
+            currencySellOfferService.insert(sellOffer); // store new sell values
 
-            changeAccountCurrencyBalances(currencyId, curUnits, curAmountATM, excess,
-                offer.getAccountId(), offer.getId());
-            // TODO: YL - fix by replacing ExchangeService
-            Exchange.addExchange(transaction, currencyId, offer.getId(), account.getId(),
-                offer.getAccountId(), curUnits, blockChainInfoService.getLastBlock(), offer.getRateATM());
+//            changeAccountCurrencyBalances(currencyId, curUnits, curAmountATM, excess,
+//                asBuyOffer.getAccountId(), asBuyOffer.getId());
+            Account counterAccount = accountService.getAccount(asBuyOffer.getAccountId());
+            log.trace("account === 1 exchangeCurrencyForAPL account={}", counterAccount);
+            accountService.addToBalanceATM(
+                counterAccount, LedgerEvent.CURRENCY_EXCHANGE, asBuyOffer.getId(), -curAmountATM);
+            accountCurrencyService.addToCurrencyUnits(
+                counterAccount, LedgerEvent.CURRENCY_EXCHANGE, asBuyOffer.getId(), currencyId, curUnits);
+            accountCurrencyService.addToUnconfirmedCurrencyUnits(
+                counterAccount, LedgerEvent.CURRENCY_EXCHANGE, asBuyOffer.getId(), currencyId, excess);
+            log.trace("account === 2 exchangeCurrencyForAPL account={}", counterAccount);
+
+            // update data in Exchange
+            Exchange.addExchange(transaction, currencyId, asBuyOffer.getId(), account.getId(),
+                asBuyOffer.getAccountId(), curUnits, blockChainInfoService.getLastBlock(), asBuyOffer.getRateATM());
         }
         long transactionId = transaction.getId();
         account = accountService.getAccount(account);
@@ -144,8 +184,9 @@ public class CurrencyExchangeOfferFacadeImpl {
         log.trace("account === 4 exchangeCurrencyForAPL account={}", account);
     }
 
-    public void changeAccountCurrencyBalances(long currencyId, long curUnits, long curAmountATM, long excess,
-                                              long accountId, long id) {
+    //    @Override
+    private void changeAccountCurrencyBalances(long currencyId, long curUnits, long curAmountATM, long excess,
+                                               long accountId, long id) {
         Account counterAccount = accountService.getAccount(accountId);
         log.trace("account === 1 exchangeCurrencyForAPL account={}", counterAccount);
         accountService.addToBalanceATM(counterAccount, LedgerEvent.CURRENCY_EXCHANGE, id, -curAmountATM);
@@ -154,16 +195,63 @@ public class CurrencyExchangeOfferFacadeImpl {
         log.trace("account === 2 exchangeCurrencyForAPL account={}", counterAccount);
     }
 
-/*
-    long increaseSupply(long delta) {
-        long excess = Math.max(Math.addExact(supply, Math.subtractExact(delta, limit)), 0);
-        supply += delta - excess;
-        return excess;
+
+    @Override
+    public void exchangeAPLForCurrency(Transaction transaction, Account account, final long currencyId, final long rateATM, final long units) {
+        List<CurrencyExchangeOffer> currencySellOffers = getAvailableSellOffers(currencyId, rateATM);
+        long totalAmountATM = 0;
+        long remainingUnits = units;
+        log.trace("account === 0 exchangeAPLForCurrency account={}, currencyId={}, rateATM={}, units={}", account, currencyId, rateATM, units);
+        for (CurrencyExchangeOffer asSellOffer : currencySellOffers) {
+            if (remainingUnits == 0) {
+                break;
+            }
+            long curUnits = Math.min(Math.min(remainingUnits, asSellOffer.getSupply()), asSellOffer.getLimit());
+            long curAmountATM = Math.multiplyExact(curUnits, asSellOffer.getRateATM());
+
+            totalAmountATM = Math.addExact(totalAmountATM, curAmountATM);
+            remainingUnits = Math.subtractExact(remainingUnits, curUnits);
+
+            asSellOffer.decreaseLimitAndSupply(curUnits);
+            currencySellOfferService.insert((CurrencySellOffer)asSellOffer); // store new sell values
+            CurrencyBuyOffer buyOffer = currencyBuyOfferService.getOffer(asSellOffer.getId());
+            long excess = buyOffer.increaseSupply(curUnits);
+            currencyBuyOfferService.insert(buyOffer); // store new buy values
+
+//            changeAccountCurrencyBalances(currencyId, curUnits, curAmountATM, excess,
+//                asSellOffer.getAccountId(), asSellOffer.getId());
+
+            Account counterAccount = accountService.getAccount(asSellOffer.getAccountId());
+            log.trace("account === 1 exchangeAPLForCurrency account={}", counterAccount);
+            accountService.addToBalanceATM(counterAccount, LedgerEvent.CURRENCY_EXCHANGE, asSellOffer.getId(), curAmountATM);
+            accountService.addToUnconfirmedBalanceATM(counterAccount, LedgerEvent.CURRENCY_EXCHANGE, asSellOffer.getId(),
+                Math.addExact(
+                    Math.multiplyExact(curUnits - excess, asSellOffer.getRateATM() - buyOffer.getRateATM()),
+                    Math.multiplyExact(excess, asSellOffer.getRateATM())
+                )
+            );
+            accountCurrencyService.addToCurrencyUnits(counterAccount, LedgerEvent.CURRENCY_EXCHANGE, asSellOffer.getId(), currencyId, -curUnits);
+            log.trace("account === 2 exchangeAPLForCurrency account={}", counterAccount);
+            Exchange.addExchange(transaction, currencyId, asSellOffer.getId(), asSellOffer.getAccountId(),
+                account.getId(), curUnits, blockChainInfoService.getLastBlock(), asSellOffer.getRateATM());
+        }
+        long transactionId = transaction.getId();
+        account = accountService.getAccount(account);
+        log.trace("account === 3 exchangeAPLForCurrency account={}", account);
+        accountCurrencyService.addToCurrencyAndUnconfirmedCurrencyUnits(account, LedgerEvent.CURRENCY_EXCHANGE, transactionId,
+            currencyId, Math.subtractExact(units, remainingUnits));
+        accountService.addToBalanceATM(account, LedgerEvent.CURRENCY_EXCHANGE, transactionId, -totalAmountATM);
+        accountService.addToUnconfirmedBalanceATM(account, LedgerEvent.CURRENCY_EXCHANGE, transactionId, Math.multiplyExact(units, rateATM) - totalAmountATM);
+        log.trace("account === 4 exchangeAPLForCurrency account={}", account);
     }
 
-    void decreaseLimitAndSupply(long delta) {
-        limit -= delta;
-        supply -= delta;
+    @Override
+    public CurrencyBuyOfferService getCurrencyBuyOfferService() {
+        return currencyBuyOfferService;
     }
-*/
+
+    @Override
+    public CurrencySellOfferService getCurrencySellOfferService() {
+        return currencySellOfferService;
+    }
 }

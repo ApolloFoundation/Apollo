@@ -53,6 +53,8 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountPropert
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.entity.state.alias.Alias;
 import com.apollocurrency.aplwallet.apl.core.entity.state.alias.AliasOffer;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.AvailableOffers;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyExchangeOffer;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSFeedback;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSPublicFeedback;
@@ -67,7 +69,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingVote;
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerHolding;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyExchangeOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyFounder;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
@@ -463,7 +464,7 @@ public final class JSONData {
         return result;
     }
 
-    public static JSONObject availableOffers(CurrencyExchangeOffer.AvailableOffers availableOffers) {
+    public static JSONObject availableOffers(AvailableOffers availableOffers) {
         JSONObject json = new JSONObject();
         json.put("rateATM", String.valueOf(availableOffers.getRateATM()));
         json.put("units", String.valueOf(availableOffers.getUnits()));
@@ -1359,7 +1360,7 @@ public final class JSONData {
                 random.nextBytes(b);
                 json.put(name +"PublicKey", Convert.toHexString(b));
             }
-            
+
         }
         json.put(name, accountId);
 

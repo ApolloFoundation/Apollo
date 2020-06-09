@@ -57,5 +57,14 @@ public class CurrencyExchangeOffer extends VersionedDeletableEntity {
         this.transactionHeight = rs.getInt("transaction_height");
     }
 
+    public long increaseSupply(long delta) {
+        long excess = Math.max(Math.addExact(supply, Math.subtractExact(delta, limit)), 0);
+        this.supply += delta - excess;
+        return excess;
+    }
 
+    public void decreaseLimitAndSupply(long delta) {
+        this.limit -= delta;
+        this.supply -= delta;
+    }
 }

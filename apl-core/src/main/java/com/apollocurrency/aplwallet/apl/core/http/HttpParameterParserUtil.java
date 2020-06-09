@@ -29,13 +29,13 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.alias.Alias;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyBuyOffer;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
@@ -45,6 +45,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
@@ -137,6 +138,7 @@ public final class HttpParameterParserUtil {
     private static AccountService accountService;
     private static AccountPublicKeyService accountPublicKeyService;
     private static AssetService assetService;
+    private static CurrencyExchangeOfferFacade currencyExchangeOfferFacade;
 
     private HttpParameterParserUtil() {
     } // never
@@ -391,7 +393,8 @@ public final class HttpParameterParserUtil {
     }
 
     public static CurrencyBuyOffer getBuyOffer(HttpServletRequest req) throws ParameterException {
-        CurrencyBuyOffer offer = CurrencyBuyOffer.getOffer(getUnsignedLong(req, "offer", true));
+        CurrencyBuyOffer offer = lookupCurrencyExchangeOfferFacade().getCurrencyBuyOfferService()
+            .getOffer(getUnsignedLong(req, "offer", true));
         if (offer == null) {
             throw new ParameterException(UNKNOWN_OFFER);
         }
@@ -399,7 +402,8 @@ public final class HttpParameterParserUtil {
     }
 
     public static CurrencySellOffer getSellOffer(HttpServletRequest req) throws ParameterException {
-        CurrencySellOffer offer = CurrencySellOffer.getOffer(getUnsignedLong(req, "offer", true));
+        CurrencySellOffer offer = lookupCurrencyExchangeOfferFacade().getCurrencySellOfferService()
+            .getOffer(getUnsignedLong(req, "offer", true));
         if (offer == null) {
             throw new ParameterException(UNKNOWN_OFFER);
         }
@@ -1193,6 +1197,13 @@ public final class HttpParameterParserUtil {
             assetService = CDI.current().select(AssetService.class).get();
         }
         return assetService;
+    }
+
+    private static CurrencyExchangeOfferFacade lookupCurrencyExchangeOfferFacade() {
+        if (currencyExchangeOfferFacade == null) {
+            currencyExchangeOfferFacade = CDI.current().select(CurrencyExchangeOfferFacade.class).get();
+        }
+        return currencyExchangeOfferFacade;
     }
 
     public static class PrivateTransactionsAPIData {
