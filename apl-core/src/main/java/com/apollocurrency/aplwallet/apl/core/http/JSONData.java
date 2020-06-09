@@ -1359,10 +1359,9 @@ public final class JSONData {
                 random.nextBytes(b);
                 json.put(name +"PublicKey", Convert.toHexString(b));
             }
-            
-        }
-        json.put(name, accountId);
 
+        }
+        json.put(name, Long.toUnsignedString(accountId));
         json.put(name + "RS", Convert2.rsAccount(accountId));
     }
 
