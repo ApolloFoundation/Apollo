@@ -50,7 +50,7 @@ class CurrencySellOfferServiceTest {
     CurrencySellOfferTable table;
     CurrencySellOfferTestData td;
     @Inject
-    private CurrencySellOfferServiceImpl offerService;
+    private CurrencySellOfferService offerService;
 
     Comparator<CurrencySellOffer> currencySellOfferComparator = Comparator
         .comparing(CurrencySellOffer::getId)
