@@ -23,9 +23,9 @@
     </fileSet>
     <fileSet>
       <directory>${project.basedir}</directory>
-      <outputDirectory>./</outputDirectory>
+      <outputDirectory>${base-dist-dir}/</outputDirectory>
       <includes>
-        <include>pkg-apollo-blockchain.json</include>
+        <include>packaging/pkg-apollo-blockchain.json</include>
       </includes>
       <fileMode>0644</fileMode>
     </fileSet>
@@ -58,9 +58,9 @@
     <dependencySet>
       <useProjectArtifact>false</useProjectArtifact>
       <outputDirectory>${base-dist-dir}/lib</outputDirectory>
-      <includes>
+      <!--      <includes>
         <include>${project.groupId}:apl-*:jar:*</include>
-      </includes>
+      </includes>-->
     </dependencySet>
   </dependencySets>
 </assembly>
