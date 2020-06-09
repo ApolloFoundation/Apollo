@@ -49,6 +49,7 @@
     <module>apl-bom</module>
     <module>apl-conf</module>
     <module>apl-exec</module>
+    <module>apl-api2-generator</module>
   </modules>
 
   <properties>
@@ -65,8 +66,8 @@
     <ext-deps-zip-file-name>${zip-file-name}-ext-deps</ext-deps-zip-file-name>
     <zip-format>zip</zip-format>
     <!--Dependency Versions-->
-    <apl-bom.version>1.44.0</apl-bom.version>
-    <!-- We have to define this property ancd change it accordingly for correct version of packages -->
+
+    <!-- We have to define this property and change it accordingly for correct version of packages -->
     <apl-bom-ext.version>1.0.0</apl-bom-ext.version>
     <base-dist-dir>ApolloWallet</base-dist-dir>
 
@@ -101,7 +102,7 @@
       <dependency>
         <groupId>com.apollocurrency</groupId>
         <artifactId>apl-bom-ext</artifactId>
-        <version>1.0.0</version>
+        <version>1.1.0</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>

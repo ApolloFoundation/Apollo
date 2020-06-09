@@ -1,0 +1,7 @@
+{
+    "artifactId": "apl-api2-resteasy",
+    "sourceFolder": "src/main/java",
+    "invokerPackage":"com.apollocurrency.aplwallet.api",
+    "apiPackage":"com.apollocurrency.aplwallet.api.v2",
+    "modelPackage":"com.apollocurrency.aplwallet.api.v2.model"
+}
