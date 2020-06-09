@@ -429,7 +429,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Query'
+              $ref: '#/components/schemas/QueryObject'
         required: true
       responses:
         200:
@@ -459,7 +459,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Query'
+              $ref: '#/components/schemas/QueryObject'
         required: true
       responses:
         200:
@@ -484,7 +484,7 @@ paths:
       tags:
       - info
       summary: Gets node health
-      operationId: getHelthInfo
+      operationId: getHealthInfo
       responses:
         200:
           description: successful operation
@@ -708,6 +708,7 @@ components:
     TxReq:
       required:
         - tx
+      type: obect
       properties:
         tx:
           description: Signed transaction data
@@ -762,22 +763,15 @@ components:
               example: '45225600000000'
             status:
               $ref: '#/components/schemas/AccountStatus'
-    Query:
-      allOf:
-        - type: object
-          properties:
-            accounts:
-              description: Exactly all items
-              type: array
-              items:
-                type: string
-                example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
-        - $ref: '#/components/schemas/TimeRange'
-        - $ref: '#/components/schemas/HeightRange'
-        - $ref: '#/components/schemas/Paginator'
-    HeightRange:
+    QueryObject:
       type: object
       properties:
+        accounts:
+          description: Exactly all items
+          type: array
+          items:
+            type: string
+            example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
         first:
           type: integer
           format: int64
@@ -788,9 +782,6 @@ components:
           format: int64
           description: The last block height
           example: 4999000
-    TimeRange:
-      type: object
-      properties:
         startTime:
           type: integer
           format: int64
@@ -801,9 +792,6 @@ components:
           format: int64
           description: The end of the time period, Unix timestamp in milliseconds
           example: 1591696372000
-    Paginator:
-      type: object
-      properties:
         page:
           type: integer
           format: int32
@@ -829,7 +817,7 @@ components:
           items:
             $ref: '#/components/schemas/Operation'
         query:
-          $ref: '#/components/schemas/Query'
+          $ref: '#/components/schemas/QueryObject'
     QueryCountResult:
       type: object
       properties:
@@ -838,7 +826,7 @@ components:
           items:
             $ref: '#/components/schemas/OperationCount'
         query:
-          $ref: '#/components/schemas/Query'
+          $ref: '#/components/schemas/QueryObject'
     Operation:
       type: object
       properties:
@@ -861,7 +849,7 @@ components:
       required:
         - transaction
         - sender
-        - recepient
+        - recipient
         - signature
       type: object
       properties:

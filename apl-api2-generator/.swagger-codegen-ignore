@@ -21,7 +21,8 @@
 #docs/*.md
 # Then explicitly reverse the ignore rule for a single file:
 #!docs/README.md
-#**/impl/*
+RestApplication.java
+**/impl/*
 *.gradle
 pom.xml
-../apl-api2/README.md
+README.md
