@@ -23,7 +23,7 @@
     </fileSet>
     <fileSet>
       <directory>${project.basedir}</directory>
-      <outputDirectory>${base-dist-dir}/../</outputDirectory>
+      <outputDirectory>${base-dist-dir}\\/../</outputDirectory>
       <includes>
         <include>packaging/pkg-apollo-blockchain.json</include>
       </includes>
