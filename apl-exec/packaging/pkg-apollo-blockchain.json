@@ -12,8 +12,8 @@
     {
       "name": "Apollo-web-ui",
       "optional": true,
-      "version_min": "2.7.6",
-      "version_max": "2.7.99"
+      "version_min": "2.8.1",
+      "version_max": "2.8.99"
     }
   ]
 }
