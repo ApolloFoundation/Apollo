@@ -34,9 +34,6 @@ public interface CurrencyExchangeOfferFacade {
 
     void exchangeAPLForCurrency(Transaction transaction, Account account, final long currencyId, final long rateATM, final long units);
 
-//    void changeAccountCurrencyBalances(long currencyId, long curUnits, long curAmountATM, long excess,
-//                                       long accountId, long id);
-
     CurrencyBuyOfferService getCurrencyBuyOfferService();
 
     CurrencySellOfferService getCurrencySellOfferService();

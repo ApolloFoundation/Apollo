@@ -159,8 +159,6 @@ public class CurrencyExchangeOfferFacadeImpl implements CurrencyExchangeOfferFac
             long excess = sellOffer.increaseSupply(curUnits);
             currencySellOfferService.insert(sellOffer); // store new sell values
 
-//            changeAccountCurrencyBalances(currencyId, curUnits, curAmountATM, excess,
-//                asBuyOffer.getAccountId(), asBuyOffer.getId());
             Account counterAccount = accountService.getAccount(asBuyOffer.getAccountId());
             log.trace("account === 1 exchangeCurrencyForAPL account={}", counterAccount);
             accountService.addToBalanceATM(
@@ -184,18 +182,6 @@ public class CurrencyExchangeOfferFacadeImpl implements CurrencyExchangeOfferFac
         log.trace("account === 4 exchangeCurrencyForAPL account={}", account);
     }
 
-    //    @Override
-    private void changeAccountCurrencyBalances(long currencyId, long curUnits, long curAmountATM, long excess,
-                                               long accountId, long id) {
-        Account counterAccount = accountService.getAccount(accountId);
-        log.trace("account === 1 exchangeCurrencyForAPL account={}", counterAccount);
-        accountService.addToBalanceATM(counterAccount, LedgerEvent.CURRENCY_EXCHANGE, id, -curAmountATM);
-        accountCurrencyService.addToCurrencyUnits(counterAccount, LedgerEvent.CURRENCY_EXCHANGE, id, currencyId, curUnits);
-        accountCurrencyService.addToUnconfirmedCurrencyUnits(counterAccount, LedgerEvent.CURRENCY_EXCHANGE, id, currencyId, excess);
-        log.trace("account === 2 exchangeCurrencyForAPL account={}", counterAccount);
-    }
-
-
     @Override
     public void exchangeAPLForCurrency(Transaction transaction, Account account, final long currencyId, final long rateATM, final long units) {
         List<CurrencyExchangeOffer> currencySellOffers = getAvailableSellOffers(currencyId, rateATM);
@@ -217,9 +203,6 @@ public class CurrencyExchangeOfferFacadeImpl implements CurrencyExchangeOfferFac
             CurrencyBuyOffer buyOffer = currencyBuyOfferService.getOffer(asSellOffer.getId());
             long excess = buyOffer.increaseSupply(curUnits);
             currencyBuyOfferService.insert(buyOffer); // store new buy values
-
-//            changeAccountCurrencyBalances(currencyId, curUnits, curAmountATM, excess,
-//                asSellOffer.getAccountId(), asSellOffer.getId());
 
             Account counterAccount = accountService.getAccount(asSellOffer.getAccountId());
             log.trace("account === 1 exchangeAPLForCurrency account={}", counterAccount);
