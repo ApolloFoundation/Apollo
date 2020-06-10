@@ -1362,8 +1362,7 @@ public final class JSONData {
             }
 
         }
-        json.put(name, accountId);
-
+        json.put(name, Long.toUnsignedString(accountId));
         json.put(name + "RS", Convert2.rsAccount(accountId));
     }
 
