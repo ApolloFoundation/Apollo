@@ -16,7 +16,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencySellOffe
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
