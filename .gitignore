@@ -35,3 +35,4 @@ nbactions.xml
 /build
 /webui
 **/swagger-codegen-cli-*.jar
+**/.swagger-codegen
