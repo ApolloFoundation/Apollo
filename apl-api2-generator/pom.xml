@@ -16,50 +16,27 @@
   <build>
     <plugins>
       <!-- activate the plugin -->
-<!--      <plugin>-->
-<!--        <groupId>org.openapitools</groupId>-->
-<!--        <artifactId>openapi-generator-maven-plugin</artifactId>-->
-<!--        &lt;!&ndash; RELEASE_VERSION &ndash;&gt;-->
-<!--        <version>${openapi-generator-maven-plugin.version}</version>-->
-<!--        &lt;!&ndash; /RELEASE_VERSION &ndash;&gt;-->
-<!--        <executions>-->
-<!--          <execution>-->
-<!--            <id>jaxrs-resteasy</id>-->
-<!--            <goals>-->
-<!--              <goal>generate</goal>-->
-<!--            </goals>-->
-<!--            <configuration>-->
-<!--              &lt;!&ndash; specify the swagger yaml &ndash;&gt;-->
-<!--              <inputSpec>${project.basedir}/src/main/resources/yaml/apollo-api-v2.yaml</inputSpec>-->
-<!--              <output>${project.basedir}/../apl-api2</output>-->
-
-<!--              &lt;!&ndash; target to generate java server code &ndash;&gt;-->
-<!--              <generatorName>jaxrs-resteasy</generatorName>-->
-
-<!--              &lt;!&ndash; pass any necessary config options &ndash;&gt;-->
-<!--              <configOptions>-->
-<!--                <sourceFolder>src/main/java</sourceFolder>-->
-<!--                <invokerPackage>com.apollocurrency.aplwallet.api.v2</invokerPackage>-->
-<!--                <apiPackage>com.apollocurrency.aplwallet.api.v2</apiPackage>-->
-<!--                <modelPackage>com.apollocurrency.aplwallet.api.v2.model</modelPackage>-->
-<!--              </configOptions>-->
-<!--            </configuration>-->
-<!--          </execution>-->
-<!--        </executions>-->
-<!--      </plugin>-->
       <plugin>
-        <groupId>io.swagger</groupId>
-        <artifactId>swagger-codegen-maven-plugin</artifactId>
-        <version>2.3.1</version>
+        <groupId>org.openapitools</groupId>
+        <artifactId>openapi-generator-maven-plugin</artifactId>
+        <!-- RELEASE_VERSION -->
+        <version>${openapi-generator-maven-plugin.version}</version>
+        <!-- /RELEASE_VERSION -->
         <executions>
           <execution>
+            <id>jaxrs-resteasy</id>
             <goals>
               <goal>generate</goal>
             </goals>
             <configuration>
+              <!-- specify the swagger yaml -->
               <inputSpec>${project.basedir}/src/main/resources/yaml/apollo-api-v2.yaml</inputSpec>
               <output>${project.basedir}/../apl-api2</output>
-              <language>java</language>
+
+              <!-- target to generate java server code -->
+              <generatorName>jaxrs-resteasy</generatorName>
+
+              <!-- pass any necessary config options -->
               <configOptions>
                 <sourceFolder>src/main/java</sourceFolder>
                 <invokerPackage>com.apollocurrency.aplwallet.api.v2</invokerPackage>
@@ -70,6 +47,29 @@
           </execution>
         </executions>
       </plugin>
+<!--      <plugin>-->
+<!--        <groupId>io.swagger</groupId>-->
+<!--        <artifactId>swagger-codegen-maven-plugin</artifactId>-->
+<!--        <version>2.3.1</version>-->
+<!--        <executions>-->
+<!--          <execution>-->
+<!--            <goals>-->
+<!--              <goal>generate</goal>-->
+<!--            </goals>-->
+<!--            <configuration>-->
+<!--              <inputSpec>${project.basedir}/src/main/resources/yaml/apollo-api-v2.yaml</inputSpec>-->
+<!--              <output>${project.basedir}/../apl-api2</output>-->
+<!--              <language>java</language>-->
+<!--              <configOptions>-->
+<!--                <sourceFolder>src/main/java</sourceFolder>-->
+<!--                <invokerPackage>com.apollocurrency.aplwallet.api.v2</invokerPackage>-->
+<!--                <apiPackage>com.apollocurrency.aplwallet.api.v2</apiPackage>-->
+<!--                <modelPackage>com.apollocurrency.aplwallet.api.v2.model</modelPackage>-->
+<!--              </configOptions>-->
+<!--            </configuration>-->
+<!--          </execution>-->
+<!--        </executions>-->
+<!--      </plugin>-->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -98,17 +98,6 @@
       <groupId>io.swagger.core.v3</groupId>
       <artifactId>swagger-jaxrs2</artifactId>
     </dependency>
-    <!--<dependency>
-      <groupId>org.jboss.resteasy</groupId>
-      <artifactId>resteasy-jaxrs</artifactId>
-      <version>${resteasy-jaxrs.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.jboss.resteasy</groupId>
-      <artifactId>jaxrs-api</artifactId>
-      <version>${resteasy-jaxrs.version}</version>
-    </dependency>-->
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
       <artifactId>resteasy-multipart-provider</artifactId>

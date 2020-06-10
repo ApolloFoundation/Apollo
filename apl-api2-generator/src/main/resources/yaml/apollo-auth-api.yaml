@@ -7,19 +7,24 @@ info:
     JSON Web Token (JWT) is an open standard (RFC 7519) that defines a compact and self-contained way for securely transmitting information between parties as a JSON object. This information can be verified and trusted because it is digitally signed. JWTs can be signed using a secret (with the HMAC algorithm) or a public/private key pair using RSA or ECDSA.
 
     Required payload:
-     - Account ID
-     - Role
+     - User ID
      - Application/Service ID
+     - Role
 
-    *Account ID*  - authenticates the user identity for personal responsibility
-
-    *Role* - the granular role to manage access to the different groups of the API methods
+    *User ID* - authenticates the user identity for personal responsibility
 
     *Service ID* - the uniq ID of particular application or service
+
+    *Role* - the granular role to manage access to the different groups of the API methods
 
   contact:
     email: authapiteam@firstbridge.io
   version: 2.0.0
+
+externalDocs:
+    description: Introduction to JSON Web Tokens
+    url: https://jwt.io/introduction/
+
 servers:
 - url: http://localhost:8080/api/v2
 
@@ -34,6 +39,7 @@ paths:
       - auth
       summary: user login routine
       description: basic routine in order to obtain a token
+      operationId: authLogin
       requestBody:
         content:
           application/json:
@@ -55,6 +61,7 @@ paths:
       - auth
       summary: refresh token
       description: Refresh the access token
+      operationId: authRefresh
       responses:
         200:
           description: Return refreshed access token
@@ -76,7 +83,7 @@ components:
         login:
           description: The login name
           type: string
-          example: 'account'
+          example: 'manager1'
         password:
           description: Top secret password
           type: string
@@ -85,7 +92,7 @@ components:
       properties:
         login:
           type: string
-          example: 'account'
+          example: 'manager1'
         accessToken:
           type: string
           description: The access token carry the necessary information to access a resource directly

@@ -2,9 +2,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.apollocurrency</groupId>
-    <artifactId>apl-api2-resteasy</artifactId>
+    <artifactId>apl-api2</artifactId>
     <packaging>jar</packaging>
-    <name>apl-api2-resteasy</name>
+    <name>apl-api2</name>
     <version>2.0.0</version>
     <build>
         <sourceDirectory>src/main/java</sourceDirectory>
@@ -25,7 +25,7 @@
             </plugin>
             <plugin>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.6</version>
+                <version>2.22.1</version>
                 <executions>
                     <execution>
                         <goals>

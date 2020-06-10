@@ -331,7 +331,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TxReq'
+              $ref: '#/components/schemas/TxRequest'
         required: true
       responses:
         200:
@@ -358,13 +358,13 @@ paths:
       description: Asynchronously broadcast the batch of the signed transaction to the network. The transactions are immediately put into an unconfirmed transaction pool in the same order as in the batch and later are sending to the network.
       operationId: broadcastTxBatch
       requestBody:
-        description: tx object
+        description: signed transaction byte array in hex format
         content:
           application/json:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/TxReq'
+                $ref: '#/components/schemas/TxRequest'
         required: true
       responses:
         200:
@@ -562,10 +562,10 @@ components:
           example: '39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152'
         attachment:
           type: object
+          nullable: true
           additionalProperties:
             type: object
           description: An object containong any additional data needed for the transaction
-          nullable: true
         sender:
           type: string
           description: The sender account
@@ -705,15 +705,16 @@ components:
           format: int64
           description: Request timestamp, Unix timestamp in milliseconds
           example: 1591696372000
-    TxReq:
+    TxRequest:
       required:
         - tx
-      type: obect
+      type: object
       properties:
         tx:
           description: Signed transaction data
           type: string
           example: '001047857c04a00539dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152eef5365f2400292d00ca9a3b0000000000c2eb0b000000000000000000000000000000000000000000000000000000000000000000000000920173ae606d36c1c77fc5bdf294bd048d04f85c46535525771b524dbb1ed20b73311900d4a409c293a10d8a5ab987430be4bd7478fb16a41cf775afa33c4d5600000000f1da1300fe7062e6fb2fbb37'
+          nullable: false
     AccountReq:
       required:
         - publicKey
@@ -721,25 +722,25 @@ components:
       properties:
         publickey:
           type: string
-          example: '39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152'
+          example: '39dc2e813bb45ff063a376e316b10cd0adeb7306111ca0eb2890194d37960152'
         alias:
           description: the account alias
           type: string
           example: 'aSimpleAccount'
-    AccountStatus:
-      type: string
-      enum: [created, verified, failed]
-      example: created
     AccountResp:
       allOf:
+        - $ref: '#/components/schemas/BasicAccount'
         - type: object
           properties:
             status:
-              $ref: '#/components/schemas/AccountStatus'
+              type: string
+              enum:
+                - created
+                - failed
+              example: created
             reason:
               type: string
               example: 'Account successfully created'
-        - $ref: '#/components/schemas/BasicAccount'
     BasicAccount:
       type: object
       properties:
@@ -762,16 +763,29 @@ components:
               type: string
               example: '45225600000000'
             status:
-              $ref: '#/components/schemas/AccountStatus'
+              type: string
+              enum:
+                - created
+                - verified
+              example: created
     QueryObject:
       type: object
       properties:
         accounts:
-          description: Exactly all items
+          description: Exactly all items.
+          nullable: true
           type: array
           items:
             type: string
             example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+        transactionStatus:
+            type: string
+            description: |
+                The transaction status. A transaction is considered as unconfirmed until it is included in a valid block.
+                A transaction is considered as confirmed after at least one confirmations, so a transaction is considered
+                as irreversible after 721 confirmations and finally a transaction is permanent if it's confirmed 1440 times.
+            enum: [confirmed, irreversible, permanent]
+            example: confirmed
         first:
           type: integer
           format: int64
@@ -924,6 +938,7 @@ components:
         result:
           type: object
           additionalProperties: {}
+          nullable: true
     ErrorResponse:
       type: object
       properties:

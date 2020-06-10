@@ -1,11 +1,12 @@
 {
-    "artifactId": "apl-api2-resteasy",
+    "artifactId": "apl-api2",
     "artifactVersion": "2.0.0",
     "groupId": "com.apollocurrency",
     "packaging": "jar",
     "sourceFolder": "src/main/java",
-    "invokerPackage":"com.apollocurrency.aplwallet.api",
+    "invokerPackage":"com.apollocurrency.aplwallet.api.v2",
     "apiPackage":"com.apollocurrency.aplwallet.api.v2",
     "modelPackage":"com.apollocurrency.aplwallet.api.v2.model",
-    "hideGenerationTimestamp": true
+    "hideGenerationTimestamp": true,
+    "fullJavaUtil": true
 }
