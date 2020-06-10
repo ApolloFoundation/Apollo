@@ -22,7 +22,6 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.dao.state.asset.AssetDeleteTable;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
@@ -71,8 +70,6 @@ class AssetDeleteTableTest {
         .addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class))
         .addBeans(MockBean.of(blockchainProcessor, BlockchainProcessor.class, BlockchainProcessorImpl.class))
         .addBeans(MockBean.of(mock(FullTextConfig.class), FullTextConfig.class, FullTextConfigImpl.class))
-//        .addBeans(MockBean.of(dbExtension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
-//        .addBeans(MockBean.of(dbExtension.getFtl(), FullTextSearchService.class))
         .addBeans(MockBean.of(mock(DerivedTablesRegistry.class), DerivedTablesRegistry.class, DerivedDbTablesRegistryImpl.class))
         .build();
 
@@ -112,7 +109,6 @@ class AssetDeleteTableTest {
     void testSave_update_existing_entity() {//SQL MERGE -> UPDATE
         AssetDelete previous = table.get(table.getDbKeyFactory().newKey(td.ASSET_DELETE_1));
         assertNotNull(previous);
-//        previous.setQuantityATU(previous.getQuantityATU() + 100);
 
         assertThrows(RuntimeException.class, () -> // not permitted by DB constraints
             DbUtils.inTransaction(dbExtension, (con) -> table.insert(previous))
