@@ -21,8 +21,6 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.Vote;
@@ -34,6 +32,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.PollOptionResult;
+import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPollCreation;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -50,8 +49,7 @@ import java.util.stream.Stream;
 @Singleton
 @Slf4j
 public class PollServiceImpl implements PollService {
-    private final BlockchainProcessor blockchainProcessor;
-    private final Blockchain blockchain;
+    private final BlockChainInfoService blockChainInfoService;
     private final DatabaseManager databaseManager;
     private final PollTable pollTable;
     private final PollResultTable pollResultTable;
@@ -59,23 +57,20 @@ public class PollServiceImpl implements PollService {
 
     /**
      * Constructor for unit tests.
-     *
-     * @param blockchainProcessor
-     * @param blockchain
+     * @param blockChainInfoService
      * @param databaseManager
      * @param pollTable
      * @param pollResultTable
+     * @param converter
      */
     public PollServiceImpl(
-        final BlockchainProcessor blockchainProcessor,
-        final Blockchain blockchain,
+        final BlockChainInfoService blockChainInfoService,
         final DatabaseManager databaseManager,
         final PollTable pollTable,
         final PollResultTable pollResultTable,
         final IteratorToStreamConverter<Poll> converter
     ) {
-        this.blockchainProcessor = blockchainProcessor;
-        this.blockchain = blockchain;
+        this.blockChainInfoService = blockChainInfoService;
         this.databaseManager = databaseManager;
         this.pollTable = pollTable;
         this.pollResultTable = pollResultTable;
@@ -84,14 +79,12 @@ public class PollServiceImpl implements PollService {
 
     @Inject
     public PollServiceImpl(
-        final BlockchainProcessor blockchainProcessor,
-        final Blockchain blockchain,
+        final BlockChainInfoService blockChainInfoService,
         final DatabaseManager databaseManager,
         final PollTable pollTable,
         final PollResultTable pollResultTable
     ) {
-        this.blockchainProcessor = blockchainProcessor;
-        this.blockchain = blockchain;
+        this.blockChainInfoService = blockChainInfoService;
         this.databaseManager = databaseManager;
         this.pollTable = pollTable;
         this.pollResultTable = pollResultTable;
@@ -145,13 +138,13 @@ public class PollServiceImpl implements PollService {
 
     @Override
     public Stream<Poll> getActivePolls(int from, int to) {
-        return converter.convert(pollTable.getActivePolls(from, to, blockchain.getHeight()));
+        return converter.convert(pollTable.getActivePolls(from, to, blockChainInfoService.getHeight()));
     }
 
     @Override
     public Stream<Poll> getPollsByAccount(long accountId, boolean includeFinished, boolean finishedOnly, int from, int to) {
         return converter.convert(
-            pollTable.getPollsByAccount(accountId, includeFinished, finishedOnly, from, to, blockchain.getHeight())
+            pollTable.getPollsByAccount(accountId, includeFinished, finishedOnly, from, to, blockChainInfoService.getHeight())
         );
     }
 
@@ -165,7 +158,7 @@ public class PollServiceImpl implements PollService {
     @Override
     public Stream<Poll> searchPolls(String query, boolean includeFinished, int from, int to) {
         return converter.convert(
-            pollTable.searchPolls(query, includeFinished, from, to, blockchain.getHeight())
+            pollTable.searchPolls(query, includeFinished, from, to, blockChainInfoService.getHeight())
         );
     }
 
@@ -176,7 +169,7 @@ public class PollServiceImpl implements PollService {
 
     @Override
     public void addPoll(Transaction transaction, MessagingPollCreation attachment) {
-        pollTable.addPoll(transaction, attachment, blockchain.getLastBlockTimestamp(), blockchain.getHeight());
+        pollTable.addPoll(transaction, attachment, blockChainInfoService.getLastBlockTimestamp(), blockChainInfoService.getHeight());
     }
 
     @Override
@@ -200,8 +193,8 @@ public class PollServiceImpl implements PollService {
     }
 
     private List<PollOptionResult> countResults(VoteWeighting voteWeighting, Poll poll) {
-        int countHeight = Math.min(poll.getFinishHeight(), blockchain.getHeight());
-        if (countHeight < blockchainProcessor.getMinRollbackHeight()) {
+        int countHeight = Math.min(poll.getFinishHeight(), blockChainInfoService.getHeight());
+        if (countHeight < blockChainInfoService.getMinRollbackHeight()) {
             return null;
         }
         return countResults(voteWeighting, countHeight, poll.getId(), poll.getAccountId(), poll.getOptions().length);
@@ -218,7 +211,7 @@ public class PollServiceImpl implements PollService {
         log.trace("count RollResult: START h={}, pollId={}, accountId = {}, {}, voteList = [{}]",
             height, id, accountId, voteWeighting, optionsLength);
         for (int i = 0; i < result.length; i++) {
-            result[i] = new PollOptionResult(id, blockchain.getHeight());
+            result[i] = new PollOptionResult(id, blockChainInfoService.getHeight());
         }
         VoteWeighting.VotingModel votingModel = voteWeighting.getVotingModel();
         try (DbIterator<Vote> votes = Vote.getVotes(id, 0, -1)) {
@@ -239,7 +232,7 @@ public class PollServiceImpl implements PollService {
                 for (int i = 0; i < partialResult.length; i++) {
                     if (partialResult[i] != Long.MIN_VALUE) {
                         if (result[i].isUndefined()) {
-                            result[i] = new PollOptionResult(id, partialResult[i], weight, blockchain.getHeight());
+                            result[i] = new PollOptionResult(id, partialResult[i], weight, blockChainInfoService.getHeight());
                         } else {
                             result[i].add(partialResult[i], weight);
                         }
@@ -266,6 +259,6 @@ public class PollServiceImpl implements PollService {
 
     @Override
     public boolean isFinished(final int finishHeight) {
-        return finishHeight <= blockchain.getHeight();
+        return finishHeight <= blockChainInfoService.getHeight();
     }
 }
