@@ -41,6 +41,7 @@ delete from ACCOUNT_INFO;
 delete from ASSET;
 delete from ASSET_DELETE;
 delete from ASSET_DIVIDEND;
+delete from EXCHANGE_REQUEST;
 
 INSERT INTO PUBLIC.BLOCK
 (DB_ID,         ID,                HEIGHT,      VERSION,   "TIMESTAMP",  PREVIOUS_BLOCK_ID,  TOTAL_AMOUNT,        TOTAL_FEE,   PAYLOAD_LENGTH,   PREVIOUS_BLOCK_HASH,                                                   CUMULATIVE_DIFFICULTY,  BASE_TARGET,    NEXT_BLOCK_ID,               GENERATION_SIGNATURE,                                                   BLOCK_SIGNATURE,                                                                                                                        PAYLOAD_HASH,                                                           GENERATOR_ID,       TIMEOUT) VALUES
@@ -482,4 +483,15 @@ INSERT INTO ASSET_DIVIDEND
 (2,     -7390004979265954310,   8804302123230545017,    1000,       61449,           0,              0,             36559807, 61487),
 (3,     9191632407374355191,    9065918785929852826,    1000,       61449,           0,              0,             36560092, 61516),
 (4,     8033155246743541720,    9065918785929852826,    100,        61449,           0,              0,             36564916, 62007)
+;
+
+INSERT INTO EXCHANGE_REQUEST
+(DB_ID, ID,                     ACCOUNT_ID,             CURRENCY_ID,            UNITS,  RATE,   IS_BUY, TIMESTAMP, HEIGHT) VALUES
+(1,     1304688235223891922,    3494172333733565977,    -6000860677406393688, 5000000000, 50,   true,   45372444,   609481),
+(2,     5294250207343561634,    3494172333733565977,    -6000860677406393688, 100000000,  1,    true,   45535320,   612120),
+(3,     -4059997508574268268,   3494172333733565977,    -6000860677406393688, 2500000000, 25,   false,  45535497,   612121),
+(4,     -9005611557904280410,   -208393164898941117,    9017193931881541951,    1,        1,    false,  59450358,   1383308),
+(5,     -6727424768559823653,   9211698109297098287,    9017193931881541951,    1,        1,    true,   59450358,   1383308),
+(6,     7546393628201945486,    7477442401604846627,    1829902366663355623,    1,        1,    false,  59450509,   1383324),
+(7,     4698684103323222902,    9211698109297098287,    1829902366663355623,    1,        1,    true,   59450509,   1383324)
 ;

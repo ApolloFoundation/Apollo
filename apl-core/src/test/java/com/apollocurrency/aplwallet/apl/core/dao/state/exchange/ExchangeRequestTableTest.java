@@ -2,17 +2,14 @@
  *  Copyright © 2018-2020 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.dao.state.asset;
+package com.apollocurrency.aplwallet.apl.core.dao.state.exchange;
 
 import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
 import javax.inject.Inject;
+
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -23,13 +20,12 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
-import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetDelete;
-import com.apollocurrency.aplwallet.apl.data.AssetDeleteTestData;
+import com.apollocurrency.aplwallet.apl.core.entity.state.exchange.ExchangeRequest;
+import com.apollocurrency.aplwallet.apl.data.ExchangeRequestTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -43,18 +39,18 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 @EnableWeld
-class AssetDeleteTableTest {
+class ExchangeRequestTableTest {
 
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension();
 
     @Inject
-    AssetDeleteTable table;
-    AssetDeleteTestData td;
+    ExchangeRequestTable table;
+    ExchangeRequestTestData td;
 
-    Comparator<AssetDelete> assetComparator = Comparator
-        .comparing(AssetDelete::getDbId)
-        .thenComparing(AssetDelete::getAssetId).reversed();
+    Comparator<ExchangeRequest> exchangeRequestComparator = Comparator
+        .comparing(ExchangeRequest::getDbId)
+        .thenComparing(ExchangeRequest::getAccountId).reversed();
 
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
@@ -62,7 +58,7 @@ class AssetDeleteTableTest {
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-        PropertiesHolder.class, AssetDeleteTable.class
+        PropertiesHolder.class, ExchangeRequestTable.class
     )
         .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
@@ -75,39 +71,39 @@ class AssetDeleteTableTest {
 
     @BeforeEach
     void setUp() {
-        td = new AssetDeleteTestData();
+        td = new ExchangeRequestTestData();
     }
 
     @Test
     void testLoad() {
-        AssetDelete assetDelete = table.get(table.getDbKeyFactory().newKey(td.ASSET_DELETE_0));
-        assertNotNull(assetDelete);
-        assertEquals(td.ASSET_DELETE_0, assetDelete);
+        ExchangeRequest result = table.get(table.getDbKeyFactory().newKey(td.EXCHANGE_REQUEST_0));
+        assertNotNull(result);
+        assertEquals(td.EXCHANGE_REQUEST_0, result);
     }
 
     @Test
     void testLoad_returnNull_ifNotExist() {
-        AssetDelete asset = table.get(table.getDbKeyFactory().newKey(td.ASSET_DELETE_NEW));
-        assertNull(asset);
+        ExchangeRequest result = table.get(table.getDbKeyFactory().newKey(td.EXCHANGE_REQUEST_NEW));
+        assertNull(result);
     }
 
     @Test
-    void testSave_insert_new_entity() {//SQL MERGE -> INSERT
-        AssetDelete previous = table.get(table.getDbKeyFactory().newKey(td.ASSET_DELETE_NEW));
+    void testSave_insert_new_entity() {
+        ExchangeRequest previous = table.get(table.getDbKeyFactory().newKey(td.EXCHANGE_REQUEST_NEW));
         assertNull(previous);
 
-        DbUtils.inTransaction(dbExtension, (con) -> table.insert(td.ASSET_DELETE_NEW));
-        AssetDelete actual = table.get(table.getDbKeyFactory().newKey(td.ASSET_DELETE_NEW));
+        DbUtils.inTransaction(dbExtension, (con) -> table.insert(td.EXCHANGE_REQUEST_NEW));
+        ExchangeRequest actual = table.get(table.getDbKeyFactory().newKey(td.EXCHANGE_REQUEST_NEW));
 
         assertNotNull(actual);
         assertTrue(actual.getDbId() != 0);
-        assertEquals(td.ASSET_DELETE_NEW.getAccountId(), actual.getAccountId());
-        assertEquals(td.ASSET_DELETE_NEW.getAssetId(), actual.getAssetId());
+        assertEquals(td.EXCHANGE_REQUEST_NEW.getAccountId(), actual.getAccountId());
+        assertEquals(td.EXCHANGE_REQUEST_NEW.getCurrencyId(), actual.getCurrencyId());
     }
 
     @Test
     void testSave_update_existing_entity() {//SQL MERGE -> UPDATE
-        AssetDelete previous = table.get(table.getDbKeyFactory().newKey(td.ASSET_DELETE_1));
+        ExchangeRequest previous = table.get(table.getDbKeyFactory().newKey(td.EXCHANGE_REQUEST_1));
         assertNotNull(previous);
 
         assertThrows(RuntimeException.class, () -> // not permitted by DB constraints
@@ -118,22 +114,11 @@ class AssetDeleteTableTest {
     @Test
     void testDefaultSort() {
         assertNotNull(table.defaultSort());
-        List<AssetDelete> expectedAll = td.ALL_ASSETS_DELETE_ORDERED_BY_DBID.stream().sorted(assetComparator).collect(Collectors.toList());
-        List<AssetDelete> actualAll = toList(table.getAll(0, Integer.MAX_VALUE));
+        List<ExchangeRequest> expectedAll = td.ALL_EXCHANGE_REQUEST_ORDERED_BY_DBID.stream()
+            .sorted(exchangeRequestComparator).collect(Collectors.toList());
+        List<ExchangeRequest> actualAll = toList(table.getAll(0, Integer.MAX_VALUE));
         assertEquals(expectedAll, actualAll);
     }
 
-    @Test
-    void testGetAssetCount() {
-        long count = table.getCount();
-        assertEquals(8, count);
-    }
-
-    @Test
-    void getAssetsIssuedBy() {
-        List<AssetDelete> expected = toList(table.getManyBy(
-            new DbClause.LongClause("account_id", td.ASSET_DELETE_1.getAccountId()), 0, 10));
-        assertEquals(3, expected.size());
-    }
 
 }
