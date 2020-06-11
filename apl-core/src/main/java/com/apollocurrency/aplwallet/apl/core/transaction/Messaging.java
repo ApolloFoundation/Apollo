@@ -3,6 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
+import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountProperty;
@@ -11,7 +12,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.alias.AliasOffer;
 import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
-import com.apollocurrency.aplwallet.apl.core.app.Poll;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.Vote;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
@@ -155,7 +155,7 @@ public abstract class Messaging extends TransactionType {
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             MessagingPollCreation attachment = (MessagingPollCreation) transaction.getAttachment();
-            Poll.addPoll(transaction, attachment);
+            lookupPollService().addPoll(transaction, attachment);
         }
 
         @Override
@@ -242,7 +242,7 @@ public abstract class Messaging extends TransactionType {
                 throw new AplException.NotValidException("Invalid vote casting attachment: " + attachment.getJSONObject());
             }
             long pollId = attachment.getPollId();
-            Poll poll = Poll.getPoll(pollId);
+            Poll poll = lookupPollService().getPoll(pollId);
             if (poll == null) {
                 throw new AplException.NotCurrentlyValidException("Invalid poll: " + Long.toUnsignedString(attachment.getPollId()));
             }

@@ -21,7 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Poll;
+import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
@@ -47,7 +47,7 @@ public final class CastVote extends CreateTransaction {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         Poll poll = HttpParameterParserUtil.getPoll(req);
-        if (poll.isFinished()) {
+        if (pollService.isFinished(poll.getFinishHeight())) {
             return POLL_FINISHED;
         }
 
