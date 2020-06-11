@@ -37,6 +37,21 @@ public class ExchangeServiceImpl implements ExchangeService {
         this.exchangeIteratorToStreamConverter = new IteratorToStreamConverter<>();
     }
 
+    /**
+     * for unit tests
+     */
+    public ExchangeServiceImpl(ExchangeTable exchangeTable,
+                               BlockChainInfoService blockChainInfoService,
+                               IteratorToStreamConverter<Exchange> exchangeIteratorToStreamConverter) {
+        this.exchangeTable = exchangeTable;
+        this.blockChainInfoService = blockChainInfoService;
+        if (exchangeIteratorToStreamConverter != null) {
+            this.exchangeIteratorToStreamConverter = exchangeIteratorToStreamConverter;
+        } else {
+            this.exchangeIteratorToStreamConverter = new IteratorToStreamConverter<>();
+        }
+    }
+
     @Override
     public Exchange addExchange(Transaction transaction, long currencyId, CurrencyExchangeOffer offer,
                                 long sellerId, long buyerId, long units,
