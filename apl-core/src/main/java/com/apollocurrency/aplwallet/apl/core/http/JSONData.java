@@ -965,7 +965,7 @@ public final class JSONData {
         json.put("asset", Long.toUnsignedString(assetTransfer.getAssetId()));
         putAccount(json, "sender", assetTransfer.getSenderId());
         putAccount(json, "recipient", assetTransfer.getRecipientId());
-        json.put("quantityATU", String.valueOf(assetTransfer.getQuantityATM()));
+        json.put("quantityATU", String.valueOf(assetTransfer.getQuantityATM())); //'...ATU' is returned from '...ATM' field
         json.put("height", assetTransfer.getHeight());
         json.put("timestamp", assetTransfer.getTimestamp());
         if (includeAssetInfo) {
