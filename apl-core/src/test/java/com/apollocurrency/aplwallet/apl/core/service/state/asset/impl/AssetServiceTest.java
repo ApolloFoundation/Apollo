@@ -4,9 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.asset.impl;
 
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -17,7 +15,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetDelete;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetDeleteService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
-import com.apollocurrency.aplwallet.apl.core.service.state.asset.impl.AssetServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetIssuance;
 import com.apollocurrency.aplwallet.apl.data.AssetTestData;
 import org.junit.jupiter.api.BeforeEach;
