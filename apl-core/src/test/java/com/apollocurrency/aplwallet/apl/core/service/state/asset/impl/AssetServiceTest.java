@@ -40,13 +40,8 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class AssetServiceTest {
 
-    //    @Inject
     AssetService service;
     AssetTestData td;
-    @Mock
-    private Blockchain blockchain;
-    @Mock
-    private BlockchainConfig blockchainConfig;
     @Mock
     private AssetTable table;
     @Mock
