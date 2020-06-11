@@ -30,7 +30,6 @@ import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
-import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -66,7 +65,7 @@ public final class GetState extends AbstractAPIRequestHandler {
             response.put("numberOfCurrencies", Currency.getCount());
             response.put("numberOfOffers", CurrencyBuyOffer.getCount());
             response.put("numberOfExchangeRequests", ExchangeRequest.getCount());
-            response.put("numberOfExchanges", Exchange.getCount());
+            response.put("numberOfExchanges", exchangeService.getCount());
             response.put("numberOfCurrencyTransfers", CurrencyTransfer.getCount());
             response.put("numberOfAliases", aliasService.getCount());
             response.put("numberOfGoods", service.getGoodsCount());
