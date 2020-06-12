@@ -1,7 +1,6 @@
 package com.apollocurrency.aplwallet.apl.util.env;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 
@@ -12,10 +11,17 @@ public class PlatformSpec {
     private final OS os;
     private final Arch arch;
 
-    @JsonCreator
-    public PlatformSpec(@JsonProperty("os") OS os, @JsonProperty("arch") Arch arch) {
+
+    public PlatformSpec(OS os, Arch arch) {
         this.os = os;
         this.arch = arch;
+    }
+
+    @JsonCreator
+    public PlatformSpec(String serialized) {
+        String[] specArray = serialized.split("-");
+        this.os = OS.from(specArray[0]);
+        this.arch = Arch.from(specArray[1]);
     }
 
     public static PlatformSpec current() {
