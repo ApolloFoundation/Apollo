@@ -71,7 +71,7 @@ class MSExchangeBuy extends MonetarySystemExchange {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         MonetarySystemExchangeBuyAttachment attachment = (MonetarySystemExchangeBuyAttachment) transaction.getAttachment();
-        ExchangeRequest.addExchangeRequest(transaction, attachment);
+        lookupExchangeRequestService().addExchangeRequest(transaction, attachment);
         CurrencyExchangeOffer.exchangeAPLForCurrency(transaction, senderAccount, attachment.getCurrencyId(), attachment.getRateATM(), attachment.getUnits());
     }
 

@@ -39,6 +39,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+@Deprecated
 public final class ExchangeRequest {
 
     private static final LongKeyFactory<ExchangeRequest> exchangeRequestDbKeyFactory = new LongKeyFactory<ExchangeRequest>("id") {
@@ -120,40 +121,67 @@ public final class ExchangeRequest {
         this.isBuy = isBuy;
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<ExchangeRequest> getAllExchangeRequests(int from, int to) {
         return exchangeRequestTable.getAll(from, to);
     }
 
+    /**
+     * @deprecated
+     */
     public static int getCount() {
         return exchangeRequestTable.getCount();
     }
 
+    /**
+     * @deprecated
+     */
     public static ExchangeRequest getExchangeRequest(long transactionId) {
         return exchangeRequestTable.get(exchangeRequestDbKeyFactory.newKey(transactionId));
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<ExchangeRequest> getCurrencyExchangeRequests(long currencyId, int from, int to) {
         return exchangeRequestTable.getManyBy(new DbClause.LongClause("currency_id", currencyId), from, to);
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<ExchangeRequest> getAccountExchangeRequests(long accountId, int from, int to) {
         return exchangeRequestTable.getManyBy(new DbClause.LongClause("account_id", accountId), from, to);
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<ExchangeRequest> getAccountCurrencyExchangeRequests(long accountId, long currencyId, int from, int to) {
         return exchangeRequestTable.getManyBy(new DbClause.LongClause("account_id", accountId).and(new DbClause.LongClause("currency_id", currencyId)), from, to);
     }
 
+    /**
+     * @deprecated
+     */
     static void addExchangeRequest(Transaction transaction, MonetarySystemExchangeBuyAttachment attachment) {
         ExchangeRequest exchangeRequest = new ExchangeRequest(transaction, attachment);
         exchangeRequestTable.insert(exchangeRequest);
     }
 
+    /**
+     * @deprecated
+     */
     static void addExchangeRequest(Transaction transaction, MonetarySystemExchangeSell attachment) {
         ExchangeRequest exchangeRequest = new ExchangeRequest(transaction, attachment);
         exchangeRequestTable.insert(exchangeRequest);
     }
 
+    /**
+     * @deprecated
+     */
     public static void init() {
     }
 

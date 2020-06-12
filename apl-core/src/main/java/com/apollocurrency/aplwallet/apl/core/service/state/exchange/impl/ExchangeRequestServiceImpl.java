@@ -49,7 +49,7 @@ public class ExchangeRequestServiceImpl implements ExchangeRequestService {
         if (exchangeRequestIteratorToStreamConverter != null) {
             this.exchangeRequestIteratorToStreamConverter = exchangeRequestIteratorToStreamConverter;
         } else {
-            this.exchangeRequestIteratorToStreamConverter = exchangeRequestIteratorToStreamConverter;
+            this.exchangeRequestIteratorToStreamConverter = new IteratorToStreamConverter<>();
         }
     }
 
@@ -104,9 +104,9 @@ public class ExchangeRequestServiceImpl implements ExchangeRequestService {
 
     @Override
     public Stream<ExchangeRequest> getAccountCurrencyExchangeRequestsStream(long accountId, long currencyId, int from, int to) {
-        return exchangeRequestIteratorToStreamConverter.apply(exchangeRequestTable.getManyBy(
-            new DbClause.LongClause("account_id", accountId)
-                .and(new DbClause.LongClause("currency_id", currencyId)), from, to));
+        DbClause dbClause = new DbClause.LongClause("account_id", accountId)
+            .and(new DbClause.LongClause("currency_id", currencyId));
+        return exchangeRequestIteratorToStreamConverter.apply(exchangeRequestTable.getManyBy(dbClause, from, to));
     }
 
     @Override
