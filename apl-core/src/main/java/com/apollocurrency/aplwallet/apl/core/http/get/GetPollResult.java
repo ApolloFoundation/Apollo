@@ -50,7 +50,7 @@ public class GetPollResult extends AbstractAPIRequestHandler {
         List<PollOptionResult> pollResults;
         VoteWeighting voteWeighting;
         if (Convert.emptyToNull(req.getParameter("votingModel")) == null) {
-            pollResults = pollService.getResults(poll);
+            pollResults = pollOptionResultService.getResultsByPoll(poll);
             voteWeighting = poll.getVoteWeighting();
         } else {
             byte votingModel = HttpParameterParserUtil.getByte(req, "votingModel", (byte) 0, (byte) 3, true);
@@ -59,7 +59,7 @@ public class GetPollResult extends AbstractAPIRequestHandler {
             byte minBalanceModel = HttpParameterParserUtil.getByte(req, "minBalanceModel", (byte) 0, (byte) 3, false);
             voteWeighting = new VoteWeighting(votingModel, holdingId, minBalance, minBalanceModel);
             voteWeighting.validate();
-            pollResults = pollService.getResults(voteWeighting, poll);
+            pollResults = pollOptionResultService.getResultsByVoteWeightingAndPoll(voteWeighting, poll);
         }
         if (pollResults == null) {
             return POLL_RESULTS_NOT_AVAILABLE;

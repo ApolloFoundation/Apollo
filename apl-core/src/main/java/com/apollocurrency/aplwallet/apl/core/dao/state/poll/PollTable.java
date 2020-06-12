@@ -27,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
 import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
@@ -38,7 +39,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.sql.DataSource;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.sql.Connection;
@@ -139,17 +139,14 @@ public class PollTable extends EntityDbTable<Poll> {
     }
 
     public DbIterator<Poll> getVotedPollsByAccount(
-        final DataSource dataSource,
         final long accountId,
         final int from,
         final int to
     ) throws AplException.NotValidException {
-        Connection connection = null;
-        try {
-            connection = dataSource.getConnection();
-
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection()) {
             //extract voted poll ids from attachment
-            try (PreparedStatement pstmt = connection.prepareStatement(
+            try (PreparedStatement pstmt = con.prepareStatement(
                 "(SELECT attachment_bytes FROM transaction " +
                     "WHERE sender_id = ? AND type = ? AND subtype = ? " +
                     "ORDER BY block_timestamp DESC, transaction_index DESC"
@@ -170,14 +167,13 @@ public class PollTable extends EntityDbTable<Poll> {
                         ids.add(pollId);
                     }
                 }
-                PreparedStatement pollStatement = connection.prepareStatement(
-                    "SELECT * FROM poll WHERE id IN (SELECT * FROM table(x bigint = ? ))");
-                pollStatement.setObject(1, ids.toArray());
-                return getManyBy(connection, pollStatement, false);
+                try (PreparedStatement pollStatement = con.prepareStatement(
+                    "SELECT * FROM poll WHERE id IN (SELECT * FROM table(x bigint = ? ))")) {
+                    pollStatement.setObject(1, ids.toArray());
+                    return getManyBy(con, pollStatement, false);
+                }
             }
-
         } catch (SQLException e) {
-            DbUtils.close(connection);
             throw new RuntimeException(e.toString(), e);
         }
     }
