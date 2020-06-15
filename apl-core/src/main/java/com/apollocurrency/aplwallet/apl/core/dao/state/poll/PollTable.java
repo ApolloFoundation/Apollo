@@ -51,13 +51,14 @@ import java.util.List;
 @Singleton
 @Slf4j
 public class PollTable extends EntityDbTable<Poll> {
+    private static final String FINISH_HEIGHT = "finish_height";
+
     private static final LongKeyFactory<Poll> POLL_LONG_KEY_FACTORY = new LongKeyFactory<>("id") {
         @Override
         public DbKey newKey(Poll poll) {
             return poll.getDbKey() == null ? newKey(poll.getId()) : poll.getDbKey();
         }
     };
-    private static final String FINISH_HEIGHT = "finish_height";
 
     @Inject
     public PollTable() {
