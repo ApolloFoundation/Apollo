@@ -1,0 +1,12 @@
+# Swagger Codegen Ignore
+
+.dockerignore
+.gitignore
+RestApplication.java
+**/webapp/*
+#**/impl/*
+*.gradle
+pom.xml
+build.gradle
+settings.gradle
+README.md

@@ -1,11 +1,9 @@
 {
     "artifactId": "apl-api2",
-    "artifactVersion": "2.0.0",
     "groupId": "com.apollocurrency",
-    "packaging": "jar",
     "sourceFolder": "src/gen/java",
-    "implFolder": "src/main/java",
-    "invokerPackage":"com.apollocurrency.aplwallet.api.v2",
+    "implFolder": "src/genimpl/java",
+    "invokerPackage":"com.apollocurrency.aplwallet.api",
     "apiPackage":"com.apollocurrency.aplwallet.api.v2",
     "modelPackage":"com.apollocurrency.aplwallet.api.v2.model",
     "hideGenerationTimestamp": true,

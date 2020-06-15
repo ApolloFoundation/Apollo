@@ -35,6 +35,30 @@ paths:
         content:
           application/json:
             schema:
+              $ref: '#/components/schemas/AccountReq'
+        required: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResp'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+  /account/batch:
+    post:
+      tags:
+      - account
+      summary: Create a batch of accounts
+      operationId: createAccountsBatch
+      requestBody:
+        description: the list of public keys
+        content:
+          application/json:
+            schema:
               type: array
               items:
                 $ref: '#/components/schemas/AccountReq'
@@ -79,16 +103,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Account'
-        401:
-          description: Unauthorized Error
-        403:
-          description: Access Forbidden
         400:
           $ref: '#/components/responses/BadRequest'
         500:
           $ref: '#/components/responses/ServerError'
-      security:
-      - bearerAuth: []
   /state/blockchain:
     get:
       tags:
@@ -103,14 +121,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Blockchain'
-        401:
-          description: Not authenticated
-        403:
-          description: Access token does not have the required scope
         500:
           $ref: '#/components/responses/ServerError'
-      security:
-      - bearerAuth: []
   /state/block:
     get:
       tags:
@@ -134,16 +146,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Block'
-        401:
-          description: Not authenticated
-        403:
-          description: Access token does not have the required scope
         400:
           $ref: '#/components/responses/BadRequest'
         500:
           $ref: '#/components/responses/ServerError'
-      security:
-      - bearerAuth: []
   /state/block/{block}:
     get:
       tags:
@@ -167,16 +173,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Block'
-        401:
-          description: Not authenticated
-        403:
-          description: Access token does not have the required scope
         400:
           $ref: '#/components/responses/BadRequest'
         500:
           $ref: '#/components/responses/ServerError'
-      security:
-      - bearerAuth: []
   /state/tx/{transaction}:
     get:
       tags:
@@ -200,16 +200,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TxReceipt'
-        401:
-          description: Not authenticated
-        403:
-          description: Access token does not have the required scope
         400:
           $ref: '#/components/responses/BadRequest'
         500:
           $ref: '#/components/responses/ServerError'
-      security:
-      - bearerAuth: []
   /state/tx:
     post:
       tags:
@@ -237,16 +231,10 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/TxReceipt'
-        401:
-          description: Not authenticated
-        403:
-          description: Access token does not have the required scope
         400:
           $ref: '#/components/responses/BadRequest'
         500:
           $ref: '#/components/responses/ServerError'
-      security:
-      - bearerAuth: []
   /state/unconfirmed/count:
     get:
       tags:
@@ -265,14 +253,8 @@ paths:
                   count:
                     type: integer
                     format: int64
-        401:
-          description: Not authenticated
-        403:
-          description: Access token does not have the required scope
         500:
           $ref: '#/components/responses/ServerError'
-      security:
-      - bearerAuth: []
   /state/unconfirmed:
     get:
       tags:
@@ -340,16 +322,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UnTxReceipt'
-        401:
-          description: Not authenticated
-        403:
-          description: Access token does not have the required scope
         400:
           $ref: '#/components/responses/BadRequest'
         500:
           $ref: '#/components/responses/ServerError'
-      security:
-      - bearerAuth: []
   /transaction/batch:
     post:
       tags:
@@ -408,16 +384,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Transaction'
-        401:
-          description: Not authenticated
-        403:
-          description: Access token does not have the required scope
         400:
           $ref: '#/components/responses/BadRequest'
         500:
           $ref: '#/components/responses/ServerError'
-      security:
-      - bearerAuth: []
   /operation/count:
     post:
       tags:

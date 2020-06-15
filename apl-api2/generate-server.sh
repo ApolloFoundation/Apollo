@@ -22,10 +22,10 @@ rm -rf $OUTPUT_DIR/target
 INPUT_SPEC=(src/main/resources/yaml/apollo-api-v2.yaml src/main/resources/yaml/apollo-auth-api.yaml)
 for spec in ${INPUT_SPEC[*]}; do
     echo "Use specification: $spec"
-    GENERATOR_GENERATOR_ARGS=" generate -DhideGenerationTimestamp=true --config $CONFIG_FILE --lang jaxrs-resteasy --output $OUTPUT_DIR --input-spec $spec"
+    GENERATOR_GENERATOR_ARGS=" generate --config $CONFIG_FILE --lang jaxrs-resteasy --output $OUTPUT_DIR --input-spec $spec"
     java $JAVA_OPTS -jar $GENERATOR_JAR $GENERATOR_GENERATOR_ARGS
 done
 
 find $OUTPUT_DIR -maxdepth 1 -type f -name "*.gradle" -delete
 rm -rf $OUTPUT_DIR/src/main/webapp
-rm $OUTPUT_DIR/.swagger-codegen-ignore
+rm -rf $OUTPUT_DIR/src/genimpl

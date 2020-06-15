@@ -42,6 +42,7 @@
   </repositories>
   <modules>
     <module>apl-api</module>
+    <module>apl-api2</module>
     <module>apl-crypto</module>
     <module>apl-utils</module>
     <module>apl-core</module>
@@ -49,7 +50,6 @@
     <module>apl-bom</module>
     <module>apl-conf</module>
     <module>apl-exec</module>
-    <module>apl-api2</module>
   </modules>
 
   <properties>
@@ -71,6 +71,9 @@
     <apl-bom-ext.version>1.0.0</apl-bom-ext.version>
     <base-dist-dir>ApolloWallet</base-dist-dir>
 
+    <build-helper-maven-plugin.version>1.9.1</build-helper-maven-plugin.version>
+    <jsonpath-maven-plugin.version>1.2.0</jsonpath-maven-plugin.version>
+    <maven-shade-plugin.version>3.2.3</maven-shade-plugin.version>
   </properties>
   <!-- We have following profiles: prod, dev, debug
        1. prod: profile for release with build of all zips and sha-256 sums
@@ -102,7 +105,7 @@
       <dependency>
         <groupId>com.apollocurrency</groupId>
         <artifactId>apl-bom-ext</artifactId>
-        <version>1.1.0</version>
+        <version>1.0.0</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -132,6 +135,11 @@
               </exclusions>
             </dependency>
           </dependencies>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>build-helper-maven-plugin</artifactId>
+          <version>${build-helper-maven-plugin.version}</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -175,11 +183,6 @@
           <version>1.8</version>
         </plugin>
         <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-shade-plugin</artifactId>
-          <version>3.2.3</version>
-        </plugin>
-        <plugin>
           <groupId>ca.szc.maven</groupId>
           <artifactId>jsonpath-maven-plugin</artifactId>
           <version>1.2.0</version>
@@ -188,24 +191,6 @@
     </pluginManagement>
 
     <plugins>
-      <plugin>
-        <artifactId>exec-maven-plugin</artifactId>
-        <groupId>org.codehaus.mojo</groupId>
-        <version>1.6.0</version>
-        <inherited>false</inherited>
-        <!--<executions>
-           <execution>
-               <id>Version Calculation</id>
-               <phase>validate</phase>
-               <goals>
-                   <goal>exec</goal>
-               </goals>
-               <configuration>
-                  <executable>${basedir}/git-sha-1.sh</executable>
-                </configuration>
-            </execution>
-        </executions>-->
-      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-clean-plugin</artifactId>

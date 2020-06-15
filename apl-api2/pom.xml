@@ -22,7 +22,6 @@
     <slf4j-version>1.6.3</slf4j-version>
     <junit-version>4.8.1</junit-version>
     <servlet-api-version>2.5</servlet-api-version>
-    <build-helper-maven-plugin.version>1.9.1</build-helper-maven-plugin.version>
   </properties>
 
   <build>
@@ -35,7 +34,6 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
-        <version>${build-helper-maven-plugin.version}</version>
         <executions>
           <execution>
             <id>add-source</id>
