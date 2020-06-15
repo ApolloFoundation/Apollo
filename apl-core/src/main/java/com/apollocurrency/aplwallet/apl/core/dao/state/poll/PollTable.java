@@ -51,13 +51,13 @@ import java.util.List;
 @Singleton
 @Slf4j
 public class PollTable extends EntityDbTable<Poll> {
-    private static final String FINISH_HEIGHT = "finish_height";
     private static final LongKeyFactory<Poll> POLL_LONG_KEY_FACTORY = new LongKeyFactory<>("id") {
         @Override
         public DbKey newKey(Poll poll) {
             return poll.getDbKey() == null ? newKey(poll.getId()) : poll.getDbKey();
         }
     };
+    private static final String FINISH_HEIGHT = "finish_height";
 
     @Inject
     public PollTable() {
@@ -109,16 +109,16 @@ public class PollTable extends EntityDbTable<Poll> {
 
     public DbIterator<Poll> getPollsFinishingBelowHeight(int height, int from, int to) {
         // select all Polls where 'finish_height' is LESS (DbClause.Op.LT) then specified height value
-        return getManyBy(new DbClause.IntClause("finish_height", DbClause.Op.LT, height), from, to);
+        return getManyBy(new DbClause.IntClause(FINISH_HEIGHT, DbClause.Op.LT, height), from, to);
     }
 
     public DbIterator<Poll> getPollsFinishingAtHeight(int height) {
         // EXACT matching to Poll finish height
-        return getManyBy(new DbClause.IntClause("finish_height", height), 0, Integer.MAX_VALUE);
+        return getManyBy(new DbClause.IntClause(FINISH_HEIGHT, height), 0, Integer.MAX_VALUE);
     }
 
     public DbIterator<Poll> getActivePolls(int from, int to, int height) {
-        return getManyBy(new DbClause.IntClause("finish_height", DbClause.Op.GT, height), from, to);
+        return getManyBy(new DbClause.IntClause(FINISH_HEIGHT, DbClause.Op.GT, height), from, to);
     }
 
     public DbIterator<Poll> getPollsByAccount(
@@ -131,9 +131,9 @@ public class PollTable extends EntityDbTable<Poll> {
     ) {
         DbClause dbClause = new DbClause.LongClause("account_id", accountId);
         if (finishedOnly) {
-            dbClause = dbClause.and(new DbClause.IntClause("finish_height", DbClause.Op.LTE, height));
+            dbClause = dbClause.and(new DbClause.IntClause(FINISH_HEIGHT, DbClause.Op.LTE, height));
         } else if (!includeFinished) {
-            dbClause = dbClause.and(new DbClause.IntClause("finish_height", DbClause.Op.GT, height));
+            dbClause = dbClause.and(new DbClause.IntClause(FINISH_HEIGHT, DbClause.Op.GT, height));
         }
         return getManyBy(dbClause, from, to);
     }
@@ -179,7 +179,7 @@ public class PollTable extends EntityDbTable<Poll> {
     }
 
     public DbIterator<Poll> searchPolls(String query, boolean includeFinished, int from, int to, int height) {
-        DbClause dbClause = includeFinished ? DbClause.EMPTY_CLAUSE : new DbClause.IntClause("finish_height",
+        DbClause dbClause = includeFinished ? DbClause.EMPTY_CLAUSE : new DbClause.IntClause(FINISH_HEIGHT,
             DbClause.Op.GT, height);
         return search(query, dbClause, from, to, " ORDER BY ft.score DESC, poll.height DESC, poll.db_id DESC ");
     }
@@ -203,5 +203,4 @@ public class PollTable extends EntityDbTable<Poll> {
     public DbKey getDbKey(final Poll poll) {
         return POLL_LONG_KEY_FACTORY.newKey(poll);
     }
-
 }
