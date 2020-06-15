@@ -248,11 +248,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  count:
-                    type: integer
-                    format: int64
+                $ref: '#/components/schemas/CountResponse'
         500:
           $ref: '#/components/responses/ServerError'
   /state/unconfirmed:
@@ -897,6 +893,13 @@ components:
                 as irreversible after 721 confirmations and finally a transaction is permanent if it's confirmed 1440 times.
               enum: [unconfirmed, confirmed, irreversible, permanent]
               example: confirmed
+    CountResponse:
+      type: object
+      properties:
+          count:
+            type: integer
+            format: int64
+            example: 345
     EmptyResponse:
       type: object
       properties:

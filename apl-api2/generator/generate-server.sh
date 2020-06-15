@@ -1,4 +1,7 @@
 #!/bin/bash
+#
+# Generate API server sources using the swagger-generator-cli
+#
 BASE_DIR=generator
 GENERATOR_VERSION=3.0.19
 GENERATOR_REMOTE_JAR=https://repo1.maven.org/maven2/io/swagger/codegen/v3/swagger-codegen-cli/${GENERATOR_VERSION}/swagger-codegen-cli-${GENERATOR_VERSION}.jar

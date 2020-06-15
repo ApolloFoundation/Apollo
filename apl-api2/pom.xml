@@ -22,6 +22,7 @@
     <slf4j-version>1.6.3</slf4j-version>
     <junit-version>4.8.1</junit-version>
     <servlet-api-version>2.5</servlet-api-version>
+    <swagger-codegen-maven-plugin.version>3.0.20</swagger-codegen-maven-plugin.version>
   </properties>
 
   <build>
@@ -51,31 +52,72 @@
         </executions>
       </plugin>
       <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <version>${exec-maven-plugin.version}</version>
-        <executions>
-          <execution>
-            <phase>generate-sources</phase>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <executable>${project.basedir}/generate-server.sh</executable>
-        </configuration>
-      </plugin>
-      <plugin>
         <artifactId>maven-clean-plugin</artifactId>
         <version>${maven-clean-plugin.version}</version>
-        <configuration>
-          <filesets>
-            <fileset>
-              <directory>src/gen/java</directory>
-            </fileset>
-          </filesets>
-        </configuration>
+        <executions>
+          <execution>
+            <id>clean-webapp</id>
+            <phase>process-sources</phase>
+            <goals>
+              <goal>clean</goal>
+            </goals>
+            <configuration>
+              <filesets>
+                <fileset>
+                  <directory>src/main/webapp</directory>
+                </fileset>
+                <fileset>
+                  <directory>src/genimpl</directory>
+                </fileset>
+              </filesets>
+            </configuration>
+          </execution>
+          <execution>
+            <id>clean-source</id>
+            <phase>clean</phase>
+            <goals>
+              <goal>clean</goal>
+            </goals>
+            <configuration>
+              <filesets>
+                <fileset>
+                  <directory>src/gen/java</directory>
+                </fileset>
+              </filesets>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>io.swagger.codegen.v3</groupId>
+        <artifactId>swagger-codegen-maven-plugin</artifactId>
+        <version>${swagger-codegen-maven-plugin.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <inputSpec>${project.basedir}/src/main/resources/yaml/apollo-api-v2.yaml</inputSpec>
+              <output>${project.basedir}</output>
+              <language>jaxrs-resteasy</language>
+              <artifactId>apl-api2</artifactId>
+              <groupId>com.apollocurrency</groupId>
+              <apiPackage>com.apollocurrency.aplwallet.api.v2</apiPackage>
+              <modelPackage>com.apollocurrency.aplwallet.api.v2.model</modelPackage>
+              <invokerPackage>com.apollocurrency.aplwallet.api</invokerPackage>
+              <skipOverwrite>true</skipOverwrite>
+              <generateApiTests>true</generateApiTests>
+              <supportingFilesToGenerate>ApiException.java,NotFoundException.java</supportingFilesToGenerate>
+              <configOptions>
+                <sourceFolder>src/gen/java</sourceFolder>
+                <implFolder>src/genimpl/java</implFolder>
+                <hideGenerationTimestamp>true</hideGenerationTimestamp>
+                <fullJavaUtil>true</fullJavaUtil>
+              </configOptions>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
@@ -88,9 +130,9 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>io.swagger.core.v3</groupId>
+      <groupId>io.swagger</groupId>
       <artifactId>swagger-annotations</artifactId>
-      <version>${swagger-core-version}</version>
+      <version>1.6.1</version>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -161,34 +203,12 @@
       <version>${junit-version}</version>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.testng</groupId>
-      <artifactId>testng</artifactId>
-      <version>6.8.8</version>
-      <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <artifactId>junit</artifactId>
-          <groupId>junit</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>snakeyaml</artifactId>
-          <groupId>org.yaml</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>bsh</artifactId>
-          <groupId>org.beanshell</groupId>
-        </exclusion>
-      </exclusions>
-    </dependency>
     <!-- Bean Validation API support -->
     <dependency>
       <groupId>javax.validation</groupId>
       <artifactId>validation-api</artifactId>
-      <version>1.1.0.Final</version>
       <scope>provided</scope>
     </dependency>
-
   </dependencies>
 
 </project>
