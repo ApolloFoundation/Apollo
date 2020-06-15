@@ -4,15 +4,13 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
 import java.util.stream.Stream;
 
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.exchange.ExchangeRequestTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
@@ -21,9 +19,11 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.exchange.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.impl.ExchangeRequestServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeBuyAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeSell;
+import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.ExchangeRequestTestData;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -34,6 +34,7 @@ class ExchangeRequestServiceTest {
 
     ExchangeRequestService service;
     ExchangeRequestTestData td;
+    BlockTestData blockTestData;
     @Mock
     private ExchangeRequestTable table;
     @Mock
@@ -44,6 +45,7 @@ class ExchangeRequestServiceTest {
     @BeforeEach
     void setUp() {
         td = new ExchangeRequestTestData();
+        blockTestData = new BlockTestData();
         service = new ExchangeRequestServiceImpl(table, blockChainInfoService, exchangeRequestIteratorToStreamConverter);
     }
 
@@ -123,16 +125,13 @@ class ExchangeRequestServiceTest {
         verify(exchangeRequestIteratorToStreamConverter).apply(dbIt);
     }
 
-    @Disabled
+    @Test
     void getAccountCurrencyExchangeRequestsStream() {
         //GIVEN
         DbIterator<ExchangeRequest> dbIt = mock(DbIterator.class);
         doReturn(dbIt).when(table).getManyBy(
-//            new DbClause.LongClause("account_id", td.EXCHANGE_REQUEST_6.getAccountId())
-//                .and(new DbClause.LongClause("currency_id", td.EXCHANGE_REQUEST_6.getCurrencyId())),
-            any(DbClause.LongClause.class),
+            any(),
             anyInt(), anyInt());
-//            0, Integer.MAX_VALUE);
         Stream<ExchangeRequest> expected = Stream.of(td.EXCHANGE_REQUEST_6, td.EXCHANGE_REQUEST_5, td.EXCHANGE_REQUEST_4);
         doReturn(expected).when(exchangeRequestIteratorToStreamConverter).apply(dbIt);
 
@@ -144,17 +143,34 @@ class ExchangeRequestServiceTest {
 
         //THEN
         verify(table).getManyBy(
-//            any(DbClause.LongClause.class).and(any(DbClause.LongClause.class)),
-            any(DbClause.LongClause.class),
+            any(),
             anyInt(), anyInt());
         verify(exchangeRequestIteratorToStreamConverter).apply(dbIt);
     }
 
     @Test
     void addExchangeRequest() {
+        Transaction transaction = mock(Transaction.class);
+        MonetarySystemExchangeBuyAttachment attachment = mock(MonetarySystemExchangeBuyAttachment.class);
+        doReturn(blockTestData.BLOCK_10).when(blockChainInfoService).getLastBlock();
+
+        //WHEN
+        service.addExchangeRequest(transaction, attachment);
+
+        //THEN
+        verify(table).insert(any(ExchangeRequest.class));
     }
 
     @Test
     void testAddExchangeRequest() {
+        Transaction transaction = mock(Transaction.class);
+        MonetarySystemExchangeSell attachment = mock(MonetarySystemExchangeSell.class);
+        doReturn(blockTestData.BLOCK_10).when(blockChainInfoService).getLastBlock();
+
+        //WHEN
+        service.addExchangeRequest(transaction, attachment);
+
+        //THEN
+        verify(table).insert(any(ExchangeRequest.class));
     }
 }
