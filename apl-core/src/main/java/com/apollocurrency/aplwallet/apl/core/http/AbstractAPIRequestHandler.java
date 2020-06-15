@@ -42,6 +42,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountL
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPropertyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.impl.AskOrderServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.impl.BidOrderServiceImpl;
@@ -100,6 +101,7 @@ public abstract class AbstractAPIRequestHandler {
     private AccountPropertyService accountPropertyService;
     private PeersService peers;
     private AccountControlPhasingService accountControlPhasingService;
+    private CurrencyTransferService currencyTransferService;
 
     public AbstractAPIRequestHandler(APITag[] apiTags, String... parameters) {
         this(null, apiTags, parameters);
@@ -229,6 +231,13 @@ public abstract class AbstractAPIRequestHandler {
             accountControlPhasingService = CDI.current().select(AccountControlPhasingService.class).get();
         }
         return accountControlPhasingService;
+    }
+
+    public CurrencyTransferService lookupCurrencyTransferService() {
+        if (currencyTransferService == null) {
+            currencyTransferService = CDI.current().select(CurrencyTransferService.class).get();
+        }
+        return currencyTransferService;
     }
 
     public final List<String> getParameters() {

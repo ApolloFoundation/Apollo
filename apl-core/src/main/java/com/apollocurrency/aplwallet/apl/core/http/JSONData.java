@@ -53,6 +53,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountPropert
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.entity.state.alias.Alias;
 import com.apollocurrency.aplwallet.apl.core.entity.state.alias.AliasOffer;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSFeedback;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSPublicFeedback;
@@ -69,7 +70,6 @@ import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyExchangeOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyFounder;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
@@ -89,6 +89,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.TradeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountLeaseService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
 import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetDelete;
@@ -130,6 +131,7 @@ public final class JSONData {
     private static AccountAssetService accountAssetService = CDI.current().select(AccountAssetService.class).get();
     private static DGSService dgsService = CDI.current().select(DGSService.class).get();
     private static AssetService assetService = CDI.current().select(AssetService.class).get();
+    private static CurrencyTransferService currencyTransferService = CDI.current().select(CurrencyTransferService.class).get();
 
     private JSONData() {
     } // never
@@ -253,7 +255,7 @@ public final class JSONData {
         json.put("decimals", currency.getDecimals());
         if (includeCounts) {
             json.put("numberOfExchanges", Exchange.getExchangeCount(currency.getId()));
-            json.put("numberOfTransfers", CurrencyTransfer.getTransferCount(currency.getId()));
+            json.put("numberOfTransfers", currencyTransferService.getTransferCount(currency.getId()));
         }
         JSONArray types = new JSONArray();
         for (CurrencyType type : CurrencyType.values()) {

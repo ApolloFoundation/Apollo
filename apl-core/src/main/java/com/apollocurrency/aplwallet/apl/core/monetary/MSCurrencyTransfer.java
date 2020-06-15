@@ -85,7 +85,7 @@ class MSCurrencyTransfer extends MonetarySystem {
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         MonetarySystemCurrencyTransfer attachment = (MonetarySystemCurrencyTransfer) transaction.getAttachment();
         Currency.transferCurrency(getLedgerEvent(), transaction.getId(), senderAccount, recipientAccount, attachment.getCurrencyId(), attachment.getUnits());
-        CurrencyTransfer.addTransfer(transaction, attachment);
+        lookupCurrencyTransferService().addTransfer(transaction, attachment);
     }
 
     @Override
