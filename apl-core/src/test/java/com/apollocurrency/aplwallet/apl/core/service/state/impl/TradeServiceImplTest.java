@@ -46,7 +46,6 @@ class TradeServiceImplTest {
     @Mock
     private TradeTable tradeTable;
 
-    @Mock
     private TradeService tradeService;
 
     @BeforeEach
