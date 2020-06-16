@@ -21,7 +21,6 @@
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
-import com.apollocurrency.aplwallet.apl.core.app.Poll;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.Vote;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
@@ -72,7 +71,7 @@ public final class GetState extends AbstractAPIRequestHandler {
             response.put("numberOfGoods", service.getGoodsCount());
             response.put("numberOfPurchases", service.getPurchaseCount());
             response.put("numberOfTags", service.getTagsCount());
-            response.put("numberOfPolls", Poll.getCount());
+            response.put("numberOfPolls", pollService.getCount());
             response.put("numberOfVotes", Vote.getCount());
             response.put("numberOfPrunableMessages", prunableMessageService.getCount());
             response.put("numberOfTaggedData", taggedDataService.getTaggedDataCount());

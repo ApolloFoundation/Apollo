@@ -93,7 +93,7 @@
 <!--        <appender-ref ref="shuffling-file"/>-->
 <!--    </logger>-->
 <!--
-    <logger name="com.apollocurrency.aplwallet.apl.core.app.Poll" level="trace" additivity="false">
+    <logger name="com.apollocurrency.aplwallet.apl.core.service.state.PollService" level="trace" additivity="false">
         <appender-ref ref="poll-file"/>
     </logger>
     <logger name="com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl" level="trace" additivity="false">
