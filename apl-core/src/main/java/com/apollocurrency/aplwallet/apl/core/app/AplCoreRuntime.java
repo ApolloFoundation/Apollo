@@ -192,9 +192,7 @@ public class AplCoreRuntime {
 
     public void stopMinter() {
         if (mintworker != null) {
-            LOG.debug("Stopping MINT Worker...");
             mintworker.stop();
-            LOG.debug("Stopped MINT Worker");
         }
     }
 
