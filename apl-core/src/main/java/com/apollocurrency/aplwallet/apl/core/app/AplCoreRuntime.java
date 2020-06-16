@@ -183,6 +183,7 @@ public class AplCoreRuntime {
     }
 
     public void startMinter() {
+        LOG.debug("Starting MINT Worker...");
         mintworker = new MintWorker(propertiesHolder, blockchainConfig);
         mintworkerThread = new Thread(mintworker);
         mintworkerThread.setDaemon(true);
@@ -191,7 +192,9 @@ public class AplCoreRuntime {
 
     public void stopMinter() {
         if (mintworker != null) {
+            LOG.debug("Stopping MINT Worker...");
             mintworker.stop();
+            LOG.debug("Stopped MINT Worker");
         }
     }
 

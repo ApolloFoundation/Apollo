@@ -25,6 +25,7 @@ public class ShutdownHook extends Thread {
     public void run() {
 
         try {
+            aplCoreRuntime.stopMinter();
             aplCoreRuntime.shutdown();
         } catch (Exception ex) {
             LOG.error(ex.getMessage(), ex);
