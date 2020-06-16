@@ -29,4 +29,6 @@ public interface BlockChainInfoService {
     DbIterator<Block> getBlocks(long accountId, int from, int to, int timestamp);
 
     Stream<Block> getBlocksByAccountStream(long accountId, int from, int to, int timestamp);
+
+    int getLastBlockTimestamp();
 }
