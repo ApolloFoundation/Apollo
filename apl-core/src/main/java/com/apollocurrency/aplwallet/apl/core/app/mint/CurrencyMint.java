@@ -53,6 +53,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 /**
  * Manages currency proof of work minting
  */
+@Deprecated
 public final class CurrencyMint {
     private static final Logger LOG = getLogger(CurrencyMint.class);
     private static final LinkKeyFactory<CurrencyMint> currencyMintDbKeyFactory = new LinkKeyFactory<CurrencyMint>("currency_id", "account_id") {
@@ -76,7 +77,7 @@ public final class CurrencyMint {
         }
 
     };
-    private static final Listeners<Mint, Event> listeners = new Listeners<>();
+//    private static final Listeners<Mint, Event> listeners = new Listeners<>();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static AccountCurrencyService accountCurrencyService;
     private final DbKey dbKey;
@@ -106,17 +107,23 @@ public final class CurrencyMint {
         return accountCurrencyService;
     }
 
-    public static boolean addListener(Listener<Mint> listener, Event eventType) {
+/*    public static boolean addListener(Listener<Mint> listener, Event eventType) {
         return listeners.addListener(listener, eventType);
     }
 
     public static boolean removeListener(Listener<Mint> listener, Event eventType) {
         return listeners.removeListener(listener, eventType);
-    }
+    }*/
 
+    /**
+     * @deprecated
+     */
     public static void init() {
     }
 
+    /**
+     * @deprecated
+     */
     public static void mintCurrency(LedgerEvent event, long eventId, final Account account,
                                     final MonetarySystemCurrencyMinting attachment) {
         CurrencyMint currencyMint = currencyMintTable.get(currencyMintDbKeyFactory.newKey(attachment.getCurrencyId(), account.getId()));
@@ -134,12 +141,15 @@ public final class CurrencyMint {
             long units = Math.min(attachment.getUnits(), currency.getMaxSupply() - currency.getCurrentSupply());
             lookupAccountCurrencyService().addToCurrencyAndUnconfirmedCurrencyUnits(account, event, eventId, currency.getId(), units);
             currency.increaseSupply(units);
-            listeners.notify(new Mint(account.getId(), currency.getId(), units), Event.CURRENCY_MINT);
+//            listeners.notify(new Mint(account.getId(), currency.getId(), units), Event.CURRENCY_MINT);
         } else {
             LOG.debug("Currency mint hash no longer meets target %s", attachment.getJSONObject().toJSONString());
         }
     }
 
+    /**
+     * @deprecated
+     */
     public static long getCounter(long currencyId, long accountId) {
         CurrencyMint currencyMint = currencyMintTable.get(currencyMintDbKeyFactory.newKey(currencyId, accountId));
         if (currencyMint != null) {
@@ -149,6 +159,9 @@ public final class CurrencyMint {
         }
     }
 
+    /**
+     * @deprecated
+     */
     public static void deleteCurrency(Currency currency) {
         List<CurrencyMint> currencyMints = new ArrayList<>();
         try (DbIterator<CurrencyMint> mints = currencyMintTable.getManyBy(new DbClause.LongClause("currency_id", currency.getId()), 0, -1)) {
