@@ -30,6 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
+import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetDividendService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.impl.AssetServiceImpl;
@@ -143,6 +144,7 @@ public abstract class TransactionType {
     private static AccountControlPhasingService accountControlPhasingService;
     private static AssetService assetService;
     private static AssetDividendService assetDividendService;
+    private static PollService pollService;
     private static ExchangeRequestService exchangeRequestService;
 
     public TransactionType() {
@@ -254,6 +256,13 @@ public abstract class TransactionType {
             assetDividendService = CDI.current().select(AssetDividendService.class).get();
         }
         return assetDividendService;
+    }
+
+    public static synchronized PollService lookupPollService() {
+        if (pollService == null) {
+            pollService = CDI.current().select(PollService.class).get();
+        }
+        return pollService;
     }
 
     public static synchronized ExchangeRequestService lookupExchangeRequestService() {
