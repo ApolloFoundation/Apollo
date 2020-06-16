@@ -25,6 +25,8 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
+import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteCasting;
 import lombok.extern.slf4j.Slf4j;
 
@@ -36,6 +38,8 @@ import java.sql.SQLException;
 
 @Slf4j
 public final class Vote {
+
+    private static final PollService POLL_SERVICE = CDI.current().select(PollService.class).get();
 
     private static final LongKeyFactory<Vote> voteDbKeyFactory = new LongKeyFactory<Vote>("id") {
         @Override
@@ -62,7 +66,7 @@ public final class Vote {
             super.trim(height);
             try (Connection con = databaseManager.getDataSource().getConnection();
 //                 DbIterator<Poll> polls = Poll.getPollsFinishingAtOrBefore(height, 0, Integer.MAX_VALUE);
-                 DbIterator<Poll> polls = Poll.getPollsFinishingBelowHeight(height, 0, Integer.MAX_VALUE);
+                 DbIterator<Poll> polls = POLL_SERVICE.getPollsFinishingBelowHeight(height, 0, Integer.MAX_VALUE);
                  PreparedStatement pstmt = con.prepareStatement("DELETE FROM vote WHERE poll_id = ?")) {
                 commonTrim(height, false, polls, pstmt);
             } catch (SQLException e) {
@@ -77,7 +81,7 @@ public final class Vote {
                 super.trim(height);
                 try (Connection con = databaseManager.getDataSource().getConnection();
                      // select all polls below or equal height value ('snapshot block' in our case)
-                     DbIterator<Poll> polls = Poll.getPollsFinishingBelowHeight(height, 0, Integer.MAX_VALUE);
+                     DbIterator<Poll> polls = POLL_SERVICE.getPollsFinishingBelowHeight(height, 0, Integer.MAX_VALUE);
                      PreparedStatement pstmt = con.prepareStatement("DELETE FROM vote WHERE poll_id = ?")) {
                     commonTrim(height, true, polls, pstmt);
                 } catch (SQLException e) {

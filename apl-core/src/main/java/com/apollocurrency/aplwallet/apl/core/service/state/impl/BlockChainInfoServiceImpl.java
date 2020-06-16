@@ -96,4 +96,9 @@ public class BlockChainInfoServiceImpl implements BlockChainInfoService {
         return blockchain.getBlocksByAccountStream(accountId, from, to, timestamp);
     }
 
+    @Override
+    public int getLastBlockTimestamp() {
+        return lookupBlockchain().getLastBlockTimestamp();
+    }
+
 }
