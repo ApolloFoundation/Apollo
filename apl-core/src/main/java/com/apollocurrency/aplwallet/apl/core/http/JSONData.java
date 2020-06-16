@@ -29,8 +29,8 @@ import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.FundingMonitor;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisAccounts;
-import com.apollocurrency.aplwallet.apl.core.app.Poll;
-import com.apollocurrency.aplwallet.apl.core.app.PollOptionResult;
+import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
+import com.apollocurrency.aplwallet.apl.core.entity.state.poll.PollOptionResult;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffler;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
@@ -79,6 +79,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetTransferService;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetDelete;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetDividend;
+import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.peer.Hallmark;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
@@ -131,6 +132,7 @@ public final class JSONData {
     private static AccountAssetService accountAssetService = CDI.current().select(AccountAssetService.class).get();
     private static DGSService dgsService = CDI.current().select(DGSService.class).get();
     private static AssetService assetService = CDI.current().select(AssetService.class).get();
+    private static final PollService POLL_SERVICE = CDI.current().select(PollService.class).get();
     private static AssetTransferService assetTransferService = CDI.current().select(AssetTransferService.class).get();
 
     private JSONData() {
@@ -719,7 +721,7 @@ public final class JSONData {
         json.put("minRangeValue", poll.getMinRangeValue());
         json.put("maxRangeValue", poll.getMaxRangeValue());
         putVoteWeighting(json, poll.getVoteWeighting());
-        json.put("finished", poll.isFinished());
+        json.put("finished", POLL_SERVICE.isFinished(poll.getFinishHeight()));
         json.put("timestamp", poll.getTimestamp());
         return json;
     }
@@ -740,7 +742,7 @@ public final class JSONData {
             }
         }
         putVoteWeighting(json, voteWeighting);
-        json.put("finished", poll.isFinished());
+        json.put("finished", POLL_SERVICE.isFinished(poll.getFinishHeight()));
         JSONArray options = new JSONArray();
         Collections.addAll(options, poll.getOptions());
         json.put("options", options);
@@ -1363,8 +1365,7 @@ public final class JSONData {
             }
 
         }
-        json.put(name, accountId);
-
+        json.put(name, Long.toUnsignedString(accountId));
         json.put(name + "RS", Convert2.rsAccount(accountId));
     }
 

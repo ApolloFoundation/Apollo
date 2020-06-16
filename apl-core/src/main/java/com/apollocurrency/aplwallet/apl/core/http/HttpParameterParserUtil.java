@@ -23,7 +23,8 @@ package com.apollocurrency.aplwallet.apl.core.http;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
-import com.apollocurrency.aplwallet.apl.core.app.Poll;
+import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
+import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -137,6 +138,7 @@ public final class HttpParameterParserUtil {
     private static AccountService accountService;
     private static AccountPublicKeyService accountPublicKeyService;
     private static AssetService assetService;
+    private static PollService POLL_SERVICE;
 
     private HttpParameterParserUtil() {
     } // never
@@ -363,7 +365,7 @@ public final class HttpParameterParserUtil {
     }
 
     public static Poll getPoll(HttpServletRequest req) throws ParameterException {
-        Poll poll = Poll.getPoll(getUnsignedLong(req, "poll", true));
+        Poll poll = lookupPollService().getPoll(getUnsignedLong(req, "poll", true));
         if (poll == null) {
             throw new ParameterException(UNKNOWN_POLL);
         }
@@ -1181,18 +1183,18 @@ public final class HttpParameterParserUtil {
         return accountService;
     }
 
-    private static AccountPublicKeyService lookupAccountPublicKeyService() {
-        if (accountPublicKeyService == null) {
-            accountPublicKeyService = CDI.current().select(AccountPublicKeyService.class).get();
-        }
-        return accountPublicKeyService;
-    }
-
     private static AssetService lookupAssetService() {
         if (assetService == null) {
             assetService = CDI.current().select(AssetService.class).get();
         }
         return assetService;
+    }
+
+    private static PollService lookupPollService() {
+        if (POLL_SERVICE == null) {
+            POLL_SERVICE = CDI.current().select(PollService.class).get();
+        }
+        return POLL_SERVICE;
     }
 
     public static class PrivateTransactionsAPIData {
