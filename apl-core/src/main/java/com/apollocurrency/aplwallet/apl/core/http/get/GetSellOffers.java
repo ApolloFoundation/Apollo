@@ -20,15 +20,17 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionType.lookupCurrencyExchangeOfferFacade;
+
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencySellOffer;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -63,11 +65,14 @@ public final class GetSellOffers extends AbstractAPIRequestHandler {
         DbIterator<CurrencySellOffer> offers = null;
         try {
             if (accountId == 0) {
-                offers = CurrencySellOffer.getCurrencyOffers(currencyId, availableOnly, firstIndex, lastIndex);
+                offers = lookupCurrencyExchangeOfferFacade().getCurrencySellOfferService()
+                    .getCurrencyOffers(currencyId, availableOnly, firstIndex, lastIndex);
             } else if (currencyId == 0) {
-                offers = CurrencySellOffer.getAccountOffers(accountId, availableOnly, firstIndex, lastIndex);
+                offers = lookupCurrencyExchangeOfferFacade().getCurrencySellOfferService()
+                    .getAccountOffers(accountId, availableOnly, firstIndex, lastIndex);
             } else {
-                CurrencySellOffer offer = CurrencySellOffer.getOffer(currencyId, accountId);
+                CurrencySellOffer offer = lookupCurrencyExchangeOfferFacade().getCurrencySellOfferService()
+                    .getOffer(currencyId, accountId);
                 if (offer != null) {
                     offerData.add(JSONData.offer(offer));
                 }

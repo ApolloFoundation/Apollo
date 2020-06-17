@@ -35,10 +35,14 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+@Deprecated
 public final class CurrencyBuyOffer extends CurrencyExchangeOffer {
     private static final BlockChainInfoService BLOCK_CHAIN_INFO_SERVICE =
         CDI.current().select(BlockChainInfoService.class).get();
 
+    /**
+     * @deprecated
+     */
     private static final LongKeyFactory<CurrencyBuyOffer> buyOfferDbKeyFactory = new LongKeyFactory<CurrencyBuyOffer>("id") {
 
         @Override
@@ -48,6 +52,9 @@ public final class CurrencyBuyOffer extends CurrencyExchangeOffer {
 
     };
 
+    /**
+     * @deprecated
+     */
     private static final VersionedDeletableEntityDbTable<CurrencyBuyOffer> buyOfferTable = new VersionedDeletableEntityDbTable<CurrencyBuyOffer>("buy_offer", buyOfferDbKeyFactory) {
 
         @Override
@@ -75,22 +82,37 @@ public final class CurrencyBuyOffer extends CurrencyExchangeOffer {
         this.dbKey = dbKey;
     }
 
+    /**
+     * @deprecated
+     */
     public static int getCount() {
         return buyOfferTable.getCount();
     }
 
+    /**
+     * @deprecated
+     */
     public static CurrencyBuyOffer getOffer(long offerId) {
         return buyOfferTable.get(buyOfferDbKeyFactory.newKey(offerId));
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<CurrencyBuyOffer> getAll(int from, int to) {
         return buyOfferTable.getAll(from, to);
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<CurrencyBuyOffer> getOffers(Currency currency, int from, int to) {
         return getCurrencyOffers(currency.getId(), false, from, to);
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<CurrencyBuyOffer> getCurrencyOffers(long currencyId, boolean availableOnly, int from, int to) {
         DbClause dbClause = new DbClause.LongClause("currency_id", currencyId);
         if (availableOnly) {
@@ -99,6 +121,9 @@ public final class CurrencyBuyOffer extends CurrencyExchangeOffer {
         return buyOfferTable.getManyBy(dbClause, from, to, " ORDER BY rate DESC, creation_height ASC, transaction_height ASC, transaction_index ASC ");
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<CurrencyBuyOffer> getAccountOffers(long accountId, boolean availableOnly, int from, int to) {
         DbClause dbClause = new DbClause.LongClause("account_id", accountId);
         if (availableOnly) {
@@ -107,49 +132,82 @@ public final class CurrencyBuyOffer extends CurrencyExchangeOffer {
         return buyOfferTable.getManyBy(dbClause, from, to, " ORDER BY rate DESC, creation_height ASC, transaction_height ASC, transaction_index ASC ");
     }
 
+    /**
+     * @deprecated
+     */
     public static CurrencyBuyOffer getOffer(Currency currency, Account account) {
         return getOffer(currency.getId(), account.getId());
     }
 
+    /**
+     * @deprecated
+     */
     public static CurrencyBuyOffer getOffer(final long currencyId, final long accountId) {
         return buyOfferTable.getBy(new DbClause.LongClause("currency_id", currencyId).and(new DbClause.LongClause("account_id", accountId)));
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<CurrencyBuyOffer> getOffers(DbClause dbClause, int from, int to) {
         return buyOfferTable.getManyBy(dbClause, from, to);
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<CurrencyBuyOffer> getOffers(DbClause dbClause, int from, int to, String sort) {
         return buyOfferTable.getManyBy(dbClause, from, to, sort);
     }
 
+    /**
+     * @deprecated
+     */
     static void addOffer(Transaction transaction, MonetarySystemPublishExchangeOffer attachment) {
         buyOfferTable.insert(new CurrencyBuyOffer(transaction, attachment));
     }
 
+    /**
+     * @deprecated
+     */
     static void remove(CurrencyBuyOffer buyOffer) {
         buyOfferTable.deleteAtHeight(buyOffer, BLOCK_CHAIN_INFO_SERVICE.getHeight());
     }
 
+    /**
+     * @deprecated
+     */
     public static void init() {
     }
 
+    /**
+     * @deprecated
+     */
     @Override
     public CurrencySellOffer getCounterOffer() {
         return CurrencySellOffer.getOffer(id);
     }
 
+    /**
+     * @deprecated
+     */
     long increaseSupply(long delta) {
         long excess = super.increaseSupply(delta);
         buyOfferTable.insert(this);
         return excess;
     }
 
+    /**
+     * @deprecated
+     */
     void decreaseLimitAndSupply(long delta) {
         super.decreaseLimitAndSupply(delta);
         buyOfferTable.insert(this);
     }
 
+    /**
+     * @deprecated
+     */
     @Override
     public long getId() {
         return super.getId();

@@ -5,8 +5,12 @@
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -16,7 +20,6 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendixV2;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
-import com.apollocurrency.aplwallet.apl.core.db.DbConfig;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
@@ -24,7 +27,6 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -33,21 +35,26 @@ import javax.servlet.http.HttpServletRequest;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
 
 @EnableWeld
-//TODO fix this tasks.
-@Disabled
 class CreateTransactionTest {
 
-    private BlockchainImpl blockchain = Mockito.mock(BlockchainImpl.class);
-    private TimeServiceImpl timeService = Mockito.mock(TimeServiceImpl.class);
+    BlockchainConfig blockchainConfig = Mockito.mock(BlockchainConfig.class);
+    private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
+    private Blockchain blockchain = Mockito.mock(Blockchain.class);
+    private TimeService timeService = Mockito.mock(TimeService.class);
+    private DatabaseManager databaseManager = Mockito.mock(DatabaseManager.class);
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(DbProperties.class, NtpTime.class,
-        PropertiesHolder.class, BlockchainConfig.class, DbConfig.class,
+        PropertiesHolder.class, DaoConfig.class, JdbiHandleFactory.class,
         TransactionDaoImpl.class, TransactionProcessor.class,
         TransactionalDataSource.class)
-        .addBeans(MockBean.of(blockchain, BlockchainImpl.class))
-        .addBeans(MockBean.of(timeService, TimeServiceImpl.class))
+        .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
+        .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
+        .addBeans(MockBean.of(blockchain, Blockchain.class))
+        .addBeans(MockBean.of(timeService, TimeService.class))
+        .addBeans(MockBean.of(databaseManager, DatabaseManager.class))
         .build();
     private Block block = Mockito.mock(Block.class);
     private int lastBlockHeight = 1000;
@@ -84,7 +91,6 @@ class CreateTransactionTest {
 
         assertEquals(lastBlockHeight + 300, phasingAppendix.getFinishHeight());
         assertEquals(-1, phasingAppendix.getFinishTime());
-
     }
 
     @Test
@@ -95,10 +101,11 @@ class CreateTransactionTest {
     }
 
     @Test
-    void parsePhasingWhenFinishNullZero() {
+    void parsePhasingWhenFinishNullZero() throws Exception {
         HttpServletRequest request = initRequest(String.valueOf(lastBlockHeight + 300), null, "-1");
 
-        assertThrows(ParameterException.class, () -> HttpParameterParserUtil.parsePhasing(request));
+        PhasingAppendixV2 phasingAppendix = HttpParameterParserUtil.parsePhasing(request);
+        assertEquals(-1, phasingAppendix.getFinishTime());
     }
 
     @Test

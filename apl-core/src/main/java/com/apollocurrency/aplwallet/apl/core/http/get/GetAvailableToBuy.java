@@ -20,12 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionType.lookupCurrencyExchangeOfferFacade;
+
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.AvailableOffers;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyExchangeOffer;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
@@ -43,7 +45,7 @@ public final class GetAvailableToBuy extends AbstractAPIRequestHandler {
 
         long currencyId = HttpParameterParserUtil.getUnsignedLong(req, "currency", true);
         long units = HttpParameterParserUtil.getLong(req, "units", 1L, Long.MAX_VALUE, true);
-        CurrencyExchangeOffer.AvailableOffers availableOffers = CurrencyExchangeOffer.getAvailableToBuy(currencyId, units);
+        AvailableOffers availableOffers = lookupCurrencyExchangeOfferFacade().getAvailableToBuy(currencyId, units);
         return JSONData.availableOffers(availableOffers);
     }
 
