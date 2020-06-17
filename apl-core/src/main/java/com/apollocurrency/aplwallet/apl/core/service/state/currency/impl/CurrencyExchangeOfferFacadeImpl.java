@@ -19,13 +19,13 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyBuyOf
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyExchangeOffer;
-import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyBuyOfferService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencySellOfferService;
+import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
 import lombok.extern.slf4j.Slf4j;
 
@@ -41,18 +41,21 @@ public class CurrencyExchangeOfferFacadeImpl implements CurrencyExchangeOfferFac
     private final BlockChainInfoService blockChainInfoService;
     private final AccountService accountService;
     private final AccountCurrencyService accountCurrencyService;
+    private final ExchangeService exchangeService;
 
     @Inject
     public CurrencyExchangeOfferFacadeImpl(CurrencyBuyOfferService currencyBuyOfferService,
                                            CurrencySellOfferService currencySellOfferService,
                                            BlockChainInfoService blockChainInfoService,
                                            AccountService accountService,
-                                           AccountCurrencyService accountCurrencyService) {
+                                           AccountCurrencyService accountCurrencyService,
+                                           ExchangeService exchangeService) {
         this.currencyBuyOfferService = currencyBuyOfferService;
         this.currencySellOfferService = currencySellOfferService;
         this.blockChainInfoService = blockChainInfoService;
         this.accountService = accountService;
         this.accountCurrencyService = accountCurrencyService;
+        this.exchangeService = exchangeService;
     }
 
     @Override
@@ -170,7 +173,7 @@ public class CurrencyExchangeOfferFacadeImpl implements CurrencyExchangeOfferFac
             log.trace("account === 2 exchangeCurrencyForAPL account={}", counterAccount);
 
             // update data in Exchange
-            Exchange.addExchange(transaction, currencyId, asBuyOffer.getId(), account.getId(),
+            exchangeService.addExchange(transaction, currencyId, asBuyOffer.getId(), account.getId(),
                 asBuyOffer.getAccountId(), curUnits, blockChainInfoService.getLastBlock(), asBuyOffer.getRateATM());
         }
         long transactionId = transaction.getId();
@@ -215,7 +218,7 @@ public class CurrencyExchangeOfferFacadeImpl implements CurrencyExchangeOfferFac
             );
             accountCurrencyService.addToCurrencyUnits(counterAccount, LedgerEvent.CURRENCY_EXCHANGE, asSellOffer.getId(), currencyId, -curUnits);
             log.trace("account === 2 exchangeAPLForCurrency account={}", counterAccount);
-            Exchange.addExchange(transaction, currencyId, asSellOffer.getId(), asSellOffer.getAccountId(),
+            exchangeService.addExchange(transaction, currencyId, asSellOffer.getId(), asSellOffer.getAccountId(),
                 account.getId(), curUnits, blockChainInfoService.getLastBlock(), asSellOffer.getRateATM());
         }
         long transactionId = transaction.getId();

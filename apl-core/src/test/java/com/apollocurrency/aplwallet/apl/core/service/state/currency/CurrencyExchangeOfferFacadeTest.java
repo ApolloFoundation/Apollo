@@ -16,6 +16,7 @@ import static org.mockito.Mockito.verify;
 
 import java.util.List;
 
+import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
@@ -39,6 +40,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurren
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.impl.CurrencyBuyOfferServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.impl.CurrencyExchangeOfferFacadeImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
@@ -93,8 +95,8 @@ class CurrencyExchangeOfferFacadeTest {
     AccountService accountService;
     @Mock
     AccountCurrencyService accountCurrencyService;
-//    @Mock
-//    Blockchain blockchain = mock(BlockchainImpl.class);
+    @Mock
+    ExchangeService exchangeService;
 //    @Mock
 //    BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
 //    @Mock
@@ -118,7 +120,7 @@ class CurrencyExchangeOfferFacadeTest {
         tdBlock = new BlockTestData();
         currencyExchangeOfferFacade = spy(
             new CurrencyExchangeOfferFacadeImpl(
-                currencyBuyOfferService, currencySellOfferService, blockChainInfoService, accountService, accountCurrencyService));
+                currencyBuyOfferService, currencySellOfferService, blockChainInfoService, accountService, accountCurrencyService, exchangeService));
     }
 
     @Test
@@ -236,11 +238,11 @@ class CurrencyExchangeOfferFacadeTest {
             tdBuy.OFFER_3.getCurrencyId(), 0);
     }
 
-    @Disabled // TODO: YL finish when Exchange.addExchange(...) is refactored
+    @Test
     void test_exchangeCurrencyForAPL() {
         //GIVEN
         Transaction tr = mock(Transaction.class);
-        doReturn(tdBuy.OFFER_7.getAccountId()).when(tr).getSenderId();
+//        doReturn(tdBuy.OFFER_7.getAccountId()).when(tr).getSenderId();
         List<CurrencyExchangeOffer> offers = List.of(tdBuy.OFFER_4, tdBuy.OFFER_5, tdBuy.OFFER_6, tdBuy.OFFER_7, tdBuy.OFFER_8);
         doReturn(offers).when(currencyExchangeOfferFacade).getAvailableBuyOffers(
             tdBuy.OFFER_3.getCurrencyId(), 1);
@@ -254,18 +256,19 @@ class CurrencyExchangeOfferFacadeTest {
         currencyExchangeOfferFacade.exchangeCurrencyForAPL(tr, tdAccount.ACC_5, tdBuy.OFFER_3.getCurrencyId(), 1L, 5);
 
         //THEN
-        verify(currencyExchangeOfferFacade).getAvailableBuyOffers(tdBuy.OFFER_3.getCurrencyId(), 0);
-        verify(accountService, times(6))
+        verify(exchangeService, times(5))
+            .addExchange(any(Transaction.class), anyLong(), anyLong(), anyLong(), anyLong(), anyLong(), any(Block.class), anyLong());
+        verify(accountService, times(5))
             .addToBalanceATM(any(Account.class), any(LedgerEvent.class), anyLong(), anyLong());
-        verify(accountCurrencyService, times(6))
+        verify(accountCurrencyService, times(5))
             .addToCurrencyUnits(any(Account.class), any(LedgerEvent.class), anyLong(), anyLong(), anyLong());
-        verify(accountCurrencyService, times(6))
+        verify(accountCurrencyService, times(5))
             .addToUnconfirmedCurrencyUnits(any(Account.class), any(LedgerEvent.class), anyLong(), anyLong(), anyLong());
         verify(currencyBuyOfferService, times(5)).insert(any(CurrencyBuyOffer.class));
         verify(currencySellOfferService, times(5)).insert(any(CurrencySellOffer.class));
     }
 
-    @Disabled // TODO: YL finish when Exchange.addExchange(...) is refactored
+    @Disabled
     void test_exchangeAPLForCurrency() {
         //GIVEN
         Transaction tr = mock(Transaction.class);
@@ -283,13 +286,15 @@ class CurrencyExchangeOfferFacadeTest {
         currencyExchangeOfferFacade.exchangeAPLForCurrency(tr, tdAccount.ACC_5, tdBuy.OFFER_3.getCurrencyId(), 1L, 5);
 
         //THEN
-        verify(currencyExchangeOfferFacade).getAvailableBuyOffers(tdBuy.OFFER_3.getCurrencyId(), 0);
-        verify(accountService, times(6))
+        verify(exchangeService, times(5))
+            .addExchange(any(Transaction.class), anyLong(), anyLong(), anyLong(), anyLong(), anyLong(), any(Block.class), anyLong());
+        verify(accountService, times(5))
             .addToBalanceATM(any(Account.class), any(LedgerEvent.class), anyLong(), anyLong());
-        verify(accountCurrencyService, times(6))
+        verify(accountCurrencyService, times(5))
             .addToCurrencyUnits(any(Account.class), any(LedgerEvent.class), anyLong(), anyLong(), anyLong());
-        verify(accountCurrencyService, times(6))
-            .addToUnconfirmedCurrencyUnits(any(Account.class), any(LedgerEvent.class), anyLong(), anyLong(), anyLong());
+        verify(accountCurrencyService, times(5))
+            .addToCurrencyAndUnconfirmedCurrencyUnits(tdAccount.ACC_5,
+                LedgerEvent.CURRENCY_EXCHANGE, tdSell.OFFER_4.getId(), tdSell.OFFER_3.getCurrencyId(), -1L);
         verify(currencyBuyOfferService, times(5)).insert(any(CurrencyBuyOffer.class));
         verify(currencySellOfferService, times(5)).insert(any(CurrencySellOffer.class));
     }
