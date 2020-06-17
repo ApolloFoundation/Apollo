@@ -65,7 +65,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingVote;
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerHolding;
-import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
+import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyExchangeOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyFounder;
@@ -76,6 +76,7 @@ import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetTransferService;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetDelete;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetDividend;
 import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
@@ -132,6 +133,7 @@ public final class JSONData {
     private static DGSService dgsService = CDI.current().select(DGSService.class).get();
     private static AssetService assetService = CDI.current().select(AssetService.class).get();
     private static final PollService POLL_SERVICE = CDI.current().select(PollService.class).get();
+    private static AssetTransferService assetTransferService = CDI.current().select(AssetTransferService.class).get();
 
     private JSONData() {
     } // never
@@ -227,7 +229,7 @@ public final class JSONData {
         json.put("asset", Long.toUnsignedString(asset.getId()));
         if (includeCounts) {
             json.put("numberOfTrades", TRADE_SERVICE.getTradeCount(asset.getId()));
-            json.put("numberOfTransfers", AssetTransfer.getTransferCount(asset.getId()));
+            json.put("numberOfTransfers", assetTransferService.getTransferCount(asset.getId()));
             json.put("numberOfAccounts", accountAssetService.getCountByAsset(asset.getId()));
         }
         return json;
@@ -965,7 +967,7 @@ public final class JSONData {
         json.put("asset", Long.toUnsignedString(assetTransfer.getAssetId()));
         putAccount(json, "sender", assetTransfer.getSenderId());
         putAccount(json, "recipient", assetTransfer.getRecipientId());
-        json.put("quantityATU", String.valueOf(assetTransfer.getQuantityATU()));
+        json.put("quantityATU", String.valueOf(assetTransfer.getQuantityATM())); //'...ATU' is returned from '...ATM' field
         json.put("height", assetTransfer.getHeight());
         json.put("timestamp", assetTransfer.getTimestamp());
         if (includeAssetInfo) {

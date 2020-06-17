@@ -30,7 +30,6 @@ import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AdminPasswordVerifier;
-import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
@@ -40,6 +39,7 @@ import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetTransferService;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
@@ -104,6 +104,7 @@ public class ServerInfoService {
     private final AccountControlPhasingService accountControlPhasingService;
     private final AssetService assetService;
     private final PollService pollService;
+    private final AssetTransferService assetTransferService;
 
     @Inject
     public ServerInfoService(BlockchainConfig blockchainConfig, Blockchain blockchain,
@@ -124,7 +125,8 @@ public class ServerInfoService {
                              TradeService tradeService,
                              AccountControlPhasingService accountControlPhasingService,
                              AssetService assetService,
-                             PollService pollService
+                             PollService pollService,
+                             AssetTransferService assetTransferService
     ) {
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
         this.blockchain = Objects.requireNonNull(blockchain, "blockchain is NULL");
@@ -148,6 +150,7 @@ public class ServerInfoService {
         this.accountControlPhasingService = Objects.requireNonNull(accountControlPhasingService, "accountControlPhasingService is NULL");
         this.assetService = Objects.requireNonNull(assetService, "assetService is NULL");
         this.pollService = Objects.requireNonNull(pollService, "pollService is NULL");
+        this.assetTransferService = Objects.requireNonNull(assetTransferService, "assetTransferService is NULL");
     }
 
     public ApolloX509Info getX509Info() {
@@ -334,7 +337,7 @@ public class ServerInfoService {
             dto.numberOfAskOrders = askCount;
             dto.numberOfBidOrders = bidCount;
             dto.numberOfTrades = tradeService.getCount();
-            dto.numberOfTransfers = AssetTransfer.getCount();
+            dto.numberOfTransfers = assetTransferService.getCount();
             dto.numberOfCurrencies = Currency.getCount();
             dto.numberOfOffers = CurrencyBuyOffer.getCount();
             dto.numberOfExchangeRequests = ExchangeRequest.getCount();
@@ -353,7 +356,6 @@ public class ServerInfoService {
             dto.numberOfActiveAccountLeases = accountService.getActiveLeaseCount();
             dto.numberOfShufflings = Shuffling.getCount();
             dto.numberOfActiveShufflings = Shuffling.getActiveCount();
-//            dto.numberOfPhasingOnlyAccounts = PhasingOnly.getCount();
             dto.numberOfPhasingOnlyAccounts = accountControlPhasingService.getCount();
         }
         dto.numberOfPeers = peersService.getAllPeers().size();

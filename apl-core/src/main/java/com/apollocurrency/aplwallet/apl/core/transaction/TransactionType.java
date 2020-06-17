@@ -34,6 +34,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetDividendService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.impl.AssetServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetTransferService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
@@ -144,6 +145,7 @@ public abstract class TransactionType {
     private static AssetService assetService;
     private static AssetDividendService assetDividendService;
     private static PollService pollService;
+    private static AssetTransferService assetTransferService;
 
     public TransactionType() {
     }
@@ -262,6 +264,14 @@ public abstract class TransactionType {
         }
         return pollService;
     }
+
+    public static synchronized AssetTransferService lookupAssetTransferService() {
+        if (assetTransferService == null) {
+            assetTransferService = CDI.current().select(AssetTransferService.class).get();
+        }
+        return assetTransferService;
+    }
+
 
     public static TransactionType findTransactionType(byte type, byte subtype) {
         switch (type) {
