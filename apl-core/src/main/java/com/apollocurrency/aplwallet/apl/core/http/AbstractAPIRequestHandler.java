@@ -46,6 +46,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountP
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
+import com.apollocurrency.aplwallet.apl.core.service.state.echange.ExchangeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.impl.AskOrderServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.impl.BidOrderServiceImpl;
@@ -87,6 +88,7 @@ public abstract class AbstractAPIRequestHandler {
     protected AssetService assetService = CDI.current().select(AssetService.class).get();
     protected final PollService pollService = CDI.current().select(PollService.class).get();
     protected final PollOptionResultService pollOptionResultService = CDI.current().select(PollOptionResultService.class).get();
+    protected ExchangeService exchangeService = CDI.current().select(ExchangeService.class).get();
 
     protected TrimService trimService;
     private List<String> parameters;

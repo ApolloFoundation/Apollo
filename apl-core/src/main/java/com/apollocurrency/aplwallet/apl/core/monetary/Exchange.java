@@ -41,9 +41,13 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Deprecated
 public final class Exchange {
 
-    private static final Listeners<Exchange, Event> listeners = new Listeners<>();
+//    private static final Listeners<Exchange, Event> listeners = new Listeners<>();
+    /**
+     * @deprecated
+     */
     private static final LinkKeyFactory<Exchange> exchangeDbKeyFactory = new LinkKeyFactory<Exchange>("transaction_id", "offer_id") {
 
         @Override
@@ -52,6 +56,9 @@ public final class Exchange {
         }
 
     };
+    /**
+     * @deprecated
+     */
     private static final EntityDbTable<Exchange> exchangeTable = new EntityDbTable<Exchange>("exchange", exchangeDbKeyFactory) {
 
         @Override
@@ -137,6 +144,7 @@ public final class Exchange {
         return exchangeTable.getCount();
     }
 
+/*
     public static boolean addListener(Listener<Exchange> listener, Event eventType) {
         return listeners.addListener(listener, eventType);
     }
@@ -152,6 +160,7 @@ public final class Exchange {
     public static boolean removeListener(Listener<Exchange> listener) {
         return listeners.removeListener(listener, Event.EXCHANGE);
     }
+*/
 
     public static DbIterator<Exchange> getCurrencyExchanges(long currencyId, int from, int to) {
         return exchangeTable.getManyBy(new DbClause.LongClause("currency_id", currencyId), from, to);
@@ -233,7 +242,7 @@ public final class Exchange {
                                 Block lastBlock) {
         Exchange exchange = new Exchange(transaction.getId(), currencyId, offer, sellerId, buyerId, units, lastBlock);
         exchangeTable.insert(exchange);
-        listeners.notify(exchange, Event.EXCHANGE);
+//        listeners.notify(exchange, Event.EXCHANGE);
         return exchange;
     }
 
@@ -244,10 +253,13 @@ public final class Exchange {
                                 long rateATM) {
         Exchange exchange = new Exchange(transaction.getId(), currencyId, offerId, sellerId, buyerId, units, lastBlock, rateATM);
         exchangeTable.insert(exchange);
-        listeners.notify(exchange, Event.EXCHANGE);
+//        listeners.notify(exchange, Event.EXCHANGE);
         return exchange;
     }
 
+    /**
+     * @deprecated
+     */
     public static void init() {
     }
 

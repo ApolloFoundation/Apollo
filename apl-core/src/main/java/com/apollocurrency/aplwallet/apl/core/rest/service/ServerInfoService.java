@@ -34,7 +34,6 @@ import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
-import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
@@ -56,6 +55,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountLedger
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
+import com.apollocurrency.aplwallet.apl.core.service.state.echange.ExchangeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.AskOrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.BidOrderService;
@@ -107,6 +107,7 @@ public class ServerInfoService {
     private final PollService pollService;
     private final AssetTransferService assetTransferService;
     private final CurrencyExchangeOfferFacade currencyExchangeOfferFacade;
+    private final ExchangeService exchangeService;
 
     @Inject
     public ServerInfoService(BlockchainConfig blockchainConfig, Blockchain blockchain,
@@ -129,7 +130,8 @@ public class ServerInfoService {
                              AssetService assetService,
                              PollService pollService,
                              AssetTransferService assetTransferService,
-                             CurrencyExchangeOfferFacade currencyExchangeOfferFacade
+                             CurrencyExchangeOfferFacade currencyExchangeOfferFacade,
+                             ExchangeService exchangeService
     ) {
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
         this.blockchain = Objects.requireNonNull(blockchain, "blockchain is NULL");
@@ -155,6 +157,7 @@ public class ServerInfoService {
         this.pollService = Objects.requireNonNull(pollService, "pollService is NULL");
         this.assetTransferService = Objects.requireNonNull(assetTransferService, "assetTransferService is NULL");
         this.currencyExchangeOfferFacade = Objects.requireNonNull(currencyExchangeOfferFacade, "currencyExchangeOfferFacade is NULL");
+        this.exchangeService = Objects.requireNonNull(exchangeService, "exchangeService is NULL");
     }
 
     public ApolloX509Info getX509Info() {
@@ -345,7 +348,7 @@ public class ServerInfoService {
             dto.numberOfCurrencies = Currency.getCount();
             dto.numberOfOffers = currencyExchangeOfferFacade.getCurrencyBuyOfferService().getCount();
             dto.numberOfExchangeRequests = ExchangeRequest.getCount();
-            dto.numberOfExchanges = Exchange.getCount();
+            dto.numberOfExchanges = exchangeService.getCount();
             dto.numberOfCurrencyTransfers = CurrencyTransfer.getCount();
             dto.numberOfAliases = aliasService.getCount();
             dto.numberOfGoods = dgsService.getGoodsCount();
