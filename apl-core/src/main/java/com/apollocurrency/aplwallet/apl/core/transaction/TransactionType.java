@@ -52,6 +52,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountL
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPropertyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
+import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeRequestService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
@@ -148,6 +149,7 @@ public abstract class TransactionType {
     private static PollService pollService;
     private static AssetTransferService assetTransferService;
     private static CurrencyExchangeOfferFacade currencyExchangeOfferFacade;
+    private static ExchangeRequestService exchangeRequestService;
 
     public TransactionType() {
     }
@@ -280,6 +282,13 @@ public abstract class TransactionType {
             currencyExchangeOfferFacade = CDI.current().select(CurrencyExchangeOfferFacade.class).get();
         }
         return currencyExchangeOfferFacade;
+    }
+
+    public static synchronized ExchangeRequestService lookupExchangeRequestService() {
+        if (exchangeRequestService == null) {
+            exchangeRequestService = CDI.current().select(ExchangeRequestService.class).get();
+        }
+        return exchangeRequestService;
     }
 
     public static TransactionType findTransactionType(byte type, byte subtype) {

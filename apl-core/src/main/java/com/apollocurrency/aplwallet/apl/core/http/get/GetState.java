@@ -32,6 +32,7 @@ import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
+import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -65,7 +66,7 @@ public final class GetState extends AbstractAPIRequestHandler {
             response.put("numberOfTransfers", lookupAssetTransferService().getCount());
             response.put("numberOfCurrencies", Currency.getCount());
             response.put("numberOfOffers", lookupCurrencyExchangeOfferFacade().getCurrencyBuyOfferService().getCount());
-            response.put("numberOfExchangeRequests", ExchangeRequest.getCount());
+            response.put("numberOfExchangeRequests", lookupExchangeRequestService().getCount());
             response.put("numberOfExchanges", exchangeService.getCount());
             response.put("numberOfCurrencyTransfers", CurrencyTransfer.getCount());
             response.put("numberOfAliases", aliasService.getCount());
@@ -81,7 +82,6 @@ public final class GetState extends AbstractAPIRequestHandler {
             response.put("numberOfActiveAccountLeases", lookupAccountService().getActiveLeaseCount());
             response.put("numberOfShufflings", Shuffling.getCount());
             response.put("numberOfActiveShufflings", Shuffling.getActiveCount());
-//            response.put("numberOfPhasingOnlyAccounts", PhasingOnly.getCount());
             response.put("numberOfPhasingOnlyAccounts", lookupAccountControlPhasingService().getCount());
         }
         response.put("numberOfPeers", lookupPeersService().getAllPeers().size());

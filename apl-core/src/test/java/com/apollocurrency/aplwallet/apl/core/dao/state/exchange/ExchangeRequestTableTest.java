@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
 import javax.inject.Inject;
+
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -23,8 +24,8 @@ import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
-import com.apollocurrency.aplwallet.apl.core.entity.state.exchange.Exchange;
-import com.apollocurrency.aplwallet.apl.data.ExchangeTestData;
+import com.apollocurrency.aplwallet.apl.core.entity.state.exchange.ExchangeRequest;
+import com.apollocurrency.aplwallet.apl.data.ExchangeRequestTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -40,20 +41,18 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 @Tag("slow")
 @EnableWeld
-class ExchangeTableTest {
+class ExchangeRequestTableTest {
 
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension();
 
     @Inject
-    ExchangeTable table;
-    ExchangeTestData td;
+    ExchangeRequestTable table;
+    ExchangeRequestTestData td;
 
-    Comparator<Exchange> exchangeComparator = Comparator
-        .comparing(Exchange::getDbId)
-        .thenComparing(Exchange::getTransactionId)
-        .thenComparing(Exchange::getCurrencyId)
-        .reversed();
+    Comparator<ExchangeRequest> exchangeRequestComparator = Comparator
+        .comparing(ExchangeRequest::getDbId)
+        .thenComparing(ExchangeRequest::getAccountId).reversed();
 
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
@@ -61,7 +60,7 @@ class ExchangeTableTest {
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-        PropertiesHolder.class, ExchangeTable.class
+        PropertiesHolder.class, ExchangeRequestTable.class
     )
         .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
@@ -74,41 +73,40 @@ class ExchangeTableTest {
 
     @BeforeEach
     void setUp() {
-        td = new ExchangeTestData();
+        td = new ExchangeRequestTestData();
     }
 
     @Test
-    void test_Load() {
-        Exchange exchange = table.get(table.getDbKeyFactory().newKey(td.EXCHANGE_0));
-        assertNotNull(exchange);
-        assertEquals(td.EXCHANGE_0, exchange);
+    void testLoad() {
+        ExchangeRequest result = table.get(table.getDbKeyFactory().newKey(td.EXCHANGE_REQUEST_0));
+        assertNotNull(result);
+        assertEquals(td.EXCHANGE_REQUEST_0, result);
     }
 
     @Test
     void testLoad_returnNull_ifNotExist() {
-        Exchange exchange = table.get(table.getDbKeyFactory().newKey(td.EXCHANGE_NEW));
-        assertNull(exchange);
+        ExchangeRequest result = table.get(table.getDbKeyFactory().newKey(td.EXCHANGE_REQUEST_NEW));
+        assertNull(result);
     }
 
     @Test
-    void testSave_insert_new_entity() {//SQL MERGE -> INSERT
-        Exchange previous = table.get(table.getDbKeyFactory().newKey(td.EXCHANGE_NEW));
+    void testSave_insert_new_entity() {
+        ExchangeRequest previous = table.get(table.getDbKeyFactory().newKey(td.EXCHANGE_REQUEST_NEW));
         assertNull(previous);
 
-        DbUtils.inTransaction(dbExtension, (con) -> table.insert(td.EXCHANGE_NEW));
-        Exchange actual = table.get(table.getDbKeyFactory().newKey(td.EXCHANGE_NEW));
+        DbUtils.inTransaction(dbExtension, (con) -> table.insert(td.EXCHANGE_REQUEST_NEW));
+        ExchangeRequest actual = table.get(table.getDbKeyFactory().newKey(td.EXCHANGE_REQUEST_NEW));
 
         assertNotNull(actual);
         assertTrue(actual.getDbId() != 0);
-        assertEquals(td.EXCHANGE_NEW.getCurrencyId(), actual.getCurrencyId());
-        assertEquals(td.EXCHANGE_NEW.getBlockId(), actual.getBlockId());
+        assertEquals(td.EXCHANGE_REQUEST_NEW.getAccountId(), actual.getAccountId());
+        assertEquals(td.EXCHANGE_REQUEST_NEW.getCurrencyId(), actual.getCurrencyId());
     }
 
     @Test
     void testSave_update_existing_entity() {//SQL MERGE -> UPDATE
-        Exchange previous = table.get(table.getDbKeyFactory().newKey(td.EXCHANGE_1));
+        ExchangeRequest previous = table.get(table.getDbKeyFactory().newKey(td.EXCHANGE_REQUEST_1));
         assertNotNull(previous);
-        previous.setRate(previous.getRate() + 100);
 
         assertThrows(RuntimeException.class, () -> // not permitted by DB constraints
             DbUtils.inTransaction(dbExtension, (con) -> table.insert(previous))
@@ -118,15 +116,11 @@ class ExchangeTableTest {
     @Test
     void testDefaultSort() {
         assertNotNull(table.defaultSort());
-        List<Exchange> expectedAll = td.ALL_EXCHANGE_ORDERED_BY_DBID.stream().sorted(exchangeComparator).collect(Collectors.toList());
-        List<Exchange> actualAll = toList(table.getAll(0, Integer.MAX_VALUE));
+        List<ExchangeRequest> expectedAll = td.ALL_EXCHANGE_REQUEST_ORDERED_BY_DBID.stream()
+            .sorted(exchangeRequestComparator).collect(Collectors.toList());
+        List<ExchangeRequest> actualAll = toList(table.getAll(0, Integer.MAX_VALUE));
         assertEquals(expectedAll, actualAll);
     }
 
-    @Test
-    void testGetAssetCount() {
-        long count = table.getCount();
-        assertEquals(6, count);
-    }
 
 }
