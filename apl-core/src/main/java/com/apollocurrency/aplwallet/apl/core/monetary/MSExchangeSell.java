@@ -67,8 +67,9 @@ class MSExchangeSell extends MonetarySystemExchange {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         MonetarySystemExchangeSell attachment = (MonetarySystemExchangeSell) transaction.getAttachment();
-        ExchangeRequest.addExchangeRequest(transaction, attachment);
-        CurrencyExchangeOffer.exchangeCurrencyForAPL(transaction, senderAccount, attachment.getCurrencyId(), attachment.getRateATM(), attachment.getUnits());
+        lookupExchangeRequestService().addExchangeRequest(transaction, attachment);
+        lookupCurrencyExchangeOfferFacade().exchangeCurrencyForAPL(
+            transaction, senderAccount, attachment.getCurrencyId(), attachment.getRateATM(), attachment.getUnits());
     }
 
 }

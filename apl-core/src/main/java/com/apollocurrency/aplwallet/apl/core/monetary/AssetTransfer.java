@@ -41,6 +41,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+@Deprecated
 public final class AssetTransfer {
 
     private static final Listeners<AssetTransfer, Event> listeners = new Listeners<>();
@@ -98,14 +99,21 @@ public final class AssetTransfer {
         this.height = rs.getInt("height");
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<AssetTransfer> getAllTransfers(int from, int to) {
         return assetTransferTable.getAll(from, to);
     }
 
+    /**
+     * @deprecated
+     */
     public static int getCount() {
         return assetTransferTable.getCount();
     }
 
+/*
     public static boolean addListener(Listener<AssetTransfer> listener, Event eventType) {
         return listeners.addListener(listener, eventType);
     }
@@ -121,11 +129,18 @@ public final class AssetTransfer {
     public static boolean removeListener(Listener<AssetTransfer> listener) {
         return removeListener(listener, Event.ASSET_TRANSFER);
     }
+*/
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<AssetTransfer> getAssetTransfers(long assetId, int from, int to) {
         return assetTransferTable.getManyBy(new DbClause.LongClause("asset_id", assetId), from, to);
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<AssetTransfer> getAccountAssetTransfers(long accountId, int from, int to) {
         Connection con = null;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
@@ -146,6 +161,9 @@ public final class AssetTransfer {
         }
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<AssetTransfer> getAccountAssetTransfers(long accountId, long assetId, int from, int to) {
         Connection con = null;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
@@ -168,10 +186,16 @@ public final class AssetTransfer {
         }
     }
 
+    /**
+     * @deprecated
+     */
     public static int getTransferCount(long assetId) {
         return assetTransferTable.getCount(new DbClause.LongClause("asset_id", assetId));
     }
 
+    /**
+     * @deprecated
+     */
     public static AssetTransfer addAssetTransfer(Transaction transaction, ColoredCoinsAssetTransfer attachment) {
         AssetTransfer assetTransfer = new AssetTransfer(transaction, attachment);
         assetTransferTable.insert(assetTransfer);
@@ -179,6 +203,9 @@ public final class AssetTransfer {
         return assetTransfer;
     }
 
+    /**
+     * @deprecated
+     */
     public static void init(DatabaseManager databaseManagerParam) {
         databaseManager = databaseManagerParam;
     }
