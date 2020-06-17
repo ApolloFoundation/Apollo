@@ -2,7 +2,7 @@
  *  Copyright © 2018-2020 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.service.state.echange.impl;
+package com.apollocurrency.aplwallet.apl.core.service.state.exchange.impl;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -19,7 +19,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.exchange.Exchange;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyExchangeOffer;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
-import com.apollocurrency.aplwallet.apl.core.service.state.echange.ExchangeService;
+import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

@@ -2,7 +2,7 @@
  *  Copyright © 2018-2020 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.service.state.echange;
+package com.apollocurrency.aplwallet.apl.core.service.state.exchange;
 
 import java.util.List;
 import java.util.stream.Stream;

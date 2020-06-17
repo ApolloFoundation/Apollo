@@ -2,7 +2,7 @@
  *  Copyright © 2018-2020 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.service.state.echange;
+package com.apollocurrency.aplwallet.apl.core.service.state.exchange;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -26,7 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.exchange.Exchange;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
-import com.apollocurrency.aplwallet.apl.core.service.state.echange.impl.ExchangeServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.exchange.impl.ExchangeServiceImpl;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.ExchangeTestData;
 import org.junit.jupiter.api.BeforeEach;
