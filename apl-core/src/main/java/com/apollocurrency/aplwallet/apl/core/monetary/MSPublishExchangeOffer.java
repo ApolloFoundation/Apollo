@@ -97,7 +97,7 @@ class MSPublishExchangeOffer extends MonetarySystem {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         MonetarySystemPublishExchangeOffer attachment = (MonetarySystemPublishExchangeOffer) transaction.getAttachment();
-        CurrencyExchangeOffer.publishOffer(transaction, attachment);
+        lookupCurrencyExchangeOfferFacade().publishOffer(transaction, attachment);
     }
 
     @Override

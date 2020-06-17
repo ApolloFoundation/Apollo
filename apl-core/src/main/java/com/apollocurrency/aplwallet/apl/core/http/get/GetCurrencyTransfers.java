@@ -22,12 +22,12 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -61,11 +61,11 @@ public final class GetCurrencyTransfers extends AbstractAPIRequestHandler {
         DbIterator<CurrencyTransfer> transfers = null;
         try {
             if (accountId == 0) {
-                transfers = CurrencyTransfer.getCurrencyTransfers(currencyId, firstIndex, lastIndex);
+                transfers = lookupCurrencyTransferService().getCurrencyTransfers(currencyId, firstIndex, lastIndex);
             } else if (currencyId == 0) {
-                transfers = CurrencyTransfer.getAccountCurrencyTransfers(accountId, firstIndex, lastIndex);
+                transfers = lookupCurrencyTransferService().getAccountCurrencyTransfers(accountId, firstIndex, lastIndex);
             } else {
-                transfers = CurrencyTransfer.getAccountCurrencyTransfers(accountId, currencyId, firstIndex, lastIndex);
+                transfers = lookupCurrencyTransferService().getAccountCurrencyTransfers(accountId, currencyId, firstIndex, lastIndex);
             }
             while (transfers.hasNext()) {
                 CurrencyTransfer currencyTransfer = transfers.next();

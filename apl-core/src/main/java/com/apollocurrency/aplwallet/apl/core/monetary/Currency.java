@@ -39,6 +39,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
@@ -110,6 +111,8 @@ public final class Currency {
     private static final Listeners<Currency, Event> listeners = new Listeners<>();
     private static AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
     private static AccountCurrencyService accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
+    private static CurrencyExchangeOfferFacade currencyExchangeOfferFacade = CDI.current().select(CurrencyExchangeOfferFacade.class).get();
+
     private final long currencyId;
     private final DbKey dbKey;
     private final long accountId;
@@ -178,7 +181,12 @@ public final class Currency {
         this.decimals = rs.getByte("decimals");
     }
 
-    private Currency(long currencyId, DbKey dbKey, long accountId, String name, String code, String description, int type, long maxSupply, long reserveSupply, int creationHeight, int issuanceHeight, long minReservePerUnitATM, int minDifficulty, int maxDifficulty, byte ruleset, byte algorithm, byte decimals, long initialSupply) {
+    /**
+     * @deprecated use for unit test  only
+     */
+    public Currency(long currencyId, DbKey dbKey, long accountId, String name, String code, String description,
+                     int type, long maxSupply, long reserveSupply, int creationHeight, int issuanceHeight,
+                     long minReservePerUnitATM, int minDifficulty, int maxDifficulty, byte ruleset, byte algorithm, byte decimals, long initialSupply) {
         this.currencyId = currencyId;
         this.dbKey = dbKey;
         this.accountId = accountId;
@@ -482,13 +490,14 @@ public final class Currency {
             CurrencyFounder.remove(currencyId);
         }
         if (is(CurrencyType.EXCHANGEABLE)) {
-            List<CurrencyBuyOffer> buyOffers = new ArrayList<>();
-            try (DbIterator<CurrencyBuyOffer> offers = CurrencyBuyOffer.getOffers(this, 0, -1)) {
+            List<com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyBuyOffer> buyOffers = new ArrayList<>();
+            try (DbIterator<com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyBuyOffer> offers =
+                     currencyExchangeOfferFacade.getCurrencyBuyOfferService().getOffers(this, 0, -1)) {
                 while (offers.hasNext()) {
                     buyOffers.add(offers.next());
                 }
             }
-            buyOffers.forEach((offer) -> CurrencyExchangeOffer.removeOffer(event, offer));
+            buyOffers.forEach((offer) -> currencyExchangeOfferFacade.removeOffer(event, offer));
         }
         if (is(CurrencyType.MINTABLE)) {
             CurrencyMint.deleteCurrency(this);

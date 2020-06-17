@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.db.fulltext;
 
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -16,6 +17,7 @@ import java.sql.Types;
 import java.util.Arrays;
 import java.util.Collections;
 
+@Tag("slow")
 public class DbUtilsTest {
     private static final TableData CURRENCY_TABLE_DATA = new TableData(
         0,

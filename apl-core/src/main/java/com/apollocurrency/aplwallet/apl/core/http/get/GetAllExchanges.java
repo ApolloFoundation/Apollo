@@ -21,11 +21,11 @@
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.entity.state.exchange.Exchange;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -50,7 +50,7 @@ public final class GetAllExchanges extends AbstractAPIRequestHandler {
 
         JSONObject response = new JSONObject();
         JSONArray exchanges = new JSONArray();
-        try (DbIterator<Exchange> exchangeIterator = Exchange.getAllExchanges(firstIndex, lastIndex)) {
+        try (DbIterator<Exchange> exchangeIterator = exchangeService.getAllExchanges(firstIndex, lastIndex)) {
             while (exchangeIterator.hasNext()) {
                 Exchange exchange = exchangeIterator.next();
                 if (exchange.getTimestamp() < timestamp) {

@@ -41,9 +41,13 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Deprecated
 public final class Exchange {
 
-    private static final Listeners<Exchange, Event> listeners = new Listeners<>();
+//    private static final Listeners<Exchange, Event> listeners = new Listeners<>();
+    /**
+     * @deprecated
+     */
     private static final LinkKeyFactory<Exchange> exchangeDbKeyFactory = new LinkKeyFactory<Exchange>("transaction_id", "offer_id") {
 
         @Override
@@ -52,6 +56,9 @@ public final class Exchange {
         }
 
     };
+    /**
+     * @deprecated
+     */
     private static final EntityDbTable<Exchange> exchangeTable = new EntityDbTable<Exchange>("exchange", exchangeDbKeyFactory) {
 
         @Override
@@ -93,6 +100,21 @@ public final class Exchange {
         this.rate = offer.getRateATM();
     }
 
+    private Exchange(long transactionId, long currencyId, long offerId,
+                     long sellerId, long buyerId, long units, Block block, long rateATM) {
+        this.transactionId = transactionId;
+        this.blockId = block.getId();
+        this.height = block.getHeight();
+        this.currencyId = currencyId;
+        this.timestamp = block.getTimestamp();
+        this.offerId = offerId;
+        this.sellerId = sellerId;
+        this.buyerId = buyerId;
+        this.dbKey = exchangeDbKeyFactory.newKey(this.transactionId, this.offerId);
+        this.units = units;
+        this.rate = rateATM;
+    }
+
     private Exchange(ResultSet rs, DbKey dbKey) throws SQLException {
         this.transactionId = rs.getLong("transaction_id");
         this.currencyId = rs.getLong("currency_id");
@@ -122,6 +144,7 @@ public final class Exchange {
         return exchangeTable.getCount();
     }
 
+/*
     public static boolean addListener(Listener<Exchange> listener, Event eventType) {
         return listeners.addListener(listener, eventType);
     }
@@ -137,6 +160,7 @@ public final class Exchange {
     public static boolean removeListener(Listener<Exchange> listener) {
         return listeners.removeListener(listener, Event.EXCHANGE);
     }
+*/
 
     public static DbIterator<Exchange> getCurrencyExchanges(long currencyId, int from, int to) {
         return exchangeTable.getManyBy(new DbClause.LongClause("currency_id", currencyId), from, to);
@@ -212,15 +236,30 @@ public final class Exchange {
         return exchangeTable.getCount(new DbClause.LongClause("currency_id", currencyId));
     }
 
-    static Exchange addExchange(Transaction transaction, long currencyId, CurrencyExchangeOffer offer,
+    static Exchange addExchange(Transaction transaction, long currencyId,
+                                CurrencyExchangeOffer offer,
                                 long sellerId, long buyerId, long units,
                                 Block lastBlock) {
         Exchange exchange = new Exchange(transaction.getId(), currencyId, offer, sellerId, buyerId, units, lastBlock);
         exchangeTable.insert(exchange);
-        listeners.notify(exchange, Event.EXCHANGE);
+//        listeners.notify(exchange, Event.EXCHANGE);
         return exchange;
     }
 
+    public static Exchange addExchange(Transaction transaction, long currencyId,
+                                long offerId,
+                                long sellerId, long buyerId, long units,
+                                Block lastBlock,
+                                long rateATM) {
+        Exchange exchange = new Exchange(transaction.getId(), currencyId, offerId, sellerId, buyerId, units, lastBlock, rateATM);
+        exchangeTable.insert(exchange);
+//        listeners.notify(exchange, Event.EXCHANGE);
+        return exchange;
+    }
+
+    /**
+     * @deprecated
+     */
     public static void init() {
     }
 
