@@ -1,14 +1,13 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2020 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.dao.state.asset;
+package com.apollocurrency.aplwallet.apl.core.dao.state.currency;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
 import javax.inject.Inject;
-import java.util.Comparator;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -20,8 +19,8 @@ import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
-import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetTransfer;
-import com.apollocurrency.aplwallet.apl.data.AssetTransferTestData;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyBuyOffer;
+import com.apollocurrency.aplwallet.apl.data.CurrencyBuyOfferTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -37,18 +36,14 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 @Tag("slow")
 @EnableWeld
-class AssetTransferTableTest {
+class CurrencyBuyOfferTableTest {
 
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension();
 
     @Inject
-    AssetTransferTable table;
-    AssetTransferTestData td;
-
-    Comparator<AssetTransfer> assetComparator = Comparator
-        .comparing(AssetTransfer::getDbId)
-        .thenComparing(AssetTransfer::getAssetId).reversed();
+    CurrencyBuyOfferTable table;
+    CurrencyBuyOfferTestData td;
 
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
@@ -56,7 +51,7 @@ class AssetTransferTableTest {
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-        PropertiesHolder.class, AssetTransferTable.class
+        PropertiesHolder.class, CurrencyBuyOfferTable.class
     )
         .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
@@ -69,52 +64,61 @@ class AssetTransferTableTest {
 
     @BeforeEach
     void setUp() {
-        td = new AssetTransferTestData();
+        td = new CurrencyBuyOfferTestData();
     }
 
     @Test
     void testLoad() {
-        AssetTransfer assetDelete = table.get(table.getDbKeyFactory().newKey(td.ASSET_TRANSFER_0));
-        assertNotNull(assetDelete);
-        assertEquals(td.ASSET_TRANSFER_0, assetDelete);
+        CurrencyBuyOffer offer = table.get(table.getDbKeyFactory().newKey(td.OFFER_0));
+        assertNotNull(offer);
+        assertEquals(td.OFFER_0, offer);
     }
 
     @Test
     void testLoad_returnNull_ifNotExist() {
-        AssetTransfer asset = table.get(table.getDbKeyFactory().newKey(td.ASSET_TRANSFER_NEW));
-        assertNull(asset);
+        CurrencyBuyOffer offer = table.get(table.getDbKeyFactory().newKey(td.OFFER_NEW));
+        assertNull(offer);
     }
 
     @Test
     void testSave_insert_new_entity() {//SQL MERGE -> INSERT
-        AssetTransfer previous = table.get(table.getDbKeyFactory().newKey(td.ASSET_TRANSFER_NEW));
+        CurrencyBuyOffer previous = table.get(table.getDbKeyFactory().newKey(td.OFFER_NEW));
         assertNull(previous);
 
-        DbUtils.inTransaction(dbExtension, (con) -> table.insert(td.ASSET_TRANSFER_NEW));
-        AssetTransfer actual = table.get(table.getDbKeyFactory().newKey(td.ASSET_TRANSFER_NEW));
+        DbUtils.inTransaction(dbExtension, (con) -> table.insert(td.OFFER_NEW));
+        CurrencyBuyOffer actual = table.get(table.getDbKeyFactory().newKey(td.OFFER_NEW));
 
         assertNotNull(actual);
         assertTrue(actual.getDbId() != 0);
-        assertEquals(td.ASSET_TRANSFER_NEW.getId(), actual.getId());
-        assertEquals(td.ASSET_TRANSFER_NEW.getAssetId(), actual.getAssetId());
+        assertEquals(td.OFFER_NEW.getAccountId(), actual.getAccountId());
+        assertEquals(td.OFFER_NEW.getId(), actual.getId());
     }
 
     @Test
     void testSave_update_existing_entity() {//SQL MERGE -> UPDATE
-        AssetTransfer previous = table.get(table.getDbKeyFactory().newKey(td.ASSET_TRANSFER_1));
+        CurrencyBuyOffer previous = table.get(table.getDbKeyFactory().newKey(td.OFFER_1));
         assertNotNull(previous);
+        previous.setLimit(previous.getLimit() + 10);
 
-        assertThrows(RuntimeException.class, () -> // not permitted by DB constraints
-            DbUtils.inTransaction(dbExtension, (con) -> table.insert(previous))
-        );
+        DbUtils.inTransaction(dbExtension, (con) -> table.insert(previous));
+        CurrencyBuyOffer actual = table.get(table.getDbKeyFactory().newKey(previous));
+
+        assertNotNull(actual);
+        assertEquals(10, actual.getLimit() - td.OFFER_1.getLimit());
+        assertEquals(previous.getCurrencyId(), actual.getCurrencyId());
+        assertEquals(previous.getId(), actual.getId());
     }
 
-
     @Test
-    void getAccountAssetTransfers() {
+    void test_getCount() {
+        int result = table.getCount();
+        assertEquals(9, result);
     }
 
     @Test
-    void testGetAccountAssetTransfers() {
+    void test_getOffer() {
+        CurrencyBuyOffer result = table.get(CurrencyBuyOfferTable.buyOfferDbKeyFactory.newKey(td.OFFER_2));
+        assertNotNull(result);
+        assertEquals(td.OFFER_2, result);
     }
 }
