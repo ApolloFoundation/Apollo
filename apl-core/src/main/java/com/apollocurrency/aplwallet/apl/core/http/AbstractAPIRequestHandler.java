@@ -19,6 +19,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.order.BidOrder;
 import com.apollocurrency.aplwallet.apl.core.service.state.PollOptionResultService;
 import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetTransferService;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
@@ -105,6 +106,7 @@ public abstract class AbstractAPIRequestHandler {
     private AccountPropertyService accountPropertyService;
     private PeersService peers;
     private AccountControlPhasingService accountControlPhasingService;
+    private AssetTransferService assetTransferService;
     private CurrencyExchangeOfferFacade currencyExchangeOfferFacade;
 
     public AbstractAPIRequestHandler(APITag[] apiTags, String... parameters) {
@@ -237,11 +239,11 @@ public abstract class AbstractAPIRequestHandler {
         return accountControlPhasingService;
     }
 
-    public CurrencyExchangeOfferFacade lookupCurrencyExchangeOfferFacade() {
-        if (currencyExchangeOfferFacade == null) {
-            currencyExchangeOfferFacade = CDI.current().select(CurrencyExchangeOfferFacade.class).get();
+    public AssetTransferService lookupAssetTransferService() {
+        if (assetTransferService == null) {
+            assetTransferService = CDI.current().select(AssetTransferService.class).get();
         }
-        return currencyExchangeOfferFacade;
+        return assetTransferService;
     }
 
     public final List<String> getParameters() {

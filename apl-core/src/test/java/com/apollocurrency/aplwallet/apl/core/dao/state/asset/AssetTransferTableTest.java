@@ -1,16 +1,15 @@
 /*
- *  Copyright © 2018-2020 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.dao.state.account;
+package com.apollocurrency.aplwallet.apl.core.dao.state.asset;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
 
 import javax.inject.Inject;
+import java.util.Comparator;
 
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
@@ -21,8 +20,8 @@ import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
-import com.apollocurrency.aplwallet.apl.data.AccountControlPhasingTestData;
-import com.apollocurrency.aplwallet.apl.data.DbTestData;
+import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetTransfer;
+import com.apollocurrency.aplwallet.apl.data.AssetTransferTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -32,27 +31,30 @@ import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-@Tag("slow")
 @EnableWeld
-class AccountControlPhasingTableTest {
+class AssetTransferTableTest {
 
     @RegisterExtension
-    static DbExtension dbExtension = new DbExtension(DbTestData.getInMemDbProps(), "db/data.sql", "db/schema.sql");
+    static DbExtension dbExtension = new DbExtension();
 
     @Inject
-    AccountControlPhasingTable table;
-    AccountControlPhasingTestData td;
+    AssetTransferTable table;
+    AssetTransferTestData td;
+
+    Comparator<AssetTransfer> assetComparator = Comparator
+        .comparing(AssetTransfer::getDbId)
+        .thenComparing(AssetTransfer::getAssetId).reversed();
 
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     private BlockchainProcessor blockchainProcessor = mock(BlockchainProcessor.class);
+
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-        PropertiesHolder.class, AccountControlPhasingTable.class
+        PropertiesHolder.class, AssetTransferTable.class
     )
         .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
@@ -65,59 +67,52 @@ class AccountControlPhasingTableTest {
 
     @BeforeEach
     void setUp() {
-        td = new AccountControlPhasingTestData();
+        td = new AssetTransferTestData();
     }
 
     @Test
     void testLoad() {
-        AccountControlPhasing phasing = table.get(table.getDbKeyFactory().newKey(td.AC_CONT_PHAS_0));
-        assertNotNull(phasing);
-        assertEquals(td.AC_CONT_PHAS_0, phasing);
+        AssetTransfer assetDelete = table.get(table.getDbKeyFactory().newKey(td.ASSET_TRANSFER_0));
+        assertNotNull(assetDelete);
+        assertEquals(td.ASSET_TRANSFER_0, assetDelete);
     }
 
     @Test
-    void load_returnNull_ifNotExist() {
-        AccountControlPhasing phasing = table.get(table.getDbKeyFactory().newKey(td.NEW_AC_CONT_PHAS));
-        assertNull(phasing);
+    void testLoad_returnNull_ifNotExist() {
+        AssetTransfer asset = table.get(table.getDbKeyFactory().newKey(td.ASSET_TRANSFER_NEW));
+        assertNull(asset);
     }
 
     @Test
-    void testSave() {
-        DbUtils.inTransaction(dbExtension, (con) -> table.insert(td.NEW_AC_CONT_PHAS));
-        AccountControlPhasing phasing = table.get(table.getDbKeyFactory().newKey(td.NEW_AC_CONT_PHAS));
-        assertNotNull(phasing);
-        assertTrue(phasing.getDbId() != 0);
-        assertEquals(td.NEW_AC_CONT_PHAS.getAccountId(), phasing.getAccountId());
-        assertEquals(td.NEW_AC_CONT_PHAS.getHeight(), phasing.getHeight());
-    }
+    void testSave_insert_new_entity() {//SQL MERGE -> INSERT
+        AssetTransfer previous = table.get(table.getDbKeyFactory().newKey(td.ASSET_TRANSFER_NEW));
+        assertNull(previous);
 
-    @Test
-    void testSave_update_existing_entity() {
-        AccountControlPhasing previous = table.get(table.getDbKeyFactory().newKey(td.AC_CONT_PHAS_1));
-        assertNotNull(previous);
-        long value = 100L;
-        previous.setMaxFees(value);
-
-        DbUtils.inTransaction(dbExtension, (con) -> table.insert(previous));
-        AccountControlPhasing actual = table.get(table.getDbKeyFactory().newKey(td.AC_CONT_PHAS_1));
+        DbUtils.inTransaction(dbExtension, (con) -> table.insert(td.ASSET_TRANSFER_NEW));
+        AssetTransfer actual = table.get(table.getDbKeyFactory().newKey(td.ASSET_TRANSFER_NEW));
 
         assertNotNull(actual);
-        assertEquals(value, actual.getMaxFees());
+        assertTrue(actual.getDbId() != 0);
+        assertEquals(td.ASSET_TRANSFER_NEW.getId(), actual.getId());
+        assertEquals(td.ASSET_TRANSFER_NEW.getAssetId(), actual.getAssetId());
     }
 
     @Test
-    void test_delete_entity() {
-        AccountControlPhasing found = table.get(table.getDbKeyFactory().newKey(td.AC_CONT_PHAS_3));
-        assertNotNull(found);
+    void testSave_update_existing_entity() {//SQL MERGE -> UPDATE
+        AssetTransfer previous = table.get(table.getDbKeyFactory().newKey(td.ASSET_TRANSFER_1));
+        assertNotNull(previous);
 
-        DbUtils.inTransaction(dbExtension, (con) -> {
-            boolean result = table.deleteAtHeight(found, td.AC_CONT_PHAS_3.getHeight());
-            assertTrue(result);
-        });
-        AccountControlPhasing actual = table.get(table.getDbKeyFactory().newKey(td.AC_CONT_PHAS_3));
-
-        assertNull(actual);
+        assertThrows(RuntimeException.class, () -> // not permitted by DB constraints
+            DbUtils.inTransaction(dbExtension, (con) -> table.insert(previous))
+        );
     }
 
 
+    @Test
+    void getAccountAssetTransfers() {
+    }
+
+    @Test
+    void testGetAccountAssetTransfers() {
+    }
 }

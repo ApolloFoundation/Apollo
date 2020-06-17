@@ -4,16 +4,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.appdata;
 
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.TrimDao;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.TrimEntry;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-
+@Tag("slow")
 class TrimDaoTest {
     @RegisterExtension
     DbExtension extension = new DbExtension();

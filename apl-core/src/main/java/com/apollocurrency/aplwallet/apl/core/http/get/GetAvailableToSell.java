@@ -20,6 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionType.lookupCurrencyExchangeOfferFacade;
+
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.AvailableOffers;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;

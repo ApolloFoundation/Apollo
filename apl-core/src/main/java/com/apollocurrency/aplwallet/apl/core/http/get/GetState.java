@@ -20,6 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionType.lookupCurrencyExchangeOfferFacade;
+
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.Vote;
@@ -61,7 +63,7 @@ public final class GetState extends AbstractAPIRequestHandler {
             response.put("numberOfAskOrders", askCount);
             response.put("numberOfBidOrders", bidCount);
             response.put("numberOfTrades", tradeService.getCount());
-            response.put("numberOfTransfers", AssetTransfer.getCount());
+            response.put("numberOfTransfers", lookupAssetTransferService().getCount());
             response.put("numberOfCurrencies", Currency.getCount());
             response.put("numberOfOffers", lookupCurrencyExchangeOfferFacade().getCurrencyBuyOfferService().getCount());
             response.put("numberOfExchangeRequests", ExchangeRequest.getCount());

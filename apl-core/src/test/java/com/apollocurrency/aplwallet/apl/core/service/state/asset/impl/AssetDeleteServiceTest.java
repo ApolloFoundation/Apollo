@@ -11,7 +11,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.asset.AssetDeleteTable;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetDelete;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetDeleteService;
-import com.apollocurrency.aplwallet.apl.core.service.state.asset.impl.AssetDeleteServiceImpl;
 import com.apollocurrency.aplwallet.apl.data.AssetDeleteTestData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

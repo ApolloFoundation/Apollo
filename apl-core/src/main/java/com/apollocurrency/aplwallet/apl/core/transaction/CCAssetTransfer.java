@@ -67,7 +67,7 @@ class CCAssetTransfer extends ColoredCoins {
             lookupAssetService().deleteAsset(transaction, attachment.getAssetId(), attachment.getQuantityATU());
         } else {
             lookupAccountAssetService().addToAssetAndUnconfirmedAssetBalanceATU(recipientAccount, getLedgerEvent(), transaction.getId(), attachment.getAssetId(), attachment.getQuantityATU());
-            AssetTransfer.addAssetTransfer(transaction, attachment);
+            lookupAssetTransferService().addAssetTransfer(transaction, attachment);
         }
     }
 
