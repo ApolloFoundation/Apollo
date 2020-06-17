@@ -32,7 +32,6 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AdminPasswordVerifier;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
@@ -58,6 +57,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
 import com.apollocurrency.aplwallet.apl.core.service.state.echange.ExchangeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeRequestService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.AskOrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.BidOrderService;
@@ -111,6 +111,7 @@ public class ServerInfoService {
     private final CurrencyExchangeOfferFacade currencyExchangeOfferFacade;
     private final ExchangeService exchangeService;
     private final ExchangeRequestService exchangeRequestService;
+    private final CurrencyTransferService currencyTransferService;
 
     @Inject
     public ServerInfoService(BlockchainConfig blockchainConfig, Blockchain blockchain,
@@ -135,7 +136,8 @@ public class ServerInfoService {
                              AssetTransferService assetTransferService,
                              CurrencyExchangeOfferFacade currencyExchangeOfferFacade,
                              ExchangeService exchangeService,
-                             ExchangeRequestService exchangeRequestService
+                             ExchangeRequestService exchangeRequestService,
+                             CurrencyTransferService currencyTransferService
     ) {
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
         this.blockchain = Objects.requireNonNull(blockchain, "blockchain is NULL");
@@ -163,6 +165,7 @@ public class ServerInfoService {
         this.currencyExchangeOfferFacade = Objects.requireNonNull(currencyExchangeOfferFacade, "currencyExchangeOfferFacade is NULL");
         this.exchangeService = Objects.requireNonNull(exchangeService, "exchangeService is NULL");
         this.exchangeRequestService = Objects.requireNonNull(exchangeRequestService, "exchangeRequestService is NULL");
+        this.currencyTransferService = Objects.requireNonNull(currencyTransferService, "currencyTransferService is NULL");
     }
 
     public ApolloX509Info getX509Info() {
@@ -354,7 +357,7 @@ public class ServerInfoService {
             dto.numberOfOffers = currencyExchangeOfferFacade.getCurrencyBuyOfferService().getCount();
             dto.numberOfExchangeRequests = exchangeRequestService.getCount();
             dto.numberOfExchanges = exchangeService.getCount();
-            dto.numberOfCurrencyTransfers = CurrencyTransfer.getCount();
+            dto.numberOfCurrencyTransfers = currencyTransferService.getCount();
             dto.numberOfAliases = aliasService.getCount();
             dto.numberOfGoods = dgsService.getGoodsCount();
             dto.numberOfPurchases = dgsService.getPurchaseCount();

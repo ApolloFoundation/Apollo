@@ -32,8 +32,6 @@ import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyTransfer;
-import com.apollocurrency.aplwallet.apl.util.Listener;
-import com.apollocurrency.aplwallet.apl.util.Listeners;
 
 import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
@@ -41,9 +39,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+@Deprecated
 public final class CurrencyTransfer {
 
-    private static final Listeners<CurrencyTransfer, Event> listeners = new Listeners<>();
+//    private static final Listeners<CurrencyTransfer, Event> listeners = new Listeners<>();
     private static final LongKeyFactory<CurrencyTransfer> currencyTransferDbKeyFactory = new LongKeyFactory<CurrencyTransfer>("id") {
 
         @Override
@@ -106,6 +105,9 @@ public final class CurrencyTransfer {
         return databaseManager.getDataSource();
     }
 
+    /**
+     * @deprecated see corresponding xxxStream method
+     */
     public static DbIterator<CurrencyTransfer> getAllTransfers(int from, int to) {
         return currencyTransferTable.getAll(from, to);
     }
@@ -114,6 +116,7 @@ public final class CurrencyTransfer {
         return currencyTransferTable.getCount();
     }
 
+/*
     public static boolean addListener(Listener<CurrencyTransfer> listener, Event eventType) {
         return listeners.addListener(listener, eventType);
     }
@@ -129,11 +132,18 @@ public final class CurrencyTransfer {
     public static boolean removeListener(Listener<CurrencyTransfer> listener) {
         return removeListener(listener, Event.TRANSFER);
     }
+*/
 
+    /**
+     * @deprecated see corresponding xxxStream method
+     */
     public static DbIterator<CurrencyTransfer> getCurrencyTransfers(long currencyId, int from, int to) {
         return currencyTransferTable.getManyBy(new DbClause.LongClause("currency_id", currencyId), from, to);
     }
 
+    /**
+     * @deprecated see corresponding xxxStream method
+     */
     public static DbIterator<CurrencyTransfer> getAccountCurrencyTransfers(long accountId, int from, int to) {
         Connection con = null;
         try {
@@ -153,6 +163,9 @@ public final class CurrencyTransfer {
         }
     }
 
+    /**
+     * @deprecated see corresponding xxxStream method
+     */
     public static DbIterator<CurrencyTransfer> getAccountCurrencyTransfers(long accountId, long currencyId, int from, int to) {
         Connection con = null;
         try {
@@ -181,7 +194,7 @@ public final class CurrencyTransfer {
     static CurrencyTransfer addTransfer(Transaction transaction, MonetarySystemCurrencyTransfer attachment) {
         CurrencyTransfer transfer = new CurrencyTransfer(transaction, attachment);
         currencyTransferTable.insert(transfer);
-        listeners.notify(transfer, Event.TRANSFER);
+//        listeners.notify(transfer, Event.TRANSFER);
         return transfer;
     }
 

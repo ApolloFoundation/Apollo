@@ -29,6 +29,8 @@ import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.FundingMonitor;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisAccounts;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.AvailableOffers;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyExchangeOffer;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.PollOptionResult;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffler;
@@ -53,8 +55,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountPropert
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.entity.state.alias.Alias;
 import com.apollocurrency.aplwallet.apl.core.entity.state.alias.AliasOffer;
-import com.apollocurrency.aplwallet.apl.core.entity.state.currency.AvailableOffers;
-import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyExchangeOffer;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSFeedback;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSPublicFeedback;
@@ -72,7 +73,6 @@ import com.apollocurrency.aplwallet.apl.core.model.account.LedgerHolding;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyFounder;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
@@ -93,6 +93,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetS
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountLeaseService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.echange.ExchangeService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
 import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetDelete;
@@ -137,6 +138,7 @@ public final class JSONData {
     private static final PollService POLL_SERVICE = CDI.current().select(PollService.class).get();
     private static AssetTransferService assetTransferService = CDI.current().select(AssetTransferService.class).get();
     private static ExchangeService exchangeService = CDI.current().select(ExchangeService.class).get();
+    private static CurrencyTransferService currencyTransferService = CDI.current().select(CurrencyTransferService.class).get();
 
     private JSONData() {
     } // never
@@ -260,7 +262,7 @@ public final class JSONData {
         json.put("decimals", currency.getDecimals());
         if (includeCounts) {
             json.put("numberOfExchanges", exchangeService.getExchangeCount(currency.getId()));
-            json.put("numberOfTransfers", CurrencyTransfer.getTransferCount(currency.getId()));
+            json.put("numberOfTransfers", currencyTransferService.getTransferCount(currency.getId()));
         }
         JSONArray types = new JSONArray();
         for (CurrencyType type : CurrencyType.values()) {
