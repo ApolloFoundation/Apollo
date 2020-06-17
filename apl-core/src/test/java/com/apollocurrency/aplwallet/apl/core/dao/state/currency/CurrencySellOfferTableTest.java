@@ -11,7 +11,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import javax.inject.Inject;
-import java.util.Comparator;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -48,10 +47,6 @@ class CurrencySellOfferTableTest {
     @Inject
     CurrencySellOfferTable table;
     CurrencySellOfferTestData td;
-
-    Comparator<CurrencySellOffer> currencySellOfferComparator = Comparator
-        .comparing(CurrencySellOffer::getId)
-        .thenComparing(CurrencySellOffer::getAccountId);
 
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);

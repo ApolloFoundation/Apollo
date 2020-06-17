@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
 import javax.inject.Inject;
-import java.util.Comparator;
 import java.util.List;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -49,10 +48,6 @@ class CurrencyTransferTableTest {
     @Inject
     CurrencyTransferTable table;
     CurrencyTransferTestData td;
-
-    Comparator<CurrencyTransfer> currencyTransferComparator = Comparator
-        .comparing(CurrencyTransfer::getDbId)
-        .thenComparing(CurrencyTransfer::getId).reversed();
 
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);

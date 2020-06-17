@@ -49,6 +49,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExch
 import com.apollocurrency.aplwallet.apl.core.service.state.echange.ExchangeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeRequestService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyMintService;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.impl.AskOrderServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.impl.BidOrderServiceImpl;
@@ -114,6 +115,7 @@ public abstract class AbstractAPIRequestHandler {
     private CurrencyExchangeOfferFacade currencyExchangeOfferFacade;
     private ExchangeRequestService exchangeRequestService;
     private CurrencyTransferService currencyTransferService;
+    private CurrencyMintService currencyMintService;
 
     public AbstractAPIRequestHandler(APITag[] apiTags, String... parameters) {
         this(null, apiTags, parameters);
@@ -265,6 +267,14 @@ public abstract class AbstractAPIRequestHandler {
         }
         return currencyTransferService;
     }
+
+    public CurrencyMintService lookupCurrencyMintService() {
+        if (currencyMintService == null) {
+            currencyMintService = CDI.current().select(CurrencyMintService.class).get();
+        }
+        return currencyMintService;
+    }
+
 
     public final List<String> getParameters() {
         return parameters;

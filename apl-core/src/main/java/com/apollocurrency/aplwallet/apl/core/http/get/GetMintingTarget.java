@@ -60,7 +60,7 @@ public final class GetMintingTarget extends AbstractAPIRequestHandler {
         BigInteger numericTarget = CurrencyMinting.getNumericTarget(currency, units);
         json.put("difficulty", String.valueOf(BigInteger.ZERO.equals(numericTarget) ? -1 : BigInteger.valueOf(2).pow(256).subtract(BigInteger.ONE).divide(numericTarget)));
         json.put("targetBytes", Convert.toHexString(CurrencyMinting.getTarget(numericTarget)));
-        json.put("counter", com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint.getCounter(currency.getId(), HttpParameterParserUtil.getAccountId(req, true)));
+        json.put("counter", lookupCurrencyMintService().getCounter(currency.getId(), HttpParameterParserUtil.getAccountId(req, true)));
         return json;
     }
 
