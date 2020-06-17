@@ -8,7 +8,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
-import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import org.json.simple.JSONObject;
@@ -67,7 +66,7 @@ class CCAssetTransfer extends ColoredCoins {
             lookupAssetService().deleteAsset(transaction, attachment.getAssetId(), attachment.getQuantityATU());
         } else {
             lookupAccountAssetService().addToAssetAndUnconfirmedAssetBalanceATU(recipientAccount, getLedgerEvent(), transaction.getId(), attachment.getAssetId(), attachment.getQuantityATU());
-            AssetTransfer.addAssetTransfer(transaction, attachment);
+            lookupAssetTransferService().addAssetTransfer(transaction, attachment);
         }
     }
 

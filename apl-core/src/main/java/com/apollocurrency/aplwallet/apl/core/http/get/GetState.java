@@ -20,6 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionType.lookupCurrencyExchangeOfferFacade;
+
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.Vote;
@@ -29,6 +31,7 @@ import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
+import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -60,11 +63,11 @@ public final class GetState extends AbstractAPIRequestHandler {
             response.put("numberOfAskOrders", askCount);
             response.put("numberOfBidOrders", bidCount);
             response.put("numberOfTrades", tradeService.getCount());
-            response.put("numberOfTransfers", AssetTransfer.getCount());
+            response.put("numberOfTransfers", lookupAssetTransferService().getCount());
             response.put("numberOfCurrencies", Currency.getCount());
-            response.put("numberOfOffers", CurrencyBuyOffer.getCount());
+            response.put("numberOfOffers", lookupCurrencyExchangeOfferFacade().getCurrencyBuyOfferService().getCount());
             response.put("numberOfExchangeRequests", lookupExchangeRequestService().getCount());
-            response.put("numberOfExchanges", Exchange.getCount());
+            response.put("numberOfExchanges", exchangeService.getCount());
             response.put("numberOfCurrencyTransfers", CurrencyTransfer.getCount());
             response.put("numberOfAliases", aliasService.getCount());
             response.put("numberOfGoods", service.getGoodsCount());
