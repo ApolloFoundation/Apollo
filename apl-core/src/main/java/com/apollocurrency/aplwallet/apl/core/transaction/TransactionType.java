@@ -34,6 +34,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetDividendService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.impl.AssetServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetTransferService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
@@ -50,6 +51,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountI
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountLeaseServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPropertyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
@@ -144,6 +146,8 @@ public abstract class TransactionType {
     private static AssetService assetService;
     private static AssetDividendService assetDividendService;
     private static PollService pollService;
+    private static AssetTransferService assetTransferService;
+    private static CurrencyExchangeOfferFacade currencyExchangeOfferFacade;
 
     public TransactionType() {
     }
@@ -261,6 +265,21 @@ public abstract class TransactionType {
             pollService = CDI.current().select(PollService.class).get();
         }
         return pollService;
+    }
+
+    public static synchronized AssetTransferService lookupAssetTransferService() {
+        if (assetTransferService == null) {
+            assetTransferService = CDI.current().select(AssetTransferService.class).get();
+        }
+        return assetTransferService;
+    }
+
+
+    public static synchronized CurrencyExchangeOfferFacade lookupCurrencyExchangeOfferFacade() {
+        if (currencyExchangeOfferFacade == null) {
+            currencyExchangeOfferFacade = CDI.current().select(CurrencyExchangeOfferFacade.class).get();
+        }
+        return currencyExchangeOfferFacade;
     }
 
     public static TransactionType findTransactionType(byte type, byte subtype) {

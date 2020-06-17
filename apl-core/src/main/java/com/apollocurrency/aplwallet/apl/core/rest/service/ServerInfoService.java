@@ -30,7 +30,6 @@ import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AdminPasswordVerifier;
-import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
@@ -39,6 +38,7 @@ import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetTransferService;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
@@ -54,6 +54,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountLeaseS
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountLedgerService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
 import com.apollocurrency.aplwallet.apl.core.service.state.echange.ExchangeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.AskOrderService;
@@ -104,6 +105,8 @@ public class ServerInfoService {
     private final AccountControlPhasingService accountControlPhasingService;
     private final AssetService assetService;
     private final PollService pollService;
+    private final AssetTransferService assetTransferService;
+    private final CurrencyExchangeOfferFacade currencyExchangeOfferFacade;
     private final ExchangeService exchangeService;
 
     @Inject
@@ -126,6 +129,8 @@ public class ServerInfoService {
                              AccountControlPhasingService accountControlPhasingService,
                              AssetService assetService,
                              PollService pollService,
+                             AssetTransferService assetTransferService,
+                             CurrencyExchangeOfferFacade currencyExchangeOfferFacade,
                              ExchangeService exchangeService
     ) {
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
@@ -150,6 +155,8 @@ public class ServerInfoService {
         this.accountControlPhasingService = Objects.requireNonNull(accountControlPhasingService, "accountControlPhasingService is NULL");
         this.assetService = Objects.requireNonNull(assetService, "assetService is NULL");
         this.pollService = Objects.requireNonNull(pollService, "pollService is NULL");
+        this.assetTransferService = Objects.requireNonNull(assetTransferService, "assetTransferService is NULL");
+        this.currencyExchangeOfferFacade = Objects.requireNonNull(currencyExchangeOfferFacade, "currencyExchangeOfferFacade is NULL");
         this.exchangeService = Objects.requireNonNull(exchangeService, "exchangeService is NULL");
     }
 
@@ -337,9 +344,9 @@ public class ServerInfoService {
             dto.numberOfAskOrders = askCount;
             dto.numberOfBidOrders = bidCount;
             dto.numberOfTrades = tradeService.getCount();
-            dto.numberOfTransfers = AssetTransfer.getCount();
+            dto.numberOfTransfers = assetTransferService.getCount();
             dto.numberOfCurrencies = Currency.getCount();
-            dto.numberOfOffers = CurrencyBuyOffer.getCount();
+            dto.numberOfOffers = currencyExchangeOfferFacade.getCurrencyBuyOfferService().getCount();
             dto.numberOfExchangeRequests = ExchangeRequest.getCount();
             dto.numberOfExchanges = exchangeService.getCount();
             dto.numberOfCurrencyTransfers = CurrencyTransfer.getCount();
