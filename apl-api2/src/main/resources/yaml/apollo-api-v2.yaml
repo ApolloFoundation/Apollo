@@ -1,7 +1,12 @@
 openapi: 3.0.1
 info:
   title: Apollo API V2
-  description: Apollo API V2 work in progress
+  description: |
+    Apollo API V2 work in progress
+
+      Notice:
+      The symbols '@@' in the path definition are used as a marker for the code generation routine.
+      If you want to use this YAML specification in the Swagger editor manually, you should replace that marker with spaces.
   contact:
     email: apiteam@firstbridge.io
   version: 2.0.0
@@ -9,7 +14,7 @@ externalDocs:
   description: The project VCS repository
   url: https://github.com/ApolloFoundation/Apollo
 servers:
-- url: http://localhost:8080/api/v2
+- url: http://localhost:7876/rest
 
 tags:
 - name: account
@@ -24,14 +29,15 @@ tags:
   description: An information
 
 paths:
-  /account:
+  /@@account:
     post:
       tags:
       - account
-      summary: Create account
+      summary: Create the child account, sender is a parent
+      description: Returns unsigned CreateAccount transaction as a byte array
       operationId: createAccount
       requestBody:
-        description: the list of public keys
+        description: the public key
         content:
           application/json:
             schema:
@@ -48,11 +54,12 @@ paths:
           $ref: '#/components/responses/BadRequest'
         500:
           $ref: '#/components/responses/ServerError'
-  /account/batch:
+  /@@account/batch:
     post:
       tags:
       - account
-      summary: Create a batch of accounts
+      summary: Create a batch of child accounts, sender is a parent
+      description: Returns a list of unsigned CreateAccount transaction as a byte array
       operationId: createAccountsBatch
       requestBody:
         description: the list of public keys
@@ -82,7 +89,7 @@ paths:
           $ref: '#/components/responses/ServerError'
       security:
       - bearerAuth: []
-  /account/{account}:
+  /@@account/{account}:
     get:
       tags:
       - account
@@ -107,7 +114,7 @@ paths:
           $ref: '#/components/responses/BadRequest'
         500:
           $ref: '#/components/responses/ServerError'
-  /state/blockchain:
+  /@@state/blockchain:
     get:
       tags:
       - state
@@ -123,7 +130,7 @@ paths:
                 $ref: '#/components/schemas/Blockchain'
         500:
           $ref: '#/components/responses/ServerError'
-  /state/block:
+  /@@state/block:
     get:
       tags:
       - state
@@ -150,7 +157,7 @@ paths:
           $ref: '#/components/responses/BadRequest'
         500:
           $ref: '#/components/responses/ServerError'
-  /state/block/{block}:
+  /@@state/block/{block}:
     get:
       tags:
       - state
@@ -177,7 +184,7 @@ paths:
           $ref: '#/components/responses/BadRequest'
         500:
           $ref: '#/components/responses/ServerError'
-  /state/tx/{transaction}:
+  /@@state/tx/{transaction}:
     get:
       tags:
       - state
@@ -204,7 +211,7 @@ paths:
           $ref: '#/components/responses/BadRequest'
         500:
           $ref: '#/components/responses/ServerError'
-  /state/tx:
+  /@@state/tx:
     post:
       tags:
       - state
@@ -235,7 +242,7 @@ paths:
           $ref: '#/components/responses/BadRequest'
         500:
           $ref: '#/components/responses/ServerError'
-  /state/unconfirmed/count:
+  /@@state/unconfirmed/count:
     get:
       tags:
       - state
@@ -251,7 +258,7 @@ paths:
                 $ref: '#/components/schemas/CountResponse'
         500:
           $ref: '#/components/responses/ServerError'
-  /state/unconfirmed:
+  /@@state/unconfirmed:
     get:
       tags:
       - state
@@ -297,7 +304,7 @@ paths:
           $ref: '#/components/responses/ServerError'
       security:
       - bearerAuth: []
-  /transaction:
+  /@@transaction:
     post:
       tags:
       - tx
@@ -322,7 +329,7 @@ paths:
           $ref: '#/components/responses/BadRequest'
         500:
           $ref: '#/components/responses/ServerError'
-  /transaction/batch:
+  /@@transaction/batch:
     post:
       tags:
       - tx
@@ -357,7 +364,7 @@ paths:
           $ref: '#/components/responses/ServerError'
       security:
       - bearerAuth: []
-  /transaction/{transaction}:
+  /@@transaction/{transaction}:
     get:
       tags:
       - tx
@@ -384,7 +391,7 @@ paths:
           $ref: '#/components/responses/BadRequest'
         500:
           $ref: '#/components/responses/ServerError'
-  /operation/count:
+  /@@operation/count:
     post:
       tags:
       - operations
@@ -414,7 +421,7 @@ paths:
           $ref: '#/components/responses/ServerError'
       security:
       - bearerAuth: []
-  /operation:
+  /@@operation:
     post:
       tags:
       - operations
@@ -445,7 +452,7 @@ paths:
       security:
       - bearerAuth: []
 
-  /info/health:
+  /@@info/health:
     get:
       tags:
       - info
@@ -689,24 +696,16 @@ components:
         publickey:
           type: string
           example: '39dc2e813bb45ff063a376e316b10cd0adeb7306111ca0eb2890194d37960152'
-        alias:
-          description: the account alias
-          type: string
-          example: 'aSimpleAccount'
     AccountResp:
-      allOf:
-        - $ref: '#/components/schemas/BasicAccount'
-        - type: object
-          properties:
-            status:
-              type: string
-              enum:
-                - created
-                - failed
-              example: created
-            reason:
-              type: string
-              example: 'Account successfully created'
+        required:
+          - tx
+        type: object
+        properties:
+          tx:
+            description: Signed transaction data
+            type: string
+            example: '001047857c04a00539dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152eef5365f2400292d00ca9a3b0000000000c2eb0b000000000000000000000000000000000000000000000000000000000000000000000000920173ae606d36c1c77fc5bdf294bd048d04f85c46535525771b524dbb1ed20b73311900d4a409c293a10d8a5ab987430be4bd7478fb16a41cf775afa33c4d5600000000f1da1300fe7062e6fb2fbb37'
+            nullable: false
     BasicAccount:
       type: object
       properties:
@@ -717,6 +716,10 @@ components:
           description: The account public key in a hex string format
           type: string
           example: '39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152'
+        parent:
+          type: string
+          example: 'APL-AHYW-P3YX-V426-4UMP2'
+          required: false
     Account:
       allOf:
         - $ref: '#/components/schemas/BasicAccount'
