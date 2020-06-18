@@ -719,7 +719,7 @@ components:
         parent:
           type: string
           example: 'APL-AHYW-P3YX-V426-4UMP2'
-          required: false
+          nullable: true
     Account:
       allOf:
         - $ref: '#/components/schemas/BasicAccount'
