@@ -10,7 +10,6 @@ import java.sql.SQLException;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencySupplyTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDeletableEntity;
-import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -24,7 +23,7 @@ public class CurrencySupply extends VersionedDeletableEntity {
     private long currentSupply;
     private long currentReservePerUnitATM;
 
-    public CurrencySupply(Currency currency, int height) {
+    public CurrencySupply(CurrencySupply currency, int height) {
         super(null, height);
         this.currencyId = currency.getCurrencyId();
         super.setDbKey(CurrencySupplyTable.currencySupplyDbKeyFactory.newKey(this.currencyId));
@@ -40,7 +39,7 @@ public class CurrencySupply extends VersionedDeletableEntity {
         this.currentSupply = currentSupply;
         this.currentReservePerUnitATM = currentReservePerUnitATM;
         this.setLatest(latest);
-        this.setLatest(latest);
+        this.setDeleted(deleted);
     }
 
     public CurrencySupply(ResultSet rs, DbKey dbKey) throws SQLException {
