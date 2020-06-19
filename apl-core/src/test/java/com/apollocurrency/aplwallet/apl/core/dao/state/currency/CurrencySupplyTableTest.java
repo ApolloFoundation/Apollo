@@ -38,7 +38,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 class CurrencySupplyTableTest {
 
     @RegisterExtension
-    static DbExtension dbExtension = new DbExtension(DbTestData.getInMemDbProps(), "db/currency_supply.sql", "db/schema.sql");
+    static DbExtension dbExtension = new DbExtension(DbTestData.getInMemDbProps(), "db/currency_supply-data.sql", "db/schema.sql");
 
     @Inject
     CurrencySupplyTable table;

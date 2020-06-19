@@ -40,7 +40,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 @EnableWeld
 class CurrencyTableTest {
     @RegisterExtension
-    static DbExtension dbExtension = new DbExtension(DbTestData.getInMemDbProps(), "db/currency.sql", "db/schema.sql");
+    static DbExtension dbExtension = new DbExtension(DbTestData.getInMemDbProps(), "db/currency-data.sql", "db/schema.sql");
 
     @Inject
     CurrencyTable table;
