@@ -33,11 +33,13 @@ paths:
     post:
       tags:
       - account
-      summary: Create the child account, sender is a parent
-      description: Returns unsigned CreateAccount transaction as a byte array
-      operationId: createAccount
+      summary: Returns unsigned CreateChildAccount transaction for creating child accounts
+      description: |
+        Returns unsigned CreateChildAccount transaction as a byte array.
+        The list of child public keys is attached in the transaction appendix.
+      operationId: createChildAccountTx
       requestBody:
-        description: the public key
+        description: the parent account and the list of public keys
         content:
           application/json:
             schema:
@@ -50,35 +52,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AccountResp'
-        400:
-          $ref: '#/components/responses/BadRequest'
-        500:
-          $ref: '#/components/responses/ServerError'
-  /@@account/batch:
-    post:
-      tags:
-      - account
-      summary: Create a batch of child accounts, sender is a parent
-      description: Returns a list of unsigned CreateAccount transaction as a byte array
-      operationId: createAccountsBatch
-      requestBody:
-        description: the list of public keys
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/AccountReq'
-        required: true
-      responses:
-        200:
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/AccountResp'
         401:
           description: Unauthorized Error
         403:
@@ -134,7 +107,7 @@ paths:
     get:
       tags:
       - state
-      summary: Get blockchain object
+      summary: Get block object
       description: Return details information about the block given block height. If no height is provided, it will fetch the latest block.
       operationId: getBlockByHeight
       parameters:
@@ -171,8 +144,8 @@ paths:
         required: true
         schema:
           type: string
-          format: int64
-          example: '11306043151604016701'
+          format: hex_bytearray
+          example: '1a0feb1043151604016701'
       responses:
         200:
           description: successful operation
@@ -198,8 +171,8 @@ paths:
         required: true
         schema:
           type: string
-          format: int64
-          example: '11306043151604016701'
+          format: hex_bytearray
+          example: '1a0feb06043151604016701'
       responses:
         200:
           description: successful operation
@@ -219,15 +192,15 @@ paths:
       description: Return the list of the brief information about transactions.
       operationId: getTxReceiptList
       requestBody:
-        description: tx objects list
+        description: the list of transaction id
         content:
           application/json:
             schema:
               type: array
               items:
                 type: string
-                format: int64
-                example: '8334041786134176852'
+                format: hex_bytearray
+                example: '83aa340eb41780f61376852'
         required: true
       responses:
         200:
@@ -309,10 +282,13 @@ paths:
       tags:
       - tx
       summary: Broadcast transaction and return transaction receipt.
-      description: Asynchronously broadcast the signed transaction to the network. The transaction is immediately put into an unconfirmed transaction pool and later is sending to the network.
+      description: |
+        Asynchronously broadcast the signed transaction to the network.
+          The transaction is validated and immediately put into an unconfirmed transaction pool
+          for further sending to the blockchain.
       operationId: broadcastTx
       requestBody:
-        description: tx object
+        description: the signed transaction is a byte array in hex format
         content:
           application/json:
             schema:
@@ -337,7 +313,7 @@ paths:
       description: Asynchronously broadcast the batch of the signed transaction to the network. The transactions are immediately put into an unconfirmed transaction pool in the same order as in the batch and later are sending to the network.
       operationId: broadcastTxBatch
       requestBody:
-        description: signed transaction byte array in hex format
+        description: an array of signed transactions, each item is a byte array in hex format
         content:
           application/json:
             schema:
@@ -378,8 +354,8 @@ paths:
         required: true
         schema:
           type: string
-          format: int64
-          example: '11306043151604016701'
+          format: hex_bytearray
+          example: '1aa130eb6043151ad6040f16701'
       responses:
         200:
           description: successful operation
@@ -476,15 +452,17 @@ components:
         id:
           description: The transaction ID
           type: string
-          format: int64
-          example: '11306043151604016701'
+          format: hex_bytearray
+          example: '1a0feb1306043151604016701'
         type:
           description: Transaction type
           type: string
+          format: int8
           example: '2'
         subtype:
           description: Transaction subtype
           type: string
+          format: int8
           example: '1'
         phased:
           description: is true if the transaction is phased
@@ -502,6 +480,7 @@ components:
           example: 1440
         senderPublicKey:
           type: string
+          format: hex_bytearray
           description: The public key of the sending account for the transaction
         recipient:
           type: string
@@ -509,28 +488,32 @@ components:
           example: 'APL-FXHG-6KHM-23LE-42ACU'
         amount:
           type: string
-          format: int64
+          format: integer
           description: The amount of the transaction
           example: 34500000000
         fee:
           type: string
-          format: int64
+          format: integer
           example: 200000000
           description: The fee of the transaction
         referencedTransactionFullHash:
           type: string
+          format: hex_bytearray
           description: The full hash of a transaction referenced by this one
           example: '5424ca4dd976a873839c7d5c9952fa15ae619f678365e8ebbc73f967142eb40d'
         signature:
           type: string
+          format: hex_bytearray
           example: '920173ae606d36c1c77fc5bdf294bd048d04f85c46535525771b524dbb1ed20b73311900d4a409c293a10d8a5ab987430be4bd7478fb16a41cf775afa33c4d56'
           description: The digital signature of the transaction
         signatureHash:
           type: string
+          format: hex_bytearray
           description: SHA-256 hash of the transaction signature
           example: '2fc1883e9b76fdc67fabee0a3def5f4b7fc2de9cd65bc8bb6d39eaf5e99498d8'
         fullHash:
           type: string
+          format: hex_bytearray
           description: The full hash of the transaction
           example: '39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152'
         attachment:
@@ -550,13 +533,14 @@ components:
           description: The height of the block in the blockchain
         version:
           type: string
+          format: int8
           example: '1'
           description: The transaction version number
         ecBlockId:
           type: string
-          format: int64
+          format: hex_bytearray
           description: The economic clustering block ID
-          example: '4015856251679437054'
+          example: '40faaeb15856251679437054'
         ecBlockHeight:
           type: integer
           format: int64
@@ -564,9 +548,9 @@ components:
           example: 3301233
         block:
           type: string
-          format: int64
+          format: hex_bytearray
           description: The block id
-          example: '2345856251679437054'
+          example: '230aeb0f4585625167943'
         confirmations:
           type: integer
           format: int32
@@ -587,9 +571,11 @@ components:
       properties:
         id:
           type: string
-          example: '11306043151604016701'
+          format: hex_bytearray
+          example: '1130faaeb604315160401'
         blockSignature:
           type: string
+          format: hex_bytearray
           example: 'ff080e64436603df0c3b9a5b792b03a26725a83bbe6aa46eb7eed9ee83707f071b6d529d09be1f2594c6f8545c2772a091896bc808553c1774e39a41248b1e1c'
         height:
           type: integer
@@ -600,9 +586,11 @@ components:
           example: 'APL-FXHG-6KHM-23LE-42ACU'
         generationSignature:
           type: string
+          format: hex_bytearray
           example: '60e598f6276371119720786b05e507cd628665473b24c8f76de436d99cf113f7'
         generatorPublicKey:
           type: string
+          format: hex_bytearray
           example: '39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152'
         timestamp:
           type: integer
@@ -623,21 +611,25 @@ components:
           example: '7686143350'
         cumulativeDifficulty:
           type: string
-          format: int64
+          format: integer
           example: '8728234277524822'
         previousBlock:
           description: Prev block id
           type: string
-          example: '8047873372645143160'
+          format: hex_bytearray
+          example: '80faaeb4787337264514'
         previousBlockHash:
           type: string
+          format: hex_bytearray
           example: '5b8ba14eaebba8cdc682c946947f5352a596d00ac63c4e616785d00cf8b8e016'
         nextBlock:
           description: Next block id
           type: string
-          example: '14819300931180530523'
+          format: hex_bytearray
+          example: '140faaeb81930093118053'
         payloadHash:
           type: string
+          format: hex_bytearray
           description: Hash of the paylod (all transactions)
           example: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
         payloadLength:
@@ -651,18 +643,22 @@ components:
           example: 14
         totalAmountATM:
           type: string
+          format: integer
           example: '569000000000000'
         totalFeeATM:
           type: string
+          format: integer
           example: '2800000000'
     Blockchain:
       type: object
       properties:
         chainid:
           type: string
-          example: 'a2e9b946-290b-48b6-9985-dc2e5a5860a1'
+          format: hex_bytearray
+          example: 'a2e9b946290b48b69985dc2e5a5860a1'
         genesisPublicKey:
           type: string
+          format: hex_bytearray
           example: '1259ec21d31a30898d7cd1609f80d9668b4778e3d97e941044b39f0c44d2e51b'
         height:
           type: integer
@@ -686,28 +682,47 @@ components:
         tx:
           description: Signed transaction data
           type: string
+          format: hex_bytearray
           example: '001047857c04a00539dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152eef5365f2400292d00ca9a3b0000000000c2eb0b000000000000000000000000000000000000000000000000000000000000000000000000920173ae606d36c1c77fc5bdf294bd048d04f85c46535525771b524dbb1ed20b73311900d4a409c293a10d8a5ab987430be4bd7478fb16a41cf775afa33c4d5600000000f1da1300fe7062e6fb2fbb37'
           nullable: false
     AccountReq:
       required:
+        - parent
         - publicKey
       type: object
       properties:
-        publickey:
+        parent:
           type: string
-          example: '39dc2e813bb45ff063a376e316b10cd0adeb7306111ca0eb2890194d37960152'
+          description: parent account id
+          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+        child_publicKey_list:
+          type: array
+          description: list of child account public keys
+          maxItems: 128
+          items:
+            type: string
+            format: hex_bytearray
+            example: '39dc2e813bb45ff063a376e316b10cd0adeb7306111ca0eb2890194d37960152'
     AccountResp:
         required:
+          - parent
           - tx
         type: object
         properties:
-          tx:
-            description: Signed transaction data
+          parent:
             type: string
+            description: parent account id
+            example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+          tx:
+            description: Unsigned transaction data
+            type: string
+            format: hex_bytearray
             example: '001047857c04a00539dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152eef5365f2400292d00ca9a3b0000000000c2eb0b000000000000000000000000000000000000000000000000000000000000000000000000920173ae606d36c1c77fc5bdf294bd048d04f85c46535525771b524dbb1ed20b73311900d4a409c293a10d8a5ab987430be4bd7478fb16a41cf775afa33c4d5600000000f1da1300fe7062e6fb2fbb37'
-            nullable: false
     BasicAccount:
       type: object
+      required:
+         - account
+         - publicKey
       properties:
         account:
           type: string
@@ -715,6 +730,7 @@ components:
         publicKey:
           description: The account public key in a hex string format
           type: string
+          format: hex_bytearray
           example: '39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152'
         parent:
           type: string
@@ -727,9 +743,11 @@ components:
           properties:
             balance:
               type: string
+              format: integer
               example: '45225600000000'
             unconfirmedbalance:
               type: string
+              format: integer
               example: '45225600000000'
             status:
               type: string
@@ -838,7 +856,8 @@ components:
       properties:
         transaction:
           type: string
-          example: '8334041786134176852'
+          format: hex_bytearray
+          example: '8330faaeb404178613417'
         sender:
           type: string
           example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
@@ -847,6 +866,7 @@ components:
           example: 'APL-FXHG-6KHM-23LE-42ACU'
         signature:
           type: string
+          format: hex_bytearray
           example: 'B98CB1890E76C772A10994B210ED9CF7F9A5488672A5D82C2734BBF9D11505D1'
         timestamp:
           type: integer
@@ -855,11 +875,11 @@ components:
           example: 1591696372000
         amount:
           type: string
-          format: int64
+          format: integer
           example: '34500000000'
         fee:
           type: string
-          format: int64
+          format: integer
           example: '0'
     TxReceipt:
       description: Confirmed transaction receipt
@@ -870,9 +890,11 @@ components:
             block:
               description: The Id of the block containing the confirmed transaction
               type: string
-              example: '4015856251679437054'
+              format: hex_bytearray
+              example: '40faaeb1585625167943'
             blockHash:
               type: string
+              format: hex_bytearray
               example: '72A5D82C2734BBF9D11505D1B98CB1890E76C772A10994B210ED9CF7F9A54886'
             blockTimestamp:
               type: integer
