@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDeletableEntity;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
 import lombok.Getter;
 import lombok.Setter;
@@ -114,6 +115,10 @@ public class Currency extends VersionedDeletableEntity {
         this.ruleset = rs.getByte("ruleset");
         this.algorithm = rs.getByte("algorithm");
         this.decimals = rs.getByte("decimals");
+    }
+
+    public boolean is(CurrencyType type) {
+        return (this.type & type.getCode()) != 0;
     }
 
 }

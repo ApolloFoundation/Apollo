@@ -272,7 +272,7 @@ class CurrencyExchangeOfferFacadeTest {
     void test_exchangeAPLForCurrency() {
         //GIVEN
         Transaction tr = mock(Transaction.class);
-        doReturn(tdBuy.OFFER_7.getAccountId()).when(tr).getSenderId();
+//        doReturn(tdBuy.OFFER_7.getAccountId()).when(tr).getSenderId();
         List<CurrencyExchangeOffer> offers = List.of(tdSell.OFFER_4, tdSell.OFFER_5, tdSell.OFFER_6, tdSell.OFFER_7, tdSell.OFFER_8);
         doReturn(offers).when(currencyExchangeOfferFacade).getAvailableSellOffers(
             tdBuy.OFFER_3.getCurrencyId(), 1);
@@ -292,9 +292,13 @@ class CurrencyExchangeOfferFacadeTest {
             .addToBalanceATM(any(Account.class), any(LedgerEvent.class), anyLong(), anyLong());
         verify(accountCurrencyService, times(5))
             .addToCurrencyUnits(any(Account.class), any(LedgerEvent.class), anyLong(), anyLong(), anyLong());
+//            .addToCurrencyUnits(tdAccount.ACC_5, LedgerEvent.CURRENCY_EXCHANGE, anyLong(), anyLong(), anyLong());
         verify(accountCurrencyService, times(5))
-            .addToCurrencyAndUnconfirmedCurrencyUnits(tdAccount.ACC_5,
-                LedgerEvent.CURRENCY_EXCHANGE, tdSell.OFFER_4.getId(), tdSell.OFFER_3.getCurrencyId(), -1L);
+            .addToCurrencyAndUnconfirmedCurrencyUnits(
+//                tdAccount.ACC_5,
+//                LedgerEvent.CURRENCY_EXCHANGE, tdSell.OFFER_4.getId(), tdSell.OFFER_3.getCurrencyId(), -1L);
+                any(Account.class),
+                any(LedgerEvent.class), anyLong(), anyLong(), anyLong());
         verify(currencyBuyOfferService, times(5)).insert(any(CurrencyBuyOffer.class));
         verify(currencySellOfferService, times(5)).insert(any(CurrencySellOffer.class));
     }

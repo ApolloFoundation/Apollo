@@ -17,8 +17,8 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyBuyOffer
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyBuyOffer;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyBuyOfferService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
@@ -77,12 +77,12 @@ public class CurrencyBuyOfferServiceImpl implements CurrencyBuyOfferService {
 
     @Override
     public DbIterator<CurrencyBuyOffer> getOffers(Currency currency, int from, int to) {
-        return getCurrencyOffers(currency.getId(), false, from, to);
+        return getCurrencyOffers(currency.getCurrencyId(), false, from, to);
     }
 
     @Override
     public Stream<CurrencyBuyOffer> getOffersStream(Currency currency, int from, int to) {
-        return getCurrencyOffersStream(currency.getId(), false, from, to);
+        return getCurrencyOffersStream(currency.getCurrencyId(), false, from, to);
     }
 
     @Override
@@ -129,7 +129,7 @@ public class CurrencyBuyOfferServiceImpl implements CurrencyBuyOfferService {
 
     @Override
     public CurrencyBuyOffer getOffer(Currency currency, Account account) {
-        return getOffer(currency.getId(), account.getId());
+        return getOffer(currency.getCurrencyId(), account.getId());
     }
 
     @Override

@@ -14,9 +14,9 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyMint;
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.impl.CurrencyMintServiceImpl;
@@ -40,6 +40,8 @@ class CurrencyMintServiceTest {
     private BlockChainInfoService blockChainInfoService;
     @Mock
     private AccountCurrencyService accountCurrencyService;
+    @Mock
+    private CurrencyService currencyService;
 
     private CurrencyMintService service;
     private CurrencyMintTestData td;
@@ -49,7 +51,8 @@ class CurrencyMintServiceTest {
     @BeforeEach
     void setUp() {
         td = new CurrencyMintTestData();
-        service = spy(new CurrencyMintServiceImpl(table, blockChainInfoService, accountCurrencyService));
+        service = spy(new CurrencyMintServiceImpl(
+            table, blockChainInfoService, accountCurrencyService, currencyService));
     }
 
     @Disabled
@@ -91,7 +94,7 @@ class CurrencyMintServiceTest {
         doReturn(dbIt).when(table).getManyBy(any(DbClause.LongClause.class), anyInt(), anyInt());
         doReturn(blockTestData.BLOCK_10).when(blockChainInfoService).getLastBlock();
         Currency currency = mock(Currency.class);
-        doReturn(100L).when(currency).getId();
+        doReturn(100L).when(currency).getCurrencyId();
 
         //WHEN
         service.deleteCurrency(currency);

@@ -11,17 +11,17 @@ import java.util.List;
 public class CurrencySupplyTestData {
 
     public final CurrencySupply CURRENCY_SUPPLY_0 = createCurrencySupply(
-        1,     6766734660591439874L, 20000000,      100000,
-        98890,      true, false);
+        1,     6847297283087791598L, 20000000,      100000,
+        3015,      true, false);
     public final CurrencySupply CURRENCY_SUPPLY_1 = createCurrencySupply(
-        2,     5980603197811663296L, 999000000,     10,
-        105814,     true, false);
+        2,     7766734660591439874L, 999000000,     10,
+        98888,     true, false);
     public final CurrencySupply CURRENCY_SUPPLY_2 = createCurrencySupply(
-        3,     709377893268819808L,  50000,         200,
-        123994,     true, false);
+        3,     2582192196243262007L,  50000,         200,
+        104087,     true, false);
     public final CurrencySupply CURRENCY_SUPPLY_3 = createCurrencySupply(
-        4,     4982636255477747488L, 100000,        0,
-        127756,     true, false);
+        4,     834406670971597912L, 100000,        0,
+        104613,     true, false);
 
     public final CurrencySupply CURRENCY_SUPPLY_NEW = createNewCurrencySupply(
         6052636255477747488L, 100000,        0,

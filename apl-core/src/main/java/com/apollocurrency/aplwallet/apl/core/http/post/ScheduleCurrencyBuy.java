@@ -30,7 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
@@ -86,7 +86,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                 long units = HttpParameterParserUtil.getLong(req, "units", 0, Long.MAX_VALUE, true);
                 Account account = HttpParameterParserUtil.getSenderAccount(req);
                 byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, account.getId(), false);
-                Attachment attachment = new MonetarySystemExchangeBuyAttachment(currency.getId(), rateATM, units);
+                Attachment attachment = new MonetarySystemExchangeBuyAttachment(currency.getCurrencyId(), rateATM, units);
                 response = (JSONObject) JSONValue.parse(JSON.toString(createTransaction(req, account, attachment)));
                 if (keySeed == null || "true".equalsIgnoreCase(req.getParameter("calculateFee"))) {
                     response.put("scheduled", false);

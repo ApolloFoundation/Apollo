@@ -23,7 +23,9 @@ package com.apollocurrency.aplwallet.apl.core.monetary;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMinting;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveIncrease;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
@@ -163,7 +165,8 @@ public enum CurrencyType {
                 }
             }
             if (transaction.getType() == MonetarySystem.RESERVE_CLAIM) {
-                if (currency == null || !currency.isActive()) {
+//                if (currency == null || !currency.isActive()) {
+                if (currency == null || !currencyService.isActive(currency)) {
                     throw new AplException.NotCurrentlyValidException("Cannot claim reserve since currency is not yet active");
                 }
             }
@@ -237,6 +240,7 @@ public enum CurrencyType {
     };
 
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private static CurrencyService currencyService = CDI.current().select(CurrencyService.class).get();
     private final int code;
 
     CurrencyType(int code) {
@@ -315,16 +319,20 @@ public enum CurrencyType {
             throw new AplException.NotValidException("Currency name already used");
         }
         Currency currency;
-        if ((currency = Currency.getCurrencyByName(normalizedName)) != null && !currency.canBeDeletedBy(issuerAccountId)) {
+        if ((currency = currencyService.getCurrencyByName(normalizedName)) != null
+            && !currencyService.canBeDeletedBy(currency, issuerAccountId)) {
             throw new AplException.NotCurrentlyValidException("Currency name already used: " + normalizedName);
         }
-        if ((currency = Currency.getCurrencyByCode(name)) != null && !currency.canBeDeletedBy(issuerAccountId)) {
+        if ((currency = currencyService.getCurrencyByCode(name)) != null
+            && !currencyService.canBeDeletedBy(currency, issuerAccountId)) {
             throw new AplException.NotCurrentlyValidException("Currency name already used as code: " + normalizedName);
         }
-        if ((currency = Currency.getCurrencyByCode(code)) != null && !currency.canBeDeletedBy(issuerAccountId)) {
+        if ((currency = currencyService.getCurrencyByCode(code)) != null
+            && !currencyService.canBeDeletedBy(currency, issuerAccountId)) {
             throw new AplException.NotCurrentlyValidException("Currency code already used: " + code);
         }
-        if ((currency = Currency.getCurrencyByName(code)) != null && !currency.canBeDeletedBy(issuerAccountId)) {
+        if ((currency = currencyService.getCurrencyByName(code)) != null
+            && !currencyService.canBeDeletedBy(currency, issuerAccountId)) {
             throw new AplException.NotCurrentlyValidException("Currency code already used as name: " + code);
         }
     }

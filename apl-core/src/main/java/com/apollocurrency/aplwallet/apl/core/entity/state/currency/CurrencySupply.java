@@ -29,6 +29,12 @@ public class CurrencySupply extends VersionedDeletableEntity {
         super.setDbKey(CurrencySupplyTable.currencySupplyDbKeyFactory.newKey(this.currencyId));
     }
 
+    public CurrencySupply(long currencyId, int height) {
+        super(null, height);
+        this.currencyId = currencyId;
+        super.setDbKey(CurrencySupplyTable.currencySupplyDbKeyFactory.newKey(this.currencyId));
+    }
+
     /**
      * unit test
      */

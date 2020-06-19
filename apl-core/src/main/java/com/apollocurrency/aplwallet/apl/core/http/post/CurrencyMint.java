@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.get.GetMintingTarget;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
@@ -67,7 +67,7 @@ public final class CurrencyMint extends CreateTransaction {
         long counter = HttpParameterParserUtil.getLong(req, "counter", 0, Integer.MAX_VALUE, true);
         Account account = HttpParameterParserUtil.getSenderAccount(req);
 
-        Attachment attachment = new MonetarySystemCurrencyMinting(nonce, currency.getId(), units, counter);
+        Attachment attachment = new MonetarySystemCurrencyMinting(nonce, currency.getCurrencyId(), units, counter);
         return createTransaction(req, account, attachment);
     }
 

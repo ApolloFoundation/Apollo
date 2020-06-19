@@ -17,10 +17,11 @@ import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyBuyOffer;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.impl.CurrencyBuyOfferServiceImpl;
 import com.apollocurrency.aplwallet.apl.data.CurrencyBuyOfferTestData;
+import com.apollocurrency.aplwallet.apl.data.CurrencySupplyTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
@@ -48,6 +49,7 @@ class CurrencyBuyOfferServiceTest {
     @Inject
     CurrencyBuyOfferTable table;
     CurrencyBuyOfferTestData td;
+    CurrencySupplyTestData supplyTestData;
     @Inject
     private CurrencyBuyOfferService offerService;
 
@@ -101,9 +103,11 @@ class CurrencyBuyOfferServiceTest {
 
     @Disabled // temporary till Currency is refactored
     void test_getOffersStream() {
-        Currency currency = new Currency(-4132128809614485872L, null, 0L,
-            null, null, null, 0, 0, 0L, 0, 0,
-            0L, 0, 0, (byte)0, (byte)0, (byte)0, 0L);
+        supplyTestData = new CurrencySupplyTestData();
+        Currency currency = new Currency(6847297283087791598L, -6392448561240417498L, "Gold",      "gold",     "GLD",
+            "A new token allowing the easy trade of gold bullion.", 3,   9900000000000000L, 0, 9900000000000000L,
+            3015,             0,              0,                         0,               0,
+            (byte)0,      (byte)0,          (byte)5,    supplyTestData.CURRENCY_SUPPLY_0,   3015,   true,   false);
         Stream<CurrencyBuyOffer> result = offerService.getOffersStream(currency, 0, 4);
         assertNotNull(result);
         assertEquals(6, result.count());

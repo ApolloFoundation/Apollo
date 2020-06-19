@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.mint;
 
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 
@@ -44,7 +44,9 @@ public final class CurrencyMinting {
         byte[] hash = getHash(currency.getAlgorithm(), attachment.getNonce(), attachment.getCurrencyId(), attachment.getUnits(),
             attachment.getCounter(), accountId);
         byte[] target = getTarget(currency.getMinDifficulty(), currency.getMaxDifficulty(),
-            attachment.getUnits(), currency.getCurrentSupply() - currency.getReserveSupply(), currency.getMaxSupply() - currency.getReserveSupply());
+            attachment.getUnits(),
+            currency.getCurrencySupply().getCurrentSupply() - currency.getReserveSupply(),
+            currency.getMaxSupply() - currency.getReserveSupply());
         return meetsTarget(hash, target);
     }
 
@@ -93,7 +95,8 @@ public final class CurrencyMinting {
 
     public static BigInteger getNumericTarget(Currency currency, long units) {
         return getNumericTarget(currency.getMinDifficulty(), currency.getMaxDifficulty(), units,
-            currency.getCurrentSupply() - currency.getReserveSupply(), currency.getMaxSupply() - currency.getReserveSupply());
+            currency.getCurrencySupply().getCurrentSupply() - currency.getReserveSupply(),
+            currency.getMaxSupply() - currency.getReserveSupply());
     }
 
     public static BigInteger getNumericTarget(int min, int max, long units, long currentMintableSupply, long totalMintableSupply) {

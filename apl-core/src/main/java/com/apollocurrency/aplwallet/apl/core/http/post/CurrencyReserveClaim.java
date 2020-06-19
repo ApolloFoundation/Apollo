@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveClaim;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
@@ -57,7 +57,7 @@ public final class CurrencyReserveClaim extends CreateTransaction {
         Currency currency = HttpParameterParserUtil.getCurrency(req);
         long units = HttpParameterParserUtil.getLong(req, "units", 0, currency.getReserveSupply(), false);
         Account account = HttpParameterParserUtil.getSenderAccount(req);
-        Attachment attachment = new MonetarySystemReserveClaim(currency.getId(), units);
+        Attachment attachment = new MonetarySystemReserveClaim(currency.getCurrencyId(), units);
         return createTransaction(req, account, attachment);
 
     }

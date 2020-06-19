@@ -131,7 +131,7 @@ public final class CurrencyMint {
             return;
         }
         Currency currency = Currency.getCurrency(attachment.getCurrencyId());
-        if (CurrencyMinting.meetsTarget(account.getId(), currency, attachment)) {
+        if (CurrencyMinting.meetsTarget(account.getId(), /*currency*/null, attachment)) {
             if (currencyMint == null) {
                 currencyMint = new CurrencyMint(attachment.getCurrencyId(), account.getId(), attachment.getCounter());
             } else {

@@ -17,11 +17,12 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyFounder;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyFounderService;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Singleton
-public class CurrencyFounderServiceImpl implements com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyFounderService {
+public class CurrencyFounderServiceImpl implements CurrencyFounderService {
 
     private final CurrencyFounderTable currencyFounderTable;
     private final BlockChainInfoService blockChainInfoService;
@@ -54,8 +55,7 @@ public class CurrencyFounderServiceImpl implements com.apollocurrency.aplwallet.
         if (founder == null) {
             founder = new CurrencyFounder(currencyId, accountId, amount, height);
         } else {
-            long amountPerUnitATM = founder.getAmountPerUnitATM();
-            amountPerUnitATM += amount;
+            long amountPerUnitATM = founder.getAmountPerUnitATM() + amount;
             founder.setAmountPerUnitATM(amountPerUnitATM);
             founder.setHeight(height); // important height assign
         }
