@@ -25,7 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySellOffer;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.impl.CurrencySellOfferServiceImpl;
 import com.apollocurrency.aplwallet.apl.data.CurrencySellOfferTestData;
@@ -100,14 +100,17 @@ class CurrencySellOfferServiceTest {
         assertEquals(6, result.count());
     }
 
-    @Disabled // temporary till Currency is refactored
+    @Test
     void test_getOffersStream() {
-        Currency currency = new Currency(-4132128809614485872L, null, 0L,
-            null, null, null, 0, 0, 0L, 0, 0,
-            0L, 0, 0, (byte)0, (byte)0, (byte)0, 0L);
+        Currency currency = new Currency(
+            -4132128809614485872L, 0L, "NotKnown", "not_known", "code", "description",
+            0, 0L, 0L, 0L, 0,
+            0, 0L, 0, 0,
+            (byte)0, (byte)0, (byte)0, null, 0,
+            true, true);
         Stream<CurrencySellOffer> result = offerService.getOffersStream(currency, 0, 4);
         assertNotNull(result);
-        assertEquals(6, result.count());
+        assertEquals(2, result.count());
     }
 
     @Test
