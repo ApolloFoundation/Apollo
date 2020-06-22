@@ -31,11 +31,14 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystem
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.inject.spi.CDI;
 import java.util.EnumSet;
 import java.util.Set;
 
+@Slf4j
 /**
  * Define and validate currency capabilities
  */
@@ -262,6 +265,8 @@ public enum CurrencyType {
 
     public static void validate(Currency currency, Transaction transaction) throws AplException.ValidationException {
         if (currency == null) {
+            log.debug("currency = {}, tr = {}, height = {}", currency, transaction, transaction.getHeight());
+            log.debug("s-trace = {}", ThreadUtils.last5Stacktrace());
             throw new AplException.NotCurrentlyValidException("Unknown currency: " + transaction.getAttachment().getJSONObject());
         }
         validate(currency, currency.getType(), transaction);

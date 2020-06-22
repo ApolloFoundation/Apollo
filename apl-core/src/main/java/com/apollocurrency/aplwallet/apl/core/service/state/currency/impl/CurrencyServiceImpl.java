@@ -92,12 +92,14 @@ public class CurrencyServiceImpl implements CurrencyService {
     @Override
     public Currency getCurrency(long id) {
         Currency currency = currencyTable.get(CurrencyTable.currencyDbKeyFactory.newKey(id));
+/*
         if (currency != null) {
             CurrencySupply currencySupply = currencySupplyTable.get(currencyTable.getDbKeyFactory().newKey(currency));
             if (currencySupply != null) {
                 currency.setCurrencySupply(currencySupply);
             }
         }
+*/
         return currency;
     }
 
@@ -190,7 +192,7 @@ public class CurrencyServiceImpl implements CurrencyService {
         if (currency.getCurrencySupply() == null) {
             currencySupply = currencySupplyTable.get(currencyTable.getDbKeyFactory().newKey(currency));
             if (currencySupply == null) {
-                currencySupply = new CurrencySupply(currency.getCurrencyId(), blockChainInfoService.getHeight());
+                currencySupply = new CurrencySupply(currency, blockChainInfoService.getHeight());
             } else {
                 currency.setHeight(blockChainInfoService.getHeight());
             }
