@@ -85,6 +85,7 @@
       <id>dev</id>
       <properties>
         <zipExecutionPhase>none</zipExecutionPhase>
+        <excludeTestTags>slow</excludeTestTags>
       </properties>
     </profile>
     <!-- The Configuration of the production profile -->
@@ -95,6 +96,7 @@
       </activation>
       <properties>
         <zipExecutionPhase>package</zipExecutionPhase>
+        <excludeTestTags/>
       </properties>
     </profile>
   </profiles>
@@ -120,6 +122,12 @@
           <version>${surefire-plugin.version}</version>
           <configuration>
             <useSystemClassLoader>false</useSystemClassLoader>
+            <excludedGroups>${excludeTestTags}</excludedGroups>
+<!--
+            <properties>
+              <includeTags>${includeTestTags}</includeTags>
+            </properties>
+-->
           </configuration>
           <dependencies>
             <dependency>

@@ -23,19 +23,20 @@ package com.apollocurrency.aplwallet.apl.core.http;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
-import com.apollocurrency.aplwallet.apl.core.app.Poll;
+import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
+import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.alias.Alias;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyBuyOffer;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
@@ -45,6 +46,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
@@ -137,6 +139,8 @@ public final class HttpParameterParserUtil {
     private static AccountService accountService;
     private static AccountPublicKeyService accountPublicKeyService;
     private static AssetService assetService;
+    private static PollService POLL_SERVICE;
+    private static CurrencyExchangeOfferFacade currencyExchangeOfferFacade;
 
     private HttpParameterParserUtil() {
     } // never
@@ -363,7 +367,7 @@ public final class HttpParameterParserUtil {
     }
 
     public static Poll getPoll(HttpServletRequest req) throws ParameterException {
-        Poll poll = Poll.getPoll(getUnsignedLong(req, "poll", true));
+        Poll poll = lookupPollService().getPoll(getUnsignedLong(req, "poll", true));
         if (poll == null) {
             throw new ParameterException(UNKNOWN_POLL);
         }
@@ -391,7 +395,8 @@ public final class HttpParameterParserUtil {
     }
 
     public static CurrencyBuyOffer getBuyOffer(HttpServletRequest req) throws ParameterException {
-        CurrencyBuyOffer offer = CurrencyBuyOffer.getOffer(getUnsignedLong(req, "offer", true));
+        CurrencyBuyOffer offer = lookupCurrencyExchangeOfferFacade().getCurrencyBuyOfferService()
+            .getOffer(getUnsignedLong(req, "offer", true));
         if (offer == null) {
             throw new ParameterException(UNKNOWN_OFFER);
         }
@@ -399,7 +404,8 @@ public final class HttpParameterParserUtil {
     }
 
     public static CurrencySellOffer getSellOffer(HttpServletRequest req) throws ParameterException {
-        CurrencySellOffer offer = CurrencySellOffer.getOffer(getUnsignedLong(req, "offer", true));
+        CurrencySellOffer offer = lookupCurrencyExchangeOfferFacade().getCurrencySellOfferService()
+            .getOffer(getUnsignedLong(req, "offer", true));
         if (offer == null) {
             throw new ParameterException(UNKNOWN_OFFER);
         }
@@ -1181,18 +1187,25 @@ public final class HttpParameterParserUtil {
         return accountService;
     }
 
-    private static AccountPublicKeyService lookupAccountPublicKeyService() {
-        if (accountPublicKeyService == null) {
-            accountPublicKeyService = CDI.current().select(AccountPublicKeyService.class).get();
-        }
-        return accountPublicKeyService;
-    }
-
     private static AssetService lookupAssetService() {
         if (assetService == null) {
             assetService = CDI.current().select(AssetService.class).get();
         }
         return assetService;
+    }
+
+    private static PollService lookupPollService() {
+        if (POLL_SERVICE == null) {
+            POLL_SERVICE = CDI.current().select(PollService.class).get();
+        }
+        return POLL_SERVICE;
+    }
+
+    private static CurrencyExchangeOfferFacade lookupCurrencyExchangeOfferFacade() {
+        if (currencyExchangeOfferFacade == null) {
+            currencyExchangeOfferFacade = CDI.current().select(CurrencyExchangeOfferFacade.class).get();
+        }
+        return currencyExchangeOfferFacade;
     }
 
     public static class PrivateTransactionsAPIData {

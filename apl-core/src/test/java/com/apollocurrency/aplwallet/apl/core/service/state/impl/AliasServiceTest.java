@@ -29,7 +29,7 @@ import static org.mockito.Mockito.when;
  * @author silaev-firstbridge on 3/19/2020
  */
 @ExtendWith(MockitoExtension.class)
-class AliasServiceImplTest {
+class AliasServiceTest {
     @Mock
     private AliasTable aliasTable;
     @Mock

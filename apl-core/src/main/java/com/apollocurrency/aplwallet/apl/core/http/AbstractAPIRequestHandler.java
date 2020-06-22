@@ -16,7 +16,10 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.BidOrder;
+import com.apollocurrency.aplwallet.apl.core.service.state.PollOptionResultService;
+import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetTransferService;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
@@ -42,6 +45,11 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountL
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPropertyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
+import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
+import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeRequestService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyMintService;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.impl.AskOrderServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.impl.BidOrderServiceImpl;
@@ -81,6 +89,9 @@ public abstract class AbstractAPIRequestHandler {
     protected TaggedDataService taggedDataService = CDI.current().select(TaggedDataService.class).get();
     protected PrunableMessageService prunableMessageService = CDI.current().select(PrunableMessageService.class).get();
     protected AssetService assetService = CDI.current().select(AssetService.class).get();
+    protected final PollService pollService = CDI.current().select(PollService.class).get();
+    protected final PollOptionResultService pollOptionResultService = CDI.current().select(PollOptionResultService.class).get();
+    protected ExchangeService exchangeService = CDI.current().select(ExchangeService.class).get();
 
     protected TrimService trimService;
     private List<String> parameters;
@@ -100,6 +111,11 @@ public abstract class AbstractAPIRequestHandler {
     private AccountPropertyService accountPropertyService;
     private PeersService peers;
     private AccountControlPhasingService accountControlPhasingService;
+    private AssetTransferService assetTransferService;
+    private CurrencyExchangeOfferFacade currencyExchangeOfferFacade;
+    private ExchangeRequestService exchangeRequestService;
+    private CurrencyTransferService currencyTransferService;
+    private CurrencyMintService currencyMintService;
 
     public AbstractAPIRequestHandler(APITag[] apiTags, String... parameters) {
         this(null, apiTags, parameters);
@@ -230,6 +246,35 @@ public abstract class AbstractAPIRequestHandler {
         }
         return accountControlPhasingService;
     }
+
+    public AssetTransferService lookupAssetTransferService() {
+        if (assetTransferService == null) {
+            assetTransferService = CDI.current().select(AssetTransferService.class).get();
+        }
+        return assetTransferService;
+    }
+
+    public ExchangeRequestService lookupExchangeRequestService() {
+        if (exchangeRequestService == null) {
+            exchangeRequestService = CDI.current().select(ExchangeRequestService.class).get();
+        }
+        return exchangeRequestService;
+    }
+
+    public CurrencyTransferService lookupCurrencyTransferService() {
+        if (currencyTransferService == null) {
+            currencyTransferService = CDI.current().select(CurrencyTransferService.class).get();
+        }
+        return currencyTransferService;
+    }
+
+    public CurrencyMintService lookupCurrencyMintService() {
+        if (currencyMintService == null) {
+            currencyMintService = CDI.current().select(CurrencyMintService.class).get();
+        }
+        return currencyMintService;
+    }
+
 
     public final List<String> getParameters() {
         return parameters;

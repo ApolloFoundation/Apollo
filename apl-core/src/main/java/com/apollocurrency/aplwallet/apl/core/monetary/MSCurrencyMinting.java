@@ -64,7 +64,7 @@ class MSCurrencyMinting extends MonetarySystem {
         if (!currency.isActive()) {
             throw new AplException.NotCurrentlyValidException("Currency not currently active " + attachment.getJSONObject());
         }
-        long counter = CurrencyMint.getCounter(attachment.getCurrencyId(), transaction.getSenderId());
+        long counter = lookupCurrencyMintService().getCounter(attachment.getCurrencyId(), transaction.getSenderId());
         if (attachment.getCounter() <= counter) {
             throw new AplException.NotCurrentlyValidException(String.format("Counter %d has to be bigger than %d", attachment.getCounter(), counter));
         }
@@ -85,7 +85,7 @@ class MSCurrencyMinting extends MonetarySystem {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         MonetarySystemCurrencyMinting attachment = (MonetarySystemCurrencyMinting) transaction.getAttachment();
-        CurrencyMint.mintCurrency(getLedgerEvent(), transaction.getId(), senderAccount, attachment);
+        lookupCurrencyMintService().mintCurrency(getLedgerEvent(), transaction.getId(), senderAccount, attachment);
     }
 
     @Override
