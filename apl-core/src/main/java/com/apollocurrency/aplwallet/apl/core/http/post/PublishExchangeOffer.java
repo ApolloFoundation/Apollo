@@ -83,7 +83,7 @@ public final class PublishExchangeOffer extends CreateTransaction {
         int expirationHeight = HttpParameterParserUtil.getInt(req, "expirationHeight", 0, Integer.MAX_VALUE, true);
         Account account = HttpParameterParserUtil.getSenderAccount(req);
 
-        Attachment attachment = new MonetarySystemPublishExchangeOffer(currency.getCurrencyId(), buyRateATM, sellRateATM,
+        Attachment attachment = new MonetarySystemPublishExchangeOffer(currency.getId(), buyRateATM, sellRateATM,
             totalBuyLimit, totalSellLimit, initialBuySupply, initialSellSupply, expirationHeight);
         try {
             return createTransaction(req, account, attachment);

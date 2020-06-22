@@ -52,6 +52,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountLedger
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeRequestService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
@@ -109,6 +110,7 @@ public class ServerInfoService {
     private final ExchangeService exchangeService;
     private final ExchangeRequestService exchangeRequestService;
     private final CurrencyTransferService currencyTransferService;
+    private final CurrencyService currencyService;
 
     @Inject
     public ServerInfoService(BlockchainConfig blockchainConfig, Blockchain blockchain,
@@ -134,7 +136,8 @@ public class ServerInfoService {
                              CurrencyExchangeOfferFacade currencyExchangeOfferFacade,
                              ExchangeService exchangeService,
                              ExchangeRequestService exchangeRequestService,
-                             CurrencyTransferService currencyTransferService
+                             CurrencyTransferService currencyTransferService,
+                             CurrencyService currencyService
     ) {
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
         this.blockchain = Objects.requireNonNull(blockchain, "blockchain is NULL");
@@ -163,6 +166,7 @@ public class ServerInfoService {
         this.exchangeService = Objects.requireNonNull(exchangeService, "exchangeService is NULL");
         this.exchangeRequestService = Objects.requireNonNull(exchangeRequestService, "exchangeRequestService is NULL");
         this.currencyTransferService = Objects.requireNonNull(currencyTransferService, "currencyTransferService is NULL");
+        this. currencyService = Objects.requireNonNull( currencyService, "currencyService is NULL");
     }
 
     public ApolloX509Info getX509Info() {
@@ -350,7 +354,7 @@ public class ServerInfoService {
             dto.numberOfBidOrders = bidCount;
             dto.numberOfTrades = tradeService.getCount();
             dto.numberOfTransfers = assetTransferService.getCount();
-            dto.numberOfCurrencies = Currency.getCount();
+            dto.numberOfCurrencies = currencyService.getCount();
             dto.numberOfOffers = currencyExchangeOfferFacade.getCurrencyBuyOfferService().getCount();
             dto.numberOfExchangeRequests = exchangeRequestService.getCount();
             dto.numberOfExchanges = exchangeService.getCount();

@@ -94,7 +94,7 @@ class CurrencyMintServiceTest {
         doReturn(dbIt).when(table).getManyBy(any(DbClause.LongClause.class), anyInt(), anyInt());
         doReturn(blockTestData.BLOCK_10).when(blockChainInfoService).getLastBlock();
         Currency currency = mock(Currency.class);
-        doReturn(100L).when(currency).getCurrencyId();
+        doReturn(100L).when(currency).getId();
 
         //WHEN
         service.deleteCurrency(currency);

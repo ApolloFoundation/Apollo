@@ -25,7 +25,7 @@ public class CurrencySupply extends VersionedDeletableEntity {
 
     public CurrencySupply(Currency currency, int height) {
         super(null, height);
-        this.currencyId = currency.getCurrencyId();
+        this.currencyId = currency.getId();
         super.setDbKey(CurrencySupplyTable.currencySupplyDbKeyFactory.newKey(this.currencyId));
     }
 

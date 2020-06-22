@@ -28,7 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -110,7 +110,7 @@ public final class StartFundingMonitor extends AbstractAPIRequestHandler {
                 }
                 break;
             case CURRENCY:
-                Currency currency = Currency.getCurrency(holdingId);
+                Currency currency = lookupCurrencyService().getCurrency(holdingId);
                 if (currency == null) {
                     throw new ParameterException(JSONResponses.UNKNOWN_CURRENCY);
                 }

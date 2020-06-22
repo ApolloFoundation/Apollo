@@ -50,7 +50,7 @@ public final class TransferCurrency extends CreateTransaction {
         long units = HttpParameterParserUtil.getLong(req, "units", 0, Long.MAX_VALUE, true);
         Account account = HttpParameterParserUtil.getSenderAccount(req);
 
-        Attachment attachment = new MonetarySystemCurrencyTransfer(currency.getCurrencyId(), units);
+        Attachment attachment = new MonetarySystemCurrencyTransfer(currency.getId(), units);
         try {
             return createTransaction(req, account, recipient, 0, attachment);
         } catch (AplException.InsufficientBalanceException e) {

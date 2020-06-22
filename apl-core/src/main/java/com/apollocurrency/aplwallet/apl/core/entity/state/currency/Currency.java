@@ -22,7 +22,7 @@ import lombok.ToString;
 @ToString(callSuper = true)
 public class Currency extends VersionedDeletableEntity {
 
-    private long currencyId;
+    private long id;
     private long accountId;
     private String name;
     private String nameLower;
@@ -44,8 +44,8 @@ public class Currency extends VersionedDeletableEntity {
 
     public Currency(Transaction transaction, MonetarySystemCurrencyIssuance attachment, int height) {
         super(null, height);
-        this.currencyId = transaction.getId();
-        super.setDbKey(CurrencyTable.currencyDbKeyFactory.newKey(this.currencyId));
+        this.id = transaction.getId();
+        super.setDbKey(CurrencyTable.currencyDbKeyFactory.newKey(this.id));
         this.accountId = transaction.getSenderId();
         this.name = attachment.getName();
         this.nameLower = attachment.getName().toLowerCase();
@@ -65,13 +65,13 @@ public class Currency extends VersionedDeletableEntity {
         this.decimals = attachment.getDecimals();
     }
 
-    public Currency(long currencyId, long accountId, String name, String nameLower, String code, String description,
+    public Currency(long id, long accountId, String name, String nameLower, String code, String description,
                     int type, long initialSupply, long reserveSupply, long maxSupply, int creationHeight,
                     int issuanceHeight, long minReservePerUnitATM, int minDifficulty, int maxDifficulty,
                     byte ruleset, byte algorithm, byte decimals, CurrencySupply currencySupply, int height,
                     boolean latest, boolean deleted) {
         super(null, height);
-        this.currencyId = currencyId;
+        this.id = id;
         this.accountId = accountId;
         this.name = name;
         this.name = nameLower;
@@ -96,7 +96,7 @@ public class Currency extends VersionedDeletableEntity {
 
     public Currency(ResultSet rs, DbKey dbKey) throws SQLException {
         super(rs);
-        this.currencyId = rs.getLong("id");
+        this.id = rs.getLong("id");
         super.setDbKey(dbKey);
         this.accountId = rs.getLong("account_id");
         this.name = rs.getString("name");

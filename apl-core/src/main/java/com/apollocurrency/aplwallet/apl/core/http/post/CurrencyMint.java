@@ -67,7 +67,7 @@ public final class CurrencyMint extends CreateTransaction {
         long counter = HttpParameterParserUtil.getLong(req, "counter", 0, Integer.MAX_VALUE, true);
         Account account = HttpParameterParserUtil.getSenderAccount(req);
 
-        Attachment attachment = new MonetarySystemCurrencyMinting(nonce, currency.getCurrencyId(), units, counter);
+        Attachment attachment = new MonetarySystemCurrencyMinting(nonce, currency.getId(), units, counter);
         return createTransaction(req, account, attachment);
     }
 

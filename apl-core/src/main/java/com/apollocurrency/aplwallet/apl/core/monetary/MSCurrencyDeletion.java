@@ -68,7 +68,7 @@ class MSCurrencyDeletion extends MonetarySystem {
         CurrencyType.validate(currency, transaction);
         if (!lookupCurrencyService().canBeDeletedBy(currency, transaction.getSenderId())) {
             throw new AplException.NotCurrentlyValidException(
-                "Currency " + currency.getCurrencyId() + " cannot be deleted by account " + transaction.getSenderId());
+                "Currency " + currency.getId() + " cannot be deleted by account " + transaction.getSenderId());
         }
     }
 

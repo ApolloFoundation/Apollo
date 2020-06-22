@@ -66,7 +66,7 @@ public final class CurrencySell extends CreateTransaction {
         long units = HttpParameterParserUtil.getLong(req, "units", 0, Long.MAX_VALUE, true);
         Account account = HttpParameterParserUtil.getSenderAccount(req);
 
-        Attachment attachment = new MonetarySystemExchangeSell(currency.getCurrencyId(), rateATM, units);
+        Attachment attachment = new MonetarySystemExchangeSell(currency.getId(), rateATM, units);
         try {
             return createTransaction(req, account, attachment);
         } catch (AplException.InsufficientBalanceException e) {

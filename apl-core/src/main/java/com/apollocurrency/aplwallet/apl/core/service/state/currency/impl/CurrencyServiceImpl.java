@@ -124,6 +124,11 @@ public class CurrencyServiceImpl implements CurrencyService {
     }
 
     @Override
+    public DbIterator<Currency> getIssuedCurrenciesByHeight(int height, int from, int to) {
+        return currencyTable.getManyBy(new DbClause.IntClause("issuance_height", height), 0, -1);
+    }
+
+    @Override
     public void addCurrency(LedgerEvent event, long eventId, Transaction transaction, Account senderAccount,
                             MonetarySystemCurrencyIssuance attachment) {
         Currency oldCurrency;
@@ -143,7 +148,7 @@ public class CurrencyServiceImpl implements CurrencyService {
         currencyTable.insert(currency);
         if (currency.is(CurrencyType.MINTABLE) || currency.is(CurrencyType.RESERVABLE)) {
 //            CurrencySupply currencySupply = currency.getSupplyData();
-            CurrencySupply currencySupply = getSupplyDataByCurrency(currency);
+            CurrencySupply currencySupply = loadCurrencySupplyByCurrency(currency);
             if (currencySupply != null) {
                 currencySupply.setCurrentSupply( attachment.getInitialSupply() );
                 currencySupplyTable.insert(currencySupply);
@@ -156,10 +161,11 @@ public class CurrencyServiceImpl implements CurrencyService {
         Currency currency = this.getCurrency(currencyId);
         accountService.addToBalanceATM(account, event, eventId, -Math.multiplyExact(currency.getReserveSupply(), amountPerUnitATM));
 //        CurrencySupply currencySupply = currency.getSupplyData();
-        CurrencySupply currencySupply = getSupplyDataByCurrency(currency);
+        CurrencySupply currencySupply = loadCurrencySupplyByCurrency(currency);
         if (currencySupply != null) {
             long tempAmountPerUnitATM = currencySupply.getCurrentReservePerUnitATM() + amountPerUnitATM;
             currencySupply.setCurrentReservePerUnitATM(tempAmountPerUnitATM);
+            currencySupply.setHeight(blockChainInfoService.getHeight());
             currencySupplyTable.insert(currencySupply);
         }
         currencyFounderService.addOrUpdateFounder(currencyId, account.getId(), amountPerUnitATM);
@@ -183,27 +189,20 @@ public class CurrencyServiceImpl implements CurrencyService {
         accountCurrencyService.addToCurrencyAndUnconfirmedCurrencyUnits(recipientAccount, event, eventId, currencyId, units);
     }
 
-    @Override
-    public CurrencySupply getSupplyDataByCurrency(Currency currency) {
+    public long getCurrentSupply(Currency currency) {
         if (!currency.is(CurrencyType.RESERVABLE) && !currency.is(CurrencyType.MINTABLE)) {
-            return null;
+            return currency.getInitialSupply();
         }
-        CurrencySupply currencySupply = null;
-        if (currency.getCurrencySupply() == null) {
-            currencySupply = currencySupplyTable.get(currencyTable.getDbKeyFactory().newKey(currency));
-            if (currencySupply == null) {
-                currencySupply = new CurrencySupply(currency, blockChainInfoService.getHeight());
-            } else {
-                currency.setHeight(blockChainInfoService.getHeight());
-            }
-            currency.setCurrencySupply(currencySupply);
+        CurrencySupply currencySupply = this.loadCurrencySupplyByCurrency(currency);
+        if (currencySupply == null) {
+            return 0;
         }
-        return currencySupply;
+        return currencySupply.getCurrentSupply();
     }
 
     @Override
     public long getCurrentReservePerUnitATM(Currency currency) {
-        if (!currency.is(CurrencyType.RESERVABLE) || getSupplyDataByCurrency(currency) == null) {
+        if (!currency.is(CurrencyType.RESERVABLE) || loadCurrencySupplyByCurrency(currency) == null) {
             return 0;
         }
         return currency.getCurrencySupply().getCurrentReservePerUnitATM();
@@ -215,24 +214,38 @@ public class CurrencyServiceImpl implements CurrencyService {
     }
 
     @Override
-    public void increaseSupply(Currency currency, long units) {
-        CurrencySupply currencySupply = this.getSupplyDataByCurrency(currency);
-        if (currencySupply != null) {
-            long tempCurrentSupply = currencySupply.getCurrentSupply() + units;
-//        currencySupply.currentSupply += units;
-            currencySupply.setCurrentSupply(tempCurrentSupply);
-            if (currencySupply.getCurrentSupply() > currency.getMaxSupply() || currencySupply.getCurrentSupply() < 0) {
-                tempCurrentSupply = currencySupply.getCurrentSupply() - units;
-    //            currencySupply.currentSupply -= units;
-                currencySupply.setCurrentSupply(tempCurrentSupply);
-                throw new IllegalArgumentException("Cannot add " + units + " to current supply of " + currencySupply.getCurrentSupply());
-            }
-            currencySupply.setHeight(blockChainInfoService.getHeight());
-            currencySupplyTable.insert(currencySupply);
+    public CurrencySupply loadCurrencySupplyByCurrency(Currency currency) {
+        if (!currency.is(CurrencyType.RESERVABLE) && !currency.is(CurrencyType.MINTABLE)) {
+            return null;
         }
+        CurrencySupply currencySupply = null;
+        if (currency.getCurrencySupply() == null) {
+            currencySupply = currencySupplyTable.get(currencyTable.getDbKeyFactory().newKey(currency));
+            if (currencySupply == null) {
+                currencySupply = new CurrencySupply(currency, blockChainInfoService.getHeight());
+            } /*else {
+                currency.setHeight(blockChainInfoService.getHeight());
+            }*/
+            currency.setCurrencySupply(currencySupply);
+        }
+        return currencySupply;
     }
 
-
+    @Override
+    public void increaseSupply(Currency currency, long units) {
+        CurrencySupply currencySupply = this.loadCurrencySupplyByCurrency(currency);
+        long tempCurrentSupply = currencySupply.getCurrentSupply() + units;
+//        currencySupply.currentSupply += units;
+        currencySupply.setCurrentSupply(tempCurrentSupply);
+        if (currencySupply.getCurrentSupply() > currency.getMaxSupply() || currencySupply.getCurrentSupply() < 0) {
+            tempCurrentSupply = currencySupply.getCurrentSupply() - units;
+            //            currencySupply.currentSupply -= units;
+            currencySupply.setCurrentSupply(tempCurrentSupply);
+            throw new IllegalArgumentException("Cannot add " + units + " to current supply of " + currencySupply.getCurrentSupply());
+        }
+        currencySupply.setHeight(blockChainInfoService.getHeight());
+        currencySupplyTable.insert(currencySupply);
+    }
 
     @Override
     public DbIterator<Exchange> getExchanges(long currencyId, int from, int to) {
@@ -249,24 +262,26 @@ public class CurrencyServiceImpl implements CurrencyService {
         if (currency == null) return false; // prevent NPE
 
         if (!currency.is(CurrencyType.NON_SHUFFLEABLE)
-            && Shuffling.getHoldingShufflingCount(currency.getCurrencyId(), false) > 0) {
+            && Shuffling.getHoldingShufflingCount(currency.getId(), false) > 0) {
             return false;
         }
         if (!this.isActive(currency)) {
             return senderAccountId == currency.getAccountId();
         }
+/*
         if (currency.getCurrencySupply() == null) {
             // refresh data
-            currency = this.getCurrency(currency.getCurrencyId());
+            currency = this.getCurrency(currency.getId());
         }
+*/
         if (currency.is(CurrencyType.MINTABLE)
-            && currency.getCurrencySupply().getCurrentSupply() < currency.getMaxSupply()
+            && this.getCurrentSupply(currency) < currency.getMaxSupply()
             && senderAccountId != currency.getAccountId()) {
             return false;
         }
 
         List<AccountCurrency> accountCurrencies = accountCurrencyService
-            .getCurrenciesByAccount(currency.getCurrencyId(), 0, -1);
+            .getCurrenciesByAccount(currency.getId(), 0, -1);
         return accountCurrencies.isEmpty() || accountCurrencies.size() == 1 && accountCurrencies.get(0).getAccountId() == senderAccountId;
     }
 
@@ -274,20 +289,20 @@ public class CurrencyServiceImpl implements CurrencyService {
     public void delete(Currency currency, LedgerEvent event, long eventId, Account senderAccount) {
         if (!canBeDeletedBy(currency, senderAccount.getId())) {
             // shouldn't happen as ownership has already been checked in validate, but as a safety check
-            throw new IllegalStateException("Currency " + currency.getCurrencyId() + " not entirely owned by "
+            throw new IllegalStateException("Currency " + currency.getId() + " not entirely owned by "
                 + senderAccount.getId());
         }
 //        listeners.notify(this, com.apollocurrency.aplwallet.apl.core.monetary.Currency.Event.BEFORE_DELETE);
         if (currency.is(CurrencyType.RESERVABLE)) {
             if (currency.is(CurrencyType.CLAIMABLE) && this.isActive(currency)) {
-                accountCurrencyService.addToUnconfirmedCurrencyUnits(senderAccount, event, eventId, currency.getCurrencyId(),
-                    -accountCurrencyService.getCurrencyUnits(senderAccount, currency.getCurrencyId()));
-                this.claimReserve(event, eventId, senderAccount, currency.getCurrencyId(),
-                    accountCurrencyService.getCurrencyUnits(senderAccount, currency.getCurrencyId()));
+                accountCurrencyService.addToUnconfirmedCurrencyUnits(senderAccount, event, eventId, currency.getId(),
+                    -accountCurrencyService.getCurrencyUnits(senderAccount, currency.getId()));
+                this.claimReserve(event, eventId, senderAccount, currency.getId(),
+                    accountCurrencyService.getCurrencyUnits(senderAccount, currency.getId()));
             }
             if (!isActive(currency)) {
                 try (DbIterator<CurrencyFounder> founders = currencyFounderService
-                    .getCurrencyFounders(currency.getCurrencyId(), 0, Integer.MAX_VALUE)) {
+                    .getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
                     for (CurrencyFounder founder : founders) {
                         accountService.addToBalanceAndUnconfirmedBalanceATM(
                             accountService.getAccount(founder.getAccountId()),
@@ -295,7 +310,7 @@ public class CurrencyServiceImpl implements CurrencyService {
                     }
                 }
             }
-            currencyFounderService.remove(currency.getCurrencyId());
+            currencyFounderService.remove(currency.getId());
         }
         if (currency.is(CurrencyType.EXCHANGEABLE)) {
             List<CurrencyBuyOffer> buyOffers = new ArrayList<>();
@@ -312,11 +327,11 @@ public class CurrencyServiceImpl implements CurrencyService {
             lookupCurrencyMintService().deleteCurrency(currency);
         }
         accountCurrencyService.addToUnconfirmedCurrencyUnits(
-            senderAccount, event, eventId, currency.getCurrencyId(),
-            -accountCurrencyService.getUnconfirmedCurrencyUnits(senderAccount, currency.getCurrencyId()));
+            senderAccount, event, eventId, currency.getId(),
+            -accountCurrencyService.getUnconfirmedCurrencyUnits(senderAccount, currency.getId()));
         accountCurrencyService.addToCurrencyUnits(
-            senderAccount, event, eventId, currency.getCurrencyId(),
-            -accountCurrencyService.getCurrencyUnits(senderAccount, currency.getCurrencyId()));
+            senderAccount, event, eventId, currency.getId(),
+            -accountCurrencyService.getCurrencyUnits(senderAccount, currency.getId()));
         int height = blockChainInfoService.getHeight();
         currency.setHeight(height);
         currencyTable.deleteAtHeight(currency, height);

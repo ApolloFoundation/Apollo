@@ -77,12 +77,12 @@ public class CurrencyBuyOfferServiceImpl implements CurrencyBuyOfferService {
 
     @Override
     public DbIterator<CurrencyBuyOffer> getOffers(Currency currency, int from, int to) {
-        return getCurrencyOffers(currency.getCurrencyId(), false, from, to);
+        return getCurrencyOffers(currency.getId(), false, from, to);
     }
 
     @Override
     public Stream<CurrencyBuyOffer> getOffersStream(Currency currency, int from, int to) {
-        return getCurrencyOffersStream(currency.getCurrencyId(), false, from, to);
+        return getCurrencyOffersStream(currency.getId(), false, from, to);
     }
 
     @Override
@@ -129,7 +129,7 @@ public class CurrencyBuyOfferServiceImpl implements CurrencyBuyOfferService {
 
     @Override
     public CurrencyBuyOffer getOffer(Currency currency, Account account) {
-        return getOffer(currency.getCurrencyId(), account.getId());
+        return getOffer(currency.getId(), account.getId());
     }
 
     @Override

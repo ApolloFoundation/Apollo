@@ -65,7 +65,7 @@ public class CrowdFundingObserver {
 
     public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
         log.trace(":accept:CrowdFundingListener: START onBlockApplied", block.getHeight());
-        try (DbIterator<Currency> issuedCurrencies = currencyTable.getManyBy(new DbClause.IntClause("issuance_height", block.getHeight()), 0, -1)) {
+        try (DbIterator<Currency> issuedCurrencies = currencyService.getIssuedCurrenciesByHeight(block.getHeight(), 0, -1)) {
             for (Currency currency : issuedCurrencies) {
                 if (currencyService.getCurrentReservePerUnitATM(currency) < currency.getMinReservePerUnitATM()) {
 //                    listeners.notify(currency, Currency.Event.BEFORE_UNDO_CROWDFUNDING);
@@ -81,52 +81,51 @@ public class CrowdFundingObserver {
 
     private void undoCrowdFunding(Currency currency) {
         try (DbIterator<CurrencyFounder> founders =
-                 currencyFounderService.getCurrencyFounders(currency.getCurrencyId(), 0, Integer.MAX_VALUE)) {
+                 currencyFounderService.getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
             for (CurrencyFounder founder : founders) {
                 accountService.addToBalanceAndUnconfirmedBalanceATM(
                     accountService.getAccount(founder.getAccountId()),
                     LedgerEvent.CURRENCY_UNDO_CROWDFUNDING,
-                    currency.getCurrencyId(),
+                    currency.getId(),
                     Math.multiplyExact(currency.getReserveSupply(),
                         founder.getAmountPerUnitATM()));
             }
         }
         accountCurrencyService.addToCurrencyAndUnconfirmedCurrencyUnits(
             accountService.getAccount(currency.getAccountId()),
-            LedgerEvent.CURRENCY_UNDO_CROWDFUNDING, currency.getCurrencyId(),
-            currency.getCurrencyId(), -currency.getInitialSupply());
+            LedgerEvent.CURRENCY_UNDO_CROWDFUNDING, currency.getId(),
+            currency.getId(), -currency.getInitialSupply());
         int height = blockChainInfoService.getHeight();
-        currency.setHeight(height);
+//        currency.setHeight(height);
         currencyTable.deleteAtHeight(currency, height);
-        currencyFounderService.remove(currency.getCurrencyId());
+        currencyFounderService.remove(currency.getId());
     }
 
     private void distributeCurrency(Currency currency) {
         long totalAmountPerUnit = 0;
         final long remainingSupply = currency.getReserveSupply() - currency.getInitialSupply();
         List<CurrencyFounder> currencyFounders = new ArrayList<>();
-        try (DbIterator<CurrencyFounder> founders = currencyFounderService
-            .getCurrencyFounders(currency.getCurrencyId(), 0, Integer.MAX_VALUE)) {
+        try (DbIterator<CurrencyFounder> founders = currencyFounderService.getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
             for (CurrencyFounder founder : founders) {
                 totalAmountPerUnit += founder.getAmountPerUnitATM();
                 currencyFounders.add(founder);
             }
         }
-        CurrencySupply currencySupply = currencyService.getSupplyDataByCurrency(currency);
+        CurrencySupply currencySupply = currencyService.loadCurrencySupplyByCurrency(currency);
         for (CurrencyFounder founder : currencyFounders) {
             long units = Math.multiplyExact(remainingSupply, founder.getAmountPerUnitATM()) / totalAmountPerUnit;
             long value = currencySupply.getCurrentSupply() + units;
             currencySupply.setCurrentSupply(value);
             accountCurrencyService.addToCurrencyAndUnconfirmedCurrencyUnits(
                 accountService.getAccount(founder.getAccountId()),
-                LedgerEvent.CURRENCY_DISTRIBUTION, currency.getCurrencyId(),
-                currency.getCurrencyId(), units);
+                LedgerEvent.CURRENCY_DISTRIBUTION, currency.getId(),
+                currency.getId(), units);
         }
         Account issuerAccount = accountService.getAccount(currency.getAccountId());
         accountCurrencyService.addToCurrencyAndUnconfirmedCurrencyUnits(
-            issuerAccount, LedgerEvent.CURRENCY_DISTRIBUTION, currency.getCurrencyId(),
-            currency.getCurrencyId(),
-            currency.getReserveSupply() - currency.getCurrencySupply().getCurrentSupply());
+            issuerAccount, LedgerEvent.CURRENCY_DISTRIBUTION, currency.getId(),
+            currency.getId(),
+            currency.getReserveSupply() - currencyService.getCurrentSupply(currency));
         if (!currency.is(CurrencyType.CLAIMABLE)) {
             accountService.addToBalanceAndUnconfirmedBalanceATM(
                 issuerAccount, LedgerEvent.CURRENCY_DISTRIBUTION, currency.getAccountId(),

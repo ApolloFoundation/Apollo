@@ -47,7 +47,7 @@ public final class DeleteCurrency extends CreateTransaction {
         if (!lookupCurrencyService().canBeDeletedBy(currency, account.getId())) {
             return JSONResponses.CANNOT_DELETE_CURRENCY;
         }
-        Attachment attachment = new MonetarySystemCurrencyDeletion(currency.getCurrencyId());
+        Attachment attachment = new MonetarySystemCurrencyDeletion(currency.getId());
         return createTransaction(req, account, attachment);
     }
 }

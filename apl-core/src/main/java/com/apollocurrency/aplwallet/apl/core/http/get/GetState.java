@@ -64,7 +64,7 @@ public final class GetState extends AbstractAPIRequestHandler {
             response.put("numberOfBidOrders", bidCount);
             response.put("numberOfTrades", tradeService.getCount());
             response.put("numberOfTransfers", lookupAssetTransferService().getCount());
-            response.put("numberOfCurrencies", Currency.getCount());
+            response.put("numberOfCurrencies", lookupCurrencyService().getCount());
             response.put("numberOfOffers", lookupCurrencyExchangeOfferFacade().getCurrencyBuyOfferService().getCount());
             response.put("numberOfExchangeRequests", lookupExchangeRequestService().getCount());
             response.put("numberOfExchanges", exchangeService.getCount());

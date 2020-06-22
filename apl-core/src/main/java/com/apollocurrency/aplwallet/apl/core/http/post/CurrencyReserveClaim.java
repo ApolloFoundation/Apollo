@@ -57,7 +57,7 @@ public final class CurrencyReserveClaim extends CreateTransaction {
         Currency currency = HttpParameterParserUtil.getCurrency(req);
         long units = HttpParameterParserUtil.getLong(req, "units", 0, currency.getReserveSupply(), false);
         Account account = HttpParameterParserUtil.getSenderAccount(req);
-        Attachment attachment = new MonetarySystemReserveClaim(currency.getCurrencyId(), units);
+        Attachment attachment = new MonetarySystemReserveClaim(currency.getId(), units);
         return createTransaction(req, account, attachment);
 
     }

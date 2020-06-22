@@ -66,7 +66,7 @@ public final class CurrencyReserveIncrease extends CreateTransaction {
         long amountPerUnitATM = HttpParameterParserUtil.getLong(req, "amountPerUnitATM", 1L,
             CDI.current().select(BlockchainConfig.class).get().getCurrentConfig().getMaxBalanceATM(), true);
         Account account = HttpParameterParserUtil.getSenderAccount(req);
-        Attachment attachment = new MonetarySystemReserveIncrease(currency.getCurrencyId(), amountPerUnitATM);
+        Attachment attachment = new MonetarySystemReserveIncrease(currency.getId(), amountPerUnitATM);
         return createTransaction(req, account, attachment);
 
     }

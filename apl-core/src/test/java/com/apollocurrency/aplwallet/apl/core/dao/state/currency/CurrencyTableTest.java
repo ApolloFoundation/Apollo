@@ -90,7 +90,7 @@ class CurrencyTableTest {
 
         assertNotNull(actual);
         assertTrue(actual.getDbId() != 0);
-        assertEquals(td.CURRENCY_NEW.getCurrencyId(), actual.getCurrencyId());
+        assertEquals(td.CURRENCY_NEW.getId(), actual.getId());
         assertEquals(td.CURRENCY_NEW.getAccountId(), actual.getAccountId());
     }
 
@@ -105,7 +105,7 @@ class CurrencyTableTest {
 
         assertNotNull(actual);
         assertEquals(100, actual.getInitialSupply() - td.CURRENCY_1.getInitialSupply());
-        assertEquals(previous.getCurrencyId(), actual.getCurrencyId());
+        assertEquals(previous.getId(), actual.getId());
         assertEquals(previous.getIssuanceHeight(), actual.getIssuanceHeight());
     }
 

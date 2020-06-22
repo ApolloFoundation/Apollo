@@ -22,7 +22,7 @@ public class CurrencyTable extends VersionedDeletableEntityDbTable<Currency> {
         @Override
         public DbKey newKey(Currency currency) {
             if (currency.getDbKey() == null) {
-                currency.setDbKey(super.newKey(currency.getCurrencyId()));
+                currency.setDbKey(super.newKey(currency.getId()));
             }
             return currency.getDbKey();
         }
@@ -48,7 +48,7 @@ public class CurrencyTable extends VersionedDeletableEntityDbTable<Currency> {
                 + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)")
         ) {
             int i = 0;
-            pstmt.setLong(++i, currency.getCurrencyId());
+            pstmt.setLong(++i, currency.getId());
             pstmt.setLong(++i, currency.getAccountId());
             pstmt.setString(++i, currency.getName());
             pstmt.setString(++i, currency.getCode());

@@ -66,7 +66,7 @@ public class CurrencyMintServiceImpl implements CurrencyMintService {
             long units = Math.min(attachment.getUnits(),
                 currency.getMaxSupply() - currency.getCurrencySupply().getCurrentSupply());
             accountCurrencyService.addToCurrencyAndUnconfirmedCurrencyUnits(
-                account, event, eventId, currency.getCurrencyId(), units);
+                account, event, eventId, currency.getId(), units);
             currencyService.increaseSupply(currency, units);
         } else {
             log.debug("Currency mint hash no longer meets target %s", attachment.getJSONObject().toJSONString());
@@ -87,7 +87,7 @@ public class CurrencyMintServiceImpl implements CurrencyMintService {
     public void deleteCurrency(Currency currency) {
         List<CurrencyMint> currencyMints = new ArrayList<>();
         try (DbIterator<CurrencyMint> mints = currencyMintTable.getManyBy(
-            new DbClause.LongClause("currency_id", currency.getCurrencyId()), 0, -1)) {
+            new DbClause.LongClause("currency_id", currency.getId()), 0, -1)) {
             while (mints.hasNext()) {
                 currencyMints.add(mints.next());
             }

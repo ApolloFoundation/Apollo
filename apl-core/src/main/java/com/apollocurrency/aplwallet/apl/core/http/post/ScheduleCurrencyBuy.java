@@ -86,7 +86,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                 long units = HttpParameterParserUtil.getLong(req, "units", 0, Long.MAX_VALUE, true);
                 Account account = HttpParameterParserUtil.getSenderAccount(req);
                 byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, account.getId(), false);
-                Attachment attachment = new MonetarySystemExchangeBuyAttachment(currency.getCurrencyId(), rateATM, units);
+                Attachment attachment = new MonetarySystemExchangeBuyAttachment(currency.getId(), rateATM, units);
                 response = (JSONObject) JSONValue.parse(JSON.toString(createTransaction(req, account, attachment)));
                 if (keySeed == null || "true".equalsIgnoreCase(req.getParameter("calculateFee"))) {
                     response.put("scheduled", false);

@@ -31,6 +31,11 @@ public interface CurrencyService {
      */
     DbIterator<Currency> searchCurrencies(String query, int from, int to);
 
+    /**
+     * @deprecated
+     */
+    DbIterator<Currency> getIssuedCurrenciesByHeight(int height, int from, int to);
+
     void addCurrency(LedgerEvent event, long eventId, Transaction transaction, Account senderAccount,
                      MonetarySystemCurrencyIssuance attachment);
 
@@ -41,11 +46,13 @@ public interface CurrencyService {
     void transferCurrency(LedgerEvent event, long eventId, Account senderAccount, Account recipientAccount,
                           long currencyId, long units);
 
-    CurrencySupply getSupplyDataByCurrency(Currency currency);
+    long getCurrentSupply(Currency currency);
 
     long getCurrentReservePerUnitATM(Currency currency);
 
     boolean isActive(Currency currency);
+
+    CurrencySupply loadCurrencySupplyByCurrency(Currency currency);
 
     void increaseSupply(Currency currency, long units);
 
