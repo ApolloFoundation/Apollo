@@ -160,7 +160,7 @@
             <fileSet>
               <directory>${project.build.directory}</directory>
               <includes>
-                <include>${zip-file-name}-NoOS-NoArch-${project.version}.${zip-format}</include>
+                <include>${zip-file-name}-${project.version}-NoOS-NoArch.${zip-format}</include>
               </includes>
             </fileSet>
           </fileSets>
