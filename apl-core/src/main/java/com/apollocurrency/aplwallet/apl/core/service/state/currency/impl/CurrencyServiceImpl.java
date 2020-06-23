@@ -125,7 +125,7 @@ public class CurrencyServiceImpl implements CurrencyService {
 
     @Override
     public DbIterator<Currency> getIssuedCurrenciesByHeight(int height, int from, int to) {
-        return currencyTable.getManyBy(new DbClause.IntClause("issuance_height", height), 0, -1);
+        return currencyTable.getManyBy(new DbClause.IntClause("issuance_height", height), from, to);
     }
 
     @Override

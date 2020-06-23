@@ -64,7 +64,7 @@ public class CrowdFundingObserver {
     }
 
     public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
-        log.trace(":accept:CrowdFundingListener: START onBlockApplied", block.getHeight());
+        log.debug(":accept:CrowdFundingListener: START onBlockApplied at = {}", block.getHeight());
         try (DbIterator<Currency> issuedCurrencies = currencyService.getIssuedCurrenciesByHeight(block.getHeight(), 0, -1)) {
             for (Currency currency : issuedCurrencies) {
                 if (currencyService.getCurrentReservePerUnitATM(currency) < currency.getMinReservePerUnitATM()) {
@@ -76,7 +76,7 @@ public class CrowdFundingObserver {
                 }
             }
         }
-        log.trace(":accept:CrowdFundingListener: END onBlockApplaid AFTER_BLOCK_APPLY. block={}", block.getHeight());
+        log.debug(":accept:CrowdFundingListener: END onBlockApplied AFTER_BLOCK_APPLY at = {}", block.getHeight());
     }
 
     private void undoCrowdFunding(Currency currency) {
