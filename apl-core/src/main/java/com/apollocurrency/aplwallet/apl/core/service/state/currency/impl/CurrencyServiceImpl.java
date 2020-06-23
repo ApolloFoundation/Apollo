@@ -218,8 +218,8 @@ public class CurrencyServiceImpl implements CurrencyService {
         if (!currency.is(CurrencyType.RESERVABLE) && !currency.is(CurrencyType.MINTABLE)) {
             return null;
         }
-        CurrencySupply currencySupply = null;
-        if (currency.getCurrencySupply() == null) {
+        CurrencySupply currencySupply = currency.getCurrencySupply();
+        if (currencySupply == null) {
             currencySupply = currencySupplyTable.get(currencyTable.getDbKeyFactory().newKey(currency));
             if (currencySupply == null) {
                 currencySupply = new CurrencySupply(currency, blockChainInfoService.getHeight());
