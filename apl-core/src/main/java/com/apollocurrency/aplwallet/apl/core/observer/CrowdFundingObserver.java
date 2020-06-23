@@ -96,7 +96,7 @@ public class CrowdFundingObserver {
             LedgerEvent.CURRENCY_UNDO_CROWDFUNDING, currency.getId(),
             currency.getId(), -currency.getInitialSupply());
         int height = blockChainInfoService.getHeight();
-//        currency.setHeight(height);
+        currency.setHeight(height);
         currencyTable.deleteAtHeight(currency, height);
         currencyFounderService.remove(currency.getId());
     }
