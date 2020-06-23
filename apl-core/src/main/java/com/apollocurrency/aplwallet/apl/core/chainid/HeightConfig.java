@@ -66,6 +66,10 @@ public class HeightConfig {
         return bp.getMaxNumberOfTransactions();
     }
 
+    public int getMaxNumberOfChildAccount() {
+        return bp.getMaxNumberOfChildAccounts();
+    }
+
     public int getBlockTime() {
         return bp.getBlockTime();
     }

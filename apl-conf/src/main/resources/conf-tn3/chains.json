@@ -50,6 +50,7 @@
       {
         "height": 50000,
         "maxNumberOfTransactions": 255,
+        "maxNumberOfChildAccounts": 10,
         "blockTime": 2,
         "maxBlockTimeLimit": 3,
         "minBlockTimeLimit": 1,

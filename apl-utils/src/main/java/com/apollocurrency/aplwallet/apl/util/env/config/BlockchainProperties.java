@@ -11,19 +11,30 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSetter;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.Objects;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonPropertyOrder({"height", "maxNumberOfTransactions", "blockTime", "maxBlockTimeLimit", "minBlockTimeLimit", "maxBalance",
+@JsonPropertyOrder({"height", "maxNumberOfTransactions", "maxNumberOfChildAccounts", "blockTime",
+    "maxBlockTimeLimit", "minBlockTimeLimit", "maxBalance",
     "shardingSettings", "consensusSettings", "featuresHeightRequirement"})
 public class BlockchainProperties {
+    @Getter @Setter
     private int height;
+    @Getter @Setter
     private int maxNumberOfTransactions;
+    @Getter @Setter
+    private int maxNumberOfChildAccounts;
+    @Getter @Setter
     private int blockTime;
+    @Getter @Setter
     private int maxBlockTimeLimit;
+    @Getter @Setter
     private int minBlockTimeLimit;
+    @Getter @Setter
     private long maxBalance;
     private ShardingSettings shardingSettings;
     private ConsensusSettings consensusSettings;
@@ -42,11 +53,12 @@ public class BlockchainProperties {
     public BlockchainProperties(
         @JsonProperty("height") int height,
         @JsonProperty("maxNumberOfTransactions") int maxNumberOfTransactions,
+        @JsonProperty("maxNumberOfChildAccount") int maxNumberOfChildAccounts,
         @JsonProperty("blockTime") int blockTime,
         @JsonProperty("maxBlockTimeLimit") int maxBlockTimeLimit,
         @JsonProperty("minBlockTimeLimit") int minBlockTimeLimit,
         @JsonProperty("maxBalance") long maxBalance) {
-        this(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, null, null);
+        this(height, maxNumberOfTransactions, maxNumberOfChildAccounts, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, null, null);
     }
 
     /**
@@ -63,6 +75,7 @@ public class BlockchainProperties {
     public BlockchainProperties(
         int height,
         int maxNumberOfTransactions,
+        int maxNumberOfChildAccounts,
         int blockTime,
         int maxBlockTimeLimit,
         int minBlockTimeLimit,
@@ -71,6 +84,7 @@ public class BlockchainProperties {
         ConsensusSettings consensusSettings) {
         this.height = height;
         this.maxNumberOfTransactions = maxNumberOfTransactions;
+        this.maxNumberOfChildAccounts = maxNumberOfChildAccounts;
         this.blockTime = blockTime;
         this.maxBlockTimeLimit = maxBlockTimeLimit;
         this.minBlockTimeLimit = minBlockTimeLimit;
@@ -79,14 +93,41 @@ public class BlockchainProperties {
         this.consensusSettings = consensusSettings == null ? new ConsensusSettings() : consensusSettings;
     }
 
-    public BlockchainProperties(int height, int maxNumberOfTransactions, int blockTime, int maxBlockTimeLimit, int minBlockTimeLimit, long maxBalance, ShardingSettings shardingSettings) {
-        this(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, shardingSettings, null);
+    public BlockchainProperties(int height, int maxNumberOfTransactions, int blockTime, int maxBlockTimeLimit,
+                                int minBlockTimeLimit, long maxBalance, ShardingSettings shardingSettings) {
+        this(height, maxNumberOfTransactions, 0, blockTime, maxBlockTimeLimit, minBlockTimeLimit,
+            maxBalance, shardingSettings, null);
     }
 
 
-    public BlockchainProperties(int height, int maxNumberOfTransactions, int blockTime, int maxBlockTimeLimit, int minBlockTimeLimit,
-                                long maxBalance, ConsensusSettings consensusSettings) {
-        this(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, null, consensusSettings);
+    public BlockchainProperties(int height, int maxNumberOfTransactions, int blockTime, int maxBlockTimeLimit,
+                                int minBlockTimeLimit, long maxBalance, ConsensusSettings consensusSettings) {
+        this(height, maxNumberOfTransactions, 0, blockTime, maxBlockTimeLimit, minBlockTimeLimit,
+            maxBalance, null, consensusSettings);
+    }
+
+    public ConsensusSettings getConsensusSettings() {
+        return consensusSettings;
+    }
+
+    @JsonAlias("consensus") //backward compatibility
+    public void setConsensusSettings(ConsensusSettings consensusSettings) {
+        this.consensusSettings = consensusSettings;
+    }
+
+    @JsonProperty
+    public ShardingSettings getShardingSettings() {
+        return shardingSettings;
+    }
+
+    @JsonSetter
+    public void setShardingSettings(ShardingSettings shardingSettings) {
+        this.shardingSettings = shardingSettings;
+    }
+
+    public BlockchainProperties copy() {
+        return new BlockchainProperties(height, maxNumberOfTransactions, maxNumberOfChildAccounts, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance,
+            shardingSettings.copy(), consensusSettings.copy());
     }
 
     @Override
@@ -109,83 +150,12 @@ public class BlockchainProperties {
         return Objects.hash(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, shardingSettings, consensusSettings);
     }
 
-    public int getHeight() {
-        return height;
-    }
-
-    public void setHeight(int height) {
-        this.height = height;
-    }
-
-    public int getMaxNumberOfTransactions() {
-        return maxNumberOfTransactions;
-    }
-
-    public void setMaxNumberOfTransactions(int maxNumberOfTransactions) {
-        this.maxNumberOfTransactions = maxNumberOfTransactions;
-    }
-
-    public int getBlockTime() {
-        return blockTime;
-    }
-
-    public void setBlockTime(int blockTime) {
-        this.blockTime = blockTime;
-    }
-
-    public long getMaxBalance() {
-        return maxBalance;
-    }
-
-    public void setMaxBalance(long maxBalance) {
-        this.maxBalance = maxBalance;
-    }
-
-    public ConsensusSettings getConsensusSettings() {
-        return consensusSettings;
-    }
-
-    @JsonAlias("consensus") //backward compatibility
-    public void setConsensusSettings(ConsensusSettings consensusSettings) {
-        this.consensusSettings = consensusSettings;
-    }
-
-    public int getMaxBlockTimeLimit() {
-        return maxBlockTimeLimit;
-    }
-
-    public void setMaxBlockTimeLimit(int maxBlockTimeLimit) {
-        this.maxBlockTimeLimit = maxBlockTimeLimit;
-    }
-
-    public int getMinBlockTimeLimit() {
-        return minBlockTimeLimit;
-    }
-
-    public void setMinBlockTimeLimit(int minBlockTimeLimit) {
-        this.minBlockTimeLimit = minBlockTimeLimit;
-    }
-
-    @JsonProperty
-    public ShardingSettings getShardingSettings() {
-        return shardingSettings;
-    }
-
-    @JsonSetter
-    public void setShardingSettings(ShardingSettings shardingSettings) {
-        this.shardingSettings = shardingSettings;
-    }
-
-    public BlockchainProperties copy() {
-        return new BlockchainProperties(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance,
-            shardingSettings.copy(), consensusSettings.copy());
-    }
-
     @Override
     public String toString() {
         return "BlockchainProperties{" +
             "height=" + height +
             ", maxNumberOfTransactions=" + maxNumberOfTransactions +
+            ", maxNumberOfChildAccount=" + maxNumberOfChildAccounts +
             ", blockTime=" + blockTime +
             ", maxBlockTimeLimit=" + maxBlockTimeLimit +
             ", minBlockTimeLimit=" + minBlockTimeLimit +

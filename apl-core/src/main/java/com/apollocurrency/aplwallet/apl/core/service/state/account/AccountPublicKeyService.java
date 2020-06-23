@@ -49,7 +49,7 @@ public interface AccountPublicKeyService {
     PublicKey loadPublicKeyFromDb(DbKey dbKey);
 
     /**
-     * Load public key for specified height from the data base
+     * Load public key for specified height from the database
      *
      * @param dbKey  the primary key to load entity
      * @param height block height
@@ -57,7 +57,20 @@ public interface AccountPublicKeyService {
      */
     PublicKey loadPublicKeyFromDb(DbKey dbKey, int height);
 
+    /**
+     *
+     * @param accountId
+     * @param key
+     * @return
+     */
     boolean setOrVerifyPublicKey(long accountId, byte[] key);
+
+    /**
+     * Load public key from the database and compare with the specified one
+     * @param key the specified public key
+     * @return true if specified public key equals the stored in the database one
+     */
+    boolean verifyPublicKey(byte[] key);
 
     boolean setOrVerifyPublicKey(DbKey dbKey, byte[] key, int height);
 

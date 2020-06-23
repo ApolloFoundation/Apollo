@@ -399,11 +399,6 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public void addToBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM) {
-        addToBalanceATM(account, event, eventId, amountATM, 0);
-    }
-
-    @Override
     public void addToBalanceAndUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM, long feeATM) {
         if (amountATM == 0 && feeATM == 0) {
             return;
@@ -426,11 +421,6 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public void addToBalanceAndUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM) {
-        addToBalanceAndUnconfirmedBalanceATM(account, event, eventId, amountATM, 0);
-    }
-
-    @Override
     public void addToUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM, long feeATM) {
         if (amountATM == 0 && feeATM == 0) {
             return;
@@ -446,11 +436,6 @@ public class AccountServiceImpl implements AccountService {
             return;
         }
         logEntryUnconfirmed(account, event, eventId, amountATM, feeATM);
-    }
-
-    @Override
-    public void addToUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM) {
-        addToUnconfirmedBalanceATM(account, event, eventId, amountATM, 0);
     }
 
     @Override

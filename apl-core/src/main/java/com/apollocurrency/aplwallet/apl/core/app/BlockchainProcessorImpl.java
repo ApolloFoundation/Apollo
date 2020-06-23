@@ -815,7 +815,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 throw new BlockOutOfOrderException("Invalid transaction timestamp: " + transaction.getTimestamp()
                     + ", current time is " + curTime, block);
             }
-            if (!transaction.verifySignature()) {
+            //if (!transaction.verifySignature()) {
+            if (!transactionValidator.verifySignature(transaction)){
                 throw new TransactionNotAcceptedException("Transaction signature verification failed at height " + previousLastBlock.getHeight(), transaction);
             }
             if (fullValidation) {

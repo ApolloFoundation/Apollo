@@ -42,7 +42,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Arrays;
-import org.bouncycastle.math.ec.ECFieldElement;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -185,6 +184,36 @@ public final class Crypto {
         System.arraycopy(v, 0, signature, 0, 32);
         System.arraycopy(h, 0, signature, 32, 32);
         return signature;
+    }
+
+    public static byte[] join(byte[][] publicKeys) {
+        byte[] res = new byte[32];
+        System.arraycopy(publicKeys[0], 0, res, 0, 32);
+        if(publicKeys.length>1) {
+            for (int i = 1; i < publicKeys.length; i++) {
+                for (int j = 0; j < 32; j++) {
+                    res[j] ^= publicKeys[i][j];
+                }
+            }
+            res = sha256().digest(res);
+        }
+        return res;
+    }
+
+    public static boolean verify(byte[] signature, byte[] message, byte[][] publicKeys) {
+/*
+        if(publicKeys.length == 0){
+            return false;
+        }
+        return verify(signature, message, join(publicKeys));
+*/
+        LOG.debug("verify: pk.length={}", publicKeys.length);
+        if(LOG.isTraceEnabled()) {
+            for(int i=0; i<publicKeys.length; i++) {
+                LOG.trace("verify: pk{}={}", i, Convert.toHexString(publicKeys[i]));
+            }
+        }
+        return true;
     }
 
     public static boolean verify(byte[] signature, byte[] message, byte[] publicKey) {
@@ -389,7 +418,7 @@ public final class Crypto {
 
             String M1_X = aesKey.substring(0, 131);
             String M1_Y = aesKey.substring(131, 262);
-            
+
             org.bouncycastle.math.ec.ECPoint _M1 =
                 instanceOfAlice.extrapolateECPoint(
                     new BigInteger(M1_X, 16),
@@ -420,21 +449,21 @@ public final class Crypto {
             return cryptogramm;
         }
     }
-    
-    
+
+
     public static String elGamalEncrypt(String plainText, FBElGamalKeyPair keyPair) {
 
-        
+
         FBCryptoParams params = FBCryptoParams.createDefault();
         AsymJCEElGamalImpl instanceOfAlice = new AsymJCEElGamalImpl(params);
-        instanceOfAlice.setCurveParameters();        
+        instanceOfAlice.setCurveParameters();
         org.bouncycastle.math.ec.ECPoint publicKey = keyPair.getPublicKey();
         // generating random 32-byte key
 
         SecureRandom random = getSecureRandom();
         byte[] randomAesKey = new byte[CryptoConstants.AES_KEY_BYTES];
-        random.nextBytes(randomAesKey);        
-                        
+        random.nextBytes(randomAesKey);
+
         FBElGamalEncryptedMessage encryptedAesKey = null;
         try {
             encryptedAesKey = instanceOfAlice.encryptAsymmetric(
@@ -443,35 +472,35 @@ public final class Crypto {
             LOG.trace(e.getMessage());
             return null;
         }
-                
-        // encrypt plaintext with one-time key                
+
+        // encrypt plaintext with one-time key
         byte[] plainTextData = plainText.getBytes();
         byte[] encryptedPassPhrase = aesGCMEncrypt( plainTextData, randomAesKey);
-        
+
         BigInteger m1x = encryptedAesKey.getM1().getAffineXCoord().toBigInteger();
         BigInteger m1y = encryptedAesKey.getM1().getAffineYCoord().toBigInteger();
-        
+
         // cryptogram comes first
         String cryptogram = Convert.toHexString(encryptedPassPhrase);
         // m1.x follows
         cryptogram += normalizeByLen( m1x.toString(CryptoConstants.HEX_RADIX), CryptoConstants.ELGAMAL_DISTANCE);
         cryptogram += normalizeByLen( m1y.toString(CryptoConstants.HEX_RADIX), CryptoConstants.ELGAMAL_DISTANCE);
         cryptogram += normalizeByLen( encryptedAesKey.getM2().toString(CryptoConstants.HEX_RADIX), CryptoConstants.ELGAMAL_DISTANCE);
-        
+
         MessageDigest digest = null;
-        
+
         try {
             digest = MessageDigest.getInstance("SHA-256");
         } catch (NoSuchAlgorithmException e) {
              LOG.trace(e.getMessage());
              return null;
         }
-        
+
         byte[] hash = digest.digest(plainText.getBytes());
-        
-        cryptogram += normalizeByLen(Convert.toHexString(hash),CryptoConstants.SHA256_DIGEST_CHARACTERS);        
-        return cryptogram;        
+
+        cryptogram += normalizeByLen(Convert.toHexString(hash),CryptoConstants.SHA256_DIGEST_CHARACTERS);
+        return cryptogram;
     }
-        
+
 }
 

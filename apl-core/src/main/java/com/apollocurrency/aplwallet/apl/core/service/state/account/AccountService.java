@@ -86,15 +86,21 @@ public interface AccountService {
 
     void addToBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM, long feeATM);
 
-    void addToBalanceAndUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM);
+    default void addToBalanceAndUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM){
+        addToBalanceAndUnconfirmedBalanceATM(account, event, eventId, amountATM, 0);
+    }
 
     void addToUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM, long feeATM);
 
-    void addToBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM);
+    default void addToBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM){
+        addToBalanceATM(account, event, eventId, amountATM, 0);
+    }
 
     void addToBalanceAndUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM, long feeATM);
 
-    void addToUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM);
+    default void addToUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM){
+        addToUnconfirmedBalanceATM(account, event, eventId, amountATM, 0);
+    }
 
     long getTotalAmountOnTopAccounts(int numberOfTopAccounts);
 

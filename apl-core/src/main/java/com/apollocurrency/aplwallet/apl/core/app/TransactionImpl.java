@@ -20,11 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtendAttachment;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
@@ -45,6 +45,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingProce
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Filter;
+import com.apollocurrency.aplwallet.apl.util.annotation.MultiSigPkCreator;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -288,8 +289,12 @@ public class TransactionImpl implements Transaction {
 
     static TransactionImpl parseTransaction(JSONObject transactionData) throws AplException.NotValidException {
         TransactionImpl transaction = newTransactionBuilder(transactionData).build();
-        if (transaction.getSignature() != null && !transaction.checkSignature()) {
-            throw new AplException.NotValidException("Invalid transaction signature for transaction " + transaction.getJSONObject().toJSONString());
+        if (transaction.getSignature() != null){
+            @MultiSigPkCreator("Check isChild(senderId) and add the corresponding public key if the result is true")
+            boolean rc = transaction.checkSignature(new byte[][]{ transaction.senderPublicKey });
+            if(!rc) {
+                throw new AplException.NotValidException("Invalid transaction signature for transaction " + transaction.getJSONObject().toJSONString());
+            }
         }
         return transaction;
     }
@@ -346,16 +351,6 @@ public class TransactionImpl implements Transaction {
         }
     }
 
-    public void sign(byte[] keySeed) throws AplException.NotValidException {
-
-        if (getSenderPublicKey() != null && !Arrays.equals(senderPublicKey, Crypto.getPublicKey(keySeed))) {
-            throw new AplException.NotValidException("Secret phrase doesn't match transaction sender public key");
-        }
-        signature = Crypto.sign(bytes(), keySeed);
-        bytes = null;
-
-    }
-
     private Blockchain lookupAndInjectBlockchain() {
         if (this.blockchain == null) {
             this.blockchain = CDI.current().select(BlockchainImpl.class).get();
@@ -363,7 +358,7 @@ public class TransactionImpl implements Transaction {
         return blockchain;
     }
 
-    private AccountPublicKeyService lookupAndInjectAccountService() {
+    private AccountPublicKeyService lookupAndInjectAccountPublicKeyService() {
         if (accountPublicKeyService == null) {
             accountPublicKeyService = CDI.current().select(AccountPublicKeyService.class).get();
         }
@@ -380,14 +375,6 @@ public class TransactionImpl implements Transaction {
     @Override
     public short getDeadline() {
         return deadline;
-    }
-
-    @Override
-    public byte[] getSenderPublicKey() {
-        if (senderPublicKey == null) {
-            senderPublicKey = lookupAndInjectAccountService().getPublicKeyByteArray(senderId);
-        }
-        return senderPublicKey;
     }
 
     @Override
@@ -766,18 +753,57 @@ public class TransactionImpl implements Transaction {
     }
 
     @Override
+    public byte[] getSenderPublicKey() {
+        if (senderPublicKey == null) {
+            senderPublicKey = lookupAndInjectAccountPublicKeyService().getPublicKeyByteArray(senderId);
+        }
+        return senderPublicKey;
+    }
+
+    @Override
     public int hashCode() {
         return (int) (getId() ^ (getId() >>> 32));
     }
 
-    public boolean verifySignature() {
-        lookupAndInjectAccountService();
-        return checkSignature() && lookupAndInjectAccountService().setOrVerifyPublicKey(getSenderId(), getSenderPublicKey());
+    @Override
+    public void sign(byte[] keySeed) throws AplException.NotValidException {
+
+        if (getSenderPublicKey() != null && !Arrays.equals(senderPublicKey, Crypto.getPublicKey(keySeed))) {
+            throw new AplException.NotValidException("Secret phrase doesn't match transaction sender public key");
+        }
+        signature = Crypto.sign(bytes(), keySeed);
+        bytes = null;
+
     }
 
-    private boolean checkSignature() {
+    @Override
+    public boolean verifySignature() {
+        lookupAndInjectAccountPublicKeyService().setOrVerifyPublicKey(getSenderId(), getSenderPublicKey());
+        @MultiSigPkCreator
+        byte[][] publicKeys = new byte[][]{ getSenderPublicKey() };
+        return verifySignature(publicKeys);
+    }
+
+    @Override
+    public boolean verifySignature(byte[][] publicKeys) {
+        if (!checkSignature(publicKeys)) {
+            return false;
+        }else{
+            for(byte[] pk: publicKeys) {
+                if(!lookupAndInjectAccountPublicKeyService().verifyPublicKey(pk)){
+                    LOG.error("Public Key Verification failed: pk={}", Convert.toHexString(pk));
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private boolean checkSignature(byte[][] publicKeys) {
         if (!hasValidSignature) {
-            hasValidSignature = signature != null && Crypto.verify(signature, zeroSignature(getBytes()), getSenderPublicKey());
+            hasValidSignature =
+                signature != null
+                    && Crypto.verify(signature, zeroSignature(getBytes()), publicKeys);
         }
         return hasValidSignature;
     }

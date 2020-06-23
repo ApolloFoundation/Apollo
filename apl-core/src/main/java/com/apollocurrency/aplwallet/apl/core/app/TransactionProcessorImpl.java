@@ -91,7 +91,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private final Map<DbKey, UnconfirmedTransaction> transactionCache = new HashMap<>();
     private final LongKeyFactory<UnconfirmedTransaction> transactionKeyFactory;
     private final EntityDbTable<UnconfirmedTransaction> unconfirmedTransactionTable;
-    private final TransactionValidator validator;
+    private final TransactionValidator transactionValidator;
     private final TransactionApplier transactionApplier;
     private final Map<Transaction, Transaction> txToBroadcastWhenConfirmed = new ConcurrentHashMap<>();
     private final Set<Transaction> broadcastedTransactions = Collections.newSetFromMap(new ConcurrentHashMap<>());
@@ -230,10 +230,10 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private volatile boolean cacheInitialized = false;
 
     @Inject
-    public TransactionProcessorImpl(LongKeyFactory<UnconfirmedTransaction> transactionKeyFactory, TransactionValidator validator, TransactionApplier applier, javax.enterprise.event.Event<List<Transaction>> txEvent) {
+    public TransactionProcessorImpl(LongKeyFactory<UnconfirmedTransaction> transactionKeyFactory, TransactionValidator transactionValidator, TransactionApplier applier, javax.enterprise.event.Event<List<Transaction>> txEvent) {
         this.transactionKeyFactory = transactionKeyFactory;
         this.unconfirmedTransactionTable = createUnconfirmedTransactionTable(transactionKeyFactory);
-        this.validator = validator;
+        this.transactionValidator = transactionValidator;
         this.transactionApplier = applier;
         this.txsEvent = Objects.requireNonNull(txEvent);
     }
@@ -501,7 +501,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 }
                 return;
             }
-            validator.validate(transaction);
+            transactionValidator.validate(transaction);
             UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction(transaction, ntpTime.getTime());
             boolean broadcastLater = lookupBlockchainProcessor().isProcessingBlock();
             if (broadcastLater) {
@@ -672,7 +672,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 while (iterator.hasNext()) {
                     UnconfirmedTransaction unconfirmedTransaction = iterator.next();
                     try {
-                        validator.validate(unconfirmedTransaction);
+                        transactionValidator.validate(unconfirmedTransaction);
                         processTransaction(unconfirmedTransaction);
                         iterator.remove();
                         addedUnconfirmedTransactions.add(unconfirmedTransaction.getTransaction());
@@ -716,7 +716,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 if (getUnconfirmedTransaction(dbKey) != null || blockchain.hasTransaction(transaction.getId())) {
                     continue;
                 }
-                validator.validate(transaction);
+                transactionValidator.validate(transaction);
                 UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction(transaction, arrivalTimestamp);
                 processTransaction(unconfirmedTransaction);
                 if (broadcastedTransactions.contains(transaction)) {
@@ -771,7 +771,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                     throw new AplException.ExistingTransactionException("Transaction already processed");
                 }
 
-                if (!transaction.verifySignature()) {
+                if (!transactionValidator.verifySignature(transaction)) {
                     if (lookupAccountService().getAccount(transaction.getSenderId()) != null) {
                         throw new AplException.NotValidException("Transaction signature verification failed");
                     } else {
