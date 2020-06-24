@@ -148,7 +148,7 @@ public class CurrencyServiceImpl implements CurrencyService {
         currencyTable.insert(currency);
         if (currency.is(CurrencyType.MINTABLE) || currency.is(CurrencyType.RESERVABLE)) {
 //            CurrencySupply currencySupply = currency.getSupplyData();
-            CurrencySupply currencySupply = loadCurrencySupplyByCurrency(currency);
+            CurrencySupply currencySupply = this.loadCurrencySupplyByCurrency(currency);
             if (currencySupply != null) {
                 currencySupply.setCurrentSupply( attachment.getInitialSupply() );
                 currencySupplyTable.insert(currencySupply);
@@ -161,7 +161,7 @@ public class CurrencyServiceImpl implements CurrencyService {
         Currency currency = this.getCurrency(currencyId);
         accountService.addToBalanceATM(account, event, eventId, -Math.multiplyExact(currency.getReserveSupply(), amountPerUnitATM));
 //        CurrencySupply currencySupply = currency.getSupplyData();
-        CurrencySupply currencySupply = loadCurrencySupplyByCurrency(currency);
+        CurrencySupply currencySupply = this.loadCurrencySupplyByCurrency(currency);
         if (currencySupply != null) {
             long tempAmountPerUnitATM = currencySupply.getCurrentReservePerUnitATM() + amountPerUnitATM;
             currencySupply.setCurrentReservePerUnitATM(tempAmountPerUnitATM);
@@ -202,7 +202,7 @@ public class CurrencyServiceImpl implements CurrencyService {
 
     @Override
     public long getCurrentReservePerUnitATM(Currency currency) {
-        if (!currency.is(CurrencyType.RESERVABLE) || loadCurrencySupplyByCurrency(currency) == null) {
+        if (!currency.is(CurrencyType.RESERVABLE) || this.loadCurrencySupplyByCurrency(currency) == null) {
             return 0;
         }
         return currency.getCurrencySupply().getCurrentReservePerUnitATM();
@@ -320,7 +320,11 @@ public class CurrencyServiceImpl implements CurrencyService {
                     buyOffers.add(offers.next());
                 }
             }
-            buyOffers.forEach((offer) -> currencyExchangeOfferFacade.removeOffer(event, offer));
+            int height = blockChainInfoService.getHeight();
+            buyOffers.forEach((offer) -> {
+                offer.setHeight(height);
+                currencyExchangeOfferFacade.removeOffer(event, offer);
+            });
         }
         if (currency.is(CurrencyType.MINTABLE)) {
             // lazy init to break up circular dependency
