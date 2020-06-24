@@ -28,14 +28,17 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
 public class GetPollVote extends AbstractAPIRequestHandler {
+    private static final PollService pollService = CDI.current().select(PollService.class).get();
 
     public GetPollVote() {
         super(new APITag[]{APITag.VS}, "poll", "account", "includeWeights");
@@ -46,7 +49,7 @@ public class GetPollVote extends AbstractAPIRequestHandler {
         Poll poll = HttpParameterParserUtil.getPoll(req);
         long accountId = HttpParameterParserUtil.getAccountId(req, true);
         boolean includeWeights = "true".equalsIgnoreCase(req.getParameter("includeWeights"));
-        Vote vote = Vote.getVote(poll.getId(), accountId);
+        Vote vote = pollService.getVote(poll.getId(), accountId);
         if (vote != null) {
             int countHeight;
             JSONData.VoteWeighter weighter = null;

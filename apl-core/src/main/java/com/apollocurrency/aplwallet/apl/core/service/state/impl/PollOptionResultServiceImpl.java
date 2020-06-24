@@ -20,12 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
-import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.app.Vote;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.dao.state.poll.PollResultTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.poll.PollTable;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.dao.state.poll.VoteTable;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.PollOptionResult;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
@@ -46,16 +45,19 @@ public class PollOptionResultServiceImpl implements PollOptionResultService {
     private final BlockChainInfoService blockChainInfoService;
     private final PollTable pollTable;
     private final PollResultTable pollResultTable;
+    private final VoteTable voteTable;
 
     @Inject
     public PollOptionResultServiceImpl(
         final BlockChainInfoService blockChainInfoService,
         final PollTable pollTable,
-        final PollResultTable pollResultTable
-    ) {
+        final PollResultTable pollResultTable,
+        final VoteTable voteTable
+        ) {
         this.blockChainInfoService = blockChainInfoService;
         this.pollTable = pollTable;
         this.pollResultTable = pollResultTable;
+        this.voteTable = voteTable;
     }
 
     @Override
@@ -100,28 +102,28 @@ public class PollOptionResultServiceImpl implements PollOptionResultService {
             result[i] = new PollOptionResult(id, blockChainInfoService.getHeight());
         }
         VoteWeighting.VotingModel votingModel = voteWeighting.getVotingModel();
-        try (DbIterator<Vote> votes = Vote.getVotes(id, 0, -1)) {
-            List<Vote> voteList = CollectionUtil.toList(votes);
-            if (voteList.isEmpty()) {
-                // stop further processing because there are no votes found
-                log.trace("count RollResult: END 1. pollId={}, accountId={} PollOptionResult = {}", id, accountId, result);
-                return Arrays.asList(result);
+        List<Vote> voteList = voteTable.getVotes(id, 0, -1);
+
+        if (voteList.isEmpty()) {
+            // stop further processing because there are no votes found
+            log.trace("count RollResult: END 1. pollId={}, accountId={} PollOptionResult = {}", id, accountId, result);
+            return Arrays.asList(result);
+        }
+        log.trace("count RollResult: h={}, pollId={}, votingModel={}, voteList = [{}]",
+            height, id, votingModel, voteList.size());
+
+        for (Vote vote : voteList) {
+            long weight = votingModel.calcWeight(voteWeighting, vote.getVoterId(), height);
+            if (weight <= 0) {
+                continue;
             }
-            log.trace("count RollResult: h={}, pollId={}, votingModel={}, voteList = [{}]",
-                height, id, votingModel, voteList.size());
-            for (Vote vote : voteList) {
-                long weight = votingModel.calcWeight(voteWeighting, vote.getVoterId(), height);
-                if (weight <= 0) {
-                    continue;
-                }
-                long[] partialResult = countVote(vote, weight, optionsLength);
-                for (int i = 0; i < partialResult.length; i++) {
-                    if (partialResult[i] != Long.MIN_VALUE) {
-                        if (result[i].isUndefined()) {
-                            result[i] = new PollOptionResult(id, partialResult[i], weight, blockChainInfoService.getHeight());
-                        } else {
-                            result[i].add(partialResult[i], weight);
-                        }
+            long[] partialResult = countVote(vote, weight, optionsLength);
+            for (int i = 0; i < partialResult.length; i++) {
+                if (partialResult[i] != Long.MIN_VALUE) {
+                    if (result[i].isUndefined()) {
+                        result[i] = new PollOptionResult(id, partialResult[i], weight, blockChainInfoService.getHeight());
+                    } else {
+                        result[i].add(partialResult[i], weight);
                     }
                 }
             }

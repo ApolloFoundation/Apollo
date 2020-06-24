@@ -23,10 +23,13 @@ package com.apollocurrency.aplwallet.apl.core.service.state;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.Vote;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPollCreation;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteCasting;
 
+import java.util.List;
 import java.util.stream.Stream;
 
 /**
@@ -38,8 +41,6 @@ public interface PollService {
     Poll getPoll(long id);
 
     Stream<Poll> getPollsFinishingAtOrBefore(int height, int from, int to);
-
-    DbIterator<Poll> getPollsFinishingBelowHeight(int height, int from, int to);
 
     Stream<Poll> getAllPolls(int from, int to);
 
@@ -53,7 +54,15 @@ public interface PollService {
 
     int getCount();
 
+    int getPollVoteCount();
+
     void addPoll(Transaction transaction, MessagingPollCreation attachment);
+
+    Stream<Vote> getVotes(long pollId, int from, int to);
+
+    Vote getVote(long pollId, long voterId);
+
+    Vote addVote(Transaction transaction, MessagingVoteCasting attachment);
 
     boolean isFinished(int finishHeight);
 }

@@ -20,24 +20,27 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Vote;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
 public class GetPollVotes extends AbstractAPIRequestHandler {
+    private static final PollService pollService = CDI.current().select(PollService.class).get();
+
 
     public GetPollVotes() {
         super(new APITag[]{APITag.VS}, "poll", "firstIndex", "lastIndex", "includeWeights");
@@ -45,12 +48,12 @@ public class GetPollVotes extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-
         int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
         int lastIndex = HttpParameterParserUtil.getLastIndex(req);
         boolean includeWeights = "true".equalsIgnoreCase(req.getParameter("includeWeights"));
         Poll poll = HttpParameterParserUtil.getPoll(req);
         int countHeight;
+
         JSONData.VoteWeighter weighter = null;
         if (includeWeights && (countHeight = Math.min(poll.getFinishHeight(), lookupBlockchain().getHeight()))
             >= lookupBlockchainProcessor().getMinRollbackHeight()) {
@@ -59,11 +62,11 @@ public class GetPollVotes extends AbstractAPIRequestHandler {
             weighter = voterId -> votingModel.calcWeight(voteWeighting, voterId, countHeight);
         }
         JSONArray votesJson = new JSONArray();
-        try (DbIterator<Vote> votes = Vote.getVotes(poll.getId(), firstIndex, lastIndex)) {
-            for (Vote vote : votes) {
-                votesJson.add(JSONData.vote(vote, weighter));
-            }
-        }
+        JSONData.VoteWeighter finalWeighter = weighter;
+
+        pollService.getVotes(poll.getId(), firstIndex, lastIndex)
+            .forEach(vote -> votesJson.add(JSONData.vote(vote, finalWeighter)));
+
         JSONObject response = new JSONObject();
         response.put("votes", votesJson);
         return response;

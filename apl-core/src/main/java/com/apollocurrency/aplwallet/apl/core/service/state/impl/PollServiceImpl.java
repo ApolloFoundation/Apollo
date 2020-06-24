@@ -22,9 +22,11 @@ package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.Vote;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.poll.PollResultTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.poll.PollTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.poll.VoteTable;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
@@ -33,6 +35,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService
 import com.apollocurrency.aplwallet.apl.core.service.state.PollOptionResultService;
 import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPollCreation;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteCasting;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -48,6 +51,7 @@ public class PollServiceImpl implements PollService {
     private final PollResultTable pollResultTable;
     private final IteratorToStreamConverter<Poll> converter;
     private final PollOptionResultService pollOptionResultService;
+    private final VoteTable voteTable;
 
     /**
      * Constructor for unit tests.
@@ -63,13 +67,15 @@ public class PollServiceImpl implements PollService {
         final PollTable pollTable,
         final PollResultTable pollResultTable,
         final IteratorToStreamConverter<Poll> converter,
-        final PollOptionResultService pollOptionResultService
+        final PollOptionResultService pollOptionResultService,
+        final VoteTable voteTable
     ) {
         this.blockChainInfoService = blockChainInfoService;
         this.pollTable = pollTable;
         this.pollResultTable = pollResultTable;
         this.converter = converter;
         this.pollOptionResultService = pollOptionResultService;
+        this.voteTable = voteTable;
     }
 
     @Inject
@@ -78,13 +84,15 @@ public class PollServiceImpl implements PollService {
         final DatabaseManager databaseManager,
         final PollTable pollTable,
         final PollResultTable pollResultTable,
-        final PollOptionResultService pollOptionResultService
-    ) {
+        final PollOptionResultService pollOptionResultService,
+        final VoteTable voteTable
+        ) {
         this.blockChainInfoService = blockChainInfoService;
         this.pollTable = pollTable;
         this.pollResultTable = pollResultTable;
         this.converter = new IteratorToStreamConverter<>();
         this.pollOptionResultService = pollOptionResultService;
+        this.voteTable = voteTable;
     }
 
     @Override
@@ -123,13 +131,6 @@ public class PollServiceImpl implements PollService {
     }
 
     @Override
-    @Deprecated
-    //TODO: change DbIterator with Stream after refactoring Vote.
-    public DbIterator<Poll> getPollsFinishingBelowHeight(int height, int from, int to) {
-        return pollTable.getPollsFinishingBelowHeight(height, from, to);
-    }
-
-    @Override
     public Stream<Poll> getAllPolls(int from, int to) {
         return converter.convert(pollTable.getAll(from, to));
     }
@@ -163,6 +164,26 @@ public class PollServiceImpl implements PollService {
     @Override
     public int getCount() {
         return pollTable.getCount();
+    }
+
+    @Override
+    public int getPollVoteCount() {
+        return voteTable.getCount();
+    }
+
+    @Override
+    public Stream<Vote> getVotes(long pollId, int from, int to) {
+        return voteTable.getVotes(pollId, from, to).stream();
+    }
+
+    @Override
+    public Vote getVote(long pollId, long voterId) {
+        return voteTable.getVote(pollId, voterId);
+    }
+
+    @Override
+    public Vote addVote(Transaction transaction, MessagingVoteCasting attachment) {
+        return voteTable.addVote(transaction, attachment);
     }
 
     @Override

@@ -6,6 +6,7 @@ import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.poll.PollResultTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.poll.PollTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.poll.VoteTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.PollOptionResult;
@@ -48,6 +49,9 @@ class PollServiceImplTest {
     @Mock
     private PollOptionResultService pollOptionResultService;
 
+    @Mock
+    private VoteTable voteTable;
+
     private PollServiceImpl pollService;
 
     @BeforeEach
@@ -57,7 +61,8 @@ class PollServiceImplTest {
             pollTable,
             pollResultTable,
             converter,
-            pollOptionResultService
+            pollOptionResultService,
+            voteTable
         );
     }
 
