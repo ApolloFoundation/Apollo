@@ -135,13 +135,14 @@ public class CurrencyServiceImpl implements CurrencyService {
         if ((oldCurrency = this.getCurrencyByName(attachment.getCode())) != null) {
             this.delete(oldCurrency, event, eventId, senderAccount);
         }
-        Currency currency = new Currency(transaction, attachment, blockChainInfoService.getHeight());
+        int height = blockChainInfoService.getHeight();
+        Currency currency = new Currency(transaction, attachment, height);
         currencyTable.insert(currency);
         if (currency.is(CurrencyType.MINTABLE) || currency.is(CurrencyType.RESERVABLE)) {
             CurrencySupply currencySupply = this.loadCurrencySupplyByCurrency(currency);
             if (currencySupply != null) {
                 currencySupply.setCurrentSupply( attachment.getInitialSupply() );
-                currencySupply.setHeight(blockChainInfoService.getHeight());
+                currencySupply.setHeight(height);
                 currencySupplyTable.insert(currencySupply);
             }
         }
@@ -300,7 +301,7 @@ public class CurrencyServiceImpl implements CurrencyService {
             }
             int height = blockChainInfoService.getHeight();
             buyOffers.forEach((offer) -> {
-                offer.setHeight(height);
+//                offer.setHeight(height);
                 currencyExchangeOfferFacade.removeOffer(event, offer);
             });
         }
