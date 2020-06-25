@@ -31,6 +31,8 @@ import com.apollocurrency.aplwallet.apl.core.utils.AccountGeneratorUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
+import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
+import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
 
@@ -398,6 +400,7 @@ public class AccountServiceImpl implements AccountService {
         logEntryConfirmed(account, event, eventId, amountATM, feeATM);
     }
 
+    @TransactionFee({FeeMarker.BALANCE, FeeMarker.UNCONFIRMED_BALANCE})
     @Override
     public void addToBalanceAndUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM, long feeATM) {
         if (amountATM == 0 && feeATM == 0) {
@@ -420,6 +423,7 @@ public class AccountServiceImpl implements AccountService {
         logEntryConfirmed(account, event, eventId, amountATM, feeATM);
     }
 
+    @TransactionFee(FeeMarker.UNCONFIRMED_BALANCE)
     @Override
     public void addToUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM, long feeATM) {
         if (amountATM == 0 && feeATM == 0) {

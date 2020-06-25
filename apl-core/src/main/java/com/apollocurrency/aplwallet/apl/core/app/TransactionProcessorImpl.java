@@ -108,6 +108,8 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private DatabaseManager databaseManager;
     private TaskDispatchManager taskDispatchManager = CDI.current().select(TaskDispatchManager.class).get();
     private PeersService peers = CDI.current().select(PeersService.class).get();
+    private AccountService accountService;
+
     private final Runnable rebroadcastTransactionsThread = () -> {
         try {
             try {
@@ -139,6 +141,8 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
     };
     private int maxUnconfirmedTransactions;
+    private volatile boolean cacheInitialized = false;
+
     private final PriorityQueue<UnconfirmedTransaction> waitingTransactions = new PriorityQueue<>(
         (o1, o2) -> {
             int result;
@@ -165,13 +169,18 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             }
             if (size() > maxUnconfirmedTransactions) {
                 UnconfirmedTransaction removed = remove();
-                //LOG.debug("Dropped unconfirmed transaction " + removed.getJSONObject().toJSONString());
+                if(LOG.isTraceEnabled()) {
+                    LOG.trace("Dropped unconfirmed transaction {}", removed.getJSONObject().toJSONString());
+                }
             }
             return true;
         }
 
     };
-    private AccountService accountService;
+
+    /**
+     * This task retrieves the unconfirmed transactions from the network using the P2P transport and processes them.
+     */
     private final Runnable processTransactionsThread = () -> {
         try {
             try {
@@ -211,6 +220,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             System.exit(1);
         }
     };
+
     private final Runnable processWaitingTransactionsThread = () -> {
         try {
             try {
@@ -227,7 +237,6 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             System.exit(1);
         }
     };
-    private volatile boolean cacheInitialized = false;
 
     @Inject
     public TransactionProcessorImpl(LongKeyFactory<UnconfirmedTransaction> transactionKeyFactory, TransactionValidator transactionValidator, TransactionApplier applier, javax.enterprise.event.Event<List<Transaction>> txEvent) {

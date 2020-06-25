@@ -897,7 +897,9 @@ public class AplDbVersion extends DbVersion {
             case 350:
                 apply("ALTER TABLE account ADD COLUMN IF NOT EXISTS is_multi_sig BOOLEAN NOT NULL DEFAULT FALSE");
             case 351:
-                return 351;
+                apply("ALTER TABLE account ADD COLUMN IF NOT EXISTS addr_scope TINYINT NOT NULL DEFAULT 0");
+            case 352:
+                return 352;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                     + ", probably trying to run older code on newer database");

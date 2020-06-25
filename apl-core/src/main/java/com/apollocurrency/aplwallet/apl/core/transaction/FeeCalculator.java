@@ -4,11 +4,14 @@ import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
+import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 
 import javax.inject.Singleton;
 
 @Singleton
 public class FeeCalculator {
+    @TransactionFee(FeeMarker.CALCULATOR)
     public long getMinimumFeeATM(Transaction transaction, int blockchainHeight) {
         long totalFee = 0;
         for (AbstractAppendix appendage : transaction.getAppendages()) {

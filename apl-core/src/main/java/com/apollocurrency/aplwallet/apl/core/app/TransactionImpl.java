@@ -24,7 +24,6 @@ import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtendAttachment;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
@@ -45,7 +44,8 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingProce
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Filter;
-import com.apollocurrency.aplwallet.apl.util.annotation.MultiSigPkCreator;
+import com.apollocurrency.aplwallet.apl.util.annotation.ParentChildSpecific;
+import com.apollocurrency.aplwallet.apl.util.annotation.ParentMarker;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -290,7 +290,7 @@ public class TransactionImpl implements Transaction {
     static TransactionImpl parseTransaction(JSONObject transactionData) throws AplException.NotValidException {
         TransactionImpl transaction = newTransactionBuilder(transactionData).build();
         if (transaction.getSignature() != null){
-            @MultiSigPkCreator("Check isChild(senderId) and add the corresponding public key if the result is true")
+            @ParentChildSpecific(ParentMarker.MULTI_SIGNATURE)
             boolean rc = transaction.checkSignature(new byte[][]{ transaction.senderPublicKey });
             if(!rc) {
                 throw new AplException.NotValidException("Invalid transaction signature for transaction " + transaction.getJSONObject().toJSONString());
@@ -352,8 +352,8 @@ public class TransactionImpl implements Transaction {
     }
 
     private Blockchain lookupAndInjectBlockchain() {
-        if (this.blockchain == null) {
-            this.blockchain = CDI.current().select(BlockchainImpl.class).get();
+        if (blockchain == null) {
+            blockchain = CDI.current().select(BlockchainImpl.class).get();
         }
         return blockchain;
     }
@@ -779,7 +779,7 @@ public class TransactionImpl implements Transaction {
     @Override
     public boolean verifySignature() {
         lookupAndInjectAccountPublicKeyService().setOrVerifyPublicKey(getSenderId(), getSenderPublicKey());
-        @MultiSigPkCreator
+        @ParentChildSpecific(ParentMarker.MULTI_SIGNATURE)
         byte[][] publicKeys = new byte[][]{ getSenderPublicKey() };
         return verifySignature(publicKeys);
     }
@@ -954,13 +954,6 @@ public class TransactionImpl implements Transaction {
 
         private Blockchain lookupAndInjectBlockchain() {
             return CDI.current().select(Blockchain.class).get();
-        }
-
-        private AccountPublicKeyService lookupAndInjectAccountService() {
-            if (accountPublicKeyService == null) {
-                accountPublicKeyService = CDI.current().select(AccountPublicKeyServiceImpl.class).get();
-            }
-            return accountPublicKeyService;
         }
 
         @Override

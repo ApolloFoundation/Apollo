@@ -5,20 +5,20 @@
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.antifraud.AntifraudValidator;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.annotation.MultiSigPkCreator;
 import com.apollocurrency.aplwallet.apl.util.annotation.ParentChildSpecific;
+import com.apollocurrency.aplwallet.apl.util.annotation.ParentMarker;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -87,14 +87,15 @@ public class TransactionValidator {
         if (!AntifraudValidator.validate(blockchain.getHeight(), transaction.getSenderId(),
             transaction.getRecipientId())) throw new AplException.NotValidException("Incorrect Passphrase");
 
-        @ParentChildSpecific
         Account sender = accountService.getAccount(transaction.getSenderId());
         if(sender != null && sender.isChild()){
             Account recipient = accountService.getAccount(transaction.getRecipientId());
             if(recipient == null) {
                 throw new AplException.NotCurrentlyValidException("Account " + transaction.getRecipientId() + " does not exist yet.");
             }
-            if(sender.getParentId() != recipient.getParentId()){
+            @ParentChildSpecific(ParentMarker.ADDRESS_RESTRICTION)
+            boolean rc = sender.getParentId() != recipient.getParentId();
+            if(rc){
                 throw new AplException.NotCurrentlyValidException("The parent account for sender and recipient must be the same;" +
                     "sender.parentId="+sender.getParentId()+", recipient.parentId="+ recipient.getParentId());
             }
@@ -104,9 +105,9 @@ public class TransactionValidator {
         for (AbstractAppendix appendage : transaction.getAppendages()) {
             appendage.loadPrunable(transaction);
             //TODO Why does it need? Take a look how to use it.
-//            if (! appendage.verifyVersion()) {
-//                throw new AplException.NotValidException("Invalid attachment version " + appendage.getVersion());
-//            }
+            //if (! appendage.verifyVersion()) {
+            //    throw new AplException.NotValidException("Invalid attachment version " + appendage.getVersion());
+            //}
             if (validatingAtFinish) {
                 appendage.validateAtFinish(transaction, blockchain.getHeight());
             } else {
@@ -143,14 +144,13 @@ public class TransactionValidator {
     }
 
     public boolean verifySignature(Transaction transaction) {
-        @ParentChildSpecific
         Account sender = accountService.getAccount(transaction.getSenderId());
         if(sender == null){
             log.error("Sender account not found, senderId={}", transaction.getSenderId());
             return false;
         }
         if(sender.isChild()){
-            @MultiSigPkCreator
+            @ParentChildSpecific(ParentMarker.MULTI_SIGNATURE)
             byte[][] publicKeys = new byte[][]{accountService.getPublicKeyByteArray(sender.getParentId()),transaction.getSenderPublicKey()};
             return transaction.verifySignature(publicKeys);
         }else{

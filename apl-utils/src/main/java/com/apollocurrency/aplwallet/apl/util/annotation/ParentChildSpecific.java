@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
  * @author andrew.zinchenko@gmail.com
  */
 @Target({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE, ElementType.TYPE_USE})
-@Retention(RetentionPolicy.RUNTIME)
+@Retention(RetentionPolicy.SOURCE)
 public @interface ParentChildSpecific {
-    String value() default "";
+    ParentMarker value();
 }

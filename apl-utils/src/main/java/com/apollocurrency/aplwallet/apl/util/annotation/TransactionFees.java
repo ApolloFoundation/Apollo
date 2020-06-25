@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
  * @author andrew.zinchenko@gmail.com
  */
 @Target({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE, ElementType.TYPE_USE})
-@Retention(RetentionPolicy.RUNTIME)
-public @interface ChargeTransactionFee {
-    String value() default "";
+@Retention(RetentionPolicy.SOURCE)
+public @interface TransactionFees {
+    TransactionFee[] value();
 }
