@@ -227,7 +227,8 @@ public class CurrencyExchangeOfferFacadeImpl implements CurrencyExchangeOfferFac
         accountCurrencyService.addToCurrencyAndUnconfirmedCurrencyUnits(account, LedgerEvent.CURRENCY_EXCHANGE, transactionId,
             currencyId, Math.subtractExact(units, remainingUnits));
         accountService.addToBalanceATM(account, LedgerEvent.CURRENCY_EXCHANGE, transactionId, -totalAmountATM);
-        accountService.addToUnconfirmedBalanceATM(account, LedgerEvent.CURRENCY_EXCHANGE, transactionId, Math.multiplyExact(units, rateATM) - totalAmountATM);
+        accountService.addToUnconfirmedBalanceATM(account, LedgerEvent.CURRENCY_EXCHANGE, transactionId,
+            Math.multiplyExact(units, rateATM) - totalAmountATM);
         log.trace("account === 4 exchangeAPLForCurrency account={}", account);
     }
 
