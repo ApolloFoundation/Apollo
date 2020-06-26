@@ -24,7 +24,6 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyBuyOfferTable;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
@@ -46,28 +45,20 @@ import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.CurrencyBuyOfferTestData;
 import com.apollocurrency.aplwallet.apl.data.CurrencySellOfferTestData;
-import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
-import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-@Tag("slow")
 @EnableWeld
 @ExtendWith(MockitoExtension.class)
 class CurrencyExchangeOfferFacadeTest {
-
-    @RegisterExtension
-    static DbExtension dbExtension = new DbExtension();
 
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
@@ -78,8 +69,6 @@ class CurrencyExchangeOfferFacadeTest {
     public WeldInitiator weld = WeldInitiator.from(
         PropertiesHolder.class, CurrencyBuyOfferTable.class, CurrencyBuyOfferServiceImpl.class
     )
-        .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
-        .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
         .addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class))
         .addBeans(MockBean.of(blockchainProcessor, BlockchainProcessor.class, BlockchainProcessorImpl.class))
@@ -260,8 +249,6 @@ class CurrencyExchangeOfferFacadeTest {
             .addExchange(any(Transaction.class), anyLong(), anyLong(), anyLong(), anyLong(), anyLong(), any(Block.class), anyLong());
 
         verify(accountService, times(1)).getAccount(any(Account.class));
-        verify(accountService, times(5))
-            .addToUnconfirmedBalanceATM(any(Account.class), any(LedgerEvent.class), anyLong(), anyLong());
         verify(accountService, times(1))
             .addToBalanceAndUnconfirmedBalanceATM(any(Account.class), any(LedgerEvent.class), anyLong(), anyLong());
         verify(accountCurrencyService, times(6))
