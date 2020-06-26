@@ -16,7 +16,6 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencySupplyTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyTable;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyFounder;
@@ -37,7 +36,6 @@ public class CrowdFundingObserver {
 
     private final AccountService accountService;
     private final AccountCurrencyService accountCurrencyService;
-//    private final CurrencyExchangeOfferFacade currencyExchangeOfferFacade;
     private final CurrencyService currencyService;
     private final CurrencyTable currencyTable;
     private final CurrencyFounderService currencyFounderService;
@@ -47,7 +45,6 @@ public class CrowdFundingObserver {
     @Inject
     public CrowdFundingObserver(AccountService accountService,
                                 AccountCurrencyService accountCurrencyService,
-//                                CurrencyExchangeOfferFacade currencyExchangeOfferFacade,
                                 CurrencyService currencyService,
                                 CurrencyTable currencyTable,
                                 CurrencyFounderService currencyFounderService,
@@ -55,7 +52,6 @@ public class CrowdFundingObserver {
                                 CurrencySupplyTable currencySupplyTable) {
         this.accountService = accountService;
         this.accountCurrencyService = accountCurrencyService;
-//        this.currencyExchangeOfferFacade = currencyExchangeOfferFacade;
         this.currencyService = currencyService;
         this.currencyTable = currencyTable;
         this.currencyFounderService = currencyFounderService;
@@ -68,10 +64,8 @@ public class CrowdFundingObserver {
         try (DbIterator<Currency> issuedCurrencies = currencyService.getIssuedCurrenciesByHeight(block.getHeight(), 0, -1)) {
             for (Currency currency : issuedCurrencies) {
                 if (currencyService.getCurrentReservePerUnitATM(currency) < currency.getMinReservePerUnitATM()) {
-//                    listeners.notify(currency, Currency.Event.BEFORE_UNDO_CROWDFUNDING);
                     undoCrowdFunding(currency);
                 } else {
-//                    listeners.notify(currency, Currency.Event.BEFORE_DISTRIBUTE_CROWDFUNDING);
                     distributeCurrency(currency);
                 }
             }
