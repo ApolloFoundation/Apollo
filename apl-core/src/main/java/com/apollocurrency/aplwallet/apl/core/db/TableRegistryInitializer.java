@@ -17,14 +17,14 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.asset.AssetDividendTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.asset.AssetTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.asset.AssetTransferTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyBuyOfferTable;
-import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyFounderTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyMintTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencySellOfferTable;
-import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencySupplyTable;
-import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyTransferTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.exchange.ExchangeRequestTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.exchange.ExchangeTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyFounderTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencySupplyTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.poll.PollResultTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.poll.PollTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.TradeTable;
@@ -150,12 +150,6 @@ public class TableRegistryInitializer {
     @Inject
     private PollResultTable pollResultTable;
     @Inject
-    private CurrencyTable currencyTable;
-    @Inject
-    private CurrencySupplyTable currencySupplyTable;
-    @Inject
-    private CurrencyFounderTable currencyFounderTable;
-    @Inject
     private CurrencyBuyOfferTable currencyBuyOfferTable;
     @Inject
     private CurrencySellOfferTable currencySellOfferTable;
@@ -175,6 +169,12 @@ public class TableRegistryInitializer {
     private AssetDividendTable assetDividendTable;
     @Inject
     private AssetTransferTable assetTransferTable;
+    @Inject
+    private CurrencyTable currencyTable;
+    @Inject
+    private CurrencySupplyTable currencySupplyTable;
+    @Inject
+    private CurrencyFounderTable currencyFounderTable;
 
     @PostConstruct
     public void init() {
