@@ -20,32 +20,38 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.dao.state.poll.VoteTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteCasting;
 import lombok.extern.slf4j.Slf4j;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 @Slf4j
-public final class Vote {
+public final class Vote extends DerivedEntity {
     private final long id;
-    private final DbKey dbKey;
     private final long pollId;
     private final long voterId;
     private final byte[] voteBytes;
 
-    public Vote(Transaction transaction, MessagingVoteCasting attachment, DbKey dbKey) {
+    public Vote(Transaction transaction, MessagingVoteCasting attachment, int height) {
+        super(null, height);
         this.id = transaction.getId();
-        this.dbKey = dbKey;
         this.pollId = attachment.getPollId();
         this.voterId = transaction.getSenderId();
         this.voteBytes = attachment.getPollVote();
+        super.setDbKey(VoteTable.voteDbKeyFactory.newKey(this.id));
     }
 
-    public Vote(long id, DbKey dbKey, long pollId, long voterId, byte[] voteBytes) {
-        this.id = id;
-        this.dbKey = dbKey;
-        this.pollId = pollId;
-        this.voterId = voterId;
-        this.voteBytes = voteBytes;
+    public Vote(ResultSet rs, DbKey dbKey) throws SQLException {
+        super(rs);
+        setDbKey(dbKey);
+        this.id = rs.getLong("id");
+        this.pollId = rs.getLong("poll_id");
+        this.voterId = rs.getLong("voter_id");
+        this.voteBytes = rs.getBytes("vote_bytes");
     }
 
     public long getId() {
@@ -62,9 +68,5 @@ public final class Vote {
 
     public byte[] getVoteBytes() {
         return voteBytes;
-    }
-
-    public DbKey getDbKey() {
-        return dbKey;
     }
 }

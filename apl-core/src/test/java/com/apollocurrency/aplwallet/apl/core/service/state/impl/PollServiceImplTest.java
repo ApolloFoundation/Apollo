@@ -1,6 +1,10 @@
+/*
+ * Copyright © 2018-2020 Apollo Foundation
+ */
 package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
@@ -52,6 +56,9 @@ class PollServiceImplTest {
     @Mock
     private VoteTable voteTable;
 
+    @Mock
+    private BlockchainImpl blockchain;
+
     private PollServiceImpl pollService;
 
     @BeforeEach
@@ -62,7 +69,8 @@ class PollServiceImplTest {
             pollResultTable,
             converter,
             pollOptionResultService,
-            voteTable
+            voteTable,
+            blockchain
         );
     }
 

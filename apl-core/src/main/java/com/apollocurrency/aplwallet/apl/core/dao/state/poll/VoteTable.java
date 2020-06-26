@@ -1,6 +1,9 @@
+/*
+ *  Copyright © 2018-2020 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.dao.state.poll;
 
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.Vote;
@@ -13,7 +16,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteCasting;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -25,7 +27,7 @@ import java.util.List;
 @Slf4j
 @Singleton
 public class VoteTable extends EntityDbTable<Vote> {
-    private static final LongKeyFactory<Vote> VOTE_LONG_KEY_FACTORY = new LongKeyFactory<>("id") {
+    public static final LongKeyFactory<Vote> voteDbKeyFactory = new LongKeyFactory<>("id") {
         @Override
         public DbKey newKey(Vote vote) {
             return vote.getDbKey();
@@ -35,14 +37,13 @@ public class VoteTable extends EntityDbTable<Vote> {
 
     @Inject
     public VoteTable(PollTable pollTable) {
-        super("vote", VOTE_LONG_KEY_FACTORY);
+        super("vote", voteDbKeyFactory);
         this.pollTable = pollTable;
     }
 
 
     @Override
     public void save(Connection con, Vote entity) throws SQLException {
-        Blockchain blockchain = CDI.current().select(Blockchain.class).get();
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO vote (id, poll_id, voter_id, "
             + "vote_bytes, height) VALUES (?, ?, ?, ?, ?)")) {
             int i = 0;
@@ -50,14 +51,14 @@ public class VoteTable extends EntityDbTable<Vote> {
             pstmt.setLong(++i, entity.getPollId());
             pstmt.setLong(++i, entity.getVoterId());
             pstmt.setBytes(++i, entity.getVoteBytes());
-            pstmt.setInt(++i, blockchain.getHeight());
+            pstmt.setInt(++i, entity.getHeight());
             pstmt.executeUpdate();
         }
     }
 
     @Override
     protected Vote load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-        return map(rs, dbKey);
+        return new Vote(rs, dbKey);
     }
 
     @Override
@@ -82,8 +83,8 @@ public class VoteTable extends EntityDbTable<Vote> {
         return getBy(clause);
     }
 
-    public Vote addVote(Transaction transaction, MessagingVoteCasting attachment) {
-        Vote vote = new Vote(transaction, attachment, VOTE_LONG_KEY_FACTORY.newKey(transaction.getId()));
+    public Vote addVote(Transaction transaction, MessagingVoteCasting attachment, int height) {
+        Vote vote = new Vote(transaction, attachment, height);
         insert(vote);
         return vote;
     }
@@ -108,17 +109,4 @@ public class VoteTable extends EntityDbTable<Vote> {
             totalDeletedVotes, index, height, isSharding);
     }
 
-    private Vote map(ResultSet rs, DbKey dbKey){
-        try {
-            Vote vote = new Vote(rs.getLong("id"),
-                dbKey,
-                rs.getLong("poll_id"),
-                rs.getLong("voter_id"),
-                rs.getBytes("vote_bytes"));
-            return vote;
-        } catch (SQLException e) {
-            log.error(e.getMessage(), e);
-            return null;
-        }
-    }
 }

@@ -25,12 +25,10 @@ import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 import java.net.InetAddress;
 
@@ -39,8 +37,6 @@ import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionType.
 @Deprecated
 @Vetoed
 public final class GetState extends AbstractAPIRequestHandler {
-    private static final PollService pollService = CDI.current().select(PollService.class).get();
-
     public GetState() {
         super(new APITag[]{APITag.INFO}, "includeCounts", "adminPassword");
     }

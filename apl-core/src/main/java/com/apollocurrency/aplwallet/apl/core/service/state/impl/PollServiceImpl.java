@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.Vote;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
@@ -52,6 +53,7 @@ public class PollServiceImpl implements PollService {
     private final IteratorToStreamConverter<Poll> converter;
     private final PollOptionResultService pollOptionResultService;
     private final VoteTable voteTable;
+    private final BlockchainImpl blockchain;
 
     /**
      * Constructor for unit tests.
@@ -68,7 +70,8 @@ public class PollServiceImpl implements PollService {
         final PollResultTable pollResultTable,
         final IteratorToStreamConverter<Poll> converter,
         final PollOptionResultService pollOptionResultService,
-        final VoteTable voteTable
+        final VoteTable voteTable,
+        BlockchainImpl blockchain
     ) {
         this.blockChainInfoService = blockChainInfoService;
         this.pollTable = pollTable;
@@ -76,6 +79,7 @@ public class PollServiceImpl implements PollService {
         this.converter = converter;
         this.pollOptionResultService = pollOptionResultService;
         this.voteTable = voteTable;
+        this.blockchain = blockchain;
     }
 
     @Inject
@@ -85,7 +89,8 @@ public class PollServiceImpl implements PollService {
         final PollTable pollTable,
         final PollResultTable pollResultTable,
         final PollOptionResultService pollOptionResultService,
-        final VoteTable voteTable
+        final VoteTable voteTable,
+        final BlockchainImpl blockchain
         ) {
         this.blockChainInfoService = blockChainInfoService;
         this.pollTable = pollTable;
@@ -93,6 +98,7 @@ public class PollServiceImpl implements PollService {
         this.converter = new IteratorToStreamConverter<>();
         this.pollOptionResultService = pollOptionResultService;
         this.voteTable = voteTable;
+        this.blockchain = blockchain;
     }
 
     @Override
@@ -183,7 +189,7 @@ public class PollServiceImpl implements PollService {
 
     @Override
     public Vote addVote(Transaction transaction, MessagingVoteCasting attachment) {
-        return voteTable.addVote(transaction, attachment);
+        return voteTable.addVote(transaction, attachment, blockchain.getLastBlock().getHeight());
     }
 
     @Override
