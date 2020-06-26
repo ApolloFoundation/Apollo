@@ -9,7 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 
 import javax.inject.Inject;
-import java.util.Comparator;
 import java.util.stream.Stream;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -37,10 +36,11 @@ import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+@Tag("slow")
 @EnableWeld
 class CurrencySellOfferServiceTest {
     @RegisterExtension
@@ -51,10 +51,6 @@ class CurrencySellOfferServiceTest {
     CurrencySellOfferTestData td;
     @Inject
     private CurrencySellOfferService offerService;
-
-    Comparator<CurrencySellOffer> currencySellOfferComparator = Comparator
-        .comparing(CurrencySellOffer::getId)
-        .thenComparing(CurrencySellOffer::getAccountId);
 
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);

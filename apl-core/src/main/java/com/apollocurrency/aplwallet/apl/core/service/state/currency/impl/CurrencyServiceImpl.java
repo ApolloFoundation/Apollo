@@ -168,7 +168,6 @@ public class CurrencyServiceImpl implements CurrencyService {
         Currency currency = this.getCurrency(currencyId);
         this.increaseSupply(currency, -units);
         accountService.addToBalanceAndUnconfirmedBalanceATM(account, event, eventId,
-//            Math.multiplyExact(units, currency.getCurrentReservePerUnitATM()));
             Math.multiplyExact(units, this.getCurrentReservePerUnitATM(currency)));
     }
 
@@ -301,7 +300,6 @@ public class CurrencyServiceImpl implements CurrencyService {
             }
             int height = blockChainInfoService.getHeight();
             buyOffers.forEach((offer) -> {
-//                offer.setHeight(height);
                 currencyExchangeOfferFacade.removeOffer(event, offer);
             });
         }
