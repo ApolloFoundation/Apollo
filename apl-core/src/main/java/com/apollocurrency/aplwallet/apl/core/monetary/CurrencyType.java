@@ -169,7 +169,7 @@ public enum CurrencyType {
             }
             if (transaction.getType() == MonetarySystem.RESERVE_CLAIM) {
 //                if (currency == null || !currency.isActive()) {
-                if (currency == null || !currencyService.isActive(currency)) {
+                if (currency == null || !lookupCurrencyService().isActive(currency)) {
                     throw new AplException.NotCurrentlyValidException("Cannot claim reserve since currency is not yet active");
                 }
             }
@@ -243,7 +243,7 @@ public enum CurrencyType {
     };
 
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static CurrencyService currencyService = CDI.current().select(CurrencyService.class).get();
+    private static CurrencyService currencyService;
     private final int code;
 
     CurrencyType(int code) {
@@ -324,6 +324,7 @@ public enum CurrencyType {
             throw new AplException.NotValidException("Currency name already used");
         }
         Currency currency;
+        CurrencyService currencyService = lookupCurrencyService();
         if ((currency = currencyService.getCurrencyByName(normalizedName)) != null
             && !currencyService.canBeDeletedBy(currency, issuerAccountId)) {
             throw new AplException.NotCurrentlyValidException("Currency name already used: " + normalizedName);
@@ -349,4 +350,11 @@ public enum CurrencyType {
     public abstract void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException;
 
     public abstract void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException;
+
+    private static CurrencyService lookupCurrencyService() {
+        if (currencyService == null) {
+            currencyService = CDI.current().select(CurrencyService.class).get();
+        }
+        return currencyService;
+    }
 }
