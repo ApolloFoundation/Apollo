@@ -126,6 +126,7 @@ public final class Currency {
     private static AccountCurrencyService accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
     private static CurrencyExchangeOfferFacade currencyExchangeOfferFacade = CDI.current().select(CurrencyExchangeOfferFacade.class).get();
 
+    private long dbId;
     private final long currencyId;
     private final DbKey dbKey;
     private final long accountId;
@@ -180,6 +181,7 @@ public final class Currency {
      * @deprecated
      */
     private Currency(ResultSet rs, DbKey dbKey) throws SQLException {
+        this.dbId = rs.getLong("db_id");
         this.currencyId = rs.getLong("id");
         this.dbKey = dbKey;
         this.accountId = rs.getLong("account_id");
@@ -385,6 +387,10 @@ public final class Currency {
             pstmt.setInt(++i, BLOCK_CHAIN_INFO_SERVICE.getHeight());
             pstmt.executeUpdate();
         }
+    }
+
+    public long getDbId() {
+        return dbId;
     }
 
     public long getId() {
@@ -605,6 +611,7 @@ public final class Currency {
 
     private static final class CurrencySupply {
 
+        private long dbId;
         private final DbKey dbKey;
         private final long currencyId;
         private long currentSupply;
@@ -616,6 +623,7 @@ public final class Currency {
         }
 
         private CurrencySupply(ResultSet rs, DbKey dbKey) throws SQLException {
+            this.dbId = rs.getLong("db_id");
             this.currencyId = rs.getLong("id");
             this.dbKey = dbKey;
             this.currentSupply = rs.getLong("current_supply");
@@ -637,6 +645,9 @@ public final class Currency {
                 pstmt.setInt(++i, BLOCK_CHAIN_INFO_SERVICE.getHeight());
                 pstmt.executeUpdate();
             }
+        }
+        public long getDbId() {
+            return dbId;
         }
     }
 
