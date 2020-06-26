@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.entity.state.account;
@@ -44,7 +44,7 @@ import java.util.Set;
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 public class Account extends VersionedDeletableEntity {
-    private static final AddressScope DEFAULT_SCOPE = AddressScope.EXTERNAL;
+    private static final AddressScope DEFAULT_SCOPE = AddressScope.valueOf((byte) 0);
 
     private final long id;
     @Setter
