@@ -58,6 +58,8 @@ import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyMint
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
+import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
+import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import lombok.Setter;
 import org.json.simple.JSONObject;
 
@@ -485,6 +487,7 @@ public abstract class TransactionType {
     public abstract void validateAttachment(Transaction transaction) throws AplException.ValidationException;
 
     // return false if double spending
+    @TransactionFee(FeeMarker.UNCONFIRMED_BALANCE)
     public final boolean applyUnconfirmed(Transaction transaction, Account senderAccount) {
         long amountATM = transaction.getAmountATM();
         long feeATM = transaction.getFeeATM();
@@ -525,6 +528,7 @@ public abstract class TransactionType {
 
     public abstract void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount);
 
+    @TransactionFee(FeeMarker.UNDO_UNCONFIRMED_BALANCE)
     public final void undoUnconfirmed(Transaction transaction, Account senderAccount) {
         undoAttachmentUnconfirmed(transaction, senderAccount);
         lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(),
@@ -535,6 +539,7 @@ public abstract class TransactionType {
         }
     }
 
+    @TransactionFee(FeeMarker.UNDO_UNCONFIRMED_BALANCE)
     public abstract void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount);
 
     public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
@@ -570,10 +575,12 @@ public abstract class TransactionType {
         return true;
     }
 
+    @TransactionFee(FeeMarker.BASE_FEE)
     public Fee getBaselineFee(Transaction transaction) {
         return Fee.DEFAULT_FEE;
     }
 
+    @TransactionFee(FeeMarker.FEE)
     public Fee getNextFee(Transaction transaction) {
         return getBaselineFee(transaction);
     }
@@ -586,6 +593,7 @@ public abstract class TransactionType {
         return Integer.MAX_VALUE;
     }
 
+    @TransactionFee(FeeMarker.FEE)
     public long[] getBackFees(Transaction transaction) {
         return Convert.EMPTY_LONG;
     }
