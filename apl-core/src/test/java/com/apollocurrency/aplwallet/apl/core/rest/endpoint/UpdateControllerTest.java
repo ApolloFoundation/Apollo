@@ -19,7 +19,9 @@ import com.apollocurrency.aplwallet.apl.core.rest.exception.LegacyParameterExcep
 import com.apollocurrency.aplwallet.apl.core.rest.utils.AccountParametersParser;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.CertificateMemoryStore;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateV2Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateV2Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
@@ -77,10 +79,11 @@ class UpdateControllerTest extends AbstractEndpointTest {
     AccountService accountService = mock(AccountService.class);
     @Mock
     KeyStoreService keystoreService = mock(KeyStoreService.class);
+    UpdateV2Transaction v2Transaction = new UpdateV2Transaction(mock(CertificateMemoryStore.class));
 
     UpdateV2Attachment attachment = new UpdateV2Attachment("https://test.com", Level.CRITICAL, new Version("1.23.4"), "https://con.com", BigInteger.ONE, Convert.parseHexString("111100ff"), Set.of(new PlatformSpec(OS.WINDOWS, Arch.X86_64), new PlatformSpec(OS.NO_OS, Arch.ARM_64)));
     @WeldSetup
-    WeldInitiator weldInitiator = WeldInitiator.from().addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class)).build();
+    WeldInitiator weldInitiator = WeldInitiator.from().addBeans(MockBean.of(v2Transaction, UpdateV2Transaction.class), MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class)).build();
 
     @Override
     @BeforeEach

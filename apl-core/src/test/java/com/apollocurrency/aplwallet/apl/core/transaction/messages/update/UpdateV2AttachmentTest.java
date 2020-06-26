@@ -35,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @EnableWeld
 class UpdateV2AttachmentTest {
     @WeldSetup
-    WeldInitiator weld = WeldUtils.from(List.of(), List.of(BlockchainConfig.class, PropertiesHolder.class, Blockchain.class, BlockchainImpl.class, NtpTime.class, TimeService.class)).build();
+    WeldInitiator weld = WeldUtils.from(List.of(), List.of(UpdateV2Transaction.class, BlockchainConfig.class, PropertiesHolder.class, Blockchain.class, BlockchainImpl.class, NtpTime.class, TimeService.class)).build();
 
     UpdateV2Attachment attachment;
 

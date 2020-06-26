@@ -7,7 +7,9 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.Update;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.CertificateMemoryStore;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateV2Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateV2Transaction;
 import com.apollocurrency.aplwallet.apl.testutil.WeldUtils;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -42,7 +44,7 @@ public class UpdateTransactionTest {
 
     @BeforeEach
     void setUp() {
-//        type = Update.UPDATE_V2;
+        type = new UpdateV2Transaction(mock(CertificateMemoryStore.class));
     }
 
     @ParameterizedTest
