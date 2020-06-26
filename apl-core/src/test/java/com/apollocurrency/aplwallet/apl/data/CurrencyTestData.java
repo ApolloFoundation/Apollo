@@ -15,7 +15,7 @@ public class CurrencyTestData {
 
     public final Currency CURRENCY_0 = createCurrency(
         1,     6847297283087791598L, -6392448561240417498L, "Gold",      "gold",
-        "GLD", "A new token allowing the easy trade of gold bullion.", 3,
+        "GLD", "A new token allowing the easy trade of gold bullion.", 7,
         9900000000000000L, 0,            9900000000000000L, 3015,
         0,              0,                         0,               0,
         (byte)0,      (byte)0,          (byte)5,     supplyTestData.CURRENCY_SUPPLY_0,  3015,   true,   false);
