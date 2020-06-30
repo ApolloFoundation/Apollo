@@ -20,14 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Vote;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
+import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONStreamAware;
 
@@ -46,7 +46,7 @@ public class GetPollVote extends AbstractAPIRequestHandler {
         Poll poll = HttpParameterParserUtil.getPoll(req);
         long accountId = HttpParameterParserUtil.getAccountId(req, true);
         boolean includeWeights = "true".equalsIgnoreCase(req.getParameter("includeWeights"));
-        Vote vote = Vote.getVote(poll.getId(), accountId);
+        Vote vote = pollService.getVote(poll.getId(), accountId);
         if (vote != null) {
             int countHeight;
             JSONData.VoteWeighter weighter = null;

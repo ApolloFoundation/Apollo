@@ -41,6 +41,8 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSPublicFeedbackTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSPurchaseTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSTagTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.poll.VoteTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.poll.VoteTable;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyExchangeOffer;
@@ -166,12 +168,13 @@ public class TableRegistryInitializer {
     private AssetDividendTable assetDividendTable;
     @Inject
     private AssetTransferTable assetTransferTable;
+    @Inject
+    private VoteTable voteTable;
 
     @PostConstruct
     public void init() {
         transactionProcessor.init();
 
-        Vote.init();
         Currency.init();
         CurrencyFounder.init();
         CurrencyBuyOffer.init();
