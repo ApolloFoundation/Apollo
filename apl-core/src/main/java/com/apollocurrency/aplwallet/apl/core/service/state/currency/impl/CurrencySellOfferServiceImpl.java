@@ -61,7 +61,7 @@ public class CurrencySellOfferServiceImpl implements CurrencySellOfferService {
 
     @Override
     public CurrencySellOffer getOffer(long offerId) {
-        return currencySellOfferTable.get(CurrencySellOfferTable.buyOfferDbKeyFactory.newKey(offerId));
+        return currencySellOfferTable.get(CurrencySellOfferTable.sellOfferDbKeyFactory.newKey(offerId));
     }
 
     @Override
@@ -166,7 +166,7 @@ public class CurrencySellOfferServiceImpl implements CurrencySellOfferService {
     }
 
     @Override
-    public void remove(CurrencySellOffer buyOffer) {
+    public void remove(CurrencySellOffer sellOffer) {
         int height = blockChainInfoService.getHeight();
         buyOffer.setHeight(height); // important to assign height here!
         currencySellOfferTable.deleteAtHeight(buyOffer, height);
@@ -174,7 +174,7 @@ public class CurrencySellOfferServiceImpl implements CurrencySellOfferService {
 
     @Override
     public void insert(CurrencySellOffer currencySellOffer) {
-        currencySellOffer.setHeight(blockChainInfoService.getHeight());// important to assign height here!
+//        currencySellOffer.setHeight(blockChainInfoService.getHeight());// important to assign height here!
         currencySellOfferTable.insert(currencySellOffer);
     }
 

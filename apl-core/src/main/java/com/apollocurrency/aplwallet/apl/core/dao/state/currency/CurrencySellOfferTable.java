@@ -18,7 +18,7 @@ import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
 public class CurrencySellOfferTable extends VersionedDeletableEntityDbTable<CurrencySellOffer> {
 
-    public static final LongKeyFactory<CurrencySellOffer> buyOfferDbKeyFactory = new LongKeyFactory<>("id") {
+    public static final LongKeyFactory<CurrencySellOffer> sellOfferDbKeyFactory = new LongKeyFactory<>("id") {
         @Override
         public DbKey newKey(CurrencySellOffer offer) {
             if (offer.getDbKey() == null) {
@@ -29,7 +29,7 @@ public class CurrencySellOfferTable extends VersionedDeletableEntityDbTable<Curr
     };
 
     public CurrencySellOfferTable() {
-        super("sell_offer", buyOfferDbKeyFactory);
+        super("sell_offer", sellOfferDbKeyFactory);
     }
 
     @Override

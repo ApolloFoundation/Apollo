@@ -24,7 +24,7 @@ public class CurrencySellOffer extends CurrencyExchangeOffer {
         super(transaction.getId(), attachment.getCurrencyId(), transaction.getSenderId(), attachment.getBuyRateATM(),
             attachment.getTotalBuyLimit(), attachment.getInitialBuySupply(), attachment.getExpirationHeight(), transaction.getHeight(),
             transaction.getIndex(), height);
-        super.setDbKey( CurrencySellOfferTable.buyOfferDbKeyFactory.newKey(this.getId()));
+        super.setDbKey( CurrencySellOfferTable.sellOfferDbKeyFactory.newKey(this.getId()));
     }
 
     /**

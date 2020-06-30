@@ -246,7 +246,7 @@ class CurrencyExchangeOfferFacadeTest {
         verify(accountService, times(5))
             .addToBalanceATM(any(Account.class), any(LedgerEvent.class), anyLong(), anyLong());
         verify(exchangeService, times(5))
-            .addExchange(any(Transaction.class), anyLong(), anyLong(), anyLong(), anyLong(), anyLong(), any(Block.class), anyLong());
+            .addExchange(any(Transaction.class), anyLong(), anyLong(), anyLong(), anyLong(), anyLong(), /*any(Block.class), */anyLong());
 
         verify(accountService, times(1)).getAccount(any(Account.class));
         verify(accountService, times(1))
@@ -286,7 +286,7 @@ class CurrencyExchangeOfferFacadeTest {
         verify(accountCurrencyService, times(5))
             .addToCurrencyUnits(any(Account.class), any(LedgerEvent.class), anyLong(), anyLong(), anyLong());
         verify(exchangeService, times(5))
-            .addExchange(any(Transaction.class), anyLong(), anyLong(), anyLong(), anyLong(), anyLong(), any(Block.class), anyLong());
+            .addExchange(any(Transaction.class), anyLong(), anyLong(), anyLong(), anyLong(), anyLong(), /*any(Block.class), */anyLong());
         verify(accountCurrencyService, times(1))
             .addToCurrencyAndUnconfirmedCurrencyUnits(
                 any(Account.class), any(LedgerEvent.class), anyLong(), anyLong(), anyLong());
