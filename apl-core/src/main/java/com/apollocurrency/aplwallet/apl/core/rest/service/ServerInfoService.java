@@ -23,6 +23,7 @@ import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.app.Vote;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMinting;
+import com.apollocurrency.aplwallet.apl.core.app.shuffling.ShufflingParticipantState;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.BidOrder;
@@ -323,7 +324,7 @@ public class ServerInfoService {
         for (Shuffling.Stage stage : Shuffling.Stage.values()) {
             dto.shufflingStages.add(new NameCodeTypeDto(stage.toString(), stage.getCode()));
         }
-        for (ShufflingParticipant.State state : ShufflingParticipant.State.values()) {
+        for (ShufflingParticipantState state : ShufflingParticipantState.values()) {
             dto.shufflingParticipantStates.add(new NameCodeTypeDto(state.toString(), state.getCode()));
         }
         for (APITag apiTag : APITag.values()) {

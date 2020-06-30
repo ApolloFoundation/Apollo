@@ -1,6 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.app.shuffling;
 
-import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
+import com.apollocurrency.aplwallet.apl.core.dao.state.shuffling.ShufflingDataTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -28,10 +28,9 @@ public class ShufflingData {
     public ShufflingData(long shufflingId, long accountId, byte[][] data, int transactionTimestamp, int height) {
         this.shufflingId = shufflingId;
         this.accountId = accountId;
-        this.dbKey = ShufflingParticipant.shufflingDataDbKeyFactory.newKey(shufflingId, accountId);
+        this.dbKey = ShufflingDataTable.dbKeyFactory.newKey(shufflingId, accountId);
         this.data = data;
         this.transactionTimestamp = transactionTimestamp;
-
         this.height = height;
     }
 

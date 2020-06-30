@@ -20,13 +20,17 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.app.shuffling.ShufflingParticipantState;
+import com.apollocurrency.aplwallet.apl.core.dao.state.shuffling.ShufflingParticipantTable;
 import com.apollocurrency.aplwallet.apl.core.model.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.service.state.impl.ShufflingServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.DbHotSwapConfig;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
@@ -65,6 +69,7 @@ public final class Shuffler {
     private static TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
+    private static ShufflingService shufflingService = CDI.current().select(ShufflingServiceImpl.class).get();
     private static FeeCalculator feeCalculator = new FeeCalculator();
     private static BlockchainProcessor blockchainProcessor;
     private static AccountService accountService;
@@ -386,7 +391,7 @@ public final class Shuffler {
                 if (shufflingParticipant == null) {
                     throw new InvalidStageException("Account has not registered for this shuffling");
                 }
-                if (shufflingParticipant.getState() == ShufflingParticipant.State.PROCESSED) {
+                if (shufflingParticipant.getState() == ShufflingParticipantState.PROCESSED) {
                     verify(shuffling);
                 }
                 break;
@@ -394,7 +399,7 @@ public final class Shuffler {
                 if (shufflingParticipant == null) {
                     throw new InvalidStageException("Account has not registered for this shuffling");
                 }
-                if (shufflingParticipant.getState() != ShufflingParticipant.State.CANCELLED) {
+                if (shufflingParticipant.getState() != ShufflingParticipantState.CANCELLED) {
                     cancel(shuffling);
                 }
                 break;
@@ -436,7 +441,7 @@ public final class Shuffler {
         if (shufflingParticipant == null || shufflingParticipant.getIndex() == shuffling.getParticipantCount() - 1) {
             return;
         }
-        if (ShufflingParticipant.getData(shuffling.getId(), accountId) == null) {
+        if (shufflingService.getData(shuffling.getId(), accountId) == null) {
             return;
         }
         submitCancel(shuffling);

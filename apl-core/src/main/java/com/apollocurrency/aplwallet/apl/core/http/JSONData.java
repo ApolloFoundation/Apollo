@@ -77,6 +77,7 @@ import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
+import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetTransferService;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetDelete;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetDividend;
@@ -139,6 +140,7 @@ public final class JSONData {
     private static AssetTransferService assetTransferService = CDI.current().select(AssetTransferService.class).get();
     private static ExchangeService exchangeService = CDI.current().select(ExchangeService.class).get();
     private static CurrencyTransferService currencyTransferService = CDI.current().select(CurrencyTransferService.class).get();
+    private static ShufflingService shufflingService = CDI.current().select(ShufflingService.class).get();
 
     private JSONData() {
     } // never
@@ -535,7 +537,7 @@ public final class JSONData {
             json.put("failureCause", shuffler.getFailureCause().getMessage());
         }
         if (includeParticipantState) {
-            ShufflingParticipant participant = ShufflingParticipant.getParticipant(Convert.fullHashToId(shuffler.getShufflingFullHash()), shuffler.getAccountId());
+            ShufflingParticipant participant = shufflingService.getParticipant(Convert.fullHashToId(shuffler.getShufflingFullHash()), shuffler.getAccountId());
             if (participant != null) {
                 json.put("participantState", participant.getState().getCode());
             }

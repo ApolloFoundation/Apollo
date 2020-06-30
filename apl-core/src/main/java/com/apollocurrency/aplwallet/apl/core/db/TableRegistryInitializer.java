@@ -43,6 +43,8 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSPurchaseTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSTagTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.poll.VoteTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.poll.VoteTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.shuffling.ShufflingDataTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.shuffling.ShufflingParticipantTable;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyExchangeOffer;
@@ -170,6 +172,10 @@ public class TableRegistryInitializer {
     private AssetTransferTable assetTransferTable;
     @Inject
     private VoteTable voteTable;
+    @Inject
+    private ShufflingParticipantTable participantTable;
+    @Inject
+    private ShufflingDataTable shufflingDataTable;
 
     @PostConstruct
     public void init() {
@@ -184,7 +190,6 @@ public class TableRegistryInitializer {
         Exchange.init();
         ExchangeRequest.init();
         Shuffling.init();
-        ShufflingParticipant.init();
         CurrencyExchangeOffer.init();
 //        AssetTransfer.init(databaseManager);
     }

@@ -47,7 +47,7 @@ public final class GetShufflingParticipants extends AbstractAPIRequestHandler {
         JSONObject response = new JSONObject();
         JSONArray participantsJSONArray = new JSONArray();
         response.put("participants", participantsJSONArray);
-        try (DbIterator<ShufflingParticipant> participants = ShufflingParticipant.getParticipants(shufflingId)) {
+        try (DbIterator<ShufflingParticipant> participants = shufflingService.getParticipants(shufflingId)) {
             for (ShufflingParticipant participant : participants) {
                 participantsJSONArray.add(JSONData.participant(participant));
             }

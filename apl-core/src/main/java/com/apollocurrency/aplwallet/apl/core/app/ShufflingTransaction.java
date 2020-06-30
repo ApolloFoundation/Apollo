@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.app.shuffling.ShufflingParticipantState;
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -324,7 +325,7 @@ public abstract class ShufflingTransaction extends TransactionType {
                 throw new AplException.NotCurrentlyValidException(String.format("Account %s is not registered for shuffling %s",
                     Long.toUnsignedString(transaction.getSenderId()), Long.toUnsignedString(shuffling.getId())));
             }
-            if (!participant.getState().canBecome(ShufflingParticipant.State.VERIFIED)) {
+            if (!participant.getState().canBecome(ShufflingParticipantState.VERIFIED)) {
                 throw new AplException.NotCurrentlyValidException(String.format("Shuffling participant %s in state %s cannot become verified",
                     Long.toUnsignedString(attachment.getShufflingId()), participant.getState()));
             }
@@ -417,7 +418,7 @@ public abstract class ShufflingTransaction extends TransactionType {
                 throw new AplException.NotCurrentlyValidException(String.format("Account %s is not registered for shuffling %s",
                     Long.toUnsignedString(transaction.getSenderId()), Long.toUnsignedString(shuffling.getId())));
             }
-            if (!participant.getState().canBecome(ShufflingParticipant.State.PROCESSED)) {
+            if (!participant.getState().canBecome(ShufflingParticipantState.PROCESSED)) {
                 throw new AplException.NotCurrentlyValidException(String.format("Participant %s processing already complete",
                     Long.toUnsignedString(transaction.getSenderId())));
             }
@@ -488,7 +489,7 @@ public abstract class ShufflingTransaction extends TransactionType {
             Transaction transaction = lookupBlockchain().getTransaction(transactionId);
 
             ShufflingProcessingAttachment attachment = (ShufflingProcessingAttachment) transaction.getAttachment();
-            return ShufflingParticipant.getData(attachment.getShufflingId(), transaction.getSenderId()) == null;
+            return lookupShufflingService().getData(attachment.getShufflingId(), transaction.getSenderId()) == null;
         }
 
     };
@@ -544,7 +545,7 @@ public abstract class ShufflingTransaction extends TransactionType {
                 throw new AplException.NotCurrentlyValidException(String.format("Account %s is not registered for shuffling %s",
                     Long.toUnsignedString(transaction.getSenderId()), Long.toUnsignedString(shuffling.getId())));
             }
-            if (!participant.getState().canBecome(ShufflingParticipant.State.CANCELLED)) {
+            if (!participant.getState().canBecome(ShufflingParticipantState.CANCELLED)) {
                 throw new AplException.NotCurrentlyValidException(String.format("Shuffling participant %s in state %s cannot submit cancellation",
                     Long.toUnsignedString(attachment.getShufflingId()), participant.getState()));
             }
@@ -593,7 +594,7 @@ public abstract class ShufflingTransaction extends TransactionType {
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             ShufflingCancellationAttachment attachment = (ShufflingCancellationAttachment) transaction.getAttachment();
             Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
-            ShufflingParticipant participant = ShufflingParticipant.getParticipant(shuffling.getId(), senderAccount.getId());
+            ShufflingParticipant participant = lookupShufflingService().getParticipant(shuffling.getId(), senderAccount.getId());
             shuffling.cancelBy(participant, attachment.getBlameData(), attachment.getKeySeeds());
         }
 
@@ -659,7 +660,7 @@ public abstract class ShufflingTransaction extends TransactionType {
                 throw new AplException.NotValidException(String.format("Participant %s is not last in shuffle",
                     Long.toUnsignedString(transaction.getSenderId())));
             }
-            if (!participant.getState().canBecome(ShufflingParticipant.State.PROCESSED)) {
+            if (!participant.getState().canBecome(ShufflingParticipantState.PROCESSED)) {
                 throw new AplException.NotCurrentlyValidException(String.format("Participant %s processing already complete",
                     Long.toUnsignedString(transaction.getSenderId())));
             }
