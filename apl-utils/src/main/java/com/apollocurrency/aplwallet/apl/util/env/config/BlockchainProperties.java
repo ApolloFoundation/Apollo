@@ -17,7 +17,7 @@ import java.util.Objects;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonPropertyOrder({"height", "maxNumberOfTransactions", "blockTime", "maxBlockTimeLimit", "minBlockTimeLimit", "maxBalance",
-    "shardingSettings", "consensusSettings", "featuresHeightRequirement"})
+    "shardingSettings", "consensusSettings", "transactionFeeSettings", "featuresHeightRequirement"})
 public class BlockchainProperties {
     private int height;
     private int maxNumberOfTransactions;
@@ -27,6 +27,7 @@ public class BlockchainProperties {
     private long maxBalance;
     private ShardingSettings shardingSettings;
     private ConsensusSettings consensusSettings;
+    private TransactionFeeSettings transactionFeeSettings;
 
     /**
      * Constructor for unit tests. Should not be used by JSON loading.
@@ -46,11 +47,12 @@ public class BlockchainProperties {
         @JsonProperty("maxBlockTimeLimit") int maxBlockTimeLimit,
         @JsonProperty("minBlockTimeLimit") int minBlockTimeLimit,
         @JsonProperty("maxBalance") long maxBalance) {
-        this(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, null, null);
+        this(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, null, null, null);
     }
 
     /**
      * All fields Constructor.
+     *
      * @param height
      * @param maxNumberOfTransactions
      * @param blockTime
@@ -68,7 +70,9 @@ public class BlockchainProperties {
         int minBlockTimeLimit,
         long maxBalance,
         ShardingSettings shardingSettings,
-        ConsensusSettings consensusSettings) {
+        ConsensusSettings consensusSettings,
+        TransactionFeeSettings transactionFeeSettings
+    ) {
         this.height = height;
         this.maxNumberOfTransactions = maxNumberOfTransactions;
         this.blockTime = blockTime;
@@ -77,16 +81,22 @@ public class BlockchainProperties {
         this.maxBalance = maxBalance;
         this.shardingSettings = shardingSettings == null ? new ShardingSettings() : shardingSettings;
         this.consensusSettings = consensusSettings == null ? new ConsensusSettings() : consensusSettings;
+        this.transactionFeeSettings = transactionFeeSettings == null ? new TransactionFeeSettings() : transactionFeeSettings;
     }
 
     public BlockchainProperties(int height, int maxNumberOfTransactions, int blockTime, int maxBlockTimeLimit, int minBlockTimeLimit, long maxBalance, ShardingSettings shardingSettings) {
-        this(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, shardingSettings, null);
+        this(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, shardingSettings, null, null);
     }
 
 
     public BlockchainProperties(int height, int maxNumberOfTransactions, int blockTime, int maxBlockTimeLimit, int minBlockTimeLimit,
                                 long maxBalance, ConsensusSettings consensusSettings) {
-        this(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, null, consensusSettings);
+        this(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, null, consensusSettings, null);
+    }
+
+    public BlockchainProperties(int height, int maxNumberOfTransactions, int blockTime, int maxBlockTimeLimit, int minBlockTimeLimit,
+                                long maxBalance, ShardingSettings shardingSettings, ConsensusSettings consensusSettings) {
+        this(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, shardingSettings, consensusSettings, null);
     }
 
     @Override
@@ -101,12 +111,13 @@ public class BlockchainProperties {
             minBlockTimeLimit == that.minBlockTimeLimit &&
             maxBalance == that.maxBalance &&
             Objects.equals(shardingSettings, that.shardingSettings) &&
-            Objects.equals(consensusSettings, that.consensusSettings);
+            Objects.equals(consensusSettings, that.consensusSettings) &&
+            Objects.equals(transactionFeeSettings, that.transactionFeeSettings);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, shardingSettings, consensusSettings);
+        return Objects.hash(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, shardingSettings, consensusSettings, transactionFeeSettings);
     }
 
     public int getHeight() {
@@ -176,9 +187,19 @@ public class BlockchainProperties {
         this.shardingSettings = shardingSettings;
     }
 
+    @JsonProperty
+    public TransactionFeeSettings getTransactionFeeSettings() {
+        return transactionFeeSettings;
+    }
+
+    @JsonSetter
+    public void setTransactionFeeSettings(TransactionFeeSettings transactionFeeSettings) {
+        this.transactionFeeSettings = transactionFeeSettings;
+    }
+
     public BlockchainProperties copy() {
         return new BlockchainProperties(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance,
-            shardingSettings.copy(), consensusSettings.copy());
+            shardingSettings.copy(), consensusSettings.copy(), transactionFeeSettings.copy());
     }
 
     @Override
@@ -192,6 +213,7 @@ public class BlockchainProperties {
             ", maxBalance=" + maxBalance +
             ", shardingSettings=" + shardingSettings +
             ", consensusSettings=" + consensusSettings +
+            ", transactionFeeSettings=" + transactionFeeSettings +
             '}';
     }
 }

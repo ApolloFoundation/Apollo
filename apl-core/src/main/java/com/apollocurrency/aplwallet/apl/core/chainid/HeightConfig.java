@@ -110,6 +110,10 @@ public class HeightConfig {
         return bp.getShardingSettings().getFrequency();
     }
 
+    public short getFeeRate(byte type, byte subType){
+        return bp.getTransactionFeeSettings().getRate(type, subType);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
