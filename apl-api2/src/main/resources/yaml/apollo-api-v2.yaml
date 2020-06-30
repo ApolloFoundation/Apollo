@@ -669,11 +669,31 @@ components:
           format: int64
           description: Genesis block timestamp, Unix timestamp in milliseconds
           example: 1491696372000
+        genesisBlockId:
+          type: string
+          format: hex_bytearray
+          description: Genesis block ID
+          example: '15856251679437054149169000'
+        ecBlockId:
+          type: string
+          format: hex_bytearray
+          description: The economic clustering block ID
+          example: '40faaeb15856251679437054'
+        ecBlockHeight:
+          type: integer
+          format: int64
+          description: The economic clustering block height
+          example: 3301233
+        txTimestamp:
+          type: integer
+          format: int64
+          description: Request timestamp in seconds since the genesis block
+          example: 1591696371
         timestamp:
           type: integer
           format: int64
           description: Request timestamp, Unix timestamp in milliseconds
-          example: 1591696372000
+          example: 1591696372300
     TxRequest:
       required:
         - tx
