@@ -109,7 +109,7 @@ public class FundingMonitor {
     private static PropertiesHolder propertiesLoader;
     private static BlockchainConfig blockchainConfig;
     private static Blockchain blockchain;
-    private static FeeCalculator feeCalculator = new FeeCalculator();
+    private static FeeCalculator feeCalculator;
     private static TransactionProcessor transactionProcessor;
     private static GlobalSync globalSync; // prevent fail on node shutdown
     private static AccountService accountService;
@@ -244,6 +244,7 @@ public class FundingMonitor {
         accountAssetService = CDI.current().select(AccountAssetServiceImpl.class).get();
         accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
         accountPropertyService = CDI.current().select(AccountPropertyServiceImpl.class).get();
+        feeCalculator = CDI.current().select(FeeCalculator.class).get();
         /** Maximum number of monitors */
         MAX_MONITORS = propertiesLoader.getIntProperty("apl.maxNumberOfMonitors");
 

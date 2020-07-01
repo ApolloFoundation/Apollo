@@ -1,5 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -77,6 +78,8 @@ class UpdateControllerTest extends AbstractEndpointTest {
     AccountService accountService = mock(AccountService.class);
     @Mock
     KeyStoreService keystoreService = mock(KeyStoreService.class);
+    @Mock
+    BlockchainConfig blockchainConfig;
 
     UpdateV2Attachment attachment = new UpdateV2Attachment("https://test.com", Level.CRITICAL, new Version("1.23.4"), "https://con.com", BigInteger.ONE, Convert.parseHexString("111100ff"), Set.of(new PlatformSpec(Platform.WINDOWS, Architecture.AMD64), new PlatformSpec(Platform.ALL, Architecture.ARM)));
     @WeldSetup
@@ -86,7 +89,7 @@ class UpdateControllerTest extends AbstractEndpointTest {
     @BeforeEach
     void setUp() {
         super.setUp();
-        transactionCreator = new TransactionCreator(validator, new PropertiesHolder(), timeService, new FeeCalculator(), blockchain, processor);
+        transactionCreator = new TransactionCreator(validator, new PropertiesHolder(), timeService, new FeeCalculator(blockchainConfig), blockchain, processor);
         dispatcher.getProviderFactory()
             .register(ByteArrayConverterProvider.class)
             .register(LegacyParameterExceptionMapper.class)
