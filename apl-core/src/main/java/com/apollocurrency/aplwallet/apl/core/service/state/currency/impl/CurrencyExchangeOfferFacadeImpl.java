@@ -156,10 +156,13 @@ public class CurrencyExchangeOfferFacadeImpl implements CurrencyExchangeOfferFac
             totalAmountATM = Math.addExact(totalAmountATM, curAmountATM);
             remainingUnits = Math.subtractExact(remainingUnits, curUnits);
 
+            int height = blockChainInfoService.getHeight();
             asBuyOffer.decreaseLimitAndSupply(curUnits);
+            asBuyOffer.setHeight(height);
             currencyBuyOfferService.insert((CurrencyBuyOffer)asBuyOffer); // store new buy values
-            CurrencySellOffer sellOffer = currencySellOfferService.getOffer(asBuyOffer.getId());
-            long excess = sellOffer.increaseSupply(curUnits);
+            CurrencySellOffer sellOffer = currencySellOfferService.getOffer(asBuyOffer.getId()); // get contra-offer
+            long excess = sellOffer.increaseSupply(curUnits); // change value
+            sellOffer.setHeight(height);
             currencySellOfferService.insert(sellOffer); // store new sell values
 
             Account counterAccount = accountService.getAccount(asBuyOffer.getAccountId());
@@ -201,10 +204,13 @@ public class CurrencyExchangeOfferFacadeImpl implements CurrencyExchangeOfferFac
             totalAmountATM = Math.addExact(totalAmountATM, curAmountATM);
             remainingUnits = Math.subtractExact(remainingUnits, curUnits);
 
+            int height = blockChainInfoService.getHeight();
             asSellOffer.decreaseLimitAndSupply(curUnits);
+            asSellOffer.setHeight(height);
             currencySellOfferService.insert((CurrencySellOffer)asSellOffer); // store new sell values
-            CurrencyBuyOffer buyOffer = currencyBuyOfferService.getOffer(asSellOffer.getId());
-            long excess = buyOffer.increaseSupply(curUnits);
+            CurrencyBuyOffer buyOffer = currencyBuyOfferService.getOffer(asSellOffer.getId()); // get contra-offer
+            long excess = buyOffer.increaseSupply(curUnits); // change value
+            buyOffer.setHeight(height);
             currencyBuyOfferService.insert(buyOffer); // store new buy values
 
             Account counterAccount = accountService.getAccount(asSellOffer.getAccountId());

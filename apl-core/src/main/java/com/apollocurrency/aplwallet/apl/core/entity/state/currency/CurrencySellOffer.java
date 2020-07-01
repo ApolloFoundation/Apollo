@@ -15,8 +15,8 @@ import lombok.ToString;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-@Getter
-@Setter
+//@Getter
+//@Setter
 @ToString(callSuper = true)
 public class CurrencySellOffer extends CurrencyExchangeOffer {
 

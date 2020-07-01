@@ -30,14 +30,14 @@ public class CurrencyBuyOfferServiceImpl implements CurrencyBuyOfferService {
 
     private final CurrencyBuyOfferTable currencyBuyOfferTable;
     private final BlockChainInfoService blockChainInfoService;
-    private final IteratorToStreamConverter<CurrencyBuyOffer> currencyBuyOfferIteratorToStreamConverter;
+    private final IteratorToStreamConverter<CurrencyBuyOffer> iteratorToStreamConverter;
 
     @Inject
     public CurrencyBuyOfferServiceImpl(CurrencyBuyOfferTable currencyBuyOfferTable,
                                        BlockChainInfoService blockChainInfoService) {
         this.currencyBuyOfferTable = currencyBuyOfferTable;
         this.blockChainInfoService = blockChainInfoService;
-        currencyBuyOfferIteratorToStreamConverter = new IteratorToStreamConverter<>();
+        this.iteratorToStreamConverter = new IteratorToStreamConverter<>();
     }
 
     /**
@@ -45,13 +45,13 @@ public class CurrencyBuyOfferServiceImpl implements CurrencyBuyOfferService {
      */
     public CurrencyBuyOfferServiceImpl(CurrencyBuyOfferTable currencyBuyOfferTable,
                                        BlockChainInfoService blockChainInfoService,
-                                       IteratorToStreamConverter<CurrencyBuyOffer> currencyBuyOfferIteratorToStreamConverter) {
+                                       IteratorToStreamConverter<CurrencyBuyOffer> iteratorToStreamConverter) {
         this.currencyBuyOfferTable = currencyBuyOfferTable;
         this.blockChainInfoService = blockChainInfoService;
-        if (currencyBuyOfferIteratorToStreamConverter != null) {
-            this.currencyBuyOfferIteratorToStreamConverter = currencyBuyOfferIteratorToStreamConverter;
+        if (iteratorToStreamConverter != null) {
+            this.iteratorToStreamConverter = iteratorToStreamConverter;
         } else {
-            this.currencyBuyOfferIteratorToStreamConverter = new IteratorToStreamConverter<>();
+            this.iteratorToStreamConverter = new IteratorToStreamConverter<>();
         }
     }
 
@@ -72,7 +72,7 @@ public class CurrencyBuyOfferServiceImpl implements CurrencyBuyOfferService {
 
     @Override
     public Stream<CurrencyBuyOffer> getAllStream(int from, int to) {
-        return currencyBuyOfferIteratorToStreamConverter.apply(currencyBuyOfferTable.getAll(from, to));
+        return iteratorToStreamConverter.apply(currencyBuyOfferTable.getAll(from, to));
     }
 
     @Override
@@ -100,7 +100,7 @@ public class CurrencyBuyOfferServiceImpl implements CurrencyBuyOfferService {
         if (availableOnly) {
             dbClause = dbClause.and(availableOnlyDbClause);
         }
-        return currencyBuyOfferIteratorToStreamConverter.apply(
+        return iteratorToStreamConverter.apply(
             currencyBuyOfferTable.getManyBy(dbClause, from, to,
                 " ORDER BY rate DESC, creation_height ASC, transaction_height ASC, transaction_index ASC ")
         );
@@ -121,7 +121,7 @@ public class CurrencyBuyOfferServiceImpl implements CurrencyBuyOfferService {
         if (availableOnly) {
             dbClause = dbClause.and(availableOnlyDbClause);
         }
-        return currencyBuyOfferIteratorToStreamConverter.apply(
+        return iteratorToStreamConverter.apply(
             currencyBuyOfferTable.getManyBy(dbClause, from, to,
                 " ORDER BY rate DESC, creation_height ASC, transaction_height ASC, transaction_index ASC ")
         );
@@ -145,7 +145,7 @@ public class CurrencyBuyOfferServiceImpl implements CurrencyBuyOfferService {
 
     @Override
     public Stream<CurrencyBuyOffer> getOffersStream(DbClause dbClause, int from, int to) {
-        return currencyBuyOfferIteratorToStreamConverter.apply(currencyBuyOfferTable.getManyBy(dbClause, from, to));
+        return iteratorToStreamConverter.apply(currencyBuyOfferTable.getManyBy(dbClause, from, to));
     }
 
     @Override
@@ -155,7 +155,7 @@ public class CurrencyBuyOfferServiceImpl implements CurrencyBuyOfferService {
 
     @Override
     public Stream<CurrencyBuyOffer> getOffersStream(DbClause dbClause, int from, int to, String sort) {
-        return currencyBuyOfferIteratorToStreamConverter.apply(currencyBuyOfferTable.getManyBy(dbClause, from, to, sort));
+        return iteratorToStreamConverter.apply(currencyBuyOfferTable.getManyBy(dbClause, from, to, sort));
     }
 
     @Override

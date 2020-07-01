@@ -15,8 +15,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-@Getter
-@Setter
+//@Getter
+//@Setter
 @ToString(callSuper = true)
 public class CurrencyBuyOffer extends CurrencyExchangeOffer {
 
