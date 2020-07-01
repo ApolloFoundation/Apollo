@@ -364,7 +364,7 @@ public class ServerInfoService {
             dto.numberOfPurchases = dgsService.getPurchaseCount();
             dto.numberOfTags = dgsService.getTagsCount();
             dto.numberOfPolls = pollService.getCount();
-            dto.numberOfVotes = Vote.getCount();
+            dto.numberOfVotes = pollService.getPollVoteCount();
             dto.numberOfPrunableMessages = prunableMessageService.getCount();
             dto.numberOfTaggedData = taggedDataService.getTaggedDataCount();
             dto.numberOfDataTags = taggedDataService.getDataTagCount();
