@@ -4,10 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.util.env.config;
 
+import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
+import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 
+@TransactionFee(FeeMarker.FEE_RATE)
 public class FeeRate {
     public static final short RATE_DIVIDER = 100;
     public static final short DEFAULT_RATE = 100; // in percent, that equals to multiply by 1
@@ -22,6 +25,10 @@ public class FeeRate {
         this(type, subType, DEFAULT_RATE);
     }
 
+    public FeeRate(short key, short rate) {
+        this((byte)((key&0xFF00)>>8), (byte)(key&0xFF), rate);
+    }
+
     @JsonCreator
     public FeeRate(@JsonProperty("type") byte type, @JsonProperty("subType") byte subType, @JsonProperty("rate") short rate) {
         this.type = type;
@@ -34,5 +41,9 @@ public class FeeRate {
 
     public FeeRate copy() {
         return new FeeRate(type, subType, rate);
+    }
+
+    public static short createKey(short type, short subType){
+        return (short) ((type << 8 | subType&0xFF) & 0xFFFF);
     }
 }

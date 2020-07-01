@@ -61,6 +61,7 @@ public class BlockchainProperties {
      * @param maxBalance
      * @param shardingSettings
      * @param consensusSettings
+     * @param transactionFeeSettings
      */
     public BlockchainProperties(
         int height,

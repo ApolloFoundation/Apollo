@@ -17,8 +17,6 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.Mockito.doReturn;
@@ -58,7 +56,6 @@ class HeightConfigFeeSettingsTest {
         assertEquals(rate, result.getFeeRate((byte)1,(byte)1));
         assertEquals(100, result.getFeeRate((byte)10,(byte)10));//default rate for other type and subType
 
-        //assertEquals(shardFrequency, result.getShardingFrequency());
     }
 
     /**
@@ -67,47 +64,18 @@ class HeightConfigFeeSettingsTest {
      */
     static Stream<Arguments> provideHeightAndFeeRate() {
         return Stream.of(
-            arguments(1, 100),
-            arguments(2, 100), // trim height 5 corresponds to configured frequency = 5
-            arguments(10,100), // trim height 6 corresponds to configured frequency = 5
-            arguments(50, 50),
-            arguments(55, 50),
-            arguments(70, 100),
-            arguments(100, 0),
-            arguments(110, 0),
-            arguments(120, 0),
-            arguments(200, 100),
-            arguments(210, 100),
-            arguments(Integer.MAX_VALUE, 100)
-        );
-    }
-
-    @ParameterizedTest
-    @MethodSource("provideDisabledResponseForTrimHeightAndFrequency")
-    void test_AtHeight_INCorrect_ConfigsWithFrequency(int trimHeight, int shardFrequency) {
-        prepareAndInitComponents();
-        HeightConfig result = blockchainConfig.getConfigAtHeight(trimHeight);  // checked method
-        log.trace("result = {}", result);
-        assertNotNull(result);
-        assertFalse(result.isShardingEnabled(), "got = " + result.isShardingEnabled());
-        assertNotEquals(shardFrequency, result.getShardingFrequency(),
-            String.format("expected = %d , got = %d", shardFrequency, result.getShardingFrequency()));
-    }
-
-    /**
-     * Height and target Frequency are supplied into unit test method
-     * @return height + frequency value for test
-     */
-    static Stream<Arguments> provideDisabledResponseForTrimHeightAndFrequency() {
-        return Stream.of(
-            // ALL should be NOT correct
-            arguments(3, 2), // trim height 3 corresponds to configured frequency = 2
-            arguments(4, 2), // trim height 4 corresponds to configured frequency = 2
-            arguments(10, 5),
-            arguments(13, 5),
-            arguments(20, 15),
-            arguments(21, 15),
-            arguments(29, 15)
+            arguments(1, 100),//default value
+            arguments(2, 100),//default value
+            arguments(10,100),//default value
+            arguments(50, 50),//set value
+            arguments(55, 50),//set value
+            arguments(70, 100),//default value
+            arguments(100, 0),//set value
+            arguments(110, 0),//set value
+            arguments(120, 0),//set value
+            arguments(200, 100),//default value
+            arguments(210, 100),//default value
+            arguments(Integer.MAX_VALUE, 100)//default value
         );
     }
 
