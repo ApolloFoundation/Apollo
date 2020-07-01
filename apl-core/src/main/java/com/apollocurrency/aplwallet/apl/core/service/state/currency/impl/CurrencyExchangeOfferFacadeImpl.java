@@ -174,7 +174,7 @@ public class CurrencyExchangeOfferFacadeImpl implements CurrencyExchangeOfferFac
 
             // update data in Exchange
             exchangeService.addExchange(transaction, currencyId, asBuyOffer.getId(), account.getId(),
-                asBuyOffer.getAccountId(), curUnits, blockChainInfoService.getLastBlock(), asBuyOffer.getRateATM());
+                asBuyOffer.getAccountId(), curUnits, /*blockChainInfoService.getLastBlock(),*/ asBuyOffer.getRateATM());
         }
         long transactionId = transaction.getId();
         account = accountService.getAccount(account);
@@ -219,7 +219,7 @@ public class CurrencyExchangeOfferFacadeImpl implements CurrencyExchangeOfferFac
             accountCurrencyService.addToCurrencyUnits(counterAccount, LedgerEvent.CURRENCY_EXCHANGE, asSellOffer.getId(), currencyId, -curUnits);
             log.trace("account === 2 exchangeAPLForCurrency account={}", counterAccount);
             exchangeService.addExchange(transaction, currencyId, asSellOffer.getId(), asSellOffer.getAccountId(),
-                account.getId(), curUnits, blockChainInfoService.getLastBlock(), asSellOffer.getRateATM());
+                account.getId(), curUnits, /*blockChainInfoService.getLastBlock(),*/ asSellOffer.getRateATM());
         }
         long transactionId = transaction.getId();
         account = accountService.getAccount(account);

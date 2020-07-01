@@ -168,8 +168,8 @@ public class CurrencySellOfferServiceImpl implements CurrencySellOfferService {
     @Override
     public void remove(CurrencySellOffer sellOffer) {
         int height = blockChainInfoService.getHeight();
-        buyOffer.setHeight(height); // important to assign height here!
-        currencySellOfferTable.deleteAtHeight(buyOffer, height);
+        sellOffer.setHeight(height); // important to assign height here!
+        currencySellOfferTable.deleteAtHeight(sellOffer, height);
     }
 
     @Override
