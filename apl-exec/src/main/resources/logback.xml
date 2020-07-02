@@ -39,10 +39,11 @@
           </encoder>
       </appender>
   -->
+<!--
   <appender name="poll-file" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <file>${LOGDIR}/apl-poll.log</file>
     <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-      <!-- rollover daily -->
+      &lt;!&ndash; rollover daily &ndash;&gt;
       <fileNamePattern>${LOGDIR}/apl-poll-%d{yyyy-MM-dd}_%i.gz</fileNamePattern>
       <maxHistory>30</maxHistory>
       <maxFileSize>100MB</maxFileSize>
@@ -55,10 +56,10 @@
   <appender name="account-file" class="ch.qos.logback.core.FileAppender">
     <file>account.log</file>
     <append>true</append>
-    <!-- set immediateFlush to false for much higher logging throughput -->
+    &lt;!&ndash; set immediateFlush to false for much higher logging throughput &ndash;&gt;
     <immediateFlush>true</immediateFlush>
-    <!-- encoders are assigned the type
-         ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
+    &lt;!&ndash; encoders are assigned the type
+         ch.qos.logback.classic.encoder.PatternLayoutEncoder by default &ndash;&gt;
     <encoder>
       <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
     </encoder>
@@ -79,6 +80,7 @@
       <pattern>%d [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
     </encoder>
   </appender>
+-->
   <logger name="com.apollocurrency.aplwallet" level="INFO"/>
   <!--<logger name="com.apollocurrency.aplwallet.apl.core.peer" level="TRACE"/>-->
   <!--Uncomment next line to enable trim duration logging-->
@@ -95,12 +97,14 @@
           <appender-ref ref="poll-file"/>
       </logger>
 -->
+<!--
       <logger name="com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl" level="trace" additivity="false">
         <appender-ref ref="account-file"/>
       </logger>
       <logger name="com.apollocurrency.aplwallet.apl.core.service.state.currency.impl.CurrencyExchangeOfferFacadeImpl" level="trace" additivity="false">
         <appender-ref ref="account-file"/>
       </logger>
+-->
   <logger name="jdbc" level="off" additivity="false"/>
   <logger name="jdbc.connection" level="info" additivity="false"/>
   <logger name="jdbc.sqltiming" level="info" additivity="false"/>
