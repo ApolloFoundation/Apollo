@@ -23,21 +23,15 @@ package com.apollocurrency.aplwallet.apl.core.transaction;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
-import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
-import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
-import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetDividendService;
-import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
-import com.apollocurrency.aplwallet.apl.core.service.state.asset.impl.AssetServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetTransferService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
@@ -51,13 +45,16 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountI
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountLeaseServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPropertyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetDividendService;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetTransferService;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.impl.AssetServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
-import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeRequestService;
-import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyMintService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
+import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeRequestService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
 import lombok.Setter;
 import org.json.simple.JSONObject;
 
@@ -69,67 +66,6 @@ import java.util.Objects;
 
 public abstract class TransactionType {
 
-    public static final byte TYPE_PAYMENT = 0;
-    public static final byte TYPE_MESSAGING = 1;
-    public static final byte TYPE_COLORED_COINS = 2;
-    public static final byte TYPE_DIGITAL_GOODS = 3;
-    public static final byte TYPE_ACCOUNT_CONTROL = 4;
-    public static final byte TYPE_MONETARY_SYSTEM = 5;
-    public static final byte TYPE_DATA = 6;
-    public static final byte TYPE_SHUFFLING = 7;
-    public static final byte TYPE_UPDATE = 8;
-    public static final byte TYPE_DEX = 9;
-
-    public static final byte SUBTYPE_PAYMENT_ORDINARY_PAYMENT = 0;
-    public static final byte SUBTYPE_PAYMENT_PRIVATE_PAYMENT = 1;
-
-    public static final byte SUBTYPE_MESSAGING_ARBITRARY_MESSAGE = 0;
-    public static final byte SUBTYPE_MESSAGING_ALIAS_ASSIGNMENT = 1;
-    public static final byte SUBTYPE_MESSAGING_POLL_CREATION = 2;
-    public static final byte SUBTYPE_MESSAGING_VOTE_CASTING = 3;
-    public static final byte SUBTYPE_MESSAGING_HUB_ANNOUNCEMENT = 4;
-    public static final byte SUBTYPE_MESSAGING_ACCOUNT_INFO = 5;
-    public static final byte SUBTYPE_MESSAGING_ALIAS_SELL = 6;
-    public static final byte SUBTYPE_MESSAGING_ALIAS_BUY = 7;
-    public static final byte SUBTYPE_MESSAGING_ALIAS_DELETE = 8;
-    public static final byte SUBTYPE_MESSAGING_PHASING_VOTE_CASTING = 9;
-    public static final byte SUBTYPE_MESSAGING_ACCOUNT_PROPERTY = 10;
-    public static final byte SUBTYPE_MESSAGING_ACCOUNT_PROPERTY_DELETE = 11;
-
-    public static final byte SUBTYPE_COLORED_COINS_ASSET_ISSUANCE = 0;
-    public static final byte SUBTYPE_COLORED_COINS_ASSET_TRANSFER = 1;
-    public static final byte SUBTYPE_COLORED_COINS_ASK_ORDER_PLACEMENT = 2;
-    public static final byte SUBTYPE_COLORED_COINS_BID_ORDER_PLACEMENT = 3;
-    public static final byte SUBTYPE_COLORED_COINS_ASK_ORDER_CANCELLATION = 4;
-    public static final byte SUBTYPE_COLORED_COINS_BID_ORDER_CANCELLATION = 5;
-    public static final byte SUBTYPE_COLORED_COINS_DIVIDEND_PAYMENT = 6;
-    public static final byte SUBTYPE_COLORED_COINS_ASSET_DELETE = 7;
-
-    public static final byte SUBTYPE_DIGITAL_GOODS_LISTING = 0;
-    public static final byte SUBTYPE_DIGITAL_GOODS_DELISTING = 1;
-    public static final byte SUBTYPE_DIGITAL_GOODS_PRICE_CHANGE = 2;
-    public static final byte SUBTYPE_DIGITAL_GOODS_QUANTITY_CHANGE = 3;
-    public static final byte SUBTYPE_DIGITAL_GOODS_PURCHASE = 4;
-    public static final byte SUBTYPE_DIGITAL_GOODS_DELIVERY = 5;
-    public static final byte SUBTYPE_DIGITAL_GOODS_FEEDBACK = 6;
-    public static final byte SUBTYPE_DIGITAL_GOODS_REFUND = 7;
-
-    public static final byte SUBTYPE_ACCOUNT_CONTROL_EFFECTIVE_BALANCE_LEASING = 0;
-    public static final byte SUBTYPE_ACCOUNT_CONTROL_PHASING_ONLY = 1;
-
-    public static final byte SUBTYPE_DATA_TAGGED_DATA_UPLOAD = 0;
-    public static final byte SUBTYPE_DATA_TAGGED_DATA_EXTEND = 1;
-
-    public static final byte SUBTYPE_UPDATE_CRITICAL = 0;
-    public static final byte SUBTYPE_UPDATE_IMPORTANT = 1;
-    public static final byte SUBTYPE_UPDATE_MINOR = 2;
-    public static final byte SUBTYPE_UPDATE_V2 = 3;
-
-    public static final byte SUBTYPE_DEX_ORDER = 0;
-    public static final byte SUBTYPE_DEX_ORDER_CANCEL = 1;
-    public static final byte SUBTYPE_DEX_CONTRACT = 2;
-    public static final byte SUBTYPE_DEX_TRANSFER_MONEY = 3;
-    public static final byte SUBTYPE_DEX_CLOSE_ORDER = 4;
 
 
     public static BlockchainConfig blockchainConfig;
@@ -309,143 +245,6 @@ public abstract class TransactionType {
         return currencyMintService;
     }
 
-    public static TransactionType findTransactionType(byte type, byte subtype) {
-        switch (type) {
-            case TYPE_PAYMENT:
-                switch (subtype) {
-                    case SUBTYPE_PAYMENT_ORDINARY_PAYMENT:
-                        return Payment.ORDINARY;
-                    case SUBTYPE_PAYMENT_PRIVATE_PAYMENT:
-                        return Payment.PRIVATE;
-                    default:
-                        return null;
-                }
-            case TYPE_MESSAGING:
-                switch (subtype) {
-                    case SUBTYPE_MESSAGING_ARBITRARY_MESSAGE:
-                        return Messaging.ARBITRARY_MESSAGE;
-                    case SUBTYPE_MESSAGING_ALIAS_ASSIGNMENT:
-                        return Messaging.ALIAS_ASSIGNMENT;
-                    case SUBTYPE_MESSAGING_POLL_CREATION:
-                        return Messaging.POLL_CREATION;
-                    case SUBTYPE_MESSAGING_VOTE_CASTING:
-                        return Messaging.VOTE_CASTING;
-                    case SUBTYPE_MESSAGING_HUB_ANNOUNCEMENT:
-                        throw new IllegalArgumentException("Hub Announcement no longer supported");
-                    case SUBTYPE_MESSAGING_ACCOUNT_INFO:
-                        return Messaging.ACCOUNT_INFO;
-                    case SUBTYPE_MESSAGING_ALIAS_SELL:
-                        return Messaging.ALIAS_SELL;
-                    case SUBTYPE_MESSAGING_ALIAS_BUY:
-                        return Messaging.ALIAS_BUY;
-                    case SUBTYPE_MESSAGING_ALIAS_DELETE:
-                        return Messaging.ALIAS_DELETE;
-                    case SUBTYPE_MESSAGING_PHASING_VOTE_CASTING:
-                        return Messaging.PHASING_VOTE_CASTING;
-                    case SUBTYPE_MESSAGING_ACCOUNT_PROPERTY:
-                        return Messaging.ACCOUNT_PROPERTY;
-                    case SUBTYPE_MESSAGING_ACCOUNT_PROPERTY_DELETE:
-                        return Messaging.ACCOUNT_PROPERTY_DELETE;
-                    default:
-                        return null;
-                }
-            case TYPE_COLORED_COINS:
-                switch (subtype) {
-                    case SUBTYPE_COLORED_COINS_ASSET_ISSUANCE:
-                        return ColoredCoins.ASSET_ISSUANCE;
-                    case SUBTYPE_COLORED_COINS_ASSET_TRANSFER:
-                        return ColoredCoins.ASSET_TRANSFER;
-                    case SUBTYPE_COLORED_COINS_ASK_ORDER_PLACEMENT:
-                        return ColoredCoins.ASK_ORDER_PLACEMENT;
-                    case SUBTYPE_COLORED_COINS_BID_ORDER_PLACEMENT:
-                        return ColoredCoins.BID_ORDER_PLACEMENT;
-                    case SUBTYPE_COLORED_COINS_ASK_ORDER_CANCELLATION:
-                        return ColoredCoins.ASK_ORDER_CANCELLATION;
-                    case SUBTYPE_COLORED_COINS_BID_ORDER_CANCELLATION:
-                        return ColoredCoins.BID_ORDER_CANCELLATION;
-                    case SUBTYPE_COLORED_COINS_DIVIDEND_PAYMENT:
-                        return ColoredCoins.DIVIDEND_PAYMENT;
-                    case SUBTYPE_COLORED_COINS_ASSET_DELETE:
-                        return ColoredCoins.ASSET_DELETE;
-                    default:
-                        return null;
-                }
-            case TYPE_DIGITAL_GOODS:
-                switch (subtype) {
-                    case SUBTYPE_DIGITAL_GOODS_LISTING:
-                        return DigitalGoods.LISTING;
-                    case SUBTYPE_DIGITAL_GOODS_DELISTING:
-                        return DigitalGoods.DELISTING;
-                    case SUBTYPE_DIGITAL_GOODS_PRICE_CHANGE:
-                        return DigitalGoods.PRICE_CHANGE;
-                    case SUBTYPE_DIGITAL_GOODS_QUANTITY_CHANGE:
-                        return DigitalGoods.QUANTITY_CHANGE;
-                    case SUBTYPE_DIGITAL_GOODS_PURCHASE:
-                        return DigitalGoods.PURCHASE;
-                    case SUBTYPE_DIGITAL_GOODS_DELIVERY:
-                        return DigitalGoods.DELIVERY;
-                    case SUBTYPE_DIGITAL_GOODS_FEEDBACK:
-                        return DigitalGoods.FEEDBACK;
-                    case SUBTYPE_DIGITAL_GOODS_REFUND:
-                        return DigitalGoods.REFUND;
-                    default:
-                        return null;
-                }
-            case TYPE_ACCOUNT_CONTROL:
-                switch (subtype) {
-                    case SUBTYPE_ACCOUNT_CONTROL_EFFECTIVE_BALANCE_LEASING:
-                        return AccountControl.EFFECTIVE_BALANCE_LEASING;
-                    case SUBTYPE_ACCOUNT_CONTROL_PHASING_ONLY:
-                        return AccountControl.SET_PHASING_ONLY;
-                    default:
-                        return null;
-                }
-            case TYPE_MONETARY_SYSTEM:
-                return MonetarySystem.findTransactionType(subtype);
-            case TYPE_DATA:
-                switch (subtype) {
-                    case SUBTYPE_DATA_TAGGED_DATA_UPLOAD:
-                        return Data.TAGGED_DATA_UPLOAD;
-                    case SUBTYPE_DATA_TAGGED_DATA_EXTEND:
-                        return Data.TAGGED_DATA_EXTEND;
-                    default:
-                        return null;
-                }
-            case TYPE_SHUFFLING:
-                return ShufflingTransaction.findTransactionType(subtype);
-            case TYPE_UPDATE:
-                switch (subtype) {
-                    case SUBTYPE_UPDATE_CRITICAL:
-                        return Update.CRITICAL;
-                    case SUBTYPE_UPDATE_IMPORTANT:
-                        return Update.IMPORTANT;
-                    case SUBTYPE_UPDATE_MINOR:
-                        return Update.MINOR;
-                    case SUBTYPE_UPDATE_V2:
-                        return Update.UPDATE_V2;
-                    default:
-                        return null;
-                }
-            case TYPE_DEX:
-                switch (subtype) {
-                    case SUBTYPE_DEX_ORDER:
-                        return DEX.DEX_ORDER_TRANSACTION;
-                    case SUBTYPE_DEX_ORDER_CANCEL:
-                        return DEX.DEX_CANCEL_ORDER_TRANSACTION;
-                    case SUBTYPE_DEX_CONTRACT:
-                        return DEX.DEX_CONTRACT_TRANSACTION;
-                    case SUBTYPE_DEX_TRANSFER_MONEY:
-                        return DEX.DEX_TRANSFER_MONEY_TRANSACTION;
-                    case SUBTYPE_DEX_CLOSE_ORDER:
-                        return DEX.DEX_CLOSE_ORDER;
-                    default:
-                        return null;
-                }
-
-            default:
-                return null;
-        }
-    }
 
     public static boolean isDuplicate(TransactionType uniqueType, String key, Map<TransactionType, Map<String, Integer>> duplicates, boolean exclusive) {
         return isDuplicate(uniqueType, key, duplicates, exclusive ? 0 : Integer.MAX_VALUE);
