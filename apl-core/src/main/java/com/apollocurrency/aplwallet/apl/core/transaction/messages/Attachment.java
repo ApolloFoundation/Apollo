@@ -20,8 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
-import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.messaging.Messaging;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.payment.PaymentTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 
 public interface Attachment extends Appendix {
@@ -30,7 +30,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return Payment.ORDINARY;
+            return PaymentTransactionType.ORDINARY;
         }
 
     };
@@ -38,7 +38,7 @@ public interface Attachment extends Appendix {
 
         @Override
         public TransactionType getTransactionType() {
-            return Payment.PRIVATE;
+            return PaymentTransactionType.PRIVATE;
         }
 
     };

@@ -1,7 +1,15 @@
+/*
+ * Copyright © 2018-2020 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.control.AccountControlTransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.control.SetPhasingOnlyTransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.messaging.Messaging;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.payment.PaymentTransactionType;
 import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
 
 import javax.enterprise.inject.Instance;
@@ -103,9 +111,9 @@ public class CachedTransactionTypeFactory {
             case TYPE_PAYMENT:
                 switch (subtype) {
                     case SUBTYPE_PAYMENT_ORDINARY_PAYMENT:
-                        return Payment.ORDINARY;
+                        return PaymentTransactionType.ORDINARY;
                     case SUBTYPE_PAYMENT_PRIVATE_PAYMENT:
-                        return Payment.PRIVATE;
+                        return PaymentTransactionType.PRIVATE;
                     default:
                         return null;
                 }
@@ -183,9 +191,9 @@ public class CachedTransactionTypeFactory {
             case TYPE_ACCOUNT_CONTROL:
                 switch (subtype) {
                     case SUBTYPE_ACCOUNT_CONTROL_EFFECTIVE_BALANCE_LEASING:
-                        return AccountControl.EFFECTIVE_BALANCE_LEASING;
+                        return AccountControlTransactionType.EFFECTIVE_BALANCE_LEASING;
                     case SUBTYPE_ACCOUNT_CONTROL_PHASING_ONLY:
-                        return AccountControl.SET_PHASING_ONLY;
+                        return SetPhasingOnlyTransactionType.SET_PHASING_ONLY;
                     default:
                         return null;
                 }

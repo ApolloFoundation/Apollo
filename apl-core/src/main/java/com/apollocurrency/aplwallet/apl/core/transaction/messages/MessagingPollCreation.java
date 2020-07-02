@@ -4,7 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
-import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.messaging.Messaging;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;

@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.messaging.Messaging;
 
 import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;

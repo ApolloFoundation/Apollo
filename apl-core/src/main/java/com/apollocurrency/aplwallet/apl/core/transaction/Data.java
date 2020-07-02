@@ -23,6 +23,8 @@ import org.json.simple.JSONObject;
 import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.SUBTYPE_DATA_TAGGED_DATA_UPLOAD;
+
 /**
  * @author al
  */

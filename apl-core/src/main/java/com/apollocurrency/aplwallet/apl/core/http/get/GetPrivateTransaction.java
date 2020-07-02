@@ -10,7 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.payment.PaymentTransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import org.json.simple.JSONObject;
@@ -62,7 +62,7 @@ public final class GetPrivateTransaction extends AbstractAPIRequestHandler {
         JSONObject response;
         if (transaction == null) {
             transaction = lookupTransactionProcessor().getUnconfirmedTransaction(transactionId);
-            if (transaction == null || !transaction.getType().equals(Payment.PRIVATE) || transaction.getType().equals(Payment.PRIVATE) && (transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId)) {
+            if (transaction == null || !transaction.getType().equals(PaymentTransactionType.PRIVATE) || transaction.getType().equals(PaymentTransactionType.PRIVATE) && (transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId)) {
                 return UNKNOWN_TRANSACTION;
             }
             if (data.isEncrypt()) {
@@ -71,7 +71,7 @@ public final class GetPrivateTransaction extends AbstractAPIRequestHandler {
                 response = JSONData.unconfirmedTransaction(transaction);
             }
         } else {
-            if (!transaction.getType().equals(Payment.PRIVATE) || transaction.getType().equals(Payment.PRIVATE) && (transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId)) {
+            if (!transaction.getType().equals(PaymentTransactionType.PRIVATE) || transaction.getType().equals(PaymentTransactionType.PRIVATE) && (transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId)) {
                 return UNKNOWN_TRANSACTION;
             }
             if (data.isEncrypt()) {

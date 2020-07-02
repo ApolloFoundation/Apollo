@@ -55,7 +55,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardImporter;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
-import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.messaging.Messaging;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;

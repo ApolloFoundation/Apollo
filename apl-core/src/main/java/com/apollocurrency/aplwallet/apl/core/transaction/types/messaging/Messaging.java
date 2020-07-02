@@ -1,9 +1,9 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2020 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.core.transaction;
+package com.apollocurrency.aplwallet.apl.core.transaction.types.messaging;
 
-import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountProperty;
@@ -13,14 +13,13 @@ import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.Vote;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollResult;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.EmptyAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAccountInfo;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAccountProperty;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAccountPropertyDelete;
@@ -29,8 +28,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAlias
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasDelete;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasSell;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPhasingVoteCasting;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPollCreation;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteCasting;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -45,245 +42,7 @@ import java.util.Map;
  * @author al
  */
 public abstract class Messaging extends TransactionType {
-    public static final TransactionType ARBITRARY_MESSAGE = new Messaging() {
-        @Override
-        public final byte getSubtype() {
-            return TransactionType.SUBTYPE_MESSAGING_ARBITRARY_MESSAGE;
-        }
-
-        @Override
-        public LedgerEvent getLedgerEvent() {
-            return LedgerEvent.ARBITRARY_MESSAGE;
-        }
-
-        @Override
-        public String getName() {
-            return "ArbitraryMessage";
-        }
-
-        @Override
-        public EmptyAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-            return Attachment.ARBITRARY_MESSAGE;
-        }
-
-        @Override
-        public EmptyAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-            return Attachment.ARBITRARY_MESSAGE;
-        }
-
-        @Override
-        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        }
-
-        @Override
-        public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-            Attachment attachment = transaction.getAttachment();
-            if (transaction.getAmountATM() != 0) {
-                throw new AplException.NotValidException("Invalid arbitrary message: " + attachment.getJSONObject());
-            }
-            if (transaction.getRecipientId() == GenesisImporter.CREATOR_ID) {
-                throw new AplException.NotValidException("Sending messages to Genesis not allowed.");
-            }
-        }
-
-        @Override
-        public boolean canHaveRecipient() {
-            return true;
-        }
-
-        @Override
-        public boolean mustHaveRecipient() {
-            return false;
-        }
-
-        @Override
-        public boolean isPhasingSafe() {
-            return false;
-        }
-    };
-    public static final TransactionType POLL_CREATION = new Messaging() {
-        private final Fee POLL_OPTIONS_FEE = new Fee.SizeBasedFee(10 * Constants.ONE_APL, Constants.ONE_APL, 1) {
-            @Override
-            public int getSize(Transaction transaction, Appendix appendage) {
-                int numOptions = ((MessagingPollCreation) appendage).getPollOptions().length;
-                return numOptions <= 19 ? 0 : numOptions - 19;
-            }
-        };
-        private final Fee POLL_SIZE_FEE = new Fee.SizeBasedFee(0, 2 * Constants.ONE_APL, 32) {
-            @Override
-            public int getSize(Transaction transaction, Appendix appendage) {
-                MessagingPollCreation attachment = (MessagingPollCreation) appendage;
-                int size = attachment.getPollName().length() + attachment.getPollDescription().length();
-                for (String option : ((MessagingPollCreation) appendage).getPollOptions()) {
-                    size += option.length();
-                }
-                return size <= 288 ? 0 : size - 288;
-            }
-        };
-        private final Fee POLL_FEE = (transaction, appendage) -> POLL_OPTIONS_FEE.getFee(transaction, appendage) + POLL_SIZE_FEE.getFee(transaction, appendage);
-
-        @Override
-        public final byte getSubtype() {
-            return TransactionType.SUBTYPE_MESSAGING_POLL_CREATION;
-        }
-
-        @Override
-        public LedgerEvent getLedgerEvent() {
-            return LedgerEvent.POLL_CREATION;
-        }
-
-        @Override
-        public String getName() {
-            return "PollCreation";
-        }
-
-        @Override
-        public Fee getBaselineFee(Transaction transaction) {
-            return POLL_FEE;
-        }
-
-        @Override
-        public MessagingPollCreation parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-            return new MessagingPollCreation(buffer);
-        }
-
-        @Override
-        public MessagingPollCreation parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-            return new MessagingPollCreation(attachmentData);
-        }
-
-        @Override
-        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            MessagingPollCreation attachment = (MessagingPollCreation) transaction.getAttachment();
-            lookupPollService().addPoll(transaction, attachment);
-        }
-
-        @Override
-        public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-            MessagingPollCreation attachment = (MessagingPollCreation) transaction.getAttachment();
-            int optionsCount = attachment.getPollOptions().length;
-            if (attachment.getPollName().length() > Constants.MAX_POLL_NAME_LENGTH || attachment.getPollName().isEmpty() || attachment.getPollDescription().length() > Constants.MAX_POLL_DESCRIPTION_LENGTH || optionsCount > Constants.MAX_POLL_OPTION_COUNT || optionsCount == 0) {
-                throw new AplException.NotValidException("Invalid poll attachment: " + attachment.getJSONObject());
-            }
-            if (attachment.getMinNumberOfOptions() < 1 || attachment.getMinNumberOfOptions() > optionsCount) {
-                throw new AplException.NotValidException("Invalid min number of options: " + attachment.getJSONObject());
-            }
-            if (attachment.getMaxNumberOfOptions() < 1 || attachment.getMaxNumberOfOptions() < attachment.getMinNumberOfOptions() || attachment.getMaxNumberOfOptions() > optionsCount) {
-                throw new AplException.NotValidException("Invalid max number of options: " + attachment.getJSONObject());
-            }
-            for (int i = 0; i < optionsCount; i++) {
-                if (attachment.getPollOptions()[i].length() > Constants.MAX_POLL_OPTION_LENGTH || attachment.getPollOptions()[i].isEmpty()) {
-                    throw new AplException.NotValidException("Invalid poll options length: " + attachment.getJSONObject());
-                }
-            }
-            if (attachment.getMinRangeValue() < Constants.MIN_VOTE_VALUE || attachment.getMaxRangeValue() > Constants.MAX_VOTE_VALUE || attachment.getMaxRangeValue() < attachment.getMinRangeValue()) {
-                throw new AplException.NotValidException("Invalid range: " + attachment.getJSONObject());
-            }
-            if (attachment.getFinishHeight() <= attachment.getFinishValidationHeight(transaction) + 1 || attachment.getFinishHeight() >= attachment.getFinishValidationHeight(transaction) + Constants.MAX_POLL_DURATION) {
-                throw new AplException.NotCurrentlyValidException("Invalid finishing height" + attachment.getJSONObject());
-            }
-            if (!attachment.getVoteWeighting().acceptsVotes() || attachment.getVoteWeighting().getVotingModel() == VoteWeighting.VotingModel.HASH) {
-                throw new AplException.NotValidException("VotingModel " + attachment.getVoteWeighting().getVotingModel() + " not valid for regular polls");
-            }
-            attachment.getVoteWeighting().validate();
-        }
-
-        @Override
-        public boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
-            return isDuplicate(Messaging.POLL_CREATION, getName(), duplicates, true);
-        }
-
-        @Override
-        public boolean canHaveRecipient() {
-            return false;
-        }
-
-        @Override
-        public boolean isPhasingSafe() {
-            return false;
-        }
-    };
-    public static final TransactionType VOTE_CASTING = new Messaging() {
-        @Override
-        public final byte getSubtype() {
-            return TransactionType.SUBTYPE_MESSAGING_VOTE_CASTING;
-        }
-
-        @Override
-        public LedgerEvent getLedgerEvent() {
-            return LedgerEvent.VOTE_CASTING;
-        }
-
-        @Override
-        public String getName() {
-            return "VoteCasting";
-        }
-
-        @Override
-        public MessagingVoteCasting parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-            return new MessagingVoteCasting(buffer);
-        }
-
-        @Override
-        public MessagingVoteCasting parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-            return new MessagingVoteCasting(attachmentData);
-        }
-
-        @Override
-        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            MessagingVoteCasting attachment = (MessagingVoteCasting) transaction.getAttachment();
-            Vote.addVote(transaction, attachment);
-        }
-
-        @Override
-        public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-            MessagingVoteCasting attachment = (MessagingVoteCasting) transaction.getAttachment();
-            if (attachment.getPollId() == 0 || attachment.getPollVote() == null || attachment.getPollVote().length > Constants.MAX_POLL_OPTION_COUNT) {
-                throw new AplException.NotValidException("Invalid vote casting attachment: " + attachment.getJSONObject());
-            }
-            long pollId = attachment.getPollId();
-            Poll poll = lookupPollService().getPoll(pollId);
-            if (poll == null) {
-                throw new AplException.NotCurrentlyValidException("Invalid poll: " + Long.toUnsignedString(attachment.getPollId()));
-            }
-            if (Vote.getVote(pollId, transaction.getSenderId()) != null) {
-                throw new AplException.NotCurrentlyValidException("Double voting attempt");
-            }
-            if (poll.getFinishHeight() <= attachment.getFinishValidationHeight(transaction)) {
-                throw new AplException.NotCurrentlyValidException("Voting for this poll finishes at " + poll.getFinishHeight());
-            }
-            byte[] votes = attachment.getPollVote();
-            int positiveCount = 0;
-            for (byte vote : votes) {
-                if (vote != Constants.NO_VOTE_VALUE && (vote < poll.getMinRangeValue() || vote > poll.getMaxRangeValue())) {
-                    throw new AplException.NotValidException(String.format("Invalid vote %d, vote must be between %d and %d", vote, poll.getMinRangeValue(), poll.getMaxRangeValue()));
-                }
-                if (vote != Constants.NO_VOTE_VALUE) {
-                    positiveCount++;
-                }
-            }
-            if (positiveCount < poll.getMinNumberOfOptions() || positiveCount > poll.getMaxNumberOfOptions()) {
-                throw new AplException.NotValidException(String.format("Invalid num of choices %d, number of choices must be between %d and %d", positiveCount, poll.getMinNumberOfOptions(), poll.getMaxNumberOfOptions()));
-            }
-        }
-
-        @Override
-        public boolean isDuplicate(final Transaction transaction, final Map<TransactionType, Map<String, Integer>> duplicates) {
-            MessagingVoteCasting attachment = (MessagingVoteCasting) transaction.getAttachment();
-            String key = Long.toUnsignedString(attachment.getPollId()) + ":" + Long.toUnsignedString(transaction.getSenderId());
-            return isDuplicate(Messaging.VOTE_CASTING, key, duplicates, true);
-        }
-
-        @Override
-        public boolean canHaveRecipient() {
-            return false;
-        }
-
-        @Override
-        public boolean isPhasingSafe() {
-            return false;
-        }
-    };
+    public static final TransactionType VOTE_CASTING = new VoteCastingTransactionType();
     public static final Messaging ACCOUNT_INFO = new Messaging() {
         private final Fee ACCOUNT_INFO_FEE = new Fee.SizeBasedFee(Constants.ONE_APL, 2 * Constants.ONE_APL, 32) {
             @Override
@@ -917,7 +676,8 @@ public abstract class Messaging extends TransactionType {
         }
     };
 
-    private Messaging() {
+    public Messaging(BlockchainConfig blockchainConfig, AccountService accountService) {
+        super(blockchainConfig, accountService);
     }
 
     @Override

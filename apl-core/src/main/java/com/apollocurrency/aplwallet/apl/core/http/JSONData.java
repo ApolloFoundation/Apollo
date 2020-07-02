@@ -94,7 +94,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountLeaseS
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
-import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.payment.PaymentTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetDelete;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
@@ -1128,13 +1128,13 @@ public final class JSONData {
         json.put("deadline", transaction.getDeadline());
         json.put("senderPublicKey", Convert.toHexString(transaction.getSenderPublicKey()));
         if (transaction.getRecipientId() != 0) {
-            if (transaction.getType().equals(Payment.PRIVATE) && isPrivate) {
+            if (transaction.getType().equals(PaymentTransactionType.PRIVATE) && isPrivate) {
                 putPrivateAccount(json, "recipient", transaction.getRecipientId());
             } else {
                 putAccount(json, "recipient", transaction.getRecipientId());
             }
         }
-        if (transaction.getType().equals(Payment.PRIVATE) && isPrivate) {
+        if (transaction.getType().equals(PaymentTransactionType.PRIVATE) && isPrivate) {
             Random random = new Random();
             json.put("amountATM", String.valueOf((long) 100_000_000 * (random.nextInt(10_000_000) + 1)));
         } else {
@@ -1170,7 +1170,7 @@ public final class JSONData {
             }
             json.put("attachment", attachmentJSON);
         }
-        if (transaction.getType().equals(Payment.PRIVATE) && isPrivate) {
+        if (transaction.getType().equals(PaymentTransactionType.PRIVATE) && isPrivate) {
             putPrivateAccount(json, "sender", transaction.getSenderId());
         } else {
             putAccount(json, "sender", transaction.getSenderId());

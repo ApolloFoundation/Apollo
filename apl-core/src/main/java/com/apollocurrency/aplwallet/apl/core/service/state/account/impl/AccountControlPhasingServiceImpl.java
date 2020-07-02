@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.account.impl;
 
-import static com.apollocurrency.aplwallet.apl.core.transaction.AccountControl.SET_PHASING_ONLY;
+import static com.apollocurrency.aplwallet.apl.core.transaction.types.control.AccountControlTransactionType.SET_PHASING_ONLY;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -27,11 +27,12 @@ import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.messaging.Messaging;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SetPhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.control.SetPhasingOnlyTransactionType;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.extern.slf4j.Slf4j;
 
@@ -172,8 +173,8 @@ public class AccountControlPhasingServiceImpl implements AccountControlPhasingSe
         return
             senderAccount.getControls().contains(AccountControlType.PHASING_ONLY)
                 && this.get(transaction.getSenderId()).getMaxFees() != 0
-                && transaction.getType() != SET_PHASING_ONLY
-                && TransactionType.isDuplicate(SET_PHASING_ONLY,
+                && transaction.getType() != SetPhasingOnlyTransactionType.SET_PHASING_ONLY
+                && TransactionType.isDuplicate(SetPhasingOnlyTransactionType.SET_PHASING_ONLY,
                 Long.toUnsignedString(senderAccount.getId()), duplicates, true);
     }
 

@@ -18,7 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingApprovedResultTable;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingApprovalResult;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingVote;
-import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.payment.PaymentTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.exchange.DexConfig;
@@ -109,7 +109,7 @@ class DexServiceIntegrationTest {
     @Test
     void testTriggerPhasingReleasedTxEventForDifferentTxType() {
         Transaction phasedTx = mock(Transaction.class);
-        doReturn(Payment.ORDINARY).when(phasedTx).getType();
+        doReturn(PaymentTransactionType.ORDINARY).when(phasedTx).getType();
 
         txEvent.select(TxEventType.literal(TxEventType.RELEASE_PHASED_TRANSACTION)).fire(phasedTx);
 
