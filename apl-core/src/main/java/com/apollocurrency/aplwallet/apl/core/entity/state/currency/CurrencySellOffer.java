@@ -17,10 +17,10 @@ import java.sql.SQLException;
 public class CurrencySellOffer extends CurrencyExchangeOffer {
 
     public CurrencySellOffer(Transaction transaction, MonetarySystemPublishExchangeOffer attachment, int height) {
-        super(transaction.getId(), attachment.getCurrencyId(), transaction.getSenderId(), attachment.getBuyRateATM(),
-            attachment.getTotalBuyLimit(), attachment.getInitialBuySupply(), attachment.getExpirationHeight(), transaction.getHeight(),
+        super(transaction.getId(), attachment.getCurrencyId(), transaction.getSenderId(), attachment.getSellRateATM(),
+            attachment.getTotalSellLimit(), attachment.getInitialSellSupply(), attachment.getExpirationHeight(), transaction.getHeight(),
             transaction.getIndex(), height);
-        super.setDbKey( CurrencySellOfferTable.buyOfferDbKeyFactory.newKey(this.getId()));
+        super.setDbKey( CurrencySellOfferTable.sellOfferDbKeyFactory.newKey(this.getId()));
     }
 
     /**

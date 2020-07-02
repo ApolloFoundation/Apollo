@@ -37,7 +37,7 @@ public class CurrencyBuyOfferTable extends VersionedDeletableEntityDbTable<Curre
         return new CurrencyBuyOffer(rs, dbKey);
     }
 
-    public void save(Connection con, CurrencyBuyOffer currencyBuyOffer) throws SQLException {
+    public void save(Connection con, CurrencyBuyOffer buyOffer) throws SQLException {
         try (
             @DatabaseSpecificDml(DmlMarker.MERGE)
             PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (id, currency_id, account_id, "
@@ -45,17 +45,17 @@ public class CurrencyBuyOfferTable extends VersionedDeletableEntityDbTable<Curre
                 + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)")
         ) {
             int i = 0;
-            pstmt.setLong(++i, currencyBuyOffer.getId());
-            pstmt.setLong(++i, currencyBuyOffer.getCurrencyId());
-            pstmt.setLong(++i, currencyBuyOffer.getAccountId());
-            pstmt.setLong(++i, currencyBuyOffer.getRateATM());
-            pstmt.setLong(++i, currencyBuyOffer.getLimit());
-            pstmt.setLong(++i, currencyBuyOffer.getSupply());
-            pstmt.setInt(++i, currencyBuyOffer.getExpirationHeight());
-            pstmt.setInt(++i, currencyBuyOffer.getCreationHeight());
-            pstmt.setShort(++i, currencyBuyOffer.getTransactionIndex());
-            pstmt.setInt(++i, currencyBuyOffer.getTransactionHeight());
-            pstmt.setInt(++i, currencyBuyOffer.getHeight());
+            pstmt.setLong(++i, buyOffer.getId());
+            pstmt.setLong(++i, buyOffer.getCurrencyId());
+            pstmt.setLong(++i, buyOffer.getAccountId());
+            pstmt.setLong(++i, buyOffer.getRateATM());
+            pstmt.setLong(++i, buyOffer.getLimit());
+            pstmt.setLong(++i, buyOffer.getSupply());
+            pstmt.setInt(++i, buyOffer.getExpirationHeight());
+            pstmt.setInt(++i, buyOffer.getCreationHeight());
+            pstmt.setShort(++i, buyOffer.getTransactionIndex());
+            pstmt.setInt(++i, buyOffer.getTransactionHeight());
+            pstmt.setInt(++i, buyOffer.getHeight());
             pstmt.executeUpdate();
         }
     }

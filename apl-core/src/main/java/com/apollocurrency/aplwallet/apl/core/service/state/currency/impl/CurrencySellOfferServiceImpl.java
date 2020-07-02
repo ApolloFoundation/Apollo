@@ -61,7 +61,7 @@ public class CurrencySellOfferServiceImpl implements CurrencySellOfferService {
 
     @Override
     public CurrencySellOffer getOffer(long offerId) {
-        return currencySellOfferTable.get(CurrencySellOfferTable.buyOfferDbKeyFactory.newKey(offerId));
+        return currencySellOfferTable.get(CurrencySellOfferTable.sellOfferDbKeyFactory.newKey(offerId));
     }
 
     @Override
