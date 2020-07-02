@@ -27,6 +27,7 @@ class HeightConfigFeeSettingsTest {
 
     // config is used for simulating complex shard settings
     private static final String CONFIG_NAME = "chains-fee-config.json";
+    private static final UUID CHAIN_UUID = UUID.fromString("3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6");
     private PropertiesHolder holder = mock(PropertiesHolder.class);
     private ChainsConfigLoader chainsConfigLoader;
     private Map<UUID, Chain> loadedChains;
@@ -38,9 +39,10 @@ class HeightConfigFeeSettingsTest {
         chainsConfigLoader = new ChainsConfigLoader(CONFIG_NAME);
         loadedChains = chainsConfigLoader.load();
         assertEquals(1, loadedChains.size());
-        assertNotNull(loadedChains.get(UUID.fromString("3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6")));
+        assertNotNull(loadedChains.get(CHAIN_UUID));
         doReturn(5000).when(holder).getIntProperty("apl.maxPrunableLifetime");
         doReturn(5000).when(holder).getIntProperty("apl.minPrunableLifetime");
+
         prepareAndInitComponents();
     }
 
@@ -80,7 +82,7 @@ class HeightConfigFeeSettingsTest {
     }
 
     private void prepareAndInitComponents() {
-        chain = loadedChains.get(UUID.fromString("3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6"));
+        chain = loadedChains.get(CHAIN_UUID);
         assertNotNull(chain);
         assertNotNull(chain.getBlockchainProperties());
         blockchainConfig = new BlockchainConfig(chain, holder);
