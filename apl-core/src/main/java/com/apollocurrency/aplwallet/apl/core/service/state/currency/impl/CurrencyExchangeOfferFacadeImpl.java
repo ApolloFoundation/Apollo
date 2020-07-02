@@ -144,7 +144,7 @@ public class CurrencyExchangeOfferFacadeImpl implements CurrencyExchangeOfferFac
     @Override
     public void exchangeCurrencyForAPL(Transaction transaction, Account account, final long currencyId, final long rateATM, final long units) {
         List<CurrencyExchangeOffer> currencyBuyOffers = getAvailableBuyOffers(currencyId, rateATM);
-        if (log.isTraceEnabled() /*&& (account.getId() == 2650055114867906720L || account.getId() == 5122426243196961555L)*/) {
+        if (log.isTraceEnabled()) {
             log.trace("account === 0 exchangeCurrencyForAPL account={}, currencyId={}, rateATM={}, units={}\nstack={}",
                 account, currencyId, rateATM, units, ThreadUtils.last5Stacktrace());
             log.trace("account === 0 exchangeCurrencyForAPL accountCurrency={}",
@@ -172,33 +172,33 @@ public class CurrencyExchangeOfferFacadeImpl implements CurrencyExchangeOfferFac
             sellOffer.setHeight(height);
             currencySellOfferService.insert(sellOffer); // store new sell values
 
-            Account counterAccount = accountService.getAccount(sellOffer.getAccountId());
-            if (log.isTraceEnabled() /*&& (account.getId() == 2650055114867906720L || account.getId() == 5122426243196961555L)*/) {
-                log.trace("account === 1 exchangeCurrencyForAPL account={}", counterAccount);
+            Account contraAccount = accountService.getAccount(sellOffer.getAccountId());
+            if (log.isTraceEnabled()) {
+                log.trace("contra account === 1 exchangeCurrencyForAPL {}", contraAccount);
             }
             accountService.addToBalanceATM(
-                counterAccount, LedgerEvent.CURRENCY_EXCHANGE, asBuyOffer.getId(), -curAmountATM);
+                contraAccount, LedgerEvent.CURRENCY_EXCHANGE, asBuyOffer.getId(), -curAmountATM);
             accountCurrencyService.addToCurrencyUnits(
-                counterAccount, LedgerEvent.CURRENCY_EXCHANGE, asBuyOffer.getId(), currencyId, curUnits);
+                contraAccount, LedgerEvent.CURRENCY_EXCHANGE, asBuyOffer.getId(), currencyId, curUnits);
             accountCurrencyService.addToUnconfirmedCurrencyUnits(
-                counterAccount, LedgerEvent.CURRENCY_EXCHANGE, asBuyOffer.getId(), currencyId, excess);
-            if (log.isTraceEnabled() /*&& (account.getId() == 2650055114867906720L || account.getId() == 5122426243196961555L)*/) {
-                log.trace("account === 2 exchangeCurrencyForAPL account={}", counterAccount);
+                contraAccount, LedgerEvent.CURRENCY_EXCHANGE, asBuyOffer.getId(), currencyId, excess);
+            if (log.isTraceEnabled()) {
+                log.trace("contra account === 2 exchangeCurrencyForAPL {}", contraAccount);
             }
 
             // update data in Exchange
             exchangeService.addExchange(transaction, currencyId, asBuyOffer.getId(), account.getId(),
-                asBuyOffer.getAccountId(), curUnits, /*blockChainInfoService.getLastBlock(),*/ asBuyOffer.getRateATM());
+                asBuyOffer.getAccountId(), curUnits, asBuyOffer.getRateATM());
         }
         long transactionId = transaction.getId();
         account = accountService.getAccount(account);
-        if (log.isTraceEnabled() /*&& (account.getId() == 2650055114867906720L || account.getId() == 5122426243196961555L)*/) {
+        if (log.isTraceEnabled()) {
             log.trace("account === 3 exchangeCurrencyForAPL account={}", account);
         }
         accountService.addToBalanceAndUnconfirmedBalanceATM(account, LedgerEvent.CURRENCY_EXCHANGE, transactionId, totalAmountATM);
         accountCurrencyService.addToCurrencyUnits(account, LedgerEvent.CURRENCY_EXCHANGE, transactionId, currencyId, -(units - remainingUnits));
         accountCurrencyService.addToUnconfirmedCurrencyUnits(account, LedgerEvent.CURRENCY_EXCHANGE, transactionId, currencyId, remainingUnits);
-        if (log.isTraceEnabled() /*&& (account.getId() == 2650055114867906720L || account.getId() == 5122426243196961555L)*/) {
+        if (log.isTraceEnabled()) {
             log.trace("account === 4 exchangeCurrencyForAPL account={}", account);
             log.trace("account === 4 exchangeCurrencyForAPL accountCurrency={}",
                 accountCurrencyService.getAccountCurrency(account.getId(), currencyId));
@@ -210,7 +210,7 @@ public class CurrencyExchangeOfferFacadeImpl implements CurrencyExchangeOfferFac
         List<CurrencyExchangeOffer> currencySellOffers = getAvailableSellOffers(currencyId, rateATM);
         long totalAmountATM = 0;
         long remainingUnits = units;
-        if (log.isTraceEnabled() /*&& (account.getId() == 2650055114867906720L || account.getId() == 5122426243196961555L)*/) {
+        if (log.isTraceEnabled()) {
             log.trace("account === 0 exchangeAPLForCurrency account={}, currencyId={}, rateATM={}, units={}\nstack={}",
                 account, currencyId, rateATM, units, ThreadUtils.last5Stacktrace());
             log.trace("account === 0 exchangeAPLForCurrency accountCurrency={}",
@@ -229,33 +229,33 @@ public class CurrencyExchangeOfferFacadeImpl implements CurrencyExchangeOfferFac
             int height = blockChainInfoService.getHeight();
             asSellOffer.decreaseLimitAndSupply(curUnits);
             asSellOffer.setHeight(height);
-            currencySellOfferService.insert((CurrencySellOffer)asSellOffer); // store new sell values
+            currencySellOfferService.insert((CurrencySellOffer) asSellOffer); // store new sell values
             CurrencyBuyOffer buyOffer = currencyBuyOfferService.getOffer(asSellOffer.getId()); // get contra-offer
             long excess = buyOffer.increaseSupply(curUnits); // change value
             buyOffer.setHeight(height);
             currencyBuyOfferService.insert(buyOffer); // store new buy values
 
-            Account counterAccount = accountService.getAccount(buyOffer.getAccountId());
-            if (log.isTraceEnabled() /*&& (account.getId() == 2650055114867906720L || account.getId() == 5122426243196961555L)*/) {
-                log.trace("account === 1 exchangeAPLForCurrency account={}", counterAccount);
+            Account contraAccount = accountService.getAccount(buyOffer.getAccountId());
+            if (log.isTraceEnabled()) {
+                log.trace("contra account === 1 exchangeAPLForCurrency {}", contraAccount);
             }
-            accountService.addToBalanceATM(counterAccount, LedgerEvent.CURRENCY_EXCHANGE, asSellOffer.getId(), curAmountATM);
-            accountService.addToUnconfirmedBalanceATM(counterAccount, LedgerEvent.CURRENCY_EXCHANGE, asSellOffer.getId(),
+            accountService.addToBalanceATM(contraAccount, LedgerEvent.CURRENCY_EXCHANGE, asSellOffer.getId(), curAmountATM);
+            accountService.addToUnconfirmedBalanceATM(contraAccount, LedgerEvent.CURRENCY_EXCHANGE, asSellOffer.getId(),
                 Math.addExact(
                     Math.multiplyExact(curUnits - excess, asSellOffer.getRateATM() - buyOffer.getRateATM()),
                     Math.multiplyExact(excess, asSellOffer.getRateATM())
                 )
             );
-            accountCurrencyService.addToCurrencyUnits(counterAccount, LedgerEvent.CURRENCY_EXCHANGE, asSellOffer.getId(), currencyId, -curUnits);
-            if (log.isTraceEnabled() /*&& (account.getId() == 2650055114867906720L || account.getId() == 5122426243196961555L)*/) {
-                log.trace("account === 2 exchangeAPLForCurrency account={}", counterAccount);
+            accountCurrencyService.addToCurrencyUnits(contraAccount, LedgerEvent.CURRENCY_EXCHANGE, asSellOffer.getId(), currencyId, -curUnits);
+            if (log.isTraceEnabled()) {
+                log.trace("contra account === 2 exchangeAPLForCurrency {}", contraAccount);
             }
             exchangeService.addExchange(transaction, currencyId, asSellOffer.getId(), asSellOffer.getAccountId(),
-                account.getId(), curUnits, /*blockChainInfoService.getLastBlock(),*/ asSellOffer.getRateATM());
+                account.getId(), curUnits, asSellOffer.getRateATM());
         }
         long transactionId = transaction.getId();
         account = accountService.getAccount(account);
-        if (log.isTraceEnabled() /*&& (account.getId() == 2650055114867906720L || account.getId() == 5122426243196961555L)*/) {
+        if (log.isTraceEnabled()) {
             log.trace("account === 3 exchangeAPLForCurrency account={}", account);
         }
         accountCurrencyService.addToCurrencyAndUnconfirmedCurrencyUnits(account, LedgerEvent.CURRENCY_EXCHANGE, transactionId,
@@ -263,10 +263,12 @@ public class CurrencyExchangeOfferFacadeImpl implements CurrencyExchangeOfferFac
         accountService.addToBalanceATM(account, LedgerEvent.CURRENCY_EXCHANGE, transactionId, -totalAmountATM);
         accountService.addToUnconfirmedBalanceATM(account, LedgerEvent.CURRENCY_EXCHANGE, transactionId,
             Math.multiplyExact(units, rateATM) - totalAmountATM);
-        if (log.isTraceEnabled() /*&& (account.getId() == 2650055114867906720L || account.getId() == 5122426243196961555L)*/) {
-            log.trace("account === 4 exchangeAPLForCurrency account={}", account);
-            log.trace("account === 4 exchangeAPLForCurrency accountCurrency={}",
-                accountCurrencyService.getAccountCurrency(account.getId(), currencyId));
+        if (log.isTraceEnabled()) {
+            if (log.isTraceEnabled()) {
+                log.trace("account === 4 exchangeAPLForCurrency account={}", account);
+                log.trace("account === 4 exchangeAPLForCurrency accountCurrency={}",
+                    accountCurrencyService.getAccountCurrency(account.getId(), currencyId));
+            }
         }
     }
 

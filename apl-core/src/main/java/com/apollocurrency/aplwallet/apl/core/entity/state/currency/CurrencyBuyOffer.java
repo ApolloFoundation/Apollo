@@ -11,12 +11,8 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyBuyOfferTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.ToString;
 
-//@Getter
-//@Setter
 @ToString(callSuper = true)
 public class CurrencyBuyOffer extends CurrencyExchangeOffer {
 
