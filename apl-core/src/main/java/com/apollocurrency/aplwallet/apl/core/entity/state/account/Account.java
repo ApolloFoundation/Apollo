@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.entity.state.account;
@@ -44,8 +44,15 @@ import java.util.Set;
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 public class Account extends VersionedDeletableEntity {
+    private static final AddressScope DEFAULT_SCOPE = AddressScope.valueOf((byte) 0);
 
-    private long id;
+    private final long id;
+    @Setter
+    private long parentId;
+    @Setter
+    private boolean multiSig;
+    @Setter
+    private AddressScope addrScope;
 
     @Setter
     private PublicKey publicKey;
@@ -72,11 +79,20 @@ public class Account extends VersionedDeletableEntity {
         }
         this.id = id;
         this.controls = Collections.emptySet();
+        this.addrScope = DEFAULT_SCOPE;
     }
 
     public Account(ResultSet rs, DbKey dbKey) throws SQLException {
         super(rs);
         this.id = rs.getLong("id");
+        this.multiSig = rs.getBoolean("is_multi_sig");
+        this.parentId = rs.getLong("parent");
+        if(!rs.wasNull()){
+            //TODO: The parent account is NOT NULL.
+            // Is it a sufficient condition for setting the multi_sig field to TRUE value?
+            this.multiSig = true;
+        }
+        this.addrScope = AddressScope.valueOf(rs.getByte("addr_scope"));
         this.balanceATM = rs.getLong("balance");
         this.unconfirmedBalanceATM = rs.getLong("unconfirmed_balance");
         this.forgedBalanceATM = rs.getLong("forged_balance");
@@ -96,6 +112,22 @@ public class Account extends VersionedDeletableEntity {
         this.unconfirmedBalanceATM = unconfirmedBalanceATM;
         this.forgedBalanceATM = forgedBalanceATM;
         this.activeLesseeId = activeLesseeId;
+    }
+
+    /**
+     * Returns true if current account is a child account
+     * @return true if current account is a child account, it means that {@code parentId != 0}
+     */
+    public boolean isChild(){
+        return !isParent();
+    }
+
+    /**
+     * Returns true if current account is a parent
+     * @return true if current account is a parent, it means that {@code parentId == 0}
+     */
+    public boolean isParent(){
+        return parentId == 0;
     }
 
     public boolean addToForgedBalanceATM(long amountATM) {
@@ -142,6 +174,27 @@ public class Account extends VersionedDeletableEntity {
         newControls.remove(control);
         controls = Collections.unmodifiableSet(newControls);
         return true;
+    }
+
+    public enum AddressScope {
+        EXTERNAL((byte)  0),
+        IN_FAMILY((byte) 1);
+
+        @Getter
+        private final byte code;
+        AddressScope(byte code) {
+            this.code = code;
+        }
+
+        public static AddressScope valueOf(byte ordinal){
+            AddressScope[] items = AddressScope.values();
+            for(AddressScope item: items){
+                if(item.code==ordinal){
+                    return item;
+                }
+            }
+            throw new IllegalArgumentException("There is no constant with code "+ordinal);
+        }
     }
 
 }

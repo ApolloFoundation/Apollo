@@ -45,7 +45,7 @@ public class ChainsConfigLoaderTest {
             new ShardingSettings(true, "SHA-512"))
     );
     private static final List<BlockchainProperties> BLOCKCHAIN_PROPERTIES2 = Collections.singletonList(
-        new BlockchainProperties(0, 2000, 2, 3, 1, (long) 1e8)
+        new BlockchainProperties(0, 2000, 10, 2, 3, 1, (long) 1e8)
     );
     private static final String CONFIG_NAME = "test-chains.json";
     private static final String OLD_CONFIG_NAME = "old-chains.json";

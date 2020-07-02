@@ -16,11 +16,12 @@ import java.util.Objects;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonPropertyOrder({"height", "maxNumberOfTransactions", "blockTime", "maxBlockTimeLimit", "minBlockTimeLimit", "maxBalance",
+@JsonPropertyOrder({"height", "maxNumberOfTransactions", "maxNumberOfChildAccounts", "blockTime", "maxBlockTimeLimit", "minBlockTimeLimit", "maxBalance",
     "shardingSettings", "consensusSettings", "transactionFeeSettings", "featuresHeightRequirement"})
 public class BlockchainProperties {
     private int height;
     private int maxNumberOfTransactions;
+    private int maxNumberOfChildAccounts;
     private int blockTime;
     private int maxBlockTimeLimit;
     private int minBlockTimeLimit;
@@ -43,11 +44,12 @@ public class BlockchainProperties {
     public BlockchainProperties(
         @JsonProperty("height") int height,
         @JsonProperty("maxNumberOfTransactions") int maxNumberOfTransactions,
+        @JsonProperty("maxNumberOfChildAccount") int maxNumberOfChildAccounts,
         @JsonProperty("blockTime") int blockTime,
         @JsonProperty("maxBlockTimeLimit") int maxBlockTimeLimit,
         @JsonProperty("minBlockTimeLimit") int minBlockTimeLimit,
         @JsonProperty("maxBalance") long maxBalance) {
-        this(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, null, null, null);
+        this(height, maxNumberOfTransactions, maxNumberOfChildAccounts, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, null, null, null);
     }
 
     /**
@@ -66,6 +68,7 @@ public class BlockchainProperties {
     public BlockchainProperties(
         int height,
         int maxNumberOfTransactions,
+        int maxNumberOfChildAccounts,
         int blockTime,
         int maxBlockTimeLimit,
         int minBlockTimeLimit,
@@ -76,6 +79,7 @@ public class BlockchainProperties {
     ) {
         this.height = height;
         this.maxNumberOfTransactions = maxNumberOfTransactions;
+        this.maxNumberOfChildAccounts = maxNumberOfChildAccounts;
         this.blockTime = blockTime;
         this.maxBlockTimeLimit = maxBlockTimeLimit;
         this.minBlockTimeLimit = minBlockTimeLimit;
@@ -118,7 +122,7 @@ public class BlockchainProperties {
 
     @Override
     public int hashCode() {
-        return Objects.hash(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, shardingSettings, consensusSettings, transactionFeeSettings);
+        return Objects.hash(height, maxNumberOfTransactions, maxNumberOfChildAccounts, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, shardingSettings, consensusSettings, transactionFeeSettings);
     }
 
     public int getHeight() {
@@ -199,7 +203,7 @@ public class BlockchainProperties {
     }
 
     public BlockchainProperties copy() {
-        return new BlockchainProperties(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance,
+        return new BlockchainProperties(height, maxNumberOfTransactions, maxNumberOfChildAccounts, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance,
             shardingSettings.copy(), consensusSettings.copy(), transactionFeeSettings.copy());
     }
 
@@ -208,6 +212,7 @@ public class BlockchainProperties {
         return "BlockchainProperties{" +
             "height=" + height +
             ", maxNumberOfTransactions=" + maxNumberOfTransactions +
+            ", maxNumberOfChildAccount=" + maxNumberOfChildAccounts +
             ", blockTime=" + blockTime +
             ", maxBlockTimeLimit=" + maxBlockTimeLimit +
             ", minBlockTimeLimit=" + minBlockTimeLimit +

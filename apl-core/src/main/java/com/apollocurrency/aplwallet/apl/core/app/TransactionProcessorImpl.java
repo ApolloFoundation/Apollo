@@ -91,7 +91,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private final Map<DbKey, UnconfirmedTransaction> transactionCache = new HashMap<>();
     private final LongKeyFactory<UnconfirmedTransaction> transactionKeyFactory;
     private final EntityDbTable<UnconfirmedTransaction> unconfirmedTransactionTable;
-    private final TransactionValidator validator;
+    private final TransactionValidator transactionValidator;
     private final TransactionApplier transactionApplier;
     private final Map<Transaction, Transaction> txToBroadcastWhenConfirmed = new ConcurrentHashMap<>();
     private final Set<Transaction> broadcastedTransactions = Collections.newSetFromMap(new ConcurrentHashMap<>());
@@ -108,6 +108,8 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private DatabaseManager databaseManager;
     private TaskDispatchManager taskDispatchManager = CDI.current().select(TaskDispatchManager.class).get();
     private PeersService peers = CDI.current().select(PeersService.class).get();
+    private AccountService accountService;
+
     private final Runnable rebroadcastTransactionsThread = () -> {
         try {
             try {
@@ -139,6 +141,8 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
     };
     private int maxUnconfirmedTransactions;
+    private volatile boolean cacheInitialized = false;
+
     private final PriorityQueue<UnconfirmedTransaction> waitingTransactions = new PriorityQueue<>(
         (o1, o2) -> {
             int result;
@@ -165,13 +169,18 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             }
             if (size() > maxUnconfirmedTransactions) {
                 UnconfirmedTransaction removed = remove();
-                //LOG.debug("Dropped unconfirmed transaction " + removed.getJSONObject().toJSONString());
+                if(LOG.isTraceEnabled()) {
+                    LOG.trace("Dropped unconfirmed transaction {}", removed.getJSONObject().toJSONString());
+                }
             }
             return true;
         }
 
     };
-    private AccountService accountService;
+
+    /**
+     * This task retrieves the unconfirmed transactions from the network using the P2P transport and processes them.
+     */
     private final Runnable processTransactionsThread = () -> {
         try {
             try {
@@ -211,6 +220,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             System.exit(1);
         }
     };
+
     private final Runnable processWaitingTransactionsThread = () -> {
         try {
             try {
@@ -227,13 +237,12 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             System.exit(1);
         }
     };
-    private volatile boolean cacheInitialized = false;
 
     @Inject
-    public TransactionProcessorImpl(LongKeyFactory<UnconfirmedTransaction> transactionKeyFactory, TransactionValidator validator, TransactionApplier applier, javax.enterprise.event.Event<List<Transaction>> txEvent) {
+    public TransactionProcessorImpl(LongKeyFactory<UnconfirmedTransaction> transactionKeyFactory, TransactionValidator transactionValidator, TransactionApplier applier, javax.enterprise.event.Event<List<Transaction>> txEvent) {
         this.transactionKeyFactory = transactionKeyFactory;
         this.unconfirmedTransactionTable = createUnconfirmedTransactionTable(transactionKeyFactory);
-        this.validator = validator;
+        this.transactionValidator = transactionValidator;
         this.transactionApplier = applier;
         this.txsEvent = Objects.requireNonNull(txEvent);
     }
@@ -501,7 +510,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 }
                 return;
             }
-            validator.validate(transaction);
+            transactionValidator.validate(transaction);
             UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction(transaction, ntpTime.getTime());
             boolean broadcastLater = lookupBlockchainProcessor().isProcessingBlock();
             if (broadcastLater) {
@@ -672,7 +681,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 while (iterator.hasNext()) {
                     UnconfirmedTransaction unconfirmedTransaction = iterator.next();
                     try {
-                        validator.validate(unconfirmedTransaction);
+                        transactionValidator.validate(unconfirmedTransaction);
                         processTransaction(unconfirmedTransaction);
                         iterator.remove();
                         addedUnconfirmedTransactions.add(unconfirmedTransaction.getTransaction());
@@ -716,7 +725,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 if (getUnconfirmedTransaction(dbKey) != null || blockchain.hasTransaction(transaction.getId())) {
                     continue;
                 }
-                validator.validate(transaction);
+                transactionValidator.validate(transaction);
                 UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction(transaction, arrivalTimestamp);
                 processTransaction(unconfirmedTransaction);
                 if (broadcastedTransactions.contains(transaction)) {
@@ -771,7 +780,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                     throw new AplException.ExistingTransactionException("Transaction already processed");
                 }
 
-                if (!transaction.verifySignature()) {
+                if (!transactionValidator.verifySignature(transaction)) {
                     if (lookupAccountService().getAccount(transaction.getSenderId()) != null) {
                         throw new AplException.NotValidException("Transaction signature verification failed");
                     } else {

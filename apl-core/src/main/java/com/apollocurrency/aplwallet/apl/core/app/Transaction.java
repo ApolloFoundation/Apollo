@@ -121,6 +121,8 @@ public interface Transaction {
 
     boolean verifySignature();
 
+    boolean verifySignature(byte[][] publicKeys);
+
     byte[] getBytes();
 
     byte[] getUnsignedBytes();

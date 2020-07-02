@@ -218,6 +218,11 @@ public class MandatoryTransaction implements Transaction {
     }
 
     @Override
+    public boolean verifySignature(byte[][] publicKeys) {
+        return transaction.verifySignature(publicKeys);
+    }
+
+    @Override
     public byte[] getBytes() {
         return transaction.getBytes();
     }

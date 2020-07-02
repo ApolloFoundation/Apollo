@@ -39,7 +39,7 @@ import javax.servlet.http.HttpServletRequest;
 @Vetoed
 public final class SignTransaction extends AbstractAPIRequestHandler {
 
-    private static TransactionValidator validator = CDI.current().select(TransactionValidator.class).get();
+    private static final TransactionValidator validator = CDI.current().select(TransactionValidator.class).get();
 
     public SignTransaction() {
         super(new APITag[]{APITag.TRANSACTIONS}, "unsignedTransactionJSON", "unsignedTransactionBytes", "prunableAttachmentJSON", "secretPhrase",
@@ -64,7 +64,7 @@ public final class SignTransaction extends AbstractAPIRequestHandler {
             JSONObject signedTransactionJSON = JSONData.unconfirmedTransaction(transaction);
             if (validate) {
                 validator.validate(transaction);
-                response.put("verify", transaction.verifySignature());
+                response.put("verify", validator.verifySignature(transaction));
             }
             response.put("transactionJSON", signedTransactionJSON);
             response.put("fullHash", signedTransactionJSON.get("fullHash"));
