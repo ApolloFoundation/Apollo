@@ -29,8 +29,8 @@ public class ArbitraryMessageTransactionType extends Messaging {
     }
 
     @Override
-    public final byte getSubtype() {
-        return TransactionTypes.SUBTYPE_MESSAGING_ARBITRARY_MESSAGE;
+    public TransactionTypes.TransactionTypeSpec getSpec() {
+        return TransactionTypes.TransactionTypeSpec.ARBITRARY_MESSAGE;
     }
 
     @Override

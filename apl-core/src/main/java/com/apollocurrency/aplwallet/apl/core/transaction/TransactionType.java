@@ -47,11 +47,11 @@ public abstract class TransactionType {
         this.accountService = accountService;
     }
 
-    public static boolean isDuplicate(TransactionType uniqueType, String key, Map<TransactionType, Map<String, Integer>> duplicates, boolean exclusive) {
+    public static boolean isDuplicate(TransactionTypes.TransactionTypeSpec uniqueType, String key, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates, boolean exclusive) {
         return isDuplicate(uniqueType, key, duplicates, exclusive ? 0 : Integer.MAX_VALUE);
     }
 
-    public static boolean isDuplicate(TransactionType uniqueType, String key, Map<TransactionType, Map<String, Integer>> duplicates, int maxCount) {
+    public static boolean isDuplicate(TransactionTypes.TransactionTypeSpec uniqueType, String key, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates, int maxCount) {
         Map<String, Integer> typeDuplicates = duplicates.get(uniqueType);
         if (typeDuplicates == null) {
             typeDuplicates = new HashMap<>();
@@ -72,9 +72,7 @@ public abstract class TransactionType {
         return true;
     }
 
-    public abstract byte getType();
-
-    public abstract byte getSubtype();
+    public abstract TransactionTypes.TransactionTypeSpec getSpec();
 
     public abstract LedgerEvent getLedgerEvent();
 
@@ -137,16 +135,16 @@ public abstract class TransactionType {
 
     public abstract void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount);
 
-    public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+    public boolean isDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
         return false;
     }
 
     // isBlockDuplicate and isDuplicate share the same duplicates map, but isBlockDuplicate check is done first
-    public boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+    public boolean isBlockDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
         return false;
     }
 
-    public boolean isUnconfirmedDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+    public boolean isUnconfirmedDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
         return false;
     }
 
@@ -194,7 +192,7 @@ public abstract class TransactionType {
 
     @Override
     public final String toString() {
-        return getName() + " type: " + getType() + ", subtype: " + getSubtype();
+        return getName() + " " + getSpec();
     }
 
 }

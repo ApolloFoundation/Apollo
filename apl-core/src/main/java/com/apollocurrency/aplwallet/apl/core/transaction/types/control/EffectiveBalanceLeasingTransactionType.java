@@ -29,9 +29,10 @@ public class EffectiveBalanceLeasingTransactionType extends AccountControlTransa
         this.accountLeaseService = accountLeaseService;
     }
 
+
     @Override
-    public final byte getSubtype() {
-        return TransactionTypes.SUBTYPE_ACCOUNT_CONTROL_EFFECTIVE_BALANCE_LEASING;
+    public TransactionTypes.TransactionTypeSpec getSpec() {
+        return TransactionTypes.TransactionTypeSpec.EFFECTIVE_BALANCE_LEASING;
     }
 
     @Override

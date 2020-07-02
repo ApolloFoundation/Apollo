@@ -13,26 +13,29 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteCasting;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 import java.util.Map;
-
-class VoteCastingTransactionType extends Messaging {
+@Singleton
+public class VoteCastingTransactionType extends Messaging {
     private final PollService pollService;
 
+    @Inject
     public VoteCastingTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, PollService pollService) {
         super(blockchainConfig, accountService);
         this.pollService = pollService;
     }
 
+
     @Override
-    public final byte getSubtype() {
-        return TransactionTypes.SUBTYPE_MESSAGING_VOTE_CASTING;
+    public TransactionTypes.TransactionTypeSpec getSpec() {
+        return TransactionTypes.TransactionTypeSpec.VOTE_CASTING;
     }
 
     @Override
@@ -94,10 +97,10 @@ class VoteCastingTransactionType extends Messaging {
     }
 
     @Override
-    public boolean isDuplicate(final Transaction transaction, final Map<TransactionType, Map<String, Integer>> duplicates) {
+    public boolean isDuplicate(final Transaction transaction, final Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
         MessagingVoteCasting attachment = (MessagingVoteCasting) transaction.getAttachment();
         String key = Long.toUnsignedString(attachment.getPollId()) + ":" + Long.toUnsignedString(transaction.getSenderId());
-        return isDuplicate(Messaging.VOTE_CASTING, key, duplicates, true);
+        return isDuplicate(TransactionTypes.TransactionTypeSpec.VOTE_CASTING, key, duplicates, true);
     }
 
     @Override

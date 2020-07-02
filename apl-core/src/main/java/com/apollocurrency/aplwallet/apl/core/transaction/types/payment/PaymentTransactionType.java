@@ -9,7 +9,6 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 
 /**
  * @author al
@@ -18,11 +17,6 @@ public abstract class PaymentTransactionType extends TransactionType {
 
     public PaymentTransactionType(BlockchainConfig blockchainConfig, AccountService accountService) {
         super(blockchainConfig, accountService);
-    }
-
-    @Override
-    public final byte getType() {
-        return TransactionTypes.TYPE_PAYMENT;
     }
 
     @Override

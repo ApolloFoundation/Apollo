@@ -26,9 +26,10 @@ public class OrdinaryPaymentTransactionType extends PaymentTransactionType {
     }
 
     @Override
-    public final byte getSubtype() {
-        return TransactionTypes.SUBTYPE_PAYMENT_ORDINARY_PAYMENT;
+    public TransactionTypes.TransactionTypeSpec getSpec() {
+        return TransactionTypes.TransactionTypeSpec.ORDINARY_PAYMENT;
     }
+
 
     @Override
     public final LedgerEvent getLedgerEvent() {

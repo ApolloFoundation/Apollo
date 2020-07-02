@@ -33,9 +33,10 @@ public class SetPhasingOnlyTransactionType extends AccountControlTransactionType
         super(blockchainConfig, accountService);
         this.accountControlPhasingService = accountControlPhasingService;
     }
+
     @Override
-    public byte getSubtype() {
-        return TransactionTypes.SUBTYPE_ACCOUNT_CONTROL_PHASING_ONLY;
+    public TransactionTypes.TransactionTypeSpec getSpec() {
+        return TransactionTypes.TransactionTypeSpec.SET_PHASING_ONLY;
     }
 
     @Override
@@ -86,8 +87,8 @@ public class SetPhasingOnlyTransactionType extends AccountControlTransactionType
     }
 
     @Override
-    public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
-        return TransactionType.isDuplicate(this, Long.toUnsignedString(transaction.getSenderId()), duplicates, true);
+    public boolean isDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
+        return TransactionType.isDuplicate(getSpec(), Long.toUnsignedString(transaction.getSenderId()), duplicates, true);
     }
 
     @Override

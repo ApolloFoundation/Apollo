@@ -13,7 +13,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPollCreation;
@@ -53,9 +52,10 @@ public class PollCreationTransactionType extends Messaging {
     };
     private final Fee POLL_FEE = (transaction, appendage) -> POLL_OPTIONS_FEE.getFee(transaction, appendage) + POLL_SIZE_FEE.getFee(transaction, appendage);
 
+
     @Override
-    public final byte getSubtype() {
-        return TransactionTypes.SUBTYPE_MESSAGING_POLL_CREATION;
+    public TransactionTypes.TransactionTypeSpec getSpec() {
+        return TransactionTypes.TransactionTypeSpec.POLL_CREATION;
     }
 
     @Override
@@ -120,8 +120,8 @@ public class PollCreationTransactionType extends Messaging {
     }
 
     @Override
-    public boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
-        return isDuplicate(this, getName(), duplicates, true);
+    public boolean isBlockDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
+        return isDuplicate(getSpec(), getName(), duplicates, true);
     }
 
     @Override

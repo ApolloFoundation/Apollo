@@ -25,8 +25,8 @@ public class PrivatePaymentTransactionType extends PaymentTransactionType {
     }
 
     @Override
-    public final byte getSubtype() {
-        return TransactionTypes.SUBTYPE_PAYMENT_PRIVATE_PAYMENT;
+    public TransactionTypes.TransactionTypeSpec getSpec() {
+        return TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT;
     }
 
     @Override
