@@ -29,11 +29,13 @@ public class AccountDTO extends BaseDTO {
     public List<AccountAssetUnconfirmedBalanceDTO> unconfirmedAssetBalances;
     //account currency
     public List<AccountCurrencyDTO> accountCurrencies;
+    private String parent;
     private String account;
     private String accountRS;
     private String publicKey;
     private String passphrase;
     private String secret;
+    private String addressScope;
     //account info
     @JsonProperty("is2FA")
     private boolean is2FA;

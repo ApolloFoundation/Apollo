@@ -81,6 +81,7 @@ public abstract class TransactionType {
     public static final byte TYPE_SHUFFLING = 7;
     public static final byte TYPE_UPDATE = 8;
     public static final byte TYPE_DEX = 9;
+    public static final byte TYPE_CHILD_ACCOUNT = 10;
 
     public static final byte SUBTYPE_PAYMENT_ORDINARY_PAYMENT = 0;
     public static final byte SUBTYPE_PAYMENT_PRIVATE_PAYMENT = 1;
@@ -132,6 +133,9 @@ public abstract class TransactionType {
     public static final byte SUBTYPE_DEX_CONTRACT = 2;
     public static final byte SUBTYPE_DEX_TRANSFER_MONEY = 3;
     public static final byte SUBTYPE_DEX_CLOSE_ORDER = 4;
+
+    public static final byte SUBTYPE_CHILD_CREATE = 0;
+    public static final byte SUBTYPE_CHILD_CONVERT_TO = 1;
 
 
     public static BlockchainConfig blockchainConfig;

@@ -44,7 +44,7 @@ import java.util.Set;
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 public class Account extends VersionedDeletableEntity {
-    private static final AddressScope DEFAULT_SCOPE = AddressScope.valueOf((byte) 0);
+    private static final AddressScope DEFAULT_SCOPE = AddressScope.from((byte) 0);
 
     private final long id;
     @Setter
@@ -92,7 +92,7 @@ public class Account extends VersionedDeletableEntity {
             // Is it a sufficient condition for setting the multi_sig field to TRUE value?
             this.multiSig = true;
         }
-        this.addrScope = AddressScope.valueOf(rs.getByte("addr_scope"));
+        this.addrScope = AddressScope.from(rs.getByte("addr_scope"));
         this.balanceATM = rs.getLong("balance");
         this.unconfirmedBalanceATM = rs.getLong("unconfirmed_balance");
         this.forgedBalanceATM = rs.getLong("forged_balance");
@@ -174,27 +174,6 @@ public class Account extends VersionedDeletableEntity {
         newControls.remove(control);
         controls = Collections.unmodifiableSet(newControls);
         return true;
-    }
-
-    public enum AddressScope {
-        EXTERNAL((byte)  0),
-        IN_FAMILY((byte) 1);
-
-        @Getter
-        private final byte code;
-        AddressScope(byte code) {
-            this.code = code;
-        }
-
-        public static AddressScope valueOf(byte ordinal){
-            AddressScope[] items = AddressScope.values();
-            for(AddressScope item: items){
-                if(item.code==ordinal){
-                    return item;
-                }
-            }
-            throw new IllegalArgumentException("There is no constant with code "+ordinal);
-        }
     }
 
 }
