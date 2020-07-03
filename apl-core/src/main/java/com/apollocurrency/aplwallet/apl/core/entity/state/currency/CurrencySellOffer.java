@@ -8,23 +8,19 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencySellOfferTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.ToString;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-@Getter
-@Setter
 @ToString(callSuper = true)
 public class CurrencySellOffer extends CurrencyExchangeOffer {
 
     public CurrencySellOffer(Transaction transaction, MonetarySystemPublishExchangeOffer attachment, int height) {
-        super(transaction.getId(), attachment.getCurrencyId(), transaction.getSenderId(), attachment.getBuyRateATM(),
-            attachment.getTotalBuyLimit(), attachment.getInitialBuySupply(), attachment.getExpirationHeight(), transaction.getHeight(),
+        super(transaction.getId(), attachment.getCurrencyId(), transaction.getSenderId(), attachment.getSellRateATM(),
+            attachment.getTotalSellLimit(), attachment.getInitialSellSupply(), attachment.getExpirationHeight(), transaction.getHeight(),
             transaction.getIndex(), height);
-        super.setDbKey( CurrencySellOfferTable.buyOfferDbKeyFactory.newKey(this.getId()));
+        super.setDbKey( CurrencySellOfferTable.sellOfferDbKeyFactory.newKey(this.getId()));
     }
 
     /**
