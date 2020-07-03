@@ -8,31 +8,55 @@ import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ChildAccountAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateAttachment;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 /**
+ * Create child account transaction.
+ * Sender is a parent account. There is an list of child public keys in the attachment.
  * @author andrii.zinchenko@firstbridge.io
  */
 public abstract class ChildAccount extends TransactionType {
 
+    private static boolean isAccountExists(byte[] childPublicKey) {
+        return lookupAccountService().getAccount(childPublicKey) != null;
+    }
+
     public static final TransactionType CREATE_CHILD = new ChildAccount() {
         @Override
         public void validateAttachment(Transaction transaction) throws AplException.NotValidException {
+            super.validateAttachment(transaction);
             ChildAccountAttachment attachment = (ChildAccountAttachment) transaction.getAttachment();
-            if (attachment.getChildCount() <= 0){
-                throw new AplException.NotValidException("Wrong value: childCount=" + attachment.getChildCount());
+            for (byte[] childPublicKey : attachment.getChildPublicKey()) {
+                if (ChildAccount.isAccountExists(childPublicKey)) {
+                    throw new AplException.NotValidException("");
+                }
             }
         }
 
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             super.applyAttachment(transaction, senderAccount, recipientAccount);
+            Account childAccount;
             ChildAccountAttachment attachment = (ChildAccountAttachment) transaction.getAttachment();
+            for (byte[] childPublicKey : attachment.getChildPublicKey()) {
+                //create an account
+                childAccount = lookupAccountService().addOrGetAccount(AccountService.getId(childPublicKey));
+                childAccount.setParentId(senderAccount.getId());
+                childAccount.setAddrScope(attachment.getAddressScope());
+                childAccount.setMultiSig(true);
+                //save the account into db
+                lookupAccountService().update(childAccount, false);
+                //save the public key into db
+                ChildAccount.lookupAccountPublicKeyService().apply(childAccount, childPublicKey);
+            }
         }
 
         @Override
@@ -64,16 +88,19 @@ public abstract class ChildAccount extends TransactionType {
     public static final TransactionType CONVERT_TO_CHILD = new ChildAccount() {
         @Override
         public void validateAttachment(Transaction transaction) throws AplException.NotValidException {
+            super.validateAttachment(transaction);
             ChildAccountAttachment attachment = (ChildAccountAttachment) transaction.getAttachment();
-            if (attachment.getChildCount() <= 0){
-                throw new AplException.NotValidException("Wrong value: childCount=" + attachment.getChildCount());
+            if (attachment.getChildCount() != 1){
+                throw new AplException.NotValidException("Wrong value of the child count value, only one account can be converted at once.");
             }
+            throw new AplException.NotValidException("Not implemented yet.");
         }
 
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             super.applyAttachment(transaction, senderAccount, recipientAccount);
             ChildAccountAttachment attachment = (ChildAccountAttachment) transaction.getAttachment();
+            //TODO: not implemented yet
         }
 
         @Override
@@ -112,6 +139,30 @@ public abstract class ChildAccount extends TransactionType {
     }
 
     @Override
+    public void validateAttachment(Transaction transaction) throws AplException.NotValidException {
+        ChildAccountAttachment attachment = (ChildAccountAttachment) transaction.getAttachment();
+        if (transaction.getAmountATM() != 0 ) {
+            throw new AplException.NotValidException("Wrong value of the transaction amount "+transaction.getAmountATM());
+        }
+        if (attachment.getChildCount() <= 0 || attachment.getChildCount() != attachment.getChildPublicKey().size()){
+            throw new AplException.NotValidException("Wrong value of the child count " + attachment.getChildCount());
+        }
+        if (attachment.getChildPublicKey().contains(transaction.getSenderPublicKey())) {
+            throw new AplException.NotValidException("Wrong value of the child public keys, a child can't simultaneously be a parent.");
+        }
+        for (byte[] publicKey : attachment.getChildPublicKey()) {
+            if (!Crypto.isCanonicalPublicKey(publicKey)) {
+                throw new AplException.NotValidException("Invalid child public key: " + Convert.toHexString(publicKey));
+            }
+        }
+    }
+
+    @Override
+    public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+
+    }
+
+    @Override
     public final boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         return true;
     }
@@ -121,25 +172,29 @@ public abstract class ChildAccount extends TransactionType {
     }
 
     @Override
+    public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+        ChildAccountAttachment attachment = (ChildAccountAttachment) transaction.getAttachment();
+        for (byte[] publicKey : attachment.getChildPublicKey()) {
+            if (TransactionType.isDuplicate(CREATE_CHILD, Convert.toHexString(publicKey), duplicates, true)) {
+                return true;
+            }
+        }
+        return super.isDuplicate(transaction, duplicates);
+    }
+
+    @Override
     public final boolean canHaveRecipient() {
-        return true;
+        return false;
     }
 
     @Override
     public final boolean isPhasingSafe() {
-        return true;
+        return false;
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-        UpdateAttachment attachment = (UpdateAttachment) transaction.getAttachment();
-        if (attachment.getUrl().getFirst().length != Constants.UPDATE_URL_PART_LENGTH || attachment.getUrl().getSecond().length != Constants.UPDATE_URL_PART_LENGTH || attachment.getHash().length > Constants.MAX_UPDATE_HASH_LENGTH) {
-            throw new AplException.NotValidException("Invalid update transaction attachment:" + attachment.getJSONObject());
-        }
-    }
-
-    @Override
-    public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+    public boolean isPhasable() {
+        return false;
     }
 
     @Override

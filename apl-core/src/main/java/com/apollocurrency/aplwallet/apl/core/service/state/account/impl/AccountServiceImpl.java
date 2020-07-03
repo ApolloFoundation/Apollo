@@ -170,7 +170,7 @@ public class AccountServiceImpl implements AccountService {
 
     /**
      * Create a new account. This account is not saved into the database but the public key of that one is saved.
-     * This account will be saved during further operation of the balance changing. (The set of 'add to balance' operation).
+     * This account will be saved during further operation of the balance changing (the set of 'add to balance' operation).
      *
      * @param id        account id
      * @param isGenesis true if this account is a genesis account
@@ -195,14 +195,18 @@ public class AccountServiceImpl implements AccountService {
         return account;
     }
 
-    @Override
-    public void update(Account account) {
-        account.setHeight(blockChainInfoService.getHeight());
-        if (account.getBalanceATM() == 0
+    private static boolean isHasZeroBalance(Account account){
+        return account.getBalanceATM() == 0
             && account.getUnconfirmedBalanceATM() == 0
             && account.getForgedBalanceATM() == 0
             && account.getActiveLesseeId() == 0
-            && account.getControls().isEmpty()) {
+            && account.getControls().isEmpty();
+    }
+
+    @Override
+    public void update(Account account, boolean deleteIfHasZeroBalance) {
+        account.setHeight(blockChainInfoService.getHeight());
+        if (isHasZeroBalance(account) && deleteIfHasZeroBalance) {
             accountTable.delete(account, blockChainInfoService.getHeight());
         } else {
             accountTable.insert(account);
@@ -320,14 +324,20 @@ public class AccountServiceImpl implements AccountService {
         return total;
     }
 
-    @Deprecated
+    /**
+     * @deprecated
+     */
+    @Deprecated(forRemoval = true)
     @Override
     public DbIterator<Account> getLessorsIterator(Account account) {
         DbIterator<Account> iterator = accountTable.getManyBy(new DbClause.LongClause("active_lessee_id", account.getId()), 0, -1, " ORDER BY id ASC ");
         return iterator;
     }
 
-    @Deprecated
+    /**
+     * @deprecated
+     */
+    @Deprecated(forRemoval = true)
     @Override
     public DbIterator<Account> getLessorsIterator(Account account, int height) {
         final DbClause.LongClause clause =

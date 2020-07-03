@@ -56,7 +56,10 @@ public interface AccountService {
 
     Account addOrGetAccount(long id);
 
-    void update(Account account);
+    default void update(Account account){
+        update(account, true);
+    }
+    void update(Account account, boolean deleteIfHasZeroBalance);
 
     List<Block> getAccountBlocks(long accountId, int from, int to, int timestamp);
 

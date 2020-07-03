@@ -118,7 +118,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
 
         JSONObject response = new JSONObject();
 //do not eat exception here, it is used for error message displaying on UI
-        Transaction transaction = createTransaction(createTransactionRequest);
+        Transaction transaction = createTransactionAndBroadcastIfRequired(createTransactionRequest);
 
         JSONObject transactionJSON = JSONData.unconfirmedTransaction(transaction);
         response.put("transactionJSON", transactionJSON);
@@ -141,7 +141,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
         return new TransactionResponse(transaction, response);
     }
 
-    public Transaction createTransaction(CreateTransactionRequest txRequest) throws AplException.ValidationException, ParameterException {
+    public Transaction createTransactionAndBroadcastIfRequired(CreateTransactionRequest txRequest) throws AplException.ValidationException, ParameterException {
         EncryptedMessageAppendix encryptedMessage = null;
         PrunableEncryptedMessageAppendix prunableEncryptedMessage = null;
 

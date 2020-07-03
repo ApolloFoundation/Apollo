@@ -9,19 +9,17 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.AddressScope;
 import com.apollocurrency.aplwallet.apl.core.transaction.ChildAccount;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.ToString;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.StringJoiner;
 
-@EqualsAndHashCode(callSuper = false)
-@ToString
 @Getter
 public class ChildAccountAttachment extends AbstractAttachment {
     private final short childCount;
@@ -45,19 +43,18 @@ public class ChildAccountAttachment extends AbstractAttachment {
     public ChildAccountAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.addressScope = AddressScope.from(((Long) attachmentData.get("addressScope")).intValue());
-        this.childCount = (short) attachmentData.get("childCount");
+        this.childCount = (short) (((Long) attachmentData.get("childCount")).intValue());
         childPublicKey = new LinkedList<>();
         JSONArray keys = (JSONArray) attachmentData.get("childPublicKeys");
         for (Object publicKey : keys) {
-            JSONObject publicKeyJsonObj = (JSONObject) publicKey;
-            byte[] key = Convert.parseHexString((String) publicKeyJsonObj.toString());
+            byte[] key = Convert.parseHexString(publicKey.toString());
             childPublicKey.add(key);
         }
     }
 
-    public ChildAccountAttachment(AddressScope addressScope, short childCount, List<byte[]> childPublicKey) {
+    public ChildAccountAttachment(AddressScope addressScope, int childCount, List<byte[]> childPublicKey) {
         this.addressScope = addressScope;
-        this.childCount = childCount;
+        this.childCount = (short) childCount;
         this.childPublicKey = childPublicKey;
 
     }
@@ -101,4 +98,27 @@ public class ChildAccountAttachment extends AbstractAttachment {
         return ChildAccount.CREATE_CHILD;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ChildAccountAttachment that = (ChildAccountAttachment) o;
+        return childCount == that.childCount &&
+            Arrays.deepEquals(this.childPublicKey.toArray(), that.childPublicKey.toArray()) &&
+            addressScope == that.addressScope;
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.deepHashCode(new Object[]{childCount, childPublicKey.toArray(), addressScope});
+    }
+
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", ChildAccountAttachment.class.getSimpleName() + "[", "]")
+            .add("childCount=" + childCount)
+            .add("childPublicKey=" + Arrays.deepToString(childPublicKey.toArray()))
+            .add("addressScope=" + addressScope.name())
+            .toString();
+    }
 }
