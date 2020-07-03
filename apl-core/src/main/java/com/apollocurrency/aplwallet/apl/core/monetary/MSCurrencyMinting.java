@@ -68,7 +68,7 @@ class MSCurrencyMinting extends MonetarySystem {
         if (attachment.getCounter() <= counter) {
             throw new AplException.NotCurrentlyValidException(String.format("Counter %d has to be bigger than %d", attachment.getCounter(), counter));
         }
-        if (!CurrencyMinting.meetsTarget(transaction.getSenderId(), currency, attachment)) {
+        if (!lookupMonetaryCurrencyMintingService().meetsTarget(transaction.getSenderId(), currency, attachment)) {
             throw new AplException.NotCurrentlyValidException(String.format("Hash doesn't meet target %s", attachment.getJSONObject()));
         }
     }

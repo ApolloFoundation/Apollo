@@ -22,10 +22,10 @@ package com.apollocurrency.aplwallet.apl.core.monetary;
 
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMinting;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveIncrease;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
@@ -192,7 +192,7 @@ public enum CurrencyType {
                 MonetarySystemCurrencyIssuance issuanceAttachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
                 try {
                     HashFunction hashFunction = HashFunction.getHashFunction(issuanceAttachment.getAlgorithm());
-                    if (!CurrencyMinting.acceptedHashFunctions.contains(hashFunction)) {
+                    if (!MonetaryCurrencyMintingService.acceptedHashFunctions.contains(hashFunction)) {
                         throw new AplException.NotValidException("Invalid minting algorithm " + hashFunction);
                     }
                 } catch (IllegalArgumentException e) {

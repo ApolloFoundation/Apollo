@@ -1,63 +1,57 @@
 /*
- * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016-2017 Jelurida IP B.V.
- *
- * See the LICENSE.txt file at the top-level directory of this distribution
- * for licensing information.
- *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
- * no part of the Nxt software, including this file, may be copied, modified,
- * propagated, or distributed except according to the terms contained in the
- * LICENSE.txt file.
- *
- * Removal or modification of this copyright notice is prohibited.
- *
+ * Copyright (c)  2018-2020. Apollo Foundation.
  */
 
-/*
- * Copyright © 2018-2019 Apollo Foundation
- */
+package com.apollocurrency.aplwallet.apl.core.service.state.currency.impl;
 
-package com.apollocurrency.aplwallet.apl.core.app.mint;
-
-import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
-import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
-
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.Set;
 
-@Deprecated
-public final class CurrencyMinting {
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySupply;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
+import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 
-    public static final Set<HashFunction> acceptedHashFunctions =
-        Collections.unmodifiableSet(EnumSet.of(HashFunction.SHA256, HashFunction.SHA3, HashFunction.SCRYPT, HashFunction.Keccak25));
+@Singleton
+public class MonetaryCurrencyMintingServiceImpl implements MonetaryCurrencyMintingService {
 
-    private CurrencyMinting() {
-    } // never
+    private final CurrencyService currencyService;
 
-    /**
-     * @deprecated
-     */
-    public static boolean meetsTarget(long accountId, Currency currency, MonetarySystemCurrencyMinting attachment) {
+    @Inject
+    public MonetaryCurrencyMintingServiceImpl(CurrencyService currencyService) {
+        this.currencyService = currencyService;
+    }
+
+    @Override
+    public boolean meetsTarget(long accountId, Currency currency, MonetarySystemCurrencyMinting attachment) {
         byte[] hash = getHash(currency.getAlgorithm(), attachment.getNonce(), attachment.getCurrencyId(), attachment.getUnits(),
             attachment.getCounter(), accountId);
+
+        Currency currencyFull = this.localSupplyDependency(currency);
+
         byte[] target = getTarget(currency.getMinDifficulty(), currency.getMaxDifficulty(),
             attachment.getUnits(),
-            currency.getCurrencySupply().getCurrentSupply() - currency.getReserveSupply(),
+            currencyFull.getCurrencySupply().getCurrentSupply() - currency.getReserveSupply(),
             currency.getMaxSupply() - currency.getReserveSupply());
         return meetsTarget(hash, target);
     }
 
-    /**
-     * @deprecated
-     */
-    public static boolean meetsTarget(byte[] hash, byte[] target) {
+    private Currency localSupplyDependency(Currency currency) {
+        CurrencySupply currencySupply = currencyService.loadCurrencySupplyByCurrency(currency); // load dependency
+        if (currencySupply != null) {
+            currency.setCurrencySupply(currencySupply);
+        }
+        return currency;
+    }
+
+    @Override
+    public boolean meetsTarget(byte[] hash, byte[] target) {
         for (int i = hash.length - 1; i >= 0; i--) {
             if ((hash[i] & 0xff) > (target[i] & 0xff)) {
                 return false;
@@ -69,18 +63,14 @@ public final class CurrencyMinting {
         return true;
     }
 
-    /**
-     * @deprecated
-     */
-    public static byte[] getHash(byte algorithm, long nonce, long currencyId, long units, long counter, long accountId) {
+    @Override
+    public byte[] getHash(byte algorithm, long nonce, long currencyId, long units, long counter, long accountId) {
         HashFunction hashFunction = HashFunction.getHashFunction(algorithm);
         return getHash(hashFunction, nonce, currencyId, units, counter, accountId);
     }
 
-    /**
-     * @deprecated
-     */
-    public static byte[] getHash(HashFunction hashFunction, long nonce, long currencyId, long units, long counter, long accountId) {
+    @Override
+    public byte[] getHash(HashFunction hashFunction, long nonce, long currencyId, long units, long counter, long accountId) {
         ByteBuffer buffer = ByteBuffer.allocate(8 + 8 + 8 + 8 + 8);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
         buffer.putLong(nonce);
@@ -91,17 +81,13 @@ public final class CurrencyMinting {
         return hashFunction.hash(buffer.array());
     }
 
-    /**
-     * @deprecated
-     */
-    public static byte[] getTarget(int min, int max, long units, long currentMintableSupply, long totalMintableSupply) {
+    @Override
+    public byte[] getTarget(int min, int max, long units, long currentMintableSupply, long totalMintableSupply) {
         return getTarget(getNumericTarget(min, max, units, currentMintableSupply, totalMintableSupply));
     }
 
-    /**
-     * @deprecated
-     */
-    public static byte[] getTarget(BigInteger numericTarget) {
+    @Override
+    public byte[] getTarget(BigInteger numericTarget) {
         byte[] targetRowBytes = numericTarget.toByteArray();
         if (targetRowBytes.length == 32) {
             return reverse(targetRowBytes);
@@ -112,19 +98,16 @@ public final class CurrencyMinting {
         return reverse(targetBytes);
     }
 
-    /**
-     * @deprecated
-     */
-    public static BigInteger getNumericTarget(Currency currency, long units) {
+    @Override
+    public BigInteger getNumericTarget(Currency currency, long units) {
+        Currency currencyFull = this.localSupplyDependency(currency);
         return getNumericTarget(currency.getMinDifficulty(), currency.getMaxDifficulty(), units,
-            currency.getCurrencySupply().getCurrentSupply() - currency.getReserveSupply(),
+            currencyFull.getCurrencySupply().getCurrentSupply() - currency.getReserveSupply(),
             currency.getMaxSupply() - currency.getReserveSupply());
     }
 
-    /**
-     * @deprecated
-     */
-    public static BigInteger getNumericTarget(int min, int max, long units, long currentMintableSupply, long totalMintableSupply) {
+    @Override
+    public BigInteger getNumericTarget(int min, int max, long units, long currentMintableSupply, long totalMintableSupply) {
         if (min < 1 || max > 255) {
             throw new IllegalArgumentException(String.format("Min: %d, Max: %d, allowed range is 1 to 255", min, max));
         }
@@ -132,7 +115,7 @@ public final class CurrencyMinting {
         return BigInteger.valueOf(2).pow(exp).subtract(BigInteger.ONE).divide(BigInteger.valueOf(units));
     }
 
-    private static byte[] reverse(byte[] b) {
+    private byte[] reverse(byte[] b) {
         for (int i = 0; i < b.length / 2; i++) {
             byte temp = b[i];
             b[i] = b[b.length - i - 1];
@@ -141,7 +124,7 @@ public final class CurrencyMinting {
         return b;
     }
 
-    private static byte[] reverseXor(byte[] b) {
+    private byte[] reverseXor(byte[] b) {
         for (int i = 0; i < b.length / 2; i++) {
             b[i] ^= b[b.length - i - 1];
             b[b.length - i - 1] ^= b[i];
@@ -149,5 +132,6 @@ public final class CurrencyMinting {
         }
         return b;
     }
+
 
 }

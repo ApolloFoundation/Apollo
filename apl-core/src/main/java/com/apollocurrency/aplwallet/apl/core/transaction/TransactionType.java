@@ -53,6 +53,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountP
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeRequestService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyMintService;
@@ -156,6 +157,7 @@ public abstract class TransactionType {
     private static CurrencyTransferService currencyTransferService;
     private static CurrencyMintService currencyMintService;
     private static CurrencyService currencyService;
+    private static MonetaryCurrencyMintingService monetaryCurrencyMintingService;
 
     public TransactionType() {
     }
@@ -316,6 +318,13 @@ public abstract class TransactionType {
             currencyService = CDI.current().select(CurrencyService.class).get();
         }
         return currencyService;
+    }
+
+    public static synchronized MonetaryCurrencyMintingService lookupMonetaryCurrencyMintingService() {
+        if (monetaryCurrencyMintingService == null) {
+            monetaryCurrencyMintingService = CDI.current().select(MonetaryCurrencyMintingService.class).get();
+        }
+        return monetaryCurrencyMintingService;
     }
 
     public static TransactionType findTransactionType(byte type, byte subtype) {

@@ -53,6 +53,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublic
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeRequestService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
@@ -313,7 +314,7 @@ public class ServerInfoService {
             dto.phasingHashAlgorithms.add(new NameCodeTypeDto(hashFunction.toString(), hashFunction.getId()));
         }
         dto.maxPhasingDuration = Constants.MAX_PHASING_DURATION;
-        for (HashFunction hashFunction : CurrencyMinting.acceptedHashFunctions) {
+        for (HashFunction hashFunction : MonetaryCurrencyMintingService.acceptedHashFunctions) {
             dto.mintingHashAlgorithms.add(new NameCodeTypeDto(hashFunction.toString(), hashFunction.getId()));
         }
         for (PeerState peerState : PeerState.values()) {

@@ -47,6 +47,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountP
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyFounderService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeRequestService;
@@ -120,6 +121,7 @@ public abstract class AbstractAPIRequestHandler {
     private CurrencyMintService currencyMintService;
     private CurrencyFounderService currencyFounderService;
     private CurrencyService currencyService;
+    private MonetaryCurrencyMintingService monetaryCurrencyMintingService;
 
     public AbstractAPIRequestHandler(APITag[] apiTags, String... parameters) {
         this(null, apiTags, parameters);
@@ -291,6 +293,13 @@ public abstract class AbstractAPIRequestHandler {
             currencyService = CDI.current().select(CurrencyService.class).get();
         }
         return currencyService;
+    }
+
+    public MonetaryCurrencyMintingService lookupMonetaryCurrencyMintingService() {
+        if (monetaryCurrencyMintingService == null) {
+            monetaryCurrencyMintingService = CDI.current().select(MonetaryCurrencyMintingService.class).get();
+        }
+        return monetaryCurrencyMintingService;
     }
 
     public final List<String> getParameters() {

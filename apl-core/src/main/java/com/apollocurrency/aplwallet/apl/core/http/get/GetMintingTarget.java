@@ -57,9 +57,9 @@ public final class GetMintingTarget extends AbstractAPIRequestHandler {
         JSONObject json = new JSONObject();
         json.put("currency", Long.toUnsignedString(currency.getId()));
         long units = HttpParameterParserUtil.getLong(req, "units", 1, currency.getMaxSupply() - currency.getReserveSupply(), true);
-        BigInteger numericTarget = CurrencyMinting.getNumericTarget(currency, units);
+        BigInteger numericTarget = lookupMonetaryCurrencyMintingService().getNumericTarget(currency, units);
         json.put("difficulty", String.valueOf(BigInteger.ZERO.equals(numericTarget) ? -1 : BigInteger.valueOf(2).pow(256).subtract(BigInteger.ONE).divide(numericTarget)));
-        json.put("targetBytes", Convert.toHexString(CurrencyMinting.getTarget(numericTarget)));
+        json.put("targetBytes", Convert.toHexString(lookupMonetaryCurrencyMintingService().getTarget(numericTarget)));
         json.put("counter", lookupCurrencyMintService().getCounter(
             currency.getId(), HttpParameterParserUtil.getAccountId(req, true)));
         return json;
