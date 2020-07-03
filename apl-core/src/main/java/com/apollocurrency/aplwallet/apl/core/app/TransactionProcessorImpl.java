@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
@@ -29,7 +30,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
@@ -230,9 +230,13 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private volatile boolean cacheInitialized = false;
 
     @Inject
-    public TransactionProcessorImpl(LongKeyFactory<UnconfirmedTransaction> transactionKeyFactory, TransactionValidator validator, TransactionApplier applier, javax.enterprise.event.Event<List<Transaction>> txEvent) {
+    public TransactionProcessorImpl(LongKeyFactory<UnconfirmedTransaction> transactionKeyFactory,
+                                    TransactionValidator validator, TransactionApplier applier,
+                                    javax.enterprise.event.Event<List<Transaction>> txEvent,
+                                    UnconfirmedTransactionTable unconfirmedTransactionTable) {
         this.transactionKeyFactory = transactionKeyFactory;
-        this.unconfirmedTransactionTable = createUnconfirmedTransactionTable(transactionKeyFactory);
+//        this.unconfirmedTransactionTable = createUnconfirmedTransactionTable(transactionKeyFactory);
+        this.unconfirmedTransactionTable = unconfirmedTransactionTable;
         this.validator = validator;
         this.transactionApplier = applier;
         this.txsEvent = Objects.requireNonNull(txEvent);
@@ -259,6 +263,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         return accountService;
     }
 
+/*
     private EntityDbTable<UnconfirmedTransaction> createUnconfirmedTransactionTable(KeyFactory<UnconfirmedTransaction> keyFactory) {
         return
             new EntityDbTable<>("unconfirmed_transaction", keyFactory) {
@@ -311,6 +316,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
             };
     }
+*/
 
     private Runnable createRemoveUnconfirmedTransactionsThread() {
         return () -> {

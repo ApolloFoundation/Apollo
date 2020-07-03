@@ -37,11 +37,8 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
 import javax.enterprise.inject.spi.CDI;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Types;
 import java.util.List;
 import java.util.Map;
 
@@ -50,16 +47,16 @@ public class UnconfirmedTransaction implements Transaction {
     private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
     private static AccountControlPhasingService accountControlPhasingService;
     private final Transaction transaction;
-    private final long arrivalTimestamp;
-    private final long feePerByte;
+    private /*final*/ long arrivalTimestamp;
+    private /*final*/ long feePerByte;
 
-    UnconfirmedTransaction(Transaction transaction, long arrivalTimestamp) {
+    public UnconfirmedTransaction(Transaction transaction, long arrivalTimestamp) {
         this.transaction = transaction;
         this.arrivalTimestamp = arrivalTimestamp;
         this.feePerByte = transaction.getFeeATM() / transaction.getFullSize();
     }
 
-    UnconfirmedTransaction(ResultSet rs) throws SQLException {
+    public UnconfirmedTransaction(ResultSet rs) throws SQLException {
         try {
             byte[] transactionBytes = rs.getBytes("transaction_bytes");
             JSONObject prunableAttachments = null;
@@ -77,6 +74,7 @@ public class UnconfirmedTransaction implements Transaction {
         }
     }
 
+/*
     void save(Connection con) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO unconfirmed_transaction (id, transaction_height, "
             + "fee_per_byte, expiration, transaction_bytes, prunable_json, arrival_timestamp, height) "
@@ -98,6 +96,7 @@ public class UnconfirmedTransaction implements Transaction {
             pstmt.executeUpdate();
         }
     }
+*/
 
     public static AccountControlPhasingService lookupAccountControlPhasingService() {
         if (accountControlPhasingService == null) {
@@ -110,11 +109,11 @@ public class UnconfirmedTransaction implements Transaction {
         return transaction;
     }
 
-    long getArrivalTimestamp() {
+    public long getArrivalTimestamp() {
         return arrivalTimestamp;
     }
 
-    long getFeePerByte() {
+    public long getFeePerByte() {
         return feePerByte;
     }
 
@@ -397,8 +396,6 @@ public class UnconfirmedTransaction implements Transaction {
             return false;
         }
         if (atAcceptanceHeight) {
-            // TODO: YL remove that 'AccountControlPhasingService' dependency later
-//            if (AccountRestrictions.isBlockDuplicate(this, duplicates)) {
             if (lookupAccountControlPhasingService().isBlockDuplicate(this, duplicates)) {
                 return true;
             }
