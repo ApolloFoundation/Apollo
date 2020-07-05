@@ -16,6 +16,8 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnou
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
+import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.Data;
 
@@ -116,6 +118,7 @@ public class TransactionCreator {
             transaction = builder.build(txRequest.getKeySeed());
             if (txRequest.getFeeATM() <= 0 || (propertiesHolder.correctInvalidFees() && txRequest.getKeySeed() == null)) {
                 int effectiveHeight = blockchain.getHeight();
+                @TransactionFee(FeeMarker.CALCULATOR)
                 long minFee = feeCalculator.getMinimumFeeATM(transaction, effectiveHeight);
                 txRequest.setFeeATM(Math.max(minFee, txRequest.getFeeATM()));
                 transaction.setFeeATM(txRequest.getFeeATM());

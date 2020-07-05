@@ -5,7 +5,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublic
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ReferencedTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -17,13 +17,16 @@ import javax.inject.Singleton;
 public class TransactionApplier {
 
     private BlockchainConfig blockchainConfig;
-    private ReferencedTransactionDaoImpl referencedTransactionDao;
+    private ReferencedTransactionDao referencedTransactionDao;
     private AccountService accountService;
     private AccountPublicKeyService accountPublicKeyService;
 
 
     @Inject
-    public TransactionApplier(BlockchainConfig blockchainConfig, ReferencedTransactionDaoImpl referencedTransactionDao, AccountService accountService, AccountPublicKeyService accountPublicKeyService) {
+    public TransactionApplier(BlockchainConfig blockchainConfig,
+                              ReferencedTransactionDao referencedTransactionDao,
+                              AccountService accountService,
+                              AccountPublicKeyService accountPublicKeyService) {
         this.blockchainConfig = blockchainConfig;
         this.referencedTransactionDao = referencedTransactionDao;
         this.accountService = accountService;

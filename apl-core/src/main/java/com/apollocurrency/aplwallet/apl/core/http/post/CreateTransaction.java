@@ -40,6 +40,8 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainM
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
+import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -208,6 +210,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
             transaction = builder.build(txRequest.getKeySeed());
             if (txRequest.getFeeATM() <= 0 || (propertiesHolder.correctInvalidFees() && txRequest.getKeySeed() == null)) {
                 int effectiveHeight = blockchain.getHeight();
+                @TransactionFee(FeeMarker.CALCULATOR)
                 long minFee = feeCalculator.getMinimumFeeATM(transaction, effectiveHeight);
                 txRequest.setFeeATM(Math.max(minFee, txRequest.getFeeATM()));
                 transaction.setFeeATM(txRequest.getFeeATM());

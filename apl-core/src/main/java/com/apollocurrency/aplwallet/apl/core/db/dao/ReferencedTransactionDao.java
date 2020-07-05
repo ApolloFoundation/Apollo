@@ -18,5 +18,7 @@ public interface ReferencedTransactionDao {
 
     int save(ReferencedTransaction referencedTransaction);
 
+    void insert(ReferencedTransaction referencedTransaction);
+
     List<Transaction> getReferencingTransactions(long transactionId, int from, Integer limit);
 }

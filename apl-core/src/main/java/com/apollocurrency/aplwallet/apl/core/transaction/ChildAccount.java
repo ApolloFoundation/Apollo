@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -36,7 +37,8 @@ public abstract class ChildAccount extends TransactionType {
             ChildAccountAttachment attachment = (ChildAccountAttachment) transaction.getAttachment();
             for (byte[] childPublicKey : attachment.getChildPublicKey()) {
                 if (ChildAccount.isAccountExists(childPublicKey)) {
-                    throw new AplException.NotValidException("");
+                    throw new AplException.NotValidException("Child account already exists, publicKey="
+                        +Convert.toHexString(childPublicKey));
                 }
             }
         }
@@ -145,12 +147,12 @@ public abstract class ChildAccount extends TransactionType {
             throw new AplException.NotValidException("Wrong value of the transaction amount "+transaction.getAmountATM());
         }
         if (attachment.getChildCount() <= 0 || attachment.getChildCount() != attachment.getChildPublicKey().size()){
-            throw new AplException.NotValidException("Wrong value of the child count " + attachment.getChildCount());
-        }
-        if (attachment.getChildPublicKey().contains(transaction.getSenderPublicKey())) {
-            throw new AplException.NotValidException("Wrong value of the child public keys, a child can't simultaneously be a parent.");
+            throw new AplException.NotValidException("Wrong value of the child count, count=" + attachment.getChildCount());
         }
         for (byte[] publicKey : attachment.getChildPublicKey()) {
+            if(Arrays.equals(publicKey, transaction.getSenderPublicKey())) {
+                throw new AplException.NotValidException("Wrong value of the child public keys, a child can't simultaneously be a parent.");
+            }
             if (!Crypto.isCanonicalPublicKey(publicKey)) {
                 throw new AplException.NotValidException("Invalid child public key: " + Convert.toHexString(publicKey));
             }

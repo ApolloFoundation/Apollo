@@ -56,7 +56,6 @@ public class ChildAccountAttachment extends AbstractAttachment {
         this.addressScope = addressScope;
         this.childCount = (short) childCount;
         this.childPublicKey = childPublicKey;
-
     }
 
     public byte[] dataBytes() {

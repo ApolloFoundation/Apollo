@@ -53,7 +53,7 @@ public class TransactionValidator {
         long feeATM = transaction.getFeeATM();
         long amountATM = transaction.getAmountATM();
         TransactionType type = transaction.getType();
-        if (transaction.getTimestamp() == 0 ? (deadline != 0 || feeATM != 0) : (deadline < 1 || feeATM <= 0)
+        if (transaction.getTimestamp() == 0 ? (deadline != 0 || feeATM != 0) : (deadline < 1 || feeATM < 0)
             || feeATM > maxBalanceAtm
             || amountATM < 0
             || amountATM > maxBalanceAtm
