@@ -20,15 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
-import com.apollocurrency.aplwallet.apl.core.service.state.asset.impl.AssetServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountAssetServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountCurrencyServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 
 import javax.enterprise.inject.spi.CDI;
 
@@ -38,6 +34,7 @@ public final class VoteWeighting {
     private static AccountAssetService accountAssetService;
     private static AccountCurrencyService accountCurrencyService;
     private static AssetService assetService;
+    private static CurrencyService currencyService;
     private final VotingModel votingModel;
     private final long holdingId; //either asset id or MS coin id
     private final long minBalance;
@@ -59,30 +56,37 @@ public final class VoteWeighting {
 
     private static AccountService lookupAccountService() {
         if (accountService == null) {
-            accountService = CDI.current().select(AccountServiceImpl.class).get();
+            accountService = CDI.current().select(AccountService.class).get();
         }
         return accountService;
     }
 
     private static AccountAssetService lookupAccountAssetService() {
         if (accountAssetService == null) {
-            accountAssetService = CDI.current().select(AccountAssetServiceImpl.class).get();
+            accountAssetService = CDI.current().select(AccountAssetService.class).get();
         }
         return accountAssetService;
     }
 
     private static AccountCurrencyService lookupAccountCurrencyService() {
         if (accountCurrencyService == null) {
-            accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
+            accountCurrencyService = CDI.current().select(AccountCurrencyService.class).get();
         }
         return accountCurrencyService;
     }
 
     public static AssetService lookupAssetService() {
         if (assetService == null) {
-            assetService = CDI.current().select(AssetServiceImpl.class).get();
+            assetService = CDI.current().select(AssetService.class).get();
         }
         return assetService;
+    }
+
+    public static CurrencyService lookupCurrencyService() {
+        if (currencyService == null) {
+            currencyService = CDI.current().select(CurrencyService.class).get();
+        }
+        return currencyService;
     }
 
     public VotingModel getVotingModel() {
@@ -111,7 +115,7 @@ public final class VoteWeighting {
         if ((votingModel == VotingModel.ASSET || votingModel == VotingModel.CURRENCY) && holdingId == 0) {
             throw new AplException.NotValidException("No holdingId provided");
         }
-        if (votingModel == VotingModel.CURRENCY && Currency.getCurrency(holdingId) == null) {
+        if (votingModel == VotingModel.CURRENCY && lookupCurrencyService().getCurrency(holdingId) == null) {
             throw new AplException.NotCurrentlyValidException("Currency " + Long.toUnsignedString(holdingId) + " not found");
         }
         lookupAssetService();
@@ -134,7 +138,7 @@ public final class VoteWeighting {
             if (minBalanceModel == MinBalanceModel.ASSET && assetService.getAsset(holdingId) == null) {
                 throw new AplException.NotCurrentlyValidException("Invalid min balance asset: " + Long.toUnsignedString(holdingId));
             }
-            if (minBalanceModel == MinBalanceModel.CURRENCY && Currency.getCurrency(holdingId) == null) {
+            if (minBalanceModel == MinBalanceModel.CURRENCY && lookupCurrencyService().getCurrency(holdingId) == null) {
                 throw new AplException.NotCurrentlyValidException("Invalid min balance currency: " + Long.toUnsignedString(holdingId));
             }
         }

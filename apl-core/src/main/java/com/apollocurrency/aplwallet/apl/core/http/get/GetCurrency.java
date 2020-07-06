@@ -25,7 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import org.json.simple.JSONStreamAware;
@@ -53,9 +53,9 @@ public final class GetCurrency extends AbstractAPIRequestHandler {
             if (currencyCode == null) {
                 return MISSING_CURRENCY;
             }
-            currency = Currency.getCurrencyByCode(currencyCode);
+            currency = lookupCurrencyService().getCurrencyByCode(currencyCode);
         } else {
-            currency = Currency.getCurrency(currencyId);
+            currency = lookupCurrencyService().getCurrency(currencyId);
         }
         if (currency == null) {
             throw new ParameterException(UNKNOWN_CURRENCY);

@@ -188,7 +188,7 @@ public class CurrencyExchangeOfferFacadeImpl implements CurrencyExchangeOfferFac
 
             // update data in Exchange
             exchangeService.addExchange(transaction, currencyId, asBuyOffer.getId(), account.getId(),
-                asBuyOffer.getAccountId(), curUnits, blockChainInfoService.getLastBlock(), asBuyOffer.getRateATM());
+                asBuyOffer.getAccountId(), curUnits, asBuyOffer.getRateATM());
         }
         long transactionId = transaction.getId();
         account = accountService.getAccount(account);
@@ -229,7 +229,7 @@ public class CurrencyExchangeOfferFacadeImpl implements CurrencyExchangeOfferFac
             int height = blockChainInfoService.getHeight();
             asSellOffer.decreaseLimitAndSupply(curUnits);
             asSellOffer.setHeight(height);
-            currencySellOfferService.insert((CurrencySellOffer)asSellOffer); // store new sell values
+            currencySellOfferService.insert((CurrencySellOffer) asSellOffer); // store new sell values
             CurrencyBuyOffer buyOffer = currencyBuyOfferService.getOffer(asSellOffer.getId()); // get contra-offer
             long excess = buyOffer.increaseSupply(curUnits); // change value
             buyOffer.setHeight(height);
@@ -251,7 +251,7 @@ public class CurrencyExchangeOfferFacadeImpl implements CurrencyExchangeOfferFac
                 log.trace("contra account === 2 exchangeAPLForCurrency {}", contraAccount);
             }
             exchangeService.addExchange(transaction, currencyId, asSellOffer.getId(), asSellOffer.getAccountId(),
-                account.getId(), curUnits, blockChainInfoService.getLastBlock(), asSellOffer.getRateATM());
+                account.getId(), curUnits, asSellOffer.getRateATM());
         }
         long transactionId = transaction.getId();
         account = accountService.getAccount(account);
@@ -264,9 +264,11 @@ public class CurrencyExchangeOfferFacadeImpl implements CurrencyExchangeOfferFac
         accountService.addToUnconfirmedBalanceATM(account, LedgerEvent.CURRENCY_EXCHANGE, transactionId,
             Math.multiplyExact(units, rateATM) - totalAmountATM);
         if (log.isTraceEnabled()) {
-            log.trace("account === 4 exchangeAPLForCurrency account={}", account);
-            log.trace("account === 4 exchangeAPLForCurrency accountCurrency={}",
-                accountCurrencyService.getAccountCurrency(account.getId(), currencyId));
+            if (log.isTraceEnabled()) {
+                log.trace("account === 4 exchangeAPLForCurrency account={}", account);
+                log.trace("account === 4 exchangeAPLForCurrency accountCurrency={}",
+                    accountCurrencyService.getAccountCurrency(account.getId(), currencyId));
+            }
         }
     }
 

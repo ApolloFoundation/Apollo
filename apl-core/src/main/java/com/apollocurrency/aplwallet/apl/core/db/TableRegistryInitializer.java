@@ -22,6 +22,9 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencySellOffe
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyTransferTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.exchange.ExchangeRequestTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.exchange.ExchangeTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyFounderTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencySupplyTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.poll.PollResultTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.poll.PollTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.TradeTable;
@@ -41,7 +44,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSPublicFeedbackTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSPurchaseTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSTagTable;
-import com.apollocurrency.aplwallet.apl.core.dao.state.poll.VoteTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.poll.VoteTable;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
@@ -133,6 +135,8 @@ public class TableRegistryInitializer {
     @Inject
     private AccountInfoTable accountInfoTable;
     @Inject
+    private AccountControlPhasingTable accountControlPhasingTable;
+    @Inject
     private AliasTable aliasTable;
     @Inject
     private AliasOfferTable aliasOfferTable;
@@ -142,8 +146,6 @@ public class TableRegistryInitializer {
     private BidOrderTable bidOrderTable;
     @Inject
     private TradeTable tradeTable;
-    @Inject
-    private AccountControlPhasingTable accountControlPhasingTable;
     @Inject
     private PollTable pollTable;
     @Inject
@@ -170,6 +172,12 @@ public class TableRegistryInitializer {
     private AssetTransferTable assetTransferTable;
     @Inject
     private VoteTable voteTable;
+    @Inject
+    private CurrencyTable currencyTable;
+    @Inject
+    private CurrencySupplyTable currencySupplyTable;
+    @Inject
+    private CurrencyFounderTable currencyFounderTable;
 
     @PostConstruct
     public void init() {
@@ -186,6 +194,5 @@ public class TableRegistryInitializer {
         Shuffling.init();
         ShufflingParticipant.init();
         CurrencyExchangeOffer.init();
-//        AssetTransfer.init(databaseManager);
     }
 }

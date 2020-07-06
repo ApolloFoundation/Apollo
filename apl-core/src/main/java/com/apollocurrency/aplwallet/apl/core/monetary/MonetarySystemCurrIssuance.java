@@ -5,8 +5,10 @@ package com.apollocurrency.aplwallet.apl.core.monetary;
 
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
@@ -49,16 +51,17 @@ class MonetarySystemCurrIssuance extends MonetarySystem {
         int minLength = Math.min(attachment.getCode().length(), attachment.getName().length());
         Currency oldCurrency;
         int oldMinLength = Integer.MAX_VALUE;
-        if ((oldCurrency = Currency.getCurrencyByCode(attachment.getCode())) != null) {
+        CurrencyService currencyService = lookupCurrencyService();
+        if ((oldCurrency = currencyService.getCurrencyByCode(attachment.getCode())) != null) {
             oldMinLength = Math.min(oldMinLength, Math.min(oldCurrency.getCode().length(), oldCurrency.getName().length()));
         }
-        if ((oldCurrency = Currency.getCurrencyByCode(attachment.getName())) != null) {
+        if ((oldCurrency = currencyService.getCurrencyByCode(attachment.getName())) != null) {
             oldMinLength = Math.min(oldMinLength, Math.min(oldCurrency.getCode().length(), oldCurrency.getName().length()));
         }
-        if ((oldCurrency = Currency.getCurrencyByName(attachment.getName())) != null) {
+        if ((oldCurrency = currencyService.getCurrencyByName(attachment.getName())) != null) {
             oldMinLength = Math.min(oldMinLength, Math.min(oldCurrency.getCode().length(), oldCurrency.getName().length()));
         }
-        if ((oldCurrency = Currency.getCurrencyByName(attachment.getCode())) != null) {
+        if ((oldCurrency = currencyService.getCurrencyByName(attachment.getCode())) != null) {
             oldMinLength = Math.min(oldMinLength, Math.min(oldCurrency.getCode().length(), oldCurrency.getName().length()));
         }
         if (minLength >= oldMinLength) {
@@ -140,7 +143,7 @@ class MonetarySystemCurrIssuance extends MonetarySystem {
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
         long transactionId = transaction.getId();
-        Currency.addCurrency(getLedgerEvent(), transactionId, transaction, senderAccount, attachment);
+        lookupCurrencyService().addCurrency(getLedgerEvent(), transactionId, transaction, senderAccount, attachment);
         lookupAccountCurrencyService().addToCurrencyAndUnconfirmedCurrencyUnits(senderAccount, getLedgerEvent(), transactionId, transactionId, attachment.getInitialSupply());
     }
 
