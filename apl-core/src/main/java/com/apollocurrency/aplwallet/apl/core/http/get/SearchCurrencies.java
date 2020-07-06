@@ -27,7 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -55,7 +55,7 @@ public final class SearchCurrencies extends AbstractAPIRequestHandler {
 
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();
-        try (DbIterator<Currency> currencies = Currency.searchCurrencies(query, firstIndex, lastIndex)) {
+        try (DbIterator<Currency> currencies = lookupCurrencyService().searchCurrencies(query, firstIndex, lastIndex)) {
             while (currencies.hasNext()) {
                 jsonArray.add(JSONData.currency(currencies.next(), includeCounts));
             }

@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyDeletion;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
@@ -44,7 +44,7 @@ public final class DeleteCurrency extends CreateTransaction {
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         Currency currency = HttpParameterParserUtil.getCurrency(req);
         Account account = HttpParameterParserUtil.getSenderAccount(req);
-        if (!currency.canBeDeletedBy(account.getId())) {
+        if (!lookupCurrencyService().canBeDeletedBy(currency, account.getId())) {
             return JSONResponses.CANNOT_DELETE_CURRENCY;
         }
         Attachment attachment = new MonetarySystemCurrencyDeletion(currency.getId());

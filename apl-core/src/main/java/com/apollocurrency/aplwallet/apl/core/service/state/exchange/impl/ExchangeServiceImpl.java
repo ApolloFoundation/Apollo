@@ -68,12 +68,12 @@ public class ExchangeServiceImpl implements ExchangeService {
     public Exchange addExchange(Transaction transaction, long currencyId,
                                 long offerId,
                                 long sellerId, long buyerId, long units,
-                                Block lastBlock,
+//                                Block lastBlock,
                                 long rateATM) {
-        Block block = blockChainInfoService.getLastBlock();
+        Block lastBlock = blockChainInfoService.getLastBlock();
         Exchange exchange = new Exchange(
             transaction.getId(), currencyId, lastBlock.getId(), offerId, sellerId, buyerId, units,
-            rateATM, block.getTimestamp(), block.getHeight());
+            rateATM, lastBlock.getTimestamp(), lastBlock.getHeight());
         exchangeTable.insert(exchange);
         return exchange;
     }

@@ -5,6 +5,7 @@ package com.apollocurrency.aplwallet.apl.core.monetary;
 
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeSell;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
@@ -58,7 +59,7 @@ class MSExchangeSell extends MonetarySystemExchange {
     @Override
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         MonetarySystemExchangeSell attachment = (MonetarySystemExchangeSell) transaction.getAttachment();
-        Currency currency = Currency.getCurrency(attachment.getCurrencyId());
+        Currency currency = lookupCurrencyService().getCurrency(attachment.getCurrencyId());
         if (currency != null) {
             lookupAccountCurrencyService().addToUnconfirmedCurrencyUnits(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getCurrencyId(), attachment.getUnits());
         }

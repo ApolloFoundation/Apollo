@@ -10,17 +10,19 @@ import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMinting;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyMintTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyMint;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySupply;
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyMintService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
 import lombok.extern.slf4j.Slf4j;
 
@@ -31,14 +33,20 @@ public class CurrencyMintServiceImpl implements CurrencyMintService {
     private final CurrencyMintTable currencyMintTable;
     private final BlockChainInfoService blockChainInfoService;
     private final AccountCurrencyService accountCurrencyService;
+    private final CurrencyService currencyService;
+    private MonetaryCurrencyMintingService monetaryCurrencyMintingService;
 
     @Inject
     public CurrencyMintServiceImpl(CurrencyMintTable currencyMintTable,
                                    BlockChainInfoService blockChainInfoService,
-                                   AccountCurrencyService accountCurrencyService) {
+                                   AccountCurrencyService accountCurrencyService,
+                                   CurrencyService currencyService,
+                                   MonetaryCurrencyMintingService monetaryCurrencyMintingService) {
         this.currencyMintTable = currencyMintTable;
         this.blockChainInfoService = blockChainInfoService;
         this.accountCurrencyService = accountCurrencyService;
+        this.currencyService = currencyService;
+        this.monetaryCurrencyMintingService = monetaryCurrencyMintingService;
     }
 
     @Override
@@ -49,8 +57,12 @@ public class CurrencyMintServiceImpl implements CurrencyMintService {
         if (currencyMint != null && attachment.getCounter() <= currencyMint.getCounter()) {
             return;
         }
-        Currency currency = Currency.getCurrency(attachment.getCurrencyId());
-        if (CurrencyMinting.meetsTarget(account.getId(), currency, attachment)) {
+        Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
+        CurrencySupply currencySupply = currencyService.loadCurrencySupplyByCurrency(currency); // load dependency
+        if (currencySupply != null) {
+            currency.setCurrencySupply(currencySupply);
+        }
+        if (monetaryCurrencyMintingService.meetsTarget(account.getId(), currency, attachment)) {
             if (currencyMint == null) {
                 currencyMint = new CurrencyMint(attachment.getCurrencyId(),
                     account.getId(), attachment.getCounter(), blockChainInfoService.getHeight());
@@ -59,9 +71,12 @@ public class CurrencyMintServiceImpl implements CurrencyMintService {
                 currencyMint.setCounter( attachment.getCounter() );
             }
             currencyMintTable.insert(currencyMint);
-            long units = Math.min(attachment.getUnits(), currency.getMaxSupply() - currency.getCurrentSupply());
-            accountCurrencyService.addToCurrencyAndUnconfirmedCurrencyUnits(account, event, eventId, currency.getId(), units);
-            currency.increaseSupply(units);
+            long units = Math.min(attachment.getUnits(),
+                currency.getMaxSupply()
+                    - (currency.getCurrencySupply() != null ? currency.getCurrencySupply().getCurrentSupply() : 0));
+            accountCurrencyService.addToCurrencyAndUnconfirmedCurrencyUnits(
+                account, event, eventId, currency.getId(), units);
+            currencyService.increaseSupply(currency, units);
         } else {
             log.debug("Currency mint hash no longer meets target %s", attachment.getJSONObject().toJSONString());
         }
