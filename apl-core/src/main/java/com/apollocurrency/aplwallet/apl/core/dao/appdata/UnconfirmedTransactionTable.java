@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.appdata;
 
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
@@ -19,9 +20,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
 public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransaction> {
@@ -31,6 +36,8 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
     private final Map<DbKey, UnconfirmedTransaction> transactionCache = new HashMap<>();
     private final PriorityQueue<UnconfirmedTransaction> waitingTransactions;
     private final Map<TransactionType, Map<String, Integer>> unconfirmedDuplicates = new HashMap<>();
+    private final Map<Transaction, Transaction> txToBroadcastWhenConfirmed = new ConcurrentHashMap<>();
+    private final Set<Transaction> broadcastedTransactions = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     @Inject
     public UnconfirmedTransactionTable(LongKeyFactory<UnconfirmedTransaction> transactionKeyFactory,
@@ -38,7 +45,7 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
         super("unconfirmed_transaction", transactionKeyFactory);
         this.transactionKeyFactory = transactionKeyFactory;
         int n = propertiesHolder.getIntProperty("apl.maxUnconfirmedTransactions");
-        maxUnconfirmedTransactions = n <= 0 ? Integer.MAX_VALUE : n;
+        this.maxUnconfirmedTransactions = n <= 0 ? Integer.MAX_VALUE : n;
         this.waitingTransactions = createWaitingTransactionsQueue();
     }
 
@@ -141,6 +148,42 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
             }
 
         };
+    }
+
+    public LongKeyFactory<UnconfirmedTransaction> getTransactionKeyFactory() {
+        return transactionKeyFactory;
+    }
+
+    public PriorityQueue<UnconfirmedTransaction> getWaitingTransactionsCache() {
+        return waitingTransactions;
+    }
+
+    public int getWaitingTransactionsCacheSize() {
+        return waitingTransactions.size();
+    }
+
+    public Collection<UnconfirmedTransaction> getWaitingTransactionsUnmodifiedCollection() {
+        return Collections.unmodifiableCollection(waitingTransactions);
+    }
+
+    public Map<Transaction, Transaction> getTxToBroadcastWhenConfirmed() {
+        return txToBroadcastWhenConfirmed;
+    }
+
+    public Map<TransactionType, Map<String, Integer>> getUnconfirmedDuplicates() {
+        return unconfirmedDuplicates;
+    }
+
+    public Set<Transaction> getBroadcastedTransactions() {
+        return broadcastedTransactions;
+    }
+
+    public int getBroadcastedTransactionsSize() {
+        return broadcastedTransactions.size();
+    }
+
+    public Map<DbKey, UnconfirmedTransaction> getTransactionCache() {
+        return transactionCache;
     }
 
 }

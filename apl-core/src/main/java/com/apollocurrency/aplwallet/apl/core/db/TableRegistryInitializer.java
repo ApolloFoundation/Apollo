@@ -7,8 +7,8 @@ package com.apollocurrency.aplwallet.apl.core.db;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.Vote;
 import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.DataTagDao;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.PrunableMessageTable;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.TaggedDataDao;
@@ -178,6 +178,8 @@ public class TableRegistryInitializer {
     private CurrencySupplyTable currencySupplyTable;
     @Inject
     private CurrencyFounderTable currencyFounderTable;
+    @Inject
+    private UnconfirmedTransactionTable unconfirmedTransactionTable;
 
     @PostConstruct
     public void init() {
