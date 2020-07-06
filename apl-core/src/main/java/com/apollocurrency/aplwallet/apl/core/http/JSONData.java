@@ -31,6 +31,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisAccounts;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.AvailableOffers;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyExchangeOffer;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyFounder;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.PollOptionResult;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffler;
@@ -71,8 +72,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollRes
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingVote;
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerHolding;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetTransfer;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyFounder;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
@@ -93,6 +93,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.TradeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountLeaseService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
 import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
@@ -140,6 +141,7 @@ public final class JSONData {
     private static AssetTransferService assetTransferService = CDI.current().select(AssetTransferService.class).get();
     private static ExchangeService exchangeService = CDI.current().select(ExchangeService.class).get();
     private static CurrencyTransferService currencyTransferService = CDI.current().select(CurrencyTransferService.class).get();
+    private static CurrencyService currencyService = CDI.current().select(CurrencyService.class).get();
     private static ShufflingService shufflingService = CDI.current().select(ShufflingService.class).get();
 
     private JSONData() {
@@ -251,13 +253,13 @@ public final class JSONData {
         json.put("description", currency.getDescription());
         json.put("type", currency.getType());
         json.put("initialSupply", String.valueOf(currency.getInitialSupply()));
-        json.put("currentSupply", String.valueOf(currency.getCurrentSupply()));
+        json.put("currentSupply", String.valueOf(currencyService.getCurrentSupply(currency)));
         json.put("reserveSupply", String.valueOf(currency.getReserveSupply()));
         json.put("maxSupply", String.valueOf(currency.getMaxSupply()));
         json.put("creationHeight", currency.getCreationHeight());
         json.put("issuanceHeight", currency.getIssuanceHeight());
         json.put("minReservePerUnitATM", String.valueOf(currency.getMinReservePerUnitATM()));
-        json.put("currentReservePerUnitATM", String.valueOf(currency.getCurrentReservePerUnitATM()));
+        json.put("currentReservePerUnitATM", String.valueOf(currencyService.getCurrentReservePerUnitATM(currency)));
         json.put("minDifficulty", currency.getMinDifficulty());
         json.put("maxDifficulty", currency.getMaxDifficulty());
         json.put("algorithm", currency.getAlgorithm());
@@ -739,7 +741,7 @@ public final class JSONData {
         if (voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.ASSET) {
             json.put("decimals", assetService.getAsset(voteWeighting.getHoldingId()).getDecimals());
         } else if (voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.CURRENCY) {
-            Currency currency = Currency.getCurrency(voteWeighting.getHoldingId());
+            Currency currency = currencyService.getCurrency(voteWeighting.getHoldingId());
             if (currency != null) {
                 json.put("decimals", currency.getDecimals());
             } else {
@@ -1393,7 +1395,7 @@ public final class JSONData {
      */
     @Deprecated
     private static void putCurrencyInfo(JSONObject json, long currencyId) {
-        Currency currency = Currency.getCurrency(currencyId);
+        Currency currency = currencyService.getCurrency(currencyId);
         if (currency == null) {
             return;
         }

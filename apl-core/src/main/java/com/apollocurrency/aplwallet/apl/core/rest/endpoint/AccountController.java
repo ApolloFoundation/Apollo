@@ -33,7 +33,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
 import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FAConverter;
@@ -58,6 +57,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetS
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.AskOrderService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
@@ -126,6 +126,7 @@ public class AccountController {
     private OrderService<AskOrder, ColoredCoinsAskOrderPlacement> orderService;
     private AccountStatisticsService accountStatisticsService;
     private AssetService assetService;
+    private CurrencyService currencyService;
 
     @Inject
     public AccountController(Blockchain blockchain,
@@ -144,7 +145,8 @@ public class AccountController {
                              @AskOrderService OrderService<AskOrder, ColoredCoinsAskOrderPlacement> orderService,
                              @Property(name = "apl.maxAPIRecords", defaultValue = "100") int maxAPIrecords,
                              AccountStatisticsService accountStatisticsService,
-                             AssetService assetService) {
+                             AssetService assetService,
+                             CurrencyService currencyService) {
 
         this.blockchain = blockchain;
         this.account2FAHelper = account2FAHelper;
@@ -163,6 +165,7 @@ public class AccountController {
         maxAPIFetchRecords = maxAPIrecords;
         this.accountStatisticsService = accountStatisticsService;
         this.assetService = assetService;
+        this. currencyService =  currencyService;
     }
 
     @Path("/account")
@@ -512,7 +515,7 @@ public class AccountController {
             if (includeCurrencyInfo) {
                 accountCurrencyDTOList.forEach(dto -> accountCurrencyConverter
                     .addCurrency(dto,
-                        Currency.getCurrency(
+                        currencyService.getCurrency(
                             Convert.parseLong(dto.getCurrency()))));
             }
 
@@ -522,7 +525,7 @@ public class AccountController {
             AccountCurrencyDTO dto = accountCurrencyConverter.convert(accountCurrency);
             if (dto != null) {
                 if (includeCurrencyInfo) {
-                    accountCurrencyConverter.addCurrency(dto, Currency.getCurrency(currencyId.get()));
+                    accountCurrencyConverter.addCurrency(dto, currencyService.getCurrency(currencyId.get()));
                 }
                 return response.bind(dto).build();
             } else {

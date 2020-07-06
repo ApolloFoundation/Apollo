@@ -5,8 +5,8 @@ package com.apollocurrency.aplwallet.apl.core.monetary;
 
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
 import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMinting;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
@@ -53,7 +53,7 @@ class MSCurrencyMinting extends MonetarySystem {
     @Override
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
         MonetarySystemCurrencyMinting attachment = (MonetarySystemCurrencyMinting) transaction.getAttachment();
-        Currency currency = Currency.getCurrency(attachment.getCurrencyId());
+        Currency currency = lookupCurrencyService().getCurrency(attachment.getCurrencyId());
         CurrencyType.validate(currency, transaction);
         if (attachment.getUnits() <= 0) {
             throw new AplException.NotValidException("Invalid number of units: " + attachment.getUnits());
@@ -61,14 +61,14 @@ class MSCurrencyMinting extends MonetarySystem {
         if (attachment.getUnits() > (currency.getMaxSupply() - currency.getReserveSupply()) / Constants.MAX_MINTING_RATIO) {
             throw new AplException.NotValidException(String.format("Cannot mint more than 1/%d of the total units supply in a single request", Constants.MAX_MINTING_RATIO));
         }
-        if (!currency.isActive()) {
+        if (!lookupCurrencyService().isActive(currency)) {
             throw new AplException.NotCurrentlyValidException("Currency not currently active " + attachment.getJSONObject());
         }
         long counter = lookupCurrencyMintService().getCounter(attachment.getCurrencyId(), transaction.getSenderId());
         if (attachment.getCounter() <= counter) {
             throw new AplException.NotCurrentlyValidException(String.format("Counter %d has to be bigger than %d", attachment.getCounter(), counter));
         }
-        if (!CurrencyMinting.meetsTarget(transaction.getSenderId(), currency, attachment)) {
+        if (!lookupMonetaryCurrencyMintingService().meetsTarget(transaction.getSenderId(), currency, attachment)) {
             throw new AplException.NotCurrentlyValidException(String.format("Hash doesn't meet target %s", attachment.getJSONObject()));
         }
     }

@@ -18,7 +18,7 @@ import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
 public class CurrencySellOfferTable extends VersionedDeletableEntityDbTable<CurrencySellOffer> {
 
-    public static final LongKeyFactory<CurrencySellOffer> buyOfferDbKeyFactory = new LongKeyFactory<>("id") {
+    public static final LongKeyFactory<CurrencySellOffer> sellOfferDbKeyFactory = new LongKeyFactory<>("id") {
         @Override
         public DbKey newKey(CurrencySellOffer offer) {
             if (offer.getDbKey() == null) {
@@ -29,7 +29,7 @@ public class CurrencySellOfferTable extends VersionedDeletableEntityDbTable<Curr
     };
 
     public CurrencySellOfferTable() {
-        super("sell_offer", buyOfferDbKeyFactory);
+        super("sell_offer", sellOfferDbKeyFactory);
     }
 
     @Override
@@ -37,7 +37,7 @@ public class CurrencySellOfferTable extends VersionedDeletableEntityDbTable<Curr
         return new CurrencySellOffer(rs, dbKey);
     }
 
-    public void save(Connection con, CurrencySellOffer currencyBuyOffer) throws SQLException {
+    public void save(Connection con, CurrencySellOffer sellOffer) throws SQLException {
         try (
             @DatabaseSpecificDml(DmlMarker.MERGE)
             PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (id, currency_id, account_id, "
@@ -45,17 +45,17 @@ public class CurrencySellOfferTable extends VersionedDeletableEntityDbTable<Curr
                 + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)")
         ) {
             int i = 0;
-            pstmt.setLong(++i, currencyBuyOffer.getId());
-            pstmt.setLong(++i, currencyBuyOffer.getCurrencyId());
-            pstmt.setLong(++i, currencyBuyOffer.getAccountId());
-            pstmt.setLong(++i, currencyBuyOffer.getRateATM());
-            pstmt.setLong(++i, currencyBuyOffer.getLimit());
-            pstmt.setLong(++i, currencyBuyOffer.getSupply());
-            pstmt.setInt(++i, currencyBuyOffer.getExpirationHeight());
-            pstmt.setInt(++i, currencyBuyOffer.getCreationHeight());
-            pstmt.setShort(++i, currencyBuyOffer.getTransactionIndex());
-            pstmt.setInt(++i, currencyBuyOffer.getTransactionHeight());
-            pstmt.setInt(++i, currencyBuyOffer.getHeight());
+            pstmt.setLong(++i, sellOffer.getId());
+            pstmt.setLong(++i, sellOffer.getCurrencyId());
+            pstmt.setLong(++i, sellOffer.getAccountId());
+            pstmt.setLong(++i, sellOffer.getRateATM());
+            pstmt.setLong(++i, sellOffer.getLimit());
+            pstmt.setLong(++i, sellOffer.getSupply());
+            pstmt.setInt(++i, sellOffer.getExpirationHeight());
+            pstmt.setInt(++i, sellOffer.getCreationHeight());
+            pstmt.setShort(++i, sellOffer.getTransactionIndex());
+            pstmt.setInt(++i, sellOffer.getTransactionHeight());
+            pstmt.setInt(++i, sellOffer.getHeight());
             pstmt.executeUpdate();
         }
     }

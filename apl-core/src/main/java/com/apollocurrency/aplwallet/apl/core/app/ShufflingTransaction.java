@@ -26,7 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
@@ -99,9 +99,9 @@ public abstract class ShufflingTransaction extends TransactionType {
                     throw new AplException.NotValidException("Invalid asset quantity " + amount);
                 }
             } else if (holdingType == HoldingType.CURRENCY) {
-                Currency currency = Currency.getCurrency(attachment.getHoldingId());
+                Currency currency = lookupCurrencyService().getCurrency(attachment.getHoldingId());
                 CurrencyType.validate(currency, transaction);
-                if (!currency.isActive()) {
+                if (!lookupCurrencyService().isActive(currency)) {
                     throw new AplException.NotCurrentlyValidException("Currency is not active: " + currency.getCode());
                 }
                 if (amount <= 0 || amount > Constants.MAX_CURRENCY_TOTAL_SUPPLY) {
@@ -165,7 +165,7 @@ public abstract class ShufflingTransaction extends TransactionType {
             if (attachment.getHoldingType() != HoldingType.CURRENCY) {
                 return false;
             }
-            Currency currency = Currency.getCurrency(attachment.getHoldingId());
+            Currency currency = lookupCurrencyService().getCurrency(attachment.getHoldingId());
             String nameLower = currency.getName().toLowerCase();
             String codeLower = currency.getCode().toLowerCase();
             boolean isDuplicate = TransactionType.isDuplicate(MonetarySystem.CURRENCY_ISSUANCE, nameLower, duplicates, false);

@@ -9,7 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 
 import javax.inject.Inject;
-import java.util.Comparator;
 import java.util.stream.Stream;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -25,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySellOffer;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.impl.CurrencySellOfferServiceImpl;
 import com.apollocurrency.aplwallet.apl.data.CurrencySellOfferTestData;
@@ -37,10 +36,11 @@ import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+@Tag("slow")
 @EnableWeld
 class CurrencySellOfferServiceTest {
     @RegisterExtension
@@ -51,10 +51,6 @@ class CurrencySellOfferServiceTest {
     CurrencySellOfferTestData td;
     @Inject
     private CurrencySellOfferService offerService;
-
-    Comparator<CurrencySellOffer> currencySellOfferComparator = Comparator
-        .comparing(CurrencySellOffer::getId)
-        .thenComparing(CurrencySellOffer::getAccountId);
 
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
@@ -100,14 +96,17 @@ class CurrencySellOfferServiceTest {
         assertEquals(6, result.count());
     }
 
-    @Disabled // temporary till Currency is refactored
+    @Test
     void test_getOffersStream() {
-        Currency currency = new Currency(-4132128809614485872L, null, 0L,
-            null, null, null, 0, 0, 0L, 0, 0,
-            0L, 0, 0, (byte)0, (byte)0, (byte)0, 0L);
+        Currency currency = new Currency(
+            -4132128809614485872L, 0L, "NotKnown", "not_known", "code", "description",
+            0, 0L, 0L, 0L, 0,
+            0, 0L, 0, 0,
+            (byte)0, (byte)0, (byte)0, null, 0,
+            true, true);
         Stream<CurrencySellOffer> result = offerService.getOffersStream(currency, 0, 4);
         assertNotNull(result);
-        assertEquals(6, result.count());
+        assertEquals(2, result.count());
     }
 
     @Test

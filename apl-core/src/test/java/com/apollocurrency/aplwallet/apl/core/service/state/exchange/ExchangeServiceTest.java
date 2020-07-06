@@ -64,7 +64,7 @@ class ExchangeServiceTest {
         doNothing().when(table).insert(isA(Exchange.class));
 
         //WHEN
-        service.addExchange(tr, 1L, 1L, 1L, 1L, 2L, blockTestData.BLOCK_11, 10L);
+        service.addExchange(tr, 1L, 1L, 1L, 1L, 2L, /*blockTestData.BLOCK_11, */10L);
 
         //THEN
         verify(table).insert(isA(Exchange.class));
