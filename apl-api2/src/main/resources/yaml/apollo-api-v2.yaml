@@ -82,7 +82,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Account'
+                $ref: '#/components/schemas/AccountInfo'
         400:
           $ref: '#/components/responses/BadRequest'
         500:
@@ -736,7 +736,7 @@ components:
           type: string
           example: 'APL-AHYW-P3YX-V426-4UMP2'
           nullable: true
-    Account:
+    AccountInfo:
       allOf:
         - $ref: '#/components/schemas/BasicAccount'
         - type: object
@@ -832,7 +832,7 @@ components:
       type: object
       properties:
         account:
-          $ref: '#/components/schemas/Account'
+          $ref: '#/components/schemas/AccountInfo'
         operations:
           type: array
           items:
@@ -841,7 +841,7 @@ components:
       type: object
       properties:
         account:
-          $ref: '#/components/schemas/Account'
+          $ref: '#/components/schemas/AccountInfo'
         operations_count:
           type: integer
           format: int32
