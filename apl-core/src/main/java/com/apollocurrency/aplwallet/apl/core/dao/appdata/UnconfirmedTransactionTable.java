@@ -20,9 +20,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
@@ -148,6 +150,20 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
             }
 
         };
+    }
+
+    public List<Long> getAllUnconfirmedTransactionIds() {
+        List<Long> result = new ArrayList<>();
+        try (Connection con = databaseManager.getDataSource().getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT id FROM unconfirmed_transaction");
+             ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                result.add(rs.getLong("id"));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+        return result;
     }
 
     public LongKeyFactory<UnconfirmedTransaction> getTransactionKeyFactory() {

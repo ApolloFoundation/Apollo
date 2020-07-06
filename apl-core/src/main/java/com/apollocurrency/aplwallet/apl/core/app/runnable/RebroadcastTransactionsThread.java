@@ -33,6 +33,7 @@ public class RebroadcastTransactionsThread implements Runnable {
         this.timeService = Objects.requireNonNull(timeService);
         this.unconfirmedTransactionTable = Objects.requireNonNull(unconfirmedTransactionTable);
         this.peers = Objects.requireNonNull(peers);
+        log.info("Created 'RebroadcastTransactionsThread' instance");
     }
 
     @Override

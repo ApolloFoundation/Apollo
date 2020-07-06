@@ -20,7 +20,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessTransactionsThread;
+import com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessWaitingTransactionsThread;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.RebroadcastTransactionsThread;
+import com.apollocurrency.aplwallet.apl.core.app.runnable.RemoveUnconfirmedTransactionsThread;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -108,7 +111,12 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private PeersService peers;// = CDI.current().select(PeersService.class).get();
     private AccountService accountService;
     private int maxUnconfirmedTransactions;
+    private volatile boolean cacheInitialized = false;
+
     private RebroadcastTransactionsThread rebroadcastTransactionsThread;
+    private ProcessWaitingTransactionsThread processWaitingTransactionsThread;
+    private ProcessTransactionsThread processTransactionsThread;
+    private RemoveUnconfirmedTransactionsThread removeUnconfirmedTransactionsThread;
 
 /*
     private final Runnable rebroadcastTransactionsThread = () -> {
@@ -178,6 +186,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     };
 */
 
+/*
     private final Runnable processTransactionsThread = () -> {
         try {
             try {
@@ -217,7 +226,9 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             System.exit(1);
         }
     };
+*/
 
+/*
     private final Runnable processWaitingTransactionsThread = () -> {
         try {
             try {
@@ -234,7 +245,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             System.exit(1);
         }
     };
-    private volatile boolean cacheInitialized = false;
+*/
 
     @Inject
     public TransactionProcessorImpl(PropertiesHolder propertiesHolder,
@@ -267,8 +278,14 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         this.peers = Objects.requireNonNull(peers);
         int n = propertiesHolder.getIntProperty("apl.maxUnconfirmedTransactions");
         this.maxUnconfirmedTransactions = n <= 0 ? Integer.MAX_VALUE : n;
+        // threads creation
         this.rebroadcastTransactionsThread = new RebroadcastTransactionsThread(
             this.timeService, this.unconfirmedTransactionTable, this.peers);
+        this.processWaitingTransactionsThread = new ProcessWaitingTransactionsThread(this);
+        this.processTransactionsThread = new ProcessTransactionsThread(
+            this, this.unconfirmedTransactionTable, blockchainConfig, peers);
+        this.removeUnconfirmedTransactionsThread = new RemoveUnconfirmedTransactionsThread(
+            this.databaseManager, this.unconfirmedTransactionTable, this, this.timeService, this.globalSync);
     }
 
     private BlockchainProcessor lookupBlockchainProcessor() {
@@ -347,6 +364,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     }
 */
 
+/*
     private Runnable createRemoveUnconfirmedTransactionsThread() {
         return () -> {
             try {
@@ -390,6 +408,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             }
         };
     }
+*/
 
     public void init() {
 
@@ -421,7 +440,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             dispatcher.schedule(Task.builder()
                 .name("RemoveUnconfirmedTransactions")
                 .delay(20000)
-                .task(createRemoveUnconfirmedTransactionsThread())
+                .task(removeUnconfirmedTransactionsThread)
                 .build());
             dispatcher.schedule(Task.builder()
                 .name("ProcessWaitingTransactions")
@@ -475,6 +494,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         return unconfirmedTransactionTable.get(dbKey);
     }
 
+/*
     private List<Long> getAllUnconfirmedTransactionIds() {
         List<Long> result = new ArrayList<>();
         try (Connection con = lookupDataSource().getConnection();
@@ -488,6 +508,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         }
         return result;
     }
+*/
 
     @Override
     public UnconfirmedTransaction[] getAllWaitingTransactions() {
@@ -735,7 +756,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         }
     }
 
-    private void processPeerTransactions(JSONArray transactionsData) throws AplException.NotValidException {
+    public void processPeerTransactions(JSONArray transactionsData) throws AplException.NotValidException {
         if (blockchain.getHeight() <= blockchainConfig.getLastKnownBlock()) {
             return;
         }
