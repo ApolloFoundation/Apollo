@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountControlPhasingTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountCurrencyTable;
@@ -165,7 +166,7 @@ class CsvWriterReaderDerivedTablesTest {
         PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class,
         PhasingVoteTable.class, PhasingPollTable.class,
         BlockDaoImpl.class, TransactionDaoImpl.class,
-        CsvEscaperImpl.class)
+        CsvEscaperImpl.class, UnconfirmedTransactionTable.class)
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))

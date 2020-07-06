@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
@@ -135,7 +136,7 @@ class CsvImporterTest {
         DerivedDbTablesRegistryImpl.class,
         AplAppStatus.class,
         BlockDaoImpl.class, TransactionDaoImpl.class,
-        ValueParserImpl.class, CsvEscaperImpl.class)
+        ValueParserImpl.class, CsvEscaperImpl.class, UnconfirmedTransactionTable.class)
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))

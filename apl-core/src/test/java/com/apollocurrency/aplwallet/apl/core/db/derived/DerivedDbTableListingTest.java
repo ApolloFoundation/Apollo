@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.derived;
 
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountCurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountGuaranteedBalanceTable;
@@ -137,7 +138,8 @@ class DerivedDbTableListingTest {
         TaggedDataExtendDao.class,
         FullTextConfigImpl.class,
         DerivedDbTablesRegistryImpl.class,
-        TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
+        TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
+        UnconfirmedTransactionTable.class)
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
