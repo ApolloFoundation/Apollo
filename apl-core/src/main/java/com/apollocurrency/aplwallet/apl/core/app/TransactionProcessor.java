@@ -66,6 +66,8 @@ public interface TransactionProcessor {
 
     void processPeerTransactions(JSONArray transactionsData) throws AplException.NotValidException;
 
+    void processTransaction(UnconfirmedTransaction unconfirmedTransaction) throws AplException.ValidationException;
+
     SortedSet<? extends Transaction> getCachedUnconfirmedTransactions(List<String> exclude);
 
     List<Transaction> restorePrunableData(JSONArray transactions) throws AplException.NotValidException;
