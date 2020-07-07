@@ -2,8 +2,8 @@ package com.apollocurrency.aplwallet.apl.core.rest.v2.impl;
 
 import com.apollocurrency.aplwallet.api.v2.AccountApiService;
 import com.apollocurrency.aplwallet.api.v2.NotFoundException;
+import com.apollocurrency.aplwallet.api.v2.model.AccountInfoResp;
 import com.apollocurrency.aplwallet.api.v2.model.AccountReq;
-import com.apollocurrency.aplwallet.api.v2.model.BasicAccount;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
 import javax.enterprise.context.RequestScoped;
@@ -20,7 +20,7 @@ public class AccountApiServiceImpl implements AccountApiService {
         byte[] publicKey = Convert.parseHexString(pk);
         long accountId = Convert.getId(publicKey);
 
-        BasicAccount basicAccount = new BasicAccount();
+        AccountInfoResp basicAccount = new AccountInfoResp();
         basicAccount.setPublicKey(pk);
         basicAccount.setAccount(Convert.defaultRsAccount(accountId));
 
@@ -29,7 +29,7 @@ public class AccountApiServiceImpl implements AccountApiService {
 
     public Response getAccountInfo(String account, SecurityContext securityContext)
       throws NotFoundException {
-          BasicAccount basicAccount = new BasicAccount();
+        AccountInfoResp basicAccount = new AccountInfoResp();
           basicAccount.setAccount(account);
       return Response.ok().entity(basicAccount).build();
   }

@@ -1,3 +1,4 @@
+The Swagger Codegen project - https://github.com/swagger-api/swagger-codegen/tree/3.0.0
 
 To build package, please execute the following:
 
