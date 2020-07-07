@@ -264,9 +264,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                type: array
-                                items:
-                                    $ref: '#/components/schemas/TransactionInfo'
+                                $ref: '#/components/schemas/TransactionInfoArrayResp'
                 401:
                     description: Not authenticated
                 403:
@@ -362,7 +360,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/TransactionInfo'
+                                $ref: '#/components/schemas/TransactionInfoResp'
                 400:
                     $ref: '#/components/responses/BadRequest'
                 500:
@@ -446,128 +444,140 @@ paths:
 
 components:
     schemas:
-        TransactionInfo:
+        TransactionInfoArrayResp:
             allOf:
                 - $ref: '#/components/schemas/BaseResponse'
                 - type: object
                   properties:
-                      id:
-                          description: The transaction ID
-                          type: string
-                          format: hex_bytearray
-                          example: '1a0feb1306043151604016701'
-                      type:
-                          description: Transaction type
-                          type: string
-                          format: int8
-                          example: '2'
-                      subtype:
-                          description: Transaction subtype
-                          type: string
-                          format: int8
-                          example: '1'
-                      phased:
-                          description: is true if the transaction is phased
-                          type: boolean
-                          example: false
-                      timestamp:
-                          type: integer
-                          format: int64
-                          description: Transaction timestamp, Unix timestamp in milliseconds
-                          example: 1591696372000
-                      deadline:
-                          description: the deadline for the transaction to be confirmed in minutes,ex.1440=24h
-                          type: integer
-                          format: int32
-                          example: 1440
-                      senderPublicKey:
-                          type: string
-                          format: hex_bytearray
-                          description: The public key of the sending account for the transaction
-                      recipient:
-                          type: string
-                          description: The account Id of the recipient
-                          example: 'APL-FXHG-6KHM-23LE-42ACU'
-                      amount:
-                          type: string
-                          format: integer
-                          description: The amount of the transaction
-                          example: 34500000000
-                      fee:
-                          type: string
-                          format: integer
-                          example: 200000000
-                          description: The fee of the transaction
-                      referencedTransactionFullHash:
-                          type: string
-                          format: hex_bytearray
-                          description: The full hash of a transaction referenced by this one
-                          example: '5424ca4dd976a873839c7d5c9952fa15ae619f678365e8ebbc73f967142eb40d'
-                      signature:
-                          type: string
-                          format: hex_bytearray
-                          example: '920173ae606d36c1c77fc5bdf294bd048d04f85c46535525771b524dbb1ed20b73311900d4a409c293a10d8a5ab987430be4bd7478fb16a41cf775afa33c4d56'
-                          description: The digital signature of the transaction
-                      signatureHash:
-                          type: string
-                          format: hex_bytearray
-                          description: SHA-256 hash of the transaction signature
-                          example: '2fc1883e9b76fdc67fabee0a3def5f4b7fc2de9cd65bc8bb6d39eaf5e99498d8'
-                      fullHash:
-                          type: string
-                          format: hex_bytearray
-                          description: The full hash of the transaction
-                          example: '39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152'
-                      attachment:
-                          type: object
-                          nullable: true
-                          additionalProperties:
-                              type: object
-                          description: An object containong any additional data needed for the transaction
-                      sender:
-                          type: string
-                          description: The sender account
-                          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
-                      height:
-                          type: integer
-                          format: int64
-                          example: 4365987
-                          description: The height of the block in the blockchain
-                      version:
-                          type: string
-                          format: int8
-                          example: '1'
-                          description: The transaction version number
-                      ecBlockId:
-                          type: string
-                          format: hex_bytearray
-                          description: The economic clustering block ID
-                          example: '40faaeb15856251679437054'
-                      ecBlockHeight:
-                          type: integer
-                          format: int64
-                          description: The economic clustering block height
-                          example: 3301233
-                      block:
-                          type: string
-                          format: hex_bytearray
-                          description: The block id
-                          example: '230aeb0f4585625167943'
-                      confirmations:
-                          type: integer
-                          format: int32
-                          description: the number of transaction confirmations
-                          example: 387
-                      blockTimestamp:
-                          type: integer
-                          format: int64
-                          description: Block timestamp, Unix timestamp in milliseconds
-                          example: 1591696372000
-                      index:
-                          type: integer
-                          format: int32
-                          description: the order of the transaction in the block
-                          example: 1
+                      tx:
+                          description: The array of transactions
+                          type: array
+                          items:
+                              $ref: '#/components/schemas/TransactionInfo'
+        TransactionInfoResp:
+            allOf:
+                - $ref: '#/components/schemas/BaseResponse'
+                - $ref: '#/components/schemas/TransactionInfo'
+        TransactionInfo:
+            type: object
+            properties:
+                id:
+                    description: The transaction ID
+                    type: string
+                    format: hex_bytearray
+                    example: '1a0feb1306043151604016701'
+                type:
+                    description: Transaction type
+                    type: string
+                    format: int8
+                    example: '2'
+                subtype:
+                    description: Transaction subtype
+                    type: string
+                    format: int8
+                    example: '1'
+                phased:
+                    description: is true if the transaction is phased
+                    type: boolean
+                    example: false
+                timestamp:
+                    type: integer
+                    format: int64
+                    description: Transaction timestamp, Unix timestamp in milliseconds
+                    example: 1591696372000
+                deadline:
+                    description: the deadline for the transaction to be confirmed in minutes,ex.1440=24h
+                    type: integer
+                    format: int32
+                    example: 1440
+                senderPublicKey:
+                    type: string
+                    format: hex_bytearray
+                    description: The public key of the sending account for the transaction
+                recipient:
+                    type: string
+                    description: The account Id of the recipient
+                    example: 'APL-FXHG-6KHM-23LE-42ACU'
+                amount:
+                    type: string
+                    format: integer
+                    description: The amount of the transaction
+                    example: 34500000000
+                fee:
+                    type: string
+                    format: integer
+                    example: 200000000
+                    description: The fee of the transaction
+                referencedTransactionFullHash:
+                    type: string
+                    format: hex_bytearray
+                    description: The full hash of a transaction referenced by this one
+                    example: '5424ca4dd976a873839c7d5c9952fa15ae619f678365e8ebbc73f967142eb40d'
+                signature:
+                    type: string
+                    format: hex_bytearray
+                    example: '920173ae606d36c1c77fc5bdf294bd048d04f85c46535525771b524dbb1ed20b73311900d4a409c293a10d8a5ab987430be4bd7478fb16a41cf775afa33c4d56'
+                    description: The digital signature of the transaction
+                signatureHash:
+                    type: string
+                    format: hex_bytearray
+                    description: SHA-256 hash of the transaction signature
+                    example: '2fc1883e9b76fdc67fabee0a3def5f4b7fc2de9cd65bc8bb6d39eaf5e99498d8'
+                fullHash:
+                    type: string
+                    format: hex_bytearray
+                    description: The full hash of the transaction
+                    example: '39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152'
+                attachment:
+                    type: object
+                    nullable: true
+                    additionalProperties:
+                        type: object
+                    description: An object containong any additional data needed for the transaction
+                sender:
+                    type: string
+                    description: The sender account
+                    example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+                height:
+                    type: integer
+                    format: int64
+                    example: 4365987
+                    description: The height of the block in the blockchain
+                version:
+                    type: string
+                    format: int8
+                    example: '1'
+                    description: The transaction version number
+                ecBlockId:
+                    type: string
+                    format: hex_bytearray
+                    description: The economic clustering block ID
+                    example: '40faaeb15856251679437054'
+                ecBlockHeight:
+                    type: integer
+                    format: int64
+                    description: The economic clustering block height
+                    example: 3301233
+                block:
+                    type: string
+                    format: hex_bytearray
+                    description: The block id
+                    example: '230aeb0f4585625167943'
+                confirmations:
+                    type: integer
+                    format: int32
+                    description: the number of transaction confirmations
+                    example: 387
+                blockTimestamp:
+                    type: integer
+                    format: int64
+                    description: Block timestamp, Unix timestamp in milliseconds
+                    example: 1591696372000
+                index:
+                    type: integer
+                    format: int32
+                    description: the order of the transaction in the block
+                    example: 1
         BlockInfo:
             allOf:
                 - $ref: '#/components/schemas/BaseResponse'
