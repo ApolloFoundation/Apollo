@@ -8,7 +8,6 @@ import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
-import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.shuffling.ShufflingData;
 import com.apollocurrency.aplwallet.apl.core.app.shuffling.ShufflingParticipantEvent;
@@ -20,6 +19,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.shuffling.ShufflingTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
@@ -195,6 +195,7 @@ public class ShufflingServiceImpl implements ShufflingService {
 
     @Override
     public boolean delete(ShufflingParticipant participant) {
+        participant.setHeight(blockchain.getHeight());
         return participantTable.deleteAtHeight(participant, blockchain.getHeight());
     }
 
