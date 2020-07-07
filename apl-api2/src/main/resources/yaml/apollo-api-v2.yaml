@@ -325,9 +325,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                type: array
-                                items:
-                                    $ref: '#/components/schemas/UnTxReceipt'
+                                $ref: '#/components/schemas/ListResponse'
                 401:
                     description: Not authenticated
                 403:
@@ -438,12 +436,13 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/EmptyResponse'
+                                $ref: '#/components/schemas/BaseResponse'
                 500:
                     $ref: '#/components/responses/ServerError'
 
 components:
     schemas:
+
         TransactionInfoArrayResp:
             allOf:
                 - $ref: '#/components/schemas/BaseResponse'
@@ -454,10 +453,12 @@ components:
                           type: array
                           items:
                               $ref: '#/components/schemas/TransactionInfo'
+
         TransactionInfoResp:
             allOf:
                 - $ref: '#/components/schemas/BaseResponse'
                 - $ref: '#/components/schemas/TransactionInfo'
+
         TransactionInfo:
             type: object
             properties:
@@ -986,14 +987,15 @@ components:
                     format: int64
                     example: 12
 
-        EmptyResponse:
+        ListResponse:
             allOf:
                 -   $ref: '#/components/schemas/BaseResponse'
                 -   type: object
                     properties:
                         result:
-                            type: object
-                            additionalProperties: {}
+                            type: array
+                            items:
+                                $ref: '#/components/schemas/BaseResponse'
                             nullable: true
 
         ErrorResponse:
