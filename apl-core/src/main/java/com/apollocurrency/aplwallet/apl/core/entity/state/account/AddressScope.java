@@ -9,7 +9,7 @@ import lombok.Getter;
 public enum AddressScope {
     EXTERNAL(0),//any address
     IN_FAMILY(1),//only accounts with the same parent
-    CUSTOM(3);//there is an address list in a special table
+    CUSTOM(2);//there is an address list in a special table
 
     @Getter
     private final byte code;

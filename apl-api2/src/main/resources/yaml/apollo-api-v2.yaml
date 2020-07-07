@@ -125,7 +125,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Block'
+                $ref: '#/components/schemas/BlockInfo'
         400:
           $ref: '#/components/responses/BadRequest'
         500:
@@ -152,7 +152,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Block'
+                $ref: '#/components/schemas/BlockInfo'
         400:
           $ref: '#/components/responses/BadRequest'
         500:
@@ -266,7 +266,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Transaction'
+                  $ref: '#/components/schemas/TransactionInfo'
         401:
           description: Not authenticated
         403:
@@ -362,7 +362,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Transaction'
+                $ref: '#/components/schemas/TransactionInfo'
         400:
           $ref: '#/components/responses/BadRequest'
         500:
@@ -446,7 +446,7 @@ paths:
 
 components:
   schemas:
-    Transaction:
+    TransactionInfo:
       type: object
       properties:
         id:
@@ -566,7 +566,7 @@ components:
           format: int32
           description: the order of the transaction in the block
           example: 1
-    Block:
+    BlockInfo:
       type: object
       properties:
         id:
@@ -704,20 +704,20 @@ components:
             format: hex_bytearray
             example: '39dc2e813bb45ff063a376e316b10cd0adeb7306111ca0eb2890194d37960152'
     AccountResp:
-        required:
-          - parent
-          - tx
-        type: object
-        properties:
-          parent:
-            type: string
-            description: parent account id
-            example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
-          tx:
-            description: Unsigned transaction data
-            type: string
-            format: hex_bytearray
-            example: '001047857c04a00539dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152eef5365f2400292d00ca9a3b0000000000c2eb0b000000000000000000000000000000000000000000000000000000000000000000000000920173ae606d36c1c77fc5bdf294bd048d04f85c46535525771b524dbb1ed20b73311900d4a409c293a10d8a5ab987430be4bd7478fb16a41cf775afa33c4d5600000000f1da1300fe7062e6fb2fbb37'
+      required:
+        - parent
+        - tx
+      type: object
+      properties:
+        parent:
+          type: string
+          description: parent account id
+          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+        tx:
+          description: Unsigned transaction data
+          type: string
+          format: hex_bytearray
+          example: '001047857c04a00539dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152eef5365f2400292d00ca9a3b0000000000c2eb0b000000000000000000000000000000000000000000000000000000000000000000000000920173ae606d36c1c77fc5bdf294bd048d04f85c46535525771b524dbb1ed20b73311900d4a409c293a10d8a5ab987430be4bd7478fb16a41cf775afa33c4d5600000000f1da1300fe7062e6fb2fbb37'
     BasicAccount:
       type: object
       required:
