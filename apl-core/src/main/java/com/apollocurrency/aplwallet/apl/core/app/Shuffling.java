@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.app.shuffling.ShufflingParticipantState;
+import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;

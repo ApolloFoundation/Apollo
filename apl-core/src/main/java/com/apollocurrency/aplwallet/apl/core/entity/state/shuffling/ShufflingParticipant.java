@@ -18,7 +18,7 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.app;
+package com.apollocurrency.aplwallet.apl.core.entity.state.shuffling;
 
 import com.apollocurrency.aplwallet.apl.core.app.shuffling.ShufflingParticipantState;
 import com.apollocurrency.aplwallet.apl.core.dao.state.shuffling.ShufflingParticipantTable;

@@ -36,7 +36,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.PollOptionResult;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffler;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
-import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
+import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.app.Token;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.Vote;

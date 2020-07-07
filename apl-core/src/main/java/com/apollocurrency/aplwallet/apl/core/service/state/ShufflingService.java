@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state;
 
-import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
+import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 
 public interface ShufflingService {

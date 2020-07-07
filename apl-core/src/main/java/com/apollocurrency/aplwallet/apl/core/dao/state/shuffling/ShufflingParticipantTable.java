@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.shuffling;
 
-import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
+import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.app.shuffling.ShufflingParticipantState;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
