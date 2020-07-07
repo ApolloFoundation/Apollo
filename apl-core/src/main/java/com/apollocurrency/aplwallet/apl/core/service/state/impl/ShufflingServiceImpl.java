@@ -666,6 +666,7 @@ public class ShufflingServiceImpl implements ShufflingService {
                 delete(participant);
             }
         }
+        shuffling.setHeight(blockchain.getHeight());
         shufflingTable.deleteAtHeight(shuffling, blockchain.getHeight());
         log.debug("DELETED Shuffling {} entered stage {}, assignee {}, remaining blocks {}",
             Long.toUnsignedString(shuffling.getId()), shuffling.getStage(), Long.toUnsignedString(shuffling.getAssigneeAccountId()), shuffling.getBlocksRemaining());

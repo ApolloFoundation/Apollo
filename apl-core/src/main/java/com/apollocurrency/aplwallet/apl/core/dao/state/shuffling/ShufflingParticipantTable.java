@@ -92,8 +92,4 @@ public class ShufflingParticipantTable  extends VersionedDeletableEntityDbTable<
         return getBy(new DbClause.LongClause("shuffling_id", participant.getShufflingId()).and(new DbClause.IntClause("participant_index", participant.getIndex() - 1)));
     }
 
-    public boolean delete(ShufflingParticipant participant, int height) {
-        return deleteAtHeight(participant, height);
-    }
-
 }

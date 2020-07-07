@@ -156,9 +156,4 @@ public class ShufflingTable extends VersionedDeletableEntityDbTable<Shuffling> {
             " ORDER BY blocks_remaining NULLS LAST, height DESC ");
     }
 
-    public void insert(Shuffling shuffling) {
-        insert(shuffling);
-    }
-
-
 }
