@@ -26,6 +26,8 @@ public class TestsCommons {
     protected static final byte[] nonce2 = new byte[32]; //(32-63)
     protected static final String secretPhraseA = "Red fox jumps over the Lazy dog";
     protected static final String secretPhraseB = "Red dog jumps over the Lazy fox";
+    protected static final String secretPhraseC = "Red rat jumps over the Lazy fly";
+    protected static final String secretPhraseD = "Red fly jumps over the Lazy rat";
     protected static byte[] plain_data;
 
     static {

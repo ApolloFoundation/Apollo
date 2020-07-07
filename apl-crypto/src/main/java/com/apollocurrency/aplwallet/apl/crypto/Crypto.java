@@ -41,7 +41,9 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import org.bouncycastle.math.ec.ECFieldElement;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -155,6 +157,54 @@ public final class Crypto {
 
     public static void curve(byte[] Z, byte[] k, byte[] P) {
         Curve25519.curve(Z, k, P);
+    }
+    
+    public static byte[] simpleParentChildSign(byte[] message, byte[]privateKeyParent, byte[] privateKeyChild) {        
+        byte[] childSignature = sign(message, privateKeyChild);
+        byte[] parentSignature = sign(message, privateKeyParent);
+        byte[] parentChildSignature = new byte[128];
+        System.arraycopy(parentSignature, 0, parentChildSignature, 0, 64);
+        System.arraycopy(childSignature, 0, parentChildSignature, 64, 64);        
+        return parentChildSignature;
+    }
+
+    public static boolean simpleParentChildVerify(byte[] parentChildSignature, byte[] message, byte[]publicKeyParent, byte[]publicKeyChild) {
+        
+        byte[] parentSignature = new byte[64]; 
+        byte[] childSignature = new byte[64]; 
+        System.arraycopy(parentChildSignature, 0, parentSignature, 0, 64);
+        System.arraycopy(parentChildSignature, 64, childSignature, 0, 64);        
+        
+        return verify(parentSignature, message, publicKeyParent) 
+                && verify(childSignature, message, publicKeyChild);
+    }
+    
+    public static byte[][] parentChildSign(byte[] message, List<byte[]> privateKeys) {
+        
+        int nUsers = privateKeys.size();        
+        byte [][] result = new byte [nUsers][64];
+        int counter = 0;
+        for (byte[] userKey : privateKeys) {
+            byte[] userSignature = sign(message,userKey);
+            System.arraycopy(userSignature, 0, result[counter], 0, 64);
+            counter++;           
+        }
+        return result;
+    }
+            
+    public static boolean parentChildVerify(byte[][] signature, byte[] message, List<byte[]> publicKeys) {
+        
+        int nSuccessfulChecks = 0;
+        int nUsers = publicKeys.size();
+        int counter = 0;
+        for (byte[] userPublicKey : publicKeys ) {
+            byte[] signatureToVerify = signature[counter];    
+            if ( verify(signatureToVerify, message, userPublicKey) ) {
+                nSuccessfulChecks++;
+            }
+            counter++;            
+        }                      
+        return nSuccessfulChecks == nUsers;
     }
 
     public static byte[] sign(byte[] message, String secretPhrase) {

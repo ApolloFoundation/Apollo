@@ -3,6 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.crypto;
 
+import static com.apollocurrency.aplwallet.apl.crypto.Crypto.sha256;
 import io.firstbridge.cryptolib.CryptoNotValidException;
 import io.firstbridge.cryptolib.FBCryptoParams;
 import io.firstbridge.cryptolib.dataformat.FBElGamalKeyPair;
@@ -10,6 +11,8 @@ import io.firstbridge.cryptolib.impl.AsymJCEElGamalImpl;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -143,8 +146,50 @@ public class CryptoTest extends TestsCommons {
           byte[] result = Crypto.sign(message, secretPhraseA);          
           assertArrayEquals(expResult, result);                     
           writeToFile(ByteBuffer.wrap(result), TST_OUT_DIR+OUT_FILE_SIGN_S);
-
     }
+    
+    @Test
+    public void testSign_simpleParentChild() throws IOException {
+        byte[] message = plain_data;
+        
+        byte[] privateKeyParent = sha256().digest(Convert.toBytes(secretPhraseA));
+        byte[] privateKeyChild = sha256().digest(Convert.toBytes(secretPhraseB));
+        byte[] parentChildSignature = Crypto.simpleParentChildSign(message, privateKeyParent,privateKeyChild);  
+        byte[] publicKeyParent = Crypto.getPublicKey(secretPhraseA);
+        byte[] publicKeyChild = Crypto.getPublicKey(secretPhraseB);
+        boolean verificationResult = Crypto.simpleParentChildVerify(parentChildSignature, message, publicKeyParent, publicKeyChild);
+        boolean expResult = true;
+        assertEquals(expResult, verificationResult);        
+    }
+                
+    @Test
+    public void testSign_regularParentChild() throws IOException {
+        byte[] message = plain_data;
+        byte[] privateKeyA = sha256().digest(Convert.toBytes(secretPhraseA));
+        byte[] privateKeyB = sha256().digest(Convert.toBytes(secretPhraseB));
+        byte[] privateKeyC = sha256().digest(Convert.toBytes(secretPhraseC));
+        byte[] privateKeyD = sha256().digest(Convert.toBytes(secretPhraseD));
+        List<byte[]> privateKeys = new ArrayList<>();
+        privateKeys.add(privateKeyA);
+        privateKeys.add(privateKeyB);
+        privateKeys.add(privateKeyC);
+        privateKeys.add(privateKeyD);
+        byte[][] multiSignature = Crypto.parentChildSign(message, privateKeys);
+        List<byte[]> publicKeys = new ArrayList<>();
+        byte[] publicKeyA = Crypto.getPublicKey(secretPhraseA);
+        byte[] publicKeyB = Crypto.getPublicKey(secretPhraseB);
+        byte[] publicKeyC = Crypto.getPublicKey(secretPhraseC);
+        byte[] publicKeyD = Crypto.getPublicKey(secretPhraseD);
+        publicKeys.add(publicKeyA);
+        publicKeys.add(publicKeyB);
+        publicKeys.add(publicKeyC);
+        publicKeys.add(publicKeyD);
+        boolean verificationResult = Crypto.parentChildVerify( multiSignature, message, publicKeys );
+        boolean expResult = true;
+        assertEquals(expResult, verificationResult);
+    }
+    
+    
 
     /**
      * Test of sign method, of class Crypto.
