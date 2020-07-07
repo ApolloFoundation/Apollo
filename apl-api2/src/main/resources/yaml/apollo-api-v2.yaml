@@ -1,995 +1,1030 @@
 openapi: 3.0.1
 info:
-  title: Apollo API V2
-  description: |
-    Apollo API V2 work in progress
+    title: Apollo API V2
+    description: |
+        Apollo API V2 work in progress
 
-      Notice:
-      The symbols '@@' in the path definition are used as a marker for the code generation routine.
-      If you want to use this YAML specification in the Swagger editor manually, you should replace that marker with spaces.
-  contact:
-    email: apiteam@firstbridge.io
-  version: 2.0.0
+          Notice:
+          The symbols '@@' in the path definition are used as a marker for the code generation routine.
+          If you want to use this YAML specification in the Swagger editor manually, you should replace that marker with spaces.
+    contact:
+        email: apiteam@firstbridge.io
+    version: 2.0.0
 externalDocs:
-  description: The project VCS repository
-  url: https://github.com/ApolloFoundation/Apollo
+    description: The project VCS repository
+    url: https://github.com/ApolloFoundation/Apollo
 servers:
-- url: http://localhost:7876/rest
+    -   url: http://localhost:7876/rest
 
 tags:
-- name: account
-  description: Operations about account
-- name: state
-  description: Everything about blockchain state
-- name: tx
-  description: Access to transactions management
-- name: operations
-  description: List operations by account (the bank reconcilation)
-- name: info
-  description: An information
+    -   name: account
+        description: Operations about account
+    -   name: state
+        description: Everything about blockchain state
+    -   name: tx
+        description: Access to transactions management
+    -   name: operations
+        description: List operations by account (the bank reconcilation)
+    -   name: info
+        description: An information
 
 paths:
-  /@@account:
-    post:
-      tags:
-      - account
-      summary: Returns unsigned CreateChildAccount transaction for creating child accounts
-      description: |
-        Returns unsigned CreateChildAccount transaction as a byte array.
-        The list of child public keys is attached in the transaction appendix.
-      operationId: createChildAccountTx
-      requestBody:
-        description: the parent account and the list of public keys
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AccountReq'
-        required: true
-      responses:
-        200:
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AccountResp'
-        401:
-          description: Unauthorized Error
-        403:
-          description: Access Forbidden
-        400:
-          $ref: '#/components/responses/BadRequest'
-        500:
-          $ref: '#/components/responses/ServerError'
-      security:
-      - bearerAuth: []
-  /@@account/{account}:
-    get:
-      tags:
-      - account
-      summary: Returns the details account information
-      operationId: getAccountInfo
-      parameters:
-        - name: account
-          in: path
-          description: The account id
-          required: true
-          schema:
-            type: string
-            example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
-      responses:
-        200:
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Account'
-        400:
-          $ref: '#/components/responses/BadRequest'
-        500:
-          $ref: '#/components/responses/ServerError'
-  /@@state/blockchain:
-    get:
-      tags:
-      - state
-      summary: Get blockchain object
-      description: Return details information about the blockchain
-      operationId: getBlockchainInfo
-      responses:
-        200:
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Blockchain'
-        500:
-          $ref: '#/components/responses/ServerError'
-  /@@state/block:
-    get:
-      tags:
-      - state
-      summary: Get block object
-      description: Return details information about the block given block height. If no height is provided, it will fetch the latest block.
-      operationId: getBlockByHeight
-      parameters:
-      - name: height
-        in: query
-        description: a blockchain height
-        required: false
-        schema:
-          type: string
-          format: int64
-          example: '4315161'
-      responses:
-        200:
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Block'
-        400:
-          $ref: '#/components/responses/BadRequest'
-        500:
-          $ref: '#/components/responses/ServerError'
-  /@@state/block/{block}:
-    get:
-      tags:
-      - state
-      summary: Get block object given block id
-      description: Return the detail information about block given id
-      operationId: getBlockById
-      parameters:
-      - name: block
-        in: path
-        description: Block id
-        required: true
-        schema:
-          type: string
-          format: hex_bytearray
-          example: '1a0feb1043151604016701'
-      responses:
-        200:
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Block'
-        400:
-          $ref: '#/components/responses/BadRequest'
-        500:
-          $ref: '#/components/responses/ServerError'
-  /@@state/tx/{transaction}:
-    get:
-      tags:
-      - state
-      summary: Get transaction receipt given transaction id.
-      description: Return the brief information about transaction given id.
-      operationId: getTxReceiptById
-      parameters:
-      - name: transaction
-        in: path
-        description: Transaction id
-        required: true
-        schema:
-          type: string
-          format: hex_bytearray
-          example: '1a0feb06043151604016701'
-      responses:
-        200:
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TxReceipt'
-        400:
-          $ref: '#/components/responses/BadRequest'
-        500:
-          $ref: '#/components/responses/ServerError'
-  /@@state/tx:
-    post:
-      tags:
-      - state
-      summary: Get transaction receipt list given list of the transaction id.
-      description: Return the list of the brief information about transactions.
-      operationId: getTxReceiptList
-      requestBody:
-        description: the list of transaction id
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                type: string
-                format: hex_bytearray
-                example: '83aa340eb41780f61376852'
-        required: true
-      responses:
-        200:
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/TxReceipt'
-        400:
-          $ref: '#/components/responses/BadRequest'
-        500:
-          $ref: '#/components/responses/ServerError'
-  /@@state/unconfirmed/count:
-    get:
-      tags:
-      - state
-      summary: Get count of unconfirmed transaction receipts.
-      description: Return the count of unconfirmed transactions.
-      operationId: getUnconfirmedTxCount
-      responses:
-        200:
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CountResponse'
-        500:
-          $ref: '#/components/responses/ServerError'
-  /@@state/unconfirmed:
-    get:
-      tags:
-      - state
-      summary: Get list of unconfirmed transaction receipts.
-      description: Return the detail information about transaction by id.
-      operationId: getUnconfirmedTx
-      parameters:
-         - name: page
-           in: query
-           description: page number (1-based)
-           required: false
-           schema:
-             type: integer
-             format: int32
-             default: 1
-             example: 1
-         - name: perPage
-           in: query
-           description: Number of entries per page (max=100)
-           required: false
-           schema:
-             type: integer
-             format: int32
-             maximum: 100
-             default: 50
-             example: 50
-      responses:
-        200:
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Transaction'
-        401:
-          description: Not authenticated
-        403:
-          description: Access token does not have the required scope
-        400:
-          $ref: '#/components/responses/BadRequest'
-        500:
-          $ref: '#/components/responses/ServerError'
-      security:
-      - bearerAuth: []
-  /@@transaction:
-    post:
-      tags:
-      - tx
-      summary: Broadcast transaction and return transaction receipt.
-      description: |
-        Asynchronously broadcast the signed transaction to the network.
-          The transaction is validated and immediately put into an unconfirmed transaction pool
-          for further sending to the blockchain.
-      operationId: broadcastTx
-      requestBody:
-        description: the signed transaction is a byte array in hex format
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TxRequest'
-        required: true
-      responses:
-        200:
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UnTxReceipt'
-        400:
-          $ref: '#/components/responses/BadRequest'
-        500:
-          $ref: '#/components/responses/ServerError'
-  /@@transaction/batch:
-    post:
-      tags:
-      - tx
-      summary: Broadcast a batch of transactions and return the transaction receipt list.
-      description: Asynchronously broadcast the batch of the signed transaction to the network. The transactions are immediately put into an unconfirmed transaction pool in the same order as in the batch and later are sending to the network.
-      operationId: broadcastTxBatch
-      requestBody:
-        description: an array of signed transactions, each item is a byte array in hex format
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/TxRequest'
-        required: true
-      responses:
-        200:
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/UnTxReceipt'
-        401:
-          description: Not authenticated
-        403:
-          description: Access token does not have the required scope
-        400:
-          $ref: '#/components/responses/BadRequest'
-        500:
-          $ref: '#/components/responses/ServerError'
-      security:
-      - bearerAuth: []
-  /@@transaction/{transaction}:
-    get:
-      tags:
-      - tx
-      summary: Get transaction object given transaction id.
-      description: Return the detail information about transaction by id.
-      operationId: getTxById
-      parameters:
-      - name: transaction
-        in: path
-        description: Transaction id
-        required: true
-        schema:
-          type: string
-          format: hex_bytearray
-          example: '1aa130eb6043151ad6040f16701'
-      responses:
-        200:
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Transaction'
-        400:
-          $ref: '#/components/responses/BadRequest'
-        500:
-          $ref: '#/components/responses/ServerError'
-  /@@operation/count:
-    post:
-      tags:
-      - operations
-      summary: Returns the count of operations corresponding the query object group by account
-      operationId: getOperationsCount
-      requestBody:
-        description: the query object
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/QueryObject'
-        required: true
-      responses:
-        200:
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/QueryCountResult'
-        401:
-          description: Not authenticated
-        403:
-          description: Access token does not have the required scope
-        400:
-          $ref: '#/components/responses/BadRequest'
-        500:
-          $ref: '#/components/responses/ServerError'
-      security:
-      - bearerAuth: []
-  /@@operation:
-    post:
-      tags:
-      - operations
-      summary: Returns the operation list corresponding the query object group by account
-      operationId: getOperations
-      requestBody:
-        description: the query object
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/QueryObject'
-        required: true
-      responses:
-        200:
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/QueryResult'
-        401:
-          description: Not authenticated
-        403:
-          description: Access token does not have the required scope
-        400:
-          $ref: '#/components/responses/BadRequest'
-        500:
-          $ref: '#/components/responses/ServerError'
-      security:
-      - bearerAuth: []
+    /@@account:
+        post:
+            tags:
+                - account
+            summary: Returns unsigned CreateChildAccount transaction for creating child accounts
+            description: |
+                Returns unsigned CreateChildAccount transaction as a byte array.
+                The list of child public keys is attached in the transaction appendix.
+            operationId: createChildAccountTx
+            requestBody:
+                description: the parent account and the list of public keys
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/AccountReq'
+                required: true
+            responses:
+                200:
+                    description: successful operation
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/CreateChildAccountResp'
+                401:
+                    description: Unauthorized Error
+                403:
+                    description: Access Forbidden
+                400:
+                    $ref: '#/components/responses/BadRequest'
+                500:
+                    $ref: '#/components/responses/ServerError'
+            security:
+                -   bearerAuth: []
+    /@@account/{account}:
+        get:
+            tags:
+                - account
+            summary: Returns the details account information
+            operationId: getAccountInfo
+            parameters:
+                -   name: account
+                    in: path
+                    description: The account id
+                    required: true
+                    schema:
+                        type: string
+                        example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+            responses:
+                200:
+                    description: successful operation
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/AccountInfoResp'
+                400:
+                    $ref: '#/components/responses/BadRequest'
+                500:
+                    $ref: '#/components/responses/ServerError'
+    /@@state/blockchain:
+        get:
+            tags:
+                - state
+            summary: Get blockchain object
+            description: Return details information about the blockchain
+            operationId: getBlockchainInfo
+            responses:
+                200:
+                    description: successful operation
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/BlockchainInfo'
+                500:
+                    $ref: '#/components/responses/ServerError'
+    /@@state/block:
+        get:
+            tags:
+                - state
+            summary: Get block object
+            description: Return details information about the block given block height. If no height is provided, it will fetch the latest block.
+            operationId: getBlockByHeight
+            parameters:
+                -   name: height
+                    in: query
+                    description: a blockchain height
+                    required: false
+                    schema:
+                        type: string
+                        format: int64
+                        example: '4315161'
+            responses:
+                200:
+                    description: successful operation
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/BlockInfo'
+                400:
+                    $ref: '#/components/responses/BadRequest'
+                500:
+                    $ref: '#/components/responses/ServerError'
+    /@@state/block/{block}:
+        get:
+            tags:
+                - state
+            summary: Get block object given block id
+            description: Return the detail information about block given id
+            operationId: getBlockById
+            parameters:
+                -   name: block
+                    in: path
+                    description: Block id
+                    required: true
+                    schema:
+                        type: string
+                        format: hex_bytearray
+                        example: '1a0feb1043151604016701'
+            responses:
+                200:
+                    description: successful operation
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/BlockInfo'
+                400:
+                    $ref: '#/components/responses/BadRequest'
+                500:
+                    $ref: '#/components/responses/ServerError'
+    /@@state/tx/{transaction}:
+        get:
+            tags:
+                - state
+            summary: Get transaction receipt given transaction id.
+            description: Return the brief information about transaction given id.
+            operationId: getTxReceiptById
+            parameters:
+                -   name: transaction
+                    in: path
+                    description: Transaction id
+                    required: true
+                    schema:
+                        type: string
+                        format: hex_bytearray
+                        example: '1a0feb06043151604016701'
+            responses:
+                200:
+                    description: successful operation
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/TxReceipt'
+                400:
+                    $ref: '#/components/responses/BadRequest'
+                500:
+                    $ref: '#/components/responses/ServerError'
+    /@@state/tx:
+        post:
+            tags:
+                - state
+            summary: Get transaction receipt list given list of the transaction id.
+            description: Return the list of the brief information about transactions.
+            operationId: getTxReceiptList
+            requestBody:
+                description: the list of transaction id
+                content:
+                    application/json:
+                        schema:
+                            type: array
+                            items:
+                                type: string
+                                format: hex_bytearray
+                                example: '83aa340eb41780f61376852'
+                required: true
+            responses:
+                200:
+                    description: successful operation
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: '#/components/schemas/TxReceipt'
+                400:
+                    $ref: '#/components/responses/BadRequest'
+                500:
+                    $ref: '#/components/responses/ServerError'
+    /@@state/unconfirmed/count:
+        get:
+            tags:
+                - state
+            summary: Get count of unconfirmed transaction receipts.
+            description: Return the count of unconfirmed transactions.
+            operationId: getUnconfirmedTxCount
+            responses:
+                200:
+                    description: successful operation
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/CountResponse'
+                500:
+                    $ref: '#/components/responses/ServerError'
+    /@@state/unconfirmed:
+        get:
+            tags:
+                - state
+            summary: Get list of unconfirmed transaction receipts.
+            description: Return the detail information about transaction by id.
+            operationId: getUnconfirmedTx
+            parameters:
+                -   name: page
+                    in: query
+                    description: page number (1-based)
+                    required: false
+                    schema:
+                        type: integer
+                        format: int32
+                        default: 1
+                        example: 1
+                -   name: perPage
+                    in: query
+                    description: Number of entries per page (max=100)
+                    required: false
+                    schema:
+                        type: integer
+                        format: int32
+                        maximum: 100
+                        default: 50
+                        example: 50
+            responses:
+                200:
+                    description: successful operation
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: '#/components/schemas/TransactionInfo'
+                401:
+                    description: Not authenticated
+                403:
+                    description: Access token does not have the required scope
+                400:
+                    $ref: '#/components/responses/BadRequest'
+                500:
+                    $ref: '#/components/responses/ServerError'
+            security:
+                -   bearerAuth: []
+    /@@transaction:
+        post:
+            tags:
+                - tx
+            summary: Broadcast transaction and return transaction receipt.
+            description: |
+                Asynchronously broadcast the signed transaction to the network.
+                  The transaction is validated and immediately put into an unconfirmed transaction pool
+                  for further sending to the blockchain.
+            operationId: broadcastTx
+            requestBody:
+                description: the signed transaction is a byte array in hex format
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/TxRequest'
+                required: true
+            responses:
+                200:
+                    description: successful operation
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/UnTxReceipt'
+                400:
+                    $ref: '#/components/responses/BadRequest'
+                500:
+                    $ref: '#/components/responses/ServerError'
+    /@@transaction/batch:
+        post:
+            tags:
+                - tx
+            summary: Broadcast a batch of transactions and return the transaction receipt list.
+            description: Asynchronously broadcast the batch of the signed transaction to the network. The transactions are immediately put into an unconfirmed transaction pool in the same order as in the batch and later are sending to the network.
+            operationId: broadcastTxBatch
+            requestBody:
+                description: an array of signed transactions, each item is a byte array in hex format
+                content:
+                    application/json:
+                        schema:
+                            type: array
+                            items:
+                                $ref: '#/components/schemas/TxRequest'
+                required: true
+            responses:
+                200:
+                    description: successful operation
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: '#/components/schemas/UnTxReceipt'
+                401:
+                    description: Not authenticated
+                403:
+                    description: Access token does not have the required scope
+                400:
+                    $ref: '#/components/responses/BadRequest'
+                500:
+                    $ref: '#/components/responses/ServerError'
+            security:
+                -   bearerAuth: []
+    /@@transaction/{transaction}:
+        get:
+            tags:
+                - tx
+            summary: Get transaction object given transaction id.
+            description: Return the detail information about transaction by id.
+            operationId: getTxById
+            parameters:
+                -   name: transaction
+                    in: path
+                    description: Transaction id
+                    required: true
+                    schema:
+                        type: string
+                        format: hex_bytearray
+                        example: '1aa130eb6043151ad6040f16701'
+            responses:
+                200:
+                    description: successful operation
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/TransactionInfo'
+                400:
+                    $ref: '#/components/responses/BadRequest'
+                500:
+                    $ref: '#/components/responses/ServerError'
+    /@@operation/count:
+        post:
+            tags:
+                - operations
+            summary: Returns the count of operations corresponding the query object group by account
+            operationId: getOperationsCount
+            requestBody:
+                description: the query object
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/QueryObject'
+                required: true
+            responses:
+                200:
+                    description: successful operation
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/QueryCountResult'
+                401:
+                    description: Not authenticated
+                403:
+                    description: Access token does not have the required scope
+                400:
+                    $ref: '#/components/responses/BadRequest'
+                500:
+                    $ref: '#/components/responses/ServerError'
+            security:
+                -   bearerAuth: []
+    /@@operation:
+        post:
+            tags:
+                - operations
+            summary: Returns the operation list corresponding the query object group by account
+            operationId: getOperations
+            requestBody:
+                description: the query object
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/QueryObject'
+                required: true
+            responses:
+                200:
+                    description: successful operation
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/QueryResult'
+                401:
+                    description: Not authenticated
+                403:
+                    description: Access token does not have the required scope
+                400:
+                    $ref: '#/components/responses/BadRequest'
+                500:
+                    $ref: '#/components/responses/ServerError'
+            security:
+                -   bearerAuth: []
 
-  /@@info/health:
-    get:
-      tags:
-      - info
-      summary: Gets node health
-      operationId: getHealthInfo
-      responses:
-        200:
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EmptyResponse'
-        500:
-          $ref: '#/components/responses/ServerError'
+    /@@info/health:
+        get:
+            tags:
+                - info
+            summary: Gets node health
+            operationId: getHealthInfo
+            responses:
+                200:
+                    description: successful operation
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/EmptyResponse'
+                500:
+                    $ref: '#/components/responses/ServerError'
 
 components:
-  schemas:
-    Transaction:
-      type: object
-      properties:
-        id:
-          description: The transaction ID
-          type: string
-          format: hex_bytearray
-          example: '1a0feb1306043151604016701'
-        type:
-          description: Transaction type
-          type: string
-          format: int8
-          example: '2'
-        subtype:
-          description: Transaction subtype
-          type: string
-          format: int8
-          example: '1'
-        phased:
-          description: is true if the transaction is phased
-          type: boolean
-          example: false
-        timestamp:
-          type: integer
-          format: int64
-          description: Transaction timestamp, Unix timestamp in milliseconds
-          example: 1591696372000
-        deadline:
-          description: the deadline for the transaction to be confirmed in minutes,ex.1440=24h
-          type: integer
-          format: int32
-          example: 1440
-        senderPublicKey:
-          type: string
-          format: hex_bytearray
-          description: The public key of the sending account for the transaction
-        recipient:
-          type: string
-          description: The account Id of the recipient
-          example: 'APL-FXHG-6KHM-23LE-42ACU'
-        amount:
-          type: string
-          format: integer
-          description: The amount of the transaction
-          example: 34500000000
-        fee:
-          type: string
-          format: integer
-          example: 200000000
-          description: The fee of the transaction
-        referencedTransactionFullHash:
-          type: string
-          format: hex_bytearray
-          description: The full hash of a transaction referenced by this one
-          example: '5424ca4dd976a873839c7d5c9952fa15ae619f678365e8ebbc73f967142eb40d'
-        signature:
-          type: string
-          format: hex_bytearray
-          example: '920173ae606d36c1c77fc5bdf294bd048d04f85c46535525771b524dbb1ed20b73311900d4a409c293a10d8a5ab987430be4bd7478fb16a41cf775afa33c4d56'
-          description: The digital signature of the transaction
-        signatureHash:
-          type: string
-          format: hex_bytearray
-          description: SHA-256 hash of the transaction signature
-          example: '2fc1883e9b76fdc67fabee0a3def5f4b7fc2de9cd65bc8bb6d39eaf5e99498d8'
-        fullHash:
-          type: string
-          format: hex_bytearray
-          description: The full hash of the transaction
-          example: '39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152'
-        attachment:
-          type: object
-          nullable: true
-          additionalProperties:
+    schemas:
+        TransactionInfo:
+            allOf:
+                - $ref: '#/components/schemas/BaseResponse'
+                - type: object
+                  properties:
+                      id:
+                          description: The transaction ID
+                          type: string
+                          format: hex_bytearray
+                          example: '1a0feb1306043151604016701'
+                      type:
+                          description: Transaction type
+                          type: string
+                          format: int8
+                          example: '2'
+                      subtype:
+                          description: Transaction subtype
+                          type: string
+                          format: int8
+                          example: '1'
+                      phased:
+                          description: is true if the transaction is phased
+                          type: boolean
+                          example: false
+                      timestamp:
+                          type: integer
+                          format: int64
+                          description: Transaction timestamp, Unix timestamp in milliseconds
+                          example: 1591696372000
+                      deadline:
+                          description: the deadline for the transaction to be confirmed in minutes,ex.1440=24h
+                          type: integer
+                          format: int32
+                          example: 1440
+                      senderPublicKey:
+                          type: string
+                          format: hex_bytearray
+                          description: The public key of the sending account for the transaction
+                      recipient:
+                          type: string
+                          description: The account Id of the recipient
+                          example: 'APL-FXHG-6KHM-23LE-42ACU'
+                      amount:
+                          type: string
+                          format: integer
+                          description: The amount of the transaction
+                          example: 34500000000
+                      fee:
+                          type: string
+                          format: integer
+                          example: 200000000
+                          description: The fee of the transaction
+                      referencedTransactionFullHash:
+                          type: string
+                          format: hex_bytearray
+                          description: The full hash of a transaction referenced by this one
+                          example: '5424ca4dd976a873839c7d5c9952fa15ae619f678365e8ebbc73f967142eb40d'
+                      signature:
+                          type: string
+                          format: hex_bytearray
+                          example: '920173ae606d36c1c77fc5bdf294bd048d04f85c46535525771b524dbb1ed20b73311900d4a409c293a10d8a5ab987430be4bd7478fb16a41cf775afa33c4d56'
+                          description: The digital signature of the transaction
+                      signatureHash:
+                          type: string
+                          format: hex_bytearray
+                          description: SHA-256 hash of the transaction signature
+                          example: '2fc1883e9b76fdc67fabee0a3def5f4b7fc2de9cd65bc8bb6d39eaf5e99498d8'
+                      fullHash:
+                          type: string
+                          format: hex_bytearray
+                          description: The full hash of the transaction
+                          example: '39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152'
+                      attachment:
+                          type: object
+                          nullable: true
+                          additionalProperties:
+                              type: object
+                          description: An object containong any additional data needed for the transaction
+                      sender:
+                          type: string
+                          description: The sender account
+                          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+                      height:
+                          type: integer
+                          format: int64
+                          example: 4365987
+                          description: The height of the block in the blockchain
+                      version:
+                          type: string
+                          format: int8
+                          example: '1'
+                          description: The transaction version number
+                      ecBlockId:
+                          type: string
+                          format: hex_bytearray
+                          description: The economic clustering block ID
+                          example: '40faaeb15856251679437054'
+                      ecBlockHeight:
+                          type: integer
+                          format: int64
+                          description: The economic clustering block height
+                          example: 3301233
+                      block:
+                          type: string
+                          format: hex_bytearray
+                          description: The block id
+                          example: '230aeb0f4585625167943'
+                      confirmations:
+                          type: integer
+                          format: int32
+                          description: the number of transaction confirmations
+                          example: 387
+                      blockTimestamp:
+                          type: integer
+                          format: int64
+                          description: Block timestamp, Unix timestamp in milliseconds
+                          example: 1591696372000
+                      index:
+                          type: integer
+                          format: int32
+                          description: the order of the transaction in the block
+                          example: 1
+        BlockInfo:
+            allOf:
+                - $ref: '#/components/schemas/BaseResponse'
+                - type: object
+                  properties:
+                      id:
+                          type: string
+                          format: hex_bytearray
+                          example: '1130faaeb604315160401'
+                      blockSignature:
+                          type: string
+                          format: hex_bytearray
+                          example: 'ff080e64436603df0c3b9a5b792b03a26725a83bbe6aa46eb7eed9ee83707f071b6d529d09be1f2594c6f8545c2772a091896bc808553c1774e39a41248b1e1c'
+                      height:
+                          type: integer
+                          format: int64
+                          example: 1319854
+                      generator:
+                          type: string
+                          example: 'APL-FXHG-6KHM-23LE-42ACU'
+                      generationSignature:
+                          type: string
+                          format: hex_bytearray
+                          example: '60e598f6276371119720786b05e507cd628665473b24c8f76de436d99cf113f7'
+                      generatorPublicKey:
+                          type: string
+                          format: hex_bytearray
+                          example: '39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152'
+                      timestamp:
+                          type: integer
+                          format: int64
+                          description: Block timestamp, Unix timestamp in milliseconds
+                          example: 1591696372000
+                      timeout:
+                          type: integer
+                          format: int32
+                          example: 1
+                      version:
+                          description: The block version
+                          type: integer
+                          format: int32
+                          example: 6
+                      baseTarget:
+                          type: string
+                          example: '7686143350'
+                      cumulativeDifficulty:
+                          type: string
+                          format: integer
+                          example: '8728234277524822'
+                      previousBlock:
+                          description: Prev block id
+                          type: string
+                          format: hex_bytearray
+                          example: '80faaeb4787337264514'
+                      previousBlockHash:
+                          type: string
+                          format: hex_bytearray
+                          example: '5b8ba14eaebba8cdc682c946947f5352a596d00ac63c4e616785d00cf8b8e016'
+                      nextBlock:
+                          description: Next block id
+                          type: string
+                          format: hex_bytearray
+                          example: '140faaeb81930093118053'
+                      payloadHash:
+                          type: string
+                          format: hex_bytearray
+                          description: Hash of the paylod (all transactions)
+                          example: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+                      payloadLength:
+                          description: The length in bytes of all transactions
+                          type: integer
+                          format: int32
+                          example: 523423
+                      numberOfTransactions:
+                          type: integer
+                          format: int32
+                          example: 14
+                      totalAmountATM:
+                          type: string
+                          format: integer
+                          example: '569000000000000'
+                      totalFeeATM:
+                          type: string
+                          format: integer
+                          example: '2800000000'
+        BlockchainInfo:
+            allOf:
+                - $ref: '#/components/schemas/BaseResponse'
+                - type: object
+                  properties:
+                      chainid:
+                          type: string
+                          format: hex_bytearray
+                          example: 'a2e9b946290b48b69985dc2e5a5860a1'
+                      genesisPublicKey:
+                          type: string
+                          format: hex_bytearray
+                          example: '1259ec21d31a30898d7cd1609f80d9668b4778e3d97e941044b39f0c44d2e51b'
+                      height:
+                          type: integer
+                          format: int64
+                          example: 4789567
+                      genesisBlockTimestamp:
+                          type: integer
+                          format: int64
+                          description: Genesis block timestamp, Unix timestamp in milliseconds
+                          example: 1491696372000
+                      genesisBlockId:
+                          type: string
+                          format: hex_bytearray
+                          description: Genesis block ID
+                          example: '15856251679437054149169000'
+                      ecBlockId:
+                          type: string
+                          format: hex_bytearray
+                          description: The economic clustering block ID
+                          example: '40faaeb15856251679437054'
+                      ecBlockHeight:
+                          type: integer
+                          format: int64
+                          description: The economic clustering block height
+                          example: 3301233
+                      txTimestamp:
+                          type: integer
+                          format: int64
+                          description: Request timestamp in seconds since the genesis block
+                          example: 1591696371
+                      timestamp:
+                          type: integer
+                          format: int64
+                          description: Request timestamp, Unix timestamp in milliseconds
+                          example: 1591696372300
+        TxRequest:
+            required:
+                - tx
             type: object
-          description: An object containong any additional data needed for the transaction
-        sender:
-          type: string
-          description: The sender account
-          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
-        height:
-          type: integer
-          format: int64
-          example: 4365987
-          description: The height of the block in the blockchain
-        version:
-          type: string
-          format: int8
-          example: '1'
-          description: The transaction version number
-        ecBlockId:
-          type: string
-          format: hex_bytearray
-          description: The economic clustering block ID
-          example: '40faaeb15856251679437054'
-        ecBlockHeight:
-          type: integer
-          format: int64
-          description: The economic clustering block height
-          example: 3301233
-        block:
-          type: string
-          format: hex_bytearray
-          description: The block id
-          example: '230aeb0f4585625167943'
-        confirmations:
-          type: integer
-          format: int32
-          description: the number of transaction confirmations
-          example: 387
-        blockTimestamp:
-          type: integer
-          format: int64
-          description: Block timestamp, Unix timestamp in milliseconds
-          example: 1591696372000
-        index:
-          type: integer
-          format: int32
-          description: the order of the transaction in the block
-          example: 1
-    Block:
-      type: object
-      properties:
-        id:
-          type: string
-          format: hex_bytearray
-          example: '1130faaeb604315160401'
-        blockSignature:
-          type: string
-          format: hex_bytearray
-          example: 'ff080e64436603df0c3b9a5b792b03a26725a83bbe6aa46eb7eed9ee83707f071b6d529d09be1f2594c6f8545c2772a091896bc808553c1774e39a41248b1e1c'
-        height:
-          type: integer
-          format: int64
-          example: 1319854
-        generator:
-          type: string
-          example: 'APL-FXHG-6KHM-23LE-42ACU'
-        generationSignature:
-          type: string
-          format: hex_bytearray
-          example: '60e598f6276371119720786b05e507cd628665473b24c8f76de436d99cf113f7'
-        generatorPublicKey:
-          type: string
-          format: hex_bytearray
-          example: '39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152'
-        timestamp:
-          type: integer
-          format: int64
-          description: Block timestamp, Unix timestamp in milliseconds
-          example: 1591696372000
-        timeout:
-          type: integer
-          format: int32
-          example: 1
-        version:
-          description: The block version
-          type: integer
-          format: int32
-          example: 6
-        baseTarget:
-          type: string
-          example: '7686143350'
-        cumulativeDifficulty:
-          type: string
-          format: integer
-          example: '8728234277524822'
-        previousBlock:
-          description: Prev block id
-          type: string
-          format: hex_bytearray
-          example: '80faaeb4787337264514'
-        previousBlockHash:
-          type: string
-          format: hex_bytearray
-          example: '5b8ba14eaebba8cdc682c946947f5352a596d00ac63c4e616785d00cf8b8e016'
-        nextBlock:
-          description: Next block id
-          type: string
-          format: hex_bytearray
-          example: '140faaeb81930093118053'
-        payloadHash:
-          type: string
-          format: hex_bytearray
-          description: Hash of the paylod (all transactions)
-          example: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
-        payloadLength:
-          description: The length in bytes of all transactions
-          type: integer
-          format: int32
-          example: 523423
-        numberOfTransactions:
-          type: integer
-          format: int32
-          example: 14
-        totalAmountATM:
-          type: string
-          format: integer
-          example: '569000000000000'
-        totalFeeATM:
-          type: string
-          format: integer
-          example: '2800000000'
-    Blockchain:
-      type: object
-      properties:
-        chainid:
-          type: string
-          format: hex_bytearray
-          example: 'a2e9b946290b48b69985dc2e5a5860a1'
-        genesisPublicKey:
-          type: string
-          format: hex_bytearray
-          example: '1259ec21d31a30898d7cd1609f80d9668b4778e3d97e941044b39f0c44d2e51b'
-        height:
-          type: integer
-          format: int64
-          example: 4789567
-        genesisBlockTimestamp:
-          type: integer
-          format: int64
-          description: Genesis block timestamp, Unix timestamp in milliseconds
-          example: 1491696372000
-        genesisBlockId:
-          type: string
-          format: hex_bytearray
-          description: Genesis block ID
-          example: '15856251679437054149169000'
-        ecBlockId:
-          type: string
-          format: hex_bytearray
-          description: The economic clustering block ID
-          example: '40faaeb15856251679437054'
-        ecBlockHeight:
-          type: integer
-          format: int64
-          description: The economic clustering block height
-          example: 3301233
-        txTimestamp:
-          type: integer
-          format: int64
-          description: Request timestamp in seconds since the genesis block
-          example: 1591696371
-        timestamp:
-          type: integer
-          format: int64
-          description: Request timestamp, Unix timestamp in milliseconds
-          example: 1591696372300
-    TxRequest:
-      required:
-        - tx
-      type: object
-      properties:
-        tx:
-          description: Signed transaction data
-          type: string
-          format: hex_bytearray
-          example: '001047857c04a00539dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152eef5365f2400292d00ca9a3b0000000000c2eb0b000000000000000000000000000000000000000000000000000000000000000000000000920173ae606d36c1c77fc5bdf294bd048d04f85c46535525771b524dbb1ed20b73311900d4a409c293a10d8a5ab987430be4bd7478fb16a41cf775afa33c4d5600000000f1da1300fe7062e6fb2fbb37'
-          nullable: false
-    AccountReq:
-      required:
-        - parent
-        - publicKey
-      type: object
-      properties:
-        parent:
-          type: string
-          description: parent account id
-          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
-        child_publicKey_list:
-          type: array
-          description: list of child account public keys
-          maxItems: 128
-          items:
-            type: string
-            format: hex_bytearray
-            example: '39dc2e813bb45ff063a376e316b10cd0adeb7306111ca0eb2890194d37960152'
-    AccountResp:
-        required:
-          - parent
-          - tx
-        type: object
-        properties:
-          parent:
-            type: string
-            description: parent account id
-            example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
-          tx:
-            description: Unsigned transaction data
-            type: string
-            format: hex_bytearray
-            example: '001047857c04a00539dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152eef5365f2400292d00ca9a3b0000000000c2eb0b000000000000000000000000000000000000000000000000000000000000000000000000920173ae606d36c1c77fc5bdf294bd048d04f85c46535525771b524dbb1ed20b73311900d4a409c293a10d8a5ab987430be4bd7478fb16a41cf775afa33c4d5600000000f1da1300fe7062e6fb2fbb37'
-    BasicAccount:
-      type: object
-      required:
-         - account
-         - publicKey
-      properties:
-        account:
-          type: string
-          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
-        publicKey:
-          description: The account public key in a hex string format
-          type: string
-          format: hex_bytearray
-          example: '39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152'
-        parent:
-          type: string
-          example: 'APL-AHYW-P3YX-V426-4UMP2'
-          nullable: true
-    Account:
-      allOf:
-        - $ref: '#/components/schemas/BasicAccount'
-        - type: object
-          properties:
-            balance:
-              type: string
-              format: integer
-              example: '45225600000000'
-            unconfirmedbalance:
-              type: string
-              format: integer
-              example: '45225600000000'
-            status:
-              type: string
-              enum:
-                - created
-                - verified
-              example: created
-    QueryObject:
-      type: object
-      properties:
-        accounts:
-          description: Exactly all items.
-          nullable: true
-          type: array
-          items:
-            type: string
-            example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
-        transactionStatus:
-            type: string
-            description: |
-                The transaction status. A transaction is considered as unconfirmed until it is included in a valid block.
-                A transaction is considered as confirmed after at least one confirmations, so a transaction is considered
-                as irreversible after 721 confirmations and finally a transaction is permanent if it's confirmed 1440 times.
-            enum: [confirmed, irreversible, permanent]
-            example: confirmed
-        first:
-          type: integer
-          format: int64
-          description: The first block height
-          example: 4000123
-        last:
-          type: integer
-          format: int64
-          description: The last block height
-          example: 4999000
-        startTime:
-          type: integer
-          format: int64
-          description: The start of the time period, Unix timestamp in milliseconds
-          example: 1591696310000
-        endTime:
-          type: integer
-          format: int64
-          description: The end of the time period, Unix timestamp in milliseconds
-          example: 1591696372000
-        page:
-          type: integer
-          format: int32
-          description: page number (1-based)
-          default: 1
-          example: 1
-        perPage:
-          type: integer
-          format: int32
-          description: Number of entries per page (max=100)
-          default: 25
-          example: 25
-        orderBy:
-          type: string
-          nullable: true
-          enum: [asc, desc]
-          default: asc
-    QueryResult:
-      type: object
-      properties:
-        result:
-          type: array
-          items:
-            $ref: '#/components/schemas/Operation'
-        query:
-          $ref: '#/components/schemas/QueryObject'
-    QueryCountResult:
-      type: object
-      properties:
-        result:
-          type: array
-          items:
-            $ref: '#/components/schemas/OperationCount'
-        query:
-          $ref: '#/components/schemas/QueryObject'
-    Operation:
-      type: object
-      properties:
-        account:
-          $ref: '#/components/schemas/Account'
-        operations:
-          type: array
-          items:
-            $ref: '#/components/schemas/TxReceipt'
-    OperationCount:
-      type: object
-      properties:
-        account:
-          $ref: '#/components/schemas/Account'
-        operations_count:
-          type: integer
-          format: int32
-    UnTxReceipt:
-      description: Unconfirmed transaction receipt
-      required:
-        - transaction
-        - sender
-        - recipient
-        - signature
-      type: object
-      properties:
-        transaction:
-          type: string
-          format: hex_bytearray
-          example: '8330faaeb404178613417'
-        sender:
-          type: string
-          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
-        recipient:
-          type: string
-          example: 'APL-FXHG-6KHM-23LE-42ACU'
-        signature:
-          type: string
-          format: hex_bytearray
-          example: 'B98CB1890E76C772A10994B210ED9CF7F9A5488672A5D82C2734BBF9D11505D1'
-        timestamp:
-          type: integer
-          format: int64
-          description: Transaction timestamp, Unix timestamp in milliseconds
-          example: 1591696372000
-        amount:
-          type: string
-          format: integer
-          example: '34500000000'
-        fee:
-          type: string
-          format: integer
-          example: '0'
-    TxReceipt:
-      description: Confirmed transaction receipt
-      allOf:
-        - $ref: '#/components/schemas/UnTxReceipt'
-        - type: object
-          properties:
-            block:
-              description: The Id of the block containing the confirmed transaction
-              type: string
-              format: hex_bytearray
-              example: '40faaeb1585625167943'
-            blockHash:
-              type: string
-              format: hex_bytearray
-              example: '72A5D82C2734BBF9D11505D1B98CB1890E76C772A10994B210ED9CF7F9A54886'
-            blockTimestamp:
-              type: integer
-              format: int64
-              description: Block timestamp, Unix timestamp in milliseconds
-              example: 1591696372000
-            height:
-              type: integer
-              format: int64
-              example: 15623658
-            index:
-              type: integer
-              format: int32
-              description: the order of the transaction in the block
-              example: 1
-            status:
-              type: string
-              description: |
-                The transaction status. A transaction is considered as unconfirmed until it is included in a valid block.
-                A transaction is considered as confirmed after at least one confirmations, so a transaction is considered
-                as irreversible after 721 confirmations and finally a transaction is permanent if it's confirmed 1440 times.
-              enum: [unconfirmed, confirmed, irreversible, permanent]
-              example: confirmed
-    CountResponse:
-      type: object
-      properties:
-          count:
-            type: integer
-            format: int64
-            example: 345
-    EmptyResponse:
-      type: object
-      properties:
-        timestamp:
-          type: integer
-          format: int64
-          description: Response timestamp, Unix timestamp in milliseconds
-          example: 1591696372000
-        result:
-          type: object
-          additionalProperties: {}
-          nullable: true
-    ErrorResponse:
-      type: object
-      properties:
-        code:
-          type: integer
-          format: int32
-          example: 123
-        type:
-          description: the type of error
-          type: string
-          enum: [fatal, error]
-          example: error
-        message:
-          description: the error message
-          type: string
-          example: 'Description of failure'
-  responses:
-    BadRequest:
-      description: Bad request - malformed request or wrong parameters
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-    ServerError:
-      description: Server error - internal server error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            properties:
+                tx:
+                    description: Signed transaction data
+                    type: string
+                    format: hex_bytearray
+                    example: '001047857c04a00539dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152eef5365f2400292d00ca9a3b0000000000c2eb0b000000000000000000000000000000000000000000000000000000000000000000000000920173ae606d36c1c77fc5bdf294bd048d04f85c46535525771b524dbb1ed20b73311900d4a409c293a10d8a5ab987430be4bd7478fb16a41cf775afa33c4d5600000000f1da1300fe7062e6fb2fbb37'
+                    nullable: false
+        AccountReq:
+            required:
+                - parent
+                - publicKey
+            type: object
+            properties:
+                parent:
+                    type: string
+                    description: parent account id
+                    example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+                child_publicKey_list:
+                    type: array
+                    description: list of child account public keys
+                    maxItems: 128
+                    items:
+                        type: string
+                        format: hex_bytearray
+                        example: '39dc2e813bb45ff063a376e316b10cd0adeb7306111ca0eb2890194d37960152'
+        CreateChildAccountResp:
+            required:
+                - parent
+                - tx
+            allOf:
+                - $ref: '#/components/schemas/BaseResponse'
+                - type: object
+                  properties:
+                      parent:
+                          type: string
+                          description: parent account id
+                          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+                      tx:
+                          description: Unsigned transaction data
+                          type: string
+                          format: hex_bytearray
+                          example: '001047857c04a00539dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152eef5365f2400292d00ca9a3b0000000000c2eb0b000000000000000000000000000000000000000000000000000000000000000000000000920173ae606d36c1c77fc5bdf294bd048d04f85c46535525771b524dbb1ed20b73311900d4a409c293a10d8a5ab987430be4bd7478fb16a41cf775afa33c4d5600000000f1da1300fe7062e6fb2fbb37'
+        AccountInfoResp:
+            allOf:
+                -   $ref: '#/components/schemas/BaseResponse'
+                -   $ref: '#/components/schemas/AccountInfo'
+        AccountInfo:
+            allOf:
+                -   $ref: '#/components/schemas/BasicAccount'
+                -   type: object
+                    required:
+                        - account
+                        - publicKey
+                    properties:
+                        account:
+                            type: string
+                            example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+                        publicKey:
+                            description: The account public key in a hex string format
+                            type: string
+                            format: hex_bytearray
+                            example: '39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152'
+                        parent:
+                            type: string
+                            example: 'APL-AHYW-P3YX-V426-4UMP2'
+                            nullable: true
+                        balance:
+                            type: string
+                            format: integer
+                            example: '45225600000000'
+                        unconfirmedbalance:
+                            type: string
+                            format: integer
+                            example: '45225600000000'
+                        status:
+                            type: string
+                            enum:
+                                - created
+                                - verified
+                            example: created
+        QueryObject:
+            type: object
+            properties:
+                accounts:
+                    description: Exactly all items.
+                    nullable: true
+                    type: array
+                    items:
+                        type: string
+                        example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+                transactionStatus:
+                    type: string
+                    description: |
+                        The transaction status. A transaction is considered as unconfirmed until it is included in a valid block.
+                        A transaction is considered as confirmed after at least one confirmations, so a transaction is considered
+                        as irreversible after 721 confirmations and finally a transaction is permanent if it's confirmed 1440 times.
+                    enum: [confirmed, irreversible, permanent]
+                    example: confirmed
+                first:
+                    type: integer
+                    format: int64
+                    description: The first block height
+                    example: 4000123
+                last:
+                    type: integer
+                    format: int64
+                    description: The last block height
+                    example: 4999000
+                startTime:
+                    type: integer
+                    format: int64
+                    description: The start of the time period, Unix timestamp in milliseconds
+                    example: 1591696310000
+                endTime:
+                    type: integer
+                    format: int64
+                    description: The end of the time period, Unix timestamp in milliseconds
+                    example: 1591696372000
+                page:
+                    type: integer
+                    format: int32
+                    description: page number (1-based)
+                    default: 1
+                    example: 1
+                perPage:
+                    type: integer
+                    format: int32
+                    description: Number of entries per page (max=100)
+                    default: 25
+                    example: 25
+                orderBy:
+                    type: string
+                    nullable: true
+                    enum: [asc, desc]
+                    default: asc
+        QueryResult:
+            allOf:
+                - $ref: '#/components/schemas/BaseResponse'
+                - type: object
+                  properties:
+                      result:
+                          type: array
+                          items:
+                              $ref: '#/components/schemas/Operation'
+                      query:
+                          $ref: '#/components/schemas/QueryObject'
+        QueryCountResult:
+            allOf:
+                - $ref: '#/components/schemas/BaseResponse'
+                - type: object
+                  properties:
+                      result:
+                          type: array
+                          items:
+                              $ref: '#/components/schemas/OperationCount'
+                      query:
+                          $ref: '#/components/schemas/QueryObject'
+        Operation:
+            type: object
+            properties:
+                account:
+                    $ref: '#/components/schemas/AccountInfo'
+                operations:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/TxReceipt'
+        OperationCount:
+            type: object
+            properties:
+                account:
+                    $ref: '#/components/schemas/AccountInfo'
+                operations_count:
+                    type: integer
+                    format: int32
+        UnTxReceipt:
+            description: Unconfirmed transaction receipt
+            allOf:
+                - $ref: '#/components/schemas/BaseResponse'
+                - type: object
+                  required:
+                      - transaction
+                      - sender
+                      - recipient
+                      - signature
+                  properties:
+                      transaction:
+                          type: string
+                          format: hex_bytearray
+                          example: '8330faaeb404178613417'
+                      sender:
+                          type: string
+                          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+                      recipient:
+                          type: string
+                          example: 'APL-FXHG-6KHM-23LE-42ACU'
+                      signature:
+                          type: string
+                          format: hex_bytearray
+                          example: 'B98CB1890E76C772A10994B210ED9CF7F9A5488672A5D82C2734BBF9D11505D1'
+                      timestamp:
+                          type: integer
+                          format: int64
+                          description: Transaction timestamp, Unix timestamp in milliseconds
+                          example: 1591696372000
+                      amount:
+                          type: string
+                          format: integer
+                          example: '34500000000'
+                      fee:
+                          type: string
+                          format: integer
+                          example: '0'
+        TxReceipt:
+            description: Confirmed transaction receipt
+            allOf:
+                -   $ref: '#/components/schemas/UnTxReceipt'
+                -   type: object
+                    properties:
+                        block:
+                            description: The Id of the block containing the confirmed transaction
+                            type: string
+                            format: hex_bytearray
+                            example: '40faaeb1585625167943'
+                        blockHash:
+                            type: string
+                            format: hex_bytearray
+                            example: '72A5D82C2734BBF9D11505D1B98CB1890E76C772A10994B210ED9CF7F9A54886'
+                        blockTimestamp:
+                            type: integer
+                            format: int64
+                            description: Block timestamp, Unix timestamp in milliseconds
+                            example: 1591696372000
+                        height:
+                            type: integer
+                            format: int64
+                            example: 15623658
+                        index:
+                            type: integer
+                            format: int32
+                            description: the order of the transaction in the block
+                            example: 1
+                        status:
+                            type: string
+                            description: |
+                                The transaction status. A transaction is considered as unconfirmed until it is included in a valid block.
+                                A transaction is considered as confirmed after at least one confirmations, so a transaction is considered
+                                as irreversible after 721 confirmations and finally a transaction is permanent if it's confirmed 1440 times.
+                            enum: [unconfirmed, confirmed, irreversible, permanent]
+                            example: confirmed
+        CountResponse:
+            allOf:
+                -   $ref: '#/components/schemas/BaseResponse'
+                -   type: object
+                    properties:
+                        count:
+                            type: integer
+                            format: int64
+                            example: 345
 
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
+        BaseResponse:
+            type: object
+            properties:
+                protocol:
+                    description: 'Protocol version'
+                    type: string
+                    example: '2'
+                requestProcessingTime:
+                    description: 'Time in milliseconds that took from incoming request to response'
+                    type: integer
+                    format: int64
+                    example: 12
+
+        EmptyResponse:
+            allOf:
+                -   $ref: '#/components/schemas/BaseResponse'
+                -   type: object
+                    properties:
+                        result:
+                            type: object
+                            additionalProperties: {}
+                            nullable: true
+
+        ErrorResponse:
+            type: object
+            properties:
+                protocol:
+                    description: 'Protocol version'
+                    type: string
+                    example: '2'
+                errorCode:
+                    description: Error code on new API. null or 0 means success, no error.
+                    type: integer
+                    format: int32
+                    example: 12
+                errorDescription:
+                    description: Textual error description, e.g. exception message, etc that could be displayed to user
+                    type: string
+                    example: 'The mandatory parameter ''id'' is not specified.'
+                errorDetails:
+                    description: |
+                        Detailed error description with debug information, helpful error data or stacktrace, by default
+                        should not be displayed to user. Main purpose is create bug reports with meaningful content.
+                    type: string
+                    example: 'Description of failure'
+    responses:
+        BadRequest:
+            description: Bad request - malformed request or wrong parameters
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/ErrorResponse'
+        ServerError:
+            description: Server error - internal server error
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/ErrorResponse'
+
+    securitySchemes:
+        bearerAuth:
+            type: http
+            scheme: bearer
+            bearerFormat: JWT
 
