@@ -162,9 +162,12 @@ public final class Crypto {
     public static byte[] simpleParentChildSign(byte[] message, byte[]privateKeyParent, byte[] privateKeyChild) {        
         byte[] childSignature = sign(message, privateKeyChild);
         byte[] parentSignature = sign(message, privateKeyParent);
-        byte[] parentChildSignature = new byte[128];
-        System.arraycopy(parentSignature, 0, parentChildSignature, 0, 64);
-        System.arraycopy(childSignature, 0, parentChildSignature, 64, 64);        
+        byte[] parentChildSignature = new byte[CryptoConstants.ED22519_SIGNATURE_SIZE*2];
+        System.arraycopy(parentSignature, 0, parentChildSignature, 0, 
+                CryptoConstants.ED22519_SIGNATURE_SIZE);
+        System.arraycopy(childSignature, 0, parentChildSignature, 
+                CryptoConstants.ED22519_SIGNATURE_SIZE, 
+                CryptoConstants.ED22519_SIGNATURE_SIZE);        
         return parentChildSignature;
     }
 
@@ -172,8 +175,10 @@ public final class Crypto {
         
         byte[] parentSignature = new byte[64]; 
         byte[] childSignature = new byte[64]; 
-        System.arraycopy(parentChildSignature, 0, parentSignature, 0, 64);
-        System.arraycopy(parentChildSignature, 64, childSignature, 0, 64);        
+        System.arraycopy(parentChildSignature, 0, parentSignature, 0, 
+                CryptoConstants.ED22519_SIGNATURE_SIZE);
+        System.arraycopy(parentChildSignature, 64, childSignature, 0, 
+                CryptoConstants.ED22519_SIGNATURE_SIZE);        
         
         return verify(parentSignature, message, publicKeyParent) 
                 && verify(childSignature, message, publicKeyChild);
@@ -186,7 +191,7 @@ public final class Crypto {
         int counter = 0;
         for (byte[] userKey : privateKeys) {
             byte[] userSignature = sign(message,userKey);
-            System.arraycopy(userSignature, 0, result[counter], 0, 64);
+            System.arraycopy(userSignature, 0, result[counter], 0, CryptoConstants.ED22519_SIGNATURE_SIZE);
             counter++;           
         }
         return result;
