@@ -30,6 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.exchange.Exchange;
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
+import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
@@ -55,6 +56,7 @@ public class CurrencyServiceImpl implements CurrencyService {
     private final CurrencyFounderService currencyFounderService;
     private final ExchangeService exchangeService;
     private final CurrencyTransferService currencyTransferService;
+    private final ShufflingService shufflingService;
     private CurrencyMintService currencyMintService; // lazy init to break up circular dependency
 
     @Inject
@@ -66,7 +68,8 @@ public class CurrencyServiceImpl implements CurrencyService {
                                CurrencyExchangeOfferFacade currencyExchangeOfferFacade,
                                CurrencyFounderService currencyFounderService,
                                ExchangeService exchangeService,
-                               CurrencyTransferService currencyTransferService) {
+                               CurrencyTransferService currencyTransferService,
+                               ShufflingService shufflingService) {
         this.currencySupplyTable = currencySupplyTable;
         this.currencyTable = currencyTable;
         this.blockChainInfoService = blockChainInfoService;
@@ -77,6 +80,7 @@ public class CurrencyServiceImpl implements CurrencyService {
         this.currencyFounderService = currencyFounderService;
         this.exchangeService = exchangeService;
         this.currencyTransferService = currencyTransferService;
+        this.shufflingService = shufflingService;
     }
 
     @Override
@@ -247,7 +251,7 @@ public class CurrencyServiceImpl implements CurrencyService {
         if (currency == null) return false; // prevent NPE
 
         if (!currency.is(CurrencyType.NON_SHUFFLEABLE)
-            && Shuffling.getHoldingShufflingCount(currency.getId(), false) > 0) {
+            && shufflingService.getHoldingShufflingCount(currency.getId(), false) > 0) {
             return false;
         }
         if (!this.isActive(currency)) {

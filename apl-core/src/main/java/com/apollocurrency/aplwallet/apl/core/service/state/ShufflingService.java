@@ -4,8 +4,19 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state;
 
+import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCancellationAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreation;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingProcessingAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRecipientsAttachment;
+import com.apollocurrency.aplwallet.apl.util.Listener;
+
+import java.util.List;
 
 public interface ShufflingService {
 
@@ -37,6 +48,62 @@ public interface ShufflingService {
 
     boolean delete(ShufflingParticipant participant);
 
-    void setNextAccountId(ShufflingParticipant participant, long nextAccountId);
+
+
+    void addShuffling(Transaction transaction, ShufflingCreation attachment);
+
+    int getShufflingCount();
+
+    int getShufflingActiveCount();
+
+    boolean addListener(Listener<Shuffling> listener, Shuffling.Event eventType);
+
+    boolean removeListener(Listener<Shuffling> listener, Shuffling.Event eventType);
+
+    DbIterator<Shuffling> getAll(int from, int to);
+
+    DbIterator<Shuffling> getActiveShufflings(int from, int to);
+
+    List<Shuffling> getActiveShufflings();
+
+    DbIterator<Shuffling> getFinishedShufflings(int from, int to);
+
+    byte[] getFullHash(long shufflingId);
+
+    Shuffling getShuffling(long shufflingId);
+
+    Shuffling getShuffling(byte[] fullHash);
+
+    int getHoldingShufflingCount(long holdingId, boolean includeFinished);
+
+    DbIterator<Shuffling> getHoldingShufflings(long holdingId, Shuffling.Stage stage, boolean includeFinished, int from, int to);
+
+    DbIterator<Shuffling> getAccountShufflings(long accountId, boolean includeFinished, int from, int to);
+
+    DbIterator<Shuffling> getAssignedShufflings(long assigneeAccountId, int from, int to);
+
+    byte[] getParticipantsHash(Iterable<ShufflingParticipant> participants);
+
+    ShufflingAttachment processShuffling(Shuffling shuffling, final long accountId, final byte[] secretBytes, final byte[] recipientPublicKey);
+
+    ShufflingCancellationAttachment revealKeySeeds(Shuffling shuffling, final byte[] secretBytes, long cancellingAccountId, byte[] shufflingStateHash);
+
+
+    void verify(Shuffling shuffling, long accountId);
+
+    boolean isFull(Shuffling shuffling, Block block);
+
+    void cancelBy(Shuffling shuffling, ShufflingParticipant participant, byte[][] blameData, byte[][] keySeeds);
+
+    void cancel(Shuffling shuffling, Block block);
+
+    void save(Shuffling shuffling);
+
+    void updateParticipantData(Shuffling shuffling, Transaction transaction, ShufflingProcessingAttachment attachment);
+
+    void updateRecipients(Shuffling shuffling, Transaction transaction, ShufflingRecipientsAttachment attachment);
+
+    void addParticipant(Shuffling shuffling, long participantId);
+
 
 }

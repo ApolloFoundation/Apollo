@@ -63,7 +63,7 @@ public final class ShufflingProcess extends CreateTransaction {
                 Convert2.rsAccount(senderId), Convert2.rsAccount(shuffling.getAssigneeAccountId())));
             return JSON.prepare(response);
         }
-        ShufflingParticipant participant = shuffling.getParticipant(senderId);
+        ShufflingParticipant participant = shufflingService.getParticipant(shuffling.getId(), senderId);
         if (participant == null) {
             JSONObject response = new JSONObject();
             response.put("errorCode", 13);
@@ -79,7 +79,7 @@ public final class ShufflingProcess extends CreateTransaction {
             return INCORRECT_PUBLIC_KEY; // do not allow existing account to be used as recipient
         }
 
-        ShufflingAttachment attachment = shuffling.process(senderId, secretBytes, recipientPublicKey);
+        ShufflingAttachment attachment = shufflingService.processShuffling(shuffling, senderId, secretBytes, recipientPublicKey);
         return createTransaction(req, senderAccount, attachment);
     }
 

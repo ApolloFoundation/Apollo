@@ -33,6 +33,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.net.InetAddress;
 
 import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionType.lookupCurrencyExchangeOfferFacade;
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionType.lookupShufflingService;
 
 @Deprecated
 @Vetoed
@@ -73,8 +74,8 @@ public final class GetState extends AbstractAPIRequestHandler {
             response.put("numberOfDataTags", taggedDataService.getDataTagCount());
             response.put("numberOfAccountLeases", lookupAccountLeaseService().getAccountLeaseCount());
             response.put("numberOfActiveAccountLeases", lookupAccountService().getActiveLeaseCount());
-            response.put("numberOfShufflings", Shuffling.getCount());
-            response.put("numberOfActiveShufflings", Shuffling.getActiveCount());
+            response.put("numberOfShufflings", lookupShufflingService().getShufflingCount());
+            response.put("numberOfActiveShufflings", lookupShufflingService().getShufflingActiveCount());
             response.put("numberOfPhasingOnlyAccounts", lookupAccountControlPhasingService().getCount());
         }
         response.put("numberOfPeers", lookupPeersService().getAllPeers().size());

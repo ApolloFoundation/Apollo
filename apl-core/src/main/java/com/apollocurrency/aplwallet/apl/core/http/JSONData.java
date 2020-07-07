@@ -499,7 +499,7 @@ public final class JSONData {
         json.put("registrantCount", shuffling.getRegistrantCount());
         json.put("stage", shuffling.getStage().getCode());
         json.put("shufflingStateHash", Convert.toHexString(shuffling.getStateHash()));
-        json.put("shufflingFullHash", Convert.toHexString(shuffling.getFullHash()));
+        json.put("shufflingFullHash", Convert.toHexString(shufflingService.getFullHash(shuffling.getId())));
         JSONArray recipientPublicKeys = new JSONArray();
         for (byte[] recipientPublicKey : shuffling.getRecipientPublicKeys()) {
             recipientPublicKeys.add(Convert.toHexString(recipientPublicKey));

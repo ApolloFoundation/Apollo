@@ -16,11 +16,13 @@ import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+@Singleton
 public class ShufflingParticipantTable  extends VersionedDeletableEntityDbTable<ShufflingParticipant> {
 
     public static final LinkKeyFactory<ShufflingParticipant> dbKeyFactory = new LinkKeyFactory<>("shuffling_id", "account_id") {

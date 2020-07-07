@@ -35,6 +35,7 @@ import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetTransferService;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
@@ -58,6 +59,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurr
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeRequestService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
+import com.apollocurrency.aplwallet.apl.core.service.state.impl.ShufflingServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.AskOrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.BidOrderService;
@@ -78,6 +80,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionType.lookupShufflingService;
 
 /**
  * @author alukin@gmail.com
@@ -113,6 +117,7 @@ public class ServerInfoService {
     private final ExchangeRequestService exchangeRequestService;
     private final CurrencyTransferService currencyTransferService;
     private final CurrencyService currencyService;
+    private final ShufflingService shufflingService;
 
     @Inject
     public ServerInfoService(BlockchainConfig blockchainConfig, Blockchain blockchain,
@@ -139,7 +144,8 @@ public class ServerInfoService {
                              ExchangeService exchangeService,
                              ExchangeRequestService exchangeRequestService,
                              CurrencyTransferService currencyTransferService,
-                             CurrencyService currencyService
+                             CurrencyService currencyService,
+                             ShufflingService shufflingService
     ) {
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
         this.blockchain = Objects.requireNonNull(blockchain, "blockchain is NULL");
@@ -168,7 +174,8 @@ public class ServerInfoService {
         this.exchangeService = Objects.requireNonNull(exchangeService, "exchangeService is NULL");
         this.exchangeRequestService = Objects.requireNonNull(exchangeRequestService, "exchangeRequestService is NULL");
         this.currencyTransferService = Objects.requireNonNull(currencyTransferService, "currencyTransferService is NULL");
-        this. currencyService = Objects.requireNonNull( currencyService, "currencyService is NULL");
+        this.currencyService = Objects.requireNonNull( currencyService, "currencyService is NULL");
+        this.shufflingService = Objects.requireNonNull( shufflingService, "shufflingService is NULL");
     }
 
     public ApolloX509Info getX509Info() {
@@ -372,8 +379,8 @@ public class ServerInfoService {
             dto.numberOfDataTags = taggedDataService.getDataTagCount();
             dto.numberOfAccountLeases = accountLeaseService.getAccountLeaseCount();
             dto.numberOfActiveAccountLeases = accountService.getActiveLeaseCount();
-            dto.numberOfShufflings = Shuffling.getCount();
-            dto.numberOfActiveShufflings = Shuffling.getActiveCount();
+            dto.numberOfShufflings = shufflingService.getShufflingCount();
+            dto.numberOfActiveShufflings = lookupShufflingService().getShufflingActiveCount();
             dto.numberOfPhasingOnlyAccounts = accountControlPhasingService.getCount();
         }
         dto.numberOfPeers = peersService.getAllPeers().size();

@@ -127,7 +127,7 @@ public final class Shuffler {
                 throw new ShufflerLimitException("Cannot run more than " + MAX_SHUFFLERS + " shufflers on the same node");
             }
             if (shuffler == null) {
-                Shuffling shuffling = Shuffling.getShuffling(shufflingFullHash);
+                Shuffling shuffling = shufflingService.getShuffling(shufflingFullHash);
                 if (shuffling == null && lookupAccountService().getAccount(recipientPublicKey) != null) {
                     throw new InvalidRecipientException("Existing account cannot be used as shuffling recipient");
                 }
@@ -259,7 +259,7 @@ public final class Shuffler {
 
     public static void init() {
 
-        Shuffling.addListener(shuffling -> {
+        shufflingService.addListener(shuffling -> {
             Map<Long, Shuffler> shufflerMap = getShufflers(shuffling);
             if (shufflerMap != null) {
                 shufflerMap.values().forEach(shuffler -> {
@@ -275,7 +275,7 @@ public final class Shuffler {
             }
         }, Shuffling.Event.SHUFFLING_CREATED);
 
-        Shuffling.addListener(shuffling -> {
+        shufflingService.addListener(shuffling -> {
             Map<Long, Shuffler> shufflerMap = getShufflers(shuffling);
             if (shufflerMap != null) {
                 Shuffler shuffler = shufflerMap.get(shuffling.getAssigneeAccountId());
@@ -290,7 +290,7 @@ public final class Shuffler {
             }
         }, Shuffling.Event.SHUFFLING_PROCESSING_ASSIGNED);
 
-        Shuffling.addListener(shuffling -> {
+        shufflingService.addListener(shuffling -> {
             Map<Long, Shuffler> shufflerMap = getShufflers(shuffling);
             if (shufflerMap != null) {
                 shufflerMap.values().forEach(shuffler -> {
@@ -304,7 +304,7 @@ public final class Shuffler {
             }
         }, Shuffling.Event.SHUFFLING_PROCESSING_FINISHED);
 
-        Shuffling.addListener(shuffling -> {
+        shufflingService.addListener(shuffling -> {
             Map<Long, Shuffler> shufflerMap = getShufflers(shuffling);
             if (shufflerMap != null) {
                 shufflerMap.values().forEach(shuffler -> {
@@ -318,13 +318,13 @@ public final class Shuffler {
             }
         }, Shuffling.Event.SHUFFLING_BLAME_STARTED);
 
-        Shuffling.addListener(Shuffler::scheduleExpiration, Shuffling.Event.SHUFFLING_DONE);
+        shufflingService.addListener(Shuffler::scheduleExpiration, Shuffling.Event.SHUFFLING_DONE);
 
-        Shuffling.addListener(Shuffler::scheduleExpiration, Shuffling.Event.SHUFFLING_CANCELLED);
+        shufflingService.addListener(Shuffler::scheduleExpiration, Shuffling.Event.SHUFFLING_CANCELLED);
     }
 
     private static Map<Long, Shuffler> getShufflers(Shuffling shuffling) {
-        return shufflingsMap.get(Convert.toHexString(shuffling.getFullHash()));
+        return shufflingsMap.get(Convert.toHexString(shufflingService.getFullHash(shuffling.getId())));
     }
 
     private static void scheduleExpiration(Shuffling shuffling) {
@@ -334,7 +334,7 @@ public final class Shuffler {
             shufflingIds = new HashSet<>();
             expirations.put(expirationHeight, shufflingIds);
         }
-        shufflingIds.add(Convert.toHexString(shuffling.getFullHash()));
+        shufflingIds.add(Convert.toHexString(shufflingService.getFullHash(shuffling.getId())));
     }
 
     private static void clearExpiration(Shuffling shuffling) {
@@ -366,7 +366,7 @@ public final class Shuffler {
     }
 
     private void init(Shuffling shuffling) throws ShufflerException {
-        ShufflingParticipant shufflingParticipant = shuffling.getParticipant(accountId);
+        ShufflingParticipant shufflingParticipant = shufflingService.getParticipant(shuffling.getId(), accountId);
         switch (shuffling.getStage()) {
             case REGISTRATION:
                 if (lookupAccountService().getAccount(recipientPublicKey) != null) {
@@ -416,7 +416,7 @@ public final class Shuffler {
     }
 
     private void verify(Shuffling shuffling) {
-        ShufflingParticipant shufflingParticipant = shuffling.getParticipant(accountId);
+        ShufflingParticipant shufflingParticipant = shufflingService.getParticipant(shuffling.getId(), accountId);
         if (shufflingParticipant != null && shufflingParticipant.getIndex() != shuffling.getParticipantCount() - 1) {
             boolean found = false;
             for (byte[] key : shuffling.getRecipientPublicKeys()) {
@@ -437,7 +437,7 @@ public final class Shuffler {
         if (accountId == shuffling.getAssigneeAccountId()) {
             return;
         }
-        ShufflingParticipant shufflingParticipant = shuffling.getParticipant(accountId);
+        ShufflingParticipant shufflingParticipant = shufflingService.getParticipant(shuffling.getId(), accountId);
         if (shufflingParticipant == null || shufflingParticipant.getIndex() == shuffling.getParticipantCount() - 1) {
             return;
         }
@@ -455,7 +455,7 @@ public final class Shuffler {
 
     private void submitProcess(Shuffling shuffling) {
         LOG.debug("Account {} processing shuffling {}", Long.toUnsignedString(accountId), Long.toUnsignedString(shuffling.getId()));
-        ShufflingAttachment attachment = shuffling.process(accountId, secretBytes, recipientPublicKey);
+        ShufflingAttachment attachment = shufflingService.processShuffling(shuffling, accountId, secretBytes, recipientPublicKey);
         submitTransaction(attachment);
     }
 
@@ -467,7 +467,7 @@ public final class Shuffler {
 
     private void submitCancel(Shuffling shuffling) {
         LOG.debug("Account {} cancelling shuffling {}", Long.toUnsignedString(accountId), Long.toUnsignedString(shuffling.getId()));
-        ShufflingCancellationAttachment attachment = shuffling.revealKeySeeds(secretBytes, shuffling.getAssigneeAccountId(),
+        ShufflingCancellationAttachment attachment = shufflingService.revealKeySeeds(shuffling, secretBytes, shuffling.getAssigneeAccountId(),
             shuffling.getStateHash());
         submitTransaction(attachment);
     }
