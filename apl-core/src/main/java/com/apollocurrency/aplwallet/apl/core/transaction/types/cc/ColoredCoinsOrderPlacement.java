@@ -1,25 +1,35 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2020 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.core.transaction;
+package com.apollocurrency.aplwallet.apl.core.transaction.types.cc;
 
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderPlacementAttachment;
 
 /**
  * @author al
  */
 abstract class ColoredCoinsOrderPlacement extends ColoredCoins {
+    private final AssetService assetService;
+
+    public ColoredCoinsOrderPlacement(BlockchainConfig blockchainConfig, AccountService accountService, AccountAssetService accountAssetService, AssetService assetService) {
+        super(blockchainConfig, accountService, accountAssetService);
+        this.assetService = assetService;
+    }
 
     @Override
     public final void validateAttachment(Transaction transaction) throws AplException.ValidationException {
         ColoredCoinsOrderPlacementAttachment attachment = (ColoredCoinsOrderPlacementAttachment) transaction.getAttachment();
-        if (attachment.getPriceATM() <= 0 || attachment.getPriceATM() > lookupBlockchainConfig().getCurrentConfig().getMaxBalanceATM() || attachment.getAssetId() == 0) {
+        if (attachment.getPriceATM() <= 0 || attachment.getPriceATM() > getBlockchainConfig().getCurrentConfig().getMaxBalanceATM() || attachment.getAssetId() == 0) {
             throw new AplException.NotValidException("Invalid asset order placement: " + attachment.getJSONObject());
         }
-        Asset asset = lookupAssetService().getAsset(attachment.getAssetId());
+        Asset asset = assetService.getAsset(attachment.getAssetId());
         if (attachment.getQuantityATU() <= 0 || (asset != null && attachment.getQuantityATU() > asset.getInitialQuantityATU())) {
             throw new AplException.NotValidException("Invalid asset order placement asset or quantity: " + attachment.getJSONObject());
         }

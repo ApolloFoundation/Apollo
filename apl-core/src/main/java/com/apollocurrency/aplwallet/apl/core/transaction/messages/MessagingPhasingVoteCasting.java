@@ -3,7 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.types.messaging.Messaging;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.messaging.MessagingTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
@@ -83,7 +83,7 @@ public final class MessagingPhasingVoteCasting extends AbstractAttachment {
 
     @Override
     public TransactionType getTransactionType() {
-        return Messaging.PHASING_VOTE_CASTING;
+        return MessagingTransactionType.PHASING_VOTE_CASTING;
     }
 
     public List<byte[]> getTransactionFullHashes() {

@@ -4,11 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.cc.ColoredCoins;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.shuffling.ShufflingTransactionType;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.control.AccountControlTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.control.SetPhasingOnlyTransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.messaging.Messaging;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.data.DataTransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.messaging.MessagingTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.payment.PaymentTransactionType;
 import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
 
@@ -120,29 +122,29 @@ public class CachedTransactionTypeFactory {
             case TYPE_MESSAGING:
                 switch (subtype) {
                     case SUBTYPE_MESSAGING_ARBITRARY_MESSAGE:
-                        return Messaging.ARBITRARY_MESSAGE;
+                        return MessagingTransactionType.ARBITRARY_MESSAGE;
                     case SUBTYPE_MESSAGING_ALIAS_ASSIGNMENT:
-                        return Messaging.ALIAS_ASSIGNMENT;
+                        return MessagingTransactionType.ALIAS_ASSIGNMENT;
                     case SUBTYPE_MESSAGING_POLL_CREATION:
-                        return Messaging.POLL_CREATION;
+                        return MessagingTransactionType.POLL_CREATION;
                     case SUBTYPE_MESSAGING_VOTE_CASTING:
-                        return Messaging.VOTE_CASTING;
+                        return MessagingTransactionType.VOTE_CASTING;
                     case SUBTYPE_MESSAGING_HUB_ANNOUNCEMENT:
                         throw new IllegalArgumentException("Hub Announcement no longer supported");
                     case SUBTYPE_MESSAGING_ACCOUNT_INFO:
-                        return Messaging.ACCOUNT_INFO;
+                        return MessagingTransactionType.ACCOUNT_INFO;
                     case SUBTYPE_MESSAGING_ALIAS_SELL:
-                        return Messaging.ALIAS_SELL;
+                        return MessagingTransactionType.ALIAS_SELL;
                     case SUBTYPE_MESSAGING_ALIAS_BUY:
-                        return Messaging.ALIAS_BUY;
+                        return MessagingTransactionType.ALIAS_BUY;
                     case SUBTYPE_MESSAGING_ALIAS_DELETE:
-                        return Messaging.ALIAS_DELETE;
+                        return MessagingTransactionType.ALIAS_DELETE;
                     case SUBTYPE_MESSAGING_PHASING_VOTE_CASTING:
-                        return Messaging.PHASING_VOTE_CASTING;
+                        return MessagingTransactionType.PHASING_VOTE_CASTING;
                     case SUBTYPE_MESSAGING_ACCOUNT_PROPERTY:
-                        return Messaging.ACCOUNT_PROPERTY;
+                        return MessagingTransactionType.ACCOUNT_PROPERTY;
                     case SUBTYPE_MESSAGING_ACCOUNT_PROPERTY_DELETE:
-                        return Messaging.ACCOUNT_PROPERTY_DELETE;
+                        return MessagingTransactionType.ACCOUNT_PROPERTY_DELETE;
                     default:
                         return null;
                 }
@@ -202,14 +204,14 @@ public class CachedTransactionTypeFactory {
             case TYPE_DATA:
                 switch (subtype) {
                     case SUBTYPE_DATA_TAGGED_DATA_UPLOAD:
-                        return Data.TAGGED_DATA_UPLOAD;
+                        return DataTransactionType.TAGGED_DATA_UPLOAD;
                     case SUBTYPE_DATA_TAGGED_DATA_EXTEND:
-                        return Data.TAGGED_DATA_EXTEND;
+                        return DataTransactionType.TAGGED_DATA_EXTEND;
                     default:
                         return null;
                 }
             case TYPE_SHUFFLING:
-                return ShufflingTransaction.findTransactionType(subtype);
+                return ShufflingTransactionType.findTransactionType(subtype);
             case TYPE_UPDATE:
                 switch (subtype) {
                     case SUBTYPE_UPDATE_CRITICAL:

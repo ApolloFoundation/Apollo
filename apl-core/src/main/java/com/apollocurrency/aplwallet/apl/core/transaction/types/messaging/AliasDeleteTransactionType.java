@@ -23,7 +23,7 @@ import java.util.Map;
 
 
 @Singleton
-public class AliasDeleteTransactionType extends Messaging {
+public class AliasDeleteTransactionType extends MessagingTransactionType {
     private final AliasService aliasService;
 
     @Inject

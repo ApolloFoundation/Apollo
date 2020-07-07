@@ -27,7 +27,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 @Singleton
-public class PhasingVoteCastingTransactionType extends Messaging {
+public class PhasingVoteCastingTransactionType extends MessagingTransactionType {
     private final Fee PHASING_VOTE_FEE = (transaction, appendage) -> {
         MessagingPhasingVoteCasting attachment = (MessagingPhasingVoteCasting) transaction.getAttachment();
         return attachment.getTransactionFullHashes().size() * Constants.ONE_APL;

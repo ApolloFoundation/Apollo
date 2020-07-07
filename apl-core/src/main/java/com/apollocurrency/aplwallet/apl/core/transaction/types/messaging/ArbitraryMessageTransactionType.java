@@ -21,7 +21,7 @@ import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 
 @Singleton
-public class ArbitraryMessageTransactionType extends Messaging {
+public class ArbitraryMessageTransactionType extends MessagingTransactionType {
 
     @Inject
     public ArbitraryMessageTransactionType(BlockchainConfig blockchainConfig, AccountService accountService) {

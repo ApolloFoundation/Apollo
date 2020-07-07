@@ -23,7 +23,7 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 
 @Singleton
-public class AliasBuyTransactionType extends Messaging {
+public class AliasBuyTransactionType extends MessagingTransactionType {
     private final AliasService aliasService;
 
     @Inject

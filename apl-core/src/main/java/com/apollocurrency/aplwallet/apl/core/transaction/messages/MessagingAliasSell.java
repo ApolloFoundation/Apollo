@@ -3,7 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.types.messaging.Messaging;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.messaging.MessagingTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
@@ -44,7 +44,7 @@ public final class MessagingAliasSell extends AbstractAttachment {
 
     @Override
     public TransactionType getTransactionType() {
-        return Messaging.ALIAS_SELL;
+        return MessagingTransactionType.ALIAS_SELL;
     }
 
     @Override

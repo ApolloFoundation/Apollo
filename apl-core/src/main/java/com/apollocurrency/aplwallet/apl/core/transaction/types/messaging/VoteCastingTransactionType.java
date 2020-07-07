@@ -23,7 +23,7 @@ import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 import java.util.Map;
 @Singleton
-public class VoteCastingTransactionType extends Messaging {
+public class VoteCastingTransactionType extends MessagingTransactionType {
     private final PollService pollService;
 
     @Inject

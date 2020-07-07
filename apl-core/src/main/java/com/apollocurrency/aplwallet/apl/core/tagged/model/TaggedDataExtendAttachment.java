@@ -9,7 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.tagged.TaggedDataAttachment;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.TaggedData;
-import com.apollocurrency.aplwallet.apl.core.transaction.Data;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.data.DataTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -47,7 +47,7 @@ public final class TaggedDataExtendAttachment extends TaggedDataAttachment {
     }
 
     public static TaggedDataExtendAttachment parse(JSONObject attachmentData) {
-        if (!Appendix.hasAppendix(Data.TAGGED_DATA_EXTEND.getName(), attachmentData)) {
+        if (!Appendix.hasAppendix(DataTransactionType.TAGGED_DATA_EXTEND.getName(), attachmentData)) {
             return null;
         }
         return new TaggedDataExtendAttachment(attachmentData);
@@ -71,7 +71,7 @@ public final class TaggedDataExtendAttachment extends TaggedDataAttachment {
 
     @Override
     public TransactionType getTransactionType() {
-        return Data.TAGGED_DATA_EXTEND;
+        return DataTransactionType.TAGGED_DATA_EXTEND;
     }
 
     public long getTaggedDataId() {

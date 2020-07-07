@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.tagged.model;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.tagged.TaggedDataAttachment;
 import com.apollocurrency.aplwallet.apl.core.service.state.TaggedDataService;
-import com.apollocurrency.aplwallet.apl.core.transaction.Data;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.data.DataTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -51,7 +51,7 @@ public final class TaggedDataUploadAttachment extends TaggedDataAttachment {
     }
 
     public static TaggedDataUploadAttachment parse(JSONObject attachmentData) {
-        if (!Appendix.hasAppendix(Data.TAGGED_DATA_UPLOAD.getName(), attachmentData)) {
+        if (!Appendix.hasAppendix(DataTransactionType.TAGGED_DATA_UPLOAD.getName(), attachmentData)) {
             return null;
         }
         return new TaggedDataUploadAttachment(attachmentData);
@@ -75,7 +75,7 @@ public final class TaggedDataUploadAttachment extends TaggedDataAttachment {
 
     @Override
     public TransactionType getTransactionType() {
-        return Data.TAGGED_DATA_UPLOAD;
+        return DataTransactionType.TAGGED_DATA_UPLOAD;
     }
 
     @Override

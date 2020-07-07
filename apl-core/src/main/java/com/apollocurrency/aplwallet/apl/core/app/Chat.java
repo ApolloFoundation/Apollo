@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.messaging.Messaging;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.messaging.MessagingTransactionType;
 
 import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
@@ -41,11 +41,11 @@ public class Chat {
                     + DbUtils.limitsClause(from, to)
             );
             int i = 0;
-            stmt.setByte(++i, Messaging.ARBITRARY_MESSAGE.getType());
-            stmt.setByte(++i, Messaging.ARBITRARY_MESSAGE.getSubtype());
+            stmt.setByte(++i, MessagingTransactionType.ARBITRARY_MESSAGE.getType());
+            stmt.setByte(++i, MessagingTransactionType.ARBITRARY_MESSAGE.getSubtype());
             stmt.setLong(++i, accountId);
-            stmt.setByte(++i, Messaging.ARBITRARY_MESSAGE.getType());
-            stmt.setByte(++i, Messaging.ARBITRARY_MESSAGE.getSubtype());
+            stmt.setByte(++i, MessagingTransactionType.ARBITRARY_MESSAGE.getType());
+            stmt.setByte(++i, MessagingTransactionType.ARBITRARY_MESSAGE.getSubtype());
             stmt.setLong(++i, accountId);
             DbUtils.setLimits(++i, stmt, from, to);
             return new DbIterator<>(con, stmt, (conection, rs) -> {
@@ -70,8 +70,8 @@ public class Chat {
                     + DbUtils.limitsClause(from, to)
             );
             int i = 0;
-            stmt.setByte(++i, Messaging.ARBITRARY_MESSAGE.getType());
-            stmt.setByte(++i, Messaging.ARBITRARY_MESSAGE.getSubtype());
+            stmt.setByte(++i, MessagingTransactionType.ARBITRARY_MESSAGE.getType());
+            stmt.setByte(++i, MessagingTransactionType.ARBITRARY_MESSAGE.getSubtype());
             stmt.setLong(++i, account1);
             stmt.setLong(++i, account2);
             stmt.setLong(++i, account2);

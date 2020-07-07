@@ -27,7 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.messaging.Messaging;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.messaging.MessagingTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SetPhasingOnly;
@@ -142,7 +142,7 @@ public class AccountControlPhasingServiceImpl implements AccountControlPhasingSe
                 String.format("Maximum total fees limit of %f %s exceeded",
                     ((double) phasingOnly.getMaxFees()) / Constants.ONE_APL, blockchainConfig.getCoinSymbol()));
         }
-        if (transaction.getType() == Messaging.PHASING_VOTE_CASTING) {
+        if (transaction.getType() == MessagingTransactionType.PHASING_VOTE_CASTING) {
             return;
         }
         try {

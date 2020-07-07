@@ -27,7 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtendAttachment;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.messaging.Messaging;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.messaging.MessagingTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
@@ -222,7 +222,7 @@ public class TransactionImpl implements Transaction {
                 builder.recipientId(recipientId);
             }
             int position = 1;
-            if ((flags & position) != 0 || (version == 0 && transactionType == Messaging.ARBITRARY_MESSAGE)) {
+            if ((flags & position) != 0 || (version == 0 && transactionType == MessagingTransactionType.ARBITRARY_MESSAGE)) {
                 builder.appendix(new MessageAppendix(buffer));
             }
             position <<= 1;

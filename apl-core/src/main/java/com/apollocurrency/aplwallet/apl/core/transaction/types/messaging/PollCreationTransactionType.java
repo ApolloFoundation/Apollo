@@ -24,7 +24,7 @@ import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 import java.util.Map;
 @Singleton
-public class PollCreationTransactionType extends Messaging {
+public class PollCreationTransactionType extends MessagingTransactionType {
     private final PollService pollService;
     @Inject
     public PollCreationTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, PollService pollService) {

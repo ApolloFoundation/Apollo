@@ -4,7 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
-import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.shuffling.ShufflingTransactionType;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -54,7 +54,7 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
     }
 
     public static ShufflingProcessingAttachment parse(JSONObject attachmentData) {
-        if (!Appendix.hasAppendix(ShufflingTransaction.SHUFFLING_PROCESSING.getName(), attachmentData)) {
+        if (!Appendix.hasAppendix(ShufflingTransactionType.SHUFFLING_PROCESSING.getName(), attachmentData)) {
             return null;
         }
         return new ShufflingProcessingAttachment(attachmentData);
@@ -99,7 +99,7 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
 
     @Override
     public TransactionType getTransactionType() {
-        return ShufflingTransaction.SHUFFLING_PROCESSING;
+        return ShufflingTransactionType.SHUFFLING_PROCESSING;
     }
 
     @Override

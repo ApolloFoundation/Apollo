@@ -23,7 +23,7 @@ import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 import java.util.Map;
 @Singleton
-public class AccountInfoTransactionType extends Messaging {
+public class AccountInfoTransactionType extends MessagingTransactionType {
     private final AccountInfoService accountInfoService;
 
     @Inject

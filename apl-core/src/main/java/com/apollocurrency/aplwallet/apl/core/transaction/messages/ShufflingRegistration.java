@@ -3,7 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.shuffling.ShufflingTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONObject;
@@ -34,7 +34,7 @@ public final class ShufflingRegistration extends AbstractAttachment implements S
 
     @Override
     public TransactionType getTransactionType() {
-        return ShufflingTransaction.SHUFFLING_REGISTRATION;
+        return ShufflingTransactionType.SHUFFLING_REGISTRATION;
     }
 
     @Override

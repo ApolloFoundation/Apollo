@@ -24,7 +24,7 @@ import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 import java.util.Map;
 @Singleton
-public class AliasAssignmentTransactionType extends Messaging {
+public class AliasAssignmentTransactionType extends MessagingTransactionType {
     private final Fee ALIAS_FEE = new Fee.SizeBasedFee(2 * Constants.ONE_APL, 2 * Constants.ONE_APL, 32) {
         @Override
         public int getSize(Transaction transaction, Appendix appendage) {

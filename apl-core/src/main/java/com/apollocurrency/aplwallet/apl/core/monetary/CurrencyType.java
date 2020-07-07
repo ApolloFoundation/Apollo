@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.monetary;
 
-import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.shuffling.ShufflingTransactionType;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMinting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -226,7 +226,7 @@ public enum CurrencyType {
     NON_SHUFFLEABLE(0x20) {
         @Override
         public void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException {
-            if (transaction.getType() == ShufflingTransaction.SHUFFLING_CREATION) {
+            if (transaction.getType() == ShufflingTransactionType.SHUFFLING_CREATION) {
                 throw new AplException.NotValidException("Shuffling is not allowed for this currency");
             }
         }

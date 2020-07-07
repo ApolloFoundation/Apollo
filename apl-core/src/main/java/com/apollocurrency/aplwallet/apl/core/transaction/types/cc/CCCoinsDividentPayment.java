@@ -1,7 +1,7 @@
 /*
- * Copyright © 2018-2020 Apollo Foundation
+ *  Copyright © 2018-2020 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.core.transaction;
+package com.apollocurrency.aplwallet.apl.core.transaction.types.cc;
 
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetDividend;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;

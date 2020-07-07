@@ -55,7 +55,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardImporter;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.messaging.Messaging;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.messaging.MessagingTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
@@ -924,7 +924,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         possiblyApprovedTransactions.add(phasedTransaction);
                     }
                 });
-                if (transaction.getType() == Messaging.PHASING_VOTE_CASTING && !transaction.attachmentIsPhased()) {
+                if (transaction.getType() == MessagingTransactionType.PHASING_VOTE_CASTING && !transaction.attachmentIsPhased()) {
                     MessagingPhasingVoteCasting voteCasting = (MessagingPhasingVoteCasting) transaction.getAttachment();
                     voteCasting.getTransactionFullHashes().forEach(hash -> {
                         PhasingPoll phasingPoll = phasingPollService.getPoll(Convert.fullHashToId(hash));
@@ -939,7 +939,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             });
             log.trace(":accept: validate Valid phasing transactions");
             validPhasedTransactions.forEach(phasedTransaction -> {
-                if (phasedTransaction.getType() == Messaging.PHASING_VOTE_CASTING) {
+                if (phasedTransaction.getType() == MessagingTransactionType.PHASING_VOTE_CASTING) {
                     PhasingPollResult result = phasingPollService.getResult(phasedTransaction.getId());
                     if (result != null && result.isApproved()) {
                         MessagingPhasingVoteCasting phasingVoteCasting = (MessagingPhasingVoteCasting) phasedTransaction.getAttachment();

@@ -21,7 +21,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 @Singleton
-public class AccountPropertyDeleteTransactionType extends Messaging {
+public class AccountPropertyDeleteTransactionType extends MessagingTransactionType {
     private final AccountPropertyService propertyService;
 
     @Inject

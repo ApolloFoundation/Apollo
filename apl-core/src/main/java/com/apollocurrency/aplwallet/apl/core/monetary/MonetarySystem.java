@@ -28,15 +28,7 @@ import java.util.Map;
 
 public abstract class MonetarySystem extends TransactionType {
 
-    public static final byte SUBTYPE_MONETARY_SYSTEM_CURRENCY_ISSUANCE = 0;
-    public static final byte SUBTYPE_MONETARY_SYSTEM_RESERVE_INCREASE = 1;
-    public static final byte SUBTYPE_MONETARY_SYSTEM_RESERVE_CLAIM = 2;
-    public static final byte SUBTYPE_MONETARY_SYSTEM_CURRENCY_TRANSFER = 3;
-    public static final byte SUBTYPE_MONETARY_SYSTEM_PUBLISH_EXCHANGE_OFFER = 4;
-    public static final byte SUBTYPE_MONETARY_SYSTEM_EXCHANGE_BUY = 5;
-    public static final byte SUBTYPE_MONETARY_SYSTEM_EXCHANGE_SELL = 6;
-    public static final byte SUBTYPE_MONETARY_SYSTEM_CURRENCY_MINTING = 7;
-    public static final byte SUBTYPE_MONETARY_SYSTEM_CURRENCY_DELETION = 8;
+
     public static final TransactionType CURRENCY_ISSUANCE = new MonetarySystemCurrIssuance();
     public static final TransactionType RESERVE_INCREASE = new MSReverseIncrease();
     public static final TransactionType RESERVE_CLAIM = new MSReverseClaim();

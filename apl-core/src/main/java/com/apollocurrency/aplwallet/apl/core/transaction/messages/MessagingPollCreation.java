@@ -4,7 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.messaging.Messaging;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.messaging.MessagingTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
@@ -152,7 +152,7 @@ public final class MessagingPollCreation extends AbstractAttachment {
 
     @Override
     public TransactionType getTransactionType() {
-        return Messaging.POLL_CREATION;
+        return MessagingTransactionType.POLL_CREATION;
     }
 
     public String getPollName() {

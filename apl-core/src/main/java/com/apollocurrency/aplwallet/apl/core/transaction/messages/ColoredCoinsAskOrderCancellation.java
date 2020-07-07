@@ -3,7 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.ColoredCoins;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.cc.ColoredCoins;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import org.json.simple.JSONObject;
 

@@ -30,7 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.messaging.Messaging;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.messaging.MessagingTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPollCreation;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteCasting;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
@@ -154,8 +154,8 @@ public class PollTable extends EntityDbTable<Poll> {
                     + DbUtils.limitsClause(from, to))) {
                 int i = 0;
                 pstmt.setLong(++i, accountId);
-                pstmt.setByte(++i, Messaging.VOTE_CASTING.getType());
-                pstmt.setByte(++i, Messaging.VOTE_CASTING.getSubtype());
+                pstmt.setByte(++i, MessagingTransactionType.VOTE_CASTING.getType());
+                pstmt.setByte(++i, MessagingTransactionType.VOTE_CASTING.getSubtype());
                 DbUtils.setLimits(++i, pstmt, from, to);
                 List<Long> ids = new ArrayList<>();
                 try (ResultSet rs = pstmt.executeQuery()) {

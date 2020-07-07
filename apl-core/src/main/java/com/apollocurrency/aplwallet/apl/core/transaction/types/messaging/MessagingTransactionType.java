@@ -12,9 +12,9 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 /**
  * @author al
  */
-public abstract class Messaging extends TransactionType {
+public abstract class MessagingTransactionType extends TransactionType {
 
-    public Messaging(BlockchainConfig blockchainConfig, AccountService accountService) {
+    public MessagingTransactionType(BlockchainConfig blockchainConfig, AccountService accountService) {
         super(blockchainConfig, accountService);
     }
 
