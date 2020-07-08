@@ -270,7 +270,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
     @Override
     public void broadcast(Transaction transaction) throws AplException.ValidationException {
-         globalSync.writeLock();
+        globalSync.writeLock();
         try {
             if (blockchain.hasTransaction(transaction.getId())) {
                 log.info("Transaction {} already in blockchain, will not broadcast again", transaction.getStringId());
@@ -703,43 +703,6 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         }
         return processed;
     }
-
-/*
-    public void processTxsToBroadcastWhenConfirmed() {
-        List<Transaction> txsToDelete = new ArrayList<>();
-        unconfirmedTransactionTable.getTxToBroadcastWhenConfirmed().forEach((tx, uncTx) -> {
-            try {
-                if (uncTx.getExpiration() < timeService.getEpochTime() || tx.getExpiration() < timeService.getEpochTime()) {
-                    log.debug("Remove expired tx {}, unctx {}", tx.getId(), uncTx.getId());
-                    txsToDelete.add(tx);
-                } else if (!hasTransaction(uncTx)) {
-                    try {
-                        broadcast(uncTx);
-                    } catch (AplException.ValidationException e) {
-                        log.debug("Unable to broadcast invalid unctx {}, reason {}", tx.getId(), e.getMessage());
-                        txsToDelete.add(tx);
-                    }
-                } else if (blockchain.hasTransaction(uncTx.getId())) {
-                    if (!hasTransaction(tx)) {
-                        try {
-                            broadcast(tx);
-                        } catch (AplException.ValidationException e) {
-                            log.debug("Unable to broadcast invalid tx {}, reason {}", tx.getId(), e.getMessage());
-                        }
-                    }
-                    txsToDelete.add(tx);
-                }
-            } catch (Throwable e) {
-                log.error("Unknown error during broadcasting {}", tx.getId());
-            }
-        });
-        txsToDelete.forEach(unconfirmedTransactionTable.getTxToBroadcastWhenConfirmed()::remove);
-    }
-
-    private boolean hasTransaction(Transaction tx) {
-        return getUnconfirmedTransaction(tx.getId()) != null || blockchain.hasTransaction(tx.getId());
-    }
-*/
 
     public void broadcastWhenConfirmed(Transaction tx, Transaction unconfirmedTx) {
         unconfirmedTransactionTable.getTxToBroadcastWhenConfirmed().put(tx, unconfirmedTx);
