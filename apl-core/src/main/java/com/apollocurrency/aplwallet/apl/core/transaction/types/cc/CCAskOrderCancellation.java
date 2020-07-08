@@ -21,17 +21,16 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 
-/**
- * @author al
- */
 @Singleton
 class CCAskOrderCancellation extends ColoredCoinsOrderCancellation {
-    private OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService;
+    private final OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService;
+    private final AccountAssetService accountAssetService;
 
     @Inject
-    public CCAskOrderCancellation(BlockchainConfig blockchainConfig, AccountService accountService, AccountAssetService accountAssetService, OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService) {
-        super(blockchainConfig, accountService, accountAssetService);
+    public CCAskOrderCancellation(BlockchainConfig blockchainConfig, AccountService accountService, OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService, AccountAssetService accountAssetService) {
+        super(blockchainConfig, accountService);
         this.askOrderService = askOrderService;
+        this.accountAssetService = accountAssetService;
     }
 
     @Override

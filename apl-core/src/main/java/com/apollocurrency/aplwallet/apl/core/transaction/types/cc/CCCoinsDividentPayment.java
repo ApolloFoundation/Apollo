@@ -3,32 +3,49 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.types.cc;
 
-import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetDividend;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetDividendService;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
-/**
- * @author al
- */
-class CCCoinsDividentPayment extends ColoredCoins {
+@Singleton
+public class CCCoinsDividentPayment extends ColoredCoins {
 
-    public CCCoinsDividentPayment() {
+
+    private final AssetService assetService;
+    private final AccountAssetService accountAssetService;
+    private final Blockchain blockchain;
+    private final AssetDividendService assetDividendService;
+
+    @Inject
+    public CCCoinsDividentPayment(BlockchainConfig blockchainConfig, AccountService accountService, AssetService assetService, AccountAssetService accountAssetService, AssetDividendService assetDividendService, Blockchain blockchain) {
+        super(blockchainConfig, accountService);
+        this.assetService = assetService;
+        this.assetDividendService = assetDividendService;
+        this.accountAssetService = accountAssetService;
+        this.blockchain = blockchain;
     }
 
     @Override
-    public final byte getSubtype() {
-        return TransactionType.SUBTYPE_COLORED_COINS_DIVIDEND_PAYMENT;
+    public TransactionTypes.TransactionTypeSpec getSpec() {
+        return TransactionTypes.TransactionTypeSpec.CC_DIVIDEND_PAYMENT;
     }
 
     @Override
@@ -55,14 +72,14 @@ class CCCoinsDividentPayment extends ColoredCoins {
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         ColoredCoinsDividendPayment attachment = (ColoredCoinsDividendPayment) transaction.getAttachment();
         long assetId = attachment.getAssetId();
-        Asset asset = lookupAssetService().getAsset(assetId, attachment.getHeight());
+        Asset asset = assetService.getAsset(assetId, attachment.getHeight());
         if (asset == null) {
             return true;
         }
-        long quantityATU = asset.getQuantityATU() - lookupAccountAssetService().getAssetBalanceATU(senderAccount, assetId, attachment.getHeight());
+        long quantityATU = asset.getQuantityATU() - accountAssetService.getAssetBalanceATU(senderAccount, assetId, attachment.getHeight());
         long totalDividendPayment = Math.multiplyExact(attachment.getAmountATMPerATU(), quantityATU);
         if (senderAccount.getUnconfirmedBalanceATM() >= totalDividendPayment) {
-            lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -totalDividendPayment);
+            getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -totalDividendPayment);
             return true;
         }
         return false;
@@ -71,49 +88,48 @@ class CCCoinsDividentPayment extends ColoredCoins {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         ColoredCoinsDividendPayment attachment = (ColoredCoinsDividendPayment) transaction.getAttachment();
-        lookupAccountAssetService().payDividends(senderAccount, transaction.getId(), attachment);
+        accountAssetService.payDividends(senderAccount, transaction.getId(), attachment);
     }
 
     @Override
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         ColoredCoinsDividendPayment attachment = (ColoredCoinsDividendPayment) transaction.getAttachment();
         long assetId = attachment.getAssetId();
-        Asset asset = lookupAssetService().getAsset(assetId, attachment.getHeight());
+        Asset asset = assetService.getAsset(assetId, attachment.getHeight());
         if (asset == null) {
             return;
         }
-        long quantityATU = asset.getQuantityATU() - lookupAccountAssetService().getAssetBalanceATU(senderAccount, assetId, attachment.getHeight());
+        long quantityATU = asset.getQuantityATU() - accountAssetService.getAssetBalanceATU(senderAccount, assetId, attachment.getHeight());
         long totalDividendPayment = Math.multiplyExact(attachment.getAmountATMPerATU(), quantityATU);
-        lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), totalDividendPayment);
+        getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), totalDividendPayment);
     }
 
     @Override
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
         ColoredCoinsDividendPayment attachment = (ColoredCoinsDividendPayment) transaction.getAttachment();
-        Blockchain blockchain = lookupBlockchain();
         if (attachment.getHeight() > blockchain.getHeight()) {
             throw new AplException.NotCurrentlyValidException("Invalid dividend payment height: " + attachment.getHeight() + ", must not exceed current blockchain height " + blockchain.getHeight());
         }
         if (attachment.getHeight() <= attachment.getFinishValidationHeight(transaction) - Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK) {
             throw new AplException.NotCurrentlyValidException("Invalid dividend payment height: " + attachment.getHeight() + ", must be less than " + Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK + " blocks before " + attachment.getFinishValidationHeight(transaction));
         }
-        Asset asset = lookupAssetService().getAsset(attachment.getAssetId(), attachment.getHeight());
+        Asset asset = assetService.getAsset(attachment.getAssetId(), attachment.getHeight());
         if (asset == null) {
             throw new AplException.NotCurrentlyValidException("Asset " + Long.toUnsignedString(attachment.getAssetId()) + " for dividend payment doesn't exist yet");
         }
         if (asset.getAccountId() != transaction.getSenderId() || attachment.getAmountATMPerATU() <= 0) {
             throw new AplException.NotValidException("Invalid dividend payment sender or amount " + attachment.getJSONObject());
         }
-        AssetDividend lastDividend = lookupAssetDividendService().getLastDividend(attachment.getAssetId());
+        AssetDividend lastDividend = assetDividendService.getLastDividend(attachment.getAssetId());
         if (lastDividend != null && lastDividend.getHeight() > blockchain.getHeight() - 60) {
-            throw new AplException.NotCurrentlyValidException("Last dividend payment for asset " + Long.toUnsignedString(attachment.getAssetId()) + " was less than 60 blocks ago at " + lastDividend.getHeight() + ", current height is " + lookupBlockchain().getHeight() + ", limit is one dividend per 60 blocks");
+            throw new AplException.NotCurrentlyValidException("Last dividend payment for asset " + Long.toUnsignedString(attachment.getAssetId()) + " was less than 60 blocks ago at " + lastDividend.getHeight() + ", current height is " + blockchain.getHeight() + ", limit is one dividend per 60 blocks");
         }
     }
 
     @Override
-    public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+    public boolean isDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
         ColoredCoinsDividendPayment attachment = (ColoredCoinsDividendPayment) transaction.getAttachment();
-        return isDuplicate(ColoredCoins.DIVIDEND_PAYMENT, Long.toUnsignedString(attachment.getAssetId()), duplicates, true);
+        return isDuplicate(TransactionTypes.TransactionTypeSpec.CC_DIVIDEND_PAYMENT, Long.toUnsignedString(attachment.getAssetId()), duplicates, true);
     }
 
     @Override

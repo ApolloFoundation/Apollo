@@ -3,10 +3,9 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.types.cc;
 
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
@@ -16,13 +15,10 @@ import java.util.Map;
 
 import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.CC_ASK_ORDER_CANCELLATION;
 
-/**
- * @author al
- */
 public abstract class ColoredCoinsOrderCancellation extends ColoredCoins {
 
-    public ColoredCoinsOrderCancellation(BlockchainConfig blockchainConfig, AccountService accountService, AccountAssetService accountAssetService) {
-        super(blockchainConfig, accountService, accountAssetService);
+    public ColoredCoinsOrderCancellation(BlockchainConfig blockchainConfig, AccountService accountService) {
+        super(blockchainConfig, accountService);
     }
 
     @Override

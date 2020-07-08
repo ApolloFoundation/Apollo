@@ -3,25 +3,32 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.types.cc;
 
-import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetIssuance;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
 /**
  * @author al
  */
-class CCAssetIssuance extends ColoredCoins {
+@Singleton
+public class CCAssetIssuance extends ColoredCoins {
 
     private final Fee SINGLETON_ASSET_FEE = new Fee.SizeBasedFee(Constants.ONE_APL, Constants.ONE_APL, 32) {
         public int getSize(Transaction transaction, Appendix appendage) {
@@ -31,12 +38,19 @@ class CCAssetIssuance extends ColoredCoins {
     };
     private final Fee ASSET_ISSUANCE_FEE = (transaction, appendage) -> isSingletonIssuance(transaction) ? SINGLETON_ASSET_FEE.getFee(transaction, appendage) : 1000 * Constants.ONE_APL;
 
-    public CCAssetIssuance() {
+    private final AssetService assetService;
+    private final AccountAssetService accountAssetService;
+
+    @Inject
+    public CCAssetIssuance(BlockchainConfig blockchainConfig, AccountService accountService, AssetService assetService, AccountAssetService accountAssetService) {
+        super(blockchainConfig, accountService);
+        this.assetService = assetService;
+        this.accountAssetService = accountAssetService;
     }
 
     @Override
-    public final byte getSubtype() {
-        return TransactionType.SUBTYPE_COLORED_COINS_ASSET_ISSUANCE;
+    public TransactionTypes.TransactionTypeSpec getSpec() {
+        return TransactionTypes.TransactionTypeSpec.CC_ASSET_ISSUANCE;
     }
 
     @Override
@@ -82,8 +96,8 @@ class CCAssetIssuance extends ColoredCoins {
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         ColoredCoinsAssetIssuance attachment = (ColoredCoinsAssetIssuance) transaction.getAttachment();
         long assetId = transaction.getId();
-        lookupAssetService().addAsset(transaction, attachment);
-        lookupAccountAssetService().addToAssetAndUnconfirmedAssetBalanceATU(senderAccount, getLedgerEvent(), assetId, assetId, attachment.getQuantityATU());
+        assetService.addAsset(transaction, attachment);
+        accountAssetService.addToAssetAndUnconfirmedAssetBalanceATU(senderAccount, getLedgerEvent(), assetId, assetId, attachment.getQuantityATU());
     }
 
     @Override
@@ -105,8 +119,8 @@ class CCAssetIssuance extends ColoredCoins {
     }
 
     @Override
-    public boolean isBlockDuplicate(final Transaction transaction, final Map<TransactionType, Map<String, Integer>> duplicates) {
-        return !isSingletonIssuance(transaction) && isDuplicate(ColoredCoins.ASSET_ISSUANCE, getName(), duplicates, true);
+    public boolean isBlockDuplicate(final Transaction transaction, final Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
+        return !isSingletonIssuance(transaction) && isDuplicate(TransactionTypes.TransactionTypeSpec.CC_ASSET_ISSUANCE, getName(), duplicates, true);
     }
 
     @Override

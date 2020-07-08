@@ -3,29 +3,44 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.types.cc;
 
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetTransferService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import org.json.simple.JSONObject;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 
-/**
- * @author al
- */
-class CCAssetTransfer extends ColoredCoins {
+@Singleton
+public class CCAssetTransfer extends ColoredCoins {
 
-    public CCAssetTransfer() {
+
+    private final AccountAssetService accountAssetService;
+    private final AssetService assetService;
+    private final AssetTransferService assetTransferService;
+
+    @Inject
+    public CCAssetTransfer(BlockchainConfig blockchainConfig, AccountService accountService, AccountAssetService accountAssetService, AssetService assetService, AssetTransferService assetTransferService) {
+        super(blockchainConfig, accountService);
+        this.accountAssetService = accountAssetService;
+        this.assetService = assetService;
+        this.assetTransferService = assetTransferService;
     }
 
     @Override
-    public final byte getSubtype() {
-        return TransactionType.SUBTYPE_COLORED_COINS_ASSET_TRANSFER;
+    public TransactionTypes.TransactionTypeSpec getSpec() {
+        return TransactionTypes.TransactionTypeSpec.CC_ASSET_TRANSFER;
     }
 
     @Override
@@ -51,9 +66,9 @@ class CCAssetTransfer extends ColoredCoins {
     @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         ColoredCoinsAssetTransfer attachment = (ColoredCoinsAssetTransfer) transaction.getAttachment();
-        long unconfirmedAssetBalance = lookupAccountAssetService().getUnconfirmedAssetBalanceATU(senderAccount, attachment.getAssetId());
+        long unconfirmedAssetBalance = accountAssetService.getUnconfirmedAssetBalanceATU(senderAccount, attachment.getAssetId());
         if (unconfirmedAssetBalance >= 0 && unconfirmedAssetBalance >= attachment.getQuantityATU()) {
-            lookupAccountAssetService().addToUnconfirmedAssetBalanceATU(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getAssetId(), -attachment.getQuantityATU());
+            accountAssetService.addToUnconfirmedAssetBalanceATU(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getAssetId(), -attachment.getQuantityATU());
             return true;
         }
         return false;
@@ -62,19 +77,19 @@ class CCAssetTransfer extends ColoredCoins {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         ColoredCoinsAssetTransfer attachment = (ColoredCoinsAssetTransfer) transaction.getAttachment();
-        lookupAccountAssetService().addToAssetBalanceATU(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getAssetId(), -attachment.getQuantityATU());
+        accountAssetService.addToAssetBalanceATU(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getAssetId(), -attachment.getQuantityATU());
         if (recipientAccount.getId() == GenesisImporter.CREATOR_ID) {
-            lookupAssetService().deleteAsset(transaction, attachment.getAssetId(), attachment.getQuantityATU());
+            assetService.deleteAsset(transaction, attachment.getAssetId(), attachment.getQuantityATU());
         } else {
-            lookupAccountAssetService().addToAssetAndUnconfirmedAssetBalanceATU(recipientAccount, getLedgerEvent(), transaction.getId(), attachment.getAssetId(), attachment.getQuantityATU());
-            lookupAssetTransferService().addAssetTransfer(transaction, attachment);
+            accountAssetService.addToAssetAndUnconfirmedAssetBalanceATU(recipientAccount, getLedgerEvent(), transaction.getId(), attachment.getAssetId(), attachment.getQuantityATU());
+            assetTransferService.addAssetTransfer(transaction, attachment);
         }
     }
 
     @Override
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         ColoredCoinsAssetTransfer attachment = (ColoredCoinsAssetTransfer) transaction.getAttachment();
-        lookupAccountAssetService().addToUnconfirmedAssetBalanceATU(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getAssetId(), attachment.getQuantityATU());
+        accountAssetService.addToUnconfirmedAssetBalanceATU(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getAssetId(), attachment.getQuantityATU());
     }
 
     @Override
@@ -86,7 +101,7 @@ class CCAssetTransfer extends ColoredCoins {
         if (transaction.getRecipientId() == GenesisImporter.CREATOR_ID) {
             throw new AplException.NotValidException("Asset transfer to Genesis not allowed, " + "use asset delete attachment instead");
         }
-        Asset asset = lookupAssetService().getAsset(attachment.getAssetId());
+        Asset asset = assetService.getAsset(attachment.getAssetId());
         if (attachment.getQuantityATU() <= 0 || (asset != null && attachment.getQuantityATU() > asset.getInitialQuantityATU())) {
             throw new AplException.NotValidException("Invalid asset transfer asset or quantity: " + attachment.getJSONObject());
         }

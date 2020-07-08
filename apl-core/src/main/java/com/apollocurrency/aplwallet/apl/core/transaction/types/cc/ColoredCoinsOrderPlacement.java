@@ -7,19 +7,15 @@ import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderPlacementAttachment;
 
-/**
- * @author al
- */
 abstract class ColoredCoinsOrderPlacement extends ColoredCoins {
     private final AssetService assetService;
 
-    public ColoredCoinsOrderPlacement(BlockchainConfig blockchainConfig, AccountService accountService, AccountAssetService accountAssetService, AssetService assetService) {
-        super(blockchainConfig, accountService, accountAssetService);
+    public ColoredCoinsOrderPlacement(BlockchainConfig blockchainConfig, AccountService accountService, AssetService assetService) {
+        super(blockchainConfig, accountService);
         this.assetService = assetService;
     }
 
