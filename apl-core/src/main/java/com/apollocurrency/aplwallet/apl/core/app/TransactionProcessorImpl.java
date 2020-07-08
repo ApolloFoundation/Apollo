@@ -159,7 +159,6 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
     public void init() {
         configureBackgroundTasks();
-//        blockchain = CDI.current().select(Blockchain.class).get();
     }
 
     private void configureBackgroundTasks() {
