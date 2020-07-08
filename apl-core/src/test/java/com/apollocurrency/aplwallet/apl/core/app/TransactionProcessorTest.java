@@ -5,16 +5,17 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_5_HEIGHT;
-import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_5_ID;
-import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_5_TIMESTAMP;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import javax.enterprise.event.Event;
+import javax.enterprise.util.AnnotationLiteral;
 import java.util.List;
+import java.util.Map;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
@@ -43,7 +44,6 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -55,7 +55,6 @@ class TransactionProcessorTest {
 
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
-//    private BlockChainInfoService blockChainInfoService = mock(BlockChainInfoService.class);
     private BlockchainProcessor blockchainProcessor = mock(BlockchainProcessor.class);
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
@@ -94,7 +93,6 @@ class TransactionProcessorTest {
 
     private TransactionProcessor service;
     TransactionTestData td;
-//    BlockTestData blockTestData;
     @Mock
     private javax.enterprise.event.Event<List<Transaction>> listEvent;
 
@@ -106,38 +104,89 @@ class TransactionProcessorTest {
             globalSync, timeService, ntpTimeConfig.time(), blockchainConfig, taskDispatchManager, peersService, blockchain);
     }
 
-    @Disabled // transaction signature verification FAILES
+    @Test
     void broadcast() throws AplException.ValidationException {
+        //GIVEN
         int expirationTimestamp = timeService.getEpochTime() + 10;
         long senderId = 9211698109297098287L;
         String signature = "75a2e84c1e039205387b025aa8e1e65384f8b455aa3f2a977d65c577caa31f0410a78f6fcaa875a352843c72b7715fd9ec616f8e2e19281b7e247f3d6642c38f";
-        Transaction preparedTrx = TransactionTestData.buildTransaction(
-            -9128485677221760321L, BLOCK_5_HEIGHT, BLOCK_5_ID, BLOCK_5_TIMESTAMP, (short) 1440, -603599418476309001L,
-            (short) 0, 100000000000000000L, 100000000,
-            "bfb2f42fa41a5181fc18147b1d9360b4ae06fc65905948fbce127c302201e9a1",
-            signature, expirationTimestamp, (byte) 0, (byte) 0, senderId, null,
-            null, false, (byte) 1, false, false,
-            false, 14734, 2621055931824266697L, false,
-            false, false, false, null);
-        doReturn(false).when(blockchain).hasTransaction(preparedTrx.getId());
+        Transaction transaction = mock(Transaction.class);
+        doReturn(-9128485677221760321L).when(transaction).getId();
+        doReturn("-9128485677221760321").when(transaction).getStringId();
+        doReturn(100L).when(transaction).getFeeATM();
+        doReturn(100).when(transaction).getFullSize();
+        doReturn(expirationTimestamp).when(transaction).getTimestamp();
+        doReturn(expirationTimestamp).when(transaction).getExpiration();
+        doReturn((byte)1).when(transaction).getVersion();
+        doReturn(true).when(transaction).verifySignature();
+        doReturn(false).when(transaction).isUnconfirmedDuplicate(any(Map.class));
+
+        doReturn(false).when(blockchain).hasTransaction(-9128485677221760321L);
+        doReturn(BLOCK_5_HEIGHT).when(blockchain).getHeight();
+        doReturn(Long.valueOf(BLOCK_5_HEIGHT - 1)).when(blockchainConfig).getLastKnownBlock();
         LongKeyFactory<UnconfirmedTransaction> longKeyFactory = mock(LongKeyFactory.class);
-        doReturn(new LongKey(preparedTrx.getId())).when(longKeyFactory).newKey(preparedTrx.getId());
+        doReturn(new LongKey(-9128485677221760321L)).when(longKeyFactory).newKey(-9128485677221760321L);
         doReturn(longKeyFactory).when(unconfirmedTransactionTable).getTransactionKeyFactory();
         TransactionalDataSource dataSource = mock(TransactionalDataSource.class);
         doReturn(dataSource).when(databaseManager).getDataSource();
         doReturn(signature.getBytes()).when(accountPublicKeyService).getPublicKeyByteArray(senderId);
+        doReturn(true).when(transactionApplier).applyUnconfirmed(transaction);
+        Event eventType = mock(Event.class);
+        doReturn(eventType).when(listEvent).select(any(AnnotationLiteral.class));
 
-        service.broadcast(preparedTrx);
+        //WHEN
+        service.broadcast(transaction);
 
-        verify(globalSync).writeLock();
-        verify(blockchain).hasTransaction(anyLong());
+        //THEN
+        verify(globalSync, times(2)).writeLock();
+        verify(globalSync, times(2)).writeUnlock();
+        verify(blockchain, times(2)).hasTransaction(anyLong());
         verify(transactionValidator).validate(any(Transaction.class));
-//        verify(service).processTransaction(any(UnconfirmedTransaction.class));
+        verify(databaseManager).getDataSource();
+        verify(transaction).verifySignature();
+        verify(transactionApplier).applyUnconfirmed(transaction);
+        verify(unconfirmedTransactionTable).insert(any(UnconfirmedTransaction.class));
     }
 
     @Test
-    void processPeerTransactions() {
-//        service.processPeerTransactions();
+    void processTransaction() throws AplException.ValidationException {
+        //GIVEN
+        int expirationTimestamp = timeService.getEpochTime() + 10;
+        long senderId = 9211698109297098287L;
+        String signature = "75a2e84c1e039205387b025aa8e1e65384f8b455aa3f2a977d65c577caa31f0410a78f6fcaa875a352843c72b7715fd9ec616f8e2e19281b7e247f3d6642c38f";
+        Transaction transaction = mock(Transaction.class);
+        doReturn(-9128485677221760321L).when(transaction).getId();
+        doReturn(100L).when(transaction).getFeeATM();
+        doReturn(100).when(transaction).getFullSize();
+        doReturn(expirationTimestamp).when(transaction).getTimestamp();
+        doReturn(expirationTimestamp).when(transaction).getExpiration();
+        doReturn((byte)1).when(transaction).getVersion();
+        doReturn(true).when(transaction).verifySignature();
+        doReturn(false).when(transaction).isUnconfirmedDuplicate(any(Map.class));
+        UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction(transaction, expirationTimestamp);
+
+        doReturn(false).when(blockchain).hasTransaction(-9128485677221760321L);
+        doReturn(BLOCK_5_HEIGHT).when(blockchain).getHeight();
+        doReturn(Long.valueOf(BLOCK_5_HEIGHT - 1)).when(blockchainConfig).getLastKnownBlock();
+        LongKeyFactory<UnconfirmedTransaction> longKeyFactory = mock(LongKeyFactory.class);
+        doReturn(new LongKey(-9128485677221760321L)).when(longKeyFactory).newKey(-9128485677221760321L);
+        doReturn(longKeyFactory).when(unconfirmedTransactionTable).getTransactionKeyFactory();
+        TransactionalDataSource dataSource = mock(TransactionalDataSource.class);
+        doReturn(dataSource).when(databaseManager).getDataSource();
+        doReturn(signature.getBytes()).when(accountPublicKeyService).getPublicKeyByteArray(senderId);
+        doReturn(true).when(transactionApplier).applyUnconfirmed(transaction);
+
+        //WHEN
+        service.processTransaction(unconfirmedTransaction);
+
+        //THEN
+        verify(globalSync).writeLock();
+        verify(globalSync).writeUnlock();
+        verify(blockchain).hasTransaction(anyLong());
+        verify(databaseManager).getDataSource();
+        verify(transaction).verifySignature();
+        verify(transactionApplier).applyUnconfirmed(transaction);
+        verify(unconfirmedTransactionTable).insert(any(UnconfirmedTransaction.class));
     }
 
 }
