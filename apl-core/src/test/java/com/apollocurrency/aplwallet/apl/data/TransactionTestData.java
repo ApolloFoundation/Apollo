@@ -109,7 +109,7 @@ public class TransactionTestData {
     public TransactionTestData() {
     }
 
-    public static Transaction buildTransaction(long id, int height, long blockId, int blockTimestamp, short deadline, Long recipientId, short index, long amount, long fee, String fullHash, String signature, int timestamp, byte type, byte subtype, long senderId, String publicKey, String referencedTransactionFullhash, boolean phased, byte version, boolean hasMessage, boolean hasEncryptedMessage, boolean hasAnnouncedPublicKey, int ecBlockHeight, long ecBlockId, boolean hasEncrypttoselfMessage, boolean hasPrunableMessage, boolean hasPrunableEncryptedMessage, boolean hasPrunableAttachment, String attachment) {
+    private static Transaction buildTransaction(long id, int height, long blockId, int blockTimestamp, short deadline, Long recipientId, short index, long amount, long fee, String fullHash, String signature, int timestamp, byte type, byte subtype, long senderId, String publicKey, String referencedTransactionFullhash, boolean phased, byte version, boolean hasMessage, boolean hasEncryptedMessage, boolean hasAnnouncedPublicKey, int ecBlockHeight, long ecBlockId, boolean hasEncrypttoselfMessage, boolean hasPrunableMessage, boolean hasPrunableEncryptedMessage, boolean hasPrunableAttachment, String attachment) {
         ByteBuffer buffer = null;
         if (attachment != null) {
             buffer = ByteBuffer.wrap(Convert.parseHexString(attachment));
