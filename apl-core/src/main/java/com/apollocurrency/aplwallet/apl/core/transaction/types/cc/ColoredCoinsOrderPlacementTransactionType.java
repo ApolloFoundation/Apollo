@@ -11,10 +11,10 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderPlacementAttachment;
 
-abstract class ColoredCoinsOrderPlacement extends ColoredCoins {
+abstract class ColoredCoinsOrderPlacementTransactionType extends ColoredCoinsTransactionType {
     private final AssetService assetService;
 
-    public ColoredCoinsOrderPlacement(BlockchainConfig blockchainConfig, AccountService accountService, AssetService assetService) {
+    public ColoredCoinsOrderPlacementTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, AssetService assetService) {
         super(blockchainConfig, accountService);
         this.assetService = assetService;
     }

@@ -22,12 +22,12 @@ import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 
 @Singleton
-class CCAskOrderCancellation extends ColoredCoinsOrderCancellation {
+class CCAskOrderCancellationTransactionType extends ColoredCoinsOrderCancellationTransactionType {
     private final OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService;
     private final AccountAssetService accountAssetService;
 
     @Inject
-    public CCAskOrderCancellation(BlockchainConfig blockchainConfig, AccountService accountService, OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService, AccountAssetService accountAssetService) {
+    public CCAskOrderCancellationTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService, AccountAssetService accountAssetService) {
         super(blockchainConfig, accountService);
         this.askOrderService = askOrderService;
         this.accountAssetService = accountAssetService;

@@ -4,7 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.types.cc.ColoredCoins;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.cc.ColoredCoinsTransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.dgs.DigitalGoodsTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.shuffling.ShufflingTransactionType;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.control.AccountControlTransactionType;
@@ -151,42 +152,42 @@ public class CachedTransactionTypeFactory {
             case TYPE_COLORED_COINS:
                 switch (subtype) {
                     case SUBTYPE_COLORED_COINS_ASSET_ISSUANCE:
-                        return ColoredCoins.ASSET_ISSUANCE;
+                        return ColoredCoinsTransactionType.ASSET_ISSUANCE;
                     case SUBTYPE_COLORED_COINS_ASSET_TRANSFER:
-                        return ColoredCoins.ASSET_TRANSFER;
+                        return ColoredCoinsTransactionType.ASSET_TRANSFER;
                     case SUBTYPE_COLORED_COINS_ASK_ORDER_PLACEMENT:
-                        return ColoredCoins.ASK_ORDER_PLACEMENT;
+                        return ColoredCoinsTransactionType.ASK_ORDER_PLACEMENT;
                     case SUBTYPE_COLORED_COINS_BID_ORDER_PLACEMENT:
-                        return ColoredCoins.BID_ORDER_PLACEMENT;
+                        return ColoredCoinsTransactionType.BID_ORDER_PLACEMENT;
                     case SUBTYPE_COLORED_COINS_ASK_ORDER_CANCELLATION:
-                        return ColoredCoins.ASK_ORDER_CANCELLATION;
+                        return ColoredCoinsTransactionType.ASK_ORDER_CANCELLATION;
                     case SUBTYPE_COLORED_COINS_BID_ORDER_CANCELLATION:
-                        return ColoredCoins.BID_ORDER_CANCELLATION;
+                        return ColoredCoinsTransactionType.BID_ORDER_CANCELLATION;
                     case SUBTYPE_COLORED_COINS_DIVIDEND_PAYMENT:
-                        return ColoredCoins.DIVIDEND_PAYMENT;
+                        return ColoredCoinsTransactionType.DIVIDEND_PAYMENT;
                     case SUBTYPE_COLORED_COINS_ASSET_DELETE:
-                        return ColoredCoins.ASSET_DELETE;
+                        return ColoredCoinsTransactionType.ASSET_DELETE;
                     default:
                         return null;
                 }
             case TYPE_DIGITAL_GOODS:
                 switch (subtype) {
                     case SUBTYPE_DIGITAL_GOODS_LISTING:
-                        return DigitalGoods.LISTING;
+                        return DigitalGoodsTransactionType.LISTING;
                     case SUBTYPE_DIGITAL_GOODS_DELISTING:
-                        return DigitalGoods.DELISTING;
+                        return DigitalGoodsTransactionType.DELISTING;
                     case SUBTYPE_DIGITAL_GOODS_PRICE_CHANGE:
-                        return DigitalGoods.PRICE_CHANGE;
+                        return DigitalGoodsTransactionType.PRICE_CHANGE;
                     case SUBTYPE_DIGITAL_GOODS_QUANTITY_CHANGE:
-                        return DigitalGoods.QUANTITY_CHANGE;
+                        return DigitalGoodsTransactionType.QUANTITY_CHANGE;
                     case SUBTYPE_DIGITAL_GOODS_PURCHASE:
-                        return DigitalGoods.PURCHASE;
+                        return DigitalGoodsTransactionType.PURCHASE;
                     case SUBTYPE_DIGITAL_GOODS_DELIVERY:
-                        return DigitalGoods.DELIVERY;
+                        return DigitalGoodsTransactionType.DELIVERY;
                     case SUBTYPE_DIGITAL_GOODS_FEEDBACK:
-                        return DigitalGoods.FEEDBACK;
+                        return DigitalGoodsTransactionType.FEEDBACK;
                     case SUBTYPE_DIGITAL_GOODS_REFUND:
-                        return DigitalGoods.REFUND;
+                        return DigitalGoodsTransactionType.REFUND;
                     default:
                         return null;
                 }

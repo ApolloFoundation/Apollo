@@ -3,7 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.types.cc.ColoredCoins;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.cc.ColoredCoinsTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import org.json.simple.JSONObject;
 
@@ -28,7 +28,7 @@ public final class ColoredCoinsBidOrderPlacement extends ColoredCoinsOrderPlacem
 
     @Override
     public TransactionType getTransactionType() {
-        return ColoredCoins.BID_ORDER_PLACEMENT;
+        return ColoredCoinsTransactionType.BID_ORDER_PLACEMENT;
     }
 
 }

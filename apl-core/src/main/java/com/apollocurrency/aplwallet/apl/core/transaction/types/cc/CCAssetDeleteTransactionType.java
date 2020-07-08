@@ -21,12 +21,12 @@ import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 
 @Singleton
-public class CCAssetDelete extends ColoredCoins {
+public class CCAssetDeleteTransactionType extends ColoredCoinsTransactionType {
     private final AssetService assetService;
     private final AccountAssetService accountAssetService;
 
     @Inject
-    public CCAssetDelete(BlockchainConfig blockchainConfig, AccountService accountService, AssetService assetService, AccountAssetService accountAssetService) {
+    public CCAssetDeleteTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, AssetService assetService, AccountAssetService accountAssetService) {
         super(blockchainConfig, accountService);
         this.assetService = assetService;
         this.accountAssetService = accountAssetService;

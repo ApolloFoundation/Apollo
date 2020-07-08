@@ -28,7 +28,7 @@ import java.util.Map;
  * @author al
  */
 @Singleton
-public class CCAssetIssuance extends ColoredCoins {
+public class CCAssetIssuanceTransactionType extends ColoredCoinsTransactionType {
 
     private final Fee SINGLETON_ASSET_FEE = new Fee.SizeBasedFee(Constants.ONE_APL, Constants.ONE_APL, 32) {
         public int getSize(Transaction transaction, Appendix appendage) {
@@ -42,7 +42,7 @@ public class CCAssetIssuance extends ColoredCoins {
     private final AccountAssetService accountAssetService;
 
     @Inject
-    public CCAssetIssuance(BlockchainConfig blockchainConfig, AccountService accountService, AssetService assetService, AccountAssetService accountAssetService) {
+    public CCAssetIssuanceTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, AssetService assetService, AccountAssetService accountAssetService) {
         super(blockchainConfig, accountService);
         this.assetService = assetService;
         this.accountAssetService = accountAssetService;

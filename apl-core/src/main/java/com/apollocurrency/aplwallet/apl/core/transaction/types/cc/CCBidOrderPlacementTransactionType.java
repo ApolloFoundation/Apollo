@@ -23,11 +23,11 @@ import java.nio.ByteBuffer;
  * @author al
  */
 @Singleton
-public class CCBidOrderPlacement extends ColoredCoinsOrderPlacement {
+public class CCBidOrderPlacementTransactionType extends ColoredCoinsOrderPlacementTransactionType {
     private final OrderMatchService orderMatchService;
 
     @Inject
-    public CCBidOrderPlacement(BlockchainConfig blockchainConfig, AccountService accountService, AssetService assetService, OrderMatchService orderMatchService) {
+    public CCBidOrderPlacementTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, AssetService assetService, OrderMatchService orderMatchService) {
         super(blockchainConfig, accountService, assetService);
         this.orderMatchService = orderMatchService;
     }

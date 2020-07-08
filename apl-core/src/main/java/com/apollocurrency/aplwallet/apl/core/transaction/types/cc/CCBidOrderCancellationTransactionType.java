@@ -21,11 +21,11 @@ import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 
 @Singleton
-public class CCBidOrderCancellation extends ColoredCoinsOrderCancellation {
+public class CCBidOrderCancellationTransactionType extends ColoredCoinsOrderCancellationTransactionType {
     private final OrderService<BidOrder, ColoredCoinsBidOrderPlacement> bidOrderService;
 
     @Inject
-    public CCBidOrderCancellation(BlockchainConfig blockchainConfig, AccountService accountService, OrderService<BidOrder, ColoredCoinsBidOrderPlacement> bidOrderService) {
+    public CCBidOrderCancellationTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, OrderService<BidOrder, ColoredCoinsBidOrderPlacement> bidOrderService) {
         super(blockchainConfig, accountService);
         this.bidOrderService = bidOrderService;
     }

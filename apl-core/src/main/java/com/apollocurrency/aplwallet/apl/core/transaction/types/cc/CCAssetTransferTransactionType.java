@@ -23,7 +23,7 @@ import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 
 @Singleton
-public class CCAssetTransfer extends ColoredCoins {
+public class CCAssetTransferTransactionType extends ColoredCoinsTransactionType {
 
 
     private final AccountAssetService accountAssetService;
@@ -31,7 +31,7 @@ public class CCAssetTransfer extends ColoredCoins {
     private final AssetTransferService assetTransferService;
 
     @Inject
-    public CCAssetTransfer(BlockchainConfig blockchainConfig, AccountService accountService, AccountAssetService accountAssetService, AssetService assetService, AssetTransferService assetTransferService) {
+    public CCAssetTransferTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, AccountAssetService accountAssetService, AssetService assetService, AssetTransferService assetTransferService) {
         super(blockchainConfig, accountService);
         this.accountAssetService = accountAssetService;
         this.assetService = assetService;

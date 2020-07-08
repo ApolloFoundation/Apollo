@@ -3,7 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.DigitalGoods;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.dgs.DigitalGoodsTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONObject;
@@ -54,7 +54,7 @@ public final class DigitalGoodsRefund extends AbstractAttachment {
 
     @Override
     public TransactionType getTransactionType() {
-        return DigitalGoods.REFUND;
+        return DigitalGoodsTransactionType.REFUND;
     }
 
     public long getPurchaseId() {

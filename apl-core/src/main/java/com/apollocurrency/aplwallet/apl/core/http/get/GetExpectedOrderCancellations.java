@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.cc.ColoredCoins;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.cc.ColoredCoinsTransactionType;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONArray;
@@ -45,8 +45,8 @@ public final class GetExpectedOrderCancellations extends AbstractAPIRequestHandl
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        Filter<Transaction> filter = transaction -> transaction.getType() == ColoredCoins.ASK_ORDER_CANCELLATION
-            || transaction.getType() == ColoredCoins.BID_ORDER_CANCELLATION;
+        Filter<Transaction> filter = transaction -> transaction.getType() == ColoredCoinsTransactionType.ASK_ORDER_CANCELLATION
+            || transaction.getType() == ColoredCoinsTransactionType.BID_ORDER_CANCELLATION;
 
         List<? extends Transaction> transactions = lookupBlockchainProcessor().getExpectedTransactions(filter);
         JSONArray cancellations = new JSONArray();

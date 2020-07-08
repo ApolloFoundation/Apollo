@@ -26,7 +26,7 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 
 @Singleton
-public class CCCoinsDividentPayment extends ColoredCoins {
+public class CCCoinsDividentPaymentTransactionType extends ColoredCoinsTransactionType {
 
 
     private final AssetService assetService;
@@ -35,7 +35,7 @@ public class CCCoinsDividentPayment extends ColoredCoins {
     private final AssetDividendService assetDividendService;
 
     @Inject
-    public CCCoinsDividentPayment(BlockchainConfig blockchainConfig, AccountService accountService, AssetService assetService, AccountAssetService accountAssetService, AssetDividendService assetDividendService, Blockchain blockchain) {
+    public CCCoinsDividentPaymentTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, AssetService assetService, AccountAssetService accountAssetService, AssetDividendService assetDividendService, Blockchain blockchain) {
         super(blockchainConfig, accountService);
         this.assetService = assetService;
         this.assetDividendService = assetDividendService;
