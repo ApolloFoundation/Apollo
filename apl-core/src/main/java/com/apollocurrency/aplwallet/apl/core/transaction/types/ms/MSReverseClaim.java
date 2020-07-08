@@ -5,6 +5,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction.types.ms;
 
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
@@ -53,7 +54,8 @@ class MSReverseClaim extends MonetarySystemTransactionType {
         if (attachment.getUnits() <= 0) {
             throw new AplException.NotValidException("Reserve claim number of units must be positive: " + attachment.getUnits());
         }
-        CurrencyType.validate(Currency.getCurrency(attachment.getCurrencyId()), transaction);
+        Currency currency = lookupCurrencyService().getCurrency(attachment.getCurrencyId());
+        CurrencyType.validate(currency, transaction);
     }
 
     @Override
@@ -69,7 +71,7 @@ class MSReverseClaim extends MonetarySystemTransactionType {
     @Override
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         MonetarySystemReserveClaim attachment = (MonetarySystemReserveClaim) transaction.getAttachment();
-        Currency currency = Currency.getCurrency(attachment.getCurrencyId());
+        Currency currency = lookupCurrencyService().getCurrency(attachment.getCurrencyId());
         if (currency != null) {
             lookupAccountCurrencyService().addToUnconfirmedCurrencyUnits(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getCurrencyId(), attachment.getUnits());
         }
@@ -78,7 +80,7 @@ class MSReverseClaim extends MonetarySystemTransactionType {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         MonetarySystemReserveClaim attachment = (MonetarySystemReserveClaim) transaction.getAttachment();
-        Currency.claimReserve(getLedgerEvent(), transaction.getId(), senderAccount, attachment.getCurrencyId(), attachment.getUnits());
+        lookupCurrencyService().claimReserve(getLedgerEvent(), transaction.getId(), senderAccount, attachment.getCurrencyId(), attachment.getUnits());
     }
 
     @Override

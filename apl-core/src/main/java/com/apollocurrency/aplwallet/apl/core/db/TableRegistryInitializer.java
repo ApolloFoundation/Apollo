@@ -12,6 +12,19 @@ import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.DataTagDao;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.PrunableMessageTable;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.TaggedDataDao;
+import com.apollocurrency.aplwallet.apl.core.dao.state.asset.AssetDeleteTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.asset.AssetDividendTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.asset.AssetTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.asset.AssetTransferTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyBuyOfferTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyMintTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencySellOfferTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyTransferTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.exchange.ExchangeRequestTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.exchange.ExchangeTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyFounderTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencySupplyTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.poll.PollResultTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.poll.PollTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.TradeTable;
@@ -31,6 +44,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSPublicFeedbackTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSPurchaseTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSTagTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.poll.VoteTable;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyExchangeOffer;
@@ -121,6 +135,8 @@ public class TableRegistryInitializer {
     @Inject
     private AccountInfoTable accountInfoTable;
     @Inject
+    private AccountControlPhasingTable accountControlPhasingTable;
+    @Inject
     private AliasTable aliasTable;
     @Inject
     private AliasOfferTable aliasOfferTable;
@@ -131,17 +147,42 @@ public class TableRegistryInitializer {
     @Inject
     private TradeTable tradeTable;
     @Inject
-    private AccountControlPhasingTable accountControlPhasingTable;
-    @Inject
     private PollTable pollTable;
     @Inject
     private PollResultTable pollResultTable;
+    @Inject
+    private CurrencyBuyOfferTable currencyBuyOfferTable;
+    @Inject
+    private CurrencySellOfferTable currencySellOfferTable;
+    @Inject
+    private CurrencyMintTable currencyMintTable;
+    @Inject
+    private CurrencyTransferTable currencyTransferTable;
+    @Inject
+    private ExchangeTable exchangeTable;
+    @Inject
+    private ExchangeRequestTable exchangeRequestTable;
+    @Inject
+    private AssetTable assetTable;
+    @Inject
+    private AssetDeleteTable assetDeleteTable;
+    @Inject
+    private AssetDividendTable assetDividendTable;
+    @Inject
+    private AssetTransferTable assetTransferTable;
+    @Inject
+    private VoteTable voteTable;
+    @Inject
+    private CurrencyTable currencyTable;
+    @Inject
+    private CurrencySupplyTable currencySupplyTable;
+    @Inject
+    private CurrencyFounderTable currencyFounderTable;
 
     @PostConstruct
     public void init() {
         transactionProcessor.init();
 
-        Vote.init();
         Currency.init();
         CurrencyFounder.init();
         CurrencyBuyOffer.init();
@@ -153,6 +194,5 @@ public class TableRegistryInitializer {
         Shuffling.init();
         ShufflingParticipant.init();
         CurrencyExchangeOffer.init();
-//        AssetTransfer.init(databaseManager);
     }
 }

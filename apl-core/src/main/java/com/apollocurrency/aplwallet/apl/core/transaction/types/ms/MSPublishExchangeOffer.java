@@ -5,6 +5,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction.types.ms;
 
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
@@ -68,9 +69,9 @@ class MSPublishExchangeOffer extends MonetarySystemTransactionType {
         if (attachment.getExpirationHeight() <= attachment.getFinishValidationHeight(transaction)) {
             throw new AplException.NotCurrentlyValidException("Expiration height must be after transaction execution height");
         }
-        Currency currency = Currency.getCurrency(attachment.getCurrencyId());
+        Currency currency = lookupCurrencyService().getCurrency(attachment.getCurrencyId());
         CurrencyType.validate(currency, transaction);
-        if (!currency.isActive()) {
+        if (!lookupCurrencyService().isActive(currency)) {
             throw new AplException.NotCurrentlyValidException("Currency not currently active: " + attachment.getJSONObject());
         }
     }
@@ -90,7 +91,7 @@ class MSPublishExchangeOffer extends MonetarySystemTransactionType {
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         MonetarySystemPublishExchangeOffer attachment = (MonetarySystemPublishExchangeOffer) transaction.getAttachment();
         lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), Math.multiplyExact(attachment.getInitialBuySupply(), attachment.getBuyRateATM()));
-        Currency currency = Currency.getCurrency(attachment.getCurrencyId());
+        Currency currency = lookupCurrencyService().getCurrency(attachment.getCurrencyId());
         if (currency != null) {
             lookupAccountCurrencyService().addToUnconfirmedCurrencyUnits(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getCurrencyId(), attachment.getInitialSellSupply());
         }

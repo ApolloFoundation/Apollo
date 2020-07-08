@@ -24,7 +24,6 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyBuyOfferTable;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
@@ -46,27 +45,20 @@ import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.CurrencyBuyOfferTestData;
 import com.apollocurrency.aplwallet.apl.data.CurrencySellOfferTestData;
-import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
-import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @EnableWeld
 @ExtendWith(MockitoExtension.class)
 class CurrencyExchangeOfferFacadeTest {
-
-    @RegisterExtension
-    static DbExtension dbExtension = new DbExtension();
 
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
@@ -77,8 +69,6 @@ class CurrencyExchangeOfferFacadeTest {
     public WeldInitiator weld = WeldInitiator.from(
         PropertiesHolder.class, CurrencyBuyOfferTable.class, CurrencyBuyOfferServiceImpl.class
     )
-        .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
-        .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
         .addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class))
         .addBeans(MockBean.of(blockchainProcessor, BlockchainProcessor.class, BlockchainProcessorImpl.class))
@@ -97,14 +87,7 @@ class CurrencyExchangeOfferFacadeTest {
     AccountCurrencyService accountCurrencyService;
     @Mock
     ExchangeService exchangeService;
-//    @Mock
-//    BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
-//    @Mock
-//    BlockChainInfoService blockChainInfoService;
-//    @Mock
-//    BlockchainProcessor blockchainProcessor;
 
-//    @Inject
     CurrencyExchangeOfferFacade currencyExchangeOfferFacade;
 
     private CurrencyBuyOfferTestData tdBuy;
@@ -242,12 +225,12 @@ class CurrencyExchangeOfferFacadeTest {
     void test_exchangeCurrencyForAPL() {
         //GIVEN
         Transaction tr = mock(Transaction.class);
-//        doReturn(tdBuy.OFFER_7.getAccountId()).when(tr).getSenderId();
         List<CurrencyExchangeOffer> offers = List.of(tdBuy.OFFER_4, tdBuy.OFFER_5, tdBuy.OFFER_6, tdBuy.OFFER_7, tdBuy.OFFER_8);
         doReturn(offers).when(currencyExchangeOfferFacade).getAvailableBuyOffers(
             tdBuy.OFFER_3.getCurrencyId(), 1);
         doReturn(tdAccount.ACC_5).doReturn(tdAccount.ACC_4).doReturn(tdAccount.ACC_3).doReturn(tdAccount.ACC_2).doReturn(tdAccount.ACC_1)
             .when(accountService).getAccount(anyLong());
+        doReturn(tdAccount.ACC_5).when(accountService).getAccount(any(Account.class));
         doReturn(tdSell.OFFER_8).doReturn(tdSell.OFFER_7).doReturn(tdSell.OFFER_6).doReturn(tdSell.OFFER_5).doReturn(tdSell.OFFER_4)
             .when(currencySellOfferService).getOffer(anyLong());
         doReturn(tdBlock.BLOCK_8).when(blockChainInfoService).getLastBlock();
@@ -256,28 +239,35 @@ class CurrencyExchangeOfferFacadeTest {
         currencyExchangeOfferFacade.exchangeCurrencyForAPL(tr, tdAccount.ACC_5, tdBuy.OFFER_3.getCurrencyId(), 1L, 5);
 
         //THEN
-        verify(exchangeService, times(5))
-            .addExchange(any(Transaction.class), anyLong(), anyLong(), anyLong(), anyLong(), anyLong(), any(Block.class), anyLong());
-        verify(accountService, times(5))
-            .addToBalanceATM(any(Account.class), any(LedgerEvent.class), anyLong(), anyLong());
-        verify(accountCurrencyService, times(5))
-            .addToCurrencyUnits(any(Account.class), any(LedgerEvent.class), anyLong(), anyLong(), anyLong());
-        verify(accountCurrencyService, times(5))
-            .addToUnconfirmedCurrencyUnits(any(Account.class), any(LedgerEvent.class), anyLong(), anyLong(), anyLong());
         verify(currencyBuyOfferService, times(5)).insert(any(CurrencyBuyOffer.class));
         verify(currencySellOfferService, times(5)).insert(any(CurrencySellOffer.class));
+        verify(currencySellOfferService, times(5)).getOffer(anyLong());
+        verify(accountService, times(5)).getAccount(anyLong());
+        verify(accountService, times(5))
+            .addToBalanceATM(any(Account.class), any(LedgerEvent.class), anyLong(), anyLong());
+        verify(exchangeService, times(5))
+            .addExchange(any(Transaction.class), anyLong(), anyLong(), anyLong(), anyLong(), anyLong(), /*any(Block.class), */anyLong());
+
+        verify(accountService, times(1)).getAccount(any(Account.class));
+        verify(accountService, times(1))
+            .addToBalanceAndUnconfirmedBalanceATM(any(Account.class), any(LedgerEvent.class), anyLong(), anyLong());
+        verify(accountCurrencyService, times(6))
+            .addToCurrencyUnits(any(Account.class), any(LedgerEvent.class), anyLong(), anyLong(), anyLong());
+        verify(accountCurrencyService, times(6))
+            .addToUnconfirmedCurrencyUnits(any(Account.class), any(LedgerEvent.class), anyLong(), anyLong(), anyLong());
     }
 
-    @Disabled
+    @Test
     void test_exchangeAPLForCurrency() {
         //GIVEN
         Transaction tr = mock(Transaction.class);
-        doReturn(tdBuy.OFFER_7.getAccountId()).when(tr).getSenderId();
+        doReturn(tdBuy.OFFER_3.getId()).when(tr).getId();
         List<CurrencyExchangeOffer> offers = List.of(tdSell.OFFER_4, tdSell.OFFER_5, tdSell.OFFER_6, tdSell.OFFER_7, tdSell.OFFER_8);
         doReturn(offers).when(currencyExchangeOfferFacade).getAvailableSellOffers(
             tdBuy.OFFER_3.getCurrencyId(), 1);
         doReturn(tdAccount.ACC_5).doReturn(tdAccount.ACC_4).doReturn(tdAccount.ACC_3).doReturn(tdAccount.ACC_2).doReturn(tdAccount.ACC_1)
             .when(accountService).getAccount(anyLong());
+        doReturn(tdAccount.ACC_5).when(accountService).getAccount(any(Account.class));
         doReturn(tdBuy.OFFER_8).doReturn(tdBuy.OFFER_7).doReturn(tdBuy.OFFER_6).doReturn(tdBuy.OFFER_5).doReturn(tdBuy.OFFER_4)
             .when(currencyBuyOfferService).getOffer(anyLong());
         doReturn(tdBlock.BLOCK_8).when(blockChainInfoService).getLastBlock();
@@ -286,18 +276,20 @@ class CurrencyExchangeOfferFacadeTest {
         currencyExchangeOfferFacade.exchangeAPLForCurrency(tr, tdAccount.ACC_5, tdBuy.OFFER_3.getCurrencyId(), 1L, 5);
 
         //THEN
-        verify(exchangeService, times(5))
-            .addExchange(any(Transaction.class), anyLong(), anyLong(), anyLong(), anyLong(), anyLong(), any(Block.class), anyLong());
-        verify(accountService, times(5))
-            .addToBalanceATM(any(Account.class), any(LedgerEvent.class), anyLong(), anyLong());
-        verify(accountCurrencyService, times(5))
-            .addToCurrencyUnits(any(Account.class), any(LedgerEvent.class), anyLong(), anyLong(), anyLong());
-        verify(accountCurrencyService, times(5))
-            .addToCurrencyAndUnconfirmedCurrencyUnits(tdAccount.ACC_5,
-                LedgerEvent.CURRENCY_EXCHANGE, tdSell.OFFER_4.getId(), tdSell.OFFER_3.getCurrencyId(), -1L);
         verify(currencyBuyOfferService, times(5)).insert(any(CurrencyBuyOffer.class));
         verify(currencySellOfferService, times(5)).insert(any(CurrencySellOffer.class));
+        verify(currencyBuyOfferService, times(5)).getOffer(anyLong());
+        verify(accountService, times(5)).getAccount(anyLong());
+        verify(accountService, times(6))
+            .addToBalanceATM(any(Account.class), any(LedgerEvent.class), anyLong(), anyLong());
+        verify(accountService, times(1)).getAccount(any(Account.class));
+        verify(accountCurrencyService, times(5))
+            .addToCurrencyUnits(any(Account.class), any(LedgerEvent.class), anyLong(), anyLong(), anyLong());
+        verify(exchangeService, times(5))
+            .addExchange(any(Transaction.class), anyLong(), anyLong(), anyLong(), anyLong(), anyLong(), /*any(Block.class), */anyLong());
+        verify(accountCurrencyService, times(1))
+            .addToCurrencyAndUnconfirmedCurrencyUnits(
+                any(Account.class), any(LedgerEvent.class), anyLong(), anyLong(), anyLong());
     }
-
 
 }

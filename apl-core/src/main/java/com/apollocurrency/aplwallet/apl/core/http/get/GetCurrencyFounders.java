@@ -22,12 +22,12 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyFounder;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyFounder;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -58,7 +58,7 @@ public final class GetCurrencyFounders extends AbstractAPIRequestHandler {
         response.put("founders", foundersJSONArray);
 
         if (currencyId != 0 && accountId != 0) {
-            CurrencyFounder currencyFounder = CurrencyFounder.getFounder(currencyId, accountId);
+            CurrencyFounder currencyFounder = lookupCurrencyFounderService().getFounder(currencyId, accountId);
             if (currencyFounder != null) {
                 foundersJSONArray.add(JSONData.currencyFounder(currencyFounder));
             }
@@ -68,9 +68,9 @@ public final class GetCurrencyFounders extends AbstractAPIRequestHandler {
         DbIterator<CurrencyFounder> founders = null;
         try {
             if (accountId == 0) {
-                founders = CurrencyFounder.getCurrencyFounders(currencyId, firstIndex, lastIndex);
+                founders = lookupCurrencyFounderService().getCurrencyFounders(currencyId, firstIndex, lastIndex);
             } else if (currencyId == 0) {
-                founders = CurrencyFounder.getFounderCurrencies(accountId, firstIndex, lastIndex);
+                founders = lookupCurrencyFounderService().getFounderCurrencies(accountId, firstIndex, lastIndex);
             }
             for (CurrencyFounder founder : founders) {
                 foundersJSONArray.add(JSONData.currencyFounder(founder));

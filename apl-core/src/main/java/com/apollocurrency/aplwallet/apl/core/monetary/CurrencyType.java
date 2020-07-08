@@ -24,18 +24,23 @@ import com.apollocurrency.aplwallet.apl.core.transaction.types.ms.MonetarySystem
 import com.apollocurrency.aplwallet.apl.core.transaction.types.ms.MonetarySystemExchange;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.shuffling.ShufflingTransactionType;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMinting;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveIncrease;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.inject.spi.CDI;
 import java.util.EnumSet;
 import java.util.Set;
 
+@Slf4j
 /**
  * Define and validate currency capabilities
  */
@@ -164,8 +169,9 @@ public enum CurrencyType {
                     throw new AplException.NotValidException("Claimable currency must have initial supply 0");
                 }
             }
-            if (transaction.getType() == MonetarySystemTransactionType.RESERVE_CLAIM) {
-                if (currency == null || !currency.isActive()) {
+            if (transaction.getType() == MonetarySystem.RESERVE_CLAIM) {
+//                if (currency == null || !currency.isActive()) {
+                if (currency == null || !lookupCurrencyService().isActive(currency)) {
                     throw new AplException.NotCurrentlyValidException("Cannot claim reserve since currency is not yet active");
                 }
             }
@@ -188,7 +194,7 @@ public enum CurrencyType {
                 MonetarySystemCurrencyIssuance issuanceAttachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
                 try {
                     HashFunction hashFunction = HashFunction.getHashFunction(issuanceAttachment.getAlgorithm());
-                    if (!CurrencyMinting.acceptedHashFunctions.contains(hashFunction)) {
+                    if (!MonetaryCurrencyMintingService.acceptedHashFunctions.contains(hashFunction)) {
                         throw new AplException.NotValidException("Invalid minting algorithm " + hashFunction);
                     }
                 } catch (IllegalArgumentException e) {
@@ -239,6 +245,7 @@ public enum CurrencyType {
     };
 
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private static CurrencyService currencyService;
     private final int code;
 
     CurrencyType(int code) {
@@ -260,6 +267,8 @@ public enum CurrencyType {
 
     public static void validate(Currency currency, Transaction transaction) throws AplException.ValidationException {
         if (currency == null) {
+            log.debug("currency = {}, tr = {}, height = {}", currency, transaction, transaction.getHeight());
+            log.debug("s-trace = {}", ThreadUtils.last5Stacktrace());
             throw new AplException.NotCurrentlyValidException("Unknown currency: " + transaction.getAttachment().getJSONObject());
         }
         validate(currency, currency.getType(), transaction);
@@ -317,16 +326,21 @@ public enum CurrencyType {
             throw new AplException.NotValidException("Currency name already used");
         }
         Currency currency;
-        if ((currency = Currency.getCurrencyByName(normalizedName)) != null && !currency.canBeDeletedBy(issuerAccountId)) {
+        CurrencyService currencyService = lookupCurrencyService();
+        if ((currency = currencyService.getCurrencyByName(normalizedName)) != null
+            && !currencyService.canBeDeletedBy(currency, issuerAccountId)) {
             throw new AplException.NotCurrentlyValidException("Currency name already used: " + normalizedName);
         }
-        if ((currency = Currency.getCurrencyByCode(name)) != null && !currency.canBeDeletedBy(issuerAccountId)) {
+        if ((currency = currencyService.getCurrencyByCode(name)) != null
+            && !currencyService.canBeDeletedBy(currency, issuerAccountId)) {
             throw new AplException.NotCurrentlyValidException("Currency name already used as code: " + normalizedName);
         }
-        if ((currency = Currency.getCurrencyByCode(code)) != null && !currency.canBeDeletedBy(issuerAccountId)) {
+        if ((currency = currencyService.getCurrencyByCode(code)) != null
+            && !currencyService.canBeDeletedBy(currency, issuerAccountId)) {
             throw new AplException.NotCurrentlyValidException("Currency code already used: " + code);
         }
-        if ((currency = Currency.getCurrencyByName(code)) != null && !currency.canBeDeletedBy(issuerAccountId)) {
+        if ((currency = currencyService.getCurrencyByName(code)) != null
+            && !currencyService.canBeDeletedBy(currency, issuerAccountId)) {
             throw new AplException.NotCurrentlyValidException("Currency code already used as name: " + code);
         }
     }
@@ -338,4 +352,11 @@ public enum CurrencyType {
     public abstract void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException;
 
     public abstract void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException;
+
+    private static CurrencyService lookupCurrencyService() {
+        if (currencyService == null) {
+            currencyService = CDI.current().select(CurrencyService.class).get();
+        }
+        return currencyService;
+    }
 }

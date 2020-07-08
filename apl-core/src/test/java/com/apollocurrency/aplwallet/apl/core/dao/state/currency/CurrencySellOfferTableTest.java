@@ -120,7 +120,7 @@ class CurrencySellOfferTableTest {
 
     @Test
     void test_getOffer() {
-        CurrencySellOffer result = table.get(CurrencySellOfferTable.buyOfferDbKeyFactory.newKey(td.OFFER_2));
+        CurrencySellOffer result = table.get(CurrencySellOfferTable.sellOfferDbKeyFactory.newKey(td.OFFER_2));
         assertNotNull(result);
         assertEquals(td.OFFER_2, result);
     }
