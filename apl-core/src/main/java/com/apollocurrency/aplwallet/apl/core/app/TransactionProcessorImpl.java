@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessTransactionsThread;
+import com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessTxsToBroadcastWhenConfirmed;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessWaitingTransactionsThread;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.RebroadcastTransactionsThread;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.RemoveUnconfirmedTransactionsThread;
@@ -103,6 +104,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private ProcessWaitingTransactionsThread processWaitingTransactionsThread;
     private ProcessTransactionsThread processTransactionsThread;
     private RemoveUnconfirmedTransactionsThread removeUnconfirmedTransactionsThread;
+    private ProcessTxsToBroadcastWhenConfirmed processTxsToBroadcastWhenConfirmed;
 
     @Inject
     public TransactionProcessorImpl(PropertiesHolder propertiesHolder,
@@ -144,6 +146,8 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             this, this.unconfirmedTransactionTable, blockchainConfig, peers);
         this.removeUnconfirmedTransactionsThread = new RemoveUnconfirmedTransactionsThread(
             this.databaseManager, this.unconfirmedTransactionTable, this, this.timeService, this.globalSync);
+        this.processTxsToBroadcastWhenConfirmed = new ProcessTxsToBroadcastWhenConfirmed(
+            this, this.unconfirmedTransactionTable, this.timeService, this.blockchain);
     }
 
     private BlockchainProcessor lookupBlockchainProcessor() {
@@ -191,7 +195,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             dispatcher.schedule(Task.builder()
                 .name("ProcessTransactionsToBroadcastWhenConfirmed")
                 .delay(15000)
-                .task(this::processTxsToBroadcastWhenConfirmed)
+                .task(processTxsToBroadcastWhenConfirmed)
                 .build());
         }
     }
@@ -700,6 +704,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         return processed;
     }
 
+/*
     public void processTxsToBroadcastWhenConfirmed() {
         List<Transaction> txsToDelete = new ArrayList<>();
         unconfirmedTransactionTable.getTxToBroadcastWhenConfirmed().forEach((tx, uncTx) -> {
@@ -734,6 +739,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private boolean hasTransaction(Transaction tx) {
         return getUnconfirmedTransaction(tx.getId()) != null || blockchain.hasTransaction(tx.getId());
     }
+*/
 
     public void broadcastWhenConfirmed(Transaction tx, Transaction unconfirmedTx) {
         unconfirmedTransactionTable.getTxToBroadcastWhenConfirmed().put(tx, unconfirmedTx);
