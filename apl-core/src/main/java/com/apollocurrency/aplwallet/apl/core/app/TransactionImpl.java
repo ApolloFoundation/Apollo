@@ -767,7 +767,6 @@ public class TransactionImpl implements Transaction {
 
     @Override
     public void sign(byte[] keySeed) throws AplException.NotValidException {
-
         if (getSenderPublicKey() != null && !Arrays.equals(senderPublicKey, Crypto.getPublicKey(keySeed))) {
             throw new AplException.NotValidException("Secret phrase doesn't match transaction sender public key");
         }
@@ -788,12 +787,11 @@ public class TransactionImpl implements Transaction {
     public boolean verifySignature(byte[][] publicKeys) {
         if (!checkSignature(publicKeys)) {
             return false;
-        }else{
-            for(byte[] pk: publicKeys) {
-                if(!lookupAndInjectAccountPublicKeyService().verifyPublicKey(pk)){
-                    LOG.error("Public Key Verification failed: pk={}", Convert.toHexString(pk));
-                    return false;
-                }
+        }
+        for (byte[] pk : publicKeys) {
+            if (!lookupAndInjectAccountPublicKeyService().setOrVerifyPublicKey(AccountService.getId(pk), pk)) {
+                LOG.error("Public Key Verification failed: pk={}", Convert.toHexString(pk));
+                return false;
             }
         }
         return true;

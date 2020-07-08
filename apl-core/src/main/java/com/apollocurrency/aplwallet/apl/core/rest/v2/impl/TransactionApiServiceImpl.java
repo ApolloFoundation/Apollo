@@ -109,6 +109,9 @@ public class TransactionApiServiceImpl implements TransactionApiService {
             throw new NotFoundException("Transaction not found. id=" + transactionIdStr);
         }
         TransactionInfoResp resp = transactionInfoMapper.convert(transaction);
+        if (log.isTraceEnabled()) {
+            log.trace("TransactionResp={}", resp);
+        }
         return builder.bind(resp).build();
     }
 }
