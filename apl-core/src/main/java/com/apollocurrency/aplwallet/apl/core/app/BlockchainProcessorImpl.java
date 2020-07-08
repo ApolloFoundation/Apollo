@@ -1255,7 +1255,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         for (Transaction phasedTransaction : phasedTransactions) {
             try {
                 transactionValidator.validate(phasedTransaction);
-                phasedTransaction.attachmentIsDuplicate(duplicates, false); // pre-populate duplicates map
+                // prefetch data for duplicate validation
+                Account senderAccount = accountService.getAccount(phasedTransaction.getSenderId());
+                Set<AccountControlType> senderAccountControls = senderAccount.getControls();
+                AccountControlPhasing accountControlPhasing = accountControlPhasingService.get(phasedTransaction.getSenderId());
+                phasedTransaction.attachmentIsDuplicate(
+                    duplicates, false, senderAccountControls, accountControlPhasing); // pre-populate duplicates map
             } catch (AplException.ValidationException ignore) {
             }
         }
