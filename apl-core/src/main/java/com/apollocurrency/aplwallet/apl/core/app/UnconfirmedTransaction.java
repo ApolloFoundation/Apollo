@@ -20,6 +20,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import static com.apollocurrency.aplwallet.apl.core.transaction.AccountControl.SET_PHASING_ONLY;
+
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
+import com.apollocurrency.aplwallet.apl.core.model.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
@@ -41,11 +45,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class UnconfirmedTransaction implements Transaction {
 
-    private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
-    private static AccountControlPhasingService accountControlPhasingService;
+//    private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
+//    private static AccountControlPhasingService accountControlPhasingService;
     private final Transaction transaction;
     private /*final*/ long arrivalTimestamp;
     private /*final*/ long feePerByte;
@@ -75,35 +80,13 @@ public class UnconfirmedTransaction implements Transaction {
     }
 
 /*
-    void save(Connection con) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO unconfirmed_transaction (id, transaction_height, "
-            + "fee_per_byte, expiration, transaction_bytes, prunable_json, arrival_timestamp, height) "
-            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
-            int i = 0;
-            pstmt.setLong(++i, transaction.getId());
-            pstmt.setInt(++i, transaction.getHeight());
-            pstmt.setLong(++i, feePerByte);
-            pstmt.setInt(++i, transaction.getExpiration());
-            pstmt.setBytes(++i, transaction.getBytes());
-            JSONObject prunableJSON = transaction.getPrunableAttachmentJSON();
-            if (prunableJSON != null) {
-                pstmt.setString(++i, prunableJSON.toJSONString());
-            } else {
-                pstmt.setNull(++i, Types.VARCHAR);
-            }
-            pstmt.setLong(++i, arrivalTimestamp);
-            pstmt.setInt(++i, blockchain.getHeight());
-            pstmt.executeUpdate();
-        }
-    }
-*/
-
     public static AccountControlPhasingService lookupAccountControlPhasingService() {
         if (accountControlPhasingService == null) {
             accountControlPhasingService = CDI.current().select(AccountControlPhasingService.class).get();
         }
         return accountControlPhasingService;
     }
+*/
 
     public Transaction getTransaction() {
         return transaction;
@@ -390,13 +373,43 @@ public class UnconfirmedTransaction implements Transaction {
     public void setIndex(int index) {
     }
 
+    /**
+     * @deprecated see method with longer parameters list below
+     */
     public boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
         if (!transaction.attachmentIsPhased() && !atAcceptanceHeight) {
             // can happen for phased transactions having non-phasable attachment
             return false;
         }
         if (atAcceptanceHeight) {
-            if (lookupAccountControlPhasingService().isBlockDuplicate(this, duplicates)) {
+//            if (lookupAccountControlPhasingService().isBlockDuplicate(this, duplicates)) {
+//                return true;
+//            }
+            // all are checked at acceptance height for block duplicates
+            if (transaction.getType().isBlockDuplicate(this, duplicates)) {
+                return true;
+            }
+            // phased are not further checked at acceptance height
+            if (attachmentIsPhased()) {
+                return false;
+            }
+        }
+        // non-phased at acceptance height, and phased at execution height
+        return transaction.getType().isDuplicate(this, duplicates);
+    }
+
+    public boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates,
+                                         boolean atAcceptanceHeight,
+                                         Set<AccountControlType> senderAccountControls,
+                                         AccountControlPhasing accountControlPhasing) {
+        if (!transaction.attachmentIsPhased() && !atAcceptanceHeight) {
+            // can happen for phased transactions having non-phasable attachment
+            return false;
+        }
+        if (atAcceptanceHeight) {
+//            if (lookupAccountControlPhasingService().isBlockDuplicate(
+            if (this.isBlockDuplicate(
+                this, duplicates, senderAccountControls, accountControlPhasing)) {
                 return true;
             }
             // all are checked at acceptance height for block duplicates
@@ -410,6 +423,18 @@ public class UnconfirmedTransaction implements Transaction {
         }
         // non-phased at acceptance height, and phased at execution height
         return transaction.getType().isDuplicate(this, duplicates);
+    }
+
+    private boolean isBlockDuplicate(Transaction transaction,
+                                    Map<TransactionType, Map<String, Integer>> duplicates,
+                                    Set<AccountControlType> senderAccountControls,
+                                     AccountControlPhasing accountControlPhasing) {
+        return
+            senderAccountControls.contains(AccountControlType.PHASING_ONLY)
+                && (accountControlPhasing != null && accountControlPhasing.getMaxFees() != 0)
+                && transaction.getType() != SET_PHASING_ONLY
+                && TransactionType.isDuplicate(SET_PHASING_ONLY,
+                Long.toUnsignedString(transaction.getSenderId()), duplicates, true);
     }
 
 

@@ -31,6 +31,9 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
+import com.apollocurrency.aplwallet.apl.core.model.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
@@ -53,6 +56,8 @@ import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollResult;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardImporter;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
@@ -109,6 +114,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -134,12 +140,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         .comparingLong(UnconfirmedTransaction::getArrivalTimestamp)
         .thenComparingInt(UnconfirmedTransaction::getHeight)
         .thenComparingLong(UnconfirmedTransaction::getId);
-    private final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private final PropertiesHolder propertiesHolder;
+    private final BlockchainConfig blockchainConfig;
     private final DexService dexService;
     private final DatabaseManager databaseManager;
     private final ExecutorService networkService;
-    private final int defaultNumberOfForkConfirmations = propertiesHolder.getIntProperty("apl.numberOfForkConfirmations");
+    private final int defaultNumberOfForkConfirmations;
     private final Set<Long> prunableTransactions = new HashSet<>();
     private final javax.enterprise.event.Event<Block> blockEvent;
     private final javax.enterprise.event.Event<AccountLedgerEventType> ledgerEvent;
@@ -164,10 +170,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private TaskDispatchManager taskDispatchManager;
     private Blockchain blockchain;
     private TransactionProcessor transactionProcessor;
-    private TimeService timeService = CDI.current().select(TimeService.class).get();
+    private TimeService timeService;
     private int initialScanHeight;
     private volatile int lastRestoreTime = 0;
     private BlockValidator validator;
+    private AccountService accountService;
+    private AccountControlPhasingService accountControlPhasingService; // lazy initialization only !
     //    private final Listeners<Block, Event> blockListeners = new Listeners<>();
     private volatile Peer lastBlockchainFeeder;
     private volatile int lastBlockchainFeederHeight;
@@ -178,7 +186,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private volatile boolean isRestoring;
 
     @Inject
-    public BlockchainProcessorImpl(BlockValidator validator, Event<Block> blockEvent, Event<AccountLedgerEventType> ledgerEvent,
+    public BlockchainProcessorImpl(PropertiesHolder propertiesHolder,
+                                   BlockchainConfig blockchainConfig,
+                                   BlockValidator validator, Event<Block> blockEvent, Event<AccountLedgerEventType> ledgerEvent,
                                    GlobalSync globalSync, DerivedTablesRegistry dbTables,
                                    ReferencedTransactionService referencedTransactionService, PhasingPollService phasingPollService,
                                    TransactionValidator transactionValidator,
@@ -189,7 +199,13 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    ShardImporter importer, PrunableMessageService prunableMessageService,
                                    TaskDispatchManager taskDispatchManager, Event<List<Transaction>> txEvent,
                                    Event<BlockchainConfig> blockchainEvent,
-                                   ShardDao shardDao) {
+                                   ShardDao shardDao,
+                                   TimeService timeService,
+                                   AccountService accountService,
+                                   AccountControlPhasingService accountControlPhasingService) {
+        this.propertiesHolder = Objects.requireNonNull(propertiesHolder);
+        this.blockchainConfig = blockchainConfig;
+        this.defaultNumberOfForkConfirmations = propertiesHolder.getIntProperty("apl.numberOfForkConfirmations");
         this.validator = validator;
         this.blockEvent = blockEvent;
         this.ledgerEvent = ledgerEvent;
@@ -210,8 +226,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.prunableMessageService = prunableMessageService;
         this.taskDispatchManager = taskDispatchManager;
         this.txEvent = txEvent;
-        this.shardDao = shardDao;
         this.blockchainEvent = blockchainEvent;
+        this.shardDao = shardDao;
+        this.timeService = timeService;
+        this.accountService = accountService;
+        this.accountControlPhasingService = accountControlPhasingService;
 
         configureBackgroundTasks();
 
@@ -261,6 +280,13 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private PeersService lookupPeersService() {
         if (peers == null) peers = CDI.current().select(PeersService.class).get();
         return peers;
+    }
+
+    private AccountControlPhasingService lookupAccountControlPhasingService() {
+        if (accountControlPhasingService == null) {
+            accountControlPhasingService = CDI.current().select(AccountControlPhasingService.class).get();
+        }
+        return accountControlPhasingService;
     }
 
     private void configureBackgroundTasks() {
@@ -566,7 +592,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             for (Transaction phasedTransaction : phasedTransactions) {
                 try {
                     transactionValidator.validate(phasedTransaction);
-                    if (!phasedTransaction.attachmentIsDuplicate(duplicates, false) && filter.test(phasedTransaction)) {
+                    // prefetch data for duplicate validation
+                    Account senderAccount = accountService.getAccount(phasedTransaction.getSenderId());
+                    Set<AccountControlType> senderAccountControls = senderAccount.getControls();
+                    AccountControlPhasing accountControlPhasing = lookupAccountControlPhasingService().get(phasedTransaction.getSenderId());
+                    if (!phasedTransaction.attachmentIsDuplicate(duplicates, false, senderAccountControls, accountControlPhasing)
+                        && filter.test(phasedTransaction)) {
                         result.add(phasedTransaction);
                     }
                 } catch (AplException.ValidationException ignore) {
@@ -637,31 +668,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             log.error("main BlockchainProcessorImpl thread was interrupted, EXITING...");
             System.exit(-1);
         }
-
-/*
-        // PREVIOUS start-up LOGIC
-        log.info("Genesis block not in database, starting from scratch");
-        TransactionalDataSource dataSource = lookupDataSource();
-        Connection con = dataSource.begin();
-        try {
-            // we should start here shard downloading
-            // Maybe better to rename this method
-            Block genesisBlock = Genesis.newGenesisBlock();
-            addBlock(genesisBlock);
-            initialBlock = genesisBlock.getId();
-            Genesis.apply(false);
-            for (DerivedTableInterface table : dbTables.getDerivedTables()) {
-                table.createSearchIndex(con);
-            }
-            blockchain.commit(genesisBlock);
-            dataSource.commit();
-            log.debug("Saved Genesis block = {}", genesisBlock);
-        } catch (SQLException e) {
-            dataSource.rollback();
-            log.info(e.getMessage());
-            throw new RuntimeException(e.toString(), e);
-        }
-*/
     }
 
     public void scheduleOneScan() {
@@ -777,7 +783,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }
             try {
                 transactionValidator.validate(phasedTransaction);
-                if (!phasedTransaction.attachmentIsDuplicate(duplicates, false)) {
+                // prefetch data for duplicate validation
+                Account senderAccount = accountService.getAccount(phasedTransaction.getSenderId());
+                Set<AccountControlType> senderAccountControls = senderAccount.getControls();
+                AccountControlPhasing accountControlPhasing = lookupAccountControlPhasingService().get(phasedTransaction.getSenderId());
+                if (!phasedTransaction.attachmentIsDuplicate(duplicates, false, senderAccountControls, accountControlPhasing)) {
                     validPhasedTransactions.add(phasedTransaction);
                 } else {
                     log.debug("At height " + height + " phased transaction " + phasedTransaction.getStringId() + " is duplicate, will not apply");
@@ -844,7 +854,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     throw new TransactionNotAcceptedException(e.getMessage(), transaction);
                 }
             }
-            if (transaction.attachmentIsDuplicate(duplicates, true)) {
+            // prefetch data for duplicate validation
+            Account senderAccount = accountService.getAccount(transaction.getSenderId());
+            Set<AccountControlType> senderAccountControls = senderAccount.getControls();
+            AccountControlPhasing accountControlPhasing = lookupAccountControlPhasingService().get(transaction.getSenderId());
+            if (transaction.attachmentIsDuplicate(duplicates, true, senderAccountControls, accountControlPhasing)) {
                 throw new TransactionNotAcceptedException("Transaction is a duplicate", transaction);
             }
             if (!hasPrunedTransactions) {
@@ -1211,7 +1225,13 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 } catch (AplException.ValidationException e) {
                     continue;
                 }
-                if (unconfirmedTransaction.getTransaction().attachmentIsDuplicate(duplicates, true)) {
+                // prefetch data for duplicate validation
+                Account senderAccount = accountService.getAccount(unconfirmedTransaction.getTransaction().getSenderId());
+                Set<AccountControlType> senderAccountControls = senderAccount.getControls();
+                AccountControlPhasing accountControlPhasing = lookupAccountControlPhasingService().get(
+                    unconfirmedTransaction.getTransaction().getSenderId());
+                if (unconfirmedTransaction.getTransaction().attachmentIsDuplicate(
+                    duplicates, true, senderAccountControls, accountControlPhasing)) {
                     continue;
                 }
                 sortedTransactions.add(unconfirmedTransaction);
