@@ -24,7 +24,6 @@ import static com.apollocurrency.aplwallet.apl.core.transaction.AccountControl.S
 
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.model.account.AccountControlType;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
@@ -40,7 +39,6 @@ import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
-import javax.enterprise.inject.spi.CDI;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
@@ -49,11 +47,9 @@ import java.util.Set;
 
 public class UnconfirmedTransaction implements Transaction {
 
-//    private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
-//    private static AccountControlPhasingService accountControlPhasingService;
     private final Transaction transaction;
-    private /*final*/ long arrivalTimestamp;
-    private /*final*/ long feePerByte;
+    private final long arrivalTimestamp;
+    private final long feePerByte;
 
     public UnconfirmedTransaction(Transaction transaction, long arrivalTimestamp) {
         this.transaction = transaction;
@@ -78,15 +74,6 @@ public class UnconfirmedTransaction implements Transaction {
             throw new RuntimeException(e.toString(), e);
         }
     }
-
-/*
-    public static AccountControlPhasingService lookupAccountControlPhasingService() {
-        if (accountControlPhasingService == null) {
-            accountControlPhasingService = CDI.current().select(AccountControlPhasingService.class).get();
-        }
-        return accountControlPhasingService;
-    }
-*/
 
     public Transaction getTransaction() {
         return transaction;
@@ -407,7 +394,6 @@ public class UnconfirmedTransaction implements Transaction {
             return false;
         }
         if (atAcceptanceHeight) {
-//            if (lookupAccountControlPhasingService().isBlockDuplicate(
             if (this.isBlockDuplicate(
                 this, duplicates, senderAccountControls, accountControlPhasing)) {
                 return true;
