@@ -448,6 +448,15 @@ public abstract class TransactionType {
                     default:
                         return null;
                 }
+            case TYPE_CHILD_ACCOUNT:
+                switch (subtype) {
+                    case SUBTYPE_CHILD_CREATE:
+                        return ChildAccount.CREATE_CHILD;
+                    case SUBTYPE_CHILD_CONVERT_TO:
+                        return ChildAccount.CONVERT_TO_CHILD;
+                    default:
+                        return null;
+                }
 
             default:
                 return null;

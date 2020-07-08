@@ -13,7 +13,6 @@ import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDao;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AddressScope;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
@@ -41,6 +40,17 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 
+import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.CHILD_ID_1;
+import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.CHILD_ID_2;
+import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.CHILD_PUBLIC_KEY_1;
+import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.CHILD_PUBLIC_KEY_2;
+import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.CHILD_ACCOUNT_ATTACHMENT;
+import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.CHILD_1;
+import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.CHILD_2;
+import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.SENDER_PUBLIC_KEY;
+import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.SENDER_SECRET_PHRASE;
+import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.SENDER;
+import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.SENDER_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -83,74 +93,61 @@ public class ChildAccountTest {
         .addBeans(MockBean.of(accountPublicKeyService, AccountPublicKeyService.class, AccountPublicKeyServiceImpl.class))
         .build();
 
-    final String accountRS = "APL-XR8C-K97J-QDZC-3YXHE";
-    final String publicKey = "d52a07dc6fdf9f5c6b547ccb11444ce7bba73a99014eb9ac647b6971bee9263c";
-    final String secretPhrase = "here we go again";
-    final Account sender = new Account(Convert.parseAccountId(accountRS), 1000 * Constants.ONE_APL, 100 * Constants.ONE_APL, 0L, 0L, 0);
-    final long senderId = sender.getId();
-
-    static final String CHILD_SECRET_PHRASE_1 = "1234567890";
-    static final byte[] CHILD_PUBLIC_KEY_1 = Crypto.getPublicKey(CHILD_SECRET_PHRASE_1);
-    static final long CHILD_ID_1 = AccountService.getId(CHILD_PUBLIC_KEY_1);
-
-    static final String CHILD_SECRET_PHRASE_2 = "0987654321";
-    static final byte[] CHILD_PUBLIC_KEY_2 = Crypto.getPublicKey(CHILD_SECRET_PHRASE_2);
-    static final long CHILD_ID_2 = AccountService.getId(CHILD_PUBLIC_KEY_2);
-
-    static final Account child1 = new Account(CHILD_ID_1, 0L,0L, 0L, 0L, 0);
-    static final Account child2 = new Account(CHILD_ID_2, 0L,0L, 0L, 0L, 0);
-
-    ChildAccountAttachment attachment = new ChildAccountAttachment(AddressScope.IN_FAMILY, 2, List.of(CHILD_PUBLIC_KEY_1, CHILD_PUBLIC_KEY_2));
-
     TransactionApplier txApplier= new TransactionApplier(blockchainConfig, referencedTransactionDao, accountService, accountPublicKeyService);
     TransactionValidator txValidator = new TransactionValidator(blockchainConfig, phasingPollService, blockchain, calculator, accountControlPhasingService, accountService);
     TransactionCreator txCreator= new TransactionCreator(txValidator, propertiesHolder, timeService, calculator, blockchain, processor);
 
     @BeforeEach
     void setUp() {
-        child1.setParentId(0L);
-        child1.setMultiSig(false);
-        child2.setParentId(0L);
-        child2.setMultiSig(false);
+        CHILD_1.setParentId(0L);
+        CHILD_1.setMultiSig(false);
+        CHILD_2.setParentId(0L);
+        CHILD_2.setMultiSig(false);
 
         EcBlockData ecBlockData = new EcBlockData(ECBLOCK_ID, ECBLOCK_HEIGHT);
         when(blockchain.getECBlock(300)).thenReturn(ecBlockData);
-        when(accountService.getAccount(senderId)).thenReturn(sender);
-        when(accountService.addOrGetAccount(CHILD_ID_1)).thenReturn(child1);
-        when(accountService.addOrGetAccount(CHILD_ID_2)).thenReturn(child2);
-        when(accountService.getAccount(CHILD_PUBLIC_KEY_1)).thenReturn(child1).thenReturn(null);
+        when(accountService.getAccount(SENDER_ID)).thenReturn(SENDER);
+        when(accountService.addOrGetAccount(CHILD_ID_1)).thenReturn(CHILD_1);
+        when(accountService.addOrGetAccount(CHILD_ID_2)).thenReturn(CHILD_2);
+        when(accountService.getAccount(CHILD_PUBLIC_KEY_1)).thenReturn(CHILD_1).thenReturn(null);
     }
 
     @Test
     void applyAttachment() {
         //GIVEN
         CreateTransactionRequest request = CreateTransactionRequest.builder()
-            .senderAccount(sender)
+            .senderAccount(SENDER)
             .deadlineValue("1440")
             .feeATM(0)
-            .attachment(attachment)
+            .attachment(CHILD_ACCOUNT_ATTACHMENT)
             .timestamp(300)
-            .keySeed(Crypto.getKeySeed(secretPhrase))
+            .keySeed(Crypto.getKeySeed(SENDER_SECRET_PHRASE))
             .broadcast(false)
             .build();
         Transaction tx = txCreator.createTransactionThrowingException(request);
         assertNotNull(tx);
 
+        byte[] txBytes = tx.getBytes();
+        byte[] txUnsignedBytes = tx.getUnsignedBytes();
+
+        String txStr = Convert.toHexString(txBytes);
+        String txUnsignedStr = Convert.toHexString(txUnsignedBytes);
+
         //WHEN
         txApplier.apply(tx);
 
         //THEN
-        assertEquals(sender.getId(), child1.getParentId());
-        assertEquals(sender.getId(), child2.getParentId());
+        assertEquals(SENDER.getId(), CHILD_1.getParentId());
+        assertEquals(SENDER.getId(), CHILD_2.getParentId());
 
-        assertTrue(child1.isChild());
-        assertTrue(child2.isChild());
+        assertTrue(CHILD_1.isChild());
+        assertTrue(CHILD_2.isChild());
 
-        assertTrue(child1.isMultiSig());
-        assertTrue(child2.isMultiSig());
+        assertTrue(CHILD_1.isMultiSig());
+        assertTrue(CHILD_2.isMultiSig());
 
-        assertEquals(attachment.getAddressScope(), child1.getAddrScope());
-        assertEquals(attachment.getAddressScope(), child2.getAddrScope());
+        assertEquals(CHILD_ACCOUNT_ATTACHMENT.getAddressScope(), CHILD_1.getAddrScope());
+        assertEquals(CHILD_ACCOUNT_ATTACHMENT.getAddressScope(), CHILD_2.getAddrScope());
 
         //Don't remove, sounds weird, but this snippet doesn't work in batch mode.
         /*ArgumentCaptor<Account> argument = ArgumentCaptor.forClass(Account.class);
@@ -159,20 +156,20 @@ public class ChildAccountTest {
         assertTrue(args.contains(CHILD_ID_1));
         assertTrue(args.contains(CHILD_ID_2));*/
 
-        verify(accountPublicKeyService).apply(child1, CHILD_PUBLIC_KEY_1);
-        verify(accountPublicKeyService).apply(child2, CHILD_PUBLIC_KEY_2);
+        verify(accountPublicKeyService).apply(CHILD_1, CHILD_PUBLIC_KEY_1);
+        verify(accountPublicKeyService).apply(CHILD_2, CHILD_PUBLIC_KEY_2);
     }
 
     @Test
     void validateAttachment() throws AplException.ValidationException {
         //GIVEN
         CreateTransactionRequest request = CreateTransactionRequest.builder()
-            .senderAccount(sender)
+            .senderAccount(SENDER)
             .deadlineValue("1440")
             .feeATM(0)
-            .attachment(attachment)
+            .attachment(CHILD_ACCOUNT_ATTACHMENT)
             .timestamp(300)
-            .keySeed(Crypto.getKeySeed(secretPhrase))
+            .keySeed(Crypto.getKeySeed(SENDER_SECRET_PHRASE))
             .broadcast(false)
             .build();
         Transaction tx = txCreator.createTransactionThrowingException(request);
@@ -194,13 +191,13 @@ public class ChildAccountTest {
     void validateAttachment_AmountGTZero() {
         //GIVEN
         CreateTransactionRequest request = CreateTransactionRequest.builder()
-            .senderAccount(sender)
+            .senderAccount(SENDER)
             .deadlineValue("1440")
             .feeATM(0)
             .amountATM(1000L)
-            .attachment(attachment)
+            .attachment(CHILD_ACCOUNT_ATTACHMENT)
             .timestamp(300)
-            .keySeed(Crypto.getKeySeed(secretPhrase))
+            .keySeed(Crypto.getKeySeed(SENDER_SECRET_PHRASE))
             .broadcast(false)
             .build();
         Transaction tx = txCreator.createTransactionThrowingException(request);
@@ -226,8 +223,8 @@ public class ChildAccountTest {
         //GIVEN
         int wrongChildCountValue = 1;// 2 is valid
         CreateTransactionRequest request = CreateTransactionRequest.builder()
-            .senderAccount(sender)
-            .publicKey(Convert.parseHexString(publicKey))
+            .senderAccount(SENDER)
+            .publicKey(Convert.parseHexString(SENDER_PUBLIC_KEY))
             .deadlineValue("1440")
             .feeATM(0L)
             .amountATM(0L)
@@ -258,12 +255,12 @@ public class ChildAccountTest {
     void validateAttachment_withParentPublicKey() throws AplException.ValidationException {
         //GIVEN
         CreateTransactionRequest request = CreateTransactionRequest.builder()
-            .senderAccount(sender)
-            .publicKey(Convert.parseHexString(publicKey))
+            .senderAccount(SENDER)
+            .publicKey(Convert.parseHexString(SENDER_PUBLIC_KEY))
             .deadlineValue("1440")
             .feeATM(0L)
             .amountATM(0L)
-            .attachment(new ChildAccountAttachment(AddressScope.IN_FAMILY, 2, List.of(CHILD_PUBLIC_KEY_1, Convert.parseHexString(publicKey))))
+            .attachment(new ChildAccountAttachment(AddressScope.IN_FAMILY, 2, List.of(CHILD_PUBLIC_KEY_1, Convert.parseHexString(SENDER_PUBLIC_KEY))))
             .timestamp(300)
             .broadcast(false)
             .build();
@@ -289,12 +286,12 @@ public class ChildAccountTest {
     void validateAttachment_withChildAlreadyExists() {
         //GIVEN
         CreateTransactionRequest request = CreateTransactionRequest.builder()
-            .senderAccount(sender)
-            .publicKey(Convert.parseHexString(publicKey))
+            .senderAccount(SENDER)
+            .publicKey(Convert.parseHexString(SENDER_PUBLIC_KEY))
             .deadlineValue("1440")
             .feeATM(0L)
             .amountATM(0L)
-            .attachment(attachment)
+            .attachment(CHILD_ACCOUNT_ATTACHMENT)
             .timestamp(300)
             .broadcast(false)
             .build();

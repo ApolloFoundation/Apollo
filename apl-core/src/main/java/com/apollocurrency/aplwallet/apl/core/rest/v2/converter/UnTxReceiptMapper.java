@@ -10,9 +10,12 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Converter;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
+import javax.inject.Singleton;
+
 /**
  * @author andrii.zinchenko@firstbridge.io
  */
+@Singleton
 public class UnTxReceiptMapper implements Converter<Transaction, UnTxReceipt> {
     @Override
     public UnTxReceipt apply(Transaction transaction) {
