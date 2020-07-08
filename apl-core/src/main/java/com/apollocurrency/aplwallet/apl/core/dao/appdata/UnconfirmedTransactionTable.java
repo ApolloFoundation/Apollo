@@ -58,7 +58,6 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
 
     @Override
     public void save(Connection con, UnconfirmedTransaction unconfirmedTransaction) throws SQLException {
-//        unconfirmedTransaction.save(con);
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO unconfirmed_transaction (id, transaction_height, "
             + "fee_per_byte, expiration, transaction_bytes, prunable_json, arrival_timestamp, height) "
             + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
