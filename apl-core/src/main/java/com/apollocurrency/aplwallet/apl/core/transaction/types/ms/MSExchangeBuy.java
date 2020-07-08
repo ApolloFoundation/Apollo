@@ -1,7 +1,7 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2020 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.core.monetary;
+package com.apollocurrency.aplwallet.apl.core.transaction.types.ms;
 
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;

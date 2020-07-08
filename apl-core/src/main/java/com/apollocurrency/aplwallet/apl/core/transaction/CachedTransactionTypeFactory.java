@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.cc.ColoredCoinsTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.dgs.DigitalGoodsTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.shuffling.ShufflingTransactionType;
-import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.ms.MonetarySystemTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.control.AccountControlTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.control.SetPhasingOnlyTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.data.DataTransactionType;
@@ -201,7 +201,7 @@ public class CachedTransactionTypeFactory {
                         return null;
                 }
             case TYPE_MONETARY_SYSTEM:
-                return MonetarySystem.findTransactionType(subtype);
+                return MonetarySystemTransactionType.findTransactionType(subtype);
             case TYPE_DATA:
                 switch (subtype) {
                     case SUBTYPE_DATA_TAGGED_DATA_UPLOAD:

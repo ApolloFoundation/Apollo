@@ -3,7 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.ms.MonetarySystemTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import org.json.simple.JSONObject;
 
@@ -28,7 +28,7 @@ public final class MonetarySystemExchangeBuyAttachment extends MonetarySystemExc
 
     @Override
     public TransactionType getTransactionType() {
-        return MonetarySystem.EXCHANGE_BUY;
+        return MonetarySystemTransactionType.EXCHANGE_BUY;
     }
 
 }

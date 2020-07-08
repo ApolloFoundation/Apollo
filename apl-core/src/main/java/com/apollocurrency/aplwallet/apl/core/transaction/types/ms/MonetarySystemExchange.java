@@ -1,16 +1,18 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2020 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.core.monetary;
+package com.apollocurrency.aplwallet.apl.core.transaction.types.ms;
 
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeAttachment;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 
 /**
  * @author al
  */
-public abstract class MonetarySystemExchange extends MonetarySystem {
+public abstract class MonetarySystemExchange extends MonetarySystemTransactionType {
 
     @Override
     public final void validateAttachment(Transaction transaction) throws AplException.ValidationException {

@@ -1,11 +1,13 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2020 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.core.monetary;
+package com.apollocurrency.aplwallet.apl.core.transaction.types.ms;
 
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyDeletion;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
@@ -17,7 +19,7 @@ import java.util.Map;
 /**
  * @author al
  */
-class MSCurrencyDeletion extends MonetarySystem {
+class MSCurrencyDeletion extends MonetarySystemTransactionType {
 
     public MSCurrencyDeletion() {
     }

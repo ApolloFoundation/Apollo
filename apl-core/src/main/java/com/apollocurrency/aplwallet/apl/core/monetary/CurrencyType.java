@@ -20,6 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.monetary;
 
+import com.apollocurrency.aplwallet.apl.core.transaction.types.ms.MonetarySystemTransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.ms.MonetarySystemExchange;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.shuffling.ShufflingTransactionType;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMinting;
@@ -49,12 +51,12 @@ public enum CurrencyType {
 
         @Override
         public void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
-            if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
+            if (transaction.getType() == MonetarySystemTransactionType.CURRENCY_ISSUANCE) {
                 if (!validators.contains(CLAIMABLE)) {
                     throw new AplException.NotValidException("Currency is not exchangeable and not claimable");
                 }
             }
-            if (transaction.getType() instanceof MonetarySystemExchange || transaction.getType() == MonetarySystem.PUBLISH_EXCHANGE_OFFER) {
+            if (transaction.getType() instanceof MonetarySystemExchange || transaction.getType() == MonetarySystemTransactionType.PUBLISH_EXCHANGE_OFFER) {
                 throw new AplException.NotValidException("Currency is not exchangeable");
             }
         }
@@ -66,12 +68,12 @@ public enum CurrencyType {
     CONTROLLABLE(0x02) {
         @Override
         public void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
-            if (transaction.getType() == MonetarySystem.CURRENCY_TRANSFER) {
+            if (transaction.getType() == MonetarySystemTransactionType.CURRENCY_TRANSFER) {
                 if (currency == null || (currency.getAccountId() != transaction.getSenderId() && currency.getAccountId() != transaction.getRecipientId())) {
                     throw new AplException.NotValidException("Controllable currency can only be transferred to/from issuer account");
                 }
             }
-            if (transaction.getType() == MonetarySystem.PUBLISH_EXCHANGE_OFFER) {
+            if (transaction.getType() == MonetarySystemTransactionType.PUBLISH_EXCHANGE_OFFER) {
                 if (currency == null || currency.getAccountId() != transaction.getSenderId()) {
                     throw new AplException.NotValidException("Only currency issuer can publish an exchange offer for controllable currency");
                 }
@@ -89,7 +91,7 @@ public enum CurrencyType {
     RESERVABLE(0x04) {
         @Override
         public void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException {
-            if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
+            if (transaction.getType() == MonetarySystemTransactionType.CURRENCY_ISSUANCE) {
                 MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
                 int issuanceHeight = attachment.getIssuanceHeight();
                 int finishHeight = attachment.getFinishValidationHeight(transaction);
@@ -113,7 +115,7 @@ public enum CurrencyType {
                     throw new AplException.NotValidException("Max supply must not exceed reserve supply for reservable and non-mintable currency");
                 }
             }
-            if (transaction.getType() == MonetarySystem.RESERVE_INCREASE) {
+            if (transaction.getType() == MonetarySystemTransactionType.RESERVE_INCREASE) {
                 MonetarySystemReserveIncrease attachment = (MonetarySystemReserveIncrease) transaction.getAttachment();
                 if (currency != null && currency.getIssuanceHeight() <= attachment.getFinishValidationHeight(transaction)) {
                     throw new AplException.NotCurrentlyValidException("Cannot increase reserve for active currency");
@@ -123,10 +125,10 @@ public enum CurrencyType {
 
         @Override
         public void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
-            if (transaction.getType() == MonetarySystem.RESERVE_INCREASE) {
+            if (transaction.getType() == MonetarySystemTransactionType.RESERVE_INCREASE) {
                 throw new AplException.NotValidException("Cannot increase reserve since currency is not reservable");
             }
-            if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
+            if (transaction.getType() == MonetarySystemTransactionType.CURRENCY_ISSUANCE) {
                 MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
                 if (attachment.getIssuanceHeight() != 0) {
                     throw new AplException.NotValidException("Issuance height for non-reservable currency must be 0");
@@ -150,7 +152,7 @@ public enum CurrencyType {
     CLAIMABLE(0x08) {
         @Override
         public void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException {
-            if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
+            if (transaction.getType() == MonetarySystemTransactionType.CURRENCY_ISSUANCE) {
                 MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
                 if (!validators.contains(RESERVABLE)) {
                     throw new AplException.NotValidException("Claimable currency must be reservable");
@@ -162,7 +164,7 @@ public enum CurrencyType {
                     throw new AplException.NotValidException("Claimable currency must have initial supply 0");
                 }
             }
-            if (transaction.getType() == MonetarySystem.RESERVE_CLAIM) {
+            if (transaction.getType() == MonetarySystemTransactionType.RESERVE_CLAIM) {
                 if (currency == null || !currency.isActive()) {
                     throw new AplException.NotCurrentlyValidException("Cannot claim reserve since currency is not yet active");
                 }
@@ -171,7 +173,7 @@ public enum CurrencyType {
 
         @Override
         public void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
-            if (transaction.getType() == MonetarySystem.RESERVE_CLAIM) {
+            if (transaction.getType() == MonetarySystemTransactionType.RESERVE_CLAIM) {
                 throw new AplException.NotValidException("Cannot claim reserve since currency is not claimable");
             }
         }
@@ -182,7 +184,7 @@ public enum CurrencyType {
     MINTABLE(0x10) {
         @Override
         public void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
-            if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
+            if (transaction.getType() == MonetarySystemTransactionType.CURRENCY_ISSUANCE) {
                 MonetarySystemCurrencyIssuance issuanceAttachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
                 try {
                     HashFunction hashFunction = HashFunction.getHashFunction(issuanceAttachment.getAlgorithm());
@@ -206,7 +208,7 @@ public enum CurrencyType {
 
         @Override
         public void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
-            if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
+            if (transaction.getType() == MonetarySystemTransactionType.CURRENCY_ISSUANCE) {
                 MonetarySystemCurrencyIssuance issuanceAttachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
                 if (issuanceAttachment.getMinDifficulty() != 0 ||
                     issuanceAttachment.getMaxDifficulty() != 0 ||
@@ -214,7 +216,7 @@ public enum CurrencyType {
                     throw new AplException.NotValidException("Non mintable currency should not specify algorithm or difficulty");
                 }
             }
-            if (transaction.getType() == MonetarySystem.CURRENCY_MINTING) {
+            if (transaction.getType() == MonetarySystemTransactionType.CURRENCY_MINTING) {
                 throw new AplException.NotValidException("Currency is not mintable");
             }
         }
