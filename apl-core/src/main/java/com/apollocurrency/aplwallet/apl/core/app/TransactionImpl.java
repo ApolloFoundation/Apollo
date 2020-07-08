@@ -74,7 +74,6 @@ public class TransactionImpl implements Transaction {
 
     @Inject
     private static AccountPublicKeyService accountPublicKeyService;
-//    private static AccountControlPhasingService accountControlPhasingService;
 
     private final short deadline;
     private final long recipientId;
@@ -374,15 +373,6 @@ public class TransactionImpl implements Transaction {
         }
         return accountPublicKeyService;
     }
-
-/*
-    public AccountControlPhasingService lookupAccountControlPhasingService() {
-        if (accountControlPhasingService == null) {
-            accountControlPhasingService = CDI.current().select(AccountControlPhasingService.class).get();
-        }
-        return accountControlPhasingService;
-    }
-*/
 
     @Override
     public short getDeadline() {
