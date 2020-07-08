@@ -21,16 +21,6 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.app.shuffling.ShufflingParticipantState;
-import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingParticipant;
-import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPublicKeyServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
@@ -41,7 +31,15 @@ import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingParticipant;
+import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPublicKeyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCancellationAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreation;
@@ -59,9 +57,7 @@ import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
-import javax.enterprise.event.Observes;
 import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
 import java.security.MessageDigest;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -98,7 +94,7 @@ public final class Shuffling {
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
     private static ShufflingService shufflingService = CDI.current().select(ShufflingService.class).get();
-    private static final VersionedDeletableEntityDbTable<Shuffling> shufflingTable = new VersionedDeletableEntityDbTable<Shuffling>("shuffling", shufflingDbKeyFactory) {
+    public static final VersionedDeletableEntityDbTable<Shuffling> shufflingTable = new VersionedDeletableEntityDbTable<Shuffling>("shuffling", shufflingDbKeyFactory) {
 
         @Override
         public Shuffling load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
@@ -124,7 +120,7 @@ public final class Shuffling {
     private final long issuerId;
     private final long amount;
     private final byte participantCount;
-    private short blocksRemaining;
+    public short blocksRemaining;
     private byte registrantCount;
     private int height;
     private Stage stage;
@@ -716,7 +712,7 @@ public final class Shuffling {
             Long.toUnsignedString(this.id), this.stage, Long.toUnsignedString(this.assigneeAccountId), this.blocksRemaining);
     }
 
-    private void cancel(Block block) {
+    public void cancel(Block block) {
         LedgerEvent event = LedgerEvent.SHUFFLING_CANCELLATION;
         long blamedAccountId = blame();
         lookupAccountService();
@@ -894,7 +890,7 @@ public final class Shuffling {
 
     }
 
-    private boolean isFull(Block block) {
+    public boolean isFull(Block block) {
         int transactionSize = Constants.MIN_TRANSACTION_SIZE; // min transaction size with no attachment
         if (stage == Stage.REGISTRATION) {
             transactionSize += 1 + 32;
@@ -1003,41 +999,4 @@ public final class Shuffling {
 
     }
 
-    @Singleton
-    public static class ShufflingObserver {
-        public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
-            LOG.trace(":accept:ShufflingObserver: START onBlockApplaid AFTER_BLOCK_APPLY, block={}", block.getHeight());
-            long startTime = System.currentTimeMillis();
-            LOG.trace("Shuffling observer call at {}", block.getHeight());
-            if (block.getOrLoadTransactions().size() == blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()
-                || block.getPayloadLength() > blockchainConfig.getCurrentConfig().getMaxPayloadLength() - Constants.MIN_TRANSACTION_SIZE) {
-                LOG.trace("Will not process shufflings at {}", block.getHeight());
-                return;
-            }
-            List<Shuffling> shufflings = new ArrayList<>();
-            List<Shuffling> activeShufflings = getActiveShufflings();//CollectionUtil.toList(getActiveShufflings(0, -1));
-            LOG.trace("Got {} active shufflings at {} in {} ms", activeShufflings.size(), block.getHeight(), System.currentTimeMillis() - startTime);
-            for (Shuffling shuffling : activeShufflings) {
-                if (!shuffling.isFull(block)) {
-                    shufflings.add(shuffling);
-                } else {
-                    LOG.trace("Skip shuffling {}, block is full", block.getId());
-                }
-            }
-            LOG.trace("Shufflings to process - {} ", shufflings.size());
-            int cancelled = 0, inserted = 0;
-            for (Shuffling shuffling : shufflings) {
-                if (--shuffling.blocksRemaining <= 0) {
-                    cancelled++;
-                    shuffling.cancel(block);
-                } else {
-                    LOG.trace("Insert shuffling {} - height - {} remaining - {}",
-                        shuffling.getId(), shuffling.getHeight(), shuffling.getBlocksRemaining());
-                    inserted++;
-                    shufflingTable.insert(shuffling);
-                }
-            }
-            LOG.trace(":accept: Shuffling observer, inserted [{}], cancelled [{}] in time: {} msec", inserted, cancelled, System.currentTimeMillis() - startTime);
-        }
-    }
 }
