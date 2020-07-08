@@ -445,23 +445,23 @@ components:
 
         TransactionInfoArrayResp:
             allOf:
-                - $ref: '#/components/schemas/BaseResponse'
-                - type: object
-                  properties:
-                    tx:
-                      description: The array of transactions
-                      type: array
-                      items:
-                         $ref: '#/components/schemas/TransactionInfo'
+                -   $ref: '#/components/schemas/BaseResponse'
+                -   type: object
+                    properties:
+                        tx:
+                            description: The array of transactions
+                            type: array
+                            items:
+                                $ref: '#/components/schemas/TransactionInfo'
 
         TransactionInfoResp:
             allOf:
-                - $ref: '#/components/schemas/BaseResponse'
-                - $ref: '#/components/schemas/TransactionInfo'
+                -   $ref: '#/components/schemas/BaseResponse'
+                -   $ref: '#/components/schemas/TransactionInfo'
 
         TransactionInfo:
-              type: object
-              properties:
+            type: object
+            properties:
                 id:
                     description: The transaction ID
                     type: string
@@ -580,137 +580,137 @@ components:
                     description: the order of the transaction in the block
                     example: 1
         BlockInfo:
-          allOf:
-            - $ref: '#/components/schemas/BaseResponse'
-            - type: object
-              properties:
-                id:
-                    type: string
-                    format: hex_bytearray
-                    example: '1130faaeb604315160401'
-                blockSignature:
-                    type: string
-                    format: hex_bytearray
-                    example: 'ff080e64436603df0c3b9a5b792b03a26725a83bbe6aa46eb7eed9ee83707f071b6d529d09be1f2594c6f8545c2772a091896bc808553c1774e39a41248b1e1c'
-                height:
-                    type: integer
-                    format: int64
-                    example: 1319854
-                generator:
-                    type: string
-                    example: 'APL-FXHG-6KHM-23LE-42ACU'
-                generationSignature:
-                    type: string
-                    format: hex_bytearray
-                    example: '60e598f6276371119720786b05e507cd628665473b24c8f76de436d99cf113f7'
-                generatorPublicKey:
-                    type: string
-                    format: hex_bytearray
-                    example: '39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152'
-                timestamp:
-                    type: integer
-                    format: int64
-                    description: Block timestamp, Unix timestamp in milliseconds
-                    example: 1591696372000
-                timeout:
-                    type: integer
-                    format: int32
-                    example: 1
-                version:
-                    description: The block version
-                    type: integer
-                    format: int32
-                    example: 6
-                baseTarget:
-                    type: string
-                    example: '7686143350'
-                cumulativeDifficulty:
-                    type: string
-                    format: integer
-                    example: '8728234277524822'
-                previousBlock:
-                    description: Prev block id
-                    type: string
-                    format: hex_bytearray
-                    example: '80faaeb4787337264514'
-                previousBlockHash:
-                    type: string
-                    format: hex_bytearray
-                    example: '5b8ba14eaebba8cdc682c946947f5352a596d00ac63c4e616785d00cf8b8e016'
-                nextBlock:
-                    description: Next block id
-                    type: string
-                    format: hex_bytearray
-                    example: '140faaeb81930093118053'
-                payloadHash:
-                    type: string
-                    format: hex_bytearray
-                    description: Hash of the paylod (all transactions)
-                    example: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
-                payloadLength:
-                    description: The length in bytes of all transactions
-                    type: integer
-                    format: int32
-                    example: 523423
-                numberOfTransactions:
-                    type: integer
-                    format: int32
-                    example: 14
-                totalAmountATM:
-                    type: string
-                    format: integer
-                    example: '569000000000000'
-                totalFeeATM:
-                    type: string
-                    format: integer
-                    example: '2800000000'
+            allOf:
+                -   $ref: '#/components/schemas/BaseResponse'
+                -   type: object
+                    properties:
+                        id:
+                            type: string
+                            format: hex_bytearray
+                            example: '1130faaeb604315160401'
+                        blockSignature:
+                            type: string
+                            format: hex_bytearray
+                            example: 'ff080e64436603df0c3b9a5b792b03a26725a83bbe6aa46eb7eed9ee83707f071b6d529d09be1f2594c6f8545c2772a091896bc808553c1774e39a41248b1e1c'
+                        height:
+                            type: integer
+                            format: int64
+                            example: 1319854
+                        generator:
+                            type: string
+                            example: 'APL-FXHG-6KHM-23LE-42ACU'
+                        generationSignature:
+                            type: string
+                            format: hex_bytearray
+                            example: '60e598f6276371119720786b05e507cd628665473b24c8f76de436d99cf113f7'
+                        generatorPublicKey:
+                            type: string
+                            format: hex_bytearray
+                            example: '39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152'
+                        timestamp:
+                            type: integer
+                            format: int64
+                            description: Block timestamp, Unix timestamp in milliseconds
+                            example: 1591696372000
+                        timeout:
+                            type: integer
+                            format: int32
+                            example: 1
+                        version:
+                            description: The block version
+                            type: integer
+                            format: int32
+                            example: 6
+                        baseTarget:
+                            type: string
+                            example: '7686143350'
+                        cumulativeDifficulty:
+                            type: string
+                            format: integer
+                            example: '8728234277524822'
+                        previousBlock:
+                            description: Prev block id
+                            type: string
+                            format: hex_bytearray
+                            example: '80faaeb4787337264514'
+                        previousBlockHash:
+                            type: string
+                            format: hex_bytearray
+                            example: '5b8ba14eaebba8cdc682c946947f5352a596d00ac63c4e616785d00cf8b8e016'
+                        nextBlock:
+                            description: Next block id
+                            type: string
+                            format: hex_bytearray
+                            example: '140faaeb81930093118053'
+                        payloadHash:
+                            type: string
+                            format: hex_bytearray
+                            description: Hash of the paylod (all transactions)
+                            example: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+                        payloadLength:
+                            description: The length in bytes of all transactions
+                            type: integer
+                            format: int32
+                            example: 523423
+                        numberOfTransactions:
+                            type: integer
+                            format: int32
+                            example: 14
+                        totalAmountATM:
+                            type: string
+                            format: integer
+                            example: '569000000000000'
+                        totalFeeATM:
+                            type: string
+                            format: integer
+                            example: '2800000000'
         BlockchainInfo:
-          allOf:
-            - $ref: '#/components/schemas/BaseResponse'
-            - type: object
-              properties:
-                chainid:
-                    type: string
-                    format: hex_bytearray
-                    example: 'a2e9b946290b48b69985dc2e5a5860a1'
-                genesisPublicKey:
-                    type: string
-                    format: hex_bytearray
-                    example: '1259ec21d31a30898d7cd1609f80d9668b4778e3d97e941044b39f0c44d2e51b'
-                height:
-                    type: integer
-                    format: int64
-                    example: 4789567
-                genesisBlockTimestamp:
-                    type: integer
-                    format: int64
-                    description: Genesis block timestamp, Unix timestamp in milliseconds
-                    example: 1491696372000
-                genesisBlockId:
-                    type: string
-                    format: hex_bytearray
-                    description: Genesis block ID
-                    example: '15856251679437054149169000'
-                ecBlockId:
-                    type: string
-                    format: hex_bytearray
-                    description: The economic clustering block ID
-                    example: '40faaeb15856251679437054'
-                ecBlockHeight:
-                    type: integer
-                    format: int64
-                    description: The economic clustering block height
-                    example: 3301233
-                txTimestamp:
-                    type: integer
-                    format: int64
-                    description: Request timestamp in seconds since the genesis block
-                    example: 1591696371
-                timestamp:
-                    type: integer
-                    format: int64
-                    description: Request timestamp, Unix timestamp in milliseconds
-                    example: 1591696372300
+            allOf:
+                -   $ref: '#/components/schemas/BaseResponse'
+                -   type: object
+                    properties:
+                        chainid:
+                            type: string
+                            format: hex_bytearray
+                            example: 'a2e9b946290b48b69985dc2e5a5860a1'
+                        genesisPublicKey:
+                            type: string
+                            format: hex_bytearray
+                            example: '1259ec21d31a30898d7cd1609f80d9668b4778e3d97e941044b39f0c44d2e51b'
+                        height:
+                            type: integer
+                            format: int64
+                            example: 4789567
+                        genesisBlockTimestamp:
+                            type: integer
+                            format: int64
+                            description: Genesis block timestamp, Unix timestamp in milliseconds
+                            example: 1491696372000
+                        genesisBlockId:
+                            type: string
+                            format: hex_bytearray
+                            description: Genesis block ID
+                            example: '15856251679437054149169000'
+                        ecBlockId:
+                            type: string
+                            format: hex_bytearray
+                            description: The economic clustering block ID
+                            example: '40faaeb15856251679437054'
+                        ecBlockHeight:
+                            type: integer
+                            format: int64
+                            description: The economic clustering block height
+                            example: 3301233
+                        txTimestamp:
+                            type: integer
+                            format: int64
+                            description: Request timestamp in seconds since the genesis block
+                            example: 1591696371
+                        timestamp:
+                            type: integer
+                            format: int64
+                            description: Request timestamp, Unix timestamp in milliseconds
+                            example: 1591696372300
         TxRequest:
             required:
                 - tx
@@ -741,60 +741,58 @@ components:
                         format: hex_bytearray
                         example: '39dc2e813bb45ff063a376e316b10cd0adeb7306111ca0eb2890194d37960152'
         CreateChildAccountResp:
-          required:
-              - parent
-              - tx
-          allOf:
-            - $ref: '#/components/schemas/BaseResponse'
-            - type: object
-              properties:
-                parent:
-                    type: string
-                    description: parent account id
-                    example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
-                tx:
-                    description: Unsigned transaction data
-                    type: string
-                    format: hex_bytearray
-                    example: '001047857c04a00539dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152eef5365f2400292d00ca9a3b0000000000c2eb0b000000000000000000000000000000000000000000000000000000000000000000000000920173ae606d36c1c77fc5bdf294bd048d04f85c46535525771b524dbb1ed20b73311900d4a409c293a10d8a5ab987430be4bd7478fb16a41cf775afa33c4d5600000000f1da1300fe7062e6fb2fbb37'
+            required:
+                - parent
+                - tx
+            allOf:
+                -   $ref: '#/components/schemas/BaseResponse'
+                -   type: object
+                    properties:
+                        parent:
+                            type: string
+                            description: parent account id
+                            example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+                        tx:
+                            description: Unsigned transaction data
+                            type: string
+                            format: hex_bytearray
+                            example: '001047857c04a00539dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152eef5365f2400292d00ca9a3b0000000000c2eb0b000000000000000000000000000000000000000000000000000000000000000000000000920173ae606d36c1c77fc5bdf294bd048d04f85c46535525771b524dbb1ed20b73311900d4a409c293a10d8a5ab987430be4bd7478fb16a41cf775afa33c4d5600000000f1da1300fe7062e6fb2fbb37'
         AccountInfoResp:
             allOf:
                 -   $ref: '#/components/schemas/BaseResponse'
                 -   $ref: '#/components/schemas/AccountInfo'
         AccountInfo:
-            allOf:
-                -   $ref: '#/components/schemas/BasicAccount'
-                -   type: object
-                    required:
-                        - account
-                        - publicKey
-                    properties:
-                        account:
-                            type: string
-                            example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
-                        publicKey:
-                            description: The account public key in a hex string format
-                            type: string
-                            format: hex_bytearray
-                            example: '39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152'
-                        parent:
-                            type: string
-                            example: 'APL-AHYW-P3YX-V426-4UMP2'
-                            nullable: true
-                        balance:
-                            type: string
-                            format: integer
-                            example: '45225600000000'
-                        unconfirmedbalance:
-                            type: string
-                            format: integer
-                            example: '45225600000000'
-                        status:
-                            type: string
-                            enum:
-                                - created
-                                - verified
-                            example: created
+            type: object
+            required:
+                - account
+                - publicKey
+            properties:
+                account:
+                    type: string
+                    example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+                publicKey:
+                    description: The account public key in a hex string format
+                    type: string
+                    format: hex_bytearray
+                    example: '39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152'
+                parent:
+                    type: string
+                    example: 'APL-AHYW-P3YX-V426-4UMP2'
+                    nullable: true
+                balance:
+                    type: string
+                    format: integer
+                    example: '45225600000000'
+                unconfirmedbalance:
+                    type: string
+                    format: integer
+                    example: '45225600000000'
+                status:
+                    type: string
+                    enum:
+                        - created
+                        - verified
+                    example: created
         QueryObject:
             type: object
             properties:
@@ -851,27 +849,27 @@ components:
                     enum: [asc, desc]
                     default: asc
         QueryResult:
-          allOf:
-            - $ref: '#/components/schemas/BaseResponse'
-            - type: object
-              properties:
-                result:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/Operation'
-                query:
-                    $ref: '#/components/schemas/QueryObject'
+            allOf:
+                -   $ref: '#/components/schemas/BaseResponse'
+                -   type: object
+                    properties:
+                        result:
+                            type: array
+                            items:
+                                $ref: '#/components/schemas/Operation'
+                        query:
+                            $ref: '#/components/schemas/QueryObject'
         QueryCountResult:
-          allOf:
-            - $ref: '#/components/schemas/BaseResponse'
-            - type: object
-              properties:
-                result:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/OperationCount'
-                query:
-                    $ref: '#/components/schemas/QueryObject'
+            allOf:
+                -   $ref: '#/components/schemas/BaseResponse'
+                -   type: object
+                    properties:
+                        result:
+                            type: array
+                            items:
+                                $ref: '#/components/schemas/OperationCount'
+                        query:
+                            $ref: '#/components/schemas/QueryObject'
         Operation:
             type: object
             properties:
@@ -890,43 +888,43 @@ components:
                     type: integer
                     format: int32
         UnTxReceipt:
-          description: Unconfirmed transaction receipt
-          allOf:
-            - $ref: '#/components/schemas/BaseResponse'
-            - type: object
-              required:
-                  - transaction
-                  - sender
-                  - recipient
-                  - signature
-              properties:
-                transaction:
-                    type: string
-                    format: hex_bytearray
-                    example: '8330faaeb404178613417'
-                sender:
-                    type: string
-                    example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
-                recipient:
-                    type: string
-                    example: 'APL-FXHG-6KHM-23LE-42ACU'
-                signature:
-                    type: string
-                    format: hex_bytearray
-                    example: 'B98CB1890E76C772A10994B210ED9CF7F9A5488672A5D82C2734BBF9D11505D1'
-                timestamp:
-                    type: integer
-                    format: int64
-                    description: Transaction timestamp, Unix timestamp in milliseconds
-                    example: 1591696372000
-                amount:
-                    type: string
-                    format: integer
-                    example: '34500000000'
-                fee:
-                    type: string
-                    format: integer
-                    example: '0'
+            description: Unconfirmed transaction receipt
+            allOf:
+                -   $ref: '#/components/schemas/BaseResponse'
+                -   type: object
+                    required:
+                        - transaction
+                        - sender
+                        - recipient
+                        - signature
+                    properties:
+                        transaction:
+                            type: string
+                            format: hex_bytearray
+                            example: '8330faaeb404178613417'
+                        sender:
+                            type: string
+                            example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+                        recipient:
+                            type: string
+                            example: 'APL-FXHG-6KHM-23LE-42ACU'
+                        signature:
+                            type: string
+                            format: hex_bytearray
+                            example: 'B98CB1890E76C772A10994B210ED9CF7F9A5488672A5D82C2734BBF9D11505D1'
+                        timestamp:
+                            type: integer
+                            format: int64
+                            description: Transaction timestamp, Unix timestamp in milliseconds
+                            example: 1591696372000
+                        amount:
+                            type: string
+                            format: integer
+                            example: '34500000000'
+                        fee:
+                            type: string
+                            format: integer
+                            example: '0'
         TxReceipt:
             description: Confirmed transaction receipt
             allOf:
