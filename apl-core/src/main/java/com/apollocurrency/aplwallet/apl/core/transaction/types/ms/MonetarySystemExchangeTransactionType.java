@@ -13,11 +13,9 @@ import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyServ
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeAttachment;
 
 public abstract class MonetarySystemExchangeTransactionType extends MonetarySystemTransactionType {
-    private final CurrencyService currencyService;
 
     public MonetarySystemExchangeTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, CurrencyService currencyService) {
         super(blockchainConfig, accountService, currencyService);
-        this.currencyService = currencyService;
     }
 
     @Override

@@ -3,33 +3,44 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.types.ms;
 
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMinting;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyMintService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
-/**
- * @author al
- */
-class MSCurrencyMintingTransactionType extends MonetarySystemTransactionType {
+@Singleton
+public class MSCurrencyMintingTransactionType extends MonetarySystemTransactionType {
+    private final CurrencyMintService currencyMintService;
+    private final MonetaryCurrencyMintingService monetaryCurrencyMintingService;
 
-    public MSCurrencyMintingTransactionType() {
+
+    @Inject
+    public MSCurrencyMintingTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, CurrencyService currencyService, CurrencyMintService currencyMintService, MonetaryCurrencyMintingService monetaryCurrencyMintingService) {
+        super(blockchainConfig, accountService, currencyService);
+        this.currencyMintService = currencyMintService;
+        this.monetaryCurrencyMintingService = monetaryCurrencyMintingService;
     }
 
     @Override
-    public byte getSubtype() {
-        return SUBTYPE_MONETARY_SYSTEM_CURRENCY_MINTING;
+    public TransactionTypes.TransactionTypeSpec getSpec() {
+        return TransactionTypes.TransactionTypeSpec.MS_CURRENCY_MINTING;
     }
 
     @Override
@@ -55,7 +66,7 @@ class MSCurrencyMintingTransactionType extends MonetarySystemTransactionType {
     @Override
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
         MonetarySystemCurrencyMinting attachment = (MonetarySystemCurrencyMinting) transaction.getAttachment();
-        Currency currency = lookupCurrencyService().getCurrency(attachment.getCurrencyId());
+        Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
         CurrencyType.validate(currency, transaction);
         if (attachment.getUnits() <= 0) {
             throw new AplException.NotValidException("Invalid number of units: " + attachment.getUnits());
@@ -63,14 +74,14 @@ class MSCurrencyMintingTransactionType extends MonetarySystemTransactionType {
         if (attachment.getUnits() > (currency.getMaxSupply() - currency.getReserveSupply()) / Constants.MAX_MINTING_RATIO) {
             throw new AplException.NotValidException(String.format("Cannot mint more than 1/%d of the total units supply in a single request", Constants.MAX_MINTING_RATIO));
         }
-        if (!lookupCurrencyService().isActive(currency)) {
+        if (!currencyService.isActive(currency)) {
             throw new AplException.NotCurrentlyValidException("Currency not currently active " + attachment.getJSONObject());
         }
-        long counter = lookupCurrencyMintService().getCounter(attachment.getCurrencyId(), transaction.getSenderId());
+        long counter = currencyMintService.getCounter(attachment.getCurrencyId(), transaction.getSenderId());
         if (attachment.getCounter() <= counter) {
             throw new AplException.NotCurrentlyValidException(String.format("Counter %d has to be bigger than %d", attachment.getCounter(), counter));
         }
-        if (!lookupMonetaryCurrencyMintingService().meetsTarget(transaction.getSenderId(), currency, attachment)) {
+        if (!monetaryCurrencyMintingService.meetsTarget(transaction.getSenderId(), currency, attachment)) {
             throw new AplException.NotCurrentlyValidException(String.format("Hash doesn't meet target %s", attachment.getJSONObject()));
         }
     }
@@ -87,19 +98,19 @@ class MSCurrencyMintingTransactionType extends MonetarySystemTransactionType {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         MonetarySystemCurrencyMinting attachment = (MonetarySystemCurrencyMinting) transaction.getAttachment();
-        lookupCurrencyMintService().mintCurrency(getLedgerEvent(), transaction.getId(), senderAccount, attachment);
+        currencyMintService.mintCurrency(getLedgerEvent(), transaction.getId(), senderAccount, attachment);
     }
 
     @Override
-    public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+    public boolean isDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
         MonetarySystemCurrencyMinting attachment = (MonetarySystemCurrencyMinting) transaction.getAttachment();
-        return TransactionType.isDuplicate(CURRENCY_MINTING, attachment.getCurrencyId() + ":" + transaction.getSenderId(), duplicates, true) || super.isDuplicate(transaction, duplicates);
+        return TransactionType.isDuplicate(TransactionTypes.TransactionTypeSpec.MS_CURRENCY_MINTING, attachment.getCurrencyId() + ":" + transaction.getSenderId(), duplicates, true) || super.isDuplicate(transaction, duplicates);
     }
 
     @Override
-    public boolean isUnconfirmedDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+    public boolean isUnconfirmedDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
         MonetarySystemCurrencyMinting attachment = (MonetarySystemCurrencyMinting) transaction.getAttachment();
-        return TransactionType.isDuplicate(CURRENCY_MINTING, attachment.getCurrencyId() + ":" + transaction.getSenderId(), duplicates, true);
+        return TransactionType.isDuplicate(TransactionTypes.TransactionTypeSpec.MS_CURRENCY_MINTING, attachment.getCurrencyId() + ":" + transaction.getSenderId(), duplicates, true);
     }
 
     @Override

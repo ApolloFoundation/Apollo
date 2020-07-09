@@ -3,29 +3,40 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.types.ms;
 
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import org.json.simple.JSONObject;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 
-/**
- * @author al
- */
-class MSPublishExchangeOfferTransactiionType extends MonetarySystemTransactionType {
+@Singleton
+public class MSPublishExchangeOfferTransactiionType extends MonetarySystemTransactionType {
+    private final AccountCurrencyService accountCurrencyService;
+    private final CurrencyExchangeOfferFacade exchangeOfferFacade;
 
-    public MSPublishExchangeOfferTransactiionType() {
+    @Inject
+    public MSPublishExchangeOfferTransactiionType(BlockchainConfig blockchainConfig, AccountService accountService, CurrencyService currencyService, AccountCurrencyService accountCurrencyService, CurrencyExchangeOfferFacade exchangeOfferFacade) {
+        super(blockchainConfig, accountService, currencyService);
+        this.accountCurrencyService = accountCurrencyService;
+        this.exchangeOfferFacade = exchangeOfferFacade;
     }
 
     @Override
-    public byte getSubtype() {
-        return SUBTYPE_MONETARY_SYSTEM_PUBLISH_EXCHANGE_OFFER;
+    public TransactionTypes.TransactionTypeSpec getSpec() {
+        return TransactionTypes.TransactionTypeSpec.MS_PUBLISH_EXCHANGE_OFFER;
     }
 
     @Override
@@ -69,9 +80,9 @@ class MSPublishExchangeOfferTransactiionType extends MonetarySystemTransactionTy
         if (attachment.getExpirationHeight() <= attachment.getFinishValidationHeight(transaction)) {
             throw new AplException.NotCurrentlyValidException("Expiration height must be after transaction execution height");
         }
-        Currency currency = lookupCurrencyService().getCurrency(attachment.getCurrencyId());
+        Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
         CurrencyType.validate(currency, transaction);
-        if (!lookupCurrencyService().isActive(currency)) {
+        if (!currencyService.isActive(currency)) {
             throw new AplException.NotCurrentlyValidException("Currency not currently active: " + attachment.getJSONObject());
         }
     }
@@ -79,9 +90,9 @@ class MSPublishExchangeOfferTransactiionType extends MonetarySystemTransactionTy
     @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         MonetarySystemPublishExchangeOffer attachment = (MonetarySystemPublishExchangeOffer) transaction.getAttachment();
-        if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact(attachment.getInitialBuySupply(), attachment.getBuyRateATM()) && lookupAccountCurrencyService().getUnconfirmedCurrencyUnits(senderAccount, attachment.getCurrencyId()) >= attachment.getInitialSellSupply()) {
-            lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -Math.multiplyExact(attachment.getInitialBuySupply(), attachment.getBuyRateATM()));
-            lookupAccountCurrencyService().addToUnconfirmedCurrencyUnits(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getCurrencyId(), -attachment.getInitialSellSupply());
+        if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact(attachment.getInitialBuySupply(), attachment.getBuyRateATM()) && accountCurrencyService.getUnconfirmedCurrencyUnits(senderAccount, attachment.getCurrencyId()) >= attachment.getInitialSellSupply()) {
+            getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -Math.multiplyExact(attachment.getInitialBuySupply(), attachment.getBuyRateATM()));
+            accountCurrencyService.addToUnconfirmedCurrencyUnits(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getCurrencyId(), -attachment.getInitialSellSupply());
             return true;
         }
         return false;
@@ -90,17 +101,17 @@ class MSPublishExchangeOfferTransactiionType extends MonetarySystemTransactionTy
     @Override
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         MonetarySystemPublishExchangeOffer attachment = (MonetarySystemPublishExchangeOffer) transaction.getAttachment();
-        lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), Math.multiplyExact(attachment.getInitialBuySupply(), attachment.getBuyRateATM()));
-        Currency currency = lookupCurrencyService().getCurrency(attachment.getCurrencyId());
+        getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), Math.multiplyExact(attachment.getInitialBuySupply(), attachment.getBuyRateATM()));
+        Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
         if (currency != null) {
-            lookupAccountCurrencyService().addToUnconfirmedCurrencyUnits(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getCurrencyId(), attachment.getInitialSellSupply());
+            accountCurrencyService.addToUnconfirmedCurrencyUnits(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getCurrencyId(), attachment.getInitialSellSupply());
         }
     }
 
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         MonetarySystemPublishExchangeOffer attachment = (MonetarySystemPublishExchangeOffer) transaction.getAttachment();
-        lookupCurrencyExchangeOfferFacade().publishOffer(transaction, attachment);
+        exchangeOfferFacade.publishOffer(transaction, attachment);
     }
 
     @Override

@@ -3,30 +3,42 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.types.ms;
 
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import org.json.simple.JSONObject;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 
-/**
- * @author al
- */
-class MSCurrencyTransferTransactionType extends MonetarySystemTransactionType {
+@Singleton
+public class MSCurrencyTransferTransactionType extends MonetarySystemTransactionType {
+    private final AccountCurrencyService accountCurrencyService;
+    private final CurrencyTransferService accountTransferService;
 
-    public MSCurrencyTransferTransactionType() {
+    @Inject
+    public MSCurrencyTransferTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, CurrencyService currencyService, AccountCurrencyService accountCurrencyService, CurrencyTransferService accountTransferService) {
+        super(blockchainConfig, accountService, currencyService);
+        this.accountCurrencyService = accountCurrencyService;
+        this.accountTransferService = accountTransferService;
     }
 
+
     @Override
-    public byte getSubtype() {
-        return SUBTYPE_MONETARY_SYSTEM_CURRENCY_TRANSFER;
+    public TransactionTypes.TransactionTypeSpec getSpec() {
+        return TransactionTypes.TransactionTypeSpec.MS_CURRENCY_TRANSFER;
     }
 
     @Override
@@ -58,9 +70,9 @@ class MSCurrencyTransferTransactionType extends MonetarySystemTransactionType {
         if (transaction.getRecipientId() == GenesisImporter.CREATOR_ID) {
             throw new AplException.NotValidException("Currency transfer to genesis account not allowed");
         }
-        Currency currency = lookupCurrencyService().getCurrency(attachment.getCurrencyId());
+        Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
         CurrencyType.validate(currency, transaction);
-        if (!lookupCurrencyService().isActive(currency)) {
+        if (!currencyService.isActive(currency)) {
             throw new AplException.NotCurrentlyValidException("Currency not currently active: " + attachment.getJSONObject());
         }
     }
@@ -68,27 +80,27 @@ class MSCurrencyTransferTransactionType extends MonetarySystemTransactionType {
     @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         MonetarySystemCurrencyTransfer attachment = (MonetarySystemCurrencyTransfer) transaction.getAttachment();
-        if (attachment.getUnits() > lookupAccountCurrencyService().getUnconfirmedCurrencyUnits(senderAccount, attachment.getCurrencyId())) {
+        if (attachment.getUnits() > accountCurrencyService.getUnconfirmedCurrencyUnits(senderAccount, attachment.getCurrencyId())) {
             return false;
         }
-        lookupAccountCurrencyService().addToUnconfirmedCurrencyUnits(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getCurrencyId(), -attachment.getUnits());
+        accountCurrencyService.addToUnconfirmedCurrencyUnits(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getCurrencyId(), -attachment.getUnits());
         return true;
     }
 
     @Override
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         MonetarySystemCurrencyTransfer attachment = (MonetarySystemCurrencyTransfer) transaction.getAttachment();
-        Currency currency = lookupCurrencyService().getCurrency(attachment.getCurrencyId());
+        Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
         if (currency != null) {
-            lookupAccountCurrencyService().addToUnconfirmedCurrencyUnits(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getCurrencyId(), attachment.getUnits());
+            accountCurrencyService.addToUnconfirmedCurrencyUnits(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getCurrencyId(), attachment.getUnits());
         }
     }
 
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         MonetarySystemCurrencyTransfer attachment = (MonetarySystemCurrencyTransfer) transaction.getAttachment();
-        lookupCurrencyService().transferCurrency(getLedgerEvent(), transaction.getId(), senderAccount, recipientAccount, attachment.getCurrencyId(), attachment.getUnits());
-        lookupCurrencyTransferService().addTransfer(transaction, attachment);
+        currencyService.transferCurrency(getLedgerEvent(), transaction.getId(), senderAccount, recipientAccount, attachment.getCurrencyId(), attachment.getUnits());
+        accountTransferService.addTransfer(transaction, attachment);
     }
 
     @Override

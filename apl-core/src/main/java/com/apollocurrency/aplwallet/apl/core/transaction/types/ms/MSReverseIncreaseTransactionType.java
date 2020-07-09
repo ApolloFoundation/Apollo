@@ -3,30 +3,38 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.types.ms;
 
-import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveIncrease;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import org.json.simple.JSONObject;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 
-/**
- * @author al
- */
-class MSReverseIncreaseTransactionType extends MonetarySystemTransactionType {
+@Singleton
+public class MSReverseIncreaseTransactionType extends MonetarySystemTransactionType {
+    private final Blockchain blockchain;
 
-    public MSReverseIncreaseTransactionType() {
+    @Inject
+    public MSReverseIncreaseTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, CurrencyService currencyService, Blockchain blockchain) {
+        super(blockchainConfig, accountService, currencyService);
+        this.blockchain = blockchain;
     }
 
     @Override
-    public byte getSubtype() {
-        return SUBTYPE_MONETARY_SYSTEM_RESERVE_INCREASE;
+    public TransactionTypes.TransactionTypeSpec getSpec() {
+        return null;
     }
 
     @Override
@@ -55,15 +63,15 @@ class MSReverseIncreaseTransactionType extends MonetarySystemTransactionType {
         if (attachment.getAmountPerUnitATM() <= 0) {
             throw new AplException.NotValidException("Reserve increase amount must be positive: " + attachment.getAmountPerUnitATM());
         }
-        CurrencyType.validate(lookupCurrencyService().getCurrency(attachment.getCurrencyId()), transaction);
+        CurrencyType.validate(currencyService.getCurrency(attachment.getCurrencyId()), transaction);
     }
 
     @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         MonetarySystemReserveIncrease attachment = (MonetarySystemReserveIncrease) transaction.getAttachment();
-        Currency currency = lookupCurrencyService().getCurrency(attachment.getCurrencyId());
+        Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
         if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact(currency.getReserveSupply(), attachment.getAmountPerUnitATM())) {
-            lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -Math.multiplyExact(currency.getReserveSupply(), attachment.getAmountPerUnitATM()));
+            getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -Math.multiplyExact(currency.getReserveSupply(), attachment.getAmountPerUnitATM()));
             return true;
         }
         return false;
@@ -73,24 +81,24 @@ class MSReverseIncreaseTransactionType extends MonetarySystemTransactionType {
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         MonetarySystemReserveIncrease attachment = (MonetarySystemReserveIncrease) transaction.getAttachment();
         long reserveSupply;
-        Currency currency = lookupCurrencyService().getCurrency(attachment.getCurrencyId());
+        Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
         if (currency != null) {
             reserveSupply = currency.getReserveSupply();
         } else {
             // TODO: find better solution, maybe extend this attachment and add currency reserve supply
-            // can occur, when new block apply transaction which deleted currency, but this transaction was not confirmed and we should restore unconfirmed balance
-            // currency must have been deleted, get reserve supply from the original issuance transaction
-            Transaction currencyIssuance = lookupBlockchain().getTransaction(attachment.getCurrencyId());
+            // can occur, when new block applied transaction which deleted currency, but this transaction was not confirmed and we should restore unconfirmed balance
+            // So that we get reserve supply from the original issuance transaction
+            Transaction currencyIssuance = blockchain.getTransaction(attachment.getCurrencyId());
             MonetarySystemCurrencyIssuance currencyIssuanceAttachment = (MonetarySystemCurrencyIssuance) currencyIssuance.getAttachment();
             reserveSupply = currencyIssuanceAttachment.getReserveSupply();
         }
-        lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), Math.multiplyExact(reserveSupply, attachment.getAmountPerUnitATM()));
+        getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), Math.multiplyExact(reserveSupply, attachment.getAmountPerUnitATM()));
     }
 
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         MonetarySystemReserveIncrease attachment = (MonetarySystemReserveIncrease) transaction.getAttachment();
-        lookupCurrencyService().increaseReserve(getLedgerEvent(), transaction.getId(), senderAccount, attachment.getCurrencyId(), attachment.getAmountPerUnitATM());
+        currencyService.increaseReserve(getLedgerEvent(), transaction.getId(), senderAccount, attachment.getCurrencyId(), attachment.getAmountPerUnitATM());
     }
 
     @Override
