@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.updater.core;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.Update;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.update.UpdateTransactionType;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateData;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateInfo;
@@ -28,7 +28,7 @@ public class UpdaterFactoryImpl implements UpdaterFactory {
 
     @Override
     public Updater getUpdater(UpdateData updateDataHolder) {
-        Level level = ((Update) updateDataHolder.getAttachment().getTransactionType()).getLevel();
+        Level level = ((UpdateTransactionType) updateDataHolder.getAttachment().getTransactionType()).getLevel();
         switch (level) {
             case CRITICAL:
                 return new CriticalUpdater(updateDataHolder, updaterMediator, updaterService, 3, 200, updateInfo);

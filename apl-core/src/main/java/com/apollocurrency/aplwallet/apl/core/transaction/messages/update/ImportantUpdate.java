@@ -4,7 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages.update;
 
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.Update;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.update.UpdateTransactionType;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.util.Version;
@@ -33,7 +33,7 @@ public final class ImportantUpdate extends UpdateAttachment {
 
     @Override
     public TransactionType getTransactionType() {
-        return Update.IMPORTANT;
+        return UpdateTransactionType.IMPORTANT;
     }
 
 }

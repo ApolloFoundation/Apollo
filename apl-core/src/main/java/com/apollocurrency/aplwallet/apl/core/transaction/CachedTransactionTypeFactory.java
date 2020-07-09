@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.types.control.SetPhasin
 import com.apollocurrency.aplwallet.apl.core.transaction.types.data.DataTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.messaging.MessagingTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.payment.PaymentTransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.update.UpdateTransactionType;
 import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
 
 import javax.enterprise.inject.Instance;
@@ -216,13 +217,13 @@ public class CachedTransactionTypeFactory {
             case TYPE_UPDATE:
                 switch (subtype) {
                     case SUBTYPE_UPDATE_CRITICAL:
-                        return Update.CRITICAL;
+                        return UpdateTransactionType.CRITICAL;
                     case SUBTYPE_UPDATE_IMPORTANT:
-                        return Update.IMPORTANT;
+                        return UpdateTransactionType.IMPORTANT;
                     case SUBTYPE_UPDATE_MINOR:
-                        return Update.MINOR;
+                        return UpdateTransactionType.MINOR;
                     case SUBTYPE_UPDATE_V2:
-                        return Update.UPDATE_V2;
+                        return UpdateTransactionType.UPDATE_V2;
                     default:
                         return null;
                 }

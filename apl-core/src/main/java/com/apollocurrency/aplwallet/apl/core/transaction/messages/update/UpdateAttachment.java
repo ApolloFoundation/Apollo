@@ -3,7 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages.update;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.Update;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.update.UpdateTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
@@ -72,11 +72,11 @@ public abstract class UpdateAttachment extends AbstractAttachment {
     }
 
     public static UpdateAttachment getAttachment(Platform platform, Architecture architecture, DoubleByteArrayTuple url, Version version, byte[] hash, byte level) {
-        if (level == Update.CRITICAL.getSubtype()) {
+        if (level == UpdateTransactionType.CRITICAL.getSubtype()) {
             return new CriticalUpdate(platform, architecture, url, version, hash);
-        } else if (level == Update.IMPORTANT.getSubtype()) {
+        } else if (level == UpdateTransactionType.IMPORTANT.getSubtype()) {
             return new ImportantUpdate(platform, architecture, url, version, hash);
-        } else if (level == Update.MINOR.getSubtype()) {
+        } else if (level == UpdateTransactionType.MINOR.getSubtype()) {
             return new MinorUpdate(platform, architecture, url, version, hash);
         }
         return null;

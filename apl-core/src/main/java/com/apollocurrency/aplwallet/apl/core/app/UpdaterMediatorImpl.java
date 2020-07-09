@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
-import com.apollocurrency.aplwallet.apl.core.transaction.Update;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.update.UpdateTransactionType;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Version;
@@ -89,7 +89,7 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
 
     @Override
     public boolean isUpdateTransaction(Transaction transaction) {
-        return Update.isUpdate(transaction.getType());
+        return UpdateTransactionType.isUpdate(transaction.getType());
     }
 
     @Override

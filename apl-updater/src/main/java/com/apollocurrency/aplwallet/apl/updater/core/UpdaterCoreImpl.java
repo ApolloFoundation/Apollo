@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.UpdaterMediatorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
-import com.apollocurrency.aplwallet.apl.core.transaction.Update;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.update.UpdateTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateData;
@@ -139,7 +139,7 @@ public class UpdaterCoreImpl implements UpdaterCore {
                     if (expectedVersion.greaterThan(updaterMediator.getWalletVersion())) {
                         LOG.error("Found " + transaction.getType() + " update (platform dependent script failed): currentVersion: " + updaterMediator.getWalletVersion() +
                             " " + " updateVersion: " + expectedVersion);
-                        if (transaction.getType() == Update.CRITICAL) {
+                        if (transaction.getType() == UpdateTransactionType.CRITICAL) {
                             updaterMediator.suspendBlockchain();
                             updateState(transaction, UpdateInfo.UpdateState.REQUIRED_MANUAL_INSTALL);
                             startUpdater = false;
@@ -229,7 +229,7 @@ public class UpdaterCoreImpl implements UpdaterCore {
         synchronized (updateInfo) {
             updateInfo.setUpdate(true);
             updateInfo.setId(updateData.getTransactionId());
-            updateInfo.setLevel(((Update) updateAttachment.getTransactionType()).getLevel());
+            updateInfo.setLevel(((UpdateTransactionType) updateAttachment.getTransactionType()).getLevel());
             updateInfo.setVersion(updateAttachment.getAppVersion());
             updateInfo.setUpdateState(state);
         }

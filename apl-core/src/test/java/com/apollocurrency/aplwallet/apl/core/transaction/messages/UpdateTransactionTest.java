@@ -6,7 +6,7 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.Update;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.update.UpdateTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateV2Attachment;
 import com.apollocurrency.aplwallet.apl.testutil.WeldUtils;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
@@ -42,7 +42,7 @@ public class UpdateTransactionTest {
 
     @BeforeEach
     void setUp() {
-        type = Update.UPDATE_V2;
+        type = UpdateTransactionType.UPDATE_V2;
     }
 
     @ParameterizedTest
@@ -63,7 +63,7 @@ public class UpdateTransactionTest {
 
     @Test
     void testCallCommonMethods() {
-        assertThrows(UnsupportedOperationException.class, () -> ((Update) type).getLevel());
+        assertThrows(UnsupportedOperationException.class, () -> ((UpdateTransactionType) type).getLevel());
         assertEquals(type.getName(), "UpdateV2");
         assertEquals(type.getSubtype(), 3);
     }
