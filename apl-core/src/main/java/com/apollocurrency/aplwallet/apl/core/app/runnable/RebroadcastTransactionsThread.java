@@ -18,21 +18,26 @@ import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Class makes lookup of BlockchainProcessor
+ */
 @Slf4j
 public class RebroadcastTransactionsThread implements Runnable {
 
     private BlockchainProcessor blockchainProcessor;
-    private TimeService timeService;
-    private UnconfirmedTransactionTable unconfirmedTransactionTable;
-    private PeersService peers;
-    private Blockchain blockchain;
+    private final TimeService timeService;
+    private final UnconfirmedTransactionTable unconfirmedTransactionTable;
+    private final PeersService peers;
+    private final Blockchain blockchain;
 
     public RebroadcastTransactionsThread(TimeService timeService,
                                          UnconfirmedTransactionTable unconfirmedTransactionTable,
-                                         PeersService peers) {
+                                         PeersService peers,
+                                         Blockchain blockchain) {
         this.timeService = Objects.requireNonNull(timeService);
         this.unconfirmedTransactionTable = Objects.requireNonNull(unconfirmedTransactionTable);
         this.peers = Objects.requireNonNull(peers);
+        this.blockchain = Objects.requireNonNull(blockchain);
         log.info("Created 'RebroadcastTransactionsThread' instance");
     }
 
@@ -46,7 +51,7 @@ public class RebroadcastTransactionsThread implements Runnable {
                 List<Transaction> transactionList = new ArrayList<>();
                 int curTime = timeService.getEpochTime();
                 for (Transaction transaction : unconfirmedTransactionTable.getBroadcastedTransactions()) {
-                    if (transaction.getExpiration() < curTime || lookupBlockchain().hasTransaction(transaction.getId())) {
+                    if (transaction.getExpiration() < curTime || blockchain.hasTransaction(transaction.getId())) {
                         unconfirmedTransactionTable.getBroadcastedTransactions().remove(transaction);
                     } else if (transaction.getTimestamp() < curTime - 30) {
                         transactionList.add(transaction);
@@ -72,12 +77,5 @@ public class RebroadcastTransactionsThread implements Runnable {
             blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
         }
         return blockchainProcessor;
-    }
-
-    private Blockchain lookupBlockchain() {
-        if (blockchain == null) {
-            blockchain = CDI.current().select(Blockchain.class).get();
-        }
-        return blockchain;
     }
 }

@@ -13,6 +13,9 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Class makes lookup of BlockchainProcessor
+ */
 @Slf4j
 public class ProcessWaitingTransactionsThread implements Runnable {
 

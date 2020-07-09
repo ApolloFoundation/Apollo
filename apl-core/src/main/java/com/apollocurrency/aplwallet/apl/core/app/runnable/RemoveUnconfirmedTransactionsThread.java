@@ -22,22 +22,24 @@ import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Class makes lookup of BlockchainProcessor
+ */
 @Slf4j
 public class RemoveUnconfirmedTransactionsThread implements Runnable {
 
     private BlockchainProcessor blockchainProcessor;
-    private DatabaseManager databaseManager;
-    private UnconfirmedTransactionTable unconfirmedTransactionTable;
-    private TransactionProcessor transactionProcessor;
-    private TimeService timeService;
-    private GlobalSync globalSync;
+    private final DatabaseManager databaseManager;
+    private final UnconfirmedTransactionTable unconfirmedTransactionTable;
+    private final TransactionProcessor transactionProcessor;
+    private final TimeService timeService;
+    private final GlobalSync globalSync;
 
     public RemoveUnconfirmedTransactionsThread(DatabaseManager databaseManager,
                                                UnconfirmedTransactionTable unconfirmedTransactionTable,
                                                TransactionProcessor transactionProcessor,
                                                TimeService timeService,
-                                               GlobalSync globalSync
-                                                     ) {
+                                               GlobalSync globalSync) {
         this.databaseManager = Objects.requireNonNull(databaseManager);
         this.unconfirmedTransactionTable = Objects.requireNonNull(unconfirmedTransactionTable);
         this.transactionProcessor = Objects.requireNonNull(transactionProcessor);

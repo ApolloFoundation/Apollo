@@ -140,7 +140,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         this.maxUnconfirmedTransactions = n <= 0 ? Integer.MAX_VALUE : n;
         // threads creation
         this.rebroadcastTransactionsThread = new RebroadcastTransactionsThread(
-            this.timeService, this.unconfirmedTransactionTable, this.peers);
+            this.timeService, this.unconfirmedTransactionTable, this.peers, this.blockchain);
         this.processWaitingTransactionsThread = new ProcessWaitingTransactionsThread(this);
         this.processTransactionsThread = new ProcessTransactionsThread(
             this, this.unconfirmedTransactionTable, blockchainConfig, peers);

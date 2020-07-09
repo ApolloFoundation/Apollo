@@ -22,14 +22,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+/**
+ * Class makes lookup of BlockchainProcessor
+ */
 @Slf4j
 public class ProcessTransactionsThread implements Runnable {
 
     private BlockchainProcessor blockchainProcessor;
-    private TransactionProcessor transactionProcessor;
-    private UnconfirmedTransactionTable unconfirmedTransactionTable;
-    private BlockchainConfig blockchainConfig;
-    private PeersService peers;
+    private final TransactionProcessor transactionProcessor;
+    private final UnconfirmedTransactionTable unconfirmedTransactionTable;
+    private final BlockchainConfig blockchainConfig;
+    private final PeersService peers;
 
     public ProcessTransactionsThread(TransactionProcessor transactionProcessor,
                                      UnconfirmedTransactionTable unconfirmedTransactionTable,
