@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.shuffling;
 
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
+import com.apollocurrency.aplwallet.apl.core.app.shuffling.ShufflingStage;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -120,7 +121,7 @@ public class ShufflingTable extends VersionedDeletableEntityDbTable<Shuffling> {
         return getCount(clause);
     }
 
-    public DbIterator<Shuffling> getHoldingShufflings(long holdingId, Shuffling.Stage stage, boolean includeFinished, int from, int to) {
+    public DbIterator<Shuffling> getHoldingShufflings(long holdingId, ShufflingStage stage, boolean includeFinished, int from, int to) {
         DbClause clause = holdingId != 0 ? new DbClause.LongClause("holding_id", holdingId) : new DbClause.NullClause("holding_id");
         if (!includeFinished) {
             clause = clause.and(new DbClause.NotNullClause("blocks_remaining"));
@@ -152,7 +153,7 @@ public class ShufflingTable extends VersionedDeletableEntityDbTable<Shuffling> {
 
     public DbIterator<Shuffling> getAssignedShufflings(long assigneeAccountId, int from, int to) {
         return getManyBy(new DbClause.LongClause("assignee_account_id", assigneeAccountId)
-                .and(new DbClause.ByteClause("stage", Shuffling.Stage.PROCESSING.getCode())), from, to,
+                .and(new DbClause.ByteClause("stage", ShufflingStage.PROCESSING.getCode())), from, to,
             " ORDER BY blocks_remaining NULLS LAST, height DESC ");
     }
 

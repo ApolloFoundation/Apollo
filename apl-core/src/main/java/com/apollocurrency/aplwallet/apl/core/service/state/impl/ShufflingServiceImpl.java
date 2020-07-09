@@ -10,8 +10,10 @@ import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.shuffling.ShufflingData;
+import com.apollocurrency.aplwallet.apl.core.app.shuffling.ShufflingEvent;
 import com.apollocurrency.aplwallet.apl.core.app.shuffling.ShufflingParticipantEvent;
 import com.apollocurrency.aplwallet.apl.core.app.shuffling.ShufflingParticipantState;
+import com.apollocurrency.aplwallet.apl.core.app.shuffling.ShufflingStage;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.state.shuffling.ShufflingDataTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.shuffling.ShufflingParticipantTable;
@@ -67,7 +69,7 @@ public class ShufflingServiceImpl implements ShufflingService {
     private final boolean deleteFinished;
 
     private static final Listeners<ShufflingParticipant, ShufflingParticipantEvent> participantListeners = new Listeners<>();
-    private static final Listeners<Shuffling, Shuffling.Event> shufflingListeners = new Listeners<>();
+    private static final Listeners<Shuffling, ShufflingEvent> shufflingListeners = new Listeners<>();
 
     @Inject
     public ShufflingServiceImpl(
@@ -204,7 +206,7 @@ public class ShufflingServiceImpl implements ShufflingService {
         Shuffling shuffling = new Shuffling(transaction, attachment, blockchain.getHeight());
         shufflingTable.insert(shuffling);
         addParticipant(shuffling.getId(), transaction.getSenderId(), 0);
-        shufflingListeners.notify(shuffling, Shuffling.Event.SHUFFLING_CREATED);
+        shufflingListeners.notify(shuffling, ShufflingEvent.SHUFFLING_CREATED);
     }
 
     @Override
@@ -223,12 +225,12 @@ public class ShufflingServiceImpl implements ShufflingService {
     }
 
     @Override
-    public boolean addListener(Listener<Shuffling> listener, Shuffling.Event eventType) {
+    public boolean addListener(Listener<Shuffling> listener, ShufflingEvent eventType) {
         return shufflingListeners.addListener(listener, eventType);
     }
 
     @Override
-    public boolean removeListener(Listener<Shuffling> listener, Shuffling.Event eventType) {
+    public boolean removeListener(Listener<Shuffling> listener, ShufflingEvent eventType) {
         return shufflingListeners.removeListener(listener, eventType);
     }
 
@@ -362,7 +364,7 @@ public class ShufflingServiceImpl implements ShufflingService {
                 throw new RuntimeException(String.format("Current shuffling cancellingAccountId %s does not match %s",
                     Long.toUnsignedString(shuffling.getAssigneeAccountId()), Long.toUnsignedString(cancellingAccountId)));
             }
-            if (shufflingStateHash == null || !Arrays.equals(shufflingStateHash, shuffling.getStateHash())) {
+            if (shufflingStateHash == null || !Arrays.equals(shufflingStateHash, getStageHash(shuffling))) {
                 throw new RuntimeException("Current shuffling state hash does not match");
             }
             long accountId = AccountService.getId(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)));
@@ -432,65 +434,16 @@ public class ShufflingServiceImpl implements ShufflingService {
     @Override
     public void cancelBy(Shuffling shuffling, ShufflingParticipant participant, byte[][] blameData, byte[][] keySeeds) {
         changeStatusToCancel(participant, blameData, keySeeds);
-        boolean startingBlame = shuffling.getStage() != Shuffling.Stage.BLAME;
+        boolean startingBlame = shuffling.getStage() != ShufflingStage.BLAME;
         if (startingBlame) {
-            setStage(shuffling, Shuffling.Stage.BLAME, participant.getAccountId(), (short) (blockchainConfig.getShufflingProcessingDeadline() + shuffling.getParticipantCount()));
+            setStage(shuffling, ShufflingStage.BLAME, participant.getAccountId(), (short) (blockchainConfig.getShufflingProcessingDeadline() + shuffling.getParticipantCount()));
         }
         updateHeightAndInsert(shuffling);
         if (startingBlame) {
-            shufflingListeners.notify(shuffling, Shuffling.Event.SHUFFLING_BLAME_STARTED);
+            shufflingListeners.notify(shuffling, ShufflingEvent.SHUFFLING_BLAME_STARTED);
         }
         log.trace("Shuffling cancelBy {} entered stage {}, blamingAcc {}, remaining blocks {}",
             Long.toUnsignedString(shuffling.getId()), shuffling.getStage(), participant.getAccountId(), shuffling.getBlocksRemaining());
-    }
-
-    private void cancelBy(Shuffling shuffling, ShufflingParticipant participant) {
-        cancelBy(shuffling, participant, Convert.EMPTY_BYTES, Convert.EMPTY_BYTES);
-    }
-
-    private void distribute(Shuffling shuffling) {
-        if (shuffling.getRecipientPublicKeys().length != shuffling.getParticipantCount()) {
-            cancelBy(shuffling, getLastParticipant(shuffling.getId()));
-            return;
-        }
-
-        for (byte[] recipientPublicKey : shuffling.getRecipientPublicKeys()) {
-            byte[] publicKey = accountService.getPublicKeyByteArray(AccountService.getId(recipientPublicKey));
-            if (publicKey != null && !Arrays.equals(publicKey, recipientPublicKey)) {
-                // distribution not possible, do a cancellation on behalf of last participant instead
-                cancelBy(shuffling, getLastParticipant(shuffling.getId()));
-                return;
-            }
-        }
-        LedgerEvent event = LedgerEvent.SHUFFLING_DISTRIBUTION;
-        try (DbIterator<ShufflingParticipant> participants = getParticipants(shuffling.getId())) {
-            for (ShufflingParticipant participant : participants) {
-                Account participantAccount = accountService.getAccount(participant.getAccountId());
-                shuffling.getHoldingType().addToBalance(participantAccount, event, shuffling.getId(), shuffling.getHoldingId(), -shuffling.getAmount());
-                if (shuffling.getHoldingType() != HoldingType.APL) {
-                    accountService.addToBalanceATM(participantAccount, event, shuffling.getId(), -blockchainConfig.getShufflingDepositAtm());
-                }
-            }
-        }
-        for (byte[] recipientPublicKey : shuffling.getRecipientPublicKeys()) {
-            long recipientId = AccountService.getId(recipientPublicKey);
-            Account recipientAccount = accountService.addOrGetAccount(recipientId);
-            accountPublicKeyService.apply(recipientAccount, recipientPublicKey);
-            shuffling.getHoldingType().addToBalanceAndUnconfirmedBalance(recipientAccount, event, shuffling.getId(), shuffling.getHoldingId(), shuffling.getAmount());
-            if (shuffling.getHoldingType() != HoldingType.APL) {
-                accountService.addToBalanceAndUnconfirmedBalanceATM(recipientAccount, event, shuffling.getId(), blockchainConfig.getShufflingDepositAtm());
-            }
-        }
-        setStage(shuffling, Shuffling.Stage.DONE, 0, (short) 0);
-        updateHeightAndInsert(shuffling);
-        shufflingListeners.notify(shuffling, Shuffling.Event.SHUFFLING_DONE);
-        if (deleteFinished) {
-            log.debug("Deleting Shuffling Done = {} , height = {}", Long.toUnsignedString(shuffling.getId()), shuffling.getHeight());
-            delete(shuffling);
-        }
-        log.debug("Shuffling {} was distributed", Long.toUnsignedString(shuffling.getId()));
-        log.trace("Shuffling distributed {} entered stage {}, assignee {}, remaining blocks {}",
-            Long.toUnsignedString(shuffling.getId()), shuffling.getStage(), Long.toUnsignedString(shuffling.getAssigneeAccountId()), shuffling.getBlocksRemaining());
     }
 
     @Override
@@ -544,9 +497,9 @@ public class ShufflingServiceImpl implements ShufflingService {
             log.debug("Shuffling penalty {} {} awarded to forger at height {}", ((double) fee) / Constants.ONE_APL, blockchainConfig.getCoinSymbol(),
                 block.getHeight());
         }
-        setStage(shuffling, Shuffling.Stage.CANCELLED, blamedAccountId, (short) 0);
+        setStage(shuffling, ShufflingStage.CANCELLED, blamedAccountId, (short) 0);
         updateHeightAndInsert(shuffling);
-        shufflingListeners.notify(shuffling, Shuffling.Event.SHUFFLING_CANCELLED);
+        shufflingListeners.notify(shuffling, ShufflingEvent.SHUFFLING_CANCELLED);
         if (deleteFinished) {
             log.debug("Deleting Shuffling Cancelled = {} , height = {} / {}", Long.toUnsignedString(shuffling.getId()), block.getHeight(), shuffling.getHeight());
             delete(shuffling);
@@ -554,14 +507,262 @@ public class ShufflingServiceImpl implements ShufflingService {
         log.debug("Shuffling {} was cancelled, blaming account {}", Long.toUnsignedString(shuffling.getId()), Long.toUnsignedString(blamedAccountId));
     }
 
+    @Override
+    public boolean isFull(Shuffling shuffling, Block block) {
+        int transactionSize = Constants.MIN_TRANSACTION_SIZE; // min transaction size with no attachment
+        if (shuffling.getStage() == ShufflingStage.REGISTRATION) {
+            transactionSize += 1 + 32;
+        } else { // must use same for PROCESSING/VERIFICATION/BLAME
+            transactionSize = 16384; // max observed was 15647 for 30 participants
+        }
+        return block.getPayloadLength() + transactionSize > blockchainConfig.getCurrentConfig().getMaxPayloadLength();
+    }
+
+    @Override
+    public void updateParticipantData(Shuffling shuffling, Transaction transaction, ShufflingProcessingAttachment attachment) {
+        long participantId = transaction.getSenderId();
+        byte[][] data = attachment.getData();
+        ShufflingParticipant participant = getParticipant(shuffling.getId(), participantId);
+        setData(participant, data, transaction.getTimestamp());
+        changeStatusToProcessed(participant, transaction.getFullHash(), attachment.getHash());
+        if (data != null && data.length == 0) {
+            // couldn't decrypt all data from previous participants
+            cancelBy(shuffling, participant);
+            return;
+        }
+        shuffling.setAssigneeAccountId(participant.getNextAccountId());
+        shuffling.setBlocksRemaining(blockchainConfig.getShufflingProcessingDeadline());
+        updateHeightAndInsert(shuffling);
+        shufflingListeners.notify(shuffling, ShufflingEvent.SHUFFLING_PROCESSING_ASSIGNED);
+        log.trace("Shuffling updateParticipant {} entered stage {}, assignee {}, remaining blocks {}",
+            Long.toUnsignedString(shuffling.getId()), shuffling.getStage(), Long.toUnsignedString(shuffling.getAssigneeAccountId()), shuffling.getBlocksRemaining());
+    }
+
+    @Override
+    public void updateRecipients(Shuffling shuffling, Transaction transaction, ShufflingRecipientsAttachment attachment) {
+        long participantId = transaction.getSenderId();
+        shuffling.setRecipientPublicKeys(attachment.getRecipientPublicKeys());
+        ShufflingParticipant participant = getParticipant(shuffling.getId(), participantId);
+        changeStatusToProcessed(participant, transaction.getFullHash(), null);
+        if (shuffling.getRecipientPublicKeys().length == 0) {
+            // couldn't decrypt all data from previous participants
+            cancelBy(shuffling, participant);
+            return;
+        }
+        changeStatusToVerified(participant);
+        // last participant announces all valid recipient public keys
+
+        for (byte[] recipientPublicKey : shuffling.getRecipientPublicKeys()) {
+            long recipientId = AccountService.getId(recipientPublicKey);
+            if (accountPublicKeyService.setOrVerifyPublicKey(recipientId, recipientPublicKey)) {
+                Account account = accountService.addOrGetAccount(recipientId);
+                accountPublicKeyService.apply(account, recipientPublicKey);
+            }
+        }
+        setStage(shuffling, ShufflingStage.VERIFICATION, 0, (short) (blockchainConfig.getShufflingProcessingDeadline() + shuffling.getParticipantCount()));
+        updateHeightAndInsert(shuffling);
+        shufflingListeners.notify(shuffling, ShufflingEvent.SHUFFLING_PROCESSING_FINISHED);
+        log.trace("Shuffling updateRecipient {} entered stage {}, assignee {}, remaining blocks {}",
+            Long.toUnsignedString(shuffling.getId()), shuffling.getStage(), Long.toUnsignedString(shuffling.getAssigneeAccountId()), shuffling.getBlocksRemaining());
+    }
+
+    @Override
+    public void addParticipant(Shuffling shuffling, long participantId) {
+        // Update the shuffling assignee to point to the new participant and update the next pointer of the existing participant
+        // to the new participant
+        ShufflingParticipant lastParticipant = getParticipant(shuffling.getId(), shuffling.getAssigneeAccountId());
+        setNextAccountId(lastParticipant, participantId);
+        addParticipant(shuffling.getId(), participantId, shuffling.getRegistrantCount());
+        shuffling.setRegistrantCount((byte) (shuffling.getRegistrantCount() + 1));
+        // Check if participant registration is complete and if so update the shuffling
+        if (shuffling.getRegistrantCount() == shuffling.getParticipantCount()) {
+            setStage(shuffling, ShufflingStage.PROCESSING, shuffling.getIssuerId(), blockchainConfig.getShufflingProcessingDeadline());
+        } else {
+            shuffling.setAssigneeAccountId(participantId);
+        }
+        updateHeightAndInsert(shuffling);
+        if (shuffling.getStage() == ShufflingStage.PROCESSING) {
+            shufflingListeners.notify(shuffling, ShufflingEvent.SHUFFLING_PROCESSING_ASSIGNED);
+        }
+        log.trace("Shuffling addParticipant {} entered stage {}, assignee {}, remaining blocks {}",
+            Long.toUnsignedString(shuffling.getId()), shuffling.getStage(), Long.toUnsignedString(shuffling.getAssigneeAccountId()), shuffling.getBlocksRemaining());
+
+    }
+
+    @Override
+    public int getHoldingShufflingCount(long holdingId, boolean includeFinished) {
+        return shufflingTable.getHoldingShufflingCount(holdingId, includeFinished);
+    }
+
+    @Override
+    public DbIterator<Shuffling> getHoldingShufflings(long holdingId, ShufflingStage stage, boolean includeFinished, int from, int to) {
+        return shufflingTable.getHoldingShufflings(holdingId, stage, includeFinished, from, to);
+    }
+
+    @Override
+    public DbIterator<Shuffling> getAccountShufflings(long accountId, boolean includeFinished, int from, int to) {
+        return shufflingTable.getAccountShufflings(accountId, includeFinished, from, to);
+    }
+
+    @Override
+    public DbIterator<Shuffling> getAssignedShufflings(long assigneeAccountId, int from, int to) {
+        return shufflingTable.getAssignedShufflings(assigneeAccountId, from, to);
+    }
+
+    @Override
+    public byte[] getParticipantsHash(Iterable<ShufflingParticipant> participants) {
+        MessageDigest digest = Crypto.sha256();
+        participants.forEach(participant -> digest.update(Convert.toBytes(participant.getAccountId())));
+        return digest.digest();
+    }
+
+    @Override
+    public byte[] getStageHash(Shuffling shuffling) {
+        switch (shuffling.getStage()) {
+            case REGISTRATION: {
+                return getFullHash(shuffling.getId());
+            }
+            case PROCESSING: {
+                if (shuffling.getAssigneeAccountId() == shuffling.getIssuerId()) {
+                    try (DbIterator<ShufflingParticipant> participants = getParticipants(shuffling.getId())) {
+                        return getParticipantsHash(participants);
+                    }
+                } else {
+                    ShufflingParticipant participant = getParticipant(shuffling.getId(), shuffling.getAssigneeAccountId());
+                    return getPreviousParticipant(participant).getDataTransactionFullHash();
+                }
+            }
+            case VERIFICATION: {
+                return getLastParticipant(shuffling.getId()).getDataTransactionFullHash();
+            }
+            case BLAME: {
+                return getParticipant(shuffling.getId(), shuffling.getAssigneeAccountId()).getDataTransactionFullHash();
+            }
+            case CANCELLED: {
+                byte[] hash = getLastParticipant(shuffling.getId()).getDataTransactionFullHash();
+                if (hash != null && hash.length > 0) {
+                    return hash;
+                }
+                try (DbIterator<ShufflingParticipant> participants = getParticipants(shuffling.getId())) {
+                    return getParticipantsHash(participants);
+                }
+            }
+            case DONE: {
+                return getLastParticipant(shuffling.getId()).getDataTransactionFullHash();
+            }
+
+            default:
+                throw new UnsupportedOperationException();
+        }
+
+    }
+
+    private void setNextAccountId(ShufflingParticipant participant, long nextAccountId) {
+        if (participant.getNextAccountId() != 0) {
+            throw new IllegalStateException("nextAccountId already set to " + Long.toUnsignedString(participant.getNextAccountId()));
+        }
+        participant.setNextAccountId(nextAccountId);
+        participant.setHeight(blockchain.getHeight());
+
+        participantTable.insert(participant);
+    }
+
+    // caller must update database
+    private void setStage(Shuffling shuffling, ShufflingStage stage, long assigneeAccountId, short blocksRemaining) {
+        if (!shuffling.getStage().canBecome(stage)) {
+            throw new IllegalStateException(String.format("Shuffling in stage %s cannot go to stage %s", shuffling.getStage(), stage));
+        }
+        if ((stage == ShufflingStage.VERIFICATION || stage == ShufflingStage.DONE) && assigneeAccountId != 0) {
+            throw new IllegalArgumentException(String.format("Invalid assigneeAccountId %s for stage %s", Long.toUnsignedString(assigneeAccountId), stage));
+        }
+        if ((stage == ShufflingStage.REGISTRATION || stage == ShufflingStage.PROCESSING || stage == ShufflingStage.BLAME) && assigneeAccountId == 0) {
+            throw new IllegalArgumentException(String.format("In stage %s assigneeAccountId cannot be 0", stage));
+        }
+        if ((stage == ShufflingStage.DONE || stage == ShufflingStage.CANCELLED) && blocksRemaining != 0) {
+            throw new IllegalArgumentException(String.format("For stage %s remaining blocks cannot be %s", stage, blocksRemaining));
+        }
+        shuffling.setStage(stage);
+        shuffling.setAssigneeAccountId(assigneeAccountId);
+        shuffling.setBlocksRemaining(blocksRemaining);
+        log.debug("Shuffling {} entered stage {}, assignee {}, remaining blocks {}",
+            Long.toUnsignedString(shuffling.getId()), shuffling.getStage(), Long.toUnsignedString(shuffling.getAssigneeAccountId()), shuffling.getBlocksRemaining());
+    }
+
+    private void updateHeightAndInsert(Shuffling shuffling) {
+        shuffling.setHeight(blockchain.getHeight());
+        shufflingTable.insert(shuffling);
+    }
+
+    private void delete(Shuffling shuffling) {
+        try (DbIterator<ShufflingParticipant> participants = getParticipants(shuffling.getId())) {
+            for (ShufflingParticipant participant : participants) {
+                delete(participant);
+            }
+        }
+        shuffling.setHeight(blockchain.getHeight());
+        shufflingTable.deleteAtHeight(shuffling, blockchain.getHeight());
+        log.debug("DELETED Shuffling {} entered stage {}, assignee {}, remaining blocks {}",
+            Long.toUnsignedString(shuffling.getId()), shuffling.getStage(), Long.toUnsignedString(shuffling.getAssigneeAccountId()), shuffling.getBlocksRemaining());
+
+    }
+
+    private void cancelBy(Shuffling shuffling, ShufflingParticipant participant) {
+        cancelBy(shuffling, participant, Convert.EMPTY_BYTES, Convert.EMPTY_BYTES);
+    }
+
+    private void distribute(Shuffling shuffling) {
+        if (shuffling.getRecipientPublicKeys().length != shuffling.getParticipantCount()) {
+            cancelBy(shuffling, getLastParticipant(shuffling.getId()));
+            return;
+        }
+
+        for (byte[] recipientPublicKey : shuffling.getRecipientPublicKeys()) {
+            byte[] publicKey = accountService.getPublicKeyByteArray(AccountService.getId(recipientPublicKey));
+            if (publicKey != null && !Arrays.equals(publicKey, recipientPublicKey)) {
+                // distribution not possible, do a cancellation on behalf of last participant instead
+                cancelBy(shuffling, getLastParticipant(shuffling.getId()));
+                return;
+            }
+        }
+        LedgerEvent event = LedgerEvent.SHUFFLING_DISTRIBUTION;
+        try (DbIterator<ShufflingParticipant> participants = getParticipants(shuffling.getId())) {
+            for (ShufflingParticipant participant : participants) {
+                Account participantAccount = accountService.getAccount(participant.getAccountId());
+                shuffling.getHoldingType().addToBalance(participantAccount, event, shuffling.getId(), shuffling.getHoldingId(), -shuffling.getAmount());
+                if (shuffling.getHoldingType() != HoldingType.APL) {
+                    accountService.addToBalanceATM(participantAccount, event, shuffling.getId(), -blockchainConfig.getShufflingDepositAtm());
+                }
+            }
+        }
+        for (byte[] recipientPublicKey : shuffling.getRecipientPublicKeys()) {
+            long recipientId = AccountService.getId(recipientPublicKey);
+            Account recipientAccount = accountService.addOrGetAccount(recipientId);
+            accountPublicKeyService.apply(recipientAccount, recipientPublicKey);
+            shuffling.getHoldingType().addToBalanceAndUnconfirmedBalance(recipientAccount, event, shuffling.getId(), shuffling.getHoldingId(), shuffling.getAmount());
+            if (shuffling.getHoldingType() != HoldingType.APL) {
+                accountService.addToBalanceAndUnconfirmedBalanceATM(recipientAccount, event, shuffling.getId(), blockchainConfig.getShufflingDepositAtm());
+            }
+        }
+        setStage(shuffling, ShufflingStage.DONE, 0, (short) 0);
+        updateHeightAndInsert(shuffling);
+        shufflingListeners.notify(shuffling, ShufflingEvent.SHUFFLING_DONE);
+        if (deleteFinished) {
+            log.debug("Deleting Shuffling Done = {} , height = {}", Long.toUnsignedString(shuffling.getId()), shuffling.getHeight());
+            delete(shuffling);
+        }
+        log.debug("Shuffling {} was distributed", Long.toUnsignedString(shuffling.getId()));
+        log.trace("Shuffling distributed {} entered stage {}, assignee {}, remaining blocks {}",
+            Long.toUnsignedString(shuffling.getId()), shuffling.getStage(), Long.toUnsignedString(shuffling.getAssigneeAccountId()), shuffling.getBlocksRemaining());
+    }
+
     private long blame(Shuffling shuffling) {
         // if registration never completed, no one is to blame
-        if (shuffling.getStage() == Shuffling.Stage.REGISTRATION) {
+        if (shuffling.getStage() == ShufflingStage.REGISTRATION) {
             log.debug("Registration never completed for shuffling {}", Long.toUnsignedString(shuffling.getId()));
             return 0;
         }
         // if no one submitted cancellation, blame the first one that did not submit processing data
-        if (shuffling.getStage() == Shuffling.Stage.PROCESSING) {
+        if (shuffling.getStage() == ShufflingStage.PROCESSING) {
             log.debug("Participant {} did not submit processing", Long.toUnsignedString(shuffling.getAssigneeAccountId()));
             return shuffling.getAssigneeAccountId();
         }
@@ -571,7 +772,7 @@ public class ShufflingServiceImpl implements ShufflingService {
                 participants.add(iterator.next());
             }
         }
-        if (shuffling.getStage() == Shuffling.Stage.VERIFICATION) {
+        if (shuffling.getStage() == ShufflingStage.VERIFICATION) {
             // if verification started, blame the first one who did not submit verification
             for (ShufflingParticipant participant : participants) {
                 if (participant.getState() != ShufflingParticipantState.VERIFIED) {
@@ -660,161 +861,4 @@ public class ShufflingServiceImpl implements ShufflingService {
         return shuffling.getAssigneeAccountId();
     }
 
-    private void delete(Shuffling shuffling) {
-        try (DbIterator<ShufflingParticipant> participants = getParticipants(shuffling.getId())) {
-            for (ShufflingParticipant participant : participants) {
-                delete(participant);
-            }
-        }
-        shuffling.setHeight(blockchain.getHeight());
-        shufflingTable.deleteAtHeight(shuffling, blockchain.getHeight());
-        log.debug("DELETED Shuffling {} entered stage {}, assignee {}, remaining blocks {}",
-            Long.toUnsignedString(shuffling.getId()), shuffling.getStage(), Long.toUnsignedString(shuffling.getAssigneeAccountId()), shuffling.getBlocksRemaining());
-
-    }
-
-    @Override
-    public boolean isFull(Shuffling shuffling, Block block) {
-        int transactionSize = Constants.MIN_TRANSACTION_SIZE; // min transaction size with no attachment
-        if (shuffling.getStage() == Shuffling.Stage.REGISTRATION) {
-            transactionSize += 1 + 32;
-        } else { // must use same for PROCESSING/VERIFICATION/BLAME
-            transactionSize = 16384; // max observed was 15647 for 30 participants
-        }
-        return block.getPayloadLength() + transactionSize > blockchainConfig.getCurrentConfig().getMaxPayloadLength();
-    }
-
-    @Override
-    public void updateParticipantData(Shuffling shuffling, Transaction transaction, ShufflingProcessingAttachment attachment) {
-        long participantId = transaction.getSenderId();
-        byte[][] data = attachment.getData();
-        ShufflingParticipant participant = getParticipant(shuffling.getId(), participantId);
-        setData(participant, data, transaction.getTimestamp());
-        changeStatusToProcessed(participant, transaction.getFullHash(), attachment.getHash());
-        if (data != null && data.length == 0) {
-            // couldn't decrypt all data from previous participants
-            cancelBy(shuffling, participant);
-            return;
-        }
-        shuffling.setAssigneeAccountId(participant.getNextAccountId());
-        shuffling.setBlocksRemaining(blockchainConfig.getShufflingProcessingDeadline());
-        updateHeightAndInsert(shuffling);
-        shufflingListeners.notify(shuffling, Shuffling.Event.SHUFFLING_PROCESSING_ASSIGNED);
-        log.trace("Shuffling updateParticipant {} entered stage {}, assignee {}, remaining blocks {}",
-            Long.toUnsignedString(shuffling.getId()), shuffling.getStage(), Long.toUnsignedString(shuffling.getAssigneeAccountId()), shuffling.getBlocksRemaining());
-    }
-
-    @Override
-    public void updateRecipients(Shuffling shuffling, Transaction transaction, ShufflingRecipientsAttachment attachment) {
-        long participantId = transaction.getSenderId();
-        shuffling.setRecipientPublicKeys(attachment.getRecipientPublicKeys());
-        ShufflingParticipant participant = getParticipant(shuffling.getId(), participantId);
-        changeStatusToProcessed(participant, transaction.getFullHash(), null);
-        if (shuffling.getRecipientPublicKeys().length == 0) {
-            // couldn't decrypt all data from previous participants
-            cancelBy(shuffling, participant);
-            return;
-        }
-        changeStatusToVerified(participant);
-        // last participant announces all valid recipient public keys
-
-        for (byte[] recipientPublicKey : shuffling.getRecipientPublicKeys()) {
-            long recipientId = AccountService.getId(recipientPublicKey);
-            if (accountPublicKeyService.setOrVerifyPublicKey(recipientId, recipientPublicKey)) {
-                Account account = accountService.addOrGetAccount(recipientId);
-                accountPublicKeyService.apply(account, recipientPublicKey);
-            }
-        }
-        setStage(shuffling, Shuffling.Stage.VERIFICATION, 0, (short) (blockchainConfig.getShufflingProcessingDeadline() + shuffling.getParticipantCount()));
-        updateHeightAndInsert(shuffling);
-        shufflingListeners.notify(shuffling, Shuffling.Event.SHUFFLING_PROCESSING_FINISHED);
-        log.trace("Shuffling updateRecipient {} entered stage {}, assignee {}, remaining blocks {}",
-            Long.toUnsignedString(shuffling.getId()), shuffling.getStage(), Long.toUnsignedString(shuffling.getAssigneeAccountId()), shuffling.getBlocksRemaining());
-    }
-
-    @Override
-    public void addParticipant(Shuffling shuffling, long participantId) {
-        // Update the shuffling assignee to point to the new participant and update the next pointer of the existing participant
-        // to the new participant
-        ShufflingParticipant lastParticipant = getParticipant(shuffling.getId(), shuffling.getAssigneeAccountId());
-        setNextAccountId(lastParticipant, participantId);
-        addParticipant(shuffling.getId(), participantId, shuffling.getRegistrantCount());
-        shuffling.setRegistrantCount((byte) (shuffling.getRegistrantCount() + 1));
-        // Check if participant registration is complete and if so update the shuffling
-        if (shuffling.getRegistrantCount() == shuffling.getParticipantCount()) {
-            setStage(shuffling, Shuffling.Stage.PROCESSING, shuffling.getIssuerId(), blockchainConfig.getShufflingProcessingDeadline());
-        } else {
-            shuffling.setAssigneeAccountId(participantId);
-        }
-        updateHeightAndInsert(shuffling);
-        if (shuffling.getStage() == Shuffling.Stage.PROCESSING) {
-            shufflingListeners.notify(shuffling, Shuffling.Event.SHUFFLING_PROCESSING_ASSIGNED);
-        }
-        log.trace("Shuffling addParticipant {} entered stage {}, assignee {}, remaining blocks {}",
-            Long.toUnsignedString(shuffling.getId()), shuffling.getStage(), Long.toUnsignedString(shuffling.getAssigneeAccountId()), shuffling.getBlocksRemaining());
-
-    }
-
-    @Override
-    public int getHoldingShufflingCount(long holdingId, boolean includeFinished) {
-        return shufflingTable.getHoldingShufflingCount(holdingId, includeFinished);
-    }
-
-    @Override
-    public DbIterator<Shuffling> getHoldingShufflings(long holdingId, Shuffling.Stage stage, boolean includeFinished, int from, int to) {
-        return shufflingTable.getHoldingShufflings(holdingId, stage, includeFinished, from, to);
-    }
-
-    @Override
-    public DbIterator<Shuffling> getAccountShufflings(long accountId, boolean includeFinished, int from, int to) {
-        return shufflingTable.getAccountShufflings(accountId, includeFinished, from, to);
-    }
-
-    @Override
-    public DbIterator<Shuffling> getAssignedShufflings(long assigneeAccountId, int from, int to) {
-        return shufflingTable.getAssignedShufflings(assigneeAccountId, from, to);
-    }
-
-    @Override
-    public byte[] getParticipantsHash(Iterable<ShufflingParticipant> participants) {
-        MessageDigest digest = Crypto.sha256();
-        participants.forEach(participant -> digest.update(Convert.toBytes(participant.getAccountId())));
-        return digest.digest();
-    }
-
-    private void setNextAccountId(ShufflingParticipant participant, long nextAccountId) {
-        if (participant.getNextAccountId() != 0) {
-            throw new IllegalStateException("nextAccountId already set to " + Long.toUnsignedString(participant.getNextAccountId()));
-        }
-        participant.setNextAccountId(nextAccountId);
-        participant.setHeight(blockchain.getHeight());
-
-        participantTable.insert(participant);
-    }
-
-    // caller must update database
-    private void setStage(Shuffling shuffling, Shuffling.Stage stage, long assigneeAccountId, short blocksRemaining) {
-        if (!shuffling.getStage().canBecome(stage)) {
-            throw new IllegalStateException(String.format("Shuffling in stage %s cannot go to stage %s", shuffling.getStage(), stage));
-        }
-        if ((stage == Shuffling.Stage.VERIFICATION || stage == Shuffling.Stage.DONE) && assigneeAccountId != 0) {
-            throw new IllegalArgumentException(String.format("Invalid assigneeAccountId %s for stage %s", Long.toUnsignedString(assigneeAccountId), stage));
-        }
-        if ((stage == Shuffling.Stage.REGISTRATION || stage == Shuffling.Stage.PROCESSING || stage == Shuffling.Stage.BLAME) && assigneeAccountId == 0) {
-            throw new IllegalArgumentException(String.format("In stage %s assigneeAccountId cannot be 0", stage));
-        }
-        if ((stage == Shuffling.Stage.DONE || stage == Shuffling.Stage.CANCELLED) && blocksRemaining != 0) {
-            throw new IllegalArgumentException(String.format("For stage %s remaining blocks cannot be %s", stage, blocksRemaining));
-        }
-        shuffling.setStage(stage);
-        shuffling.setAssigneeAccountId(assigneeAccountId);
-        shuffling.setBlocksRemaining(blocksRemaining);
-        log.debug("Shuffling {} entered stage {}, assignee {}, remaining blocks {}",
-            Long.toUnsignedString(shuffling.getId()), shuffling.getStage(), Long.toUnsignedString(shuffling.getAssigneeAccountId()), shuffling.getBlocksRemaining());
-    }
-
-    private void updateHeightAndInsert(Shuffling shuffling){
-        shuffling.setHeight(blockchain.getHeight());
-        shufflingTable.insert(shuffling);
-    }
 }

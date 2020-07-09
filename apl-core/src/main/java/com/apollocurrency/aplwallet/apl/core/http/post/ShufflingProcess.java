@@ -20,14 +20,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
+import com.apollocurrency.aplwallet.apl.core.app.shuffling.ShufflingStage;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttachment;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -48,7 +49,7 @@ public final class ShufflingProcess extends CreateTransaction {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         Shuffling shuffling = HttpParameterParserUtil.getShuffling(req);
-        if (shuffling.getStage() != Shuffling.Stage.PROCESSING) {
+        if (shuffling.getStage() != ShufflingStage.PROCESSING) {
             JSONObject response = new JSONObject();
             response.put("errorCode", 11);
             response.put("errorDescription", "Shuffling is not in processing, stage " + shuffling.getStage());

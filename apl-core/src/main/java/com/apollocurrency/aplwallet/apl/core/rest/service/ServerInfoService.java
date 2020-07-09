@@ -18,9 +18,9 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
-import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.app.shuffling.ShufflingParticipantState;
+import com.apollocurrency.aplwallet.apl.core.app.shuffling.ShufflingStage;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.BidOrder;
@@ -30,10 +30,6 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AdminPasswordVerifier;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
-import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
-import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
-import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
-import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetTransferService;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
@@ -42,6 +38,8 @@ import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageSer
 import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.core.service.state.TradeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
@@ -49,13 +47,14 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountLeaseS
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountLedgerService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetTransferService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
-import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
-import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
-import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeRequestService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
-import com.apollocurrency.aplwallet.apl.core.service.state.impl.ShufflingServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
+import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeRequestService;
+import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.AskOrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.BidOrderService;
@@ -329,7 +328,7 @@ public class ServerInfoService {
         for (HoldingType holdingType : HoldingType.values()) {
             dto.holdingTypes.add(new NameCodeTypeDto(holdingType.toString(), holdingType.getCode()));
         }
-        for (Shuffling.Stage stage : Shuffling.Stage.values()) {
+        for (ShufflingStage stage : ShufflingStage.values()) {
             dto.shufflingStages.add(new NameCodeTypeDto(stage.toString(), stage.getCode()));
         }
         for (ShufflingParticipantState state : ShufflingParticipantState.values()) {

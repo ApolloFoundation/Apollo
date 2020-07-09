@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
+import com.apollocurrency.aplwallet.apl.core.app.shuffling.ShufflingStage;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
@@ -57,10 +58,10 @@ public final class GetHoldingShufflings extends AbstractAPIRequestHandler {
             }
         }
         String stageValue = Convert.emptyToNull(req.getParameter("stage"));
-        Shuffling.Stage stage = null;
+        ShufflingStage stage = null;
         if (stageValue != null) {
             try {
-                stage = Shuffling.Stage.get(Byte.parseByte(stageValue));
+                stage = ShufflingStage.get(Byte.parseByte(stageValue));
             } catch (RuntimeException e) {
                 return incorrect("stage");
             }

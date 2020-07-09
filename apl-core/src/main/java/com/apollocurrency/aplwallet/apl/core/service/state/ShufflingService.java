@@ -7,6 +7,8 @@ package com.apollocurrency.aplwallet.apl.core.service.state;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.shuffling.ShufflingEvent;
+import com.apollocurrency.aplwallet.apl.core.app.shuffling.ShufflingStage;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttachment;
@@ -56,9 +58,9 @@ public interface ShufflingService {
 
     int getShufflingActiveCount();
 
-    boolean addListener(Listener<Shuffling> listener, Shuffling.Event eventType);
+    boolean addListener(Listener<Shuffling> listener, ShufflingEvent eventType);
 
-    boolean removeListener(Listener<Shuffling> listener, Shuffling.Event eventType);
+    boolean removeListener(Listener<Shuffling> listener, ShufflingEvent eventType);
 
     DbIterator<Shuffling> getAll(int from, int to);
 
@@ -76,7 +78,7 @@ public interface ShufflingService {
 
     int getHoldingShufflingCount(long holdingId, boolean includeFinished);
 
-    DbIterator<Shuffling> getHoldingShufflings(long holdingId, Shuffling.Stage stage, boolean includeFinished, int from, int to);
+    DbIterator<Shuffling> getHoldingShufflings(long holdingId, ShufflingStage stage, boolean includeFinished, int from, int to);
 
     DbIterator<Shuffling> getAccountShufflings(long accountId, boolean includeFinished, int from, int to);
 
@@ -105,5 +107,6 @@ public interface ShufflingService {
 
     void addParticipant(Shuffling shuffling, long participantId);
 
+    byte[] getStageHash(Shuffling shuffling);
 
 }

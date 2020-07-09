@@ -21,16 +21,17 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.app.shuffling.ShufflingParticipantState;
-import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingParticipant;
-import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.app.shuffling.ShufflingStage;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
+import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingParticipant;
+import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCancellationAttachment;
@@ -212,11 +213,11 @@ public abstract class ShufflingTransaction extends TransactionType {
             if (shuffling == null) {
                 throw new AplException.NotCurrentlyValidException("Shuffling not found: " + Long.toUnsignedString(attachment.getShufflingId()));
             }
-            byte[] shufflingStateHash = shuffling.getStateHash();
+            byte[] shufflingStateHash = lookupShufflingService().getStageHash(shuffling);
             if (shufflingStateHash == null || !Arrays.equals(shufflingStateHash, attachment.getShufflingStateHash())) {
                 throw new AplException.NotCurrentlyValidException("Shuffling state hash doesn't match");
             }
-            if (shuffling.getStage() != Shuffling.Stage.REGISTRATION) {
+            if (shuffling.getStage() != ShufflingStage.REGISTRATION) {
                 throw new AplException.NotCurrentlyValidException("Shuffling registration has ended for " + Long.toUnsignedString(attachment.getShufflingId()));
             }
             if (lookupShufflingService().getParticipant(shuffling.getId(), transaction.getSenderId()) != null) {
@@ -318,7 +319,7 @@ public abstract class ShufflingTransaction extends TransactionType {
             if (shuffling == null) {
                 throw new AplException.NotCurrentlyValidException("Shuffling not found: " + Long.toUnsignedString(attachment.getShufflingId()));
             }
-            if (shuffling.getStage() != Shuffling.Stage.VERIFICATION) {
+            if (shuffling.getStage() != ShufflingStage.VERIFICATION) {
                 throw new AplException.NotCurrentlyValidException("Shuffling not in verification stage: " + Long.toUnsignedString(attachment.getShufflingId()));
             }
             ShufflingParticipant participant = lookupShufflingService().getParticipant(shuffling.getId(), transaction.getSenderId());
@@ -333,7 +334,7 @@ public abstract class ShufflingTransaction extends TransactionType {
             if (participant.getIndex() == shuffling.getParticipantCount() - 1) {
                 throw new AplException.NotValidException("Last participant cannot submit verification transaction");
             }
-            byte[] shufflingStateHash = shuffling.getStateHash();
+            byte[] shufflingStateHash = lookupShufflingService().getStageHash(shuffling);
             if (shufflingStateHash == null || !Arrays.equals(shufflingStateHash, attachment.getShufflingStateHash())) {
                 throw new AplException.NotCurrentlyValidException("Shuffling state hash doesn't match");
             }
@@ -410,7 +411,7 @@ public abstract class ShufflingTransaction extends TransactionType {
             if (shuffling == null) {
                 throw new AplException.NotCurrentlyValidException("Shuffling not found: " + Long.toUnsignedString(attachment.getShufflingId()));
             }
-            if (shuffling.getStage() != Shuffling.Stage.PROCESSING) {
+            if (shuffling.getStage() != ShufflingStage.PROCESSING) {
                 throw new AplException.NotCurrentlyValidException(String.format("Shuffling %s is not in processing stage",
                     Long.toUnsignedString(attachment.getShufflingId())));
             }
@@ -431,7 +432,7 @@ public abstract class ShufflingTransaction extends TransactionType {
                 throw new AplException.NotValidException(String.format("Participant %s is last in shuffle",
                     Long.toUnsignedString(transaction.getSenderId())));
             }
-            byte[] shufflingStateHash = shuffling.getStateHash();
+            byte[] shufflingStateHash = lookupShufflingService().getStageHash(shuffling);
             if (shufflingStateHash == null || !Arrays.equals(shufflingStateHash, attachment.getShufflingStateHash())) {
                 throw new AplException.NotCurrentlyValidException("Shuffling state hash doesn't match");
             }
@@ -534,7 +535,7 @@ public abstract class ShufflingTransaction extends TransactionType {
                 throw new AplException.NotCurrentlyValidException("Shuffling not found: " + Long.toUnsignedString(attachment.getShufflingId()));
             }
             long cancellingAccountId = attachment.getCancellingAccountId();
-            if (cancellingAccountId == 0 && !shuffling.getStage().canBecome(Shuffling.Stage.BLAME)) {
+            if (cancellingAccountId == 0 && !shuffling.getStage().canBecome(ShufflingStage.BLAME)) {
                 throw new AplException.NotCurrentlyValidException(String.format("Shuffling in state %s cannot be cancelled", shuffling.getStage()));
             }
             if (cancellingAccountId != 0 && cancellingAccountId != shuffling.getAssigneeAccountId()) {
@@ -553,7 +554,7 @@ public abstract class ShufflingTransaction extends TransactionType {
             if (participant.getIndex() == shuffling.getParticipantCount() - 1) {
                 throw new AplException.NotValidException("Last participant cannot submit cancellation transaction");
             }
-            byte[] shufflingStateHash = shuffling.getStateHash();
+            byte[] shufflingStateHash = lookupShufflingService().getStageHash(shuffling);
             if (shufflingStateHash == null || !Arrays.equals(shufflingStateHash, attachment.getShufflingStateHash())) {
                 throw new AplException.NotCurrentlyValidException("Shuffling state hash doesn't match");
             }
@@ -648,7 +649,7 @@ public abstract class ShufflingTransaction extends TransactionType {
             if (shuffling == null) {
                 throw new AplException.NotCurrentlyValidException("Shuffling not found: " + Long.toUnsignedString(attachment.getShufflingId()));
             }
-            if (shuffling.getStage() != Shuffling.Stage.PROCESSING) {
+            if (shuffling.getStage() != ShufflingStage.PROCESSING) {
                 throw new AplException.NotCurrentlyValidException(String.format("Shuffling %s is not in processing stage",
                     Long.toUnsignedString(attachment.getShufflingId())));
             }
@@ -669,7 +670,7 @@ public abstract class ShufflingTransaction extends TransactionType {
                 throw new AplException.NotCurrentlyValidException(String.format("Participant %s is not currently assigned to process shuffling %s",
                     Long.toUnsignedString(participant.getAccountId()), Long.toUnsignedString(shuffling.getId())));
             }
-            byte[] shufflingStateHash = shuffling.getStateHash();
+            byte[] shufflingStateHash = lookupShufflingService().getStageHash(shuffling);
             if (shufflingStateHash == null || !Arrays.equals(shufflingStateHash, attachment.getShufflingStateHash())) {
                 throw new AplException.NotCurrentlyValidException("Shuffling state hash doesn't match");
             }
