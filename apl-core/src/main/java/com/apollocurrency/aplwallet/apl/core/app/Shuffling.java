@@ -31,7 +31,6 @@ import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreation;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
-import javax.enterprise.inject.spi.CDI;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
@@ -64,7 +63,6 @@ public final class Shuffling extends DerivedEntity {
         this.recipientPublicKeys = Convert.EMPTY_BYTES;
         this.registrantCount = 1;
 
-        setHeight(transaction.getHeight());
         setDbKey(ShufflingTable.dbKeyFactory.newKey(transaction.getId()));
     }
 
@@ -82,7 +80,6 @@ public final class Shuffling extends DerivedEntity {
         this.assigneeAccountId = rs.getLong("assignee_account_id");
         this.recipientPublicKeys = DbUtils.getArray(rs, "recipient_public_keys", byte[][].class, Convert.EMPTY_BYTES);
         this.registrantCount = rs.getByte("registrant_count");
-        setHeight(rs.getInt("height"));
     }
 
     public long getId() {
@@ -170,7 +167,7 @@ public final class Shuffling extends DerivedEntity {
     }
 
     // TODO: YL remove static instance later
-    private static ShufflingService shufflingService = CDI.current().select(ShufflingService.class).get();
+    private static ShufflingService shufflingService;
 
     public enum Stage {
         REGISTRATION((byte) 0, new byte[]{1, 4}) {

@@ -56,7 +56,9 @@ public class ShufflingObserver {
         log.trace("Shufflings to process - {} ", shufflings.size());
         int cancelled = 0, inserted = 0;
         for (Shuffling shuffling : shufflings) {
-            if (shuffling.getBlocksRemaining() - 1 <= 0) {
+            shuffling.setBlocksRemaining((short) (shuffling.getBlocksRemaining() - 1));
+
+            if (shuffling.getBlocksRemaining() <= 0) {
                 cancelled++;
                 shufflingService.cancel(shuffling, block);
             } else {
