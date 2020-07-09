@@ -8,7 +8,8 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeSell;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveClaim;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import org.json.simple.JSONObject;
 
@@ -17,39 +18,49 @@ import java.nio.ByteBuffer;
 /**
  * @author al
  */
-class MSExchangeSell extends MonetarySystemExchange {
+class MSReverseClaimTransactionType extends MonetarySystemTransactionType {
 
-    public MSExchangeSell() {
+    public MSReverseClaimTransactionType() {
     }
 
     @Override
     public byte getSubtype() {
-        return SUBTYPE_MONETARY_SYSTEM_EXCHANGE_SELL;
+        return SUBTYPE_MONETARY_SYSTEM_RESERVE_CLAIM;
     }
 
     @Override
     public LedgerEvent getLedgerEvent() {
-        return LedgerEvent.CURRENCY_EXCHANGE_SELL;
+        return LedgerEvent.CURRENCY_RESERVE_CLAIM;
     }
 
     @Override
     public String getName() {
-        return "ExchangeSell";
+        return "ReserveClaim";
     }
 
     @Override
-    public MonetarySystemExchangeSell parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-        return new MonetarySystemExchangeSell(buffer);
+    public MonetarySystemReserveClaim parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        return new MonetarySystemReserveClaim(buffer);
     }
 
     @Override
-    public MonetarySystemExchangeSell parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-        return new MonetarySystemExchangeSell(attachmentData);
+    public MonetarySystemReserveClaim parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+        return new MonetarySystemReserveClaim(attachmentData);
+    }
+
+    @Override
+    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+        MonetarySystemReserveClaim attachment = (MonetarySystemReserveClaim) transaction.getAttachment();
+        if (attachment.getUnits() <= 0) {
+            throw new AplException.NotValidException("Reserve claim number of units must be positive: " + attachment.getUnits());
+        }
+        Currency currency = lookupCurrencyService().getCurrency(attachment.getCurrencyId());
+        CurrencyType.validate(currency, transaction);
     }
 
     @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        MonetarySystemExchangeSell attachment = (MonetarySystemExchangeSell) transaction.getAttachment();
+        MonetarySystemReserveClaim attachment = (MonetarySystemReserveClaim) transaction.getAttachment();
         if (lookupAccountCurrencyService().getUnconfirmedCurrencyUnits(senderAccount, attachment.getCurrencyId()) >= attachment.getUnits()) {
             lookupAccountCurrencyService().addToUnconfirmedCurrencyUnits(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getCurrencyId(), -attachment.getUnits());
             return true;
@@ -59,7 +70,7 @@ class MSExchangeSell extends MonetarySystemExchange {
 
     @Override
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        MonetarySystemExchangeSell attachment = (MonetarySystemExchangeSell) transaction.getAttachment();
+        MonetarySystemReserveClaim attachment = (MonetarySystemReserveClaim) transaction.getAttachment();
         Currency currency = lookupCurrencyService().getCurrency(attachment.getCurrencyId());
         if (currency != null) {
             lookupAccountCurrencyService().addToUnconfirmedCurrencyUnits(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getCurrencyId(), attachment.getUnits());
@@ -68,10 +79,13 @@ class MSExchangeSell extends MonetarySystemExchange {
 
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        MonetarySystemExchangeSell attachment = (MonetarySystemExchangeSell) transaction.getAttachment();
-        lookupExchangeRequestService().addExchangeRequest(transaction, attachment);
-        lookupCurrencyExchangeOfferFacade().exchangeCurrencyForAPL(
-            transaction, senderAccount, attachment.getCurrencyId(), attachment.getRateATM(), attachment.getUnits());
+        MonetarySystemReserveClaim attachment = (MonetarySystemReserveClaim) transaction.getAttachment();
+        lookupCurrencyService().claimReserve(getLedgerEvent(), transaction.getId(), senderAccount, attachment.getCurrencyId(), attachment.getUnits());
+    }
+
+    @Override
+    public boolean canHaveRecipient() {
+        return false;
     }
 
 }

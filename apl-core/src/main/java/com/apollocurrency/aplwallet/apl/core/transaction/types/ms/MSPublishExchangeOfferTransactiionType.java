@@ -18,9 +18,9 @@ import java.nio.ByteBuffer;
 /**
  * @author al
  */
-class MSPublishExchangeOffer extends MonetarySystemTransactionType {
+class MSPublishExchangeOfferTransactiionType extends MonetarySystemTransactionType {
 
-    public MSPublishExchangeOffer() {
+    public MSPublishExchangeOfferTransactiionType() {
     }
 
     @Override

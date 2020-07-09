@@ -3,13 +3,15 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.types.ms;
 
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
@@ -18,18 +20,27 @@ import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
 @Singleton
-public class MonetarySystemCurrIssuance extends MonetarySystemTransactionType {
+public class MSCurrencyIssuanceTransactionType extends MonetarySystemTransactionType {
 
     private static final Fee FIVE_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(40 * Constants.ONE_APL);
     private static final Fee FOUR_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(1000 * Constants.ONE_APL);
     private static final Fee THREE_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(25000 * Constants.ONE_APL);
 
-    private final Currency
+    private final CurrencyService currencyService;
+    private final AccountCurrencyService accountCurrencyService;
+
+    @Inject
+    public MSCurrencyIssuanceTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, CurrencyService currencyService, CurrencyService currencyService1, AccountCurrencyService accountCurrencyService) {
+        super(blockchainConfig, accountService, currencyService);
+        this.currencyService = currencyService1;
+        this.accountCurrencyService = accountCurrencyService;
+    }
 
     @Override
     public TransactionTypes.TransactionTypeSpec getSpec() {
@@ -52,7 +63,6 @@ public class MonetarySystemCurrIssuance extends MonetarySystemTransactionType {
         int minLength = Math.min(attachment.getCode().length(), attachment.getName().length());
         Currency oldCurrency;
         int oldMinLength = Integer.MAX_VALUE;
-        CurrencyService currencyService = lookupCurrencyService();
         if ((oldCurrency = currencyService.getCurrencyByCode(attachment.getCode())) != null) {
             oldMinLength = Math.min(oldMinLength, Math.min(oldCurrency.getCode().length(), oldCurrency.getName().length()));
         }
@@ -144,8 +154,8 @@ public class MonetarySystemCurrIssuance extends MonetarySystemTransactionType {
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
         long transactionId = transaction.getId();
-        lookupCurrencyService().addCurrency(getLedgerEvent(), transactionId, transaction, senderAccount, attachment);
-        lookupAccountCurrencyService().addToCurrencyAndUnconfirmedCurrencyUnits(senderAccount, getLedgerEvent(), transactionId, transactionId, attachment.getInitialSupply());
+        currencyService.addCurrency(getLedgerEvent(), transactionId, transaction, senderAccount, attachment);
+        accountCurrencyService.addToCurrencyAndUnconfirmedCurrencyUnits(senderAccount, getLedgerEvent(), transactionId, transactionId, attachment.getInitialSupply());
     }
 
     @Override

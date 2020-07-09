@@ -3,31 +3,39 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.types.ms;
 
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyDeletion;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import org.json.simple.JSONObject;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
-/**
- * @author al
- */
-class MSCurrencyDeletion extends MonetarySystemTransactionType {
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.MS_CURRENCY_DELETION;
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.MS_CURRENCY_ISSUANCE;
 
-    public MSCurrencyDeletion() {
+@Singleton
+public class MSCurrencyDeletionTransactionType extends MonetarySystemTransactionType {
+
+    @Inject
+    public MSCurrencyDeletionTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, CurrencyService currencyService) {
+        super(blockchainConfig, accountService, currencyService);
     }
 
     @Override
-    public byte getSubtype() {
-        return SUBTYPE_MONETARY_SYSTEM_CURRENCY_DELETION;
+    public TransactionTypes.TransactionTypeSpec getSpec() {
+        return MS_CURRENCY_DELETION;
     }
 
     @Override
@@ -51,14 +59,14 @@ class MSCurrencyDeletion extends MonetarySystemTransactionType {
     }
 
     @Override
-    public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+    public boolean isDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
         MonetarySystemCurrencyDeletion attachment = (MonetarySystemCurrencyDeletion) transaction.getAttachment();
-        Currency currency = lookupCurrencyService().getCurrency(attachment.getCurrencyId());
+        Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
         String nameLower = currency.getName().toLowerCase();
         String codeLower = currency.getCode().toLowerCase();
-        boolean isDuplicate = TransactionType.isDuplicate(CURRENCY_ISSUANCE, nameLower, duplicates, true);
+        boolean isDuplicate = TransactionType.isDuplicate(MS_CURRENCY_ISSUANCE, nameLower, duplicates, true);
         if (!nameLower.equals(codeLower)) {
-            isDuplicate = isDuplicate || TransactionType.isDuplicate(CURRENCY_ISSUANCE, codeLower, duplicates, true);
+            isDuplicate = isDuplicate || TransactionType.isDuplicate(MS_CURRENCY_ISSUANCE, codeLower, duplicates, true);
         }
         return isDuplicate;
     }
@@ -66,9 +74,9 @@ class MSCurrencyDeletion extends MonetarySystemTransactionType {
     @Override
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
         MonetarySystemCurrencyDeletion attachment = (MonetarySystemCurrencyDeletion) transaction.getAttachment();
-        Currency currency = lookupCurrencyService().getCurrency(attachment.getCurrencyId());
+        Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
         CurrencyType.validate(currency, transaction);
-        if (!lookupCurrencyService().canBeDeletedBy(currency, transaction.getSenderId())) {
+        if (!currencyService.canBeDeletedBy(currency, transaction.getSenderId())) {
             throw new AplException.NotCurrentlyValidException(
                 "Currency " + currency.getId() + " cannot be deleted by account " + transaction.getSenderId());
         }
@@ -86,8 +94,8 @@ class MSCurrencyDeletion extends MonetarySystemTransactionType {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         MonetarySystemCurrencyDeletion attachment = (MonetarySystemCurrencyDeletion) transaction.getAttachment();
-        Currency currency = lookupCurrencyService().getCurrency(attachment.getCurrencyId());
-        lookupCurrencyService().delete(currency, getLedgerEvent(), transaction.getId(), senderAccount);
+        Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
+        currencyService.delete(currency, getLedgerEvent(), transaction.getId(), senderAccount);
     }
 
     @Override

@@ -22,9 +22,9 @@ import java.util.Map;
 /**
  * @author al
  */
-class MSCurrencyMinting extends MonetarySystemTransactionType {
+class MSCurrencyMintingTransactionType extends MonetarySystemTransactionType {
 
-    public MSCurrencyMinting() {
+    public MSCurrencyMintingTransactionType() {
     }
 
     @Override

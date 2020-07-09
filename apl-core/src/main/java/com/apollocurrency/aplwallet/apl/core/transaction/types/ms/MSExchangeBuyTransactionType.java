@@ -17,9 +17,9 @@ import java.util.Map;
 /**
  * @author al
  */
-class MSExchangeBuy extends MonetarySystemExchange {
+class MSExchangeBuyTransactionType extends MonetarySystemExchangeTransactionType {
 
-    public MSExchangeBuy() {
+    public MSExchangeBuyTransactionType() {
     }
 
     @Override

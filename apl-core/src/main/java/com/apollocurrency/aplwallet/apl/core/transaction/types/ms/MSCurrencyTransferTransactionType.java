@@ -19,9 +19,9 @@ import java.nio.ByteBuffer;
 /**
  * @author al
  */
-class MSCurrencyTransfer extends MonetarySystemTransactionType {
+class MSCurrencyTransferTransactionType extends MonetarySystemTransactionType {
 
-    public MSCurrencyTransfer() {
+    public MSCurrencyTransferTransactionType() {
     }
 
     @Override

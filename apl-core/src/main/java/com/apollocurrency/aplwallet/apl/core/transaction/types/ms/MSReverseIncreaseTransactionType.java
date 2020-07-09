@@ -19,9 +19,9 @@ import java.nio.ByteBuffer;
 /**
  * @author al
  */
-class MSReverseIncrease extends MonetarySystemTransactionType {
+class MSReverseIncreaseTransactionType extends MonetarySystemTransactionType {
 
-    public MSReverseIncrease() {
+    public MSReverseIncreaseTransactionType() {
     }
 
     @Override

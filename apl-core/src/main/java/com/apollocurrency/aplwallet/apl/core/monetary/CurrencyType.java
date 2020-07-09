@@ -21,7 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.monetary;
 
 import com.apollocurrency.aplwallet.apl.core.transaction.types.ms.MonetarySystemTransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.ms.MonetarySystemExchange;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.ms.MonetarySystemExchangeTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.shuffling.ShufflingTransactionType;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
@@ -61,7 +61,7 @@ public enum CurrencyType {
                     throw new AplException.NotValidException("Currency is not exchangeable and not claimable");
                 }
             }
-            if (transaction.getType() instanceof MonetarySystemExchange || transaction.getType() == MonetarySystemTransactionType.PUBLISH_EXCHANGE_OFFER) {
+            if (transaction.getType() instanceof MonetarySystemExchangeTransactionType || transaction.getType() == MonetarySystemTransactionType.PUBLISH_EXCHANGE_OFFER) {
                 throw new AplException.NotValidException("Currency is not exchangeable");
             }
         }

@@ -3,17 +3,22 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.types.ms;
 
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeAttachment;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeAttachment;
 
-/**
- * @author al
- */
-public abstract class MonetarySystemExchange extends MonetarySystemTransactionType {
+public abstract class MonetarySystemExchangeTransactionType extends MonetarySystemTransactionType {
+    private final CurrencyService currencyService;
+
+    public MonetarySystemExchangeTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, CurrencyService currencyService) {
+        super(blockchainConfig, accountService, currencyService);
+        this.currencyService = currencyService;
+    }
 
     @Override
     public final void validateAttachment(Transaction transaction) throws AplException.ValidationException {
@@ -21,9 +26,9 @@ public abstract class MonetarySystemExchange extends MonetarySystemTransactionTy
         if (attachment.getRateATM() <= 0 || attachment.getUnits() == 0) {
             throw new AplException.NotValidException("Invalid exchange: " + attachment.getJSONObject());
         }
-        Currency currency = lookupCurrencyService().getCurrency(attachment.getCurrencyId());
+        Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
         CurrencyType.validate(currency, transaction);
-        if (!lookupCurrencyService().isActive(currency)) {
+        if (!currencyService.isActive(currency)) {
             throw new AplException.NotCurrentlyValidException("Currency not active: " + attachment.getJSONObject());
         }
     }
