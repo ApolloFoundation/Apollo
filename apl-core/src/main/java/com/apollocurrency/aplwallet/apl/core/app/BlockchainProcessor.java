@@ -68,9 +68,9 @@ public interface BlockchainProcessor {
 
     List<Block> popOffToCommonBlock(Block commonBlock);
 
-    int restorePrunedData();
+//    int restorePrunedData();
 
-    Transaction restorePrunedTransaction(long transactionId);
+//    Transaction restorePrunedTransaction(long transactionId);
 
     void waitUntilBlockchainDownloadingStops();
 

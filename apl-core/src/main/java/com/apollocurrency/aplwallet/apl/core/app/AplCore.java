@@ -65,9 +65,9 @@ import static com.apollocurrency.aplwallet.apl.util.Constants.DEFAULT_PEER_PORT;
 public final class AplCore {
 
     private static volatile boolean shutdown = false;
-    private static BlockchainConfig blockchainConfig;
+//    private static BlockchainConfig blockchainConfig;
     private static TransportInteractionService transportInteractionService;
-    private static volatile boolean initialized = false;
+    private /*static*/ volatile boolean initialized = false;
     @Inject
     @Setter
     PeersService peers;
@@ -98,18 +98,18 @@ public final class AplCore {
     @Inject
     @Setter
     private TaskDispatchManager taskDispatchManager;
-    @Inject
-    @Setter
-    private AccountPublicKeyService accountPublicKeyService;
-    @Inject
-    @Setter
-    private InMemoryCacheManager cacheManager;
-    @Inject
-    @Setter
-    private DexOrderProcessor dexOrderProcessor;
-    @Inject
-    @Setter
-    private PrunableArchiveMonitor prunableArchiveMonitor;
+//    @Inject
+//    @Setter
+//    private AccountPublicKeyService accountPublicKeyService;
+//    @Inject
+//    @Setter
+//    private InMemoryCacheManager cacheManager;
+//    @Inject
+//    @Setter
+//    private DexOrderProcessor dexOrderProcessor;
+//    @Inject
+//    @Setter
+//    private PrunableArchiveMonitor prunableArchiveMonitor;
     private String initCoreTaskID;
 
     public AplCore() {

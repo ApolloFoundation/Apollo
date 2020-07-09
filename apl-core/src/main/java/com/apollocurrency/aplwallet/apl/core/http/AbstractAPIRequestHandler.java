@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.BidOrder;
+import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableRestorationService;
 import com.apollocurrency.aplwallet.apl.core.service.state.PollOptionResultService;
 import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
@@ -91,6 +92,7 @@ public abstract class AbstractAPIRequestHandler {
     protected DGSService service = CDI.current().select(DGSService.class).get();
     protected TaggedDataService taggedDataService = CDI.current().select(TaggedDataService.class).get();
     protected PrunableMessageService prunableMessageService = CDI.current().select(PrunableMessageService.class).get();
+    protected PrunableRestorationService prunableRestorationService = CDI.current().select(PrunableRestorationService.class).get();
     protected AssetService assetService = CDI.current().select(AssetService.class).get();
     protected final PollService pollService = CDI.current().select(PollService.class).get();
     protected final PollOptionResultService pollOptionResultService = CDI.current().select(PollOptionResultService.class).get();

@@ -109,6 +109,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -134,12 +135,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         .comparingLong(UnconfirmedTransaction::getArrivalTimestamp)
         .thenComparingInt(UnconfirmedTransaction::getHeight)
         .thenComparingLong(UnconfirmedTransaction::getId);
-    private final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private final PropertiesHolder propertiesHolder;
+    private final BlockchainConfig blockchainConfig;
     private final DexService dexService;
     private final DatabaseManager databaseManager;
     private final ExecutorService networkService;
-    private final int defaultNumberOfForkConfirmations = propertiesHolder.getIntProperty("apl.numberOfForkConfirmations");
+    private final int defaultNumberOfForkConfirmations;
     private final Set<Long> prunableTransactions = new HashSet<>();
     private final javax.enterprise.event.Event<Block> blockEvent;
     private final javax.enterprise.event.Event<AccountLedgerEventType> ledgerEvent;
@@ -164,10 +165,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private TaskDispatchManager taskDispatchManager;
     private Blockchain blockchain;
     private TransactionProcessor transactionProcessor;
-    private TimeService timeService = CDI.current().select(TimeService.class).get();
+    private final TimeService timeService;
     private int initialScanHeight;
     private volatile int lastRestoreTime = 0;
-    private BlockValidator validator;
+    private final BlockValidator validator;
     //    private final Listeners<Block, Event> blockListeners = new Listeners<>();
     private volatile Peer lastBlockchainFeeder;
     private volatile int lastBlockchainFeederHeight;
@@ -178,7 +179,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private volatile boolean isRestoring;
 
     @Inject
-    public BlockchainProcessorImpl(BlockValidator validator, Event<Block> blockEvent, Event<AccountLedgerEventType> ledgerEvent,
+    public BlockchainProcessorImpl(PropertiesHolder propertiesHolder, BlockchainConfig blockchainConfig,
+                                   BlockValidator validator, Event<Block> blockEvent, Event<AccountLedgerEventType> ledgerEvent,
                                    GlobalSync globalSync, DerivedTablesRegistry dbTables,
                                    ReferencedTransactionService referencedTransactionService, PhasingPollService phasingPollService,
                                    TransactionValidator transactionValidator,
@@ -189,7 +191,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    ShardImporter importer, PrunableMessageService prunableMessageService,
                                    TaskDispatchManager taskDispatchManager, Event<List<Transaction>> txEvent,
                                    Event<BlockchainConfig> blockchainEvent,
-                                   ShardDao shardDao) {
+                                   ShardDao shardDao,
+                                   TimeService timeService) {
+        this.propertiesHolder = Objects.requireNonNull(propertiesHolder);
+        this.defaultNumberOfForkConfirmations = propertiesHolder.getIntProperty("apl.numberOfForkConfirmations");
+        this.blockchainConfig = blockchainConfig;
         this.validator = validator;
         this.blockEvent = blockEvent;
         this.ledgerEvent = ledgerEvent;
@@ -212,6 +218,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.txEvent = txEvent;
         this.shardDao = shardDao;
         this.blockchainEvent = blockchainEvent;
+        this.timeService = timeService;
 
         configureBackgroundTasks();
 
@@ -458,105 +465,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     @Override
-    public int restorePrunedData() {
-        TransactionalDataSource dataSource = lookupDataSource();
-        try (Connection con = dataSource.begin()) {
-            int now = timeService.getEpochTime();
-            int minTimestamp = Math.max(1, now - blockchainConfig.getMaxPrunableLifetime());
-            int maxTimestamp = Math.max(minTimestamp, now - blockchainConfig.getMinPrunableLifetime()) - 1;
-            List<PrunableTransaction> transactionList =
-                lookupBlockhain().findPrunableTransactions(con, minTimestamp, maxTimestamp);
-            transactionList.forEach(prunableTransaction -> {
-                long id = prunableTransaction.getId();
-                if ((prunableTransaction.hasPrunableAttachment() && prunableTransaction.getTransactionType().isPruned(id)) ||
-                    prunableMessageService.isPruned(id, prunableTransaction.hasPrunablePlainMessage(), prunableTransaction.hasPrunableEncryptedMessage())) {
-                    synchronized (prunableTransactions) {
-                        prunableTransactions.add(id);
-                    }
-                }
-            });
-            if (!prunableTransactions.isEmpty()) {
-                lastRestoreTime = 0;
-            }
-            dataSource.commit();
-        } catch (SQLException e) {
-            dataSource.rollback();
-            throw new RuntimeException(e.toString(), e);
-        }
-        synchronized (prunableTransactions) {
-            return prunableTransactions.size();
-        }
-    }
-
-    @Override
-    public Transaction restorePrunedTransaction(long transactionId) {
-        Transaction transaction = lookupBlockhain().getTransaction(transactionId);
-        if (transaction == null) {
-            throw new IllegalArgumentException("Transaction not found");
-        }
-        boolean isPruned = false;
-        for (AbstractAppendix appendage : transaction.getAppendages(true)) {
-            if ((appendage instanceof Prunable) &&
-                !((Prunable) appendage).hasPrunableData()) {
-                isPruned = true;
-                break;
-            }
-        }
-        if (!isPruned) {
-            return transaction;
-        }
-        List<Peer> peersList = lookupPeersService().getPeers(chkPeer -> chkPeer.providesService(Peer.Service.PRUNABLE) &&
-            !chkPeer.isBlacklisted() && chkPeer.getAnnouncedAddress() != null);
-        if (peersList.isEmpty()) {
-            log.debug("Cannot find any archive peers");
-            return null;
-        }
-        JSONObject json = new JSONObject();
-        JSONArray requestList = new JSONArray();
-        requestList.add(Long.toUnsignedString(transactionId));
-        json.put("requestType", "getTransactions");
-        json.put("transactionIds", requestList);
-        json.put("chainId", blockchainConfig.getChain().getChainId());
-        JSONStreamAware request = JSON.prepareRequest(json);
-        for (Peer peer : peersList) {
-            if (peer.getState() != PeerState.CONNECTED) {
-                lookupPeersService().connectPeer(peer);
-            }
-            if (peer.getState() != PeerState.CONNECTED) {
-                continue;
-            }
-            log.debug("Connected to archive peer " + peer.getHost());
-            JSONObject response;
-            try {
-                response = peer.send(request, blockchainConfig.getChain().getChainId());
-            } catch (PeerNotConnectedException ex) {
-                response = null;
-            }
-            if (response == null) {
-                continue;
-            }
-            JSONArray transactions = (JSONArray) response.get("transactions");
-            if (transactions == null || transactions.isEmpty()) {
-                continue;
-            }
-            try {
-                List<Transaction> processed = lookupTransactionProcessor().restorePrunableData(transactions);
-                if (processed.isEmpty()) {
-                    continue;
-                }
-                synchronized (prunableTransactions) {
-                    prunableTransactions.remove(transactionId);
-                }
-                return processed.get(0);
-            } catch (AplException.NotValidException e) {
-                log.error("Peer " + peer.getHost() + " returned invalid prunable transaction", e);
-                peer.blacklist(e);
-            }
-        }
-        return null;
-    }
-
-    @Override
     public List<Transaction> getExpectedTransactions(Filter<Transaction> filter) {
         Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
         List<Transaction> result = new ArrayList<>();
@@ -637,31 +545,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             log.error("main BlockchainProcessorImpl thread was interrupted, EXITING...");
             System.exit(-1);
         }
-
-/*
-        // PREVIOUS start-up LOGIC
-        log.info("Genesis block not in database, starting from scratch");
-        TransactionalDataSource dataSource = lookupDataSource();
-        Connection con = dataSource.begin();
-        try {
-            // we should start here shard downloading
-            // Maybe better to rename this method
-            Block genesisBlock = Genesis.newGenesisBlock();
-            addBlock(genesisBlock);
-            initialBlock = genesisBlock.getId();
-            Genesis.apply(false);
-            for (DerivedTableInterface table : dbTables.getDerivedTables()) {
-                table.createSearchIndex(con);
-            }
-            blockchain.commit(genesisBlock);
-            dataSource.commit();
-            log.debug("Saved Genesis block = {}", genesisBlock);
-        } catch (SQLException e) {
-            dataSource.rollback();
-            log.info(e.getMessage());
-            throw new RuntimeException(e.toString(), e);
-        }
-*/
     }
 
     public void scheduleOneScan() {
