@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import javax.inject.Singleton;
+import javax.enterprise.inject.Vetoed;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.SocketException;
@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-@Singleton
+@Vetoed
 public class NtpTime {
 
     private static final Logger LOG = getLogger(NtpTime.class);

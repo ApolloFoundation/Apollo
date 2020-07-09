@@ -48,7 +48,7 @@ class ShardControllerTest {
         dispatcher = MockDispatcherFactory.createDispatcher();
         shardService = mock(ShardService.class);
         indexParser = mock(FirstLastIndexParser.class);
-        ShardController controller = new ShardController(shardService, indexParser);
+        ShardController controller = new ShardController(shardService, 100);
         dispatcher.getRegistry().addSingletonResource(controller);
     }
 

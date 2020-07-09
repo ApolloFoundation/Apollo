@@ -3,12 +3,12 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.order.service.OrderMatchService;
+import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderMatchService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import org.json.simple.JSONObject;
 
 import javax.enterprise.inject.spi.CDI;

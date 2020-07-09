@@ -25,9 +25,9 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.service.state.TaggedDataService;
+import com.apollocurrency.aplwallet.apl.core.entity.prunable.TaggedData;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;

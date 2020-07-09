@@ -14,7 +14,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.updater.repository.UpdaterDbRepository;
 import com.apollocurrency.aplwallet.apl.updater.repository.UpdaterRepository;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.util.env.Arch;
 import com.apollocurrency.aplwallet.apl.util.env.OS;

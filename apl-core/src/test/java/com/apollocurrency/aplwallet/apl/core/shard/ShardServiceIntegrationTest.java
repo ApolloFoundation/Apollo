@@ -9,7 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.app.TrimConfig;
-import com.apollocurrency.aplwallet.apl.core.app.TrimService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
@@ -34,6 +34,7 @@ import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -56,6 +57,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
+@Tag("slow")
 @ExtendWith(MockitoExtension.class)
 public class ShardServiceIntegrationTest {
     @RegisterExtension
@@ -153,7 +155,7 @@ public class ShardServiceIntegrationTest {
         assertTrue(reset);
         assertThrows(IllegalStateException.class, () -> databaseManager.getDataSource().commit()); //previous datasource was closed
         assertThrows(SQLException.class, shardDatasource::getConnection); //shard datasource was closed
-        assertEquals(4, FileUtils.countElementsOfDirectory(dbDir));
+        assertEquals(4, FileUtils.countElementsOfDirectory(dbDir, (dir) -> dir.toFile().isFile())); // files only
         Files.exists(zipPath);
         Files.exists(backupDir);
         Files.exists(dbDir.resolve(Constants.APPLICATION_DIR_NAME + DbProperties.DB_EXTENSION_WITH_DOT));

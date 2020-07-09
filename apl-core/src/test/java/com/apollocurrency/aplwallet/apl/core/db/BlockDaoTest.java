@@ -1,16 +1,20 @@
+/*
+ *  Copyright © 2018-2020 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.core.alias.service.AliasService;
+import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
-import com.apollocurrency.aplwallet.apl.core.app.TimeService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
+import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
@@ -23,6 +27,7 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -56,6 +61,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
+@Tag("slow")
 @EnableWeld
 class BlockDaoTest {
 
@@ -135,7 +141,7 @@ class BlockDaoTest {
 
     @Test
     void findBlockCountRange() {
-        Long count = blockDao.getBlockCount(BLOCK_0_HEIGHT, BLOCK_7_HEIGHT);
+        Long count = blockDao.getBlockCount(null, BLOCK_0_HEIGHT, BLOCK_7_HEIGHT);
         assertEquals(7L, count.longValue());
     }
 
@@ -148,7 +154,7 @@ class BlockDaoTest {
 
     @Test
     void getBlocksRangeAccountId() {
-        DbIterator<Block> result = blockDao.getBlocks(4363726829568989435L, GENESIS_BLOCK_TIMESTAMP, GENESIS_BLOCK_HEIGHT, BLOCK_7_HEIGHT);
+        DbIterator<Block> result = blockDao.getBlocksByAccount(null, 4363726829568989435L, GENESIS_BLOCK_HEIGHT, BLOCK_7_HEIGHT, GENESIS_BLOCK_TIMESTAMP);
         assertNotNull(result);
         int count = 0;
         while (result.hasNext()) {
@@ -167,7 +173,7 @@ class BlockDaoTest {
 
     @Test
     void countByHeight() {
-        long count = blockDao.getBlockCount(GENESIS_BLOCK_HEIGHT, BlockTestData.BLOCK_7_HEIGHT);
+        long count = blockDao.getBlockCount(null, GENESIS_BLOCK_HEIGHT, BlockTestData.BLOCK_7_HEIGHT);
         assertEquals(8, count);
 
         count = blockDao.getBlockCount(extension.getDatabaseManager().getDataSource(), BlockTestData.BLOCK_7_HEIGHT, BlockTestData.BLOCK_11_HEIGHT);
@@ -221,7 +227,7 @@ class BlockDaoTest {
         Block lastBlock = blockDao.findLastBlock();
         assertEquals(td.LAST_BLOCK, lastBlock);
 
-        Long blockCount = blockDao.getBlockCount(0, Integer.MAX_VALUE);
+        Long blockCount = blockDao.getBlockCount(null, 0, Integer.MAX_VALUE);
         assertEquals(15, blockCount);
     }
 
@@ -264,21 +270,21 @@ class BlockDaoTest {
 
     @Test
     void testGetBlockCountForGenerator() {
-        int blockCount = blockDao.getBlockCount(td.BLOCK_1.getGeneratorId());
+        int blockCount = blockDao.getBlockCount(null, td.BLOCK_1.getGeneratorId());
 
         assertEquals(3, blockCount);
     }
 
     @Test
     void testGetBlocksForAccount() {
-        List<Block> blocks = CollectionUtil.toList(blockDao.getBlocks(td.BLOCK_1.getGeneratorId(), 0, 0, 1));
+        List<Block> blocks = CollectionUtil.toList(blockDao.getBlocksByAccount(null, td.BLOCK_1.getGeneratorId(), 0, 1, 0));
 
         assertEquals(List.of(td.BLOCK_12, td.BLOCK_1), blocks);
     }
 
     @Test
     void testGetBlocksForAccountWithTimestamp() {
-        List<Block> blocks = CollectionUtil.toList(blockDao.getBlocks(td.BLOCK_1.getGeneratorId(), td.BLOCK_0.getTimestamp() + 1, 0, 3));
+        List<Block> blocks = CollectionUtil.toList(blockDao.getBlocksByAccount(null, td.BLOCK_1.getGeneratorId(), 0, 3, td.BLOCK_0.getTimestamp() + 1));
 
         assertEquals(List.of(td.BLOCK_12, td.BLOCK_1), blocks);
     }

@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.model;
 
-import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
+import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import lombok.Data;
 
 import java.util.List;

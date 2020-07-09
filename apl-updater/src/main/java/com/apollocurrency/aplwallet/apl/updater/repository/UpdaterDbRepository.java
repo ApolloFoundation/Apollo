@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.updater.UpdateTransaction;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;

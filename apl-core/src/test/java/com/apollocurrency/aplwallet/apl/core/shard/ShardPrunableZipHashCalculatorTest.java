@@ -1,3 +1,7 @@
+/*
+ *  Copyright © 2018-2020 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.shard;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -8,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardState;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
-import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageTable;
+import com.apollocurrency.aplwallet.apl.core.dao.prunable.PrunableMessageTable;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaperImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.TrimData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
@@ -24,6 +28,7 @@ import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -45,6 +50,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
+@Tag("slow")
 @EnableWeld
 class ShardPrunableZipHashCalculatorTest {
     DerivedTablesRegistry registry = mock(DerivedTablesRegistry.class);
@@ -52,6 +58,7 @@ class ShardPrunableZipHashCalculatorTest {
     ShardDao shardDao = mock(ShardDao.class);
     BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     DirProvider dirProvider = mock(DirProvider.class);
+    private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
 
     @RegisterExtension
     TemporaryFolderExtension tempFolder = new TemporaryFolderExtension();
@@ -70,6 +77,7 @@ class ShardPrunableZipHashCalculatorTest {
         .addBeans(MockBean.of(shardDao, ShardDao.class))
         .addBeans(MockBean.of(dirProvider, DirProvider.class))
         .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
         .build();
     @Inject
     PrunableMessageTable prunableMessageTable;

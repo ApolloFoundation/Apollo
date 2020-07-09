@@ -4,8 +4,9 @@
 package com.apollocurrency.aplwallet.apl.core.monetary;
 
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeAttachment;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 
 /**
  * @author al
@@ -18,9 +19,9 @@ public abstract class MonetarySystemExchange extends MonetarySystem {
         if (attachment.getRateATM() <= 0 || attachment.getUnits() == 0) {
             throw new AplException.NotValidException("Invalid exchange: " + attachment.getJSONObject());
         }
-        Currency currency = Currency.getCurrency(attachment.getCurrencyId());
+        Currency currency = lookupCurrencyService().getCurrency(attachment.getCurrencyId());
         CurrencyType.validate(currency, transaction);
-        if (!currency.isActive()) {
+        if (!lookupCurrencyService().isActive(currency)) {
             throw new AplException.NotCurrentlyValidException("Currency not active: " + attachment.getJSONObject());
         }
     }

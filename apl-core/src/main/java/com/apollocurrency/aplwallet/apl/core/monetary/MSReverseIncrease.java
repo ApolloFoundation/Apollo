@@ -3,12 +3,13 @@
  */
 package com.apollocurrency.aplwallet.apl.core.monetary;
 
-import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveIncrease;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -52,13 +53,13 @@ class MSReverseIncrease extends MonetarySystem {
         if (attachment.getAmountPerUnitATM() <= 0) {
             throw new AplException.NotValidException("Reserve increase amount must be positive: " + attachment.getAmountPerUnitATM());
         }
-        CurrencyType.validate(Currency.getCurrency(attachment.getCurrencyId()), transaction);
+        CurrencyType.validate(lookupCurrencyService().getCurrency(attachment.getCurrencyId()), transaction);
     }
 
     @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         MonetarySystemReserveIncrease attachment = (MonetarySystemReserveIncrease) transaction.getAttachment();
-        Currency currency = Currency.getCurrency(attachment.getCurrencyId());
+        Currency currency = lookupCurrencyService().getCurrency(attachment.getCurrencyId());
         if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact(currency.getReserveSupply(), attachment.getAmountPerUnitATM())) {
             lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -Math.multiplyExact(currency.getReserveSupply(), attachment.getAmountPerUnitATM()));
             return true;
@@ -70,7 +71,7 @@ class MSReverseIncrease extends MonetarySystem {
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         MonetarySystemReserveIncrease attachment = (MonetarySystemReserveIncrease) transaction.getAttachment();
         long reserveSupply;
-        Currency currency = Currency.getCurrency(attachment.getCurrencyId());
+        Currency currency = lookupCurrencyService().getCurrency(attachment.getCurrencyId());
         if (currency != null) {
             reserveSupply = currency.getReserveSupply();
         } else {
@@ -87,7 +88,7 @@ class MSReverseIncrease extends MonetarySystem {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         MonetarySystemReserveIncrease attachment = (MonetarySystemReserveIncrease) transaction.getAttachment();
-        Currency.increaseReserve(getLedgerEvent(), transaction.getId(), senderAccount, attachment.getCurrencyId(), attachment.getAmountPerUnitATM());
+        lookupCurrencyService().increaseReserve(getLedgerEvent(), transaction.getId(), senderAccount, attachment.getCurrencyId(), attachment.getAmountPerUnitATM());
     }
 
     @Override

@@ -31,6 +31,7 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -40,17 +41,18 @@ import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
-import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.OptionDAO;
 import com.apollocurrency.aplwallet.apl.core.files.shards.ShardsDownloadService;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecision;
-import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
+import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
+import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardImporter;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
@@ -66,7 +68,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.Filter;
@@ -115,7 +116,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Singleton
@@ -134,7 +138,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private final DexService dexService;
     private final DatabaseManager databaseManager;
-    private final ExecutorService networkService = Executors.newCachedThreadPool(new NamedThreadFactory("BlockchainProcessor:networkService"));
+    private final ExecutorService networkService;
     private final int defaultNumberOfForkConfirmations = propertiesHolder.getIntProperty("apl.numberOfForkConfirmations");
     private final Set<Long> prunableTransactions = new HashSet<>();
     private final javax.enterprise.event.Event<Block> blockEvent;
@@ -198,6 +202,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.referencedTransactionService = referencedTransactionService;
         this.databaseManager = databaseManager;
         this.dexService = dexService;
+        this.networkService = getNetworkServiceExecutor();
         this.blockApplier = blockApplier;
         this.aplAppStatus = aplAppStatus;
         this.shardDownloader = shardDownloader;
@@ -210,6 +215,24 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
         configureBackgroundTasks();
 
+    }
+
+    private ExecutorService getNetworkServiceExecutor() {
+        final NamedThreadFactory threadFactory = new NamedThreadFactory("BlockchainProcessor:networkService");
+        ExecutorService executorService;
+        if (propertiesHolder.getBooleanProperty("apl.limitHardwareResources", false)) {
+            executorService = new ThreadPoolExecutor(
+                propertiesHolder.getIntProperty("apl.networkServiceCorePoolSize"),
+                propertiesHolder.getIntProperty("apl.networkServiceMaximumPoolSize"),
+                60L, TimeUnit.MILLISECONDS,
+                new SynchronousQueue<>(),
+                threadFactory,
+                new ThreadPoolExecutor.CallerRunsPolicy()
+            );
+        } else {
+            executorService = Executors.newCachedThreadPool(threadFactory);
+        }
+        return executorService;
     }
 
     private TransactionProcessor lookupTransactionProcessor() {

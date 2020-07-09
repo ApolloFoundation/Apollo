@@ -25,9 +25,9 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.message.PrunableMessage;
-import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.entity.prunable.PrunableMessage;
+import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONStreamAware;
 

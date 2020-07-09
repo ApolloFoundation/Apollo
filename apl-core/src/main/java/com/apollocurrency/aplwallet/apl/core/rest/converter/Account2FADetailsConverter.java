@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
 import com.apollocurrency.aplwallet.api.dto.account.Account2FADetailsDTO;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
+import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthDetails;
 
 public class Account2FADetailsConverter implements Converter<TwoFactorAuthDetails, Account2FADetailsDTO> {
 

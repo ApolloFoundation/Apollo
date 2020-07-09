@@ -1,38 +1,66 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountInfoService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountInfoServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountLeaseService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountLeaseServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountPropertyService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountPropertyServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
+import com.apollocurrency.aplwallet.apl.core.entity.state.order.BidOrder;
+import com.apollocurrency.aplwallet.apl.core.service.state.PollOptionResultService;
+import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetTransferService;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
+import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
+import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
+import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
+import com.apollocurrency.aplwallet.apl.core.service.state.TaggedDataService;
+import com.apollocurrency.aplwallet.apl.core.service.state.TradeService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountInfoService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountLeaseService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountLedgerService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPropertyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountAssetServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountCurrencyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountInfoServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountLeaseServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountLedgerServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPropertyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPublicKeyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyFounderService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
+import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeRequestService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyMintService;
+import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
+import com.apollocurrency.aplwallet.apl.core.service.state.order.impl.AskOrderServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.order.impl.BidOrderServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.AskOrderService;
+import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.BidOrderService;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
+import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONStreamAware;
 
@@ -48,11 +76,26 @@ import java.util.Set;
 
 public abstract class AbstractAPIRequestHandler {
 
+    protected final AliasService aliasService = CDI.current().select(AliasService.class).get();
+    protected final OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService =
+        CDI.current().select(AskOrderServiceImpl.class, AskOrderService.Literal.INSTANCE).get();
+    protected final OrderService<BidOrder, ColoredCoinsBidOrderPlacement> bidOrderService =
+        CDI.current().select(BidOrderServiceImpl.class, BidOrderService.Literal.INSTANCE).get();
+    protected final TradeService tradeService = CDI.current().select(TradeService.class).get();
     protected BlockchainProcessor blockchainProcessor;
     protected TimeService timeService = CDI.current().select(TimeService.class).get();
     protected AdminPasswordVerifier apw = CDI.current().select(AdminPasswordVerifier.class).get();
     protected ElGamalEncryptor elGamal = CDI.current().select(ElGamalEncryptor.class).get();
     protected PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    protected UPnP upnp = CDI.current().select(UPnP.class).get();
+    protected DGSService service = CDI.current().select(DGSService.class).get();
+    protected TaggedDataService taggedDataService = CDI.current().select(TaggedDataService.class).get();
+    protected PrunableMessageService prunableMessageService = CDI.current().select(PrunableMessageService.class).get();
+    protected AssetService assetService = CDI.current().select(AssetService.class).get();
+    protected final PollService pollService = CDI.current().select(PollService.class).get();
+    protected final PollOptionResultService pollOptionResultService = CDI.current().select(PollOptionResultService.class).get();
+    protected ExchangeService exchangeService = CDI.current().select(ExchangeService.class).get();
+
     protected TrimService trimService;
     private List<String> parameters;
     private String fileParameter;
@@ -70,6 +113,15 @@ public abstract class AbstractAPIRequestHandler {
     private AccountLeaseService accountLeaseService;
     private AccountPropertyService accountPropertyService;
     private PeersService peers;
+    private AccountControlPhasingService accountControlPhasingService;
+    private AssetTransferService assetTransferService;
+    private CurrencyExchangeOfferFacade currencyExchangeOfferFacade;
+    private ExchangeRequestService exchangeRequestService;
+    private CurrencyTransferService currencyTransferService;
+    private CurrencyMintService currencyMintService;
+    private CurrencyFounderService currencyFounderService;
+    private CurrencyService currencyService;
+    private MonetaryCurrencyMintingService monetaryCurrencyMintingService;
 
     public AbstractAPIRequestHandler(APITag[] apiTags, String... parameters) {
         this(null, apiTags, parameters);
@@ -192,6 +244,62 @@ public abstract class AbstractAPIRequestHandler {
     protected TrimService lookupTrimService() {
         if (trimService == null) trimService = CDI.current().select(TrimService.class).get();
         return trimService;
+    }
+
+    public AccountControlPhasingService lookupAccountControlPhasingService() {
+        if (accountControlPhasingService == null) {
+            accountControlPhasingService = CDI.current().select(AccountControlPhasingService.class).get();
+        }
+        return accountControlPhasingService;
+    }
+
+    public AssetTransferService lookupAssetTransferService() {
+        if (assetTransferService == null) {
+            assetTransferService = CDI.current().select(AssetTransferService.class).get();
+        }
+        return assetTransferService;
+    }
+
+    public ExchangeRequestService lookupExchangeRequestService() {
+        if (exchangeRequestService == null) {
+            exchangeRequestService = CDI.current().select(ExchangeRequestService.class).get();
+        }
+        return exchangeRequestService;
+    }
+
+    public CurrencyTransferService lookupCurrencyTransferService() {
+        if (currencyTransferService == null) {
+            currencyTransferService = CDI.current().select(CurrencyTransferService.class).get();
+        }
+        return currencyTransferService;
+    }
+
+    public CurrencyMintService lookupCurrencyMintService() {
+        if (currencyMintService == null) {
+            currencyMintService = CDI.current().select(CurrencyMintService.class).get();
+        }
+        return currencyMintService;
+    }
+
+    public CurrencyFounderService lookupCurrencyFounderService() {
+        if (currencyFounderService == null) {
+            currencyFounderService = CDI.current().select(CurrencyFounderService.class).get();
+        }
+        return currencyFounderService;
+    }
+
+    public CurrencyService lookupCurrencyService() {
+        if (currencyService == null) {
+            currencyService = CDI.current().select(CurrencyService.class).get();
+        }
+        return currencyService;
+    }
+
+    public MonetaryCurrencyMintingService lookupMonetaryCurrencyMintingService() {
+        if (monetaryCurrencyMintingService == null) {
+            monetaryCurrencyMintingService = CDI.current().select(MonetaryCurrencyMintingService.class).get();
+        }
+        return monetaryCurrencyMintingService;
     }
 
     public final List<String> getParameters() {

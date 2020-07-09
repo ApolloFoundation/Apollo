@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.shard;
 
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
-import com.apollocurrency.aplwallet.apl.core.app.TrimService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
 import com.apollocurrency.aplwallet.apl.core.db.AplDbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbVersion;

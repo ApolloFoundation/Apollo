@@ -6,9 +6,8 @@
   <parent>
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-blockchain</artifactId>
-    <version>1.45.0</version>
+    <version>1.45.1</version>
   </parent>
-
   <artifactId>apl-core</artifactId>
   <name>apl-core</name>
   <packaging>jar</packaging>
@@ -63,6 +62,11 @@
     <dependency>
       <groupId>javax.ws.rs</groupId>
       <artifactId>javax.ws.rs-api</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jboss.weld.servlet</groupId>
+      <artifactId>weld-servlet-shaded</artifactId>
     </dependency>
     <!-- RESTEasy runtime dependencies -->
     <dependency>

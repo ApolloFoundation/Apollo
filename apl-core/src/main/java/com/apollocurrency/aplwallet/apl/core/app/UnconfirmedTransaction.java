@@ -15,12 +15,12 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
@@ -32,7 +32,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendi
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -48,7 +47,8 @@ import java.util.Map;
 
 public class UnconfirmedTransaction implements Transaction {
 
-    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
+    private static AccountControlPhasingService accountControlPhasingService;
     private final Transaction transaction;
     private final long arrivalTimestamp;
     private final long feePerByte;
@@ -97,6 +97,13 @@ public class UnconfirmedTransaction implements Transaction {
             pstmt.setInt(++i, blockchain.getHeight());
             pstmt.executeUpdate();
         }
+    }
+
+    public static AccountControlPhasingService lookupAccountControlPhasingService() {
+        if (accountControlPhasingService == null) {
+            accountControlPhasingService = CDI.current().select(AccountControlPhasingService.class).get();
+        }
+        return accountControlPhasingService;
     }
 
     public Transaction getTransaction() {
@@ -390,7 +397,9 @@ public class UnconfirmedTransaction implements Transaction {
             return false;
         }
         if (atAcceptanceHeight) {
-            if (AccountRestrictions.isBlockDuplicate(this, duplicates)) {
+            // TODO: YL remove that 'AccountControlPhasingService' dependency later
+//            if (AccountRestrictions.isBlockDuplicate(this, duplicates)) {
+            if (lookupAccountControlPhasingService().isBlockDuplicate(this, duplicates)) {
                 return true;
             }
             // all are checked at acceptance height for block duplicates

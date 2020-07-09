@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
@@ -16,9 +16,10 @@ import javax.servlet.http.HttpServletRequest;
 
 public class HttpRequestToCreateTransactionRequestConverter {
 
+    public static CreateTransactionRequest convert(
+        HttpServletRequest req, Account senderAccount, Account recipientAccount, long recipientId, long amountATM, long feeATM,
+        Attachment attachment, Boolean broadcast) throws ParameterException {
 
-    public static CreateTransactionRequest convert(HttpServletRequest req, Account senderAccount, Account recipientAccount, long recipientId, long amountATM, long feeATM,
-                                                   Attachment attachment, boolean broadcast) throws ParameterException {
         String passphrase = Convert.emptyToNull(HttpParameterParserUtil.getPassphrase(req, false));
         String secretPhrase = HttpParameterParserUtil.getSecretPhrase(req, false);
         Boolean encryptedMessageIsPrunable = Boolean.valueOf(req.getParameter("encryptedMessageIsPrunable"));
@@ -26,7 +27,8 @@ public class HttpRequestToCreateTransactionRequestConverter {
         Boolean isPhased = Boolean.valueOf(req.getParameter("phased"));
 
         CreateTransactionRequest createTransactionRequest = CreateTransactionRequest.builder()
-            .broadcast(!"false".equalsIgnoreCase(req.getParameter("broadcast")) && broadcast && (secretPhrase != null || passphrase != null))
+            .broadcast(!"false".equalsIgnoreCase(req.getParameter("broadcast"))
+                && (broadcast != null ? broadcast : false)  && (secretPhrase != null || passphrase != null))
             .secretPhrase(secretPhrase)
             .passphrase(passphrase)
             .deadlineValue(req.getParameter("deadline"))

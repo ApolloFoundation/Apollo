@@ -20,8 +20,8 @@
 package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
-import com.apollocurrency.aplwallet.apl.core.rest.ByteArrayConverterProvider;
-import com.apollocurrency.aplwallet.apl.core.rest.PlatformSpecConverterProvider;
+import com.apollocurrency.aplwallet.apl.core.rest.provider.ByteArrayConverterProvider;
+import com.apollocurrency.aplwallet.apl.core.rest.provider.PlatformSpecConverterProvider;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ClientErrorExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ConstraintViolationExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.DefaultGlobalExceptionMapper;
@@ -56,6 +56,7 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.eclipse.jetty.util.security.Constraint;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.jboss.resteasy.plugins.server.servlet.ResteasyContextParameters;
 import org.jboss.weld.environment.servlet.Listener;
@@ -240,10 +241,7 @@ public final class API {
 
         if (enableAPIServer) {
 
-            org.eclipse.jetty.util.thread.QueuedThreadPool threadPool = new org.eclipse.jetty.util.thread.QueuedThreadPool();
-            threadPool.setMaxThreads(Math.max(maxThreadPoolSize, 200));
-            threadPool.setMinThreads(Math.max(minThreadPoolSize, 8));
-            threadPool.setName("APIThreadPool");
+            final QueuedThreadPool threadPool = getQueuedThreadPool();
             apiServer = new Server(threadPool);
 
             //
@@ -411,6 +409,23 @@ public final class API {
             LOG.info("API server not enabled");
         }
 
+    }
+
+    private QueuedThreadPool getQueuedThreadPool() {
+        int minThreadPoolSizeLocal;
+        int maxThreadPoolSizeLocal;
+        if (propertiesHolder.getBooleanProperty("apl.limitHardwareResources", false)) {
+            minThreadPoolSizeLocal = propertiesHolder.getIntProperty("apl.apiMinThreadPoolSize");
+            maxThreadPoolSizeLocal = propertiesHolder.getIntProperty("apl.apiMaxThreadPoolSize");
+        } else {
+            minThreadPoolSizeLocal = Math.max(minThreadPoolSize, 8);
+            maxThreadPoolSizeLocal = Math.max(maxThreadPoolSize, 200);
+        }
+        final QueuedThreadPool threadPool = new QueuedThreadPool();
+        threadPool.setMaxThreads(maxThreadPoolSizeLocal);
+        threadPool.setMinThreads(minThreadPoolSizeLocal);
+        threadPool.setName("APIThreadPool");
+        return threadPool;
     }
 
     public final void shutdown() {

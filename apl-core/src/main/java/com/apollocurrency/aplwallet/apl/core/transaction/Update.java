@@ -3,8 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.CriticalUpdate;
@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.Importa
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.MinorUpdate;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateAttachment;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 

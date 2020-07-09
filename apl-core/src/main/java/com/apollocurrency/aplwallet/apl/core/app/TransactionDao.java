@@ -2,9 +2,8 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
+import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

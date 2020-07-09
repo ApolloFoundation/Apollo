@@ -27,8 +27,8 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetTransfer;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -61,11 +61,11 @@ public final class GetAssetTransfers extends AbstractAPIRequestHandler {
         DbIterator<AssetTransfer> transfers = null;
         try {
             if (accountId == 0) {
-                transfers = AssetTransfer.getAssetTransfers(assetId, firstIndex, lastIndex);
+                transfers = lookupAssetTransferService().getAssetTransfers(assetId, firstIndex, lastIndex);
             } else if (assetId == 0) {
-                transfers = AssetTransfer.getAccountAssetTransfers(accountId, firstIndex, lastIndex);
+                transfers = lookupAssetTransferService().getAccountAssetTransfers(accountId, firstIndex, lastIndex);
             } else {
-                transfers = AssetTransfer.getAccountAssetTransfers(accountId, assetId, firstIndex, lastIndex);
+                transfers = lookupAssetTransferService().getAccountAssetTransfers(accountId, assetId, firstIndex, lastIndex);
             }
             while (transfers.hasNext()) {
                 AssetTransfer assetTransfer = transfers.next();

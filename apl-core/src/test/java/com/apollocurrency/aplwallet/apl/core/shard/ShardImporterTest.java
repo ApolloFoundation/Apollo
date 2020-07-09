@@ -1,3 +1,7 @@
+/*
+ *  Copyright © 2018-2020 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.shard;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
@@ -23,8 +27,8 @@ import com.apollocurrency.aplwallet.apl.core.shard.helper.ValueParserImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaper;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaperImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.ValueParser;
-import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.DataTag;
+import com.apollocurrency.aplwallet.apl.core.dao.prunable.DataTagDao;
+import com.apollocurrency.aplwallet.apl.core.entity.prunable.DataTag;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
@@ -36,6 +40,7 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -71,6 +76,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
+@Tag("slow")
 @EnableWeld
 @ExtendWith(MockitoExtension.class)
 class ShardImporterTest {

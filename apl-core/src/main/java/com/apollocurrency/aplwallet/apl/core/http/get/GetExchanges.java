@@ -22,13 +22,13 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.entity.state.exchange.Exchange;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -62,11 +62,11 @@ public final class GetExchanges extends AbstractAPIRequestHandler {
         DbIterator<Exchange> exchanges = null;
         try {
             if (accountId == 0) {
-                exchanges = Exchange.getCurrencyExchanges(currencyId, firstIndex, lastIndex);
+                exchanges = exchangeService.getCurrencyExchanges(currencyId, firstIndex, lastIndex);
             } else if (currencyId == 0) {
-                exchanges = Exchange.getAccountExchanges(accountId, firstIndex, lastIndex);
+                exchanges = exchangeService.getAccountExchanges(accountId, firstIndex, lastIndex);
             } else {
-                exchanges = Exchange.getAccountCurrencyExchanges(accountId, currencyId, firstIndex, lastIndex);
+                exchanges = exchangeService.getAccountCurrencyExchanges(accountId, currencyId, firstIndex, lastIndex);
             }
             while (exchanges.hasNext()) {
                 Exchange exchange = exchanges.next();

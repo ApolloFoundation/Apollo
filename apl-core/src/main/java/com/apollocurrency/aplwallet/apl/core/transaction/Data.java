@@ -3,19 +3,19 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
-import com.apollocurrency.aplwallet.apl.core.app.TimeService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
+import com.apollocurrency.aplwallet.apl.core.service.state.TaggedDataService;
+import com.apollocurrency.aplwallet.apl.core.entity.prunable.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtendAttachment;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
@@ -131,15 +131,15 @@ public abstract class Data extends TransactionType {
             TaggedDataExtendAttachment attachment = (TaggedDataExtendAttachment) transaction.getAttachment();
             BlockchainConfig blockchainConfig = lookupBlockchainConfig();
             TimeService timeService = lookupTimeService();
-            if ((attachment.jsonIsPruned() || attachment.getData() == null) && Data.lookupTimeService().getEpochTime() - transaction.getTimestamp() < Data.lookupBlockchainConfig().getMinPrunableLifetime()) {
+            if ((attachment.jsonIsPruned() || attachment.getData() == null) && timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMinPrunableLifetime()) {
                 throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
             }
             Blockchain blockchain = lookupBlockchain();
-            if (!lookupBlockchain().hasTransaction(attachment.getTaggedDataId(), lookupBlockchain().getHeight())) {
+            if (!blockchain.hasTransaction(attachment.getTaggedDataId(), blockchain.getHeight())) {
                 throw new AplException.NotCurrentlyValidException("No such tagged data upload " + Long.toUnsignedString(attachment.getTaggedDataId()));
             }
             TaggedData taggedData = lookupTaggedDataService().getData(attachment.getTaggedDataId());
-            if (taggedData != null && taggedData.getTransactionTimestamp() > Data.lookupTimeService().getEpochTime() + 6 * lookupBlockchainConfig().getMinPrunableLifetime()) {
+            if (taggedData != null && taggedData.getTransactionTimestamp() > timeService.getEpochTime() + 6 * blockchainConfig.getMinPrunableLifetime()) {
                 throw new AplException.NotCurrentlyValidException("Data already extended, timestamp is " + taggedData.getTransactionTimestamp());
             }
         }

@@ -4,10 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
+import javax.enterprise.inject.Vetoed;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Singleton;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
@@ -38,7 +39,7 @@ import java.util.zip.ZipOutputStream;
  *
  * @author alukin@gmail.com
  */
-@Singleton
+@Vetoed
 public class ZipImpl implements Zip {
     private static final Logger log = LoggerFactory.getLogger(ZipImpl.class);
 

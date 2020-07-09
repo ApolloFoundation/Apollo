@@ -2,7 +2,7 @@ package com.apollocurrency.aplwallet.apl.core.db.dao;
 
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.dao.factory.LongArrayArgumentFactory;
-import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.ShardRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.ShardRowMapper;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -120,5 +120,4 @@ public interface ShardDao {
     @SqlQuery("select * from SHARD where SHARD_STATE = 100 and (SHARD_HEIGHT between :heightFrom - 1 and :heightTo) order by SHARD_HEIGHT")
     @RegisterRowMapper(ShardRowMapper.class)
     List<Shard> getCompletedBetweenBlockHeight(@Bind("heightFrom") long heightFrom, @Bind("heightTo") long heightTo);
-
 }

@@ -5,7 +5,7 @@
 
   <groupId>com.apollocurrency</groupId>
   <artifactId>apollo-blockchain</artifactId>
-  <version>1.45.0</version>
+  <version>1.45.1</version>
   <packaging>pom</packaging>
   <name>apollo-blockchain</name>
 
@@ -62,13 +62,12 @@
     <compile-plugin.version>3.8.1</compile-plugin.version>
     <!-- cross-platform zip distribution -->
     <zip-file-name>apollo-blockchain</zip-file-name>
-    <ext-deps-zip-file-name>${zip-file-name}-ext-deps</ext-deps-zip-file-name>
     <zip-format>zip</zip-format>
     <!--Dependency Versions-->
     <apl-bom.version>1.44.0</apl-bom.version>
     <!-- We have to define this property ancd change it accordingly for correct version of packages -->
     <apl-bom-ext.version>1.0.0</apl-bom-ext.version>
-    <base-dist-dir>ApolloWallet</base-dist-dir>
+    <base-dist-dir>ApolloWallet/apollo-blockchain</base-dist-dir>
 
   </properties>
   <!-- We have following profiles: prod, dev, debug
@@ -82,6 +81,7 @@
       <id>dev</id>
       <properties>
         <zipExecutionPhase>none</zipExecutionPhase>
+        <excludeTestTags>slow</excludeTestTags>
       </properties>
     </profile>
     <!-- The Configuration of the production profile -->
@@ -92,6 +92,7 @@
       </activation>
       <properties>
         <zipExecutionPhase>package</zipExecutionPhase>
+        <excludeTestTags/>
       </properties>
     </profile>
   </profiles>
@@ -117,6 +118,12 @@
           <version>${surefire-plugin.version}</version>
           <configuration>
             <useSystemClassLoader>false</useSystemClassLoader>
+            <excludedGroups>${excludeTestTags}</excludedGroups>
+<!--
+            <properties>
+              <includeTags>${includeTestTags}</includeTags>
+            </properties>
+-->
           </configuration>
           <dependencies>
             <dependency>

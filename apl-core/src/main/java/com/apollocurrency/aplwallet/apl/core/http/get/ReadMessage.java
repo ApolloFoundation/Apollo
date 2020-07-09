@@ -21,15 +21,15 @@
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.dgs.EncryptedDataUtil;
+import com.apollocurrency.aplwallet.apl.core.utils.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.message.PrunableMessage;
-import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
+import com.apollocurrency.aplwallet.apl.core.entity.prunable.PrunableMessage;
+import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;

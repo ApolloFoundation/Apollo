@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-blockchain</artifactId>
-    <version>1.45.0</version>
+    <version>1.45.1</version>
   </parent>
 
   <artifactId>apl-exec</artifactId>
@@ -138,21 +138,7 @@
                 <descriptor>src/assembly/zipdist.xml</descriptor>
               </descriptors>
               <appendAssemblyId>false</appendAssemblyId>
-              <finalName>${zip-file-name}-${project.version}</finalName>
-            </configuration>
-          </execution>
-          <execution>
-            <id>distro-libs-assembly</id>
-            <phase>${zipExecutionPhase}</phase>
-            <goals>
-              <goal>single</goal>
-            </goals>
-            <configuration>
-              <descriptors>
-                <descriptor>src/assembly/zipdistlibs.xml</descriptor>
-              </descriptors>
-              <appendAssemblyId>false</appendAssemblyId>
-              <finalName>${ext-deps-zip-file-name}-${apl-bom-ext.version}</finalName>
+              <finalName>${zip-file-name}-${project.version}-NoOS-NoArch</finalName>
             </configuration>
           </execution>
         </executions>
@@ -174,8 +160,7 @@
             <fileSet>
               <directory>${project.build.directory}</directory>
               <includes>
-                <include>${zip-file-name}-${project.version}.${zip-format}</include>
-                <include>${ext-deps-zip-file-name}-${apl-bom-ext.version}.${zip-format}</include>
+                <include>${zip-file-name}-${project.version}-NoOS-NoArch.${zip-format}</include>
               </includes>
             </fileSet>
           </fileSets>
@@ -199,29 +184,12 @@
               <goal>modify</goal>
             </goals>
             <configuration>
-              <file>${basedir}/pkg-apollo-blockchain.json</file>
+              <file>${basedir}/packaging/pkg-apollo-blockchain.json</file>
               <formatter>conventional</formatter>
               <modifications>
                 <modification>
                   <expression>$.version</expression>
                   <value>${project.version}</value>
-                </modification>
-              </modifications>
-            </configuration>
-          </execution>
-          <execution>
-            <id>update-version-deps</id>
-            <phase>process-resources</phase>
-            <goals>
-              <goal>modify</goal>
-            </goals>
-            <configuration>
-              <file>${basedir}/pkg-apollo-blockchain-ext-deps.json</file>
-              <formatter>conventional</formatter>
-              <modifications>
-                <modification>
-                  <expression>$.version</expression>
-                  <value>${apl-bom-ext.version}</value>
                 </modification>
               </modifications>
             </configuration>

@@ -231,9 +231,37 @@ public class BlockDaoImpl implements BlockDao {
     }
 
     @Override
-    public DbIterator<Block> getBlocks(long accountId, int timestamp, int from, int to) {
+    public DbIterator<Block> getBlocksByAccount(long accountId, int from, int to, int timestamp) {
+        LOG.trace("start getBlocksByAccount DbIter(accountId={}, from={}, to={}, timestamp={} )...",
+            accountId, from, to, timestamp);
         Connection con = null;
-        TransactionalDataSource dataSource = databaseManager.getDataSource(); // TODO: YL implement partial fetch from main + shard db
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try {
+            con = dataSource.getConnection();
+            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE generator_id = ? "
+                + (timestamp > 0 ? " AND timestamp >= ? " : " ") + "ORDER BY height DESC"
+                + DbUtils.limitsClause(from, to));
+            int i = 0;
+            pstmt.setLong(++i, accountId);
+            if (timestamp > 0) {
+                pstmt.setInt(++i, timestamp);
+            }
+            DbUtils.setLimits(++i, pstmt, from, to);
+            return getBlocks(con, pstmt);
+        } catch (SQLException e) {
+            DbUtils.close(con);
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    @Override
+    public DbIterator<Block> getBlocksByAccount(TransactionalDataSource dataSource, long accountId, int from, int to, int timestamp) {
+        LOG.trace("start getBlocksByAccount DbIter(dataSource={}, accountId={}, from={}, to={}, timestamp={} )...",
+            dataSource != null ? dataSource.getDbIdentity() : null, accountId, from, to, timestamp);
+        if (dataSource == null) {
+            dataSource = databaseManager.getDataSource();
+        }
+        Connection con = null;
         try {
             con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE generator_id = ? "
@@ -302,7 +330,24 @@ public class BlockDaoImpl implements BlockDao {
 
     @Override
     public int getBlockCount(long accountId) {
-        TransactionalDataSource dataSource = databaseManager.getDataSource(); // TODO: YL implement partial fetch from main + shard db
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM block WHERE generator_id = ?")) {
+            pstmt.setLong(1, accountId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                rs.next();
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    @Override
+    public int getBlockCount(TransactionalDataSource dataSource, long accountId) {
+        if (dataSource == null) {
+            dataSource = databaseManager.getDataSource();
+        }
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM block WHERE generator_id = ?")) {
             pstmt.setLong(1, accountId);

@@ -2,7 +2,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import com.apollocurrency.aplwallet.api.dto.TransactionHash;
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
@@ -22,7 +22,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;

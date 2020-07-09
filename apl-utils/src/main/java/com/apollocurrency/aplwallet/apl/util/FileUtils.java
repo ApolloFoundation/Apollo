@@ -153,4 +153,10 @@ public class FileUtils {
             return in.getMessageDigest().digest();
         }
     }
+
+    public static long countElementsOfDirectory(Path directory, Predicate<Path> predicate) throws IOException {
+        try (Stream<Path> stream = Files.list(directory)) {
+            return stream.filter(predicate).count();
+        }
+    }
 }

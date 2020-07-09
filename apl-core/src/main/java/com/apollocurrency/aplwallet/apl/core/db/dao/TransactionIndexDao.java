@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.db.dao;
 
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.TransactionIndexRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionIndexRowMapper;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.TransactionIndex;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;

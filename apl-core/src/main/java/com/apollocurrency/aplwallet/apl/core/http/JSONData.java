@@ -15,37 +15,25 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.api.dto.BlockDTO;
-import com.apollocurrency.aplwallet.api.dto.account.AccountAssetDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountCurrencyDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
-import com.apollocurrency.aplwallet.apl.core.account.LedgerHolding;
-import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountLease;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountProperty;
-import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountLeaseService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.alias.entity.Alias;
-import com.apollocurrency.aplwallet.apl.core.alias.entity.AliasOffer;
-import com.apollocurrency.aplwallet.apl.core.alias.service.AliasService;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.FundingMonitor;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisAccounts;
-import com.apollocurrency.aplwallet.apl.core.app.Poll;
-import com.apollocurrency.aplwallet.apl.core.app.PollOptionResult;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.AvailableOffers;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyExchangeOffer;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyFounder;
+import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
+import com.apollocurrency.aplwallet.apl.core.entity.state.poll.PollOptionResult;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffler;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
@@ -55,41 +43,58 @@ import com.apollocurrency.aplwallet.apl.core.app.Vote;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
-import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSFeedback;
-import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
-import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPublicFeedback;
-import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
-import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSTag;
-import com.apollocurrency.aplwallet.apl.core.message.PrunableMessage;
-import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
-import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
-import com.apollocurrency.aplwallet.apl.core.monetary.AssetDelete;
-import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
-import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyExchangeOffer;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyFounder;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
+import com.apollocurrency.aplwallet.apl.core.entity.prunable.DataTag;
+import com.apollocurrency.aplwallet.apl.core.entity.prunable.PrunableMessage;
+import com.apollocurrency.aplwallet.apl.core.entity.prunable.TaggedData;
+import com.apollocurrency.aplwallet.apl.core.entity.state.Trade;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountAsset;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountCurrency;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountLease;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountProperty;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEntry;
+import com.apollocurrency.aplwallet.apl.core.entity.state.alias.Alias;
+import com.apollocurrency.aplwallet.apl.core.entity.state.alias.AliasOffer;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyTransfer;
+import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSFeedback;
+import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSGoods;
+import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSPublicFeedback;
+import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSPurchase;
+import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSTag;
+import com.apollocurrency.aplwallet.apl.core.entity.state.exchange.Exchange;
+import com.apollocurrency.aplwallet.apl.core.entity.state.exchange.ExchangeRequest;
+import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
+import com.apollocurrency.aplwallet.apl.core.entity.state.order.BidOrder;
+import com.apollocurrency.aplwallet.apl.core.entity.state.order.Order;
+import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollResult;
+import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingVote;
+import com.apollocurrency.aplwallet.apl.core.model.account.LedgerHolding;
+import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetTransfer;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
-import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
-import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
-import com.apollocurrency.aplwallet.apl.core.order.entity.AskOrder;
-import com.apollocurrency.aplwallet.apl.core.order.entity.BidOrder;
-import com.apollocurrency.aplwallet.apl.core.order.entity.Order;
+import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetTransferService;
+import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetDelete;
+import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetDividend;
+import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.peer.Hallmark;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.DataTag;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
-import com.apollocurrency.aplwallet.apl.core.trade.entity.Trade;
-import com.apollocurrency.aplwallet.apl.core.trade.service.TradeService;
+import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
+import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
+import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
+import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.TradeService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountLeaseService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
 import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetDelete;
@@ -130,6 +135,12 @@ public final class JSONData {
     private static AccountLeaseService accountLeaseService = CDI.current().select(AccountLeaseService.class).get();
     private static AccountAssetService accountAssetService = CDI.current().select(AccountAssetService.class).get();
     private static DGSService dgsService = CDI.current().select(DGSService.class).get();
+    private static AssetService assetService = CDI.current().select(AssetService.class).get();
+    private static final PollService POLL_SERVICE = CDI.current().select(PollService.class).get();
+    private static AssetTransferService assetTransferService = CDI.current().select(AssetTransferService.class).get();
+    private static ExchangeService exchangeService = CDI.current().select(ExchangeService.class).get();
+    private static CurrencyTransferService currencyTransferService = CDI.current().select(CurrencyTransferService.class).get();
+    private static CurrencyService currencyService = CDI.current().select(CurrencyService.class).get();
 
     private JSONData() {
     } // never
@@ -225,7 +236,7 @@ public final class JSONData {
         json.put("asset", Long.toUnsignedString(asset.getId()));
         if (includeCounts) {
             json.put("numberOfTrades", TRADE_SERVICE.getTradeCount(asset.getId()));
-            json.put("numberOfTransfers", AssetTransfer.getTransferCount(asset.getId()));
+            json.put("numberOfTransfers", assetTransferService.getTransferCount(asset.getId()));
             json.put("numberOfAccounts", accountAssetService.getCountByAsset(asset.getId()));
         }
         return json;
@@ -240,20 +251,20 @@ public final class JSONData {
         json.put("description", currency.getDescription());
         json.put("type", currency.getType());
         json.put("initialSupply", String.valueOf(currency.getInitialSupply()));
-        json.put("currentSupply", String.valueOf(currency.getCurrentSupply()));
+        json.put("currentSupply", String.valueOf(currencyService.getCurrentSupply(currency)));
         json.put("reserveSupply", String.valueOf(currency.getReserveSupply()));
         json.put("maxSupply", String.valueOf(currency.getMaxSupply()));
         json.put("creationHeight", currency.getCreationHeight());
         json.put("issuanceHeight", currency.getIssuanceHeight());
         json.put("minReservePerUnitATM", String.valueOf(currency.getMinReservePerUnitATM()));
-        json.put("currentReservePerUnitATM", String.valueOf(currency.getCurrentReservePerUnitATM()));
+        json.put("currentReservePerUnitATM", String.valueOf(currencyService.getCurrentReservePerUnitATM(currency)));
         json.put("minDifficulty", currency.getMinDifficulty());
         json.put("maxDifficulty", currency.getMaxDifficulty());
         json.put("algorithm", currency.getAlgorithm());
         json.put("decimals", currency.getDecimals());
         if (includeCounts) {
-            json.put("numberOfExchanges", Exchange.getExchangeCount(currency.getId()));
-            json.put("numberOfTransfers", CurrencyTransfer.getTransferCount(currency.getId()));
+            json.put("numberOfExchanges", exchangeService.getExchangeCount(currency.getId()));
+            json.put("numberOfTransfers", currencyTransferService.getTransferCount(currency.getId()));
         }
         JSONArray types = new JSONArray();
         for (CurrencyType type : CurrencyType.values()) {
@@ -438,6 +449,9 @@ public final class JSONData {
         return result;
     }
 
+    /**
+     * Replaced by {@link com.apollocurrency.aplwallet.apl.core.rest.service.AccountStatisticsService#getAccountsStatistic(int)}
+     */
     @Deprecated
     public static JSONObject getAccountsStatistic(int numberOfAccounts) {
         long totalSupply = accountService.getTotalSupply();
@@ -460,7 +474,7 @@ public final class JSONData {
         return result;
     }
 
-    public static JSONObject availableOffers(CurrencyExchangeOffer.AvailableOffers availableOffers) {
+    public static JSONObject availableOffers(AvailableOffers availableOffers) {
         JSONObject json = new JSONObject();
         json.put("rateATM", String.valueOf(availableOffers.getRateATM()));
         json.put("units", String.valueOf(availableOffers.getUnits()));
@@ -714,7 +728,7 @@ public final class JSONData {
         json.put("minRangeValue", poll.getMinRangeValue());
         json.put("maxRangeValue", poll.getMaxRangeValue());
         putVoteWeighting(json, poll.getVoteWeighting());
-        json.put("finished", poll.isFinished());
+        json.put("finished", POLL_SERVICE.isFinished(poll.getFinishHeight()));
         json.put("timestamp", poll.getTimestamp());
         return json;
     }
@@ -723,9 +737,9 @@ public final class JSONData {
         JSONObject json = new JSONObject();
         json.put("poll", Long.toUnsignedString(poll.getId()));
         if (voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.ASSET) {
-            json.put("decimals", Asset.getAsset(voteWeighting.getHoldingId()).getDecimals());
+            json.put("decimals", assetService.getAsset(voteWeighting.getHoldingId()).getDecimals());
         } else if (voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.CURRENCY) {
-            Currency currency = Currency.getCurrency(voteWeighting.getHoldingId());
+            Currency currency = currencyService.getCurrency(voteWeighting.getHoldingId());
             if (currency != null) {
                 json.put("decimals", currency.getDecimals());
             } else {
@@ -735,7 +749,7 @@ public final class JSONData {
             }
         }
         putVoteWeighting(json, voteWeighting);
-        json.put("finished", poll.isFinished());
+        json.put("finished", POLL_SERVICE.isFinished(poll.getFinishHeight()));
         JSONArray options = new JSONArray();
         Collections.addAll(options, poll.getOptions());
         json.put("options", options);
@@ -829,6 +843,10 @@ public final class JSONData {
         return json;
     }
 
+    /**
+     * Use {@link com.apollocurrency.aplwallet.apl.core.rest.converter.VoteWeightingConverter#apply(VoteWeighting)}
+     */
+    @Deprecated
     private static void putVoteWeighting(JSONObject json, VoteWeighting voteWeighting) {
         json.put("votingModel", voteWeighting.getVotingModel().getCode());
         json.put("minBalance", String.valueOf(voteWeighting.getMinBalance()));
@@ -838,7 +856,32 @@ public final class JSONData {
         }
     }
 
+/*
+    @Deprecated
     public static JSONObject phasingOnly(PhasingOnly phasingOnly) {
+        JSONObject json = new JSONObject();
+        putAccount(json, "account", phasingOnly.getAccountId());
+        json.put("quorum", String.valueOf(phasingOnly.getPhasingParams().getQuorum()));
+        JSONArray whitelistJson = new JSONArray();
+        for (long accountId : phasingOnly.getPhasingParams().getWhitelist()) {
+            JSONObject whitelisted = new JSONObject();
+            putAccount(whitelisted, "whitelisted", accountId);
+            whitelistJson.add(whitelisted);
+        }
+        json.put("whitelist", whitelistJson);
+        json.put("maxFees", String.valueOf(phasingOnly.getMaxFees()));
+        json.put("minDuration", phasingOnly.getMinDuration());
+        json.put("maxDuration", phasingOnly.getMaxDuration());
+        putVoteWeighting(json, phasingOnly.getPhasingParams().getVoteWeighting());
+        return json;
+    }
+*/
+
+    /**
+     * Use {@link com.apollocurrency.aplwallet.apl.core.rest.converter.AccountControlPhasingConverter#apply(AccountControlPhasing)}
+     */
+    @Deprecated
+    public static JSONObject phasingOnly(AccountControlPhasing phasingOnly) {
         JSONObject json = new JSONObject();
         putAccount(json, "account", phasingOnly.getAccountId());
         json.put("quorum", String.valueOf(phasingOnly.getPhasingParams().getQuorum()));
@@ -931,7 +974,7 @@ public final class JSONData {
         json.put("asset", Long.toUnsignedString(assetTransfer.getAssetId()));
         putAccount(json, "sender", assetTransfer.getSenderId());
         putAccount(json, "recipient", assetTransfer.getRecipientId());
-        json.put("quantityATU", String.valueOf(assetTransfer.getQuantityATU()));
+        json.put("quantityATU", String.valueOf(assetTransfer.getQuantityATM())); //'...ATU' is returned from '...ATM' field
         json.put("height", assetTransfer.getHeight());
         json.put("timestamp", assetTransfer.getTimestamp());
         if (includeAssetInfo) {
@@ -983,6 +1026,7 @@ public final class JSONData {
         return json;
     }
 
+    @Deprecated
     public static JSONObject assetDividend(AssetDividend assetDividend) {
         JSONObject json = new JSONObject();
         json.put("assetDividend", Long.toUnsignedString(assetDividend.getId()));
@@ -1311,18 +1355,23 @@ public final class JSONData {
         json.put("errorDescription", error + e.getMessage());
     }
 
+    /**
+     * Use {@link com.apollocurrency.aplwallet.apl.core.rest.converter.AccountConverter#apply(Account)}
+     */
     @Deprecated
     static void putAccount(JSONObject json, String name, long accountId, boolean isPrivate) {
         if (isPrivate) {
             Random random = new Random();
             accountId = random.nextLong();
-            if (name.equals("sender")) {
+
+            if (name.equals("sender"))
+            {
                 byte[] b = new byte[32];
                 random.nextBytes(b);
-                json.put(name + "PublicKey", Convert.toHexString(b));
+                json.put(name +"PublicKey", Convert.toHexString(b));
             }
-        }
 
+        }
         json.put(name, Long.toUnsignedString(accountId));
         json.put(name + "RS", Convert2.rsAccount(accountId));
     }
@@ -1344,7 +1393,7 @@ public final class JSONData {
      */
     @Deprecated
     private static void putCurrencyInfo(JSONObject json, long currencyId) {
-        Currency currency = Currency.getCurrency(currencyId);
+        Currency currency = currencyService.getCurrency(currencyId);
         if (currency == null) {
             return;
         }
@@ -1357,11 +1406,11 @@ public final class JSONData {
     }
 
     /**
-     * Use {@link com.apollocurrency.aplwallet.apl.core.rest.converter.AccountAssetConverter#addAsset(AccountAssetDTO, Asset)}
+     * Use {@link com.apollocurrency.aplwallet.apl.core.rest.converter.AccountAssetConverter#apply(AccountAsset)}
      */
     @Deprecated
     private static void putAssetInfo(JSONObject json, long assetId) {
-        Asset asset = Asset.getAsset(assetId);
+        Asset asset = assetService.getAsset(assetId);
         if (asset != null) {
             json.put("name", asset.getName());
             json.put("decimals", asset.getDecimals());

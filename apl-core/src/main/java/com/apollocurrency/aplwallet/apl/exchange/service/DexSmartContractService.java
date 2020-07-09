@@ -1,6 +1,6 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
-import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.eth.contracts.DexContract;
@@ -26,7 +26,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.ExpiredSwap;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.UserAddressesWithOffset;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.task.Task;

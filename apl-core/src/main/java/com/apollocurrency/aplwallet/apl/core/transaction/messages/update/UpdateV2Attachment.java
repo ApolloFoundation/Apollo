@@ -5,7 +5,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttach
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.util.env.Arch;
 import com.apollocurrency.aplwallet.apl.util.env.OS;
