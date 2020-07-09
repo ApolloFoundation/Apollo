@@ -22,7 +22,7 @@ public interface ExchangeService {
     Exchange addExchange(Transaction transaction, long currencyId,
                          long offerId,
                          long sellerId, long buyerId, long units,
-                         Block lastBlock,
+//                         Block lastBlock,
                          long rateATM);
 
     /**

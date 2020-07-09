@@ -17,7 +17,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySellOffer;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencySellOfferService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
@@ -29,14 +29,14 @@ public class CurrencySellOfferServiceImpl implements CurrencySellOfferService {
 
     private final CurrencySellOfferTable currencySellOfferTable;
     private final BlockChainInfoService blockChainInfoService;
-    private final IteratorToStreamConverter<CurrencySellOffer> currencyBuyOfferIteratorToStreamConverter;
+    private final IteratorToStreamConverter<CurrencySellOffer> iteratorToStreamConverter;
 
     @Inject
     public CurrencySellOfferServiceImpl(CurrencySellOfferTable currencySellOfferTable,
                                         BlockChainInfoService blockChainInfoService) {
         this.currencySellOfferTable = currencySellOfferTable;
         this.blockChainInfoService = blockChainInfoService;
-        currencyBuyOfferIteratorToStreamConverter = new IteratorToStreamConverter<>();
+        this.iteratorToStreamConverter = new IteratorToStreamConverter<>();
     }
 
     /**
@@ -44,13 +44,13 @@ public class CurrencySellOfferServiceImpl implements CurrencySellOfferService {
      */
     public CurrencySellOfferServiceImpl(CurrencySellOfferTable currencySellOfferTable,
                                         BlockChainInfoService blockChainInfoService,
-                                        IteratorToStreamConverter<CurrencySellOffer> currencyBuyOfferIteratorToStreamConverter) {
+                                        IteratorToStreamConverter<CurrencySellOffer> iteratorToStreamConverter) {
         this.currencySellOfferTable = currencySellOfferTable;
         this.blockChainInfoService = blockChainInfoService;
-        if (currencyBuyOfferIteratorToStreamConverter != null) {
-            this.currencyBuyOfferIteratorToStreamConverter = currencyBuyOfferIteratorToStreamConverter;
+        if (iteratorToStreamConverter != null) {
+            this.iteratorToStreamConverter = iteratorToStreamConverter;
         } else {
-            this.currencyBuyOfferIteratorToStreamConverter = new IteratorToStreamConverter<>();
+            this.iteratorToStreamConverter = new IteratorToStreamConverter<>();
         }
     }
 
@@ -61,7 +61,7 @@ public class CurrencySellOfferServiceImpl implements CurrencySellOfferService {
 
     @Override
     public CurrencySellOffer getOffer(long offerId) {
-        return currencySellOfferTable.get(CurrencySellOfferTable.buyOfferDbKeyFactory.newKey(offerId));
+        return currencySellOfferTable.get(CurrencySellOfferTable.sellOfferDbKeyFactory.newKey(offerId));
     }
 
     @Override
@@ -71,7 +71,7 @@ public class CurrencySellOfferServiceImpl implements CurrencySellOfferService {
 
     @Override
     public Stream<CurrencySellOffer> getAllStream(int from, int to) {
-        return currencyBuyOfferIteratorToStreamConverter.apply(currencySellOfferTable.getAll(from, to));
+        return iteratorToStreamConverter.apply(currencySellOfferTable.getAll(from, to));
     }
 
     @Override
@@ -90,7 +90,8 @@ public class CurrencySellOfferServiceImpl implements CurrencySellOfferService {
         if (availableOnly) {
             dbClause = dbClause.and(availableOnlyDbClause);
         }
-        return currencySellOfferTable.getManyBy(dbClause, from, to, " ORDER BY rate DESC, creation_height ASC, transaction_height ASC, transaction_index ASC ");
+        return currencySellOfferTable.getManyBy(dbClause, from, to,
+            " ORDER BY rate DESC, creation_height ASC, transaction_height ASC, transaction_index ASC ");
     }
 
     @Override
@@ -99,7 +100,7 @@ public class CurrencySellOfferServiceImpl implements CurrencySellOfferService {
         if (availableOnly) {
             dbClause = dbClause.and(availableOnlyDbClause);
         }
-        return currencyBuyOfferIteratorToStreamConverter.apply(
+        return iteratorToStreamConverter.apply(
             currencySellOfferTable.getManyBy(dbClause, from, to,
                 " ORDER BY rate DESC, creation_height ASC, transaction_height ASC, transaction_index ASC ")
         );
@@ -111,7 +112,8 @@ public class CurrencySellOfferServiceImpl implements CurrencySellOfferService {
         if (availableOnly) {
             dbClause = dbClause.and(availableOnlyDbClause);
         }
-        return currencySellOfferTable.getManyBy(dbClause, from, to, " ORDER BY rate DESC, creation_height ASC, transaction_height ASC, transaction_index ASC ");
+        return currencySellOfferTable.getManyBy(dbClause, from, to,
+            " ORDER BY rate DESC, creation_height ASC, transaction_height ASC, transaction_index ASC ");
     }
 
     @Override
@@ -120,7 +122,7 @@ public class CurrencySellOfferServiceImpl implements CurrencySellOfferService {
         if (availableOnly) {
             dbClause = dbClause.and(availableOnlyDbClause);
         }
-        return currencyBuyOfferIteratorToStreamConverter.apply(
+        return iteratorToStreamConverter.apply(
             currencySellOfferTable.getManyBy(dbClause, from, to,
                 " ORDER BY rate DESC, creation_height ASC, transaction_height ASC, transaction_index ASC ")
         );
@@ -144,7 +146,7 @@ public class CurrencySellOfferServiceImpl implements CurrencySellOfferService {
 
     @Override
     public Stream<CurrencySellOffer> getOffersStream(DbClause dbClause, int from, int to) {
-        return currencyBuyOfferIteratorToStreamConverter.apply(currencySellOfferTable.getManyBy(dbClause, from, to));
+        return iteratorToStreamConverter.apply(currencySellOfferTable.getManyBy(dbClause, from, to));
     }
 
     @Override
@@ -154,7 +156,7 @@ public class CurrencySellOfferServiceImpl implements CurrencySellOfferService {
 
     @Override
     public Stream<CurrencySellOffer> getOffersStream(DbClause dbClause, int from, int to, String sort) {
-        return currencyBuyOfferIteratorToStreamConverter.apply(currencySellOfferTable.getManyBy(dbClause, from, to, sort));
+        return iteratorToStreamConverter.apply(currencySellOfferTable.getManyBy(dbClause, from, to, sort));
     }
 
     @Override
@@ -164,10 +166,10 @@ public class CurrencySellOfferServiceImpl implements CurrencySellOfferService {
     }
 
     @Override
-    public void remove(CurrencySellOffer buyOffer) {
+    public void remove(CurrencySellOffer sellOffer) {
         int height = blockChainInfoService.getHeight();
-        buyOffer.setHeight(height); // important to assign height here!
-        currencySellOfferTable.deleteAtHeight(buyOffer, height);
+        sellOffer.setHeight(height); // important to assign height here!
+        currencySellOfferTable.deleteAtHeight(sellOffer, height);
     }
 
     @Override

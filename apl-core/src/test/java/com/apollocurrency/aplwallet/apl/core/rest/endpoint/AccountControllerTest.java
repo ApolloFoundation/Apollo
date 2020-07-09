@@ -37,6 +37,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetS
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
 import com.apollocurrency.aplwallet.apl.core.utils.AccountGeneratorUtil;
@@ -134,6 +135,8 @@ class AccountControllerTest extends AbstractEndpointTest {
     private AccountAssetConverter accountAssetConverter;
     @Mock
     private OrderService<AskOrder, ColoredCoinsAskOrderPlacement> orderService;
+    @Mock
+    private CurrencyService currencyService;
 
     private TransactionConverter transactionConverter = new TransactionConverter(blockchain, new UnconfirmedTransactionConverter());
     private BlockConverter blockConverter = new BlockConverter(blockchain, transactionConverter, mock(PhasingPollService.class));
@@ -172,7 +175,8 @@ class AccountControllerTest extends AbstractEndpointTest {
             orderService,
             100,
             accountStatisticsService,
-            assetService
+            assetService,
+            currencyService
         );
 
         dispatcher.getRegistry().addSingletonResource(endpoint);

@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.mint;
 
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 
@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
 
+@Deprecated
 public final class CurrencyMinting {
 
     public static final Set<HashFunction> acceptedHashFunctions =
@@ -40,14 +41,22 @@ public final class CurrencyMinting {
     private CurrencyMinting() {
     } // never
 
+    /**
+     * @deprecated
+     */
     public static boolean meetsTarget(long accountId, Currency currency, MonetarySystemCurrencyMinting attachment) {
         byte[] hash = getHash(currency.getAlgorithm(), attachment.getNonce(), attachment.getCurrencyId(), attachment.getUnits(),
             attachment.getCounter(), accountId);
         byte[] target = getTarget(currency.getMinDifficulty(), currency.getMaxDifficulty(),
-            attachment.getUnits(), currency.getCurrentSupply() - currency.getReserveSupply(), currency.getMaxSupply() - currency.getReserveSupply());
+            attachment.getUnits(),
+            currency.getCurrencySupply().getCurrentSupply() - currency.getReserveSupply(),
+            currency.getMaxSupply() - currency.getReserveSupply());
         return meetsTarget(hash, target);
     }
 
+    /**
+     * @deprecated
+     */
     public static boolean meetsTarget(byte[] hash, byte[] target) {
         for (int i = hash.length - 1; i >= 0; i--) {
             if ((hash[i] & 0xff) > (target[i] & 0xff)) {
@@ -60,11 +69,17 @@ public final class CurrencyMinting {
         return true;
     }
 
+    /**
+     * @deprecated
+     */
     public static byte[] getHash(byte algorithm, long nonce, long currencyId, long units, long counter, long accountId) {
         HashFunction hashFunction = HashFunction.getHashFunction(algorithm);
         return getHash(hashFunction, nonce, currencyId, units, counter, accountId);
     }
 
+    /**
+     * @deprecated
+     */
     public static byte[] getHash(HashFunction hashFunction, long nonce, long currencyId, long units, long counter, long accountId) {
         ByteBuffer buffer = ByteBuffer.allocate(8 + 8 + 8 + 8 + 8);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
@@ -76,10 +91,16 @@ public final class CurrencyMinting {
         return hashFunction.hash(buffer.array());
     }
 
+    /**
+     * @deprecated
+     */
     public static byte[] getTarget(int min, int max, long units, long currentMintableSupply, long totalMintableSupply) {
         return getTarget(getNumericTarget(min, max, units, currentMintableSupply, totalMintableSupply));
     }
 
+    /**
+     * @deprecated
+     */
     public static byte[] getTarget(BigInteger numericTarget) {
         byte[] targetRowBytes = numericTarget.toByteArray();
         if (targetRowBytes.length == 32) {
@@ -91,11 +112,18 @@ public final class CurrencyMinting {
         return reverse(targetBytes);
     }
 
+    /**
+     * @deprecated
+     */
     public static BigInteger getNumericTarget(Currency currency, long units) {
         return getNumericTarget(currency.getMinDifficulty(), currency.getMaxDifficulty(), units,
-            currency.getCurrentSupply() - currency.getReserveSupply(), currency.getMaxSupply() - currency.getReserveSupply());
+            currency.getCurrencySupply().getCurrentSupply() - currency.getReserveSupply(),
+            currency.getMaxSupply() - currency.getReserveSupply());
     }
 
+    /**
+     * @deprecated
+     */
     public static BigInteger getNumericTarget(int min, int max, long units, long currentMintableSupply, long totalMintableSupply) {
         if (min < 1 || max > 255) {
             throw new IllegalArgumentException(String.format("Min: %d, Max: %d, allowed range is 1 to 255", min, max));

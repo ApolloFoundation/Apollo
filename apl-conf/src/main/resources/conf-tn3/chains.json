@@ -8,7 +8,9 @@
       "51.15.210.116",
       "51.15.242.197",
       "51.15.218.241",
-      "51.15.130.37"
+      "51.15.130.37",
+      "51.15.46.49",
+      "51.15.102.159"
     ],
     "name": "Apollo experimental testnet",
     "description": "NOT STABLE testnet for experiments. Don't use it if you don't know what is it",
@@ -44,7 +46,7 @@
         },
         "shardingSettings": {
           "enabled": true,
-          "frequency": 2000
+          "frequency": 10000
         }
       },
       {

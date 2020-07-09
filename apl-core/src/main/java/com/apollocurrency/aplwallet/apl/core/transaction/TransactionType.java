@@ -154,6 +154,8 @@ public abstract class TransactionType {
     private static ExchangeRequestService exchangeRequestService;
     private static CurrencyTransferService currencyTransferService;
     private static CurrencyMintService currencyMintService;
+    private static CurrencyService currencyService;
+    private static MonetaryCurrencyMintingService monetaryCurrencyMintingService;
 
     public TransactionType() {
     }
@@ -314,6 +316,20 @@ public abstract class TransactionType {
             currencyMintService = CDI.current().select(CurrencyMintService.class).get();
         }
         return currencyMintService;
+    }
+
+    public static synchronized CurrencyService lookupCurrencyService() {
+        if (currencyService == null) {
+            currencyService = CDI.current().select(CurrencyService.class).get();
+        }
+        return currencyService;
+    }
+
+    public static synchronized MonetaryCurrencyMintingService lookupMonetaryCurrencyMintingService() {
+        if (monetaryCurrencyMintingService == null) {
+            monetaryCurrencyMintingService = CDI.current().select(MonetaryCurrencyMintingService.class).get();
+        }
+        return monetaryCurrencyMintingService;
     }
 
     public static TransactionType findTransactionType(byte type, byte subtype) {

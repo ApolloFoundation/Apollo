@@ -22,6 +22,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TwoFactorAuthService;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 
@@ -42,15 +43,23 @@ public class AccountConverter implements Converter<Account, AccountDTO> {
     private final TwoFactorAuthService twoFactorAuthService;
     private final Blockchain blockchain;
     private final AccountCurrencyConverter accountCurrencyConverter;
+    private final CurrencyService currencyService;
 
     @Inject
-    public AccountConverter(AccountService accountService, AccountInfoService accountInfoService, AccountLeaseService accountLeaseService, TwoFactorAuthService twoFactorAuthService, Blockchain blockchain, AccountCurrencyConverter accountCurrencyConverter) {
+    public AccountConverter(AccountService accountService,
+                            AccountInfoService accountInfoService,
+                            AccountLeaseService accountLeaseService,
+                            TwoFactorAuthService twoFactorAuthService,
+                            Blockchain blockchain,
+                            AccountCurrencyConverter accountCurrencyConverter,
+                            CurrencyService currencyService) {
         this.accountService = accountService;
         this.accountInfoService = accountInfoService;
         this.accountLeaseService = accountLeaseService;
         this.twoFactorAuthService = twoFactorAuthService;
         this.blockchain = blockchain;
         this.accountCurrencyConverter = accountCurrencyConverter;
+        this. currencyService = currencyService;
     }
 
     private static void addAccountInfo(AccountDTO o, AccountInfo model) {
@@ -209,7 +218,7 @@ public class AccountConverter implements Converter<Account, AccountDTO> {
             List<AccountCurrencyDTO> currencies = model.stream()
                 .map(accountCurrency -> {
                     AccountCurrencyDTO dto = accountCurrencyConverter.convert(accountCurrency);
-                    accountCurrencyConverter.addCurrency(dto, Currency.getCurrency(accountCurrency.getCurrencyId()));
+                    accountCurrencyConverter.addCurrency(dto,  currencyService.getCurrency(accountCurrency.getCurrencyId()));
                     return dto;
                 }).collect(Collectors.toList());
 

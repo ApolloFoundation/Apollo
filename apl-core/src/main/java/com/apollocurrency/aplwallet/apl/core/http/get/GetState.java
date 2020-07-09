@@ -20,19 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionType.lookupCurrencyExchangeOfferFacade;
-
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
-import com.apollocurrency.aplwallet.apl.core.app.Vote;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
-import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
-import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -40,10 +32,11 @@ import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 import java.net.InetAddress;
 
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionType.lookupCurrencyExchangeOfferFacade;
+
 @Deprecated
 @Vetoed
 public final class GetState extends AbstractAPIRequestHandler {
-
     public GetState() {
         super(new APITag[]{APITag.INFO}, "includeCounts", "adminPassword");
     }
@@ -64,7 +57,7 @@ public final class GetState extends AbstractAPIRequestHandler {
             response.put("numberOfBidOrders", bidCount);
             response.put("numberOfTrades", tradeService.getCount());
             response.put("numberOfTransfers", lookupAssetTransferService().getCount());
-            response.put("numberOfCurrencies", Currency.getCount());
+            response.put("numberOfCurrencies", lookupCurrencyService().getCount());
             response.put("numberOfOffers", lookupCurrencyExchangeOfferFacade().getCurrencyBuyOfferService().getCount());
             response.put("numberOfExchangeRequests", lookupExchangeRequestService().getCount());
             response.put("numberOfExchanges", exchangeService.getCount());
@@ -74,7 +67,7 @@ public final class GetState extends AbstractAPIRequestHandler {
             response.put("numberOfPurchases", service.getPurchaseCount());
             response.put("numberOfTags", service.getTagsCount());
             response.put("numberOfPolls", pollService.getCount());
-            response.put("numberOfVotes", Vote.getCount());
+            response.put("numberOfVotes", pollService.getPollVoteCount());
             response.put("numberOfPrunableMessages", prunableMessageService.getCount());
             response.put("numberOfTaggedData", taggedDataService.getTaggedDataCount());
             response.put("numberOfDataTags", taggedDataService.getDataTagCount());

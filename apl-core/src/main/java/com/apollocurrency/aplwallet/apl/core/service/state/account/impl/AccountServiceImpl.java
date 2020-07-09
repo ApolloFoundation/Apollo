@@ -211,7 +211,7 @@ public class AccountServiceImpl implements AccountService {
         } else {
             accountTable.insert(account);
         }
-        if (log.isTraceEnabled()) {
+        if (log.isTraceEnabled() /*&& (account.getId() == 2650055114867906720L || account.getId() == 5122426243196961555L)*/) {
             try {
                 log.trace("Account entities {}", accountTable.selectAllForKey(account.getId()).stream().map(this::stringAcount).limit(3).collect(Collectors.joining("-----")));
                 log.trace("Account id {} - {}", account.getId(), ThreadUtils.last5Stacktrace());
@@ -246,7 +246,7 @@ public class AccountServiceImpl implements AccountService {
             account.setPublicKey(accountPublicKeyService.getPublicKey(AccountTable.newKey(account.getId())));
         }
         if (account.getPublicKey() == null || account.getPublicKey().getPublicKey() == null || height - account.getPublicKey().getHeight() <= EFFECTIVE_BALANCE_CONFIRMATIONS) {
-            if (log.isTraceEnabled()) {
+            if (log.isTraceEnabled() /*&& (account.getId() == 2650055114867906720L || account.getId() == 5122426243196961555L)*/) {
                 log.trace(" height '{}' - this.publicKey.getHeight() '{}' ('{}') <= EFFECTIVE_BALANCE_CONFIRMATIONS '{}'",
                     height,
                     account.getPublicKey() != null ? account.getPublicKey().getHeight() : null,
@@ -287,7 +287,7 @@ public class AccountServiceImpl implements AccountService {
             int height = currentHeight - numberOfConfirmations;
             if (height + blockchainConfig.getGuaranteedBalanceConfirmations() < blockChainInfoService.getMinRollbackHeight()
                 || height > blockChainInfoService.getHeight()) {
-                if (log.isDebugEnabled()) {
+                if (log.isDebugEnabled() /*&& (account.getId() == 2650055114867906720L || account.getId() == 5122426243196961555L)*/) {
                     log.debug("GuaranteedBalance Restriction: if ({} < {} || {} > {}) throw ex.",
                         height + blockchainConfig.getGuaranteedBalanceConfirmations(), blockChainInfoService.getMinRollbackHeight(),
                         height, blockChainInfoService.getHeight());
