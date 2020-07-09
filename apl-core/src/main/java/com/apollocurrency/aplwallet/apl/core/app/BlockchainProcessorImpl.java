@@ -45,7 +45,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.appdata.OptionDAO;
 import com.apollocurrency.aplwallet.apl.core.files.shards.ShardsDownloadService;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecision;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
-import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
@@ -56,7 +55,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollRes
 import com.apollocurrency.aplwallet.apl.core.shard.ShardImporter;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
-import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
@@ -158,7 +156,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final BlockApplier blockApplier;
     private final ShardsDownloadService shardDownloader;
     private final ShardDao shardDao;
-    private final PrunableMessageService prunableMessageService;
     private PeersService peers;
     private BlockchainConfigUpdater blockchainConfigUpdater;
     private FullTextSearchService fullTextSearchProvider;
@@ -188,11 +185,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    TrimService trimService, DatabaseManager databaseManager, DexService dexService,
                                    BlockApplier blockApplier, AplAppStatus aplAppStatus,
                                    ShardsDownloadService shardDownloader,
-                                   ShardImporter importer, PrunableMessageService prunableMessageService,
+                                   ShardImporter importer,
                                    TaskDispatchManager taskDispatchManager, Event<List<Transaction>> txEvent,
                                    Event<BlockchainConfig> blockchainEvent,
                                    ShardDao shardDao,
-                                   TimeService timeService) {
+                                   TimeService timeService,
+                                   BlockchainConfigUpdater blockchainConfigUpdater) {
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder);
         this.defaultNumberOfForkConfirmations = propertiesHolder.getIntProperty("apl.numberOfForkConfirmations");
         this.blockchainConfig = blockchainConfig;
@@ -213,12 +211,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.aplAppStatus = aplAppStatus;
         this.shardDownloader = shardDownloader;
         this.shardImporter = importer;
-        this.prunableMessageService = prunableMessageService;
         this.taskDispatchManager = taskDispatchManager;
         this.txEvent = txEvent;
         this.shardDao = shardDao;
         this.blockchainEvent = blockchainEvent;
         this.timeService = timeService;
+        this.blockchainConfigUpdater = blockchainConfigUpdater;
 
         configureBackgroundTasks();
 
@@ -251,14 +249,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private Blockchain lookupBlockhain() {
         if (blockchain == null) blockchain = CDI.current().select(Blockchain.class).get();
         return blockchain;
-    }
-
-    //private final Runnable getMoreBlocksThread = new GetMoreBlocksThread();
-
-    private BlockchainConfigUpdater lookupBlockhainConfigUpdater() {
-        if (blockchainConfigUpdater == null)
-            blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
-        return blockchainConfigUpdater;
     }
 
     private TransactionalDataSource lookupDataSource() {
@@ -448,7 +438,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     FileUtils.clearDirectorySilently(dataExportDir);
                     FileUtils.deleteFilesByPattern(dirProvider.getDbDir(), new String[]{".zip", DbProperties.DB_EXTENSION_WITH_DOT}, new String[]{"-shard-"});
                     dataSource.commit(false);
-                    lookupBlockhainConfigUpdater().rollback(0);
+                    blockchainConfigUpdater.rollback(0);
                 } catch (Exception e) {
                     log.error(e.toString(), e);
                     dataSource.rollback(false);
@@ -1030,7 +1020,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
                 log.debug("popOffWithRescan set to lastBLock={}", lastBLock);
                 lookupBlockhain().setLastBlock(lastBLock);
-                lookupBlockhainConfigUpdater().rollback(lastBLock.getHeight());
+                blockchainConfigUpdater.rollback(lastBLock.getHeight());
                 log.debug("Blockchain config updated, lastBlockId={} at height={}", lastBLock.getId(), lastBLock.getHeight());
             } catch (Exception e) {
                 // just for logging possible hidden error
@@ -1287,7 +1277,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 } else {
                     blockchain.setLastBlock(blockchain.getBlockAtHeight(height - 1));
                 }
-                lookupBlockhainConfigUpdater().rollback(blockchain.getLastBlock().getHeight());
+                blockchainConfigUpdater.rollback(blockchain.getLastBlock().getHeight());
                 if (shutdown) {
                     log.info("Scan will be performed at next start");
                     new Thread(() -> System.exit(0)).start();
