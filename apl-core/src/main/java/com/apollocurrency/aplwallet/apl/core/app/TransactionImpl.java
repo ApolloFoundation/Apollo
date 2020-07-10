@@ -187,6 +187,7 @@ public class TransactionImpl implements Transaction {
         try {
             ByteBuffer buffer = ByteBuffer.wrap(bytes);
             buffer.order(ByteOrder.LITTLE_ENDIAN);
+            //begin: read transaction header
             byte type = buffer.get();
             byte subtype = buffer.get();
             byte version = (byte) ((subtype & 0xF0) >> 4);
@@ -212,9 +213,15 @@ public class TransactionImpl implements Transaction {
                 ecBlockHeight = buffer.getInt();
                 ecBlockId = buffer.getLong();
             }
+            //end: read transaction header
             TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
-            TransactionImpl.BuilderImpl builder = new BuilderImpl(version, senderPublicKey, amountATM, feeATM,
-                deadline, transactionType.parseAttachment(buffer), timestamp)
+            //begin: read transaction attachment
+            AbstractAttachment attachment = transactionType.parseAttachment(buffer);
+            //end: read transaction attachment
+            TransactionImpl.BuilderImpl builder = new BuilderImpl(
+                version, senderPublicKey, amountATM, feeATM, deadline,
+                attachment,
+                timestamp)
                 .referencedTransactionFullHash(referencedTransactionFullHash)
                 .signature(signature)
                 .ecBlockHeight(ecBlockHeight)
@@ -222,6 +229,7 @@ public class TransactionImpl implements Transaction {
             if (transactionType.canHaveRecipient()) {
                 builder.recipientId(recipientId);
             }
+            //begin: read transaction appendix
             int position = 1;
             if ((flags & position) != 0 || (version == 0 && transactionType == Messaging.ARBITRARY_MESSAGE)) {
                 builder.appendix(new MessageAppendix(buffer));
@@ -250,8 +258,19 @@ public class TransactionImpl implements Transaction {
             if ((flags & position) != 0) {
                 builder.appendix(new PrunableEncryptedMessageAppendix(buffer));
             }
+            //end: read transaction appendix
+
             if (buffer.hasRemaining()) {
-                throw new AplException.NotValidException("Transaction bytes too long, " + buffer.remaining() + " extra bytes");
+                //try: read transaction multisig
+                byte[] magicMultiSig = new byte[4];
+                buffer.get(magicMultiSig);
+                if (Arrays.equals(magicMultiSig, new byte[]{})) {
+                    //begin: read transaction multisig
+
+                    //end: read transaction multisig
+                } else {
+                    throw new AplException.NotValidException("Transaction bytes too long, " + buffer.remaining() + " extra bytes");
+                }
             }
             return builder;
         } catch (RuntimeException e) {
