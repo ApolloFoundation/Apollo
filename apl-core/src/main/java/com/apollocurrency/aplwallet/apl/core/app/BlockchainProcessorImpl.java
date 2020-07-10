@@ -49,6 +49,7 @@ import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableRestorationService;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollResult;
@@ -139,7 +140,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final DatabaseManager databaseManager;
     private final ExecutorService networkService;
     private final int defaultNumberOfForkConfirmations;
-    private final Set<Long> prunableTransactions = new HashSet<>();
+//    private final Set<Long> prunableTransactions = new HashSet<>();
     private final javax.enterprise.event.Event<Block> blockEvent;
     private final javax.enterprise.event.Event<AccountLedgerEventType> ledgerEvent;
     private final javax.enterprise.event.Event<List<Transaction>> txEvent;
@@ -166,6 +167,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private int initialScanHeight;
     private volatile int lastRestoreTime = 0;
     private final BlockValidator validator;
+    private final PrunableRestorationService prunableRestorationService;
     //    private final Listeners<Block, Event> blockListeners = new Listeners<>();
     private volatile Peer lastBlockchainFeeder;
     private volatile int lastBlockchainFeederHeight;
@@ -190,7 +192,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    Event<BlockchainConfig> blockchainEvent,
                                    ShardDao shardDao,
                                    TimeService timeService,
-                                   BlockchainConfigUpdater blockchainConfigUpdater) {
+                                   BlockchainConfigUpdater blockchainConfigUpdater,
+                                   PrunableRestorationService prunableRestorationService) {
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder);
         this.defaultNumberOfForkConfirmations = propertiesHolder.getIntProperty("apl.numberOfForkConfirmations");
         this.blockchainConfig = blockchainConfig;
@@ -217,6 +220,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.blockchainEvent = blockchainEvent;
         this.timeService = timeService;
         this.blockchainConfigUpdater = blockchainConfigUpdater;
+        this.prunableRestorationService = prunableRestorationService;
 
         configureBackgroundTasks();
 
@@ -772,6 +776,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         for (AbstractAppendix appendage : transaction.getAppendages(true)) {
                             if ((appendage instanceof Prunable) &&
                                 !((Prunable) appendage).hasPrunableData()) {
+                                // TODO: YL check correct work with prunables
+                                Set<Long> prunableTransactions = prunableRestorationService.getPrunableTransactions();
                                 synchronized (prunableTransactions) {
                                     prunableTransactions.add(transaction.getId());
                                 }
@@ -1471,6 +1477,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 // retry later using a different archive peer
                 //
                 Set<Long> processing;
+                Set<Long> prunableTransactions = prunableRestorationService.getPrunableTransactions(); // TODO: YL check correct work with prunables
                 synchronized (prunableTransactions) {
                     processing = new HashSet<>(prunableTransactions.size());
                     processing.addAll(prunableTransactions);
@@ -1530,7 +1537,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 log.error("Unable to restore prunable data", e);
             } finally {
                 isRestoring = false;
-                log.debug("Remaining " + prunableTransactions.size() + " pruned transactions");
+                // TODO: YL check correct work with prunables
+                log.debug("Remaining " + prunableRestorationService.getPrunableTransactions().size() + " pruned transactions");
             }
         }
     }
@@ -1581,7 +1589,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 // Restore prunable data
                 //
                 int now = timeService.getEpochTime();
-                if (!isRestoring && !prunableTransactions.isEmpty() && now - lastRestoreTime > 60 * 60) {
+                if (!isRestoring && !prunableRestorationService.getPrunableTransactions().isEmpty() && now - lastRestoreTime > 60 * 60) {
                     isRestoring = true;
                     lastRestoreTime = now;
                     networkService.submit(new RestorePrunableDataTask());

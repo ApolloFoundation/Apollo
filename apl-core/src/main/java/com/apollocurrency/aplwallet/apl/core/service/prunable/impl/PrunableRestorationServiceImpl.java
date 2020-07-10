@@ -166,7 +166,13 @@ public class PrunableRestorationServiceImpl implements PrunableRestorationServic
         return null;
     }
 
-    public PrunableMessageService getPrunableMessageService() {
-        return prunableMessageService;
+    public Set<Long> getPrunableTransactions() {
+        synchronized (prunableTransactions) {
+            return prunableTransactions;
+        }
+    }
+
+    public boolean remove(long transactionId) {
+        return prunableTransactions.remove(transactionId);
     }
 }
