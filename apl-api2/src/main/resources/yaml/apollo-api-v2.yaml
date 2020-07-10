@@ -673,24 +673,24 @@ components:
               type: string
               format: hex_bytearray
               example: 'a2e9b946290b48b69985dc2e5a5860a1'
-            genesisPublicKey:
-              type: string
-              format: hex_bytearray
-              example: '1259ec21d31a30898d7cd1609f80d9668b4778e3d97e941044b39f0c44d2e51b'
             height:
               type: integer
               format: int64
               example: 4789567
-            genesisBlockTimestamp:
-              type: integer
-              format: int64
-              description: Genesis block timestamp, Unix timestamp in milliseconds
-              example: 1491696372000
+            genesisAccount:
+              type: string
+              format: hex_bytearray
+              example: '90001259ec21d31a30898d7'
             genesisBlockId:
               type: string
               format: hex_bytearray
               description: Genesis block ID
               example: '15856251679437054149169000'
+            genesisBlockTimestamp:
+              type: integer
+              format: int64
+              description: Genesis block timestamp (epoch beginning), Unix timestamp in milliseconds
+              example: 1491696372000
             ecBlockId:
               type: string
               format: hex_bytearray
