@@ -50,8 +50,20 @@ public interface Blockchain {
 
     int getLastBlockTimestamp();
 
+    /**
+     * Return block a given blockId or null if block doesn't exist
+     *
+     * @param blockId the block id
+     * @return block object
+     */
     Block getBlock(long blockId);
 
+    /**
+     * Return block a given height or throw exception BlockNotFoundException if block doesn't exist
+     *
+     * @param height the specified height
+     * @return block object
+     */
     Block getBlockAtHeight(int height);
 
     boolean hasBlock(long blockId);

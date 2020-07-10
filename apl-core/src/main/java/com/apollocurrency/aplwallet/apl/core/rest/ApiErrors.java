@@ -8,7 +8,9 @@ package com.apollocurrency.aplwallet.apl.core.rest;
 
 public enum ApiErrors implements ErrorInfo {
 
-    INTERNAL_SERVER_EXCEPTION(0, 1000, "Internal error, root cause: %s"),
+    INTERNAL_SERVER_EXCEPTION(0, 100, "Internal error, root cause: %s"),
+    BLOCKCHAIN_NOT_INITIALIZED(-1, 101, "Blockchain is not initialized."),
+
     JSON_SERIALIZATION_EXCEPTION(1, 1001, "Exception encountered during generating JSON content, root cause: %s"),
 
     CONSTRAINT_VIOLATION(4, 2001, "Constraint violation: %s"),

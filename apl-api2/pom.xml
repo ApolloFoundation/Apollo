@@ -130,6 +130,7 @@
               <generateSupportingFiles>false</generateSupportingFiles>
               <supportingFilesToGenerate>ApiException.java,NotFoundException.java</supportingFilesToGenerate>
               <modelsToGenerate>AccountInfo,AccountInfoResp,AccountReq,BlockchainInfo,BlockInfo,CountResponse,CreateChildAccountResp,EmptyResponse,ListResponse,Operation,OperationCount,QueryCountResult,QueryObject,QueryResult,TransactionInfo,TransactionInfoArrayResp,TransactionInfoResp,TxReceipt,TxRequest,UnTxReceipt</modelsToGenerate>
+              <configHelp>false</configHelp>
               <configOptions>
                 <sourceFolder>src/gen/java</sourceFolder>
                 <implFolder>src/genimpl/java</implFolder>

@@ -18,17 +18,17 @@ import javax.inject.Singleton;
 @Singleton
 public class UnTxReceiptMapper implements Converter<Transaction, UnTxReceipt> {
     @Override
-    public UnTxReceipt apply(Transaction transaction) {
-        UnTxReceipt o = new UnTxReceipt();
-        o.setTransaction(transaction.getStringId());
-        o.setAmount(String.valueOf(transaction.getAmountATM()));
-        o.setFee(String.valueOf(transaction.getFeeATM()));
-        o.setSender(Convert2.rsAccount(transaction.getSenderId()));
-        if(transaction.getRecipientId()!=0) {
-            o.setRecipient(Convert2.rsAccount(transaction.getRecipientId()));
+    public UnTxReceipt apply(Transaction model) {
+        UnTxReceipt dto = new UnTxReceipt();
+        dto.setTransaction(model.getStringId());
+        dto.setAmount(String.valueOf(model.getAmountATM()));
+        dto.setFee(String.valueOf(model.getFeeATM()));
+        dto.setSender(Convert2.rsAccount(model.getSenderId()));
+        if (model.getRecipientId() != 0) {
+            dto.setRecipient(Convert2.rsAccount(model.getRecipientId()));
         }
-        o.setSignature(Convert.toHexString(transaction.getSignature()));
-        o.setTimestamp((long) transaction.getTimestamp());
-        return o;
+        dto.setSignature(Convert.toHexString(model.getSignature()));
+        dto.setTimestamp((long) model.getTimestamp());
+        return dto;
     }
 }

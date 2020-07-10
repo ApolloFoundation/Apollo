@@ -41,4 +41,9 @@ public class TimeServiceImpl implements TimeService {
     public long systemTime() {
         return ntpTime.getTime() / 1000;
     }
+
+    @Override
+    public long systemTimeMillis() {
+        return ntpTime.getTime();
+    }
 }

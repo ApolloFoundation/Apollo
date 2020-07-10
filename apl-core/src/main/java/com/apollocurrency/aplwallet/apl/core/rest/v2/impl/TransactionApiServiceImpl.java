@@ -79,12 +79,12 @@ public class TransactionApiServiceImpl implements TransactionApiService {
             }
         } catch (NumberFormatException e) {
             receipt = ResponseBuilderV2.createErrorResponse(
-                ApiErrors.CUSTOM_ERROR_MESSAGE,
+                ApiErrors.CUSTOM_ERROR_MESSAGE, null,
                 "Cant't parse byte array, cause " + e.getMessage());
 
         } catch (AplException.ValidationException e) {
             receipt = ResponseBuilderV2.createErrorResponse(
-                ApiErrors.CONSTRAINT_VIOLATION,
+                ApiErrors.CONSTRAINT_VIOLATION, null,
                 e.getMessage());
         }
         return receipt;

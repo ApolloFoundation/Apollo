@@ -11,4 +11,10 @@ public interface TimeService {
      * @return seconds since unix epoch
      */
     long systemTime();
+
+    /**
+     * @return milliseconds since unix epoch
+     */
+    long systemTimeMillis();
+
 }

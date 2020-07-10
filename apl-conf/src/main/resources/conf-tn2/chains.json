@@ -48,7 +48,6 @@
           "frequency": 100000
         },
         "transactionFeeSettings": {
-          "enabled": true,
           "feeRates": [
             {
               "type": 0,

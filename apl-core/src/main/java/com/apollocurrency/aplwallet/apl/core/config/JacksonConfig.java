@@ -1,8 +1,14 @@
+/*
+ * Copyright (c)  2018-2020. Apollo Foundation.
+ */
+
 package com.apollocurrency.aplwallet.apl.core.config;
 
 import com.apollocurrency.aplwallet.apl.core.utils.RFC3339DateFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
@@ -22,6 +28,10 @@ public class JacksonConfig implements ContextResolver<ObjectMapper> {
     public JacksonConfig() {
 
         objectMapper = new ObjectMapper()
+            .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            .configure(DeserializationFeature.FAIL_ON_INVALID_SUBTYPE, false)
+            .setDefaultPropertyInclusion(JsonInclude.Include.NON_NULL)
             .setDateFormat(new RFC3339DateFormat())
             .registerModule(new JodaModule() {
                 {

@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.ChildAccountAt
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -24,6 +25,7 @@ import java.util.Map;
  * Sender is a parent account. There is an list of child public keys in the attachment.
  * @author andrii.zinchenko@firstbridge.io
  */
+@Slf4j
 public abstract class ChildAccount extends TransactionType {
 
     private static boolean isAccountExists(byte[] childPublicKey) {
@@ -48,16 +50,20 @@ public abstract class ChildAccount extends TransactionType {
             super.applyAttachment(transaction, senderAccount, recipientAccount);
             Account childAccount;
             ChildAccountAttachment attachment = (ChildAccountAttachment) transaction.getAttachment();
+            log.trace("CREATE_CHILD: parentId={}, child count={}", senderAccount.getId(), attachment.getChildPublicKey().size());
             for (byte[] childPublicKey : attachment.getChildPublicKey()) {
                 //create an account
                 childAccount = lookupAccountService().addOrGetAccount(AccountService.getId(childPublicKey));
                 childAccount.setParentId(senderAccount.getId());
                 childAccount.setAddrScope(attachment.getAddressScope());
                 childAccount.setMultiSig(true);
+                log.trace("CREATE_CHILD: create ParentId={}, childId={}", senderAccount.getId(), childAccount.getId());
                 //save the account into db
                 lookupAccountService().update(childAccount, false);
+                log.trace("CREATE_CHILD: update child={}", childAccount);
                 //save the public key into db
                 ChildAccount.lookupAccountPublicKeyService().apply(childAccount, childPublicKey);
+                log.trace("CREATE_CHILD: apply public key child={}", childAccount);
             }
         }
 

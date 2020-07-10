@@ -31,39 +31,39 @@ public class TransactionInfoMapper implements Converter<Transaction, Transaction
     }
 
     @Override
-    public TransactionInfoResp apply(Transaction transaction) {
-        TransactionInfoResp o = new TransactionInfoResp();
-        o.setId(transaction.getStringId());
-        o.setType(String.valueOf(transaction.getType().getType()));
-        o.setSubtype(String.valueOf(transaction.getType().getSubtype()));
-        o.setVersion(String.valueOf(transaction.getVersion()));
-        o.setAmount(String.valueOf(transaction.getAmountATM()));
-        o.setFee(String.valueOf(transaction.getFeeATM()));
-        o.setDeadline((int) transaction.getDeadline());
-        o.setSender(Convert2.rsAccount(transaction.getSenderId()));
-        o.setSenderPublicKey(Convert.toHexString(transaction.getSenderPublicKey()));
-        if (transaction.getRecipientId() != 0) {
-            o.setRecipient(Convert2.rsAccount(transaction.getRecipientId()));
+    public TransactionInfoResp apply(Transaction model) {
+        TransactionInfoResp dto = new TransactionInfoResp();
+        dto.setId(model.getStringId());
+        dto.setType(String.valueOf(model.getType().getType()));
+        dto.setSubtype(String.valueOf(model.getType().getSubtype()));
+        dto.setVersion(String.valueOf(model.getVersion()));
+        dto.setAmount(String.valueOf(model.getAmountATM()));
+        dto.setFee(String.valueOf(model.getFeeATM()));
+        dto.setDeadline((int) model.getDeadline());
+        dto.setSender(Convert2.rsAccount(model.getSenderId()));
+        dto.setSenderPublicKey(Convert.toHexString(model.getSenderPublicKey()));
+        if (model.getRecipientId() != 0) {
+            dto.setRecipient(Convert2.rsAccount(model.getRecipientId()));
         }
-        o.setSignature(Convert.toHexString(transaction.getSignature()));
-        o.setSignatureHash(Convert.toHexString(Crypto.sha256().digest(transaction.getSignature())));
-        o.setFullHash(transaction.getFullHashString());
-        o.setReferencedTransactionFullHash(transaction.getReferencedTransactionFullHash());
-        o.setTimestamp((long) transaction.getTimestamp());
-        if (transaction.getBlock() != null) {
-            o.setBlock(transaction.getBlock().getStringId());
-            o.setBlockTimestamp((long) transaction.getBlockTimestamp());
-            o.setEcBlockHeight((long) transaction.getECBlockHeight());
-            o.setEcBlockId(Long.toUnsignedString(transaction.getECBlockId()));
+        dto.setSignature(Convert.toHexString(model.getSignature()));
+        dto.setSignatureHash(Convert.toHexString(Crypto.sha256().digest(model.getSignature())));
+        dto.setFullHash(model.getFullHashString());
+        dto.setReferencedTransactionFullHash(model.getReferencedTransactionFullHash());
+        dto.setTimestamp((long) model.getTimestamp());
+        if (model.getBlock() != null) {
+            dto.setBlock(model.getBlock().getStringId());
+            dto.setBlockTimestamp((long) model.getBlockTimestamp());
+            dto.setEcBlockHeight((long) model.getECBlockHeight());
+            dto.setEcBlockId(Long.toUnsignedString(model.getECBlockId()));
         }
-        o.setHeight((long) transaction.getHeight());
-        o.setIndex((int) transaction.getIndex());
-        o.setConfirmations(blockchain.getHeight() - transaction.getHeight());
-        o.setPhased(transaction.attachmentIsPhased());
+        dto.setHeight((long) model.getHeight());
+        dto.setIndex((int) model.getIndex());
+        dto.setConfirmations(blockchain.getHeight() - model.getHeight());
+        dto.setPhased(model.attachmentIsPhased());
 
         JSONObject attachmentJSON = new JSONObject();
 
-        for (Appendix appendage : transaction.getAppendages(true)) {
+        for (Appendix appendage : model.getAppendages(true)) {
             attachmentJSON.putAll(appendage.getJSONObject());
         }
         if (!attachmentJSON.isEmpty()) {
@@ -72,8 +72,8 @@ public class TransactionInfoMapper implements Converter<Transaction, Transaction
                     entry.setValue(String.valueOf(entry.getValue()));
                 }
             }
-            o.setAttachment(attachmentJSON);
+            dto.setAttachment(attachmentJSON);
         }
-        return o;
+        return dto;
     }
 }
