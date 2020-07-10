@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.db;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.DataTagDao;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.PrunableMessageTable;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.TaggedDataDao;
@@ -185,6 +186,8 @@ public class TableRegistryInitializer {
     private ShufflingDataTable shufflingDataTable;
     @Inject
     private ShufflingTable shufflingTable;
+    @Inject
+    private UnconfirmedTransactionTable unconfirmedTransactionTable;
 
     @PostConstruct
     public void init() {

@@ -20,6 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
+import com.apollocurrency.aplwallet.apl.core.model.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
@@ -38,6 +40,7 @@ import org.json.simple.JSONObject;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public interface Transaction {
 
@@ -163,7 +166,17 @@ public interface Transaction {
 
     long getECBlockId();
 
+    /**
+     * @deprecated see method with longer parameters list below
+     */
     default boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
+        return false;
+    }
+
+    default boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates,
+                                          boolean atAcceptanceHeight,
+                                          Set<AccountControlType> senderAccountControls,
+                                          AccountControlPhasing accountControlPhasing) {
         return false;
     }
 

@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.derived;
 
+import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountCurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountGuaranteedBalanceTable;
@@ -11,6 +13,8 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountLedgerTabl
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.GenesisPublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.PublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPublicKeyServiceImpl;
@@ -30,7 +34,6 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImp
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.VaultKeyStoreServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
@@ -62,6 +65,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.prunable.DataTagDao;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.TaggedDataDao;
 import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataExtendDao;
 import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataTimestampDao;
+import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
@@ -117,9 +121,12 @@ class DerivedDbTableListingTest {
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     @Inject
     DerivedTablesRegistry registry;
-    private NtpTime time = mock(NtpTime.class);
-    private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(temporaryFolderExtension.newFolder("keystorePath").toPath(), time);
+    private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
+    private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
+    private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(temporaryFolderExtension.newFolder("keystorePath").toPath(), ntpTimeConfig.time());
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+    private PeersService peersService = mock(PeersService.class);
+
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
         BlockchainImpl.class, DaoConfig.class,
@@ -137,13 +144,15 @@ class DerivedDbTableListingTest {
         TaggedDataExtendDao.class,
         FullTextConfigImpl.class,
         DerivedDbTablesRegistryImpl.class,
-        TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
+        BlockDaoImpl.class, TransactionDaoImpl.class,
+        UnconfirmedTransactionTable.class, AccountService.class, TaskDispatchManager.class)
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
         .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
-        .addBeans(MockBean.of(mock(TrimService.class), TrimService.class))
-        .addBeans(MockBean.of(time, NtpTime.class))
+        .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
+        .addBeans(MockBean.of(ntpTimeConfig.time(), NtpTime.class))
+        .addBeans(MockBean.of(timeService, TimeService.class))
         .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
         .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
         .addBeans(MockBean.of(mock(DirProvider.class), DirProvider.class))
@@ -156,6 +165,7 @@ class DerivedDbTableListingTest {
         .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
         .addBeans(MockBean.of(mock(AccountControlPhasingService.class), AccountControlPhasingService.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
+        .addBeans(MockBean.of(peersService, PeersService.class))
         .build();
     private HeightConfig config = Mockito.mock(HeightConfig.class);
     private Chain chain = Mockito.mock(Chain.class);
