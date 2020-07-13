@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.entity.state.phasing;
 
-import com.apollocurrency.aplwallet.apl.core.app.AbstractPoll;
+import com.apollocurrency.aplwallet.apl.core.entity.state.poll.AbstractPoll;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 

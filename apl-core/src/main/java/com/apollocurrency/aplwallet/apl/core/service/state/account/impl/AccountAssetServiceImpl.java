@@ -13,7 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventType;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetDividendService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetService;
@@ -27,7 +27,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
 
-import static com.apollocurrency.aplwallet.apl.core.observer.events.AccountEventBinding.literal;
+import static com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountEventBinding.literal;
 
 /**
  * @author andrew.zinchenko@gmail.com

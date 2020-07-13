@@ -8,8 +8,8 @@ import com.apollocurrency.aplwallet.apl.core.model.account.AccountEventType;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountPropertyTable;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountProperty;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPropertyService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
@@ -18,7 +18,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
 
-import static com.apollocurrency.aplwallet.apl.core.observer.events.AccountEventBinding.literal;
+import static com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountEventBinding.literal;
 import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
 
 /**

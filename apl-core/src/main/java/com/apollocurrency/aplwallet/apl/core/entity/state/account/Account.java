@@ -21,8 +21,8 @@
 package com.apollocurrency.aplwallet.apl.core.entity.state.account;
 
 import com.apollocurrency.aplwallet.apl.core.model.account.AccountControlType;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDeletableEntity;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDeletableEntity;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;

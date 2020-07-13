@@ -1,6 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Blockchain;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.spi.CDI;

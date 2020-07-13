@@ -20,8 +20,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -29,15 +33,15 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountS
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
-import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCancellationAttachment;
@@ -73,6 +77,7 @@ import java.util.Set;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+@Deprecated
 public final class Shuffling {
     /**
      * Cache, which contains all active shufflings required for processing on each block push
@@ -127,6 +132,9 @@ public final class Shuffling {
     private long assigneeAccountId;
     private byte[][] recipientPublicKeys;
 
+    /**
+     * @deprecated
+     */
     private Shuffling(Transaction transaction, ShufflingCreation attachment) {
         this.id = transaction.getId();
         this.dbKey = shufflingDbKeyFactory.newKey(this.id);
@@ -143,6 +151,9 @@ public final class Shuffling {
         this.height = transaction.getHeight();
     }
 
+    /**
+     * @deprecated
+     */
     private Shuffling(ResultSet rs, DbKey dbKey) throws SQLException {
         this.id = rs.getLong("id");
         this.dbKey = dbKey;
@@ -159,6 +170,9 @@ public final class Shuffling {
         this.height = rs.getInt("height");
     }
 
+    /**
+     * @deprecated
+     */
     private static TransactionalDataSource lookupDataSource() {
         if (databaseManager == null) {
             databaseManager = CDI.current().select(DatabaseManager.class).get();
@@ -166,18 +180,30 @@ public final class Shuffling {
         return databaseManager.getDataSource();
     }
 
+    /**
+     * @deprecated
+     */
     public static boolean addListener(Listener<Shuffling> listener, Event eventType) {
         return listeners.addListener(listener, eventType);
     }
 
+    /**
+     * @deprecated
+     */
     public static boolean removeListener(Listener<Shuffling> listener, Event eventType) {
         return listeners.removeListener(listener, eventType);
     }
 
+    /**
+     * @deprecated
+     */
     public static int getCount() {
         return shufflingTable.getCount();
     }
 
+    /**
+     * @deprecated
+     */
     public static int getActiveCount() {
         return shufflingTable.getCount(new DbClause.NotNullClause("blocks_remaining"));
     }
@@ -192,14 +218,23 @@ public final class Shuffling {
         }
 */
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<Shuffling> getAll(int from, int to) {
         return shufflingTable.getAll(from, to, " ORDER BY blocks_remaining NULLS LAST, height DESC ");
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<Shuffling> getActiveShufflings(int from, int to) {
         return shufflingTable.getManyBy(new DbClause.NotNullClause("blocks_remaining"), from, to, " ORDER BY blocks_remaining, height DESC ");
     }
 
+    /**
+     * @deprecated
+     */
     public static List<Shuffling> getActiveShufflings() {
         Connection con = null;
         try {
@@ -212,14 +247,23 @@ public final class Shuffling {
         }
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<Shuffling> getFinishedShufflings(int from, int to) {
         return shufflingTable.getManyBy(new DbClause.NullClause("blocks_remaining"), from, to, " ORDER BY height DESC ");
     }
 
+    /**
+     * @deprecated
+     */
     public static Shuffling getShuffling(long shufflingId) {
         return shufflingTable.get(shufflingDbKeyFactory.newKey(shufflingId));
     }
 
+    /**
+     * @deprecated
+     */
     public static Shuffling getShuffling(byte[] fullHash) {
         long shufflingId = Convert.fullHashToId(fullHash);
         Shuffling shuffling = shufflingTable.get(shufflingDbKeyFactory.newKey(shufflingId));
@@ -231,6 +275,9 @@ public final class Shuffling {
         return shuffling;
     }
 
+    /**
+     * @deprecated
+     */
     public static int getHoldingShufflingCount(long holdingId, boolean includeFinished) {
         DbClause clause = holdingId != 0 ? new DbClause.LongClause("holding_id", holdingId) : new DbClause.NullClause("holding_id");
         if (!includeFinished) {
@@ -239,6 +286,9 @@ public final class Shuffling {
         return shufflingTable.getCount(clause);
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<Shuffling> getHoldingShufflings(long holdingId, Stage stage, boolean includeFinished, int from, int to) {
         DbClause clause = holdingId != 0 ? new DbClause.LongClause("holding_id", holdingId) : new DbClause.NullClause("holding_id");
         if (!includeFinished) {
@@ -250,6 +300,9 @@ public final class Shuffling {
         return shufflingTable.getManyBy(clause, from, to, " ORDER BY blocks_remaining NULLS LAST, height DESC ");
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<Shuffling> getAccountShufflings(long accountId, boolean includeFinished, int from, int to) {
         Connection con = null;
         try {
@@ -269,12 +322,18 @@ public final class Shuffling {
         }
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<Shuffling> getAssignedShufflings(long assigneeAccountId, int from, int to) {
         return shufflingTable.getManyBy(new DbClause.LongClause("assignee_account_id", assigneeAccountId)
                 .and(new DbClause.ByteClause("stage", Stage.PROCESSING.getCode())), from, to,
             " ORDER BY blocks_remaining NULLS LAST, height DESC ");
     }
 
+    /**
+     * @deprecated
+     */
     static void addShuffling(Transaction transaction, ShufflingCreation attachment) {
         Shuffling shuffling = new Shuffling(transaction, attachment);
         insert(shuffling);
@@ -282,6 +341,9 @@ public final class Shuffling {
         listeners.notify(shuffling, Event.SHUFFLING_CREATED);
     }
 
+    /**
+     * @deprecated
+     */
     public static void init() {
 
     }
@@ -309,6 +371,9 @@ public final class Shuffling {
         return digest.digest();
     }
 
+    /**
+     * @deprecated
+     */
     private void save(Connection con) throws SQLException {
         try (
             @DatabaseSpecificDml(DmlMarker.MERGE)
@@ -336,6 +401,9 @@ public final class Shuffling {
         }
     }
 
+    /**
+     * @deprecated
+     */
     public int getHeight() {
         return height;
     }
@@ -414,10 +482,16 @@ public final class Shuffling {
         return recipientPublicKeys;
     }
 
+    /**
+     * @deprecated
+     */
     public ShufflingParticipant getParticipant(long accountId) {
         return ShufflingParticipant.getParticipant(id, accountId);
     }
 
+    /**
+     * @deprecated
+     */
     public ShufflingParticipant getLastParticipant() {
         return ShufflingParticipant.getLastParticipant(id);
     }
@@ -430,6 +504,9 @@ public final class Shuffling {
         return blockchain.getFullHash(id);
     }
 
+    /**
+     * @deprecated
+     */
     public ShufflingAttachment process(final long accountId, final byte[] secretBytes, final byte[] recipientPublicKey) {
         byte[][] data = Convert.EMPTY_BYTES;
         byte[] shufflingStateHash = null;
@@ -509,6 +586,9 @@ public final class Shuffling {
         }
     }
 
+    /**
+     * @deprecated
+     */
     public ShufflingCancellationAttachment revealKeySeeds(final byte[] secretBytes, long cancellingAccountId, byte[] shufflingStateHash) {
         globalSync.readLock();
         try (DbIterator<ShufflingParticipant> participants = ShufflingParticipant.getParticipants(id)) {
@@ -570,6 +650,9 @@ public final class Shuffling {
         }
     }
 
+    /**
+     * @deprecated
+     */
     void addParticipant(long participantId) {
         // Update the shuffling assignee to point to the new participant and update the next pointer of the existing participant
         // to the new participant
@@ -592,6 +675,9 @@ public final class Shuffling {
 
     }
 
+    /**
+     * @deprecated
+     */
     void updateParticipantData(Transaction transaction, ShufflingProcessingAttachment attachment) {
         long participantId = transaction.getSenderId();
         byte[][] data = attachment.getData();
@@ -611,6 +697,9 @@ public final class Shuffling {
             Long.toUnsignedString(this.id), this.stage, Long.toUnsignedString(this.assigneeAccountId), this.blocksRemaining);
     }
 
+    /**
+     * @deprecated
+     */
     void updateRecipients(Transaction transaction, ShufflingRecipientsAttachment attachment) {
         long participantId = transaction.getSenderId();
         this.recipientPublicKeys = attachment.getRecipientPublicKeys();
@@ -638,6 +727,9 @@ public final class Shuffling {
             Long.toUnsignedString(this.id), this.stage, Long.toUnsignedString(this.assigneeAccountId), this.blocksRemaining);
     }
 
+    /**
+     * @deprecated
+     */
     void verify(long accountId) {
         ShufflingParticipant.getParticipant(id, accountId).verify();
         if (ShufflingParticipant.getVerifiedCount(id) == participantCount) {
@@ -645,6 +737,9 @@ public final class Shuffling {
         }
     }
 
+    /**
+     * @deprecated
+     */
     void cancelBy(ShufflingParticipant participant, byte[][] blameData, byte[][] keySeeds) {
         participant.cancel(blameData, keySeeds);
         boolean startingBlame = this.stage != Stage.BLAME;
@@ -663,6 +758,9 @@ public final class Shuffling {
         cancelBy(participant, Convert.EMPTY_BYTES, Convert.EMPTY_BYTES);
     }
 
+    /**
+     * @deprecated
+     */
     private void distribute() {
         if (recipientPublicKeys.length != participantCount) {
             cancelBy(getLastParticipant());
@@ -708,6 +806,9 @@ public final class Shuffling {
             Long.toUnsignedString(this.id), this.stage, Long.toUnsignedString(this.assigneeAccountId), this.blocksRemaining);
     }
 
+    /**
+     * @deprecated
+     */
     private void cancel(Block block) {
         LedgerEvent event = LedgerEvent.SHUFFLING_CANCELLATION;
         long blamedAccountId = blame();
@@ -995,6 +1096,9 @@ public final class Shuffling {
 
     }
 
+    /**
+     * @deprecated
+     */
     @Singleton
     public static class ShufflingObserver {
         public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {

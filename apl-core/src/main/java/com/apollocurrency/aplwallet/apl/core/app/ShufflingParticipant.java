@@ -20,16 +20,17 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.app.shuffling.ShufflingData;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
-import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LinkKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.PrunableDbTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
@@ -44,9 +45,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
 
+@Deprecated
 @Slf4j
 public final class ShufflingParticipant {
 
+    /**
+     * @deprecated
+     */
     public static final LinkKeyFactory<ShufflingData> shufflingDataDbKeyFactory = new LinkKeyFactory<ShufflingData>("shuffling_id", "account_id") {
 
         @Override
@@ -77,17 +82,27 @@ public final class ShufflingParticipant {
         }
 
     };
+    /**
+     * @deprecated
+     */
     private static final PrunableDbTable<ShufflingData> shufflingDataTable = new PrunableDbTable<>("shuffling_data", shufflingDataDbKeyFactory) {
+        /**
+         * @deprecated
+         */
         @Override
         public boolean isScanSafe() {
             return false; // shuffling data cannot be recovered from transactions (only by downloading/generating blocks)
         }
-
+        /**
+         * @deprecated
+         */
         @Override
         public ShufflingData load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new ShufflingData(rs, dbKey);
         }
-
+        /**
+         * @deprecated
+         */
         @Override
         public void save(Connection con, ShufflingData shufflingData) throws SQLException {
             try (
@@ -122,6 +137,9 @@ public final class ShufflingParticipant {
     private byte[] dataTransactionFullHash;
     private byte[] dataHash; // hash of the processing data from ShufflingProcessingAttachment
 
+    /**
+     * @deprecated
+     */
     private ShufflingParticipant(long shufflingId, long accountId, int index) {
         this.shufflingId = shufflingId;
         this.accountId = accountId;
@@ -132,6 +150,9 @@ public final class ShufflingParticipant {
         this.keySeeds = Convert.EMPTY_BYTES;
     }
 
+    /**
+     * @deprecated
+     */
     private ShufflingParticipant(ResultSet rs, DbKey dbKey) throws SQLException {
         this.shufflingId = rs.getLong("shuffling_id");
         this.accountId = rs.getLong("account_id");
@@ -145,51 +166,84 @@ public final class ShufflingParticipant {
         this.dataHash = rs.getBytes("data_hash");
     }
 
+    /**
+     * @deprecated
+     */
     public static boolean addListener(Listener<ShufflingParticipant> listener, Event eventType) {
         return listeners.addListener(listener, eventType);
     }
 
+    /**
+     * @deprecated
+     */
     public static boolean removeListener(Listener<ShufflingParticipant> listener, Event eventType) {
         return listeners.removeListener(listener, eventType);
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<ShufflingParticipant> getParticipants(long shufflingId) {
         return shufflingParticipantTable.getManyBy(new DbClause.LongClause("shuffling_id", shufflingId), 0, -1, " ORDER BY participant_index ");
     }
 
+    /**
+     * @deprecated
+     */
     public static ShufflingParticipant getParticipant(long shufflingId, long accountId) {
         return shufflingParticipantTable.get(shufflingParticipantDbKeyFactory.newKey(shufflingId, accountId));
     }
 
+    /**
+     * @deprecated
+     */
     static ShufflingParticipant getLastParticipant(long shufflingId) {
         return shufflingParticipantTable.getBy(new DbClause.LongClause("shuffling_id", shufflingId).and(new DbClause.NullClause("next_account_id")));
     }
 
+    /**
+     * @deprecated
+     */
     static void addParticipant(long shufflingId, long accountId, int index) {
         ShufflingParticipant participant = new ShufflingParticipant(shufflingId, accountId, index);
         shufflingParticipantTable.insert(participant);
         listeners.notify(participant, Event.PARTICIPANT_REGISTERED);
     }
 
+    /**
+     * @deprecated
+     */
     static int getVerifiedCount(long shufflingId) {
         return shufflingParticipantTable.getCount(new DbClause.LongClause("shuffling_id", shufflingId).and(
             new DbClause.ByteClause("state", State.VERIFIED.getCode())));
     }
 
+    /**
+     * @deprecated
+     */
     public static void init() {
     }
 
+    /**
+     * @deprecated
+     */
     public static byte[][] getData(long shufflingId, long accountId) {
         ShufflingData shufflingData = shufflingDataTable.get(shufflingDataDbKeyFactory.newKey(shufflingId, accountId));
         return shufflingData != null ? shufflingData.getData() : null;
     }
 
+    /**
+     * @deprecated
+     */
     public static void restoreData(long shufflingId, long accountId, byte[][] data, int timestamp, int height) {
         if (data != null && getData(shufflingId, accountId) == null) {
             shufflingDataTable.insert(new ShufflingData(shufflingId, accountId, data, timestamp, height));
         }
     }
 
+    /**
+     * @deprecated
+     */
     private void save(Connection con) throws SQLException {
         try (
             @DatabaseSpecificDml(DmlMarker.MERGE)
@@ -213,18 +267,30 @@ public final class ShufflingParticipant {
         }
     }
 
+    /**
+     * @deprecated
+     */
     public long getShufflingId() {
         return shufflingId;
     }
 
+    /**
+     * @deprecated
+     */
     public long getAccountId() {
         return accountId;
     }
 
+    /**
+     * @deprecated
+     */
     public long getNextAccountId() {
         return nextAccountId;
     }
 
+    /**
+     * @deprecated
+     */
     void setNextAccountId(long nextAccountId) {
         if (this.nextAccountId != 0) {
             throw new IllegalStateException("nextAccountId already set to " + Long.toUnsignedString(this.nextAccountId));
@@ -233,14 +299,23 @@ public final class ShufflingParticipant {
         shufflingParticipantTable.insert(this);
     }
 
+    /**
+     * @deprecated
+     */
     public int getIndex() {
         return index;
     }
 
+    /**
+     * @deprecated
+     */
     public State getState() {
         return state;
     }
 
+    /**
+     * @deprecated
+     */
     // caller must update database
     private void setState(State state) {
         if (!this.state.canBecome(state)) {
@@ -250,24 +325,39 @@ public final class ShufflingParticipant {
         log.debug("Shuffling participant {} changed state to {}", Long.toUnsignedString(accountId), this.state);
     }
 
+    /**
+     * @deprecated
+     */
     public byte[][] getData() {
         return getData(shufflingId, accountId);
     }
 
+    /**
+     * @deprecated
+     */
     void setData(byte[][] data, int timestamp) {
         if (data != null && timeService.getEpochTime() - timestamp < blockchainConfig.getMaxPrunableLifetime() && getData() == null) {
             shufflingDataTable.insert(new ShufflingData(shufflingId, accountId, data, timestamp, blockchain.getHeight()));
         }
     }
 
+    /**
+     * @deprecated
+     */
     public byte[][] getBlameData() {
         return blameData;
     }
 
+    /**
+     * @deprecated
+     */
     public byte[][] getKeySeeds() {
         return keySeeds;
     }
 
+    /**
+     * @deprecated
+     */
     void cancel(byte[][] blameData, byte[][] keySeeds) {
         if (this.keySeeds.length > 0) {
             throw new IllegalStateException("keySeeds already set");
@@ -279,14 +369,23 @@ public final class ShufflingParticipant {
         listeners.notify(this, Event.PARTICIPANT_CANCELLED);
     }
 
+    /**
+     * @deprecated
+     */
     public byte[] getDataTransactionFullHash() {
         return dataTransactionFullHash;
     }
 
+    /**
+     * @deprecated
+     */
     public byte[] getDataHash() {
         return dataHash;
     }
 
+    /**
+     * @deprecated
+     */
     private void setDataHash(byte[] dataHash) {
         if (this.dataHash != null) {
             throw new IllegalStateException("dataHash already set");
@@ -294,6 +393,9 @@ public final class ShufflingParticipant {
         this.dataHash = dataHash;
     }
 
+    /**
+     * @deprecated
+     */
     void setProcessed(byte[] dataTransactionFullHash, byte[] dataHash) {
         if (this.dataTransactionFullHash != null) {
             throw new IllegalStateException("dataTransactionFullHash already set");
@@ -307,6 +409,9 @@ public final class ShufflingParticipant {
         listeners.notify(this, Event.PARTICIPANT_PROCESSED);
     }
 
+    /**
+     * @deprecated
+     */
     public ShufflingParticipant getPreviousParticipant() {
         if (index == 0) {
             return null;
@@ -314,16 +419,25 @@ public final class ShufflingParticipant {
         return shufflingParticipantTable.getBy(new DbClause.LongClause("shuffling_id", shufflingId).and(new DbClause.IntClause("participant_index", index - 1)));
     }
 
+    /**
+     * @deprecated
+     */
     void verify() {
         setState(State.VERIFIED);
         shufflingParticipantTable.insert(this);
         listeners.notify(this, Event.PARTICIPANT_VERIFIED);
     }
 
+    /**
+     * @deprecated
+     */
     void delete() {
         shufflingParticipantTable.deleteAtHeight(this, blockchain.getHeight());
     }
 
+    /**
+     * @deprecated
+     */
     public enum State {
         REGISTERED((byte) 0, new byte[]{1}),
         PROCESSED((byte) 1, new byte[]{2, 3}),

@@ -4,11 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.asset.impl;
 
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.dao.state.asset.AssetDividendTable;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetDividend;
-import com.apollocurrency.aplwallet.apl.core.monetary.observer.AssetEventType;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.AssetEventType;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetDividendService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
 
@@ -17,7 +17,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
 
-import static com.apollocurrency.aplwallet.apl.core.monetary.observer.event.AssetEventBinding.literal;
+import static com.apollocurrency.aplwallet.apl.core.app.observer.events.AssetEventBinding.literal;
 
 @Singleton
 public class AssetDividendServiceImpl implements AssetDividendService {

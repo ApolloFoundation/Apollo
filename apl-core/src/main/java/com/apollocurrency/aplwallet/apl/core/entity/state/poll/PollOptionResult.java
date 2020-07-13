@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.entity.state.poll;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import lombok.Data;
 import lombok.ToString;
 
