@@ -30,6 +30,12 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
+import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetDividendService;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.impl.AssetServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetTransferService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
@@ -57,6 +63,9 @@ import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyServ
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeRequestService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyMintService;
+import com.apollocurrency.aplwallet.apl.core.service.state.impl.ShufflingServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateV2Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -160,6 +169,7 @@ public abstract class TransactionType {
     private static CurrencyMintService currencyMintService;
     private static CurrencyService currencyService;
     private static MonetaryCurrencyMintingService monetaryCurrencyMintingService;
+    private static ShufflingService shufflingService;
 
     public TransactionType() {
     }
@@ -335,6 +345,13 @@ public abstract class TransactionType {
             monetaryCurrencyMintingService = CDI.current().select(MonetaryCurrencyMintingService.class).get();
         }
         return monetaryCurrencyMintingService;
+    }
+
+    public static synchronized ShufflingService lookupShufflingService() {
+        if (shufflingService == null) {
+            shufflingService = CDI.current().select(ShufflingService.class).get();
+        }
+        return shufflingService;
     }
 
     public static TransactionType findTransactionType(byte type, byte subtype) {

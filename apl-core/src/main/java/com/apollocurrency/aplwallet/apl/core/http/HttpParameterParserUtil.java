@@ -39,6 +39,7 @@ import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
+import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
@@ -143,6 +144,7 @@ public final class HttpParameterParserUtil {
     private static PollService POLL_SERVICE;
     private static CurrencyExchangeOfferFacade currencyExchangeOfferFacade;
     private static CurrencyService currencyService;
+    private static ShufflingService shufflingService;
 
     private HttpParameterParserUtil() {
     } // never
@@ -415,7 +417,7 @@ public final class HttpParameterParserUtil {
     }
 
     public static Shuffling getShuffling(HttpServletRequest req) throws ParameterException {
-        Shuffling shuffling = Shuffling.getShuffling(getUnsignedLong(req, "shuffling", true));
+        Shuffling shuffling = lookupShufflingService().getShuffling(getUnsignedLong(req, "shuffling", true));
         if (shuffling == null) {
             throw new ParameterException(UNKNOWN_SHUFFLING);
         }
@@ -1215,6 +1217,13 @@ public final class HttpParameterParserUtil {
             currencyService = CDI.current().select(CurrencyService.class).get();
         }
         return currencyService;
+    }
+
+    private static ShufflingService lookupShufflingService() {
+        if (shufflingService == null) {
+            shufflingService = CDI.current().select(ShufflingService.class).get();
+        }
+        return shufflingService;
     }
 
     public static class PrivateTransactionsAPIData {

@@ -545,18 +545,19 @@ public final class Currency {
      * @deprecated
      */
     public boolean canBeDeletedBy(long senderAccountId) {
-        if (!is(CurrencyType.NON_SHUFFLEABLE) && Shuffling.getHoldingShufflingCount(currencyId, false) > 0) {
-            return false;
-        }
-        if (!isActive()) {
-            return senderAccountId == accountId;
-        }
-        if (is(CurrencyType.MINTABLE) && getCurrentSupply() < maxSupply && senderAccountId != accountId) {
-            return false;
-        }
-
-        List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrenciesByAccount(this.currencyId, 0, -1);
-        return accountCurrencies.isEmpty() || accountCurrencies.size() == 1 && accountCurrencies.get(0).getAccountId() == senderAccountId;
+//        if (!is(CurrencyType.NON_SHUFFLEABLE) && Shuffling.getHoldingShufflingCount(currencyId, false) > 0) {
+//            return false;
+//        }
+//        if (!isActive()) {
+//            return senderAccountId == accountId;
+//        }
+//        if (is(CurrencyType.MINTABLE) && getCurrentSupply() < maxSupply && senderAccountId != accountId) {
+//            return false;
+//        }
+//
+//        List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrenciesByAccount(this.currencyId, 0, -1);
+//        return accountCurrencies.isEmpty() || accountCurrencies.size() == 1 && accountCurrencies.get(0).getAccountId() == senderAccountId;
+        throw new UnsupportedOperationException();
     }
 
     /**

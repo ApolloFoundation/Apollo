@@ -20,13 +20,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.model.account.AccountControlType;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
+import com.apollocurrency.aplwallet.apl.core.app.shuffling.ShufflingEvent;
+import com.apollocurrency.aplwallet.apl.core.app.shuffling.ShufflingParticipantState;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingParticipant;
+import com.apollocurrency.aplwallet.apl.core.model.account.AccountControlType;
+import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.impl.ShufflingServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.DbHotSwapConfig;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
@@ -65,6 +70,7 @@ public final class Shuffler {
     private static TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
+    private static ShufflingService shufflingService = CDI.current().select(ShufflingServiceImpl.class).get();
     private static FeeCalculator feeCalculator = new FeeCalculator();
     private static BlockchainProcessor blockchainProcessor;
     private static AccountService accountService;
@@ -122,7 +128,7 @@ public final class Shuffler {
                 throw new ShufflerLimitException("Cannot run more than " + MAX_SHUFFLERS + " shufflers on the same node");
             }
             if (shuffler == null) {
-                Shuffling shuffling = Shuffling.getShuffling(shufflingFullHash);
+                Shuffling shuffling = shufflingService.getShuffling(shufflingFullHash);
                 if (shuffling == null && lookupAccountService().getAccount(recipientPublicKey) != null) {
                     throw new InvalidRecipientException("Existing account cannot be used as shuffling recipient");
                 }
@@ -254,7 +260,7 @@ public final class Shuffler {
 
     public static void init() {
 
-        Shuffling.addListener(shuffling -> {
+        shufflingService.addListener(shuffling -> {
             Map<Long, Shuffler> shufflerMap = getShufflers(shuffling);
             if (shufflerMap != null) {
                 shufflerMap.values().forEach(shuffler -> {
@@ -268,9 +274,9 @@ public final class Shuffler {
                 });
                 clearExpiration(shuffling);
             }
-        }, Shuffling.Event.SHUFFLING_CREATED);
+        }, ShufflingEvent.SHUFFLING_CREATED);
 
-        Shuffling.addListener(shuffling -> {
+        shufflingService.addListener(shuffling -> {
             Map<Long, Shuffler> shufflerMap = getShufflers(shuffling);
             if (shufflerMap != null) {
                 Shuffler shuffler = shufflerMap.get(shuffling.getAssigneeAccountId());
@@ -283,9 +289,9 @@ public final class Shuffler {
                 }
                 clearExpiration(shuffling);
             }
-        }, Shuffling.Event.SHUFFLING_PROCESSING_ASSIGNED);
+        }, ShufflingEvent.SHUFFLING_PROCESSING_ASSIGNED);
 
-        Shuffling.addListener(shuffling -> {
+        shufflingService.addListener(shuffling -> {
             Map<Long, Shuffler> shufflerMap = getShufflers(shuffling);
             if (shufflerMap != null) {
                 shufflerMap.values().forEach(shuffler -> {
@@ -297,9 +303,9 @@ public final class Shuffler {
                 });
                 clearExpiration(shuffling);
             }
-        }, Shuffling.Event.SHUFFLING_PROCESSING_FINISHED);
+        }, ShufflingEvent.SHUFFLING_PROCESSING_FINISHED);
 
-        Shuffling.addListener(shuffling -> {
+        shufflingService.addListener(shuffling -> {
             Map<Long, Shuffler> shufflerMap = getShufflers(shuffling);
             if (shufflerMap != null) {
                 shufflerMap.values().forEach(shuffler -> {
@@ -311,15 +317,15 @@ public final class Shuffler {
                 });
                 clearExpiration(shuffling);
             }
-        }, Shuffling.Event.SHUFFLING_BLAME_STARTED);
+        }, ShufflingEvent.SHUFFLING_BLAME_STARTED);
 
-        Shuffling.addListener(Shuffler::scheduleExpiration, Shuffling.Event.SHUFFLING_DONE);
+        shufflingService.addListener(Shuffler::scheduleExpiration, ShufflingEvent.SHUFFLING_DONE);
 
-        Shuffling.addListener(Shuffler::scheduleExpiration, Shuffling.Event.SHUFFLING_CANCELLED);
+        shufflingService.addListener(Shuffler::scheduleExpiration, ShufflingEvent.SHUFFLING_CANCELLED);
     }
 
     private static Map<Long, Shuffler> getShufflers(Shuffling shuffling) {
-        return shufflingsMap.get(Convert.toHexString(shuffling.getFullHash()));
+        return shufflingsMap.get(Convert.toHexString(shufflingService.getFullHash(shuffling.getId())));
     }
 
     private static void scheduleExpiration(Shuffling shuffling) {
@@ -329,7 +335,7 @@ public final class Shuffler {
             shufflingIds = new HashSet<>();
             expirations.put(expirationHeight, shufflingIds);
         }
-        shufflingIds.add(Convert.toHexString(shuffling.getFullHash()));
+        shufflingIds.add(Convert.toHexString(shufflingService.getFullHash(shuffling.getId())));
     }
 
     private static void clearExpiration(Shuffling shuffling) {
@@ -361,7 +367,7 @@ public final class Shuffler {
     }
 
     private void init(Shuffling shuffling) throws ShufflerException {
-        ShufflingParticipant shufflingParticipant = shuffling.getParticipant(accountId);
+        ShufflingParticipant shufflingParticipant = shufflingService.getParticipant(shuffling.getId(), accountId);
         switch (shuffling.getStage()) {
             case REGISTRATION:
                 if (lookupAccountService().getAccount(recipientPublicKey) != null) {
@@ -386,7 +392,7 @@ public final class Shuffler {
                 if (shufflingParticipant == null) {
                     throw new InvalidStageException("Account has not registered for this shuffling");
                 }
-                if (shufflingParticipant.getState() == ShufflingParticipant.State.PROCESSED) {
+                if (shufflingParticipant.getState() == ShufflingParticipantState.PROCESSED) {
                     verify(shuffling);
                 }
                 break;
@@ -394,7 +400,7 @@ public final class Shuffler {
                 if (shufflingParticipant == null) {
                     throw new InvalidStageException("Account has not registered for this shuffling");
                 }
-                if (shufflingParticipant.getState() != ShufflingParticipant.State.CANCELLED) {
+                if (shufflingParticipant.getState() != ShufflingParticipantState.CANCELLED) {
                     cancel(shuffling);
                 }
                 break;
@@ -411,7 +417,7 @@ public final class Shuffler {
     }
 
     private void verify(Shuffling shuffling) {
-        ShufflingParticipant shufflingParticipant = shuffling.getParticipant(accountId);
+        ShufflingParticipant shufflingParticipant = shufflingService.getParticipant(shuffling.getId(), accountId);
         if (shufflingParticipant != null && shufflingParticipant.getIndex() != shuffling.getParticipantCount() - 1) {
             boolean found = false;
             for (byte[] key : shuffling.getRecipientPublicKeys()) {
@@ -432,11 +438,11 @@ public final class Shuffler {
         if (accountId == shuffling.getAssigneeAccountId()) {
             return;
         }
-        ShufflingParticipant shufflingParticipant = shuffling.getParticipant(accountId);
+        ShufflingParticipant shufflingParticipant = shufflingService.getParticipant(shuffling.getId(), accountId);
         if (shufflingParticipant == null || shufflingParticipant.getIndex() == shuffling.getParticipantCount() - 1) {
             return;
         }
-        if (ShufflingParticipant.getData(shuffling.getId(), accountId) == null) {
+        if (shufflingService.getData(shuffling.getId(), accountId) == null) {
             return;
         }
         submitCancel(shuffling);
@@ -450,20 +456,20 @@ public final class Shuffler {
 
     private void submitProcess(Shuffling shuffling) {
         LOG.debug("Account {} processing shuffling {}", Long.toUnsignedString(accountId), Long.toUnsignedString(shuffling.getId()));
-        ShufflingAttachment attachment = shuffling.process(accountId, secretBytes, recipientPublicKey);
+        ShufflingAttachment attachment = shufflingService.processShuffling(shuffling, accountId, secretBytes, recipientPublicKey);
         submitTransaction(attachment);
     }
 
     private void submitVerify(Shuffling shuffling) {
         LOG.debug("Account {} verifying shuffling {}", Long.toUnsignedString(accountId), Long.toUnsignedString(shuffling.getId()));
-        ShufflingVerificationAttachment attachment = new ShufflingVerificationAttachment(shuffling.getId(), shuffling.getStateHash());
+        ShufflingVerificationAttachment attachment = new ShufflingVerificationAttachment(shuffling.getId(), shufflingService.getStageHash(shuffling));
         submitTransaction(attachment);
     }
 
     private void submitCancel(Shuffling shuffling) {
         LOG.debug("Account {} cancelling shuffling {}", Long.toUnsignedString(accountId), Long.toUnsignedString(shuffling.getId()));
-        ShufflingCancellationAttachment attachment = shuffling.revealKeySeeds(secretBytes, shuffling.getAssigneeAccountId(),
-            shuffling.getStateHash());
+        ShufflingCancellationAttachment attachment = shufflingService.revealKeySeeds(shuffling, secretBytes, shuffling.getAssigneeAccountId(),
+            shufflingService.getStageHash(shuffling));
         submitTransaction(attachment);
     }
 

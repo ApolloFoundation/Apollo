@@ -52,7 +52,7 @@ public final class GetAssignedShufflings extends AbstractAPIRequestHandler {
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();
         response.put("shufflings", jsonArray);
-        try (DbIterator<Shuffling> shufflings = Shuffling.getAssignedShufflings(accountId, firstIndex, lastIndex)) {
+        try (DbIterator<Shuffling> shufflings = shufflingService.getAssignedShufflings(accountId, firstIndex, lastIndex)) {
             for (Shuffling shuffling : shufflings) {
                 jsonArray.add(JSONData.shuffling(shuffling, includeHoldingInfo));
             }

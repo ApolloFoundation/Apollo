@@ -73,7 +73,7 @@ public final class StartShuffler extends AbstractAPIRequestHandler {
             return JSON.prepare(response);
         } catch (Shuffler.ShufflerException e) {
             if (e.getCause() instanceof AplException.InsufficientBalanceException) {
-                Shuffling shuffling = Shuffling.getShuffling(shufflingFullHash);
+                Shuffling shuffling = shufflingService.getShuffling(shufflingFullHash);
                 if (shuffling == null) {
                     return JSONResponses.NOT_ENOUGH_APL;
                 }
