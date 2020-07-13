@@ -153,7 +153,7 @@ public interface Transaction {
     /**
      * @deprecated see method with longer parameters list below
      */
-    default boolean attachmentIsDuplicate(Map<TransactionTypeSpec, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
+    default boolean attachmentIsDuplicate(Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
         return false;
     }
 

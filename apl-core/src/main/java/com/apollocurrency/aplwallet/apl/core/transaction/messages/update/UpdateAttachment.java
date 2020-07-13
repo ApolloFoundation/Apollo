@@ -3,11 +3,11 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages.update;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.types.update.UpdateTransactionType;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.util.Version;
@@ -71,12 +71,12 @@ public abstract class UpdateAttachment extends AbstractAttachment {
         this.hash = hash;
     }
 
-    public static UpdateAttachment getAttachment(Platform platform, Architecture architecture, DoubleByteArrayTuple url, Version version, byte[] hash, byte level) {
-        if (level == UpdateTransactionType.CRITICAL.getSubtype()) {
+    public static UpdateAttachment getAttachment(OS platform, Arch architecture, DoubleByteArrayTuple url, Version version, byte[] hash, byte level) {
+        if (level == TransactionTypes.SUBTYPE_UPDATE_CRITICAL) {
             return new CriticalUpdate(platform, architecture, url, version, hash);
-        } else if (level == UpdateTransactionType.IMPORTANT.getSubtype()) {
+        } else if (level == TransactionTypes.SUBTYPE_UPDATE_IMPORTANT) {
             return new ImportantUpdate(platform, architecture, url, version, hash);
-        } else if (level == UpdateTransactionType.MINOR.getSubtype()) {
+        } else if (level == TransactionTypes.SUBTYPE_UPDATE_MINOR) {
             return new MinorUpdate(platform, architecture, url, version, hash);
         }
         return null;

@@ -28,7 +28,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateV2Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.Getter;
 import org.json.simple.JSONObject;

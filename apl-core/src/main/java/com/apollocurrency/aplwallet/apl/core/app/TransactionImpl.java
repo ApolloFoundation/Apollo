@@ -20,14 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import static com.apollocurrency.aplwallet.apl.core.transaction.AccountControl.SET_PHASING_ONLY;
-
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.model.account.AccountControlType;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
@@ -48,7 +45,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -60,14 +56,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.SET_PHASING_ONLY;
+
 public class TransactionImpl implements Transaction {
     private static final Logger LOG = LoggerFactory.getLogger(TransactionImpl.class);
-
-    //    @Inject
-    private static Blockchain blockchain;
-
-    @Inject
-    private static AccountPublicKeyService accountPublicKeyService;
 
     private final short deadline;
     private final long recipientId;
@@ -188,20 +180,6 @@ public class TransactionImpl implements Transaction {
         signature = Crypto.sign(bytes(), keySeed);
         bytes = null;
 
-    }
-
-    private Blockchain lookupAndInjectBlockchain() {
-        if (this.blockchain == null) {
-            this.blockchain = CDI.current().select(BlockchainImpl.class).get();
-        }
-        return blockchain;
-    }
-
-    private AccountPublicKeyService lookupAndInjectAccountPublickKeyService() {
-        if (accountPublicKeyService == null) {
-            accountPublicKeyService = CDI.current().select(AccountPublicKeyService.class).get();
-        }
-        return accountPublicKeyService;
     }
 
     @Override
@@ -598,7 +576,6 @@ public class TransactionImpl implements Transaction {
     }
 
     public boolean verifySignature() {
-        lookupAndInjectAccountPublickKeyService();
         return checkSignature() && lookupAndInjectAccountPublickKeyService().setOrVerifyPublicKey(getSenderId(), getSenderPublicKey());
     }
 
@@ -670,7 +647,7 @@ public class TransactionImpl implements Transaction {
     /**
      * @deprecated see method with longer parameters list below
      */
-    public boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
+    public boolean attachmentIsDuplicate(Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
         if (!attachmentIsPhased() && !atAcceptanceHeight) {
             // can happen for phased transactions having non-phasable attachment
             return false;
@@ -692,7 +669,7 @@ public class TransactionImpl implements Transaction {
         return type.isDuplicate(this, duplicates);
     }
 
-    public boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates,
+    public boolean attachmentIsDuplicate(Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates,
                                          boolean atAcceptanceHeight,
                                          Set<AccountControlType> senderAccountControls,
                                          AccountControlPhasing accountControlPhasing) {
@@ -720,13 +697,13 @@ public class TransactionImpl implements Transaction {
     }
 
     private boolean isBlockDuplicate(Transaction transaction,
-                                     Map<TransactionType, Map<String, Integer>> duplicates,
+                                     Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates,
                                      Set<AccountControlType> senderAccountControls,
                                      AccountControlPhasing accountControlPhasing) {
         return
             senderAccountControls.contains(AccountControlType.PHASING_ONLY)
                 && (accountControlPhasing != null && accountControlPhasing.getMaxFees() != 0)
-                && transaction.getType() != SET_PHASING_ONLY
+                && transaction.getType().getSpec() != SET_PHASING_ONLY
                 && TransactionType.isDuplicate(SET_PHASING_ONLY,
                 Long.toUnsignedString(transaction.getSenderId()), duplicates, true);
     }

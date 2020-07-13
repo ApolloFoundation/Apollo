@@ -4,38 +4,36 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.account.impl;
 
-import static com.apollocurrency.aplwallet.apl.core.transaction.types.control.AccountControlTransactionType.SET_PHASING_ONLY;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Stream;
-
-import com.apollocurrency.aplwallet.apl.core.model.account.AccountControlType;
-import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountControlPhasingTable;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
+import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountControlPhasingTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
+import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
+import com.apollocurrency.aplwallet.apl.core.model.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.messaging.MessagingTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SetPhasingOnly;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.control.SetPhasingOnlyTransactionType;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.extern.slf4j.Slf4j;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Stream;
+
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.SET_PHASING_ONLY;
 
 @Slf4j
 @Singleton
@@ -136,6 +134,16 @@ public class AccountControlPhasingServiceImpl implements AccountControlPhasingSe
         }
     }
 
+    @Override
+    public boolean isBlockDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates, Set<AccountControlType> senderAccountControls, AccountControlPhasing accountControlPhasing) {
+        return
+            senderAccountControls.contains(AccountControlType.PHASING_ONLY)
+                && (accountControlPhasing != null && accountControlPhasing.getMaxFees() != 0)
+                && transaction.getType().getSpec() != SET_PHASING_ONLY
+                && TransactionType.isDuplicate(SET_PHASING_ONLY,
+                Long.toUnsignedString(transaction.getSenderId()), duplicates, true);
+    }
+
     private void checkTransactionByPhasing(Transaction transaction, AccountControlPhasing phasingOnly) throws AplException.AccountControlException {
         if (phasingOnly.getMaxFees() > 0 && Math.addExact(transaction.getFeeATM(),
             phasingPollService.getSenderPhasedTransactionFees(transaction.getSenderId())) > phasingOnly.getMaxFees()) {
@@ -143,7 +151,7 @@ public class AccountControlPhasingServiceImpl implements AccountControlPhasingSe
                 String.format("Maximum total fees limit of %f %s exceeded",
                     ((double) phasingOnly.getMaxFees()) / Constants.ONE_APL, blockchainConfig.getCoinSymbol()));
         }
-        if (transaction.getType() == MessagingTransactionType.PHASING_VOTE_CASTING) {
+        if (transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.PHASING_VOTE_CASTING) {
             return;
         }
         try {
@@ -172,14 +180,14 @@ public class AccountControlPhasingServiceImpl implements AccountControlPhasingSe
      * @deprecated see method with longer parameters list below
      */
     @Override
-    public boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+    public boolean isBlockDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
         Account senderAccount = accountService.getAccount(transaction.getSenderId());
         Set<AccountControlType> senderAccountControls = senderAccount.getControls();
         AccountControlPhasing accountControlPhasing = this.get(transaction.getSenderId());
         return
             senderAccountControls.contains(AccountControlType.PHASING_ONLY)
                 && (accountControlPhasing != null && accountControlPhasing.getMaxFees() != 0)
-                && transaction.getType() != SET_PHASING_ONLY
+                && transaction.getType().getSpec() != SET_PHASING_ONLY
                 && TransactionType.isDuplicate(SET_PHASING_ONLY,
                 Long.toUnsignedString(transaction.getSenderId()), duplicates, true);
     }
