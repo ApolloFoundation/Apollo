@@ -23,7 +23,6 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
@@ -42,23 +41,7 @@ import java.util.Map;
 
 public interface Transaction {
 
-    static Transaction.Builder newTransactionBuilder(byte[] senderPublicKey, long amountATM, long feeATM, short deadline, Attachment attachment, int timestamp) {
-        return new TransactionImpl.BuilderImpl((byte) 1, senderPublicKey, amountATM, feeATM, deadline, (AbstractAttachment) attachment, timestamp);
-    }
-
-    static Transaction.Builder newTransactionBuilder(byte[] transactionBytes) throws AplException.NotValidException {
-        return TransactionImpl.newTransactionBuilder(transactionBytes);
-    }
-
-    static Transaction.Builder newTransactionBuilder(JSONObject transactionJSON) throws AplException.NotValidException {
-        return TransactionImpl.newTransactionBuilder(transactionJSON);
-    }
-
-    static Transaction.Builder newTransactionBuilder(byte[] transactionBytes, JSONObject prunableAttachments) throws AplException.NotValidException {
-        return TransactionImpl.newTransactionBuilder(transactionBytes, prunableAttachments);
-    }
-
-    boolean isUnconfirmedDuplicate(Map<TransactionType, Map<String, Integer>> unconfirmedDuplicates);
+    boolean isUnconfirmedDuplicate(Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> unconfirmedDuplicates);
 
     void sign(byte[] keySeed) throws AplException.NotValidException;
 
@@ -116,7 +99,7 @@ public interface Transaction {
 
     byte[] getFullHash();
 
-    TransactionTypes.TransactionTypeSpec getType();
+    TransactionType getType();
 
     Attachment getAttachment();
 
@@ -164,7 +147,7 @@ public interface Transaction {
 
     long getECBlockId();
 
-    default boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
+    default boolean attachmentIsDuplicate(Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
         return false;
     }
 
@@ -195,6 +178,8 @@ public interface Transaction {
         Builder timestamp(int timestamp);
 
         Builder ecBlockHeight(int height);
+
+        Builder ecBlockData(EcBlockData ecBlockData);
 
         Builder dbId(long dbId);
 

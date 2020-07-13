@@ -22,13 +22,8 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtendAttachment;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.messaging.MessagingTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
@@ -42,7 +37,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingProcessingAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Filter;
@@ -76,7 +70,7 @@ public class TransactionImpl implements Transaction {
     private final long recipientId;
     private final long amountATM;
     private final byte[] referencedTransactionFullHash;
-    private final TransactionTypes.TransactionTypeSpec type;
+    private final TransactionType type;
     private final int ecBlockHeight;
     private final long ecBlockId;
     private final byte version;
@@ -107,7 +101,7 @@ public class TransactionImpl implements Transaction {
     private volatile long dbId;
     private volatile boolean hasValidSignature = false;
 
-    private TransactionImpl(BuilderImpl builder, byte[] keySeed) throws AplException.NotValidException {
+    TransactionImpl(BuilderImpl builder, byte[] keySeed) throws AplException.NotValidException {
 
         this.timestamp = builder.timestamp;
         this.deadline = builder.deadline;
@@ -181,170 +175,6 @@ public class TransactionImpl implements Transaction {
             signature = null;
         }
 
-    }
-
-    static TransactionImpl.BuilderImpl newTransactionBuilder(byte[] bytes) throws AplException.NotValidException {
-        try {
-            ByteBuffer buffer = ByteBuffer.wrap(bytes);
-            buffer.order(ByteOrder.LITTLE_ENDIAN);
-            byte type = buffer.get();
-            byte subtype = buffer.get();
-            byte version = (byte) ((subtype & 0xF0) >> 4);
-            subtype = (byte) (subtype & 0x0F);
-            int timestamp = buffer.getInt();
-            short deadline = buffer.getShort();
-            byte[] senderPublicKey = new byte[32];
-            buffer.get(senderPublicKey);
-            long recipientId = buffer.getLong();
-            long amountATM = buffer.getLong();
-            long feeATM = buffer.getLong();
-            byte[] referencedTransactionFullHash = new byte[32];
-            buffer.get(referencedTransactionFullHash);
-            referencedTransactionFullHash = Convert.emptyToNull(referencedTransactionFullHash);
-            byte[] signature = new byte[64];
-            buffer.get(signature);
-            signature = Convert.emptyToNull(signature);
-            int flags = 0;
-            int ecBlockHeight = 0;
-            long ecBlockId = 0;
-            if (version > 0) {
-                flags = buffer.getInt();
-                ecBlockHeight = buffer.getInt();
-                ecBlockId = buffer.getLong();
-            }
-            TransactionTypes.TransactionTypeSpec transactionType = TransactionTypes.findValue(type, subtype);
-            TransactionImpl.BuilderImpl builder = new BuilderImpl(version, senderPublicKey, amountATM, feeATM,
-                deadline, transactionType.parseAttachment(buffer), timestamp)
-                .referencedTransactionFullHash(referencedTransactionFullHash)
-                .signature(signature)
-                .ecBlockHeight(ecBlockHeight)
-                .ecBlockId(ecBlockId);
-            if (transactionType.canHaveRecipient()) {
-                builder.recipientId(recipientId);
-            }
-            int position = 1;
-            if ((flags & position) != 0 || (version == 0 && transactionType == MessagingTransactionType.ARBITRARY_MESSAGE)) {
-                builder.appendix(new MessageAppendix(buffer));
-            }
-            position <<= 1;
-            if ((flags & position) != 0) {
-                builder.appendix(new EncryptedMessageAppendix(buffer));
-            }
-            position <<= 1;
-            if ((flags & position) != 0) {
-                builder.appendix(new PublicKeyAnnouncementAppendix(buffer));
-            }
-            position <<= 1;
-            if ((flags & position) != 0) {
-                builder.appendix(new EncryptToSelfMessageAppendix(buffer));
-            }
-            position <<= 1;
-            if ((flags & position) != 0) {
-                builder.appendix(PhasingAppendixFactory.build(buffer));
-            }
-            position <<= 1;
-            if ((flags & position) != 0) {
-                builder.appendix(new PrunablePlainMessageAppendix(buffer));
-            }
-            position <<= 1;
-            if ((flags & position) != 0) {
-                builder.appendix(new PrunableEncryptedMessageAppendix(buffer));
-            }
-            if (buffer.hasRemaining()) {
-                throw new AplException.NotValidException("Transaction bytes too long, " + buffer.remaining() + " extra bytes");
-            }
-            return builder;
-        } catch (RuntimeException e) {
-            LOG.debug("Failed to parse transaction bytes: " + Convert.toHexString(bytes));
-            throw e;
-        }
-    }
-
-    static TransactionImpl.BuilderImpl newTransactionBuilder(byte[] bytes, JSONObject prunableAttachments) throws AplException.NotValidException {
-        BuilderImpl builder = newTransactionBuilder(bytes);
-        if (prunableAttachments != null) {
-            ShufflingProcessingAttachment shufflingProcessing = ShufflingProcessingAttachment.parse(prunableAttachments);
-            if (shufflingProcessing != null) {
-                builder.appendix(shufflingProcessing);
-            }
-            TaggedDataUploadAttachment taggedDataUploadAttachment = TaggedDataUploadAttachment.parse(prunableAttachments);
-            if (taggedDataUploadAttachment != null) {
-                builder.appendix(taggedDataUploadAttachment);
-            }
-            TaggedDataExtendAttachment taggedDataExtendAttachment = TaggedDataExtendAttachment.parse(prunableAttachments);
-            if (taggedDataExtendAttachment != null) {
-                builder.appendix(taggedDataExtendAttachment);
-            }
-            PrunablePlainMessageAppendix prunablePlainMessage = PrunablePlainMessageAppendix.parse(prunableAttachments);
-            if (prunablePlainMessage != null) {
-                builder.appendix(prunablePlainMessage);
-            }
-            PrunableEncryptedMessageAppendix prunableEncryptedMessage = PrunableEncryptedMessageAppendix.parse(prunableAttachments);
-            if (prunableEncryptedMessage != null) {
-                builder.appendix(prunableEncryptedMessage);
-            }
-        }
-        return builder;
-    }
-
-    static TransactionImpl parseTransaction(JSONObject transactionData) throws AplException.NotValidException {
-        TransactionImpl transaction = newTransactionBuilder(transactionData).build();
-        if (transaction.getSignature() != null && !transaction.checkSignature()) {
-            throw new AplException.NotValidException("Invalid transaction signature for transaction " + transaction.getJSONObject().toJSONString());
-        }
-        return transaction;
-    }
-
-    static TransactionImpl.BuilderImpl newTransactionBuilder(JSONObject transactionData) throws AplException.NotValidException {
-        try {
-            byte type = ((Long) transactionData.get("type")).byteValue();
-            byte subtype = ((Long) transactionData.get("subtype")).byteValue();
-            int timestamp = ((Long) transactionData.get("timestamp")).intValue();
-            short deadline = ((Long) transactionData.get("deadline")).shortValue();
-            byte[] senderPublicKey = Convert.parseHexString((String) transactionData.get("senderPublicKey"));
-            long amountATM = transactionData.containsKey("amountATM") ? Convert.parseLong(transactionData.get("amountATM")) : Convert.parseLong(transactionData.get("amountNQT"));
-            long feeATM = transactionData.containsKey("feeATM") ? Convert.parseLong(transactionData.get("feeATM")) : Convert.parseLong(transactionData.get("feeNQT"));
-            String referencedTransactionFullHash = (String) transactionData.get("referencedTransactionFullHash");
-            byte[] signature = Convert.parseHexString((String) transactionData.get("signature"));
-            Long versionValue = (Long) transactionData.get("version");
-            byte version = versionValue == null ? 0 : versionValue.byteValue();
-            JSONObject attachmentData = (JSONObject) transactionData.get("attachment");
-            int ecBlockHeight = 0;
-            long ecBlockId = 0;
-            if (version > 0) {
-                ecBlockHeight = ((Long) transactionData.get("ecBlockHeight")).intValue();
-                ecBlockId = Convert.parseUnsignedLong((String) transactionData.get("ecBlockId"));
-            }
-
-            TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
-            if (transactionType == null) {
-                throw new AplException.NotValidException("Invalid transaction type: " + type + ", " + subtype);
-            }
-            TransactionImpl.BuilderImpl builder = new BuilderImpl(version, senderPublicKey,
-                amountATM, feeATM, deadline,
-                transactionType.parseAttachment(attachmentData), timestamp)
-                .referencedTransactionFullHash(referencedTransactionFullHash)
-                .signature(signature)
-                .ecBlockHeight(ecBlockHeight)
-                .ecBlockId(ecBlockId);
-            if (transactionType.canHaveRecipient()) {
-                long recipientId = Convert.parseUnsignedLong((String) transactionData.get("recipient"));
-                builder.recipientId(recipientId);
-            }
-            if (attachmentData != null) {
-                builder.appendix(MessageAppendix.parse(attachmentData));
-                builder.appendix(EncryptedMessageAppendix.parse(attachmentData));
-                builder.appendix(PublicKeyAnnouncementAppendix.parse(attachmentData));
-                builder.appendix(EncryptToSelfMessageAppendix.parse(attachmentData));
-                builder.appendix(PhasingAppendixFactory.parse(attachmentData));
-                builder.appendix(PrunablePlainMessageAppendix.parse(attachmentData));
-                builder.appendix(PrunableEncryptedMessageAppendix.parse(attachmentData));
-            }
-            return builder;
-        } catch (RuntimeException e) {
-            LOG.debug("Failed to parse transaction: " + transactionData.toJSONString());
-            throw e;
-        }
     }
 
     public void sign(byte[] keySeed) throws AplException.NotValidException {
@@ -455,7 +285,7 @@ public class TransactionImpl implements Transaction {
     }
 
     @Override
-    public TransactionTypes.TransactionTypeSpec getType() {
+    public TransactionType getType() {
         return type;
     }
 
@@ -668,8 +498,8 @@ public class TransactionImpl implements Transaction {
             try {
                 ByteBuffer buffer = ByteBuffer.allocate(getSize());
                 buffer.order(ByteOrder.LITTLE_ENDIAN);
-                buffer.put(type.getType());
-                buffer.put((byte) ((version << 4) | type.getSubtype()));
+                buffer.put(type.getSpec().getType());
+                buffer.put((byte) ((version << 4) | type.getSpec().getSubtype()));
                 buffer.putInt(timestamp);
                 buffer.putShort(deadline);
                 buffer.put(getSenderPublicKey());
@@ -707,8 +537,8 @@ public class TransactionImpl implements Transaction {
     public JSONObject getJSONObject() {
         JSONObject json = new JSONObject();
         json.put("id", Long.toUnsignedString(id));
-        json.put("type", type.getType());
-        json.put("subtype", type.getSubtype());
+        json.put("type", type.getSpec().getType());
+        json.put("subtype", type.getSpec().getSubtype());
         json.put("timestamp", timestamp);
         json.put("deadline", deadline);
         json.put("senderPublicKey", Convert.toHexString(getSenderPublicKey()));
@@ -841,7 +671,7 @@ public class TransactionImpl implements Transaction {
         return flags;
     }
 
-    public boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
+    public boolean attachmentIsDuplicate(Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
         if (!attachmentIsPhased() && !atAcceptanceHeight) {
             // can happen for phased transactions having non-phasable attachment
             return false;
@@ -864,7 +694,7 @@ public class TransactionImpl implements Transaction {
     }
 
     @Override
-    public boolean isUnconfirmedDuplicate(Map<TransactionType, Map<String, Integer>> duplicates) {
+    public boolean isUnconfirmedDuplicate(Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
         return type.isUnconfirmedDuplicate(this, duplicates);
     }
 
@@ -874,7 +704,7 @@ public class TransactionImpl implements Transaction {
         private byte[] senderPublicKey;
         private long amountATM;
         private long feeATM;
-        private TransactionTypes.TransactionTypeSpec type;
+        private TransactionType type;
         private byte version;
         private AbstractAttachment attachment;
 
@@ -919,9 +749,7 @@ public class TransactionImpl implements Transaction {
         @Override
         public TransactionImpl build(byte[] keySeed) throws AplException.NotValidException {
             if (!ecBlockSet) {
-                EcBlockData ecBlock = lookupAndInjectBlockchain().getECBlock(timestamp);
-                this.ecBlockHeight = ecBlock.getHeight();
-                this.ecBlockId = ecBlock.getId();
+                throw new IllegalStateException("Ec block was not set for transaction");
             }
             return new TransactionImpl(this, keySeed);
         }
@@ -1003,6 +831,14 @@ public class TransactionImpl implements Transaction {
         @Override
         public BuilderImpl ecBlockHeight(int height) {
             this.ecBlockHeight = height;
+            this.ecBlockSet = true;
+            return this;
+        }
+
+        @Override
+        public BuilderImpl ecBlockData(EcBlockData ecBlockData) {
+            this.ecBlockHeight = ecBlockData.getHeight();
+            this.ecBlockId = ecBlockData.getId();
             this.ecBlockSet = true;
             return this;
         }
