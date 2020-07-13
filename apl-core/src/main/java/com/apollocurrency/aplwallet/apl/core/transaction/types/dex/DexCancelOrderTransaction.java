@@ -1,28 +1,42 @@
 /*
  * Copyright © 2018-2020 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.exchange.transaction;
+package com.apollocurrency.aplwallet.apl.core.transaction.types.dex;
 
-import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOrderCancelAttachment;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import org.json.simple.JSONObject;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
-public class DexCancelOrderTransaction extends DEX {
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.DEX_CANCEL_ORDER;
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.DEX_CONTRACT;
+
+@Singleton
+public class DexCancelOrderTransaction extends DexTransactionType {
+
+
+    @Inject
+    public DexCancelOrderTransaction(BlockchainConfig blockchainConfig, AccountService accountService, DexService dexService) {
+        super(blockchainConfig, accountService, dexService);
+    }
 
     @Override
-    public byte getSubtype() {
-        return TransactionType.SUBTYPE_DEX_ORDER_CANCEL;
+    public TransactionTypes.TransactionTypeSpec getSpec() {
+        return DEX_CANCEL_ORDER;
     }
 
     @Override
@@ -45,7 +59,7 @@ public class DexCancelOrderTransaction extends DEX {
         DexOrderCancelAttachment attachment = (DexOrderCancelAttachment) transaction.getAttachment();
         long orderTransactionId = attachment.getOrderId();
 
-        DexOrder order = lookupDexService().getOrder(orderTransactionId);
+        DexOrder order = dexService.getOrder(orderTransactionId);
         if (order == null) {
             throw new AplException.NotCurrentlyValidException("Order was not found. OrderId: " + orderTransactionId);
         }
@@ -69,7 +83,6 @@ public class DexCancelOrderTransaction extends DEX {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         DexOrderCancelAttachment attachment = (DexOrderCancelAttachment) transaction.getAttachment();
-        DexService dexService = lookupDexService();
         DexOrder order = dexService.getOrder(attachment.getOrderId());
 
         try {
@@ -89,10 +102,10 @@ public class DexCancelOrderTransaction extends DEX {
     }
 
     @Override
-    public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+    public boolean isDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
         DexOrderCancelAttachment attachment = (DexOrderCancelAttachment) transaction.getAttachment();
-        return isDuplicate(DEX.DEX_CONTRACT_TRANSACTION, Long.toUnsignedString(attachment.getOrderId()), duplicates, true)
-            || isDuplicate(DEX.DEX_CANCEL_ORDER_TRANSACTION, Long.toUnsignedString(attachment.getOrderId()), duplicates, true);
+        return isDuplicate(DEX_CONTRACT, Long.toUnsignedString(attachment.getOrderId()), duplicates, true)
+            || isDuplicate(DEX_CANCEL_ORDER, Long.toUnsignedString(attachment.getOrderId()), duplicates, true);
     }
 
     @Override

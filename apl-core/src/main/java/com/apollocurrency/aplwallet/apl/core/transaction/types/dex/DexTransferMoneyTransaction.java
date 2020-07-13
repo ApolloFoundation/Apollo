@@ -1,11 +1,12 @@
 /*
  * Copyright © 2018-2020 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.exchange.transaction;
+package com.apollocurrency.aplwallet.apl.core.transaction.types.dex;
 
-import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
@@ -15,7 +16,6 @@ import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 
@@ -23,7 +23,7 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 
 @Slf4j
-public class DexTransferMoneyTransaction extends DEX {
+public class DexTransferMoneyTransaction extends DexTransactionType {
 
     @Override
     public byte getSubtype() {
@@ -112,7 +112,7 @@ public class DexTransferMoneyTransaction extends DEX {
     @Override
     public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
         DexControlOfFrozenMoneyAttachment attachment = (DexControlOfFrozenMoneyAttachment) transaction.getAttachment();
-        return isDuplicate(DEX.DEX_TRANSFER_MONEY_TRANSACTION, Long.toUnsignedString(attachment.getContractId()), duplicates, true);
+        return isDuplicate(DexTransactionType.DEX_TRANSFER_MONEY_TRANSACTION, Long.toUnsignedString(attachment.getContractId()), duplicates, true);
     }
 
     @Override

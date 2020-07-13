@@ -27,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtendAttachment;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.messaging.MessagingTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
@@ -75,7 +76,7 @@ public class TransactionImpl implements Transaction {
     private final long recipientId;
     private final long amountATM;
     private final byte[] referencedTransactionFullHash;
-    private final TransactionType type;
+    private final TransactionTypes.TransactionTypeSpec type;
     private final int ecBlockHeight;
     private final long ecBlockId;
     private final byte version;
@@ -211,7 +212,7 @@ public class TransactionImpl implements Transaction {
                 ecBlockHeight = buffer.getInt();
                 ecBlockId = buffer.getLong();
             }
-            TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
+            TransactionTypes.TransactionTypeSpec transactionType = TransactionTypes.findValue(type, subtype);
             TransactionImpl.BuilderImpl builder = new BuilderImpl(version, senderPublicKey, amountATM, feeATM,
                 deadline, transactionType.parseAttachment(buffer), timestamp)
                 .referencedTransactionFullHash(referencedTransactionFullHash)
@@ -454,7 +455,7 @@ public class TransactionImpl implements Transaction {
     }
 
     @Override
-    public TransactionType getType() {
+    public TransactionTypes.TransactionTypeSpec getType() {
         return type;
     }
 
@@ -873,7 +874,7 @@ public class TransactionImpl implements Transaction {
         private byte[] senderPublicKey;
         private long amountATM;
         private long feeATM;
-        private TransactionType type;
+        private TransactionTypes.TransactionTypeSpec type;
         private byte version;
         private AbstractAttachment attachment;
 
@@ -918,23 +919,11 @@ public class TransactionImpl implements Transaction {
         @Override
         public TransactionImpl build(byte[] keySeed) throws AplException.NotValidException {
             if (!ecBlockSet) {
-                lookupAndInjectBlockchain();
                 EcBlockData ecBlock = lookupAndInjectBlockchain().getECBlock(timestamp);
                 this.ecBlockHeight = ecBlock.getHeight();
                 this.ecBlockId = ecBlock.getId();
             }
             return new TransactionImpl(this, keySeed);
-        }
-
-        private Blockchain lookupAndInjectBlockchain() {
-            return CDI.current().select(Blockchain.class).get();
-        }
-
-        private AccountPublicKeyService lookupAndInjectAccountService() {
-            if (accountPublicKeyService == null) {
-                accountPublicKeyService = CDI.current().select(AccountPublicKeyServiceImpl.class).get();
-            }
-            return accountPublicKeyService;
         }
 
         @Override

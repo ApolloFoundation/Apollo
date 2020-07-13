@@ -1,35 +1,47 @@
 /*
  * Copyright © 2018-2020 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.exchange.transaction;
+package com.apollocurrency.aplwallet.apl.core.transaction.types.dex;
 
-import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexContractAttachment;
+import com.apollocurrency.aplwallet.apl.exchange.DexConfig;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 
+import javax.inject.Inject;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class DexContractTransaction extends DEX {
+public class DexContractTransaction extends DexTransactionType {
+
+    private final DexConfig dexConfig;
+
+    @Inject
+    public DexContractTransaction(BlockchainConfig blockchainConfig, AccountService accountService, DexService dexService, DexConfig dexConfig) {
+        super(blockchainConfig, accountService, dexService);
+        this.dexConfig = dexConfig;
+    }
 
     @Override
-    public byte getSubtype() {
-        return TransactionType.SUBTYPE_DEX_CONTRACT;
+    public TransactionTypes.TransactionTypeSpec getSpec() {
+        return TransactionTypes.TransactionTypeSpec.DEX_CONTRACT;
     }
 
     @Override
@@ -51,7 +63,6 @@ public class DexContractTransaction extends DEX {
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
         DexContractAttachment attachment = (DexContractAttachment) transaction.getAttachment();
 
-        DexService dexService = lookupDexService();
         DexOrder order = dexService.getOrder(attachment.getOrderId());
         DexOrder counterOrder = dexService.getOrder(attachment.getCounterOrderId());
         if (order == null) {
@@ -144,7 +155,7 @@ public class DexContractTransaction extends DEX {
             }
         }
 
-        if (attachment.getTimeToReply() < lookupDexConfig().getMinAtomicSwapDuration()) {
+        if (attachment.getTimeToReply() < dexConfig.getMinAtomicSwapDuration()) {
             throw new AplException.NotValidException("Time to reply is less than minimal.");
         }
         if (attachment.getTimeToReply() > Constants.DEX_MAX_CONTRACT_TIME_WAITING_TO_REPLY) {
@@ -160,7 +171,6 @@ public class DexContractTransaction extends DEX {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         DexContractAttachment attachment = (DexContractAttachment) transaction.getAttachment();
-        DexService dexService = lookupDexService();
         DexOrder order = dexService.getOrder(attachment.getOrderId());
         DexOrder counterOrder = dexService.getOrder(attachment.getCounterOrderId());
 
@@ -207,9 +217,9 @@ public class DexContractTransaction extends DEX {
     }
 
     @Override
-    public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+    public boolean isDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
         DexContractAttachment attachment = (DexContractAttachment) transaction.getAttachment();
-        return isDuplicate(DEX.DEX_CONTRACT_TRANSACTION, Long.toUnsignedString(attachment.getCounterOrderId()), duplicates, true);
+        return isDuplicate(TransactionTypes.TransactionTypeSpec.DEX_CONTRACT, Long.toUnsignedString(attachment.getCounterOrderId()), duplicates, true);
     }
 
     @Override
@@ -229,7 +239,6 @@ public class DexContractTransaction extends DEX {
 
 
     private void reopenNotMatchedOrders(ExchangeContract contract) {
-        DexService dexService = lookupDexService();
         List<ExchangeContract> allContracts = dexService.getDexContractsByCounterOrderId(contract.getCounterOrderId());
 
         //Exclude current contract.

@@ -2,6 +2,9 @@ package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import lombok.Getter;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class TransactionTypes {
     public static final byte TYPE_PAYMENT = 0;
     public static final byte TYPE_MESSAGING = 1;
@@ -82,6 +85,8 @@ public class TransactionTypes {
     public static final byte SUBTYPE_MONETARY_SYSTEM_CURRENCY_MINTING = 7;
     public static final byte SUBTYPE_MONETARY_SYSTEM_CURRENCY_DELETION = 8;
 
+    private static final Map<Integer, TransactionTypeSpec> ALL_TYPES = new HashMap<>();
+
     @Getter
     public enum TransactionTypeSpec {
         ORDINARY_PAYMENT(TYPE_PAYMENT, SUBTYPE_PAYMENT_ORDINARY_PAYMENT),
@@ -152,12 +157,21 @@ public class TransactionTypes {
         DEX_CLOSE_ORDER(TYPE_DEX, SUBTYPE_DEX_CLOSE_ORDER),
 
         ;
+
         private final byte type;
         private final byte subtype;
 
         TransactionTypeSpec(int type, int subtype) {
             this.type = (byte) type;
             this.subtype = (byte) subtype;
+            ALL_TYPES.put(subtype | type << 8, this);
         }
+    }
+    public static TransactionTypeSpec findValue(int type, int subtype) {
+        TransactionTypeSpec spec = ALL_TYPES.get(subtype | type << 8);
+        if (spec == null) {
+            throw new IllegalArgumentException("Unable to find spec for type '" + type + "' and subtype '" + subtype + "'");
+        }
+        return spec;
     }
 }

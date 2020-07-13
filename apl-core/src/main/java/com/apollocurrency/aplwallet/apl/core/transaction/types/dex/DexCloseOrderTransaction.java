@@ -1,13 +1,17 @@
 /*
  * Copyright © 2018-2020 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.exchange.transaction;
+package com.apollocurrency.aplwallet.apl.core.transaction.types.dex;
 
-import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexCloseOrderAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
@@ -16,21 +20,35 @@ import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.DEX_CLOSE_ORDER;
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.DEX_TRANSFER_MONEY;
 
 
-public class DexCloseOrderTransaction extends DEX {
+@Singleton
+public class DexCloseOrderTransaction extends DexTransactionType {
+    private final Blockchain blockchain;
+    private final PhasingPollService phasingPollService;
+
+    @Inject
+    public DexCloseOrderTransaction(BlockchainConfig blockchainConfig, AccountService accountService, DexService dexService, Blockchain blockchain, PhasingPollService phasingPollService) {
+        super(blockchainConfig, accountService, dexService);
+        this.blockchain = blockchain;
+        this.phasingPollService = phasingPollService;
+    }
+
 
     @Override
-    public byte getSubtype() {
-        return TransactionType.SUBTYPE_DEX_CLOSE_ORDER;
+    public TransactionTypes.TransactionTypeSpec getSpec() {
+        return DEX_CLOSE_ORDER;
     }
 
     @Override
@@ -51,7 +69,6 @@ public class DexCloseOrderTransaction extends DEX {
     @Override
     public void validateAttachment(Transaction tx) throws AplException.ValidationException {
         DexCloseOrderAttachment attachment = (DexCloseOrderAttachment) tx.getAttachment();
-        DexService dexService = lookupDexService();
         ExchangeContract dexContract = dexService.getDexContractById(attachment.getContractId());
         if (dexContract == null) {
             throw new AplException.NotCurrentlyValidException("Contract does not exists, id - " + attachment.getContractId());
@@ -78,11 +95,11 @@ public class DexCloseOrderTransaction extends DEX {
             throw new AplException.NotCurrentlyValidException(JSON.toString(incorrect("orderStatus", "You can close order in the status WaitingForApproval only, but got: " + order.getStatus().name())));
         }
         long transferId = Long.parseUnsignedLong(isSender ? dexContract.getTransferTxId() : dexContract.getCounterTransferTxId());
-        Transaction transferTx = lookupBlockchain().getTransaction(transferId);
+        Transaction transferTx = blockchain.getTransaction(transferId);
         if (transferTx == null) {
             throw new AplException.NotCurrentlyValidException("Transfer tx was not found: " + transferId);
         }
-        if (transferTx.getType() != DEX_TRANSFER_MONEY_TRANSACTION) {
+        if (transferTx.getType() != DEX_TRANSFER_MONEY) {
             throw new AplException.NotCurrentlyValidException("Wrong type of transfer tx: " + transferTx.getType());
         }
         if (transferTx.getSenderId() != tx.getSenderId()) {
@@ -92,7 +109,6 @@ public class DexCloseOrderTransaction extends DEX {
         if (transferContractId != attachment.getContractId()) {
             throw new AplException.NotCurrentlyValidException("Trasfer tx " + transferId + " refers to another contract " + transferContractId + ", expected " + attachment.getContractId());
         }
-        PhasingPollService phasingPollService = lookupPhasingPollService();
         if (phasingPollService.getPoll(transferId) == null && phasingPollService.getResult(transferId) == null) {
             throw new AplException.NotCurrentlyValidException("Transfer tx " + transferId + " was not phased");
         }
@@ -107,7 +123,6 @@ public class DexCloseOrderTransaction extends DEX {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         DexCloseOrderAttachment attachment = (DexCloseOrderAttachment) transaction.getAttachment();
-        DexService dexService = lookupDexService();
         ExchangeContract contract = dexService.getDexContractById(attachment.getContractId());
         long orderId = senderAccount.getId() == contract.getSender() ? contract.getOrderId() : contract.getCounterOrderId();
         dexService.closeOrder(orderId);
@@ -120,9 +135,9 @@ public class DexCloseOrderTransaction extends DEX {
     }
 
     @Override
-    public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+    public boolean isDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
         DexCloseOrderAttachment attachment = (DexCloseOrderAttachment) transaction.getAttachment();
-        return isDuplicate(DEX.DEX_CLOSE_ORDER, Long.toUnsignedString(attachment.getContractId()), duplicates, true);
+        return isDuplicate(DEX_CLOSE_ORDER, Long.toUnsignedString(attachment.getContractId()), duplicates, true);
     }
 
     @Override
