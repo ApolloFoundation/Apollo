@@ -7,14 +7,17 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.update.UpdateTransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.Update;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.CertificateMemoryStore;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateV2Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateV2Transaction;
 import com.apollocurrency.aplwallet.apl.testutil.WeldUtils;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.Version;
-import com.apollocurrency.aplwallet.apl.util.env.Architecture;
-import com.apollocurrency.aplwallet.apl.util.env.Platform;
+import com.apollocurrency.aplwallet.apl.util.env.Arch;
+import com.apollocurrency.aplwallet.apl.util.env.OS;
 import com.apollocurrency.aplwallet.apl.util.env.PlatformSpec;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit5.EnableWeld;
@@ -42,7 +45,7 @@ public class UpdateTransactionTest {
 
     @BeforeEach
     void setUp() {
-        type = UpdateTransactionType.UPDATE_V2;
+        type = new UpdateV2Transaction(mock(CertificateMemoryStore.class));
     }
 
     @ParameterizedTest
@@ -71,7 +74,7 @@ public class UpdateTransactionTest {
     private Transaction createUpdateTx(String v) {
         Transaction tx = mock(Transaction.class);
         Version version = new Version(v);
-        UpdateV2Attachment attachment = new UpdateV2Attachment("htpps://update.zip", Level.CRITICAL, version, "somesite.com", BigInteger.ONE, new byte[128], Set.of(new PlatformSpec(Platform.ALL, Architecture.AMD64), new PlatformSpec(Platform.ALL, Architecture.X86), new PlatformSpec(Platform.MAC_OS, Architecture.ARM)));
+        UpdateV2Attachment attachment = new UpdateV2Attachment("htpps://update.zip", Level.CRITICAL, version, "somesite.com", BigInteger.ONE, new byte[128], Set.of(new PlatformSpec(OS.NO_OS, Arch.X86_64), new PlatformSpec(OS.NO_OS, Arch.X86_32), new PlatformSpec(OS.MAC_OS, Arch.ARM_32)));
         when(tx.getAttachment()).thenReturn(attachment);
         return tx;
     }

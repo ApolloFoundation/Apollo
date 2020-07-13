@@ -5,6 +5,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.shuffling.ShufflingTransactionType;
+import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -124,7 +125,7 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
     @Override
     public void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
         if (data == null && shouldLoadPrunable(transaction, includeExpiredPrunable)) {
-            data = ShufflingParticipant.getData(getShufflingId(), transaction.getSenderId());
+            data = lookupShufflingService().getData(getShufflingId(), transaction.getSenderId());
         }
     }
 
@@ -135,7 +136,7 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
 
     @Override
     public void restorePrunableData(Transaction transaction, int blockTimestamp, int height) {
-        ShufflingParticipant.restoreData(getShufflingId(), transaction.getSenderId(), getData(), transaction.getTimestamp(), height);
+        lookupShufflingService().restoreData(getShufflingId(), transaction.getSenderId(), getData(), transaction.getTimestamp(), height);
     }
 
 }

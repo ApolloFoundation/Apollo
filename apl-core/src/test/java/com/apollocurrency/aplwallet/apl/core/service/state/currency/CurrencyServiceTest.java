@@ -29,6 +29,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySuppl
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
+import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.impl.CurrencyBuyOfferServiceImpl;
@@ -92,6 +93,8 @@ class CurrencyServiceTest {
     @Mock
     private CurrencyTransferService currencyTransferService;
     @Mock
+    private ShufflingService shufflingService;
+    @Mock
     private IteratorToStreamConverter<CurrencyTransfer> iteratorToStreamConverter;
 
     @BeforeEach
@@ -99,7 +102,7 @@ class CurrencyServiceTest {
         td = new CurrencyTestData();
         service = new CurrencyServiceImpl(currencySupplyTable, currencyTable, blockChainInfoService,
             accountService, accountCurrencyService, currencyExchangeOfferFacade, currencyFounderService,
-            exchangeService, currencyTransferService);
+            exchangeService, currencyTransferService, shufflingService);
     }
 
     @Test

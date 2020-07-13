@@ -115,7 +115,7 @@ public class AbstractEndpointTest {
 //        request.accept(MediaType.TEXT_HTML);
         request.contentType(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
         request.setAttribute(Validator.class.getName(), validator);
-        if (StringUtils.isNoneEmpty(body)) {
+        if (StringUtils.isNoneBlank(body)) {
             request.content(body.getBytes());
         }
 

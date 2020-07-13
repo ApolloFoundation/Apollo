@@ -56,11 +56,11 @@ public final class GetAllShufflings extends AbstractAPIRequestHandler {
         DbIterator<Shuffling> shufflings = null;
         try {
             if (finishedOnly) {
-                shufflings = Shuffling.getFinishedShufflings(firstIndex, lastIndex);
+                shufflings = shufflingService.getFinishedShufflings(firstIndex, lastIndex);
             } else if (includeFinished) {
-                shufflings = Shuffling.getAll(firstIndex, lastIndex);
+                shufflings = shufflingService.getAll(firstIndex, lastIndex);
             } else {
-                shufflings = Shuffling.getActiveShufflings(firstIndex, lastIndex);
+                shufflings = shufflingService.getActiveShufflings(firstIndex, lastIndex);
             }
             for (Shuffling shuffling : shufflings) {
                 jsonArray.add(JSONData.shuffling(shuffling, includeHoldingInfo));

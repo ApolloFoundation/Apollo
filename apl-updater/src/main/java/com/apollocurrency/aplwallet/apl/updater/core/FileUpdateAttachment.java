@@ -4,14 +4,14 @@
 
 package com.apollocurrency.aplwallet.apl.updater.core;
 
-import com.apollocurrency.aplwallet.apl.util.env.Architecture;
-import com.apollocurrency.aplwallet.apl.util.env.Platform;
+import com.apollocurrency.aplwallet.apl.util.env.Arch;
+import com.apollocurrency.aplwallet.apl.util.env.OS;
 
 import java.util.Objects;
 
 public class FileUpdateAttachment {
-    private Platform platform;
-    private Architecture architecture;
+    private OS OS;
+    private Arch architecture;
     private String urlFirstPart;
     private String urlSecondPart;
     private String version;
@@ -21,8 +21,8 @@ public class FileUpdateAttachment {
     public FileUpdateAttachment() {
     }
 
-    public FileUpdateAttachment(Platform platform, Architecture architecture, String urlFirstPart, String urlSecondPart, String version, String hash, int level) {
-        this.platform = platform;
+    public FileUpdateAttachment(OS OS, Arch architecture, String urlFirstPart, String urlSecondPart, String version, String hash, int level) {
+        this.OS = OS;
         this.architecture = architecture;
         this.urlFirstPart = urlFirstPart;
         this.urlSecondPart = urlSecondPart;
@@ -37,7 +37,7 @@ public class FileUpdateAttachment {
         if (!(o instanceof FileUpdateAttachment)) return false;
         FileUpdateAttachment that = (FileUpdateAttachment) o;
         return level == that.level &&
-            platform == that.platform &&
+            OS == that.OS &&
             architecture == that.architecture &&
             Objects.equals(urlFirstPart, that.urlFirstPart) &&
             Objects.equals(urlSecondPart, that.urlSecondPart) &&
@@ -47,22 +47,22 @@ public class FileUpdateAttachment {
 
     @Override
     public int hashCode() {
-        return Objects.hash(platform, architecture, urlFirstPart, urlSecondPart, version, hash, level);
+        return Objects.hash(OS, architecture, urlFirstPart, urlSecondPart, version, hash, level);
     }
 
-    public Platform getPlatform() {
-        return platform;
+    public OS getOS() {
+        return OS;
     }
 
-    public void setPlatform(Platform platform) {
-        this.platform = platform;
+    public void setOS(OS OS) {
+        this.OS = OS;
     }
 
-    public Architecture getArchitecture() {
+    public Arch getArchitecture() {
         return architecture;
     }
 
-    public void setArchitecture(Architecture architecture) {
+    public void setArchitecture(Arch architecture) {
         this.architecture = architecture;
     }
 

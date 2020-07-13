@@ -7,12 +7,16 @@ package com.apollocurrency.aplwallet.apl.util;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.Vetoed;
+import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -22,6 +26,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Vetoed
 public class FileUtils {
     private static final Logger log = getLogger(FileUtils.class);
+    private static final int READ_BUFFER_SIZE = 16384;
 
     private FileUtils() {
     }
@@ -130,6 +135,22 @@ public class FileUtils {
     public static long countElementsOfDirectory(Path directory) throws IOException {
         try (Stream<Path> stream = Files.list(directory)) {
             return stream.count();
+        }
+    }
+
+    public static long freeSpace() {
+        return new File("/").getFreeSpace();
+    }
+
+    public static long webFileSize(String url) throws IOException {
+        return new URL(url).openConnection().getContentLengthLong();
+    }
+
+    public static byte[] hashFile(Path file, MessageDigest digest) throws IOException {
+        try (DigestInputStream in = new DigestInputStream(Files.newInputStream(file), digest)) {
+            byte[] block = new byte[READ_BUFFER_SIZE];
+            while (in.read(block) > 0) {}
+            return in.getMessageDigest().digest();
         }
     }
 

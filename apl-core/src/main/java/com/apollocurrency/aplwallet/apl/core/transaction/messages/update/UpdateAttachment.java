@@ -11,8 +11,8 @@ import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.util.Version;
-import com.apollocurrency.aplwallet.apl.util.env.Architecture;
-import com.apollocurrency.aplwallet.apl.util.env.Platform;
+import com.apollocurrency.aplwallet.apl.util.env.Arch;
+import com.apollocurrency.aplwallet.apl.util.env.OS;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -24,8 +24,8 @@ import java.util.Objects;
  */
 public abstract class UpdateAttachment extends AbstractAttachment {
 
-    final Platform platform;
-    final Architecture architecture;
+    final OS os;
+    final Arch architecture;
     final DoubleByteArrayTuple url;
     final Version version;
     final byte[] hash;
@@ -33,8 +33,8 @@ public abstract class UpdateAttachment extends AbstractAttachment {
     public UpdateAttachment(ByteBuffer buffer) throws AplException.NotValidException {
         super(buffer);
         try {
-            platform = Platform.valueOf(Convert.readString(buffer, buffer.get(), Constants.MAX_UPDATE_PLATFORM_LENGTH).trim());
-            architecture = Architecture.valueOf(Convert.readString(buffer, buffer.get(), Constants.MAX_UPDATE_ARCHITECTURE_LENGTH).trim());
+            os = OS.fromCompatible(Convert.readString(buffer, buffer.get(), Constants.MAX_UPDATE_PLATFORM_LENGTH).trim());
+            architecture = Arch.fromCompatible(Convert.readString(buffer, buffer.get(), Constants.MAX_UPDATE_ARCHITECTURE_LENGTH).trim());
             int firstUrlPartLength = buffer.getShort();
             byte[] firstUrlPart = new byte[firstUrlPartLength];
             buffer.get(firstUrlPart);
@@ -53,8 +53,8 @@ public abstract class UpdateAttachment extends AbstractAttachment {
 
     public UpdateAttachment(JSONObject attachmentData) {
         super(attachmentData);
-        platform = Platform.valueOf(Convert.nullToEmpty((String) attachmentData.get("platform")).trim());
-        architecture = Architecture.valueOf(Convert.nullToEmpty((String) attachmentData.get("architecture")).trim());
+        os = OS.fromCompatible(Convert.nullToEmpty((String) attachmentData.get("os")).trim());
+        architecture = Arch.fromCompatible(Convert.nullToEmpty((String) attachmentData.get("architecture")).trim());
         JSONObject urlJson = (JSONObject) attachmentData.get("url");
         byte[] firstUrlPart = Convert.parseHexString(Convert.nullToEmpty(((String) urlJson.get("first")).trim()));
         byte[] secondUrlPart = Convert.parseHexString(Convert.nullToEmpty(((String) urlJson.get("second")).trim()));
@@ -63,8 +63,8 @@ public abstract class UpdateAttachment extends AbstractAttachment {
         hash = Convert.parseHexString(Convert.nullToEmpty((String) attachmentData.get("hash")).trim());
     }
 
-    public UpdateAttachment(Platform platform, Architecture architecture, DoubleByteArrayTuple url, Version version, byte[] hash) {
-        this.platform = platform;
+    public UpdateAttachment(OS os, Arch architecture, DoubleByteArrayTuple url, Version version, byte[] hash) {
+        this.os = os;
         this.architecture = architecture;
         this.url = url;
         this.version = version;
@@ -84,13 +84,13 @@ public abstract class UpdateAttachment extends AbstractAttachment {
 
     @Override
     public int getMySize() {
-        return 1 + Convert.toBytes(platform.name()).length + 1 + Convert.toBytes(architecture.name()).length + 2 + url.getFirst().length + 2 + url.getSecond().length + 1 + Convert.toBytes(version.toString()).length + 2 + hash.length;
+        return 1 + Convert.toBytes(os.getCompatibleName()).length + 1 + Convert.toBytes(architecture.getCompatibleName()).length + 2 + url.getFirst().length + 2 + url.getSecond().length + 1 + Convert.toBytes(version.toString()).length + 2 + hash.length;
     }
 
     @Override
     public void putMyBytes(ByteBuffer buffer) {
-        byte[] platform = Convert.toBytes(this.platform.toString());
-        byte[] architecture = Convert.toBytes(this.architecture.toString());
+        byte[] platform = Convert.toBytes(this.os.getCompatibleName());
+        byte[] architecture = Convert.toBytes(this.architecture.getCompatibleName());
         byte[] version = Convert.toBytes(this.version.toString());
         buffer.put((byte) platform.length);
         buffer.put(platform);
@@ -108,8 +108,8 @@ public abstract class UpdateAttachment extends AbstractAttachment {
 
     @Override
     public void putMyJSON(JSONObject attachment) {
-        attachment.put("platform", platform.toString());
-        attachment.put("architecture", architecture.toString());
+        attachment.put("os", os.getCompatibleName());
+        attachment.put("architecture", architecture.getCompatibleName());
         JSONObject urlJson = new JSONObject();
         urlJson.put("first", Convert.toHexString(url.getFirst()));
         urlJson.put("second", Convert.toHexString(url.getSecond()));
@@ -118,11 +118,11 @@ public abstract class UpdateAttachment extends AbstractAttachment {
         attachment.put("hash", Convert.toHexString(hash));
     }
 
-    public Platform getPlatform() {
-        return platform;
+    public OS getOS() {
+        return os;
     }
 
-    public Architecture getArchitecture() {
+    public Arch getArchitecture() {
         return architecture;
     }
 
@@ -147,12 +147,12 @@ public abstract class UpdateAttachment extends AbstractAttachment {
             return false;
         }
         UpdateAttachment that = (UpdateAttachment) o;
-        return platform == that.platform && architecture == that.architecture && Objects.equals(url, that.url) && Objects.equals(version, that.version) && Arrays.equals(hash, that.hash);
+        return os == that.os && architecture == that.architecture && Objects.equals(url, that.url) && Objects.equals(version, that.version) && Arrays.equals(hash, that.hash);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(platform, architecture, url, version);
+        int result = Objects.hash(os, architecture, url, version);
         result = 31 * result + Arrays.hashCode(hash);
         return result;
     }
