@@ -147,6 +147,10 @@ public class AccountControlController {
         log.trace("Started getPhasingOnlyControl, accountIdParameter = {}", accountIdParameter);
         long accountId = accountIdParameter.get();
         AccountControlPhasing phasingOnly = accountControlPhasingService.get(accountId);
+        if (phasingOnly == null) {
+            log.trace("getPhasingOnlyControl NOT FOUND phasingOnly");
+            return response.build(); // empty respond when AccountControlPhasing is not found by account Id
+        }
         AccountControlPhasingDTO dto = accountControlPhasingConverter.apply(phasingOnly);
         log.trace("getPhasingOnlyControl result: {}", dto);
         return response.bind(dto).build();
