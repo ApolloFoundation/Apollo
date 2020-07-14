@@ -20,17 +20,17 @@
 
 package com.apollocurrency.aplwallet.apl.core.entity.state.currency;
 
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystemExchange;
-import com.apollocurrency.aplwallet.apl.core.transaction.ShufflingTransaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
+import com.apollocurrency.aplwallet.apl.core.transaction.ShufflingTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveIncrease;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import lombok.extern.slf4j.Slf4j;

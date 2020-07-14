@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.tagged.model;
 
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.tagged.TaggedDataAttachment;
 import com.apollocurrency.aplwallet.apl.core.service.state.TaggedDataService;
@@ -11,7 +12,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.Data;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import org.json.simple.JSONObject;
 
 import javax.enterprise.inject.spi.CDI;

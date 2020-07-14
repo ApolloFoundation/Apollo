@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.appdata.impl;
 
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDaoJdbc;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDaoJdbc;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardRecovery;
 import org.slf4j.Logger;
 

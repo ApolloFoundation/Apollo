@@ -20,13 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.app.Shuffler;
+import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffler;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.core.service.state.ShufflerService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -43,6 +44,7 @@ public final class StopShuffler extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
+        ShufflerService shufflerService = lookupShufflerService();
         byte[] shufflingFullHash = HttpParameterParserUtil.getBytes(req, "shufflingFullHash", false);
         long accountId = HttpParameterParserUtil.getAccountId(req, false);
         byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, accountId, false);
@@ -55,15 +57,15 @@ public final class StopShuffler extends AbstractAPIRequestHandler {
             if (shufflingFullHash.length == 0) {
                 return JSONResponses.missing("shufflingFullHash");
             }
-            Shuffler shuffler = Shuffler.stopShuffler(accountId, shufflingFullHash);
+            Shuffler shuffler = shufflerService.stopShuffler(accountId, shufflingFullHash);
             response.put("stoppedShuffler", shuffler != null);
         } else {
             apw.verifyPassword(req);
             if (accountId != 0 && shufflingFullHash.length != 0) {
-                Shuffler shuffler = Shuffler.stopShuffler(accountId, shufflingFullHash);
+                Shuffler shuffler = shufflerService.stopShuffler(accountId, shufflingFullHash);
                 response.put("stoppedShuffler", shuffler != null);
             } else if (accountId == 0 && shufflingFullHash.length == 0) {
-                Shuffler.stopAllShufflers();
+                shufflerService.stopAllShufflers();
                 response.put("stoppedAllShufflers", true);
             } else if (accountId != 0) {
                 return JSONResponses.missing("shufflingFullHash");

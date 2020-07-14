@@ -4,9 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

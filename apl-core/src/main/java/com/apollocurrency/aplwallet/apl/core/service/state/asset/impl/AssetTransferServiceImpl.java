@@ -4,21 +4,20 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.asset.impl;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
-import java.util.stream.Stream;
-
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
+import com.apollocurrency.aplwallet.apl.core.dao.state.asset.AssetTransferTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.dao.state.asset.AssetTransferTable;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetTransferService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.util.stream.Stream;
 
 @Singleton
 public class AssetTransferServiceImpl implements AssetTransferService {

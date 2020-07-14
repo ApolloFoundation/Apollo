@@ -20,9 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.files.DownloadableFilesManager;
@@ -42,11 +39,14 @@ import com.apollocurrency.aplwallet.apl.core.peer.endpoint.PeerRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.peer.endpoint.PeerResponses;
 import com.apollocurrency.aplwallet.apl.core.peer.endpoint.ProcessBlock;
 import com.apollocurrency.aplwallet.apl.core.peer.endpoint.ProcessTransactions;
-import com.apollocurrency.aplwallet.apl.util.io.CountingInputReader;
-import com.apollocurrency.aplwallet.apl.util.io.CountingOutputWriter;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.QueuedThreadPool;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.io.CountingInputReader;
+import com.apollocurrency.aplwallet.apl.util.io.CountingOutputWriter;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
 import org.eclipse.jetty.websocket.servlet.WebSocketCreator;

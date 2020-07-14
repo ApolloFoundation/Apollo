@@ -4,30 +4,23 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.currency.impl;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencySupplyTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountCurrency;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyFounder;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySupply;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyTransfer;
-import com.apollocurrency.aplwallet.apl.core.entity.state.exchange.Exchange;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
+import com.apollocurrency.aplwallet.apl.core.entity.state.exchange.Exchange;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
@@ -40,6 +33,12 @@ import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTran
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
 import lombok.extern.slf4j.Slf4j;
+
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Singleton

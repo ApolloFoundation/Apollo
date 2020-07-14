@@ -1,8 +1,8 @@
 package com.apollocurrency.aplwallet.apl.core.service.prunable;
 
-import java.util.Set;
-
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+
+import java.util.Set;
 
 public interface PrunableRestorationService {
     int restorePrunedData();

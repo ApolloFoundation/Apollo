@@ -27,7 +27,7 @@
         <appender-ref ref="STDOUT"/>
       </logger>
       <logger name="com.apollocurrency.aplwallet.apl.core.service.fulltext" level="WARN" additivity="false">
-        <appender-ref ref="STDOUT"/>
+          <appender-ref ref="STDOUT"/>
       </logger>
     </then>
     <else>

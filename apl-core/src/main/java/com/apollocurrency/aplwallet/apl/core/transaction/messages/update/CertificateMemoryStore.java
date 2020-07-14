@@ -27,7 +27,7 @@ public class CertificateMemoryStore {
     private final URL caCertUrl;
 
     @Inject
-    public CertificateMemoryStore(@Property("updater.ca.cert-url") String caCertUrl,  CertificateLoader loader) throws MalformedURLException {
+    public CertificateMemoryStore(@Property("updater.ca.cert-url") String caCertUrl, CertificateLoader loader) throws MalformedURLException {
         this.loader = Objects.requireNonNull(loader);
         String notNullCertUrl = Objects.requireNonNull(caCertUrl);
         this.caCertUrl = new URL(notNullCertUrl);

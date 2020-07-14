@@ -1,15 +1,15 @@
 package com.apollocurrency.aplwallet.apl.core.dao.appdata.impl;
 
+import com.apollocurrency.aplwallet.apl.core.converter.db.ReferencedTransactionRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ReferencedTransactionDao;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.converter.db.ReferencedTransactionRowMapper;
-import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ReferencedTransaction;
-import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import org.jdbi.v3.core.Jdbi;
 
 import javax.inject.Singleton;

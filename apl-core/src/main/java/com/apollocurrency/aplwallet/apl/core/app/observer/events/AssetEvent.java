@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.observer.events;
 
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.AssetEventType;
-
 import javax.inject.Qualifier;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;

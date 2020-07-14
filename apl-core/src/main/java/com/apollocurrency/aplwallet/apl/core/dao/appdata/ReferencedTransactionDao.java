@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.appdata;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ReferencedTransaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 
 import java.util.List;
 import java.util.Optional;

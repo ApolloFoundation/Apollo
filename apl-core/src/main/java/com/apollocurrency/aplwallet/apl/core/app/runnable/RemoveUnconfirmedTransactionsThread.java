@@ -4,11 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
-import javax.enterprise.inject.spi.CDI;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
@@ -20,6 +15,11 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProces
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import lombok.extern.slf4j.Slf4j;
+
+import javax.enterprise.inject.spi.CDI;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * Class makes lookup of BlockchainProcessor

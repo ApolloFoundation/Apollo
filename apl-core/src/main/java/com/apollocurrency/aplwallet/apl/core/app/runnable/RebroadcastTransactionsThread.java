@@ -4,18 +4,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
+import lombok.extern.slf4j.Slf4j;
+
 import javax.enterprise.inject.spi.CDI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Class makes lookup of BlockchainProcessor
