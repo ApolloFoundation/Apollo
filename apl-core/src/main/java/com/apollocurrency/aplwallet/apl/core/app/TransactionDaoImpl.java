@@ -268,7 +268,7 @@ public class TransactionDaoImpl implements TransactionDao {
                     DbUtils.setBytes(pstmt, ++i, transaction.referencedTransactionFullHash());
                     pstmt.setInt(++i, transaction.getHeight());
                     pstmt.setLong(++i, transaction.getBlockId());
-                    pstmt.setBytes(++i, transaction.getSignature());
+                    pstmt.setBytes(++i, transaction.getSignature().bytes());
                     pstmt.setInt(++i, transaction.getTimestamp());
                     pstmt.setByte(++i, transaction.getType().getType());
                     pstmt.setByte(++i, transaction.getType().getSubtype());

@@ -35,6 +35,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendi
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
+import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -220,7 +221,7 @@ public class UnconfirmedTransaction implements Transaction {
     }
 
     @Override
-    public byte[] getSignature() {
+    public Signature getSignature() {
         return transaction.getSignature();
     }
 

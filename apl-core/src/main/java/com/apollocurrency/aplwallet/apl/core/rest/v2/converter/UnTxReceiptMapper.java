@@ -27,7 +27,7 @@ public class UnTxReceiptMapper implements Converter<Transaction, UnTxReceipt> {
         if (model.getRecipientId() != 0) {
             dto.setRecipient(Convert2.rsAccount(model.getRecipientId()));
         }
-        dto.setSignature(Convert.toHexString(model.getSignature()));
+        dto.setSignature(Convert.toHexString(model.getSignature().bytes()));
         dto.setTimestamp((long) model.getTimestamp());
         return dto;
     }

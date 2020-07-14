@@ -1149,7 +1149,7 @@ public final class JSONData {
         if (referencedTransactionFullHash != null) {
             json.put("referencedTransactionFullHash", referencedTransactionFullHash);
         }
-        byte[] signature = Convert.emptyToNull(transaction.getSignature());
+        byte[] signature = Convert.emptyToNull(transaction.getSignature().bytes());
         if (signature != null) {
             json.put("signature", Convert.toHexString(signature));
             json.put("signatureHash", Convert.toHexString(Crypto.sha256().digest(signature)));

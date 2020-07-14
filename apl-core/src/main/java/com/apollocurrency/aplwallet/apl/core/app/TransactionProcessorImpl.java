@@ -86,7 +86,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private final PropertiesHolder propertiesHolder;
     private final BlockchainConfig blockchainConfig;
     private final NtpTime ntpTime;
-    private Blockchain blockchain;
+    private final Blockchain blockchain;
     private BlockchainProcessor blockchainProcessor;
     private final TimeService timeService;
     private final GlobalSync globalSync;

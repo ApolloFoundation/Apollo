@@ -25,21 +25,21 @@ public class UnconfirmedTransactionConverter implements Converter<Transaction, U
         dto.setTimestamp(model.getTimestamp());
         dto.setDeadline(model.getDeadline());
         dto.setSenderPublicKey(Convert.toHexString(model.getSenderPublicKey()));
-        
+
         long recipientId;
         long senderId;
         long amountATM;
         String senderPublicKey;
-        
+
         if (model.getType() == Payment.PRIVATE){
             recipientId = AccountConverter.anonymizeAccount();
             senderId = AccountConverter.anonymizeAccount();
             amountATM = AccountConverter.anonymizeBalance();
             senderPublicKey = AccountConverter.anonymizePublicKey();
-            
+
             dto.setRecipient(Long.toUnsignedString(recipientId));
             dto.setRecipientRS(Convert2.rsAccount(recipientId));
-            
+
         } else {
             senderPublicKey = Convert.toHexString(model.getSenderPublicKey());
             amountATM = model.getAmountATM();
@@ -48,16 +48,16 @@ public class UnconfirmedTransactionConverter implements Converter<Transaction, U
                 recipientId = model.getRecipientId();
                 dto.setRecipient(Long.toUnsignedString(recipientId));
                 dto.setRecipientRS(Convert2.rsAccount(recipientId));
-            }    
+            }
         }
-        
+
         dto.setSender(Long.toUnsignedString(senderId));
         dto.setSenderRS(Convert2.rsAccount(senderId));
         dto.setSenderPublicKey(senderPublicKey);
         dto.setAmountATM(String.valueOf(amountATM));
         dto.setFeeATM(String.valueOf(model.getFeeATM()));
         dto.setReferencedTransactionFullHash(model.getReferencedTransactionFullHash());
-        byte[] signature = Convert.emptyToNull(model.getSignature());
+        byte[] signature = Convert.emptyToNull(model.getBytes());
         if (signature != null) {
             dto.setSignature(Convert.toHexString(signature));
             dto.setSignatureHash(Convert.toHexString(Crypto.sha256().digest(signature)));
@@ -76,8 +76,8 @@ public class UnconfirmedTransactionConverter implements Converter<Transaction, U
             }
             dto.setAttachment(attachmentJSON);
         }
-        
-        
+
+
         dto.setHeight(model.getHeight());
         dto.setVersion(model.getVersion());
         dto.setEcBlockId(Long.toUnsignedString(model.getECBlockId()));

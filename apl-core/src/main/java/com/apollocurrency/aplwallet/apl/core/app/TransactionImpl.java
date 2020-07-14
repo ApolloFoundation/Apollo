@@ -27,6 +27,8 @@ import com.apollocurrency.aplwallet.apl.core.model.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
+import com.apollocurrency.aplwallet.apl.core.signature.SignatureParser;
+import com.apollocurrency.aplwallet.apl.core.signature.SignatureParserFactory;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtendAttachment;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
@@ -44,6 +46,9 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryp
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingProcessingAttachment;
+import com.apollocurrency.aplwallet.apl.core.signature.MultiSigData;
+import com.apollocurrency.aplwallet.apl.core.signature.SignatureParseException;
+import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Filter;
@@ -96,8 +101,8 @@ public class TransactionImpl implements Transaction {
     private final int appendagesSize;
     private volatile byte[] senderPublicKey;
     private volatile long feeATM; // remove final modifier to set fee outside the class TODO get back 'final' modifier
-    private volatile byte[] signature;
-    private volatile int height = Integer.MAX_VALUE;
+    private Signature signature;
+    private volatile int height;
     private volatile long blockId;
     private volatile Block block;
     private volatile int blockTimestamp = -1;
@@ -110,7 +115,7 @@ public class TransactionImpl implements Transaction {
     private volatile long dbId;
     private volatile boolean hasValidSignature = false;
 
-    private TransactionImpl(BuilderImpl builder, byte[] keySeed) throws AplException.NotValidException {
+    private TransactionImpl(BuilderImpl builder) throws AplException.NotValidException {
 
         this.timestamp = builder.timestamp;
         this.deadline = builder.deadline;
@@ -130,10 +135,6 @@ public class TransactionImpl implements Transaction {
         this.ecBlockHeight = builder.ecBlockHeight;
         this.ecBlockId = builder.ecBlockId;
         this.dbId = builder.dbId;
-        // set fee later
-        //        if (builder.feeATM <= 0) {
-//            throw new IllegalArgumentException("Fee should be positive");
-//        }
         this.feeATM = builder.feeATM;
         List<AbstractAppendix> list = new ArrayList<>();
         if ((this.attachment = builder.attachment) != null) {
@@ -161,29 +162,12 @@ public class TransactionImpl implements Transaction {
             list.add(this.prunableEncryptedMessage);
         }
         this.appendages = Collections.unmodifiableList(list);
-        int appendagesSize = 0;
-        for (Appendix appendage : appendages) {
-            if (keySeed != null && appendage instanceof Encryptable) {
-                ((Encryptable) appendage).encrypt(keySeed);
-            }
-            appendagesSize += appendage.getSize();
+        int appSize = 0;
+        for (AbstractAppendix appendage : appendages) {
+            appSize += appendage.getSize();
         }
-        this.appendagesSize = appendagesSize;
-
-        if (builder.signature != null && keySeed != null) {
-            throw new AplException.NotValidException("Transaction is already signed");
-        } else if (builder.signature != null) {
-            this.signature = builder.signature;
-        } else if (keySeed != null) {
-            if (getSenderPublicKey() != null && !Arrays.equals(senderPublicKey, Crypto.getPublicKey(keySeed))) {
-                throw new AplException.NotValidException("Secret phrase doesn't match transaction sender public key");
-            }
-            signature = Crypto.sign(bytes(), keySeed);
-            bytes = null;
-        } else {
-            signature = null;
-        }
-
+        this.appendagesSize = appSize;
+        this.signature = builder.signature;
     }
 
     static TransactionImpl.BuilderImpl newTransactionBuilder(byte[] bytes) throws AplException.NotValidException {
@@ -205,9 +189,11 @@ public class TransactionImpl implements Transaction {
             byte[] referencedTransactionFullHash = new byte[32];
             buffer.get(referencedTransactionFullHash);
             referencedTransactionFullHash = Convert.emptyToNull(referencedTransactionFullHash);
-            byte[] signature = new byte[64];
-            buffer.get(signature);
-            signature = Convert.emptyToNull(signature);
+            Signature signature = null;
+            SignatureParser signatureParser = SignatureParserFactory.createParser(version);
+            if (version < 2) {
+                signature = signatureParser.parse(buffer);
+            }
             int flags = 0;
             int ecBlockHeight = 0;
             long ecBlockId = 0;
@@ -226,7 +212,6 @@ public class TransactionImpl implements Transaction {
                 attachment,
                 timestamp)
                 .referencedTransactionFullHash(referencedTransactionFullHash)
-                .signature(signature)
                 .ecBlockHeight(ecBlockHeight)
                 .ecBlockId(ecBlockId);
             if (transactionType.canHaveRecipient()) {
@@ -262,18 +247,14 @@ public class TransactionImpl implements Transaction {
                 builder.appendix(new PrunableEncryptedMessageAppendix(buffer));
             }
             //end: read transaction appendix
+            if (version >= 2) {
+                //read transaction multi-signature
+                signature = signatureParser.parse(buffer);
+            }
+            builder.signature(signature);
 
             if (buffer.hasRemaining()) {
-                //try: read transaction multisig
-                byte[] magicMultiSig = new byte[4];
-                buffer.get(magicMultiSig);
-                if (Arrays.equals(magicMultiSig, new byte[]{})) {
-                    //begin: read transaction multisig
-
-                    //end: read transaction multisig
-                } else {
-                    throw new AplException.NotValidException("Transaction bytes too long, " + buffer.remaining() + " extra bytes");
-                }
+                throw new AplException.NotValidException("Transaction bytes too long, " + buffer.remaining() + " extra bytes");
             }
             return builder;
         } catch (RuntimeException e) {
@@ -350,7 +331,6 @@ public class TransactionImpl implements Transaction {
                 amountATM, feeATM, deadline,
                 transactionType.parseAttachment(attachmentData), timestamp)
                 .referencedTransactionFullHash(referencedTransactionFullHash)
-                .signature(signature)
                 .ecBlockHeight(ecBlockHeight)
                 .ecBlockId(ecBlockId);
             if (transactionType.canHaveRecipient()) {
@@ -451,7 +431,7 @@ public class TransactionImpl implements Transaction {
     }
 
     @Override
-    public byte[] getSignature() {
+    public Signature getSignature() {
         return signature;
     }
 
@@ -559,7 +539,7 @@ public class TransactionImpl implements Transaction {
                 throw new IllegalStateException("Transaction is not signed yet");
             }
             byte[] data = zeroSignature(getBytes());
-            byte[] signatureHash = Crypto.sha256().digest(signature);
+            byte[] signatureHash = Crypto.sha256().digest(signature.bytes());
             MessageDigest digest = Crypto.sha256();
             digest.update(data);
             fullHash = digest.digest(signatureHash);
@@ -682,17 +662,20 @@ public class TransactionImpl implements Transaction {
                 } else {
                     buffer.put(new byte[32]);
                 }
-                buffer.put(signature != null ? signature : new byte[64]);
+                //removed signature in old format
                 buffer.putInt(getFlags());
                 buffer.putInt(ecBlockHeight);
                 buffer.putLong(ecBlockId);
                 for (Appendix appendage : appendages) {
                     appendage.putBytes(buffer);
                 }
+                if (signature != null) {
+                    buffer.put(signature.bytes());
+                }
                 bytes = buffer.array();
             } catch (RuntimeException e) {
-                if (signature != null) {
-                    LOG.debug("Failed to get transaction bytes for transaction: " + getJSONObject().toJSONString());
+                if (signature != null && LOG.isDebugEnabled()) {
+                    LOG.debug("Failed to get transaction bytes for transaction: {}", getJSONObject().toJSONString());
                 }
                 throw e;
             }
@@ -723,7 +706,7 @@ public class TransactionImpl implements Transaction {
         }
         json.put("ecBlockHeight", ecBlockHeight);
         json.put("ecBlockId", Long.toUnsignedString(ecBlockId));
-        json.put("signature", Convert.toHexString(signature));
+        json.put("sigData", signature.getJsonObject());
         JSONObject attachmentJSON = new JSONObject();
         for (AbstractAppendix appendage : appendages) {
             appendage.loadPrunable(this);
@@ -787,7 +770,6 @@ public class TransactionImpl implements Transaction {
         }
         signature = Crypto.sign(bytes(), keySeed);
         bytes = null;
-
     }
 
     @Override
@@ -814,15 +796,14 @@ public class TransactionImpl implements Transaction {
 
     private boolean checkSignature(byte[][] publicKeys) {
         if (!hasValidSignature) {
-            hasValidSignature =
-                signature != null
-                    && Crypto.verify(signature, zeroSignature(getBytes()), publicKeys);
+            hasValidSignature = signature != null
+                && Crypto.verify(signature, zeroSignature(getBytes()), publicKeys);
         }
         return hasValidSignature;
     }
 
     private int getSize() {
-        return signatureOffset() + 64 + 4 + 4 + 8 + appendagesSize;
+        return txHeaderSize() + appendagesSize + getSignature().getSize();
     }
 
     @Override
@@ -834,15 +815,15 @@ public class TransactionImpl implements Transaction {
         return fullSize;
     }
 
-    private int signatureOffset() {
-        return 1 + 1 + 4 + 2 + 32 + 8 + 8 + 8 + 32;
+    private int txHeaderSize() {
+        return 1 + 1 + 4 + 2 + 32 + 8 + 8 + 8 + 32 + 4 + 4 + 8;
     }
 
     private byte[] zeroSignature(byte[] data) {
-        int start = signatureOffset();
+        /*int start = txHeaderSize();
         for (int i = start; i < start + 64; i++) {
             data[i] = 0;
-        }
+        }*/
         return data;
     }
 
@@ -879,6 +860,7 @@ public class TransactionImpl implements Transaction {
         return flags;
     }
 
+    @Override
     /**
      * @deprecated see method with longer parameters list below
      */
@@ -888,9 +870,6 @@ public class TransactionImpl implements Transaction {
             return false;
         }
         if (atAcceptanceHeight) {
-//            if (lookupAccountControlPhasingService().isBlockDuplicate(this, duplicates)) {
-//                return true;
-//            }
             // all are checked at acceptance height for block duplicates
             if (type.isBlockDuplicate(this, duplicates)) {
                 return true;
@@ -913,7 +892,6 @@ public class TransactionImpl implements Transaction {
             return false;
         }
         if (atAcceptanceHeight) {
-//            if (lookupAccountControlPhasingService().isBlockDuplicate(this, duplicates)) {
             if (this.isBlockDuplicate(
                 this, duplicates, senderAccountControls, accountControlPhasing)) {
                 return true;
@@ -960,7 +938,7 @@ public class TransactionImpl implements Transaction {
 
         private long recipientId;
         private byte[] referencedTransactionFullHash;
-        private byte[] signature;
+        private Signature signature;
         private MessageAppendix message;
         private EncryptedMessageAppendix encryptedMessage;
         private EncryptToSelfMessageAppendix encryptToSelfMessage;
@@ -999,15 +977,33 @@ public class TransactionImpl implements Transaction {
         @Override
         public TransactionImpl build(byte[] keySeed) throws AplException.NotValidException {
             if (!ecBlockSet) {
-                lookupAndInjectBlockchain();
-                EcBlockData ecBlock = lookupAndInjectBlockchain().getECBlock(timestamp);
+                EcBlockData ecBlock = lookupAndInjectBlockChain().getECBlock(timestamp);
                 this.ecBlockHeight = ecBlock.getHeight();
                 this.ecBlockId = ecBlock.getId();
             }
-            return new TransactionImpl(this, keySeed);
+            TransactionImpl transaction = new TransactionImpl(this);
+
+            if (keySeed != null) {//sign transaction
+                if (transaction.signature != null) {
+                    throw new AplException.NotValidException("Transaction is already signed");
+                }
+                for (Appendix appendage : transaction.getAppendages()) {
+                    if (appendage instanceof Encryptable) {//encrypt attached message
+                        ((Encryptable) appendage).encrypt(keySeed);
+                    }
+                }
+                if (transaction.getSenderPublicKey() != null
+                    && !Arrays.equals(transaction.getSenderPublicKey(), Crypto.getPublicKey(keySeed))) {
+                    throw new AplException.NotValidException("Secret phrase doesn't match transaction sender public key");
+                }
+                transaction.signature = new MultiSigData(
+                    transaction.getSenderPublicKey(),
+                    Crypto.sign(transaction.bytes(), keySeed));
+            }
+            return transaction;
         }
 
-        private Blockchain lookupAndInjectBlockchain() {
+        private static Blockchain lookupAndInjectBlockChain() {
             return CDI.current().select(Blockchain.class).get();
         }
 
@@ -1105,13 +1101,14 @@ public class TransactionImpl implements Transaction {
             return this;
         }
 
-        public BuilderImpl id(long id) {
-            this.id = id;
+        @Override
+        public BuilderImpl signature(Signature signature) {
+            this.signature = signature;
             return this;
         }
 
-        public BuilderImpl signature(byte[] signature) {
-            this.signature = signature;
+        public BuilderImpl id(long id) {
+            this.id = id;
             return this;
         }
 
@@ -1144,7 +1141,5 @@ public class TransactionImpl implements Transaction {
             this.index = index;
             return this;
         }
-
     }
-
 }

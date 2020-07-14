@@ -34,6 +34,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendi
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
+import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONObject;
@@ -112,7 +113,7 @@ public interface Transaction {
 
     byte[] referencedTransactionFullHash();
 
-    byte[] getSignature();
+    Signature getSignature();
 
     String getFullHashString();
 
@@ -213,6 +214,8 @@ public interface Transaction {
         Builder dbId(long dbId);
 
         Builder ecBlockId(long blockId);
+
+        Builder signature(Signature signature);
 
         Transaction build() throws AplException.NotValidException;
 
