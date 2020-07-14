@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffler;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
@@ -28,6 +27,8 @@ import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.core.service.state.ShufflerService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -48,6 +49,7 @@ public final class GetShufflers extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
+        ShufflerService shufflerService = lookupShufflerService();
         long accountId = HttpParameterParserUtil.getAccountId(req, false);
         byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, accountId, false);
 
@@ -60,22 +62,22 @@ public final class GetShufflers extends AbstractAPIRequestHandler {
             }
             accountId = AccountService.getId(Crypto.getPublicKey(keySeed));
             if (shufflingFullHash.length == 0) {
-                shufflers = Shuffler.getAccountShufflers(accountId);
+                shufflers = shufflerService.getAccountShufflers(accountId);
             } else {
-                Shuffler shuffler = Shuffler.getShuffler(accountId, shufflingFullHash);
+                Shuffler shuffler = shufflerService.getShuffler(accountId, shufflingFullHash);
                 shufflers = shuffler == null ? Collections.emptyList() : Collections.singletonList(shuffler);
             }
         } else {
             apw.verifyPassword(req);
             if (accountId != 0 && shufflingFullHash.length == 0) {
-                shufflers = Shuffler.getAccountShufflers(accountId);
+                shufflers = shufflerService.getAccountShufflers(accountId);
             } else if (accountId == 0 && shufflingFullHash.length > 0) {
-                shufflers = Shuffler.getShufflingShufflers(shufflingFullHash);
+                shufflers = shufflerService.getShufflingShufflers(shufflingFullHash);
             } else if (accountId != 0 && shufflingFullHash.length > 0) {
-                Shuffler shuffler = Shuffler.getShuffler(accountId, shufflingFullHash);
+                Shuffler shuffler = shufflerService.getShuffler(accountId, shufflingFullHash);
                 shufflers = shuffler == null ? Collections.emptyList() : Collections.singletonList(shuffler);
             } else {
-                shufflers = Shuffler.getAllShufflers();
+                shufflers = shufflerService.getAllShufflers();
             }
         }
         JSONObject response = new JSONObject();

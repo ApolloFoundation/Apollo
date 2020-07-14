@@ -16,17 +16,16 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.BidOrder;
-import com.apollocurrency.aplwallet.apl.core.service.state.PollOptionResultService;
-import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
-import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
-import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
-import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetTransferService;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
+import com.apollocurrency.aplwallet.apl.core.service.state.PollOptionResultService;
+import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.ShufflerService;
+import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.core.service.state.TradeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetService;
@@ -46,14 +45,16 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountL
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPropertyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetTransferService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyFounderService;
-import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
-import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
-import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
-import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeRequestService;
-import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyMintService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
+import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeRequestService;
+import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.impl.AskOrderServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.impl.BidOrderServiceImpl;
@@ -124,6 +125,7 @@ public abstract class AbstractAPIRequestHandler {
     private CurrencyFounderService currencyFounderService;
     private CurrencyService currencyService;
     private MonetaryCurrencyMintingService monetaryCurrencyMintingService;
+    private ShufflerService shufflerService;
 
     public AbstractAPIRequestHandler(APITag[] apiTags, String... parameters) {
         this(null, apiTags, parameters);
@@ -163,6 +165,13 @@ public abstract class AbstractAPIRequestHandler {
             accountPropertyService = CDI.current().select(AccountPropertyServiceImpl.class).get();
         }
         return accountPropertyService;
+    }
+
+    protected ShufflerService lookupShufflerService() {
+        if (shufflerService == null) {
+            shufflerService = CDI.current().select(ShufflerService.class).get();
+        }
+        return shufflerService;
     }
 
     protected AccountLeaseService lookupAccountLeaseService() {
