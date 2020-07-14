@@ -20,16 +20,17 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.payment.PaymentTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -51,16 +52,20 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT;
+
 @Slf4j
 @Singleton
 public class TransactionDaoImpl implements TransactionDao {
     private static final TransactionRowMapper MAPPER = new TransactionRowMapper();
     private final DatabaseManager databaseManager;
+    private final TransactionTypeFactory typeFactory;
 
     @Inject
-    public TransactionDaoImpl(DatabaseManager databaseManager) {
+    public TransactionDaoImpl(DatabaseManager databaseManager, TransactionTypeFactory factory) {
         Objects.requireNonNull(databaseManager);
         this.databaseManager = databaseManager;
+        this.typeFactory = factory;
     }
 
     @Override
@@ -234,7 +239,7 @@ public class TransactionDaoImpl implements TransactionDao {
                     long id = rs.getLong("id");
                     byte type = rs.getByte("type");
                     byte subtype = rs.getByte("subtype");
-                    TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
+                    TransactionType transactionType = typeFactory.findTransactionType(type, subtype);
                     result.add(new PrunableTransaction(id, transactionType,
                         rs.getBoolean("prunable_attachment"),
                         rs.getBoolean("prunable_plain_message"),
@@ -270,8 +275,8 @@ public class TransactionDaoImpl implements TransactionDao {
                     pstmt.setLong(++i, transaction.getBlockId());
                     pstmt.setBytes(++i, transaction.getSignature());
                     pstmt.setInt(++i, transaction.getTimestamp());
-                    pstmt.setByte(++i, transaction.getType().getType());
-                    pstmt.setByte(++i, transaction.getType().getSubtype());
+                    pstmt.setByte(++i, transaction.getType().getSpec().getType());
+                    pstmt.setByte(++i, transaction.getType().getSpec().getSubtype());
                     pstmt.setLong(++i, transaction.getSenderId());
                     if (!transaction.shouldSavePublicKey()) {
                         pstmt.setNull(++i, Types.BINARY);
@@ -404,7 +409,7 @@ public class TransactionDaoImpl implements TransactionDao {
         if (blockTimestamp > 0) {
             buf.append("AND block_timestamp >= ? ");
         }
-        if (!includePrivate && TransactionType.findTransactionType(type, subtype) == PaymentTransactionType.PRIVATE) {
+        if (!includePrivate && TransactionTypes.findValue(type, subtype) == PRIVATE_PAYMENT) {
             throw new RuntimeException("None of private transactions should be retrieved!");
         }
         if (type >= 0) {
@@ -520,8 +525,8 @@ public class TransactionDaoImpl implements TransactionDao {
             }
         }
         if (!includePrivate) {
-            pstmt.setByte(++i, PaymentTransactionType.PRIVATE.getType());
-            pstmt.setByte(++i, PaymentTransactionType.PRIVATE.getSubtype());
+            pstmt.setByte(++i, PRIVATE_PAYMENT.getType());
+            pstmt.setByte(++i, PRIVATE_PAYMENT.getSubtype());
         }
         if (height < Integer.MAX_VALUE) {
             pstmt.setInt(++i, height);
@@ -541,8 +546,8 @@ public class TransactionDaoImpl implements TransactionDao {
             }
         }
         if (!includePrivate) {
-            pstmt.setByte(++i, PaymentTransactionType.PRIVATE.getType());
-            pstmt.setByte(++i, PaymentTransactionType.PRIVATE.getSubtype());
+            pstmt.setByte(++i, PRIVATE_PAYMENT.getType());
+            pstmt.setByte(++i, PRIVATE_PAYMENT.getSubtype());
         }
         if (height < Integer.MAX_VALUE) {
             pstmt.setInt(++i, height);
@@ -570,8 +575,8 @@ public class TransactionDaoImpl implements TransactionDao {
             con = dataSource.getConnection();
             PreparedStatement statement = con.prepareStatement(sqlQuery.toString());
             int i = 0;
-            statement.setByte(++i, PaymentTransactionType.PRIVATE.getType());
-            statement.setByte(++i, PaymentTransactionType.PRIVATE.getSubtype());
+            statement.setByte(++i, PRIVATE_PAYMENT.getType());
+            statement.setByte(++i, PRIVATE_PAYMENT.getSubtype());
             if (type >= 0) {
                 statement.setByte(++i, type);
                 if (subtype >= 0) {
@@ -630,8 +635,8 @@ public class TransactionDaoImpl implements TransactionDao {
         try (Connection con = dataSource.getConnection();
              PreparedStatement statement = con.prepareStatement(sqlQuery.toString())) {
             int i = 0;
-            statement.setByte(++i, PaymentTransactionType.PRIVATE.getType());
-            statement.setByte(++i, PaymentTransactionType.PRIVATE.getSubtype());
+            statement.setByte(++i, PRIVATE_PAYMENT.getType());
+            statement.setByte(++i, PRIVATE_PAYMENT.getSubtype());
             statement.setLong(++i, accountId);
             statement.setLong(++i, accountId);
             if (type >= 0) {

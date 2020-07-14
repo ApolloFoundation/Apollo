@@ -11,7 +11,6 @@ import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencySupplyTable;

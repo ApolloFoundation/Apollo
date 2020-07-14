@@ -8,4 +8,5 @@ public interface TransactionTypeFactory {
 
     TransactionType findTransactionType(byte type, byte subtype);
 
+    TransactionType findTransactionTypeBySpec(TransactionTypes.TransactionTypeSpec transactionTypeSpec);
 }
