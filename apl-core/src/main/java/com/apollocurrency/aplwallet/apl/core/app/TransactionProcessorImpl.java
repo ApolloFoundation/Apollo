@@ -124,7 +124,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder);
         this.enableTransactionRebroadcasting = propertiesHolder.getBooleanProperty("apl.enableTransactionRebroadcasting");
         this.unconfirmedTransactionTable = Objects.requireNonNull(unconfirmedTransactionTable);
-        this.validator = validator;
+        this.transactionValidator = validator;
         this.transactionApplier = applier;
         this.txsEvent = Objects.requireNonNull(txEvent);
         this.databaseManager = databaseManager;
@@ -560,7 +560,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 }
 
                 if (!transactionValidator.verifySignature(transaction)) {
-                    if (lookupAccountService().getAccount(transaction.getSenderId()) != null) {
+                    if (accountService.getAccount(transaction.getSenderId()) != null) {
                         throw new AplException.NotValidException("Transaction signature verification failed");
                     } else {
                         throw new AplException.NotCurrentlyValidException("Unknown transaction sender");

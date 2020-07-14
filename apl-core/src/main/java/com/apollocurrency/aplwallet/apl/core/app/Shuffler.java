@@ -71,7 +71,7 @@ public final class Shuffler {
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
     private static ShufflingService shufflingService = CDI.current().select(ShufflingServiceImpl.class).get();
-    private static FeeCalculator feeCalculator =  
+    private static FeeCalculator feeCalculator = CDI.current().select(FeeCalculator.class).get();
     private static BlockchainProcessor blockchainProcessor;
     private static AccountService accountService;
     private final long accountId;
