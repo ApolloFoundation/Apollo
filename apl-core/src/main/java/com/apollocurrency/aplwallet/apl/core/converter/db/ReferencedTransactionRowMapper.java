@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.converter.db;
 
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.ReferencedTransaction;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.ReferencedTransaction;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 

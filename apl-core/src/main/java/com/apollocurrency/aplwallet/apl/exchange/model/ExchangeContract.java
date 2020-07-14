@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.model;
 
-import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexContractAttachment;
 import lombok.Builder;
 import lombok.Data;

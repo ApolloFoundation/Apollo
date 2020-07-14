@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
-import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbc;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDaoJdbc;
 
 import java.sql.Connection;
 

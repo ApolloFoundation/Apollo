@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.entity.state.dgs;
 
-import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 
 import java.util.Objects;

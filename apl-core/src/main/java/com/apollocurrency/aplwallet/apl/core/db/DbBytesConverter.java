@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+
 import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;

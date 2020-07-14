@@ -4,9 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.account;
 
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountProperty;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 
 import java.util.List;
 

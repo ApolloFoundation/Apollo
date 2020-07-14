@@ -20,20 +20,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.entity.prunable.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.entity.prunable.PrunableMessage;
-import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -45,7 +43,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Vetoed
 public final class DownloadPrunableMessage extends AbstractAPIRequestHandler {
     private static final Logger LOG = getLogger(DownloadPrunableMessage.class);
-    private PrunableMessageService prunableMessageService = CDI.current().select(PrunableMessageService.class).get();
 
     public DownloadPrunableMessage() {
         super(new APITag[]{APITag.MESSAGES}, "transaction", "secretPhrase", "sharedKey", "retrieve", "save", "account", "passphrase");
@@ -57,7 +54,7 @@ public final class DownloadPrunableMessage extends AbstractAPIRequestHandler {
         boolean retrieve = "true".equalsIgnoreCase(request.getParameter("retrieve"));
         PrunableMessage prunableMessage = prunableMessageService.get(transactionId);
         if (prunableMessage == null && retrieve) {
-            if (lookupBlockchainProcessor().restorePrunedTransaction(transactionId) == null) {
+            if (prunableRestorationService.restorePrunedTransaction(transactionId) == null) {
                 return PRUNED_TRANSACTION;
             }
             prunableMessage = prunableMessageService.get(transactionId);

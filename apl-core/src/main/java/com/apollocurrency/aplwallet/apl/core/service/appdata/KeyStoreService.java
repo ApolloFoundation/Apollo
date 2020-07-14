@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.appdata;
 
-import com.apollocurrency.aplwallet.apl.core.app.SecretBytesDetails;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.SecretBytesDetails;
 import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import io.firstbridge.cryptolib.container.FbWallet;

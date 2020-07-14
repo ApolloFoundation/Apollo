@@ -1,6 +1,6 @@
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
-import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.exchange.mapper.DexTransactionMapper;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexTransaction;
 import org.jdbi.v3.sqlobject.config.RegisterArgumentFactory;

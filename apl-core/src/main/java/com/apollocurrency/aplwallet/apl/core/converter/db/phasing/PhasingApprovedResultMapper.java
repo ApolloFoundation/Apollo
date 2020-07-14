@@ -1,7 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.converter.db.phasing;
 
-import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.converter.db.DerivedEntityMapper;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingApprovalResult;
 import org.jdbi.v3.core.statement.StatementContext;
 
