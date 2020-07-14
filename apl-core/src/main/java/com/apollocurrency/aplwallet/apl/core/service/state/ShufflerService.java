@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state;
 
-import com.apollocurrency.aplwallet.apl.core.app.Shuffler;
+import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffler;
 import com.apollocurrency.aplwallet.apl.core.exception.ShufflerException;
 
 import java.util.List;

@@ -4,14 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.currency.impl;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencySupplyTable;
@@ -41,6 +33,12 @@ import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTran
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
 import lombok.extern.slf4j.Slf4j;
+
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Singleton
