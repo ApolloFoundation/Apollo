@@ -21,8 +21,8 @@ import com.apollocurrency.aplwallet.apl.updater.pdu.PlatformDependentUpdater;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterService;
 import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.util.Version;
-import com.apollocurrency.aplwallet.apl.util.env.Architecture;
-import com.apollocurrency.aplwallet.apl.util.env.Platform;
+import com.apollocurrency.aplwallet.apl.util.env.Arch;
+import com.apollocurrency.aplwallet.apl.util.env.OS;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.junit.jupiter.api.BeforeEach;
@@ -76,8 +76,8 @@ public class UpdaterCoreTest {
     public void setUp() throws Exception {
         doReturn(new TransactionalDataSource(new DbProperties(), propertiesHolder)).when(updaterMediator).getDataSource();
         attachment = UpdateAttachment.getAttachment(
-            Platform.current(),
-            Architecture.current(),
+            OS.current(),
+            Arch.current(),
             new DoubleByteArrayTuple(new byte[0], new byte[0]),
             new Version("1.0.8"),
             new byte[0],

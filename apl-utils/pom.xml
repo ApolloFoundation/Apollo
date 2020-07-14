@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-blockchain</artifactId>
-    <version>1.45.1</version>
+    <version>1.45.2</version>
   </parent>
 
   <artifactId>apl-utils</artifactId>
@@ -99,10 +99,6 @@
     <dependency>
       <groupId>commons-net</groupId>
       <artifactId>commons-net</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-lang3</artifactId>
     </dependency>
     <dependency>
       <groupId>commons-io</groupId>

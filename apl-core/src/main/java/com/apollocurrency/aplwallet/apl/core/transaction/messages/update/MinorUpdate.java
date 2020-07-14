@@ -8,8 +8,8 @@ import com.apollocurrency.aplwallet.apl.core.transaction.Update;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.util.Version;
-import com.apollocurrency.aplwallet.apl.util.env.Architecture;
-import com.apollocurrency.aplwallet.apl.util.env.Platform;
+import com.apollocurrency.aplwallet.apl.util.env.Arch;
+import com.apollocurrency.aplwallet.apl.util.env.OS;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -27,8 +27,8 @@ public final class MinorUpdate extends UpdateAttachment {
         super(attachmentData);
     }
 
-    public MinorUpdate(Platform platform, Architecture architecture, DoubleByteArrayTuple url, Version version, byte[] hash) {
-        super(platform, architecture, url, version, hash);
+    public MinorUpdate(OS OS, Arch architecture, DoubleByteArrayTuple url, Version version, byte[] hash) {
+        super(OS, architecture, url, version, hash);
     }
 
     @Override

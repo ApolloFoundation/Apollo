@@ -4,11 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountControlPhasingTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountCurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.GenesisPublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.PublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPublicKeyServiceImpl;
@@ -70,6 +72,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.prunable.DataTagDao;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.TaggedDataDao;
 import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataExtendDao;
 import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataTimestampDao;
+import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
@@ -77,6 +80,7 @@ import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
+import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ServiceModeDirProvider;
@@ -143,6 +147,7 @@ class CsvWriterReaderDerivedTablesTest {
     private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
     private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
     private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(temporaryFolderExtension.newFolder("keystorePath").toPath(), ntpTimeConfig.time());
+    private PeersService peersService = mock(PeersService.class);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -165,7 +170,7 @@ class CsvWriterReaderDerivedTablesTest {
         PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class,
         PhasingVoteTable.class, PhasingPollTable.class,
         BlockDaoImpl.class, TransactionDaoImpl.class,
-        CsvEscaperImpl.class)
+        CsvEscaperImpl.class, UnconfirmedTransactionTable.class, AccountService.class, TaskDispatchManager.class)
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
@@ -183,7 +188,9 @@ class CsvWriterReaderDerivedTablesTest {
         .addBeans(MockBean.of(mock(AccountControlPhasingService.class), AccountControlPhasingService.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
         .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
+        .addBeans(MockBean.of(ntpTimeConfig.time(), NtpTime.class))
         .addBeans(MockBean.of(timeService, TimeService.class))
+        .addBeans(MockBean.of(peersService, PeersService.class))
         .build();
     @Inject
     private Blockchain blockchain;

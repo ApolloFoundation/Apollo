@@ -4,21 +4,19 @@
 
 package com.apollocurrency.aplwallet.apl.core.model;
 
-import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionType.lookupCurrencyService;
-
-import javax.enterprise.inject.spi.CDI;
-
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.AplException.ValidationException;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.AplException.ValidationException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
@@ -148,7 +146,7 @@ public final class PhasingParams {
         AssetService assetService = CDI.current().select(AssetService.class).get();
 
         if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.CURRENCY) {
-            Currency currency = lookupCurrencyService().getCurrency(voteWeighting.getHoldingId());
+            Currency currency = TransactionType.lookupCurrencyService().getCurrency(voteWeighting.getHoldingId());
             if (currency == null) {
                 throw new AplException.NotCurrentlyValidException("Currency " + Long.toUnsignedString(voteWeighting.getHoldingId()) + " not found");
             }
@@ -178,7 +176,7 @@ public final class PhasingParams {
                         + " exceeds total initial asset quantity " + asset.getInitialQuantityATU());
                 }
             } else if (voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.CURRENCY) {
-                Currency currency = lookupCurrencyService().getCurrency(voteWeighting.getHoldingId());
+                Currency currency = TransactionType.lookupCurrencyService().getCurrency(voteWeighting.getHoldingId());
                 if (currency == null) {
                     throw new AplException.NotCurrentlyValidException("Currency " + Long.toUnsignedString(voteWeighting.getHoldingId()) + " not found");
                 }
@@ -194,11 +192,11 @@ public final class PhasingParams {
     public void checkApprovable() throws AplException.NotCurrentlyValidException {
 
         if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.CURRENCY
-            && lookupCurrencyService().getCurrency(voteWeighting.getHoldingId()) == null) {
+            && TransactionType.lookupCurrencyService().getCurrency(voteWeighting.getHoldingId()) == null) {
             throw new AplException.NotCurrentlyValidException("Currency " + Long.toUnsignedString(voteWeighting.getHoldingId()) + " not found");
         }
         if (voteWeighting.getMinBalance() > 0 && voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.CURRENCY
-            && lookupCurrencyService().getCurrency(voteWeighting.getHoldingId()) == null) {
+            && TransactionType.lookupCurrencyService().getCurrency(voteWeighting.getHoldingId()) == null) {
             throw new AplException.NotCurrentlyValidException("Currency " + Long.toUnsignedString(voteWeighting.getHoldingId()) + " not found");
         }
     }

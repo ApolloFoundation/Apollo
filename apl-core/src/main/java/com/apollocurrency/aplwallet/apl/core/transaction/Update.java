@@ -11,12 +11,9 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.Critica
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.ImportantUpdate;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.MinorUpdate;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateV2Attachment;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.Version;
-import com.apollocurrency.aplwallet.apl.util.env.PlatformSpec;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -119,58 +116,10 @@ public abstract class Update extends TransactionType {
             return new MinorUpdate(attachmentData);
         }
     };
-    public static final TransactionType UPDATE_V2 = new Update() {
-        @Override
-        public Level getLevel() {
-            throw new UnsupportedOperationException("Level is not defined for UpdateV2 statically");
-        }
 
-        @Override
-        public void validateAttachment(Transaction transaction) throws AplException.NotValidException {
-            UpdateV2Attachment attachment = (UpdateV2Attachment) transaction.getAttachment();
-            Version version = attachment.getReleaseVersion();
-            if (version.getMinorVersion() > Short.MAX_VALUE || version.getIntermediateVersion() > Short.MAX_VALUE || version.getMajorVersion() > Short.MAX_VALUE) {
-                throw new AplException.NotValidException("Update version is too big! " + version);
-            }
-        }
-
-        @Override
-        public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-            super.applyAttachment(transaction, senderAccount, recipientAccount);
-            UpdateV2Attachment attachment = (UpdateV2Attachment) transaction.getAttachment();
-            if (attachment.getUpdateLevel() == Level.CRITICAL && attachment.getPlatforms().contains(PlatformSpec.current())) {
-                // TODO send message to supervisor
-            }
-        }
-
-        @Override
-        public final byte getSubtype() {
-            return TransactionType.SUBTYPE_UPDATE_V2;
-        }
-
-        @Override
-        public LedgerEvent getLedgerEvent() {
-            return LedgerEvent.UPDATE_V2;
-        }
-
-        @Override
-        public String getName() {
-            return "UpdateV2";
-        }
-
-        @Override
-        public UpdateV2Attachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-            return new UpdateV2Attachment(buffer);
-        }
-
-        @Override
-        public UpdateV2Attachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-            return new UpdateV2Attachment(attachmentData);
-        }
-    };
     private final Fee UPDATE_FEE = new Fee.ConstantFee(Constants.ONE_APL);
 
-    private Update() {
+    protected Update() {
     }
 
     public static boolean isUpdate(TransactionType transactionType) {
