@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.fulltext;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 
 import javax.enterprise.inject.spi.CDI;
 import java.sql.ResultSet;

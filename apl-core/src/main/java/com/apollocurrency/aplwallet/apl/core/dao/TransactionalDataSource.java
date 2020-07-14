@@ -159,7 +159,7 @@ public class TransactionalDataSource extends DataSourceWrapper implements Transa
             Connection con = getPooledConnection();
             con.setAutoCommit(false);
             DbConnectionWrapper wcon = new DbConnectionWrapper(con, factory, localConnection, transactionCallback);
-            wcon.setTxStart( System.currentTimeMillis() );
+            wcon.setTxStart(System.currentTimeMillis());
             localConnection.set(wcon);
             return wcon;
         } catch (SQLException e) {

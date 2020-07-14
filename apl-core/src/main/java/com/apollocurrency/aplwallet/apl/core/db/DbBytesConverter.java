@@ -4,14 +4,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+
 import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
-
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 
 /**
  * Functions for inner db conversions

@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state;
 
-import java.util.stream.Stream;
-
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+
+import java.util.stream.Stream;
 
 /**
  * @author silaev-firstbridge on 1/31/2020

@@ -19,7 +19,7 @@
   </logger>
 
   <logger name="com.apollocurrency.aplwallet.apl.core.service.fulltext" level="warn" additivity="false">
-    <appender-ref ref="STDOUT"/>
+      <appender-ref ref="STDOUT"/>
   </logger>
   <if condition='property("apl-test.env").equals("quiet")'>
     <then>

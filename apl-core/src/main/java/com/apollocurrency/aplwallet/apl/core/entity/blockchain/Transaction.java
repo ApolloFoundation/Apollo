@@ -20,9 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
 
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
@@ -109,7 +109,11 @@ public interface Transaction {
 
     void setFeeATM(long feeATM);
 
-    default long[] getBackFees() { return new long[]{};};
+    default long[] getBackFees() {
+        return new long[]{};
+    }
+
+    ;
 
     String getReferencedTransactionFullHash();
 

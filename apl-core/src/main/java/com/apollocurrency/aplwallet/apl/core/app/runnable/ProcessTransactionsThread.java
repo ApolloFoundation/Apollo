@@ -4,10 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
-import javax.enterprise.inject.spi.CDI;
-import java.util.Collections;
-import java.util.Objects;
-
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
@@ -20,6 +16,10 @@ import com.apollocurrency.aplwallet.apl.util.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+
+import javax.enterprise.inject.spi.CDI;
+import java.util.Collections;
+import java.util.Objects;
 
 /**
  * Class makes lookup of BlockchainProcessor

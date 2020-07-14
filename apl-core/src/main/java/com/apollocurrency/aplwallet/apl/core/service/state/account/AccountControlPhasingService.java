@@ -4,18 +4,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.account;
 
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Stream;
-
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SetPhasingOnly;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
+
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Stream;
 
 public interface AccountControlPhasingService {
 
