@@ -7,9 +7,9 @@ package com.apollocurrency.aplwallet.apl.core.entity.state.asset;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.dao.state.asset.AssetDeleteTable;
 import lombok.Getter;
 import lombok.Setter;

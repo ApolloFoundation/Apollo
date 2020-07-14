@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.entity.state.currency;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDeletableEntity;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDeletableEntity;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;

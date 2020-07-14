@@ -20,8 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.entity.state.alias;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDerivedEntity;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;

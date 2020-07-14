@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Set;
 
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.TransactionCallback;
+
 /**
  * Connection wrapper pinned to ThreadLocal with caches
  */
@@ -91,5 +93,13 @@ public class DbConnectionWrapper extends FilteredConnection {
         } else if (this != localConnection.get()) {
             throw new IllegalStateException("Previous connection not committed");
         }
+    }
+
+    public synchronized void setTxStart(long txStart) {
+        this.txStart = txStart;
+    }
+
+    public long getTxStart() {
+        return this.txStart;
     }
 }

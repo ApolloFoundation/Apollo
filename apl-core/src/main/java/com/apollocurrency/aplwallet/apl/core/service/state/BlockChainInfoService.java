@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.service.state;
 
 import java.util.stream.Stream;
 
-import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 
 /**
