@@ -1,5 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
 
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
@@ -18,6 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 public class MandatoryTransaction implements Transaction {
     private Transaction transaction;
@@ -320,9 +323,21 @@ public class MandatoryTransaction implements Transaction {
         return transaction.getECBlockId();
     }
 
+    /**
+     * @deprecated see method with longer parameters list below
+     */
     @Override
     public boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
         return transaction.attachmentIsDuplicate(duplicates, atAcceptanceHeight);
+    }
+
+    @Override
+    public boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates,
+                                         boolean atAcceptanceHeight,
+                                         Set<AccountControlType> senderAccountControls,
+                                         AccountControlPhasing accountControlPhasing) {
+        return transaction.attachmentIsDuplicate(duplicates, atAcceptanceHeight,
+            senderAccountControls, accountControlPhasing);
     }
 
     public Long getDbEntryId() {

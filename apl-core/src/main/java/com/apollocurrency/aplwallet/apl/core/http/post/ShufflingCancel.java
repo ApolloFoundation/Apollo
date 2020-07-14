@@ -21,7 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
+import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCancellationAttachment;
@@ -45,7 +45,7 @@ public final class ShufflingCancel extends CreateTransaction {
         byte[] shufflingStateHash = HttpParameterParserUtil.getBytes(req, "shufflingStateHash", true);
         long accountId = HttpParameterParserUtil.getAccountId(req, this.vaultAccountName(), false);
         byte[] secretBytes = HttpParameterParserUtil.getSecretBytes(req, accountId, true);
-        ShufflingCancellationAttachment attachment = shuffling.revealKeySeeds(secretBytes, cancellingAccountId, shufflingStateHash);
+        ShufflingCancellationAttachment attachment = shufflingService.revealKeySeeds(shuffling, secretBytes, cancellingAccountId, shufflingStateHash);
         Account account = HttpParameterParserUtil.getSenderAccount(req);
         return createTransaction(req, account, attachment);
     }

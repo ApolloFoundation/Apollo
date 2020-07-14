@@ -6,14 +6,15 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.Fee;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
 import org.json.simple.JSONObject;
 
 import javax.enterprise.inject.spi.CDI;
@@ -29,6 +30,7 @@ public abstract class AbstractAppendix implements Appendix {
     private static BlockchainConfig blockchainConfig;// = CDI.current().select(BlockchainConfig.class).get();
     private static volatile TimeService timeService;// = CDI.current().select(TimeService.class).get();
     private static PrunableMessageService messageService;// = CDI.current().select(PrunableMessageService.class).get();
+    private static ShufflingService shufflingService;
 
     private final byte version;
 
@@ -171,6 +173,13 @@ public abstract class AbstractAppendix implements Appendix {
             messageService = CDI.current().select(PrunableMessageService.class).get();
         }
         return messageService;
+    }
+
+    public static ShufflingService lookupShufflingService(){
+        if ( shufflingService == null) {
+            shufflingService = CDI.current().select(ShufflingService.class).get();
+        }
+        return shufflingService;
     }
 
 }

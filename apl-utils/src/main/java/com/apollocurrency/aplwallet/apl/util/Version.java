@@ -15,6 +15,7 @@ import java.util.Objects;
 @JsonDeserialize(using = Version.VersionDeserializer.class)
 @JsonSerialize(using = ToStringSerializer.class)
 public class Version implements Comparable<Version> {
+    public static final String VERSION_PATTERN = "\\d+\\.\\d+\\.\\d+";
     private final int majorVersion;
     private final int intermediateVersion;
     private final int minorVersion;
@@ -27,7 +28,7 @@ public class Version implements Comparable<Version> {
 
     public Version(String versionString) {
         Objects.requireNonNull(versionString);
-        if (!versionString.matches("\\d+\\.\\d+\\.\\d+")) {
+        if (!versionString.matches(VERSION_PATTERN)) {
             throw new RuntimeException("Incorrect versionString :  " + versionString);
         }
         String[] versionNumbers = versionString.split("\\.");

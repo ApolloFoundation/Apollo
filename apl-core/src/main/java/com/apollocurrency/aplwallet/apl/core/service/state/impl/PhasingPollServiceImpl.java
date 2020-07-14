@@ -4,12 +4,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
-import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
@@ -33,6 +36,7 @@ import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Event;
+import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.SQLException;
@@ -42,6 +46,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -55,6 +60,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     private final PhasingVoteTable phasingVoteTable;
     private final Blockchain blockchain;
     private final AccountService accountService;
+    private AccountControlPhasingService accountControlPhasingService; // lazy initalization only!
 
     @Inject
     public PhasingPollServiceImpl(PhasingPollResultTable resultTable, PhasingPollTable phasingPollTable,
@@ -69,6 +75,13 @@ public class PhasingPollServiceImpl implements PhasingPollService {
         this.blockchain = blockchain;
         this.event = Objects.requireNonNull(event);
         this.accountService = Objects.requireNonNull(accountService, "accountService is null");
+    }
+
+    private AccountControlPhasingService lookupAccountControlPhasingService() {
+        if (accountControlPhasingService == null) {
+            accountControlPhasingService = CDI.current().select(AccountControlPhasingService.class).get();
+        }
+        return accountControlPhasingService;
     }
 
     @Override
@@ -265,7 +278,11 @@ public class PhasingPollServiceImpl implements PhasingPollService {
         PhasingPoll poll = getPoll(transaction.getId());
         long result = countVotes(poll);
         if (result >= poll.getQuorum()) {
-            if (!transaction.attachmentIsDuplicate(duplicates, false)) {
+            // prefetch data for duplicate validation
+            Account senderAccount = accountService.getAccount(transaction.getSenderId());
+            Set<AccountControlType> senderAccountControls = senderAccount.getControls();
+            AccountControlPhasing accountControlPhasing = lookupAccountControlPhasingService().get(transaction.getSenderId());
+            if (!transaction.attachmentIsDuplicate(duplicates, false, senderAccountControls, accountControlPhasing)) {
                 try {
                     release(transaction);
                     finish(poll, result);

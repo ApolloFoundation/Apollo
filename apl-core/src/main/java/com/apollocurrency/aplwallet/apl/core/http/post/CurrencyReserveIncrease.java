@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.get.GetCurrencyFounders;
@@ -47,7 +48,7 @@ import javax.servlet.http.HttpServletRequest;
  * <p>
  * Constraints
  * <p>
- * This API is allowed only when the currency is {@link com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType#RESERVABLE} and is not yet active.
+ * This API is allowed only when the currency is {@link CurrencyType#RESERVABLE} and is not yet active.
  * <p>
  * The sender account is registered as a founder. Once the currency becomes active
  * the total supply is distributed between the founders based on their proportional investment<br>

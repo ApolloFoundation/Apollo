@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer.observer;
 
-import com.apollocurrency.aplwallet.apl.core.model.account.AccountEventType;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountEventType;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountEvent;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;

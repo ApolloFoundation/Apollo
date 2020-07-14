@@ -14,7 +14,7 @@ import com.apollocurrency.aplwallet.apl.updater.pdu.PlatformDependentUpdater;
 import com.apollocurrency.aplwallet.apl.updater.pdu.PlatformDependentUpdaterFactory;
 import com.apollocurrency.aplwallet.apl.updater.pdu.PlatformDependentUpdaterFactoryImpl;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterService;
-import com.apollocurrency.aplwallet.apl.util.env.Platform;
+import com.apollocurrency.aplwallet.apl.util.env.OS;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -85,7 +85,7 @@ public abstract class AbstractUpdater implements Updater {
             if (updaterService.verifyJarSignature(UpdaterConstants.CERTIFICATE_DIRECTORY, path)) {
                 try {
                     Path unpackedDirPath = updaterService.unpack(path);
-                    PlatformDependentUpdater pdu = pduFactory.createInstance(Platform.current(), updateInfo);
+                    PlatformDependentUpdater pdu = pduFactory.createInstance(OS.current(), updateInfo);
                     pdu.start(unpackedDirPath);
                     return true;
                 } catch (IOException e) {

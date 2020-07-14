@@ -15,19 +15,20 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
+import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
+import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingStage;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
-import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
+import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttachment;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -48,7 +49,7 @@ public final class ShufflingProcess extends CreateTransaction {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         Shuffling shuffling = HttpParameterParserUtil.getShuffling(req);
-        if (shuffling.getStage() != Shuffling.Stage.PROCESSING) {
+        if (shuffling.getStage() != ShufflingStage.PROCESSING) {
             JSONObject response = new JSONObject();
             response.put("errorCode", 11);
             response.put("errorDescription", "Shuffling is not in processing, stage " + shuffling.getStage());
@@ -63,7 +64,7 @@ public final class ShufflingProcess extends CreateTransaction {
                 Convert2.rsAccount(senderId), Convert2.rsAccount(shuffling.getAssigneeAccountId())));
             return JSON.prepare(response);
         }
-        ShufflingParticipant participant = shuffling.getParticipant(senderId);
+        ShufflingParticipant participant = shufflingService.getParticipant(shuffling.getId(), senderId);
         if (participant == null) {
             JSONObject response = new JSONObject();
             response.put("errorCode", 13);
@@ -79,7 +80,7 @@ public final class ShufflingProcess extends CreateTransaction {
             return INCORRECT_PUBLIC_KEY; // do not allow existing account to be used as recipient
         }
 
-        ShufflingAttachment attachment = shuffling.process(senderId, secretBytes, recipientPublicKey);
+        ShufflingAttachment attachment = shufflingService.processShuffling(shuffling, senderId, secretBytes, recipientPublicKey);
         return createTransaction(req, senderAccount, attachment);
     }
 

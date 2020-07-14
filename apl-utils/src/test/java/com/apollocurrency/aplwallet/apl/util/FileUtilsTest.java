@@ -4,13 +4,17 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -101,5 +105,26 @@ class FileUtilsTest {
         long filesCount = FileUtils.countElementsOfDirectory(directory);
         assertEquals(1, filesCount);
         assertTrue(Files.exists(existingFile));
+    }
+
+    @Test
+    void testGetFreeSpace() {
+        assertTrue(FileUtils.freeSpace() > 0);
+    }
+
+    @Test
+    void testGetWebSize() throws IOException {
+        File file = temporaryFolderExtension.newFile("file");
+        Files.writeString(file.toPath(), "tralala");
+        long size = FileUtils.webFileSize("file:///" + file.getAbsolutePath());
+        assertEquals(7, size);
+    }
+
+    @Test
+    void testHashFile() throws IOException, NoSuchAlgorithmException {
+        File file = temporaryFolderExtension.newFile("file-to-hash");
+        Files.writeString(file.toPath(), "Some content \n to hash \n it \r \n \t");
+        byte[] arr = FileUtils.hashFile(file.toPath(), MessageDigest.getInstance("SHA-256"));
+        assertEquals("52ae3f0066b74f5ca6d2bb5ccf83340a575e1ef766cb15023a48d1d65865cfd8", Convert.toHexString(arr));
     }
 }

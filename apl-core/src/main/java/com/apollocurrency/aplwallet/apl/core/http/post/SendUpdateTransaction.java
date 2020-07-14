@@ -15,8 +15,8 @@ import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
 import com.apollocurrency.aplwallet.apl.util.Version;
-import com.apollocurrency.aplwallet.apl.util.env.Architecture;
-import com.apollocurrency.aplwallet.apl.util.env.Platform;
+import com.apollocurrency.aplwallet.apl.util.env.Arch;
+import com.apollocurrency.aplwallet.apl.util.env.OS;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
@@ -34,8 +34,8 @@ public final class SendUpdateTransaction extends CreateTransaction {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        Architecture architecture = Architecture.valueOf(Convert.nullToEmpty(req.getParameter("architecture")).trim());
-        Platform platform = Platform.valueOf(Convert.nullToEmpty(req.getParameter("platform")).trim());
+        Arch architecture = Arch.valueOf(Convert.nullToEmpty(req.getParameter("architecture")).trim());
+        OS os = OS.fromCompatible(Convert.nullToEmpty(req.getParameter("platform")).trim());
         byte[] urlFirstPart = HttpParameterParserUtil.getBytes(req, "urlFirstPart", true);
         byte[] urlSecondPart = HttpParameterParserUtil.getBytes(req, "urlSecondPart", true);
         Version version = new Version(Convert.nullToEmpty(req.getParameter("version")).trim());
@@ -52,7 +52,7 @@ public final class SendUpdateTransaction extends CreateTransaction {
         }
         DoubleByteArrayTuple url = new DoubleByteArrayTuple(urlFirstPart, urlSecondPart);
         Account account = HttpParameterParserUtil.getSenderAccount(req);
-        Attachment attachment = UpdateAttachment.getAttachment(platform, architecture, url, version, hash, level);
+        Attachment attachment = UpdateAttachment.getAttachment(os, architecture, url, version, hash, level);
         return createTransaction(req, account, attachment);
     }
 }

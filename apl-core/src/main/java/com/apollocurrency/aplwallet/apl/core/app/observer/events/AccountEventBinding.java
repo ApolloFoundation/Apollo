@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.observer.events;
 
-import com.apollocurrency.aplwallet.apl.core.model.account.AccountEventType;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountEventType;
 
 import javax.enterprise.util.AnnotationLiteral;
 

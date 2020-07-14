@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.util.env;
 
-import org.apache.commons.lang3.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 
 public class EnvironmentVariables {
     public String logDir = "";

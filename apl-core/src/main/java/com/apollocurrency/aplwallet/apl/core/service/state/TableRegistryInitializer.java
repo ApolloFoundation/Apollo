@@ -4,10 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state;
 
-import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
-import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.DataTagDao;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.PrunableMessageTable;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.TaggedDataDao;
@@ -44,6 +43,9 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSPublicFeedbackTabl
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSPurchaseTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSTagTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.poll.VoteTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.shuffling.ShufflingDataTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.shuffling.ShufflingParticipantTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.shuffling.ShufflingTable;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyExchangeOffer;
@@ -178,6 +180,14 @@ public class TableRegistryInitializer {
     private CurrencySupplyTable currencySupplyTable;
     @Inject
     private CurrencyFounderTable currencyFounderTable;
+    @Inject
+    private ShufflingParticipantTable participantTable;
+    @Inject
+    private ShufflingDataTable shufflingDataTable;
+    @Inject
+    private ShufflingTable shufflingTable;
+    @Inject
+    private UnconfirmedTransactionTable unconfirmedTransactionTable;
 
     @PostConstruct
     public void init() {
@@ -191,8 +201,6 @@ public class TableRegistryInitializer {
         CurrencyTransfer.init();
         Exchange.init();
         ExchangeRequest.init();
-        Shuffling.init();
-        ShufflingParticipant.init();
         CurrencyExchangeOffer.init();
     }
 }

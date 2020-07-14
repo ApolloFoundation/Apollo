@@ -159,7 +159,7 @@ public class UpdaterCoreImpl implements UpdaterCore {
             Path path = Paths.get(updateAttachmentFile);
             ObjectMapper objectMapper = new ObjectMapper();
             FileUpdateAttachment fua = objectMapper.readValue(path.toAbsolutePath().toFile(), FileUpdateAttachment.class);
-            UpdateAttachment attachment = UpdateAttachment.getAttachment(fua.getPlatform(), fua.getArchitecture(), new DoubleByteArrayTuple(
+            UpdateAttachment attachment = UpdateAttachment.getAttachment(fua.getOS(), fua.getArchitecture(), new DoubleByteArrayTuple(
                     Convert.parseHexString(fua.getUrlFirstPart()), Convert.parseHexString(fua.getUrlSecondPart())
                 ),
                 new Version(fua.getVersion()),

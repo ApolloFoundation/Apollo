@@ -13,13 +13,13 @@ import com.apollocurrency.aplwallet.api.dto.info.NameCodeTypeDto;
 import com.apollocurrency.aplwallet.api.dto.info.SubTypeDto;
 import com.apollocurrency.aplwallet.api.dto.info.TimeDto;
 import com.apollocurrency.aplwallet.api.dto.info.TotalSupplyDto;
+import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingParticipantState;
+import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingStage;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
-import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
-import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
@@ -28,11 +28,8 @@ import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AdminPasswordVerifier;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
-import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
-import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
-import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetTransferService;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
@@ -41,6 +38,8 @@ import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageSer
 import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.core.service.state.TradeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
@@ -48,12 +47,14 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountLeaseS
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountLedgerService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetTransferService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
-import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
-import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
-import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeRequestService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
+import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeRequestService;
+import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.AskOrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.BidOrderService;
@@ -74,6 +75,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionType.lookupShufflingService;
 
 /**
  * @author alukin@gmail.com
@@ -109,6 +112,7 @@ public class ServerInfoService {
     private final ExchangeRequestService exchangeRequestService;
     private final CurrencyTransferService currencyTransferService;
     private final CurrencyService currencyService;
+    private final ShufflingService shufflingService;
 
     @Inject
     public ServerInfoService(BlockchainConfig blockchainConfig, Blockchain blockchain,
@@ -135,7 +139,8 @@ public class ServerInfoService {
                              ExchangeService exchangeService,
                              ExchangeRequestService exchangeRequestService,
                              CurrencyTransferService currencyTransferService,
-                             CurrencyService currencyService
+                             CurrencyService currencyService,
+                             ShufflingService shufflingService
     ) {
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
         this.blockchain = Objects.requireNonNull(blockchain, "blockchain is NULL");
@@ -164,7 +169,8 @@ public class ServerInfoService {
         this.exchangeService = Objects.requireNonNull(exchangeService, "exchangeService is NULL");
         this.exchangeRequestService = Objects.requireNonNull(exchangeRequestService, "exchangeRequestService is NULL");
         this.currencyTransferService = Objects.requireNonNull(currencyTransferService, "currencyTransferService is NULL");
-        this. currencyService = Objects.requireNonNull( currencyService, "currencyService is NULL");
+        this.currencyService = Objects.requireNonNull( currencyService, "currencyService is NULL");
+        this.shufflingService = Objects.requireNonNull( shufflingService, "shufflingService is NULL");
     }
 
     public ApolloX509Info getX509Info() {
@@ -322,10 +328,10 @@ public class ServerInfoService {
         for (HoldingType holdingType : HoldingType.values()) {
             dto.holdingTypes.add(new NameCodeTypeDto(holdingType.toString(), holdingType.getCode()));
         }
-        for (Shuffling.Stage stage : Shuffling.Stage.values()) {
+        for (ShufflingStage stage : ShufflingStage.values()) {
             dto.shufflingStages.add(new NameCodeTypeDto(stage.toString(), stage.getCode()));
         }
-        for (ShufflingParticipant.State state : ShufflingParticipant.State.values()) {
+        for (ShufflingParticipantState state : ShufflingParticipantState.values()) {
             dto.shufflingParticipantStates.add(new NameCodeTypeDto(state.toString(), state.getCode()));
         }
         for (APITag apiTag : APITag.values()) {
@@ -368,8 +374,8 @@ public class ServerInfoService {
             dto.numberOfDataTags = taggedDataService.getDataTagCount();
             dto.numberOfAccountLeases = accountLeaseService.getAccountLeaseCount();
             dto.numberOfActiveAccountLeases = accountService.getActiveLeaseCount();
-            dto.numberOfShufflings = Shuffling.getCount();
-            dto.numberOfActiveShufflings = Shuffling.getActiveCount();
+            dto.numberOfShufflings = shufflingService.getShufflingCount();
+            dto.numberOfActiveShufflings = lookupShufflingService().getShufflingActiveCount();
             dto.numberOfPhasingOnlyAccounts = accountControlPhasingService.getCount();
         }
         dto.numberOfPeers = peersService.getAllPeers().size();
