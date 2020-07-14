@@ -11,6 +11,8 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+
 /**
  * Functions for inner db conversions
  */

@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.entity.state.phasing;
 
-import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 
 import java.util.Objects;
 

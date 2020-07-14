@@ -1,5 +1,5 @@
 /*
- * Copyright (c)  2018-2020. Apollo Foundation.
+ * Copyright (c)  2019-2020. Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
@@ -9,14 +9,13 @@ import java.util.Collections;
 import java.util.Objects;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
@@ -89,7 +88,7 @@ public class ProcessTransactionsThread implements Runnable {
 
     private BlockchainProcessor lookupBlockchainProcessor() {
         if (blockchainProcessor == null) {
-            blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+            blockchainProcessor = CDI.current().select(BlockchainProcessor.class).get();
         }
         return blockchainProcessor;
     }

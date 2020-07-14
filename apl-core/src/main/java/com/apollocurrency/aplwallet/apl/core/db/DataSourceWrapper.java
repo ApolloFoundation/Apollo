@@ -20,12 +20,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.core.db.dao.factory.BigIntegerArgumentFactory;
-import com.apollocurrency.aplwallet.apl.core.db.dao.factory.DexCurrenciesFactory;
-import com.apollocurrency.aplwallet.apl.core.db.dao.factory.LongArrayArgumentFactory;
-import com.apollocurrency.aplwallet.apl.core.db.dao.factory.OrderStatusFactory;
-import com.apollocurrency.aplwallet.apl.core.db.dao.factory.OrderTypeFactory;
-import com.apollocurrency.aplwallet.apl.core.db.dao.factory.ShardStateFactory;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.factory.BigIntegerArgumentFactory;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.factory.DexCurrenciesFactory;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.factory.LongArrayArgumentFactory;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.factory.OrderStatusFactory;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.factory.OrderTypeFactory;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.factory.ShardStateFactory;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;

@@ -5,8 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
 import com.apollocurrency.aplwallet.api.dto.UnconfirmedTransactionDTO;
-import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -25,21 +25,21 @@ public class UnconfirmedTransactionConverter implements Converter<Transaction, U
         dto.setTimestamp(model.getTimestamp());
         dto.setDeadline(model.getDeadline());
         dto.setSenderPublicKey(Convert.toHexString(model.getSenderPublicKey()));
-        
+
         long recipientId;
         long senderId;
         long amountATM;
         String senderPublicKey;
-        
+
         if (model.getType() == Payment.PRIVATE){
             recipientId = AccountConverter.anonymizeAccount();
             senderId = AccountConverter.anonymizeAccount();
             amountATM = AccountConverter.anonymizeBalance();
             senderPublicKey = AccountConverter.anonymizePublicKey();
-            
+
             dto.setRecipient(Long.toUnsignedString(recipientId));
             dto.setRecipientRS(Convert2.rsAccount(recipientId));
-            
+
         } else {
             senderPublicKey = Convert.toHexString(model.getSenderPublicKey());
             amountATM = model.getAmountATM();
@@ -48,9 +48,9 @@ public class UnconfirmedTransactionConverter implements Converter<Transaction, U
                 recipientId = model.getRecipientId();
                 dto.setRecipient(Long.toUnsignedString(recipientId));
                 dto.setRecipientRS(Convert2.rsAccount(recipientId));
-            }    
+            }
         }
-        
+
         dto.setSender(Long.toUnsignedString(senderId));
         dto.setSenderRS(Convert2.rsAccount(senderId));
         dto.setSenderPublicKey(senderPublicKey);
@@ -76,8 +76,8 @@ public class UnconfirmedTransactionConverter implements Converter<Transaction, U
             }
             dto.setAttachment(attachmentJSON);
         }
-        
-        
+
+
         dto.setHeight(model.getHeight());
         dto.setVersion(model.getVersion());
         dto.setEcBlockId(Long.toUnsignedString(model.getECBlockId()));

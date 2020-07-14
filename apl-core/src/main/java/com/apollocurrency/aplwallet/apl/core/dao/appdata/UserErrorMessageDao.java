@@ -1,6 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.dao.appdata;
 
-import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.exchange.mapper.UserErrorMessageMapper;
 import com.apollocurrency.aplwallet.apl.exchange.model.UserErrorMessage;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;

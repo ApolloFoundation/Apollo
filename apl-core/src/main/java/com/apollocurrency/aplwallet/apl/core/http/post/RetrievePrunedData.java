@@ -48,7 +48,7 @@ public class RetrievePrunedData extends AbstractAPIRequestHandler {
     public JSONStreamAware processRequest(HttpServletRequest req) {
         JSONObject response = new JSONObject();
         try {
-            int count = lookupBlockchainProcessor().restorePrunedData();
+            int count = prunableRestorationService.restorePrunedData();
             response.put("done", true);
             response.put("numberOfPrunedData", count);
         } catch (RuntimeException e) {

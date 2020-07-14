@@ -6,7 +6,7 @@
 
  import com.apollocurrency.aplwallet.apl.core.app.EncryptedSecretBytesDetails;
  import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
- import com.apollocurrency.aplwallet.apl.core.app.SecretBytesDetails;
+ import com.apollocurrency.aplwallet.apl.core.entity.appdata.SecretBytesDetails;
  import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
  import com.apollocurrency.aplwallet.apl.core.model.AplWalletKey;
  import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;

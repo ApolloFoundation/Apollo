@@ -4,9 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state;
 
-import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSFeedback;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSGoods;

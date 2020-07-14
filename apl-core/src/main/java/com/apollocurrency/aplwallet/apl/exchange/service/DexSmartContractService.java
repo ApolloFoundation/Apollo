@@ -2,7 +2,7 @@ package com.apollocurrency.aplwallet.apl.exchange.service;
 
 import com.apollocurrency.aplwallet.apl.core.service.appdata.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
-import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
+import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.eth.contracts.DexContract;
 import com.apollocurrency.aplwallet.apl.eth.contracts.DexContractImpl;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;

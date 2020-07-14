@@ -4,9 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.core.db.derived.BasicDbTable;
-import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
-import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.BasicDbTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;

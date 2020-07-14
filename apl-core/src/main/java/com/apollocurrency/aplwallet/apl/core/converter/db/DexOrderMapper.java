@@ -3,7 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.converter.db;
 
-import com.apollocurrency.aplwallet.apl.core.db.VersionedDerivedEntityMapper;
+import com.apollocurrency.aplwallet.apl.core.dao.state.mapper.VersionedDerivedEntityMapper;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderKeyFactory;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;

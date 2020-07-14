@@ -13,11 +13,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import com.apollocurrency.aplwallet.apl.core.model.account.AccountControlType;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountControlPhasingTable;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;

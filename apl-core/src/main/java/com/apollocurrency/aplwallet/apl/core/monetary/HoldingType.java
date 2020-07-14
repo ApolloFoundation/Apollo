@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.monetary;
 
-import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountAssetServiceImpl;

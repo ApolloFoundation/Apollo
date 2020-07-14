@@ -5,8 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.entity.state.account;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountGuaranteedBalanceTable;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;

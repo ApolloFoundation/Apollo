@@ -5,17 +5,18 @@
 package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.BidOrder;
+import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableRestorationService;
 import com.apollocurrency.aplwallet.apl.core.service.state.PollOptionResultService;
 import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
@@ -92,6 +93,7 @@ public abstract class AbstractAPIRequestHandler {
     protected DGSService service = CDI.current().select(DGSService.class).get();
     protected TaggedDataService taggedDataService = CDI.current().select(TaggedDataService.class).get();
     protected PrunableMessageService prunableMessageService = CDI.current().select(PrunableMessageService.class).get();
+    protected PrunableRestorationService prunableRestorationService = CDI.current().select(PrunableRestorationService.class).get();
     protected AssetService assetService = CDI.current().select(AssetService.class).get();
     protected final PollService pollService = CDI.current().select(PollService.class).get();
     protected final PollOptionResultService pollOptionResultService = CDI.current().select(PollOptionResultService.class).get();

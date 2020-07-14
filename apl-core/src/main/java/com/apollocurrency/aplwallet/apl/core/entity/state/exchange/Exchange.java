@@ -8,8 +8,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.exchange.ExchangeTable;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;

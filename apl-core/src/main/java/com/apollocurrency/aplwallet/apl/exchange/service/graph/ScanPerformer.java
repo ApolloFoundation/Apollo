@@ -1,6 +1,6 @@
 package com.apollocurrency.aplwallet.apl.exchange.service.graph;
 
-import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexCandlestickDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.OrderScanDao;

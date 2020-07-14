@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.tagged;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.LongKey;
-import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.converter.db.tagged.TagDataTimestampMapper;
 import com.apollocurrency.aplwallet.apl.core.entity.state.tagged.TaggedDataTimestamp;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;

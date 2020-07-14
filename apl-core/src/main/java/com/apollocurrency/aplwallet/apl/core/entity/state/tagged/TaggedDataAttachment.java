@@ -3,7 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.entity.state.tagged;
 
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.service.state.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
