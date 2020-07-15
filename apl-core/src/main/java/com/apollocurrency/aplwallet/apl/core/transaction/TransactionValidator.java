@@ -8,9 +8,13 @@ import com.apollocurrency.antifraud.AntifraudValidator;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.signature.SignatureParser;
+import com.apollocurrency.aplwallet.apl.core.signature.SignatureParserFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -31,10 +35,11 @@ public class TransactionValidator {
     private final FeeCalculator feeCalculator;
     private final AccountControlPhasingService accountControlPhasingService;
     private final AccountService accountService;
+    private final TransactionVersionValidator transactionVersionValidator;
 
     @Inject
     public TransactionValidator(BlockchainConfig blockchainConfig, PhasingPollService phasingPollService,
-                                Blockchain blockchain, FeeCalculator feeCalculator,
+                                Blockchain blockchain, FeeCalculator feeCalculator, TransactionVersionValidator transactionVersionValidator,
                                 AccountControlPhasingService accountControlPhasingService,
                                 AccountService accountService) {
         this.blockchainConfig = blockchainConfig;
@@ -43,9 +48,13 @@ public class TransactionValidator {
         this.feeCalculator = feeCalculator;
         this.accountControlPhasingService = accountControlPhasingService;
         this.accountService = accountService;
+        this.transactionVersionValidator = transactionVersionValidator;
     }
 
     public void validate(Transaction transaction) throws AplException.ValidationException {
+        if (transactionVersionValidator.isValidVersion(transaction)) {
+            throw new AplException.NotValidException("Unsupported transaction version:" + transaction.getVersion() + " at height " + blockchain.getHeight());
+        }
         long maxBalanceAtm = blockchainConfig.getCurrentConfig().getMaxBalanceATM();
         short deadline = transaction.getDeadline();
         long feeATM = transaction.getFeeATM();
@@ -69,26 +78,23 @@ public class TransactionValidator {
         if (attachment == null || type != attachment.getTransactionType()) {
             throw new AplException.NotValidException("Invalid attachment " + attachment + " for transaction of type " + type);
         }
+
         long recipientId = transaction.getRecipientId();
-        if (!type.canHaveRecipient()) {
-            if (recipientId != 0 || amountATM != 0) {
-                throw new AplException.NotValidException("Transactions of this type must have recipient == 0, amount == 0");
-            }
+        if (!type.canHaveRecipient() && (recipientId != 0 || amountATM != 0)) {
+            throw new AplException.NotValidException("Transactions of this type must have recipient == 0, amount == 0");
         }
 
-        if (type.mustHaveRecipient()) {
-            if (recipientId == 0) {
-                throw new AplException.NotValidException("Transactions of this type must have a valid recipient");
-            }
+        if (type.mustHaveRecipient() && recipientId == 0) {
+            throw new AplException.NotValidException("Transactions of this type must have a valid recipient");
         }
 
         if (!AntifraudValidator.validate(blockchain.getHeight(), transaction.getSenderId(),
             transaction.getRecipientId())) throw new AplException.NotValidException("Incorrect Passphrase");
 
         Account sender = accountService.getAccount(transaction.getSenderId());
-        if(sender != null && sender.isChild()){
+        if (sender != null && sender.isChild()) {
             Account recipient = accountService.getAccount(transaction.getRecipientId());
-            if(recipient == null) {
+            if (recipient == null) {
                 throw new AplException.NotCurrentlyValidException("Account " + transaction.getRecipientId() + " does not exist yet.");
             }
             @ParentChildSpecific(ParentMarker.ADDRESS_RESTRICTION)
@@ -147,9 +153,14 @@ public class TransactionValidator {
             log.error("Sender account not found, senderId={}", transaction.getSenderId());
             return false;
         }
-        if(sender.isChild()){
+        if(sender.isChild()) {
+            if (transactionVersionValidator.getActualVersion() < 2) {
+                log.error("Inconsistent transaction fields, the value of the sender property 'parent' doesn't match the transaction version.");
+                return false;
+            }
+            SignatureParser parser = SignatureParserFactory.selectParser(transaction.getVersion()).orElseThrow(UnsupportedTransactionVersion::new);
             @ParentChildSpecific(ParentMarker.MULTI_SIGNATURE)
-            byte[][] publicKeys = new byte[][]{accountService.getPublicKeyByteArray(sender.getParentId()),transaction.getSenderPublicKey()};
+            byte[][] publicKeys = new byte[][]{accountService.getPublicKeyByteArray(sender.getParentId()), transaction.getSenderPublicKey()};
             return transaction.verifySignature(publicKeys);
         }else{
             return transaction.verifySignature();

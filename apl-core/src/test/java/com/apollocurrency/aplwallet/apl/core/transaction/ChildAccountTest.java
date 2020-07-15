@@ -5,18 +5,18 @@
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.EcBlockData;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDao;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.ReferencedTransactionDao;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.EcBlockData;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AddressScope;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
@@ -40,17 +40,17 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 
+import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.CHILD_1;
+import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.CHILD_2;
+import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.CHILD_ACCOUNT_ATTACHMENT;
 import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.CHILD_ID_1;
 import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.CHILD_ID_2;
 import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.CHILD_PUBLIC_KEY_1;
 import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.CHILD_PUBLIC_KEY_2;
-import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.CHILD_ACCOUNT_ATTACHMENT;
-import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.CHILD_1;
-import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.CHILD_2;
-import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.SENDER_PUBLIC_KEY;
-import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.SENDER_SECRET_PHRASE;
 import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.SENDER;
 import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.SENDER_ID;
+import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.SENDER_PUBLIC_KEY;
+import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.SENDER_SECRET_PHRASE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -93,9 +93,10 @@ public class ChildAccountTest {
         .addBeans(MockBean.of(accountPublicKeyService, AccountPublicKeyService.class, AccountPublicKeyServiceImpl.class))
         .build();
 
-    TransactionApplier txApplier= new TransactionApplier(blockchainConfig, referencedTransactionDao, accountService, accountPublicKeyService);
-    TransactionValidator txValidator = new TransactionValidator(blockchainConfig, phasingPollService, blockchain, calculator, accountControlPhasingService, accountService);
-    TransactionCreator txCreator= new TransactionCreator(txValidator, propertiesHolder, timeService, calculator, blockchain, processor);
+    TransactionVersionValidator txVersionValidator = new TransactionVersionValidator(blockchainConfig, blockchain);
+    TransactionApplier txApplier = new TransactionApplier(blockchainConfig, referencedTransactionDao, accountService, accountPublicKeyService);
+    TransactionValidator txValidator = new TransactionValidator(blockchainConfig, phasingPollService, blockchain, calculator, txVersionValidator, accountControlPhasingService, accountService);
+    TransactionCreator txCreator = new TransactionCreator(txValidator, propertiesHolder, timeService, calculator, blockchain, processor);
 
     @BeforeEach
     void setUp() {

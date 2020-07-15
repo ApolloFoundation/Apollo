@@ -173,6 +173,21 @@ public class BlockchainConfig {
         }
     }
 
+    public Optional<Integer> getTransactionV2Height() {
+        if (chain.getFeaturesHeightRequirement() != null) {
+            return Optional.ofNullable(chain.getFeaturesHeightRequirement().getTransactionV2Height());
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    public boolean isTransactionV2ActiveAtHeight(int height) {
+        if (getTransactionV2Height().isPresent()) {
+            return height >= getTransactionV2Height().get();
+        }
+        return false;
+    }
+
     public HeightConfig getCurrentConfig() {
         return currentConfig;
     }

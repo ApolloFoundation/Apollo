@@ -66,7 +66,7 @@ public class ChainsConfigLoaderTest {
         "Batman's chain", "BTM",
         "BTM", "I am batman!", "conf/data/batman-genesis.json", BLOCKCHAIN_PROPERTIES2);
     private static final Chain CHAIN3 = new Chain(chainId2, false, Arrays.asList("51.15.1.1",
-        "51.15.0.0"), Collections.emptyList(), Collections.emptyList(), "1", "2", "3", "4", "5", "6", BLOCKCHAIN_PROPERTIES1.subList(0, 3), new FeaturesHeightRequirement(150, 150));
+        "51.15.0.0"), Collections.emptyList(), Collections.emptyList(), "1", "2", "3", "4", "5", "6", BLOCKCHAIN_PROPERTIES1.subList(0, 3), new FeaturesHeightRequirement(150, 150, 150));
     private Path tempRootPath;
 
 

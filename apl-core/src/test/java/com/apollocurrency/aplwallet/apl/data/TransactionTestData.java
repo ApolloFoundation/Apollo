@@ -5,6 +5,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.appdata.ReferencedTransactio
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
+import com.apollocurrency.aplwallet.apl.core.signature.SigData;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
@@ -121,7 +122,7 @@ public class TransactionTestData {
             Transaction.Builder builder = new TransactionImpl.BuilderImpl(version, pk,
                 amount, fee, deadline, transactionType.parseAttachment(buffer), timestamp)
                 .referencedTransactionFullHash(referencedTransactionFullhash)
-                .signature(Convert.parseHexString(signature))
+                .signature(new SigData(Convert.parseHexString(signature)))
                 .blockId(blockId)
                 .height(height)
                 .id(id)

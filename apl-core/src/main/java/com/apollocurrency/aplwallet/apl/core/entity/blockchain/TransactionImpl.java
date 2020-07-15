@@ -29,9 +29,9 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
+import com.apollocurrency.aplwallet.apl.core.signature.MultiSigData;
+import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureParser;
-import com.apollocurrency.aplwallet.apl.core.signature.SignatureParserFactory;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtendAttachment;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
@@ -49,9 +49,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryp
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingProcessingAttachment;
-import com.apollocurrency.aplwallet.apl.core.signature.MultiSigData;
-import com.apollocurrency.aplwallet.apl.core.signature.SignatureParseException;
-import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Filter;
@@ -195,7 +192,8 @@ public class TransactionImpl implements Transaction {
             buffer.get(referencedTransactionFullHash);
             referencedTransactionFullHash = Convert.emptyToNull(referencedTransactionFullHash);
             Signature signature = null;
-            SignatureParser signatureParser = SignatureParserFactory.createParser(version);
+            //TODO SYNTAX
+            SignatureParser signatureParser = null;//SignatureParserFactory.createParser(version);
             if (version < 2) {
                 signature = signatureParser.parse(buffer);
             }
@@ -773,7 +771,8 @@ public class TransactionImpl implements Transaction {
         if (getSenderPublicKey() != null && !Arrays.equals(senderPublicKey, Crypto.getPublicKey(keySeed))) {
             throw new AplException.NotValidException("Secret phrase doesn't match transaction sender public key");
         }
-        signature = Crypto.sign(bytes(), keySeed);
+        //TODO SYNTAX
+        signature = null;//Crypto.sign(bytes(), keySeed);
         bytes = null;
     }
 
@@ -801,14 +800,17 @@ public class TransactionImpl implements Transaction {
 
     private boolean checkSignature(byte[][] publicKeys) {
         if (!hasValidSignature) {
-            hasValidSignature = signature != null
-                && Crypto.verify(signature, zeroSignature(getBytes()), publicKeys);
+            hasValidSignature = signature != null;
+            //TODO SYNTAX
+            //&& Crypto.verify(signature, zeroSignature(getBytes()), publicKeys);
         }
         return hasValidSignature;
     }
 
     private int getSize() {
-        return txHeaderSize() + appendagesSize + getSignature().getSize();
+        //TODO SYNTAX
+        //if(version)
+        return txV2HeaderSize() + appendagesSize + getSignature().getSize();
     }
 
     @Override
@@ -820,15 +822,21 @@ public class TransactionImpl implements Transaction {
         return fullSize;
     }
 
-    private int txHeaderSize() {
+    private int txV2HeaderSize() {
         return 1 + 1 + 4 + 2 + 32 + 8 + 8 + 8 + 32 + 4 + 4 + 8;
     }
 
+    private int signatureOffset() {
+        return 1 + 1 + 4 + 2 + 32 + 8 + 8 + 8 + 32;
+    }
+
     private byte[] zeroSignature(byte[] data) {
-        /*int start = txHeaderSize();
-        for (int i = start; i < start + 64; i++) {
-            data[i] = 0;
-        }*/
+        if (version < 2) {
+            int start = signatureOffset();
+            for (int i = start; i < start + 64; i++) {
+                data[i] = 0;
+            }
+        }
         return data;
     }
 
