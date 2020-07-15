@@ -17,17 +17,22 @@ import java.util.Objects;
  * @author andrii.zinchenko@firstbridge.io
  */
 @Slf4j
-public class SigData implements Signature {
+class SigData implements Signature {
     private static final int SIGNATURE_LENGTH = 64;
     private final byte[] signature;
+    private boolean verified = false;
 
     public SigData(byte[] signature) {
         this.signature = Objects.requireNonNull(signature);
     }
 
+    void setVerified(boolean verified) {
+        this.verified = verified;
+    }
+
     @Override
-    public boolean isCanonical() {
-        return true;
+    public boolean isVerified() {
+        return verified;
     }
 
     @Override

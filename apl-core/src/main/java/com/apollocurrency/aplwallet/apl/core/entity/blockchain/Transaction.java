@@ -64,8 +64,6 @@ public interface Transaction {
 
     boolean isUnconfirmedDuplicate(Map<TransactionType, Map<String, Integer>> unconfirmedDuplicates);
 
-    void sign(byte[] keySeed) throws AplException.NotValidException;
-
     long getId();
 
     long getDbId();
@@ -114,8 +112,6 @@ public interface Transaction {
         return new long[]{};
     }
 
-    ;
-
     String getReferencedTransactionFullHash();
 
     byte[] referencedTransactionFullHash();
@@ -129,10 +125,6 @@ public interface Transaction {
     TransactionType getType();
 
     Attachment getAttachment();
-
-    boolean verifySignature();
-
-    boolean verifySignature(byte[][] publicKeys);
 
     byte[] getBytes();
 

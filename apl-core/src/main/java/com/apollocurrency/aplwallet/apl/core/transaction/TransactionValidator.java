@@ -12,9 +12,14 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.signature.SignatureParser;
-import com.apollocurrency.aplwallet.apl.core.signature.SignatureParserFactory;
+import com.apollocurrency.aplwallet.apl.core.signature.Credential;
+import com.apollocurrency.aplwallet.apl.core.signature.MultiSigCredential;
+import com.apollocurrency.aplwallet.apl.core.signature.PublicKeyValidator;
+import com.apollocurrency.aplwallet.apl.core.signature.SignatureCredential;
+import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
+import com.apollocurrency.aplwallet.apl.core.signature.SignatureValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -35,13 +40,17 @@ public class TransactionValidator {
     private final FeeCalculator feeCalculator;
     private final AccountControlPhasingService accountControlPhasingService;
     private final AccountService accountService;
+    private final AccountPublicKeyService accountPublicKeyService;
     private final TransactionVersionValidator transactionVersionValidator;
+    private final PublicKeyValidator publicKeyValidator;
 
     @Inject
     public TransactionValidator(BlockchainConfig blockchainConfig, PhasingPollService phasingPollService,
                                 Blockchain blockchain, FeeCalculator feeCalculator, TransactionVersionValidator transactionVersionValidator,
                                 AccountControlPhasingService accountControlPhasingService,
-                                AccountService accountService) {
+                                AccountService accountService,
+                                AccountPublicKeyService accountPublicKeyService
+    ) {
         this.blockchainConfig = blockchainConfig;
         this.phasingPollService = phasingPollService;
         this.blockchain = blockchain;
@@ -49,6 +58,8 @@ public class TransactionValidator {
         this.accountControlPhasingService = accountControlPhasingService;
         this.accountService = accountService;
         this.transactionVersionValidator = transactionVersionValidator;
+        this.accountPublicKeyService = accountPublicKeyService;
+        this.publicKeyValidator = new PkValidator(accountPublicKeyService);
     }
 
     public void validate(Transaction transaction) throws AplException.ValidationException {
@@ -149,21 +160,54 @@ public class TransactionValidator {
 
     public boolean verifySignature(Transaction transaction) {
         Account sender = accountService.getAccount(transaction.getSenderId());
-        if(sender == null){
+        if (sender == null) {
             log.error("Sender account not found, senderId={}", transaction.getSenderId());
             return false;
         }
-        if(sender.isChild()) {
-            if (transactionVersionValidator.getActualVersion() < 2) {
+        @ParentChildSpecific(ParentMarker.MULTI_SIGNATURE)
+        Credential signatureCredential;
+        SignatureValidator signatureValidator = SignatureToolFactory.selectValidator(transaction.getVersion()).orElseThrow(UnsupportedTransactionVersion::new);
+        if (sender.isChild()) {
+            //multi-signature
+            if (transaction.getVersion() < 2) {
                 log.error("Inconsistent transaction fields, the value of the sender property 'parent' doesn't match the transaction version.");
                 return false;
             }
-            SignatureParser parser = SignatureParserFactory.selectParser(transaction.getVersion()).orElseThrow(UnsupportedTransactionVersion::new);
-            @ParentChildSpecific(ParentMarker.MULTI_SIGNATURE)
-            byte[][] publicKeys = new byte[][]{accountService.getPublicKeyByteArray(sender.getParentId()), transaction.getSenderPublicKey()};
-            return transaction.verifySignature(publicKeys);
-        }else{
-            return transaction.verifySignature();
+            signatureCredential = new MultiSigCredential(2, new byte[][]{accountService.getPublicKeyByteArray(sender.getParentId()), transaction.getSenderPublicKey()});
+        } else {
+            //only one signer
+            if (transaction.getVersion() < 2) {
+                signatureCredential = new SignatureCredential(transaction.getSenderPublicKey());
+            } else {
+                signatureCredential = new MultiSigCredential(transaction.getSenderPublicKey());
+            }
+        }
+
+        if (!signatureCredential.validateCredential(publicKeyValidator)) {
+            return false;
+        }
+
+        if (transaction.getSignature().isVerified()) {
+            return true;
+        } else {
+            return signatureValidator.verify(transaction.getUnsignedBytes(), transaction.getSignature(), signatureCredential);
+        }
+    }
+
+    private static class PkValidator implements PublicKeyValidator {
+        private final AccountPublicKeyService accountPublicKeyService;
+
+        public PkValidator(AccountPublicKeyService accountPublicKeyService) {
+            this.accountPublicKeyService = accountPublicKeyService;
+        }
+
+        @Override
+        public boolean validate(byte[] publicKey) {
+            if (!accountPublicKeyService.setOrVerifyPublicKey(AccountService.getId(publicKey), publicKey)) {
+                log.error("Public Key Verification failed: pk={}", Convert.toHexString(publicKey));
+                return false;
+            }
+            return true;
         }
     }
 }

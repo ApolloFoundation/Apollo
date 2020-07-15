@@ -27,13 +27,14 @@ import static com.apollocurrency.aplwallet.apl.core.signature.MultiSig.KeyId.KEY
  * @author andrii.zinchenko@firstbridge.io
  */
 @Slf4j
-public class MultiSigData implements MultiSig {
+class MultiSigData implements MultiSig {
 
     private static final int SIGNATURE_LENGTH = 64;
     private final byte[] payload;
     private final short count;
     private final Map<KeyId, byte[]> signaturesMap;
     private SignatureParser parser = new Parser();
+    private boolean verified = false;
 
     public MultiSigData(byte[] publicKey, byte[] signature) {
         this(1, new byte[Parser.PAYLOAD_LENGTH]);
@@ -48,6 +49,15 @@ public class MultiSigData implements MultiSig {
         this.count = (short) count;
         this.payload = payload;
         this.signaturesMap = new HashMap<>();
+    }
+
+    void setVerified(boolean verified) {
+        this.verified = verified;
+    }
+
+    @Override
+    public boolean isVerified() {
+        return verified;
     }
 
     @Override
@@ -113,11 +123,6 @@ public class MultiSigData implements MultiSig {
     @Override
     public void addSignature(KeyId keyId, byte[] signature) {
         signaturesMap.put(Objects.requireNonNull(keyId), Objects.requireNonNull(signature));
-    }
-
-    @Override
-    public boolean isCanonical() {
-        return true;
     }
 
     private static class KeyIdImpl implements KeyId {

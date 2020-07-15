@@ -19,4 +19,8 @@ public class SignatureCredential implements Credential {
         this.publicKey = Objects.requireNonNull(publicKey);
     }
 
+    @Override
+    public boolean validateCredential(PublicKeyValidator validator) {
+        return validator.validate(publicKey);
+    }
 }

@@ -9,6 +9,6 @@ package com.apollocurrency.aplwallet.apl.core.signature;
  */
 public interface SignatureValidator {
 
-    boolean verify(Signature signature, Credential credential);
+    boolean verify(byte[] document, Signature signature, Credential credential);
 
 }

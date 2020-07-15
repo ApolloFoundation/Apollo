@@ -7,6 +7,8 @@ package com.apollocurrency.aplwallet.apl.core.signature;
 /**
  * @author andrii.zinchenko@firstbridge.io
  */
-public interface Credential {
-    boolean validateCredential(PublicKeyValidator validator);
+public interface SignatureBuilder {
+
+    Signature sign(byte[] document, Signature signature, Credential credential);
+
 }

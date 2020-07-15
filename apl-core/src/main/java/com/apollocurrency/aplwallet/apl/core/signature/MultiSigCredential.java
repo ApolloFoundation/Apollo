@@ -27,4 +27,14 @@ public class MultiSigCredential implements Credential {
     public MultiSigCredential(byte[] pubicKey) {
         this(1, new byte[][]{pubicKey});
     }
+
+    @Override
+    public boolean validateCredential(PublicKeyValidator validator) {
+        for (byte[] pk : publicKeys) {
+            if (!validator.validate(pk)) {
+                return false;
+            }
+        }
+        return true;
+    }
 }

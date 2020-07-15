@@ -105,11 +105,6 @@ public class UnconfirmedTransaction implements Transaction {
     }
 
     @Override
-    public void sign(byte[] keySeed) throws AplException.NotValidException {
-        throw new UnsupportedOperationException("Transaction should be already signed");
-    }
-
-    @Override
     public long getId() {
         return transaction.getId();
     }
@@ -244,16 +239,6 @@ public class UnconfirmedTransaction implements Transaction {
     @Override
     public Attachment getAttachment() {
         return transaction.getAttachment();
-    }
-
-    @Override
-    public boolean verifySignature() {
-        return transaction.verifySignature();
-    }
-
-    @Override
-    public boolean verifySignature(byte[][] publicKeys) {
-        return transaction.verifySignature(publicKeys);
     }
 
     @Override

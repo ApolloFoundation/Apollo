@@ -11,8 +11,6 @@ import org.json.simple.JSONObject;
  */
 public interface Signature {
 
-    boolean isCanonical();
-
     byte[] bytes();
 
     int getSize();
@@ -22,5 +20,13 @@ public interface Signature {
     }
 
     JSONObject getJsonObject();
+
+    /**
+     * Return true if signature is already verified.
+     * Used to increase the speed of the verification routine and considered as a simple cache
+     *
+     * @return
+     */
+    boolean isVerified();
 
 }

@@ -466,7 +466,7 @@ public class ShufflerServiceImpl implements ShufflerService {
             Transaction.Builder builder = Transaction.newTransactionBuilder(Crypto.getPublicKey(Crypto.getKeySeed(shuffler.getSecretBytes())), 0, 0,
                 (short) 1440, attachment, blockchain.getLastBlockTimestamp());
 
-            Transaction transaction = builder.build(null);
+            Transaction transaction = builder.build();
             transaction.setFeeATM(feeCalculator.getMinimumFeeATM(transaction, blockchain.getHeight()));
             transaction.sign(Crypto.getKeySeed(shuffler.getSecretBytes()));
             shuffler.setFailedTransaction(null);

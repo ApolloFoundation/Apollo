@@ -561,7 +561,7 @@ public class FundingMonitor {
                 monitoredAccount.amount, 0, (short) 1440, Attachment.ORDINARY_PAYMENT, blockchain.getLastBlockTimestamp());
 
             builder.recipientId(monitoredAccount.accountId);
-            Transaction transaction = builder.build(null);
+            Transaction transaction = builder.build();
             long minimumFeeATM = feeCalculator.getMinimumFeeATM(transaction, blockchain.getHeight());
             transaction.setFeeATM(minimumFeeATM);
             transaction.sign(monitor.keySeed);
@@ -600,7 +600,7 @@ public class FundingMonitor {
             Transaction.Builder builder = Transaction.newTransactionBuilder(monitor.publicKey,
                 0, 0, (short) 1440, attachment, blockchain.getLastBlockTimestamp());
             builder.recipientId(monitoredAccount.accountId);
-            Transaction transaction = builder.build(null);
+            Transaction transaction = builder.build();
             transaction.setFeeATM(feeCalculator.getMinimumFeeATM(transaction, blockchain.getHeight()));
             transaction.sign(monitor.keySeed);
             if (transaction.getFeeATM() > fundingAccount.getUnconfirmedBalanceATM()) {
@@ -638,7 +638,7 @@ public class FundingMonitor {
             Transaction.Builder builder = Transaction.newTransactionBuilder(monitor.publicKey,
                 0, 0, (short) 1440, attachment, blockchain.getLastBlockTimestamp());
             builder.recipientId(monitoredAccount.accountId);
-            Transaction transaction = builder.build(null);
+            Transaction transaction = builder.build();
             transaction.setFeeATM(feeCalculator.getMinimumFeeATM(transaction, blockchain.getHeight()));
             transaction.sign(monitor.keySeed);
             if (transaction.getFeeATM() > fundingAccount.getUnconfirmedBalanceATM()) {

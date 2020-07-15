@@ -29,7 +29,6 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.signature.MultiSigData;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureParser;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtendAttachment;
@@ -686,6 +685,7 @@ public class TransactionImpl implements Transaction {
         return bytes;
     }
 
+    @Override
     public byte[] getUnsignedBytes() {
         return zeroSignature(getBytes());
     }
@@ -764,47 +764,6 @@ public class TransactionImpl implements Transaction {
     @Override
     public int hashCode() {
         return (int) (getId() ^ (getId() >>> 32));
-    }
-
-    @Override
-    public void sign(byte[] keySeed) throws AplException.NotValidException {
-        if (getSenderPublicKey() != null && !Arrays.equals(senderPublicKey, Crypto.getPublicKey(keySeed))) {
-            throw new AplException.NotValidException("Secret phrase doesn't match transaction sender public key");
-        }
-        //TODO SYNTAX
-        signature = null;//Crypto.sign(bytes(), keySeed);
-        bytes = null;
-    }
-
-    @Override
-    public boolean verifySignature() {
-        lookupAndInjectAccountPublicKeyService().setOrVerifyPublicKey(getSenderId(), getSenderPublicKey());
-        @ParentChildSpecific(ParentMarker.MULTI_SIGNATURE)
-        byte[][] publicKeys = new byte[][]{ getSenderPublicKey() };
-        return verifySignature(publicKeys);
-    }
-
-    @Override
-    public boolean verifySignature(byte[][] publicKeys) {
-        if (!checkSignature(publicKeys)) {
-            return false;
-        }
-        for (byte[] pk : publicKeys) {
-            if (!lookupAndInjectAccountPublicKeyService().setOrVerifyPublicKey(AccountService.getId(pk), pk)) {
-                LOG.error("Public Key Verification failed: pk={}", Convert.toHexString(pk));
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private boolean checkSignature(byte[][] publicKeys) {
-        if (!hasValidSignature) {
-            hasValidSignature = signature != null;
-            //TODO SYNTAX
-            //&& Crypto.verify(signature, zeroSignature(getBytes()), publicKeys);
-        }
-        return hasValidSignature;
     }
 
     private int getSize() {
@@ -988,6 +947,11 @@ public class TransactionImpl implements Transaction {
         }
 
         @Override
+        public TransactionImpl build() throws AplException.NotValidException {
+            return build(null);
+        }
+
+        @Override
         public TransactionImpl build(byte[] keySeed) throws AplException.NotValidException {
             if (!ecBlockSet) {
                 EcBlockData ecBlock = lookupAndInjectBlockChain().getECBlock(timestamp);
@@ -1016,13 +980,18 @@ public class TransactionImpl implements Transaction {
             return transaction;
         }
 
-        private static Blockchain lookupAndInjectBlockChain() {
-            return CDI.current().select(Blockchain.class).get();
+        @Override
+        public void sign(byte[] keySeed) throws AplException.NotValidException {
+            if (getSenderPublicKey() != null && !Arrays.equals(senderPublicKey, Crypto.getPublicKey(keySeed))) {
+                throw new AplException.NotValidException("Secret phrase doesn't match transaction sender public key");
+            }
+            //TODO SYNTAX
+            signature = null;//Crypto.sign(bytes(), keySeed);
+            bytes = null;
         }
 
-        @Override
-        public TransactionImpl build() throws AplException.NotValidException {
-            return build(null);
+        private static Blockchain lookupAndInjectBlockChain() {
+            return CDI.current().select(Blockchain.class).get();
         }
 
         public BuilderImpl recipientId(long recipientId) {
