@@ -4,14 +4,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.entity.state.currency;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyBuyOfferTable;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
 import lombok.ToString;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 @ToString(callSuper = true)
 public class CurrencyBuyOffer extends CurrencyExchangeOffer {
@@ -20,7 +20,7 @@ public class CurrencyBuyOffer extends CurrencyExchangeOffer {
         super(transaction.getId(), attachment.getCurrencyId(), transaction.getSenderId(), attachment.getBuyRateATM(),
             attachment.getTotalBuyLimit(), attachment.getInitialBuySupply(), attachment.getExpirationHeight(), transaction.getHeight(),
             transaction.getIndex(), height);
-        super.setDbKey( CurrencyBuyOfferTable.buyOfferDbKeyFactory.newKey(this.getId()));
+        super.setDbKey(CurrencyBuyOfferTable.buyOfferDbKeyFactory.newKey(this.getId()));
     }
 
     /**

@@ -20,10 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.entity.state.poll;
 
-import com.apollocurrency.aplwallet.apl.core.app.AbstractPoll;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPollCreation;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;

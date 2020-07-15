@@ -4,14 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
-import javax.enterprise.inject.spi.CDI;
-
-import java.util.Objects;
-
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import lombok.extern.slf4j.Slf4j;
+
+import javax.enterprise.inject.spi.CDI;
+import java.util.Objects;
 
 /**
  * Class makes lookup of BlockchainProcessor
@@ -47,7 +45,7 @@ public class ProcessWaitingTransactionsThread implements Runnable {
 
     private BlockchainProcessor lookupBlockchainProcessor() {
         if (blockchainProcessor == null) {
-            blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+            blockchainProcessor = CDI.current().select(BlockchainProcessor.class).get();
         }
         return blockchainProcessor;
     }

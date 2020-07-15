@@ -1,11 +1,13 @@
 /*
- *  Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,12 +23,12 @@ import java.util.Set;
 
 @Singleton
 public class ActiveGenerators {
-    private static final Logger LOG = LoggerFactory.getLogger(ActiveGenerators.class);
-    private static final int MAX_TRACKED_GENERATORS = 50;
+    private final Logger LOG = LoggerFactory.getLogger(ActiveGenerators.class);
+    private final int MAX_TRACKED_GENERATORS = 50;
     /**
      * Active block generators
      */
-    private static final Set<Long> activeGeneratorIds = new HashSet<>();
+    private final Set<Long> activeGeneratorIds = new HashSet<>();
     /**
      * Sorted list of generators for the next block
      */

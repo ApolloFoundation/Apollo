@@ -89,7 +89,7 @@
   <logger name="javax.servlet.level" level="off" additivity="false"/>
   <logger name="com.apollocurrency.aplwallet.apl.core.http.APIProxyServlet" level="info" additivity="false"/>
   <!--    <logger name="com.apollocurrency.aplwallet.apl.core.account.Account" level="trace"/> -->
-  <!--    <logger name="com.apollocurrency.aplwallet.apl.core.app.Shuffling" level="trace" additivity="false">-->
+  <!--    <logger name="com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling" level="trace" additivity="false">-->
   <!--        <appender-ref ref="shuffling-file"/>-->
   <!--    </logger>-->
   <!--
