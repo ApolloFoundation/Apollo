@@ -1,13 +1,11 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.update.UpdateTransactionType;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.Update;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 
 public class UpdateTransaction {
     private Transaction transaction;
@@ -50,7 +48,7 @@ public class UpdateTransaction {
     }
 
     public boolean requireManualUpdate() {
-        return transaction.getType() == UpdateTransactionType.MINOR;
+        return transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.MINOR_UPDATE;
     }
 
 }

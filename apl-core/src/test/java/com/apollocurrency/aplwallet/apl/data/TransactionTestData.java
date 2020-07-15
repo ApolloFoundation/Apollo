@@ -119,7 +119,7 @@ public class TransactionTestData {
         byte[] pk = StringUtils.isBlank(publicKey) ? null : Convert.parseHexString(publicKey);
         try {
             Transaction.Builder builder = new TransactionImpl.BuilderImpl(version, pk,
-                amount, fee, deadline, transactionType.parseAttachment(buffer), timestamp)
+                amount, fee, deadline, transactionType.parseAttachment(buffer), timestamp, )
                 .referencedTransactionFullHash(referencedTransactionFullhash)
                 .signature(Convert.parseHexString(signature))
                 .blockId(blockId)

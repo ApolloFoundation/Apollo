@@ -65,7 +65,7 @@ public class TransactionRowMapper implements RowMapper<Transaction> {
             }
             TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
             TransactionImpl.BuilderImpl builder = new TransactionImpl.BuilderImpl(version, senderPublicKey,
-                amountATM, feeATM, deadline, transactionType != null ? transactionType.parseAttachment(buffer) : null, timestamp)
+                amountATM, feeATM, deadline, transactionType != null ? transactionType.parseAttachment(buffer) : null, timestamp, )
                 .referencedTransactionFullHash(referencedTransactionFullHash)
                 .signature(signature)
                 .blockId(blockId)

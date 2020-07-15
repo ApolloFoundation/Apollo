@@ -144,7 +144,7 @@ public interface Transaction {
         return false;
     }
 
-    default boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates,
+    default boolean attachmentIsDuplicate(Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates,
                                           boolean atAcceptanceHeight,
                                           Set<AccountControlType> senderAccountControls,
                                           AccountControlPhasing accountControlPhasing) {

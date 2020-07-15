@@ -5,8 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtendAttachment;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
@@ -39,7 +39,7 @@ public class TransactionBuilder {
     }
 
     public Transaction.Builder newTransactionBuilder(byte[] senderPublicKey, long amountATM, long feeATM, short deadline, Attachment attachment, int timestamp) {
-        return new TransactionImpl.BuilderImpl((byte) 1, senderPublicKey, amountATM, feeATM, deadline, (AbstractAttachment) attachment, timestamp);
+        return new TransactionImpl.BuilderImpl((byte) 1, senderPublicKey, amountATM, feeATM, deadline, (AbstractAttachment) attachment, timestamp, );
     }
 
     public TransactionImpl.BuilderImpl newTransactionBuilder(byte[] bytes) throws AplException.NotValidException {
@@ -74,7 +74,7 @@ public class TransactionBuilder {
             TransactionType transactionType = factory.findTransactionType(type, subtype);
 
             TransactionImpl.BuilderImpl builder = new TransactionImpl.BuilderImpl(version, senderPublicKey, amountATM, feeATM,
-                deadline, transactionType.parseAttachment(buffer), timestamp)
+                deadline, transactionType.parseAttachment(buffer), timestamp, )
                 .referencedTransactionFullHash(referencedTransactionFullHash)
                 .signature(signature)
                 .ecBlockHeight(ecBlockHeight)
@@ -182,7 +182,7 @@ public class TransactionBuilder {
             }
             TransactionImpl.BuilderImpl builder = new TransactionImpl.BuilderImpl(version, senderPublicKey,
                 amountATM, feeATM, deadline,
-                transactionType.parseAttachment(attachmentData), timestamp)
+                transactionType.parseAttachment(attachmentData), timestamp, )
                 .referencedTransactionFullHash(referencedTransactionFullHash)
                 .signature(signature)
                 .ecBlockHeight(ecBlockHeight)
