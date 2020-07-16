@@ -19,7 +19,7 @@ public class BlockchainProcessorState {
     private volatile boolean isProcessingBlock;
     private volatile boolean isRestoring;
     private volatile int lastRestoreTime = 0;
-    private int initialScanHeight;
+    private volatile int initialScanHeight;
 
     public synchronized Peer getLastBlockchainFeeder() {
         return lastBlockchainFeeder;
