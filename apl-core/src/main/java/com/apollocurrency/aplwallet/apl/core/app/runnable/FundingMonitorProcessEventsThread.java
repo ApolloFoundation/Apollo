@@ -16,7 +16,6 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-//public class FundingMonitorProcessEventsThread extends Thread {
 public class FundingMonitorProcessEventsThread implements Runnable {
 
     private final FundingMonitorServiceImpl fundingMonitorService;
@@ -43,47 +42,46 @@ public class FundingMonitorProcessEventsThread implements Runnable {
                 //
                 // Wait for a block to be pushed and then process pending account events
                 //
-                processSemaphore.acquire();
-                if (stopped) {
+                fundingMonitorService.processSemaphoreAcquire();
+                if (fundingMonitorService.isStopped()) {
                     log.debug("Account monitor thread stopped");
                     break;
                 }
                 MonitoredAccount monitoredAccount;
-                while ((monitoredAccount = pendingEvents.poll()) != null) {
+                while ((monitoredAccount = fundingMonitorService.pollPendingEvent()) != null) {
                     try {
-                        Account targetAccount = accountService.getAccount(monitoredAccount.accountId);
-                        Account fundingAccount = accountService.getAccount(monitoredAccount.monitor.accountId);
-                        if (blockchain.getHeight() - monitoredAccount.height < monitoredAccount.interval) {
+                        Account targetAccount = accountService.getAccount(monitoredAccount.getAccountId());
+                        Account fundingAccount = accountService.getAccount(monitoredAccount.getMonitor().getAccountId());
+                        if (blockchain.getHeight() - monitoredAccount.getHeight() < monitoredAccount.getInterval()) {
                             if (!suspendedEvents.contains(monitoredAccount)) {
                                 suspendedEvents.add(monitoredAccount);
                             }
                         } else if (targetAccount == null) {
-                            log.error(String.format("Monitored account %s no longer exists",
-                                monitoredAccount.accountName));
+                            log.error("Monitored account {} no longer exists", monitoredAccount.getAccountName());
                         } else if (fundingAccount == null) {
-                            log.error(String.format("Funding account %s no longer exists",
-                                monitoredAccount.monitor.accountName));
+                            log.error("Funding account {} no longer exists", monitoredAccount.getMonitor().getAccountName());
                         } else {
-                            switch (monitoredAccount.monitor.holdingType) {
+                            switch (monitoredAccount.getMonitor().getHoldingType()) {
                                 case APL:
-                                    processAplEvent(monitoredAccount, targetAccount, fundingAccount);
+                                    fundingMonitorService.processAplEvent(monitoredAccount, targetAccount, fundingAccount);
                                     break;
                                 case ASSET:
-                                    processAssetEvent(monitoredAccount, targetAccount, fundingAccount);
+                                    fundingMonitorService.processAssetEvent(monitoredAccount, targetAccount, fundingAccount);
                                     break;
                                 case CURRENCY:
-                                    processCurrencyEvent(monitoredAccount, targetAccount, fundingAccount);
+                                    fundingMonitorService.processCurrencyEvent(monitoredAccount, targetAccount, fundingAccount);
                                     break;
                             }
                         }
                     } catch (Exception exc) {
-                        log.error(String.format("Unable to process %s event for account %s, property '%s', holding %s",
-                            monitoredAccount.monitor.holdingType.name(), monitoredAccount.accountName,
-                            monitoredAccount.monitor.property, Long.toUnsignedString(monitoredAccount.monitor.holdingId)), exc);
+                        log.error("Unable to process {} event for account {}, property '{}', holding {}",
+                            monitoredAccount.getMonitor().getHoldingType().name(), monitoredAccount.getAccountName(),
+                            monitoredAccount.getMonitor().getProperty(),
+                            monitoredAccount.getMonitor().getHoldingId(), exc);
                     }
                 }
                 if (!suspendedEvents.isEmpty()) {
-                    pendingEvents.addAll(suspendedEvents);
+                    fundingMonitorService.addAllPendingEvents(suspendedEvents);
                     suspendedEvents.clear();
                 }
             }

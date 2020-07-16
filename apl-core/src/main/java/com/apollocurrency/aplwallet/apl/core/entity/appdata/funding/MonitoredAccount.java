@@ -6,7 +6,9 @@ package com.apollocurrency.aplwallet.apl.core.entity.appdata.funding;
 
 import com.apollocurrency.aplwallet.apl.core.app.FundingMonitor;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
+import lombok.ToString;
 
+@ToString
 public class MonitoredAccount {
 
     /**
@@ -22,7 +24,7 @@ public class MonitoredAccount {
     /**
      * Associated monitor
      */
-    private final FundingMonitor monitor;
+    private final FundingMonitorInstance monitor;
 
     /**
      * Fund amount
@@ -54,7 +56,7 @@ public class MonitoredAccount {
      * @param threshold Fund threshold
      * @param interval  Fund interval
      */
-    private MonitoredAccount(long accountId, FundingMonitor monitor, long amount, long threshold, int interval) {
+    public MonitoredAccount(long accountId, FundingMonitorInstance monitor, long amount, long threshold, int interval) {
         if (amount < FundingMonitor.MIN_FUND_AMOUNT) {
             throw new IllegalArgumentException("Minimum fund amount is " + FundingMonitor.MIN_FUND_AMOUNT);
         }
@@ -108,6 +110,18 @@ public class MonitoredAccount {
         return threshold;
     }
 
+    public void setAmount(long amount) {
+        this.amount = amount;
+    }
+
+    public void setThreshold(long threshold) {
+        this.threshold = threshold;
+    }
+
+    public void setInterval(int interval) {
+        this.interval = interval;
+    }
+
     /**
      * Get the funding interval
      *
@@ -117,7 +131,15 @@ public class MonitoredAccount {
         return interval;
     }
 
-    public FundingMonitor getMonitor() {
+    public FundingMonitorInstance getMonitor() {
         return monitor;
+    }
+
+    public int getHeight() {
+        return height;
+    }
+
+    public void setHeight(int height) {
+        this.height = height;
     }
 }

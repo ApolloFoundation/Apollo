@@ -5,11 +5,14 @@
 package com.apollocurrency.aplwallet.apl.core.entity.appdata.funding;
 
 
-import com.apollocurrency.aplwallet.apl.core.app.FundingMonitor;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import lombok.Getter;
+import lombok.Setter;
 
+@Setter
+@Getter
 public class FundingMonitorInstance {
 
     /**
@@ -124,8 +127,8 @@ public class FundingMonitorInstance {
     @Override
     public boolean equals(Object obj) {
         boolean isEqual = false;
-        if ((obj instanceof FundingMonitor)) {
-            FundingMonitor monitor = (FundingMonitor) obj;
+        if ((obj instanceof FundingMonitorInstance)) {
+            FundingMonitorInstance monitor = (FundingMonitorInstance) obj;
             if (holdingType == monitor.getHoldingType() && holdingId == monitor.getHoldingId() &&
                 property.equals(monitor.getProperty()) && accountId == monitor.getAccountId()) {
                 isEqual = true;
