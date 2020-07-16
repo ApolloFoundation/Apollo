@@ -101,7 +101,6 @@ public final class StartFundingMonitor extends AbstractAPIRequestHandler {
         }
         int interval = HttpParameterParserUtil.getInt(req, "interval", FundingMonitor.MIN_FUND_INTERVAL, Integer.MAX_VALUE, true);
         byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, accountId, true);
-        AssetService assetService = CDI.current().select(AssetService.class).get();
         switch (holdingType) {
             case ASSET:
                 Asset asset = assetService.getAsset(holdingId);
