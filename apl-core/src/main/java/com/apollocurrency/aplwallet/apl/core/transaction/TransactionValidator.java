@@ -5,17 +5,17 @@
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.antifraud.AntifraudValidator;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 
 import javax.inject.Inject;
@@ -23,20 +23,22 @@ import javax.inject.Singleton;
 
 @Singleton
 public class TransactionValidator {
-    private BlockchainConfig blockchainConfig;
-    private PhasingPollService phasingPollService;
-    private Blockchain blockchain;
-    private FeeCalculator feeCalculator;
-    private AccountControlPhasingService accountControlPhasingService;
+    private final BlockchainConfig blockchainConfig;
+    private final PhasingPollService phasingPollService;
+    private final Blockchain blockchain;
+    private final FeeCalculator feeCalculator;
+    private final AccountPublicKeyService accountPublicKeyService;
+    private final AccountControlPhasingService accountControlPhasingService;
 
     @Inject
     public TransactionValidator(BlockchainConfig blockchainConfig, PhasingPollService phasingPollService,
                                 Blockchain blockchain, FeeCalculator feeCalculator,
-                                AccountControlPhasingService accountControlPhasingService) {
+                                AccountPublicKeyService accountPublicKeyService, AccountControlPhasingService accountControlPhasingService) {
         this.blockchainConfig = blockchainConfig;
         this.phasingPollService = phasingPollService;
         this.blockchain = blockchain;
         this.feeCalculator = feeCalculator;
+        this.accountPublicKeyService = accountPublicKeyService;
         this.accountControlPhasingService = accountControlPhasingService;
     }
 
@@ -46,11 +48,12 @@ public class TransactionValidator {
         long feeATM = transaction.getFeeATM();
         long amountATM = transaction.getAmountATM();
         TransactionType type = transaction.getType();
+        TransactionTypes.TransactionTypeSpec typeSpec = type.getSpec();
         if (transaction.getTimestamp() == 0 ? (deadline != 0 || feeATM != 0) : (deadline < 1 || feeATM <= 0)
             || feeATM > maxBalanceAtm
             || amountATM < 0
             || amountATM > maxBalanceAtm
-            || type == null) {
+            || typeSpec == null) {
             throw new AplException.NotValidException("Invalid transaction parameters:\n type: " + type + ", timestamp: " + transaction.getTimestamp()
                 + ", deadline: " + deadline + ", fee: " + feeATM + ", amount: " + amountATM);
         }
@@ -61,7 +64,7 @@ public class TransactionValidator {
         }
         Attachment attachment = transaction.getAttachment();
 
-        if (attachment == null || type != attachment.getTransactionType()) {
+        if (attachment == null || typeSpec != attachment.getTransactionType()) {
             throw new AplException.NotValidException("Invalid attachment " + attachment + " for transaction of type " + type);
         }
         long recipientId = transaction.getRecipientId();
@@ -122,4 +125,17 @@ public class TransactionValidator {
             accountControlPhasingService.checkTransaction(transaction);
         }
     }
+
+    public boolean verifySignature(Transaction transaction) {
+        return checkSignature(transaction) && accountPublicKeyService.setOrVerifyPublicKey(transaction.getSenderId(), transaction.getSenderPublicKey());
+    }
+
+    public boolean checkSignature(Transaction transaction) {
+        boolean hasValidSignature = transaction.hasValidSignature();
+        if (!hasValidSignature) {
+            hasValidSignature = transaction.getSignature() != null && Crypto.verify(transaction.getSignature(), transaction.getUnsignedBytes(), transaction.getSenderPublicKey());
+        }
+        return hasValidSignature;
+    }
+
 }

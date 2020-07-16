@@ -41,9 +41,11 @@ public interface Transaction {
 
     long getSenderId();
 
-    byte[] getSenderPublicKey();
+    boolean hasValidSignature();
 
-    boolean shouldSavePublicKey();
+    void withValidSignature();
+
+    byte[] getSenderPublicKey();
 
     long getRecipientId();
 

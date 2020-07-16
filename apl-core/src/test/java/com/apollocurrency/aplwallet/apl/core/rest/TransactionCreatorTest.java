@@ -1,5 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.rest;
 
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -10,8 +11,12 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EmptyAttachment;
@@ -51,7 +56,6 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 @EnableWeld
 class TransactionCreatorTest {
-    private static CustomTransactionType transactionType = new CustomTransactionType();
     @Mock
     TransactionValidator validator;
     Blockchain blockchain = mock(Blockchain.class);
@@ -63,6 +67,14 @@ class TransactionCreatorTest {
     PropertiesHolder propertiesHolder;
     @Mock
     FeeCalculator calculator;
+    @Mock
+    TransactionBuilder transactionBuilder;
+    @Mock
+    TransactionTypeFactory transactionTypeFactory;
+    @Mock
+    BlockchainConfig blockchainConfig;
+    @Mock
+    AccountService accountService;
     TransactionCreator txCreator;
     @WeldSetup
     WeldInitiator weldInitiator = WeldInitiator.from().addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class)).build();
@@ -70,10 +82,13 @@ class TransactionCreatorTest {
     Account sender = new Account(Convert.parseAccountId(accountRS), 1000 * Constants.ONE_APL, 100 * Constants.ONE_APL, 0L, 0L, 0);
     private String publicKey = "d52a07dc6fdf9f5c6b547ccb11444ce7bba73a99014eb9ac647b6971bee9263c";
     private String secretPhrase = "here we go again";
+    private CustomTransactionType transactionType;
 
     @BeforeEach
     void setUp() {
-        txCreator = new TransactionCreator(validator, propertiesHolder, timeService, calculator, blockchain, processor);
+        txCreator = new TransactionCreator(validator, propertiesHolder, timeService, calculator, blockchain, processor, transactionTypeFactory, transactionBuilder);
+        transactionType = new CustomTransactionType(blockchainConfig, accountService);
+
     }
 
     @Test
@@ -345,26 +360,25 @@ class TransactionCreatorTest {
     private static class CustomAttachment extends EmptyAttachment {
 
         @Override
-        public TransactionType getTransactionType() {
-            return transactionType;
+        public TransactionTypes.TransactionTypeSpec getTransactionType() {
+            return TransactionTypes.TransactionTypeSpec.ORDINARY_PAYMENT;
         }
     }
 
     private static class CustomTransactionType extends TransactionType {
 
-        @Override
-        public byte getType() {
-            return 10;
+        public CustomTransactionType(BlockchainConfig blockchainConfig, AccountService accountService) {
+            super(blockchainConfig, accountService);
         }
 
         @Override
-        public byte getSubtype() {
-            return 1;
+        public TransactionTypes.TransactionTypeSpec getSpec() {
+            return TransactionTypes.TransactionTypeSpec.ORDINARY_PAYMENT;
         }
 
         @Override
         public LedgerEvent getLedgerEvent() {
-            return LedgerEvent.PRIVATE_PAYMENT;
+            return LedgerEvent.ORDINARY_PAYMENT;
         }
 
         @Override

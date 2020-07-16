@@ -183,12 +183,6 @@ public class TransactionImpl implements Transaction {
     }
 
     @Override
-    public boolean shouldSavePublicKey() {
-        return true;
-        //        return Account.getPublicKey(senderId) == null;
-    }
-
-    @Override
     public long getRecipientId() {
         return recipientId;
     }
@@ -318,6 +312,11 @@ public class TransactionImpl implements Transaction {
     }
 
     @Override
+    public boolean verifySignature() {
+        return false;
+    }
+
+    @Override
     public List<AbstractAppendix> getAppendages() {
         return getAppendages(false);
     }
@@ -390,6 +389,16 @@ public class TransactionImpl implements Transaction {
             senderId = AccountService.getId(getSenderPublicKey());
         }
         return senderId;
+    }
+
+    @Override
+    public boolean hasValidSignature() {
+        return hasValidSignature;
+    }
+
+    @Override
+    public void withValidSignature() {
+        hasValidSignature = true;
     }
 
     @Override
@@ -490,6 +499,7 @@ public class TransactionImpl implements Transaction {
         return bytes;
     }
 
+    @Override
     public byte[] getUnsignedBytes() {
         return zeroSignature(getBytes());
     }
@@ -562,16 +572,6 @@ public class TransactionImpl implements Transaction {
         return (int) (getId() ^ (getId() >>> 32));
     }
 
-    public boolean verifySignature() {
-        return checkSignature() && lookupAndInjectAccountPublickKeyService().setOrVerifyPublicKey(getSenderId(), getSenderPublicKey());
-    }
-
-    public boolean checkSignature() {
-        if (!hasValidSignature) {
-            hasValidSignature = signature != null && Crypto.verify(signature, zeroSignature(getBytes()), getSenderPublicKey());
-        }
-        return hasValidSignature;
-    }
 
     private int getSize() {
         return signatureOffset() + 64 + 4 + 4 + 8 + appendagesSize;
@@ -590,7 +590,7 @@ public class TransactionImpl implements Transaction {
         return 1 + 1 + 4 + 2 + 32 + 8 + 8 + 8 + 32;
     }
 
-    private byte[] zeroSignature(byte[] data) {
+    public byte[] zeroSignature(byte[] data) {
         int start = signatureOffset();
         for (int i = start; i < start + 64; i++) {
             data[i] = 0;

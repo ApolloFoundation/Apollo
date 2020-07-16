@@ -20,12 +20,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
 
-import static com.apollocurrency.aplwallet.apl.core.transaction.AccountControl.SET_PHASING_ONLY;
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.SET_PHASING_ONLY;
 
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
@@ -99,7 +100,7 @@ public class UnconfirmedTransaction implements Transaction {
     }
 
     @Override
-    public boolean isUnconfirmedDuplicate(Map<TransactionType, Map<String, Integer>> unconfirmedDuplicates) {
+    public boolean isUnconfirmedDuplicate(Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> unconfirmedDuplicates) {
         return transaction.isUnconfirmedDuplicate(unconfirmedDuplicates);
     }
 
@@ -129,14 +130,15 @@ public class UnconfirmedTransaction implements Transaction {
     }
 
     @Override
+    public boolean hasValidSignature() {
+        return transaction.hasValidSignature();
+    }
+
+    @Override
     public byte[] getSenderPublicKey() {
         return transaction.getSenderPublicKey();
     }
 
-    @Override
-    public boolean shouldSavePublicKey() {
-        return transaction.shouldSavePublicKey();
-    }
 
     @Override
     public long getRecipientId() {
@@ -364,7 +366,7 @@ public class UnconfirmedTransaction implements Transaction {
     /**
      * @deprecated see method with longer parameters list below
      */
-    public boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
+    public boolean attachmentIsDuplicate(Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
         if (!transaction.attachmentIsPhased() && !atAcceptanceHeight) {
             // can happen for phased transactions having non-phasable attachment
             return false;
@@ -386,7 +388,7 @@ public class UnconfirmedTransaction implements Transaction {
         return transaction.getType().isDuplicate(this, duplicates);
     }
 
-    public boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates,
+    public boolean attachmentIsDuplicate(Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates,
                                          boolean atAcceptanceHeight,
                                          Set<AccountControlType> senderAccountControls,
                                          AccountControlPhasing accountControlPhasing) {
@@ -413,13 +415,13 @@ public class UnconfirmedTransaction implements Transaction {
     }
 
     private boolean isBlockDuplicate(Transaction transaction,
-                                    Map<TransactionType, Map<String, Integer>> duplicates,
+                                    Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates,
                                     Set<AccountControlType> senderAccountControls,
                                      AccountControlPhasing accountControlPhasing) {
         return
             senderAccountControls.contains(AccountControlType.PHASING_ONLY)
                 && (accountControlPhasing != null && accountControlPhasing.getMaxFees() != 0)
-                && transaction.getType() != SET_PHASING_ONLY
+                && transaction.getType().getSpec() != SET_PHASING_ONLY
                 && TransactionType.isDuplicate(SET_PHASING_ONLY,
                 Long.toUnsignedString(transaction.getSenderId()), duplicates, true);
     }

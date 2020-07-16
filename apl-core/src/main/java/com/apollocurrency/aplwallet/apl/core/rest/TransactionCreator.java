@@ -7,6 +7,10 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProce
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
@@ -30,23 +34,28 @@ public class TransactionCreator {
     private final FeeCalculator feeCalculator;
     private final Blockchain blockchain;
     private final TransactionProcessor processor;
+    private final TransactionTypeFactory typeFactory;
+    private final TransactionBuilder transactionBuilder;
 
     @Inject
-    public TransactionCreator(TransactionValidator validator, PropertiesHolder propertiesHolder, TimeService timeService, FeeCalculator feeCalculator, Blockchain blockchain, TransactionProcessor processor) {
+    public TransactionCreator(TransactionValidator validator, PropertiesHolder propertiesHolder, TimeService timeService, FeeCalculator feeCalculator, Blockchain blockchain, TransactionProcessor processor, TransactionTypeFactory typeFactory, TransactionBuilder transactionBuilder) {
         this.validator = validator;
         this.propertiesHolder = propertiesHolder;
         this.timeService = timeService;
         this.feeCalculator = feeCalculator;
         this.blockchain = blockchain;
         this.processor = processor;
+        this.typeFactory = typeFactory;
+        this.transactionBuilder = transactionBuilder;
     }
 
     public TransactionCreationData createTransaction(CreateTransactionRequest txRequest) {
         TransactionCreationData tcd = new TransactionCreationData();
         EncryptedMessageAppendix encryptedMessage = null;
         PrunableEncryptedMessageAppendix prunableEncryptedMessage = null;
-
-        if (txRequest.getAttachment().getTransactionType().canHaveRecipient() && txRequest.getRecipientId() != 0) {
+        TransactionTypes.TransactionTypeSpec typeSpec = txRequest.getAttachment().getTransactionType();
+        TransactionType transactionType = typeFactory.findTransactionType(typeSpec.getType(), typeSpec.getSubtype());
+        if (transactionType.canHaveRecipient() && txRequest.getRecipientId() != 0) {
             if (txRequest.isEncryptedMessageIsPrunable()) {
                 prunableEncryptedMessage = (PrunableEncryptedMessageAppendix) txRequest.getAppendix();
             } else {
@@ -97,9 +106,9 @@ public class TransactionCreator {
         int timestamp = txRequest.getTimestamp() != 0 ? txRequest.getTimestamp() : timeService.getEpochTime();
         Transaction transaction;
         try {
-            Transaction.Builder builder = Transaction.newTransactionBuilder(txRequest.getPublicKey(), txRequest.getAmountATM(), txRequest.getFeeATM(),
+            Transaction.Builder builder = transactionBuilder.newTransactionBuilder(txRequest.getPublicKey(), txRequest.getAmountATM(), txRequest.getFeeATM(),
                 deadline, txRequest.getAttachment(), timestamp).referencedTransactionFullHash(txRequest.getReferencedTransactionFullHash());
-            if (txRequest.getAttachment().getTransactionType().canHaveRecipient()) {
+            if (transactionType.canHaveRecipient()) {
                 builder.recipientId(txRequest.getRecipientId());
             }
             builder.appendix(encryptedMessage);

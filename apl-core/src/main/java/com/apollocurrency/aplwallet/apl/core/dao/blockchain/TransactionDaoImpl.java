@@ -20,26 +20,22 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -64,7 +60,7 @@ import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes
 @Slf4j
 @Singleton
 public class TransactionDaoImpl implements TransactionDao {
-    private static final TransactionRowMapper MAPPER = new TransactionRowMapper();
+    private final TransactionRowMapper mapper;
     private final DatabaseManager databaseManager;
     private final TransactionTypeFactory typeFactory;
 
@@ -73,6 +69,7 @@ public class TransactionDaoImpl implements TransactionDao {
         Objects.requireNonNull(databaseManager);
         this.databaseManager = databaseManager;
         this.typeFactory = factory;
+        this.mapper = new TransactionRowMapper(typeFactory);
     }
 
     @Override
@@ -194,7 +191,7 @@ public class TransactionDaoImpl implements TransactionDao {
 
     @Override
     public Transaction loadTransaction(Connection con, ResultSet rs) throws AplException.NotValidException {
-        return MAPPER.mapWithException(rs, null);
+        return mapper.mapWithException(rs, null);
     }
 
 
@@ -285,11 +282,7 @@ public class TransactionDaoImpl implements TransactionDao {
                     pstmt.setByte(++i, transaction.getType().getSpec().getType());
                     pstmt.setByte(++i, transaction.getType().getSpec().getSubtype());
                     pstmt.setLong(++i, transaction.getSenderId());
-                    if (!transaction.shouldSavePublicKey()) {
-                        pstmt.setNull(++i, Types.BINARY);
-                    } else {
-                        pstmt.setBytes(++i, transaction.getSenderPublicKey());
-                    }
+                    pstmt.setBytes(++i, transaction.getSenderPublicKey());
                     int bytesLength = 0;
                     for (Appendix appendage : transaction.getAppendages()) {
                         bytesLength += appendage.getSize();

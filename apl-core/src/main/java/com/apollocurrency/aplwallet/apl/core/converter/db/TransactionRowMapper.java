@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
@@ -24,6 +25,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class TransactionRowMapper implements RowMapper<Transaction> {
+    private final TransactionTypeFactory factory;
+
+    public TransactionRowMapper(TransactionTypeFactory factory) {
+        this.factory = factory;
+    }
+
 
     @Override
     public Transaction map(ResultSet rs, StatementContext ctx) throws SQLException {
@@ -63,9 +70,9 @@ public class TransactionRowMapper implements RowMapper<Transaction> {
                 buffer = ByteBuffer.wrap(attachmentBytes);
                 buffer.order(ByteOrder.LITTLE_ENDIAN);
             }
-            TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
+            TransactionType transactionType = factory.findTransactionType(type, subtype);
             TransactionImpl.BuilderImpl builder = new TransactionImpl.BuilderImpl(version, senderPublicKey,
-                amountATM, feeATM, deadline, transactionType != null ? transactionType.parseAttachment(buffer) : null, timestamp, )
+                amountATM, feeATM, deadline, transactionType != null ? transactionType.parseAttachment(buffer) : null, timestamp,transactionType )
                 .referencedTransactionFullHash(referencedTransactionFullHash)
                 .signature(signature)
                 .blockId(blockId)

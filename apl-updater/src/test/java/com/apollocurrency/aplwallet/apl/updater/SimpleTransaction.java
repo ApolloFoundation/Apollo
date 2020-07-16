@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.updater;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
@@ -45,7 +46,7 @@ public class SimpleTransaction implements Transaction {
     }
 
     @Override
-    public boolean isUnconfirmedDuplicate(Map<TransactionType, Map<String, Integer>> unconfirmedDuplicates) {
+    public boolean isUnconfirmedDuplicate(Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> unconfirmedDuplicates) {
         return false;
     }
 
@@ -76,6 +77,11 @@ public class SimpleTransaction implements Transaction {
     @Override
     public long getSenderId() {
         return 0;
+    }
+
+    @Override
+    public boolean hasValidSignature() {
+        return true;
     }
 
     @Override

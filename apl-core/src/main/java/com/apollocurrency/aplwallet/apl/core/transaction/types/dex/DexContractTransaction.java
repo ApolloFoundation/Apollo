@@ -4,16 +4,12 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.types.dex;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexContractAttachment;
 import com.apollocurrency.aplwallet.apl.exchange.DexConfig;
@@ -185,7 +181,7 @@ public class DexContractTransaction extends DexTransactionType {
             contract = new ExchangeContract(transaction.getId(),
                 senderAccount.getId(),
                 counterOrder.getAccountId(),
-                transaction.getBlock().getTimestamp() + attachment.getTimeToReply(),
+                transaction.getBlockTimestamp() + attachment.getTimeToReply(),
                 attachment);
 
             dexService.saveDexContract(contract);
@@ -200,7 +196,7 @@ public class DexContractTransaction extends DexTransactionType {
             contract.setSecretHash(attachment.getSecretHash());
             contract.setCounterTransferTxId(attachment.getCounterTransferTxId());
             contract.setContractStatus(ExchangeContractStatus.STEP_2);
-            contract.setDeadlineToReply(transaction.getBlock().getTimestamp() + attachment.getTimeToReply());
+            contract.setDeadlineToReply(transaction.getBlockTimestamp() + attachment.getTimeToReply());
 
             //Change another orders to the status Open.
             reopenNotMatchedOrders(contract);
@@ -209,7 +205,7 @@ public class DexContractTransaction extends DexTransactionType {
         } else if (attachment.getContractStatus().isStep3() && contract.getContractStatus().isStep2()) {
             contract.setTransferTxId(attachment.getTransferTxId());
             contract.setContractStatus(ExchangeContractStatus.STEP_3);
-            contract.setDeadlineToReply(transaction.getBlock().getTimestamp() + attachment.getTimeToReply());
+            contract.setDeadlineToReply(transaction.getBlockTimestamp() + attachment.getTimeToReply());
 
             dexService.saveDexContract(contract);
         }

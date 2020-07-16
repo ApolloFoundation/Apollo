@@ -10,8 +10,10 @@ import com.apollocurrency.aplwallet.apl.core.converter.db.ReferencedTransactionR
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ReferencedTransaction;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import org.jdbi.v3.core.Jdbi;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -30,10 +32,12 @@ public class ReferencedTransactionDaoImpl extends EntityDbTable<ReferencedTransa
     };
     private static final String TABLE = "referenced_transaction";
     private static final ReferencedTransactionRowMapper REFERENCED_ROW_MAPPER = new ReferencedTransactionRowMapper();
-    private static final TransactionRowMapper TRANSACTION_ROW_MAPPER = new TransactionRowMapper();
+    private final TransactionRowMapper rowMapper;
 
-    public ReferencedTransactionDaoImpl() {
+    @Inject
+    public ReferencedTransactionDaoImpl(TransactionTypeFactory factory) {
         super(TABLE, KEY_FACTORY, false);
+        rowMapper = new TransactionRowMapper(factory);
     }
 
     @Override
@@ -95,7 +99,7 @@ public class ReferencedTransactionDaoImpl extends EntityDbTable<ReferencedTransa
                 .bind("transactionId", transactionId)
                 .bind("from", from)
                 .bind("limit", limit)
-                .map(TRANSACTION_ROW_MAPPER)
+                .map(rowMapper)
                 .list()
         );
     }

@@ -3,6 +3,7 @@ package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
@@ -59,7 +60,7 @@ public class MandatoryTransaction implements Transaction {
     }
 
     @Override
-    public boolean isUnconfirmedDuplicate(Map<TransactionType, Map<String, Integer>> unconfirmedDuplicates) {
+    public boolean isUnconfirmedDuplicate(Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> unconfirmedDuplicates) {
         return transaction.isUnconfirmedDuplicate(unconfirmedDuplicates);
     }
 
@@ -89,13 +90,13 @@ public class MandatoryTransaction implements Transaction {
     }
 
     @Override
-    public byte[] getSenderPublicKey() {
-        return transaction.getSenderPublicKey();
+    public boolean hasValidSignature() {
+        return transaction.hasValidSignature();
     }
 
     @Override
-    public boolean shouldSavePublicKey() {
-        return transaction.shouldSavePublicKey();
+    public byte[] getSenderPublicKey() {
+        return transaction.getSenderPublicKey();
     }
 
     @Override
@@ -327,12 +328,12 @@ public class MandatoryTransaction implements Transaction {
      * @deprecated see method with longer parameters list below
      */
     @Override
-    public boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
+    public boolean attachmentIsDuplicate(Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
         return transaction.attachmentIsDuplicate(duplicates, atAcceptanceHeight);
     }
 
     @Override
-    public boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates,
+    public boolean attachmentIsDuplicate(Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates,
                                          boolean atAcceptanceHeight,
                                          Set<AccountControlType> senderAccountControls,
                                          AccountControlPhasing accountControlPhasing) {
