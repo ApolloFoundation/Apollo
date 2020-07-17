@@ -211,7 +211,7 @@ public class BlockController {
             return response.error(ApiErrors.UNKNOWN_VALUE, "blockId by height", height).build();
         }
         BlockDTO dto = new BlockDTO();
-        dto.setBlock(blockId.toString());
+        dto.setBlock(Long.toUnsignedString(blockId));
         log.trace("getBlockId result: {}", dto);
         return response.bind(dto).build();
     }
