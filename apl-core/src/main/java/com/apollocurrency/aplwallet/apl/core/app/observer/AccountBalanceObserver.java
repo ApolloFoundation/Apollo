@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.app.observer;
 
 import javax.enterprise.event.Observes;
-import javax.enterprise.inject.Vetoed;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -16,17 +15,17 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountEventTyp
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.funding.MonitoredAccount;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.funding.FundingMonitorServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.funding.FundingMonitorService;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Vetoed
+@Singleton
 public class AccountBalanceObserver {
 
-    private final FundingMonitorServiceImpl fundingMonitorService;
+    private final FundingMonitorService fundingMonitorService;
 
     @Inject
-    public AccountBalanceObserver(FundingMonitorServiceImpl fundingMonitorService) {
+    public AccountBalanceObserver(FundingMonitorService fundingMonitorService) {
         this.fundingMonitorService = fundingMonitorService;
     }
 
@@ -42,8 +41,8 @@ public class AccountBalanceObserver {
         //
         // Check the APL balance for monitored accounts
         //
-        synchronized (FundingMonitorServiceImpl.getMonitors()) {
-            List<MonitoredAccount> accountList = fundingMonitorService.getMonitoredAccountById(account.getId());
+        synchronized (fundingMonitorService.getMonitors()) {
+            List<MonitoredAccount> accountList = fundingMonitorService.getMonitoredAccountListById(account.getId());
             if (accountList != null) {
                 accountList.forEach((maccount) -> {
                     if (maccount.getMonitor().getHoldingType() == HoldingType.APL && balance < maccount.getThreshold() &&

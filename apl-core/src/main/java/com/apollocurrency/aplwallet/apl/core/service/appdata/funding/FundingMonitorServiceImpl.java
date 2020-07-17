@@ -4,12 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.appdata.funding;
 
-import javax.annotation.PostConstruct;
-import javax.enterprise.inject.Vetoed;
+import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -20,6 +20,7 @@ import java.util.concurrent.Semaphore;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.FundingMonitorProcessEventsThread;
+import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.funding.MonitoredAccount;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
@@ -46,6 +47,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.task.Task;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -60,17 +62,17 @@ import org.json.simple.parser.ParseException;
  * interval.
  */
 @Slf4j
-@Vetoed
-public class FundingMonitorServiceImpl {
+@Singleton
+public class FundingMonitorServiceImpl implements FundingMonitorService {
 
    /**
     * Active monitors
     */
-    private static final List<FundingMonitorInstance> monitors = new ArrayList<>();
+    private static final List<FundingMonitorInstance> monitors = Collections.synchronizedList(new ArrayList<>());
     /**
      * Monitored accounts
      */
-    private static Map<Long, List<MonitoredAccount>> accounts = new HashMap<>();
+    private static Map<Long, List<MonitoredAccount>> accounts = Collections.synchronizedMap(new HashMap<>());
     /**
      * Process semaphore
      */
@@ -90,6 +92,7 @@ public class FundingMonitorServiceImpl {
     private final AccountAssetService accountAssetService;
     private final AccountCurrencyService accountCurrencyService;
     private final AccountPropertyService accountPropertyService;
+    private final TaskDispatchManager taskDispatchManager;
     /**
      * Maximum number of monitors
      */
@@ -112,7 +115,8 @@ public class FundingMonitorServiceImpl {
                                      AccountService accountService,
                                      AccountAssetService accountAssetService,
                                      AccountCurrencyService accountCurrencyService,
-                                     AccountPropertyService accountPropertyService) {
+                                     AccountPropertyService accountPropertyService,
+                                     TaskDispatchManager taskDispatchManager) {
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder);
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig);
         this.blockchain = Objects.requireNonNull(blockchain);
@@ -124,10 +128,10 @@ public class FundingMonitorServiceImpl {
         this.accountPropertyService = Objects.requireNonNull(accountPropertyService);
         /** Maximum number of monitors */
         MAX_MONITORS = this.propertiesHolder.getIntProperty("apl.maxNumberOfMonitors");
+        this.taskDispatchManager = taskDispatchManager;
     }
 
 
-    @PostConstruct
     /**
      * Initialize monitor processing
      */
@@ -140,61 +144,96 @@ public class FundingMonitorServiceImpl {
         }
         try {
             //
-            // Create the monitor processing thread
+            // Create the Funding monitor processing thread
             //
             Runnable processingThread = new FundingMonitorProcessEventsThread(
                 this, this.blockchain, this.accountService);
 //            processingThread.start();
-            processingThread.run();
+            if (!propertiesHolder.isLightClient()) {
+                taskDispatchManager.newBackgroundDispatcher("FundingMonitor")
+                    .schedule(Task.builder()
+                        .name("FundingMonitorThread")
+                        .initialDelay(500)
+                        .delay(1000)
+                        .task(processingThread)
+                        .build());
+            }
+//            processingThread.run();
             started = true;
-            log.debug("Account monitor initialization completed");
+            log.debug("Account Funding monitor initialization completed");
         } catch (RuntimeException exc) {
             stopped = true;
-            log.error("Account monitor initialization failed", exc);
+            log.error("Account Funding monitor initialization failed", exc);
             throw exc;
         }
     }
 
+    /**
+     * Stop monitor processing
+     */
+    @PreDestroy
+    private void shutdown() {
+        log.debug("Funding monitor shutdown... was started ? = '{}'", started);
+        try {
+            if (started && !stopped) {
+                stopped = true;
+//                processSemaphore.release();
+            }
+        } catch (Exception ex) {
+            log.error(ex.getMessage(), ex);
+        }
+    }
+
+    @Override
     public boolean isStopped() {
         return stopped;
     }
 
+    @Override
     public void processSemaphoreAcquire() throws InterruptedException {
-        processSemaphore.acquire();
+//        processSemaphore.acquire();
     }
 
+    @Override
     public boolean addPendingEvent(MonitoredAccount account) {
         return pendingEvents.add(account);
     }
 
+    @Override
     public MonitoredAccount pollPendingEvent() {
         return pendingEvents.poll();
     }
 
+    @Override
     public boolean addAllPendingEvents(List<MonitoredAccount> suspendedEvents) {
         return pendingEvents.addAll(suspendedEvents);
     }
 
+    @Override
     public boolean containsPendingEvent(MonitoredAccount monitoredAccount) {
         return pendingEvents.contains(monitoredAccount);
     }
 
+    @Override
     public boolean isPendingEventsEmpty() {
         return pendingEvents.isEmpty();
     }
 
-    public List<MonitoredAccount> getMonitoredAccountById(long accountId) {
+    @Override
+    public List<MonitoredAccount> getMonitoredAccountListById(long accountId) {
         return accounts.get(accountId);
     }
 
-    public static List<FundingMonitorInstance> getMonitors() {
+    public List<FundingMonitorInstance> getMonitors() {
         return monitors;
     }
 
+    @Override
     public List<MonitoredAccount> putAccountList(long accountId, List<MonitoredAccount> accountList) {
         return accounts.put(accountId, accountList);
     }
 
+    @Override
     public List<MonitoredAccount> removeByAccountId(long accountId) {
         return accounts.remove(accountId);
     }
@@ -214,14 +253,18 @@ public class FundingMonitorServiceImpl {
      * @param keySeed     Fund account keySeed
      * @return TRUE if the monitor was started
      */
+    @Override
     public boolean startMonitor(HoldingType holdingType, long holdingId, String property,
-                                       long amount, long threshold, int interval, byte[] keySeed) {
+                                long amount, long threshold, int interval, byte[] keySeed) {
         //
         // Initialize monitor processing if it hasn't been done yet.  We do this now
         // instead of during ARS initialization so we don't start the monitor thread if it
         // won't be used.
         //
+        this.init(); // lazy start
         long accountId = AccountService.getId(Crypto.getPublicKey(keySeed));
+        log.debug("startMonitor accountId={}, holdingId = {} holdingType={}, property={}, threshold={}, interval={}",
+            accountId, holdingId, holdingType, property, threshold, interval);
         //
         // Create the monitor
         //
@@ -264,7 +307,7 @@ public class FundingMonitorServiceImpl {
                     log.debug("Created {} monitor for target account {}, property '{}', holding {}, "
                             + "amount {}, threshold {}, interval {}",
                         holdingType.name(), account.getAccountName(), monitor.getProperty(),
-                        Long.toUnsignedString(monitor.getHoldingId()),
+                        monitor.getHoldingId(),
                         account.getAmount(), account.getThreshold(), account.getInterval());
                 });
                 monitors.add(monitor);
@@ -275,6 +318,8 @@ public class FundingMonitorServiceImpl {
         } finally {
             globalSync.readUnlock();
         }
+        log.debug("Started Monitor for accountId={}, holdingId = {} holdingType={}, property={}, threshold={}, interval={} = OK",
+            accountId, holdingId, holdingType, property, threshold, interval);
         return true;
     }
 
@@ -290,6 +335,7 @@ public class FundingMonitorServiceImpl {
      * @param propertyValue Account property value
      * @return Monitored account
      */
+    @Override
     public MonitoredAccount createMonitoredAccount(long accountId, FundingMonitorInstance monitor, String propertyValue) {
         long monitorAmount = monitor.getAmount();
         long monitorThreshold = monitor.getThreshold();
@@ -310,7 +356,9 @@ public class FundingMonitorServiceImpl {
                 throw new IllegalArgumentException(errorMessage, exc);
             }
         }
-        return new MonitoredAccount(accountId, monitor, monitorAmount, monitorThreshold, monitorInterval);
+        MonitoredAccount monitoredAccount = new MonitoredAccount(accountId, monitor, monitorAmount, monitorThreshold, monitorInterval);
+        log.debug("createed MonitoredAccount = {}", monitoredAccount);
+        return monitoredAccount;
     }
 
     /**
@@ -320,6 +368,7 @@ public class FundingMonitorServiceImpl {
      *
      * @return Number of monitors stopped
      */
+    @Override
     public int stopAllMonitors() {
         int stopCount;
         synchronized (monitors) {
@@ -327,7 +376,7 @@ public class FundingMonitorServiceImpl {
             monitors.clear();
             accounts.clear();
         }
-        log.info("All monitors stopped");
+        log.info("All [{}] monitor(s) stopped", stopCount);
         return stopCount;
     }
 
@@ -343,7 +392,9 @@ public class FundingMonitorServiceImpl {
      * @param accountId   Fund account identifier
      * @return TRUE if the monitor was stopped
      */
+    @Override
     public boolean stopMonitor(HoldingType holdingType, long holdingId, String property, long accountId) {
+        log.debug("stopMonitor accountId={}, holdingId = {} holdingType={}, property={}", accountId, holdingId, holdingType, property);
         FundingMonitorInstance monitor = null;
         boolean wasStopped = false;
         synchronized (monitors) {
@@ -380,10 +431,12 @@ public class FundingMonitorServiceImpl {
                         }
                     }
                 }
-                log.info("{} monitor stopped for fund account {}, property '{}', holding {}",
+                log.debug("{} monitor stopped for funding account {}, property '{}', holding {}",
                     holdingType.name(), monitor.getAccountName(), monitor.getProperty(), monitor.getHoldingId());
             }
         }
+        log.debug("Is stopped Monitor ? '{}' accountId={}, holdingId = {} holdingType={}, property={}",
+            wasStopped, accountId, holdingId, holdingType, property);
         return wasStopped;
     }
 
@@ -393,6 +446,7 @@ public class FundingMonitorServiceImpl {
      * @param filter Monitor filter
      * @return Monitor list
      */
+    @Override
     public List<FundingMonitorInstance> getMonitors(Filter<FundingMonitorInstance> filter) {
         List<FundingMonitorInstance> result = new ArrayList<>();
         synchronized (monitors) {
@@ -410,6 +464,7 @@ public class FundingMonitorServiceImpl {
      *
      * @return Account monitor list
      */
+    @Override
     public List<FundingMonitorInstance> getAllMonitors() {
         List<FundingMonitorInstance> allMonitors = new ArrayList<>();
         synchronized (monitors) {
@@ -424,7 +479,7 @@ public class FundingMonitorServiceImpl {
      * @param monitor Monitor
      * @return List of monitored accounts
      */
-    public static List<MonitoredAccount> getMonitoredAccounts(FundingMonitorInstance monitor) {
+    public List<MonitoredAccount> getMonitoredAccounts(FundingMonitorInstance monitor) {
         List<MonitoredAccount> monitoredAccounts = new ArrayList<>();
         synchronized (monitors) {
             accounts.values().forEach(monitorList -> monitorList.forEach(account -> {
@@ -444,8 +499,11 @@ public class FundingMonitorServiceImpl {
      * @param fundingAccount   Funding account
      * @throws AplException Unable to create transaction
      */
+    @Override
     public void processAplEvent(MonitoredAccount monitoredAccount, Account targetAccount, Account fundingAccount)
         throws AplException {
+        log.debug("processAplEvent monitoredAccount={}, targetAccount = {} fundingAccount={}",
+            monitoredAccount, targetAccount, fundingAccount);
         FundingMonitorInstance monitor = monitoredAccount.getMonitor();
         if (targetAccount.getBalanceATM() < monitoredAccount.getThreshold()) {
             Transaction.Builder builder = Transaction.newTransactionBuilder(monitor.getPublicKey(),
@@ -469,6 +527,10 @@ public class FundingMonitorServiceImpl {
                     blockchainConfig.getCoinSymbol(), monitor.getAccountName(),
                     monitoredAccount.getAccountName());
             }
+        } else {
+            log.debug("processAplEvent - Nothing to process, targetATM={}, monitoredThreshold={},  condition = '{}'",
+                targetAccount.getBalanceATM(), monitoredAccount.getThreshold(),
+                targetAccount.getBalanceATM() < monitoredAccount.getThreshold());
         }
     }
 
@@ -481,11 +543,15 @@ public class FundingMonitorServiceImpl {
      * @param fundingAccount   Funding account
      * @throws AplException Unable to create transaction
      */
+    @Override
     public void processAssetEvent(MonitoredAccount monitoredAccount, Account targetAccount, Account fundingAccount)
         throws AplException {
+        log.debug("processAssetEvent monitoredAccount={}, targetAccount = {} fundingAccount={}",
+            monitoredAccount, targetAccount, fundingAccount);
         FundingMonitorInstance monitor = monitoredAccount.getMonitor();
         AccountAsset targetAsset = accountAssetService.getAsset(targetAccount, monitor.getHoldingId());
         AccountAsset fundingAsset = accountAssetService.getAsset(fundingAccount, monitor.getHoldingId());
+        log.debug("processAssetEvent targetAsset={}, fundingAsset = {}", targetAsset, fundingAsset);
         if (fundingAsset == null || fundingAsset.getUnconfirmedQuantityATU() < monitoredAccount.getAmount()) {
             log.warn("Funding account {} has insufficient quantity for asset {}; funding transaction discarded",
                     monitor.getAccountName(), monitor.getHoldingId());
@@ -507,6 +573,8 @@ public class FundingMonitorServiceImpl {
                     transaction.getStringId(), monitoredAccount.getAmount(),
                     monitor.getAccountName(), monitoredAccount.getAccountName());
             }
+        } else {
+            log.debug("processAssetEvent - Nothing to process...");
         }
     }
 
@@ -518,11 +586,15 @@ public class FundingMonitorServiceImpl {
      * @param fundingAccount   Funding account
      * @throws AplException Unable to create transaction
      */
+    @Override
     public void processCurrencyEvent(MonitoredAccount monitoredAccount, Account targetAccount, Account fundingAccount)
         throws AplException {
+        log.debug("processCurrencyEvent monitoredAccount={}, targetAccount = {} fundingAccount={}",
+            monitoredAccount, targetAccount, fundingAccount);
         FundingMonitorInstance monitor = monitoredAccount.getMonitor();
         AccountCurrency targetCurrency = accountCurrencyService.getAccountCurrency(targetAccount.getId(), monitor.getHoldingId());
         AccountCurrency fundingCurrency = accountCurrencyService.getAccountCurrency(fundingAccount.getId(), monitor.getHoldingId());
+        log.debug("processAssetEvent targetCurrency={}, fundingCurrency = {}", targetCurrency, fundingCurrency);
         if (fundingCurrency == null || fundingCurrency.getUnconfirmedUnits() < monitoredAccount.getAmount()) {
             log.warn("Funding account {} has insufficient quantity for currency {}; funding transaction discarded",
                     monitor.getAccountName(), monitor.getHoldingId());
@@ -544,6 +616,9 @@ public class FundingMonitorServiceImpl {
                     transaction.getStringId(), monitoredAccount.getAmount(),
                     monitor.getAccountName(), monitoredAccount.getAccountName());
             }
+        } else {
+            log.debug("processCurrencyEvent  - Nothing to process, monitoredAccount={}, targetAccount = {} fundingAccount={}",
+                monitoredAccount, targetAccount, fundingAccount);
         }
     }
 

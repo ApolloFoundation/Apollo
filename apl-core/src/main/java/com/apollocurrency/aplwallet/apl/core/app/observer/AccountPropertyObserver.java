@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.app.observer;
 
 import javax.enterprise.event.Observes;
-import javax.enterprise.inject.Vetoed;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.ArrayList;
@@ -17,18 +16,18 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountEventTyp
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.funding.FundingMonitorInstance;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.funding.MonitoredAccount;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountProperty;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.funding.FundingMonitorServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.funding.FundingMonitorService;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Vetoed
+@Singleton
 public class AccountPropertyObserver {
 
-    private final FundingMonitorServiceImpl fundingMonitorService;
+    private final FundingMonitorService fundingMonitorService;
 
     @Inject
-    public AccountPropertyObserver(FundingMonitorServiceImpl fundingMonitorService) {
+    public AccountPropertyObserver(FundingMonitorService fundingMonitorService) {
         this.fundingMonitorService = fundingMonitorService;
     }
 
@@ -38,19 +37,20 @@ public class AccountPropertyObserver {
      * @param property Account property
      */
     public void onAccountSetProperty(@Observes @AccountEvent(AccountEventType.SET_PROPERTY) AccountProperty property) {
-        log.trace("Catch event {} property={}", AccountEventType.SET_PROPERTY, property);
+        log.debug("Catch event {} property={}", AccountEventType.SET_PROPERTY, property);
         if (fundingMonitorService.isStopped()) {
             return;
         }
         long accountId = property.getRecipientId();
         try {
             boolean addMonitoredAccount = true;
-            synchronized (FundingMonitorServiceImpl.getMonitors()) {
+            synchronized (fundingMonitorService.getMonitors()) {
                 //
                 // Check if updating an existing monitored account.  In this case, we don't need to create
                 // a new monitored account and just need to update any monitor overrides.
                 //
-                List<MonitoredAccount> accountList = fundingMonitorService.getMonitoredAccountById(accountId);
+                List<MonitoredAccount> accountList = fundingMonitorService.getMonitoredAccountListById(accountId);
+                log.debug("accountList = {}", accountList);
                 if (accountList != null) {
                     for (MonitoredAccount account : accountList) {
                         if (account.getMonitor().getProperty().equals(property.getProperty())) {
@@ -74,11 +74,11 @@ public class AccountPropertyObserver {
                 // Create a new monitored account if there is an active monitor for this account property
                 //
                 if (addMonitoredAccount) {
-                    for (FundingMonitorInstance monitor : FundingMonitorServiceImpl.getMonitors()) {
+                    for (FundingMonitorInstance monitor : fundingMonitorService.getMonitors()) {
                         if (monitor.getProperty().equals(property.getProperty())) {
                             MonitoredAccount account =
                                 fundingMonitorService.createMonitoredAccount(accountId, monitor, property.getValue());
-                            accountList = fundingMonitorService.getMonitoredAccountById(accountId);
+                            accountList = fundingMonitorService.getMonitoredAccountListById(accountId);
                             if (accountList == null) {
                                 accountList = new ArrayList<>();
                                 fundingMonitorService.putAccountList(accountId, accountList);
@@ -106,8 +106,8 @@ public class AccountPropertyObserver {
             return;
         }
         long accountId = property.getRecipientId();
-        synchronized (FundingMonitorServiceImpl.getMonitors()) {
-            List<MonitoredAccount> accountList = fundingMonitorService.getMonitoredAccountById(accountId);
+        synchronized (fundingMonitorService.getMonitors()) {
+            List<MonitoredAccount> accountList = fundingMonitorService.getMonitoredAccountListById(accountId);
             if (accountList != null) {
                 Iterator<MonitoredAccount> it = accountList.iterator();
                 while (it.hasNext()) {

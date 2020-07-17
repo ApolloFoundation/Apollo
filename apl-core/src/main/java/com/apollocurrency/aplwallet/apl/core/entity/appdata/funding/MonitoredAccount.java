@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.entity.appdata.funding;
 
-import com.apollocurrency.aplwallet.apl.core.app.FundingMonitor;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.funding.FundingMonitorService;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import lombok.ToString;
 
@@ -57,14 +57,14 @@ public class MonitoredAccount {
      * @param interval  Fund interval
      */
     public MonitoredAccount(long accountId, FundingMonitorInstance monitor, long amount, long threshold, int interval) {
-        if (amount < FundingMonitor.MIN_FUND_AMOUNT) {
-            throw new IllegalArgumentException("Minimum fund amount is " + FundingMonitor.MIN_FUND_AMOUNT);
+        if (amount < FundingMonitorService.MIN_FUND_AMOUNT) {
+            throw new IllegalArgumentException("Minimum fund amount is " + FundingMonitorService.MIN_FUND_AMOUNT);
         }
-        if (threshold < FundingMonitor.MIN_FUND_THRESHOLD) {
-            throw new IllegalArgumentException("Minimum fund threshold is " + FundingMonitor.MIN_FUND_THRESHOLD);
+        if (threshold < FundingMonitorService.MIN_FUND_THRESHOLD) {
+            throw new IllegalArgumentException("Minimum fund threshold is " + FundingMonitorService.MIN_FUND_THRESHOLD);
         }
-        if (interval < FundingMonitor.MIN_FUND_INTERVAL) {
-            throw new IllegalArgumentException("Minimum fund interval is " + FundingMonitor.MIN_FUND_INTERVAL);
+        if (interval < FundingMonitorService.MIN_FUND_INTERVAL) {
+            throw new IllegalArgumentException("Minimum fund interval is " + FundingMonitorService.MIN_FUND_INTERVAL);
         }
         this.accountId = accountId;
         this.accountName = Convert2.rsAccount(accountId);
