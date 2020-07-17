@@ -3,16 +3,16 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.types.update;
 
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Fee;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateAttachment;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 
 public abstract class UpdateTransactionType extends TransactionType {

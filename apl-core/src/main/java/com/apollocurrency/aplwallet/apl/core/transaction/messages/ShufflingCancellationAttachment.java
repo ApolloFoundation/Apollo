@@ -3,13 +3,11 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.types.shuffling.ShufflingTransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.ShufflingTransaction;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -78,8 +76,8 @@ public final class ShufflingCancellationAttachment extends AbstractShufflingAtta
     }
 
     @Override
-    public TransactionType getTransactionType() {
-        return ShufflingTransactionType.SHUFFLING_CANCELLATION;
+    public TransactionTypes.TransactionTypeSpec getTransactionType() {
+        return TransactionTypes.TransactionTypeSpec.SHUFFLING_CANCELLATION;
     }
 
     @Override

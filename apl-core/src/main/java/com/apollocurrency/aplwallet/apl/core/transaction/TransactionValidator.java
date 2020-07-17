@@ -134,6 +134,9 @@ public class TransactionValidator {
         boolean hasValidSignature = transaction.hasValidSignature();
         if (!hasValidSignature) {
             hasValidSignature = transaction.getSignature() != null && Crypto.verify(transaction.getSignature(), transaction.getUnsignedBytes(), transaction.getSenderPublicKey());
+            if (hasValidSignature) {
+                transaction.withValidSignature();
+            }
         }
         return hasValidSignature;
     }

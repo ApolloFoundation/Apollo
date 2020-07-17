@@ -5,13 +5,10 @@
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
 import com.apollocurrency.aplwallet.api.dto.UnconfirmedTransactionDTO;
-import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.payment.PaymentTransactionType;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import org.json.simple.JSONObject;
@@ -22,8 +19,8 @@ public class UnconfirmedTransactionConverter implements Converter<Transaction, U
     @Override
     public UnconfirmedTransactionDTO apply(Transaction model) {
         UnconfirmedTransactionDTO dto = new UnconfirmedTransactionDTO();
-        dto.setType(model.getType().getType());
-        dto.setSubtype(model.getType().getSubtype());
+        dto.setType(model.getType().getSpec().getType());
+        dto.setSubtype(model.getType().getSpec().getSubtype());
         dto.setPhased(model.getPhasing() != null);
         dto.setTimestamp(model.getTimestamp());
         dto.setDeadline(model.getDeadline());
@@ -34,7 +31,7 @@ public class UnconfirmedTransactionConverter implements Converter<Transaction, U
         long amountATM;
         String senderPublicKey;
 
-        if (model.getType() == PaymentTransactionType.PRIVATE){
+        if (model.getType().getSpec() == TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT) {
             recipientId = AccountConverter.anonymizeAccount();
             senderId = AccountConverter.anonymizeAccount();
             amountATM = AccountConverter.anonymizeBalance();

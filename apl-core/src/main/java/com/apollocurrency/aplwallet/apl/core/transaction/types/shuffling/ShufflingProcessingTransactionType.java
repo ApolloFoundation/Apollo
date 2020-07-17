@@ -5,16 +5,19 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.types.shuffling;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.Fee;
-import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
-import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
+import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingParticipant;
+import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingParticipantState;
+import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingStage;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
@@ -31,15 +34,18 @@ import java.util.Map;
 import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.SHUFFLING_PROCESSING;
 
 @Singleton
-class ShufflingProcessingTransactionType extends ShufflingTransactionType {
+public class ShufflingProcessingTransactionType extends ShufflingTransactionType {
+    public static final String NAME = "ShufflingProcessing";
     private final Blockchain blockchain;
     private final TimeService timeService;
+    private final ShufflingService shufflingService;
 
     @Inject
-    public ShufflingProcessingTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, Blockchain blockchain, TimeService timeService) {
+    public ShufflingProcessingTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, Blockchain blockchain, TimeService timeService, ShufflingService shufflingService) {
         super(blockchainConfig, accountService);
         this.blockchain = blockchain;
         this.timeService = timeService;
+        this.shufflingService = shufflingService;
     }
 
     @Override
@@ -54,7 +60,7 @@ class ShufflingProcessingTransactionType extends ShufflingTransactionType {
 
     @Override
     public String getName() {
-        return "ShufflingProcessing";
+        return NAME;
     }
 
     @Override
@@ -75,20 +81,20 @@ class ShufflingProcessingTransactionType extends ShufflingTransactionType {
     @Override
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
         ShufflingProcessingAttachment attachment = (ShufflingProcessingAttachment) transaction.getAttachment();
-        Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
+        Shuffling shuffling = shufflingService.getShuffling(attachment.getShufflingId());
         if (shuffling == null) {
             throw new AplException.NotCurrentlyValidException("Shuffling not found: " + Long.toUnsignedString(attachment.getShufflingId()));
         }
-        if (shuffling.getStage() != Shuffling.Stage.PROCESSING) {
+        if (shuffling.getStage() != ShufflingStage.PROCESSING) {
             throw new AplException.NotCurrentlyValidException(String.format("Shuffling %s is not in processing stage",
                 Long.toUnsignedString(attachment.getShufflingId())));
         }
-        ShufflingParticipant participant = shuffling.getParticipant(transaction.getSenderId());
+        ShufflingParticipant participant = shufflingService.getParticipant(shuffling.getId(), transaction.getSenderId());
         if (participant == null) {
             throw new AplException.NotCurrentlyValidException(String.format("Account %s is not registered for shuffling %s",
                 Long.toUnsignedString(transaction.getSenderId()), Long.toUnsignedString(shuffling.getId())));
         }
-        if (!participant.getState().canBecome(ShufflingParticipant.State.PROCESSED)) {
+        if (!participant.getState().canBecome(ShufflingParticipantState.PROCESSED)) {
             throw new AplException.NotCurrentlyValidException(String.format("Participant %s processing already complete",
                 Long.toUnsignedString(transaction.getSenderId())));
         }
@@ -100,7 +106,7 @@ class ShufflingProcessingTransactionType extends ShufflingTransactionType {
             throw new AplException.NotValidException(String.format("Participant %s is last in shuffle",
                 Long.toUnsignedString(transaction.getSenderId())));
         }
-        byte[] shufflingStateHash = shuffling.getStateHash();
+        byte[] shufflingStateHash = shufflingService.getStageHash(shuffling);
         if (shufflingStateHash == null || !Arrays.equals(shufflingStateHash, attachment.getShufflingStateHash())) {
             throw new AplException.NotCurrentlyValidException("Shuffling state hash doesn't match");
         }
@@ -129,7 +135,7 @@ class ShufflingProcessingTransactionType extends ShufflingTransactionType {
     @Override
     public boolean isDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
         ShufflingProcessingAttachment attachment = (ShufflingProcessingAttachment) transaction.getAttachment();
-        Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
+        Shuffling shuffling = shufflingService.getShuffling(attachment.getShufflingId());
         return TransactionType.isDuplicate(SHUFFLING_PROCESSING, Long.toUnsignedString(shuffling.getId()), duplicates, true);
     }
 
@@ -141,8 +147,8 @@ class ShufflingProcessingTransactionType extends ShufflingTransactionType {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         ShufflingProcessingAttachment attachment = (ShufflingProcessingAttachment) transaction.getAttachment();
-        Shuffling shuffling = Shuffling.getShuffling(attachment.getShufflingId());
-        shuffling.updateParticipantData(transaction, attachment);
+        Shuffling shuffling = shufflingService.getShuffling(attachment.getShufflingId());
+        shufflingService.updateParticipantData(shuffling, transaction, attachment);
     }
 
     @Override
@@ -159,7 +165,7 @@ class ShufflingProcessingTransactionType extends ShufflingTransactionType {
         Transaction transaction = blockchain.getTransaction(transactionId);
 
         ShufflingProcessingAttachment attachment = (ShufflingProcessingAttachment) transaction.getAttachment();
-        return ShufflingParticipant.getData(attachment.getShufflingId(), transaction.getSenderId()) == null;
+        return shufflingService.getData(attachment.getShufflingId(), transaction.getSenderId()) == null;
     }
 
 }

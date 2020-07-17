@@ -3,10 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.types.shuffling.ShufflingTransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.ShufflingTransaction;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONObject;
 
@@ -73,8 +71,8 @@ public final class ShufflingCreation extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
-        return ShufflingTransactionType.SHUFFLING_CREATION;
+    public TransactionTypes.TransactionTypeSpec getTransactionType() {
+        return TransactionTypes.TransactionTypeSpec.SHUFFLING_CREATION;
     }
 
     public long getHoldingId() {

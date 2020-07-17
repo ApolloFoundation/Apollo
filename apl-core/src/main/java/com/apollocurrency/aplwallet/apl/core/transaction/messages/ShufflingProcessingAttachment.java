@@ -3,13 +3,9 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.shuffling.ShufflingTransactionType;
-import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.ShufflingTransaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.shuffling.ShufflingProcessingTransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import org.json.simple.JSONArray;
@@ -57,7 +53,7 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
     }
 
     public static ShufflingProcessingAttachment parse(JSONObject attachmentData) {
-        if (!Appendix.hasAppendix(ShufflingTransactionType.SHUFFLING_PROCESSING.getName(), attachmentData)) {
+        if (!Appendix.hasAppendix(ShufflingProcessingTransactionType.NAME, attachmentData)) {
             return null;
         }
         return new ShufflingProcessingAttachment(attachmentData);
@@ -101,8 +97,8 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
     }
 
     @Override
-    public TransactionType getTransactionType() {
-        return ShufflingTransactionType.SHUFFLING_PROCESSING;
+    public TransactionTypes.TransactionTypeSpec getTransactionType() {
+        return TransactionTypes.TransactionTypeSpec.SHUFFLING_PROCESSING;
     }
 
     @Override

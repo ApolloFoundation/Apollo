@@ -3,11 +3,9 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.types.shuffling.ShufflingTransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.ShufflingTransaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -76,8 +74,8 @@ public final class ShufflingRecipientsAttachment extends AbstractShufflingAttach
     }
 
     @Override
-    public TransactionType getTransactionType() {
-        return ShufflingTransactionType.SHUFFLING_RECIPIENTS;
+    public TransactionTypes.TransactionTypeSpec getTransactionType() {
+        return TransactionTypes.TransactionTypeSpec.SHUFFLING_RECIPIENTS;
     }
 
     public byte[][] getRecipientPublicKeys() {

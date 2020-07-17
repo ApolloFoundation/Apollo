@@ -4,9 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.types.shuffling;
 
-import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 

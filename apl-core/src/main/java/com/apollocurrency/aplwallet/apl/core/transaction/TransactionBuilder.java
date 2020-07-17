@@ -39,7 +39,9 @@ public class TransactionBuilder {
     }
 
     public Transaction.Builder newTransactionBuilder(byte[] senderPublicKey, long amountATM, long feeATM, short deadline, Attachment attachment, int timestamp) {
-        return new TransactionImpl.BuilderImpl((byte) 1, senderPublicKey, amountATM, feeATM, deadline, (AbstractAttachment) attachment, timestamp, );
+        TransactionTypes.TransactionTypeSpec spec = attachment.getTransactionType();
+        TransactionType transactionType = factory.findTransactionType(spec.getType(), spec.getSubtype());
+        return new TransactionImpl.BuilderImpl((byte) 1, senderPublicKey, amountATM, feeATM, deadline, (AbstractAttachment) attachment, timestamp, transactionType);
     }
 
     public TransactionImpl.BuilderImpl newTransactionBuilder(byte[] bytes) throws AplException.NotValidException {
@@ -74,7 +76,7 @@ public class TransactionBuilder {
             TransactionType transactionType = factory.findTransactionType(type, subtype);
 
             TransactionImpl.BuilderImpl builder = new TransactionImpl.BuilderImpl(version, senderPublicKey, amountATM, feeATM,
-                deadline, transactionType.parseAttachment(buffer), timestamp, )
+                deadline, transactionType.parseAttachment(buffer), timestamp, transactionType)
                 .referencedTransactionFullHash(referencedTransactionFullHash)
                 .signature(signature)
                 .ecBlockHeight(ecBlockHeight)
@@ -147,14 +149,6 @@ public class TransactionBuilder {
         return builder;
     }
 
-    public TransactionImpl parseTransaction(JSONObject transactionData) throws AplException.NotValidException {
-        TransactionImpl transaction = newTransactionBuilder(transactionData).build();
-        if (transaction.getSignature() != null && !transaction.checkSignature()) {
-            throw new AplException.NotValidException("Invalid transaction signature for transaction " + transaction.getJSONObject().toJSONString());
-        }
-        return transaction;
-    }
-
     public TransactionImpl.BuilderImpl newTransactionBuilder(JSONObject transactionData) throws AplException.NotValidException {
         try {
             byte type = ((Long) transactionData.get("type")).byteValue();
@@ -182,7 +176,7 @@ public class TransactionBuilder {
             }
             TransactionImpl.BuilderImpl builder = new TransactionImpl.BuilderImpl(version, senderPublicKey,
                 amountATM, feeATM, deadline,
-                transactionType.parseAttachment(attachmentData), timestamp, )
+                transactionType.parseAttachment(attachmentData), timestamp, transactionType)
                 .referencedTransactionFullHash(referencedTransactionFullHash)
                 .signature(signature)
                 .ecBlockHeight(ecBlockHeight)
