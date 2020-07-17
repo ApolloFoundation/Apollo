@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
@@ -32,6 +33,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.converter.HttpRequestToCreateT
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSigner;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
@@ -71,6 +73,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
         "ecBlockId", "ecBlockHeight"};
     protected TimeService timeService = CDI.current().select(TimeService.class).get();
     private TransactionValidator validator = CDI.current().select(TransactionValidator.class).get();
+    private static final TransactionSigner signer = CDI.current().select(TransactionSigner.class).get();
     private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private FeeCalculator feeCalculator = CDI.current().select(FeeCalculator.class).get();
 
@@ -131,7 +134,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
         if (createTransactionRequest.getKeySeed() != null) {
             response.put("transaction", transaction.getStringId());
             response.put("fullHash", transactionJSON.get("fullHash"));
-            response.put("transactionBytes", Convert.toHexString(transaction.getBytes()));
+            response.put("transactionBytes", Convert.toHexString(transaction.getCopyTxBytes()));
             response.put("signatureHash", transactionJSON.get("signatureHash"));
         }
         if (createTransactionRequest.isBroadcast()) {
@@ -191,7 +194,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
         int timestamp = timeService.getEpochTime();
         Transaction transaction;
         try {
-            Transaction.Builder builder = Transaction.newTransactionBuilder(txRequest.getPublicKey(), txRequest.getAmountATM(), txRequest.getFeeATM(),
+            Transaction.Builder builder = TransactionBuilder.newTransactionBuilder(txRequest.getPublicKey(), txRequest.getAmountATM(), txRequest.getFeeATM(),
                 deadline, txRequest.getAttachment(), timestamp).referencedTransactionFullHash(txRequest.getReferencedTransactionFullHash());
             if (txRequest.getAttachment().getTransactionType().canHaveRecipient()) {
                 builder.recipientId(txRequest.getRecipientId());
@@ -208,6 +211,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
                 builder.ecBlockHeight(txRequest.getEcBlockHeight());
             }
             transaction = builder.build(txRequest.getKeySeed());
+            signer.sign(transaction, txRequest.getKeySeed());
             if (txRequest.getFeeATM() <= 0 || (propertiesHolder.correctInvalidFees() && txRequest.getKeySeed() == null)) {
                 int effectiveHeight = blockchain.getHeight();
                 @TransactionFee(FeeMarker.CALCULATOR)

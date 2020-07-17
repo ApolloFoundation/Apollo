@@ -95,8 +95,9 @@ public class ChildAccountTest {
 
     TransactionVersionValidator txVersionValidator = new TransactionVersionValidator(blockchainConfig, blockchain);
     TransactionApplier txApplier = new TransactionApplier(blockchainConfig, referencedTransactionDao, accountService, accountPublicKeyService);
-    TransactionValidator txValidator = new TransactionValidator(blockchainConfig, phasingPollService, blockchain, calculator, txVersionValidator, accountControlPhasingService, accountService);
-    TransactionCreator txCreator = new TransactionCreator(txValidator, propertiesHolder, timeService, calculator, blockchain, processor);
+    TransactionValidator txValidator = new TransactionValidator(blockchainConfig, phasingPollService, blockchain, calculator, txVersionValidator, accountControlPhasingService, accountService, accountPublicKeyService);
+    TransactionSigner txSigner = new TransactionSigner(accountPublicKeyService);
+    TransactionCreator txCreator = new TransactionCreator(txValidator, propertiesHolder, timeService, calculator, blockchain, processor, txSigner);
 
     @BeforeEach
     void setUp() {
@@ -128,7 +129,7 @@ public class ChildAccountTest {
         Transaction tx = txCreator.createTransactionThrowingException(request);
         assertNotNull(tx);
 
-        byte[] txBytes = tx.getBytes();
+        byte[] txBytes = tx.getCopyTxBytes();
         byte[] txUnsignedBytes = tx.getUnsignedBytes();
 
         String txStr = Convert.toHexString(txBytes);

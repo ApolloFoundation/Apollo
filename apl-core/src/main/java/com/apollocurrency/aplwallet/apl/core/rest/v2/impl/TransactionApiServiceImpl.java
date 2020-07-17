@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.api.v2.model.TransactionInfoResp;
 import com.apollocurrency.aplwallet.api.v2.model.TxRequest;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.ResponseBuilderV2;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TransactionInfoMapper;
@@ -70,7 +71,7 @@ public class TransactionApiServiceImpl implements TransactionApiService {
                 log.trace("Broadcast transaction: tx={}", req.getTx());
             }
             byte[] tx = Convert.parseHexString(req.getTx());
-            Transaction.Builder txBuilder = Transaction.newTransactionBuilder(tx);
+            Transaction.Builder txBuilder = TransactionBuilder.newTransactionBuilder(tx);
             Transaction newTx = txBuilder.build();
             transactionProcessor.broadcast(newTx);
             receipt = unTxReceiptMapper.convert(newTx);

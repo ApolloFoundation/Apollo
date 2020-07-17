@@ -66,7 +66,7 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
             pstmt.setInt(++i, unconfirmedTransaction.getHeight());
             pstmt.setLong(++i, unconfirmedTransaction.getFeePerByte());
             pstmt.setInt(++i, unconfirmedTransaction.getExpiration());
-            pstmt.setBytes(++i, unconfirmedTransaction.getBytes());
+            pstmt.setBytes(++i, unconfirmedTransaction.getCopyTxBytes());
             JSONObject prunableJSON = unconfirmedTransaction.getPrunableAttachmentJSON();
             if (prunableJSON != null) {
                 pstmt.setString(++i, prunableJSON.toJSONString());

@@ -127,7 +127,7 @@ class TransactionProcessorTest {
         doReturn(expirationTimestamp).when(transaction).getTimestamp();
         doReturn(expirationTimestamp).when(transaction).getExpiration();
         doReturn((byte)1).when(transaction).getVersion();
-        doReturn(true).when(transaction).verifySignature();
+
         doReturn(false).when(transaction).isUnconfirmedDuplicate(any(Map.class));
 
         doReturn(false).when(blockchain).hasTransaction(-9128485677221760321L);
@@ -152,7 +152,7 @@ class TransactionProcessorTest {
         verify(blockchain, times(2)).hasTransaction(anyLong());
         verify(transactionValidator).validate(any(Transaction.class));
         verify(databaseManager).getDataSource();
-        verify(transaction).verifySignature();
+
         verify(transactionApplier).applyUnconfirmed(transaction);
         verify(unconfirmedTransactionTable).insert(any(UnconfirmedTransaction.class));
     }
@@ -170,7 +170,7 @@ class TransactionProcessorTest {
         doReturn(expirationTimestamp).when(transaction).getTimestamp();
         doReturn(expirationTimestamp).when(transaction).getExpiration();
         doReturn((byte)1).when(transaction).getVersion();
-        doReturn(true).when(transaction).verifySignature();
+
         doReturn(false).when(transaction).isUnconfirmedDuplicate(any(Map.class));
         UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction(transaction, expirationTimestamp);
 
@@ -193,7 +193,7 @@ class TransactionProcessorTest {
         verify(globalSync).writeUnlock();
         verify(blockchain).hasTransaction(anyLong());
         verify(databaseManager).getDataSource();
-        verify(transaction).verifySignature();
+
         verify(transactionApplier).applyUnconfirmed(transaction);
         verify(unconfirmedTransactionTable).insert(any(UnconfirmedTransaction.class));
     }

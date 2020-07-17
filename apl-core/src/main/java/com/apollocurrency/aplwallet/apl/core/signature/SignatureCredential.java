@@ -13,14 +13,14 @@ import java.util.Objects;
  */
 @Getter
 public class SignatureCredential implements Credential {
-    private final byte[] publicKey;
+    private final byte[] key;
 
-    public SignatureCredential(byte[] publicKey) {
-        this.publicKey = Objects.requireNonNull(publicKey);
+    public SignatureCredential(byte[] key) {
+        this.key = Objects.requireNonNull(key);
     }
 
     @Override
-    public boolean validateCredential(PublicKeyValidator validator) {
-        return validator.validate(publicKey);
+    public boolean validateCredential(KeyValidator validator) {
+        return validator.validate(key);
     }
 }

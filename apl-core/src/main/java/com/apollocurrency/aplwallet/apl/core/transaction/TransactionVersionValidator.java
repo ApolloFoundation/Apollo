@@ -19,6 +19,7 @@ import java.util.Objects;
 @Slf4j
 @Singleton
 public class TransactionVersionValidator {
+    public static final int LATEST_VERSION = 2;
     private final BlockchainConfig blockchainConfig;
     private final Blockchain blockchain;
 
@@ -40,7 +41,7 @@ public class TransactionVersionValidator {
     }
 
     private boolean isValidVersion(int transactionVersion) {
-        return transactionVersion == getActualVersion();
+        return transactionVersion <= getActualVersion();
     }
 
     public void checkVersion(int transactionVersion) {

@@ -33,13 +33,17 @@ class MultiSigData implements MultiSig {
     private final byte[] payload;
     private final short count;
     private final Map<KeyId, byte[]> signaturesMap;
-    private SignatureParser parser = new Parser();
+    private final SignatureParser parser = new Parser();
     private boolean verified = false;
 
     public MultiSigData(byte[] publicKey, byte[] signature) {
         this(1, new byte[Parser.PAYLOAD_LENGTH]);
         Arrays.fill(payload, (byte) 0x0);
         addSignature(publicKey, signature);
+    }
+
+    public MultiSigData(int count) {
+        this(count, Parser.PAYLOAD_RESERVED);
     }
 
     public MultiSigData(int count, byte[] payload) {
@@ -157,6 +161,14 @@ class MultiSigData implements MultiSig {
         private static final int MAGIC_DATA_LENGTH = 4;
         private static final int PAYLOAD_LENGTH = 4;
         private static final byte[] PAYLOAD_RESERVED = new byte[PAYLOAD_LENGTH];
+        public static final String PAYLOAD_FIELD_NAME = "payload";
+        public static final String PARTICIPANT_COUNT_FIELD_NAME = "participantCount";
+        public static final String SIGNATURES_FIELD_NAME = "signatures";
+        public static final String KEY_ID_FIELD_NAME = "keyId";
+
+        static {
+            Arrays.fill(PAYLOAD_RESERVED, (byte) 0x0);
+        }
 
         /**
          * Parse the byte array and build the multisig object
@@ -223,13 +235,13 @@ class MultiSigData implements MultiSig {
         public JSONObject getJsonObject(Signature signature) {
             MultiSig multiSig = (MultiSig) signature;
             JSONObject json = new JSONObject();
-            json.put("payload", Convert.toHexString(multiSig.getPayload()));
-            json.put("participantCount", multiSig.getParticipantCount());
+            json.put(PAYLOAD_FIELD_NAME, Convert.toHexString(multiSig.getPayload()));
+            json.put(PARTICIPANT_COUNT_FIELD_NAME, multiSig.getParticipantCount());
             JSONArray signatureArray = new JSONArray();
             multiSig.signaturesMap().forEach((keyId, bytes) -> {
                 JSONObject item = new JSONObject();
-                item.put("keyId", Convert.toHexString(keyId.getKey()));
-                item.put("signature", Convert.toHexString(bytes));
+                item.put(KEY_ID_FIELD_NAME, Convert.toHexString(keyId.getKey()));
+                item.put(SIGNATURES_FIELD_NAME, Convert.toHexString(bytes));
                 signatureArray.add(item);
             });
             json.put("signatures", signatureArray);
@@ -245,13 +257,13 @@ class MultiSigData implements MultiSig {
          */
         @Override
         public Signature parse(JSONObject json) {
-            byte[] payload = (byte[]) json.get("payload");
-            short participantCount = (short) json.get("participantCount");
+            byte[] payload = (byte[]) json.get(PAYLOAD_FIELD_NAME);
+            short participantCount = (short) json.get(PARTICIPANT_COUNT_FIELD_NAME);
             MultiSigData multiSigData = new MultiSigData(participantCount, payload);
-            JSONArray signatures = (JSONArray) json.get("signatures");
+            JSONArray signatures = (JSONArray) json.get(SIGNATURES_FIELD_NAME);
             for (Object item : signatures) {
-                byte[] keyId = Convert.parseHexString((String) ((JSONObject) item).get("keyId"));
-                byte[] sig = Convert.parseHexString((String) ((JSONObject) item).get("signature"));
+                byte[] keyId = Convert.parseHexString((String) ((JSONObject) item).get(KEY_ID_FIELD_NAME));
+                byte[] sig = Convert.parseHexString((String) ((JSONObject) item).get(SIGNATURES_FIELD_NAME));
                 multiSigData.addSignature(keyId, sig);
             }
             return multiSigData;

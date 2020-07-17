@@ -20,6 +20,7 @@ import java.util.Objects;
 class SigData implements Signature {
     private static final int SIGNATURE_LENGTH = 64;
     private final byte[] signature;
+    private final SignatureParser parser = new SigData.Parser();
     private boolean verified = false;
 
     public SigData(byte[] signature) {
@@ -52,12 +53,11 @@ class SigData implements Signature {
 
     @Override
     public JSONObject getJsonObject() {
-        return null;
+        return parser.getJsonObject(this);
     }
 
     static class Parser implements SignatureParser {
         private static final int PARSER_VERSION = 1;
-        public static final String SIGNATURE_FIELD_NAME = "signature";
 
         /**
          * Parse the byte array and build the multisig object

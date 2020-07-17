@@ -23,7 +23,9 @@ package com.apollocurrency.aplwallet.apl.core.app.mint;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSigner;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
@@ -74,10 +76,12 @@ public class MintWorker implements Runnable {
     private boolean done = false;
     private PropertiesHolder propertiesHolder;
     private BlockchainConfig blockchainConfig;
+    private TransactionSigner transactionSigner;
 
-    public MintWorker(PropertiesHolder propertiesHolder, BlockchainConfig blockchainConfig) {
+    public MintWorker(PropertiesHolder propertiesHolder, BlockchainConfig blockchainConfig, TransactionSigner transactionSigner) {
         this.blockchainConfig = blockchainConfig;
         this.propertiesHolder = propertiesHolder;
+        this.transactionSigner = transactionSigner;
     }
 
     private static String getUrlParams(Map<String, String> params) {
@@ -225,15 +229,17 @@ public class MintWorker implements Runnable {
         JSONObject ecBlock = getECBlock();
         Attachment attachment = new MonetarySystemCurrencyMinting(nonce, currencyId, units, counter);
         int timestamp = ((Long) ecBlock.get("timestamp")).intValue();
-        Transaction.Builder builder = Transaction.newTransactionBuilder(Crypto.getPublicKey(keySeed), 0, Constants.ONE_APL,
+        Transaction.Builder builder = TransactionBuilder.newTransactionBuilder(Crypto.getPublicKey(keySeed), 0, Constants.ONE_APL,
             (short) 120, attachment, timestamp)
             .ecBlockHeight(((Long) ecBlock.get("ecBlockHeight")).intValue())
             .ecBlockId(Convert.parseUnsignedLong((String) ecBlock.get("ecBlockId")));
         try {
             Transaction transaction = builder.build(keySeed);
+            transactionSigner.sign(transaction, keySeed);
+
             Map<String, String> params = new HashMap<>();
             params.put("requestType", "broadcastTransaction");
-            params.put("transactionBytes", Convert.toHexString(transaction.getBytes()));
+            params.put("transactionBytes", Convert.toHexString(transaction.getCopyTxBytes()));
             return getJsonResponse(params);
         } catch (AplException.NotValidException e) {
             LOG.info("local signing failed", e);

@@ -435,7 +435,7 @@ public class AccountControlController {
         leaseBalanceResponse.setUnsignedTransactionBytes(Convert.toHexString(transaction.getUnsignedBytes()));
         leaseBalanceResponse.setTransaction(transaction.getStringId());
         leaseBalanceResponse.setFullHash(transaction.getFullHashString());
-        leaseBalanceResponse.setTransactionBytes(Convert.toHexString(transaction.getBytes()));
+        leaseBalanceResponse.setTransactionBytes(Convert.toHexString(transaction.getCopyTxBytes()));
         leaseBalanceResponse.setBroadcasted(txRequest.isBroadcast());
 
         log.trace("DONE leaseBalance, response = {}", leaseBalanceResponse);

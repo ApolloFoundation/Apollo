@@ -23,9 +23,9 @@ package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
+import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
@@ -35,32 +35,16 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendi
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
-import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONObject;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public interface Transaction {
-
-    static Transaction.Builder newTransactionBuilder(byte[] senderPublicKey, long amountATM, long feeATM, short deadline, Attachment attachment, int timestamp) {
-        return new TransactionImpl.BuilderImpl((byte) 1, senderPublicKey, amountATM, feeATM, deadline, (AbstractAttachment) attachment, timestamp);
-    }
-
-    static Transaction.Builder newTransactionBuilder(byte[] transactionBytes) throws AplException.NotValidException {
-        return TransactionImpl.newTransactionBuilder(transactionBytes);
-    }
-
-    static Transaction.Builder newTransactionBuilder(JSONObject transactionJSON) throws AplException.NotValidException {
-        return TransactionImpl.newTransactionBuilder(transactionJSON);
-    }
-
-    static Transaction.Builder newTransactionBuilder(byte[] transactionBytes, JSONObject prunableAttachments) throws AplException.NotValidException {
-        return TransactionImpl.newTransactionBuilder(transactionBytes, prunableAttachments);
-    }
 
     boolean isUnconfirmedDuplicate(Map<TransactionType, Map<String, Integer>> unconfirmedDuplicates);
 
@@ -116,6 +100,8 @@ public interface Transaction {
 
     byte[] referencedTransactionFullHash();
 
+    void sign(Signature signature);
+
     Signature getSignature();
 
     String getFullHashString();
@@ -126,7 +112,12 @@ public interface Transaction {
 
     Attachment getAttachment();
 
-    byte[] getBytes();
+    default byte[] getCopyTxBytes() {
+        byte[] txBytes = bytes();
+        return Arrays.copyOf(txBytes, txBytes.length);
+    }
+
+    byte[] bytes();
 
     byte[] getUnsignedBytes();
 
@@ -192,6 +183,8 @@ public interface Transaction {
 
         Builder referencedTransactionFullHash(String referencedTransactionFullHash);
 
+        Builder referencedTransactionFullHash(byte[] referencedTransactionFullHash);
+
         Builder appendix(MessageAppendix message);
 
         Builder appendix(EncryptedMessageAppendix encryptedMessage);
@@ -218,7 +211,16 @@ public interface Transaction {
 
         Transaction build() throws AplException.NotValidException;
 
+        /**
+         * Build transaction adn encrypt attachments. This method doesn't sign the transaction.
+         * The transaction keeps unsigned.
+         *
+         * @param keySeed the key seed to encrypt appendixes
+         * @return unsigned transaction with encrypted appendixes
+         * @throws AplException.NotValidException
+         */
         Transaction build(byte[] keySeed) throws AplException.NotValidException;
 
+        TransactionImpl.BuilderImpl blockId(long blockId);
     }
 }

@@ -185,6 +185,11 @@ public class MandatoryTransaction implements Transaction {
     }
 
     @Override
+    public void sign(Signature signature) {
+        throw new RuntimeException("Transaction is already signed");
+    }
+
+    @Override
     public Signature getSignature() {
         return transaction.getSignature();
     }
@@ -210,8 +215,13 @@ public class MandatoryTransaction implements Transaction {
     }
 
     @Override
-    public byte[] getBytes() {
-        return transaction.getBytes();
+    public byte[] getCopyTxBytes() {
+        return transaction.getCopyTxBytes();
+    }
+
+    @Override
+    public byte[] bytes() {
+        return transaction.bytes();
     }
 
     @Override

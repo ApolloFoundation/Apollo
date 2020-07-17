@@ -12,6 +12,7 @@ import java.nio.ByteBuffer;
  * @author andrii.zinchenko@firstbridge.io
  */
 public interface SignatureParser {
+    String SIGNATURE_FIELD_NAME = "signature";
     /**
      * Parse the byte array and build the signature object
      *

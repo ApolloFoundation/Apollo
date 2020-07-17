@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSigner;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
@@ -54,6 +55,8 @@ class TransactionCreatorTest {
     private static CustomTransactionType transactionType = new CustomTransactionType();
     @Mock
     TransactionValidator validator;
+    @Mock
+    TransactionSigner transactionSigner;
     Blockchain blockchain = mock(Blockchain.class);
     @Mock
     TimeService timeService;
@@ -73,7 +76,7 @@ class TransactionCreatorTest {
 
     @BeforeEach
     void setUp() {
-        txCreator = new TransactionCreator(validator, propertiesHolder, timeService, calculator, blockchain, processor);
+        txCreator = new TransactionCreator(validator, propertiesHolder, timeService, calculator, blockchain, processor, transactionSigner);
     }
 
     @Test

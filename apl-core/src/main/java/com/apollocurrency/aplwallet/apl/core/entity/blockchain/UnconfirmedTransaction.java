@@ -67,7 +67,7 @@ public class UnconfirmedTransaction implements Transaction {
             if (prunableJSON != null) {
                 prunableAttachments = (JSONObject) JSONValue.parse(prunableJSON);
             }
-            TransactionImpl.BuilderImpl builder = TransactionImpl.newTransactionBuilder(transactionBytes, prunableAttachments);
+            Transaction.Builder builder = TransactionBuilder.newTransactionBuilder(transactionBytes, prunableAttachments);
             this.transaction = builder.build();
             this.transaction.setHeight(rs.getInt("transaction_height"));
             this.arrivalTimestamp = rs.getLong("arrival_timestamp");
@@ -217,6 +217,11 @@ public class UnconfirmedTransaction implements Transaction {
     }
 
     @Override
+    public void sign(Signature signature) {
+        throw new UnsupportedOperationException("Transaction should be already signed");
+    }
+
+    @Override
     public Signature getSignature() {
         return transaction.getSignature();
     }
@@ -242,8 +247,13 @@ public class UnconfirmedTransaction implements Transaction {
     }
 
     @Override
-    public byte[] getBytes() {
-        return transaction.getBytes();
+    public byte[] getCopyTxBytes() {
+        return transaction.getCopyTxBytes();
+    }
+
+    @Override
+    public byte[] bytes() {
+        return transaction.bytes();
     }
 
     @Override

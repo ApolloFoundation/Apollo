@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.exchange.dao;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.MandatoryTransaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionBuilder;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
@@ -20,7 +21,7 @@ public class MandatoryTransactionMapper implements RowMapper<MandatoryTransactio
         byte[] txBytes = rs.getBytes("transaction_bytes");
         Transaction tx;
         try {
-            tx = Transaction.newTransactionBuilder(txBytes).build();
+            tx = TransactionBuilder.newTransactionBuilder(txBytes).build();
         } catch (AplException.NotValidException e) {
             throw new RuntimeException(e);
         }

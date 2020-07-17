@@ -14,23 +14,27 @@ import java.util.Objects;
 @Getter
 public class MultiSigCredential implements Credential {
     private final int threshold;
-    private final byte[][] publicKeys;
+    private final byte[][] keys;
 
-    public MultiSigCredential(int threshold, byte[][] publicKeys) {
-        this.threshold = threshold;
-        this.publicKeys = Objects.requireNonNull(publicKeys);
-        if (threshold < 1 || threshold > publicKeys.length) {
+    public MultiSigCredential(int threshold, byte[][] keys) {
+        this.keys = Objects.requireNonNull(keys);
+        if (threshold < 1 || threshold > keys.length) {
             throw new IllegalArgumentException("Wrong threshold value.");
         }
+        this.threshold = threshold;
     }
 
-    public MultiSigCredential(byte[] pubicKey) {
-        this(1, new byte[][]{pubicKey});
+    public MultiSigCredential(byte[][] keys) {
+        this(keys.length, keys);
+    }
+
+    public MultiSigCredential(byte[] key) {
+        this(1, new byte[][]{key});
     }
 
     @Override
-    public boolean validateCredential(PublicKeyValidator validator) {
-        for (byte[] pk : publicKeys) {
+    public boolean validateCredential(KeyValidator validator) {
+        for (byte[] pk : keys) {
             if (!validator.validate(pk)) {
                 return false;
             }

@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShufflingEvent;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
@@ -23,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProce
 import com.apollocurrency.aplwallet.apl.core.service.state.ShufflerService;
 import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.signature.SignatureHelper;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttachment;
@@ -462,13 +464,18 @@ public class ShufflerServiceImpl implements ShufflerService {
                 }
             }
         }
+        //TODO Use TransactionVersionValidator#getActualVersion()
+        int version = 1;
         try {
-            Transaction.Builder builder = Transaction.newTransactionBuilder(Crypto.getPublicKey(Crypto.getKeySeed(shuffler.getSecretBytes())), 0, 0,
+            Transaction.Builder builder = TransactionBuilder.newTransactionBuilder(version, Crypto.getPublicKey(Crypto.getKeySeed(shuffler.getSecretBytes())), 0, 0,
                 (short) 1440, attachment, blockchain.getLastBlockTimestamp());
 
             Transaction transaction = builder.build();
             transaction.setFeeATM(feeCalculator.getMinimumFeeATM(transaction, blockchain.getHeight()));
-            transaction.sign(Crypto.getKeySeed(shuffler.getSecretBytes()));
+            transaction.sign(
+                SignatureHelper.sign(transaction.getUnsignedBytes(), Crypto.getKeySeed(shuffler.getSecretBytes()))
+            );
+            //transaction.sign(Crypto.getKeySeed(shuffler.getSecretBytes()));
             shuffler.setFailedTransaction(null);
             shuffler.setFailureCause(null);
             Account participantAccount = accountService.getAccount(shuffler.getAccountId());

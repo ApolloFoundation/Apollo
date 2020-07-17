@@ -57,7 +57,7 @@ public class UnconfirmedTransactionConverter implements Converter<Transaction, U
         dto.setAmountATM(String.valueOf(amountATM));
         dto.setFeeATM(String.valueOf(model.getFeeATM()));
         dto.setReferencedTransactionFullHash(model.getReferencedTransactionFullHash());
-        byte[] signature = Convert.emptyToNull(model.getBytes());
+        byte[] signature = Convert.emptyToNull(model.getCopyTxBytes());
         if (signature != null) {
             dto.setSignature(Convert.toHexString(signature));
             dto.setSignatureHash(Convert.toHexString(Crypto.sha256().digest(signature)));

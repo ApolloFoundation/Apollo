@@ -47,7 +47,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.PeerBlock;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionImpl;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
@@ -779,7 +779,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             calculatedTotalAmount += transaction.getAmountATM();
             calculatedTotalFee += transaction.getFeeATM();
             payloadLength += transaction.getFullSize();
-            digest.update(((TransactionImpl) transaction).bytes());
+            digest.update(transaction.bytes());
         }
         if (calculatedTotalAmount != block.getTotalAmountATM() || calculatedTotalFee != block.getTotalFeeATM()) {
             throw new BlockNotAcceptedException("Total amount or fee don't match transaction totals", block);
@@ -1191,7 +1191,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         for (UnconfirmedTransaction unconfirmedTransaction : sortedTransactions) {
             Transaction transaction = unconfirmedTransaction.getTransaction();
             blockTransactions.add(transaction);
-            digest.update(transaction.getBytes());
+            digest.update(transaction.getCopyTxBytes());
             totalAmountATM += transaction.getAmountATM();
             totalFeeATM += transaction.getFeeATM();
             payloadLength += transaction.getFullSize();
@@ -1384,13 +1384,13 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                         }
                                         validateTransactions(currentBlock, blockchain.getLastBlock(), curTime, duplicates, true);
                                         for (Transaction transaction : currentBlock.getOrLoadTransactions()) {
-                                            byte[] transactionBytes = ((TransactionImpl) transaction).bytes();
-                                            if (!Arrays.equals(transactionBytes, TransactionImpl.newTransactionBuilder(transactionBytes).build().bytes())) {
+                                            byte[] transactionBytes = transaction.bytes();
+                                            if (!Arrays.equals(transactionBytes, TransactionBuilder.newTransactionBuilder(transactionBytes).build().bytes())) {
                                                 throw new AplException.NotValidException("Transaction bytes cannot be parsed back to the same transaction: "
                                                     + transaction.getJSONObject().toJSONString());
                                             }
                                             JSONObject transactionJSON = (JSONObject) JSONValue.parse(transaction.getJSONObject().toJSONString());
-                                            if (!Arrays.equals(transactionBytes, TransactionImpl.newTransactionBuilder(transactionJSON).build().bytes())) {
+                                            if (!Arrays.equals(transactionBytes, TransactionBuilder.newTransactionBuilder(transactionJSON).build().bytes())) {
                                                 throw new AplException.NotValidException("Transaction JSON cannot be parsed back to the same transaction: "
                                                     + transaction.getJSONObject().toJSONString());
                                             }

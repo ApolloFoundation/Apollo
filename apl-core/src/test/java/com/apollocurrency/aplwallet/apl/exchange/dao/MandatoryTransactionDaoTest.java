@@ -9,7 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.MandatoryTransaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -55,8 +55,8 @@ class MandatoryTransactionDaoTest {
     @BeforeEach
     void setUp() {
         try {
-            orderTx = new MandatoryTransaction(Transaction.newTransactionBuilder(Convert.parseHexString(orderBytes)).build(), null, (long) 20);
-            cancelTx = new MandatoryTransaction(Transaction.newTransactionBuilder(Convert.parseHexString(cancelBytes)).build(), orderTx.getFullHash(), (long) 10);
+            orderTx = new MandatoryTransaction(TransactionBuilder.newTransactionBuilder(Convert.parseHexString(orderBytes)).build(), null, (long) 20);
+            cancelTx = new MandatoryTransaction(TransactionBuilder.newTransactionBuilder(Convert.parseHexString(cancelBytes)).build(), orderTx.getFullHash(), (long) 10);
         } catch (AplException.NotValidException e) {
             throw new RuntimeException(e);
         }

@@ -17,6 +17,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.PublicKeyTableProducer;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.EcBlockData;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
@@ -145,12 +146,12 @@ public class ChildAccountApplyTest {
     void applyAttachment() throws AplException.NotValidException {
         //GIVEN
         byte[] tx = Convert.parseHexString(SIGNED_TX_1_HEX);
-        Transaction.Builder txBuilder = Transaction.newTransactionBuilder(tx);
+        Transaction.Builder txBuilder = TransactionBuilder.newTransactionBuilder(tx);
         Transaction newTx = txBuilder.build();
 
         assertNotNull(newTx);
 
-        byte[] txBytes = newTx.getBytes();
+        byte[] txBytes = newTx.getCopyTxBytes();
         byte[] txUnsignedBytes = newTx.getUnsignedBytes();
 
         String txStr = Convert.toHexString(txBytes);

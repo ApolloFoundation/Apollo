@@ -27,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSigner;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONObject;
@@ -40,6 +41,7 @@ import javax.servlet.http.HttpServletRequest;
 public final class SignTransaction extends AbstractAPIRequestHandler {
 
     private static final TransactionValidator validator = CDI.current().select(TransactionValidator.class).get();
+    private static final TransactionSigner signer = CDI.current().select(TransactionSigner.class).get();
 
     public SignTransaction() {
         super(new APITag[]{APITag.TRANSACTIONS}, "unsignedTransactionJSON", "unsignedTransactionBytes", "prunableAttachmentJSON", "secretPhrase",
@@ -61,6 +63,7 @@ public final class SignTransaction extends AbstractAPIRequestHandler {
         JSONObject response = new JSONObject();
         try {
             Transaction transaction = builder.build(keySeed);
+            signer.sign(transaction, keySeed);
             JSONObject signedTransactionJSON = JSONData.unconfirmedTransaction(transaction);
             if (validate) {
                 validator.validate(transaction);
@@ -70,7 +73,7 @@ public final class SignTransaction extends AbstractAPIRequestHandler {
             response.put("fullHash", signedTransactionJSON.get("fullHash"));
             response.put("signatureHash", signedTransactionJSON.get("signatureHash"));
             response.put("transaction", transaction.getStringId());
-            response.put("transactionBytes", Convert.toHexString(transaction.getBytes()));
+            response.put("transactionBytes", Convert.toHexString(transaction.getCopyTxBytes()));
             JSONData.putPrunableAttachment(response, transaction);
         } catch (AplException.ValidationException | RuntimeException e) {
             JSONData.putException(response, e, "Incorrect unsigned transaction json or bytes");

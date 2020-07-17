@@ -52,7 +52,7 @@ public class BlockchainConfigTest {
         "test",
         "test",
         "TEST",
-        "TEST", "Test", "data.json", BLOCKCHAIN_PROPERTIES, new FeaturesHeightRequirement(100, 100));
+        "TEST", "Test", "data.json", BLOCKCHAIN_PROPERTIES, new FeaturesHeightRequirement(100, 100, 100));
     @Inject
     BlockchainConfig blockchainConfig;
     @Inject

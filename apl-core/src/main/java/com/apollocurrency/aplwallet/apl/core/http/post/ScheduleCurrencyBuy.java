@@ -23,6 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySellOffer;
@@ -92,7 +93,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                     response.put("scheduled", false);
                     return response;
                 }
-                transaction = Transaction.newTransactionBuilder((JSONObject) response.get("transactionJSON")).build();
+                transaction = TransactionBuilder.newTransactionBuilder((JSONObject) response.get("transactionJSON")).build();
             } else {
                 response = new JSONObject();
                 transaction = HttpParameterParserUtil.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON).build();
@@ -102,7 +103,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                     response.put("unsignedTransactionBytes", Convert.toHexString(transaction.getUnsignedBytes()));
                 } catch (AplException.NotYetEncryptedException ignore) {
                 }
-                response.put("transactionBytes", Convert.toHexString(transaction.getBytes()));
+                response.put("transactionBytes", Convert.toHexString(transaction.getCopyTxBytes()));
                 response.put("signatureHash", json.get("signatureHash"));
                 response.put("transaction", transaction.getStringId());
                 response.put("fullHash", transaction.getFullHashString());

@@ -173,7 +173,7 @@ public final class BlockImpl implements Block {
             int timeout = !requireTimeout(version) ? 0 : ((Long) timeoutJsonValue).intValue();
             List<Transaction> blockTransactions = new ArrayList<>();
             for (Object transactionData : (JSONArray) blockData.get("transactions")) {
-                blockTransactions.add(TransactionImpl.parseTransaction((JSONObject) transactionData));
+                blockTransactions.add(TransactionBuilder.parseTransaction((JSONObject) transactionData));
             }
             BlockImpl block = new BlockImpl(version, timestamp, previousBlock, totalAmountATM, totalFeeATM, payloadLength, payloadHash, generatorPublicKey,
                 generationSignature, blockSignature, previousBlockHash, timeout, blockTransactions);
@@ -498,7 +498,7 @@ public final class BlockImpl implements Block {
 
     public void loadTransactions() {
         for (Transaction transaction : getOrLoadTransactions()) {
-            ((TransactionImpl) transaction).bytes();
+            transaction.bytes();
             transaction.getAppendages();
         }
     }

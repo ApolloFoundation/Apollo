@@ -16,12 +16,13 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublic
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.signature.Credential;
 import com.apollocurrency.aplwallet.apl.core.signature.MultiSigCredential;
-import com.apollocurrency.aplwallet.apl.core.signature.PublicKeyValidator;
+import com.apollocurrency.aplwallet.apl.core.signature.KeyValidator;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureCredential;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.annotation.ParentChildSpecific;
@@ -42,7 +43,7 @@ public class TransactionValidator {
     private final AccountService accountService;
     private final AccountPublicKeyService accountPublicKeyService;
     private final TransactionVersionValidator transactionVersionValidator;
-    private final PublicKeyValidator publicKeyValidator;
+    private final KeyValidator keyValidator;
 
     @Inject
     public TransactionValidator(BlockchainConfig blockchainConfig, PhasingPollService phasingPollService,
@@ -59,11 +60,11 @@ public class TransactionValidator {
         this.accountService = accountService;
         this.transactionVersionValidator = transactionVersionValidator;
         this.accountPublicKeyService = accountPublicKeyService;
-        this.publicKeyValidator = new PkValidator(accountPublicKeyService);
+        this.keyValidator = new PublicKeyValidator(accountPublicKeyService);
     }
 
     public void validate(Transaction transaction) throws AplException.ValidationException {
-        if (transactionVersionValidator.isValidVersion(transaction)) {
+        if (!transactionVersionValidator.isValidVersion(transaction)) {
             throw new AplException.NotValidException("Unsupported transaction version:" + transaction.getVersion() + " at height " + blockchain.getHeight());
         }
         long maxBalanceAtm = blockchainConfig.getCurrentConfig().getMaxBalanceATM();
@@ -167,6 +168,9 @@ public class TransactionValidator {
         @ParentChildSpecific(ParentMarker.MULTI_SIGNATURE)
         Credential signatureCredential;
         SignatureValidator signatureValidator = SignatureToolFactory.selectValidator(transaction.getVersion()).orElseThrow(UnsupportedTransactionVersion::new);
+        if (log.isTraceEnabled()) {
+            log.trace("#MULTI_SIG# verify signature validator={}", signatureValidator.getClass().getName());
+        }
         if (sender.isChild()) {
             //multi-signature
             if (transaction.getVersion() < 2) {
@@ -182,27 +186,32 @@ public class TransactionValidator {
                 signatureCredential = new MultiSigCredential(transaction.getSenderPublicKey());
             }
         }
-
-        if (!signatureCredential.validateCredential(publicKeyValidator)) {
+        if (log.isTraceEnabled()) {
+            log.trace("#MULTI_SIG# verify credential={}", signatureCredential);
+        }
+        if (!signatureCredential.validateCredential(keyValidator)) {
             return false;
         }
 
-        if (transaction.getSignature().isVerified()) {
+        if (transaction.getSignature() != null && transaction.getSignature().isVerified()) {
             return true;
         } else {
             return signatureValidator.verify(transaction.getUnsignedBytes(), transaction.getSignature(), signatureCredential);
         }
     }
 
-    private static class PkValidator implements PublicKeyValidator {
+    private static class PublicKeyValidator implements KeyValidator {
         private final AccountPublicKeyService accountPublicKeyService;
 
-        public PkValidator(AccountPublicKeyService accountPublicKeyService) {
+        public PublicKeyValidator(AccountPublicKeyService accountPublicKeyService) {
             this.accountPublicKeyService = accountPublicKeyService;
         }
 
         @Override
         public boolean validate(byte[] publicKey) {
+            if (log.isTraceEnabled()) {
+                log.trace("#MULTI_SIG# public key validation account={}", Convert2.rsAccount(AccountService.getId(publicKey)));
+            }
             if (!accountPublicKeyService.setOrVerifyPublicKey(AccountService.getId(publicKey), publicKey)) {
                 log.error("Public Key Verification failed: pk={}", Convert.toHexString(publicKey));
                 return false;

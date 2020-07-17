@@ -35,7 +35,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionImpl;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
@@ -266,7 +266,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         globalSync.readLock();
         try {
             return unconfirmedTransactionTable.getBroadcastedTransactions().toArray(
-                new TransactionImpl[unconfirmedTransactionTable.getBroadcastedTransactionsSize()]);
+                new Transaction[unconfirmedTransactionTable.getBroadcastedTransactionsSize()]);
         } finally {
             globalSync.readUnlock();
         }
@@ -503,7 +503,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         List<Exception> exceptions = new ArrayList<>();
         for (Object transactionData : transactionsData) {
             try {
-                Transaction transaction = TransactionImpl.parseTransaction((JSONObject) transactionData);
+                Transaction transaction = TransactionBuilder.parseTransaction((JSONObject) transactionData);
                 receivedTransactions.add(transaction);
                 DbKey dbKey = unconfirmedTransactionTable.getTransactionKeyFactory().newKey(transaction.getId());
                 if (getUnconfirmedTransaction(dbKey) != null || blockchain.hasTransaction(transaction.getId())) {
@@ -650,7 +650,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 // Check each transaction returned by the archive peer
                 //
                 for (Object transactionJSON : transactions) {
-                    Transaction transaction = TransactionImpl.parseTransaction((JSONObject) transactionJSON);
+                    Transaction transaction = TransactionBuilder.parseTransaction((JSONObject) transactionJSON);
                     Transaction myTransaction = blockchain.findTransactionByFullHash(transaction.getFullHash());
                     if (myTransaction != null) {
                         boolean foundAllData = true;

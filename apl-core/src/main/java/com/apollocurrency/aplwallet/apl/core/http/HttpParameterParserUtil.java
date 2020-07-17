@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.alias.Alias;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
@@ -823,7 +824,7 @@ public final class HttpParameterParserUtil {
         if (transactionJSON != null) {
             try {
                 JSONObject json = (JSONObject) JSONValue.parseWithException(transactionJSON);
-                return Transaction.newTransactionBuilder(json);
+                return TransactionBuilder.newTransactionBuilder(json);
             } catch (AplException.ValidationException | RuntimeException | ParseException e) {
                 LOG.debug(e.getMessage(), e);
                 JSONObject response = new JSONObject();
@@ -834,7 +835,7 @@ public final class HttpParameterParserUtil {
             try {
                 byte[] bytes = Convert.parseHexString(transactionBytes);
                 JSONObject prunableAttachments = prunableAttachmentJSON == null ? null : (JSONObject) JSONValue.parseWithException(prunableAttachmentJSON);
-                return Transaction.newTransactionBuilder(bytes, prunableAttachments);
+                return TransactionBuilder.newTransactionBuilder(bytes, prunableAttachments);
             } catch (AplException.ValidationException | RuntimeException | ParseException e) {
                 LOG.debug(e.getMessage(), e);
                 JSONObject response = new JSONObject();
