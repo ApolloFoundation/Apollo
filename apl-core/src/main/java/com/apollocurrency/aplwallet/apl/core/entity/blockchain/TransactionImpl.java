@@ -771,9 +771,15 @@ public class TransactionImpl implements Transaction {
     }
 
     private int getSize() {
-        //TODO SYNTAX
-        //if(version)
-        return txV2HeaderSize() + appendagesSize + (version < 2 ? 64 : signature == null ? 0 : signature.getSize());
+        int signatureSize = 0;
+        if (version < 2) {
+            signatureSize = 64;
+        } else {
+            if (signature != null) {
+                signatureSize = signature.getSize();
+            }
+        }
+        return txV2HeaderSize() + appendagesSize + signatureSize;
     }
 
     @Override
