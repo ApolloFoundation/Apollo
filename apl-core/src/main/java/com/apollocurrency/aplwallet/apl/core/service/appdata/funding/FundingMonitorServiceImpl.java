@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.service.appdata.funding;
 
 import javax.annotation.PostConstruct;
+import javax.enterprise.inject.Vetoed;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -59,7 +60,7 @@ import org.json.simple.parser.ParseException;
  * interval.
  */
 @Slf4j
-@Singleton
+@Vetoed
 public class FundingMonitorServiceImpl {
 
    /**

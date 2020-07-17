@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.app.observer;
 
 import javax.enterprise.event.Observes;
+import javax.enterprise.inject.Vetoed;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -19,7 +20,7 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.funding.FundingMoni
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Singleton
+@Vetoed
 public class AccountBalanceObserver {
 
     private final FundingMonitorServiceImpl fundingMonitorService;
