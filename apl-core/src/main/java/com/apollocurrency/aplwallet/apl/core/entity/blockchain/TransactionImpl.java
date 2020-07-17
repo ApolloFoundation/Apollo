@@ -166,7 +166,6 @@ public class TransactionImpl implements Transaction {
         }
         signature = Crypto.sign(bytes(), keySeed);
         bytes = null;
-
     }
 
     @Override
@@ -177,7 +176,7 @@ public class TransactionImpl implements Transaction {
     @Override
     public byte[] getSenderPublicKey() {
         if (senderPublicKey == null) {
-            senderPublicKey = lookupAndInjectAccountPublickKeyService().getPublicKeyByteArray(senderId);
+            throw new IllegalStateException("Sender public key is not set");
         }
         return senderPublicKey;
     }
@@ -256,8 +255,8 @@ public class TransactionImpl implements Transaction {
 
     @Override
     public Block getBlock() {
-        if (block == null && blockId != 0) {
-            block = lookupAndInjectBlockchain().getBlock(blockId);
+        if (block == null || blockId == 0) {
+            throw new IllegalStateException("Block was not fetched for tx " + getId());
         }
         return block;
     }
