@@ -74,7 +74,6 @@ import java.util.concurrent.Semaphore;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-@Deprecated
 /**
  * Monitor account balances based on account properties
  * <p>
