@@ -4,32 +4,32 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
-import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollLinkedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollResultTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollVoterTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingVoteTable;
-import com.apollocurrency.aplwallet.apl.core.model.PhasingCreator;
+import com.apollocurrency.aplwallet.apl.core.db.DbClause;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollLinkedTransaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollVoter;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingVote;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.model.PhasingCreator;
+import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
@@ -274,7 +274,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     }
 
     @Override
-    public void tryCountVotes(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+    public void tryCountVotes(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
         PhasingPoll poll = getPoll(transaction.getId());
         long result = countVotes(poll);
         if (result >= poll.getQuorum()) {
