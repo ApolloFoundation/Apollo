@@ -151,7 +151,7 @@ class ShardEngineTest {
     DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("targetDb").toAbsolutePath().toString()));
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
-    private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
+    private TimeService timeService = mock(TimeService.class);
 
     Weld weld = WeldInitiator.createWeld();
     @Inject
