@@ -76,6 +76,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.ValueParser;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionVersionValidator;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
@@ -191,6 +192,7 @@ class CsvWriterReaderDerivedTablesTest {
         .addBeans(MockBean.of(ntpTimeConfig.time(), NtpTime.class))
         .addBeans(MockBean.of(timeService, TimeService.class))
         .addBeans(MockBean.of(peersService, PeersService.class))
+        .addBeans(MockBean.of(mock(TransactionVersionValidator.class), TransactionVersionValidator.class))
         .build();
     @Inject
     private Blockchain blockchain;

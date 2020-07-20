@@ -32,7 +32,7 @@ public class SignatureToolFactory {
         {new SigData.Parser(), new MultiSigData.Parser()};
 
     private static final SignatureSigner[] sigSigners = new SignatureSigner[]
-        {};
+        {new SignatureSignerV1(), new MultiSigSigner()};
 
     public static Signature createSignature(byte[] signature) {
         return new SigData(Objects.requireNonNull(signature));

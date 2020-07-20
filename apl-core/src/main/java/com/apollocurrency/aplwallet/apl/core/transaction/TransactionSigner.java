@@ -52,5 +52,6 @@ public class TransactionSigner {
             throw new AplException.NotValidException("Secret phrase doesn't match transaction sender public key");
         }
         transaction.sign(SignatureHelper.sign(transaction.getUnsignedBytes(), keySeed));
+        log.trace("#MULTI_SIG# transaction.sign={}", transaction.getSignature());
     }
 }

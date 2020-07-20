@@ -10,6 +10,7 @@ import org.json.simple.JSONObject;
  * It's a simple interface for signature
  */
 public interface Signature {
+    int ECDSA_SIGNATURE_SIZE = 64;
 
     byte[] bytes();
 

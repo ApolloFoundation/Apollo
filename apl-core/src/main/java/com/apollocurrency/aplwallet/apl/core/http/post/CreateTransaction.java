@@ -73,7 +73,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
         "ecBlockId", "ecBlockHeight"};
     protected TimeService timeService = CDI.current().select(TimeService.class).get();
     private TransactionValidator validator = CDI.current().select(TransactionValidator.class).get();
-    private static final TransactionSigner signer = CDI.current().select(TransactionSigner.class).get();
+    private TransactionSigner signer = CDI.current().select(TransactionSigner.class).get();
     private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private FeeCalculator feeCalculator = CDI.current().select(FeeCalculator.class).get();
 

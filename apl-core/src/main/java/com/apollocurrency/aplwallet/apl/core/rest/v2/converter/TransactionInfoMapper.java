@@ -45,8 +45,8 @@ public class TransactionInfoMapper implements Converter<Transaction, Transaction
         if (model.getRecipientId() != 0) {
             dto.setRecipient(Convert2.rsAccount(model.getRecipientId()));
         }
-        dto.setSignature(Convert.toHexString(model.getCopyTxBytes()));
-        dto.setSignatureHash(Convert.toHexString(Crypto.sha256().digest(model.getCopyTxBytes())));
+        dto.setSignature(Convert.toHexString(model.getSignature().bytes()));
+        dto.setSignatureHash(Convert.toHexString(Crypto.sha256().digest(model.getSignature().bytes())));
         dto.setFullHash(model.getFullHashString());
         dto.setReferencedTransactionFullHash(model.getReferencedTransactionFullHash());
         dto.setTimestamp((long) model.getTimestamp());

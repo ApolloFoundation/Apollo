@@ -28,8 +28,6 @@ import static com.apollocurrency.aplwallet.apl.core.signature.MultiSig.KeyId.KEY
  */
 @Slf4j
 class MultiSigData implements MultiSig {
-
-    private static final int SIGNATURE_LENGTH = 64;
     private final byte[] payload;
     private final short count;
     private final Map<KeyId, byte[]> signaturesMap;
@@ -194,7 +192,7 @@ class MultiSigData implements MultiSig {
                 for (int i = 0; i < count; i++) {
                     byte[] pkId = new byte[KEY_LENGTH];
                     buffer.get(pkId);
-                    byte[] sig = new byte[MultiSigData.SIGNATURE_LENGTH];
+                    byte[] sig = new byte[ECDSA_SIGNATURE_SIZE];
                     buffer.get(sig);
                     multiSigData.addSignature(pkId, sig);
                 }
@@ -213,7 +211,7 @@ class MultiSigData implements MultiSig {
 
         @Override
         public int calcDataSize(int count) {
-            return MAGIC_DATA_LENGTH + PAYLOAD_LENGTH + 2 + (KEY_LENGTH + MultiSigData.SIGNATURE_LENGTH) * count;
+            return MAGIC_DATA_LENGTH + PAYLOAD_LENGTH + 2 + (KEY_LENGTH + ECDSA_SIGNATURE_SIZE) * count;
         }
 
         @Override

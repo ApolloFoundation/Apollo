@@ -18,6 +18,8 @@ import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TransactionInfoMa
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.UnTxReceiptMapper;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.signature.Signature;
+import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.ChildAccount;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -46,6 +48,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionApiServiceImplTest {
@@ -130,8 +133,10 @@ class TransactionApiServiceImplTest {
         String txIdStr = TX_1_ID;
         long txId = Convert.parseUnsignedLong(txIdStr);
         Transaction transaction = mock(Transaction.class);
+        Signature signature = spy(SignatureToolFactory.createSignature(Convert.parseHexString(TX_1_SIGNATURE)));
+        doReturn(Convert.parseHexString(TX_1_SIGNATURE)).when(signature).bytes();
         doReturn(ChildAccount.CREATE_CHILD).when(transaction).getType();
-        doReturn(Convert.parseHexString(TX_1_SIGNATURE)).when(transaction).getSignature();
+        doReturn(signature).when(transaction).getSignature();
         doReturn(transaction).when(blockchain).getTransaction(txId);
         //WHEN
         Response response = transactionApiService.getTxById(txIdStr, securityContext);

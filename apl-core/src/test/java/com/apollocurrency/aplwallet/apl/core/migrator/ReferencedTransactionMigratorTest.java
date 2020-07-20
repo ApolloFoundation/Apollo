@@ -9,10 +9,13 @@ import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.ReferencedTransact
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ReferencedTransaction;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
+import com.apollocurrency.aplwallet.apl.core.service.prunable.impl.PrunableMessageServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
@@ -41,19 +44,22 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Tag("slow")
 @EnableWeld
-public class ReferencedTransactionMigratorTest {
+class ReferencedTransactionMigratorTest {
     @RegisterExtension
     DbExtension dbExtension = new DbExtension();
 
     @WeldSetup
-    WeldInitiator weld = WeldInitiator.from(ReferencedTransactionDaoImpl.class,
-        BlockchainConfig.class, FullTextConfigImpl.class,
-        DerivedDbTablesRegistryImpl.class, PropertiesHolder.class,
-        ChainsConfigHolder.class)
+    WeldInitiator weld = WeldInitiator.from(
+        ChainsConfigHolder.class, BlockchainConfig.class, FullTextConfigImpl.class,
+        DerivedDbTablesRegistryImpl.class,
+        ReferencedTransactionDaoImpl.class)
         .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(Mockito.mock(Blockchain.class), BlockchainImpl.class))
-        .addBeans(MockBean.of(Mockito.mock(TimeServiceImpl.class), TimeServiceImpl.class))
+        .addBeans(MockBean.of(Mockito.mock(TimeService.class), TimeService.class, TimeServiceImpl.class))
+        .addBeans(MockBean.of(Mockito.mock(PropertiesHolder.class), PropertiesHolder.class))
+        .addBeans(MockBean.of(Mockito.mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
         .build();
+
     @Inject
     ReferencedTransactionDaoImpl referencedTransactionDao;
 
@@ -67,7 +73,7 @@ public class ReferencedTransactionMigratorTest {
     }
 
     @Test
-    public void testMigrate() throws SQLException {
+    void testMigrate() throws SQLException {
 
         try (Connection connection = dbExtension.getDatabaseManager().getDataSource().getConnection();
              Statement stmt = connection.createStatement()) {

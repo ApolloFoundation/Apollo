@@ -18,7 +18,6 @@ import java.util.Objects;
  */
 @Slf4j
 class SigData implements Signature {
-    private static final int SIGNATURE_LENGTH = 64;
     private final byte[] signature;
     private final SignatureParser parser = new SigData.Parser();
     private boolean verified = false;
@@ -70,7 +69,7 @@ class SigData implements Signature {
             SigData sigData;
             try {
                 buffer.order(ByteOrder.LITTLE_ENDIAN);
-                byte[] signature = new byte[SIGNATURE_LENGTH];
+                byte[] signature = new byte[ECDSA_SIGNATURE_SIZE];
                 buffer.get(signature);
                 sigData = new SigData(signature);
             } catch (BufferUnderflowException e) {
@@ -83,7 +82,7 @@ class SigData implements Signature {
 
         @Override
         public int calcDataSize(int count) {
-            return SIGNATURE_LENGTH;
+            return ECDSA_SIGNATURE_SIZE;
         }
 
         @Override

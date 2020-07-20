@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
 import com.apollocurrency.aplwallet.api.dto.UnconfirmedTransactionDTO;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
@@ -57,10 +58,10 @@ public class UnconfirmedTransactionConverter implements Converter<Transaction, U
         dto.setAmountATM(String.valueOf(amountATM));
         dto.setFeeATM(String.valueOf(model.getFeeATM()));
         dto.setReferencedTransactionFullHash(model.getReferencedTransactionFullHash());
-        byte[] signature = Convert.emptyToNull(model.getCopyTxBytes());
+        Signature signature = model.getSignature();
         if (signature != null) {
-            dto.setSignature(Convert.toHexString(signature));
-            dto.setSignatureHash(Convert.toHexString(Crypto.sha256().digest(signature)));
+            dto.setSignature(Convert.toHexString(model.getSignature().bytes()));
+            dto.setSignatureHash(Convert.toHexString(Crypto.sha256().digest(model.getSignature().bytes())));
             dto.setFullHash(model.getFullHashString());
             dto.setTransaction(model.getStringId());
         }
@@ -76,7 +77,6 @@ public class UnconfirmedTransactionConverter implements Converter<Transaction, U
             }
             dto.setAttachment(attachmentJSON);
         }
-
 
         dto.setHeight(model.getHeight());
         dto.setVersion(model.getVersion());

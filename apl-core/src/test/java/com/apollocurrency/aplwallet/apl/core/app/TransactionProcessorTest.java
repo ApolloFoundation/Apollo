@@ -126,7 +126,8 @@ class TransactionProcessorTest {
         doReturn(100).when(transaction).getFullSize();
         doReturn(expirationTimestamp).when(transaction).getTimestamp();
         doReturn(expirationTimestamp).when(transaction).getExpiration();
-        doReturn((byte)1).when(transaction).getVersion();
+        doReturn((byte) 1).when(transaction).getVersion();
+        doReturn(true).when(transactionValidator).verifySignature(transaction);
 
         doReturn(false).when(transaction).isUnconfirmedDuplicate(any(Map.class));
 
@@ -169,7 +170,8 @@ class TransactionProcessorTest {
         doReturn(100).when(transaction).getFullSize();
         doReturn(expirationTimestamp).when(transaction).getTimestamp();
         doReturn(expirationTimestamp).when(transaction).getExpiration();
-        doReturn((byte)1).when(transaction).getVersion();
+        doReturn((byte) 1).when(transaction).getVersion();
+        doReturn(true).when(transactionValidator).verifySignature(transaction);
 
         doReturn(false).when(transaction).isUnconfirmedDuplicate(any(Map.class));
         UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction(transaction, expirationTimestamp);

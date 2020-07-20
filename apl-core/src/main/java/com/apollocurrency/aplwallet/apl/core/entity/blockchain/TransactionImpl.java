@@ -663,7 +663,11 @@ public class TransactionImpl implements Transaction {
                     buffer.put(new byte[32]);
                 }
                 if (version < 2) {
-                    buffer.put(signature.bytes());
+                    if (signature != null) {
+                        buffer.put(signature.bytes());
+                    } else {
+                        buffer.put(new byte[Signature.ECDSA_SIGNATURE_SIZE]);
+                    }
                 }
                 buffer.putInt(getFlags());
                 buffer.putInt(ecBlockHeight);
@@ -969,10 +973,11 @@ public class TransactionImpl implements Transaction {
                 this.ecBlockId = ecBlock.getId();
             }
             TransactionImpl transaction = new TransactionImpl(this);
-
-            for (Appendix appendage : transaction.getAppendages()) {
-                if (appendage instanceof Encryptable) {//encrypt attached message
-                    ((Encryptable) appendage).encrypt(keySeed);
+            if (keySeed != null) {
+                for (Appendix appendage : transaction.getAppendages()) {
+                    if (appendage instanceof Encryptable) {//encrypt attached message
+                        ((Encryptable) appendage).encrypt(keySeed);
+                    }
                 }
             }
             return transaction;

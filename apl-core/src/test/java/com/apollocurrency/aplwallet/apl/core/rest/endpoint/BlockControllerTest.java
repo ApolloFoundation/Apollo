@@ -162,7 +162,7 @@ class BlockControllerTest extends AbstractEndpointTest {
 
         BlockDTO dtoResult = mapper.readValue(respondJson, new TypeReference<>(){});
         assertNotNull(dtoResult);
-        assertEquals(String.valueOf(btd.BLOCK_10.getId()), dtoResult.getBlock());
+        assertEquals(Long.toUnsignedString(btd.BLOCK_10.getId()), dtoResult.getBlock());
         //verify
         verify(blockchain, times(1)).getBlockIdAtHeight(btd.BLOCK_10.getHeight());
     }

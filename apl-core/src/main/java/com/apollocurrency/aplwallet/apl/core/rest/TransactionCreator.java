@@ -120,7 +120,9 @@ public class TransactionCreator {
                 builder.ecBlockHeight(txRequest.getEcBlockHeight());
             }
             transaction = builder.build(txRequest.getKeySeed());
-            signer.sign(transaction, txRequest.getKeySeed());
+            if (txRequest.getKeySeed() != null) {
+                signer.sign(transaction, txRequest.getKeySeed());
+            }
             if (txRequest.getFeeATM() <= 0 || (propertiesHolder.correctInvalidFees() && txRequest.getKeySeed() == null)) {
                 int effectiveHeight = blockchain.getHeight();
                 @TransactionFee(FeeMarker.CALCULATOR)
