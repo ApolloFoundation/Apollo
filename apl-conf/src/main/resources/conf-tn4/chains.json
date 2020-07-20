@@ -1,25 +1,22 @@
 [
   {
-    "chainId": "2f2b6149-d29e-41ca-8c0d-f3343f5540c6",
+    "chainId": "440cf6bd-00a3-346b-aad6-61fefc0bd1c6",
     "active": true,
     "wellKnownPeers": [
-      "51.15.37.165",
-      "51.15.228.126",
-      "51.15.228.171",
-      "51.15.209.252",
-      "51.15.228.90",
-      "51.15.46.25",
-      "51.15.72.23"
+      "51.15.104.205",
+      "51.15.85.92",
+      "51.15.246.168",
+      "51.15.249.64"
     ],
-    "name": "Apollo development testnet",
-    "description": "Apollo development test chain, running on latest development version",
+    "name": "Apollo experimental testnet",
+    "description": "NOT STABLE testnet for experiments. Don't use it if you don't know what is it",
     "symbol": "Apollo",
     "prefix": "APL",
     "project": "Apollo",
     "genesisLocation": "conf/data/genesisAccounts-testnet.json",
     "featuresHeightRequirement": {
-      "dexReopenPendingOrdersHeight": 300000,
-      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 750000
+      "dexReopenPendingOrdersHeight": 3000,
+      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 5000
     },
     "blockchainProperties": [
       {
@@ -44,28 +41,13 @@
           }
         },
         "shardingSettings": {
-          "enabled": true,
-          "frequency": 100000
-        },
-        "transactionFeeSettings": {
-          "feeRates": [
-            {
-              "type": 0,
-              "subType": 0,
-              "rate": 100
-            },
-            {
-              "type": 0,
-              "subType": 1,
-              "rate": 100
-            }
-          ]
+          "enabled": false,
+          "frequency": 10000
         }
       },
       {
-        "height": 1000000,
+        "height": 50000,
         "maxNumberOfTransactions": 255,
-        "maxNumberOfChildAccounts": 10,
         "blockTime": 2,
         "maxBlockTimeLimit": 3,
         "minBlockTimeLimit": 1,
@@ -77,11 +59,10 @@
           }
         },
         "shardingSettings": {
-          "enabled": true,
+          "enabled": false,
           "frequency": 10000
         }
       }
     ]
   }
 ]
-
