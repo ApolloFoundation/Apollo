@@ -53,13 +53,14 @@
       <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
     </encoder>
   </appender>
+-->
   <appender name="account-file" class="ch.qos.logback.core.FileAppender">
     <file>account.log</file>
     <append>true</append>
-    &lt;!&ndash; set immediateFlush to false for much higher logging throughput &ndash;&gt;
+    <!-- set immediateFlush to false for much higher logging throughput -->
     <immediateFlush>true</immediateFlush>
-    &lt;!&ndash; encoders are assigned the type
-         ch.qos.logback.classic.encoder.PatternLayoutEncoder by default &ndash;&gt;
+    <!-- encoders are assigned the type
+         ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
     <encoder>
       <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
     </encoder>
@@ -80,7 +81,7 @@
       <pattern>%d [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
     </encoder>
   </appender>
--->
+
   <logger name="com.apollocurrency.aplwallet" level="INFO"/>
   <!--<logger name="com.apollocurrency.aplwallet.apl.core.peer" level="TRACE"/>-->
   <!--Uncomment next line to enable trim duration logging-->
@@ -88,7 +89,9 @@
   <logger name="org.eclipse.jetty" level="off" additivity="false"/>
   <logger name="javax.servlet.level" level="off" additivity="false"/>
   <logger name="com.apollocurrency.aplwallet.apl.core.http.APIProxyServlet" level="info" additivity="false"/>
-  <!--    <logger name="com.apollocurrency.aplwallet.apl.core.account.Account" level="trace"/> -->
+      <logger name="com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl" level="trace" additivity="false">
+        <appender-ref ref="account-file"/>
+      </logger>
   <!--    <logger name="com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling" level="trace" additivity="false">-->
   <!--        <appender-ref ref="shuffling-file"/>-->
   <!--    </logger>-->
