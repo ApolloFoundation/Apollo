@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.signature;
 
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +24,7 @@ public class SignatureHelper {
      */
     public static Signature sign(byte[] document, byte[] keySeed) {
         int version = 1;
-        Credential credential = SignatureToolFactory.createCredential(version, Crypto.getKeySeed(keySeed));
+        Credential credential = SignatureToolFactory.createCredential(version, keySeed);
         SignatureSigner signatureSigner = SignatureToolFactory.selectBuilder(version).get();
         Signature signature = signatureSigner.sign(document, credential);
         if (log.isTraceEnabled()) {
