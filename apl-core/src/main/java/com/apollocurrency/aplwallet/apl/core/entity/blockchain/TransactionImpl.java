@@ -715,7 +715,13 @@ public class TransactionImpl implements Transaction {
         }
         json.put("ecBlockHeight", ecBlockHeight);
         json.put("ecBlockId", Long.toUnsignedString(ecBlockId));
-        json.put("signature", signature.getJsonObject());
+        if (signature != null) {
+            if (version < 2) {
+                json.put("signature", getSignature().getJsonObject().get(SignatureParser.SIGNATURE_FIELD_NAME));
+            } else {
+                json.put("signature", getSignature().getJsonObject());
+            }
+        }
         JSONObject attachmentJSON = new JSONObject();
         for (AbstractAppendix appendage : appendages) {
             appendage.loadPrunable(this);

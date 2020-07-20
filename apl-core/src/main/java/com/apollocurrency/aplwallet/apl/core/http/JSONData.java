@@ -1151,7 +1151,11 @@ public final class JSONData {
             json.put("referencedTransactionFullHash", referencedTransactionFullHash);
         }
         if (transaction.getSignature() != null) {
-            json.put("signature", transaction.getSignature().getJsonObject().get(SignatureParser.SIGNATURE_FIELD_NAME));
+            if (transaction.getVersion() < 2) {
+                json.put("signature", transaction.getSignature().getJsonObject().get(SignatureParser.SIGNATURE_FIELD_NAME));
+            } else {
+                json.put("signature", transaction.getSignature().getJsonObject());
+            }
             json.put("signatureHash", Convert.toHexString(Crypto.sha256().digest(transaction.getSignature().bytes())));
             json.put("fullHash", transaction.getFullHashString());
             json.put("transaction", transaction.getStringId());
