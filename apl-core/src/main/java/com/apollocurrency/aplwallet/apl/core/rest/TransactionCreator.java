@@ -67,6 +67,10 @@ public class TransactionCreator {
         if (txRequest.getRecipientPublicKey() != null) {
             publicKeyAnnouncement = new PublicKeyAnnouncementAppendix(Convert.parseHexString(txRequest.getRecipientPublicKey()));
         }
+        if (txRequest.getKeySeed() == null && txRequest.getSecretPhrase() != null) {
+            txRequest.setKeySeed(Crypto.getKeySeed(txRequest.getSecretPhrase()));
+        }
+
         if (txRequest.getKeySeed() != null) {
             txRequest.setPublicKey(Crypto.getPublicKey(txRequest.getKeySeed()));
         }
@@ -74,7 +78,9 @@ public class TransactionCreator {
         if (txRequest.getKeySeed() == null && txRequest.getPublicKey() == null) {
             tcd.setErrorType(TransactionCreationData.ErrorType.MISSING_SECRET_PHRASE);
             return tcd;
-        } else if (txRequest.getDeadlineValue() == null) {
+        }
+
+        if (txRequest.getDeadlineValue() == null) {
             tcd.setErrorType(TransactionCreationData.ErrorType.MISSING_DEADLINE);
             return tcd;
         }
@@ -119,10 +125,8 @@ public class TransactionCreator {
                 builder.ecBlockId(txRequest.getEcBlockId());
                 builder.ecBlockHeight(txRequest.getEcBlockHeight());
             }
+            //build transaction, this transaction is UNSIGNED
             transaction = builder.build(txRequest.getKeySeed());
-            if (txRequest.getKeySeed() != null) {
-                signer.sign(transaction, txRequest.getKeySeed());
-            }
             if (txRequest.getFeeATM() <= 0 || (propertiesHolder.correctInvalidFees() && txRequest.getKeySeed() == null)) {
                 int effectiveHeight = blockchain.getHeight();
                 @TransactionFee(FeeMarker.CALCULATOR)
@@ -139,6 +143,11 @@ public class TransactionCreator {
             } catch (ArithmeticException e) {
                 tcd.setErrorType(TransactionCreationData.ErrorType.NOT_ENOUGH_APL);
                 return tcd;
+            }
+
+            //Sign transaction
+            if (txRequest.getKeySeed() != null) {
+                signer.sign(transaction, txRequest.getKeySeed());
             }
 
             if (txRequest.isBroadcast()) {
