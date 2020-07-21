@@ -48,6 +48,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
@@ -332,6 +333,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                         removed.add(unconfirmedTransaction.getTransaction());
                     }
                 }
+                log.trace("Unc txs cleared");
                 unconfirmedTransactionTable.truncate();
                 dataSource.commit();
             } catch (Exception e) {
@@ -369,6 +371,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             List<Transaction> removed = new ArrayList<>();
             try (DbIterator<UnconfirmedTransaction> unconfirmedTransactions = getAllUnconfirmedTransactions()) {
                 for (UnconfirmedTransaction unconfirmedTransaction : unconfirmedTransactions) {
+                    log.trace("Requeue tx {} at {}", unconfirmedTransaction.getId(), blockchain.getHeight());
                     transactionApplier.undoUnconfirmed(unconfirmedTransaction.getTransaction());
                     if (removed.size() < maxUnconfirmedTransactions) {
                         removed.add(unconfirmedTransaction.getTransaction());
@@ -423,6 +426,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             pstmt.setLong(1, transaction.getId());
             int deleted = pstmt.executeUpdate();
             if (deleted > 0) {
+                log.trace("Removing unc tx {}", transaction.getId());
                 transactionApplier.undoUnconfirmed(transaction);
                 DbKey dbKey = unconfirmedTransactionTable.getTransactionKeyFactory().newKey(transaction.getId());
                 unconfirmedTransactionTable.getTransactionCache().remove(dbKey);
@@ -444,6 +448,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 if (blockchain.hasTransaction(transaction.getId())) {
                     continue;
                 }
+                log.trace("Process later tx {}", transaction.getId());
                 transaction.unsetBlock();
                 unconfirmedTransactionTable.getWaitingTransactionsCache().add(new UnconfirmedTransaction(
                     transaction, Math.min(currentTime, Convert2.fromEpochTime(transaction.getTimestamp())))
@@ -465,6 +470,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 while (iterator.hasNext()) {
                     UnconfirmedTransaction unconfirmedTransaction = iterator.next();
                     try {
+                        log.trace("Process waiting tx {}", unconfirmedTransaction.getId());
                         validator.validate(unconfirmedTransaction);
                         processTransaction(unconfirmedTransaction);
                         iterator.remove();
@@ -572,6 +578,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                     }
                 }
 
+                log.trace("Process tx {} at height {}, stacktrace - {}", transaction.getId(), blockchain.getHeight(), ThreadUtils.last5Stacktrace());
                 if (!transactionApplier.applyUnconfirmed(transaction)) {
                     throw new AplException.InsufficientBalanceException("Insufficient balance");
                 }
@@ -581,6 +588,9 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 }
 
                 unconfirmedTransactionTable.insert(unconfirmedTransaction);
+                if (log.isTraceEnabled()) {
+                    log.trace("Tx {} applied and saved at {}",unconfirmedTransaction, blockchain.getHeight());
+                }
 
                 dataSource.commit();
             } catch (Exception e) {

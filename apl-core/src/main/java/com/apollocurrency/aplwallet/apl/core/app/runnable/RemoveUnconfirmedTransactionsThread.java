@@ -62,6 +62,7 @@ public class RemoveUnconfirmedTransactionsThread implements Runnable {
                     }
                 }
                 if (expiredTransactions.size() > 0) {
+                    log.trace("Found {} unc txs to remove", expiredTransactions.size());
                     globalSync.writeLock();
                     try {
                         TransactionalDataSource dataSource = databaseManager.getDataSource();
