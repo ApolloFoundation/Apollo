@@ -39,9 +39,9 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
 
     private final LongKeyFactory<UnconfirmedTransaction> transactionKeyFactory;
     private int maxUnconfirmedTransactions;
-    private final Map<DbKey, UnconfirmedTransaction> transactionCache = Collections.synchronizedMap(new HashMap<>());
+    private final Map<DbKey, UnconfirmedTransaction> transactionCache = new HashMap<>();
     private final PriorityBlockingQueue<UnconfirmedTransaction> waitingTransactions;
-    private final Map<TransactionType, Map<String, Integer>> unconfirmedDuplicates = Collections.synchronizedMap(new HashMap<>());
+    private final Map<TransactionType, Map<String, Integer>> unconfirmedDuplicates = new HashMap<>();
     private final Map<Transaction, Transaction> txToBroadcastWhenConfirmed = new ConcurrentHashMap<>();
     private final Set<Transaction> broadcastedTransactions = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
