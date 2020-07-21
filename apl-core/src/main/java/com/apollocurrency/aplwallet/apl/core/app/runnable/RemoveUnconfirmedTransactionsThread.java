@@ -54,22 +54,29 @@ public class RemoveUnconfirmedTransactionsThread implements Runnable {
                 if (lookupBlockchainProcessor().isDownloading()) {
                     return;
                 }
-                List<UnconfirmedTransaction> expiredTransactions = new ArrayList<>();
-                try (DbIterator<UnconfirmedTransaction> iterator = unconfirmedTransactionTable.getManyBy(
-                    new DbClause.IntClause("expiration", DbClause.Op.LT, timeService.getEpochTime()), 0, -1, "")) {
-                    while (iterator.hasNext()) {
-                        expiredTransactions.add(iterator.next());
-                    }
-                }
-                if (expiredTransactions.size() > 0) {
+//                List<UnconfirmedTransaction> expiredTransactions = new ArrayList<>();
+//                try (DbIterator<UnconfirmedTransaction> iterator = unconfirmedTransactionTable.getManyBy(
+//                    new DbClause.IntClause("expiration", DbClause.Op.LT, timeService.getEpochTime()), 0, -1, "")) {
+//                    while (iterator.hasNext()) {
+//                        expiredTransactions.add(iterator.next());
+//                    }
+//                }
+//                if (expiredTransactions.size() > 0) {
+                int epochTime = timeService.getEpochTime();
+                if (unconfirmedTransactionTable.countExpiredTransactions(epochTime) > 0) {
                     globalSync.writeLock();
                     try {
                         TransactionalDataSource dataSource = databaseManager.getDataSource();
                         try {
                             dataSource.begin();
-                            for (UnconfirmedTransaction unconfirmedTransaction : expiredTransactions) {
-                                transactionProcessor.removeUnconfirmedTransaction(unconfirmedTransaction.getTransaction());
+//                            for (UnconfirmedTransaction unconfirmedTransaction : expiredTransactions) {
+                            try (DbIterator<UnconfirmedTransaction> iterator = unconfirmedTransactionTable.getManyBy(
+                                new DbClause.IntClause("expiration", DbClause.Op.LT, epochTime), 0, -1, "")) {
+                                while (iterator.hasNext()) {
+                                    transactionProcessor.removeUnconfirmedTransaction(iterator.next().getTransaction());
+                                }
                             }
+//                            }
                             dataSource.commit();
                         } catch (Exception e) {
                             log.error(e.toString(), e);
