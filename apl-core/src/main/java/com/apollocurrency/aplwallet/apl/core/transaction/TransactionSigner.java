@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureHelper;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureSigner;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import lombok.extern.slf4j.Slf4j;
 
@@ -59,9 +60,17 @@ public class TransactionSigner {
             && !Arrays.equals(publicKey, Crypto.getPublicKey(keySeed))) {
             throw new AplException.NotValidException("Secret phrase doesn't match transaction sender public key");
         }
-        transaction.sign(SignatureHelper.sign(transaction.getUnsignedBytes(), keySeed));
         if (log.isTraceEnabled()) {
-            log.trace("#MULTI_SIG# transaction.sign={} transaction={}", transaction.getSignature(), transaction.getJSONObject().toJSONString());
+            log.trace("#MULTI_SIG# sign keySeed={} publicKey={} document={}",
+                Convert.toHexString(keySeed),
+                Convert.toHexString(publicKey),
+                Convert.toHexString(transaction.getUnsignedBytes()));
+        }
+        transaction.sign(
+            SignatureHelper.sign(transaction.getUnsignedBytes(), keySeed)
+        );
+        if (log.isTraceEnabled()) {
+            log.trace("#MULTI_SIG# sign signature={} transaction={}", transaction.getSignature().getJsonString(), transaction.getJSONObject().toJSONString());
         }
     }
 }

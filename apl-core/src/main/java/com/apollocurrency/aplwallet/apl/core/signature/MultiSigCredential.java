@@ -4,9 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.signature;
 
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.Getter;
 
+import java.util.Arrays;
 import java.util.Objects;
+import java.util.StringJoiner;
+import java.util.stream.Collectors;
 
 /**
  * @author andrii.zinchenko@firstbridge.io
@@ -40,5 +44,13 @@ public class MultiSigCredential implements Credential {
             }
         }
         return true;
+    }
+
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", MultiSigCredential.class.getSimpleName() + "[", "]")
+            .add("threshold=" + threshold)
+            .add("keys=[" + Arrays.stream(keys).map(Convert::toHexString).collect(Collectors.joining(",")) + "]")
+            .toString();
     }
 }

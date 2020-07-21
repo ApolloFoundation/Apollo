@@ -62,6 +62,39 @@ paths:
           $ref: '#/components/responses/ServerError'
       security:
         - bearerAuth: []
+  /@@account/test:
+    post:
+      tags:
+        - account
+      summary: Returns signed CreateChildAccount transaction for creating child accounts
+      description: |
+        Returns signed CreateChildAccount transaction as a byte array.
+        The list of child public keys is attached in the transaction appendix.
+      operationId: createChildAccountTxTest
+      requestBody:
+        description: the parent account and the list of public keys
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountReqTest'
+        required: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateChildAccountResp'
+        401:
+          description: Unauthorized Error
+        403:
+          description: Access Forbidden
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+      security:
+        - bearerAuth: []
   /@@account/{account}:
     get:
       tags:
@@ -740,6 +773,27 @@ components:
             type: string
             format: hex_bytearray
             example: '39dc2e813bb45ff063a376e316b10cd0adeb7306111ca0eb2890194d37960152'
+    AccountReqTest:
+      required:
+        - parent
+        - publicKey
+      type: object
+      properties:
+        parent:
+          type: string
+          description: parent account id
+          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+        secret:
+          type: string
+          description: parent account secret phrase
+          example: 'topSecretPhrase'
+        child_secret_list:
+          type: array
+          description: list of child secret phrases
+          maxItems: 128
+          items:
+            type: string
+            example: 'secret1'
     CreateChildAccountResp:
       required:
         - parent

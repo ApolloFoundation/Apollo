@@ -4,9 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.signature;
 
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.Getter;
 
 import java.util.Objects;
+import java.util.StringJoiner;
 
 /**
  * @author andrii.zinchenko@firstbridge.io
@@ -22,5 +24,12 @@ public class SignatureCredential implements Credential {
     @Override
     public boolean validateCredential(KeyValidator validator) {
         return validator.validate(key);
+    }
+
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", SignatureCredential.class.getSimpleName() + "[", "]")
+            .add("key=" + Convert.toHexString(key))
+            .toString();
     }
 }

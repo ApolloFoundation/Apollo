@@ -156,7 +156,15 @@ public class SignatureToolFactory {
             SignatureCredential signatureCredential;
             signatureCredential = getSignatureCredential(credential);
             sigData = getSigData(signature);
-            sigData.setVerified(Crypto.verify(sigData.bytes(), document, signatureCredential.getKey()));
+            if (log.isTraceEnabled()) {
+                log.trace("#MULTI_SIG# verify signature={} publicKey={} document={}",
+                    Convert.toHexString(sigData.bytes()),
+                    Convert.toHexString(signatureCredential.getKey()),
+                    Convert.toHexString(document));
+            }
+            sigData.setVerified(
+                Crypto.verify(sigData.bytes(), document, signatureCredential.getKey())
+            );
             if (log.isTraceEnabled()) {
                 log.trace("#MULTI_SIG# verify signature: {}  isVerified={}", sigData.getJsonString(), sigData.isVerified());
             }
@@ -202,9 +210,16 @@ public class SignatureToolFactory {
         public Signature sign(byte[] document, Credential credential) {
             Objects.requireNonNull(document);
             SignatureCredential signatureCredential = getSignatureCredential(credential);
-            SigData sigData = new SigData(Crypto.sign(document, signatureCredential.getKey()));
             if (log.isTraceEnabled()) {
-                log.trace("#MULTI_SIG# sign single-signature: {}", sigData.getJsonString());
+                log.trace("#MULTI_SIG# crypto sign keySeed={} document={}",
+                    Convert.toHexString(signatureCredential.getKey()),
+                    Convert.toHexString(document));
+            }
+            SigData sigData = new SigData(
+                Crypto.sign(document, signatureCredential.getKey())
+            );
+            if (log.isTraceEnabled()) {
+                log.trace("#MULTI_SIG# crypto sign single-signature: {}", sigData.getJsonString());
             }
             return sigData;
         }

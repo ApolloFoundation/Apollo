@@ -159,6 +159,10 @@ public class TransactionValidator {
         }
     }
 
+    public int getActualTransactionVersion() {
+        return transactionVersionValidator.getActualVersion();
+    }
+
     public boolean verifySignature(Transaction transaction) {
         Account sender = accountService.getAccount(transaction.getSenderId());
         if (sender == null) {
@@ -169,7 +173,7 @@ public class TransactionValidator {
         Credential signatureCredential;
         SignatureValidator signatureValidator = SignatureToolFactory.selectValidator(transaction.getVersion()).orElseThrow(UnsupportedTransactionVersion::new);
         if (log.isTraceEnabled()) {
-            log.trace("#MULTI_SIG# verify signature validator={}", signatureValidator.getClass().getName());
+            log.trace("#MULTI_SIG# verify signature validator class={}", signatureValidator.getClass().getName());
         }
         if (sender.isChild()) {
             //multi-signature
@@ -196,7 +200,16 @@ public class TransactionValidator {
         if (transaction.getSignature() != null && transaction.getSignature().isVerified()) {
             return true;
         } else {
-            return signatureValidator.verify(transaction.getUnsignedBytes(), transaction.getSignature(), signatureCredential);
+            if (log.isTraceEnabled()) {
+                log.trace("#MULTI_SIG# verify signature={} publicKey={} document={}",
+                    Convert.toHexString(transaction.getSignature().bytes()),
+                    Convert.toHexString(((SignatureCredential) signatureCredential).getKey()),
+                    Convert.toHexString(transaction.getUnsignedBytes()));
+            }
+
+            return signatureValidator.verify(
+                transaction.getUnsignedBytes(), transaction.getSignature(), signatureCredential
+            );
         }
     }
 

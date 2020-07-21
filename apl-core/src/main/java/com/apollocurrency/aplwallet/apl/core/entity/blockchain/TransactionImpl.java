@@ -249,6 +249,9 @@ public class TransactionImpl implements Transaction {
                 signature = signatureParser.parse(buffer);
             }
             builder.signature(signature);
+            if (LOG.isTraceEnabled()) {
+                LOG.trace("#MULTI_SIG# parsed signature={}", signature.getJsonString());
+            }
 
             if (buffer.hasRemaining()) {
                 throw new AplException.NotValidException("Transaction bytes too long, " + buffer.remaining() + " extra bytes");
@@ -430,6 +433,7 @@ public class TransactionImpl implements Transaction {
     @Override
     public void sign(Signature signature) {
         this.signature = signature;
+        this.bytes = null;
     }
 
     @Override
@@ -542,7 +546,7 @@ public class TransactionImpl implements Transaction {
             if (signature == null) {
                 throw new IllegalStateException("Transaction is not signed yet");
             }
-            byte[] data = zeroSignature(getCopyTxBytes());
+            byte[] data = getUnsignedBytes();
             byte[] signatureHash = Crypto.sha256().digest(signature.bytes());
             MessageDigest digest = Crypto.sha256();
             digest.update(data);

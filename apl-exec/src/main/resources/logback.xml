@@ -93,8 +93,8 @@
           additivity="false">
     <appender-ref ref="account-file"/>
   </logger>
-  <logger name="com.apollocurrency.aplwallet.apl.core.transaction" level="trace" additivity="false"/>
-  <logger name="com.apollocurrency.aplwallet.apl.core.signature" level="trace" additivity="false"/>
+  <logger name="com.apollocurrency.aplwallet.apl.core.transaction" level="TRACE"/>
+  <logger name="com.apollocurrency.aplwallet.apl.core.signature" level="TRACE"/>
   <!--    <logger name="com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling" level="trace" additivity="false">-->
   <!--        <appender-ref ref="shuffling-file"/>-->
   <!--    </logger>-->
