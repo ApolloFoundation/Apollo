@@ -64,6 +64,7 @@ public class RemoveUnconfirmedTransactionsThread implements Runnable {
 //                if (expiredTransactions.size() > 0) {
                 int epochTime = timeService.getEpochTime();
                 if (unconfirmedTransactionTable.countExpiredTransactions(epochTime) > 0) {
+                    log.trace("Found {} unc txs to remove", expiredTransactions.size());
                     globalSync.writeLock();
                     try {
                         TransactionalDataSource dataSource = databaseManager.getDataSource();
