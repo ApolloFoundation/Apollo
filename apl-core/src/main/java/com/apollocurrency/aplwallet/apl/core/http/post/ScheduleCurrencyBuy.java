@@ -20,25 +20,26 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.TransactionSchedulerService;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.ms.MonetarySystemTransactionType;
-import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TransactionSchedulerService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeBuyAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
@@ -50,7 +51,6 @@ import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
-import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionType.lookupCurrencyExchangeOfferFacade;
 import static org.slf4j.LoggerFactory.getLogger;
 
 
@@ -60,7 +60,8 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
     private static TransactionValidator validator = CDI.current().select(TransactionValidator.class).get();
     private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
     private final TransactionSchedulerService transactionSchedulerService = CDI.current().select(TransactionSchedulerService.class).get();
-
+    private final TransactionBuilder transactionBuilder = CDI.current().select(TransactionBuilder.class).get();
+    private final CurrencyExchangeOfferFacade exchangeOfferFacade = CDI.current().select(CurrencyExchangeOfferFacade.class).get();
     public ScheduleCurrencyBuy() {
 
         super(new APITag[]{APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "rateATM", "units", "offerIssuer",
@@ -93,7 +94,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                     response.put("scheduled", false);
                     return response;
                 }
-                transaction = Transaction.newTransactionBuilder((JSONObject) response.get("transactionJSON")).build();
+                transaction = transactionBuilder.newTransactionBuilder((JSONObject) response.get("transactionJSON")).build();
             } else {
                 response = new JSONObject();
                 transaction = HttpParameterParserUtil.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON).build();
@@ -115,7 +116,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
             globalSync.updateLock();
             try {
                 validator.validate(transaction);
-                CurrencySellOffer sellOffer = lookupCurrencyExchangeOfferFacade().getCurrencySellOfferService()
+                CurrencySellOffer sellOffer = exchangeOfferFacade.getCurrencySellOfferService()
                     .getOffer(attachment.getCurrencyId(), offerIssuerId);
                 if (sellOffer != null && sellOffer.getSupply() > 0 && sellOffer.getRateATM() <= attachment.getRateATM()) {
                     LOG.debug("Exchange offer found in blockchain, broadcasting transaction " + transaction.getStringId());
@@ -171,7 +172,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
         @Override
         public boolean test(Transaction transaction) {
             if (transaction.getSenderId() != senderId
-                || transaction.getType() != MonetarySystemTransactionType.PUBLISH_EXCHANGE_OFFER
+                || transaction.getType().getSpec() != TransactionTypes.TransactionTypeSpec.MS_PUBLISH_EXCHANGE_OFFER
                 || transaction.getPhasing() != null) {
                 return false;
             }
