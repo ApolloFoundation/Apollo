@@ -63,8 +63,9 @@ public class RemoveUnconfirmedTransactionsThread implements Runnable {
 //                }
 //                if (expiredTransactions.size() > 0) {
                 int epochTime = timeService.getEpochTime();
-                if (unconfirmedTransactionTable.countExpiredTransactions(epochTime) > 0) {
-                    log.trace("Found {} unc txs to remove", expiredTransactions.size());
+                int expiredTransactionsCount = unconfirmedTransactionTable.countExpiredTransactions(epochTime);
+                if (expiredTransactionsCount > 0) {
+                    log.trace("Found {} unc txs to remove", expiredTransactionsCount);
                     globalSync.writeLock();
                     try {
                         TransactionalDataSource dataSource = databaseManager.getDataSource();
@@ -77,7 +78,6 @@ public class RemoveUnconfirmedTransactionsThread implements Runnable {
                                     transactionProcessor.removeUnconfirmedTransaction(iterator.next().getTransaction());
                                 }
                             }
-//                            }
                             dataSource.commit();
                         } catch (Exception e) {
                             log.error(e.toString(), e);
