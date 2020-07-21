@@ -166,7 +166,7 @@ public class SignatureToolFactory {
                 Crypto.verify(sigData.bytes(), document, signatureCredential.getKey())
             );
             if (log.isTraceEnabled()) {
-                log.trace("#MULTI_SIG# verify signature: {}  isVerified={}", sigData.getJsonString(), sigData.isVerified());
+                log.trace("#MULTI_SIG# verify isVerified={} signature={}", sigData.isVerified(), sigData.getJsonString());
             }
             return sigData.isVerified();
         }

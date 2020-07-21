@@ -203,7 +203,7 @@ public class TransactionValidator {
             if (log.isTraceEnabled()) {
                 log.trace("#MULTI_SIG# verify signature={} publicKey={} document={}",
                     Convert.toHexString(transaction.getSignature().bytes()),
-                    Convert.toHexString(((SignatureCredential) signatureCredential).getKey()),
+                    signatureCredential,
                     Convert.toHexString(transaction.getUnsignedBytes()));
             }
 
