@@ -477,13 +477,16 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                         addedUnconfirmedTransactions.add(unconfirmedTransaction.getTransaction());
                     } catch (AplException.ExistingTransactionException e) {
                         iterator.remove();
+                        log.trace("Tx processing error " + unconfirmedTransaction.getId(), e);
                     } catch (AplException.NotCurrentlyValidException e) {
                         if (unconfirmedTransaction.getExpiration() < currentTime
                             || currentTime - Convert2.toEpochTime(unconfirmedTransaction.getArrivalTimestamp()) > 3600) {
                             iterator.remove();
                         }
+                        log.trace("Tx is not valid currently " + unconfirmedTransaction.getId(), e);
                     } catch (AplException.ValidationException | RuntimeException e) {
                         iterator.remove();
+                        log.trace("Validation tx processing error " + unconfirmedTransaction.getId(), e);
                     }
                 }
                 if (addedUnconfirmedTransactions.size() > 0) {
@@ -594,6 +597,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
                 dataSource.commit();
             } catch (Exception e) {
+                log.trace("Processing error for tx " + unconfirmedTransaction.getId(), e);
                 dataSource.rollback();
                 throw e;
             }
