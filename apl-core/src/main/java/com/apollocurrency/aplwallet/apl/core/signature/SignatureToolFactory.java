@@ -185,6 +185,16 @@ public class SignatureToolFactory {
             }
             return multiSigData;
         }
+
+        @Override
+        public boolean isCanonical(Signature signature) {
+            MultiSigData multiSigData = getMultiSigData(Objects.requireNonNull(signature));
+            final boolean[] rc = {multiSigData.getParticipantCount() > 0};
+            if (rc[0]) {
+                multiSigData.signaturesMap().forEach((keyId, bytes) -> rc[0] = rc[0] && Crypto.isCanonicalSignature(bytes));
+            }
+            return rc[0];
+        }
     }
 
     private static class SignatureSignerV1 implements SignatureSigner {
@@ -197,6 +207,12 @@ public class SignatureToolFactory {
                 log.trace("#MULTI_SIG# sign single-signature: {}", sigData.getJsonString());
             }
             return sigData;
+        }
+
+        @Override
+        public boolean isCanonical(Signature signature) {
+            Objects.requireNonNull(signature);
+            return Crypto.isCanonicalSignature(signature.bytes());
         }
     }
 }

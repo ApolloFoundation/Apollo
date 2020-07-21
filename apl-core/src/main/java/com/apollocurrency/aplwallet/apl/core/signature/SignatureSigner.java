@@ -11,4 +11,6 @@ public interface SignatureSigner {
 
     Signature sign(byte[] document, Credential credential);
 
+    boolean isCanonical(Signature signature);
+
 }

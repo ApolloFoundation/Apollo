@@ -379,6 +379,9 @@ public final class Crypto {
     }
 
     public static boolean isCanonicalSignature(byte[] signature) {
+        if (signature.length != 64) {
+            return false;
+        }
         return Curve25519.isCanonicalSignature(signature);
     }
 
