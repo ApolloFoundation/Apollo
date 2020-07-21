@@ -16,6 +16,7 @@ import javax.enterprise.inject.spi.CDI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Class makes lookup of BlockchainProcessor
@@ -49,9 +50,10 @@ public class RebroadcastTransactionsThread implements Runnable {
                 }
                 List<Transaction> transactionList = new ArrayList<>();
                 int curTime = timeService.getEpochTime();
-                for (Transaction transaction : unconfirmedTransactionTable.getBroadcastedTransactions()) {
+                Set<Transaction> broadcastedTransactions = unconfirmedTransactionTable.getBroadcastedTransactions();
+                for (Transaction transaction : broadcastedTransactions) {
                     if (transaction.getExpiration() < curTime || blockchain.hasTransaction(transaction.getId())) {
-                        unconfirmedTransactionTable.getBroadcastedTransactions().remove(transaction);
+                        broadcastedTransactions.remove(transaction);
                     } else if (transaction.getTimestamp() < curTime - 30) {
                         transactionList.add(transaction);
                     }

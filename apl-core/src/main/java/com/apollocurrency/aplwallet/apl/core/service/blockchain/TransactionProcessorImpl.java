@@ -70,6 +70,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -266,8 +267,8 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     public Transaction[] getAllBroadcastedTransactions() {
         globalSync.readLock();
         try {
-            return unconfirmedTransactionTable.getBroadcastedTransactions().toArray(
-                new TransactionImpl[unconfirmedTransactionTable.getBroadcastedTransactionsSize()]);
+            Set<Transaction> broadcastedTransactions = unconfirmedTransactionTable.getBroadcastedTransactions();
+            return broadcastedTransactions.toArray(new Transaction[0]);
         } finally {
             globalSync.readUnlock();
         }
