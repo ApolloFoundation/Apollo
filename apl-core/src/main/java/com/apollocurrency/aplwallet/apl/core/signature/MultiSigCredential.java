@@ -28,10 +28,6 @@ public class MultiSigCredential implements Credential {
         this.threshold = threshold;
     }
 
-    public MultiSigCredential(byte[][] keys) {
-        this(keys.length, keys);
-    }
-
     public MultiSigCredential(byte[] key) {
         this(1, new byte[][]{key});
     }

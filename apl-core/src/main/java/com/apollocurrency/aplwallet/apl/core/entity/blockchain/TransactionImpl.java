@@ -71,12 +71,6 @@ import static com.apollocurrency.aplwallet.apl.core.transaction.AccountControl.S
 public class TransactionImpl implements Transaction {
     private static final Logger LOG = LoggerFactory.getLogger(TransactionImpl.class);
 
-    //    @Inject
-    //private static Blockchain blockchain;
-
-    //@Inject
-    //private static AccountPublicKeyService accountPublicKeyService;
-
     private final short deadline;
     private final long recipientId;
     private final long amountATM;
@@ -346,26 +340,10 @@ public class TransactionImpl implements Transaction {
 
             return builder;
         } catch (RuntimeException e) {
-            LOG.debug("Failed to parse transaction: " + transactionData.toJSONString());
+            LOG.debug("Failed to parse transaction={}", transactionData.toJSONString());
             throw e;
         }
     }
-
-/*
-    private Blockchain lookupAndInjectBlockchain() {
-        if (blockchain == null) {
-            blockchain = CDI.current().select(BlockchainImpl.class).get();
-        }
-        return blockchain;
-    }
-
-    private AccountPublicKeyService lookupAndInjectAccountPublicKeyService() {
-        if (accountPublicKeyService == null) {
-            accountPublicKeyService = CDI.current().select(AccountPublicKeyService.class).get();
-        }
-        return accountPublicKeyService;
-    }
-*/
 
     @Override
     public short getDeadline() {
@@ -458,11 +436,6 @@ public class TransactionImpl implements Transaction {
 
     @Override
     public Block getBlock() {
-/*
-        if (block == null && blockId != 0) {
-            block = lookupAndInjectBlockchain().getBlock(blockId);
-        }
-*/
         return block;
     }
 
@@ -703,6 +676,7 @@ public class TransactionImpl implements Transaction {
     @Override
     public JSONObject getJSONObject() {
         JSONObject json = new JSONObject();
+        json.put("version", version);
         json.put("id", Long.toUnsignedString(id));
         json.put("type", type.getType());
         json.put("subtype", type.getSubtype());
@@ -719,13 +693,6 @@ public class TransactionImpl implements Transaction {
         }
         json.put("ecBlockHeight", ecBlockHeight);
         json.put("ecBlockId", Long.toUnsignedString(ecBlockId));
-        if (signature != null) {
-            if (version < 2) {
-                json.put("signature", getSignature().getJsonObject().get(SignatureParser.SIGNATURE_FIELD_NAME));
-            } else {
-                json.put("signature", getSignature().getJsonObject());
-            }
-        }
         JSONObject attachmentJSON = new JSONObject();
         for (AbstractAppendix appendage : appendages) {
             appendage.loadPrunable(this);
@@ -734,7 +701,15 @@ public class TransactionImpl implements Transaction {
         if (!attachmentJSON.isEmpty()) {
             json.put("attachment", attachmentJSON);
         }
-        json.put("version", version);
+
+        if (signature != null) {
+            if (version < 2) {
+                //json.put("signature", getSignature().getJsonObject().get(SignatureParser.SIGNATURE_FIELD_NAME));
+                json.putAll(getSignature().getJsonObject());
+            } else {
+                json.put("signature", getSignature().getJsonObject());
+            }
+        }
         return json;
     }
 
@@ -771,11 +746,6 @@ public class TransactionImpl implements Transaction {
 
     @Override
     public byte[] getSenderPublicKey() {
-/*
-        if (senderPublicKey == null) {
-            senderPublicKey = lookupAndInjectAccountPublicKeyService().getPublicKeyByteArray(senderId);
-        }
-*/
         return senderPublicKey;
     }
 
@@ -787,7 +757,7 @@ public class TransactionImpl implements Transaction {
     private int getSize() {
         int signatureSize = 0;
         if (version < 2) {
-            signatureSize = 64;
+            signatureSize = Signature.ECDSA_SIGNATURE_SIZE;
         } else {
             if (signature != null) {
                 signatureSize = signature.getSize();
@@ -805,6 +775,11 @@ public class TransactionImpl implements Transaction {
         return fullSize;
     }
 
+    /**
+     * The transaction V2 header size, it doesn't contain the signature size
+     *
+     * @return the transaction V2 header size
+     */
     private int txV2HeaderSize() {
         return 1 + 1 + 4 + 2 + 32 + 8 + 8 + 8 + 32 + 4 + 4 + 8;
     }
@@ -816,7 +791,7 @@ public class TransactionImpl implements Transaction {
     private byte[] zeroSignature(byte[] data) {
         if (version < 2) {
             int start = signatureV1Offset();
-            for (int i = start; i < start + 64; i++) {
+            for (int i = start; i < start + Signature.ECDSA_SIGNATURE_SIZE; i++) {
                 data[i] = 0;
             }
         }

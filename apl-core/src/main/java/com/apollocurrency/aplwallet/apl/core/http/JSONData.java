@@ -95,7 +95,6 @@ import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetTransferSe
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
-import com.apollocurrency.aplwallet.apl.core.signature.SignatureParser;
 import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetDelete;
@@ -1152,7 +1151,8 @@ public final class JSONData {
         }
         if (transaction.getSignature() != null) {
             if (transaction.getVersion() < 2) {
-                json.put("signature", transaction.getSignature().getJsonObject().get(SignatureParser.SIGNATURE_FIELD_NAME));
+                //json.put("signature", transaction.getSignature().getJsonObject().get(SignatureParser.SIGNATURE_FIELD_NAME));
+                json.putAll(transaction.getSignature().getJsonObject());
             } else {
                 json.put("signature", transaction.getSignature().getJsonObject());
             }
