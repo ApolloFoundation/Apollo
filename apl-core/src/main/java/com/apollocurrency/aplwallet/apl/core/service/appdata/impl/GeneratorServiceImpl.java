@@ -111,11 +111,13 @@ public class GeneratorServiceImpl {
         GeneratorEntity generator = new GeneratorEntity(keySeed, publicKey, accountId);
         globalSync.updateLock();
         try {
-            if (blockchain.getHeight() >= blockchainConfig.getLastKnownBlock()) {
+            if (generateBlocksThread != null && blockchain.getHeight() >= blockchainConfig.getLastKnownBlock()) {
                 generateBlocksThread.setLastBlock(blockchain.getLastBlock(), generator);
             }
 //            sortedForgers = null;
-            generateBlocksThread.resetSortedForgers();
+            if (generateBlocksThread != null) {
+                generateBlocksThread.resetSortedForgers();
+            }
         } finally {
             globalSync.updateUnlock();
         }
@@ -132,7 +134,7 @@ public class GeneratorServiceImpl {
 
     public GeneratorEntity stopForging(byte[] keySeed) {
         GeneratorEntity generator = generators.remove(Convert.getId(Crypto.getPublicKey(keySeed)));
-        if (generator != null) {
+        if (generator != null && generateBlocksThread != null) {
             globalSync.updateLock();
             try {
 //                sortedForgers = null;
@@ -158,7 +160,9 @@ public class GeneratorServiceImpl {
         globalSync.updateLock();
         try {
 //            sortedForgers = null;
-            generateBlocksThread.resetSortedForgers();
+            if (generateBlocksThread != null) {
+                generateBlocksThread.resetSortedForgers();
+            }
         } finally {
             globalSync.updateUnlock();
         }
@@ -183,7 +187,7 @@ public class GeneratorServiceImpl {
 
     public List<GeneratorEntity> getSortedForgers() {
 //        List<GeneratorEntity> forgers = sortedForgers;
-        List<GeneratorEntity> forgers = generateBlocksThread.getSortedForgers();
+        List<GeneratorEntity> forgers = generateBlocksThread != null ? generateBlocksThread.getSortedForgers() : null;
         return forgers == null ? Collections.emptyList() : forgers;
     }
 
@@ -191,7 +195,7 @@ public class GeneratorServiceImpl {
         globalSync.readLock();
         try {
 //            if (lastBlockId == Generator.lastBlockId && sortedForgers != null) {
-            List<GeneratorEntity> sortedForgers = generateBlocksThread.getSortedForgers();
+            List<GeneratorEntity> sortedForgers = generateBlocksThread != null ? generateBlocksThread.getSortedForgers() : null;
             if (sortedForgers != null) {
                 for (GeneratorEntity generator : sortedForgers) {
                     if (generator.getHitTime() >= curTime - propertiesHolder.FORGING_DELAY()) {
@@ -321,12 +325,6 @@ public class GeneratorServiceImpl {
         }
         return new int[]{timeout, version};
     }
-
-/*
-    private int getTimestamp(int generationLimit) {
-        return (generationLimit - hitTime > 3600) ? generationLimit : (int) hitTime + 1;
-    }
-*/
 
     private BlockchainProcessor lookupBlockchainProcessor() {
         if (blockchainProcessor == null) {
