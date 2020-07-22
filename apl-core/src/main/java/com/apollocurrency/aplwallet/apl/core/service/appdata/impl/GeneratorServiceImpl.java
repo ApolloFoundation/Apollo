@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -64,7 +65,7 @@ public class GeneratorServiceImpl {
     private final AccountService accountService;
     private final TaskDispatchManager taskDispatchManager;
     private static volatile boolean suspendForging = false;
-    private static volatile List<GeneratorEntity> sortedForgers = null;
+//    private static volatile List<GeneratorEntity> sortedForgers = null;
     private long lastBlockId;
 //    private int delayTime = propertiesHolder.FORGING_DELAY();
     private GenerateBlocksThread generateBlocksThread;
@@ -89,7 +90,8 @@ public class GeneratorServiceImpl {
 
         if (!propertiesHolder.isLightClient()) {
             generateBlocksThread = new GenerateBlocksThread(this.propertiesHolder, this.globalSync,
-                this.blockchain, this.blockchainConfig, this.timeService, this.transactionProcessor);
+                this.blockchain, this.blockchainConfig, this.timeService,
+                this.transactionProcessor, this.accountService, this);
             taskDispatchManager.newBackgroundDispatcher(BACKGROUND_SERVICE_NAME)
                 .schedule(Task.builder()
                     .name("GenerateBlocks")
@@ -99,158 +101,25 @@ public class GeneratorServiceImpl {
         }
 
     }
-
-    /*
-    private static final Runnable generateBlocksThread = new Runnable() {
-
-        private volatile boolean logged;
-
-        @Override
-        public void run() {
-            if (suspendForging) {
-                return;
-            }
-            try {
-                try {
-                    globalSync.updateLock();
-                    try {
-                        Block lastBlock = blockchain.getLastBlock();
-                        if (lastBlock == null || lastBlock.getHeight() < blockchainConfig.getLastKnownBlock()) {
-                            return;
-                        }
-                        final int generationLimit = timeService.getEpochTime() - delayTime;
-                        if (lastBlock.getId() != lastBlockId || sortedForgers == null) {
-                            lastBlockId = lastBlock.getId();
-                            if (lastBlock.getTimestamp() > timeService.getEpochTime() - 600) {
-                                Block previousBlock = blockchain.getBlock(lastBlock.getPreviousBlockId());
-                                for (Generator generator : generators.values()) {
-                                    generator.setLastBlock(previousBlock);
-                                    int timestamp = generator.getTimestamp(generationLimit);
-                                    if (timestamp != generationLimit && generator.getHitTime() > 0 && timestamp < lastBlock.getTimestamp() - lastBlock.getTimeout()) {
-                                        log.debug("Pop off: " + generator.toString() + " will pop off last block " + lastBlock.getStringId());
-                                        List<Block> poppedOffBlock = blockchainProcessor.popOffToCommonBlock(previousBlock);
-                                        for (Block block : poppedOffBlock) {
-                                            transactionProcessor.processLater(block.getOrLoadTransactions());
-                                        }
-                                        lastBlock = previousBlock;
-                                        lastBlockId = previousBlock.getId();
-                                        break;
-                                    }
-                                }
-                            }
-                            List<Generator> forgers = new ArrayList<>();
-                            for (Generator generator : generators.values()) {
-                                generator.setLastBlock(lastBlock);
-                                if (generator.effectiveBalance.signum() > 0) {
-                                    forgers.add(generator);
-                                }
-                            }
-                            Collections.sort(forgers);
-                            sortedForgers = Collections.unmodifiableList(forgers);
-                            logged = false;
-                        }
-                        if (!logged) {
-                            for (Generator generator : sortedForgers) {
-                                if (generator.getHitTime() - generationLimit > 60) {
-                                    break;
-                                }
-                                log.debug(generator.toString());
-                                logged = true;
-                            }
-                        }
-                        for (Generator generator : sortedForgers) {
-                            if (suspendForging) {
-                                break;
-                            }
-                            if (generator.getHitTime() > generationLimit || generator.forge(lastBlock, generationLimit)) {
-                                return;
-                            }
-                        }
-                    } finally {
-                        globalSync.updateUnlock();
-                    }
-                } catch (Exception e) {
-                    log.info("Error in block generation thread", e);
-                }
-            } catch (Throwable t) {
-                log.error("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS.\n" + t.toString());
-                t.printStackTrace();
-                System.exit(1);
-            }
-
-        }
-
-    };
-*/
-
-/*
-    static {
-
-        fakeForgingPublicKey = propertiesHolder.getBooleanProperty("apl.enableFakeForging") ?
-            accountService.getPublicKeyByteArray(Convert.parseAccountId(propertiesHolder.getStringProperty("apl.fakeForgingAccount"))) : null;
-    }
-*/
-
-//    private final long accountId;
-//    private final byte[] keySeed;
-//    private final byte[] publicKey;
-//    private volatile long hitTime;
-//    private volatile BigInteger hit;
-//    @Getter
-//    private volatile BigInteger effectiveBalance;
-//    private volatile long deadline;
-
-/*
-    public Generator(long accountId, byte[] keySeed, byte[] publicKey) {
-        this.accountId = accountId;
-        this.keySeed = keySeed;
-        this.publicKey = publicKey;
-    }
-
-    private Generator(byte[] keySeed) {
-        this.keySeed = keySeed;
-        this.publicKey = Crypto.getPublicKey(keySeed);
-        this.accountId = AccountService.getId(publicKey);
-        globalSync.updateLock();
-        try {
-            if (blockchain.getHeight() >= blockchainConfig.getLastKnownBlock()) {
-                setLastBlock(blockchain.getLastBlock());
-            }
-            sortedForgers = null;
-        } finally {
-            globalSync.updateUnlock();
-        }
-    }
-*/
-
-/*
-    static void init() {
-        if (!propertiesHolder.isLightClient()) {
-            taskDispatchManager.newBackgroundDispatcher(BACKGROUND_SERVICE_NAME)
-                .schedule(Task.builder()
-                    .name("GenerateBlocks")
-                    .delay(500)
-                    .task(generateBlocksThread)
-                    .build());
-        }
-    }
-*/
-
-/*
-    public static boolean addListener(Listener<Generator> listener, Generator.GeneratorEvent generatorEventType) {
-        return listeners.addListener(listener, generatorEventType);
-    }
-
-    public static boolean removeListener(Listener<Generator> listener, Generator.GeneratorEvent generatorEventType) {
-        return listeners.removeListener(listener, generatorEventType);
-    }
-*/
 
     public GeneratorEntity startForging(byte[] keySeed) {
         if (generators.size() >= MAX_FORGERS) {
             throw new RuntimeException("Cannot forge with more than " + MAX_FORGERS + " accounts on the same node");
         }
-        GeneratorEntity generator = new GeneratorEntity(keySeed);
+        byte[] publicKey = Crypto.getPublicKey(keySeed);
+        long accountId = AccountService.getId(publicKey);
+        GeneratorEntity generator = new GeneratorEntity(keySeed, publicKey, accountId);
+        globalSync.updateLock();
+        try {
+            if (blockchain.getHeight() >= blockchainConfig.getLastKnownBlock()) {
+                generateBlocksThread.setLastBlock(blockchain.getLastBlock(), generator);
+            }
+//            sortedForgers = null;
+            generateBlocksThread.resetSortedForgers();
+        } finally {
+            globalSync.updateUnlock();
+        }
+
         GeneratorEntity old = generators.putIfAbsent(generator.getAccountId(), generator);
         if (old != null) {
             log.debug(old + " is already forging");
@@ -266,7 +135,8 @@ public class GeneratorServiceImpl {
         if (generator != null) {
             globalSync.updateLock();
             try {
-                sortedForgers = null;
+//                sortedForgers = null;
+                generateBlocksThread.resetSortedForgers();
             } finally {
                 globalSync.updateUnlock();
             }
@@ -287,7 +157,8 @@ public class GeneratorServiceImpl {
         }
         globalSync.updateLock();
         try {
-            sortedForgers = null;
+//            sortedForgers = null;
+            generateBlocksThread.resetSortedForgers();
         } finally {
             globalSync.updateUnlock();
         }
@@ -302,12 +173,17 @@ public class GeneratorServiceImpl {
         return generators.size();
     }
 
+    public Map<Long, GeneratorEntity> getGeneratorsMap() {
+        return generators;
+    }
+
     public Collection<GeneratorEntity> getAllGenerators() {
         return allGenerators;
     }
 
     public List<GeneratorEntity> getSortedForgers() {
-        List<GeneratorEntity> forgers = sortedForgers;
+//        List<GeneratorEntity> forgers = sortedForgers;
+        List<GeneratorEntity> forgers = generateBlocksThread.getSortedForgers();
         return forgers == null ? Collections.emptyList() : forgers;
     }
 
@@ -315,12 +191,14 @@ public class GeneratorServiceImpl {
         globalSync.readLock();
         try {
 //            if (lastBlockId == Generator.lastBlockId && sortedForgers != null) {
+            List<GeneratorEntity> sortedForgers = generateBlocksThread.getSortedForgers();
+            if (sortedForgers != null) {
                 for (GeneratorEntity generator : sortedForgers) {
                     if (generator.getHitTime() >= curTime - propertiesHolder.FORGING_DELAY()) {
                         return generator.getHitTime();
                     }
                 }
-//            }
+            }
             return 0;
         } finally {
             globalSync.readUnlock();
@@ -331,34 +209,24 @@ public class GeneratorServiceImpl {
 //        Generator.delayTime = delay;
     }
 
-    public boolean verifyHit(BigInteger hit, BigInteger effectiveBalance, Block previousBlock, int timestamp) {
+//    public boolean verifyHit(BigInteger hit, BigInteger effectiveBalance, Block previousBlock, int timestamp) {
+    public boolean verifyHit(GeneratorEntity generator, Block previousBlock, int timestamp) {
         int elapsedTime = timestamp - previousBlock.getTimestamp();
         if (elapsedTime <= 0) {
             return false;
         }
-        BigInteger effectiveBaseTarget = BigInteger.valueOf(previousBlock.getBaseTarget()).multiply(effectiveBalance);
+        BigInteger effectiveBaseTarget = BigInteger.valueOf(previousBlock.getBaseTarget())
+            .multiply(generator.getEffectiveBalance());
         BigInteger prevTarget = effectiveBaseTarget.multiply(BigInteger.valueOf(elapsedTime - 1));
         BigInteger target = prevTarget.add(effectiveBaseTarget);
-        boolean ret = hit.compareTo(target) < 0
-            && (hit.compareTo(prevTarget) >= 0
+        boolean ret = generator.getHit().compareTo(target) < 0
+            && (generator.getHit().compareTo(prevTarget) >= 0
             || elapsedTime > 3600
             || propertiesHolder.isOffline());
         if (!ret) {
-            log.warn("target: {}, hit: {}, verification failed!", target, hit);
+            log.warn("target: {}, hit: {}, verification failed!", target, generator.getHit());
         }
         return ret;
-    }
-
-    public BigInteger getHit(byte[] publicKey, Block block) {
-        MessageDigest digest = Crypto.sha256();
-        digest.update(block.getGenerationSignature());
-        byte[] generationSignatureHash = digest.digest(publicKey);
-        return new BigInteger(1, new byte[]{generationSignatureHash[7], generationSignatureHash[6], generationSignatureHash[5], generationSignatureHash[4], generationSignatureHash[3], generationSignatureHash[2], generationSignatureHash[1], generationSignatureHash[0]});
-    }
-
-    public long getHitTime(BigInteger effectiveBalance, BigInteger hit, Block block) {
-        return block.getTimestamp()
-            + hit.divide(BigInteger.valueOf(block.getBaseTarget()).multiply(effectiveBalance)).longValue();
     }
 
     public void suspendForging() {
@@ -379,66 +247,14 @@ public class GeneratorServiceImpl {
         }
     }
 
-//    public byte[] getPublicKey() {
-//        return publicKey;
-//    }
-//
-//    public long getAccountId() {
-//        return accountId;
-//    }
-//
-//    public long getDeadline() {
-//        return deadline;
-//    }
-//
-//    public long getHitTime() {
-//        return hitTime;
-//    }
-
-/*
-    @Override
-    public int compareTo(Generator g) {
-        int i = this.hit.multiply(g.effectiveBalance).compareTo(g.hit.multiply(this.effectiveBalance));
-        if (i != 0) {
-            return i;
-        }
-        return Long.compare(accountId, g.accountId);
-    }
-
-    @Override
-    public String toString() {
-        return "Forger " + Long.toUnsignedString(accountId) + " deadline " + getDeadline() + " hit " + hitTime;
-    }
-*/
-
-/*
-    private void setLastBlock(Block lastBlock) {
-        int height = lastBlock.getHeight();
-        Account account = accountService.getAccount(accountId, height);
-        if (account == null) {
-            effectiveBalance = BigInteger.ZERO;
-        } else {
-            effectiveBalance = BigInteger.valueOf(Math.max(accountService.getEffectiveBalanceAPL(account, height, true), 0));
-        }
-        if (effectiveBalance.signum() == 0) {
-            hitTime = 0;
-            hit = BigInteger.ZERO;
-            return;
-        }
-        hit = getHit(publicKey, lastBlock);
-        hitTime = getHitTime(effectiveBalance, hit, lastBlock);
-        deadline = Math.max(hitTime - lastBlock.getTimestamp(), 0);
-        listeners.notify(this, Generator.GeneratorEvent.GENERATION_DEADLINE);
-    }
-
-    public boolean forge(Block lastBlock, int generationLimit) throws BlockchainProcessor.BlockNotAcceptedException {
-        int timestamp = getTimestamp(generationLimit);
+    public boolean forge(Block lastBlock, int generationLimit, GeneratorEntity generator) throws BlockchainProcessor.BlockNotAcceptedException {
+        int timestamp = generator.getTimestamp(generationLimit);
         int[] timeoutAndVersion = getBlockTimeoutAndVersion(timestamp, generationLimit, lastBlock);
         if (timeoutAndVersion == null) {
             return false;
         }
         int timeout = timeoutAndVersion[0];
-        if (!verifyHit(hit, effectiveBalance, lastBlock, timestamp)) {
+        if (!verifyHit(generator, lastBlock, timestamp)) {
             log.debug(this.toString() + " failed to forge at " + (timestamp + timeout) + " height " + lastBlock.getHeight() + " " +
                 "last " +
                 "timestamp " + lastBlock.getTimestamp());
@@ -447,7 +263,7 @@ public class GeneratorServiceImpl {
         int start = timeService.getEpochTime();
         while (true) {
             try {
-                blockchainProcessor.generateBlock(keySeed, timestamp + timeout, timeout, timeoutAndVersion[1]);
+                blockchainProcessor.generateBlock(generator.getKeySeed(), timestamp + timeout, timeout, timeoutAndVersion[1]);
                 setDelay(propertiesHolder.FORGING_DELAY());
                 return true;
             } catch (BlockchainProcessor.TransactionNotAcceptedException e) {
@@ -458,7 +274,6 @@ public class GeneratorServiceImpl {
             }
         }
     }
-*/
 
     /**
      * Return block timestamp shift

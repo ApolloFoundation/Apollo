@@ -26,27 +26,14 @@ public class GeneratorEntity implements Comparable<GeneratorEntity> {
     private volatile BigInteger effectiveBalance;
     private volatile long deadline;
 
-    public GeneratorEntity(long accountId, byte[] keySeed, byte[] publicKey) {
-        this.accountId = accountId;
+        public GeneratorEntity(byte[] keySeed, byte[] publicKey, long accountId) {
         this.keySeed = keySeed;
         this.publicKey = publicKey;
+        this.accountId = accountId;
     }
 
-    public GeneratorEntity(byte[] keySeed) {
-        this.keySeed = keySeed;
-        this.publicKey = Crypto.getPublicKey(keySeed);
-        this.accountId = AccountService.getId(publicKey);
-/*
-        globalSync.updateLock();
-        try {
-            if (blockchain.getHeight() >= blockchainConfig.getLastKnownBlock()) {
-                setLastBlock(blockchain.getLastBlock());
-            }
-            sortedForgers = null;
-        } finally {
-            globalSync.updateUnlock();
-        }
-*/
+    public int getTimestamp(int generationLimit) {
+        return (generationLimit - hitTime > 3600) ? generationLimit : (int) hitTime + 1;
     }
 
     @Override
