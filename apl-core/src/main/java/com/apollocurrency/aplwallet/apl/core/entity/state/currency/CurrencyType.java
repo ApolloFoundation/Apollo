@@ -266,8 +266,8 @@ public enum CurrencyType {
 
     public static void validate(Currency currency, Transaction transaction) throws AplException.ValidationException {
         if (currency == null) {
-            log.debug("currency = {}, tr = {}, height = {}", currency, transaction, transaction.getHeight());
-            log.debug("s-trace = {}", ThreadUtils.last5Stacktrace());
+            log.trace("currency = {}, tr = {}, height = {}", currency, transaction, transaction.getHeight());
+            log.trace("s-trace = {}", ThreadUtils.last5Stacktrace());
             throw new AplException.NotCurrentlyValidException("Unknown currency: " + transaction.getAttachment().getJSONObject());
         }
         validate(currency, currency.getType(), transaction);
