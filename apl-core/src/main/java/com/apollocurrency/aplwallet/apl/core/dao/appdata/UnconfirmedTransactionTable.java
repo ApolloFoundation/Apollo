@@ -98,6 +98,7 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
                 while (rs.next()) {
                     UnconfirmedTransaction unconfirmedTransaction = load(con, rs, null);
                     waitingTransactions.add(unconfirmedTransaction);
+                    log.trace("Revert to waiting tx {}", unconfirmedTransaction.getId());
                     DbKey dbKey = transactionKeyFactory.newKey(unconfirmedTransaction.getId());
                     transactionCache.remove(dbKey);
                 }
