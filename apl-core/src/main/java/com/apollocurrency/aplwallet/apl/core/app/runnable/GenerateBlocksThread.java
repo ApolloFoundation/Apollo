@@ -90,7 +90,7 @@ public class GenerateBlocksThread implements Runnable {
                             for (GeneratorEntity generator : generatorsMap.values()) {
 //                            for (Generator generator : generators.values()) {
 //                                generator.setLastBlock(previousBlock);
-                                this.setLastBlock(previousBlock, generator);
+                                generatorService.setLastBlock(previousBlock, generator);
                                 int timestamp = generator.getTimestamp(generationLimit);
                                 if (timestamp != generationLimit && generator.getHitTime() > 0 && timestamp < lastBlock.getTimestamp() - lastBlock.getTimeout()) {
                                     log.debug("Pop off: {} will pop off last block {}", generator.toString(), lastBlock.getStringId());
@@ -106,7 +106,7 @@ public class GenerateBlocksThread implements Runnable {
                         }
                         List<GeneratorEntity> forgers = new ArrayList<>();
                         for (GeneratorEntity generator : generatorsMap.values()) {
-                            this.setLastBlock(lastBlock, generator);
+                            generatorService.setLastBlock(lastBlock, generator);
                             if (generator.getEffectiveBalance().signum() > 0) {
                                 forgers.add(generator);
                             }
@@ -146,6 +146,7 @@ public class GenerateBlocksThread implements Runnable {
         }
     }
 
+/*
     public void setLastBlock(Block lastBlock, GeneratorEntity generator) {
         int height = lastBlock.getHeight();
         Account account = accountService.getAccount(generator.getAccountId(), height);
@@ -180,6 +181,7 @@ public class GenerateBlocksThread implements Runnable {
         return block.getTimestamp()
             + hit.divide(BigInteger.valueOf(block.getBaseTarget()).multiply(effectiveBalance)).longValue();
     }
+*/
 
     public List<GeneratorEntity> getSortedForgers() {
         return sortedForgers;

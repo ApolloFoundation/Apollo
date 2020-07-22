@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
 
@@ -18,6 +19,7 @@ import java.math.BigInteger;
 public class ActiveGenerator implements Comparable<ActiveGenerator> {
 
     private AccountService accountService;
+    private GeneratorService generatorService;
     private final long accountId;
     private long hitTime;
     private long effectiveBalanceAPL;
@@ -33,6 +35,13 @@ public class ActiveGenerator implements Comparable<ActiveGenerator> {
             accountService = CDI.current().select(AccountServiceImpl.class).get();
         }
         return accountService;
+    }
+
+    private GeneratorService lookupGeneratorService() {
+        if (generatorService == null) {
+            generatorService = CDI.current().select(GeneratorService.class).get();
+        }
+        return generatorService;
     }
 
     public long getAccountId() {

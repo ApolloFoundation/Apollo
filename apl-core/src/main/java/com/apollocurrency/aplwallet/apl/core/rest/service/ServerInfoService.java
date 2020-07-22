@@ -31,6 +31,7 @@ import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
@@ -113,6 +114,7 @@ public class ServerInfoService {
     private final CurrencyTransferService currencyTransferService;
     private final CurrencyService currencyService;
     private final ShufflingService shufflingService;
+    private final GeneratorService generatorService;
 
     @Inject
     public ServerInfoService(BlockchainConfig blockchainConfig, Blockchain blockchain,
@@ -140,7 +142,8 @@ public class ServerInfoService {
                              ExchangeRequestService exchangeRequestService,
                              CurrencyTransferService currencyTransferService,
                              CurrencyService currencyService,
-                             ShufflingService shufflingService
+                             ShufflingService shufflingService,
+                             GeneratorService generatorService
     ) {
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
         this.blockchain = Objects.requireNonNull(blockchain, "blockchain is NULL");
@@ -171,6 +174,7 @@ public class ServerInfoService {
         this.currencyTransferService = Objects.requireNonNull(currencyTransferService, "currencyTransferService is NULL");
         this.currencyService = Objects.requireNonNull( currencyService, "currencyService is NULL");
         this.shufflingService = Objects.requireNonNull( shufflingService, "shufflingService is NULL");
+        this.generatorService = Objects.requireNonNull( generatorService, "generatorService is NULL");
     }
 
     public ApolloX509Info getX509Info() {
