@@ -167,6 +167,7 @@ public class ChildAccountTest {
         //GIVEN
         CreateTransactionRequest request = CreateTransactionRequest.builder()
             .senderAccount(SENDER)
+            .recipientId(SENDER_ID)
             .deadlineValue("1440")
             .feeATM(0)
             .attachment(CHILD_ACCOUNT_ATTACHMENT)
@@ -194,6 +195,7 @@ public class ChildAccountTest {
         //GIVEN
         CreateTransactionRequest request = CreateTransactionRequest.builder()
             .senderAccount(SENDER)
+            .recipientId(SENDER_ID)
             .deadlineValue("1440")
             .feeATM(0)
             .amountATM(1000L)
@@ -216,7 +218,7 @@ public class ChildAccountTest {
             fail("Unexpected flow.");
         } catch (AplException.ValidationException e) {
             //THEN
-            assertTrue(e.getMessage().contains("Transactions of this type must have recipient == 0, amount == 0"), "Unexpected exception message.");
+            assertTrue(e.getMessage().contains("Wrong value of the transaction amount"), "Unexpected exception message.");
         }
     }
 
@@ -226,6 +228,7 @@ public class ChildAccountTest {
         int wrongChildCountValue = 1;// 2 is valid
         CreateTransactionRequest request = CreateTransactionRequest.builder()
             .senderAccount(SENDER)
+            .recipientId(SENDER_ID)
             .publicKey(Convert.parseHexString(SENDER_PUBLIC_KEY))
             .deadlineValue("1440")
             .feeATM(0L)
@@ -258,6 +261,7 @@ public class ChildAccountTest {
         //GIVEN
         CreateTransactionRequest request = CreateTransactionRequest.builder()
             .senderAccount(SENDER)
+            .recipientId(SENDER_ID)
             .publicKey(Convert.parseHexString(SENDER_PUBLIC_KEY))
             .deadlineValue("1440")
             .feeATM(0L)
@@ -289,6 +293,7 @@ public class ChildAccountTest {
         //GIVEN
         CreateTransactionRequest request = CreateTransactionRequest.builder()
             .senderAccount(SENDER)
+            .recipientId(SENDER_ID)
             .publicKey(Convert.parseHexString(SENDER_PUBLIC_KEY))
             .deadlineValue("1440")
             .feeATM(0L)
