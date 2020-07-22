@@ -620,7 +620,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             //
             // Initialize the unconfirmed transaction cache if it hasn't been done yet
             //
-//            synchronized (unconfirmedTransactionTable.getTransactionCache()) {
+            synchronized (unconfirmedTransactionTable.getTransactionCache()) {
                 if (!cacheInitialized) {
                     DbIterator<UnconfirmedTransaction> it = getAllUnconfirmedTransactions();
                     while (it.hasNext()) {
@@ -629,7 +629,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                         unconfirmedTransactionTable.getTransactionCache().put(dbKey, unconfirmedTransaction);
                     }
                     cacheInitialized = true;
-//                }
+                }
             }
             //
             // Build the result set
