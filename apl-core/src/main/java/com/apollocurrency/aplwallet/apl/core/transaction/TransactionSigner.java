@@ -8,8 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
-import com.apollocurrency.aplwallet.apl.core.signature.SignatureHelper;
-import com.apollocurrency.aplwallet.apl.core.signature.SignatureSigner;
+import com.apollocurrency.aplwallet.apl.core.signature.DocumentSigner;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -30,10 +29,12 @@ public class TransactionSigner {
     private static final byte[] ZERO_ECDS = new byte[Signature.ECDSA_SIGNATURE_SIZE];
 
     private final AccountPublicKeyService accountPublicKeyService;
+    private final DocumentSigner documentSigner;
 
     @Inject
     public TransactionSigner(AccountPublicKeyService accountPublicKeyService) {
-        this.accountPublicKeyService = accountPublicKeyService;
+        this.accountPublicKeyService = Objects.requireNonNull(accountPublicKeyService);
+        this.documentSigner = SignatureToolFactory.selectBuilder(1).orElseThrow(UnsupportedTransactionVersion::new);
     }
 
     /**
@@ -45,10 +46,10 @@ public class TransactionSigner {
      */
     public void sign(Transaction transaction, byte[] keySeed) throws AplException.NotValidException {
         Objects.requireNonNull(keySeed);
-        SignatureSigner signatureSigner = SignatureToolFactory.selectBuilder(1).get();
+
         if (transaction.getSignature() != null
             && !Arrays.equals(ZERO_ECDS, transaction.getSignature().bytes())
-            && signatureSigner.isCanonical(transaction.getSignature())) {
+            && documentSigner.isCanonical(transaction.getSignature())) {
             throw new AplException.NotValidException("Transaction is already signed");
         }
         byte[] publicKey = transaction.getSenderPublicKey();
@@ -66,9 +67,8 @@ public class TransactionSigner {
                 Convert.toHexString(publicKey),
                 Convert.toHexString(transaction.getUnsignedBytes()));
         }
-        transaction.sign(
-            SignatureHelper.sign(transaction.getUnsignedBytes(), keySeed)
-        );
+        Signature signature = documentSigner.sign(transaction.getUnsignedBytes(), SignatureToolFactory.createCredential(1, keySeed));
+        transaction.sign(signature);
         if (log.isTraceEnabled()) {
             log.trace("#MULTI_SIG# sign signature={} transaction={}", transaction.getSignature().getJsonString(), transaction.getJSONObject().toJSONString());
         }

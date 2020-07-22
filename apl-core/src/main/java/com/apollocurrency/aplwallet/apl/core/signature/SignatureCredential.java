@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.signature;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.Getter;
 
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.StringJoiner;
 
@@ -31,5 +32,18 @@ public class SignatureCredential implements Credential {
         return new StringJoiner(", ", SignatureCredential.class.getSimpleName() + "[", "]")
             .add("key=" + Convert.toHexString(key))
             .toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SignatureCredential that = (SignatureCredential) o;
+        return Arrays.equals(key, that.key);
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(key);
     }
 }

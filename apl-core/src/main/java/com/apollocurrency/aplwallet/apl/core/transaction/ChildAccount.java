@@ -191,7 +191,7 @@ public abstract class ChildAccount extends TransactionType {
 
     @Override
     public final boolean canHaveRecipient() {
-        return false;
+        return true;
     }
 
     @Override

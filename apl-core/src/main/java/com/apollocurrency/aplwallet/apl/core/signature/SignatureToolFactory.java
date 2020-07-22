@@ -25,20 +25,21 @@ import java.util.Set;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class SignatureToolFactory {
 
-    private static final SignatureValidator[] validators = new SignatureValidator[]
-        {new SignatureValidatorV1(), new MultiSigValidatorImpl()};
+    private static final SignatureVerifier[] validators = new SignatureVerifier[]
+        {new SignatureVerifierV1(), new MultiSigVerifierImpl()};
 
     private static final SignatureParser[] parsers = new SignatureParser[]
         {new SigData.Parser(), new MultiSigData.Parser()};
 
-    private static final SignatureSigner[] sigSigners = new SignatureSigner[]
-        {new SignatureSignerV1(), new MultiSigSigner()};
+    private static final DocumentSigner[] sigSigners = new DocumentSigner[]
+        {new DocumentSignerV1(), new MultiSigSigner()};
 
     public static Signature createSignature(byte[] signature) {
         return new SigData(Objects.requireNonNull(signature));
     }
 
     public static Credential createCredential(int version, byte[]... keys) {
+        Objects.requireNonNull(keys);
         switch (version) {
             case 0:
             case 1:
@@ -50,7 +51,7 @@ public class SignatureToolFactory {
         }
     }
 
-    public static Optional<SignatureValidator> selectValidator(int transactionVersion) {
+    public static Optional<SignatureVerifier> selectValidator(int transactionVersion) {
         return selectTool(transactionVersion, validators);
     }
 
@@ -58,7 +59,7 @@ public class SignatureToolFactory {
         return selectTool(transactionVersion, parsers);
     }
 
-    public static Optional<SignatureSigner> selectBuilder(int transactionVersion) {
+    public static Optional<DocumentSigner> selectBuilder(int transactionVersion) {
         return selectTool(transactionVersion, sigSigners);
     }
 
@@ -110,7 +111,7 @@ public class SignatureToolFactory {
         return signatureCredential;
     }
 
-    private static class MultiSigValidatorImpl implements SignatureValidator {
+    private static class MultiSigVerifierImpl implements SignatureVerifier {
 
         @Override
         public boolean verify(byte[] document, Signature signature, Credential credential) {
@@ -119,7 +120,7 @@ public class SignatureToolFactory {
             MultiSigCredential multiSigCredential;
             multiSigCredential = getMultiSigCredential(credential);
             multiSigData = getMultiSigData(signature);
-            if (multiSigCredential.getThreshold() > multiSigData.getParticipantCount()) {
+            if (multiSigCredential.getThreshold() > multiSigData.getThresholdParticipantCount()) {
                 return false;
             }
 
@@ -127,8 +128,8 @@ public class SignatureToolFactory {
             for (byte[] pk : multiSigCredential.getKeys()) {
                 if (multiSigData.isParticipant(pk)) {
                     if (verifiedPks.contains(pk)) {
-                        if (log.isTraceEnabled()) {
-                            log.trace("Pk already verified, pk={}", Convert.toHexString(pk));
+                        if (log.isDebugEnabled()) {
+                            log.debug("Pk already verified, pk={}", Convert.toHexString(pk));
                         }
                     } else {
                         if (Crypto.verify(multiSigData.getSignature(pk), document, pk)) {
@@ -148,7 +149,7 @@ public class SignatureToolFactory {
         }
     }
 
-    private static class SignatureValidatorV1 implements SignatureValidator {
+    private static class SignatureVerifierV1 implements SignatureVerifier {
         @Override
         public boolean verify(byte[] document, Signature signature, Credential credential) {
             Objects.requireNonNull(document);
@@ -172,7 +173,7 @@ public class SignatureToolFactory {
         }
     }
 
-    private static class MultiSigSigner implements SignatureSigner {
+    private static class MultiSigSigner implements DocumentSigner {
         @Override
         public Signature sign(byte[] document, Credential credential) {
             Objects.requireNonNull(document);
@@ -197,15 +198,16 @@ public class SignatureToolFactory {
         @Override
         public boolean isCanonical(Signature signature) {
             MultiSigData multiSigData = getMultiSigData(Objects.requireNonNull(signature));
-            final boolean[] rc = {multiSigData.getParticipantCount() > 0};
+            final boolean[] rc = {multiSigData.getThresholdParticipantCount() > 0};
             if (rc[0]) {
-                multiSigData.signaturesMap().forEach((keyId, bytes) -> rc[0] = rc[0] && Crypto.isCanonicalSignature(bytes));
+                multiSigData.signaturesMap().
+                    forEach((keyId, bytes) -> rc[0] = rc[0] && Crypto.isCanonicalSignature(bytes));
             }
             return rc[0];
         }
     }
 
-    private static class SignatureSignerV1 implements SignatureSigner {
+    private static class DocumentSignerV1 implements DocumentSigner {
         @Override
         public Signature sign(byte[] document, Credential credential) {
             Objects.requireNonNull(document);

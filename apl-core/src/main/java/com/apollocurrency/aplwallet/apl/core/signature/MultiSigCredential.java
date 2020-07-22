@@ -49,4 +49,20 @@ public class MultiSigCredential implements Credential {
             .add("keys=[" + Arrays.stream(keys).map(Convert::toHexString).collect(Collectors.joining(",")) + "]")
             .toString();
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        MultiSigCredential that = (MultiSigCredential) o;
+        return threshold == that.threshold &&
+            Arrays.equals(keys, that.keys);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(threshold);
+        result = 31 * result + Arrays.hashCode(keys);
+        return result;
+    }
 }

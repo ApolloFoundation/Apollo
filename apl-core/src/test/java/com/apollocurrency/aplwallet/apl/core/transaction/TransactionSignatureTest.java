@@ -10,7 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionBuilde
 import com.apollocurrency.aplwallet.apl.core.signature.Credential;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
-import com.apollocurrency.aplwallet.apl.core.signature.SignatureValidator;
+import com.apollocurrency.aplwallet.apl.core.signature.SignatureVerifier;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.SneakyThrows;
 import org.json.simple.JSONObject;
@@ -46,7 +46,7 @@ class TransactionSignatureTest {
     JSONObject txJsonObject = (JSONObject) new JSONParser().parse(StrtxJsonString);
 
     Transaction transaction;
-    SignatureValidator signatureValidator;
+    SignatureVerifier signatureVerifier;
     Credential credential;
 
     TransactionSignatureTest() throws ParseException {
@@ -56,7 +56,7 @@ class TransactionSignatureTest {
     @BeforeEach
     void setUp() {
         transaction = TransactionBuilder.newTransactionBuilder(txJsonObject).build();
-        signatureValidator = SignatureToolFactory.selectValidator(1).get();
+        signatureVerifier = SignatureToolFactory.selectValidator(1).get();
         credential = SignatureToolFactory.createCredential(1, transaction.getSenderPublicKey());
     }
 
@@ -69,7 +69,7 @@ class TransactionSignatureTest {
 
         //WHEN
 
-        boolean rc = signatureValidator.verify(transaction.getUnsignedBytes(), signature, credential);
+        boolean rc = signatureVerifier.verify(transaction.getUnsignedBytes(), signature, credential);
 
         //THEN
         assertNotNull(signature);

@@ -18,8 +18,14 @@ public interface MultiSig extends Signature {
 
     /**
      * @return the participant count of the multisig
+     * It's a min count of participants that needs signing the document
      */
-    short getParticipantCount();
+    int getThresholdParticipantCount();
+
+    /**
+     * @return the count of participants
+     */
+    int getActualParticipantCount();
 
     /**
      * Return a signature a given public key of a participant

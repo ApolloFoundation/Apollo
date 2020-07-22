@@ -19,7 +19,7 @@ import com.apollocurrency.aplwallet.apl.core.signature.MultiSigCredential;
 import com.apollocurrency.aplwallet.apl.core.signature.KeyValidator;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureCredential;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
-import com.apollocurrency.aplwallet.apl.core.signature.SignatureValidator;
+import com.apollocurrency.aplwallet.apl.core.signature.SignatureVerifier;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
@@ -171,9 +171,9 @@ public class TransactionValidator {
         }
         @ParentChildSpecific(ParentMarker.MULTI_SIGNATURE)
         Credential signatureCredential;
-        SignatureValidator signatureValidator = SignatureToolFactory.selectValidator(transaction.getVersion()).orElseThrow(UnsupportedTransactionVersion::new);
+        SignatureVerifier signatureVerifier = SignatureToolFactory.selectValidator(transaction.getVersion()).orElseThrow(UnsupportedTransactionVersion::new);
         if (log.isTraceEnabled()) {
-            log.trace("#MULTI_SIG# verify signature validator class={}", signatureValidator.getClass().getName());
+            log.trace("#MULTI_SIG# verify signature validator class={}", signatureVerifier.getClass().getName());
         }
         if (sender.isChild()) {
             //multi-signature
@@ -207,7 +207,7 @@ public class TransactionValidator {
                     Convert.toHexString(transaction.getUnsignedBytes()));
             }
 
-            return signatureValidator.verify(
+            return signatureVerifier.verify(
                 transaction.getUnsignedBytes(), transaction.getSignature(), signatureCredential
             );
         }

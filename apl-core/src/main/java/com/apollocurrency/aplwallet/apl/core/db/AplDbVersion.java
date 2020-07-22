@@ -899,7 +899,9 @@ public class AplDbVersion extends DbVersion {
             case 351:
                 apply("ALTER TABLE account ADD COLUMN IF NOT EXISTS addr_scope TINYINT NOT NULL DEFAULT 0");
             case 352:
-                return 352;
+                apply("ALTER TABLE transaction ALTER COLUMN signature VARBINARY NULL DEFAULT NULL");
+            case 353:
+                return 353;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                     + ", probably trying to run older code on newer database");

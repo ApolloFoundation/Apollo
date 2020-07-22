@@ -7,10 +7,8 @@ package com.apollocurrency.aplwallet.apl.core.signature;
 /**
  * @author andrii.zinchenko@firstbridge.io
  */
-public interface SignatureSigner {
+public interface SignatureVerifier {
 
-    Signature sign(byte[] document, Credential credential);
-
-    boolean isCanonical(Signature signature);
+    boolean verify(byte[] document, Signature signature, Credential credential);
 
 }

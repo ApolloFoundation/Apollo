@@ -24,8 +24,11 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProce
 import com.apollocurrency.aplwallet.apl.core.service.state.ShufflerService;
 import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.signature.SignatureHelper;
+import com.apollocurrency.aplwallet.apl.core.signature.Signature;
+import com.apollocurrency.aplwallet.apl.core.signature.DocumentSigner;
+import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
+import com.apollocurrency.aplwallet.apl.core.transaction.UnsupportedTransactionVersion;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCancellationAttachment;
@@ -61,6 +64,8 @@ public class ShufflerServiceImpl implements ShufflerService {
     private final AccountService accountService;
     private final int MAX_SHUFFLERS;
 
+    private final DocumentSigner documentSigner;
+
     private final Map<String, Map<Long, Shuffler>> shufflingsMap = new ConcurrentHashMap<>();
     private final Map<Integer, Set<String>> expirations = new ConcurrentHashMap<>();
 
@@ -77,6 +82,7 @@ public class ShufflerServiceImpl implements ShufflerService {
         this.blockchainProcessor = blockchainProcessor;
         this.accountService = accountService;
         this.MAX_SHUFFLERS = propertiesLoade.getIntProperty("apl.maxNumberOfShufflers");
+        this.documentSigner = SignatureToolFactory.selectBuilder(1).orElseThrow(UnsupportedTransactionVersion::new);
     }
 
     @Override
@@ -472,9 +478,14 @@ public class ShufflerServiceImpl implements ShufflerService {
 
             Transaction transaction = builder.build();
             transaction.setFeeATM(feeCalculator.getMinimumFeeATM(transaction, blockchain.getHeight()));
-            transaction.sign(
-                SignatureHelper.sign(transaction.getUnsignedBytes(), Crypto.getKeySeed(shuffler.getSecretBytes()))
+            Signature signature = documentSigner.sign(
+                transaction.getUnsignedBytes(),
+                SignatureToolFactory.createCredential(
+                    1,
+                    Crypto.getKeySeed(shuffler.getSecretBytes())
+                )
             );
+            transaction.sign(signature);
             //transaction.sign(Crypto.getKeySeed(shuffler.getSecretBytes()));
             shuffler.setFailedTransaction(null);
             shuffler.setFailureCause(null);
