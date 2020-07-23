@@ -592,6 +592,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 }
                 unconfirmedTransaction.setHeight(blockchain.getHeight());
                 unconfirmedTransactionTable.insert(unconfirmedTransaction);
+                unconfirmedTransaction.setHeight(blockchain.getHeight());
                 if (log.isTraceEnabled()) {
                     log.trace("Tx {} applied and saved at {}",unconfirmedTransaction, blockchain.getHeight());
                 }
