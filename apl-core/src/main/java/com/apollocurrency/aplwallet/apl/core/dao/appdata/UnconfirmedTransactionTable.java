@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -48,7 +47,7 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
     @Inject
     public UnconfirmedTransactionTable(LongKeyFactory<UnconfirmedTransaction> transactionKeyFactory,
                                        PropertiesHolder propertiesHolder) {
-        super("unconfirmed_transaction", transactionKeyFactory);
+        super("unconfirmed_transaction", transactionKeyFactory, false);
         this.transactionKeyFactory = transactionKeyFactory;
         int n = propertiesHolder.getIntProperty("apl.maxUnconfirmedTransactions");
         this.maxUnconfirmedTransactions = n <= 0 ? Integer.MAX_VALUE : n;
