@@ -51,9 +51,9 @@ public class StateApiServiceImpl implements StateApiService {
             } catch (NumberFormatException e) {
                 return ResponseBuilderV2.apiError(ApiErrors.INCORRECT_PARAM, "height", heightStr).build();
             }
-
         }
-        if (height == -1 || 0 < height && height <= blockchain.getHeight()) {
+        int blockChainHeight = blockchain.getHeight();
+        if (height == -1 || 0 < height && height <= blockChainHeight) {
             try {
                 if (height == -1) {
                     block = blockchain.getLastBlock();
@@ -69,8 +69,7 @@ public class StateApiServiceImpl implements StateApiService {
             return builder.bind(response).build();
         } else {
             return ResponseBuilderV2.apiError(ApiErrors.OUT_OF_RANGE_NAME_VALUE,
-                "height", heightStr,
-                0, blockchain.getHeight()).build();
+                "height", heightStr, 0, blockChainHeight).build();
         }
     }
 

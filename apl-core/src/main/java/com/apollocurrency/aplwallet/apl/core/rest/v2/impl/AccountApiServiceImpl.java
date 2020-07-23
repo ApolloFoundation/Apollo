@@ -64,6 +64,7 @@ public class AccountApiServiceImpl implements AccountApiService {
 
         CreateTransactionRequest txRequest = CreateTransactionRequest.builder()
             .senderAccount(parentAccount)
+            .recipientId(parentAccountId)
             .secretPhrase(body.getSecret())
             .deadlineValue("1440")
             .amountATM(0)
@@ -103,6 +104,7 @@ public class AccountApiServiceImpl implements AccountApiService {
 
         CreateTransactionRequest txRequest = CreateTransactionRequest.builder()
             .senderAccount(parentAccount)
+            .recipientId(parentAccountId)
             .publicKey(parentAccount.getPublicKey().getPublicKey())
             .deadlineValue("1440")
             .amountATM(0)
@@ -113,7 +115,7 @@ public class AccountApiServiceImpl implements AccountApiService {
             .build();
 
         Transaction transaction = transactionCreator.createTransactionThrowingException(txRequest);
-        response.setTx(Convert.toHexString(transaction.getCopyTxBytes()));
+        response.setTx(Convert.toHexString(transaction.getUnsignedBytes()));
 
         return builder.bind(response).build();
     }
