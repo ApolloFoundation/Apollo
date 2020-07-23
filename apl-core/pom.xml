@@ -140,14 +140,14 @@
       <artifactId>paranamer</artifactId>
     </dependency>
 
-    <dependency>
+    <!--    <dependency>
       <groupId>javax.el</groupId>
       <artifactId>javax.el-api</artifactId>
     </dependency>
     <dependency>
       <groupId>org.glassfish.web</groupId>
       <artifactId>javax.el</artifactId>
-    </dependency>
+    </dependency>-->
 
     <!-- Swagger runtime dependencies -->
     <!-- Swagger annotation for API auto-documenting -->
