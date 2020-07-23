@@ -1,25 +1,14 @@
 /*
- *  Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2019-2020 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.app;
-
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
-
-import javax.enterprise.inject.spi.CDI;
-import java.math.BigInteger;
+package com.apollocurrency.aplwallet.apl.core.entity.appdata;
 
 /**
  * Active generator
  */
 public class ActiveGenerator implements Comparable<ActiveGenerator> {
 
-    private AccountService accountService;
-    private GeneratorService generatorService;
     private final long accountId;
     private long hitTime;
     private long effectiveBalanceAPL;
@@ -30,20 +19,6 @@ public class ActiveGenerator implements Comparable<ActiveGenerator> {
         this.hitTime = Long.MAX_VALUE;
     }
 
-    private AccountService lookupAccountService() {
-        if (accountService == null) {
-            accountService = CDI.current().select(AccountServiceImpl.class).get();
-        }
-        return accountService;
-    }
-
-    private GeneratorService lookupGeneratorService() {
-        if (generatorService == null) {
-            generatorService = CDI.current().select(GeneratorService.class).get();
-        }
-        return generatorService;
-    }
-
     public long getAccountId() {
         return accountId;
     }
@@ -52,10 +27,27 @@ public class ActiveGenerator implements Comparable<ActiveGenerator> {
         return effectiveBalanceAPL;
     }
 
+    public void setEffectiveBalanceAPL(long effectiveBalanceAPL) {
+        this.effectiveBalanceAPL = effectiveBalanceAPL;
+    }
+
     public long getHitTime() {
         return hitTime;
     }
 
+    public byte[] getPublicKey() {
+        return publicKey;
+    }
+
+    public void setPublicKey(byte[] publicKey) {
+        this.publicKey = publicKey;
+    }
+
+    public void setHitTime(long hitTime) {
+        this.hitTime = hitTime;
+    }
+
+/*
     public void setLastBlock(Block lastBlock) {
         if (publicKey == null) {
             publicKey = lookupAccountService().getPublicKeyByteArray(accountId);
@@ -79,6 +71,7 @@ public class ActiveGenerator implements Comparable<ActiveGenerator> {
         BigInteger hit = lookupGeneratorService().getHit(publicKey, lastBlock);
         hitTime = generatorService.getHitTime(effectiveBalance, hit, lastBlock);
     }
+*/
 
     @Override
     public int hashCode() {
@@ -92,6 +85,6 @@ public class ActiveGenerator implements Comparable<ActiveGenerator> {
 
     @Override
     public int compareTo(ActiveGenerator obj) {
-        return (hitTime < obj.hitTime ? -1 : (hitTime > obj.hitTime ? 1 : 0));
+        return (Long.compare(hitTime, obj.hitTime));
     }
 }
