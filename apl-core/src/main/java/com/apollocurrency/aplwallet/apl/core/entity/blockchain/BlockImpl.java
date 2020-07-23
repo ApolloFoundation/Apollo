@@ -21,12 +21,12 @@
 package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -52,11 +52,11 @@ import static org.slf4j.LoggerFactory.getLogger;
 public final class BlockImpl implements Block {
     private static final Logger LOG = getLogger(BlockImpl.class);
 
-
-    private static BlockchainConfig blockchainConfig;// = CDI.current().select(BlockchainConfig.class).get();
+    private static BlockchainConfig blockchainConfig;
     private static Blockchain blockchain;
     private static ShardDao shardDao;
     private static AccountService accountService;
+    private static GeneratorService generatorService;
 
     private final int version;
     private final int timestamp;
@@ -204,6 +204,13 @@ public final class BlockImpl implements Block {
             blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
         }
         return blockchainConfig;
+    }
+
+    private GeneratorService lookupGeneratorService() {
+        if (generatorService == null) {
+            generatorService = CDI.current().select(GeneratorService.class).get();
+        }
+        return generatorService;
     }
 
     @Override
@@ -437,7 +444,6 @@ public final class BlockImpl implements Block {
     public boolean verifyGenerationSignature() throws BlockchainProcessor.BlockOutOfOrderException {
 
         try {
-
             Block previousBlock = lookupBlockchain().getBlock(getPreviousBlockId());
             if (previousBlock == null) {
                 throw new BlockchainProcessor.BlockOutOfOrderException("Can't verify signature because previous block is missing", this);
@@ -462,7 +468,8 @@ public final class BlockImpl implements Block {
 
             BigInteger hit = new BigInteger(1, new byte[]{generationSignatureHash[7], generationSignatureHash[6], generationSignatureHash[5], generationSignatureHash[4], generationSignatureHash[3], generationSignatureHash[2], generationSignatureHash[1], generationSignatureHash[0]});
 
-            boolean ret = Generator.verifyHit(hit, BigInteger.valueOf(effectiveBalance), previousBlock, requireTimeout(version) ? timestamp - timeout : timestamp);
+            boolean ret = lookupGeneratorService().verifyHit(
+                hit, BigInteger.valueOf(effectiveBalance), previousBlock, requireTimeout(version) ? timestamp - timeout : timestamp);
             if (!ret) {
                 LOG.warn("Account: {} Effective ballance: {}, blockchain.height: {}, Generator.verifyHit() verification failed",
                     account, effectiveBalance, blockchain.getHeight());

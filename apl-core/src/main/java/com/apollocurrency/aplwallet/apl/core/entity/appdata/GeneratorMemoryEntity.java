@@ -6,8 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.entity.appdata;
 
 import java.math.BigInteger;
 
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -15,7 +13,7 @@ import lombok.ToString;
 @ToString
 @Getter
 @Setter
-public class GeneratorEntity implements Comparable<GeneratorEntity> {
+public class GeneratorMemoryEntity implements Comparable<GeneratorMemoryEntity> {
 
     private final long accountId;
     private final byte[] keySeed;
@@ -26,7 +24,7 @@ public class GeneratorEntity implements Comparable<GeneratorEntity> {
     private volatile BigInteger effectiveBalance;
     private volatile long deadline;
 
-        public GeneratorEntity(byte[] keySeed, byte[] publicKey, long accountId) {
+        public GeneratorMemoryEntity(byte[] keySeed, byte[] publicKey, long accountId) {
         this.keySeed = keySeed;
         this.publicKey = publicKey;
         this.accountId = accountId;
@@ -37,7 +35,7 @@ public class GeneratorEntity implements Comparable<GeneratorEntity> {
     }
 
     @Override
-    public int compareTo(GeneratorEntity g) {
+    public int compareTo(GeneratorMemoryEntity g) {
         int i = this.hit.multiply(g.effectiveBalance).compareTo(g.hit.multiply(this.effectiveBalance));
         if (i != 0) {
             return i;

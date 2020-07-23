@@ -5,8 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
 import javax.enterprise.inject.spi.CDI;
-import java.math.BigInteger;
-import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -14,17 +12,14 @@ import java.util.Map;
 import java.util.Objects;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.appdata.GeneratorEntity;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.GeneratorMemoryEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.GeneratorServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 
@@ -42,10 +37,9 @@ public class GenerateBlocksThread implements Runnable {
     private volatile TimeService timeService;
     private final TransactionProcessor transactionProcessor;
     private BlockchainProcessor blockchainProcessor;
-    private AccountService accountService;
     private final GeneratorServiceImpl generatorService;
 
-    private static volatile List<GeneratorEntity> sortedForgers = null;
+    private static volatile List<GeneratorMemoryEntity> sortedForgers = null;
     private int delayTime;
 
     public GenerateBlocksThread(PropertiesHolder propertiesHolder,
@@ -54,7 +48,6 @@ public class GenerateBlocksThread implements Runnable {
                                 BlockchainConfig blockchainConfig,
                                 TimeService timeService,
                                 TransactionProcessor transactionProcessor,
-                                AccountService accountService,
                                 GeneratorServiceImpl generatorService) {
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder);
         this.globalSync = Objects.requireNonNull(globalSync);
@@ -63,7 +56,6 @@ public class GenerateBlocksThread implements Runnable {
         this.timeService = Objects.requireNonNull(timeService);
         this.transactionProcessor = Objects.requireNonNull(transactionProcessor);
         this.delayTime = this.propertiesHolder.FORGING_DELAY();
-        this.accountService = Objects.requireNonNull(accountService);
         this.generatorService = Objects.requireNonNull(generatorService);
     }
 
@@ -84,12 +76,10 @@ public class GenerateBlocksThread implements Runnable {
                     if (lastBlock.getId() != lastBlockId || sortedForgers == null) {
                         lastBlockId = lastBlock.getId();
 
-                        Map<Long, GeneratorEntity> generatorsMap = generatorService.getGeneratorsMap();
+                        Map<Long, GeneratorMemoryEntity> generatorsMap = generatorService.getGeneratorsMap();
                         if (lastBlock.getTimestamp() > timeService.getEpochTime() - 600) {
                             Block previousBlock = blockchain.getBlock(lastBlock.getPreviousBlockId());
-                            for (GeneratorEntity generator : generatorsMap.values()) {
-//                            for (Generator generator : generators.values()) {
-//                                generator.setLastBlock(previousBlock);
+                            for (GeneratorMemoryEntity generator : generatorsMap.values()) {
                                 generatorService.setLastBlock(previousBlock, generator);
                                 int timestamp = generator.getTimestamp(generationLimit);
                                 if (timestamp != generationLimit && generator.getHitTime() > 0 && timestamp < lastBlock.getTimestamp() - lastBlock.getTimeout()) {
@@ -104,8 +94,8 @@ public class GenerateBlocksThread implements Runnable {
                                 }
                             }
                         }
-                        List<GeneratorEntity> forgers = new ArrayList<>();
-                        for (GeneratorEntity generator : generatorsMap.values()) {
+                        List<GeneratorMemoryEntity> forgers = new ArrayList<>();
+                        for (GeneratorMemoryEntity generator : generatorsMap.values()) {
                             generatorService.setLastBlock(lastBlock, generator);
                             if (generator.getEffectiveBalance().signum() > 0) {
                                 forgers.add(generator);
@@ -116,7 +106,7 @@ public class GenerateBlocksThread implements Runnable {
                         logged = false;
                     }
                     if (!logged) {
-                        for (GeneratorEntity generator : sortedForgers) {
+                        for (GeneratorMemoryEntity generator : sortedForgers) {
                             if (generator.getHitTime() - generationLimit > 60) {
                                 break;
                             }
@@ -124,7 +114,7 @@ public class GenerateBlocksThread implements Runnable {
                             logged = true;
                         }
                     }
-                    for (GeneratorEntity generator : sortedForgers) {
+                    for (GeneratorMemoryEntity generator : sortedForgers) {
                         if (suspendForging) {
                             break;
                         }
@@ -146,49 +136,16 @@ public class GenerateBlocksThread implements Runnable {
         }
     }
 
-/*
-    public void setLastBlock(Block lastBlock, GeneratorEntity generator) {
-        int height = lastBlock.getHeight();
-        Account account = accountService.getAccount(generator.getAccountId(), height);
-        if (account == null) {
-            generator.setEffectiveBalance(BigInteger.ZERO);
-        } else {
-            generator.setEffectiveBalance(
-                BigInteger.valueOf(Math.max(
-                    accountService.getEffectiveBalanceAPL(account, height, true), 0)));
-        }
-        if (generator.getEffectiveBalance().signum() == 0) {
-            generator.setHitTime(0);
-            generator.setHit(BigInteger.ZERO);
-            return;
-        }
-        generator.setHit( getHit(generator.getPublicKey(), lastBlock));
-        generator.setHitTime( getHitTime(generator.getEffectiveBalance(), generator.getHit(), lastBlock));
-        generator.setDeadline( Math.max(generator.getHitTime() - lastBlock.getTimestamp(), 0));
-    }
-
-    public BigInteger getHit(byte[] publicKey, Block block) {
-        MessageDigest digest = Crypto.sha256();
-        digest.update(block.getGenerationSignature());
-        byte[] generationSignatureHash = digest.digest(publicKey);
-        return new BigInteger(1,
-            new byte[]{generationSignatureHash[7], generationSignatureHash[6],
-                generationSignatureHash[5], generationSignatureHash[4], generationSignatureHash[3],
-                generationSignatureHash[2], generationSignatureHash[1], generationSignatureHash[0]});
-    }
-
-    public long getHitTime(BigInteger effectiveBalance, BigInteger hit, Block block) {
-        return block.getTimestamp()
-            + hit.divide(BigInteger.valueOf(block.getBaseTarget()).multiply(effectiveBalance)).longValue();
-    }
-*/
-
-    public List<GeneratorEntity> getSortedForgers() {
+    public List<GeneratorMemoryEntity> getSortedForgers() {
         return sortedForgers;
     }
 
     public void resetSortedForgers() {
         sortedForgers = null;
+    }
+
+    public void setDelayTime(int delayTime) {
+        this.delayTime = delayTime;
     }
 
     private BlockchainProcessor lookupBlockchainProcessor() {

@@ -23,7 +23,6 @@ package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainScanException;
-import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.app.GetNextBlocksTask;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventType;
@@ -61,6 +60,7 @@ import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.DatabaseManagerImpl;
@@ -187,7 +187,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private AccountService accountService;
     private AccountControlPhasingService accountControlPhasingService; // lazy initialization only !
     private final PrunableRestorationService prunableRestorationService;
-    //    private final Listeners<Block, Event> blockListeners = new Listeners<>();
+    private final GeneratorService generatorService;
+
     private volatile Peer lastBlockchainFeeder;
     private volatile int lastBlockchainFeederHeight;
     private volatile boolean getMoreBlocks = true;
@@ -214,7 +215,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    AccountService accountService,
                                    AccountControlPhasingService accountControlPhasingService,
                                    BlockchainConfigUpdater blockchainConfigUpdater,
-                                   PrunableRestorationService prunableRestorationService) {
+                                   PrunableRestorationService prunableRestorationService,
+                                   GeneratorService generatorService) {
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder);
         this.defaultNumberOfForkConfirmations = propertiesHolder.getIntProperty("apl.numberOfForkConfirmations");
         this.blockchainConfig = blockchainConfig;
@@ -244,6 +246,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.accountControlPhasingService = accountControlPhasingService;
         this.blockchainConfigUpdater = blockchainConfigUpdater;
         this.prunableRestorationService = prunableRestorationService;
+        this.generatorService = generatorService;
 
         configureBackgroundTasks();
 
@@ -606,13 +609,13 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
                 validator.validate(block, previousLastBlock, curTime);
 
-                long nextHitTime = Generator.getNextHitTime(previousLastBlock.getId(), curTime);
+                long nextHitTime = generatorService.getNextHitTime(previousLastBlock.getId(), curTime);
                 if (nextHitTime > 0 && block.getTimestamp() > nextHitTime + 1) {
                     String msg = "Rejecting block " + block.getStringId() + " at height " + previousLastBlock.getHeight()
                         + " block timestamp " + block.getTimestamp() + " next hit time " + nextHitTime
                         + " current time " + curTime;
                     log.debug(msg);
-                    Generator.setDelay(-propertiesHolder.FORGING_SPEEDUP());
+                    generatorService.setDelay(-propertiesHolder.FORGING_SPEEDUP());
                     throw new BlockOutOfOrderException(msg, block);
                 }
 

@@ -5,35 +5,37 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import com.apollocurrency.aplwallet.apl.core.entity.appdata.GeneratorEntity;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.GeneratorMemoryEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 
 public interface GeneratorService {
 
-    GeneratorEntity startForging(byte[] keySeed);
+    GeneratorMemoryEntity startForging(byte[] keySeed);
 
-    GeneratorEntity stopForging(byte[] keySeed);
+    GeneratorMemoryEntity stopForging(byte[] keySeed);
 
     int stopForging();
 
-    GeneratorEntity getGenerator(long id);
+    GeneratorMemoryEntity getGenerator(long id);
 
     int getGeneratorCount();
 
-    Map<Long, GeneratorEntity> getGeneratorsMap();
+    Map<Long, GeneratorMemoryEntity> getGeneratorsMap();
 
-    Collection<GeneratorEntity> getAllGenerators();
+    Collection<GeneratorMemoryEntity> getAllGenerators();
 
-    List<GeneratorEntity> getSortedForgers();
+    List<GeneratorMemoryEntity> getSortedForgers();
 
     long getNextHitTime(long lastBlockId, int curTime);
 
     void setDelay(int delay);
 
-    boolean verifyHit(GeneratorEntity generator, Block previousBlock, int timestamp);
+    boolean verifyHit(BigInteger hit, BigInteger effectiveBalance, Block previousBlock, int timestamp);
 
-    void setLastBlock(Block lastBlock, GeneratorEntity generator);
+    boolean verifyHit(GeneratorMemoryEntity generator, Block previousBlock, int timestamp);
+
+    void setLastBlock(Block lastBlock, GeneratorMemoryEntity generator);
 
     BigInteger getHit(byte[] publicKey, Block block);
 
@@ -43,6 +45,6 @@ public interface GeneratorService {
 
     void resumeForging();
 
-    boolean forge(Block lastBlock, int generationLimit, GeneratorEntity generator) throws BlockchainProcessor.BlockNotAcceptedException;
+    boolean forge(Block lastBlock, int generationLimit, GeneratorMemoryEntity generator) throws BlockchainProcessor.BlockNotAcceptedException;
 
 }

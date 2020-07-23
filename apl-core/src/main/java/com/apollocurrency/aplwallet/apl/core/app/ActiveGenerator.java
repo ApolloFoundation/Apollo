@@ -76,8 +76,8 @@ public class ActiveGenerator implements Comparable<ActiveGenerator> {
             return;
         }
         BigInteger effectiveBalance = BigInteger.valueOf(effectiveBalanceAPL);
-        BigInteger hit = Generator.getHit(publicKey, lastBlock);
-        hitTime = Generator.getHitTime(effectiveBalance, hit, lastBlock);
+        BigInteger hit = lookupGeneratorService().getHit(publicKey, lastBlock);
+        hitTime = generatorService.getHitTime(effectiveBalance, hit, lastBlock);
     }
 
     @Override

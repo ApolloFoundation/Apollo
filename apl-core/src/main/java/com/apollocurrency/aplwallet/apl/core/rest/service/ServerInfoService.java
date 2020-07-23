@@ -13,10 +13,10 @@ import com.apollocurrency.aplwallet.api.dto.info.NameCodeTypeDto;
 import com.apollocurrency.aplwallet.api.dto.info.SubTypeDto;
 import com.apollocurrency.aplwallet.api.dto.info.TimeDto;
 import com.apollocurrency.aplwallet.api.dto.info.TotalSupplyDto;
-import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.GeneratorMemoryEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
@@ -185,8 +185,8 @@ public class ServerInfoService {
 
     public List<GeneratorInfo> getActiveForgers(boolean showBallances) {
         List<GeneratorInfo> res = new ArrayList<>();
-        List<Generator> forgers = Generator.getSortedForgers();
-        for (Generator g : forgers) {
+        List<GeneratorMemoryEntity> forgers = generatorService.getSortedForgers();
+        for (GeneratorMemoryEntity g : forgers) {
             GeneratorInfo gi = new GeneratorInfo();
             gi.setAccount(g.getAccountId());
             gi.setDeadline(g.getDeadline());
@@ -384,7 +384,7 @@ public class ServerInfoService {
         }
         dto.numberOfPeers = peersService.getAllPeers().size();
         dto.numberOfActivePeers = peersService.getActivePeers().size();
-        dto.numberOfUnlockedAccounts = Generator.getAllGenerators().size();
+        dto.numberOfUnlockedAccounts = generatorService.getAllGenerators().size();
         dto.availableProcessors = Runtime.getRuntime().availableProcessors();
         dto.maxMemory = Runtime.getRuntime().maxMemory();
         dto.totalMemory = Runtime.getRuntime().totalMemory();

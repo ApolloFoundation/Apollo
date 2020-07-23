@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import org.json.simple.JSONObject;
@@ -78,7 +77,7 @@ public final class GetState extends AbstractAPIRequestHandler {
         }
         response.put("numberOfPeers", lookupPeersService().getAllPeers().size());
         response.put("numberOfActivePeers", lookupPeersService().getActivePeers().size());
-        response.put("numberOfUnlockedAccounts", Generator.getAllGenerators().size());
+        response.put("numberOfUnlockedAccounts", lookupGeneratorService().getAllGenerators().size());
         response.put("availableProcessors", Runtime.getRuntime().availableProcessors());
         response.put("maxMemory", Runtime.getRuntime().maxMemory());
         response.put("totalMemory", Runtime.getRuntime().totalMemory());
