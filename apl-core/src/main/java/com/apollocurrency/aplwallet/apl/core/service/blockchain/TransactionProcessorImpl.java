@@ -580,6 +580,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                     throw new AplException.NotCurrentlyValidException("Duplicate unconfirmed transaction");
                 }
 
+                unconfirmedTransaction.setHeight(blockchain.getHeight());
                 unconfirmedTransactionTable.insert(unconfirmedTransaction);
 
                 dataSource.commit();
