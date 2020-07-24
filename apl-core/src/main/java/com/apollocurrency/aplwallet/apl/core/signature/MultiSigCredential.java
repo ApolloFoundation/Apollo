@@ -18,9 +18,9 @@ import java.util.stream.Collectors;
 @Getter
 public class MultiSigCredential implements Credential {
     private final int threshold;
-    private final byte[][] keys;
+    private final byte[][] keys;//array of the key seed or public key
 
-    public MultiSigCredential(int threshold, byte[][] keys) {
+    public MultiSigCredential(int threshold, byte[]... keys) {
         this.keys = Objects.requireNonNull(keys);
         if (threshold < 1 || threshold > keys.length) {
             throw new IllegalArgumentException("Wrong threshold value.");
@@ -29,7 +29,7 @@ public class MultiSigCredential implements Credential {
     }
 
     public MultiSigCredential(byte[] key) {
-        this(1, new byte[][]{key});
+        this(1, key);
     }
 
     @Override

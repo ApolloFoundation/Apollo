@@ -95,6 +95,39 @@ paths:
           $ref: '#/components/responses/ServerError'
       security:
         - bearerAuth: []
+  /@@account/money:
+    post:
+      tags:
+        - account
+      summary: Returns signed SendMoney transaction from child account
+      description: |
+        Returns signed SendMoney transaction as a byte array.
+        This transaction is a multi-signature signed tx.
+      operationId: createChildAccountTxSendMony
+      requestBody:
+        description: the parent account, child account and other
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountReqSendMoney'
+        required: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateChildAccountResp'
+        401:
+          description: Unauthorized Error
+        403:
+          description: Access Forbidden
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+      security:
+        - bearerAuth: []
   /@@account/{account}:
     get:
       tags:
@@ -794,6 +827,36 @@ components:
           items:
             type: string
             example: 'secret1'
+    AccountReqSendMoney:
+      required:
+        - parent
+        - publicKey
+      type: object
+      properties:
+        parent:
+          type: string
+          description: parent account id
+          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+        psecret:
+          type: string
+          description: parent account secret phrase
+          example: 'ParenttopSecretPhrase'
+        sender:
+          type: string
+          description: child account id
+          example: 'APL-632K-TWX3-2ALQ-973CU'
+        csecret:
+          type: string
+          description: child account secret phrase
+          example: 'ChildtopSecretPhrase'
+        recipient:
+          type: string
+          description: recipient account id
+          example: 'APL-VWMY-APVK-UFHN-3MC7N'
+        amount:
+          type: integer
+          format: int64
+          description: the amount
     CreateChildAccountResp:
       required:
         - parent

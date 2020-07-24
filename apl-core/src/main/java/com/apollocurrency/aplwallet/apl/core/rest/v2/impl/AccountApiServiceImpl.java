@@ -4,6 +4,7 @@ import com.apollocurrency.aplwallet.api.v2.AccountApiService;
 import com.apollocurrency.aplwallet.api.v2.NotFoundException;
 import com.apollocurrency.aplwallet.api.v2.model.AccountInfoResp;
 import com.apollocurrency.aplwallet.api.v2.model.AccountReq;
+import com.apollocurrency.aplwallet.api.v2.model.AccountReqSendMoney;
 import com.apollocurrency.aplwallet.api.v2.model.AccountReqTest;
 import com.apollocurrency.aplwallet.api.v2.model.CreateChildAccountResp;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
@@ -15,7 +16,10 @@ import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.ResponseBuilderV2;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.AccountInfoMapper;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.signature.MultiSigCredential;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ChildAccountAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 
@@ -38,6 +42,55 @@ public class AccountApiServiceImpl implements AccountApiService {
         this.accountService = Objects.requireNonNull(accountService);
         this.accountInfoMapper = Objects.requireNonNull(accountInfoMapper);
         this.transactionCreator = Objects.requireNonNull(transactionCreator);
+    }
+
+    @Override
+    public Response createChildAccountTxSendMony(AccountReqSendMoney body, SecurityContext securityContext) throws NotFoundException {
+        ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
+
+        long parentAccountId = Convert.parseAccountId(body.getParent());
+        Account parentAccount = accountService.getAccount(parentAccountId);
+        if (parentAccount == null) {
+            return ResponseBuilderV2.apiError(ApiErrors.INCORRECT_VALUE, "parent_account", body.getParent()).build();
+        }
+        long senderAccountId = Convert.parseAccountId(body.getSender());
+        Account senderAccount = accountService.getAccount(senderAccountId);
+        if (senderAccount == null) {
+            return ResponseBuilderV2.apiError(ApiErrors.INCORRECT_VALUE, "sender_account", body.getSender()).build();
+        }
+        long recipientAccountId = Convert.parseAccountId(body.getRecipient());
+        Account recipientAccount = accountService.getAccount(recipientAccountId);
+        if (recipientAccount == null) {
+            return ResponseBuilderV2.apiError(ApiErrors.INCORRECT_VALUE, "recipient_account", body.getRecipient()).build();
+        }
+
+        CreateChildAccountResp response = new CreateChildAccountResp();
+        response.setParent(body.getParent());
+
+        CreateTransactionRequest txRequest = CreateTransactionRequest.builder()
+            .version(2)
+            .senderAccount(senderAccount)
+            .publicKey(accountService.getPublicKeyByteArray(senderAccountId))
+            .recipientId(recipientAccountId)
+            .deadlineValue("1440")
+            .amountATM(body.getAmount())
+            .feeATM(0)
+            .attachment(Attachment.ORDINARY_PAYMENT)
+            .broadcast(false)
+            .validate(false)
+            .message(new MessageAppendix("simple text message"))
+            .credential(
+                new MultiSigCredential(2,
+                    Crypto.getKeySeed(body.getCsecret()),
+                    Crypto.getKeySeed(body.getPsecret())
+                )
+            )
+            .build();
+
+        Transaction transaction = transactionCreator.createTransactionThrowingException(txRequest);
+        response.setTx(Convert.toHexString(transaction.getCopyTxBytes()));
+
+        return builder.bind(response).build();
     }
 
     @Override

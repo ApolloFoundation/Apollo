@@ -211,7 +211,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
                 builder.ecBlockHeight(txRequest.getEcBlockHeight());
             }
             transaction = builder.build(txRequest.getKeySeed());
-            signer.sign(transaction, txRequest.getKeySeed());
+
             if (txRequest.getFeeATM() <= 0 || (propertiesHolder.correctInvalidFees() && txRequest.getKeySeed() == null)) {
                 int effectiveHeight = blockchain.getHeight();
                 @TransactionFee(FeeMarker.CALCULATOR)
@@ -227,6 +227,8 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
             } catch (ArithmeticException e) {
                 throw new AplException.NotValidException(NOT_ENOUGH_APL);
             }
+
+            signer.sign(transaction, txRequest.getKeySeed());
 
             if (txRequest.isBroadcast()) {
                 lookupTransactionProcessor().broadcast(transaction);

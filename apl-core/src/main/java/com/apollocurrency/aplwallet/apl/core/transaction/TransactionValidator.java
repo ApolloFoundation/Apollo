@@ -181,7 +181,10 @@ public class TransactionValidator {
                 log.error("Inconsistent transaction fields, the value of the sender property 'parent' doesn't match the transaction version.");
                 return false;
             }
-            signatureCredential = new MultiSigCredential(2, new byte[][]{accountService.getPublicKeyByteArray(sender.getParentId()), transaction.getSenderPublicKey()});
+            signatureCredential = new MultiSigCredential(2,
+                accountService.getPublicKeyByteArray(sender.getParentId()),
+                transaction.getSenderPublicKey()
+            );
         } else {
             //only one signer
             if (transaction.getVersion() < 2) {

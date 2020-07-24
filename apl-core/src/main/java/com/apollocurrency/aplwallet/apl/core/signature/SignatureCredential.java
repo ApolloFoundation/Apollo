@@ -16,7 +16,7 @@ import java.util.StringJoiner;
  */
 @Getter
 public class SignatureCredential implements Credential {
-    private final byte[] key;
+    private final byte[] key;//key seed or public key
 
     public SignatureCredential(byte[] key) {
         this.key = Objects.requireNonNull(key);

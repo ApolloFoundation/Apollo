@@ -177,9 +177,10 @@ public class SignatureToolFactory {
         @Override
         public Signature sign(byte[] document, Credential credential) {
             Objects.requireNonNull(document);
-
-            MultiSigCredential multiSigCredential;
-            multiSigCredential = getMultiSigCredential(credential);
+            if (log.isTraceEnabled()) {
+                log.trace("#MULTI_SIG# sign credential: {}", credential);
+            }
+            MultiSigCredential multiSigCredential = getMultiSigCredential(credential);
             Map<byte[], byte[]> signatures = new HashMap<>();
             for (byte[] seed : multiSigCredential.getKeys()) {
                 signatures.put(

@@ -61,6 +61,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -670,7 +671,12 @@ public class TransactionImpl implements Transaction {
 
     @Override
     public byte[] getUnsignedBytes() {
-        return zeroSignature(getCopyTxBytes());
+        if (version < 2) {
+            return zeroSignature(getCopyTxBytes());
+        } else {
+            byte[] txBytes = bytes();
+            return Arrays.copyOf(txBytes, txV2HeaderSize() + appendagesSize);
+        }
     }
 
     @Override

@@ -48,6 +48,8 @@ public class TransactionCreator {
     }
 
     public TransactionCreationData createTransaction(CreateTransactionRequest txRequest) {
+        int version = txRequest.getVersion() != null ? txRequest.getVersion() : 1;
+
         TransactionCreationData tcd = new TransactionCreationData();
         EncryptedMessageAppendix encryptedMessage = null;
         PrunableEncryptedMessageAppendix prunableEncryptedMessage = null;
@@ -75,7 +77,7 @@ public class TransactionCreator {
             txRequest.setPublicKey(Crypto.getPublicKey(txRequest.getKeySeed()));
         }
 
-        if (txRequest.getKeySeed() == null && txRequest.getPublicKey() == null) {
+        if (txRequest.getKeySeed() == null && txRequest.getPublicKey() == null && txRequest.getCredential() == null) {
             tcd.setErrorType(TransactionCreationData.ErrorType.MISSING_SECRET_PHRASE);
             return tcd;
         }
@@ -109,7 +111,7 @@ public class TransactionCreator {
         int timestamp = txRequest.getTimestamp() != 0 ? txRequest.getTimestamp() : timeService.getEpochTime();
         Transaction transaction;
         try {
-            Transaction.Builder builder = TransactionBuilder.newTransactionBuilder(txRequest.getPublicKey(), txRequest.getAmountATM(), txRequest.getFeeATM(),
+            Transaction.Builder builder = TransactionBuilder.newTransactionBuilder(version, txRequest.getPublicKey(), txRequest.getAmountATM(), txRequest.getFeeATM(),
                 deadline, txRequest.getAttachment(), timestamp).referencedTransactionFullHash(txRequest.getReferencedTransactionFullHash());
             if (txRequest.getAttachment().getTransactionType().canHaveRecipient()) {
                 builder.recipientId(txRequest.getRecipientId());
@@ -146,8 +148,14 @@ public class TransactionCreator {
             }
 
             //Sign transaction
-            if (txRequest.getKeySeed() != null) {
-                signer.sign(transaction, txRequest.getKeySeed());
+            if (version < 2) { //tx v1
+                if (txRequest.getKeySeed() != null) {
+                    signer.sign(transaction, txRequest.getKeySeed());
+                }
+            } else {//tx v2
+                if (txRequest.getCredential() != null) {
+                    signer.sign(transaction, txRequest.getCredential());
+                }
             }
 
             if (txRequest.isBroadcast()) {
@@ -205,7 +213,9 @@ public class TransactionCreator {
         }
 
         public enum ErrorType {
-            INCORRECT_DEADLINE, MISSING_DEADLINE, MISSING_SECRET_PHRASE, INCORRECT_EC_BLOCK, FEATURE_NOT_AVAILABLE, NOT_ENOUGH_APL, INSUFFICIENT_BALANCE_ON_APPLY_UNCONFIRMED, VALIDATION_FAILED
+            INCORRECT_DEADLINE, MISSING_DEADLINE, MISSING_SECRET_PHRASE,
+            INCORRECT_EC_BLOCK, FEATURE_NOT_AVAILABLE, NOT_ENOUGH_APL,
+            INSUFFICIENT_BALANCE_ON_APPLY_UNCONFIRMED, VALIDATION_FAILED
         }
     }
 }
