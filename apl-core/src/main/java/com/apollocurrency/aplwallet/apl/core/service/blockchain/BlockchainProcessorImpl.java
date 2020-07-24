@@ -1089,12 +1089,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     private int getBlockVersion(int previousBlockHeight) {
-
         return 3;
     }
 
     private int getTransactionVersion(int previousBlockHeight) {
-        return 1;
+        return transactionValidator.getActualTransactionVersion();
     }
 
 
