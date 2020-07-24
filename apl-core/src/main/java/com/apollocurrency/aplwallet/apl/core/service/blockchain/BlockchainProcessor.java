@@ -72,6 +72,8 @@ public interface BlockchainProcessor {
 
     List<Block> popOffToCommonBlock(Block commonBlock);
 
+    void pushBlock(final Block block) throws BlockNotAcceptedException;
+
 //    int restorePrunedData();
 
 //    Transaction restorePrunedTransaction(long transactionId);
@@ -139,18 +141,4 @@ public interface BlockchainProcessor {
 
     }
 
-    class InvalidTransactionException extends BlockNotAcceptedException {
-
-        public InvalidTransactionException(String message, Block block) {
-            super(message, block);
-        }
-
-        public InvalidTransactionException(Throwable cause, Block block) {
-            super(cause, block);
-        }
-
-        public InvalidTransactionException(String message) {
-            super(message, null);
-        }
-    }
 }
