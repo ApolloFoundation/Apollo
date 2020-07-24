@@ -260,7 +260,7 @@ class MultiSigData implements MultiSig {
             MultiSig multiSig = (MultiSig) signature;
             JSONObject json = new JSONObject();
             json.put(PAYLOAD_FIELD_NAME, Convert.toHexString(multiSig.getPayload()));
-            json.put(PARTICIPANT_COUNT_FIELD_NAME, multiSig.getThresholdParticipantCount());
+            json.put(PARTICIPANT_COUNT_FIELD_NAME, String.valueOf(multiSig.getThresholdParticipantCount()));
             JSONArray signatureArray = new JSONArray();
             multiSig.signaturesMap().forEach((keyId, bytes) -> {
                 JSONObject item = new JSONObject();
@@ -282,7 +282,7 @@ class MultiSigData implements MultiSig {
         @Override
         public Signature parse(JSONObject json) {
             byte[] payload = Convert.parseHexString((String) json.get(PAYLOAD_FIELD_NAME));
-            int participantCount = (int) json.get(PARTICIPANT_COUNT_FIELD_NAME);
+            int participantCount = Integer.parseInt((String) json.get(PARTICIPANT_COUNT_FIELD_NAME));
             MultiSigData multiSigData = new MultiSigData(participantCount, payload);
             JSONArray signatures = (JSONArray) json.get(SIGNATURES_FIELD_NAME);
             for (Object item : signatures) {

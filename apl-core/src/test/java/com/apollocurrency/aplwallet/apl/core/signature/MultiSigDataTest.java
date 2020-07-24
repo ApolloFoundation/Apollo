@@ -81,7 +81,7 @@ class MultiSigDataTest extends AbstractSigData {
 
         //THEN
         assertArrayEquals(ZERO4BYTES, Convert.parseHexString((String) jsonObject.get("payload")));
-        assertEquals(2, jsonObject.get("participantCount"));
+        assertEquals(2, Integer.parseInt((String) jsonObject.get("participantCount")));
         assertTrue(jsonObject.get(SIGNATURES_FIELD_NAME) instanceof JSONArray);
 
         JSONArray signatures = (JSONArray) jsonObject.get(SIGNATURES_FIELD_NAME);
