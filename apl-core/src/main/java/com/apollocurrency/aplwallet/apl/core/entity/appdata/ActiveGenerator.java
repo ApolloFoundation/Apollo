@@ -47,32 +47,6 @@ public class ActiveGenerator implements Comparable<ActiveGenerator> {
         this.hitTime = hitTime;
     }
 
-/*
-    public void setLastBlock(Block lastBlock) {
-        if (publicKey == null) {
-            publicKey = lookupAccountService().getPublicKeyByteArray(accountId);
-            if (publicKey == null) {
-                hitTime = Long.MAX_VALUE;
-                return;
-            }
-        }
-        int height = lastBlock.getHeight();
-        Account account = lookupAccountService().getAccount(accountId, height);
-        if (account == null) {
-            hitTime = Long.MAX_VALUE;
-            return;
-        }
-        effectiveBalanceAPL = Math.max(lookupAccountService().getEffectiveBalanceAPL(account, height, true), 0);
-        if (effectiveBalanceAPL == 0) {
-            hitTime = Long.MAX_VALUE;
-            return;
-        }
-        BigInteger effectiveBalance = BigInteger.valueOf(effectiveBalanceAPL);
-        BigInteger hit = lookupGeneratorService().getHit(publicKey, lastBlock);
-        hitTime = generatorService.getHitTime(effectiveBalance, hit, lastBlock);
-    }
-*/
-
     @Override
     public int hashCode() {
         return Long.hashCode(accountId);
