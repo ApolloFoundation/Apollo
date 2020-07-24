@@ -42,6 +42,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.PeerBlock;
@@ -403,12 +404,13 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             log.trace("Timestamp: peerBlock{},ourBlock{}", request.get("timestamp"), lastBlock.getTimestamp());
             log.trace("PrevId: peerBlock{},ourBlock{}", peerBlockPreviousBlockId, lastBlock.getPreviousBlockId());
             // peer block is the next block in our blockchain
+            long baseTarget = blockchainConfig.getCurrentConfig().getInitialBaseTarget();
             if (peerBlockPreviousBlockId == lastBlock.getId()) {
                 log.debug("push peer last block");
-                Block block = BlockImpl.parseBlock(request);
+                Block block = BlockImpl.parseBlock(request, baseTarget);
                 pushBlock(block);
             } else if (peerBlockPreviousBlockId == lastBlock.getPreviousBlockId()) { //peer block is a candidate to replace our last block
-                Block block = BlockImpl.parseBlock(request);
+                Block block = BlockImpl.parseBlock(request, baseTarget);
                 //try to replace our last block by peer block only when timestamp of peer block is less than timestamp of our block or when
                 // timestamps are equal but timeout of peer block is greater, so that peer block is better.
                 if (((block.getTimestamp() < lastBlock.getTimestamp()
@@ -625,7 +627,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 validatePhasedTransactions(block, previousLastBlock, validPhasedTransactions, invalidPhasedTransactions, duplicates);
                 validateTransactions(block, previousLastBlock, curTime, duplicates, previousLastBlock.getHeight() >= Constants.LAST_CHECKSUM_BLOCK);
 
-                block.setPrevious(previousLastBlock);
+//                block.setPrevious(previousLastBlock);
+                HeightConfig config = blockchainConfig.getCurrentConfig();
+                Shard lastShard = shardDao.getLastShard();
+                block.setPrevious(previousLastBlock, config, lastShard);
                 log.trace("fire block on = {}, id = '{}', '{}'", block.getHeight(), block.getId(), BlockEventType.BEFORE_BLOCK_ACCEPT.name());
                 blockEvent.select(literal(BlockEventType.BEFORE_BLOCK_ACCEPT)).fire(block);
                 lookupTransactionProcessor().requeueAllUnconfirmedTransactions();
@@ -1203,9 +1208,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         final byte[] publicKey = Crypto.getPublicKey(keySeed);
         byte[] generationSignature = digest.digest(publicKey);
         byte[] previousBlockHash = Crypto.sha256().digest(((BlockImpl) previousBlock).bytes());
-
+        long baseTarget = blockchainConfig.getCurrentConfig().getInitialBaseTarget();
         Block block = new BlockImpl(blockVersion, blockTimestamp, previousBlock.getId(), totalAmountATM, totalFeeATM, payloadLength,
-            payloadHash, publicKey, generationSignature, previousBlockHash, timeout, blockTransactions, keySeed);
+            payloadHash, publicKey, generationSignature, previousBlockHash, timeout, blockTransactions, keySeed, baseTarget);
 
         try {
             pushBlock(block);
@@ -1380,8 +1385,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                         validator.validate(currentBlock, blockchain.getLastBlock(), curTime);
                                         byte[] blockBytes = ((BlockImpl) currentBlock).bytes();
                                         JSONObject blockJSON = (JSONObject) JSONValue.parse(currentBlock.getJSONObject().toJSONString());
+                                        long baseTarget = blockchainConfig.getCurrentConfig().getInitialBaseTarget();
                                         if (!Arrays.equals(blockBytes,
-                                            BlockImpl.parseBlock(blockJSON).bytes())) {
+                                            BlockImpl.parseBlock(blockJSON, baseTarget).bytes())) {
                                             throw new AplException.NotValidException("Block JSON cannot be parsed back to the same block");
                                         }
                                         validateTransactions(currentBlock, blockchain.getLastBlock(), curTime, duplicates, true);

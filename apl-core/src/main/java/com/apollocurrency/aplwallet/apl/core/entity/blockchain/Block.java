@@ -20,7 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import org.json.simple.JSONObject;
 
 import java.math.BigInteger;
@@ -80,9 +81,9 @@ public interface Block {
 
     boolean verifyBlockSignature();
 
-    boolean verifyGenerationSignature() throws BlockchainProcessor.BlockOutOfOrderException;
+//    boolean verifyGenerationSignature() throws BlockchainProcessor.BlockOutOfOrderException;
 
-    void setPrevious(Block block);
+    void setPrevious(Block block, HeightConfig config, Shard lastShard);
 
     JSONObject getJSONObject();
 

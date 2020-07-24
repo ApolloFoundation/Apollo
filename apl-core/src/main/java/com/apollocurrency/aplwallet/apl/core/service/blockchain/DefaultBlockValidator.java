@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockImpl;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import lombok.extern.slf4j.Slf4j;
@@ -20,8 +21,11 @@ import java.util.Arrays;
 public class DefaultBlockValidator extends AbstractBlockValidator {
 
     @Inject
-    public DefaultBlockValidator(Blockchain blockchain, BlockchainConfig blockchainConfig, AccountService accountService) {
-        super(blockchain, blockchainConfig, accountService);
+    public DefaultBlockValidator(Blockchain blockchain,
+                                 BlockchainConfig blockchainConfig,
+                                 AccountService accountService,
+                                 GeneratorService generatorService) {
+        super(blockchain, blockchainConfig, accountService, generatorService);
     }
 
     @Override
