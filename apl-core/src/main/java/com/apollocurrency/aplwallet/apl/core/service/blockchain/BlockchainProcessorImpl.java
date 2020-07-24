@@ -1332,7 +1332,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                         int curTime = timeService.getEpochTime();
                                         validator.validate(currentBlock, blockchain.getLastBlock(), curTime);
                                         byte[] blockBytes = ((BlockImpl) currentBlock).bytes();
-                                        JSONObject blockJSON = (JSONObject) JSONValue.parse(currentBlock.getJSONObject().toJSONString());
+                                        JSONObject blockJSON = currentBlock.getJSONObject();
                                         long baseTarget = blockchainConfig.getCurrentConfig().getInitialBaseTarget();
                                         if (!Arrays.equals(blockBytes,
                                             BlockImpl.parseBlock(blockJSON, baseTarget).bytes())) {

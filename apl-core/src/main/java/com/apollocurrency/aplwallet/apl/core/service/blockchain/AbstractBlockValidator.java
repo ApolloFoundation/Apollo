@@ -26,7 +26,7 @@ public abstract class AbstractBlockValidator implements BlockValidator {
     private static final Logger LOG = getLogger(AbstractBlockValidator.class);
     protected BlockchainConfig blockchainConfig;
     private Blockchain blockchain;
-    private AccountService accountService;
+    protected AccountService accountService;
     private static GeneratorService generatorService;
 
     @Inject
@@ -110,6 +110,11 @@ public abstract class AbstractBlockValidator implements BlockValidator {
 
             MessageDigest digest = Crypto.sha256();
             digest.update(previousBlock.getGenerationSignature());
+            byte[] generatorPublicKey = block.getGeneratorPublicKey();
+            if (generatorPublicKey == null) {
+                generatorPublicKey = accountService.getPublicKeyByteArray(block.getGeneratorId());
+                block.setGeneratorPublicKey(generatorPublicKey);
+            }
             byte[] generationSignatureHash = digest.digest(block.getGeneratorPublicKey());
             if (!Arrays.equals(block.getGenerationSignature(), generationSignatureHash)) {
                 LOG.warn("Account: {} Effective ballance: {},  gen. signature: {}, calculated: {}, blockchain.height: {}, verification failed",

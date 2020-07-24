@@ -556,7 +556,12 @@ public final class JSONData {
         json.put("block", block.getStringId());
         json.put("height", block.getHeight());
         putAccount(json, "generator", block.getGeneratorId());
-        json.put("generatorPublicKey", Convert.toHexString(block.getGeneratorPublicKey()));
+        byte[] generatorPublicKey = block.getGeneratorPublicKey();
+        if (generatorPublicKey == null) {
+            generatorPublicKey = accountService.getPublicKeyByteArray(block.getGeneratorId());
+            block.setGeneratorPublicKey(generatorPublicKey);
+        }
+        json.put("generatorPublicKey", Convert.toHexString(generatorPublicKey));
         json.put("timestamp", block.getTimestamp());
 
         json.put("timeout", block.getTimeout());

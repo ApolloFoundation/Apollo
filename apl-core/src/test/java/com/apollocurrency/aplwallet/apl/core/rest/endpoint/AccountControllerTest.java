@@ -139,7 +139,9 @@ class AccountControllerTest extends AbstractEndpointTest {
     private CurrencyService currencyService;
 
     private TransactionConverter transactionConverter = new TransactionConverter(blockchain, new UnconfirmedTransactionConverter());
-    private BlockConverter blockConverter = new BlockConverter(blockchain, transactionConverter, mock(PhasingPollService.class));
+    private BlockConverter blockConverter = new BlockConverter(
+        blockchain, transactionConverter,
+        mock(PhasingPollService.class), mock(AccountService.class));
 
     @Mock
     private Account2FAHelper account2FAHelper;

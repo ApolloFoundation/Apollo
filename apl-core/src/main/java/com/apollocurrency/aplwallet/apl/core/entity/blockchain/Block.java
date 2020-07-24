@@ -47,6 +47,8 @@ public interface Block {
 
     byte[] getGeneratorPublicKey();
 
+    void setGeneratorPublicKey(byte[] generatorPublicKey);
+
     long getPreviousBlockId();
 
     byte[] getPreviousBlockHash();
@@ -79,7 +81,9 @@ public interface Block {
 
     byte[] getBytes();
 
-    boolean verifyBlockSignature();
+//    boolean verifyBlockSignature();
+
+    boolean checkSignature();
 
 //    boolean verifyGenerationSignature() throws BlockchainProcessor.BlockOutOfOrderException;
 

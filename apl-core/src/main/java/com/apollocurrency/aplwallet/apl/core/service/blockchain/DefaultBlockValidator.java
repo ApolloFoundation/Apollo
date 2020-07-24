@@ -44,7 +44,8 @@ public class DefaultBlockValidator extends AbstractBlockValidator {
 
     @Override
     void verifySignature(Block block) throws BlockchainProcessor.BlockNotAcceptedException {
-        if (!block.verifyBlockSignature()) {
+        boolean checkResult = accountService.setOrVerifyPublicKey(block.getGeneratorId(), block.getGeneratorPublicKey());
+        if (!block.checkSignature() && !checkResult) {
             throw new BlockchainProcessor.BlockNotAcceptedException("Block signature verification failed", block);
         }
     }

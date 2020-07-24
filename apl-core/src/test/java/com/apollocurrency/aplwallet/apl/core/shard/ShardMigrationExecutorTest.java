@@ -34,6 +34,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
@@ -145,6 +146,7 @@ class ShardMigrationExecutorTest {
     private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
     private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
     private Zip zip = new UtilComponentConfig().zip();
+    private GeneratorService generatorService = mock(GeneratorService.class);
 
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from(
@@ -183,6 +185,7 @@ class ShardMigrationExecutorTest {
         .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
         .addBeans(MockBean.of(timeService, TimeService.class))
         .addBeans(MockBean.of(zip, Zip.class))
+        .addBeans(MockBean.of(generatorService, GeneratorService.class))
         .build();
     @Inject
     private ShardEngine shardEngine;

@@ -50,7 +50,7 @@ public final class BlockImpl implements Block {
 //    private static BlockchainConfig blockchainConfig;
     private static Blockchain blockchain;
 //    private static ShardDao shardDao;
-    private static AccountService accountService;
+//    private static AccountService accountService;
 //    private static GeneratorService generatorService;
 
     private final int version;
@@ -138,8 +138,6 @@ public final class BlockImpl implements Block {
         if (baseTarget != null) {
             this.baseTarget = baseTarget;
         } else {
-//            lookupBlockchainConfig();
-//            this.baseTarget = blockchainConfig.getCurrentConfig().getInitialBaseTarget();
             String error = "'baseTarget' can't be null or empty ! Supply it from 'config' data, pls...";
             throw new RuntimeException(error);
         }
@@ -194,12 +192,14 @@ public final class BlockImpl implements Block {
         return Block.ADAPTIVE_BLOCK_VERSION == version || Block.INSTANT_BLOCK_VERSION == version;
     }
 
+/*
     private AccountService lookupAccountService() {
         if (accountService == null) {
             accountService = CDI.current().select(AccountService.class).get();
         }
         return accountService;
     }
+*/
 
 /*
     private BlockchainConfig lookupBlockchainConfig() {
@@ -241,10 +241,19 @@ public final class BlockImpl implements Block {
 
     @Override
     public byte[] getGeneratorPublicKey() {
-        if (generatorPublicKey == null) {
-            generatorPublicKey = lookupAccountService().getPublicKeyByteArray(generatorId);
-        }
+//        if (generatorPublicKey == null) {
+//            generatorPublicKey = lookupAccountService().getPublicKeyByteArray(generatorId);
+//        }
         return generatorPublicKey;
+    }
+
+    public void setGeneratorPublicKey(byte[] generatorPublicKey) {
+        if (generatorPublicKey != null && generatorPublicKey.length > 0) {
+            this.generatorPublicKey = generatorPublicKey;
+        } else {
+            String error = "Can't assign empty generatorPublicKey";
+            throw new RuntimeException(error);
+        }
     }
 
     @Override
@@ -360,7 +369,9 @@ public final class BlockImpl implements Block {
     @Override
     public long getGeneratorId() {
         if (generatorId == 0) {
-            generatorId = AccountService.getId(getGeneratorPublicKey());
+//            generatorId = AccountService.getId(getGeneratorPublicKey());
+            String error = "GeneratorId should be assigned !";
+            throw new RuntimeException(error);
         }
         return generatorId;
     }
@@ -433,12 +444,15 @@ public final class BlockImpl implements Block {
         return bytes;
     }
 
+/*
     @Override
     public boolean verifyBlockSignature() {
         return checkSignature() && lookupAccountService().setOrVerifyPublicKey(getGeneratorId(), getGeneratorPublicKey());
     }
+*/
 
-    private boolean checkSignature() {
+    @Override
+    public boolean checkSignature() {
         if (!hasValidSignature) {
             byte[] data = Arrays.copyOf(bytes(), bytes.length - 64);
             hasValidSignature = blockSignature != null && Crypto.verify(blockSignature, data, getGeneratorPublicKey());
