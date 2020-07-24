@@ -40,8 +40,8 @@ public class TransactionVersionValidator {
         return isValidVersion(transaction.getVersion());
     }
 
-    private boolean isValidVersion(int transactionVersion) {
-        return transactionVersion <= getActualVersion();
+    public boolean isValidVersion(int transactionVersion) {
+        return 0 < transactionVersion && transactionVersion <= getActualVersion();
     }
 
     public void checkVersion(int transactionVersion) {

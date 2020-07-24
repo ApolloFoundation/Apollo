@@ -163,6 +163,14 @@ public class TransactionValidator {
         return transactionVersionValidator.getActualVersion();
     }
 
+    public boolean isValidVersion(int transactionVersion) {
+        return transactionVersionValidator.isValidVersion(transactionVersion);
+    }
+
+    public void checkVersion(int transactionVersion) {
+        transactionVersionValidator.checkVersion(transactionVersion);
+    }
+
     public boolean verifySignature(Transaction transaction) {
         Account sender = accountService.getAccount(transaction.getSenderId());
         if (sender == null) {

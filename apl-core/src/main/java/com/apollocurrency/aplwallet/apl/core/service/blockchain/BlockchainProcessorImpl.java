@@ -748,7 +748,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     throw new TransactionNotAcceptedException("Missing or invalid referenced transaction "
                         + transaction.getReferencedTransactionFullHash(), transaction);
                 }
-                if (transaction.getVersion() != getTransactionVersion(previousLastBlock.getHeight())) {
+                if (!isValidTransactionVersion(transaction.getVersion(), previousLastBlock.getHeight())) {
                     throw new TransactionNotAcceptedException("Invalid transaction version " + transaction.getVersion()
                         + " at height " + previousLastBlock.getHeight(), transaction);
                 }
@@ -1092,10 +1092,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         return 3;
     }
 
-    private int getTransactionVersion(int previousBlockHeight) {
-        return transactionValidator.getActualTransactionVersion();
+    private boolean isValidTransactionVersion(int transactionVersion, int previousBlockHeight) {
+        return transactionValidator.isValidVersion(transactionVersion);
     }
-
 
     public SortedSet<UnconfirmedTransaction> selectUnconfirmedTransactions(
         Map<TransactionType, Map<String, Integer>> duplicates, Block previousBlock, int blockTimestamp, int limit) {
@@ -1121,7 +1120,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 if (sortedTransactions.contains(unconfirmedTransaction) || payloadLength + transactionLength > maxPayloadLength) {
                     continue;
                 }
-                if (unconfirmedTransaction.getVersion() != getTransactionVersion(previousBlock.getHeight())) {
+                if (!isValidTransactionVersion(unconfirmedTransaction.getVersion(), previousBlock.getHeight())) {
                     continue;
                 }
                 if (blockTimestamp > 0 && (unconfirmedTransaction.getTimestamp() > blockTimestamp + Constants.MAX_TIMEDRIFT
