@@ -4,9 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.signature;
 
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -27,8 +29,13 @@ class SignatureToolFactoryTest extends AbstractSigData {
     }
 
     @Test
-    void createCredential() {
+    void createCredentialAndValidate() {
         //GIVEN
+        KeyValidator keyValidator1 = new KeyValidatorImpl(PUBLIC_KEY1);
+        KeyValidator keyValidator2 = new KeyValidatorImpl(PUBLIC_KEY2);
+        MultiSigCredential multiSigCredential1 = new MultiSigCredential(1, PUBLIC_KEY1);
+        MultiSigCredential multiSigCredential2 = new MultiSigCredential(PUBLIC_KEY1);
+
         //WHEN
         Credential credential0 = SignatureToolFactory.createCredential(0, PUBLIC_KEY1);
         Credential credential01 = SignatureToolFactory.createCredential(0, PUBLIC_KEY1, PUBLIC_KEY2);
@@ -41,6 +48,30 @@ class SignatureToolFactoryTest extends AbstractSigData {
         assertTrue(credential2 instanceof MultiSigCredential);
 
         assertEquals(credential0, credential01);
+        assertEquals(credential0.toString(), credential01.toString());
+
+        assertTrue(credential0.validateCredential(keyValidator1));
+        assertTrue(credential01.validateCredential(keyValidator1));
+        assertFalse(credential01.validateCredential(keyValidator2));
+
+        assertFalse(credential2.validateCredential(keyValidator2));
+
+        assertEquals(multiSigCredential1, multiSigCredential2);
+        assertEquals(multiSigCredential1.toString(), multiSigCredential2.toString());
+
+    }
+
+    static class KeyValidatorImpl implements KeyValidator {
+        private final byte[] key;
+
+        public KeyValidatorImpl(byte[] key) {
+            this.key = key;
+        }
+
+        @Override
+        public boolean validate(byte[] publicKey) {
+            return Arrays.equals(key, publicKey);
+        }
     }
 
     @Test
@@ -80,5 +111,51 @@ class SignatureToolFactoryTest extends AbstractSigData {
         assertTrue(tool1.isPresent());
         assertTrue(tool2.isPresent());
         assertTrue(tool3.isEmpty());
+    }
+
+    @Test
+    void testSigningRoutine() {
+        //GIVEN
+        String secretPhrase = "topSecret";
+        byte[] document = "The document".getBytes();
+        Credential signCredential = SignatureToolFactory.createCredential(1, Crypto.getKeySeed(secretPhrase));
+        Credential verifyCredential = SignatureToolFactory.createCredential(1, Crypto.getPublicKey(secretPhrase));
+        DocumentSigner documentSigner = SignatureToolFactory.selectBuilder(1).get();
+        SignatureVerifier signatureVerifier = SignatureToolFactory.selectValidator(1).get();
+
+        //WHEN
+        Signature signature = documentSigner.sign(document, signCredential);
+        boolean rc = signatureVerifier.verify(document, signature, verifyCredential);
+
+        //THEN
+        assertNotNull(signature);
+        assertTrue(signature instanceof SigData);
+        assertEquals(Signature.ECDSA_SIGNATURE_SIZE, signature.getSize());
+        assertTrue(rc);
+        assertTrue(signature.isVerified());
+    }
+
+    @Test
+    void testMultiSigningRoutine() {
+        //GIVEN
+        String secretPhrase1 = "topSecret1";
+        String secretPhrase2 = "topSecret2";
+        byte[] document = "The document".getBytes();
+        Credential signCredential = SignatureToolFactory.createCredential(2, Crypto.getKeySeed(secretPhrase1), Crypto.getKeySeed(secretPhrase2));
+        Credential verifyCredential = SignatureToolFactory.createCredential(2, Crypto.getPublicKey(secretPhrase2), Crypto.getPublicKey(secretPhrase1));
+        DocumentSigner documentSigner = SignatureToolFactory.selectBuilder(2).get();
+        SignatureVerifier signatureVerifier = SignatureToolFactory.selectValidator(2).get();
+
+        //WHEN
+        Signature signature = documentSigner.sign(document, signCredential);
+        boolean rc = signatureVerifier.verify(document, signature, verifyCredential);
+
+        //THEN
+        assertNotNull(signature);
+        assertTrue(signature instanceof MultiSigData);
+        assertEquals(2, ((MultiSigData) signature).getActualParticipantCount());
+        assertEquals(2, ((MultiSigData) signature).getPublicKeyIdSet().size());
+        assertTrue(rc);
+        assertTrue(signature.isVerified());
     }
 }
