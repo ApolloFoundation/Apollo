@@ -82,6 +82,36 @@
     </encoder>
   </appender>
 
+
+  <appender name="tp-file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${LOGDIR}/tp.log</file>
+    <immediateFlush>true</immediateFlush>
+    <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+      <fileNamePattern>${LOGDIR}/tp_%i.log.zip</fileNamePattern>
+      <minIndex>1</minIndex>
+      <maxIndex>100</maxIndex>
+    </rollingPolicy>
+
+    <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+      <maxFileSize>300MB</maxFileSize>
+    </triggeringPolicy>
+    <encoder>
+      <pattern>%d [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+
+
+  <logger name="com.apollocurrency.aplwallet.apl.core.app.runnable" level="trace" additivity="false">
+    <appender-ref ref="tp-file"/>
+  </logger>
+  <logger name="com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessorImpl" level="trace" additivity="false">
+    <appender-ref ref="tp-file"/>
+  </logger>
+  <logger name="com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable" level="trace" additivity="false">
+    <appender-ref ref="tp-file"/>
+  </logger>
+
   <logger name="com.apollocurrency.aplwallet" level="INFO"/>
   <!--<logger name="com.apollocurrency.aplwallet.apl.core.peer" level="TRACE"/>-->
   <!--Uncomment next line to enable trim duration logging-->

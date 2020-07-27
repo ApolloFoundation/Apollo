@@ -87,11 +87,7 @@
       <groupId>org.bitlet</groupId>
       <artifactId>weupnp</artifactId>
     </dependency>
-    <!-- Apache Tika libs-->
-    <dependency>
-      <groupId>org.apache.tika</groupId>
-      <artifactId>tika-core</artifactId>
-    </dependency>
+
     <dependency>
       <groupId>org.jboss.weld.se</groupId>
       <artifactId>weld-se-core</artifactId>

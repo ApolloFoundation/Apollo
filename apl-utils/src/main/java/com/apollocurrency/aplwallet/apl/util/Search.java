@@ -14,21 +14,24 @@
  *
  */
 
-/*
- * Copyright © 2018 Apollo Foundation
+ /*
+ * Copyright © 2019-2020 Apollo Foundation
  */
-
 package com.apollocurrency.aplwallet.apl.util;
 
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.apache.tika.Tika;
 import org.slf4j.Logger;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.FileNameMap;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -36,6 +39,7 @@ import java.util.regex.Pattern;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public final class Search {
+
     private static final Logger LOG = getLogger(Search.class);
 
     private static final Analyzer analyzer = new StandardAnalyzer();
@@ -52,8 +56,8 @@ public final class Search {
             CharTermAttribute attribute = stream.addAttribute(CharTermAttribute.class);
             String tag;
             stream.reset();
-            while (stream.incrementToken() && list.size() < maxTagCount &&
-                (tag = attribute.toString()).length() <= maxTagLength && tag.length() >= minTagLength) {
+            while (stream.incrementToken() && list.size() < maxTagCount
+                    && (tag = attribute.toString()).length() <= maxTagLength && tag.length() >= minTagLength) {
                 if (!list.contains(tag)) {
                     list.add(tag);
                 }
@@ -65,25 +69,31 @@ public final class Search {
         return list.toArray(new String[0]);
     }
 
-    //TODO: remove apache tika, use something lighter
     public static String detectMimeType(byte[] data, String filename) {
-        Tika tika = new Tika();
-        return tika.detect(data, filename);
+        //try to guess from file magic numers, it is more reliable
+        String mimeType = detectMimeType(data);
+        if (mimeType == null) {
+            //guess from file name
+            FileNameMap fileNameMap = URLConnection.getFileNameMap();
+            mimeType = fileNameMap.getContentTypeFor("file://" + filename);
+        }
+        return mimeType;
     }
 
     public static String detectMimeType(byte[] data) {
-        Tika tika = new Tika();
+        String mimeType = null;
+        InputStream is = new BufferedInputStream(new ByteArrayInputStream(data));
         try {
-            return tika.detect(data);
-        } catch (NoClassDefFoundError e) {
-            LOG.error("Error running Tika parsers", e);
-            return null;
+            mimeType = URLConnection.guessContentTypeFromStream(is);
+        } catch (IOException ex) {
+            //do nothing, stream is in memory
         }
+        return mimeType;
     }
 
     protected static boolean parseIps(List<String> ips) {
         Pattern IP_PATTERN = Pattern.compile(
-            "^(([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.){3}([01]?\\d\\d?|2[0-4]\\d|25[0-5])$");
+                "^(([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.){3}([01]?\\d\\d?|2[0-4]\\d|25[0-5])$");
         return ips.stream().anyMatch(ip -> !IP_PATTERN.matcher(ip).matches());
     }
 

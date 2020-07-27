@@ -74,6 +74,7 @@ import java.util.concurrent.Semaphore;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+@Deprecated
 /**
  * Monitor account balances based on account properties
  * <p>
@@ -82,6 +83,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * remain pending if the number of blocks since the previous transfer transaction is less than the monitor
  * interval.
  */
+@Vetoed
 public class FundingMonitor {
     /**
      * Minimum monitor amount
@@ -227,6 +229,7 @@ public class FundingMonitor {
     }
 
     /**
+     * @deprecated
      * Start the monitor
      * <p>
      * One or more funding parameters can be overridden in the account property value
@@ -319,6 +322,7 @@ public class FundingMonitor {
     }
 
     /**
+     * @deprecated
      * Create a monitored account
      * <p>
      * The amount, threshold and interval values specified when the monitor was started can be overridden
@@ -367,6 +371,7 @@ public class FundingMonitor {
     }
 
     /**
+     * @deprecated
      * Stop all monitors
      * <p>
      * Pending fund transactions will still be processed
@@ -385,6 +390,7 @@ public class FundingMonitor {
     }
 
     /**
+     * @deprecated
      * Stop monitor
      * <p>
      * Pending fund transactions will still be processed
@@ -440,6 +446,7 @@ public class FundingMonitor {
     }
 
     /**
+     * @deprecated
      * Get monitors satisfying the supplied filter
      *
      * @param filter Monitor filter
@@ -458,6 +465,7 @@ public class FundingMonitor {
     }
 
     /**
+     * @deprecated
      * Get all monitors
      *
      * @return Account monitor list
@@ -471,6 +479,7 @@ public class FundingMonitor {
     }
 
     /**
+     * @deprecated
      * Get all monitored accounts for a single monitor
      *
      * @param monitor Monitor
@@ -489,6 +498,7 @@ public class FundingMonitor {
     }
 
     /**
+     * @deprecated
      * Initialize monitor processing
      */
     private static synchronized void init() {
@@ -531,6 +541,7 @@ public class FundingMonitor {
     }
 
     /**
+     * @deprecated
      * Stop monitor processing
      */
     public static void shutdown() {
@@ -545,6 +556,7 @@ public class FundingMonitor {
     }
 
     /**
+     * @deprecated
      * Process a APL event
      *
      * @param monitoredAccount Monitored account
@@ -578,6 +590,7 @@ public class FundingMonitor {
     }
 
     /**
+     * @deprecated
      * Process an ASSET event
      *
      * @param monitoredAccount Monitored account
@@ -616,6 +629,7 @@ public class FundingMonitor {
     }
 
     /**
+     * @deprecated
      * Process a CURRENCY event
      *
      * @param monitoredAccount Monitored account
@@ -654,6 +668,7 @@ public class FundingMonitor {
     }
 
     /**
+     * @deprecated
      * Return the monitor holding type
      *
      * @return Holding type
@@ -663,6 +678,7 @@ public class FundingMonitor {
     }
 
     /**
+     * @deprecated
      * Return the holding identifier
      *
      * @return Holding identifier for asset or currency
@@ -672,6 +688,7 @@ public class FundingMonitor {
     }
 
     /**
+     * @deprecated
      * Return the account property name
      *
      * @return Account property
@@ -756,6 +773,7 @@ public class FundingMonitor {
 
     /**
      * Process pending account event
+     * @deprecated
      */
     @Vetoed
     private static class ProcessEvents extends Thread {
@@ -826,6 +844,7 @@ public class FundingMonitor {
 
     /**
      * Monitored account
+     * @deprecated
      */
     public static final class MonitoredAccount {
 
@@ -939,6 +958,7 @@ public class FundingMonitor {
 
     /**
      * Account event handler (BALANCE event)
+     * @deprecated
      */
     @Singleton
     public static class AccountEventHandler {
@@ -973,6 +993,7 @@ public class FundingMonitor {
 
     /**
      * Asset event handler (ASSET_BALANCE event)
+     * @deprecated
      */
     @Singleton
     public static class AssetEventHandler {
@@ -1010,6 +1031,7 @@ public class FundingMonitor {
 
     /**
      * Currency event handler (CURRENCY_BALANCE event)
+     * @deprecated
      */
     @Singleton
     public static class CurrencyEventHandler {
@@ -1047,6 +1069,7 @@ public class FundingMonitor {
 
     /**
      * Property event handler
+     * @deprecated
      */
     @Singleton
     public static class AccountPropertyEventHandler {
@@ -1150,6 +1173,7 @@ public class FundingMonitor {
      * <p>
      * We will process pending funding events when a block is pushed to the blockchain.  This ensures that all
      * block transactions have been processed before we process funding events.
+     * @deprecated
      */
     @Singleton
     public static class BlockEventHandler {

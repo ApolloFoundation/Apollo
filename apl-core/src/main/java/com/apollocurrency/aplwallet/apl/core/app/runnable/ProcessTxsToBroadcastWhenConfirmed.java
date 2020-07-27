@@ -40,7 +40,8 @@ public class ProcessTxsToBroadcastWhenConfirmed implements Runnable {
         List<Transaction> txsToDelete = new ArrayList<>();
         unconfirmedTransactionTable.getTxToBroadcastWhenConfirmed().forEach((tx, uncTx) -> {
             try {
-                if (uncTx.getExpiration() < timeService.getEpochTime() || tx.getExpiration() < timeService.getEpochTime()) {
+                int epochTime = timeService.getEpochTime();
+                if (uncTx.getExpiration() < epochTime || tx.getExpiration() < epochTime) {
                     log.debug("Remove expired tx {}, unctx {}", tx.getId(), uncTx.getId());
                     txsToDelete.add(tx);
                 } else if (!hasTransaction(uncTx)) {

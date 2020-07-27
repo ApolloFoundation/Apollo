@@ -22,8 +22,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsRe
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.UnencryptedDigitalGoodsDelivery;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import org.apache.tika.Tika;
-import org.apache.tika.mime.MediaType;
+import com.apollocurrency.aplwallet.apl.util.Search;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 
@@ -132,8 +131,8 @@ public abstract class DigitalGoods extends TransactionType {
             DigitalGoodsPriceChange attachment = (DigitalGoodsPriceChange) transaction.getAttachment();
             DGSGoods goods = lookupDGService().getGoods(attachment.getGoodsId());
             if (attachment.getPriceATM() <= 0
-                || attachment.getPriceATM() > lookupBlockchainConfig().getCurrentConfig().getMaxBalanceATM()
-                || (goods != null && transaction.getSenderId() != goods.getSellerId())) {
+                    || attachment.getPriceATM() > lookupBlockchainConfig().getCurrentConfig().getMaxBalanceATM()
+                    || (goods != null && transaction.getSenderId() != goods.getSellerId())) {
                 throw new AplException.NotValidException("Invalid digital goods price change: " + attachment.getJSONObject());
             }
             if (goods == null || goods.isDelisted()) {
@@ -272,10 +271,10 @@ public abstract class DigitalGoods extends TransactionType {
             DigitalGoodsPurchase attachment = (DigitalGoodsPurchase) transaction.getAttachment();
             DGSGoods goods = lookupDGService().getGoods(attachment.getGoodsId());
             if (attachment.getQuantity() <= 0
-                || attachment.getQuantity() > Constants.MAX_DGS_LISTING_QUANTITY
-                || attachment.getPriceATM() <= 0
-                || attachment.getPriceATM() > lookupBlockchainConfig().getCurrentConfig().getMaxBalanceATM()
-                || (goods != null && goods.getSellerId() != transaction.getRecipientId())) {
+                    || attachment.getQuantity() > Constants.MAX_DGS_LISTING_QUANTITY
+                    || attachment.getPriceATM() <= 0
+                    || attachment.getPriceATM() > lookupBlockchainConfig().getCurrentConfig().getMaxBalanceATM()
+                    || (goods != null && goods.getSellerId() != transaction.getRecipientId())) {
                 throw new AplException.NotValidException("Invalid digital goods purchase: " + attachment.getJSONObject());
             }
             if (transaction.getEncryptedMessage() != null && !transaction.getEncryptedMessage().isText()) {
@@ -370,10 +369,10 @@ public abstract class DigitalGoods extends TransactionType {
                 }
             }
             if (attachment.getDiscountATM() < 0
-                || attachment.getDiscountATM() > lookupBlockchainConfig().getCurrentConfig().getMaxBalanceATM()
-                || (purchase != null && (purchase.getBuyerId() != transaction.getRecipientId()
-                || transaction.getSenderId() != purchase.getSellerId()
-                || attachment.getDiscountATM() > Math.multiplyExact(purchase.getPriceATM(), (long) purchase.getQuantity())))) {
+                    || attachment.getDiscountATM() > lookupBlockchainConfig().getCurrentConfig().getMaxBalanceATM()
+                    || (purchase != null && (purchase.getBuyerId() != transaction.getRecipientId()
+                    || transaction.getSenderId() != purchase.getSellerId()
+                    || attachment.getDiscountATM() > Math.multiplyExact(purchase.getPriceATM(), (long) purchase.getQuantity())))) {
                 throw new AplException.NotValidException("Invalid digital goods delivery: " + attachment.getJSONObject());
             }
             if (purchase == null || purchase.getEncryptedGoods() != null) {
@@ -513,9 +512,9 @@ public abstract class DigitalGoods extends TransactionType {
             DigitalGoodsRefund attachment = (DigitalGoodsRefund) transaction.getAttachment();
             DGSPurchase purchase = lookupDGService().getPurchase(attachment.getPurchaseId());
             if (attachment.getRefundATM() < 0
-                || attachment.getRefundATM() > lookupBlockchainConfig().getCurrentConfig().getMaxBalanceATM()
-                || (purchase != null && (purchase.getBuyerId() != transaction.getRecipientId()
-                || transaction.getSenderId() != purchase.getSellerId()))) {
+                    || attachment.getRefundATM() > lookupBlockchainConfig().getCurrentConfig().getMaxBalanceATM()
+                    || (purchase != null && (purchase.getBuyerId() != transaction.getRecipientId()
+                    || transaction.getSenderId() != purchase.getSellerId()))) {
                 throw new AplException.NotValidException("Invalid digital goods refund: " + attachment.getJSONObject());
             }
             if (transaction.getEncryptedMessage() != null && !transaction.getEncryptedMessage().isText()) {
@@ -598,15 +597,14 @@ public abstract class DigitalGoods extends TransactionType {
             if (prunablePlainMessage != null) {
                 byte[] image = prunablePlainMessage.getMessage();
                 if (image != null) {
-                    Tika tika = new Tika();
-                    MediaType mediaType = null;
+                    String mediaType = null;
                     try {
-                        String mediaTypeName = tika.detect(image);
-                        mediaType = MediaType.parse(mediaTypeName);
+                        String mediaTypeName = Search.detectMimeType(image);
+                        mediaType = mediaTypeName.substring(0, mediaTypeName.indexOf("/"));
                     } catch (NoClassDefFoundError e) {
                         LOG.error("Error running Tika parsers", e);
                     }
-                    if (mediaType == null || !"image".equals(mediaType.getType())) {
+                    if (mediaType == null || !"image".equals(mediaType)) {
                         throw new AplException.NotValidException("Only image attachments allowed for DGS listing, media type is " + mediaType);
                     }
                 }

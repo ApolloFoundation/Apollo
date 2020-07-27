@@ -17,8 +17,6 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProce
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.inject.spi.CDI;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -54,21 +52,20 @@ public class RemoveUnconfirmedTransactionsThread implements Runnable {
                 if (lookupBlockchainProcessor().isDownloading()) {
                     return;
                 }
-                List<UnconfirmedTransaction> expiredTransactions = new ArrayList<>();
-                try (DbIterator<UnconfirmedTransaction> iterator = unconfirmedTransactionTable.getManyBy(
-                    new DbClause.IntClause("expiration", DbClause.Op.LT, timeService.getEpochTime()), 0, -1, "")) {
-                    while (iterator.hasNext()) {
-                        expiredTransactions.add(iterator.next());
-                    }
-                }
-                if (expiredTransactions.size() > 0) {
+                int epochTime = timeService.getEpochTime();
+                int expiredTransactionsCount = unconfirmedTransactionTable.countExpiredTransactions(epochTime);
+                if (expiredTransactionsCount > 0) {
+                    log.trace("Found {} unc txs to remove", expiredTransactionsCount);
                     globalSync.writeLock();
                     try {
                         TransactionalDataSource dataSource = databaseManager.getDataSource();
                         try {
                             dataSource.begin();
-                            for (UnconfirmedTransaction unconfirmedTransaction : expiredTransactions) {
-                                transactionProcessor.removeUnconfirmedTransaction(unconfirmedTransaction.getTransaction());
+                            try (DbIterator<UnconfirmedTransaction> iterator = unconfirmedTransactionTable.getManyBy(
+                                new DbClause.IntClause("expiration", DbClause.Op.LT, epochTime), 0, -1, "")) {
+                                while (iterator.hasNext()) {
+                                    transactionProcessor.removeUnconfirmedTransaction(iterator.next().getTransaction());
+                                }
                             }
                             dataSource.commit();
                         } catch (Exception e) {

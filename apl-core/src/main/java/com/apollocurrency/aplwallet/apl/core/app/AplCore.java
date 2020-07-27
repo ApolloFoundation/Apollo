@@ -153,7 +153,7 @@ public final class AplCore {
         log.info("Shutting down...");
         AddOns.shutdown();
         if (apiServer != null) apiServer.shutdown();
-        FundingMonitor.shutdown();
+//        FundingMonitor.shutdown();
         log.info("Background tasks shutdown...");
         if (taskDispatchManager != null) taskDispatchManager.shutdown();
 
