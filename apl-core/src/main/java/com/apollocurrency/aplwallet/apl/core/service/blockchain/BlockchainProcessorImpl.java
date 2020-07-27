@@ -574,6 +574,16 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             dataSource.begin();
             try {
                 previousLastBlock = blockchain.getLastBlock();
+                byte[] generatorPublicKey = previousLastBlock.getGeneratorPublicKey();
+                if (generatorPublicKey == null) {
+                    generatorPublicKey = accountService.getPublicKeyByteArray(previousLastBlock.getGeneratorId());
+                    previousLastBlock.setGeneratorPublicKey(generatorPublicKey);
+                }
+                generatorPublicKey = block.getGeneratorPublicKey();
+                if (generatorPublicKey == null) {
+                    generatorPublicKey = accountService.getPublicKeyByteArray(block.getGeneratorId());
+                    block.setGeneratorPublicKey(generatorPublicKey);
+                }
 
                 validator.validate(block, previousLastBlock, curTime);
 
