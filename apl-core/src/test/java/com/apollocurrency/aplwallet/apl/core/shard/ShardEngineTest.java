@@ -151,7 +151,7 @@ class ShardEngineTest {
     DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("targetDb").toAbsolutePath().toString()));
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
-    private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
+    private TimeService timeService = mock(TimeService.class);
 
     Weld weld = WeldInitiator.createWeld();
     @Inject
@@ -436,7 +436,7 @@ class ShardEngineTest {
         assertNull(excludedTransaction);
         assertEquals(td.TRANSACTION_5, transactionDao.findTransaction(td.TRANSACTION_5.getId(), shardDataSource));
 
-        //5.        // create shard db FULL schema + add shard hash info
+//5.        // create shard db FULL schema + add shard hash info
         state = shardEngine.addOrCreateShard(new ShardAddConstraintsSchemaVersion(), CommandParamInfo.builder().shardHash(shardHash).shardId(4L).prevBlockData(PrevBlockData.builder().generatorIds(new Long[]{1L, 2L}).prevBlockTimeouts(new Integer[]{3, 4}).prevBlockTimestamps(new Integer[]{5, 6}).build()).build());
         assertEquals(SHARD_SCHEMA_FULL, state);
         // check 'merkle tree hash' is stored in shard record
@@ -496,6 +496,7 @@ class ShardEngineTest {
         assertEquals(10, Files.readAllLines(dataExportDirPath.resolve(tableToCsvFile(GOODS_TABLE_NAME))).size());
         assertEquals(4, Files.readAllLines(dataExportDirPath.resolve(tableToCsvFile(TRANSACTION_TABLE_NAME))).size());
         assertEquals(2, Files.readAllLines(dataExportDirPath.resolve(tableToCsvFile(BLOCK_TABLE_NAME))).size());
+        assertEquals(12, Files.readAllLines(dataExportDirPath.resolve(tableToCsvFile(PRUNABLE_MESSAGE_TABLE_NAME))).size());
 
 
         paramInfo = CommandParamInfo.builder().snapshotBlockHeight(snapshotBlockHeight).excludeInfo(excludeInfo).shardId(4L).tableInfoList(tableNameList).build();

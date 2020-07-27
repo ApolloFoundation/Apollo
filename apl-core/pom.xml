@@ -89,7 +89,7 @@
       <artifactId>resteasy-jackson2-provider</artifactId>
     </dependency>
     <!-- we do not need validation at the moment, but keep in mind that it is interface
-    only and requires implementation laso, e.g hybernate-validator -->
+    only and requires implementation also, e.g hybernate-validator -->
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
       <artifactId>resteasy-validator-provider</artifactId>
@@ -145,6 +145,7 @@
       <artifactId>paranamer</artifactId>
     </dependency>
 
+    <!-- This stuff is used by hibernate-validator dynamically in runtime -->
     <dependency>
       <groupId>javax.el</groupId>
       <artifactId>javax.el-api</artifactId>
