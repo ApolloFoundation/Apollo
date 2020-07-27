@@ -56,13 +56,18 @@ public abstract class ChildAccount extends TransactionType {
                 childAccount.setParentId(senderAccount.getId());
                 childAccount.setAddrScope(attachment.getAddressScope());
                 childAccount.setMultiSig(true);
-                log.trace("CREATE_CHILD: create ParentId={}, childId={}", senderAccount.getId(), childAccount.getId());
+                log.trace("CREATE_CHILD: create ParentId={}, childRS={}, childId={}, child publickey={}",
+                    senderAccount.getId(),
+                    Convert.defaultRsAccount(childAccount.getId()),
+                    childAccount.getId(),
+                    Convert.toHexString(childPublicKey));
                 //save the account into db
                 lookupAccountService().update(childAccount, false);
                 log.trace("CREATE_CHILD: update child={}", childAccount);
                 //save the public key into db
-                ChildAccount.lookupAccountPublicKeyService().apply(childAccount, childPublicKey);
                 log.trace("CREATE_CHILD: apply public key child={}", childAccount);
+                ChildAccount.lookupAccountPublicKeyService().apply(childAccount, childPublicKey);
+
             }
         }
 

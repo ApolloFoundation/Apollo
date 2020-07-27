@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.StringJoiner;
+import java.util.stream.Collectors;
 
 @Getter
 public class ChildAccountAttachment extends AbstractAttachment {
@@ -116,7 +117,7 @@ public class ChildAccountAttachment extends AbstractAttachment {
     public String toString() {
         return new StringJoiner(", ", ChildAccountAttachment.class.getSimpleName() + "[", "]")
             .add("childCount=" + childCount)
-            .add("childPublicKey=" + Arrays.deepToString(childPublicKey.toArray()))
+            .add("childPublicKey=[" + childPublicKey.stream().map(Convert::toHexString).collect(Collectors.joining(",")) + "]")
             .add("addressScope=" + addressScope.name())
             .toString();
     }

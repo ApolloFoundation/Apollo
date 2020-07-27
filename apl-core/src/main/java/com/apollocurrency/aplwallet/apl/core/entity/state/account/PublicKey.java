@@ -5,6 +5,7 @@ package com.apollocurrency.aplwallet.apl.core.entity.state.account;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDerivedEntity;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -57,7 +58,7 @@ public final class PublicKey extends VersionedDerivedEntity {
     public String toString() {
         return "PublicKey{" +
             "accountId=" + accountId +
-            ", publicKey=" + (publicKey != null ? "[...]" : "null") +
+            ", publicKey=[" + (publicKey != null ? Convert.toHexString(publicKey) : "null") + "]" +
             ", height=" + getHeight() +
             ", latest=" + isLatest() +
             "} ";

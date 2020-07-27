@@ -68,15 +68,18 @@ public class TransactionApiServiceImpl implements TransactionApiService {
         BaseResponse receipt;
         try {
             if (log.isTraceEnabled()) {
-                log.trace("Broadcast transaction: tx={}", req.getTx());
+                log.trace("API_V2: Broadcast transaction: tx={}", req.getTx());
             }
             byte[] tx = Convert.parseHexString(req.getTx());
             Transaction.Builder txBuilder = TransactionBuilder.newTransactionBuilder(tx);
             Transaction newTx = txBuilder.build();
+            if (log.isTraceEnabled()) {
+                log.trace("API_V2: parsed transaction=[{}] attachment={}", newTx.getType(), newTx.getAttachment());
+            }
             transactionProcessor.broadcast(newTx);
             receipt = unTxReceiptMapper.convert(newTx);
             if (log.isTraceEnabled()) {
-                log.trace("UnTxReceipt={}", receipt);
+                log.trace("API_V2: UnTxReceipt={}", receipt);
             }
         } catch (NumberFormatException e) {
             receipt = ResponseBuilderV2.createErrorResponse(
