@@ -209,9 +209,11 @@ public final class BlockImpl implements Block {
 
     @Override
     public byte[] getGeneratorPublicKey() {
-//        if (generatorPublicKey == null) {
+        if (generatorPublicKey == null) {
+            String error = "Pls, assign generatorPublicKey first, before trying to take it";
+            throw new RuntimeException(error);
 //            generatorPublicKey = lookupAccountService().getPublicKeyByteArray(generatorId);
-//        }
+        }
         return generatorPublicKey;
     }
 
