@@ -23,13 +23,14 @@ package com.apollocurrency.aplwallet.apl.core.http;
 import com.apollocurrency.aplwallet.api.dto.BlockDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountCurrencyDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
-import com.apollocurrency.aplwallet.apl.core.app.FundingMonitor;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisAccounts;
 import com.apollocurrency.aplwallet.apl.core.app.Token;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.funding.FundingMonitorInstance;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.funding.MonitoredAccount;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.DataTag;
@@ -79,6 +80,7 @@ import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
 import com.apollocurrency.aplwallet.apl.core.peer.Hallmark;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.funding.FundingMonitorService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
@@ -143,6 +145,7 @@ public final class JSONData {
     private static CurrencyTransferService currencyTransferService = CDI.current().select(CurrencyTransferService.class).get();
     private static CurrencyService currencyService = CDI.current().select(CurrencyService.class).get();
     private static ShufflingService shufflingService = CDI.current().select(ShufflingService.class).get();
+    private static FundingMonitorService fundingMonitorService = CDI.current().select(FundingMonitorService.class).get();
 
     private JSONData() {
     } // never
@@ -1227,7 +1230,7 @@ public final class JSONData {
         return response;
     }
 
-    public static JSONObject accountMonitor(FundingMonitor monitor, boolean includeMonitoredAccounts) {
+    public static JSONObject accountMonitor(FundingMonitorInstance monitor, boolean includeMonitoredAccounts) {
         JSONObject json = new JSONObject();
         json.put("holdingType", monitor.getHoldingType().getCode());
         json.put("account", Long.toUnsignedString(monitor.getAccountId()));
@@ -1239,14 +1242,14 @@ public final class JSONData {
         json.put("interval", monitor.getInterval());
         if (includeMonitoredAccounts) {
             JSONArray jsonAccounts = new JSONArray();
-            List<FundingMonitor.MonitoredAccount> accountList = FundingMonitor.getMonitoredAccounts(monitor);
+            List<MonitoredAccount> accountList = fundingMonitorService.getMonitoredAccounts(monitor);
             accountList.forEach(account -> jsonAccounts.add(JSONData.monitoredAccount(account)));
             json.put("monitoredAccounts", jsonAccounts);
         }
         return json;
     }
 
-    static JSONObject monitoredAccount(FundingMonitor.MonitoredAccount account) {
+    static JSONObject monitoredAccount(MonitoredAccount account) {
         JSONObject json = new JSONObject();
         json.put("account", Long.toUnsignedString(account.getAccountId()));
         json.put("accountRS", account.getAccountName());

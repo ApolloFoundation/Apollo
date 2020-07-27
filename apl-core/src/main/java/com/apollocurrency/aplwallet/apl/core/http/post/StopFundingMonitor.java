@@ -21,7 +21,6 @@
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.app.FundingMonitor;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
@@ -87,10 +86,10 @@ public class StopFundingMonitor extends AbstractAPIRequestHandler {
             HoldingType holdingType = HttpParameterParserUtil.getHoldingType(req);
             long holdingId = HttpParameterParserUtil.getHoldingId(req, holdingType);
             String property = HttpParameterParserUtil.getAccountProperty(req, true);
-            boolean stopped = FundingMonitor.stopMonitor(holdingType, holdingId, property, accountId);
+            boolean stopped = lookupFundingMonitorService().stopMonitor(holdingType, holdingId, property, accountId);
             response.put("stopped", stopped ? 1 : 0);
         } else {
-            int count = FundingMonitor.stopAllMonitors();
+            int count = lookupFundingMonitorService().stopAllMonitors();
             response.put("stopped", count);
         }
         return response;

@@ -21,7 +21,6 @@
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.app.FundingMonitor;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
@@ -30,7 +29,7 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
-import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.funding.FundingMonitorService;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import org.json.simple.JSONObject;
@@ -92,16 +91,16 @@ public final class StartFundingMonitor extends AbstractAPIRequestHandler {
         long holdingId = HttpParameterParserUtil.getHoldingId(req, holdingType);
         String property = HttpParameterParserUtil.getAccountProperty(req, true);
         long amount = HttpParameterParserUtil.getLong(req, "amount", 0, Long.MAX_VALUE, true);
-        if (amount < FundingMonitor.MIN_FUND_AMOUNT) {
-            throw new ParameterException(incorrect("amount", "Minimum funding amount is " + FundingMonitor.MIN_FUND_AMOUNT));
+        if (amount < FundingMonitorService.MIN_FUND_AMOUNT) {
+            throw new ParameterException(incorrect("amount", "Minimum funding amount is " + FundingMonitorService.MIN_FUND_AMOUNT));
         }
         long threshold = HttpParameterParserUtil.getLong(req, "threshold", 0, Long.MAX_VALUE, true);
-        if (threshold < FundingMonitor.MIN_FUND_THRESHOLD) {
-            throw new ParameterException(incorrect("threshold", "Minimum funding threshold is " + FundingMonitor.MIN_FUND_THRESHOLD));
+        if (threshold < FundingMonitorService.MIN_FUND_THRESHOLD) {
+            throw new ParameterException(incorrect("threshold", "Minimum funding threshold is " + FundingMonitorService.MIN_FUND_THRESHOLD));
         }
-        int interval = HttpParameterParserUtil.getInt(req, "interval", FundingMonitor.MIN_FUND_INTERVAL, Integer.MAX_VALUE, true);
+        int interval = HttpParameterParserUtil.getInt(req, "interval", FundingMonitorService.MIN_FUND_INTERVAL, Integer.MAX_VALUE, true);
         byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, accountId, true);
-        AssetService assetService = CDI.current().select(AssetService.class).get();
+//        AssetService assetService = CDI.current().select(AssetService.class).get();
         switch (holdingType) {
             case ASSET:
                 Asset asset = assetService.getAsset(holdingId);
@@ -120,7 +119,7 @@ public final class StartFundingMonitor extends AbstractAPIRequestHandler {
         if (account == null) {
             throw new ParameterException(UNKNOWN_ACCOUNT);
         }
-        if (FundingMonitor.startMonitor(holdingType, holdingId, property, amount, threshold, interval, keySeed)) {
+        if (lookupFundingMonitorService().startMonitor(holdingType, holdingId, property, amount, threshold, interval, keySeed)) {
             JSONObject response = new JSONObject();
             response.put("started", true);
             return response;
