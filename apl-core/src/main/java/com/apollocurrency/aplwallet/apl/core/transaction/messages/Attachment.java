@@ -52,6 +52,6 @@ public interface Attachment extends Appendix {
 
     };
 
-    public TransactionType getTransactionType();
+    TransactionType getTransactionType();
 
 }

@@ -75,4 +75,9 @@ public abstract class AbstractAttachment extends AbstractAppendix implements Att
         return isPhased(transaction) ? transaction.getPhasing().getFinishHeight() - 1 : lookupBlockchain().getHeight();
     }
 
+    @Override
+    public String toString() {
+        return "Attachment[" + getClass().getSimpleName() + ":" + getTransactionType().getName() + "]";
+    }
+
 }
