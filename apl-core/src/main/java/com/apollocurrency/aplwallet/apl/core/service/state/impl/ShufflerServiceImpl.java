@@ -51,6 +51,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * The Shuffler service
+ * <p>
+ * NOTICE: The current service supports the transaction V1 signing, it doesn't support multi-sig.
+ * See the document signer instantiating routine in the constructor.
+ */
 @Slf4j
 @Singleton
 public class ShufflerServiceImpl implements ShufflerService {
