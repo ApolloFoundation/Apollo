@@ -35,7 +35,6 @@ import javax.enterprise.inject.spi.CDI;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -44,7 +43,7 @@ import java.util.Objects;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public final class BlockImpl implements Block {
-    private static final Logger LOG = getLogger(BlockImpl.class);
+//    private static final Logger LOG = getLogger(BlockImpl.class);
 
     private static Blockchain blockchain;
 
@@ -150,6 +149,7 @@ public final class BlockImpl implements Block {
         }
     }
 
+/*
     public static BlockImpl parseBlock(JSONObject blockData, long baseTarget) throws AplException.NotValidException {
         try {
             int version = ((Long) blockData.get("version")).intValue();
@@ -182,6 +182,7 @@ public final class BlockImpl implements Block {
             throw e;
         }
     }
+*/
 
     static boolean requireTimeout(int version) {
         return Block.ADAPTIVE_BLOCK_VERSION == version || Block.INSTANT_BLOCK_VERSION == version;

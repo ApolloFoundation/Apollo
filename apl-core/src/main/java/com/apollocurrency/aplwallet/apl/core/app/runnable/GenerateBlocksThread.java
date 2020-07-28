@@ -61,7 +61,9 @@ public class GenerateBlocksThread implements Runnable {
 
     @Override
     public void run() {
+        log.debug("run = {}", GenerateBlocksThread.class.getName());
         if (suspendForging) {
+            log.debug("suspendForging = {}", suspendForging);
             return;
         }
         try {
@@ -70,6 +72,7 @@ public class GenerateBlocksThread implements Runnable {
                 try {
                     Block lastBlock = blockchain.getLastBlock();
                     if (lastBlock == null || lastBlock.getHeight() < blockchainConfig.getLastKnownBlock()) {
+                        log.debug("not last block or height below = {}, lastKnownBlock={}", lastBlock, blockchainConfig.getLastKnownBlock());
                         return;
                     }
                     final int generationLimit = timeService.getEpochTime() - delayTime;

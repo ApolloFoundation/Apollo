@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2019-2020 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.core.app;
 
@@ -7,6 +7,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockParser;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -27,7 +28,8 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
      * Block identifier list
      */
     private final List<Long> blockIds;
-    private BlockchainConfig blockchainConfig;
+    private final BlockchainConfig blockchainConfig;
+    private final BlockParser blockParser;
     /**
      * Callable future
      */
@@ -65,8 +67,11 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
      * @param stop        Stop index within the list
      * @param startHeight Height of the block from which we will start to download blockchain
      */
-    public GetNextBlocksTask(List<Long> blockIds, int start, int stop, int startHeight, BlockchainConfig blockchainConfig) {
+    public GetNextBlocksTask(List<Long> blockIds, int start, int stop, int startHeight,
+                             BlockchainConfig blockchainConfig,
+                             BlockParser blockParser) {
         this.blockchainConfig = blockchainConfig;
+        this.blockParser = blockParser;
         this.blockIds = blockIds;
         this.start = start;
         this.stop = stop;
@@ -123,7 +128,9 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
         try {
             int count = stop - start;
             for (JSONObject blockData : nextBlocks) {
-                blockList.add(BlockImpl.parseBlock(blockData, blockchainConfig.getCurrentConfig().getInitialBaseTarget()));
+//                BlockImpl parsedBlock = BlockImpl.parseBlock(blockData, blockchainConfig.getCurrentConfig().getInitialBaseTarget());
+                BlockImpl parsedBlock = blockParser.parseBlock(blockData, blockchainConfig.getCurrentConfig().getInitialBaseTarget());
+                blockList.add(parsedBlock);
                 if (--count <= 0) {
                     break;
                 }
