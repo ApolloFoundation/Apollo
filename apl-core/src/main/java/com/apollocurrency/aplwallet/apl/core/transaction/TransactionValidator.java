@@ -15,8 +15,8 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountContro
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.signature.Credential;
-import com.apollocurrency.aplwallet.apl.core.signature.MultiSigCredential;
 import com.apollocurrency.aplwallet.apl.core.signature.KeyValidator;
+import com.apollocurrency.aplwallet.apl.core.signature.MultiSigCredential;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureCredential;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureVerifier;
@@ -110,10 +110,24 @@ public class TransactionValidator {
                 throw new AplException.NotCurrentlyValidException("Account " + transaction.getRecipientId() + " does not exist yet.");
             }
             @ParentChildSpecific(ParentMarker.ADDRESS_RESTRICTION)
-            boolean rc = sender.getParentId() != recipient.getParentId();
-            if(rc){
+            boolean rc;
+            switch (sender.getAddrScope()) {
+                case IN_FAMILY:
+                    rc = sender.getParentId() == recipient.getId() || sender.getParentId() == recipient.getParentId();
+                    break;
+                case EXTERNAL:
+                    rc = true;
+                    break;
+                case CUSTOM:
+                default:
+                    throw new AplException.NotCurrentlyValidException("Unsupported value " +
+                        sender.getAddrScope().name() +
+                        " for sender address scope;" +
+                        "sender.Id=" + sender.getId());
+            }
+            if (!rc) {
                 throw new AplException.NotCurrentlyValidException("The parent account for sender and recipient must be the same;" +
-                    "sender.parentId="+sender.getParentId()+", recipient.parentId="+ recipient.getParentId());
+                    "sender.parentId=" + sender.getParentId() + ", recipient.parentId=" + recipient.getParentId());
             }
         }
 
