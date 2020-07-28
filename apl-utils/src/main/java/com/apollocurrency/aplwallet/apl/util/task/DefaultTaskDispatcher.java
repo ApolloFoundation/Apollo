@@ -35,7 +35,7 @@ import static com.apollocurrency.aplwallet.apl.util.task.Tasks.shutdownExecutor;
 @Slf4j
 public class DefaultTaskDispatcher implements TaskDispatcher {
 
-    public static final int DEFAULT_THREAD_POOL_SIZE = 10;
+    public static final int DEFAULT_THREAD_POOL_SIZE = 30;
     public static final String APL_BG_WORKERS = "apl-bg-workers";
     public static final String APL_POOL_NAME = "apl-dispatcher";
 

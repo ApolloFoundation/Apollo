@@ -87,6 +87,7 @@ public class GeneratorServiceImpl implements GeneratorService {
             this.taskDispatchManager.newBackgroundDispatcher(BACKGROUND_SERVICE_NAME)
                 .schedule(Task.builder()
                     .name("GenerateBlocks")
+                    .initialDelay(500)
                     .delay(500)
                     .task(generateBlocksThread)
                     .build());
