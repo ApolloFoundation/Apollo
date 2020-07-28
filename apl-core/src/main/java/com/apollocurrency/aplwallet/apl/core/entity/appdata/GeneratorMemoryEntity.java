@@ -8,9 +8,7 @@ import java.math.BigInteger;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
-@ToString
 @Getter
 @Setter
 public class GeneratorMemoryEntity implements Comparable<GeneratorMemoryEntity> {
@@ -43,4 +41,8 @@ public class GeneratorMemoryEntity implements Comparable<GeneratorMemoryEntity> 
         return Long.compare(accountId, g.accountId);
     }
 
+    @Override
+    public String toString() {
+        return "Forger " + Long.toUnsignedString(accountId) + " deadline " + getDeadline() + " hit " + hitTime;
+    }
 }
