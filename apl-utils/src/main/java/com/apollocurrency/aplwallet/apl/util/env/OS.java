@@ -14,6 +14,8 @@ import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+
 @JsonSerialize(using = ToStringSerializer.class)
 @JsonDeserialize(using = OS.Deserializer.class)
 public enum OS {
@@ -86,6 +88,15 @@ public enum OS {
             }
         }
         throw new IllegalArgumentException("Unable to find compatible OS for '" + s + "'");
+    }
+
+    public static Optional<OS> fromCompatibleOptional(String s) {
+        for (OS value : values()) {
+            if (StringUtils.isNotBlank(value.compatibleName) && value.compatibleName.equalsIgnoreCase(s)) {
+                return Optional.of(value);
+            }
+        }
+        return Optional.empty();
     }
 
     public boolean isAppropriate(OS os) {

@@ -38,6 +38,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataExtendDa
 import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataTimestampDao;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
@@ -125,6 +126,7 @@ class DerivedDbTableListingTest {
     private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(temporaryFolderExtension.newFolder("keystorePath").toPath(), ntpTimeConfig.time());
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     private PeersService peersService = mock(PeersService.class);
+    private GeneratorService generatorService = mock(GeneratorService.class);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -165,6 +167,7 @@ class DerivedDbTableListingTest {
         .addBeans(MockBean.of(mock(AccountControlPhasingService.class), AccountControlPhasingService.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
         .addBeans(MockBean.of(peersService, PeersService.class))
+        .addBeans(MockBean.of(generatorService, GeneratorService.class))
         .build();
     private HeightConfig config = mock(HeightConfig.class);
     private Chain chain = mock(Chain.class);

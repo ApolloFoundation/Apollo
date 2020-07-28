@@ -18,6 +18,7 @@ import org.json.simple.JSONObject;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * @author al
@@ -53,7 +54,10 @@ public abstract class UpdateAttachment extends AbstractAttachment {
 
     public UpdateAttachment(JSONObject attachmentData) {
         super(attachmentData);
-        os = OS.fromCompatible(Convert.nullToEmpty((String) attachmentData.get("os")).trim());
+        // try to get data from 'os' json field
+        Optional<OS> optionalOS = OS.fromCompatibleOptional(Convert.nullToEmpty((String) attachmentData.get("os")).trim());
+        // otherwise try to get value from 'platform' field
+        os = optionalOS.orElseGet(() -> OS.fromCompatible(Convert.nullToEmpty((String) attachmentData.get("platform")).trim()));
         architecture = Arch.fromCompatible(Convert.nullToEmpty((String) attachmentData.get("architecture")).trim());
         JSONObject urlJson = (JSONObject) attachmentData.get("url");
         byte[] firstUrlPart = Convert.parseHexString(Convert.nullToEmpty(((String) urlJson.get("first")).trim()));

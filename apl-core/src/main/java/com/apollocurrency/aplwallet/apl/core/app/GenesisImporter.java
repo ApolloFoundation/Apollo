@@ -246,7 +246,8 @@ public class GenesisImporter {
     }
 
     public Block newGenesisBlock() {
-        return new BlockImpl(CREATOR_PUBLIC_KEY, loadBalancesAccountsComputeDigest());
+        long baseTarget = blockchainConfig.getCurrentConfig().getInitialBaseTarget();
+        return new BlockImpl(CREATOR_PUBLIC_KEY, loadBalancesAccountsComputeDigest(), baseTarget);
     }
 
     @Transactional
