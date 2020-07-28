@@ -12,6 +12,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.stream.Stream;
 
 public interface TransactionDao {
 
@@ -73,4 +74,9 @@ public interface TransactionDao {
 
     DbIterator<Transaction> getTransactions(Connection con, PreparedStatement pstmt);
 
+    Stream<Transaction> getTransactions(byte type, byte subtype,
+                                        int startTime, int endTime,
+                                        int fromHeight, int toHeight,
+                                        String sortOrder,
+                                        int from, int to);
 }

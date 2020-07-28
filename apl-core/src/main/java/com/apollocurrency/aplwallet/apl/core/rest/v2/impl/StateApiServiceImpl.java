@@ -7,6 +7,8 @@ import com.apollocurrency.aplwallet.api.v2.model.BlockchainInfo;
 import com.apollocurrency.aplwallet.apl.core.app.BlockNotFoundException;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
+import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDao;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.EcBlockData;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
@@ -30,13 +32,22 @@ public class StateApiServiceImpl implements StateApiService {
     private final Blockchain blockchain;
     private final TimeService timeService;
     private final BlockInfoMapper blockInfoMapper;
+    private final TransactionDao transactionDao;
+    private final UnconfirmedTransactionTable unconfirmedTxDao;
 
     @Inject
-    public StateApiServiceImpl(BlockchainConfig blockchainConfig, Blockchain blockchain, TimeService timeService, BlockInfoMapper blockInfoMapper) {
+    public StateApiServiceImpl(BlockchainConfig blockchainConfig,
+                               Blockchain blockchain,
+                               TimeService timeService,
+                               BlockInfoMapper blockInfoMapper,
+                               TransactionDao transactionDao,
+                               UnconfirmedTransactionTable unconfirmedTxDao) {
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig);
         this.blockchain = Objects.requireNonNull(blockchain);
         this.timeService = Objects.requireNonNull(timeService);
         this.blockInfoMapper = Objects.requireNonNull(blockInfoMapper);
+        this.transactionDao = Objects.requireNonNull(transactionDao);
+        this.unconfirmedTxDao = Objects.requireNonNull(unconfirmedTxDao);
     }
 
     public Response getBlockByHeight(String heightStr, SecurityContext securityContext) throws NotFoundException {
@@ -114,7 +125,28 @@ public class StateApiServiceImpl implements StateApiService {
     }
 
     public Response getTxReceiptById(String transaction, SecurityContext securityContext) throws NotFoundException {
-        return NOT_IMPLEMENTED_RESPONSE;
+
+        ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
+        if (!blockchain.isInitialized()) {
+            return builder.error(ApiErrors.BLOCKCHAIN_NOT_INITIALIZED).build();
+        }
+        BlockchainInfo blockchainInfo = new BlockchainInfo();
+        blockchainInfo.setChainid(blockchainConfig.getChain().getChainId().toString());
+        blockchainInfo.setGenesisAccount(Long.toUnsignedString(GenesisImporter.CREATOR_ID));
+        blockchainInfo.setGenesisBlockTimestamp(GenesisImporter.EPOCH_BEGINNING);
+        blockchainInfo.setGenesisBlockId(Long.toUnsignedString(blockchain.getBlockIdAtHeight(0)));
+
+        int height = blockchain.getHeight();
+        blockchainInfo.setHeight((long) height);
+        EcBlockData ecBlockData = blockchain.getECBlock(height);
+        blockchainInfo.setEcBlockId(Long.toUnsignedString(ecBlockData.getId()));
+        blockchainInfo.setEcBlockHeight((long) ecBlockData.getHeight());
+
+        blockchainInfo.setTxTimestamp((long) timeService.getEpochTime());
+        blockchainInfo.setTimestamp(timeService.systemTimeMillis());
+
+        return builder.bind(blockchainInfo).build();
+
     }
 
     public Response getTxReceiptList(List<String> body, SecurityContext securityContext) throws NotFoundException {

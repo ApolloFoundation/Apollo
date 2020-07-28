@@ -1,0 +1,37 @@
+/*
+ * Copyright (c)  2018-2020. Apollo Foundation.
+ */
+
+package com.apollocurrency.aplwallet.apl.core.service.blockchain;
+
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * @author andrii.zinchenko@firstbridge.io
+ */
+public interface FindTransactionService {
+
+    /**
+     * Returns transaction given the transaction id up to the specified height.
+     * Looks for transactions in both transaction table in the unconfirmed and confirmed.
+     *
+     * @param transactionId the transaction id
+     * @param height        the blockchain height (optional)
+     * @return the transaction object
+     */
+    Optional<Transaction> findTransaction(long transactionId, int height);
+
+    Optional<Transaction> findUnconfirmedTransaction(long transactionId);
+
+    /**
+     * Returns list of transactions saved in the blockchain during the time interval
+     *
+     * @param timeStart the start of time interval
+     * @param timeEnd   the end of time interval
+     * @return the list of transaction objects
+     */
+    List<Transaction> getTransactionsByPeriod(int timeStart, int timeEnd);
+}

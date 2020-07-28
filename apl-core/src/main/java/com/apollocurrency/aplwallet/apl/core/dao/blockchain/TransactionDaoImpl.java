@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.blockchain;
 
+import com.apollocurrency.aplwallet.api.v2.model.TxReceipt;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
@@ -29,16 +30,22 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.signature.Signature;
+import com.apollocurrency.aplwallet.apl.core.signature.SignatureParser;
+import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.UnsupportedTransactionVersion;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
+import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -53,6 +60,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 @Slf4j
 @Singleton
@@ -667,5 +678,158 @@ public class TransactionDaoImpl implements TransactionDao {
             }
         }
         return transactions;
+    }
+
+    @Override
+    public synchronized Stream<Transaction> getTransactions(byte type, byte subtype,
+                                                            int startTime, int endTime,
+                                                            int fromHeight, int toHeight,
+                                                            String sortOrder,
+                                                            int from, int to) {
+        StringBuilder sqlQuery = new StringBuilder("SELECT tx.id, tx.sender_id, tx.recipient_id, " +
+            "tx.signature, tx.timestamp, tx.amount, tx.fee, tx.height, tx.block_id," +
+            "tx.block_timestamp, tx.transaction_index FROM transaction tx ");
+
+        createSelectTransactionQuery(sqlQuery, type, subtype, startTime, endTime, fromHeight, toHeight);
+
+        sqlQuery.append("ORDER BY block_timestamp " + sortOrder + ", transaction_index " + sortOrder + " ");
+
+        sqlQuery.append(DbUtils.limitsClause(from, to));
+
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement statement = con.prepareStatement(sqlQuery.toString())) {
+            int i = setSelectTransactionQueryParams(statement, type, subtype, startTime, endTime, fromHeight, toHeight);
+            DbUtils.setLimits(++i, statement, from, to);
+
+            return StreamSupport.stream(
+                Spliterators.spliteratorUnknownSize(
+                    new DbIterator<>(con, statement, this::loadTransaction),
+                    Spliterator.ORDERED),
+                false
+            );
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    private TxReceipt parseTxReceipt(ResultSet rs) throws AplException.NotValidException {
+        try {
+            byte type = rs.getByte("type");
+            byte subtype = rs.getByte("subtype");
+            int timestamp = rs.getInt("timestamp");
+            long amountATM = rs.getLong("amount");
+            long feeATM = rs.getLong("fee");
+            byte version = rs.getByte("version");
+
+            SignatureParser parser = SignatureToolFactory.selectParser(version).orElseThrow(UnsupportedTransactionVersion::new);
+            ByteBuffer signatureBuffer = ByteBuffer.wrap(rs.getBytes("signature"));
+            Signature signature = parser.parse(signatureBuffer);
+
+            long blockId = rs.getLong("block_id");
+            int height = rs.getInt("height");
+            long id = rs.getLong("id");
+            long senderId = rs.getLong("sender_id");
+            long recipientId = rs.getLong("recipient_id");
+            byte[] attachmentBytes = rs.getBytes("attachment_bytes");
+            int blockTimestamp = rs.getInt("block_timestamp");
+            ByteBuffer buffer = null;
+            if (attachmentBytes != null) {
+                buffer = ByteBuffer.wrap(attachmentBytes);
+                buffer.order(ByteOrder.LITTLE_ENDIAN);
+            }
+
+            short transactionIndex = rs.getShort("transaction_index");
+            TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
+            if (transactionType == null) {
+                throw new AplException.NotValidException("Wrong transaction type/subtype value, type=" + type + " subtype=" + subtype);
+            }
+            StringBuilder payload = new StringBuilder();
+            parseAppendix(payload, transactionType.parseAttachment(buffer));
+            if (rs.getBoolean("has_message")) {
+                parseAppendix(payload, new MessageAppendix(buffer));
+            }
+
+            TxReceipt transaction = new TxReceipt();
+            transaction.setTransaction(Long.toUnsignedString(id));
+            transaction.setSender(Convert.defaultRsAccount(senderId));
+            transaction.setRecipient(recipientId != 0 ? Convert.defaultRsAccount(recipientId) : "0");
+            transaction.setAmount(Long.toUnsignedString(amountATM));
+            transaction.setFee(Long.toUnsignedString(feeATM));
+            transaction.setTimestamp((long) timestamp);
+            transaction.setHeight((long) height);
+            transaction.setBlock(Long.toUnsignedString(blockId));
+            transaction.setBlockTimestamp((long) blockTimestamp);
+            transaction.setIndex((int) transactionIndex);
+            transaction.setSignature(signature.getJsonString());
+            transaction.setPayload(payload.toString());
+            return transaction;
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    private static void parseAppendix(StringBuilder builder, Appendix appendix) {
+        if (appendix != null) {
+            JSONObject json = appendix.getJSONObject();
+            if (json != null) {
+                builder.append(json.toJSONString());
+            }
+        }
+    }
+
+    private StringBuilder createSelectTransactionQuery(StringBuilder buf, byte type, byte subtype,
+                                                       int startTime, int endTime,
+                                                       int fromHeight, int toHeight) {
+        buf.append("WHERE ");
+        if (type >= 0) {
+            buf.append("AND type = ? ");
+            if (subtype >= 0) {
+                buf.append("AND subtype = ? ");
+            }
+        }
+        if (startTime > 0) {
+            buf.append("AND block_timestamp >= ? ");
+            buf.append("AND timestamp >= ? ");
+        }
+        if (endTime > 0) {
+            buf.append("AND block_timestamp <= ? ");
+            buf.append("AND timestamp <= ? ");
+        }
+        if (fromHeight > 0) {
+            buf.append("AND height >= ? ");
+        }
+        if (toHeight > 0) {
+            buf.append("AND height <= ? ");
+        }
+        return buf;
+    }
+
+    private int setSelectTransactionQueryParams(PreparedStatement pstmt, byte type, byte subtype,
+                                                int startTime, int endTime,
+                                                int fromHeight, int toHeight) throws SQLException {
+        int i = 0;
+        if (type >= 0) {
+            pstmt.setByte(++i, type);
+            if (subtype >= 0) {
+                pstmt.setByte(++i, subtype);
+            }
+        }
+        if (startTime > 0) {
+            pstmt.setInt(++i, startTime);
+            pstmt.setInt(++i, startTime);
+        }
+        if (endTime > 0) {
+            pstmt.setInt(++i, endTime);
+            pstmt.setInt(++i, endTime);
+        }
+        if (fromHeight > 0) {
+            pstmt.setInt(++i, fromHeight);
+        }
+        if (toHeight > 0) {
+            pstmt.setInt(++i, toHeight);
+        }
+        return i;
     }
 }
