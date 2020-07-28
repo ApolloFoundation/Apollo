@@ -1,7 +1,6 @@
 package com.apollocurrency.aplwallet.apl.exec;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
-import com.apollocurrency.aplwallet.apl.core.app.FundingMonitor;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.funding.FundingMonitorService;
 import org.slf4j.Logger;
 

@@ -23,7 +23,6 @@ package com.apollocurrency.aplwallet.apl.core.http;
 import com.apollocurrency.aplwallet.api.dto.BlockDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountCurrencyDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
-import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisAccounts;
 import com.apollocurrency.aplwallet.apl.core.app.Token;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
@@ -31,6 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.funding.FundingMonitorInstance;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.funding.MonitoredAccount;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.GeneratorMemoryEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.DataTag;
@@ -559,7 +559,12 @@ public final class JSONData {
         json.put("block", block.getStringId());
         json.put("height", block.getHeight());
         putAccount(json, "generator", block.getGeneratorId());
-        json.put("generatorPublicKey", Convert.toHexString(block.getGeneratorPublicKey()));
+        byte[] generatorPublicKey = block.getGeneratorPublicKey();
+        if (generatorPublicKey == null) {
+            generatorPublicKey = accountService.getPublicKeyByteArray(block.getGeneratorId());
+            block.setGeneratorPublicKey(generatorPublicKey);
+        }
+        json.put("generatorPublicKey", Convert.toHexString(generatorPublicKey));
         json.put("timestamp", block.getTimestamp());
 
         json.put("timeout", block.getTimeout());
@@ -1224,7 +1229,7 @@ public final class JSONData {
         return json;
     }
 
-    public static JSONObject generator(Generator generator, int elapsedTime) {
+    public static JSONObject generator(GeneratorMemoryEntity generator, int elapsedTime) {
         JSONObject response = new JSONObject();
         long deadline = generator.getDeadline();
         putAccount(response, "account", generator.getAccountId());

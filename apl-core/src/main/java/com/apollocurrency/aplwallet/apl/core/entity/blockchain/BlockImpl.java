@@ -21,15 +21,9 @@
 package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Generator;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -41,22 +35,18 @@ import javax.enterprise.inject.spi.CDI;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
 public final class BlockImpl implements Block {
     private static final Logger LOG = getLogger(BlockImpl.class);
 
-
-    private static BlockchainConfig blockchainConfig;// = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain;
-    private static ShardDao shardDao;
-    private static AccountService accountService;
 
     private final int version;
     private final int timestamp;
@@ -82,26 +72,30 @@ public final class BlockImpl implements Block {
     private volatile byte[] bytes = null;
     private volatile boolean hasValidSignature = false;
 
-    public BlockImpl(byte[] generatorPublicKey, byte[] generationSignature) {
-        this(-1, 0, 0, 0, 0, 0, new byte[32], generatorPublicKey, generationSignature, new byte[64],
-            new byte[32], 0, Collections.emptyList());
+    public BlockImpl(byte[] generatorPublicKey, byte[] generationSignature, long baseTarget) {
+        this(-1, 0, 0, 0, 0, 0, new byte[32], generatorPublicKey,
+            generationSignature, new byte[64],
+            new byte[32], 0, Collections.emptyList(), baseTarget);
         this.height = 0;
     }
 
     public BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountATM, long totalFeeATM, int payloadLength, byte[] payloadHash,
                      byte[] generatorPublicKey, byte[] generationSignature, byte[] previousBlockHash, int timeout,
                      List<Transaction> transactions,
-                     byte[] keySeed) {
+                     byte[] keySeed,
+                     long baseTarget) {
         this(version, timestamp, previousBlockId, totalAmountATM, totalFeeATM, payloadLength, payloadHash,
-            generatorPublicKey, generationSignature, null, previousBlockHash, timeout, transactions);
+            generatorPublicKey, generationSignature, null, previousBlockHash, timeout, transactions, baseTarget);
         blockSignature = Crypto.sign(bytes(), keySeed);
         bytes = null;
     }
 
     public BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountATM, long totalFeeATM, int payloadLength, byte[] payloadHash,
                      byte[] generatorPublicKey, byte[] generationSignature, byte[] blockSignature, byte[] previousBlockHash, int timeout,
-                     List<Transaction> transactions) {
-        this(version, timestamp, previousBlockId, totalAmountATM, totalFeeATM, payloadLength, payloadHash, generatorPublicKey, generationSignature, blockSignature, previousBlockHash, BigInteger.ZERO, null, 0L, -1, 0, timeout, transactions);
+                     List<Transaction> transactions, long baseTarget) {
+        this(version, timestamp, previousBlockId, totalAmountATM, totalFeeATM, payloadLength, payloadHash, generatorPublicKey,
+            generationSignature, blockSignature, previousBlockHash, BigInteger.ZERO, baseTarget, 0L, -1, 0, timeout,
+            transactions);
     }
 
     public BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountATM, long totalFeeATM, int payloadLength,
@@ -139,8 +133,8 @@ public final class BlockImpl implements Block {
         if (baseTarget != null) {
             this.baseTarget = baseTarget;
         } else {
-            lookupBlockchainConfig();
-            this.baseTarget = blockchainConfig.getCurrentConfig().getInitialBaseTarget();
+            String error = "'baseTarget' can't be null or empty ! Supply it from 'config' data, pls...";
+            throw new RuntimeException(error);
         }
         this.nextBlockId = nextBlockId;
         this.height = height;
@@ -156,7 +150,7 @@ public final class BlockImpl implements Block {
         }
     }
 
-    public static BlockImpl parseBlock(JSONObject blockData) throws AplException.NotValidException {
+    public static BlockImpl parseBlock(JSONObject blockData, long baseTarget) throws AplException.NotValidException {
         try {
             int version = ((Long) blockData.get("version")).intValue();
             int timestamp = ((Long) blockData.get("timestamp")).intValue();
@@ -175,8 +169,9 @@ public final class BlockImpl implements Block {
             for (Object transactionData : (JSONArray) blockData.get("transactions")) {
                 blockTransactions.add(TransactionBuilder.parseTransaction((JSONObject) transactionData));
             }
-            BlockImpl block = new BlockImpl(version, timestamp, previousBlock, totalAmountATM, totalFeeATM, payloadLength, payloadHash, generatorPublicKey,
-                generationSignature, blockSignature, previousBlockHash, timeout, blockTransactions);
+            BlockImpl block = new BlockImpl(version, timestamp, previousBlock, totalAmountATM, totalFeeATM,
+                payloadLength, payloadHash, generatorPublicKey,
+                generationSignature, blockSignature, previousBlockHash, timeout, blockTransactions, baseTarget);
             if (!block.checkSignature()) {
                 throw new AplException.NotValidException("Invalid block signature");
             }
@@ -190,20 +185,6 @@ public final class BlockImpl implements Block {
 
     static boolean requireTimeout(int version) {
         return Block.ADAPTIVE_BLOCK_VERSION == version || Block.INSTANT_BLOCK_VERSION == version;
-    }
-
-    private AccountService lookupAccountService() {
-        if (accountService == null) {
-            accountService = CDI.current().select(AccountService.class).get();
-        }
-        return accountService;
-    }
-
-    private BlockchainConfig lookupBlockchainConfig() {
-        if (blockchainConfig == null) {
-            blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-        }
-        return blockchainConfig;
     }
 
     @Override
@@ -228,10 +209,21 @@ public final class BlockImpl implements Block {
 
     @Override
     public byte[] getGeneratorPublicKey() {
-        if (generatorPublicKey == null) {
-            generatorPublicKey = lookupAccountService().getPublicKeyByteArray(generatorId);
-        }
+//        if (generatorPublicKey == null) {
+//            String error = "Pls, assign generatorPublicKey first, before trying to take it";
+//            throw new RuntimeException(error);
+//            generatorPublicKey = lookupAccountService().getPublicKeyByteArray(generatorId);
+//        }
         return generatorPublicKey;
+    }
+
+    public void setGeneratorPublicKey(byte[] generatorPublicKey) {
+        if (generatorPublicKey != null && generatorPublicKey.length > 0) {
+            this.generatorPublicKey = generatorPublicKey;
+        } else {
+            String error = "Can't assign empty generatorPublicKey";
+            throw new RuntimeException(error);
+        }
     }
 
     @Override
@@ -347,7 +339,9 @@ public final class BlockImpl implements Block {
     @Override
     public long getGeneratorId() {
         if (generatorId == 0) {
-            generatorId = AccountService.getId(getGeneratorPublicKey());
+//            generatorId = AccountService.getId(getGeneratorPublicKey());
+            String error = "GeneratorId should be assigned !";
+            throw new RuntimeException(error);
         }
         return generatorId;
     }
@@ -421,11 +415,7 @@ public final class BlockImpl implements Block {
     }
 
     @Override
-    public boolean verifyBlockSignature() {
-        return checkSignature() && lookupAccountService().setOrVerifyPublicKey(getGeneratorId(), getGeneratorPublicKey());
-    }
-
-    private boolean checkSignature() {
+    public boolean checkSignature() {
         if (!hasValidSignature) {
             byte[] data = Arrays.copyOf(bytes(), bytes.length - 64);
             hasValidSignature = blockSignature != null && Crypto.verify(blockSignature, data, getGeneratorPublicKey());
@@ -434,58 +424,15 @@ public final class BlockImpl implements Block {
     }
 
     @Override
-    public boolean verifyGenerationSignature() throws BlockchainProcessor.BlockOutOfOrderException {
-
-        try {
-
-            Block previousBlock = lookupBlockchain().getBlock(getPreviousBlockId());
-            if (previousBlock == null) {
-                throw new BlockchainProcessor.BlockOutOfOrderException("Can't verify signature because previous block is missing", this);
-            }
-
-            Account account = lookupAccountService().getAccount(getGeneratorId());
-            long effectiveBalance = account == null ? 0 : lookupAccountService().getEffectiveBalanceAPL(account, blockchain.getHeight(), true);
-            if (effectiveBalance <= 0) {
-                LOG.warn("Account: {} Effective ballance: {}, blockchain.height: {},  verification failed",
-                    account, effectiveBalance, blockchain.getHeight());
-                return false;
-            }
-
-            MessageDigest digest = Crypto.sha256();
-            digest.update(previousBlock.getGenerationSignature());
-            byte[] generationSignatureHash = digest.digest(getGeneratorPublicKey());
-            if (!Arrays.equals(generationSignature, generationSignatureHash)) {
-                LOG.warn("Account: {} Effective ballance: {},  gen. signature: {}, calculated: {}, blockchain.height: {}, verification failed",
-                    account, effectiveBalance, generationSignature, generationSignatureHash, blockchain.getHeight());
-                return false;
-            }
-
-            BigInteger hit = new BigInteger(1, new byte[]{generationSignatureHash[7], generationSignatureHash[6], generationSignatureHash[5], generationSignatureHash[4], generationSignatureHash[3], generationSignatureHash[2], generationSignatureHash[1], generationSignatureHash[0]});
-
-            boolean ret = Generator.verifyHit(hit, BigInteger.valueOf(effectiveBalance), previousBlock, requireTimeout(version) ? timestamp - timeout : timestamp);
-            if (!ret) {
-                LOG.warn("Account: {} Effective ballance: {}, blockchain.height: {}, Generator.verifyHit() verification failed",
-                    account, effectiveBalance, blockchain.getHeight());
-            }
-            return ret;
-        } catch (RuntimeException e) {
-
-            LOG.info("Error verifying block generation signature", e);
-            return false;
-
-        }
-
-    }
-
-    @Override
-    public void setPrevious(Block block) {
+    public void setPrevious(Block block, HeightConfig config, Shard lastShard) {
+        Objects.requireNonNull(config, "HeightConfig is NULL");
         if (block != null) {
             if (block.getId() != getPreviousBlockId()) {
                 // shouldn't happen as previous id is already verified, but just in case
                 throw new IllegalStateException("Previous block id doesn't match");
             }
             this.height = block.getHeight() + 1;
-            this.calculateBaseTarget(block);
+            this.calculateBaseTarget(block, config, lastShard);
         } else {
             this.height = 0;
         }
@@ -503,12 +450,11 @@ public final class BlockImpl implements Block {
         }
     }
 
-    private void calculateBaseTarget(Block previousBlock) {
+    private void calculateBaseTarget(Block previousBlock, HeightConfig config, Shard lastShard) {
         long prevBaseTarget = previousBlock.getBaseTarget();
         int blockchainHeight = previousBlock.getHeight();
         if (blockchainHeight > 2 && blockchainHeight % 2 == 0) {
-            int blocktimeAverage = getBlockTimeAverage(previousBlock);
-            HeightConfig config = blockchainConfig.getCurrentConfig();
+            int blocktimeAverage = getBlockTimeAverage(previousBlock, lastShard);
             int blockTime = config.getBlockTime();
             if (blocktimeAverage > blockTime) {
                 int maxBlocktimeLimit = config.getMaxBlockTimeLimit();
@@ -532,13 +478,13 @@ public final class BlockImpl implements Block {
         cumulativeDifficulty = previousBlock.getCumulativeDifficulty().add(Convert.two64.divide(BigInteger.valueOf(baseTarget)));
     }
 
-    private int getBlockTimeAverage(Block previousBlock) {
+    private int getBlockTimeAverage(Block previousBlock, Shard lastShard) {
         int blockchainHeight = previousBlock.getHeight();
         Block shardInitialBlock = lookupBlockchain().getShardInitialBlock();
-        int lastBlockTimestamp = getPrevTimestamp(shardInitialBlock.getHeight(), blockchainHeight - 2);
+        int lastBlockTimestamp = getPrevTimestamp(shardInitialBlock.getHeight(), blockchainHeight - 2, lastShard);
         if (version != Block.LEGACY_BLOCK_VERSION) {
-            int intermediateTimestamp = getPrevTimestamp(shardInitialBlock.getHeight(), blockchainHeight - 1);
-            int intermediateTimeout = getPrevTimeout(shardInitialBlock.getHeight(), blockchainHeight - 1);
+            int intermediateTimestamp = getPrevTimestamp(shardInitialBlock.getHeight(), blockchainHeight - 1, lastShard);
+            int intermediateTimeout = getPrevTimeout(shardInitialBlock.getHeight(), blockchainHeight - 1, lastShard);
             int thisBlockActualTime = this.timestamp - previousBlock.getTimestamp() - this.timeout;
             int previousBlockTime = previousBlock.getTimestamp() - previousBlock.getTimeout() - intermediateTimestamp;
             int secondAvgBlockTime = intermediateTimestamp
@@ -549,33 +495,24 @@ public final class BlockImpl implements Block {
         }
     }
 
-    private ShardDao lookupShardDao() {
-        if (shardDao == null) {
-            shardDao = CDI.current().select(ShardDao.class).get();
-        }
-        return shardDao;
-    }
-
-    private int getPrevTimestamp(int shardInitialHeight, int blockHeight) {
+    private int getPrevTimestamp(int shardInitialHeight, int blockHeight, Shard lastShard) {
         int diff = shardInitialHeight - blockHeight;
         if (diff > 2) {
             throw new IllegalArgumentException("Unable to retrieve block timestamp for height " + blockHeight + " current shard height " + shardInitialHeight);
         }
         if (diff > 0) {
-            Shard lastShard = lookupShardDao().getLastShard();
             int[] blockTimestamps = lastShard.getBlockTimestamps();
             return blockTimestamps[diff - 1];
         }
         return lookupBlockchain().getBlockAtHeight(blockHeight).getTimestamp();
     }
 
-    private int getPrevTimeout(int shardInitialHeight, int blockHeight) {
+    private int getPrevTimeout(int shardInitialHeight, int blockHeight, Shard lastShard) {
         int diff = shardInitialHeight - blockHeight;
         if (diff > 2) {
             throw new IllegalArgumentException("Unable to retrieve block timeout for height " + blockHeight + " current shard height " + shardInitialHeight);
         }
         if (diff > 0) {
-            Shard lastShard = lookupShardDao().getLastShard();
             int[] blockTimeouts = lastShard.getBlockTimeouts();
             return blockTimeouts[diff - 1];
         }

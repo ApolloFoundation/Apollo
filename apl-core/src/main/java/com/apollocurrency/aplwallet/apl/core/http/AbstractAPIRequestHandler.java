@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.BidOrder;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.funding.FundingMonitorService;
@@ -130,6 +131,7 @@ public abstract class AbstractAPIRequestHandler {
     private MonetaryCurrencyMintingService monetaryCurrencyMintingService;
     private ShufflerService shufflerService;
     private FundingMonitorService fundingMonitorService;
+    private GeneratorService generatorService;
 
     public AbstractAPIRequestHandler(APITag[] apiTags, String... parameters) {
         this(null, apiTags, parameters);
@@ -322,6 +324,13 @@ public abstract class AbstractAPIRequestHandler {
             fundingMonitorService = CDI.current().select(FundingMonitorService.class).get();
         }
         return fundingMonitorService;
+    }
+
+    public GeneratorService lookupGeneratorService() {
+        if (generatorService == null) {
+            generatorService = CDI.current().select(GeneratorService.class).get();
+        }
+        return generatorService;
     }
 
     public final List<String> getParameters() {

@@ -123,7 +123,7 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
         try {
             int count = stop - start;
             for (JSONObject blockData : nextBlocks) {
-                blockList.add(BlockImpl.parseBlock(blockData));
+                blockList.add(BlockImpl.parseBlock(blockData, blockchainConfig.getCurrentConfig().getInitialBaseTarget()));
                 if (--count <= 0) {
                     break;
                 }

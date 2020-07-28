@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.app.Generator;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.GeneratorMemoryEntity;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
@@ -42,7 +42,7 @@ public final class StartForging extends AbstractAPIRequestHandler {
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
         long accountId = HttpParameterParserUtil.getAccountId(req, vaultAccountName(), false);
         byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, accountId, true);
-        Generator generator = Generator.startForging(keySeed);
+        GeneratorMemoryEntity generator = lookupGeneratorService().startForging(keySeed);
 
         JSONObject response = new JSONObject();
         response.put("deadline", generator.getDeadline());
