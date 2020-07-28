@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2019-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.service.appdata.impl;

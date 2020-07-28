@@ -23,7 +23,6 @@ package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainScanException;
-import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
@@ -39,9 +38,11 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.OptionDAO;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockchainProcessorState;
@@ -58,6 +59,7 @@ import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecisio
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.DatabaseManagerImpl;
@@ -160,6 +162,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final AplAppStatus aplAppStatus;
     private final BlockApplier blockApplier;
     private final ShardsDownloadService shardDownloader;
+    private final ShardDao shardDao;
     private final PeersService peersService;
     private final Blockchain blockchain;
     private final TransactionProcessor transactionProcessor;
@@ -172,6 +175,15 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final TaskDispatchManager taskDispatchManager;
     private final BlockValidator validator;
     private final AccountService accountService;
+    private final GeneratorService generatorService;
+
+    private volatile Peer lastBlockchainFeeder;
+    private volatile int lastBlockchainFeederHeight;
+    private volatile boolean getMoreBlocks = true;
+    private volatile boolean isScanning;
+    private volatile boolean isDownloading;
+    private volatile boolean isProcessingBlock;
+    private volatile boolean isRestoring;
 
     @Inject
     public BlockchainProcessorImpl(PropertiesHolder propertiesHolder, BlockchainConfig blockchainConfig,
@@ -186,6 +198,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    ShardImporter importer,
                                    TaskDispatchManager taskDispatchManager, Event<List<Transaction>> txEvent,
                                    Event<BlockchainConfig> blockchainEvent,
+                                   ShardDao shardDao,
                                    TimeService timeService,
                                    AccountService accountService,
                                    AccountControlPhasingService accountControlPhasingService,
@@ -194,7 +207,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    Blockchain blockchain,
                                    PeersService peersService,
                                    TransactionProcessor transactionProcessor,
-                                   FullTextSearchService fullTextSearchProvider) {
+                                   FullTextSearchService fullTextSearchProvider,
+                                   GeneratorService generatorService) {
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder);
         this.blockchainConfig = blockchainConfig;
         this.validator = validator;
@@ -217,6 +231,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.taskDispatchManager = taskDispatchManager;
         this.txEvent = txEvent;
         this.blockchainEvent = blockchainEvent;
+        this.shardDao = shardDao;
         this.timeService = timeService;
         this.accountService = accountService;
         this.accountControlPhasingService = accountControlPhasingService;
@@ -228,6 +243,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.transactionProcessor = transactionProcessor;
         this.fullTextSearchProvider = fullTextSearchProvider;
         this.blockchainProcessorState = new BlockchainProcessorState();
+        this.generatorService = generatorService;
 
         configureBackgroundTasks();
     }
@@ -353,12 +369,13 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             log.trace("Timestamp: peerBlock{},ourBlock{}", request.get("timestamp"), lastBlock.getTimestamp());
             log.trace("PrevId: peerBlock{},ourBlock{}", peerBlockPreviousBlockId, lastBlock.getPreviousBlockId());
             // peer block is the next block in our blockchain
+            long baseTarget = blockchainConfig.getCurrentConfig().getInitialBaseTarget();
             if (peerBlockPreviousBlockId == lastBlock.getId()) {
                 log.debug("push peer last block");
-                Block block = BlockImpl.parseBlock(request);
+                Block block = BlockImpl.parseBlock(request, baseTarget);
                 pushBlock(block);
             } else if (peerBlockPreviousBlockId == lastBlock.getPreviousBlockId()) { //peer block is a candidate to replace our last block
-                Block block = BlockImpl.parseBlock(request);
+                Block block = BlockImpl.parseBlock(request, baseTarget);
                 //try to replace our last block by peer block only when timestamp of peer block is less than timestamp of our block or when
                 // timestamps are equal but timeout of peer block is greater, so that peer block is better.
                 if (((block.getTimestamp() < lastBlock.getTimestamp()
@@ -557,16 +574,26 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             dataSource.begin();
             try {
                 previousLastBlock = blockchain.getLastBlock();
+                byte[] generatorPublicKey = previousLastBlock.getGeneratorPublicKey();
+                if (generatorPublicKey == null) {
+                    generatorPublicKey = accountService.getPublicKeyByteArray(previousLastBlock.getGeneratorId());
+                    previousLastBlock.setGeneratorPublicKey(generatorPublicKey);
+                }
+                generatorPublicKey = block.getGeneratorPublicKey();
+                if (generatorPublicKey == null) {
+                    generatorPublicKey = accountService.getPublicKeyByteArray(block.getGeneratorId());
+                    block.setGeneratorPublicKey(generatorPublicKey);
+                }
 
                 validator.validate(block, previousLastBlock, curTime);
 
-                long nextHitTime = Generator.getNextHitTime(previousLastBlock.getId(), curTime);
+                long nextHitTime = generatorService.getNextHitTime(previousLastBlock.getId(), curTime);
                 if (nextHitTime > 0 && block.getTimestamp() > nextHitTime + 1) {
                     String msg = "Rejecting block " + block.getStringId() + " at height " + previousLastBlock.getHeight()
                         + " block timestamp " + block.getTimestamp() + " next hit time " + nextHitTime
                         + " current time " + curTime;
                     log.debug(msg);
-                    Generator.setDelay(-propertiesHolder.FORGING_SPEEDUP());
+                    generatorService.setDelay(-propertiesHolder.FORGING_SPEEDUP());
                     throw new BlockOutOfOrderException(msg, block);
                 }
 
@@ -576,7 +603,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 validatePhasedTransactions(block, previousLastBlock, validPhasedTransactions, invalidPhasedTransactions, duplicates);
                 validateTransactions(block, previousLastBlock, curTime, duplicates, previousLastBlock.getHeight() >= Constants.LAST_CHECKSUM_BLOCK);
 
-                block.setPrevious(previousLastBlock);
+//                block.setPrevious(previousLastBlock);
+                HeightConfig config = blockchainConfig.getCurrentConfig();
+                Shard lastShard = shardDao.getLastShard();
+                block.setPrevious(previousLastBlock, config, lastShard);
                 log.trace("fire block on = {}, id = '{}', '{}'", block.getHeight(), block.getId(), BlockEventType.BEFORE_BLOCK_ACCEPT.name());
                 blockEvent.select(literal(BlockEventType.BEFORE_BLOCK_ACCEPT)).fire(block);
                 transactionProcessor.requeueAllUnconfirmedTransactions();
@@ -1136,9 +1166,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         final byte[] publicKey = Crypto.getPublicKey(keySeed);
         byte[] generationSignature = digest.digest(publicKey);
         byte[] previousBlockHash = Crypto.sha256().digest(((BlockImpl) previousBlock).bytes());
-
+        long baseTarget = blockchainConfig.getCurrentConfig().getInitialBaseTarget();
         Block block = new BlockImpl(blockVersion, blockTimestamp, previousBlock.getId(), totalAmountATM, totalFeeATM, payloadLength,
-            payloadHash, publicKey, generationSignature, previousBlockHash, timeout, blockTransactions, keySeed);
+            payloadHash, publicKey, generationSignature, previousBlockHash, timeout, blockTransactions, keySeed, baseTarget);
 
         try {
             pushBlock(block);
@@ -1312,9 +1342,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                         int curTime = timeService.getEpochTime();
                                         validator.validate(currentBlock, blockchain.getLastBlock(), curTime);
                                         byte[] blockBytes = ((BlockImpl) currentBlock).bytes();
-                                        JSONObject blockJSON = (JSONObject) JSONValue.parse(currentBlock.getJSONObject().toJSONString());
+                                        JSONObject blockJSON = currentBlock.getJSONObject();
+                                        long baseTarget = blockchainConfig.getCurrentConfig().getInitialBaseTarget();
                                         if (!Arrays.equals(blockBytes,
-                                            BlockImpl.parseBlock(blockJSON).bytes())) {
+                                            BlockImpl.parseBlock(blockJSON, baseTarget).bytes())) {
                                             throw new AplException.NotValidException("Block JSON cannot be parsed back to the same block");
                                         }
                                         validateTransactions(currentBlock, blockchain.getLastBlock(), curTime, duplicates, true);
