@@ -5,17 +5,18 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.types.shuffling;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
-import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
@@ -31,11 +32,15 @@ import java.util.Map;
 @Singleton
 public class ShufflingCreationTransactionType extends ShufflingTransactionType {
     private final AssetService assetService;
+    private final CurrencyService currencyService;
+    private final ShufflingService shufflingService;
 
     @Inject
-    public ShufflingCreationTransactionType(AssetService assetService, BlockchainConfig blockchainConfig, AccountService accountService) {
+    public ShufflingCreationTransactionType(AssetService assetService, BlockchainConfig blockchainConfig, AccountService accountService, CurrencyService currencyService, ShufflingService shufflingService) {
         super(blockchainConfig, accountService);
         this.assetService = assetService;
+        this.currencyService = currencyService;
+        this.shufflingService = shufflingService;
     }
 
 
@@ -84,9 +89,9 @@ public class ShufflingCreationTransactionType extends ShufflingTransactionType {
                 throw new AplException.NotValidException("Invalid asset quantity " + amount);
             }
         } else if (holdingType == HoldingType.CURRENCY) {
-            Currency currency = Currency.getCurrency(attachment.getHoldingId());
+            Currency currency = currencyService.getCurrency(attachment.getHoldingId());
             CurrencyType.validate(currency, transaction);
-            if (!currency.isActive()) {
+            if (!currencyService.isActive(currency)) {
                 throw new AplException.NotCurrentlyValidException("Currency is not active: " + currency.getCode());
             }
             if (amount <= 0 || amount > Constants.MAX_CURRENCY_TOTAL_SUPPLY) {
@@ -129,7 +134,7 @@ public class ShufflingCreationTransactionType extends ShufflingTransactionType {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         ShufflingCreation attachment = (ShufflingCreation) transaction.getAttachment();
-        Shuffling.addShuffling(transaction, attachment);
+        shufflingService.addShuffling(transaction, attachment);
     }
 
     @Override
@@ -150,12 +155,12 @@ public class ShufflingCreationTransactionType extends ShufflingTransactionType {
         if (attachment.getHoldingType() != HoldingType.CURRENCY) {
             return false;
         }
-        Currency currency = Currency.getCurrency(attachment.getHoldingId());
+        Currency currency = currencyService.getCurrency(attachment.getHoldingId());
         String nameLower = currency.getName().toLowerCase();
         String codeLower = currency.getCode().toLowerCase();
-        boolean isDuplicate = TransactionType.isDuplicate(TransactionTypes.TransactionTypeSpec.CURRENCY_ISSUANCE, nameLower, duplicates, false);
+        boolean isDuplicate = TransactionType.isDuplicate(TransactionTypes.TransactionTypeSpec.MS_CURRENCY_ISSUANCE, nameLower, duplicates, false);
         if (!nameLower.equals(codeLower)) {
-            isDuplicate = isDuplicate || TransactionType.isDuplicate(TransactionTypes.TransactionTypeSpec.CURRENCY_ISSUANCE, codeLower, duplicates, false);
+            isDuplicate = isDuplicate || TransactionType.isDuplicate(TransactionTypes.TransactionTypeSpec.MS_CURRENCY_ISSUANCE, codeLower, duplicates, false);
         }
         return isDuplicate;
     }

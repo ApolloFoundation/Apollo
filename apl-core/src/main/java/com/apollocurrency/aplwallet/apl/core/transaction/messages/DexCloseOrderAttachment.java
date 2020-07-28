@@ -1,15 +1,16 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
 
-@Data
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.DEX_CLOSE_ORDER;
+
+@Getter
 @AllArgsConstructor
 public class DexCloseOrderAttachment extends AbstractAttachment {
 
@@ -41,7 +42,7 @@ public class DexCloseOrderAttachment extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
-        return DEX.DEX_CLOSE_ORDER;
+    public TransactionTypes.TransactionTypeSpec getTransactionType() {
+        return DEX_CLOSE_ORDER;
     }
 }

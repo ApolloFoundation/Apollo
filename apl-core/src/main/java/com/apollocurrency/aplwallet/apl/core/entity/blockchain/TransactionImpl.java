@@ -16,7 +16,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppend
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Encryptable;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
@@ -136,9 +135,6 @@ public class TransactionImpl implements Transaction {
         this.appendages = Collections.unmodifiableList(list);
         int appendagesSize = 0;
         for (Appendix appendage : appendages) {
-            if (keySeed != null && appendage instanceof Encryptable) {
-                ((Encryptable) appendage).encrypt(keySeed);
-            }
             appendagesSize += appendage.getSize();
         }
         this.appendagesSize = appendagesSize;

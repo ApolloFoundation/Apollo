@@ -4,14 +4,14 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.types.dex;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.rest.service.DexOrderAttachmentFactory;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOrderAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOrderAttachmentV2;
@@ -19,24 +19,32 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import org.json.simple.JSONObject;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
 import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
 
 @Singleton
 public class DexOrderTransaction extends DexTransactionType {
 
+    private final TimeService timeService;
+
+    @Inject
+    public DexOrderTransaction(BlockchainConfig blockchainConfig, AccountService accountService, DexService dexService, TimeService timeService) {
+        super(blockchainConfig, accountService, dexService);
+        this.timeService = timeService;
+    }
+
     @Override
-    public byte getSubtype() {
-        return TransactionType.SUBTYPE_DEX_ORDER;
+    public TransactionTypes.TransactionTypeSpec getSpec() {
+        return TransactionTypes.TransactionTypeSpec.DEX_ORDER;
     }
 
     @Override
@@ -74,28 +82,28 @@ public class DexOrderTransaction extends DexTransactionType {
         }
 
         if (attachment.getPairRate() <= 0) {
-            throw new AplException.NotValidException(JSON.toString(incorrect("pairRate", "Should be more than zero.")));
+            throw new AplException.NotValidException("pairRate should be more than zero.");
         }
         if (attachment.getOrderAmount() <= 0) {
-            throw new AplException.NotValidException(JSON.toString(incorrect("offerAmount", "Should be more than zero.")));
+            throw new AplException.NotValidException("offerAmount should be more than zero.");
         }
 
         if (attachment instanceof DexOrderAttachmentV2) {
             String address = ((DexOrderAttachmentV2) attachment).getFromAddress();
             if (StringUtils.isBlank(address) || address.length() > Constants.MAX_ADDRESS_LENGTH) {
-                throw new AplException.NotValidException(JSON.toString(incorrect("FromAddress", "Should be not null and address length less then " + Constants.MAX_ADDRESS_LENGTH)));
+                throw new AplException.NotValidException("FromAddress should be not null and address length less then " + Constants.MAX_ADDRESS_LENGTH);
             }
         }
 
-        int currentTime = lookupTimeService().getEpochTime();
+        int currentTime = timeService.getEpochTime();
         if (attachment.getFinishTime() <= 0 || attachment.getFinishTime() - currentTime > MAX_ORDER_DURATION_SEC) {
-            throw new AplException.NotCurrentlyValidException(JSON.toString(incorrect("amountOfTime", String.format("value %d not in range [%d-%d]", attachment.getFinishTime(), 0, MAX_ORDER_DURATION_SEC))));
+            throw new AplException.NotCurrentlyValidException(String.format("amountOfTime %d not in range [%d-%d]", attachment.getFinishTime(), 0, MAX_ORDER_DURATION_SEC));
         }
     }
 
     @Override
-    public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
-        return isDuplicate(DexTransactionType.DEX_ORDER_TRANSACTION, Long.toUnsignedString(transaction.getId()), duplicates, true);
+    public boolean isDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
+        return isDuplicate(TransactionTypes.TransactionTypeSpec.DEX_ORDER, Long.toUnsignedString(transaction.getId()), duplicates, true);
     }
 
     @Override
@@ -105,7 +113,7 @@ public class DexOrderTransaction extends DexTransactionType {
         DexOrderAttachment attachment = (DexOrderAttachment) transaction.getAttachment();
         if (attachment.getType() == OrderType.SELL.ordinal()) {
             if (senderAccount.getUnconfirmedBalanceATM() >= attachment.getOrderAmount()) {
-                lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, LedgerEvent.DEX_FREEZE_MONEY, transaction.getId(), -attachment.getOrderAmount());
+                getAccountService().addToUnconfirmedBalanceATM(senderAccount, LedgerEvent.DEX_FREEZE_MONEY, transaction.getId(), -attachment.getOrderAmount());
             } else {
                 result = false;
             }
@@ -117,14 +125,14 @@ public class DexOrderTransaction extends DexTransactionType {
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         DexOrderAttachment attachment = (DexOrderAttachment) transaction.getAttachment();
 
-        lookupDexService().saveOrder(new DexOrder(transaction, attachment));
+        dexService.saveOrder(new DexOrder(transaction, attachment));
     }
 
     @Override
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         DexOrderAttachment attachment = (DexOrderAttachment) transaction.getAttachment();
         if (attachment.getType() == OrderType.SELL.ordinal()) {
-            lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, LedgerEvent.DEX_FREEZE_MONEY, transaction.getId(), attachment.getOrderAmount());
+            getAccountService().addToUnconfirmedBalanceATM(senderAccount, LedgerEvent.DEX_FREEZE_MONEY, transaction.getId(), attachment.getOrderAmount());
         }
     }
 

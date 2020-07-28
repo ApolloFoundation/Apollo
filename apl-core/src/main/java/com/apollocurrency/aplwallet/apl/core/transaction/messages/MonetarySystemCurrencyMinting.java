@@ -3,8 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.types.ms.MonetarySystemTransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONObject;
 
@@ -65,8 +64,8 @@ public final class MonetarySystemCurrencyMinting extends AbstractAttachment impl
     }
 
     @Override
-    public TransactionType getTransactionType() {
-        return MonetarySystemTransactionType.CURRENCY_MINTING;
+    public TransactionTypes.TransactionTypeSpec getTransactionType() {
+        return TransactionTypes.TransactionTypeSpec.MS_CURRENCY_MINTING;
     }
 
     public long getNonce() {

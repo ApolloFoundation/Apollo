@@ -44,13 +44,7 @@ public interface Appendix {
 
     byte getVersion();
 
-    int getBaselineFeeHeight();
-
     Fee getBaselineFee(Transaction transaction);
-
-    int getNextFeeHeight();
-
-    Fee getNextFee(Transaction transaction);
 
     default boolean isPhasable() {
         return false;

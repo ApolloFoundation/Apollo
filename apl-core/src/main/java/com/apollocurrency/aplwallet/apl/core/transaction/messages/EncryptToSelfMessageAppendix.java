@@ -31,7 +31,7 @@ public class EncryptToSelfMessageAppendix extends AbstractEncryptedMessageAppend
             return null;
         }
         if (((JSONObject) attachmentData.get("encryptToSelfMessage")).get("data") == null) {
-            return new UnencryptedEncryptToSelfMessageAppendix(attachmentData);
+            throw new RuntimeException("Unencrypted message to self is not supported");
         }
         return new EncryptToSelfMessageAppendix(attachmentData);
     }

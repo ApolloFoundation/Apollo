@@ -5,6 +5,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
@@ -69,7 +70,6 @@ import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.TransferTransactionInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.UserAddressesWithOffset;
 import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
-import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
 import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -903,7 +903,7 @@ public class DexService {
 
 
     public void onPhasedTxReleased(@Observes @TxEvent(TxEventType.RELEASE_PHASED_TRANSACTION) Transaction transaction) throws AplException.ExecutiveProcessException {
-        if (transaction.getType() == DEX.DEX_TRANSFER_MONEY_TRANSACTION) {
+        if (transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.DEX_TRANSFER_MONEY) {
             List<PhasingVote> votes = phasingPollService.getVotes(transaction.getId());
             log.debug("Found {} votes, pick latest", votes.size());
             phasingApprovedResultTable.insert(new PhasingApprovalResult(blockchain.getHeight(), transaction.getId(), votes.get(0).getVoteId()));
@@ -931,7 +931,7 @@ public class DexService {
         if (blockchainConfig.getDexExpiredContractWithFinishedPhasingHeightAndStep3() != null &&
             blockchainConfig.getDexExpiredContractWithFinishedPhasingHeightAndStep3() < blockchain.getHeight()) {
 
-            if (transaction.getType() == DEX.DEX_TRANSFER_MONEY_TRANSACTION) {
+            if (transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.DEX_TRANSFER_MONEY) {
                 long contractId = ((DexControlOfFrozenMoneyAttachment) transaction.getAttachment()).getContractId();
                 ExchangeContract exchangeContract = getDexContractById(contractId);
 

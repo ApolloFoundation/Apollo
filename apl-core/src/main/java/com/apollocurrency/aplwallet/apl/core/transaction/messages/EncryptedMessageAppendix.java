@@ -32,7 +32,7 @@ public class EncryptedMessageAppendix extends AbstractEncryptedMessageAppendix {
             return null;
         }
         if (((JSONObject) attachmentData.get("encryptedMessage")).get("data") == null) {
-            return new UnencryptedEncryptedMessageAppendix(attachmentData);
+            throw new RuntimeException("Unencrypted message is not supported");
         }
         return new EncryptedMessageAppendix(attachmentData);
     }

@@ -4,14 +4,11 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.types.dex;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
@@ -102,7 +99,7 @@ public class DexCloseOrderTransaction extends DexTransactionType {
         if (transferTx == null) {
             throw new AplException.NotCurrentlyValidException("Transfer tx was not found: " + transferId);
         }
-        if (transferTx.getType() != DEX_TRANSFER_MONEY) {
+        if (transferTx.getType().getSpec() != DEX_TRANSFER_MONEY) {
             throw new AplException.NotCurrentlyValidException("Wrong type of transfer tx: " + transferTx.getType());
         }
         if (transferTx.getSenderId() != tx.getSenderId()) {

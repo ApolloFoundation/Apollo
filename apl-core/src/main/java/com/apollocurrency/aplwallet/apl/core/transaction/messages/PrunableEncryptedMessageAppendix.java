@@ -75,7 +75,7 @@ public class PrunableEncryptedMessageAppendix extends AbstractAppendix implement
         }
         JSONObject encryptedMessageJSON = (JSONObject) attachmentData.get("encryptedMessage");
         if (encryptedMessageJSON != null && encryptedMessageJSON.get("data") == null) {
-            return new UnencryptedPrunableEncryptedMessageAppendix(attachmentData);
+            throw new RuntimeException("Unencrypted prunable message is not supported");
         }
         return new PrunableEncryptedMessageAppendix(attachmentData);
     }

@@ -32,9 +32,10 @@ public abstract class AbstractAttachment extends AbstractAppendix implements Att
     public AbstractAttachment() {
     }
 
+    // TODO Resolve names to be compatible with old implementation
     @Override
     public String getAppendixName() {
-        return getTransactionType().getName();
+        return getTransactionType().toString();
     }
 
     @Override
@@ -50,21 +51,6 @@ public abstract class AbstractAttachment extends AbstractAppendix implements Att
     @Override
     public final Fee getBaselineFee(Transaction transaction) {
         return getTransactionType().getBaselineFee(transaction);
-    }
-
-    @Override
-    public final Fee getNextFee(Transaction transaction) {
-        return getTransactionType().getNextFee(transaction);
-    }
-
-    @Override
-    public final int getBaselineFeeHeight() {
-        return getTransactionType().getBaselineFeeHeight();
-    }
-
-    @Override
-    public final int getNextFeeHeight() {
-        return getTransactionType().getNextFeeHeight();
     }
 
     @Override

@@ -20,17 +20,17 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionType.lookupCurrencyExchangeOfferFacade;
-
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.AvailableOffers;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
@@ -40,12 +40,13 @@ public final class GetAvailableToSell extends AbstractAPIRequestHandler {
         super(new APITag[]{APITag.MS}, "currency", "units");
     }
 
+    private CurrencyExchangeOfferFacade currencyExchangeOfferFacade = CDI.current().select(CurrencyExchangeOfferFacade.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
         long currencyId = HttpParameterParserUtil.getUnsignedLong(req, "currency", true);
         long units = HttpParameterParserUtil.getLong(req, "units", 1L, Long.MAX_VALUE, true);
-        AvailableOffers availableOffers = lookupCurrencyExchangeOfferFacade().getAvailableToSell(currencyId, units);
+        AvailableOffers availableOffers = currencyExchangeOfferFacade.getAvailableToSell(currencyId, units);
         return JSONData.availableOffers(availableOffers);
     }
 

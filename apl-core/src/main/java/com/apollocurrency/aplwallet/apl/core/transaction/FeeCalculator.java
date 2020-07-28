@@ -12,10 +12,7 @@ public class FeeCalculator {
         long totalFee = 0;
         for (AbstractAppendix appendage : transaction.getAppendages()) {
             appendage.loadPrunable(transaction);
-            if (blockchainHeight < appendage.getBaselineFeeHeight()) {
-                return 0; // No need to validate fees before baseline block
-            }
-            Fee fee = blockchainHeight >= appendage.getNextFeeHeight() ? appendage.getNextFee(transaction) : appendage.getBaselineFee(transaction);
+            Fee fee = appendage.getBaselineFee(transaction);
             totalFee = Math.addExact(totalFee, fee.getFee(transaction, appendage));
         }
         if (transaction.getReferencedTransactionFullHash() != null) {

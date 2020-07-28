@@ -1,11 +1,12 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
+
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.DEX_CANCEL_ORDER;
 
 public class DexOrderCancelAttachment extends AbstractAttachment {
 
@@ -41,8 +42,8 @@ public class DexOrderCancelAttachment extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
-        return DEX.DEX_CANCEL_ORDER_TRANSACTION;
+    public TransactionTypes.TransactionTypeSpec getTransactionType() {
+        return DEX_CANCEL_ORDER;
     }
 
     public long getOrderId() {

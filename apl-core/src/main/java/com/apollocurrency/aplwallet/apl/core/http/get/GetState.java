@@ -23,15 +23,16 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 import java.net.InetAddress;
 
-import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionType.lookupCurrencyExchangeOfferFacade;
-import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionType.lookupShufflingService;
 
 @Deprecated
 @Vetoed
@@ -40,6 +41,8 @@ public final class GetState extends AbstractAPIRequestHandler {
         super(new APITag[]{APITag.INFO}, "includeCounts", "adminPassword");
     }
 
+    private ShufflingService shufflingService = CDI.current().select(ShufflingService.class).get();
+    private CurrencyExchangeOfferFacade exchangeOfferFacade = CDI.current().select(CurrencyExchangeOfferFacade.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) {
 
@@ -57,7 +60,7 @@ public final class GetState extends AbstractAPIRequestHandler {
             response.put("numberOfTrades", tradeService.getCount());
             response.put("numberOfTransfers", lookupAssetTransferService().getCount());
             response.put("numberOfCurrencies", lookupCurrencyService().getCount());
-            response.put("numberOfOffers", lookupCurrencyExchangeOfferFacade().getCurrencyBuyOfferService().getCount());
+            response.put("numberOfOffers", exchangeOfferFacade.getCurrencyBuyOfferService().getCount());
             response.put("numberOfExchangeRequests", lookupExchangeRequestService().getCount());
             response.put("numberOfExchanges", exchangeService.getCount());
             response.put("numberOfCurrencyTransfers", lookupCurrencyTransferService().getCount());
@@ -72,8 +75,8 @@ public final class GetState extends AbstractAPIRequestHandler {
             response.put("numberOfDataTags", taggedDataService.getDataTagCount());
             response.put("numberOfAccountLeases", lookupAccountLeaseService().getAccountLeaseCount());
             response.put("numberOfActiveAccountLeases", lookupAccountService().getActiveLeaseCount());
-            response.put("numberOfShufflings", lookupShufflingService().getShufflingCount());
-            response.put("numberOfActiveShufflings", lookupShufflingService().getShufflingActiveCount());
+            response.put("numberOfShufflings", shufflingService.getShufflingCount());
+            response.put("numberOfActiveShufflings", shufflingService.getShufflingActiveCount());
             response.put("numberOfPhasingOnlyAccounts", lookupAccountControlPhasingService().getCount());
         }
         response.put("numberOfPeers", lookupPeersService().getAllPeers().size());

@@ -4,13 +4,12 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.types.dex;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -22,15 +21,25 @@ import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.DEX_TRANSFER_MONEY;
+
 @Slf4j
+@Singleton
 public class DexTransferMoneyTransaction extends DexTransactionType {
 
+    @Inject
+    public DexTransferMoneyTransaction(BlockchainConfig blockchainConfig, AccountService accountService, DexService dexService) {
+        super(blockchainConfig, accountService, dexService);
+    }
+
     @Override
-    public byte getSubtype() {
-        return TransactionType.SUBTYPE_DEX_TRANSFER_MONEY;
+    public TransactionTypes.TransactionTypeSpec getSpec() {
+        return DEX_TRANSFER_MONEY;
     }
 
     @Override
@@ -52,7 +61,6 @@ public class DexTransferMoneyTransaction extends DexTransactionType {
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
         // IMPORTANT! Validation should restrict sending this transaction without money freezing and out of the dex scope
         DexControlOfFrozenMoneyAttachment attachment = (DexControlOfFrozenMoneyAttachment) transaction.getAttachment();
-        DexService dexService = lookupDexService();
         ExchangeContract dexContract = dexService.getDexContractById(attachment.getContractId());
 
         if (dexContract == null) {
@@ -98,10 +106,9 @@ public class DexTransferMoneyTransaction extends DexTransactionType {
     @Override
     public void applyAttachment(Transaction tx, Account sender, Account recipient) {
         DexControlOfFrozenMoneyAttachment attachment = (DexControlOfFrozenMoneyAttachment) tx.getAttachment();
-        lookupAccountService().addToBalanceATM(sender, getLedgerEvent(), tx.getId(), -attachment.getOfferAmount()); // reduce only balanceATM, assume that unconfirmed balance was reduced earlier and was not recovered yet
-        lookupAccountService().addToBalanceAndUnconfirmedBalanceATM(recipient, getLedgerEvent(), tx.getId(), attachment.getOfferAmount());
+        getAccountService().addToBalanceATM(sender, getLedgerEvent(), tx.getId(), -attachment.getOfferAmount()); // reduce only balanceATM, assume that unconfirmed balance was reduced earlier and was not recovered yet
+        getAccountService().addToBalanceAndUnconfirmedBalanceATM(recipient, getLedgerEvent(), tx.getId(), attachment.getOfferAmount());
 
-        DexService dexService = lookupDexService();
         ExchangeContract dexContract = dexService.getDexContractById(attachment.getContractId());
 
         long orderToClose = dexContract.getSender() == sender.getId() ? dexContract.getCounterOrderId() : dexContract.getOrderId(); // close order which was approved
@@ -113,9 +120,9 @@ public class DexTransferMoneyTransaction extends DexTransactionType {
     }
 
     @Override
-    public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+    public boolean isDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
         DexControlOfFrozenMoneyAttachment attachment = (DexControlOfFrozenMoneyAttachment) transaction.getAttachment();
-        return isDuplicate(DexTransactionType.DEX_TRANSFER_MONEY_TRANSACTION, Long.toUnsignedString(attachment.getContractId()), duplicates, true);
+        return isDuplicate(DEX_TRANSFER_MONEY, Long.toUnsignedString(attachment.getContractId()), duplicates, true);
     }
 
     @Override

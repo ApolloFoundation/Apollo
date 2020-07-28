@@ -5,12 +5,11 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.types.messaging;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.Vote;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
-import com.apollocurrency.aplwallet.apl.core.model.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
@@ -61,7 +60,7 @@ public class VoteCastingTransactionType extends MessagingTransactionType {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         MessagingVoteCasting attachment = (MessagingVoteCasting) transaction.getAttachment();
-        Vote.addVote(transaction, attachment);
+        pollService.addVote(transaction, attachment);
     }
 
     @Override
@@ -75,7 +74,7 @@ public class VoteCastingTransactionType extends MessagingTransactionType {
         if (poll == null) {
             throw new AplException.NotCurrentlyValidException("Invalid poll: " + Long.toUnsignedString(attachment.getPollId()));
         }
-        if (Vote.getVote(pollId, transaction.getSenderId()) != null) {
+        if (pollService.getVote(pollId, transaction.getSenderId()) != null) {
             throw new AplException.NotCurrentlyValidException("Double voting attempt");
         }
         if (poll.getFinishHeight() <= attachment.getFinishValidationHeight(transaction)) {

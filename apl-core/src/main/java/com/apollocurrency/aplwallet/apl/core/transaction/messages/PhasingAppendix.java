@@ -113,7 +113,7 @@ public class PhasingAppendix extends AbstractAppendix {
     //TODO think it over how to change it (magic numbers).
     @Override
     public byte getVersion() {
-        return Byte.valueOf("1");
+        return 1;
     }
 
     @Override
