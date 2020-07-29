@@ -5,14 +5,20 @@
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  * @author andrii.zinchenko@firstbridge.io
  */
 public interface FindTransactionService {
+
+    Stream<UnconfirmedTransaction> getAllUnconfirmedTransactionsStream();
+
+    long getAllUnconfirmedTransactionsCount();
 
     /**
      * Returns transaction given the transaction id up to the specified height.

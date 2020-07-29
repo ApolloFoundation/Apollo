@@ -681,6 +681,28 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
+    public synchronized int getTransactionsCount(byte type, byte subtype,
+                                                 int startTime, int endTime,
+                                                 int fromHeight, int toHeight,
+                                                 String sortOrder,
+                                                 int from, int to) {
+        StringBuilder sqlQuery = new StringBuilder("SELECT COUNT(*) FROM transaction tx ");
+
+        createSelectTransactionQuery(sqlQuery, type, subtype, startTime, endTime, fromHeight, toHeight);
+
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement statement = con.prepareStatement(sqlQuery.toString())) {
+            int i = setSelectTransactionQueryParams(statement, type, subtype, startTime, endTime, fromHeight, toHeight);
+            ResultSet rs = statement.executeQuery();
+            rs.next();
+            return rs.getInt(1);
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    @Override
     public synchronized Stream<Transaction> getTransactions(byte type, byte subtype,
                                                             int startTime, int endTime,
                                                             int fromHeight, int toHeight,

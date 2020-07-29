@@ -16,8 +16,14 @@ public class OperationApiServiceImpl implements OperationApiService {
     }
 
     public Response getOperationsCount(QueryObject body, SecurityContext securityContext) throws NotFoundException {
-
-        return Response.ok().build();
+        ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
+        QueryCountResult result = new QueryCountResult();
+        result.setQuery(body);
+        QueryObject query = setDefaults(body);
+        result.setCount(
+            findTransactionService.getTransactionsCountByPeriod(query.getStartTime().intValue(), query.getEndTime().intValue())
+        );
+        return builder.bind(result).build();
     }
 
 

@@ -40,6 +40,16 @@ public class FindTransactionServiceImpl implements FindTransactionService {
     }
 
     @Override
+    public Stream<UnconfirmedTransaction> getAllUnconfirmedTransactionsStream() {
+        return streamConverter.convert(unconfirmedTransactionTable.getAll(0, -1));
+    }
+
+    @Override
+    public long getAllUnconfirmedTransactionsCount() {
+        return unconfirmedTransactionTable.getCount();
+    }
+
+    @Override
     public Optional<Transaction> findTransaction(long transactionId, int height) {
         return Optional.ofNullable(transactionDao.findTransaction(transactionId, height, databaseManager.getDataSource()));
     }
@@ -52,7 +62,7 @@ public class FindTransactionServiceImpl implements FindTransactionService {
     @Override
     public List<Transaction> getTransactionsByPeriod(final int timeStart, final int timeEnd) {
 
-        Stream<Transaction> unconfirmedTransactionStream = transactionProcessor.getAllUnconfirmedTransactionsStream()
+        Stream<Transaction> unconfirmedTransactionStream = getAllUnconfirmedTransactionsStream()
             .filter(transaction -> transaction.getTimestamp() > timeStart && transaction.getTimestamp() < timeEnd)
             .map(unconfirmedTransaction -> unconfirmedTransaction);
 
@@ -60,5 +70,17 @@ public class FindTransactionServiceImpl implements FindTransactionService {
             0, 0, "ASC", 0, -1);
 
         return Stream.concat(unconfirmedTransactionStream, transactionStream).collect(Collectors.toUnmodifiableList());
+    }
+
+    @Override
+    public long getTransactionsCountByPeriod(int timeStart, int timeEnd) {
+        long unconfirmedTxCount = getAllUnconfirmedTransactionsStream()
+            .filter(transaction -> transaction.getTimestamp() > timeStart && transaction.getTimestamp() < timeEnd)
+            .count();
+
+        long txCount = transactionDao.getTransactionsCount((byte) -1, (byte) -1, timeStart, timeEnd,
+            0, 0, "ASC", 0, -1);
+
+        return unconfirmedTxCount + txCount;
     }
 }

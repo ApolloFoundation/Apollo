@@ -30,15 +30,12 @@ import org.json.simple.JSONObject;
 import java.util.Collection;
 import java.util.List;
 import java.util.SortedSet;
-import java.util.stream.Stream;
 
 public interface TransactionProcessor {
 
     void init();
 
     DbIterator<UnconfirmedTransaction> getAllUnconfirmedTransactions();
-
-    Stream<UnconfirmedTransaction> getAllUnconfirmedTransactionsStream();
 
     DbIterator<? extends Transaction> getAllUnconfirmedTransactions(int from, int to);
 

@@ -973,10 +973,10 @@ components:
         - $ref: '#/components/schemas/BaseResponse'
         - type: object
           properties:
-            result:
-              type: array
-              items:
-                $ref: '#/components/schemas/OperationCount'
+            count:
+              type: integer
+              format: int64
+              example: 345
             query:
               $ref: '#/components/schemas/QueryObject'
     Operation:

@@ -29,7 +29,6 @@ import com.apollocurrency.aplwallet.apl.core.app.runnable.RebroadcastTransaction
 import com.apollocurrency.aplwallet.apl.core.app.runnable.RemoveUnconfirmedTransactionsThread;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
@@ -74,7 +73,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.stream.Stream;
 
 import static java.util.Comparator.comparingInt;
 import static java.util.Comparator.comparingLong;
@@ -104,7 +102,6 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private final TaskDispatchManager taskDispatchManager;
     private final PeersService peers;
     private final AccountService accountService;
-    private final IteratorToStreamConverter<UnconfirmedTransaction> streamConverter;
 
     private final boolean enableTransactionRebroadcasting;
     private int maxUnconfirmedTransactions;
@@ -148,7 +145,6 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         this.blockchain = Objects.requireNonNull(blockchain);
         int n = propertiesHolder.getIntProperty("apl.maxUnconfirmedTransactions");
         this.maxUnconfirmedTransactions = n <= 0 ? Integer.MAX_VALUE : n;
-        this.streamConverter = new IteratorToStreamConverter<>();
         // threads creation
         this.rebroadcastTransactionsThread = new RebroadcastTransactionsThread(
             this.timeService, this.unconfirmedTransactionTable, this.peers, this.blockchain);
@@ -214,11 +210,6 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     @Override
     public DbIterator<UnconfirmedTransaction> getAllUnconfirmedTransactions() {
         return unconfirmedTransactionTable.getAll(0, -1);
-    }
-
-    @Override
-    public Stream<UnconfirmedTransaction> getAllUnconfirmedTransactionsStream() {
-        return streamConverter.convert(unconfirmedTransactionTable.getAll(0, -1));
     }
 
     @Override
