@@ -27,7 +27,7 @@ public interface Attachment extends Appendix {
     EmptyAttachment ORDINARY_PAYMENT = new EmptyAttachment() {
 
         @Override
-        public TransactionTypes.TransactionTypeSpec getTransactionType() {
+        public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
             return TransactionTypes.TransactionTypeSpec.ORDINARY_PAYMENT;
         }
 
@@ -35,7 +35,7 @@ public interface Attachment extends Appendix {
     EmptyAttachment PRIVATE_PAYMENT = new EmptyAttachment() {
 
         @Override
-        public TransactionTypes.TransactionTypeSpec getTransactionType() {
+        public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
             return TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT;
         }
 
@@ -44,12 +44,14 @@ public interface Attachment extends Appendix {
     EmptyAttachment ARBITRARY_MESSAGE = new EmptyAttachment() {
 
         @Override
-        public TransactionTypes.TransactionTypeSpec getTransactionType() {
+        public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
             return TransactionTypes.TransactionTypeSpec.ARBITRARY_MESSAGE;
         }
 
     };
 
-    TransactionTypes.TransactionTypeSpec getTransactionType();
+    TransactionTypes.TransactionTypeSpec getTransactionTypeSpec();
+
+
 
 }

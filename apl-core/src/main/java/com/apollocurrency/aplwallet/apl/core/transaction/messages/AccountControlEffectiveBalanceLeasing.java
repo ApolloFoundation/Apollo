@@ -46,7 +46,7 @@ public final class AccountControlEffectiveBalanceLeasing extends AbstractAttachm
     }
 
     @Override
-    public TransactionType getTransactionType() {
+    public TransactionType getTransactionTypeSpec() {
         return AccountControlTransactionType.EFFECTIVE_BALANCE_LEASING;
     }
 

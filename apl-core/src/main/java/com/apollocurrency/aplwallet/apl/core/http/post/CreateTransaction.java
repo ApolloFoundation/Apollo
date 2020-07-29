@@ -145,7 +145,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
         EncryptedMessageAppendix encryptedMessage = null;
         PrunableEncryptedMessageAppendix prunableEncryptedMessage = null;
 
-        if (txRequest.getAttachment().getTransactionType().canHaveRecipient() && txRequest.getRecipientId() != 0) {
+        if (txRequest.getAttachment().getTransactionTypeSpec().canHaveRecipient() && txRequest.getRecipientId() != 0) {
             if (txRequest.isEncryptedMessageIsPrunable()) {
                 prunableEncryptedMessage = (PrunableEncryptedMessageAppendix) txRequest.getAppendix();
             } else {
@@ -191,7 +191,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
         try {
             Transaction.Builder builder = Transaction.newTransactionBuilder(txRequest.getPublicKey(), txRequest.getAmountATM(), txRequest.getFeeATM(),
                 deadline, txRequest.getAttachment(), timestamp).referencedTransactionFullHash(txRequest.getReferencedTransactionFullHash());
-            if (txRequest.getAttachment().getTransactionType().canHaveRecipient()) {
+            if (txRequest.getAttachment().getTransactionTypeSpec().canHaveRecipient()) {
                 builder.recipientId(txRequest.getRecipientId());
             }
             builder.appendix(encryptedMessage);

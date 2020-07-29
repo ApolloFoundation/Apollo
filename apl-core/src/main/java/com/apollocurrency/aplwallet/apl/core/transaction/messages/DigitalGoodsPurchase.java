@@ -65,7 +65,7 @@ public final class DigitalGoodsPurchase extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
+    public TransactionType getTransactionTypeSpec() {
         return DigitalGoodsTransactionType.PURCHASE;
     }
 

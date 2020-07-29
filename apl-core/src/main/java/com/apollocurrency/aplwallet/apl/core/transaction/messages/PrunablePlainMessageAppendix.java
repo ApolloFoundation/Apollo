@@ -118,25 +118,18 @@ public class PrunablePlainMessageAppendix extends AbstractAppendix implements Pr
         json.put("messageHash", Convert.toHexString(getHash()));
     }
 
+    public void setPrunableMessage(PrunableMessage prunableMessage) {
+        this.prunableMessage = prunableMessage;
+    }
+
     @Override
     public void validate(Transaction transaction, int blockHeight) throws AplException.ValidationException {
-        if (transaction.getMessage() != null) {
-            throw new AplException.NotValidException("Cannot have both message and prunable message attachments");
-        }
-        byte[] msg = getMessage();
-        if (msg != null && msg.length > Constants.MAX_PRUNABLE_MESSAGE_LENGTH) {
-            throw new AplException.NotValidException("Invalid prunable message length: " + msg.length);
-        }
-        if (msg == null && lookupTimeService().getEpochTime() - transaction.getTimestamp() < lookupBlockchainConfig().getMinPrunableLifetime()) {
-            throw new AplException.NotCurrentlyValidException("Message has been pruned prematurely");
-        }
+        throw new UnsupportedOperationException("Validation for prunable plain message is not supported, use separate class");
     }
 
     @Override
     public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        if (lookupTimeService().getEpochTime() - transaction.getTimestamp() < lookupBlockchainConfig().getMaxPrunableLifetime()) {
-            lookupMessageService().add(transaction, this);
-        }
+        throw new UnsupportedOperationException("Apply for this prunable plain appendix is not supported, use separate class");
     }
 
     public byte[] getMessage() {
@@ -165,16 +158,6 @@ public class PrunablePlainMessageAppendix extends AbstractAppendix implements Pr
     }
 
     @Override
-    public void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
-        if (!hasPrunableData() && shouldLoadPrunable(transaction, includeExpiredPrunable)) {
-            PrunableMessage prunableMessage = lookupMessageService().get(transaction.getId());
-            if (prunableMessage != null && prunableMessage.getMessage() != null) {
-                this.prunableMessage = prunableMessage;
-            }
-        }
-    }
-
-    @Override
     public boolean isPhasable() {
         return false;
     }
@@ -184,8 +167,4 @@ public class PrunablePlainMessageAppendix extends AbstractAppendix implements Pr
         return (prunableMessage != null || message != null);
     }
 
-    @Override
-    public void restorePrunableData(Transaction transaction, int blockTimestamp, int height) {
-        lookupMessageService().add(transaction, this, blockTimestamp, height);
-    }
 }

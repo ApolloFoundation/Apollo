@@ -53,7 +53,7 @@ public final class MonetarySystemReserveClaim extends AbstractAttachment impleme
     }
 
     @Override
-    public TransactionType getTransactionType() {
+    public TransactionType getTransactionTypeSpec() {
         return MonetarySystemTransactionType.RESERVE_CLAIM;
     }
 

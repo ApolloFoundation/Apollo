@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveIncrease;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.ms.MonetarySystemExchangeTransactionType;
@@ -103,7 +104,7 @@ public enum CurrencyType {
             if (transaction.getType().getSpec() == MS_CURRENCY_ISSUANCE) {
                 MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
                 int issuanceHeight = attachment.getIssuanceHeight();
-                int finishHeight = attachment.getFinishValidationHeight(transaction);
+                int finishHeight = transactionValidator.getFinishValidationHeight(transaction, attachment);
                 if (issuanceHeight <= finishHeight) {
                     throw new AplException.NotCurrentlyValidException(
                         String.format("Reservable currency activation height %d not higher than transaction apply height %d",
@@ -126,7 +127,7 @@ public enum CurrencyType {
             }
             if (transaction.getType().getSpec() == MS_RESERVE_INCREASE) {
                 MonetarySystemReserveIncrease attachment = (MonetarySystemReserveIncrease) transaction.getAttachment();
-                if (currency != null && currency.getIssuanceHeight() <= attachment.getFinishValidationHeight(transaction)) {
+                if (currency != null && currency.getIssuanceHeight() <= transactionValidator.getFinishValidationHeight(transaction, attachment)) {
                     throw new AplException.NotCurrentlyValidException("Cannot increase reserve for active currency");
                 }
             }
@@ -364,4 +365,5 @@ public enum CurrencyType {
         }
         return currencyService;
     }
+    private static final TransactionValidator transactionValidator = CDI.current().select(TransactionValidator.class).get();
 }

@@ -46,7 +46,7 @@ public final class SetPhasingOnly extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
+    public TransactionType getTransactionTypeSpec() {
         return SetPhasingOnlyTransactionType.SET_PHASING_ONLY;
     }
 

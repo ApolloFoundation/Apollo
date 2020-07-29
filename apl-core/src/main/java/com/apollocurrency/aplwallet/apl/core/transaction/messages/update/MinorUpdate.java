@@ -31,7 +31,7 @@ public final class MinorUpdate extends UpdateAttachment {
     }
 
     @Override
-    public TransactionTypes.TransactionTypeSpec getTransactionType() {
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
         return TransactionTypes.TransactionTypeSpec.MINOR_UPDATE;
     }
 

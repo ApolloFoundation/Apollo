@@ -47,7 +47,7 @@ public final class MonetarySystemCurrencyDeletion extends AbstractAttachment imp
     }
 
     @Override
-    public TransactionType getTransactionType() {
+    public TransactionType getTransactionTypeSpec() {
         return MonetarySystemTransactionType.CURRENCY_DELETION;
     }
 

@@ -64,7 +64,7 @@ public final class MessagingAccountInfo extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
+    public TransactionType getTransactionTypeSpec() {
         return MessagingTransactionType.ACCOUNT_INFO;
     }
 

@@ -140,7 +140,7 @@ public class UpdateV2Attachment extends AbstractAttachment {
     }
 
     @Override
-    public TransactionTypes.TransactionTypeSpec getTransactionType() {
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
         return TransactionTypes.TransactionTypeSpec.UPDATE_V2;
     }
 

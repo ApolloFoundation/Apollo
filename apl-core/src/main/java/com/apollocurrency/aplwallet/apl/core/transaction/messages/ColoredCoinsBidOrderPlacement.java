@@ -26,7 +26,7 @@ public final class ColoredCoinsBidOrderPlacement extends ColoredCoinsOrderPlacem
     }
 
     @Override
-    public TransactionTypes.TransactionTypeSpec getTransactionType() {
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
         return TransactionTypes.TransactionTypeSpec.CC_BID_ORDER_PLACEMENT;
     }
 

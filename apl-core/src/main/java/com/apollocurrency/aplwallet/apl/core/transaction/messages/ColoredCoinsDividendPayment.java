@@ -59,7 +59,7 @@ public final class ColoredCoinsDividendPayment extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
+    public TransactionType getTransactionTypeSpec() {
         return ColoredCoinsTransactionType.DIVIDEND_PAYMENT;
     }
 

@@ -64,7 +64,7 @@ public final class MonetarySystemCurrencyMinting extends AbstractAttachment impl
     }
 
     @Override
-    public TransactionTypes.TransactionTypeSpec getTransactionType() {
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
         return TransactionTypes.TransactionTypeSpec.MS_CURRENCY_MINTING;
     }
 

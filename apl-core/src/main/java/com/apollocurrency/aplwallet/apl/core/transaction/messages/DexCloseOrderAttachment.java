@@ -42,7 +42,7 @@ public class DexCloseOrderAttachment extends AbstractAttachment {
     }
 
     @Override
-    public TransactionTypes.TransactionTypeSpec getTransactionType() {
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
         return DEX_CLOSE_ORDER;
     }
 }

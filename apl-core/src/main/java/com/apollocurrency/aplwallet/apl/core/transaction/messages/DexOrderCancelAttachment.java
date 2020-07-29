@@ -42,7 +42,7 @@ public class DexOrderCancelAttachment extends AbstractAttachment {
     }
 
     @Override
-    public TransactionTypes.TransactionTypeSpec getTransactionType() {
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
         return DEX_CANCEL_ORDER;
     }
 

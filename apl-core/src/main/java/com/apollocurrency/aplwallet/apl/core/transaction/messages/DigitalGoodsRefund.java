@@ -53,7 +53,7 @@ public final class DigitalGoodsRefund extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
+    public TransactionType getTransactionTypeSpec() {
         return DigitalGoodsTransactionType.REFUND;
     }
 

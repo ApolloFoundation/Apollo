@@ -53,7 +53,7 @@ public final class MonetarySystemCurrencyTransfer extends AbstractAttachment imp
     }
 
     @Override
-    public TransactionType getTransactionType() {
+    public TransactionType getTransactionTypeSpec() {
         return MonetarySystemTransactionType.CURRENCY_TRANSFER;
     }
 

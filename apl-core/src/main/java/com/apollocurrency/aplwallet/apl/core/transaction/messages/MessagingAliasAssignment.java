@@ -64,7 +64,7 @@ public final class MessagingAliasAssignment extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
+    public TransactionType getTransactionTypeSpec() {
         return MessagingTransactionType.ALIAS_ASSIGNMENT;
     }
 

@@ -84,7 +84,7 @@ public final class DigitalGoodsListing extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
+    public TransactionType getTransactionTypeSpec() {
         return DigitalGoodsTransactionType.LISTING;
     }
 

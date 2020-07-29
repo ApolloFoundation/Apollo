@@ -39,7 +39,7 @@ public final class MessagingAliasBuy extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
+    public TransactionType getTransactionTypeSpec() {
         return MessagingTransactionType.ALIAS_BUY;
     }
 

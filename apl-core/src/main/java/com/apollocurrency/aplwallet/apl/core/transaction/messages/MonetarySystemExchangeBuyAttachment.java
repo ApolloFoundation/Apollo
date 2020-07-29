@@ -27,7 +27,7 @@ public final class MonetarySystemExchangeBuyAttachment extends MonetarySystemExc
     }
 
     @Override
-    public TransactionType getTransactionType() {
+    public TransactionType getTransactionTypeSpec() {
         return MonetarySystemTransactionType.EXCHANGE_BUY;
     }
 

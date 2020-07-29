@@ -42,6 +42,12 @@ public class TransactionValidator {
         this.accountControlPhasingService = accountControlPhasingService;
     }
 
+
+    public int getFinishValidationHeight(Transaction transaction, Attachment attachment) {
+        return attachment.isPhased(transaction) ? transaction.getPhasing().getFinishHeight() - 1 : blockchain.getHeight();
+    }
+
+
     public void validate(Transaction transaction) throws AplException.ValidationException {
         long maxBalanceAtm = blockchainConfig.getCurrentConfig().getMaxBalanceATM();
         short deadline = transaction.getDeadline();
@@ -64,7 +70,7 @@ public class TransactionValidator {
         }
         Attachment attachment = transaction.getAttachment();
 
-        if (attachment == null || typeSpec != attachment.getTransactionType()) {
+        if (attachment == null || typeSpec != attachment.getTransactionTypeSpec()) {
             throw new AplException.NotValidException("Invalid attachment " + attachment + " for transaction of type " + type);
         }
         long recipientId = transaction.getRecipientId();

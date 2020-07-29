@@ -8,14 +8,17 @@ import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import org.json.simple.JSONObject;
 
+import javax.validation.constraints.NotNull;
 import java.nio.ByteBuffer;
 
 /**
  * @author al
  */
 public abstract class AbstractAttachment extends AbstractAppendix implements Attachment {
+    private TransactionType transactionType;
 
     public AbstractAttachment(ByteBuffer buffer) {
         super(buffer);
@@ -32,34 +35,46 @@ public abstract class AbstractAttachment extends AbstractAppendix implements Att
     public AbstractAttachment() {
     }
 
+    public void bindTransactionType(@NotNull TransactionType transactionType) {
+        if (transactionType.getSpec() != getTransactionTypeSpec()) {
+            throw new IllegalArgumentException("Required tx type " + getTransactionTypeSpec() + " but got " + transactionType.getSpec());
+        }
+        if (this.transactionType != null) {
+            throw new IllegalStateException("Transaction type is already set");
+        }
+        this.transactionType = transactionType;
+    }
+
+    private TransactionType transactionType() {
+        if (transactionType == null) {
+            throw new IllegalStateException("Transaction type was not set");
+        }
+        return transactionType;
+    }
+
     // TODO Resolve names to be compatible with old implementation
     @Override
     public String getAppendixName() {
-        return getTransactionType().toString();
+        return getTransactionTypeSpec().toString();
     }
 
     @Override
     public void validate(Transaction transaction, int blockHeight) throws AplException.ValidationException {
-        getTransactionType().validateAttachment(transaction);
+        transactionType().validateAttachment(transaction);
     }
 
     @Override
     public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        getTransactionType().apply((TransactionImpl) transaction, senderAccount, recipientAccount);
+        transactionType().apply((TransactionImpl) transaction, senderAccount, recipientAccount);
     }
 
     @Override
     public final Fee getBaselineFee(Transaction transaction) {
-        return getTransactionType().getBaselineFee(transaction);
+        return transactionType().getBaselineFee(transaction);
     }
 
     @Override
     public boolean isPhasable() {
-        return !(this instanceof Prunable) && getTransactionType().isPhasable();
+        return !(this instanceof Prunable) && transactionType().isPhasable();
     }
-
-    public int getFinishValidationHeight(Transaction transaction) {
-        return isPhased(transaction) ? transaction.getPhasing().getFinishHeight() - 1 : lookupBlockchain().getHeight();
-    }
-
 }

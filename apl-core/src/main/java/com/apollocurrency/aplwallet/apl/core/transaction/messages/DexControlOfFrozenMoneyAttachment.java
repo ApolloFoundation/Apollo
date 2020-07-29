@@ -49,7 +49,7 @@ public class DexControlOfFrozenMoneyAttachment extends AbstractAttachment {
     }
 
     @Override
-    public TransactionTypes.TransactionTypeSpec getTransactionType() {
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
         return DEX_TRANSFER_MONEY;
     }
 }

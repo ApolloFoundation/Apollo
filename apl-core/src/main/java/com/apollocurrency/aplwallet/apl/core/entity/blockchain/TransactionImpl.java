@@ -445,6 +445,7 @@ public class TransactionImpl implements Transaction {
     @Override
     public PrunableEncryptedMessageAppendix getPrunableEncryptedMessage() {
         if (prunableEncryptedMessage != null) {
+            //TODO should load prunable with 'false' flag
             prunableEncryptedMessage.loadPrunable(this);
         }
         return prunableEncryptedMessage;

@@ -54,7 +54,7 @@ public final class ColoredCoinsAssetDelete extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
+    public TransactionType getTransactionTypeSpec() {
         return ColoredCoinsTransactionType.ASSET_DELETE;
     }
 

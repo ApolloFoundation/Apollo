@@ -58,12 +58,6 @@ public interface Appendix {
 
     void validate(Transaction transaction, int blockHeight) throws AplException.ValidationException;
 
-    default void loadPrunable(Transaction transaction) {
-    }
-
-    default void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
-    }
-
     default String getAppendixName() {
         return null;
     }

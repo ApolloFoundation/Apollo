@@ -103,7 +103,7 @@ public class UpdaterDbTest {
         UpdateTransaction updateTransaction = repository.getLast();
         Transaction transaction = updateTransaction.getTransaction();
         assertEquals(-4081443370478530685L, transaction.getId());
-        assertEquals(UpdateTransactionType.CRITICAL, transaction.getAttachment().getTransactionType());
+        assertEquals(UpdateTransactionType.CRITICAL, transaction.getAttachment().getTransactionTypeSpec());
         assertFalse(updateTransaction.isUpdated());
     }
 

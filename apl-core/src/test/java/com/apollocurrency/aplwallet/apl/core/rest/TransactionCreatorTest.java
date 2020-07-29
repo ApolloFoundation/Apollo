@@ -360,7 +360,7 @@ class TransactionCreatorTest {
     private static class CustomAttachment extends EmptyAttachment {
 
         @Override
-        public TransactionTypes.TransactionTypeSpec getTransactionType() {
+        public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
             return TransactionTypes.TransactionTypeSpec.ORDINARY_PAYMENT;
         }
     }

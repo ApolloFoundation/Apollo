@@ -96,13 +96,6 @@ public abstract class AbstractAppendix implements Appendix {
 
     public abstract void apply(Transaction transaction, Account senderAccount, Account recipientAccount);
 
-    public void loadPrunable(Transaction transaction) {
-        loadPrunable(transaction, false);
-    }
-
-    public void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
-    }
-
     public abstract boolean isPhasable();
 
     @Override

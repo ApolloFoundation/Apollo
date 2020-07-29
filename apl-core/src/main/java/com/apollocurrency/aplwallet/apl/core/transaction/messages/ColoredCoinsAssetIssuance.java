@@ -76,7 +76,7 @@ public final class ColoredCoinsAssetIssuance extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
+    public TransactionType getTransactionTypeSpec() {
         return ColoredCoinsTransactionType.ASSET_ISSUANCE;
     }
 

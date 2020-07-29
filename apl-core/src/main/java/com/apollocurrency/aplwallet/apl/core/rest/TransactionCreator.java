@@ -53,7 +53,7 @@ public class TransactionCreator {
         TransactionCreationData tcd = new TransactionCreationData();
         EncryptedMessageAppendix encryptedMessage = null;
         PrunableEncryptedMessageAppendix prunableEncryptedMessage = null;
-        TransactionTypes.TransactionTypeSpec typeSpec = txRequest.getAttachment().getTransactionType();
+        TransactionTypes.TransactionTypeSpec typeSpec = txRequest.getAttachment().getTransactionTypeSpec();
         TransactionType transactionType = typeFactory.findTransactionType(typeSpec.getType(), typeSpec.getSubtype());
         if (transactionType.canHaveRecipient() && txRequest.getRecipientId() != 0) {
             if (txRequest.isEncryptedMessageIsPrunable()) {

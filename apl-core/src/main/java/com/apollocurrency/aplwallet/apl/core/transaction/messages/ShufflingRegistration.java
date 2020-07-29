@@ -34,7 +34,7 @@ public final class ShufflingRegistration extends AbstractAttachment implements S
     }
 
     @Override
-    public TransactionTypes.TransactionTypeSpec getTransactionType() {
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
         return SHUFFLING_REGISTRATION;
     }
 

@@ -26,7 +26,7 @@ public final class ShufflingVerificationAttachment extends AbstractShufflingAtta
     }
 
     @Override
-    public TransactionTypes.TransactionTypeSpec getTransactionType() {
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
         return TransactionTypes.TransactionTypeSpec.SHUFFLING_VERIFICATION;
     }
 

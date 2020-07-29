@@ -28,7 +28,7 @@ public class UpdaterFactoryImpl implements UpdaterFactory {
 
     @Override
     public Updater getUpdater(UpdateData updateDataHolder) {
-        Level level = ((UpdateTransactionType) updateDataHolder.getAttachment().getTransactionType()).getLevel();
+        Level level = ((UpdateTransactionType) updateDataHolder.getAttachment().getTransactionTypeSpec()).getLevel();
         switch (level) {
             case CRITICAL:
                 return new CriticalUpdater(updateDataHolder, updaterMediator, updaterService, 3, 200, updateInfo);

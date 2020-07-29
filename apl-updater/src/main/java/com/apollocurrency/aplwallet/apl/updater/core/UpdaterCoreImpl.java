@@ -229,7 +229,7 @@ public class UpdaterCoreImpl implements UpdaterCore {
         synchronized (updateInfo) {
             updateInfo.setUpdate(true);
             updateInfo.setId(updateData.getTransactionId());
-            updateInfo.setLevel(((UpdateTransactionType) updateAttachment.getTransactionType()).getLevel());
+            updateInfo.setLevel(((UpdateTransactionType) updateAttachment.getTransactionTypeSpec()).getLevel());
             updateInfo.setVersion(updateAttachment.getAppVersion());
             updateInfo.setUpdateState(state);
         }

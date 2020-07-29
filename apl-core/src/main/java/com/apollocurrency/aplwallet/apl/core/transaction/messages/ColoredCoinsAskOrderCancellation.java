@@ -27,7 +27,7 @@ public final class ColoredCoinsAskOrderCancellation extends ColoredCoinsOrderCan
     }
 
     @Override
-    public TransactionType getTransactionType() {
+    public TransactionType getTransactionTypeSpec() {
         return ColoredCoinsTransactionType.ASK_ORDER_CANCELLATION;
     }
 

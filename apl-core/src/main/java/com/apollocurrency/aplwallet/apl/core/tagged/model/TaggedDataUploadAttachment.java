@@ -74,7 +74,7 @@ public final class TaggedDataUploadAttachment extends TaggedDataAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
+    public TransactionType getTransactionTypeSpec() {
         return DataTransactionType.TAGGED_DATA_UPLOAD;
     }
 

@@ -151,7 +151,7 @@ public final class MessagingPollCreation extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
+    public TransactionType getTransactionTypeSpec() {
         return MessagingTransactionType.POLL_CREATION;
     }
 

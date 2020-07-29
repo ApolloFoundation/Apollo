@@ -39,7 +39,7 @@ public class TransactionBuilder {
     }
 
     public Transaction.Builder newTransactionBuilder(byte[] senderPublicKey, long amountATM, long feeATM, short deadline, Attachment attachment, int timestamp) {
-        TransactionTypes.TransactionTypeSpec spec = attachment.getTransactionType();
+        TransactionTypes.TransactionTypeSpec spec = attachment.getTransactionTypeSpec();
         TransactionType transactionType = factory.findTransactionType(spec.getType(), spec.getSubtype());
         return new TransactionImpl.BuilderImpl((byte) 1, senderPublicKey, amountATM, feeATM, deadline, (AbstractAttachment) attachment, timestamp, transactionType);
     }

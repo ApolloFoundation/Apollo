@@ -31,7 +31,7 @@ public final class ImportantUpdate extends UpdateAttachment {
     }
 
     @Override
-    public TransactionTypes.TransactionTypeSpec getTransactionType() {
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
         return TransactionTypes.TransactionTypeSpec.IMPORTANT_UPDATE;
     }
 

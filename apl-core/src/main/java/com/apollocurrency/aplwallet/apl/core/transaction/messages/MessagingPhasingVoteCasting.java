@@ -82,7 +82,7 @@ public final class MessagingPhasingVoteCasting extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
+    public TransactionType getTransactionTypeSpec() {
         return MessagingTransactionType.PHASING_VOTE_CASTING;
     }
 

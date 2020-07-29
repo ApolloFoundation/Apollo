@@ -54,7 +54,7 @@ public final class ColoredCoinsAssetTransfer extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
+    public TransactionType getTransactionTypeSpec() {
         return ColoredCoinsTransactionType.ASSET_TRANSFER;
     }
 

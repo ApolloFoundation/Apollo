@@ -53,7 +53,7 @@ public final class DigitalGoodsPriceChange extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
+    public TransactionType getTransactionTypeSpec() {
         return DigitalGoodsTransactionType.PRICE_CHANGE;
     }
 

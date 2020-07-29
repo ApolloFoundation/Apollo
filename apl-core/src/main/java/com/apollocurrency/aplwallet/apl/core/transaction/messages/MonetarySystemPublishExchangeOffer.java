@@ -89,7 +89,7 @@ public final class MonetarySystemPublishExchangeOffer extends AbstractAttachment
     }
 
     @Override
-    public TransactionType getTransactionType() {
+    public TransactionType getTransactionTypeSpec() {
         return MonetarySystemTransactionType.PUBLISH_EXCHANGE_OFFER;
     }
 

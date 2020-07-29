@@ -27,7 +27,7 @@ public final class MonetarySystemExchangeSell extends MonetarySystemExchangeAtta
     }
 
     @Override
-    public TransactionType getTransactionType() {
+    public TransactionType getTransactionTypeSpec() {
         return MonetarySystemTransactionType.EXCHANGE_SELL;
     }
 

@@ -74,7 +74,7 @@ public final class ShufflingRecipientsAttachment extends AbstractShufflingAttach
     }
 
     @Override
-    public TransactionTypes.TransactionTypeSpec getTransactionType() {
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
         return TransactionTypes.TransactionTypeSpec.SHUFFLING_RECIPIENTS;
     }
 

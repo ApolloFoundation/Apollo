@@ -27,7 +27,7 @@ public final class ColoredCoinsBidOrderCancellation extends ColoredCoinsOrderCan
     }
 
     @Override
-    public TransactionType getTransactionType() {
+    public TransactionType getTransactionTypeSpec() {
         return ColoredCoinsTransactionType.BID_ORDER_CANCELLATION;
     }
 
