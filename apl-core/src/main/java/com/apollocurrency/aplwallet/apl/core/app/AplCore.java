@@ -256,7 +256,7 @@ public final class AplCore {
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 60.0, "Apollo Account ledger initialization done");
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 61.0, "Apollo Peer services initialization started");
             APIProxy.init();
-            Generator.init();
+//            Generator.init();
             AddOns.init();
             Helper2FA.init(databaseManager);
             // do one time '2fa data' migration from db into files. That method is safe for multiple repeatable calls

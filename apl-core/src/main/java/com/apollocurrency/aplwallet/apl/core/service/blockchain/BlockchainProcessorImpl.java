@@ -176,14 +176,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final BlockValidator validator;
     private final AccountService accountService;
     private final GeneratorService generatorService;
-
-    private volatile Peer lastBlockchainFeeder;
-    private volatile int lastBlockchainFeederHeight;
-    private volatile boolean getMoreBlocks = true;
-    private volatile boolean isScanning;
-    private volatile boolean isDownloading;
-    private volatile boolean isProcessingBlock;
-    private volatile boolean isRestoring;
+    private final BlockParser blockParser;
 
     @Inject
     public BlockchainProcessorImpl(PropertiesHolder propertiesHolder, BlockchainConfig blockchainConfig,
@@ -208,7 +201,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    PeersService peersService,
                                    TransactionProcessor transactionProcessor,
                                    FullTextSearchService fullTextSearchProvider,
-                                   GeneratorService generatorService) {
+                                   GeneratorService generatorService,
+                                   BlockParser blockParser) {
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder);
         this.blockchainConfig = blockchainConfig;
         this.validator = validator;
@@ -244,6 +238,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.fullTextSearchProvider = fullTextSearchProvider;
         this.blockchainProcessorState = new BlockchainProcessorState();
         this.generatorService = generatorService;
+        this.blockParser = blockParser;
 
         configureBackgroundTasks();
     }
@@ -312,7 +307,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 .task(new GetMoreBlocksThread(this, blockchainProcessorState,
                     blockchainConfig, blockchain, peersService,
                     globalSync, timeService, prunableRestorationService,
-                    networkService, propertiesHolder, transactionProcessor)
+                    networkService, propertiesHolder, transactionProcessor, blockParser)
                 )
                 .build();
 
@@ -372,10 +367,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             long baseTarget = blockchainConfig.getCurrentConfig().getInitialBaseTarget();
             if (peerBlockPreviousBlockId == lastBlock.getId()) {
                 log.debug("push peer last block");
-                Block block = BlockImpl.parseBlock(request, baseTarget);
+                Block block = blockParser.parseBlock(request, baseTarget);
                 pushBlock(block);
             } else if (peerBlockPreviousBlockId == lastBlock.getPreviousBlockId()) { //peer block is a candidate to replace our last block
-                Block block = BlockImpl.parseBlock(request, baseTarget);
+                Block block = blockParser.parseBlock(request, baseTarget);
                 //try to replace our last block by peer block only when timestamp of peer block is less than timestamp of our block or when
                 // timestamps are equal but timeout of peer block is greater, so that peer block is better.
                 if (((block.getTimestamp() < lastBlock.getTimestamp()
@@ -1350,7 +1345,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                         JSONObject blockJSON = currentBlock.getJSONObject();
                                         long baseTarget = blockchainConfig.getCurrentConfig().getInitialBaseTarget();
                                         if (!Arrays.equals(blockBytes,
-                                            BlockImpl.parseBlock(blockJSON, baseTarget).bytes())) {
+                                            blockParser.parseBlock(blockJSON, baseTarget).bytes())) {
                                             throw new AplException.NotValidException("Block JSON cannot be parsed back to the same block");
                                         }
                                         validateTransactions(currentBlock, blockchain.getLastBlock(), curTime, duplicates, true);

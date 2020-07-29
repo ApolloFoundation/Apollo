@@ -19,6 +19,7 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.GenerateBlocksThread;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -86,6 +87,7 @@ public class GeneratorServiceImpl implements GeneratorService {
             this.taskDispatchManager.newBackgroundDispatcher(BACKGROUND_SERVICE_NAME)
                 .schedule(Task.builder()
                     .name("GenerateBlocks")
+                    .initialDelay(500)
                     .delay(500)
                     .task(generateBlocksThread)
                     .build());
@@ -104,14 +106,13 @@ public class GeneratorServiceImpl implements GeneratorService {
         try {
             if (blockchain.getHeight() >= blockchainConfig.getLastKnownBlock()) {
                 this.setLastBlock(blockchain.getLastBlock(), generator);
-            }
-            if (generateBlocksThread != null) {
-                generateBlocksThread.resetSortedForgers();
+                if (generateBlocksThread != null) {
+                    generateBlocksThread.resetSortedForgers();
+                }
             }
         } finally {
             globalSync.updateUnlock();
         }
-
         GeneratorMemoryEntity old = generators.putIfAbsent(generator.getAccountId(), generator);
         if (old != null) {
             log.debug(old + " is already forging");
