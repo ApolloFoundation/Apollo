@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySupply;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyTransfer;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
@@ -198,7 +199,14 @@ class CurrencyServiceTest {
     }
 
     @Test
-    void validate() {
+    void validate() throws Exception {
+        //GIVEN
+        Transaction tr = mock(Transaction.class);
+        Currency currency = mock(Currency.class);
+
+        //WHEN
+//        service.validate(currency, CurrencyType.MINTABLE.getCode(), tr);
+
     }
 
     @Test

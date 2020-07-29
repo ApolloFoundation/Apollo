@@ -52,7 +52,8 @@ public enum CurrencyType implements CurrencyTypeValidatable {
 //        }
 
         @Override
-        public void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
+        public void validateMissing(Currency currency, Transaction transaction,
+                                    Set<CurrencyType> validators, CurrencyType currencyType) throws AplException.NotValidException {
             if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
                 if (!validators.contains(CLAIMABLE)) {
                     throw new AplException.NotValidException("Currency is not exchangeable and not claimable");
@@ -69,7 +70,8 @@ public enum CurrencyType implements CurrencyTypeValidatable {
      */
     CONTROLLABLE(0x02) {
         @Override
-        public void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
+        public void validate(Currency currency, Transaction transaction,
+                             Set<CurrencyType> validators, CurrencyType currencyType) throws AplException.NotValidException {
             if (transaction.getType() == MonetarySystem.CURRENCY_TRANSFER) {
                 if (currency == null || (currency.getAccountId() != transaction.getSenderId() && currency.getAccountId() != transaction.getRecipientId())) {
                     throw new AplException.NotValidException("Controllable currency can only be transferred to/from issuer account");
@@ -92,7 +94,8 @@ public enum CurrencyType implements CurrencyTypeValidatable {
      */
     RESERVABLE(0x04) {
         @Override
-        public void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException {
+        public void validate(Currency currency, Transaction transaction,
+                             Set<CurrencyType> validators, CurrencyType currencyType) throws AplException.ValidationException {
             if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
                 MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
                 int issuanceHeight = attachment.getIssuanceHeight();
@@ -126,7 +129,8 @@ public enum CurrencyType implements CurrencyTypeValidatable {
         }
 
         @Override
-        public void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
+        public void validateMissing(Currency currency, Transaction transaction,
+                                    Set<CurrencyType> validators, CurrencyType currencyType) throws AplException.NotValidException {
             if (transaction.getType() == MonetarySystem.RESERVE_INCREASE) {
                 throw new AplException.NotValidException("Cannot increase reserve since currency is not reservable");
             }
@@ -153,7 +157,8 @@ public enum CurrencyType implements CurrencyTypeValidatable {
      */
     CLAIMABLE(0x08) {
         @Override
-        public void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException {
+        public void validate(Currency currency, Transaction transaction,
+                             Set<CurrencyType> validators, CurrencyType currencyType) throws AplException.ValidationException {
             if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
                 MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
                 if (!validators.contains(RESERVABLE)) {
@@ -167,14 +172,16 @@ public enum CurrencyType implements CurrencyTypeValidatable {
                 }
             }
             if (transaction.getType() == MonetarySystem.RESERVE_CLAIM) {
-                if (currency == null || !lookupCurrencyService().isActive(currency)) {
+//                if (currency == null || !lookupCurrencyService().isActive(currency)) {
+                if (currency == null || !currencyService.isActive(currency)) {
                     throw new AplException.NotCurrentlyValidException("Cannot claim reserve since currency is not yet active");
                 }
             }
         }
 
         @Override
-        public void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
+        public void validateMissing(Currency currency, Transaction transaction,
+                                    Set<CurrencyType> validators, CurrencyType currencyType) throws AplException.NotValidException {
             if (transaction.getType() == MonetarySystem.RESERVE_CLAIM) {
                 throw new AplException.NotValidException("Cannot claim reserve since currency is not claimable");
             }
@@ -185,7 +192,8 @@ public enum CurrencyType implements CurrencyTypeValidatable {
      */
     MINTABLE(0x10) {
         @Override
-        public void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
+        public void validate(Currency currency, Transaction transaction,
+                             Set<CurrencyType> validators, CurrencyType currencyType) throws AplException.NotValidException {
             if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
                 MonetarySystemCurrencyIssuance issuanceAttachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
                 try {
@@ -209,7 +217,8 @@ public enum CurrencyType implements CurrencyTypeValidatable {
         }
 
         @Override
-        public void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
+        public void validateMissing(Currency currency, Transaction transaction,
+                                    Set<CurrencyType> validators, CurrencyType currencyType) throws AplException.NotValidException {
             if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
                 MonetarySystemCurrencyIssuance issuanceAttachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
                 if (issuanceAttachment.getMinDifficulty() != 0 ||
@@ -229,7 +238,8 @@ public enum CurrencyType implements CurrencyTypeValidatable {
      */
     NON_SHUFFLEABLE(0x20) {
         @Override
-        public void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException {
+        public void validate(Currency currency, Transaction transaction,
+                             Set<CurrencyType> validators, CurrencyType currencyType) throws AplException.ValidationException {
             if (transaction.getType() == ShufflingTransaction.SHUFFLING_CREATION) {
                 throw new AplException.NotValidException("Shuffling is not allowed for this currency");
             }
@@ -241,16 +251,18 @@ public enum CurrencyType implements CurrencyTypeValidatable {
     };
 
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static CurrencyService currencyService;
+    private static CurrencyService currencyService = CDI.current().select(CurrencyService.class).get();
     private final int code;
 
     CurrencyType(int code) {
         this.code = code;
     }
 
+/*
     CurrencyType() {
         code = 0;
     }
+*/
 
     public static CurrencyType get(int code) {
         for (CurrencyType currencyType : values()) {
@@ -351,10 +363,12 @@ public enum CurrencyType implements CurrencyTypeValidatable {
 //
 //    public abstract void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException;
 
+/*
     private static CurrencyService lookupCurrencyService() {
         if (currencyService == null) {
             currencyService = CDI.current().select(CurrencyService.class).get();
         }
         return currencyService;
     }
+*/
 }
