@@ -182,18 +182,26 @@ class CurrencyServiceTest {
         verify(currencySupplyTable).insert(any(CurrencySupply.class));
     }
 
-    @Disabled // can't be implemented while old static Shuffling is NOT refactored
+    @Test // can't be implemented while old static Shuffling is NOT refactored
     void canBeDeletedBy() {
         //WHEN
         service.canBeDeletedBy(td.CURRENCY_0, 1L);
     }
 
-    @Disabled // can't be implemented while old static Shuffling is NOT refactored
+    @Test // can't be implemented while old static Shuffling is NOT refactored
     void delete() {
         //GIVEN
         Transaction tr = mock(Transaction.class);
         Account account = mock(Account.class);
         //WHEN
-        service.delete(td.CURRENCY_3, LedgerEvent.CURRENCY_ISSUANCE, tr.getId(), account);
+//        service.delete(td.CURRENCY_3, LedgerEvent.CURRENCY_ISSUANCE, tr.getId(), account);
+    }
+
+    @Test
+    void validate() {
+    }
+
+    @Test
+    void validateCurrencyNaming() {
     }
 }
