@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionBuilde
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.ResponseBuilderV2;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TransactionInfoMapper;
-import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.UnTxReceiptMapper;
+import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TxReceiptMapper;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -32,17 +32,17 @@ public class TransactionApiServiceImpl implements TransactionApiService {
 
     private final TransactionProcessor transactionProcessor;
     private final Blockchain blockchain;
-    private final UnTxReceiptMapper unTxReceiptMapper;
+    private final TxReceiptMapper txReceiptMapper;
     private final TransactionInfoMapper transactionInfoMapper;
 
     @Inject
     public TransactionApiServiceImpl(TransactionProcessor transactionProcessor,
                                      Blockchain blockchain,
-                                     UnTxReceiptMapper unTxReceiptMapper,
+                                     TxReceiptMapper txReceiptMapper,
                                      TransactionInfoMapper transactionInfoMapper) {
         this.transactionProcessor = Objects.requireNonNull(transactionProcessor);
         this.blockchain = Objects.requireNonNull(blockchain);
-        this.unTxReceiptMapper = Objects.requireNonNull(unTxReceiptMapper);
+        this.txReceiptMapper = Objects.requireNonNull(txReceiptMapper);
         this.transactionInfoMapper = Objects.requireNonNull(transactionInfoMapper);
     }
 
@@ -79,7 +79,7 @@ public class TransactionApiServiceImpl implements TransactionApiService {
                 log.trace("API_V2: parsed transaction=[{}] attachment={}", newTx.getType(), newTx.getAttachment());
             }
             transactionProcessor.broadcast(newTx);
-            receipt = unTxReceiptMapper.convert(newTx);
+            receipt = txReceiptMapper.convert(newTx);
             if (log.isTraceEnabled()) {
                 log.trace("API_V2: UnTxReceipt={}", receipt);
             }

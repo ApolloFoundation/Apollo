@@ -15,9 +15,10 @@ import com.apollocurrency.aplwallet.api.v2.model.TxReceipt;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TransactionInfoMapper;
-import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.UnTxReceiptMapper;
+import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TxReceiptMapper;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.ChildAccount;
@@ -60,18 +61,20 @@ class TransactionApiServiceImplTest {
     @Mock
     BlockchainConfig blockchainConfig;
     @Mock
+    BlockChainInfoService blockChainInfoService;
+    @Mock
     TransactionProcessor transactionProcessor;
 
-    UnTxReceiptMapper unTxReceiptMapper;
+    TxReceiptMapper txReceiptMapper;
     TransactionInfoMapper transactionInfoMapper;
     TransactionApiService transactionApiService;
 
     @BeforeEach
     void setUp() {
         Convert2.init(blockchainConfig);
-        unTxReceiptMapper = new UnTxReceiptMapper();
+        txReceiptMapper = new TxReceiptMapper(blockChainInfoService);
         transactionInfoMapper = new TransactionInfoMapper(blockchain);
-        transactionApiService = new TransactionApiServiceImpl(transactionProcessor, blockchain, unTxReceiptMapper, transactionInfoMapper);
+        transactionApiService = new TransactionApiServiceImpl(transactionProcessor, blockchain, txReceiptMapper, transactionInfoMapper);
     }
 
     @Test

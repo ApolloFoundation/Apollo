@@ -123,6 +123,8 @@
   <logger name="com.apollocurrency.aplwallet.apl.core.transaction" level="TRACE"/>
   <logger name="com.apollocurrency.aplwallet.apl.core.signature" level="TRACE"/>
   <logger name="com.apollocurrency.aplwallet.apl.core.rest.v2" level="TRACE"/>
+  <logger name="com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl" level="TRACE"/>
+
   <!--    <logger name="com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling" level="trace" additivity="false">-->
   <!--        <appender-ref ref="shuffling-file"/>-->
   <!--    </logger>-->

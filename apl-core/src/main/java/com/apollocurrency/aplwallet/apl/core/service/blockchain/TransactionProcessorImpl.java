@@ -206,6 +206,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         }
     }
 
+    @Deprecated
     @Override
     public DbIterator<UnconfirmedTransaction> getAllUnconfirmedTransactions() {
         return unconfirmedTransactionTable.getAll(0, -1);
