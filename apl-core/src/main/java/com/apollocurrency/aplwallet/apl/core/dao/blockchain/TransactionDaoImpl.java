@@ -45,7 +45,6 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
-import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -64,6 +63,8 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionUtils.convertAppendixToString;
 
 @Slf4j
 @Singleton
@@ -703,11 +704,11 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
-    public synchronized Stream<Transaction> getTransactions(byte type, byte subtype,
-                                                            int startTime, int endTime,
-                                                            int fromHeight, int toHeight,
-                                                            String sortOrder,
-                                                            int from, int to) {
+    public synchronized Stream<TxReceipt> getTransactions(byte type, byte subtype,
+                                                          int startTime, int endTime,
+                                                          int fromHeight, int toHeight,
+                                                          String sortOrder,
+                                                          int from, int to) {
         StringBuilder sqlQuery = new StringBuilder("SELECT tx.id, tx.sender_id, tx.recipient_id, " +
             "tx.signature, tx.timestamp, tx.amount, tx.fee, tx.height, tx.block_id," +
             "tx.block_timestamp, tx.transaction_index FROM transaction tx ");
@@ -726,7 +727,7 @@ public class TransactionDaoImpl implements TransactionDao {
 
             return StreamSupport.stream(
                 Spliterators.spliteratorUnknownSize(
-                    new DbIterator<>(con, statement, this::loadTransaction),
+                    new DbIterator<TxReceipt>(con, statement, this::parseTxReceipt),
                     Spliterator.ORDERED),
                 false
             );
@@ -735,7 +736,7 @@ public class TransactionDaoImpl implements TransactionDao {
         }
     }
 
-    private TxReceipt parseTxReceipt(ResultSet rs) throws AplException.NotValidException {
+    private TxReceipt parseTxReceipt(Connection connection, ResultSet rs) throws AplException.NotValidException {
         try {
             byte type = rs.getByte("type");
             byte subtype = rs.getByte("subtype");
@@ -767,9 +768,9 @@ public class TransactionDaoImpl implements TransactionDao {
                 throw new AplException.NotValidException("Wrong transaction type/subtype value, type=" + type + " subtype=" + subtype);
             }
             StringBuilder payload = new StringBuilder();
-            parseAppendix(payload, transactionType.parseAttachment(buffer));
+            convertAppendixToString(payload, transactionType.parseAttachment(buffer));
             if (rs.getBoolean("has_message")) {
-                parseAppendix(payload, new MessageAppendix(buffer));
+                convertAppendixToString(payload, new MessageAppendix(buffer));
             }
 
             TxReceipt transaction = new TxReceipt();
@@ -789,15 +790,6 @@ public class TransactionDaoImpl implements TransactionDao {
 
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
-        }
-    }
-
-    private static void parseAppendix(StringBuilder builder, Appendix appendix) {
-        if (appendix != null) {
-            JSONObject json = appendix.getJSONObject();
-            if (json != null) {
-                builder.append(json.toJSONString());
-            }
         }
     }
 

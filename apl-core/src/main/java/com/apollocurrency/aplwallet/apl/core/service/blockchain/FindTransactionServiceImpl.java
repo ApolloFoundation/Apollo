@@ -4,9 +4,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
+import com.apollocurrency.aplwallet.api.v2.model.TxReceipt;
+import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDao;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TxReceiptMapper;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -26,17 +32,28 @@ import java.util.stream.Stream;
 @Slf4j
 @Singleton
 public class FindTransactionServiceImpl implements FindTransactionService {
+    private final BlockChainInfoService blockChainInfoService;
+    private final UnconfirmedTransactionTable unconfirmedTransactionTable;
     private final TransactionProcessor transactionProcessor;
     private final TransactionDao transactionDao;
     private final DatabaseManager databaseManager;
+    private final TxReceiptMapper txReceiptMapper;
+    private final IteratorToStreamConverter<UnconfirmedTransaction> streamConverter;
 
     @Inject
     public FindTransactionServiceImpl(DatabaseManager databaseManager,
                                       TransactionProcessor transactionProcessor,
-                                      TransactionDao transactionDao) {
+                                      TransactionDao transactionDao,
+                                      UnconfirmedTransactionTable unconfirmedTransactionTable,
+                                      BlockChainInfoService blockChainInfoService,
+                                      TxReceiptMapper txReceiptMapper) {
         this.databaseManager = Objects.requireNonNull(databaseManager);
         this.transactionProcessor = Objects.requireNonNull(transactionProcessor);
         this.transactionDao = Objects.requireNonNull(transactionDao);
+        this.unconfirmedTransactionTable = Objects.requireNonNull(unconfirmedTransactionTable);
+        this.blockChainInfoService = Objects.requireNonNull(blockChainInfoService);
+        this.txReceiptMapper = Objects.requireNonNull(txReceiptMapper);
+        this.streamConverter = new IteratorToStreamConverter<>();
     }
 
     @Override
@@ -60,16 +77,26 @@ public class FindTransactionServiceImpl implements FindTransactionService {
     }
 
     @Override
-    public List<Transaction> getTransactionsByPeriod(final int timeStart, final int timeEnd) {
+    public List<TxReceipt> getTransactionsByPeriod(final int timeStart, final int timeEnd) {
 
         Stream<Transaction> unconfirmedTransactionStream = getAllUnconfirmedTransactionsStream()
             .filter(transaction -> transaction.getTimestamp() > timeStart && transaction.getTimestamp() < timeEnd)
             .map(unconfirmedTransaction -> unconfirmedTransaction);
 
-        Stream<Transaction> transactionStream = transactionDao.getTransactions((byte) -1, (byte) -1, timeStart, timeEnd,
-            0, 0, "ASC", 0, -1);
+        int height = blockChainInfoService.getHeight();
 
-        return Stream.concat(unconfirmedTransactionStream, transactionStream).collect(Collectors.toUnmodifiableList());
+        Stream<TxReceipt> transactionStream = transactionDao.getTransactions((byte) -1, (byte) -1, timeStart, timeEnd,
+            0, 0, "ASC", 0, -1)
+            .peek(txReceipt -> {
+                    txReceipt.setConfirmations(Math.max(0, height - txReceipt.getHeight()));
+                    txReceipt.setStatus(txReceipt.getConfirmations() > 0
+                        ? TxReceipt.StatusEnum.CONFIRMED
+                        : TxReceipt.StatusEnum.UNCONFIRMED);
+                }
+            );
+
+        return Stream.concat(unconfirmedTransactionStream.map(txReceiptMapper), transactionStream)
+            .collect(Collectors.toUnmodifiableList());
     }
 
     @Override

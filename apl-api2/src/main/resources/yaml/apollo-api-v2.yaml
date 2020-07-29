@@ -365,7 +365,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UnTxReceipt'
+                $ref: '#/components/schemas/TxReceipt'
         400:
           $ref: '#/components/responses/BadRequest'
         500:
@@ -965,7 +965,7 @@ components:
             result:
               type: array
               items:
-                $ref: '#/components/schemas/Operation'
+                $ref: '#/components/schemas/TxReceipt'
             query:
               $ref: '#/components/schemas/QueryObject'
     QueryCountResult:
@@ -979,25 +979,8 @@ components:
               example: 345
             query:
               $ref: '#/components/schemas/QueryObject'
-    Operation:
-      type: object
-      properties:
-        account:
-          $ref: '#/components/schemas/AccountInfo'
-        operations:
-          type: array
-          items:
-            $ref: '#/components/schemas/TxReceipt'
-    OperationCount:
-      type: object
-      properties:
-        account:
-          $ref: '#/components/schemas/AccountInfo'
-        operations_count:
-          type: integer
-          format: int32
-    UnTxReceipt:
-      description: Unconfirmed transaction receipt
+    TxReceipt:
+      description: Transaction receipt
       allOf:
         - $ref: '#/components/schemas/BaseResponse'
         - type: object
@@ -1045,12 +1028,6 @@ components:
                 as irreversible after 721 confirmations and finally a transaction is permanent if it's confirmed 1440 times.
               enum: [unconfirmed, confirmed, irreversible, permanent]
               example: unconfirmed
-    TxReceipt:
-      description: Confirmed transaction receipt
-      allOf:
-        - $ref: '#/components/schemas/UnTxReceipt'
-        - type: object
-          properties:
             block:
               description: The Id of the block containing the confirmed transaction
               type: string

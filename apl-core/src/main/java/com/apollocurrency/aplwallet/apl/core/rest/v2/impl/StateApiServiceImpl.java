@@ -7,16 +7,17 @@ import com.apollocurrency.aplwallet.api.v2.model.BlockchainInfo;
 import com.apollocurrency.aplwallet.apl.core.app.BlockNotFoundException;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
-import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDao;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.EcBlockData;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
+import com.apollocurrency.aplwallet.apl.core.rest.parameter.LongParameter;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.ResponseBuilderV2;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.BlockInfoMapper;
+import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TxReceiptMapper;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.FindTransactionService;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -32,22 +33,22 @@ public class StateApiServiceImpl implements StateApiService {
     private final Blockchain blockchain;
     private final TimeService timeService;
     private final BlockInfoMapper blockInfoMapper;
-    private final TransactionDao transactionDao;
-    private final UnconfirmedTransactionTable unconfirmedTxDao;
+    private final FindTransactionService findTransactionService;
+    private final TxReceiptMapper txReceiptMapper;
 
     @Inject
     public StateApiServiceImpl(BlockchainConfig blockchainConfig,
                                Blockchain blockchain,
                                TimeService timeService,
                                BlockInfoMapper blockInfoMapper,
-                               TransactionDao transactionDao,
-                               UnconfirmedTransactionTable unconfirmedTxDao) {
+                               FindTransactionService findTransactionService,
+                               TxReceiptMapper txReceiptMapper) {
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig);
         this.blockchain = Objects.requireNonNull(blockchain);
         this.timeService = Objects.requireNonNull(timeService);
         this.blockInfoMapper = Objects.requireNonNull(blockInfoMapper);
-        this.transactionDao = Objects.requireNonNull(transactionDao);
-        this.unconfirmedTxDao = Objects.requireNonNull(unconfirmedTxDao);
+        this.findTransactionService = Objects.requireNonNull(findTransactionService);
+        this.txReceiptMapper = Objects.requireNonNull(txReceiptMapper);
     }
 
     public Response getBlockByHeight(String heightStr, SecurityContext securityContext) throws NotFoundException {
@@ -86,12 +87,8 @@ public class StateApiServiceImpl implements StateApiService {
 
     public Response getBlockById(String blockIdStr, SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
-        Block block;
-        try {
-            block = blockchain.getBlock(Convert.parseLong(blockIdStr));
-        } catch (NumberFormatException e) {
-            return ResponseBuilderV2.apiError(ApiErrors.INCORRECT_PARAM, "blockId", blockIdStr).build();
-        }
+        LongParameter blockId = new LongParameter(blockIdStr);
+        Block block = blockchain.getBlock(blockId.get());
         if (block == null) {
             throw new NotFoundException("There is no block with id=" + blockIdStr);
         }
@@ -124,29 +121,16 @@ public class StateApiServiceImpl implements StateApiService {
         return builder.bind(blockchainInfo).build();
     }
 
-    public Response getTxReceiptById(String transaction, SecurityContext securityContext) throws NotFoundException {
+    public Response getTxReceiptById(String transactionStr, SecurityContext securityContext) throws NotFoundException {
 
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
-        if (!blockchain.isInitialized()) {
-            return builder.error(ApiErrors.BLOCKCHAIN_NOT_INITIALIZED).build();
-        }
-        BlockchainInfo blockchainInfo = new BlockchainInfo();
-        blockchainInfo.setChainid(blockchainConfig.getChain().getChainId().toString());
-        blockchainInfo.setGenesisAccount(Long.toUnsignedString(GenesisImporter.CREATOR_ID));
-        blockchainInfo.setGenesisBlockTimestamp(GenesisImporter.EPOCH_BEGINNING);
-        blockchainInfo.setGenesisBlockId(Long.toUnsignedString(blockchain.getBlockIdAtHeight(0)));
+        final LongParameter transactionId = new LongParameter(transactionStr);
 
-        int height = blockchain.getHeight();
-        blockchainInfo.setHeight((long) height);
-        EcBlockData ecBlockData = blockchain.getECBlock(height);
-        blockchainInfo.setEcBlockId(Long.toUnsignedString(ecBlockData.getId()));
-        blockchainInfo.setEcBlockHeight((long) ecBlockData.getHeight());
+        Transaction transaction = findTransactionService.findTransaction(transactionId.get(), Integer.MAX_VALUE)
+            .or(() -> findTransactionService.findUnconfirmedTransaction(transactionId.get()))
+            .orElseThrow(() -> new NotFoundException("Thereis no transaction with id=" + transactionStr));
 
-        blockchainInfo.setTxTimestamp((long) timeService.getEpochTime());
-        blockchainInfo.setTimestamp(timeService.systemTimeMillis());
-
-        return builder.bind(blockchainInfo).build();
-
+        return builder.bind(txReceiptMapper.convert(transaction)).build();
     }
 
     public Response getTxReceiptList(List<String> body, SecurityContext securityContext) throws NotFoundException {
