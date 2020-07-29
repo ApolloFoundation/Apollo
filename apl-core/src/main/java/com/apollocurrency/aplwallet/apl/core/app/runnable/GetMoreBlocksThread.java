@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.GetNextBlocksTask;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockImpl;
