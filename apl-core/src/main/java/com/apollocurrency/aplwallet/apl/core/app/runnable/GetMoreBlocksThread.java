@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockParser;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
@@ -57,7 +58,7 @@ public class GetMoreBlocksThread implements Runnable {
     private final Integer defaultNumberOfForkConfirmations;
 
     private final BlockchainProcessorState blockchainProcessorState;
-
+    private final BlockParser blockParser;
 
     private final JSONStreamAware getCumulativeDifficultyRequest;
     private boolean peerHasMore;
@@ -71,7 +72,8 @@ public class GetMoreBlocksThread implements Runnable {
                                BlockchainConfig blockchainConfig, Blockchain blockchain, PeersService peersService,
                                GlobalSync globalSync, TimeService timeService, PrunableRestorationService prunableRestorationService,
                                ExecutorService networkService, PropertiesHolder propertiesHolder,
-                               TransactionProcessor transactionProcessor) {
+                               TransactionProcessor transactionProcessor,
+                               BlockParser blockParser) {
         this.blockchainProcessor = blockchainProcessor;
         this.blockchainProcessorState = blockchainProcessorState;
 
@@ -84,6 +86,7 @@ public class GetMoreBlocksThread implements Runnable {
         this.networkService = networkService;
         this.transactionProcessor = transactionProcessor;
         this.defaultNumberOfForkConfirmations = propertiesHolder.getIntProperty("apl.numberOfForkConfirmations");
+        this.blockParser = blockParser;
 
         JSONObject request = new JSONObject();
         request.put("requestType", "getCumulativeDifficulty");
@@ -429,7 +432,8 @@ public class GetMoreBlocksThread implements Runnable {
         int segSize = Constants.MAX_AUTO_ROLLBACK / 20;
         int stop = chainBlockIds.size() - 1;
         for (int start = 0; start < stop; start += segSize) {
-            getList.add(new GetNextBlocksTask(chainBlockIds, start, Math.min(start + segSize, stop), startHeight, blockchainConfig));
+            getList.add(new GetNextBlocksTask(chainBlockIds, start,
+                Math.min(start + segSize, stop), startHeight, blockchainConfig, blockParser));
         }
         int nextPeerIndex = ThreadLocalRandom.current().nextInt(connectedPublicPeers.size());
         long maxResponseTime = 0;

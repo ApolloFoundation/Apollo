@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -29,22 +28,17 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.slf4j.Logger;
 
 import javax.enterprise.inject.spi.CDI;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 public final class BlockImpl implements Block {
-    private static final Logger LOG = getLogger(BlockImpl.class);
 
     private static Blockchain blockchain;
 
@@ -150,39 +144,6 @@ public final class BlockImpl implements Block {
         }
     }
 
-    public static BlockImpl parseBlock(JSONObject blockData, long baseTarget) throws AplException.NotValidException {
-        try {
-            int version = ((Long) blockData.get("version")).intValue();
-            int timestamp = ((Long) blockData.get("timestamp")).intValue();
-            long previousBlock = Convert.parseUnsignedLong((String) blockData.get("previousBlock"));
-            long totalAmountATM = blockData.containsKey("totalAmountATM") ? Convert.parseLong(blockData.get("totalAmountATM")) : Convert.parseLong(blockData.get("totalAmountNQT"));
-            long totalFeeATM = blockData.containsKey("totalFeeATM") ? Convert.parseLong(blockData.get("totalFeeATM")) : Convert.parseLong(blockData.get("totalFeeNQT"));
-            int payloadLength = ((Long) blockData.get("payloadLength")).intValue();
-            byte[] payloadHash = Convert.parseHexString((String) blockData.get("payloadHash"));
-            byte[] generatorPublicKey = Convert.parseHexString((String) blockData.get("generatorPublicKey"));
-            byte[] generationSignature = Convert.parseHexString((String) blockData.get("generationSignature"));
-            byte[] blockSignature = Convert.parseHexString((String) blockData.get("blockSignature"));
-            byte[] previousBlockHash = version == 1 ? null : Convert.parseHexString((String) blockData.get("previousBlockHash"));
-            Object timeoutJsonValue = blockData.get("timeout");
-            int timeout = !requireTimeout(version) ? 0 : ((Long) timeoutJsonValue).intValue();
-            List<Transaction> blockTransactions = new ArrayList<>();
-            for (Object transactionData : (JSONArray) blockData.get("transactions")) {
-                blockTransactions.add(TransactionImpl.parseTransaction((JSONObject) transactionData));
-            }
-            BlockImpl block = new BlockImpl(version, timestamp, previousBlock, totalAmountATM, totalFeeATM,
-                payloadLength, payloadHash, generatorPublicKey,
-                generationSignature, blockSignature, previousBlockHash, timeout, blockTransactions, baseTarget);
-            if (!block.checkSignature()) {
-                throw new AplException.NotValidException("Invalid block signature");
-            }
-            return block;
-        } catch (RuntimeException e) {
-            LOG.debug("Failed to parse block: " + blockData.toJSONString());
-            LOG.debug("Exception: " + e.getMessage());
-            throw e;
-        }
-    }
-
     static boolean requireTimeout(int version) {
         return Block.ADAPTIVE_BLOCK_VERSION == version || Block.INSTANT_BLOCK_VERSION == version;
     }
@@ -209,11 +170,6 @@ public final class BlockImpl implements Block {
 
     @Override
     public byte[] getGeneratorPublicKey() {
-//        if (generatorPublicKey == null) {
-//            String error = "Pls, assign generatorPublicKey first, before trying to take it";
-//            throw new RuntimeException(error);
-//            generatorPublicKey = lookupAccountService().getPublicKeyByteArray(generatorId);
-//        }
         return generatorPublicKey;
     }
 

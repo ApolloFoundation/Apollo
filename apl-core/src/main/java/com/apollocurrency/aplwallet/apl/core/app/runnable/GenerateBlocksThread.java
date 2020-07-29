@@ -61,7 +61,9 @@ public class GenerateBlocksThread implements Runnable {
 
     @Override
     public void run() {
+        log.trace("run - generateBlocksThread");
         if (suspendForging) {
+            log.trace("run - suspendForging = {}", suspendForging);
             return;
         }
         try {
@@ -70,16 +72,19 @@ public class GenerateBlocksThread implements Runnable {
                 try {
                     Block lastBlock = blockchain.getLastBlock();
                     if (lastBlock == null || lastBlock.getHeight() < blockchainConfig.getLastKnownBlock()) {
+                        log.trace("run - lastBlock = {}", lastBlock);
                         return;
                     }
                     final int generationLimit = timeService.getEpochTime() - delayTime;
                     if (lastBlock.getId() != lastBlockId || sortedForgers == null) {
                         lastBlockId = lastBlock.getId();
-
+                        log.trace("run - lastBlockId = {}", lastBlockId);
                         Map<Long, GeneratorMemoryEntity> generatorsMap = generatorService.getGeneratorsMap();
                         if (lastBlock.getTimestamp() > timeService.getEpochTime() - 600) {
+                            log.trace("run - getTimestamp = {} > {}", lastBlock.getTimestamp(), timeService.getEpochTime() - 600);
                             Block previousBlock = blockchain.getBlock(lastBlock.getPreviousBlockId());
                             for (GeneratorMemoryEntity generator : generatorsMap.values()) {
+                                log.trace("run - generator.setLastBlock() 1. = {}", generator);
                                 generatorService.setLastBlock(previousBlock, generator);
                                 int timestamp = generator.getTimestamp(generationLimit);
                                 if (timestamp != generationLimit && generator.getHitTime() > 0 && timestamp < lastBlock.getTimestamp() - lastBlock.getTimeout()) {
@@ -96,14 +101,17 @@ public class GenerateBlocksThread implements Runnable {
                         }
                         List<GeneratorMemoryEntity> forgers = new ArrayList<>();
                         for (GeneratorMemoryEntity generator : generatorsMap.values()) {
+                            log.trace("run - generator.setLastBlock() 2. = {}", generator);
                             generatorService.setLastBlock(lastBlock, generator);
                             if (generator.getEffectiveBalance().signum() > 0) {
-                                forgers.add(generator);
+                                boolean result = forgers.add(generator);
+                                log.trace("run - added ! generator = {}", result);
                             }
                         }
                         Collections.sort(forgers);
                         sortedForgers = Collections.unmodifiableList(forgers);
                         logged = false;
+                        log.trace("run - set logged = {}", logged);
                     }
                     if (!logged) {
                         for (GeneratorMemoryEntity generator : sortedForgers) {
@@ -112,6 +120,7 @@ public class GenerateBlocksThread implements Runnable {
                             }
                             log.debug(generator.toString());
                             logged = true;
+                            log.trace("run - unset logged = {}", logged);
                         }
                     }
                     for (GeneratorMemoryEntity generator : sortedForgers) {
@@ -120,6 +129,7 @@ public class GenerateBlocksThread implements Runnable {
                         }
                         if (generator.getHitTime() > generationLimit
                             || generatorService.forge(lastBlock, generationLimit, generator)) {
+                            log.trace("run - generator.forge() = {}", generator);
                             return;
                         }
                     }
