@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.currency.impl;
 
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencySupplyTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyTable;
@@ -20,6 +22,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySellO
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySupply;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyTypeValidatable;
 import com.apollocurrency.aplwallet.apl.core.entity.state.exchange.Exchange;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
@@ -32,17 +35,21 @@ import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyServ
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Singleton
-public class CurrencyServiceImpl implements CurrencyService {
+public class CurrencyServiceImpl implements CurrencyService, CurrencyTypeValidatable {
 
     private final CurrencySupplyTable currencySupplyTable;
     private final CurrencyTable currencyTable;
@@ -56,6 +63,7 @@ public class CurrencyServiceImpl implements CurrencyService {
     private final CurrencyTransferService currencyTransferService;
     private final ShufflingService shufflingService;
     private CurrencyMintService currencyMintService; // lazy init to break up circular dependency
+    private final BlockchainConfig blockchainConfig;
 
     @Inject
     public CurrencyServiceImpl(CurrencySupplyTable currencySupplyTable,
@@ -67,7 +75,8 @@ public class CurrencyServiceImpl implements CurrencyService {
                                CurrencyFounderService currencyFounderService,
                                ExchangeService exchangeService,
                                CurrencyTransferService currencyTransferService,
-                               ShufflingService shufflingService) {
+                               ShufflingService shufflingService,
+                               BlockchainConfig blockchainConfig) {
         this.currencySupplyTable = currencySupplyTable;
         this.currencyTable = currencyTable;
         this.blockChainInfoService = blockChainInfoService;
@@ -79,6 +88,7 @@ public class CurrencyServiceImpl implements CurrencyService {
         this.exchangeService = exchangeService;
         this.currencyTransferService = currencyTransferService;
         this.shufflingService = shufflingService;
+        this.blockchainConfig = blockchainConfig;
     }
 
     @Override
@@ -327,4 +337,95 @@ public class CurrencyServiceImpl implements CurrencyService {
         return this.currencyMintService;
     }
 
+    @Override
+    public void validate(Currency currency, Transaction transaction) throws AplException.ValidationException {
+        if (currency == null) {
+            log.trace("currency = {}, tr = {}, height = {}", currency, transaction, transaction.getHeight());
+            log.trace("s-trace = {}", ThreadUtils.last5Stacktrace());
+            throw new AplException.NotCurrentlyValidException("Unknown currency: " + transaction.getAttachment().getJSONObject());
+        }
+        this.validate(currency, currency.getType(), transaction);
+    }
+
+    public void validate(int type, Transaction transaction) throws AplException.ValidationException {
+        this.validate(null, type, transaction);
+    }
+
+    @Override
+    public void validate(Currency currency, int type, Transaction transaction) throws AplException.ValidationException {
+        if (transaction.getAmountATM() != 0) {
+            throw new AplException.NotValidException(String.format("Currency transaction %s amount must be 0", blockchainConfig.getCoinSymbol()));
+        }
+
+        final EnumSet<CurrencyType> validators = EnumSet.noneOf(CurrencyType.class);
+        for (CurrencyType validator : CurrencyType.values()) {
+            if ((validator.getCode() & type) != 0) {
+                validators.add(validator);
+            }
+        }
+        if (validators.isEmpty()) {
+            throw new AplException.NotValidException("Currency type not specified");
+        }
+        for (CurrencyType validator : CurrencyType.values()) {
+            if ((validator.getCode() & type) != 0) {
+                validator.validate(currency, transaction, validators);
+            } else {
+                validator.validateMissing(currency, transaction, validators);
+            }
+        }
+    }
+
+    @Override
+    public void validateCurrencyNaming(long issuerAccountId, MonetarySystemCurrencyIssuance attachment) throws AplException.ValidationException {
+        String name = attachment.getName();
+        String code = attachment.getCode();
+        String description = attachment.getDescription();
+        if (name.length() < Constants.MIN_CURRENCY_NAME_LENGTH || name.length() > Constants.MAX_CURRENCY_NAME_LENGTH
+            || name.length() < code.length()
+            || code.length() < Constants.MIN_CURRENCY_CODE_LENGTH || code.length() > Constants.MAX_CURRENCY_CODE_LENGTH
+            || description.length() > Constants.MAX_CURRENCY_DESCRIPTION_LENGTH) {
+            throw new AplException.NotValidException(String.format("Invalid currency name %s code %s or description %s", name, code, description));
+        }
+        String normalizedName = name.toLowerCase();
+        for (int i = 0; i < normalizedName.length(); i++) {
+            if (Constants.ALPHABET.indexOf(normalizedName.charAt(i)) < 0) {
+                throw new AplException.NotValidException("Invalid currency name: " + normalizedName);
+            }
+        }
+        for (int i = 0; i < code.length(); i++) {
+            if (Constants.ALLOWED_CURRENCY_CODE_LETTERS.indexOf(code.charAt(i)) < 0) {
+                throw new AplException.NotValidException("Invalid currency code: " + code + " code must be all upper case");
+            }
+        }
+        if (code.contains(blockchainConfig.getCoinSymbol()) || blockchainConfig.getCoinSymbol().toLowerCase().equals(normalizedName)) {
+            throw new AplException.NotValidException("Currency name already used: " + code);
+        }
+        Currency currency;
+        if ((currency = this.getCurrencyByName(normalizedName)) != null
+            && !this.canBeDeletedBy(currency, issuerAccountId)) {
+            throw new AplException.NotCurrentlyValidException("Currency name already used: " + normalizedName);
+        }
+        if ((currency = this.getCurrencyByCode(name)) != null
+            && !this.canBeDeletedBy(currency, issuerAccountId)) {
+            throw new AplException.NotCurrentlyValidException("Currency name already used as code: " + normalizedName);
+        }
+        if ((currency = this.getCurrencyByCode(code)) != null
+            && !this.canBeDeletedBy(currency, issuerAccountId)) {
+            throw new AplException.NotCurrentlyValidException("Currency code already used: " + code);
+        }
+        if ((currency = this.getCurrencyByName(code)) != null
+            && !this.canBeDeletedBy(currency, issuerAccountId)) {
+            throw new AplException.NotCurrentlyValidException("Currency code already used as name: " + code);
+        }
+    }
+
+    @Override
+    public void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException {
+//        switch (currency)
+    }
+
+    @Override
+    public void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException {
+
+    }
 }

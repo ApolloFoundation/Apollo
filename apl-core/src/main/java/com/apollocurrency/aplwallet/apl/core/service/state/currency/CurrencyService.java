@@ -1,5 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.currency;
 
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
@@ -69,4 +70,13 @@ public interface CurrencyService {
     boolean canBeDeletedBy(Currency currency, long senderAccountId);
 
     void delete(Currency currency, LedgerEvent event, long eventId, Account senderAccount);
+
+    void validate(Currency currency, Transaction transaction) throws AplException.ValidationException;
+
+    void validate(int type, Transaction transaction) throws AplException.ValidationException;
+
+    void validate(Currency currency, int type, Transaction transaction) throws AplException.ValidationException;
+
+    void validateCurrencyNaming(long issuerAccountId, MonetarySystemCurrencyIssuance attachment) throws AplException.ValidationException;
+
 }

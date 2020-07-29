@@ -31,8 +31,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.ShufflingTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveIncrease;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.inject.spi.CDI;
@@ -43,15 +41,15 @@ import java.util.Set;
 /**
  * Define and validate currency capabilities
  */
-public enum CurrencyType {
+public enum CurrencyType implements CurrencyTypeValidatable {
 
     /**
      * Can be exchanged from/to APL<br>
      */
     EXCHANGEABLE(0x01) {
-        @Override
-        public void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
-        }
+//        @Override
+//        public void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
+//        }
 
         @Override
         public void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
@@ -84,9 +82,9 @@ public enum CurrencyType {
             }
         }
 
-        @Override
-        public void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) {
-        }
+//        @Override
+//        public void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) {
+//        }
 
     },
     /**
@@ -169,7 +167,6 @@ public enum CurrencyType {
                 }
             }
             if (transaction.getType() == MonetarySystem.RESERVE_CLAIM) {
-//                if (currency == null || !currency.isActive()) {
                 if (currency == null || !lookupCurrencyService().isActive(currency)) {
                     throw new AplException.NotCurrentlyValidException("Cannot claim reserve since currency is not yet active");
                 }
@@ -238,9 +235,9 @@ public enum CurrencyType {
             }
         }
 
-        @Override
-        public void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException {
-        }
+//        @Override
+//        public void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException {
+//        }
     };
 
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
@@ -264,6 +261,7 @@ public enum CurrencyType {
         return null;
     }
 
+/*
     public static void validate(Currency currency, Transaction transaction) throws AplException.ValidationException {
         if (currency == null) {
             log.trace("currency = {}, tr = {}, height = {}", currency, transaction, transaction.getHeight());
@@ -322,7 +320,7 @@ public enum CurrencyType {
             }
         }
         if (code.contains(blockchainConfig.getCoinSymbol()) || blockchainConfig.getCoinSymbol().toLowerCase().equals(normalizedName)) {
-            throw new AplException.NotValidException("Currency name already used");
+            throw new AplException.NotValidException("Currency name already used: " + code);
         }
         Currency currency;
         CurrencyService currencyService = lookupCurrencyService();
@@ -343,14 +341,15 @@ public enum CurrencyType {
             throw new AplException.NotCurrentlyValidException("Currency code already used as name: " + code);
         }
     }
+*/
 
     public int getCode() {
         return code;
     }
 
-    public abstract void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException;
-
-    public abstract void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException;
+//    public abstract void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException;
+//
+//    public abstract void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException;
 
     private static CurrencyService lookupCurrencyService() {
         if (currencyService == null) {

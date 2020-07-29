@@ -104,9 +104,9 @@ public class GeneratorServiceImpl implements GeneratorService {
         try {
             if (blockchain.getHeight() >= blockchainConfig.getLastKnownBlock()) {
                 this.setLastBlock(blockchain.getLastBlock(), generator);
-            }
-            if (generateBlocksThread != null) {
-                generateBlocksThread.resetSortedForgers();
+                if (generateBlocksThread != null) {
+                    generateBlocksThread.resetSortedForgers();
+                }
             }
         } finally {
             globalSync.updateUnlock();
