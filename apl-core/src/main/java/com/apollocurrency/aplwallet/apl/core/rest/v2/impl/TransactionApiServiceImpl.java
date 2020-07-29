@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.UnTxReceiptMapper
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.context.RequestScoped;
@@ -50,21 +51,22 @@ public class TransactionApiServiceImpl implements TransactionApiService {
      */
     public Response broadcastTx(TxRequest body, SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
-        BaseResponse receipt = broadcastOneTx(body);
-        return builder.bind(receipt).build();
+        StatusResponse rc = broadcastOneTx(body);
+        return builder.bind(rc.getResponse()).status(rc.getStatus()).build();
     }
 
     public Response broadcastTxBatch(List<TxRequest> body, SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
         ListResponse listResponse = new ListResponse();
         for (TxRequest req : body) {
-            BaseResponse receipt = broadcastOneTx(req);
+            BaseResponse receipt = broadcastOneTx(req).getResponse();
             listResponse.getResult().add(receipt);
         }
         return builder.bind(listResponse).build();
     }
 
-    private BaseResponse broadcastOneTx(TxRequest req) {
+    private StatusResponse broadcastOneTx(TxRequest req) {
+        int status = 200;
         BaseResponse receipt;
         try {
             if (log.isTraceEnabled()) {
@@ -85,13 +87,15 @@ public class TransactionApiServiceImpl implements TransactionApiService {
             receipt = ResponseBuilderV2.createErrorResponse(
                 ApiErrors.CUSTOM_ERROR_MESSAGE, null,
                 "Cant't parse byte array, cause " + e.getMessage());
+            status = 400;
 
         } catch (AplException.ValidationException e) {
             receipt = ResponseBuilderV2.createErrorResponse(
                 ApiErrors.CONSTRAINT_VIOLATION, null,
                 e.getMessage());
+            status = 400;
         }
-        return receipt;
+        return new StatusResponse(status, receipt);
     }
 
     public Response getTxById(String transactionIdStr, SecurityContext securityContext) throws NotFoundException {
@@ -117,5 +121,16 @@ public class TransactionApiServiceImpl implements TransactionApiService {
             log.trace("TransactionResp={}", resp);
         }
         return builder.bind(resp).build();
+    }
+
+    @Getter
+    private static class StatusResponse {
+        int status;
+        BaseResponse response;
+
+        public StatusResponse(int status, BaseResponse response) {
+            this.status = status;
+            this.response = response;
+        }
     }
 }

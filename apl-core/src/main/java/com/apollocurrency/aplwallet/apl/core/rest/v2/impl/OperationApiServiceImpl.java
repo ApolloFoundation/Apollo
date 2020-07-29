@@ -29,7 +29,7 @@ public class OperationApiServiceImpl implements OperationApiService {
         query.getEndTime(); //timestamp
         query.getFirst();
         query.getLast(); //height
-        query.getTransactionStatus();
+
 
         query.getPage();
         query.getPerPage();

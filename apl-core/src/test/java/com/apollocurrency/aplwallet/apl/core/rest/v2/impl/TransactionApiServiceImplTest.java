@@ -11,7 +11,7 @@ import com.apollocurrency.aplwallet.api.v2.model.ErrorResponse;
 import com.apollocurrency.aplwallet.api.v2.model.ListResponse;
 import com.apollocurrency.aplwallet.api.v2.model.TransactionInfoResp;
 import com.apollocurrency.aplwallet.api.v2.model.TxRequest;
-import com.apollocurrency.aplwallet.api.v2.model.UnTxReceipt;
+import com.apollocurrency.aplwallet.api.v2.model.TxReceipt;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TransactionInfoMapper;
@@ -83,7 +83,7 @@ class TransactionApiServiceImplTest {
         Response response = transactionApiService.broadcastTx(request, securityContext);
         //THEN
         assertNotNull(response);
-        UnTxReceipt receipt = (UnTxReceipt) response.getEntity();
+        TxReceipt receipt = (TxReceipt) response.getEntity();
         assertEquals(TX_1_ID, receipt.getTransaction());
     }
 
@@ -123,7 +123,7 @@ class TransactionApiServiceImplTest {
         ListResponse receipt = (ListResponse) response.getEntity();
 
         assertEquals(requestList.size(), receipt.getResult().size());
-        assertEquals(TX_1_ID, ((UnTxReceipt) receipt.getResult().get(0)).getTransaction());
+        assertEquals(TX_1_ID, ((TxReceipt) receipt.getResult().get(0)).getTransaction());
         assertEquals(2001, ((ErrorResponse) receipt.getResult().get(1)).getErrorCode());
     }
 

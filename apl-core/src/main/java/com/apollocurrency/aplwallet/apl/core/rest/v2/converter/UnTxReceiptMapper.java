@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.v2.converter;
 
-import com.apollocurrency.aplwallet.api.v2.model.UnTxReceipt;
+import com.apollocurrency.aplwallet.api.v2.model.TxReceipt;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Converter;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
@@ -16,10 +16,10 @@ import javax.inject.Singleton;
  * @author andrii.zinchenko@firstbridge.io
  */
 @Singleton
-public class UnTxReceiptMapper implements Converter<Transaction, UnTxReceipt> {
+public class UnTxReceiptMapper implements Converter<Transaction, TxReceipt> {
     @Override
-    public UnTxReceipt apply(Transaction model) {
-        UnTxReceipt dto = new UnTxReceipt();
+    public TxReceipt apply(Transaction model) {
+        TxReceipt dto = new TxReceipt();
         dto.setTransaction(model.getStringId());
         dto.setAmount(String.valueOf(model.getAmountATM()));
         dto.setFee(String.valueOf(model.getFeeATM()));
