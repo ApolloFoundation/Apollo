@@ -87,7 +87,7 @@ public class FindTransactionServiceImpl implements FindTransactionService {
 
         Stream<TxReceipt> transactionStream = transactionDao.getTransactions((byte) -1, (byte) -1, timeStart, timeEnd,
             0, 0, "ASC", 0, -1)
-            .peek(txReceipt -> {
+            .stream().peek(txReceipt -> {
                     txReceipt.setConfirmations(Math.max(0, height - txReceipt.getHeight()));
                     txReceipt.setStatus(txReceipt.getConfirmations() > 0
                         ? TxReceipt.StatusEnum.CONFIRMED

@@ -59,12 +59,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.Spliterator;
-import java.util.Spliterators;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
-
-import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionUtils.convertAppendixToString;
 
 @Slf4j
 @Singleton
@@ -691,6 +685,8 @@ public class TransactionDaoImpl implements TransactionDao {
 
         createSelectTransactionQuery(sqlQuery, type, subtype, startTime, endTime, fromHeight, toHeight);
 
+        log.trace("getTransactionsCount sql=[{}]", sqlQuery.toString());
+
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement statement = con.prepareStatement(sqlQuery.toString())) {
@@ -704,14 +700,16 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
-    public synchronized Stream<TxReceipt> getTransactions(byte type, byte subtype,
-                                                          int startTime, int endTime,
-                                                          int fromHeight, int toHeight,
-                                                          String sortOrder,
-                                                          int from, int to) {
-        StringBuilder sqlQuery = new StringBuilder("SELECT tx.id, tx.sender_id, tx.recipient_id, " +
-            "tx.signature, tx.timestamp, tx.amount, tx.fee, tx.height, tx.block_id," +
-            "tx.block_timestamp, tx.transaction_index FROM transaction tx ");
+    public synchronized List<TxReceipt> getTransactions(byte type, byte subtype,
+                                                        int startTime, int endTime,
+                                                        int fromHeight, int toHeight,
+                                                        String sortOrder,
+                                                        int from, int to) {
+        List<TxReceipt> result = new ArrayList<>();
+        StringBuilder sqlQuery = new StringBuilder("SELECT version, type, subtype, id, sender_id, recipient_id, " +
+            "signature, timestamp, amount, fee, height, block_id, block_timestamp, transaction_index, " +
+            "attachment_bytes, has_message " +
+            "FROM transaction ");
 
         createSelectTransactionQuery(sqlQuery, type, subtype, startTime, endTime, fromHeight, toHeight);
 
@@ -719,19 +717,22 @@ public class TransactionDaoImpl implements TransactionDao {
 
         sqlQuery.append(DbUtils.limitsClause(from, to));
 
+        log.trace("getTransactions sql=[{}]", sqlQuery.toString());
+
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement statement = con.prepareStatement(sqlQuery.toString())) {
             int i = setSelectTransactionQueryParams(statement, type, subtype, startTime, endTime, fromHeight, toHeight);
             DbUtils.setLimits(++i, statement, from, to);
 
-            return StreamSupport.stream(
-                Spliterators.spliteratorUnknownSize(
-                    new DbIterator<TxReceipt>(con, statement, this::parseTxReceipt),
-                    Spliterator.ORDERED),
-                false
-            );
-        } catch (SQLException e) {
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    TxReceipt receipt = parseTxReceipt(con, rs);
+                    result.add(receipt);
+                }
+            }
+            return result;
+        } catch (SQLException | AplException.NotValidException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -767,10 +768,10 @@ public class TransactionDaoImpl implements TransactionDao {
             if (transactionType == null) {
                 throw new AplException.NotValidException("Wrong transaction type/subtype value, type=" + type + " subtype=" + subtype);
             }
-            StringBuilder payload = new StringBuilder();
-            convertAppendixToString(payload, transactionType.parseAttachment(buffer));
+            String payload = null;
+            transactionType.parseAttachment(buffer);
             if (rs.getBoolean("has_message")) {
-                convertAppendixToString(payload, new MessageAppendix(buffer));
+                payload = Convert.toString(new MessageAppendix(buffer).getMessage());
             }
 
             TxReceipt transaction = new TxReceipt();
@@ -785,7 +786,7 @@ public class TransactionDaoImpl implements TransactionDao {
             transaction.setBlockTimestamp((long) blockTimestamp);
             transaction.setIndex((int) transactionIndex);
             transaction.setSignature(signature.getJsonString());
-            transaction.setPayload(payload.toString());
+            transaction.setPayload(payload);
             return transaction;
 
         } catch (SQLException e) {
@@ -796,7 +797,7 @@ public class TransactionDaoImpl implements TransactionDao {
     private StringBuilder createSelectTransactionQuery(StringBuilder buf, byte type, byte subtype,
                                                        int startTime, int endTime,
                                                        int fromHeight, int toHeight) {
-        buf.append("WHERE ");
+        buf.append("WHERE 1=1 ");
         if (type >= 0) {
             buf.append("AND type = ? ");
             if (subtype >= 0) {

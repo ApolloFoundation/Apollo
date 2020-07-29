@@ -13,7 +13,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.stream.Stream;
 
 public interface TransactionDao {
 
@@ -81,9 +80,9 @@ public interface TransactionDao {
                              String sortOrder,
                              int from, int to);
 
-    Stream<TxReceipt> getTransactions(byte type, byte subtype,
-                                      int startTime, int endTime,
-                                      int fromHeight, int toHeight,
-                                      String sortOrder,
-                                      int from, int to);
+    List<TxReceipt> getTransactions(byte type, byte subtype,
+                                    int startTime, int endTime,
+                                    int fromHeight, int toHeight,
+                                    String sortOrder,
+                                    int from, int to);
 }
