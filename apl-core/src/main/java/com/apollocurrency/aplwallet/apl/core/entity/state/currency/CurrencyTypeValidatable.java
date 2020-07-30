@@ -12,12 +12,12 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 public interface CurrencyTypeValidatable {
 
     default void validate(Currency currency, Transaction transaction,
-                          Set<CurrencyType> validators, CurrencyType currencyType) throws AplException.ValidationException {
+                          Set<CurrencyType> validators, long maxBalanceAtm, boolean isActiveCurrency) throws AplException.ValidationException {
         // do nothing, all is valid
     }
 
     default void validateMissing(Currency currency, Transaction transaction,
-                                 Set<CurrencyType> validators, CurrencyType currencyType) throws AplException.ValidationException {
+                                 Set<CurrencyType> validators) throws AplException.ValidationException {
         // do nothing, all is valid
     }
 

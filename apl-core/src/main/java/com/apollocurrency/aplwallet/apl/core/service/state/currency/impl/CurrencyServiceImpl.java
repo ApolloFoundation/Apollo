@@ -22,14 +22,10 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyFounder;
-import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySupply;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
-import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyTypeValidatable;
 import com.apollocurrency.aplwallet.apl.core.entity.state.exchange.Exchange;
-import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
-import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystemExchange;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
@@ -39,12 +35,8 @@ import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyFoun
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyMintService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
-import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
-import com.apollocurrency.aplwallet.apl.core.transaction.ShufflingTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveIncrease;
-import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -56,16 +48,16 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
+import java.util.stream.Stream;
 
 @Slf4j
 @Singleton
-public class CurrencyServiceImpl implements CurrencyService, CurrencyTypeValidatable {
+public class CurrencyServiceImpl implements CurrencyService {
 
     private final CurrencySupplyTable currencySupplyTable;
     private final CurrencyTable currencyTable;
     private final BlockChainInfoService blockChainInfoService;
-    private final IteratorToStreamConverter<CurrencySellOffer> iteratorToStreamConverter;
+    private final IteratorToStreamConverter<Currency> iteratorToStreamConverter;
     private final AccountService accountService;
     private final AccountCurrencyService accountCurrencyService;
     private final CurrencyExchangeOfferFacade currencyExchangeOfferFacade;
@@ -133,13 +125,33 @@ public class CurrencyServiceImpl implements CurrencyService, CurrencyTypeValidat
     }
 
     @Override
+    public Stream<Currency> getCurrencyIssuedByAsStream(long accountId, int from, int to) {
+        return iteratorToStreamConverter.apply(
+            currencyTable.getManyBy(new DbClause.LongClause("account_id", accountId), from, to));
+    }
+
+    @Override
     public DbIterator<Currency> searchCurrencies(String query, int from, int to) {
         return currencyTable.search(query, DbClause.EMPTY_CLAUSE, from, to, " ORDER BY ft.score DESC, currency.creation_height DESC ");
     }
 
     @Override
+    public Stream<Currency> searchCurrenciesStream(String query, int from, int to) {
+        return iteratorToStreamConverter.apply(
+            currencyTable.search(query, DbClause.EMPTY_CLAUSE, from, to, " ORDER BY ft.score DESC, currency.creation_height DESC ")
+        );
+    }
+
+    @Override
     public DbIterator<Currency> getIssuedCurrenciesByHeight(int height, int from, int to) {
         return currencyTable.getManyBy(new DbClause.IntClause("issuance_height", height), from, to);
+    }
+
+    @Override
+    public Stream<Currency> getIssuedCurrenciesByHeightStream(int height, int from, int to) {
+        return iteratorToStreamConverter.apply(
+            currencyTable.getManyBy(new DbClause.IntClause("issuance_height", height), from, to)
+        );
     }
 
     @Override
@@ -372,23 +384,19 @@ public class CurrencyServiceImpl implements CurrencyService, CurrencyTypeValidat
         if (type <= 0) {
             throw new AplException.NotValidException("Currency type not specified, because it's = " + type);
         }
-//        final EnumSet<CurrencyType> validators;
-//        if (validators == null) {
-//            validators = EnumSet.noneOf(CurrencyType.class);
-            final EnumSet<CurrencyType> validators = EnumSet.noneOf(CurrencyType.class);
-            for (CurrencyType currencyType : CurrencyType.values()) {
-                if ((currencyType.getCode() & type) != 0) {
-                    validators.add(currencyType);
-                }
-            }
-//        }
+        final EnumSet<CurrencyType> validators = EnumSet.noneOf(CurrencyType.class);
         for (CurrencyType currencyType : CurrencyType.values()) {
             if ((currencyType.getCode() & type) != 0) {
-//                currencyType.validate(currency, transaction, validators, currencyType);
-                this.validate(currency, transaction, validators, currencyType);
+                validators.add(currencyType);
+            }
+        }
+        long maxBalanceAtm = blockchainConfig.getCurrentConfig().getMaxBalanceATM();
+        boolean isActiveCurrency = currency != null && this.isActive(currency);
+        for (CurrencyType currencyType : CurrencyType.values()) {
+            if ((currencyType.getCode() & type) != 0) {
+                currencyType.validate(currency, transaction, validators, maxBalanceAtm, isActiveCurrency);
             } else {
-//                currencyType.validateMissing(currency, transaction, validators, currencyType);
-                this.validateMissing(currency, transaction, validators, currencyType);
+                currencyType.validateMissing(currency, transaction, validators);
             }
         }
     }
@@ -437,159 +445,4 @@ public class CurrencyServiceImpl implements CurrencyService, CurrencyTypeValidat
         }
     }
 
-    @Override
-    public void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators, CurrencyType currencyType) throws AplException.ValidationException {
-        switch (currencyType) {
-//            case EXCHANGEABLE: {
-//            }
-            case CONTROLLABLE: {
-                if (transaction.getType() == MonetarySystem.CURRENCY_TRANSFER) {
-                    if (currency == null || (currency.getAccountId() != transaction.getSenderId() && currency.getAccountId() != transaction.getRecipientId())) {
-                        throw new AplException.NotValidException("Controllable currency can only be transferred to/from issuer account");
-                    }
-                }
-                if (transaction.getType() == MonetarySystem.PUBLISH_EXCHANGE_OFFER) {
-                    if (currency == null || currency.getAccountId() != transaction.getSenderId()) {
-                        throw new AplException.NotValidException("Only currency issuer can publish an exchange offer for controllable currency");
-                    }
-                }
-            }
-            case RESERVABLE: {
-                if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
-                    MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
-                    int issuanceHeight = attachment.getIssuanceHeight();
-                    int finishHeight = attachment.getFinishValidationHeight(transaction);
-                    if (issuanceHeight <= finishHeight) {
-                        throw new AplException.NotCurrentlyValidException(
-                            String.format("Reservable currency activation height %d not higher than transaction apply height %d",
-                                issuanceHeight, finishHeight));
-                    }
-                    if (attachment.getMinReservePerUnitATM() <= 0) {
-                        throw new AplException.NotValidException("Minimum reserve per unit must be > 0");
-                    }
-
-                    if (Math.multiplyExact(attachment.getMinReservePerUnitATM(), attachment.getReserveSupply()) > blockchainConfig.getCurrentConfig().getMaxBalanceATM()) {
-
-                        throw new AplException.NotValidException("Minimum reserve per unit is too large");
-                    }
-                    if (attachment.getReserveSupply() <= attachment.getInitialSupply()) {
-                        throw new AplException.NotValidException("Reserve supply must exceed initial supply");
-                    }
-                    if (!validators.contains(MINTABLE) && attachment.getReserveSupply() < attachment.getMaxSupply()) {
-                        throw new AplException.NotValidException("Max supply must not exceed reserve supply for reservable and non-mintable currency");
-                    }
-                }
-                if (transaction.getType() == MonetarySystem.RESERVE_INCREASE) {
-                    MonetarySystemReserveIncrease attachment = (MonetarySystemReserveIncrease) transaction.getAttachment();
-                    if (currency != null && currency.getIssuanceHeight() <= attachment.getFinishValidationHeight(transaction)) {
-                        throw new AplException.NotCurrentlyValidException("Cannot increase reserve for active currency");
-                    }
-                }
-            }
-            case CLAIMABLE: {
-                if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
-                    MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
-                    if (!validators.contains(RESERVABLE)) {
-                        throw new AplException.NotValidException("Claimable currency must be reservable");
-                    }
-                    if (validators.contains(MINTABLE)) {
-                        throw new AplException.NotValidException("Claimable currency cannot be mintable");
-                    }
-                    if (attachment.getInitialSupply() > 0) {
-                        throw new AplException.NotValidException("Claimable currency must have initial supply 0");
-                    }
-                }
-                if (transaction.getType() == MonetarySystem.RESERVE_CLAIM) {
-                    if (currency == null || !this.isActive(currency)) {
-                        throw new AplException.NotCurrentlyValidException("Cannot claim reserve since currency is not yet active");
-                    }
-                }
-            }
-            case MINTABLE: {
-                if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
-                    MonetarySystemCurrencyIssuance issuanceAttachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
-                    try {
-                        HashFunction hashFunction = HashFunction.getHashFunction(issuanceAttachment.getAlgorithm());
-                        if (!MonetaryCurrencyMintingService.acceptedHashFunctions.contains(hashFunction)) {
-                            throw new AplException.NotValidException("Invalid minting algorithm " + hashFunction);
-                        }
-                    } catch (IllegalArgumentException e) {
-                        throw new AplException.NotValidException("Illegal algorithm code specified", e);
-                    }
-                    if (issuanceAttachment.getMinDifficulty() < 1 || issuanceAttachment.getMaxDifficulty() > 255 ||
-                        issuanceAttachment.getMaxDifficulty() < issuanceAttachment.getMinDifficulty()) {
-                        throw new AplException.NotValidException(
-                            String.format("Invalid minting difficulties min %d max %d, difficulty must be between 1 and 255, max larger than min",
-                                issuanceAttachment.getMinDifficulty(), issuanceAttachment.getMaxDifficulty()));
-                    }
-                    if (issuanceAttachment.getMaxSupply() <= issuanceAttachment.getReserveSupply()) {
-                        throw new AplException.NotValidException("Max supply for mintable currency must exceed reserve supply");
-                    }
-                }
-            }
-            case NON_SHUFFLEABLE: {
-                if (transaction.getType() == ShufflingTransaction.SHUFFLING_CREATION) {
-                    throw new AplException.NotValidException("Shuffling is not allowed for this currency");
-                }
-            }
-        }
-    }
-
-    @Override
-    public void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators, CurrencyType currencyType) throws AplException.ValidationException {
-        switch (currencyType) {
-            case EXCHANGEABLE: {
-                if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
-                    if (!validators.contains(CLAIMABLE)) {
-                        throw new AplException.NotValidException("Currency is not exchangeable and not claimable");
-                    }
-                }
-                if (transaction.getType() instanceof MonetarySystemExchange || transaction.getType() == MonetarySystem.PUBLISH_EXCHANGE_OFFER) {
-                    throw new AplException.NotValidException("Currency is not exchangeable");
-                }
-            }
-//            case CONTROLLABLE: {
-//            }
-            case RESERVABLE: {
-                if (transaction.getType() == MonetarySystem.RESERVE_INCREASE) {
-                    throw new AplException.NotValidException("Cannot increase reserve since currency is not reservable");
-                }
-                if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
-                    MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
-                    if (attachment.getIssuanceHeight() != 0) {
-                        throw new AplException.NotValidException("Issuance height for non-reservable currency must be 0");
-                    }
-                    if (attachment.getMinReservePerUnitATM() > 0) {
-                        throw new AplException.NotValidException("Minimum reserve per unit for non-reservable currency must be 0 ");
-                    }
-                    if (attachment.getReserveSupply() > 0) {
-                        throw new AplException.NotValidException("Reserve supply for non-reservable currency must be 0");
-                    }
-                    if (!validators.contains(MINTABLE) && attachment.getInitialSupply() < attachment.getMaxSupply()) {
-                        throw new AplException.NotValidException("Initial supply for non-reservable and non-mintable currency must be equal to max supply");
-                    }
-                }
-            }
-            case CLAIMABLE: {
-                if (transaction.getType() == MonetarySystem.RESERVE_CLAIM) {
-                    throw new AplException.NotValidException("Cannot claim reserve since currency is not claimable");
-                }
-            }
-            case MINTABLE: {
-                if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
-                    MonetarySystemCurrencyIssuance issuanceAttachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
-                    if (issuanceAttachment.getMinDifficulty() != 0 ||
-                        issuanceAttachment.getMaxDifficulty() != 0 ||
-                        issuanceAttachment.getAlgorithm() != 0) {
-                        throw new AplException.NotValidException("Non mintable currency should not specify algorithm or difficulty");
-                    }
-                }
-                if (transaction.getType() == MonetarySystem.CURRENCY_MINTING) {
-                    throw new AplException.NotValidException("Currency is not mintable");
-                }
-            }
-//            case NON_SHUFFLEABLE: {
-//            }
-        }
-    }
 }
