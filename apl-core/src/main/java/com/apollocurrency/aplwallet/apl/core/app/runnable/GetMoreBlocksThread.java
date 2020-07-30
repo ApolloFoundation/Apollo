@@ -15,6 +15,15 @@ import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.core.peer.parser.GetCumulativeDifficultyResponseParser;
+import com.apollocurrency.aplwallet.apl.core.peer.parser.GetMilestoneBlockIdsResponseParser;
+import com.apollocurrency.aplwallet.apl.core.peer.parser.GetNextBlockIdsResponseParser;
+import com.apollocurrency.aplwallet.apl.core.peer.request.GetCumulativeDifficultyRequest;
+import com.apollocurrency.aplwallet.apl.core.peer.request.GetMilestoneBlockIdsRequest;
+import com.apollocurrency.aplwallet.apl.core.peer.request.GetNextBlockIdsRequest;
+import com.apollocurrency.aplwallet.apl.core.peer.respons.GetCumulativeDifficultyResponse;
+import com.apollocurrency.aplwallet.apl.core.peer.respons.GetMilestoneBlockIdsResponse;
+import com.apollocurrency.aplwallet.apl.core.peer.respons.GetNextBlockIdsResponse;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockParser;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -24,12 +33,8 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProce
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableRestorationService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -58,9 +63,9 @@ public class GetMoreBlocksThread implements Runnable {
     private final Integer defaultNumberOfForkConfirmations;
 
     private final BlockchainProcessorState blockchainProcessorState;
+    private final GetCumulativeDifficultyRequest getCumulativeDifficultyRequest;
     private final BlockParser blockParser;
 
-    private final JSONStreamAware getCumulativeDifficultyRequest;
     private boolean peerHasMore;
     private List<Peer> connectedPublicPeers;
     private List<Long> chainBlockIds;
@@ -87,11 +92,7 @@ public class GetMoreBlocksThread implements Runnable {
         this.transactionProcessor = transactionProcessor;
         this.defaultNumberOfForkConfirmations = propertiesHolder.getIntProperty("apl.numberOfForkConfirmations");
         this.blockParser = blockParser;
-
-        JSONObject request = new JSONObject();
-        request.put("requestType", "getCumulativeDifficulty");
-        request.put("chainId", blockchainConfig.getChain().getChainId());
-        getCumulativeDifficultyRequest = JSON.prepareRequest(request);
+        this.getCumulativeDifficultyRequest = new GetCumulativeDifficultyRequest(blockchainConfig.getChain().getChainId());
     }
 
     @Override
@@ -155,36 +156,26 @@ public class GetMoreBlocksThread implements Runnable {
                 log.debug("Can not find weighted peer");
                 return;
             }
-            JSONObject response = peer.send(getCumulativeDifficultyRequest, blockchainConfig.getChain().getChainId());
+
+            GetCumulativeDifficultyResponse response = peer.send(getCumulativeDifficultyRequest, new GetCumulativeDifficultyResponseParser());
             if (response == null) {
                 log.debug("Null response wile getCumulativeDifficultyRequest from peer {}", peer.getHostWithPort());
                 return;
             }
             Block lastBlock = blockchain.getLastBlock();
             BigInteger curCumulativeDifficulty = lastBlock.getCumulativeDifficulty();
-            String peerCumulativeDifficulty = (String) response.get("cumulativeDifficulty");
+            BigInteger peerCumulativeDifficulty = response.getCumulativeDifficulty();
             if (peerCumulativeDifficulty == null) {
                 return;
             }
-            BigInteger betterCumulativeDifficulty = new BigInteger(peerCumulativeDifficulty);
-            if (betterCumulativeDifficulty.compareTo(curCumulativeDifficulty) < 0) {
+            if (peerCumulativeDifficulty.compareTo(curCumulativeDifficulty) < 0) {
                 return;
             }
-            if (response.get("blockchainHeight") != null) {
+            if (response.getBlockchainHeight() != null) {
                 blockchainProcessorState.setLastBlockchainFeeder(peer);
-                //we can get sometimes string and sometimes long from different peers, and yes it's strange
-                Long bhl;
-                Object bh = response.get("blockchainHeight");
-                if (bh == null) {
-                    bhl = 0L;
-                } else if (bh instanceof String) {
-                    bhl = Long.parseLong((String) bh);
-                } else {
-                    bhl = (Long) bh;
-                }
-                blockchainProcessorState.setLastBlockchainFeederHeight(bhl.intValue());
+                blockchainProcessorState.setLastBlockchainFeederHeight(response.getBlockchainHeight().intValue());
             }
-            if (betterCumulativeDifficulty.equals(curCumulativeDifficulty)) {
+            if (peerCumulativeDifficulty.equals(curCumulativeDifficulty)) {
                 return;
             }
 
@@ -224,7 +215,7 @@ public class GetMoreBlocksThread implements Runnable {
             globalSync.updateLock();
 //                Generator.suspendForging();
             try {
-                if (betterCumulativeDifficulty.compareTo(blockchain.getLastBlock().getCumulativeDifficulty()) <= 0) {
+                if (peerCumulativeDifficulty.compareTo(blockchain.getLastBlock().getCumulativeDifficulty()) <= 0) {
                     return;
                 }
                 long lastBlockId = blockchain.getLastBlock().getId();
@@ -254,12 +245,12 @@ public class GetMoreBlocksThread implements Runnable {
                     if (blockchain.getHeight() - otherPeerCommonBlock.getHeight() >= Constants.MAX_AUTO_ROLLBACK) {
                         continue;
                     }
-                    String otherPeerCumulativeDifficulty;
-                    JSONObject otherPeerResponse = peer.send(getCumulativeDifficultyRequest, blockchainConfig.getChain().getChainId());
-                    if (otherPeerResponse == null || (otherPeerCumulativeDifficulty = (String) response.get("cumulativeDifficulty")) == null) {
+                    BigInteger otherPeerCumulativeDifficulty = response.getCumulativeDifficulty();
+                    GetCumulativeDifficultyResponse otherPeerResponse = peer.send(getCumulativeDifficultyRequest, new GetCumulativeDifficultyResponseParser());
+                    if (otherPeerResponse == null || otherPeerCumulativeDifficulty == null) {
                         continue;
                     }
-                    if (new BigInteger(otherPeerCumulativeDifficulty).compareTo(blockchain.getLastBlock().getCumulativeDifficulty()) <= 0) {
+                    if (otherPeerCumulativeDifficulty.compareTo(blockchain.getLastBlock().getCumulativeDifficulty()) <= 0) {
                         continue;
                     }
                     log.debug("Found a peer with better difficulty: {}", otherPeer.getHostWithPort());
@@ -302,25 +293,23 @@ public class GetMoreBlocksThread implements Runnable {
         String lastMilestoneBlockId = null;
 
         while (true) {
-            JSONObject milestoneBlockIdsRequest = new JSONObject();
-            milestoneBlockIdsRequest.put("requestType", "getMilestoneBlockIds");
-            milestoneBlockIdsRequest.put("chainId", blockchainConfig.getChain().getChainId());
+            GetMilestoneBlockIdsRequest milestoneBlockIdsRequest = new GetMilestoneBlockIdsRequest(blockchainConfig.getChain().getChainId());
             if (lastMilestoneBlockId == null) {
-                milestoneBlockIdsRequest.put("lastBlockId", blockchain.getLastBlock().getStringId());
+                milestoneBlockIdsRequest.setLastBlockId(blockchain.getLastBlock().getStringId());
             } else {
-                milestoneBlockIdsRequest.put("lastMilestoneBlockId", lastMilestoneBlockId);
+                milestoneBlockIdsRequest.setLastMilestoneBlockId(lastMilestoneBlockId);
             }
 
-            JSONObject response;
+            GetMilestoneBlockIdsResponse response;
             try {
-                response = peer.send(JSON.prepareRequest(milestoneBlockIdsRequest), blockchainConfig.getChain().getChainId());
+                response = peer.send(milestoneBlockIdsRequest, new GetMilestoneBlockIdsResponseParser());
             } catch (PeerNotConnectedException ex) {
                 response = null;
             }
             if (response == null) {
                 return 0;
             }
-            JSONArray milestoneBlockIds = (JSONArray) response.get("milestoneBlockIds");
+            List<String> milestoneBlockIds = response.getMilestoneBlockIds();
             if (milestoneBlockIds == null) {
                 return 0;
             }
@@ -333,18 +322,18 @@ public class GetMoreBlocksThread implements Runnable {
                 peer.blacklist("Too many milestoneBlockIds");
                 return 0;
             }
-            if (Boolean.TRUE.equals(response.get("last"))) {
+            if (Boolean.TRUE.equals(response.isLast())) {
                 peerHasMore = false;
             }
-            for (Object milestoneBlockId : milestoneBlockIds) {
-                long blockId = Convert.parseUnsignedLong((String) milestoneBlockId);
+            for (String milestoneBlockId : milestoneBlockIds) {
+                long blockId = Convert.parseUnsignedLong(milestoneBlockId);
                 if (blockchain.hasBlock(blockId)) {
                     if (lastMilestoneBlockId == null && milestoneBlockIds.size() > 1) {
                         peerHasMore = false;
                     }
                     return blockId;
                 }
-                lastMilestoneBlockId = (String) milestoneBlockId;
+                lastMilestoneBlockId = milestoneBlockId;
             }
         }
 
@@ -356,22 +345,24 @@ public class GetMoreBlocksThread implements Runnable {
         boolean matched = false;
         int limit = countFromStart ? Constants.MAX_AUTO_ROLLBACK : Constants.MAX_AUTO_ROLLBACK * 2;
         while (true) {
-            JSONObject request = new JSONObject();
-            request.put("requestType", "getNextBlockIds");
-            request.put("blockId", Long.toUnsignedString(matchId));
-            request.put("limit", limit);
-            request.put("chainId", blockchainConfig.getChain().getChainId());
-            JSONObject response;
+            GetNextBlockIdsRequest request = new GetNextBlockIdsRequest(
+                Long.toUnsignedString(matchId),
+                limit,
+                blockchainConfig.getChain().getChainId()
+            );
+
+            GetNextBlockIdsResponse response = null;
             try {
-                response = peer.send(JSON.prepareRequest(request), blockchainConfig.getChain().getChainId());
+                response = peer.send(request, new GetNextBlockIdsResponseParser());
             } catch (PeerNotConnectedException ex) {
-                response = null;
+                log.warn(ex.getMessage());
             }
+
             if (response == null) {
                 log.debug("null reaponse from peer {} while getNeBlockIdst", peer.getHostWithPort());
                 return Collections.emptyList();
             }
-            JSONArray nextBlockIds = (JSONArray) response.get("nextBlockIds");
+            List<String> nextBlockIds = response.getNextBlockIds();
             if (nextBlockIds == null || nextBlockIds.size() == 0) {
                 break;
             }

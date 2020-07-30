@@ -13,6 +13,9 @@ import com.apollocurrency.aplwallet.apl.core.peer.Hallmark;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerTrustLevel;
+import com.apollocurrency.aplwallet.apl.core.peer.parser.PeerResponseParser;
+import com.apollocurrency.aplwallet.apl.core.peer.request.PeerRequest;
+import com.apollocurrency.aplwallet.apl.core.peer.respons.PeerResponse;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import org.json.simple.JSONObject;
@@ -206,6 +209,15 @@ public class EntityProducer {
 
             @Override
             public JSONObject send(JSONStreamAware request, UUID chainId) {
+                return null;
+            }
+
+            @Override
+            public void send(PeerRequest request) {
+            }
+
+            @Override
+            public PeerResponse send(PeerRequest request, PeerResponseParser parser) {
                 return null;
             }
 
