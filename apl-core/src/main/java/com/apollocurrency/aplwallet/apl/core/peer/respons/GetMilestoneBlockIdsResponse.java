@@ -9,7 +9,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class GetMilestoneBlockIdsResponse implements PeerResponse {
+public class GetMilestoneBlockIdsResponse extends PeerResponse {
     private List<String> milestoneBlockIds;
     private boolean last;
 

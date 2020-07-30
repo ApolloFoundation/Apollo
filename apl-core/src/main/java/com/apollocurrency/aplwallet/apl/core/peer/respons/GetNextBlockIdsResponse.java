@@ -9,7 +9,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class GetNextBlockIdsResponse implements PeerResponse {
+public class GetNextBlockIdsResponse extends PeerResponse {
 
     private List<String> nextBlockIds;
 

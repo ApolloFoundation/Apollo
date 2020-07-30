@@ -16,6 +16,7 @@ import lombok.Setter;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BaseP2PRequest {
+
     public Integer protocol = 1;
     public String requestType;
 }

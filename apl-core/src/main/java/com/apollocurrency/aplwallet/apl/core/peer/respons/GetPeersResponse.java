@@ -9,7 +9,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class GetPeersResponse implements PeerResponse {
+public class GetPeersResponse extends PeerResponse {
     private List<String> peers;
     private List<String> services;
 }

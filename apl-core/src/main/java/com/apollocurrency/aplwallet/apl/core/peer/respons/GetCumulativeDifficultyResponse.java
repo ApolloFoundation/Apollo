@@ -9,7 +9,7 @@ import lombok.Data;
 import java.math.BigInteger;
 
 @Data
-public class GetCumulativeDifficultyResponse implements PeerResponse {
+public class GetCumulativeDifficultyResponse extends PeerResponse {
     private Long blockchainHeight;
     private BigInteger cumulativeDifficulty;
 

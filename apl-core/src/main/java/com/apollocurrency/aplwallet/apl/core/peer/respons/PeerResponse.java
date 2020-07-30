@@ -4,7 +4,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer.respons;
 
-public interface PeerResponse {
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+public class PeerResponse {
+    protected Exception exception;
 
 }
