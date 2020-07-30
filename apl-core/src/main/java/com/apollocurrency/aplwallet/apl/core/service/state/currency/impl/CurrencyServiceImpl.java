@@ -314,26 +314,19 @@ public class CurrencyServiceImpl implements CurrencyService {
                     accountCurrencyService.getCurrencyUnits(senderAccount, currency.getId()));
             }
             if (!isActive(currency)) {
-                try (DbIterator<CurrencyFounder> founders = currencyFounderService
-                    .getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
-                    for (CurrencyFounder founder : founders) {
-                        accountService.addToBalanceAndUnconfirmedBalanceATM(
-                            accountService.getAccount(founder.getAccountId()),
-                            event, eventId, Math.multiplyExact(currency.getReserveSupply(), founder.getAmountPerUnitATM()));
-                    }
-                }
+                Stream<CurrencyFounder> founders = currencyFounderService
+                    .getCurrencyFoundersStream(currency.getId(), 0, Integer.MAX_VALUE);
+                founders.forEach((founder) -> {
+                    accountService.addToBalanceAndUnconfirmedBalanceATM(
+                        accountService.getAccount(founder.getAccountId()),
+                        event, eventId, Math.multiplyExact(currency.getReserveSupply(), founder.getAmountPerUnitATM()));
+                });
             }
             currencyFounderService.remove(currency.getId());
         }
         if (currency.is(CurrencyType.EXCHANGEABLE)) {
-            List<CurrencyBuyOffer> buyOffers = new ArrayList<>();
-            try (DbIterator<CurrencyBuyOffer> offers =
-                     currencyExchangeOfferFacade.getCurrencyBuyOfferService().getOffers(currency, 0, -1)) {
-                while (offers.hasNext()) {
-                    buyOffers.add(offers.next());
-                }
-            }
-            int height = blockChainInfoService.getHeight();
+            Stream<CurrencyBuyOffer> buyOffers =
+                currencyExchangeOfferFacade.getCurrencyBuyOfferService().getOffersStream(currency, 0, -1);
             buyOffers.forEach((offer) -> {
                 currencyExchangeOfferFacade.removeOffer(event, offer);
             });

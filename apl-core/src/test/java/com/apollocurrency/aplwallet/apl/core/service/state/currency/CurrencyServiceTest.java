@@ -1,6 +1,11 @@
+/*
+ *  Copyright © 2018-2020 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.service.state.currency;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyBuyOfferTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencySupplyTable;
@@ -11,9 +16,9 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySupply;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyTransfer;
-import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
@@ -38,18 +43,21 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+
+import java.util.stream.Stream;
 
 @EnableWeld
 @ExtendWith(MockitoExtension.class)
@@ -60,6 +68,7 @@ class CurrencyServiceTest {
     private BlockChainInfoService blockChainInfoService = mock(BlockChainInfoService.class);
     private BlockchainProcessor blockchainProcessor = mock(BlockchainProcessor.class);
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
+    private HeightConfig config = Mockito.mock(HeightConfig.class);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -97,6 +106,8 @@ class CurrencyServiceTest {
     private ShufflingService shufflingService;
     @Mock
     private IteratorToStreamConverter<CurrencyTransfer> iteratorToStreamConverter;
+    @Mock
+    private CurrencyBuyOfferService buyOfferService;
 
     @BeforeEach
     void setUp() {
@@ -183,33 +194,53 @@ class CurrencyServiceTest {
         verify(currencySupplyTable).insert(any(CurrencySupply.class));
     }
 
-    @Test // can't be implemented while old static Shuffling is NOT refactored
+    @Test
     void canBeDeletedBy() {
         //WHEN
         service.canBeDeletedBy(td.CURRENCY_0, 1L);
+        //THEN
+        verify(accountCurrencyService).getCurrenciesByAccount(td.CURRENCY_0.getId(), 0, -1);
     }
 
-    @Test // can't be implemented while old static Shuffling is NOT refactored
+    @Test
     void delete() {
         //GIVEN
         Transaction tr = mock(Transaction.class);
         Account account = mock(Account.class);
+        Stream<CurrencyBuyOffer> buyOffers = Stream.of(mock(CurrencyBuyOffer.class));
+        doReturn(buyOffers).when(buyOfferService).getOffersStream(td.CURRENCY_3, 0, -1);
+        doReturn(buyOfferService).when(currencyExchangeOfferFacade).getCurrencyBuyOfferService();
+
         //WHEN
-//        service.delete(td.CURRENCY_3, LedgerEvent.CURRENCY_ISSUANCE, tr.getId(), account);
+        service.delete(td.CURRENCY_3, LedgerEvent.CURRENCY_ISSUANCE, tr.getId(), account);
+        //THEN
+        verify(buyOfferService).getOffersStream(any(Currency.class), anyInt(), anyInt());
+        verify(accountCurrencyService).addToUnconfirmedCurrencyUnits(any(Account.class), any(LedgerEvent.class), anyLong(), anyLong(), anyLong());
+        verify(accountCurrencyService).addToCurrencyUnits(any(Account.class), any(LedgerEvent.class), anyLong(), anyLong(), anyLong());
+        verify(currencyTable).deleteAtHeight(any(Currency.class), anyInt());
     }
 
     @Test
     void validate() throws Exception {
         //GIVEN
         Transaction tr = mock(Transaction.class);
-        Currency currency = mock(Currency.class);
+        doReturn(config).when(blockchainConfig).getCurrentConfig();
+        doReturn(10L).when(config).getMaxBalanceATM();
 
         //WHEN
-//        service.validate(currency, CurrencyType.MINTABLE.getCode(), tr);
-
+        service.validate(td.CURRENCY_3, td.CURRENCY_3.getType(), tr);
     }
 
     @Test
-    void validateCurrencyNaming() {
+    void validateCurrencyNaming() throws Exception {
+        MonetarySystemCurrencyIssuance issuance = mock(MonetarySystemCurrencyIssuance.class);
+        doReturn("Name").when(issuance).getName();
+        doReturn("CODE").when(issuance).getCode();
+        doReturn("Description").when(issuance).getDescription();
+        doReturn(config).when(blockchainConfig).getCurrentConfig();
+        doReturn("APL").when(blockchainConfig).getCoinSymbol();
+
+        //WHEN
+        service.validateCurrencyNaming(td.CURRENCY_3.getAccountId(), issuance);
     }
 }
