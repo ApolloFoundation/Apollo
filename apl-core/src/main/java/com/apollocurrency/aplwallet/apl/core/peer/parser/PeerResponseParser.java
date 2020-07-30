@@ -4,12 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer.parser;
 
-import com.apollocurrency.aplwallet.apl.core.peer.respons.PeerResponse;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.apollocurrency.aplwallet.api.p2p.respons.BaseP2PResponse;
 import org.json.simple.JSONObject;
 
-public interface PeerResponseParser<T extends PeerResponse> {
+public interface PeerResponseParser<T extends BaseP2PResponse> {
 
-    T parse(JSONObject json) throws JsonProcessingException;
+    T parse(JSONObject json);
 
 }

@@ -45,7 +45,10 @@ public class GetNextBlocksResponseParser implements PeerResponseParser<GetNextBl
         }
 
         if (nextBlocks.size() > MAX_BLOCKS) {
-            return new GetNextBlocksResponse(blockList, new AplException.NotValidException("Too many nextBlocks"));
+            GetNextBlocksResponse nextBlocksResponse = new GetNextBlocksResponse(blockList);
+            nextBlocksResponse.setErrorCode(1);
+            nextBlocksResponse.setCause("Too many nextBlocks");
+            return nextBlocksResponse;
         }
 
         try {
@@ -55,7 +58,10 @@ public class GetNextBlocksResponseParser implements PeerResponseParser<GetNextBl
             }
         } catch (AplException.NotValidException | RuntimeException e) {
             log.debug("Failed to parse block(s): " + e.toString(), e);
-            return new GetNextBlocksResponse(blockList, e);
+            GetNextBlocksResponse nextBlocksResponse = new GetNextBlocksResponse(blockList);
+            nextBlocksResponse.setErrorCode(1);
+            nextBlocksResponse.setCause("Failed to parse block(s): " + e.toString());
+            return nextBlocksResponse;
         }
         return new GetNextBlocksResponse(blockList);
     }

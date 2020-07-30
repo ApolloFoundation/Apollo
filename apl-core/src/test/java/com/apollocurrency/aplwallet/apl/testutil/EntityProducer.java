@@ -6,16 +6,17 @@
 
 package com.apollocurrency.aplwallet.apl.testutil;
 
+import com.apollocurrency.aplwallet.api.p2p.request.BaseP2PRequest;
+import com.apollocurrency.aplwallet.api.p2p.respons.BaseP2PResponse;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
 import com.apollocurrency.aplwallet.apl.core.peer.BlockchainState;
 import com.apollocurrency.aplwallet.apl.core.peer.Hallmark;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerTrustLevel;
 import com.apollocurrency.aplwallet.apl.core.peer.parser.PeerResponseParser;
-import com.apollocurrency.aplwallet.apl.core.peer.request.PeerRequest;
-import com.apollocurrency.aplwallet.apl.core.peer.respons.PeerResponse;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import org.json.simple.JSONObject;
@@ -213,11 +214,12 @@ public class EntityProducer {
             }
 
             @Override
-            public void send(PeerRequest request) {
+            public void send(BaseP2PRequest request) throws PeerNotConnectedException {
+
             }
 
             @Override
-            public PeerResponse send(PeerRequest request, PeerResponseParser parser) {
+            public <T extends BaseP2PResponse> T send(BaseP2PRequest request, PeerResponseParser<T> parser) throws PeerNotConnectedException {
                 return null;
             }
 

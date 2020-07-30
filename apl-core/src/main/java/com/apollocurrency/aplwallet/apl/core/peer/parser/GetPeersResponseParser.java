@@ -4,14 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer.parser;
 
-import com.apollocurrency.aplwallet.apl.core.peer.respons.GetPeersResponse;
+import com.apollocurrency.aplwallet.api.p2p.respons.GetPeersResponse;
 import com.apollocurrency.aplwallet.apl.util.JSON;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.json.simple.JSONObject;
 
 public class GetPeersResponseParser implements PeerResponseParser<GetPeersResponse> {
     @Override
-    public GetPeersResponse parse(JSONObject json) throws JsonProcessingException {
-        return JSON.getMapper().readValue(json.toJSONString(), GetPeersResponse.class);
+    public GetPeersResponse parse(JSONObject json) {
+        return JSON.getMapper().convertValue(json, GetPeersResponse.class);
     }
 }

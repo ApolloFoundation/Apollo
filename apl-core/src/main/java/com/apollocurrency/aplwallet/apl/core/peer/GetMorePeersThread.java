@@ -3,10 +3,10 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import com.apollocurrency.aplwallet.api.p2p.request.AddPeersRequest;
+import com.apollocurrency.aplwallet.api.p2p.request.GetPeersRequest;
+import com.apollocurrency.aplwallet.api.p2p.respons.GetPeersResponse;
 import com.apollocurrency.aplwallet.apl.core.peer.parser.GetPeersResponseParser;
-import com.apollocurrency.aplwallet.apl.core.peer.request.AddPeersRequest;
-import com.apollocurrency.aplwallet.apl.core.peer.request.GetPeersRequest;
-import com.apollocurrency.aplwallet.apl.core.peer.respons.GetPeersResponse;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

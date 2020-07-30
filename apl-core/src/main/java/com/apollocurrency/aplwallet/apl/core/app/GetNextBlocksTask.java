@@ -3,12 +3,12 @@
  */
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.api.p2p.request.GetNextBlocksRequest;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
 import com.apollocurrency.aplwallet.apl.core.peer.parser.GetNextBlocksResponseParser;
-import com.apollocurrency.aplwallet.apl.core.peer.request.GetNextBlocksRequest;
 import com.apollocurrency.aplwallet.apl.core.peer.respons.GetNextBlocksResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -110,9 +110,9 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
             responseTime = System.currentTimeMillis() - startTime;
         }
 
-        if (response.getException() != null) {
-            log.debug("Failed to parse block(s): " + response.getException().toString(), response.getException());
-            peer.blacklist(response.getException());
+        if (response.getErrorCode() != 0) {
+            log.debug("Failed to parse block(s): " + response.getCause());
+            peer.blacklist(response.getCause());
             stop = start + response.getNextBlocks().size();
         }
 

@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+//TODO Refactoring this class to make pojo.
 public final class BlockImpl implements Block {
 
     private static Blockchain blockchain;

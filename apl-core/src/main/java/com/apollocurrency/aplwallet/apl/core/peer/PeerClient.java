@@ -5,14 +5,15 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.api.p2p.FileChunk;
 import com.apollocurrency.aplwallet.api.p2p.FileChunkInfo;
-import com.apollocurrency.aplwallet.api.p2p.FileChunkRequest;
-import com.apollocurrency.aplwallet.api.p2p.FileChunkResponse;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
-import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfoRequest;
-import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfoResponse;
 import com.apollocurrency.aplwallet.api.p2p.ShardingInfo;
-import com.apollocurrency.aplwallet.api.p2p.ShardingInfoRequest;
-import com.apollocurrency.aplwallet.api.p2p.ShardingInfoResponse;
+import com.apollocurrency.aplwallet.api.p2p.request.FileChunkRequest;
+import com.apollocurrency.aplwallet.api.p2p.request.FileDownloadInfoRequest;
+import com.apollocurrency.aplwallet.api.p2p.request.ShardingInfoRequest;
+import com.apollocurrency.aplwallet.api.p2p.respons.FileChunkResponse;
+import com.apollocurrency.aplwallet.api.p2p.respons.FileDownloadInfoResponse;
+import com.apollocurrency.aplwallet.api.p2p.respons.ShardingInfoResponse;
+import com.apollocurrency.aplwallet.apl.core.peer.parser.FileChunkResponseParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import org.json.simple.JSONObject;
@@ -58,7 +59,7 @@ public class PeerClient {
             log.debug("Peer: {} is not connected", peer.getAnnouncedAddress());
             return null;
         }
-        FileDownloadInfoRequest rq = new FileDownloadInfoRequest();
+        FileDownloadInfoRequest rq = new FileDownloadInfoRequest(UUID.fromString(PeersService.myPI.getChainId()));
         rq.fileId = entityId;
         rq.full = true;
         JSONObject req = mapper.convertValue(rq, JSONObject.class);
@@ -92,25 +93,22 @@ public class PeerClient {
             return null;
         }
         FileChunk fc;
-        FileChunkRequest rq = new FileChunkRequest();
-        rq.fileId = fci.fileId;
-        rq.id = fci.chunkId;
-        rq.offset = fci.offset;
-        rq.size = fci.size;
-        JSONObject req = mapper.convertValue(rq, JSONObject.class);
-        JSONObject resp;
+        FileChunkRequest rq = new FileChunkRequest(UUID.fromString(PeersService.myPI.getChainId()));
+        rq.setFileId(fci.fileId);
+        rq.setId(fci.chunkId);
+        rq.setOffset(fci.offset);
+        rq.setSize(fci.size);
+
+        FileChunkResponse resp;
         try {
-            resp = peer.send(req, UUID.fromString(PeersService.myPI.getChainId()));
+            resp = peer.send(rq, new FileChunkResponseParser());
         } catch (PeerNotConnectedException ex) {
-            resp = null;
-        }
-        if (resp == null) {
             log.debug("NULL FileInfo response from peer: {}", peer.getAnnouncedAddress());
             return null;
         }
-        FileChunkResponse res = mapper.convertValue(resp, FileChunkResponse.class);
-        if (res.errorCode == 0) {
-            fc = res.chunk;
+
+        if (resp.errorCode == 0) {
+            fc = resp.chunk;
         } else {
             fc = null;
         }
@@ -123,8 +121,8 @@ public class PeerClient {
             log.debug("Can not connect to peer: {}", peer.getAnnouncedAddress());
             return null;
         }
-        ShardingInfoRequest rq = new ShardingInfoRequest();
-        rq.full = true;
+        ShardingInfoRequest rq = new ShardingInfoRequest(true, UUID.fromString(PeersService.myPI.getChainId()));
+
         JSONObject req = mapper.convertValue(rq, JSONObject.class);
         JSONObject resp;
         try {

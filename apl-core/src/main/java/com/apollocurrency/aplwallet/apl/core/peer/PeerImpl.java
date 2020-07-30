@@ -20,8 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import com.apollocurrency.aplwallet.api.p2p.BaseP2PResponse;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
+import com.apollocurrency.aplwallet.api.p2p.request.BaseP2PRequest;
+import com.apollocurrency.aplwallet.api.p2p.respons.BaseP2PResponse;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
@@ -29,8 +30,6 @@ import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
 import com.apollocurrency.aplwallet.apl.core.peer.endpoint.Errors;
 import com.apollocurrency.aplwallet.apl.core.peer.parser.PeerResponseParser;
-import com.apollocurrency.aplwallet.apl.core.peer.request.PeerRequest;
-import com.apollocurrency.aplwallet.apl.core.peer.respons.PeerResponse;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
@@ -74,7 +73,6 @@ public final class PeerImpl implements Peer {
     private static final Logger LOG = getLogger(PeerImpl.class);
 
     private final String host;
-    private final TimeLimiter limiter;
     private final Object servicesMonitor = new Object();
     private final ReadWriteLock stateLock = new ReentrantReadWriteLock();
     private final AtomicReference<UUID> chainId = new AtomicReference<>();
@@ -137,7 +135,6 @@ public final class PeerImpl implements Peer {
         this.timeService = timeService;
         this.peers = peers;
         isLightClient = peers.isLightClient;
-        this.limiter = timeLimiter;
         this.p2pTransport = new Peer2PeerTransport(this, peerServlet, timeLimiter);
         state = PeerState.NON_CONNECTED; // set this peer its' initial state
         this.accountService = accountService;
@@ -507,13 +504,13 @@ public final class PeerImpl implements Peer {
     }
 
     @Override
-    public PeerResponse send(PeerRequest request, PeerResponseParser parser) throws PeerNotConnectedException {
+    public BaseP2PResponse send(BaseP2PRequest request, PeerResponseParser parser) throws PeerNotConnectedException {
         if (getState() != PeerState.CONNECTED) {
             LOG.debug("send() called before handshake(). Handshacking to: {}", getHostWithPort());
             throw new PeerNotConnectedException("send() called before handshake(). Handshacking");
         } else {
             try {
-                return parser.parse(sendJSON(request.toJson()));
+                return parser.parse(sendJSON(mapper.writeValueAsString(request)));
             } catch (JsonProcessingException e) {
                 LOG.debug("Can not deserialize request");
                 return null;
@@ -522,13 +519,13 @@ public final class PeerImpl implements Peer {
     }
 
     @Override
-    public void send(PeerRequest request) throws PeerNotConnectedException {
+    public void send(BaseP2PRequest request) throws PeerNotConnectedException {
         if (getState() != PeerState.CONNECTED) {
             LOG.debug("send() called before handshake(). Handshacking to: {}", getHostWithPort());
             throw new PeerNotConnectedException("send() called before handshake(). Handshacking");
         } else {
             try {
-                sendJSON(request.toJson()).toJSONString();
+                sendJSON(mapper.writeValueAsString(request)).toJSONString();
             } catch (JsonProcessingException e) {
                 LOG.debug("Can not deserialize request");
             }
