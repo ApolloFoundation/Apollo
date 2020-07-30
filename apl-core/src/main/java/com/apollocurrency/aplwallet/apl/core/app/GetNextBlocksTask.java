@@ -7,7 +7,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
-import com.apollocurrency.aplwallet.apl.core.peer.parser.GetNextBlocksParser;
+import com.apollocurrency.aplwallet.apl.core.peer.parser.GetNextBlocksResponseParser;
 import com.apollocurrency.aplwallet.apl.core.peer.request.GetNextBlocksRequest;
 import com.apollocurrency.aplwallet.apl.core.peer.respons.GetNextBlocksResponse;
 import org.slf4j.Logger;
@@ -28,7 +28,7 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
      */
     private final List<Long> blockIds;
     private final BlockchainConfig blockchainConfig;
-    private final GetNextBlocksParser getNextBlocksParser;
+    private final GetNextBlocksResponseParser getNextBlocksResponseParser;
     /**
      * Callable future
      */
@@ -68,9 +68,9 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
      */
     public GetNextBlocksTask(List<Long> blockIds, int start, int stop, int startHeight,
                              BlockchainConfig blockchainConfig,
-                             GetNextBlocksParser getNextBlocksParser) {
+                             GetNextBlocksResponseParser getNextBlocksResponseParser) {
         this.blockchainConfig = blockchainConfig;
-        this.getNextBlocksParser = getNextBlocksParser;
+        this.getNextBlocksResponseParser = getNextBlocksResponseParser;
         this.blockIds = blockIds;
         this.start = start;
         this.stop = stop;
@@ -103,7 +103,7 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
         GetNextBlocksResponse response;
         long startTime = System.currentTimeMillis();
         try {
-            response = peer.send(request, getNextBlocksParser);
+            response = peer.send(request, getNextBlocksResponseParser);
         } catch (PeerNotConnectedException ex) {
             return null;
         } finally {

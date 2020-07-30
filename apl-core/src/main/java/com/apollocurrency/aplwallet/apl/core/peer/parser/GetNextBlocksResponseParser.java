@@ -19,14 +19,14 @@ import java.util.List;
 
 @Slf4j
 @Singleton
-public class GetNextBlocksParser implements PeerResponseParser<GetNextBlocksResponse> {
+public class GetNextBlocksResponseParser implements PeerResponseParser<GetNextBlocksResponse> {
     private final BlockParser blockParser;
     private final BlockchainConfig blockchainConfig;
 
     private final static int MAX_BLOCKS = 36;
 
     @Inject
-    public GetNextBlocksParser(BlockParser blockParser, BlockchainConfig blockchainConfig) {
+    public GetNextBlocksResponseParser(BlockParser blockParser, BlockchainConfig blockchainConfig) {
         this.blockParser = blockParser;
         this.blockchainConfig = blockchainConfig;
     }

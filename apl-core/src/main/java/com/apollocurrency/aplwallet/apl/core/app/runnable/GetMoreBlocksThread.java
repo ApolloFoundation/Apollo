@@ -18,7 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.peer.parser.GetCumulativeDifficultyResponseParser;
 import com.apollocurrency.aplwallet.apl.core.peer.parser.GetMilestoneBlockIdsResponseParser;
 import com.apollocurrency.aplwallet.apl.core.peer.parser.GetNextBlockIdsResponseParser;
-import com.apollocurrency.aplwallet.apl.core.peer.parser.GetNextBlocksParser;
+import com.apollocurrency.aplwallet.apl.core.peer.parser.GetNextBlocksResponseParser;
 import com.apollocurrency.aplwallet.apl.core.peer.request.GetCumulativeDifficultyRequest;
 import com.apollocurrency.aplwallet.apl.core.peer.request.GetMilestoneBlockIdsRequest;
 import com.apollocurrency.aplwallet.apl.core.peer.request.GetNextBlockIdsRequest;
@@ -64,7 +64,7 @@ public class GetMoreBlocksThread implements Runnable {
 
     private final BlockchainProcessorState blockchainProcessorState;
     private final GetCumulativeDifficultyRequest getCumulativeDifficultyRequest;
-    private final GetNextBlocksParser getNextBlocksParser;
+    private final GetNextBlocksResponseParser getNextBlocksResponseParser;
 
     private boolean peerHasMore;
     private List<Peer> connectedPublicPeers;
@@ -78,7 +78,7 @@ public class GetMoreBlocksThread implements Runnable {
                                GlobalSync globalSync, TimeService timeService, PrunableRestorationService prunableRestorationService,
                                ExecutorService networkService, PropertiesHolder propertiesHolder,
                                TransactionProcessor transactionProcessor,
-                               GetNextBlocksParser getNextBlocksParser) {
+                               GetNextBlocksResponseParser getNextBlocksResponseParser) {
         this.blockchainProcessor = blockchainProcessor;
         this.blockchainProcessorState = blockchainProcessorState;
 
@@ -91,7 +91,7 @@ public class GetMoreBlocksThread implements Runnable {
         this.networkService = networkService;
         this.transactionProcessor = transactionProcessor;
         this.defaultNumberOfForkConfirmations = propertiesHolder.getIntProperty("apl.numberOfForkConfirmations");
-        this.getNextBlocksParser = getNextBlocksParser;
+        this.getNextBlocksResponseParser = getNextBlocksResponseParser;
         this.getCumulativeDifficultyRequest = new GetCumulativeDifficultyRequest(blockchainConfig.getChain().getChainId());
     }
 
@@ -424,7 +424,7 @@ public class GetMoreBlocksThread implements Runnable {
         int stop = chainBlockIds.size() - 1;
         for (int start = 0; start < stop; start += segSize) {
             getList.add(new GetNextBlocksTask(chainBlockIds, start,
-                Math.min(start + segSize, stop), startHeight, blockchainConfig, getNextBlocksParser));
+                Math.min(start + segSize, stop), startHeight, blockchainConfig, getNextBlocksResponseParser));
         }
         int nextPeerIndex = ThreadLocalRandom.current().nextInt(connectedPublicPeers.size());
         long maxResponseTime = 0;
