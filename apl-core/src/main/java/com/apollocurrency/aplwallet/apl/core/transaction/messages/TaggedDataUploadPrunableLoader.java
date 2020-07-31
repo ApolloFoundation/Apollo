@@ -14,8 +14,8 @@ import javax.inject.Singleton;
 public class TaggedDataUploadPrunableLoader extends TaggedDataPrunableLoader<TaggedDataUploadAttachment>{
 
     @Inject
-    public TaggedDataUploadPrunableLoader(PrunableService prunableService, TaggedDataService taggedDataService) {
-        super(prunableService, taggedDataService);
+    public TaggedDataUploadPrunableLoader(PrunableLoadingChecker prunableLoadingChecker, TaggedDataService taggedDataService) {
+        super(prunableLoadingChecker, taggedDataService);
     }
 
     @Override

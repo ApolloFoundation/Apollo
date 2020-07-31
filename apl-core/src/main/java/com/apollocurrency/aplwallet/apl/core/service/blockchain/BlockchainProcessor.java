@@ -127,7 +127,7 @@ public interface BlockchainProcessor {
 
         @Override
         public String getMessage() {
-            return super.getMessage() + ", transaction " + transaction.getStringId() + " " + transaction.getJSONObject().toJSONString();
+            return super.getMessage() + ", transaction " + transaction.getStringId();
         }
     }
 

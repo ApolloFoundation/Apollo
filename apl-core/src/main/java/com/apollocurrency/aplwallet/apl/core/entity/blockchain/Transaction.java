@@ -4,13 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
 
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
@@ -20,8 +19,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryp
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.Filter;
-import org.json.simple.JSONObject;
 
 import java.util.List;
 import java.util.Map;
@@ -101,10 +98,6 @@ public interface Transaction {
 
     byte[] getUnsignedBytes();
 
-    JSONObject getJSONObject();
-
-    JSONObject getPrunableAttachmentJSON();
-
     byte getVersion();
 
     int getFullSize();
@@ -130,10 +123,6 @@ public interface Transaction {
     boolean hasPrunableEncryptedMessage();
 
     List<AbstractAppendix> getAppendages();
-
-    List<AbstractAppendix> getAppendages(boolean includeExpiredPrunable);
-
-    List<AbstractAppendix> getAppendages(Filter<Appendix> filter, boolean includeExpiredPrunable);
 
     int getECBlockHeight();
 

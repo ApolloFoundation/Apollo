@@ -106,7 +106,7 @@ class DexServiceTest {
     void setUp() {
         dexService = new DexService(ethWalletService, dexOrderDao, dexOrderTable, transactionProcessor, dexSmartContractService, secureStorageService,
             dexContractTable, dexOrderTransactionCreator, timeService, dexContractDao, blockchain, phasingPollService, dexMatcherService,
-            approvedResultTable, mandatoryTransactionDao, accountService, blockchainConfig, cache, dexConfig);
+            approvedResultTable, mandatoryTransactionDao, transactionSerializer, accountService, blockchainConfig, cache, dexConfig);
     }
 
     @Test

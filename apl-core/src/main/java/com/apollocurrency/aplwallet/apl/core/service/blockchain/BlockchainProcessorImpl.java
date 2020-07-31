@@ -24,6 +24,8 @@ import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainScanException;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.app.GetNextBlocksTask;
@@ -175,6 +177,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final BlockApplier blockApplier;
     private final ShardsDownloadService shardDownloader;
     private final ShardDao shardDao;
+    private final PrunableLoadingService prunableService;
+    private final TransactionSerializer transactionSerializer;
     private PeersService peers;
     private BlockchainConfigUpdater blockchainConfigUpdater;
     private FullTextSearchService fullTextSearchProvider;
@@ -211,7 +215,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    TaskDispatchManager taskDispatchManager, Event<List<Transaction>> txEvent,
                                    Event<BlockchainConfig> blockchainEvent,
                                    TransactionBuilder transactionBuilder, ShardDao shardDao,
-                                   TimeService timeService,
+                                   PrunableLoadingService prunableService, TransactionSerializer transactionSerializer, TimeService timeService,
                                    AccountService accountService,
                                    AccountControlPhasingService accountControlPhasingService,
                                    BlockchainConfigUpdater blockchainConfigUpdater,
@@ -232,6 +236,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.databaseManager = databaseManager;
         this.dexService = dexService;
         this.transactionBuilder = transactionBuilder;
+        this.prunableService = prunableService;
+        this.transactionSerializer = transactionSerializer;
         this.networkService = getNetworkServiceExecutor();
         this.blockApplier = blockApplier;
         this.aplAppStatus = aplAppStatus;
@@ -818,7 +824,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 try {
                     transactionApplier.apply(transaction);
                     if (transaction.getTimestamp() > fromTimestamp) {
-                        for (AbstractAppendix appendage : transaction.getAppendages(true)) {
+                        for (AbstractAppendix appendage : transaction.getAppendages()) {
+                            prunableService.loadPrunable(transaction, appendage, true);
                             if ((appendage instanceof Prunable) &&
                                 !((Prunable) appendage).hasPrunableData()) {
                                 // TODO: YL check correct work with prunables
@@ -1388,12 +1395,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                             byte[] transactionBytes = ((TransactionImpl) transaction).bytes();
                                             if (!Arrays.equals(transactionBytes, transactionBuilder.newTransactionBuilder(transactionBytes).build().bytes())) {
                                                 throw new AplException.NotValidException("Transaction bytes cannot be parsed back to the same transaction: "
-                                                    + transaction.getJSONObject().toJSONString());
+                                                    + transactionSerializer.toJson(transaction).toJSONString());
                                             }
-                                            JSONObject transactionJSON = (JSONObject) JSONValue.parse(transaction.getJSONObject().toJSONString());
+                                            JSONObject transactionJSON = (JSONObject) JSONValue.parse(transactionSerializer.toJson(transaction).toJSONString());
                                             if (!Arrays.equals(transactionBytes, transactionBuilder.newTransactionBuilder(transactionJSON).build().bytes())) {
                                                 throw new AplException.NotValidException("Transaction JSON cannot be parsed back to the same transaction: "
-                                                    + transaction.getJSONObject().toJSONString());
+                                                    + transactionSerializer.toJson(transaction).toJSONString());
                                             }
                                         }
                                     }

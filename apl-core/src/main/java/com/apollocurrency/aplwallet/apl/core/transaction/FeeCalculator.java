@@ -2,7 +2,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableService;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 
 import javax.inject.Inject;
@@ -10,10 +10,10 @@ import javax.inject.Singleton;
 
 @Singleton
 public class FeeCalculator {
-    private final PrunableService prunableService;
+    private final PrunableLoadingService prunableService;
 
     @Inject
-    public FeeCalculator(PrunableService prunableService) {
+    public FeeCalculator(PrunableLoadingService prunableService) {
         this.prunableService = prunableService;
     }
 

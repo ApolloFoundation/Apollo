@@ -74,7 +74,7 @@ public class AliasSellTransactionType extends MessagingTransactionType {
     @Override
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
         if (transaction.getAmountATM() != 0) {
-            throw new AplException.NotValidException("Invalid sell alias transaction: " + transaction.getJSONObject());
+            throw new AplException.NotValidException("Invalid sell alias transaction: " + transaction.getId() + " amount is 0");
         }
         final MessagingAliasSell attachment = (MessagingAliasSell) transaction.getAttachment();
         final String aliasName = attachment.getAliasName();

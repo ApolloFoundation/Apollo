@@ -5,7 +5,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControl
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
@@ -14,8 +13,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendi
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
-import com.apollocurrency.aplwallet.apl.util.Filter;
-import org.json.simple.JSONObject;
 
 import java.util.Arrays;
 import java.util.List;
@@ -251,16 +248,6 @@ public class MandatoryTransaction implements Transaction {
     }
 
     @Override
-    public JSONObject getJSONObject() {
-        return transaction.getJSONObject();
-    }
-
-    @Override
-    public JSONObject getPrunableAttachmentJSON() {
-        return transaction.getPrunableAttachmentJSON();
-    }
-
-    @Override
     public byte getVersion() {
         return transaction.getVersion();
     }
@@ -323,16 +310,6 @@ public class MandatoryTransaction implements Transaction {
     @Override
     public List<AbstractAppendix> getAppendages() {
         return transaction.getAppendages();
-    }
-
-    @Override
-    public List<AbstractAppendix> getAppendages(boolean includeExpiredPrunable) {
-        return transaction.getAppendages(includeExpiredPrunable);
-    }
-
-    @Override
-    public List<AbstractAppendix> getAppendages(Filter<Appendix> filter, boolean includeExpiredPrunable) {
-        return transaction.getAppendages(filter, includeExpiredPrunable);
     }
 
     @Override

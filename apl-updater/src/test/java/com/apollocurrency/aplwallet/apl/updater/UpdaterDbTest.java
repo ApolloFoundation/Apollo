@@ -121,7 +121,7 @@ public class UpdaterDbTest {
         }
 
         @Override
-        public Transaction loadTransaction(Connection connection, ResultSet rs) throws AplException.NotValidException {
+        public Transaction getTransaction(Connection connection, ResultSet rs) throws AplException.NotValidException {
             try {
                 int height = rs.getInt("height");
                 long id = rs.getLong("id");

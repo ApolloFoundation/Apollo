@@ -19,14 +19,11 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfM
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.Filter;
-import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -302,7 +299,6 @@ public class TransactionImpl implements Transaction {
 
     @Override
     public AbstractAttachment getAttachment() {
-        attachment.loadPrunable(this);
         return attachment;
     }
 
@@ -313,27 +309,7 @@ public class TransactionImpl implements Transaction {
 
     @Override
     public List<AbstractAppendix> getAppendages() {
-        return getAppendages(false);
-    }
-
-    @Override
-    public List<AbstractAppendix> getAppendages(boolean includeExpiredPrunable) {
-        for (AbstractAppendix appendage : appendages) {
-            appendage.loadPrunable(this, includeExpiredPrunable);
-        }
         return appendages;
-    }
-
-    @Override
-    public List<AbstractAppendix> getAppendages(Filter<Appendix> filter, boolean includeExpiredPrunable) {
-        List<AbstractAppendix> result = new ArrayList<>();
-        appendages.forEach(appendix -> {
-            if (filter.test(appendix)) {
-                (appendix).loadPrunable(this, includeExpiredPrunable);
-                result.add(appendix);
-            }
-        });
-        return result;
     }
 
     @Override
@@ -432,9 +408,6 @@ public class TransactionImpl implements Transaction {
 
     @Override
     public PrunablePlainMessageAppendix getPrunablePlainMessage() {
-        if (prunablePlainMessage != null) {
-            prunablePlainMessage.loadPrunable(this);
-        }
         return prunablePlainMessage;
     }
 
@@ -444,10 +417,6 @@ public class TransactionImpl implements Transaction {
 
     @Override
     public PrunableEncryptedMessageAppendix getPrunableEncryptedMessage() {
-        if (prunableEncryptedMessage != null) {
-            //TODO should load prunable with 'false' flag
-            prunableEncryptedMessage.loadPrunable(this);
-        }
         return prunableEncryptedMessage;
     }
 
@@ -487,7 +456,7 @@ public class TransactionImpl implements Transaction {
                 bytes = buffer.array();
             } catch (RuntimeException e) {
                 if (signature != null) {
-                    LOG.debug("Failed to get transaction bytes for transaction: " + getJSONObject().toJSONString());
+                    LOG.debug("Failed to get transaction bytes for transaction: " + toString());
                 }
                 throw e;
             }
@@ -498,54 +467,6 @@ public class TransactionImpl implements Transaction {
     @Override
     public byte[] getUnsignedBytes() {
         return zeroSignature(getBytes());
-    }
-
-    @Override
-    public JSONObject getJSONObject() {
-        JSONObject json = new JSONObject();
-        json.put("id", Long.toUnsignedString(id));
-        json.put("type", type.getSpec().getType());
-        json.put("subtype", type.getSpec().getSubtype());
-        json.put("timestamp", timestamp);
-        json.put("deadline", deadline);
-        json.put("senderPublicKey", Convert.toHexString(getSenderPublicKey()));
-        if (type.canHaveRecipient()) {
-            json.put("recipient", Long.toUnsignedString(recipientId));
-        }
-        json.put("amountATM", amountATM);
-        json.put("feeATM", feeATM);
-        if (referencedTransactionFullHash != null) {
-            json.put("referencedTransactionFullHash", Convert.toHexString(referencedTransactionFullHash));
-        }
-        json.put("ecBlockHeight", ecBlockHeight);
-        json.put("ecBlockId", Long.toUnsignedString(ecBlockId));
-        json.put("signature", Convert.toHexString(signature));
-        JSONObject attachmentJSON = new JSONObject();
-        for (AbstractAppendix appendage : appendages) {
-            appendage.loadPrunable(this);
-            attachmentJSON.putAll(appendage.getJSONObject());
-        }
-        if (!attachmentJSON.isEmpty()) {
-            json.put("attachment", attachmentJSON);
-        }
-        json.put("version", version);
-        return json;
-    }
-
-    @Override
-    public JSONObject getPrunableAttachmentJSON() {
-        JSONObject prunableJSON = null;
-        for (AbstractAppendix appendage : appendages) {
-            if (appendage instanceof Prunable) {
-                appendage.loadPrunable(this);
-                if (prunableJSON == null) {
-                    prunableJSON = appendage.getJSONObject();
-                } else {
-                    prunableJSON.putAll(appendage.getJSONObject());
-                }
-            }
-        }
-        return prunableJSON;
     }
 
     @Override

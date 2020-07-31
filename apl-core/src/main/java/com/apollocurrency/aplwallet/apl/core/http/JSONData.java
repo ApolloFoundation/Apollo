@@ -94,6 +94,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetTransferSe
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetDelete;
@@ -104,6 +105,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystem
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -142,6 +144,8 @@ public final class JSONData {
     private static CurrencyTransferService currencyTransferService = CDI.current().select(CurrencyTransferService.class).get();
     private static CurrencyService currencyService = CDI.current().select(CurrencyService.class).get();
     private static ShufflingService shufflingService = CDI.current().select(ShufflingService.class).get();
+    private static PrunableLoadingService prunableLoadingService = CDI.current().select(PrunableLoadingService.class).get();
+    private static TransactionSerializer transactionSerializer = CDI.current().select(TransactionSerializer.class).get();
 
     private JSONData() {
     } // never
@@ -1157,12 +1161,17 @@ public final class JSONData {
         }
         JSONObject attachmentJSON = new JSONObject();
         if (filter == null) {
-            for (Appendix appendage : transaction.getAppendages(true)) {
+
+            for (Appendix appendage : transaction.getAppendages()) {
+                prunableLoadingService.loadPrunable(transaction, appendage, true);
                 attachmentJSON.putAll(appendage.getJSONObject());
             }
         } else {
-            for (Appendix appendage : transaction.getAppendages(filter, true)) {
-                attachmentJSON.putAll(appendage.getJSONObject());
+            for (Appendix appendage : transaction.getAppendages()) {
+                if (filter.test(appendage)) {
+                    prunableLoadingService.loadPrunable(transaction, appendage, true);
+                    attachmentJSON.putAll(appendage.getJSONObject());
+                }
             }
         }
         if (!attachmentJSON.isEmpty()) {
@@ -1337,7 +1346,7 @@ public final class JSONData {
     }
 
     public static void putPrunableAttachment(JSONObject json, Transaction transaction) {
-        JSONObject prunableAttachment = transaction.getPrunableAttachmentJSON();
+        JSONObject prunableAttachment = transactionSerializer.getPrunableAttachmentJSON(transaction);
         if (prunableAttachment != null) {
             json.put("prunableAttachmentJSON", prunableAttachment);
         }

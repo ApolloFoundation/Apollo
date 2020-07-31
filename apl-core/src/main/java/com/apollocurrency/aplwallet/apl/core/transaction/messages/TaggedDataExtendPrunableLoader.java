@@ -13,8 +13,8 @@ import javax.inject.Singleton;
 @Singleton
 public class TaggedDataExtendPrunableLoader extends TaggedDataPrunableLoader<TaggedDataExtendAttachment> {
     @Inject
-    public TaggedDataExtendPrunableLoader(PrunableService prunableService, TaggedDataService taggedDataService) {
-        super(prunableService, taggedDataService);
+    public TaggedDataExtendPrunableLoader(PrunableLoadingChecker loadingChecker, TaggedDataService taggedDataService) {
+        super(loadingChecker, taggedDataService);
     }
 
     @Override

@@ -30,6 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -57,6 +58,7 @@ public final class BlockImpl implements Block {
     private static Blockchain blockchain;
     private static ShardDao shardDao;
     private static AccountService accountService;
+    private static TransactionSerializer transactionSerializer;
 
     private final int version;
     private final int timestamp;
@@ -206,6 +208,13 @@ public final class BlockImpl implements Block {
             blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
         }
         return blockchainConfig;
+    }
+
+    private TransactionSerializer lookupTransactionSerializer() {
+        if (transactionSerializer == null) {
+            transactionSerializer = CDI.current().select(TransactionSerializer.class).get();
+        }
+        return transactionSerializer;
     }
 
     @Override
@@ -383,7 +392,7 @@ public final class BlockImpl implements Block {
         json.put("timeout", timeout);
 
         JSONArray transactionsData = new JSONArray();
-        getOrLoadTransactions().forEach(transaction -> transactionsData.add(transaction.getJSONObject()));
+        getOrLoadTransactions().forEach(transaction -> transactionsData.add(lookupTransactionSerializer().toJson(transaction)));
         json.put("transactions", transactionsData);
         return json;
     }

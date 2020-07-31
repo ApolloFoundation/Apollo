@@ -28,7 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.app.runnable.RemoveUnconfirmedTrans
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableService;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionImpl;
@@ -93,7 +93,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private final TransactionApplier transactionApplier;
     private final TransactionBuilder transactionBuilder;
     private final PropertiesHolder propertiesHolder;
-    private final PrunableService prunableService;
+    private final PrunableLoadingService prunableService;
     private final BlockchainConfig blockchainConfig;
     private final NtpTime ntpTime;
     private Blockchain blockchain;
@@ -130,7 +130,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                                     BlockchainConfig blockchainConfig,
                                     TaskDispatchManager taskDispatchManager,
                                     PeersService peers,
-                                    Blockchain blockchain, TransactionBuilder transactionBuilder, PrunableService prunableService) {
+                                    Blockchain blockchain, TransactionBuilder transactionBuilder, PrunableLoadingService prunableService) {
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder);
         this.enableTransactionRebroadcasting = propertiesHolder.getBooleanProperty("apl.enableTransactionRebroadcasting");
         this.unconfirmedTransactionTable = Objects.requireNonNull(unconfirmedTransactionTable);
@@ -400,7 +400,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 for (UnconfirmedTransaction unconfirmedTransaction : oldNonBroadcastedTransactions) {
                     if (unconfirmedTransaction.getTransaction().isUnconfirmedDuplicate(
                         unconfirmedTransactionTable.getUnconfirmedDuplicates())) {
-                        log.debug("Skipping duplicate unconfirmed transaction " + unconfirmedTransaction.getTransaction().getJSONObject().toString());
+                        log.debug("Skipping duplicate unconfirmed transaction {}", unconfirmedTransaction.getId());
                     } else if (enableTransactionRebroadcasting) {
                         unconfirmedTransactionTable.getBroadcastedTransactions().add(unconfirmedTransaction.getTransaction());
                     }
@@ -722,7 +722,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     public  TransactionImpl parseTransaction(JSONObject transactionData) throws AplException.NotValidException {
         TransactionImpl transaction = transactionBuilder.newTransactionBuilder(transactionData).build();
         if (transaction.getSignature() != null && !validator.checkSignature(transaction)) {
-            throw new AplException.NotValidException("Invalid transaction signature for transaction " + transaction.getJSONObject().toJSONString());
+            throw new AplException.NotValidException("Invalid transaction signature for transaction " + transaction.getId());
         }
         return transaction;
     }

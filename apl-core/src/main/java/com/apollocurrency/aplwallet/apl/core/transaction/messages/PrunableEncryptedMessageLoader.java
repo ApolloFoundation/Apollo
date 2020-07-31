@@ -13,18 +13,18 @@ import javax.inject.Singleton;
 
 @Singleton
 public class PrunableEncryptedMessageLoader implements PrunableLoader<PrunableEncryptedMessageAppendix> {
-    private final PrunableService prunableService;
+    private final PrunableLoadingChecker loadingChecker;
     private final PrunableMessageService messageService;
 
     @Inject
-    public PrunableEncryptedMessageLoader(PrunableService prunableService, PrunableMessageService messageService) {
-        this.prunableService = prunableService;
+    public PrunableEncryptedMessageLoader(PrunableLoadingChecker loadingChecker, PrunableMessageService messageService) {
+        this.loadingChecker = loadingChecker;
         this.messageService = messageService;
     }
 
     @Override
     public void loadPrunable(Transaction transaction, PrunableEncryptedMessageAppendix appendix, boolean includeExpiredPrunable) {
-        if (!appendix.hasPrunableData() && prunableService.shouldLoadPrunable(transaction, includeExpiredPrunable)) {
+        if (!appendix.hasPrunableData() && loadingChecker.shouldLoadPrunable(transaction, includeExpiredPrunable)) {
             PrunableMessage prunableMessage = messageService.get(transaction.getId());
             if (prunableMessage != null && prunableMessage.getEncryptedData() != null) {
                 appendix.setPrunableMessage(prunableMessage);

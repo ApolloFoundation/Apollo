@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONObject;
@@ -44,13 +45,15 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
     private final Map<Transaction, Transaction> txToBroadcastWhenConfirmed = new ConcurrentHashMap<>();
     private final Set<Transaction> broadcastedTransactions = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final TransactionBuilder transactionBuilder;
+    private final TransactionSerializer transactionSerializer;
 
     @Inject
     public UnconfirmedTransactionTable(LongKeyFactory<UnconfirmedTransaction> transactionKeyFactory,
-                                       PropertiesHolder propertiesHolder, TransactionBuilder transactionBuilder) {
+                                       PropertiesHolder propertiesHolder, TransactionBuilder transactionBuilder, TransactionSerializer transactionSerializer) {
         super("unconfirmed_transaction", transactionKeyFactory);
         this.transactionKeyFactory = transactionKeyFactory;
         this.transactionBuilder = transactionBuilder;
+        this.transactionSerializer = transactionSerializer;
         int n = propertiesHolder.getIntProperty("apl.maxUnconfirmedTransactions");
         this.maxUnconfirmedTransactions = n <= 0 ? Integer.MAX_VALUE : n;
         this.waitingTransactions = createWaitingTransactionsQueue();
@@ -86,7 +89,7 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
             pstmt.setLong(++i, unconfirmedTransaction.getFeePerByte());
             pstmt.setInt(++i, unconfirmedTransaction.getExpiration());
             pstmt.setBytes(++i, unconfirmedTransaction.getBytes());
-            JSONObject prunableJSON = unconfirmedTransaction.getPrunableAttachmentJSON();
+            JSONObject prunableJSON = transactionSerializer.getPrunableAttachmentJSON(unconfirmedTransaction);
             if (prunableJSON != null) {
                 pstmt.setString(++i, prunableJSON.toJSONString());
             } else {

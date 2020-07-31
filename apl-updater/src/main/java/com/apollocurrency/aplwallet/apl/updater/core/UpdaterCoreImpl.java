@@ -5,10 +5,11 @@
 package com.apollocurrency.aplwallet.apl.updater.core;
 
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.update.UpdateTransactionType;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediatorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.update.UpdateTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateData;
@@ -119,10 +120,10 @@ public class UpdaterCoreImpl implements UpdaterCore {
             if (updateTransaction != null) {
                 Transaction transaction = updateTransaction.getTransaction();
                 if (!updateTransaction.isUpdated()) {
-                    LOG.debug("Found non-installed update : " + transaction.getJSONObject().toJSONString());
+                    LOG.debug("Found non-installed update : {} - {}", transaction.getId(), transaction.getType().getSpec());
                     UpdateData updateData = updateTransactionVerifier.process(transaction);
                     if (updateData == null) {
-                        LOG.error("Unable to validate update transaction: " + transaction.getJSONObject().toJSONString());
+                        LOG.error("Unable to validate update transaction: " + transaction.getId());
                         int deleted = updaterService.clear();
                         LOG.debug("Deleted {} invalid update transaction(s)", deleted);
                     } else {
@@ -139,7 +140,7 @@ public class UpdaterCoreImpl implements UpdaterCore {
                     if (expectedVersion.greaterThan(updaterMediator.getWalletVersion())) {
                         LOG.error("Found " + transaction.getType() + " update (platform dependent script failed): currentVersion: " + updaterMediator.getWalletVersion() +
                             " " + " updateVersion: " + expectedVersion);
-                        if (transaction.getType() == UpdateTransactionType.CRITICAL) {
+                        if (transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.CRITICAL_UPDATE) {
                             updaterMediator.suspendBlockchain();
                             updateState(transaction, UpdateInfo.UpdateState.REQUIRED_MANUAL_INSTALL);
                             startUpdater = false;
@@ -217,21 +218,10 @@ public class UpdaterCoreImpl implements UpdaterCore {
                         processUpdateTxs = false;
                         startUpdate(updateData);
                     } else {
-                        updateState(updateData, UpdateInfo.UpdateState.REQUIRED_START);
+                        updateState(transaction, UpdateInfo.UpdateState.REQUIRED_START);
                     }
                 }
             });
-        }
-    }
-
-    private void updateState(UpdateData updateData, UpdateInfo.UpdateState state) {
-        UpdateAttachment updateAttachment = updateData.getAttachment();
-        synchronized (updateInfo) {
-            updateInfo.setUpdate(true);
-            updateInfo.setId(updateData.getTransactionId());
-            updateInfo.setLevel(((UpdateTransactionType) updateAttachment.getTransactionTypeSpec()).getLevel());
-            updateInfo.setVersion(updateAttachment.getAppVersion());
-            updateInfo.setUpdateState(state);
         }
     }
 
@@ -240,6 +230,7 @@ public class UpdaterCoreImpl implements UpdaterCore {
         synchronized (updateInfo) {
             updateInfo.setUpdate(true);
             updateInfo.setId(transaction.getId());
+            updateInfo.setLevel((((UpdateTransactionType) transaction.getType())).getLevel());
             updateInfo.setVersion(updateAttachment.getAppVersion());
             updateInfo.setUpdateState(state);
         }

@@ -12,18 +12,18 @@ import javax.inject.Singleton;
 
 @Singleton
 public class ShufflingProcessingPrunableLoader implements PrunableLoader<ShufflingProcessingAttachment> {
-    private final PrunableService prunableService;
+    private final PrunableLoadingChecker loadingChecker;
     private final ShufflingService shufflingService;
 
     @Inject
-    public ShufflingProcessingPrunableLoader(PrunableService prunableService, ShufflingService shufflingService) {
-        this.prunableService = prunableService;
+    public ShufflingProcessingPrunableLoader(PrunableLoadingChecker loadingChecker, ShufflingService shufflingService) {
+        this.loadingChecker = loadingChecker;
         this.shufflingService = shufflingService;
     }
 
     @Override
     public void loadPrunable(Transaction transaction, ShufflingProcessingAttachment appendix, boolean includeExpiredPrunable) {
-        if (appendix.getData() == null && prunableService.shouldLoadPrunable(transaction, includeExpiredPrunable)) {
+        if (appendix.getData() == null && loadingChecker.shouldLoadPrunable(transaction, includeExpiredPrunable)) {
             appendix.setData(shufflingService.getData(appendix.getShufflingId(), transaction.getSenderId()));
         }
     }

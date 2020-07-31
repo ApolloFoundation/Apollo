@@ -6,7 +6,6 @@ package com.apollocurrency.aplwallet.apl.udpater.intfce;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
@@ -26,8 +25,6 @@ import org.slf4j.Logger;
 
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Singleton;
-import java.sql.Connection;
-import java.sql.ResultSet;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -124,8 +121,8 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
     }
 
     @Override
-    public Transaction loadTransaction(Connection connection, ResultSet rs) throws AplException.NotValidException {
-        return lookupBlockchain().loadTransaction(connection, rs);
+    public Transaction getTransaction(long transactionId) {
+        return lookupBlockchain().getTransaction(transactionId);
     }
 
     @Override

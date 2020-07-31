@@ -14,7 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountContro
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableService;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -30,12 +30,12 @@ public class TransactionValidator {
     private final FeeCalculator feeCalculator;
     private final AccountPublicKeyService accountPublicKeyService;
     private final AccountControlPhasingService accountControlPhasingService;
-    private final PrunableService prunableService;
+    private final PrunableLoadingService prunableService;
 
     @Inject
     public TransactionValidator(BlockchainConfig blockchainConfig, PhasingPollService phasingPollService,
                                 Blockchain blockchain, FeeCalculator feeCalculator,
-                                AccountPublicKeyService accountPublicKeyService, AccountControlPhasingService accountControlPhasingService, PrunableService prunableService) {
+                                AccountPublicKeyService accountPublicKeyService, AccountControlPhasingService accountControlPhasingService, PrunableLoadingService prunableService) {
         this.blockchainConfig = blockchainConfig;
         this.phasingPollService = phasingPollService;
         this.blockchain = blockchain;

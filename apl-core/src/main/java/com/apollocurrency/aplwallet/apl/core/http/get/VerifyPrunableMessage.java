@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -33,6 +34,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 
@@ -59,6 +61,8 @@ public final class VerifyPrunableMessage extends AbstractAPIRequestHandler {
         response.put("errorDescription", "This transaction has no encrypted message attachment");
         NO_SUCH_ENCRYPTED_MESSAGE = JSON.prepare(response);
     }
+
+    private PrunableLoadingService prunableLoadingService = CDI.current().select(PrunableLoadingService.class).get();
 
     public VerifyPrunableMessage() {
         super(new APITag[]{APITag.MESSAGES}, "transaction",
@@ -91,6 +95,7 @@ public final class VerifyPrunableMessage extends AbstractAPIRequestHandler {
             if (myPlainMessage == null) {
                 return NO_SUCH_PLAIN_MESSAGE;
             }
+            prunableLoadingService.loadPrunable(transaction, myPlainMessage, false);
             if (!Arrays.equals(myPlainMessage.getHash(), plainMessage.getHash())) {
                 return JSONResponses.HASHES_MISMATCH;
             }
@@ -102,6 +107,7 @@ public final class VerifyPrunableMessage extends AbstractAPIRequestHandler {
             if (myEncryptedMessage == null) {
                 return NO_SUCH_ENCRYPTED_MESSAGE;
             }
+            prunableLoadingService.loadPrunable(transaction, myEncryptedMessage, false);
             if (!Arrays.equals(myEncryptedMessage.getHash(), encryptedMessage.getHash())) {
                 return JSONResponses.HASHES_MISMATCH;
             }

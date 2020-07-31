@@ -874,20 +874,6 @@ class BlockchainTest {
         assertNull(fullHash);
     }
 
-    @Test
-    void testLoadTransaction() {
-        DbUtils.inTransaction(extension, (con) -> {
-            try (Statement stmt = con.createStatement()) {
-                try (ResultSet rs = stmt.executeQuery("select * from transaction where id = " + txd.TRANSACTION_14.getId())) {
-                    rs.next();
-                    Transaction tx = blockchain.loadTransaction(con, rs);
-                    assertEquals(txd.TRANSACTION_14, tx);
-                }
-            } catch (SQLException | AplException.NotValidException e) {
-                throw new RuntimeException(e);
-            }
-        });
-    }
 
     @Test
     void testGetTransactionCount() {

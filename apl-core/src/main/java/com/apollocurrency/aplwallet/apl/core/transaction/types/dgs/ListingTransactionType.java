@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsListing;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.extern.slf4j.Slf4j;
@@ -36,10 +37,12 @@ public class ListingTransactionType extends DigitalGoodsTransactionType {
             return attachment.getName().length() + attachment.getDescription().length();
         }
     };
+    private final PrunableLoadingService prunableLoadingService;
 
     @Inject
-    public ListingTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, DGSService service) {
+    public ListingTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, DGSService service, PrunableLoadingService prunableLoadingService) {
         super(blockchainConfig, accountService, service);
+        this.prunableLoadingService = prunableLoadingService;
     }
 
 
@@ -87,6 +90,7 @@ public class ListingTransactionType extends DigitalGoodsTransactionType {
         }
         PrunablePlainMessageAppendix prunablePlainMessage = transaction.getPrunablePlainMessage();
         if (prunablePlainMessage != null) {
+            prunableLoadingService.loadPrunable(transaction, prunablePlainMessage, false);
             byte[] image = prunablePlainMessage.getMessage();
             if (image != null) {
                 Tika tika = new Tika();

@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
@@ -83,6 +83,7 @@ public class BlockchainImpl implements Blockchain {
     private final ShardDao shardDao;
     private final ShardRecoveryDao shardRecoveryDao;
     private final IteratorToStreamConverter<Block> blockConverter = new IteratorToStreamConverter<>();
+    private final PrunableLoadingService prunableService;
 
     private final AtomicReference<Block> lastBlock;
     private final AtomicReference<Block> shardInitialBlock;
@@ -90,7 +91,7 @@ public class BlockchainImpl implements Blockchain {
     @Inject
     public BlockchainImpl(BlockDao blockDao, TransactionDao transactionDao, BlockchainConfig blockchainConfig, TimeService timeService,
                           PropertiesHolder propertiesHolder, TransactionIndexDao transactionIndexDao, BlockIndexService blockIndexService,
-                          DatabaseManager databaseManager, ShardDao shardDao, ShardRecoveryDao shardRecoveryDao) {
+                          DatabaseManager databaseManager, ShardDao shardDao, ShardRecoveryDao shardRecoveryDao, PrunableLoadingService prunableService) {
         this.blockDao = blockDao;
         this.transactionDao = transactionDao;
         this.blockchainConfig = blockchainConfig;
@@ -101,6 +102,7 @@ public class BlockchainImpl implements Blockchain {
         this.databaseManager = databaseManager;
         this.shardDao = shardDao;
         this.shardRecoveryDao = shardRecoveryDao;
+        this.prunableService = prunableService;
         this.lastBlock = new AtomicReference<>();
         this.shardInitialBlock = new AtomicReference<>();
     }
@@ -413,7 +415,7 @@ public class BlockchainImpl implements Blockchain {
                     for (int i = prevSize; i < result.size(); i++) {
                         Block block = result.get(i);
                         List<Transaction> blockTransactions = transactionDao.findBlockTransactions(con, block.getId());
-                        block.setTransactions(blockTransactions);
+                        block.setTransactions(loadPrunables(blockTransactions));
                     }
                     if (result.size() - 1 >= 0) {
                         fromBlockHeight = getBlockHeight(blockIdList.get(result.size() - 1));
@@ -517,7 +519,7 @@ public class BlockchainImpl implements Blockchain {
     @Override
     public Transaction findTransaction(long transactionId, int height) {
         TransactionalDataSource datasource = getDatasourceWithShardingByTransactionId(transactionId);
-        return transactionDao.findTransaction(transactionId, height, datasource);
+        return loadPrunable(transactionDao.findTransaction(transactionId, height, datasource));
     }
 
     @Transactional(readOnly = true)
@@ -535,7 +537,8 @@ public class BlockchainImpl implements Blockchain {
     @Override
     public Transaction findTransactionByFullHash(byte[] fullHash, int height) {
         TransactionalDataSource dataSource = getDatasourceWithShardingByTransactionId(Convert.fullHashToId(fullHash));
-        return transactionDao.findTransactionByFullHash(fullHash, height, dataSource);
+
+        return loadPrunable(transactionDao.findTransactionByFullHash(fullHash, height, dataSource));
     }
 
     @Override
@@ -614,12 +617,6 @@ public class BlockchainImpl implements Blockchain {
             fullHash = Convert.toFullHash(transactionIndex.getTransactionId(), transactionIndex.getPartialTransactionHash());
         }
         return fullHash;
-    }
-
-    @Transactional(readOnly = true)
-    @Override
-    public Transaction loadTransaction(Connection con, ResultSet rs) throws AplException.NotValidException {
-        return transactionDao.loadTransaction(con, rs);
     }
 
     @Transactional(readOnly = true)
@@ -809,6 +806,18 @@ public class BlockchainImpl implements Blockchain {
     private TransactionalDataSource getDatasourceWithShardingByTransactionId(long transactionId) {
         Long shardId = transactionIndexDao.getShardIdByTransactionId(transactionId);
         return getShardDataSourceOrDefault(shardId);
+    }
+
+    private Transaction loadPrunable(Transaction transaction) {
+        if (transaction != null) {
+            prunableService.loadTransactionPrunables(transaction);
+        }
+        return transaction;
+    }
+
+    private List<Transaction> loadPrunables(List<Transaction> transactions) {
+        transactions.forEach(this::loadPrunable);
+        return transactions;
     }
 
 }

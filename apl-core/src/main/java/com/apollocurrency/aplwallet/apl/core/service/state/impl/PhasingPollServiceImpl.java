@@ -274,7 +274,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
             try {
                 release(transaction);
             } catch (RuntimeException e) {
-                log.error("Failed to release phased transaction " + transaction.getJSONObject().toJSONString(), e);
+                log.error("Failed to release phased transaction " + transaction.getId(), e);
                 reject(transaction);
             }
         } else {
@@ -297,7 +297,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
                     finish(poll, result);
                     log.debug("Early finish of transaction " + transaction.getStringId() + " at height " + blockchain.getHeight());
                 } catch (RuntimeException e) {
-                    log.error("Failed to release phased transaction " + transaction.getJSONObject().toJSONString(), e);
+                    log.error("Failed to release phased transaction " + transaction.getId(), e);
                 }
             } else {
                 log.debug("At height " + blockchain.getHeight() + " phased transaction " + transaction.getStringId()

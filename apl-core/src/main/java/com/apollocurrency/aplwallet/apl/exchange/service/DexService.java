@@ -5,6 +5,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
@@ -110,6 +111,7 @@ public class DexService {
     private TransactionProcessor transactionProcessor;
     private SecureStorageService secureStorageService;
     private MandatoryTransactionDao mandatoryTransactionDao;
+    private final TransactionSerializer transactionSerializer;
     private LoadingCache<Long, OrderFreezing> orderFreezingCache;
 
     private DexOrderTransactionCreator dexOrderTransactionCreator;
@@ -128,10 +130,10 @@ public class DexService {
                       DexSmartContractService dexSmartContractService, SecureStorageService secureStorageService, DexContractTable dexContractTable,
                       DexOrderTransactionCreator dexOrderTransactionCreator, TimeService timeService, DexContractDao dexContractDao, Blockchain blockchain, PhasingPollService phasingPollService,
                       IDexMatcherInterface dexMatcherService, PhasingApprovedResultTable phasingApprovedResultTable, MandatoryTransactionDao mandatoryTransactionDao,
-                      AccountService accountService,
+                      TransactionSerializer transactionSerializer, AccountService accountService,
                       BlockchainConfig blockchainConfig,
                       @CacheProducer
-                      @CacheType(DexOrderFreezingCacheConfig.CACHE_NAME) Cache<Long, OrderFreezing> cache,
+                          @CacheType(DexOrderFreezingCacheConfig.CACHE_NAME) Cache<Long, OrderFreezing> cache,
                       DexConfig dexConfig) {
         this.ethereumWalletService = ethereumWalletService;
         this.dexOrderDao = dexOrderDao;
@@ -148,6 +150,7 @@ public class DexService {
         this.dexMatcherService = dexMatcherService;
         this.phasingApprovedResultTable = phasingApprovedResultTable;
         this.mandatoryTransactionDao = mandatoryTransactionDao;
+        this.transactionSerializer = transactionSerializer;
         this.orderFreezingCache = (LoadingCache<Long, OrderFreezing>) cache;
         this.blockchainConfig = blockchainConfig;
         this.accountService = accountService;
@@ -720,9 +723,9 @@ public class DexService {
             log.debug("Create order - frozen money, accountId: {}, offerId: {}", account.getId(), order.getId());
         }
 
-        ((JSONObject) response).put("order", orderTx.getJSONObject());
+        ((JSONObject) response).put("order", transactionSerializer.toJson(orderTx));
         if (contractTx != null) {
-            ((JSONObject) response).put("contract", contractTx.getJSONObject());
+            ((JSONObject) response).put("contract", transactionSerializer.toJson(contractTx));
         }
         if (freezeTx != null) {
             ((JSONObject) response).put("frozenTx", freezeTx);

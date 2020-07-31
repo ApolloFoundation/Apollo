@@ -8,17 +8,17 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.TaggedDataService;
 
 public abstract class TaggedDataPrunableLoader<T extends TaggedDataAttachment> implements PrunableLoader<T> {
-    protected final PrunableService prunableService;
+    protected final PrunableLoadingChecker loadingChecker;
     protected final TaggedDataService taggedDataService;
 
-    public TaggedDataPrunableLoader(PrunableService prunableService, TaggedDataService taggedDataService) {
-        this.prunableService = prunableService;
+    public TaggedDataPrunableLoader(PrunableLoadingChecker loadingChecker, TaggedDataService taggedDataService) {
+        this.loadingChecker = loadingChecker;
         this.taggedDataService = taggedDataService;
     }
 
     @Override
     public void loadPrunable(Transaction transaction, T appendix, boolean includeExpiredPrunable) {
-        if (appendix.getData() == null && appendix.getTaggedData() == null && prunableService.shouldLoadPrunable(transaction, includeExpiredPrunable)) {
+        if (appendix.getData() == null && appendix.getTaggedData() == null && loadingChecker.shouldLoadPrunable(transaction, includeExpiredPrunable)) {
             appendix.setTaggedData(taggedDataService.getData(appendix.getTaggedDataId(transaction)));
         }
     }

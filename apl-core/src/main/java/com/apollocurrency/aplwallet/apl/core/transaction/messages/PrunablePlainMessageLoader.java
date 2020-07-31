@@ -13,18 +13,18 @@ import javax.inject.Singleton;
 
 @Singleton
 public class PrunablePlainMessageLoader implements PrunableLoader<PrunablePlainMessageAppendix>  {
-    private final PrunableService prunableService;
+    private final PrunableLoadingChecker loadingChecker;
     private final PrunableMessageService messageService;
 
     @Inject
-    public PrunablePlainMessageLoader(PrunableService prunableService, PrunableMessageService messageService) {
-        this.prunableService = prunableService;
+    public PrunablePlainMessageLoader(PrunableLoadingChecker loadingChecker, PrunableMessageService messageService) {
+        this.loadingChecker = loadingChecker;
         this.messageService = messageService;
     }
 
     @Override
     public void loadPrunable(Transaction transaction, PrunablePlainMessageAppendix appendix, boolean includeExpiredPrunable) {
-        if (!appendix.hasPrunableData() && prunableService.shouldLoadPrunable(transaction, includeExpiredPrunable)) {
+        if (!appendix.hasPrunableData() && loadingChecker.shouldLoadPrunable(transaction, includeExpiredPrunable)) {
             PrunableMessage prunableMessage = messageService.get(transaction.getId());
             if (prunableMessage != null && prunableMessage.getMessage() != null) {
                 appendix.setPrunableMessage(prunableMessage);

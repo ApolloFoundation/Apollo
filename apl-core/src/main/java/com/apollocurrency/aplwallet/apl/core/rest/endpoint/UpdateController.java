@@ -52,15 +52,16 @@ import java.util.HashSet;
 public class UpdateController {
     private AccountParametersParser parser;
     private TransactionCreator txCreator;
-    private UnconfirmedTransactionConverter converter = new UnconfirmedTransactionConverter();
+    private UnconfirmedTransactionConverter converter;
 
     public UpdateController() {
     }
 
     @Inject
-    public UpdateController(AccountParametersParser parser, TransactionCreator txCreator) {
+    public UpdateController(AccountParametersParser parser, TransactionCreator txCreator, UnconfirmedTransactionConverter converter) {
         this.parser = parser;
         this.txCreator = txCreator;
+        this.converter = converter;
     }
 
     @POST
