@@ -107,6 +107,7 @@ public class RestorePrunableDataTask implements Runnable {
                 request.put("chainId", blockchainConfig.getChain().getChainId());
                 JSONObject response;
                 try {
+                    //TODO https://firstb.atlassian.net/browse/APL-1633
                     response = peer.send(JSON.prepareRequest(request), blockchainConfig.getChain().getChainId());
                 } catch (PeerNotConnectedException ex) {
                     response = null;

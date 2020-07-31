@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
+import com.apollocurrency.aplwallet.api.p2p.request.GetUnconfirmedTransactionsRequest;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
@@ -18,7 +19,9 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import javax.enterprise.inject.spi.CDI;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -55,15 +58,16 @@ public class ProcessTransactionsThread implements Runnable {
                 if (peer == null) {
                     return;
                 }
-                JSONObject request = new JSONObject();
-                request.put("requestType", "getUnconfirmedTransactions");
-                JSONArray exclude = new JSONArray();
+                GetUnconfirmedTransactionsRequest request = new GetUnconfirmedTransactionsRequest(blockchainConfig.getChain().getChainId());
+
+                List<String> exclude = new ArrayList<>();
                 unconfirmedTransactionTable.getAllUnconfirmedTransactionIds().forEach(
                     transactionId -> exclude.add(Long.toUnsignedString(transactionId)));
                 Collections.sort(exclude);
-                request.put("exclude", exclude);
-                request.put("chainId", blockchainConfig.getChain().getChainId());
-                JSONObject response = peer.send(JSON.prepareRequest(request), blockchainConfig.getChain().getChainId());
+
+                request.setExclude(exclude);
+
+                JSONObject response = peer.send(JSON.getMapper().convertValue(request, JSONObject.class), blockchainConfig.getChain().getChainId());
                 if (response == null) {
                     return;
                 }
@@ -72,6 +76,9 @@ public class ProcessTransactionsThread implements Runnable {
                     return;
                 }
                 try {
+                    //TODO Refactoring processPeerTransactions. https://firstb.atlassian.net/browse/APL-1632
+                    // Divide processing and parse transactions. Make method "processPeerTransactions"
+                    // works with List<Transaction> instead of JSONArray
                     transactionProcessor.processPeerTransactions(transactionsData);
                 } catch (AplException.NotValidException | RuntimeException e) {
                     peer.blacklist(e);
