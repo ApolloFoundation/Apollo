@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionT
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDao;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.model.AplQueryObject;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TxReceiptMapper;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
@@ -77,7 +78,11 @@ public class FindTransactionServiceImpl implements FindTransactionService {
     }
 
     @Override
-    public List<TxReceipt> getTransactionsByPeriod(final int timeStart, final int timeEnd) {
+    public List<TxReceipt> getTransactionsByPeriod(final int timeStart, final int timeEnd, String orderBy) {
+        if (timeStart <= 0 || timeEnd <= 0) {
+            throw new IllegalArgumentException("Wrong time stamp value: timeStart=" + timeStart + " timeEnd=" + timeEnd);
+        }
+        Objects.requireNonNull(orderBy);
 
         Stream<Transaction> unconfirmedTransactionStream = getAllUnconfirmedTransactionsStream()
             .filter(transaction -> transaction.getTimestamp() > timeStart && transaction.getTimestamp() < timeEnd)
@@ -86,12 +91,10 @@ public class FindTransactionServiceImpl implements FindTransactionService {
         int height = blockChainInfoService.getHeight();
 
         Stream<TxReceipt> transactionStream = transactionDao.getTransactions((byte) -1, (byte) -1, timeStart, timeEnd,
-            0, 0, "ASC", 0, -1)
+            0, 0, orderBy, 0, -1)
             .stream().peek(txReceipt -> {
-                    txReceipt.setConfirmations(Math.max(0, height - txReceipt.getHeight()));
-                    txReceipt.setStatus(txReceipt.getConfirmations() > 0
-                        ? TxReceipt.StatusEnum.CONFIRMED
-                        : TxReceipt.StatusEnum.UNCONFIRMED);
+                txReceipt.setConfirmations(Math.max(0, height - txReceipt.getHeight()));
+                txReceipt.setStatus(TxReceipt.StatusEnum.CONFIRMED);
                 }
             );
 
@@ -100,13 +103,67 @@ public class FindTransactionServiceImpl implements FindTransactionService {
     }
 
     @Override
-    public long getTransactionsCountByPeriod(int timeStart, int timeEnd) {
+    public long getTransactionsCountByPeriod(int timeStart, int timeEnd, String orderBy) {
+        if (timeStart <= 0 || timeEnd <= 0) {
+            throw new IllegalArgumentException("Wrong time stamp value: timeStart=" + timeStart + " timeEnd=" + timeEnd);
+        }
+        Objects.requireNonNull(orderBy);
+
         long unconfirmedTxCount = getAllUnconfirmedTransactionsStream()
             .filter(transaction -> transaction.getTimestamp() > timeStart && transaction.getTimestamp() < timeEnd)
             .count();
 
         long txCount = transactionDao.getTransactionsCount((byte) -1, (byte) -1, timeStart, timeEnd,
-            0, 0, "ASC", 0, -1);
+            0, 0, orderBy, 0, -1);
+
+        return unconfirmedTxCount + txCount;
+    }
+
+    @Override
+    public List<TxReceipt> getTransactionsByQuery(AplQueryObject query) {
+        if (query.getStartTime() <= 0 || query.getEndTime() <= 0) {
+            throw new IllegalArgumentException("Wrong time stamp values: timeStart=" + query.getStartTime() + " timeEnd=" + query.getEndTime());
+        }
+        Stream<Transaction> unconfirmedTransactionStream = null;
+        if (query.getLastHeight() <= 0) {
+            unconfirmedTransactionStream = getAllUnconfirmedTransactionsStream()
+                .filter(transaction -> transaction.getTimestamp() > query.getStartTime() && transaction.getTimestamp() < query.getEndTime())
+                .map(unconfirmedTransaction -> unconfirmedTransaction);
+        }
+
+        int height = blockChainInfoService.getHeight();
+
+        Stream<TxReceipt> transactionStream = transactionDao.getTransactions((byte) -1, (byte) -1,
+            query.getStartTime(), query.getEndTime(),
+            query.getFirstHeight(), query.getLastHeight(),
+            query.getOrder().name(),
+            query.getFrom(), query.getTo())
+            .stream().peek(txReceipt -> {
+                    txReceipt.setConfirmations(Math.max(0, height - txReceipt.getHeight()));
+                    txReceipt.setStatus(TxReceipt.StatusEnum.CONFIRMED);
+                }
+            );
+
+        return unconfirmedTransactionStream != null ?
+            Stream.concat(unconfirmedTransactionStream.map(txReceiptMapper), transactionStream)
+                .collect(Collectors.toUnmodifiableList())
+            : transactionStream.collect(Collectors.toUnmodifiableList());
+    }
+
+    @Override
+    public long getTransactionsCountByQuery(AplQueryObject query) {
+        if (query.getStartTime() <= 0 || query.getEndTime() <= 0) {
+            throw new IllegalArgumentException("Wrong time stamp values: timeStart=" + query.getStartTime() + " timeEnd=" + query.getEndTime());
+        }
+        long unconfirmedTxCount = getAllUnconfirmedTransactionsStream()
+            .filter(transaction -> transaction.getTimestamp() > query.getStartTime() && transaction.getTimestamp() < query.getEndTime())
+            .count();
+
+        long txCount = transactionDao.getTransactionsCount((byte) -1, (byte) -1,
+            query.getStartTime(), query.getEndTime(),
+            query.getFirstHeight(), query.getLastHeight(),
+            query.getOrder().name(),
+            query.getFrom(), query.getTo());
 
         return unconfirmedTxCount + txCount;
     }

@@ -682,6 +682,7 @@ public class TransactionDaoImpl implements TransactionDao {
                                                  String sortOrder,
                                                  int from, int to) {
         StringBuilder sqlQuery = new StringBuilder("SELECT COUNT(*) FROM transaction tx ");
+        sqlQuery.append("WHERE 1=1 ");
 
         createSelectTransactionQuery(sqlQuery, type, subtype, startTime, endTime, fromHeight, toHeight);
 
@@ -710,7 +711,7 @@ public class TransactionDaoImpl implements TransactionDao {
             "signature, timestamp, amount, fee, height, block_id, block_timestamp, transaction_index, " +
             "attachment_bytes, has_message " +
             "FROM transaction ");
-
+        sqlQuery.append("WHERE 1=1 ");
         createSelectTransactionQuery(sqlQuery, type, subtype, startTime, endTime, fromHeight, toHeight);
 
         sqlQuery.append("ORDER BY block_timestamp " + sortOrder + ", transaction_index " + sortOrder + " ");
@@ -797,7 +798,6 @@ public class TransactionDaoImpl implements TransactionDao {
     private StringBuilder createSelectTransactionQuery(StringBuilder buf, byte type, byte subtype,
                                                        int startTime, int endTime,
                                                        int fromHeight, int toHeight) {
-        buf.append("WHERE 1=1 ");
         if (type >= 0) {
             buf.append("AND type = ? ");
             if (subtype >= 0) {
@@ -817,6 +817,26 @@ public class TransactionDaoImpl implements TransactionDao {
         }
         if (toHeight > 0) {
             buf.append("AND height <= ? ");
+        }
+        return buf;
+    }
+
+    private StringBuilder addAccountsFilter(StringBuilder buf, List<Long> accounts) {
+        if (accounts != null && accounts.size() > 0) {
+            StringBuilder accBuf = new StringBuilder("[");
+            boolean first = true;
+            for (Long accountId : accounts) {
+                if (accountId != 0) {
+                    if (!first) {
+                        accBuf.append(",");
+                    } else {
+                        first = false;
+                    }
+                    accBuf.append(accountId);
+                }
+            }
+            accBuf.append("]");
+            buf.append("AND ( sender_id IN ").append(accBuf).append(" OR recipient_id IN ").append(accBuf).append(")");
         }
         return buf;
     }

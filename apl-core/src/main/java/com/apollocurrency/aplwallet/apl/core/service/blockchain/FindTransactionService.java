@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 import com.apollocurrency.aplwallet.api.v2.model.TxReceipt;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.model.AplQueryObject;
 
 import java.util.List;
 import java.util.Optional;
@@ -40,7 +41,9 @@ public interface FindTransactionService {
      * @param timeEnd   the end of time interval
      * @return the list of transaction objects
      */
-    List<TxReceipt> getTransactionsByPeriod(int timeStart, int timeEnd);
+    List<TxReceipt> getTransactionsByPeriod(int timeStart, int timeEnd, String orderBy);
+
+    List<TxReceipt> getTransactionsByQuery(AplQueryObject query);
 
     /**
      * Returns count of transactions saved in the blockchain during the time interval
@@ -49,5 +52,7 @@ public interface FindTransactionService {
      * @param timeEnd   the end of time interval
      * @return the list of transaction objects
      */
-    long getTransactionsCountByPeriod(int timeStart, int timeEnd);
+    long getTransactionsCountByPeriod(int timeStart, int timeEnd, String orderBy);
+
+    long getTransactionsCountByQuery(AplQueryObject query);
 }
