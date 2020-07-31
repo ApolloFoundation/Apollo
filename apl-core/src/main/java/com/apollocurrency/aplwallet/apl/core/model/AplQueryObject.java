@@ -14,6 +14,7 @@ import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 /**
@@ -97,4 +98,19 @@ public class AplQueryObject {
         return getFrom() + getPerPage();
     }
 
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", AplQueryObject.class.getSimpleName() + "[", "]")
+            .add("accounts=[" + accounts.stream().map(Long::toUnsignedString).collect(Collectors.joining(",")) + "]")
+            .add("firstHeight=" + firstHeight)
+            .add("lastHeight=" + lastHeight)
+            .add("startTime=" + startTime)
+            .add("endTime=" + endTime)
+            .add("startTimeUnix=" + Convert2.fromEpochTime(startTime))
+            .add("endTimeUnix=" + Convert2.fromEpochTime(endTime))
+            .add("page=" + page)
+            .add("perPage=" + perPage)
+            .add("order=" + order)
+            .toString();
+    }
 }

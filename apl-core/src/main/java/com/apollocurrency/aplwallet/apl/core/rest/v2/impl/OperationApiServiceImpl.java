@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.api.v2.model.QueryResult;
 import com.apollocurrency.aplwallet.apl.core.model.AplQueryObject;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.ResponseBuilderV2;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.FindTransactionService;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -16,6 +17,7 @@ import javax.ws.rs.core.SecurityContext;
 import java.util.Objects;
 
 @RequestScoped
+@Slf4j
 public class OperationApiServiceImpl implements OperationApiService {
     private final FindTransactionService findTransactionService;
 
@@ -29,6 +31,9 @@ public class OperationApiServiceImpl implements OperationApiService {
         QueryResult result = new QueryResult();
         result.setQuery(body);
         AplQueryObject query = new AplQueryObject(body);
+        if (log.isTraceEnabled()) {
+            log.trace("GetOperations query={}, from body startTimeUnix={} endTimeUnix={}", query, body.getStartTime(), body.getEndTime());
+        }
         result.setResult(
             findTransactionService.getTransactionsByPeriod(query.getStartTime(), query.getEndTime(), query.getOrder().name())
         );
@@ -40,6 +45,9 @@ public class OperationApiServiceImpl implements OperationApiService {
         QueryCountResult result = new QueryCountResult();
         result.setQuery(body);
         AplQueryObject query = new AplQueryObject(body);
+        if (log.isTraceEnabled()) {
+            log.trace("GetOperationsCount query={}, from body startTimeUnix={} endTimeUnix={}", query, body.getStartTime(), body.getEndTime());
+        }
         result.setCount(
             findTransactionService.getTransactionsCountByPeriod(query.getStartTime(), query.getEndTime(), query.getOrder().name())
         );
