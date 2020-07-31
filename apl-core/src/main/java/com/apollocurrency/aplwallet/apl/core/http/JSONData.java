@@ -94,6 +94,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetTransferSe
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetDelete;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
@@ -103,8 +104,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystem
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.ms.MonetarySystemTransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.payment.PaymentTransactionType;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -1093,7 +1092,7 @@ public final class JSONData {
     public static JSONObject exchangeRequest(ExchangeRequest exchangeRequest, boolean includeCurrencyInfo) {
         JSONObject json = new JSONObject();
         json.put("transaction", Long.toUnsignedString(exchangeRequest.getId()));
-        json.put("subtype", exchangeRequest.isBuy() ? MonetarySystemTransactionType.EXCHANGE_BUY.getSubtype() : MonetarySystemTransactionType.EXCHANGE_SELL.getSubtype());
+        json.put("subtype", exchangeRequest.isBuy() ? TransactionTypes.TransactionTypeSpec.MS_EXCHANGE_BUY.getSubtype() :TransactionTypes.TransactionTypeSpec.MS_EXCHANGE_SELL);
         json.put("timestamp", exchangeRequest.getTimestamp());
         json.put("units", String.valueOf(exchangeRequest.getUnits()));
         json.put("rateATM", String.valueOf(exchangeRequest.getRate()));
@@ -1107,7 +1106,7 @@ public final class JSONData {
     public static JSONObject expectedExchangeRequest(Transaction transaction, boolean includeCurrencyInfo) {
         JSONObject json = new JSONObject();
         json.put("transaction", transaction.getStringId());
-        json.put("subtype", transaction.getType().getSubtype());
+        json.put("subtype", transaction.getType().getSpec().getSubtype());
         MonetarySystemExchangeAttachment attachment = (MonetarySystemExchangeAttachment) transaction.getAttachment();
         json.put("units", String.valueOf(attachment.getUnits()));
         json.put("rateATM", String.valueOf(attachment.getRateATM()));
@@ -1125,20 +1124,20 @@ public final class JSONData {
     static JSONObject unconfirmedTransaction(Transaction transaction, Filter<Appendix> filter, boolean isPrivate) {
 
         JSONObject json = new JSONObject();
-        json.put("type", transaction.getType().getType());
-        json.put("subtype", transaction.getType().getSubtype());
+        json.put("type", transaction.getType().getSpec().getType());
+        json.put("subtype", transaction.getType().getSpec().getSubtype());
         json.put("phased", transaction.getPhasing() != null);
         json.put("timestamp", transaction.getTimestamp());
         json.put("deadline", transaction.getDeadline());
         json.put("senderPublicKey", Convert.toHexString(transaction.getSenderPublicKey()));
         if (transaction.getRecipientId() != 0) {
-            if (transaction.getType().equals(PaymentTransactionType.PRIVATE) && isPrivate) {
+            if (transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT && isPrivate) {
                 putPrivateAccount(json, "recipient", transaction.getRecipientId());
             } else {
                 putAccount(json, "recipient", transaction.getRecipientId());
             }
         }
-        if (transaction.getType().equals(PaymentTransactionType.PRIVATE) && isPrivate) {
+        if (transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT && isPrivate) {
             Random random = new Random();
             json.put("amountATM", String.valueOf((long) 100_000_000 * (random.nextInt(10_000_000) + 1)));
         } else {
@@ -1174,7 +1173,7 @@ public final class JSONData {
             }
             json.put("attachment", attachmentJSON);
         }
-        if (transaction.getType().equals(PaymentTransactionType.PRIVATE) && isPrivate) {
+        if (transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT && isPrivate) {
             putPrivateAccount(json, "sender", transaction.getSenderId());
         } else {
             putAccount(json, "sender", transaction.getSenderId());

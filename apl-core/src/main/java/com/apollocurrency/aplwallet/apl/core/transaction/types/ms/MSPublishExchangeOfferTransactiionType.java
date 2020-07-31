@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
 import org.json.simple.JSONObject;
 
@@ -26,12 +27,14 @@ import java.nio.ByteBuffer;
 public class MSPublishExchangeOfferTransactiionType extends MonetarySystemTransactionType {
     private final AccountCurrencyService accountCurrencyService;
     private final CurrencyExchangeOfferFacade exchangeOfferFacade;
+    private final TransactionValidator transactionValidator;
 
     @Inject
-    public MSPublishExchangeOfferTransactiionType(BlockchainConfig blockchainConfig, AccountService accountService, CurrencyService currencyService, AccountCurrencyService accountCurrencyService, CurrencyExchangeOfferFacade exchangeOfferFacade) {
+    public MSPublishExchangeOfferTransactiionType(BlockchainConfig blockchainConfig, AccountService accountService, CurrencyService currencyService, AccountCurrencyService accountCurrencyService, CurrencyExchangeOfferFacade exchangeOfferFacade, TransactionValidator transactionValidator) {
         super(blockchainConfig, accountService, currencyService);
         this.accountCurrencyService = accountCurrencyService;
         this.exchangeOfferFacade = exchangeOfferFacade;
+        this.transactionValidator = transactionValidator;
     }
 
     @Override
@@ -77,7 +80,7 @@ public class MSPublishExchangeOfferTransactiionType extends MonetarySystemTransa
         if (attachment.getInitialBuySupply() == 0 && attachment.getInitialSellSupply() == 0) {
             throw new AplException.NotValidException("Initial buy and sell supply cannot be both 0");
         }
-        if (attachment.getExpirationHeight() <= attachment.getFinishValidationHeight(transaction)) {
+        if (attachment.getExpirationHeight() <= transactionValidator.getFinishValidationHeight(transaction, attachment)) {
             throw new AplException.NotCurrentlyValidException("Expiration height must be after transaction execution height");
         }
         Currency currency = currencyService.getCurrency(attachment.getCurrencyId());

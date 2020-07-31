@@ -106,28 +106,6 @@ public class PhasingAppendixValidator implements AppendixValidator<PhasingAppend
 
     }
 
-    public void validateFinishHeightAndTime(Integer height, Integer time, PhasingAppendix phasingAppendix) throws AplException.NotCurrentlyValidException {
-        int finishHeight = phasingAppendix.getFinishHeight();
-        if ((finishHeight != -1 && time != -1) || (finishHeight == -1 && time == -1)) {
-            throw new AplException.NotCurrentlyValidException("Only one parameter should be filled 'phasingFinishHeight or phasingFinishTime'");
-        }
-
-        Block lastBlock = blockchain.getLastBlock();
-        int lastBlockHeight = lastBlock.getHeight();
-        int currentTime = timeService.getEpochTime();
-
-        if (time == -1 &&
-            (finishHeight <= lastBlockHeight + (phasingAppendix.getParams().getVoteWeighting().acceptsVotes() ? 2 : 1) ||
-                finishHeight >= lastBlockHeight + Constants.MAX_PHASING_DURATION)) {
-            throw new AplException.NotCurrentlyValidException("Invalid finish height " + height);
-        }
-
-
-        if (finishHeight == -1 && time >= currentTime + Constants.MAX_PHASING_TIME_DURATION_SEC) {
-            throw new AplException.NotCurrentlyValidException("Invalid finish time " + time);
-        }
-
-    }
 
     private void checkLinkedTransaction(byte[] hash, int currentHeight, int transactionHeight) throws AplException.NotValidException, AplException.NotCurrentlyValidException {
         Integer txHeight = blockchain.getTransactionHeight(hash, currentHeight);

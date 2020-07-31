@@ -20,11 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
 
-import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.SET_PHASING_ONLY;
-
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
@@ -39,13 +37,12 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainM
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.SET_PHASING_ONLY;
 
 public class UnconfirmedTransaction implements Transaction {
 
@@ -59,22 +56,10 @@ public class UnconfirmedTransaction implements Transaction {
         this.feePerByte = transaction.getFeeATM() / transaction.getFullSize();
     }
 
-    public UnconfirmedTransaction(ResultSet rs) throws SQLException {
-        try {
-            byte[] transactionBytes = rs.getBytes("transaction_bytes");
-            JSONObject prunableAttachments = null;
-            String prunableJSON = rs.getString("prunable_json");
-            if (prunableJSON != null) {
-                prunableAttachments = (JSONObject) JSONValue.parse(prunableJSON);
-            }
-            TransactionImpl.BuilderImpl builder = TransactionImpl.newTransactionBuilder(transactionBytes, prunableAttachments);
-            this.transaction = builder.build();
-            this.transaction.setHeight(rs.getInt("transaction_height"));
-            this.arrivalTimestamp = rs.getLong("arrival_timestamp");
-            this.feePerByte = rs.getLong("fee_per_byte");
-        } catch (AplException.ValidationException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
+    public UnconfirmedTransaction(Transaction transaction, long arrivalTimestamp, long feePerByte) {
+        this.transaction = transaction;
+        this.arrivalTimestamp = arrivalTimestamp;
+        this.feePerByte = feePerByte;
     }
 
     public Transaction getTransaction() {
@@ -132,6 +117,11 @@ public class UnconfirmedTransaction implements Transaction {
     @Override
     public boolean hasValidSignature() {
         return transaction.hasValidSignature();
+    }
+
+    @Override
+    public void withValidSignature() {
+        transaction.withValidSignature();
     }
 
     @Override
@@ -353,6 +343,16 @@ public class UnconfirmedTransaction implements Transaction {
     @Override
     public long getECBlockId() {
         return transaction.getECBlockId();
+    }
+
+    @Override
+    public boolean ofType(TransactionTypes.TransactionTypeSpec spec) {
+        return transaction.ofType(spec);
+    }
+
+    @Override
+    public boolean isNotOfType(TransactionTypes.TransactionTypeSpec spec) {
+        return transaction.isNotOfType(spec);
     }
 
     @Override

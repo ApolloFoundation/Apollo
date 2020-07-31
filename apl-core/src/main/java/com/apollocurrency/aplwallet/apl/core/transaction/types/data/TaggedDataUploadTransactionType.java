@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUploadAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +24,8 @@ import java.nio.ByteBuffer;
 
 @Singleton
 @Slf4j
-class TaggedDataUploadTransactionType extends DataTransactionType {
+public class TaggedDataUploadTransactionType extends DataTransactionType {
+    public static final String NAME = "TaggedDataUpload";
     private final TimeService timeService;
     private final TaggedDataService taggedDataService;
 
@@ -95,7 +96,7 @@ class TaggedDataUploadTransactionType extends DataTransactionType {
 
     @Override
     public String getName() {
-        return "TaggedDataUpload";
+        return NAME;
     }
 
     @Override

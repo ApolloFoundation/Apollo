@@ -559,6 +559,16 @@ public class TransactionImpl implements Transaction {
     }
 
     @Override
+    public boolean ofType(TransactionTypes.TransactionTypeSpec spec) {
+        return type.getSpec() == spec;
+    }
+
+    @Override
+    public boolean isNotOfType(TransactionTypes.TransactionTypeSpec spec) {
+        return !ofType(spec);
+    }
+
+    @Override
     public boolean equals(Object o) {
         return o instanceof TransactionImpl && this.getId() == ((Transaction) o).getId();
     }

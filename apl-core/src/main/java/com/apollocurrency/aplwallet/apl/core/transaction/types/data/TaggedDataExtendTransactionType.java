@@ -14,7 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtendAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataExtendAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
@@ -25,10 +25,11 @@ import java.nio.ByteBuffer;
 
 @Slf4j
 @Singleton
-class TaggedDataExtendTransactionType extends DataTransactionType {
-    private TaggedDataService taggedDataService;
-    private TimeService timeService;
-    private Blockchain blockchain;
+public class TaggedDataExtendTransactionType extends DataTransactionType {
+    public static final String NAME = "TaggedDataExtend";
+    private final TaggedDataService taggedDataService;
+    private final TimeService timeService;
+    private final Blockchain blockchain;
 
     @Inject
     public TaggedDataExtendTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, TaggedDataService taggedDataService, TimeService timeService, Blockchain blockchain) {
@@ -83,7 +84,7 @@ class TaggedDataExtendTransactionType extends DataTransactionType {
 
     @Override
     public String getName() {
-        return "TaggedDataExtend";
+        return NAME;
     }
 
     @Override

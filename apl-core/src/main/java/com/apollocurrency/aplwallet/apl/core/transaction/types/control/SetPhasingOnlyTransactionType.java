@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
@@ -28,10 +29,12 @@ import java.util.Map;
 @Singleton
 public class SetPhasingOnlyTransactionType extends AccountControlTransactionType {
     private final AccountControlPhasingService accountControlPhasingService;
+    private final PhasingPollService phasingPollService;
     @Inject
-    public SetPhasingOnlyTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, AccountControlPhasingService accountControlPhasingService) {
+    public SetPhasingOnlyTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, AccountControlPhasingService accountControlPhasingService, PhasingPollService phasingPollService) {
         super(blockchainConfig, accountService);
         this.accountControlPhasingService = accountControlPhasingService;
+        this.phasingPollService = phasingPollService;
     }
 
     @Override
@@ -58,7 +61,7 @@ public class SetPhasingOnlyTransactionType extends AccountControlTransactionType
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
         SetPhasingOnly attachment = (SetPhasingOnly) transaction.getAttachment();
         VoteWeighting.VotingModel votingModel = attachment.getPhasingParams().getVoteWeighting().getVotingModel();
-        attachment.getPhasingParams().validate();
+        phasingPollService.validate(attachment.getPhasingParams());
         if (votingModel == VoteWeighting.VotingModel.NONE) {
             Account senderAccount = getAccountService().getAccount(transaction.getSenderId());
             if (senderAccount == null || !senderAccount.getControls().contains(AccountControlType.PHASING_ONLY)) {

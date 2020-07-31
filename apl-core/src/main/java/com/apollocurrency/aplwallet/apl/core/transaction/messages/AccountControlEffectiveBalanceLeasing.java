@@ -3,8 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.types.control.AccountControlTransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -46,8 +45,8 @@ public final class AccountControlEffectiveBalanceLeasing extends AbstractAttachm
     }
 
     @Override
-    public TransactionType getTransactionTypeSpec() {
-        return AccountControlTransactionType.EFFECTIVE_BALANCE_LEASING;
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
+        return TransactionTypes.TransactionTypeSpec.EFFECTIVE_BALANCE_LEASING;
     }
 
     public int getPeriod() {

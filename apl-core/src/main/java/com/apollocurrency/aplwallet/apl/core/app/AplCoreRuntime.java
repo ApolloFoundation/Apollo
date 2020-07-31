@@ -4,10 +4,11 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.app.mint.MintWorker;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
@@ -48,6 +49,7 @@ public class AplCoreRuntime {
     // in every class?
     private BlockchainConfig blockchainConfig;
     private PropertiesHolder propertiesHolder;
+    private TransactionBuilder transactionBuilder;
     //TODO:  check and debug minting
     private MintWorker mintworker;
     private Thread mintworkerThread;
@@ -60,6 +62,7 @@ public class AplCoreRuntime {
         this.databaseManager = CDI.current().select(DatabaseManager.class).get();
         this.aplAppStatus = CDI.current().select(AplAppStatus.class).get();
         this.peers = CDI.current().select(PeersService.class).get();
+        this.transactionBuilder = CDI.current().select(TransactionBuilder.class).get();
 
     }
 
@@ -184,7 +187,7 @@ public class AplCoreRuntime {
 
     public void startMinter() {
         LOG.debug("Starting MINT Worker...");
-        mintworker = new MintWorker(propertiesHolder, blockchainConfig);
+        mintworker = new MintWorker(propertiesHolder, blockchainConfig, transactionBuilder);
         mintworkerThread = new Thread(mintworker);
         mintworkerThread.setDaemon(true);
         mintworkerThread.start();

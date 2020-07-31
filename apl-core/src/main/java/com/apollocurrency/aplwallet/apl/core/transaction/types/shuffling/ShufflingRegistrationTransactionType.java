@@ -17,6 +17,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRegistration;
 import org.json.simple.JSONObject;
@@ -32,12 +33,14 @@ import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes
 public class ShufflingRegistrationTransactionType extends ShufflingTransactionType {
     private final Blockchain blockchain;
     private final ShufflingService shufflingService;
+    private final TransactionValidator validator;
 
     @Inject
-    public ShufflingRegistrationTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, Blockchain blockchain, ShufflingService shufflingService) {
+    public ShufflingRegistrationTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, Blockchain blockchain, ShufflingService shufflingService, TransactionValidator validator) {
         super(blockchainConfig, accountService);
         this.blockchain = blockchain;
         this.shufflingService = shufflingService;
+        this.validator = validator;
     }
 
     @Override
@@ -83,7 +86,7 @@ public class ShufflingRegistrationTransactionType extends ShufflingTransactionTy
             throw new AplException.NotCurrentlyValidException(String.format("Account %s is already registered for shuffling %s",
                 Long.toUnsignedString(transaction.getSenderId()), Long.toUnsignedString(shuffling.getId())));
         }
-        if (blockchain.getHeight() + shuffling.getBlocksRemaining() <= attachment.getFinishValidationHeight(transaction)) {
+        if (blockchain.getHeight() + shuffling.getBlocksRemaining() <= validator.getFinishValidationHeight(transaction, attachment)) {
             throw new AplException.NotCurrentlyValidException("Shuffling registration finishes in " + shuffling.getBlocksRemaining() + " blocks");
         }
     }

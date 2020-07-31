@@ -3,8 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.types.cc.ColoredCoinsTransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -27,8 +26,8 @@ public final class ColoredCoinsAskOrderCancellation extends ColoredCoinsOrderCan
     }
 
     @Override
-    public TransactionType getTransactionTypeSpec() {
-        return ColoredCoinsTransactionType.ASK_ORDER_CANCELLATION;
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
+        return TransactionTypes.TransactionTypeSpec.CC_ASK_ORDER_CANCELLATION;
     }
 
 }

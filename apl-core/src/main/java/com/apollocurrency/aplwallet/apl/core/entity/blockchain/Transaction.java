@@ -139,6 +139,10 @@ public interface Transaction {
 
     long getECBlockId();
 
+    boolean ofType(TransactionTypes.TransactionTypeSpec spec);
+
+    boolean isNotOfType(TransactionTypes.TransactionTypeSpec spec);
+
     /**
      * @deprecated see method with longer parameters list below
      */

@@ -85,13 +85,13 @@ public class SimpleTransaction implements Transaction {
     }
 
     @Override
-    public byte[] getSenderPublicKey() {
-        return new byte[0];
+    public void withValidSignature() {
+
     }
 
     @Override
-    public boolean shouldSavePublicKey() {
-        return false;
+    public byte[] getSenderPublicKey() {
+        return new byte[0];
     }
 
     @Override
@@ -320,6 +320,16 @@ public class SimpleTransaction implements Transaction {
     @Override
     public long getECBlockId() {
         return 0;
+    }
+
+    @Override
+    public boolean ofType(TransactionTypes.TransactionTypeSpec spec) {
+        return false;
+    }
+
+    @Override
+    public boolean isNotOfType(TransactionTypes.TransactionTypeSpec spec) {
+        return false;
     }
 
 }

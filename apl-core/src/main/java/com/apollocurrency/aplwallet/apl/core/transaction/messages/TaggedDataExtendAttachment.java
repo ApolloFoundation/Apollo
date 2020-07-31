@@ -1,29 +1,26 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2020 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.tagged.model;
+package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.state.tagged.TaggedDataAttachment;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.TaggedData;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.data.DataTransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.data.TaggedDataExtendTransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 
-import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 
 /**
  * @author al
  */
+@Slf4j
 public final class TaggedDataExtendAttachment extends TaggedDataAttachment {
 
-    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     final long taggedDataId;
     final boolean jsonIsPruned;
     private volatile byte[] hash;
@@ -47,7 +44,7 @@ public final class TaggedDataExtendAttachment extends TaggedDataAttachment {
     }
 
     public static TaggedDataExtendAttachment parse(JSONObject attachmentData) {
-        if (!Appendix.hasAppendix(DataTransactionType.TAGGED_DATA_EXTEND.getName(), attachmentData)) {
+        if (!Appendix.hasAppendix(TaggedDataExtendTransactionType.NAME, attachmentData)) {
             return null;
         }
         return new TaggedDataExtendAttachment(attachmentData);
@@ -70,8 +67,8 @@ public final class TaggedDataExtendAttachment extends TaggedDataAttachment {
     }
 
     @Override
-    public TransactionType getTransactionTypeSpec() {
-        return DataTransactionType.TAGGED_DATA_EXTEND;
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
+        return TransactionTypes.TransactionTypeSpec.TAGGED_DATA_EXTEND;
     }
 
     public long getTaggedDataId() {
@@ -84,8 +81,7 @@ public final class TaggedDataExtendAttachment extends TaggedDataAttachment {
             hash = super.getHash();
         }
         if (hash == null) {
-            TaggedDataUploadAttachment taggedDataUploadAttachment = (TaggedDataUploadAttachment) blockchain.getTransaction(taggedDataId).getAttachment();
-            hash = taggedDataUploadAttachment.getHash();
+            log.warn("Hash can be extracted from blockchain, but for now this ability was suspended {}", ThreadUtils.last5Stacktrace());
         }
         return hash;
     }
@@ -97,10 +93,6 @@ public final class TaggedDataExtendAttachment extends TaggedDataAttachment {
 
     public boolean jsonIsPruned() {
         return jsonIsPruned;
-    }
-
-    @Override
-    public void restorePrunableData(Transaction transaction, int blockTimestamp, int height) {
     }
 
     @Override

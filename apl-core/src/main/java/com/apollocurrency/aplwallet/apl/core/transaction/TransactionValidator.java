@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountContro
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -29,17 +30,19 @@ public class TransactionValidator {
     private final FeeCalculator feeCalculator;
     private final AccountPublicKeyService accountPublicKeyService;
     private final AccountControlPhasingService accountControlPhasingService;
+    private final PrunableService prunableService;
 
     @Inject
     public TransactionValidator(BlockchainConfig blockchainConfig, PhasingPollService phasingPollService,
                                 Blockchain blockchain, FeeCalculator feeCalculator,
-                                AccountPublicKeyService accountPublicKeyService, AccountControlPhasingService accountControlPhasingService) {
+                                AccountPublicKeyService accountPublicKeyService, AccountControlPhasingService accountControlPhasingService, PrunableService prunableService) {
         this.blockchainConfig = blockchainConfig;
         this.phasingPollService = phasingPollService;
         this.blockchain = blockchain;
         this.feeCalculator = feeCalculator;
         this.accountPublicKeyService = accountPublicKeyService;
         this.accountControlPhasingService = accountControlPhasingService;
+        this.prunableService = prunableService;
     }
 
 
@@ -92,7 +95,7 @@ public class TransactionValidator {
 
         boolean validatingAtFinish = transaction.getPhasing() != null && transaction.getSignature() != null && phasingPollService.getPoll(transaction.getId()) != null;
         for (AbstractAppendix appendage : transaction.getAppendages()) {
-            appendage.loadPrunable(transaction);
+            prunableService.loadPrunable(transaction, appendage, false);
             //TODO Why does it need? Take a look how to use it.
 //            if (! appendage.verifyVersion()) {
 //                throw new AplException.NotValidException("Invalid attachment version " + appendage.getVersion());

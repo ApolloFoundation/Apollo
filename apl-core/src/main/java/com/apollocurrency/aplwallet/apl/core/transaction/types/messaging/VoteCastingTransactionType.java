@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
 import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteCasting;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
@@ -24,11 +25,13 @@ import java.util.Map;
 @Singleton
 public class VoteCastingTransactionType extends MessagingTransactionType {
     private final PollService pollService;
+    private final TransactionValidator validator;
 
     @Inject
-    public VoteCastingTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, PollService pollService) {
+    public VoteCastingTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, PollService pollService, TransactionValidator validator) {
         super(blockchainConfig, accountService);
         this.pollService = pollService;
+        this.validator = validator;
     }
 
 
@@ -77,7 +80,7 @@ public class VoteCastingTransactionType extends MessagingTransactionType {
         if (pollService.getVote(pollId, transaction.getSenderId()) != null) {
             throw new AplException.NotCurrentlyValidException("Double voting attempt");
         }
-        if (poll.getFinishHeight() <= attachment.getFinishValidationHeight(transaction)) {
+        if (poll.getFinishHeight() <= validator.getFinishValidationHeight(transaction, attachment)) {
             throw new AplException.NotCurrentlyValidException("Voting for this poll finishes at " + poll.getFinishHeight());
         }
         byte[] votes = attachment.getPollVote();

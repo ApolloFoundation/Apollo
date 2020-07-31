@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPollCreation;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -26,10 +27,12 @@ import java.util.Map;
 @Singleton
 public class PollCreationTransactionType extends MessagingTransactionType {
     private final PollService pollService;
+    private final TransactionValidator transactionValidator;
     @Inject
-    public PollCreationTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, PollService pollService) {
+    public PollCreationTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, PollService pollService, TransactionValidator transactionValidator) {
         super(blockchainConfig, accountService);
         this.pollService = pollService;
+        this.transactionValidator = transactionValidator;
     }
 
     private final Fee POLL_OPTIONS_FEE = new Fee.SizeBasedFee(10 * Constants.ONE_APL, Constants.ONE_APL, 1) {
@@ -110,7 +113,8 @@ public class PollCreationTransactionType extends MessagingTransactionType {
         if (attachment.getMinRangeValue() < Constants.MIN_VOTE_VALUE || attachment.getMaxRangeValue() > Constants.MAX_VOTE_VALUE || attachment.getMaxRangeValue() < attachment.getMinRangeValue()) {
             throw new AplException.NotValidException("Invalid range: " + attachment.getJSONObject());
         }
-        if (attachment.getFinishHeight() <= attachment.getFinishValidationHeight(transaction) + 1 || attachment.getFinishHeight() >= attachment.getFinishValidationHeight(transaction) + Constants.MAX_POLL_DURATION) {
+        int finishValidationHeight = transactionValidator.getFinishValidationHeight(transaction, attachment);
+        if (attachment.getFinishHeight() <= finishValidationHeight + 1 || attachment.getFinishHeight() >= finishValidationHeight + Constants.MAX_POLL_DURATION) {
             throw new AplException.NotCurrentlyValidException("Invalid finishing height" + attachment.getJSONObject());
         }
         if (!attachment.getVoteWeighting().acceptsVotes() || attachment.getVoteWeighting().getVotingModel() == VoteWeighting.VotingModel.HASH) {

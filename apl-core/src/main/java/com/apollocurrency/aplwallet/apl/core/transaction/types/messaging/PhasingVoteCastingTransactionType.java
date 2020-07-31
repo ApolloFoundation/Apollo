@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPhasingVoteCasting;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -34,11 +35,13 @@ public class PhasingVoteCastingTransactionType extends MessagingTransactionType 
     };
 
     private final PhasingPollService phasingPollService;
+    private final TransactionValidator transactionValidator;
 
     @Inject
-    public PhasingVoteCastingTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, PhasingPollService phasingPollService) {
+    public PhasingVoteCastingTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, PhasingPollService phasingPollService, TransactionValidator transactionValidator) {
         super(blockchainConfig, accountService);
         this.phasingPollService = phasingPollService;
+        this.transactionValidator = transactionValidator;
     }
 
 
@@ -132,8 +135,9 @@ public class PhasingVoteCastingTransactionType extends MessagingTransactionType 
             if (!Arrays.equals(poll.getFullHash(), hash)) {
                 throw new AplException.NotCurrentlyValidException("Phased transaction hash does not match hash in voting transaction");
             }
-            if (poll.getFinishTime() == -1 && poll.getFinishHeight() <= attachment.getFinishValidationHeight(transaction) + 1) {
-                throw new AplException.NotCurrentlyValidException(String.format("Phased transaction finishes at height %d which is not after approval transaction height %d", poll.getFinishHeight(), attachment.getFinishValidationHeight(transaction) + 1));
+            int finishHeight = transactionValidator.getFinishValidationHeight(transaction, attachment) + 1;
+            if (poll.getFinishTime() == -1 && poll.getFinishHeight() <= finishHeight) {
+                throw new AplException.NotCurrentlyValidException(String.format("Phased transaction finishes at height %d which is not after approval transaction height %d", poll.getFinishHeight(), finishHeight));
             }
 
             if (poll.getFinishHeight() == -1 && poll.getFinishTime() <= transaction.getTimestamp()) {

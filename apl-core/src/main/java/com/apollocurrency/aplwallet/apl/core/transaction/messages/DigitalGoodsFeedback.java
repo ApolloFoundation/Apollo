@@ -3,8 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.types.dgs.DigitalGoodsTransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONObject;
 
@@ -47,8 +46,8 @@ public final class DigitalGoodsFeedback extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionTypeSpec() {
-        return DigitalGoodsTransactionType.FEEDBACK;
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
+        return TransactionTypes.TransactionTypeSpec.DGS_FEEDBACK;
     }
 
     public long getPurchaseId() {

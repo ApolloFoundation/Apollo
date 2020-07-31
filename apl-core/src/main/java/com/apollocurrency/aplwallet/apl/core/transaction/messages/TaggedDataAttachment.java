@@ -1,18 +1,14 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2020 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.core.entity.state.tagged;
+package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.TaggedData;
-import com.apollocurrency.aplwallet.apl.core.service.state.TaggedDataService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import org.json.simple.JSONObject;
 
-import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 
@@ -182,12 +178,12 @@ public abstract class TaggedDataAttachment extends AbstractAttachment implements
         return data;
     }
 
-    @Override
-    public void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
-        if (data == null && taggedData == null && shouldLoadPrunable(transaction, includeExpiredPrunable)) {
-            TaggedDataService taggedDataService = CDI.current().select(TaggedDataService.class).get();
-            taggedData = taggedDataService.getData(getTaggedDataId(transaction));
-        }
+    public TaggedData getTaggedData() {
+        return taggedData;
+    }
+
+    void setTaggedData(TaggedData taggedData) {
+        this.taggedData = taggedData;
     }
 
     @Override

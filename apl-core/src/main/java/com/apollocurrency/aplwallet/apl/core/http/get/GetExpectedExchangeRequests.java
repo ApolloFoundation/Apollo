@@ -20,14 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.ms.MonetarySystemTransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeAttachment;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -52,7 +52,7 @@ public final class GetExpectedExchangeRequests extends AbstractAPIRequestHandler
         boolean includeCurrencyInfo = "true".equalsIgnoreCase(req.getParameter("includeCurrencyInfo"));
 
         Filter<Transaction> filter = transaction -> {
-            if (transaction.getType() != MonetarySystemTransactionType.EXCHANGE_BUY && transaction.getType() != MonetarySystemTransactionType.EXCHANGE_SELL) {
+            if (transaction.getType().getSpec() != TransactionTypes.TransactionTypeSpec.MS_EXCHANGE_BUY && transaction.getType().getSpec() != TransactionTypes.TransactionTypeSpec.MS_EXCHANGE_SELL) {
                 return false;
             }
             if (accountId != 0 && transaction.getSenderId() != accountId) {

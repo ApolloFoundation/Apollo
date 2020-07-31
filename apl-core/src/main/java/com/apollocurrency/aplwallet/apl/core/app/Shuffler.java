@@ -45,6 +45,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.impl.ShufflingServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.DbHotSwapConfig;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCancellationAttachment;
@@ -82,7 +83,8 @@ public final class Shuffler {
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
     private static ShufflingService shufflingService = CDI.current().select(ShufflingServiceImpl.class).get();
-    private static FeeCalculator feeCalculator = new FeeCalculator();
+    private static FeeCalculator feeCalculator = CDI.current().select(FeeCalculator.class).get();
+    private static TransactionBuilder transactionBuilder = CDI.current().select(TransactionBuilder.class).get();
     private static BlockchainProcessor blockchainProcessor;
     private static AccountService accountService;
     private final long accountId;
@@ -499,7 +501,7 @@ public final class Shuffler {
             }
         }
         try {
-            Transaction.Builder builder = Transaction.newTransactionBuilder(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)), 0, 0,
+            Transaction.Builder builder = transactionBuilder.newTransactionBuilder(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)), 0, 0,
                 (short) 1440, attachment, blockchain.getLastBlockTimestamp());
 
             Transaction transaction = builder.build(null);

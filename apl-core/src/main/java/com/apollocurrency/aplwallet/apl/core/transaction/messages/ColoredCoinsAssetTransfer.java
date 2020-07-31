@@ -3,10 +3,9 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.types.cc.ColoredCoinsTransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -54,8 +53,8 @@ public final class ColoredCoinsAssetTransfer extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionTypeSpec() {
-        return ColoredCoinsTransactionType.ASSET_TRANSFER;
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
+        return TransactionTypes.TransactionTypeSpec.CC_ASSET_TRANSFER;
     }
 
     public long getAssetId() {

@@ -20,14 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.payment.PaymentTransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -55,7 +55,7 @@ public final class GetUnconfirmedTransactions extends AbstractAPIRequestHandler 
         if (accountIds.isEmpty()) {
             try (FilteringIterator<? extends Transaction> transactionsIterator = new FilteringIterator<>(
                 lookupTransactionProcessor().getAllUnconfirmedTransactions(0, -1),
-                transaction -> transaction.getType() != PaymentTransactionType.PRIVATE,
+                transaction -> transaction.getType().getSpec() != TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT,
                 firstIndex, lastIndex)) {
                 while (transactionsIterator.hasNext()) {
                     Transaction transaction = transactionsIterator.next();
@@ -65,7 +65,7 @@ public final class GetUnconfirmedTransactions extends AbstractAPIRequestHandler 
         } else {
             try (FilteringIterator<? extends Transaction> transactionsIterator = new FilteringIterator<>(
                 lookupTransactionProcessor().getAllUnconfirmedTransactions(0, -1),
-                transaction -> transaction.getType() != PaymentTransactionType.PRIVATE && (accountIds.contains(transaction.getSenderId()) ||
+                transaction -> transaction.getType().getSpec() != TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT && (accountIds.contains(transaction.getSenderId()) ||
                     accountIds.contains(transaction.getRecipientId())),
                 firstIndex, lastIndex)) {
                 while (transactionsIterator.hasNext()) {

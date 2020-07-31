@@ -1,20 +1,16 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2020 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.tagged.model;
+package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.state.tagged.TaggedDataAttachment;
-import com.apollocurrency.aplwallet.apl.core.service.state.TaggedDataService;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.data.DataTransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.data.TaggedDataUploadTransactionType;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONObject;
 
-import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
@@ -51,7 +47,7 @@ public final class TaggedDataUploadAttachment extends TaggedDataAttachment {
     }
 
     public static TaggedDataUploadAttachment parse(JSONObject attachmentData) {
-        if (!Appendix.hasAppendix(DataTransactionType.TAGGED_DATA_UPLOAD.getName(), attachmentData)) {
+        if (!Appendix.hasAppendix(TaggedDataUploadTransactionType.NAME, attachmentData)) {
             return null;
         }
         return new TaggedDataUploadAttachment(attachmentData);
@@ -74,8 +70,8 @@ public final class TaggedDataUploadAttachment extends TaggedDataAttachment {
     }
 
     @Override
-    public TransactionType getTransactionTypeSpec() {
-        return DataTransactionType.TAGGED_DATA_UPLOAD;
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
+        return TransactionTypes.TransactionTypeSpec.TAGGED_DATA_UPLOAD;
     }
 
     @Override
@@ -89,12 +85,6 @@ public final class TaggedDataUploadAttachment extends TaggedDataAttachment {
     @Override
     public long getTaggedDataId(Transaction transaction) {
         return transaction.getId();
-    }
-
-    @Override
-    public void restorePrunableData(Transaction transaction, int blockTimestamp, int height) {
-        TaggedDataService taggedDataService = CDI.current().select(TaggedDataService.class).get();
-        taggedDataService.restore(transaction, this, blockTimestamp, height);
     }
 
     @Override

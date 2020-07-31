@@ -31,6 +31,9 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.HttpRequestToCreateTransactionRequestConverter;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
@@ -71,6 +74,8 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
     private TransactionValidator validator = CDI.current().select(TransactionValidator.class).get();
     private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private FeeCalculator feeCalculator = CDI.current().select(FeeCalculator.class).get();
+    private TransactionTypeFactory transactionTypeFactory = CDI.current().select(TransactionTypeFactory.class).get();
+    private TransactionBuilder txBuilder = CDI.current().select(TransactionBuilder.class).get();
 
     public CreateTransaction(APITag[] apiTags, String... parameters) {
         super(apiTags, addCommonParameters(parameters));
@@ -144,8 +149,12 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
     public Transaction createTransaction(CreateTransactionRequest txRequest) throws AplException.ValidationException, ParameterException {
         EncryptedMessageAppendix encryptedMessage = null;
         PrunableEncryptedMessageAppendix prunableEncryptedMessage = null;
-
-        if (txRequest.getAttachment().getTransactionTypeSpec().canHaveRecipient() && txRequest.getRecipientId() != 0) {
+        TransactionType type = transactionTypeFactory.findTransactionTypeBySpec(txRequest.getAttachment().getTransactionTypeSpec());
+        if (type == null) {
+            throw new AplException.NotValidException("Unable to find transaction type for attachment: " + txRequest.getAttachment().getTransactionTypeSpec());
+        }
+        txRequest.getAttachment().bindTransactionType(type);
+        if (type.canHaveRecipient() && txRequest.getRecipientId() != 0) {
             if (txRequest.isEncryptedMessageIsPrunable()) {
                 prunableEncryptedMessage = (PrunableEncryptedMessageAppendix) txRequest.getAppendix();
             } else {
@@ -189,9 +198,9 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
         int timestamp = timeService.getEpochTime();
         Transaction transaction;
         try {
-            Transaction.Builder builder = Transaction.newTransactionBuilder(txRequest.getPublicKey(), txRequest.getAmountATM(), txRequest.getFeeATM(),
+            Transaction.Builder builder = txBuilder.newTransactionBuilder(txRequest.getPublicKey(), txRequest.getAmountATM(), txRequest.getFeeATM(),
                 deadline, txRequest.getAttachment(), timestamp).referencedTransactionFullHash(txRequest.getReferencedTransactionFullHash());
-            if (txRequest.getAttachment().getTransactionTypeSpec().canHaveRecipient()) {
+            if (type.canHaveRecipient()) {
                 builder.recipientId(txRequest.getRecipientId());
             }
             builder.appendix(encryptedMessage);

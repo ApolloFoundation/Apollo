@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetDividendService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
@@ -33,14 +34,16 @@ public class CCCoinsDividentPaymentTransactionType extends ColoredCoinsTransacti
     private final AccountAssetService accountAssetService;
     private final Blockchain blockchain;
     private final AssetDividendService assetDividendService;
+    private final TransactionValidator transactionValidator;
 
     @Inject
-    public CCCoinsDividentPaymentTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, AssetService assetService, AccountAssetService accountAssetService, AssetDividendService assetDividendService, Blockchain blockchain) {
+    public CCCoinsDividentPaymentTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, AssetService assetService, AccountAssetService accountAssetService, AssetDividendService assetDividendService, Blockchain blockchain, TransactionValidator transactionValidator) {
         super(blockchainConfig, accountService);
         this.assetService = assetService;
         this.assetDividendService = assetDividendService;
         this.accountAssetService = accountAssetService;
         this.blockchain = blockchain;
+        this.transactionValidator = transactionValidator;
     }
 
     @Override
@@ -110,8 +113,9 @@ public class CCCoinsDividentPaymentTransactionType extends ColoredCoinsTransacti
         if (attachment.getHeight() > blockchain.getHeight()) {
             throw new AplException.NotCurrentlyValidException("Invalid dividend payment height: " + attachment.getHeight() + ", must not exceed current blockchain height " + blockchain.getHeight());
         }
-        if (attachment.getHeight() <= attachment.getFinishValidationHeight(transaction) - Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK) {
-            throw new AplException.NotCurrentlyValidException("Invalid dividend payment height: " + attachment.getHeight() + ", must be less than " + Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK + " blocks before " + attachment.getFinishValidationHeight(transaction));
+        int finishValidationHeight = transactionValidator.getFinishValidationHeight(transaction, attachment);
+        if (attachment.getHeight() <= finishValidationHeight - Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK) {
+            throw new AplException.NotCurrentlyValidException("Invalid dividend payment height: " + attachment.getHeight() + ", must be less than " + Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK + " blocks before " + finishValidationHeight);
         }
         Asset asset = assetService.getAsset(attachment.getAssetId(), attachment.getHeight());
         if (asset == null) {

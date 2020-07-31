@@ -35,6 +35,7 @@ public abstract class AbstractAttachment extends AbstractAppendix implements Att
     public AbstractAttachment() {
     }
 
+    @Override
     public void bindTransactionType(@NotNull TransactionType transactionType) {
         if (transactionType.getSpec() != getTransactionTypeSpec()) {
             throw new IllegalArgumentException("Required tx type " + getTransactionTypeSpec() + " but got " + transactionType.getSpec());

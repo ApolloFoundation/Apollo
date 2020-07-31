@@ -110,7 +110,7 @@ class TransactionProcessorTest {
         td = new TransactionTestData();
         service = new TransactionProcessorImpl(propertiesHolder, transactionValidator, transactionApplier,
             listEvent, unconfirmedTransactionTable, databaseManager, accountService,
-            globalSync, timeService, ntpTimeConfig.time(), blockchainConfig, taskDispatchManager, peersService, blockchain);
+            globalSync, timeService, ntpTimeConfig.time(), blockchainConfig, taskDispatchManager, peersService, blockchain, transactionBuilder, prunableService);
     }
 
     @Test

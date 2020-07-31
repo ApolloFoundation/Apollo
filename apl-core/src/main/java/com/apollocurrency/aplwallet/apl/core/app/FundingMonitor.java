@@ -45,6 +45,7 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyTransfer;
@@ -116,13 +117,14 @@ public class FundingMonitor {
     private static PropertiesHolder propertiesLoader;
     private static BlockchainConfig blockchainConfig;
     private static Blockchain blockchain;
-    private static FeeCalculator feeCalculator = new FeeCalculator();
+    private static FeeCalculator feeCalculator;
     private static TransactionProcessor transactionProcessor;
     private static GlobalSync globalSync; // prevent fail on node shutdown
     private static AccountService accountService;
     private static AccountAssetService accountAssetService;
     private static AccountCurrencyService accountCurrencyService;
     private static AccountPropertyService accountPropertyService;
+    private static TransactionBuilder transactionBuilder;
     /**
      * Maximum number of monitors
      */
@@ -251,6 +253,8 @@ public class FundingMonitor {
         accountAssetService = CDI.current().select(AccountAssetServiceImpl.class).get();
         accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
         accountPropertyService = CDI.current().select(AccountPropertyServiceImpl.class).get();
+        feeCalculator = CDI.current().select(FeeCalculator.class).get();
+        transactionBuilder = CDI.current().select(TransactionBuilder.class).get();
         /** Maximum number of monitors */
         MAX_MONITORS = propertiesLoader.getIntProperty("apl.maxNumberOfMonitors");
 
@@ -556,7 +560,7 @@ public class FundingMonitor {
         throws AplException {
         FundingMonitor monitor = monitoredAccount.monitor;
         if (targetAccount.getBalanceATM() < monitoredAccount.threshold) {
-            Transaction.Builder builder = Transaction.newTransactionBuilder(monitor.publicKey,
+            Transaction.Builder builder = transactionBuilder.newTransactionBuilder(monitor.publicKey,
                 monitoredAccount.amount, 0, (short) 1440, Attachment.ORDINARY_PAYMENT, blockchain.getLastBlockTimestamp());
 
             builder.recipientId(monitoredAccount.accountId);
@@ -596,7 +600,7 @@ public class FundingMonitor {
                     monitor.accountName, Long.toUnsignedString(monitor.holdingId)));
         } else if (targetAsset == null || targetAsset.getQuantityATU() < monitoredAccount.threshold) {
             Attachment attachment = new ColoredCoinsAssetTransfer(monitor.holdingId, monitoredAccount.amount);
-            Transaction.Builder builder = Transaction.newTransactionBuilder(monitor.publicKey,
+            Transaction.Builder builder = transactionBuilder.newTransactionBuilder(monitor.publicKey,
                 0, 0, (short) 1440, attachment, blockchain.getLastBlockTimestamp());
             builder.recipientId(monitoredAccount.accountId);
             Transaction transaction = builder.build(null);
@@ -634,7 +638,7 @@ public class FundingMonitor {
                     monitor.accountName, Long.toUnsignedString(monitor.holdingId)));
         } else if (targetCurrency == null || targetCurrency.getUnits() < monitoredAccount.threshold) {
             Attachment attachment = new MonetarySystemCurrencyTransfer(monitor.holdingId, monitoredAccount.amount);
-            Transaction.Builder builder = Transaction.newTransactionBuilder(monitor.publicKey,
+            Transaction.Builder builder = transactionBuilder.newTransactionBuilder(monitor.publicKey,
                 0, 0, (short) 1440, attachment, blockchain.getLastBlockTimestamp());
             builder.recipientId(monitoredAccount.accountId);
             Transaction transaction = builder.build(null);

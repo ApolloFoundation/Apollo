@@ -155,7 +155,7 @@ public class AccountControlPhasingServiceImpl implements AccountControlPhasingSe
             return;
         }
         try {
-            phasingOnly.getPhasingParams().checkApprovable();
+            phasingPollService.checkApprovable(phasingOnly.getPhasingParams());
         } catch (AplException.NotCurrentlyValidException e) {
             //LOG.debug("Account control no longer valid: " + e.getMessage());
             return;

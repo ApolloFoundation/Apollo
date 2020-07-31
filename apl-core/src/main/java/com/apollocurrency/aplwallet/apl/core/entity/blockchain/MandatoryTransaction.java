@@ -26,11 +26,27 @@ import java.util.Set;
 public class MandatoryTransaction implements Transaction {
     private Transaction transaction;
     private byte[] requiredTxHash;
+    private byte[] transactionBytes;
     private Long dbId;
 
     public MandatoryTransaction(Transaction transaction, byte[] requiredTxHash, Long dbId) {
         this.transaction = transaction;
         this.requiredTxHash = requiredTxHash;
+        this.transactionBytes = transaction.getBytes();
+        this.dbId = dbId;
+    }
+
+    public void setTransaction(Transaction transaction) {
+        this.transaction = transaction;
+    }
+
+    public byte[] getTransactionBytes() {
+        return transactionBytes;
+    }
+
+    public MandatoryTransaction(byte[] requiredTxHash, byte[] transactionBytes, Long dbId) {
+        this.requiredTxHash = requiredTxHash;
+        this.transactionBytes = transactionBytes;
         this.dbId = dbId;
     }
 
@@ -92,6 +108,11 @@ public class MandatoryTransaction implements Transaction {
     @Override
     public boolean hasValidSignature() {
         return transaction.hasValidSignature();
+    }
+
+    @Override
+    public void withValidSignature() {
+        transaction.withValidSignature();
     }
 
     @Override
@@ -322,6 +343,16 @@ public class MandatoryTransaction implements Transaction {
     @Override
     public long getECBlockId() {
         return transaction.getECBlockId();
+    }
+
+    @Override
+    public boolean ofType(TransactionTypes.TransactionTypeSpec spec) {
+        return transaction.ofType(spec);
+    }
+
+    @Override
+    public boolean isNotOfType(TransactionTypes.TransactionTypeSpec spec) {
+        return transaction.isNotOfType(spec);
     }
 
     /**

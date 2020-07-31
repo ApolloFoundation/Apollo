@@ -20,38 +20,20 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+
+import javax.validation.constraints.NotNull;
 
 public interface Attachment extends Appendix {
 
-    EmptyAttachment ORDINARY_PAYMENT = new EmptyAttachment() {
-
-        @Override
-        public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
-            return TransactionTypes.TransactionTypeSpec.ORDINARY_PAYMENT;
-        }
-
-    };
-    EmptyAttachment PRIVATE_PAYMENT = new EmptyAttachment() {
-
-        @Override
-        public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
-            return TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT;
-        }
-
-    };
+    EmptyAttachment ORDINARY_PAYMENT = new OrdinaryPaymentAttachment();
+    EmptyAttachment PRIVATE_PAYMENT = new PrivatePaymentAttachment();
     // the message payload is in the Appendix
-    EmptyAttachment ARBITRARY_MESSAGE = new EmptyAttachment() {
-
-        @Override
-        public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
-            return TransactionTypes.TransactionTypeSpec.ARBITRARY_MESSAGE;
-        }
-
-    };
+    EmptyAttachment ARBITRARY_MESSAGE = new ArbitraryMessageAttachment();
 
     TransactionTypes.TransactionTypeSpec getTransactionTypeSpec();
 
 
-
+    void bindTransactionType(@NotNull TransactionType transactionType);
 }
