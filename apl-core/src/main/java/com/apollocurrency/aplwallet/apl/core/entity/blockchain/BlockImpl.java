@@ -380,15 +380,20 @@ public final class BlockImpl implements Block {
     }
 
     @Override
-    public void setPrevious(Block block, HeightConfig config, Shard lastShard) {
+    public void setPrevious(Block[] threeLatestBlocksArray, HeightConfig config, Shard lastShard, int initialBlockHeight) {
         Objects.requireNonNull(config, "HeightConfig is NULL");
-        if (block != null) {
-            if (block.getId() != getPreviousBlockId()) {
+        Objects.requireNonNull(threeLatestBlocksArray, "shardInitialBlock is NULL");// check for now (not sure if needed?)
+        if (threeLatestBlocksArray.length == 0) {
+            // shouldn't happen as previous id is already verified, but just in case
+            throw new IllegalArgumentException("threeLatestBlocksArray is empty and has 0 element(s)");
+        }
+        if (threeLatestBlocksArray[0] != null) {
+            if (threeLatestBlocksArray[0].getId() != getPreviousBlockId()) {
                 // shouldn't happen as previous id is already verified, but just in case
-                throw new IllegalStateException("Previous block id doesn't match");
+                throw new IllegalStateException("Previous threeLatestBlocksArray id doesn't match");
             }
-            this.height = block.getHeight() + 1;
-            this.calculateBaseTarget(block, config, lastShard);
+            this.height = threeLatestBlocksArray[0].getHeight() + 1;
+            this.calculateBaseTarget(threeLatestBlocksArray, config, lastShard, initialBlockHeight);
         } else {
             this.height = 0;
         }
@@ -406,43 +411,45 @@ public final class BlockImpl implements Block {
         }
     }
 
-    private void calculateBaseTarget(Block previousBlock, HeightConfig config, Shard lastShard) {
-        long prevBaseTarget = previousBlock.getBaseTarget();
-        int blockchainHeight = previousBlock.getHeight();
+    private void calculateBaseTarget(Block[] threeLatestBlocksArray, HeightConfig config, Shard lastShard, int initialBlockHeight) {
+        long prevBaseTarget = threeLatestBlocksArray[0].getBaseTarget();
+        int blockchainHeight = threeLatestBlocksArray[0].getHeight();
         if (blockchainHeight > 2 && blockchainHeight % 2 == 0) {
-            int blocktimeAverage = getBlockTimeAverage(previousBlock, lastShard);
+            int blocktimeAverage = getBlockTimeAverage(threeLatestBlocksArray, lastShard, initialBlockHeight);
             int blockTime = config.getBlockTime();
             if (blocktimeAverage > blockTime) {
                 int maxBlocktimeLimit = config.getMaxBlockTimeLimit();
-                baseTarget = (prevBaseTarget * Math.min(blocktimeAverage, maxBlocktimeLimit)) / blockTime;
+                this.baseTarget = (prevBaseTarget * Math.min(blocktimeAverage, maxBlocktimeLimit)) / blockTime;
             } else {
                 int minBlocktimeLimit = config.getMinBlockTimeLimit();
-                baseTarget = prevBaseTarget - prevBaseTarget * Constants.BASE_TARGET_GAMMA
+                this.baseTarget = prevBaseTarget - prevBaseTarget * Constants.BASE_TARGET_GAMMA
                     * (blockTime - Math.max(blocktimeAverage, minBlocktimeLimit)) / (100 * blockTime);
             }
             long maxBaseTarget = config.getMaxBaseTarget();
-            if (baseTarget < 0 || baseTarget > maxBaseTarget) {
-                baseTarget = maxBaseTarget;
+            if (this.baseTarget < 0 || this.baseTarget > maxBaseTarget) {
+                this.baseTarget = maxBaseTarget;
             }
             long minBaseTarget = config.getMinBaseTarget();
-            if (baseTarget < minBaseTarget) {
-                baseTarget = config.getMinBaseTarget();
+            if (this.baseTarget < minBaseTarget) {
+                this.baseTarget = config.getMinBaseTarget();
             }
         } else {
-            baseTarget = prevBaseTarget;
+            this.baseTarget = prevBaseTarget;
         }
-        cumulativeDifficulty = previousBlock.getCumulativeDifficulty().add(Convert.two64.divide(BigInteger.valueOf(baseTarget)));
+        this.cumulativeDifficulty = threeLatestBlocksArray[0].getCumulativeDifficulty().add(Convert.two64.divide(BigInteger.valueOf(this.baseTarget)));
     }
 
-    private int getBlockTimeAverage(Block previousBlock, Shard lastShard) {
-        int blockchainHeight = previousBlock.getHeight();
-        Block shardInitialBlock = lookupBlockchain().getShardInitialBlock();
-        int lastBlockTimestamp = getPrevTimestamp(shardInitialBlock.getHeight(), blockchainHeight - 2, lastShard);
-        if (version != Block.LEGACY_BLOCK_VERSION) {
-            int intermediateTimestamp = getPrevTimestamp(shardInitialBlock.getHeight(), blockchainHeight - 1, lastShard);
-            int intermediateTimeout = getPrevTimeout(shardInitialBlock.getHeight(), blockchainHeight - 1, lastShard);
-            int thisBlockActualTime = this.timestamp - previousBlock.getTimestamp() - this.timeout;
-            int previousBlockTime = previousBlock.getTimestamp() - previousBlock.getTimeout() - intermediateTimestamp;
+    private int getBlockTimeAverage(Block[] threeLatestBlocksArray, Shard lastShard, int initialBlockHeight) {
+        int blockchainHeight = threeLatestBlocksArray[0].getHeight();
+        Block blockAtHeight = threeLatestBlocksArray[2];
+        int lastBlockTimestamp = validatePrevTimestamp(
+            initialBlockHeight, blockchainHeight - 2, lastShard, blockAtHeight);
+        if (this.version != Block.LEGACY_BLOCK_VERSION) {
+            blockAtHeight = threeLatestBlocksArray[1];
+            int intermediateTimestamp = validatePrevTimestamp(initialBlockHeight, blockchainHeight - 1, lastShard, blockAtHeight);
+            int intermediateTimeout = validatePrevTimeout(initialBlockHeight, blockchainHeight - 1, lastShard, blockAtHeight);
+            int thisBlockActualTime = this.timestamp - threeLatestBlocksArray[0].getTimestamp() - this.timeout;
+            int previousBlockTime = threeLatestBlocksArray[0].getTimestamp() - threeLatestBlocksArray[0].getTimeout() - intermediateTimestamp;
             int secondAvgBlockTime = intermediateTimestamp
                 - intermediateTimeout - lastBlockTimestamp;
             return (thisBlockActualTime + previousBlockTime + secondAvgBlockTime) / 3;
@@ -451,7 +458,7 @@ public final class BlockImpl implements Block {
         }
     }
 
-    private int getPrevTimestamp(int shardInitialHeight, int blockHeight, Shard lastShard) {
+    private int validatePrevTimestamp(int shardInitialHeight, int blockHeight, Shard lastShard, Block blockAtHeight) {
         int diff = shardInitialHeight - blockHeight;
         if (diff > 2) {
             throw new IllegalArgumentException("Unable to retrieve block timestamp for height " + blockHeight + " current shard height " + shardInitialHeight);
@@ -460,10 +467,10 @@ public final class BlockImpl implements Block {
             int[] blockTimestamps = lastShard.getBlockTimestamps();
             return blockTimestamps[diff - 1];
         }
-        return lookupBlockchain().getBlockAtHeight(blockHeight).getTimestamp();
+        return blockAtHeight.getTimestamp();
     }
 
-    private int getPrevTimeout(int shardInitialHeight, int blockHeight, Shard lastShard) {
+    private int validatePrevTimeout(int shardInitialHeight, int blockHeight, Shard lastShard, Block blockAtHeight) {
         int diff = shardInitialHeight - blockHeight;
         if (diff > 2) {
             throw new IllegalArgumentException("Unable to retrieve block timeout for height " + blockHeight + " current shard height " + shardInitialHeight);
@@ -472,7 +479,7 @@ public final class BlockImpl implements Block {
             int[] blockTimeouts = lastShard.getBlockTimeouts();
             return blockTimeouts[diff - 1];
         }
-        return lookupBlockchain().getBlockAtHeight(blockHeight).getTimeout();
+        return blockAtHeight.getTimeout();
     }
 
     private Blockchain lookupBlockchain() {

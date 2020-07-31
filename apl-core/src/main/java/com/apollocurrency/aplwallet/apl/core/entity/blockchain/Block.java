@@ -81,13 +81,9 @@ public interface Block {
 
     byte[] getBytes();
 
-//    boolean verifyBlockSignature();
-
     boolean checkSignature();
 
-//    boolean verifyGenerationSignature() throws BlockchainProcessor.BlockOutOfOrderException;
-
-    void setPrevious(Block block, HeightConfig config, Shard lastShard);
+    void setPrevious(Block[] threeLatestBlocksArray, HeightConfig config, Shard lastShard, int initialBlockHeight);
 
     JSONObject getJSONObject();
 

@@ -178,6 +178,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final GeneratorService generatorService;
     private final BlockParser blockParser;
 
+    /**
+     * Three blocks are used for internal calculations on assigning previous block
+     */
+    private Block[] threeLatestBlocksArray = new Block[3];
+
     @Inject
     public BlockchainProcessorImpl(PropertiesHolder propertiesHolder, BlockchainConfig blockchainConfig,
                                    BlockValidator validator, Event<Block> blockEvent, Event<AccountLedgerEventType> ledgerEvent,
@@ -601,7 +606,17 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 //                block.setPrevious(previousLastBlock);
                 HeightConfig config = blockchainConfig.getCurrentConfig();
                 Shard lastShard = shardDao.getLastShard();
-                block.setPrevious(previousLastBlock, config, lastShard);
+                Block shardInitialBlock = blockchain.getShardInitialBlock();
+                int currentHeight = previousLastBlock.getHeight();
+                // put three latest blocks into array TODO: YL optimize to fetch three blocks later
+                threeLatestBlocksArray[0] = previousLastBlock;
+                if (currentHeight >= 1) {
+                    threeLatestBlocksArray[1] = blockchain.getBlockAtHeight(currentHeight - 1);
+                }
+                if (currentHeight >= 2) {
+                    threeLatestBlocksArray[2] = blockchain.getBlockAtHeight(currentHeight - 2);
+                }
+                block.setPrevious(threeLatestBlocksArray, config, lastShard, shardInitialBlock.getHeight());
                 log.trace("fire block on = {}, id = '{}', '{}'", block.getHeight(), block.getId(), BlockEventType.BEFORE_BLOCK_ACCEPT.name());
                 blockEvent.select(literal(BlockEventType.BEFORE_BLOCK_ACCEPT)).fire(block);
                 transactionProcessor.requeueAllUnconfirmedTransactions();
