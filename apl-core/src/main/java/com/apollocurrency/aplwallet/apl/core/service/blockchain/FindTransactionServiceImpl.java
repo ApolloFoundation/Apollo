@@ -90,11 +90,11 @@ public class FindTransactionServiceImpl implements FindTransactionService {
 
         int height = blockChainInfoService.getHeight();
 
-        Stream<TxReceipt> transactionStream = transactionDao.getTransactions((byte) -1, (byte) -1, timeStart, timeEnd,
+        Stream<TxReceipt> transactionStream = transactionDao.getTransactions(null, (byte) -1, (byte) -1, timeStart, timeEnd,
             0, 0, orderBy, 0, -1)
             .stream().peek(txReceipt -> {
-                txReceipt.setConfirmations(Math.max(0, height - txReceipt.getHeight()));
-                txReceipt.setStatus(TxReceipt.StatusEnum.CONFIRMED);
+                    txReceipt.setConfirmations(Math.max(0, height - txReceipt.getHeight()));
+                    txReceipt.setStatus(TxReceipt.StatusEnum.CONFIRMED);
                 }
             );
 
@@ -113,7 +113,7 @@ public class FindTransactionServiceImpl implements FindTransactionService {
             .filter(transaction -> transaction.getTimestamp() > timeStart && transaction.getTimestamp() < timeEnd)
             .count();
 
-        long txCount = transactionDao.getTransactionsCount((byte) -1, (byte) -1, timeStart, timeEnd,
+        long txCount = transactionDao.getTransactionsCount(null, (byte) -1, (byte) -1, timeStart, timeEnd,
             0, 0, orderBy, 0, -1);
 
         return unconfirmedTxCount + txCount;
@@ -133,7 +133,7 @@ public class FindTransactionServiceImpl implements FindTransactionService {
 
         int height = blockChainInfoService.getHeight();
 
-        Stream<TxReceipt> transactionStream = transactionDao.getTransactions((byte) -1, (byte) -1,
+        Stream<TxReceipt> transactionStream = transactionDao.getTransactions(query.getAccounts(), (byte) -1, (byte) -1,
             query.getStartTime(), query.getEndTime(),
             query.getFirstHeight(), query.getLastHeight(),
             query.getOrder().name(),
@@ -159,7 +159,7 @@ public class FindTransactionServiceImpl implements FindTransactionService {
             .filter(transaction -> transaction.getTimestamp() > query.getStartTime() && transaction.getTimestamp() < query.getEndTime())
             .count();
 
-        long txCount = transactionDao.getTransactionsCount((byte) -1, (byte) -1,
+        long txCount = transactionDao.getTransactionsCount(query.getAccounts(), (byte) -1, (byte) -1,
             query.getStartTime(), query.getEndTime(),
             query.getFirstHeight(), query.getLastHeight(),
             query.getOrder().name(),

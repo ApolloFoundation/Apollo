@@ -77,7 +77,7 @@ public class AplQueryObject {
         this.setLastHeight(query.getLast() != null ? query.getLast().intValue() : -1); //timestamp
 
         this.setPage(query.getPage() != null ? query.getPage() : -1);
-        this.setPage(query.getPerPage() != null ? query.getPerPage() : 25);
+        this.setPerPage(query.getPerPage() != null ? query.getPerPage() : 25);
 
         if (query.getOrderBy() != null) {
             this.setOrder(OrderByEnum.from(query.getOrderBy().name()));

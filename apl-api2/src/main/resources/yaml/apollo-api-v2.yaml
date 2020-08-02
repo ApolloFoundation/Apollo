@@ -961,6 +961,11 @@ components:
         - $ref: '#/components/schemas/BaseResponse'
         - type: object
           properties:
+            count:
+              type: integer
+              format: int32
+              description: Count of result items
+              example: 345
             result:
               type: array
               items:
