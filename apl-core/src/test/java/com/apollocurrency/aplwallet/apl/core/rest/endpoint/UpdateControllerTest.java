@@ -1,7 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.EcBlockData;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
@@ -9,21 +9,23 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.http.ElGamalEncryptor;
 import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.LegacyParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.provider.ByteArrayConverterProvider;
 import com.apollocurrency.aplwallet.apl.core.rest.provider.PlatformSpecConverterProvider;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.AccountParametersParser;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.transaction.CachedTransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSigner;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.CertificateMemoryStore;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateV2Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.update.UpdateV2TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
@@ -34,10 +36,7 @@ import com.apollocurrency.aplwallet.apl.util.env.OS;
 import com.apollocurrency.aplwallet.apl.util.env.PlatformSpec;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.resteasy.mock.MockHttpResponse;
-import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
-import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,6 +49,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -77,29 +77,29 @@ class UpdateControllerTest extends AbstractEndpointTest {
     @Mock
     TransactionProcessor processor;
     @Mock
-    ElGamalEncryptor elGamal = mock(ElGamalEncryptor.class);
+    ElGamalEncryptor elGamal;
     @Mock
-    AccountService accountService = mock(AccountService.class);
+    AccountService accountService;
     @Mock
     KeyStoreService keystoreService = mock(KeyStoreService.class);
     @Mock
     BlockchainConfig blockchainConfig;
-    UpdateV2Transaction v2Transaction = new UpdateV2Transaction(mock(CertificateMemoryStore.class));
+    UpdateV2TransactionType v2Transaction = new UpdateV2TransactionType(blockchainConfig, accountService);
 
     UpdateV2Attachment attachment = new UpdateV2Attachment("https://test.com", Level.CRITICAL, new Version("1.23.4"), "https://con.com", BigInteger.ONE, Convert.parseHexString("111100ff"), Set.of(new PlatformSpec(OS.WINDOWS, Arch.X86_64), new PlatformSpec(OS.NO_OS, Arch.ARM_64)));
-    @WeldSetup
-    WeldInitiator weldInitiator = WeldInitiator.from().addBeans(MockBean.of(v2Transaction, UpdateV2Transaction.class), MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class)).build();
 
     @Override
     @BeforeEach
     void setUp() {
         super.setUp();
-        transactionCreator = new TransactionCreator(validator, new PropertiesHolder(), timeService, new FeeCalculator(), blockchain, processor, typeFactory, builder);
+        UnconfirmedTransactionConverter converter = new UnconfirmedTransactionConverter(mock(PrunableLoadingService.class));
+        CachedTransactionTypeFactory txTypeFactory = new CachedTransactionTypeFactory(List.of(v2Transaction));
+        transactionCreator = new TransactionCreator(validator, new PropertiesHolder(), timeService, new FeeCalculator(mock(PrunableLoadingService.class), blockchainConfig), blockchain, processor, txTypeFactory, new TransactionBuilder(txTypeFactory), mock(TransactionSigner.class));
         dispatcher.getProviderFactory()
             .register(ByteArrayConverterProvider.class)
             .register(LegacyParameterExceptionMapper.class)
             .register(PlatformSpecConverterProvider.class);
-        UpdateController updateController = new UpdateController(new AccountParametersParser(accountService, blockchain, keystoreService, elGamal), transactionCreator);
+        UpdateController updateController = new UpdateController(new AccountParametersParser(accountService, blockchain, keystoreService, elGamal), transactionCreator, converter);
         dispatcher.getRegistry().addSingletonResource(updateController);
         dispatcher.getDefaultContextObjects().put(HttpServletRequest.class, req);
     }

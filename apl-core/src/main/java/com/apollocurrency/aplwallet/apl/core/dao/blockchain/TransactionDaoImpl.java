@@ -71,11 +71,11 @@ public class TransactionDaoImpl implements TransactionDao {
     private final TransactionTypeFactory typeFactory;
 
     @Inject
-    public TransactionDaoImpl(DatabaseManager databaseManager, TransactionTypeFactory factory) {
+    public TransactionDaoImpl(DatabaseManager databaseManager, TransactionTypeFactory factory, TransactionRowMapper transactionRowMapper) {
         Objects.requireNonNull(databaseManager);
         this.databaseManager = databaseManager;
         this.typeFactory = factory;
-        this.mapper = new TransactionRowMapper(typeFactory);
+        this.mapper = transactionRowMapper;
     }
 
     @Override
@@ -415,7 +415,7 @@ public class TransactionDaoImpl implements TransactionDao {
         if (blockTimestamp > 0) {
             buf.append("AND block_timestamp >= ? ");
         }
-        if (!includePrivate && TransactionTypes.findValue(type, subtype) == PRIVATE_PAYMENT) {
+        if (!includePrivate && TransactionTypes.find(type, subtype) == PRIVATE_PAYMENT) {
             throw new RuntimeException("None of private transactions should be retrieved!");
         }
         if (type >= 0) {

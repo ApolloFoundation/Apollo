@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
@@ -45,7 +46,15 @@ public class TransactionSerializerImpl implements TransactionSerializer {
         }
         json.put("ecBlockHeight", transaction.getECBlockHeight());
         json.put("ecBlockId", Long.toUnsignedString(transaction.getECBlockId()));
-        json.put("signature", Convert.toHexString(transaction.getSignature()));
+        Signature signature = transaction.getSignature();
+        if (signature != null) {
+            if (transaction.getVersion() < 2) {
+                //json.put("signature", getSignature().getJsonObject().get(SignatureParser.SIGNATURE_FIELD_NAME));
+                json.putAll(signature.getJsonObject());
+            } else {
+                json.put("signature", signature.getJsonObject());
+            }
+        }
         JSONObject attachmentJSON = new JSONObject();
         for (AbstractAppendix appendage : transaction.getAppendages()) {
             prunableService.loadPrunable(transaction, appendage, false);

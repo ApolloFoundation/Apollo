@@ -30,12 +30,14 @@ import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountControlPhasingServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.impl.BlockChainInfoServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.impl.PhasingPollServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.child.CreateChildTransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
@@ -44,7 +46,6 @@ import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
-import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
@@ -59,6 +60,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.CHILD_1;
 import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.CHILD_2;
@@ -72,7 +74,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @Disabled
-@EnableWeld
 @ExtendWith(MockitoExtension.class)
 public class ChildAccountApplyTest {
 
@@ -93,6 +94,7 @@ public class ChildAccountApplyTest {
     BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     Blockchain blockchain = mock(Blockchain.class);
     FeeCalculator calculator = mock(FeeCalculator.class);
+    AccountPublicKeyService accountPublicKeyService = mock(AccountPublicKeyService.class);
     NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
     TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
 
@@ -144,8 +146,10 @@ public class ChildAccountApplyTest {
     @Test
     void applyAttachment() throws AplException.NotValidException {
         //GIVEN
+        CreateChildTransactionType type = new CreateChildTransactionType(blockchainConfig, accountService, accountPublicKeyService);
+        TransactionBuilder builder = new TransactionBuilder(new CachedTransactionTypeFactory(List.of(type)));
         byte[] tx = Convert.parseHexString(SIGNED_TX_1_HEX);
-        Transaction.Builder txBuilder = TransactionBuilder.newTransactionBuilder(tx);
+        Transaction.Builder txBuilder = builder.newTransactionBuilder(tx);
         Transaction newTx = txBuilder.build();
 
         assertNotNull(newTx);

@@ -71,7 +71,7 @@ public final class GetBlockchainTransactions extends AbstractAPIRequestHandler {
         } catch (NumberFormatException e) {
             subtype = -1;
         }
-        if (TransactionTypes.findValue(type, subtype) == TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT) {
+        if (TransactionTypes.find(type, subtype) == TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT) {
             return PRIVATE_TRANSACTIONS_ACCESS_DENIED;
         }
         int firstIndex = HttpParameterParserUtil.getFirstIndex(req);

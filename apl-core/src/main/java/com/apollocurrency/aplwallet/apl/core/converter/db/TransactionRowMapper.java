@@ -6,10 +6,12 @@ package com.apollocurrency.aplwallet.apl.core.converter.db;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureParser;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.UnsupportedTransactionVersion;
@@ -22,16 +24,22 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnou
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+@Singleton
 public class TransactionRowMapper implements RowMapper<Transaction> {
     private final TransactionTypeFactory factory;
+    private final TransactionBuilder transactionBuilder;
 
-    public TransactionRowMapper(TransactionTypeFactory factory) {
+    @Inject
+    public TransactionRowMapper(TransactionTypeFactory factory, TransactionBuilder transactionBuilder) {
         this.factory = factory;
+        this.transactionBuilder = transactionBuilder;
     }
 
 
@@ -79,8 +87,8 @@ public class TransactionRowMapper implements RowMapper<Transaction> {
                 buffer.order(ByteOrder.LITTLE_ENDIAN);
             }
             TransactionType transactionType = factory.findTransactionType(type, subtype);
-            TransactionImpl.BuilderImpl builder = new TransactionImpl.BuilderImpl(version, senderPublicKey,
-                amountATM, feeATM, deadline, transactionType != null ? transactionType.parseAttachment(buffer) : null, timestamp,transactionType )
+            TransactionImpl.BuilderImpl builder = transactionBuilder.newTransactionBuilder(version, senderPublicKey,
+                amountATM, feeATM, deadline, transactionType != null ? transactionType.parseAttachment(buffer) : null, timestamp)
                 .referencedTransactionFullHash(referencedTransactionFullHash)
                 .blockId(blockId)
                 .height(height)
@@ -92,6 +100,7 @@ public class TransactionRowMapper implements RowMapper<Transaction> {
                 .ecBlockId(ecBlockId)
                 .dbId(dbId)
                 .index(transactionIndex);
+
             if (transactionType != null && transactionType.canHaveRecipient()) {
                 long recipientId = rs.getLong("recipient_id");
                 if (!rs.wasNull()) {

@@ -27,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.signature.DocumentSigner;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.UnsupportedTransactionVersion;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttachment;
@@ -67,6 +68,7 @@ public class ShufflerServiceImpl implements ShufflerService {
     private final FeeCalculator feeCalculator;
     private final BlockchainProcessor blockchainProcessor;
     private final AccountService accountService;
+    private final TransactionBuilder transactionBuilder;
     private final int MAX_SHUFFLERS;
 
     private final DocumentSigner documentSigner;
@@ -78,7 +80,7 @@ public class ShufflerServiceImpl implements ShufflerService {
     public ShufflerServiceImpl(PropertiesHolder propertiesLoade, TransactionProcessor transactionProcessor,
                                Blockchain blockchain, GlobalSync globalSync, ShufflingService shufflingService,
                                FeeCalculator feeCalculator, BlockchainProcessor blockchainProcessor,
-                               AccountService accountService) {
+                               AccountService accountService, TransactionBuilder transactionBuilder) {
         this.transactionProcessor = transactionProcessor;
         this.blockchain = blockchain;
         this.globalSync = globalSync;
@@ -87,6 +89,7 @@ public class ShufflerServiceImpl implements ShufflerService {
         this.blockchainProcessor = blockchainProcessor;
         this.accountService = accountService;
         this.MAX_SHUFFLERS = propertiesLoade.getIntProperty("apl.maxNumberOfShufflers");
+        this.transactionBuilder = transactionBuilder;
         this.documentSigner = SignatureToolFactory.selectBuilder(1).orElseThrow(UnsupportedTransactionVersion::new);
     }
 
@@ -478,7 +481,7 @@ public class ShufflerServiceImpl implements ShufflerService {
         //TODO Use TransactionVersionValidator#getActualVersion()
         int version = 1;
         try {
-            Transaction.Builder builder = TransactionBuilder.newTransactionBuilder(version, Crypto.getPublicKey(Crypto.getKeySeed(shuffler.getSecretBytes())), 0, 0,
+            Transaction.Builder builder = transactionBuilder.newTransactionBuilder(version, Crypto.getPublicKey(Crypto.getKeySeed(shuffler.getSecretBytes())), 0, 0,
                 (short) 1440, attachment, blockchain.getLastBlockTimestamp());
 
             Transaction transaction = builder.build();

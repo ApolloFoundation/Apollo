@@ -9,15 +9,14 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollResult;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexCloseOrderAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
-import com.apollocurrency.aplwallet.apl.exchange.DexConfig;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.dex.DexCloseOrderTransaction;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
@@ -25,15 +24,12 @@ import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
-import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
-import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 
-import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -56,26 +52,22 @@ class DexCloseOrderTransactionTest {
         ExchangeContractStatus.STEP_2, new byte[32], "100", null, new byte[32],
         7200, null, true);
     DexOrder order = new DexOrder(200L, 100L, "from", "to", OrderType.BUY, OrderStatus.OPEN, DexCurrency.APL, 250L, DexCurrency.ETH, BigDecimal.ONE, 500);
-    DexService dexService = mock(DexService.class);
-    @WeldSetup
-    WeldInitiator weld = WeldInitiator.from()
-        .addBeans(
-            MockBean.of(mock(DexConfig.class), DexConfig.class),
-            MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class),
-            MockBean.of(mock(BlockchainImpl.class), Blockchain.class, BlockchainImpl.class),
-            MockBean.of(mock(PhasingPollService.class), PhasingPollService.class),
-            MockBean.of(dexService, DexService.class),
-            MockBean.of(mock(TimeService.class), TimeService.class)
-        ).build();
-    @Inject
+    @Mock
+    BlockchainConfig blockchainConfig;
+    @Mock
+    AccountService accountService;
+    @Mock
+    DexService dexService;
+
+    @Mock
     Blockchain blockchain;
-    @Inject
+    @Mock
     PhasingPollService phasingPollService;
     DexCloseOrderTransaction transactionType;
 
     @BeforeEach
     void setUp() {
-        transactionType = new DexCloseOrderTransaction();
+        transactionType = new DexCloseOrderTransaction(blockchainConfig, accountService, dexService, blockchain, phasingPollService);
     }
 
     @Test
@@ -154,7 +146,7 @@ class DexCloseOrderTransactionTest {
         doReturn(transferTx).when(blockchain).getTransaction(100);
         assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
 
-        doReturn(DEX.DEX_TRANSFER_MONEY_TRANSACTION).when(transferTx).getType();
+        doReturn(transactionType).when(transferTx).getType();
         assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
 
         doReturn(1000L).when(transferTx).getSenderId();
@@ -162,7 +154,9 @@ class DexCloseOrderTransactionTest {
         doReturn(attachment).when(transferTx).getAttachment();
         assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
 
-        attachment.setContractId(10L);
+        attachment = new DexControlOfFrozenMoneyAttachment(10L, 100000);
+        doReturn(attachment).when(transferTx).getAttachment();
+
         assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
         doReturn(new PhasingPollResult(1L, 1, 1L, 1L, true)).when(phasingPollService).getResult(100);
         transactionType.validateAttachment(tx);
@@ -200,7 +194,7 @@ class DexCloseOrderTransactionTest {
     void testIsDuplicate() {
         Transaction tx = mock(Transaction.class);
         doReturn(attachment).when(tx).getAttachment();
-        HashMap<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
+        HashMap<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates = new HashMap<>();
         assertFalse(transactionType.isDuplicate(tx, duplicates));
         assertTrue(transactionType.isDuplicate(tx, duplicates));
         assertTrue(transactionType.isDuplicate(tx, duplicates));

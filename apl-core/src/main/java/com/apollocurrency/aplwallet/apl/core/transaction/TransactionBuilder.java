@@ -8,8 +8,9 @@ import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataExtendAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUploadAttachment;
+import com.apollocurrency.aplwallet.apl.core.signature.Signature;
+import com.apollocurrency.aplwallet.apl.core.signature.SignatureParser;
+import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
@@ -19,6 +20,8 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryp
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingProcessingAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataExtendAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUploadAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
@@ -55,6 +58,11 @@ public class TransactionBuilder {
             byte type = buffer.get();
             byte subtype = buffer.get();
             byte version = (byte) ((subtype & 0xF0) >> 4);
+            Signature signature = null;
+            SignatureParser signatureParser = SignatureToolFactory.selectParser(version).orElseThrow(UnsupportedTransactionVersion::new);
+            if (version < 2) {
+                signature = signatureParser.parse(buffer);
+            }
             subtype = (byte) (subtype & 0x0F);
             int timestamp = buffer.getInt();
             short deadline = buffer.getShort();
@@ -66,9 +74,6 @@ public class TransactionBuilder {
             byte[] referencedTransactionFullHash = new byte[32];
             buffer.get(referencedTransactionFullHash);
             referencedTransactionFullHash = Convert.emptyToNull(referencedTransactionFullHash);
-            byte[] signature = new byte[64];
-            buffer.get(signature);
-            signature = Convert.emptyToNull(signature);
             int flags = 0;
             int ecBlockHeight = 0;
             long ecBlockId = 0;
@@ -116,6 +121,11 @@ public class TransactionBuilder {
             if ((flags & position) != 0) {
                 builder.appendix(new PrunableEncryptedMessageAppendix(buffer));
             }
+            if (version >= 2) {
+                //read transaction multi-signature V2
+                signature = signatureParser.parse(buffer);
+            }
+            builder.signature(signature);
             if (buffer.hasRemaining()) {
                 throw new AplException.NotValidException("Transaction bytes too long, " + buffer.remaining() + " extra bytes");
             }
@@ -163,9 +173,17 @@ public class TransactionBuilder {
             long amountATM = transactionData.containsKey("amountATM") ? Convert.parseLong(transactionData.get("amountATM")) : Convert.parseLong(transactionData.get("amountNQT"));
             long feeATM = transactionData.containsKey("feeATM") ? Convert.parseLong(transactionData.get("feeATM")) : Convert.parseLong(transactionData.get("feeNQT"));
             String referencedTransactionFullHash = (String) transactionData.get("referencedTransactionFullHash");
-            byte[] signature = Convert.parseHexString((String) transactionData.get("signature"));
             Long versionValue = (Long) transactionData.get("version");
             byte version = versionValue == null ? 0 : versionValue.byteValue();
+            SignatureParser signatureParser = SignatureToolFactory.selectParser(version).orElseThrow(UnsupportedTransactionVersion::new);
+            JSONObject sigJsonObject;
+            if (version < 2) {
+                sigJsonObject = new JSONObject();
+                sigJsonObject.put(SignatureParser.SIGNATURE_FIELD_NAME, transactionData.get("signature"));
+            } else {
+                sigJsonObject = (JSONObject) transactionData.get("signature");
+            }
+            Signature signature = signatureParser.parse(sigJsonObject);
             JSONObject attachmentData = (JSONObject) transactionData.get("attachment");
             int ecBlockHeight = 0;
             long ecBlockId = 0;
@@ -198,6 +216,7 @@ public class TransactionBuilder {
                 builder.appendix(PrunablePlainMessageAppendix.parse(attachmentData));
                 builder.appendix(PrunableEncryptedMessageAppendix.parse(attachmentData));
             }
+            builder.signature(signature);
             return builder;
         } catch (RuntimeException e) {
             log.debug("Failed to parse transaction: " + transactionData.toJSONString());

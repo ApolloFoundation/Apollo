@@ -18,17 +18,11 @@ import javax.inject.Singleton;
 @Singleton
 public class FeeCalculator {
     private final PrunableLoadingService prunableService;
-
-    @Inject
-    public FeeCalculator(PrunableLoadingService prunableService) {
-        this.prunableService = prunableService;
-    }
-
-
     private final BlockchainConfig blockchainConfig;
 
     @Inject
-    public FeeCalculator(BlockchainConfig blockchainConfig) {
+    public FeeCalculator(PrunableLoadingService prunableService, BlockchainConfig blockchainConfig) {
+        this.prunableService = prunableService;
         this.blockchainConfig = blockchainConfig;
     }
 
@@ -50,10 +44,11 @@ public class FeeCalculator {
             log.error(errMsg);
             throw new IllegalArgumentException(errMsg);
         }else {
-            feeRate = heightConfig.getFeeRate(transaction.getType().getType(), transaction.getType().getSubtype());
+            TransactionTypes.TransactionTypeSpec spec = transaction.getType().getSpec();
+            feeRate = heightConfig.getFeeRate(spec.getType(), spec.getSubtype());
             if(log.isTraceEnabled()){
                 log.trace("Calculate fee for tx type={} subtype={} at height={} totalFee={} * {} / 100 = {}",
-                    transaction.getType().getType(), transaction.getType().getSubtype(), blockchainHeight,
+                    spec.getType(), spec.getSubtype(), blockchainHeight,
                     totalFee, feeRate, totalFee * feeRate / FeeRate.RATE_DIVIDER);
             }
             totalFee = totalFee * feeRate / FeeRate.RATE_DIVIDER;

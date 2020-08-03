@@ -8,7 +8,10 @@ import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
@@ -24,10 +27,14 @@ import java.util.List;
 public class BlockParserImpl implements BlockParser {
 
     protected AccountService accountService;
+    private final TransactionBuilder transactionBuilder;
+    private final TransactionValidator transactionValidator;
 
     @Inject
-    public BlockParserImpl(AccountService accountService) {
+    public BlockParserImpl(AccountService accountService, TransactionBuilder transactionBuilder, TransactionValidator transactionValidator) {
         this.accountService = accountService;
+        this.transactionBuilder = transactionBuilder;
+        this.transactionValidator = transactionValidator;
     }
 
     @Override
@@ -52,7 +59,7 @@ public class BlockParserImpl implements BlockParser {
             int timeout = !requireTimeout(version) ? 0 : ((Long) timeoutJsonValue).intValue();
             List<Transaction> blockTransactions = new ArrayList<>();
             for (Object transactionData : (JSONArray) blockData.get("transactions")) {
-                blockTransactions.add(TransactionBuilder.parseTransaction((JSONObject) transactionData));
+                blockTransactions.add(parseTransaction((JSONObject) transactionData));
             }
             BlockImpl block = new BlockImpl(version, timestamp, previousBlock, totalAmountATM, totalFeeATM,
                 payloadLength, payloadHash, generatorPublicKey,
@@ -66,6 +73,14 @@ public class BlockParserImpl implements BlockParser {
             log.debug("Exception: " + e.getMessage());
             throw e;
         }
+    }
+
+    private Transaction parseTransaction(JSONObject jsonObject) throws AplException.NotValidException {
+        TransactionImpl tx = transactionBuilder.newTransactionBuilder(jsonObject).build();
+        if (tx.getSignature() != null && !transactionValidator.checkSignature(tx)) {
+            throw new AplException.NotValidException("Invalid transaction signature for transaction " + tx.getId());
+        }
+        return tx;
     }
 
     private boolean requireTimeout(int version) {

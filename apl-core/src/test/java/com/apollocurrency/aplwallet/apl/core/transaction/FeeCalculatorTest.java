@@ -31,7 +31,7 @@ class FeeCalculatorTest {
 
     @BeforeEach
     void setUp() {
-        feeCalculator = new FeeCalculator(blockchainConfig);
+        feeCalculator = new FeeCalculator(prunableService, blockchainConfig);
     }
 
     @Test

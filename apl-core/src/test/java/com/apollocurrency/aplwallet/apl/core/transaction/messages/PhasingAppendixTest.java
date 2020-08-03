@@ -6,48 +6,33 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.NtpTime;
-import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.jboss.weld.junit.MockBean;
-import org.jboss.weld.junit5.EnableWeld;
-import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
 
-//TODO fix several methods
-@EnableWeld
 class PhasingAppendixTest {
 
-    private BlockchainImpl blockchain = Mockito.mock(BlockchainImpl.class);
-    private TimeService timeService = Mockito.mock(TimeService.class);
-    @WeldSetup
-    public WeldInitiator weld = WeldInitiator.from(DbProperties.class, NtpTime.class,
-        PropertiesHolder.class,
-        TransactionDaoImpl.class, TransactionProcessor.class,
-        TransactionalDataSource.class)
-        .addBeans(MockBean.of(mock(DatabaseManager.class), DatabaseManager.class))
-        .addBeans(MockBean.of(blockchain, BlockchainImpl.class))
-        .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
-        .addBeans(MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class))
-        .addBeans(MockBean.of(timeService, TimeService.class))
-        .build();
+    @Mock
+    private Blockchain blockchain;
+    @Mock
+    private TimeService timeService;
+    @Mock
+    PhasingPollService phasingPollService;
+    @Mock
+    BlockchainConfig blockchainConfig;
+    PhasingAppendixV2Validator validatorv2;
+
+
     private Block block = Mockito.mock(Block.class);
     private int lastBlockHeight = 1000;
     private int currentTime = 11000;
@@ -60,41 +45,43 @@ class PhasingAppendixTest {
         Mockito.doReturn(currentTime).when(timeService).getEpochTime();
         Mockito.doReturn(block).when(blockchain).getLastBlock();
         phasingAppendix = new PhasingAppendixV2(-1, 360, new PhasingParams((byte) 0, 0, 3, 0, (byte) 0, new long[]{1, 2, 3}), null, null, Byte.MIN_VALUE);
+        validatorv2 = new PhasingAppendixV2Validator(new PhasingAppendixValidator(blockchain, phasingPollService, blockchainConfig, timeService), blockchain, timeService);
     }
 
     @Test
     void validateFinishHeightAndTimeWhenBothNotFilled() {
-        assertThrows(AplException.NotCurrentlyValidException.class, () -> phasingAppendix.validateFinishHeightAndTime(-1, -1));
+        PhasingAppendixV2Validator validatorv2 = new PhasingAppendixV2Validator(new PhasingAppendixValidator(blockchain, phasingPollService, blockchainConfig, timeService), blockchain, timeService);
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> validatorv2.validateFinishHeightAndTime(-1, -1, phasingAppendix));
     }
 
     @Disabled
     void validateFinishHeightAndTimeWhenBothFilled() {
-        assertThrows(AplException.NotCurrentlyValidException.class, () -> phasingAppendix.validateFinishHeightAndTime(500, 360));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> validatorv2.validateFinishHeightAndTime(500, 360, phasingAppendix));
     }
 
     @Disabled
     void validateFinishHeightAndTimeWhenTimeNull() {
-        assertThrows(AplException.NotCurrentlyValidException.class, () -> phasingAppendix.validateFinishHeightAndTime(500, null));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> validatorv2.validateFinishHeightAndTime(500, null, phasingAppendix));
     }
 
     @Disabled
     void validateFinishHeightAndTimeWhenHeightNull() {
-        assertThrows(AplException.NotCurrentlyValidException.class, () -> phasingAppendix.validateFinishHeightAndTime(null, 300));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> validatorv2.validateFinishHeightAndTime(null, 300, phasingAppendix));
     }
 
     @Test
     void validateFinishHeightAndTimeWhenHeightNotFilledAndTimeMoreThenMax() {
-        assertThrows(AplException.NotCurrentlyValidException.class, () -> phasingAppendix.validateFinishHeightAndTime(-1, currentTime + Constants.MAX_PHASING_TIME_DURATION_SEC));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> validatorv2.validateFinishHeightAndTime(-1, currentTime + Constants.MAX_PHASING_TIME_DURATION_SEC, phasingAppendix));
     }
 
     @Test
     void validateFinishHeightAndTimeWhenHeightLessThenMin() {
-        assertThrows(AplException.NotCurrentlyValidException.class, () -> phasingAppendix.validateFinishHeightAndTime(lastBlockHeight, -1));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> validatorv2.validateFinishHeightAndTime(lastBlockHeight, -1, phasingAppendix));
     }
 
     @Test
     void validateFinishHeightAndTimeWhenHeightMoreThenMax() {
-        assertThrows(AplException.NotCurrentlyValidException.class, () -> phasingAppendix.validateFinishHeightAndTime(lastBlockHeight + Constants.MAX_PHASING_DURATION, -1));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> validatorv2.validateFinishHeightAndTime(lastBlockHeight + Constants.MAX_PHASING_DURATION, -1, phasingAppendix));
     }
 
 

@@ -2,6 +2,7 @@ package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
 
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
+import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
@@ -13,9 +14,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendi
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
-import com.apollocurrency.aplwallet.apl.core.signature.Signature;
-import com.apollocurrency.aplwallet.apl.util.Filter;
-import org.json.simple.JSONObject;
 
 import java.util.Arrays;
 import java.util.List;
@@ -32,7 +30,7 @@ public class MandatoryTransaction implements Transaction {
     public MandatoryTransaction(Transaction transaction, byte[] requiredTxHash, Long dbId) {
         this.transaction = transaction;
         this.requiredTxHash = requiredTxHash;
-        this.transactionBytes = transaction.getBytes();
+        this.transactionBytes = transaction.getCopyTxBytes();
         this.dbId = dbId;
     }
 

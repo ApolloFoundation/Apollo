@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TransactionInfoMa
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TxReceiptMapper;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -33,16 +34,18 @@ public class TransactionApiServiceImpl implements TransactionApiService {
     private final Blockchain blockchain;
     private final TxReceiptMapper txReceiptMapper;
     private final TransactionInfoMapper transactionInfoMapper;
+    private final TransactionBuilder transactionBuilder;
 
     @Inject
     public TransactionApiServiceImpl(TransactionProcessor transactionProcessor,
                                      Blockchain blockchain,
                                      TxReceiptMapper txReceiptMapper,
-                                     TransactionInfoMapper transactionInfoMapper) {
+                                     TransactionInfoMapper transactionInfoMapper, TransactionBuilder transactionBuilder) {
         this.transactionProcessor = Objects.requireNonNull(transactionProcessor);
         this.blockchain = Objects.requireNonNull(blockchain);
         this.txReceiptMapper = Objects.requireNonNull(txReceiptMapper);
         this.transactionInfoMapper = Objects.requireNonNull(transactionInfoMapper);
+        this.transactionBuilder = transactionBuilder;
     }
 
     /*
@@ -72,7 +75,7 @@ public class TransactionApiServiceImpl implements TransactionApiService {
                 log.trace("API_V2: Broadcast transaction: tx={}", req.getTx());
             }
             byte[] tx = Convert.parseHexString(req.getTx());
-            Transaction.Builder txBuilder = TransactionBuilder.newTransactionBuilder(tx);
+            Transaction.Builder txBuilder = transactionBuilder.newTransactionBuilder(tx);
             Transaction newTx = txBuilder.build();
             if (log.isTraceEnabled()) {
                 log.trace("API_V2: parsed transaction=[{}] attachment={}", newTx.getType(), newTx.getAttachment());

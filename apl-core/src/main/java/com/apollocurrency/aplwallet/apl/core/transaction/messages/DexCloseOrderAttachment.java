@@ -14,7 +14,7 @@ import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes
 @AllArgsConstructor
 public class DexCloseOrderAttachment extends AbstractAttachment {
 
-    private long contractId;
+    private final long contractId;
 
     public DexCloseOrderAttachment(ByteBuffer buffer) {
         super(buffer);

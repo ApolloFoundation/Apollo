@@ -16,6 +16,7 @@ public class TransactionTypes {
     public static final byte TYPE_SHUFFLING = 7;
     public static final byte TYPE_UPDATE = 8;
     public static final byte TYPE_DEX = 9;
+    public static final byte TYPE_CHILD_ACCOUNT = 10;
 
     public static final byte SUBTYPE_PAYMENT_ORDINARY_PAYMENT = 0;
     public static final byte SUBTYPE_PAYMENT_PRIVATE_PAYMENT = 1;
@@ -84,6 +85,9 @@ public class TransactionTypes {
     public static final byte SUBTYPE_MONETARY_SYSTEM_EXCHANGE_SELL = 6;
     public static final byte SUBTYPE_MONETARY_SYSTEM_CURRENCY_MINTING = 7;
     public static final byte SUBTYPE_MONETARY_SYSTEM_CURRENCY_DELETION = 8;
+
+    public static final byte SUBTYPE_CHILD_CREATE = 0;
+    public static final byte SUBTYPE_CHILD_CONVERT_TO = 1;
 
     private static final Map<Integer, TransactionTypeSpec> ALL_TYPES = new HashMap<>();
 
@@ -156,6 +160,9 @@ public class TransactionTypes {
         DEX_TRANSFER_MONEY(TYPE_DEX, SUBTYPE_DEX_TRANSFER_MONEY),
         DEX_CLOSE_ORDER(TYPE_DEX, SUBTYPE_DEX_CLOSE_ORDER),
 
+        CHILD_ACCOUNT_CREATE(TYPE_CHILD_ACCOUNT, SUBTYPE_CHILD_CREATE),
+        CHILD_ACCOUNT_CONVERT_TO(TYPE_CHILD_ACCOUNT, SUBTYPE_CHILD_CONVERT_TO),
+
         ;
 
         private final byte type;
@@ -167,7 +174,7 @@ public class TransactionTypes {
             ALL_TYPES.put(subtype | type << 8, this);
         }
     }
-    public static TransactionTypeSpec findValue(int type, int subtype) {
+    public static TransactionTypeSpec find(int type, int subtype) {
         TransactionTypeSpec spec = ALL_TYPES.get(subtype | type << 8);
         if (spec == null) {
             throw new IllegalArgumentException("Unable to find spec for type '" + type + "' and subtype '" + subtype + "'");

@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Converter;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -24,18 +25,20 @@ import java.util.Map;
 @Singleton
 public class TransactionInfoMapper implements Converter<Transaction, TransactionInfoResp> {
     private final Blockchain blockchain;
+    private final PrunableLoadingService prunableLoadingService;
 
     @Inject
-    public TransactionInfoMapper(Blockchain blockchain) {
+    public TransactionInfoMapper(Blockchain blockchain, PrunableLoadingService prunableLoadingService) {
         this.blockchain = blockchain;
+        this.prunableLoadingService = prunableLoadingService;
     }
 
     @Override
     public TransactionInfoResp apply(Transaction model) {
         TransactionInfoResp dto = new TransactionInfoResp();
         dto.setId(model.getStringId());
-        dto.setType(String.valueOf(model.getType().getType()));
-        dto.setSubtype(String.valueOf(model.getType().getSubtype()));
+        dto.setType(String.valueOf(model.getType().getSpec().getType()));
+        dto.setSubtype(String.valueOf(model.getType().getSpec().getSubtype()));
         dto.setVersion(String.valueOf(model.getVersion()));
         dto.setAmount(String.valueOf(model.getAmountATM()));
         dto.setFee(String.valueOf(model.getFeeATM()));
@@ -63,7 +66,8 @@ public class TransactionInfoMapper implements Converter<Transaction, Transaction
 
         JSONObject attachmentJSON = new JSONObject();
 
-        for (Appendix appendage : model.getAppendages(true)) {
+        for (Appendix appendage : model.getAppendages()) {
+            prunableLoadingService.loadPrunable(model, appendage, true);
             attachmentJSON.putAll(appendage.getJSONObject());
         }
         if (!attachmentJSON.isEmpty()) {

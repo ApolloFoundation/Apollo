@@ -27,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.signature.DocumentSigner;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.UnsupportedTransactionVersion;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
@@ -100,6 +101,7 @@ public class FundingMonitorServiceImpl implements FundingMonitorService {
     private final AccountPropertyService accountPropertyService;
     private final TaskDispatchManager taskDispatchManager;
     private final DocumentSigner documentSigner;
+    private final TransactionBuilder transactionBuilder;
     /**
      * Maximum number of monitors
      */
@@ -123,7 +125,8 @@ public class FundingMonitorServiceImpl implements FundingMonitorService {
                                      AccountAssetService accountAssetService,
                                      AccountCurrencyService accountCurrencyService,
                                      AccountPropertyService accountPropertyService,
-                                     TaskDispatchManager taskDispatchManager) {
+                                     FeeCalculator feeCalculator,
+                                     TaskDispatchManager taskDispatchManager, TransactionBuilder transactionBuilder) {
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder);
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig);
         this.blockchain = Objects.requireNonNull(blockchain);
@@ -133,10 +136,11 @@ public class FundingMonitorServiceImpl implements FundingMonitorService {
         this.accountAssetService = Objects.requireNonNull(accountAssetService);
         this.accountCurrencyService = Objects.requireNonNull(accountCurrencyService);
         this.accountPropertyService = Objects.requireNonNull(accountPropertyService);
+        this.transactionBuilder = transactionBuilder;
         /** Maximum number of monitors */
         MAX_MONITORS = this.propertiesHolder.getIntProperty("apl.maxNumberOfMonitors");
         this.taskDispatchManager = taskDispatchManager;
-        this.feeCalculator = new FeeCalculator(blockchainConfig);
+        this.feeCalculator = feeCalculator;
         this.documentSigner = SignatureToolFactory.selectBuilder(1).orElseThrow(UnsupportedTransactionVersion::new);
     }
 
@@ -515,7 +519,7 @@ public class FundingMonitorServiceImpl implements FundingMonitorService {
             monitoredAccount, targetAccount, fundingAccount);
         FundingMonitorInstance monitor = monitoredAccount.getMonitor();
         if (targetAccount.getBalanceATM() < monitoredAccount.getThreshold()) {
-            Transaction.Builder builder = TransactionBuilder.newTransactionBuilder(monitor.getPublicKey(),
+            Transaction.Builder builder = transactionBuilder.newTransactionBuilder(monitor.getPublicKey(),
                 monitoredAccount.getAmount(), 0, (short) 1440,
                 Attachment.ORDINARY_PAYMENT, blockchain.getLastBlockTimestamp());
 
@@ -573,7 +577,7 @@ public class FundingMonitorServiceImpl implements FundingMonitorService {
                     monitor.getAccountName(), monitor.getHoldingId());
         } else if (targetAsset == null || targetAsset.getQuantityATU() < monitoredAccount.getThreshold()) {
             Attachment attachment = new ColoredCoinsAssetTransfer(monitor.getHoldingId(), monitoredAccount.getAmount());
-            Transaction.Builder builder = TransactionBuilder.newTransactionBuilder(monitor.getPublicKey(),
+            Transaction.Builder builder = transactionBuilder.newTransactionBuilder(monitor.getPublicKey(),
                 0, 0, (short) 1440, attachment, blockchain.getLastBlockTimestamp());
             builder.recipientId(monitoredAccount.getAccountId());
             Transaction transaction = builder.build(null);
@@ -623,7 +627,7 @@ public class FundingMonitorServiceImpl implements FundingMonitorService {
                     monitor.getAccountName(), monitor.getHoldingId());
         } else if (targetCurrency == null || targetCurrency.getUnits() < monitoredAccount.getThreshold()) {
             Attachment attachment = new MonetarySystemCurrencyTransfer(monitor.getHoldingId(), monitoredAccount.getAmount());
-            Transaction.Builder builder = TransactionBuilder.newTransactionBuilder(monitor.getPublicKey(),
+            Transaction.Builder builder = transactionBuilder.newTransactionBuilder(monitor.getPublicKey(),
                 0, 0, (short) 1440, attachment, blockchain.getLastBlockTimestamp());
             builder.recipientId(monitoredAccount.getAccountId());
             Transaction transaction = builder.build(null);
