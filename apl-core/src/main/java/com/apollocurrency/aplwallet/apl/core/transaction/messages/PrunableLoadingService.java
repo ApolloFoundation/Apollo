@@ -7,7 +7,6 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 
 import javax.enterprise.inject.Instance;
-import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.lang.reflect.ParameterizedType;
 import java.util.HashMap;
@@ -18,8 +17,11 @@ import java.util.function.Consumer;
 public class PrunableLoadingService {
     private final Map<Class<?>, PrunableLoader<?>> loaders = new HashMap<>();
 
-    @Inject
-    public PrunableLoadingService(Instance<PrunableLoader<?>> prunableLoaderInstances) {
+    public PrunableLoadingService() {
+
+    }
+
+    public void initLoaders(Instance<PrunableLoader<?>> prunableLoaderInstances) {
         prunableLoaderInstances.iterator().forEachRemaining(e-> {
             loaders.put((Class<?>) ((ParameterizedType)e.getClass().getGenericSuperclass()).getActualTypeArguments()[0], e);
         });

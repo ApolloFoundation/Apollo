@@ -6,6 +6,9 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 
+import javax.enterprise.inject.Vetoed;
+
+@Vetoed
 public class PrivatePaymentAttachment extends EmptyAttachment {
 
     @Override

@@ -18,7 +18,7 @@ import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 
 @Singleton
-class MinorUpdateTransactionType extends UpdateTransactionType {
+public class MinorUpdateTransactionType extends UpdateTransactionType {
     @Inject
     public MinorUpdateTransactionType(BlockchainConfig blockchainConfig, AccountService accountService) {
         super(blockchainConfig, accountService);

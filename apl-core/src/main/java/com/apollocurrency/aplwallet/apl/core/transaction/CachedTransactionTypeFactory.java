@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import javax.enterprise.inject.Instance;
-import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.Collection;
 import java.util.HashMap;
@@ -15,12 +14,9 @@ import java.util.Map;
 public class CachedTransactionTypeFactory implements TransactionTypeFactory {
     private Map<TypeSubtype, TransactionType> types = new HashMap<>();
 
-    @Inject
-    public CachedTransactionTypeFactory(Instance<TransactionType> typeInstances) {
-        for (TransactionType typeInstance : typeInstances) {
-            putIfNotPresent(typeInstance);
+    public CachedTransactionTypeFactory() {
         }
-    }
+
 
     private void putIfNotPresent(TransactionType type) {
         TransactionTypes.TransactionTypeSpec spec = type.getSpec();
@@ -29,6 +25,13 @@ public class CachedTransactionTypeFactory implements TransactionTypeFactory {
             throw new IllegalStateException("Duplicate instance for type: " + typeSubtype);
         }
         types.put(typeSubtype, type);
+    }
+
+    public void init(Instance<TransactionType> typeInstances) {
+        for (TransactionType typeInstance : typeInstances) {
+            putIfNotPresent(typeInstance);
+        }
+
     }
 
     public CachedTransactionTypeFactory(Collection<TransactionType> transactionTypes) {

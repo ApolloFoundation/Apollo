@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
@@ -19,8 +18,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendi
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
-import com.apollocurrency.aplwallet.apl.util.Filter;
-import org.json.simple.JSONObject;
 
 import java.util.List;
 import java.util.Map;
@@ -224,16 +221,6 @@ public class SimpleTransaction implements Transaction {
     }
 
     @Override
-    public JSONObject getJSONObject() {
-        return new JSONObject();
-    }
-
-    @Override
-    public JSONObject getPrunableAttachmentJSON() {
-        return null;
-    }
-
-    @Override
     public byte getVersion() {
         return 0;
     }
@@ -293,16 +280,6 @@ public class SimpleTransaction implements Transaction {
 
     @Override
     public List<AbstractAppendix> getAppendages() {
-        return null;
-    }
-
-    @Override
-    public List<AbstractAppendix> getAppendages(boolean includeExpiredPrunable) {
-        return null;
-    }
-
-    @Override
-    public List<AbstractAppendix> getAppendages(Filter<Appendix> filter, boolean includeExpiredPrunable) {
         return null;
     }
 

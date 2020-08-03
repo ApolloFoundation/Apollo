@@ -5,13 +5,13 @@ package com.apollocurrency.aplwallet.apl.core.transaction.types.cc;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.BidOrder;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
+import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.BidOrderService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderCancellation;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
@@ -26,7 +26,7 @@ public class CCBidOrderCancellationTransactionType extends ColoredCoinsOrderCanc
     private final OrderService<BidOrder, ColoredCoinsBidOrderPlacement> bidOrderService;
 
     @Inject
-    public CCBidOrderCancellationTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, OrderService<BidOrder, ColoredCoinsBidOrderPlacement> bidOrderService) {
+    public CCBidOrderCancellationTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, @BidOrderService OrderService<BidOrder, ColoredCoinsBidOrderPlacement> bidOrderService) {
         super(blockchainConfig, accountService);
         this.bidOrderService = bidOrderService;
     }
