@@ -133,7 +133,7 @@ public class FindTransactionServiceImpl implements FindTransactionService {
 
         int height = blockChainInfoService.getHeight();
 
-        Stream<TxReceipt> transactionStream = transactionDao.getTransactions(query.getAccounts(), (byte) -1, (byte) -1,
+        Stream<TxReceipt> transactionStream = transactionDao.getTransactions(query.getAccounts(), query.getType(), (byte) -1,
             query.getStartTime(), query.getEndTime(),
             query.getFirstHeight(), query.getLastHeight(),
             query.getOrder().name(),
@@ -159,7 +159,7 @@ public class FindTransactionServiceImpl implements FindTransactionService {
             .filter(transaction -> transaction.getTimestamp() > query.getStartTime() && transaction.getTimestamp() < query.getEndTime())
             .count();
 
-        long txCount = transactionDao.getTransactionsCount(query.getAccounts(), (byte) -1, (byte) -1,
+        long txCount = transactionDao.getTransactionsCount(query.getAccounts(), query.getType(), (byte) -1,
             query.getStartTime(), query.getEndTime(),
             query.getFirstHeight(), query.getLastHeight(),
             query.getOrder().name(),

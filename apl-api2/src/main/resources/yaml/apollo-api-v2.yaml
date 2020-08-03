@@ -14,6 +14,7 @@ externalDocs:
   url: https://github.com/ApolloFoundation/Apollo
 servers:
   - url: http://localhost:7876/rest
+  - url: http://51.15.104.205:7876/rest
 
 tags:
   - name: account
@@ -912,6 +913,26 @@ components:
     QueryObject:
       type: object
       properties:
+        type:
+          description: |
+            The transaction type, it's an optional parameter and can be missed or specified negative value to avoid
+            filtering by that criteria.
+            There are eleven types:
+              PAYMENT = 0;
+              MESSAGING = 1;
+              COLORED_COINS = 2;
+              DIGITAL_GOODS = 3;
+              ACCOUNT_CONTROL = 4;
+              MONETARY_SYSTEM = 5;
+              DATA = 6;
+              SHUFFLING = 7;
+              UPDATE = 8;
+              DEX = 9;
+              CHILD_ACCOUNT = 10;
+          type: integer
+          format: int8
+          example: 0
+          default: -1
         accounts:
           description: Exactly all items.
           nullable: true
@@ -1078,6 +1099,7 @@ components:
           type: integer
           format: int64
           example: 12
+          default: 0
 
     ListResponse:
       allOf:

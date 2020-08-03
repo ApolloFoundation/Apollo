@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 @Getter
 @Setter
 public class AplQueryObject {
+    private byte type = -1;
     private List<Long> accounts = new ArrayList<>();
     private int firstHeight;
     private int lastHeight;
@@ -41,7 +42,7 @@ public class AplQueryObject {
         ASC("asc"),
         DESC("desc");
         @Getter
-        private String value;
+        private final String value;
 
         OrderByEnum(String value) {
             this.value = value;
@@ -65,6 +66,7 @@ public class AplQueryObject {
     }
 
     public AplQueryObject(QueryObject query) {
+        this.setType(query.getType() != null ? query.getType().byteValue() : (byte) -1);
         if (query.getAccounts() != null) {
             this.setAccounts(query.getAccounts().stream().map(Convert::parseAccountId).collect(Collectors.toUnmodifiableList()));
         } else {
@@ -95,12 +97,13 @@ public class AplQueryObject {
     }
 
     public int getTo() {
-        return getFrom() + getPerPage();
+        return getFrom() + getPerPage() - 1;
     }
 
     @Override
     public String toString() {
         return new StringJoiner(", ", AplQueryObject.class.getSimpleName() + "[", "]")
+            .add("type=" + type)
             .add("accounts=[" + accounts.stream().map(Long::toUnsignedString).collect(Collectors.joining(",")) + "]")
             .add("firstHeight=" + firstHeight)
             .add("lastHeight=" + lastHeight)
