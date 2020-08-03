@@ -3,6 +3,7 @@
  */
 package com.apollocurrency.aplwallet.api.p2p;
 
+import com.apollocurrency.aplwallet.api.p2p.respons.BaseP2PResponse;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.EqualsAndHashCode;

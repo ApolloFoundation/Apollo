@@ -4,11 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockImpl;
@@ -19,6 +14,11 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Singleton
@@ -46,8 +46,10 @@ public class BlockParserImpl implements BlockParser {
             byte[] blockSignature = Convert.parseHexString((String) blockData.get("blockSignature"));
             byte[] previousBlockHash = version == 1 ? null : Convert.parseHexString((String) blockData.get("previousBlockHash"));
             Object timeoutJsonValue = blockData.get("timeout");
+
+            //TODO https://firstb.atlassian.net/browse/APL-1634
             if (generatorPublicKey == null) {
-                long generatorId = Long.parseUnsignedLong( (String)blockData.get("generatorId") );
+                long generatorId = Long.parseUnsignedLong((String) blockData.get("generatorId"));
                 generatorPublicKey = accountService.getPublicKeyByteArray(generatorId);
             }
             int timeout = !requireTimeout(version) ? 0 : ((Long) timeoutJsonValue).intValue();
