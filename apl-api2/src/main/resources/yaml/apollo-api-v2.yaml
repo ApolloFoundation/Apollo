@@ -1100,6 +1100,15 @@ components:
           format: int64
           example: 12
           default: 0
+        errorCode:
+          description: Error code on new API. null or 0 means success, no error.
+          type: integer
+          format: int32
+          example: 12
+        errorDescription:
+          description: Textual error description, e.g. exception message, etc that could be displayed to user
+          type: string
+          example: 'The mandatory parameter ''id'' is not specified.'
 
     ListResponse:
       allOf:
