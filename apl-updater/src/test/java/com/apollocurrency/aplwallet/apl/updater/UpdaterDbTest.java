@@ -4,12 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.update.UpdateTransactionType;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.update.CriticalUpdateTransactiionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediatorImpl;
@@ -28,10 +29,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.sql.DataSource;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -39,6 +37,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @Disabled
@@ -53,6 +53,10 @@ public class UpdaterDbTest {
     private PropertiesHolder propertiesHolder;
     @Mock
     private DbProperties dbProperties;
+    @Mock
+    BlockchainConfig blockchainConfig;
+    @Mock
+    AccountService accountService;
 
     @BeforeEach
     void setUp() {
@@ -64,7 +68,7 @@ public class UpdaterDbTest {
     public void testLoadUpdateTransaction() throws Exception {
         UpdateTransaction updateTransaction = repository.getLast();
         Transaction transaction = updateTransaction.getTransaction();
-        assertEquals(UpdateTransactionType.IMPORTANT, transaction.getType());
+        assertEquals(TransactionTypes.TransactionTypeSpec.CRITICAL_UPDATE, transaction.getType().getSpec());
         assertEquals(104595, transaction.getHeight());
         assertEquals(((UpdateAttachment) transaction.getAttachment()).getAppVersion(), new Version("1.0.8"));
         assertEquals(((UpdateAttachment) transaction.getAttachment()).getArchitecture(), Arch.X86_32);
@@ -88,7 +92,7 @@ public class UpdaterDbTest {
         repository.save(new UpdateTransaction(-4081443370478530685L, false));
         UpdateTransaction updateTransaction = repository.getLast();
         Transaction transaction = updateTransaction.getTransaction();
-        assertEquals(UpdateTransactionType.CRITICAL, transaction.getType());
+        assertEquals(TransactionTypes.TransactionTypeSpec.CRITICAL_UPDATE, transaction.getType().getSpec());
         assertEquals(104671, transaction.getHeight());
         assertEquals(((UpdateAttachment) transaction.getAttachment()).getAppVersion(), new Version("1.0.8"));
         assertEquals(((UpdateAttachment) transaction.getAttachment()).getArchitecture(), Arch.X86_64);
@@ -103,7 +107,7 @@ public class UpdaterDbTest {
         UpdateTransaction updateTransaction = repository.getLast();
         Transaction transaction = updateTransaction.getTransaction();
         assertEquals(-4081443370478530685L, transaction.getId());
-        assertEquals(UpdateTransactionType.CRITICAL, transaction.getAttachment().getTransactionTypeSpec());
+        assertEquals(TransactionTypes.TransactionTypeSpec.CRITICAL_UPDATE, transaction.getAttachment().getTransactionTypeSpec());
         assertFalse(updateTransaction.isUpdated());
     }
 
@@ -121,25 +125,13 @@ public class UpdaterDbTest {
         }
 
         @Override
-        public Transaction getTransaction(Connection connection, ResultSet rs) throws AplException.NotValidException {
-            try {
-                int height = rs.getInt("height");
-                long id = rs.getLong("id");
-                byte type = rs.getByte("type");
-                byte subType = rs.getByte("subtype");
-                byte[] attachmentBytes = rs.getBytes("attachment_bytes");
-                TransactionType transactionType = TransactionType.findTransactionType(type, subType);
-
-                ByteBuffer buffer = ByteBuffer.wrap(attachmentBytes);
-                buffer.order(ByteOrder.LITTLE_ENDIAN);
-                UpdateAttachment attachment = (UpdateAttachment) transactionType.parseAttachment(buffer);
-                SimpleTransaction simpleTransaction = new SimpleTransaction(id, transactionType, height);
-                simpleTransaction.setAttachment(attachment);
-                return simpleTransaction;
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-            return null;
+        public Transaction getTransaction(long id)  {
+            Transaction tx = mock(Transaction.class);
+            CriticalUpdateTransactiionType type = new CriticalUpdateTransactiionType(blockchainConfig, accountService);
+            doReturn(type).when(tx).getType();
+            doReturn(104671).when(tx).getHeight();
+            doReturn(-4081443370478530685L).when(tx).getId();
+            return tx;
         }
 
         @Override
