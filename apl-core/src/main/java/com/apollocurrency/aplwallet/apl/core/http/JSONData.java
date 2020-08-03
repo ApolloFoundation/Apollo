@@ -31,6 +31,11 @@ import com.apollocurrency.aplwallet.apl.core.app.Token;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.funding.FundingMonitorInstance;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.funding.MonitoredAccount;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.GeneratorMemoryEntity;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.DataTag;
@@ -74,10 +79,14 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingVote;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.PollOptionResult;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
+import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffler;
+import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.peer.Hallmark;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.funding.FundingMonitorService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
@@ -105,6 +114,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystem
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -144,6 +154,7 @@ public final class JSONData {
     private static CurrencyTransferService currencyTransferService = CDI.current().select(CurrencyTransferService.class).get();
     private static CurrencyService currencyService = CDI.current().select(CurrencyService.class).get();
     private static ShufflingService shufflingService = CDI.current().select(ShufflingService.class).get();
+    private static FundingMonitorService fundingMonitorService = CDI.current().select(FundingMonitorService.class).get();
     private static PrunableLoadingService prunableLoadingService = CDI.current().select(PrunableLoadingService.class).get();
     private static TransactionSerializer transactionSerializer = CDI.current().select(TransactionSerializer.class).get();
 
@@ -559,7 +570,12 @@ public final class JSONData {
         json.put("block", block.getStringId());
         json.put("height", block.getHeight());
         putAccount(json, "generator", block.getGeneratorId());
-        json.put("generatorPublicKey", Convert.toHexString(block.getGeneratorPublicKey()));
+        byte[] generatorPublicKey = block.getGeneratorPublicKey();
+        if (generatorPublicKey == null) {
+            generatorPublicKey = accountService.getPublicKeyByteArray(block.getGeneratorId());
+            block.setGeneratorPublicKey(generatorPublicKey);
+        }
+        json.put("generatorPublicKey", Convert.toHexString(generatorPublicKey));
         json.put("timestamp", block.getTimestamp());
 
         json.put("timeout", block.getTimeout());
@@ -1152,10 +1168,14 @@ public final class JSONData {
         if (referencedTransactionFullHash != null) {
             json.put("referencedTransactionFullHash", referencedTransactionFullHash);
         }
-        byte[] signature = Convert.emptyToNull(transaction.getSignature());
-        if (signature != null) {
-            json.put("signature", Convert.toHexString(signature));
-            json.put("signatureHash", Convert.toHexString(Crypto.sha256().digest(signature)));
+        if (transaction.getSignature() != null) {
+            if (transaction.getVersion() < 2) {
+                //json.put("signature", transaction.getSignature().getJsonObject().get(SignatureParser.SIGNATURE_FIELD_NAME));
+                json.putAll(transaction.getSignature().getJsonObject());
+            } else {
+                json.put("signature", transaction.getSignature().getJsonObject());
+            }
+            json.put("signatureHash", Convert.toHexString(Crypto.sha256().digest(transaction.getSignature().bytes())));
             json.put("fullHash", transaction.getFullHashString());
             json.put("transaction", transaction.getStringId());
         }
@@ -1225,7 +1245,7 @@ public final class JSONData {
         return json;
     }
 
-    public static JSONObject generator(Generator generator, int elapsedTime) {
+    public static JSONObject generator(GeneratorMemoryEntity generator, int elapsedTime) {
         JSONObject response = new JSONObject();
         long deadline = generator.getDeadline();
         putAccount(response, "account", generator.getAccountId());
@@ -1235,7 +1255,7 @@ public final class JSONData {
         return response;
     }
 
-    public static JSONObject accountMonitor(FundingMonitor monitor, boolean includeMonitoredAccounts) {
+    public static JSONObject accountMonitor(FundingMonitorInstance monitor, boolean includeMonitoredAccounts) {
         JSONObject json = new JSONObject();
         json.put("holdingType", monitor.getHoldingType().getCode());
         json.put("account", Long.toUnsignedString(monitor.getAccountId()));
@@ -1247,14 +1267,14 @@ public final class JSONData {
         json.put("interval", monitor.getInterval());
         if (includeMonitoredAccounts) {
             JSONArray jsonAccounts = new JSONArray();
-            List<FundingMonitor.MonitoredAccount> accountList = FundingMonitor.getMonitoredAccounts(monitor);
+            List<MonitoredAccount> accountList = fundingMonitorService.getMonitoredAccounts(monitor);
             accountList.forEach(account -> jsonAccounts.add(JSONData.monitoredAccount(account)));
             json.put("monitoredAccounts", jsonAccounts);
         }
         return json;
     }
 
-    static JSONObject monitoredAccount(FundingMonitor.MonitoredAccount account) {
+    static JSONObject monitoredAccount(MonitoredAccount account) {
         JSONObject json = new JSONObject();
         json.put("account", Long.toUnsignedString(account.getAccountId()));
         json.put("accountRS", account.getAccountName());

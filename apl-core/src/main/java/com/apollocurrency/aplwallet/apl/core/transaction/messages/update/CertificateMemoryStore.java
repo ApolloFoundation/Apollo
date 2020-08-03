@@ -8,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.io.IOException;
 import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -27,7 +26,7 @@ public class CertificateMemoryStore {
     private final URL caCertUrl;
 
     @Inject
-    public CertificateMemoryStore(@Property("updater.ca.cert-url") String caCertUrl,  CertificateLoader loader) throws MalformedURLException {
+    public CertificateMemoryStore(@Property("updater.ca.cert-url") String caCertUrl, CertificateLoader loader) throws MalformedURLException {
         this.loader = Objects.requireNonNull(loader);
         String notNullCertUrl = Objects.requireNonNull(caCertUrl);
         this.caCertUrl = new URL(notNullCertUrl);
@@ -38,14 +37,14 @@ public class CertificateMemoryStore {
         List<ApolloCertificate> all = null;
         try {
             all = loader.loadAll();
-        } catch (IOException e) {
-            log.error("Error loading all certificates !", e);
+        } catch (Exception e) {
+            log.debug("Error loading all certificates !", e);
         }
         X509Certificate rootCert = null;
         try {
             rootCert = FBCryptoFactory.createDefault().getKeyReader().readX509CertPEMorDER(caCertUrl.openStream());
-        } catch (IOException e) {
-            log.error("Error readX509 CertPEMorDER", e);
+        } catch (Exception e) {
+            log.debug("Error readX509 CertPEMorDER", e);
         }
         if (all != null) {
             for (ApolloCertificate apolloCertificate : all) {

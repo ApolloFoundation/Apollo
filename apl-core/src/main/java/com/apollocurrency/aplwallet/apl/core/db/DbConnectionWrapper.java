@@ -1,10 +1,10 @@
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.TransactionCallback;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Set;
-
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.TransactionCallback;
 
 /**
  * Connection wrapper pinned to ThreadLocal with caches

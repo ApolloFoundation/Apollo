@@ -4,12 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.account;
 
-import com.apollocurrency.aplwallet.apl.core.exception.DoubleSpendingException;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.exception.DoubleSpendingException;
 import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
 import com.apollocurrency.aplwallet.apl.core.model.Balances;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -56,7 +56,10 @@ public interface AccountService {
 
     Account addOrGetAccount(long id);
 
-    void update(Account account);
+    default void update(Account account){
+        update(account, true);
+    }
+    void update(Account account, boolean deleteIfHasZeroBalance);
 
     List<Block> getAccountBlocks(long accountId, int from, int to, int timestamp);
 
@@ -86,15 +89,21 @@ public interface AccountService {
 
     void addToBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM, long feeATM);
 
-    void addToBalanceAndUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM);
+    default void addToBalanceAndUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM){
+        addToBalanceAndUnconfirmedBalanceATM(account, event, eventId, amountATM, 0);
+    }
 
     void addToUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM, long feeATM);
 
-    void addToBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM);
+    default void addToBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM){
+        addToBalanceATM(account, event, eventId, amountATM, 0);
+    }
 
     void addToBalanceAndUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM, long feeATM);
 
-    void addToUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM);
+    default void addToUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM){
+        addToUnconfirmedBalanceATM(account, event, eventId, amountATM, 0);
+    }
 
     long getTotalAmountOnTopAccounts(int numberOfTopAccounts);
 

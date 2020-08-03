@@ -1,8 +1,8 @@
 package com.apollocurrency.aplwallet.apl.core.dao.appdata;
 
+import com.apollocurrency.aplwallet.apl.core.converter.db.ShardRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.factory.LongArrayArgumentFactory;
-import com.apollocurrency.aplwallet.apl.core.converter.db.ShardRowMapper;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;

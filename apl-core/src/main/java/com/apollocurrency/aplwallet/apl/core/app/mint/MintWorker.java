@@ -23,14 +23,18 @@ package com.apollocurrency.aplwallet.apl.core.app.mint;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSigner;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.TrustAllSSLProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -76,10 +80,12 @@ public class MintWorker implements Runnable {
     private PropertiesHolder propertiesHolder;
     private BlockchainConfig blockchainConfig;
     private TransactionBuilder transactionBuilder;
+    private TransactionSigner transactionSigner;
 
-    public MintWorker(PropertiesHolder propertiesHolder, BlockchainConfig blockchainConfig, TransactionBuilder transactionBuilder) {
+    public MintWorker(PropertiesHolder propertiesHolder, BlockchainConfig blockchainConfig, TransactionBuilder transactionBuilder, TransactionSigner transactionSigner) {
         this.blockchainConfig = blockchainConfig;
         this.propertiesHolder = propertiesHolder;
+        this.transactionSigner = transactionSigner;
         this.transactionBuilder = transactionBuilder;
     }
 
@@ -234,9 +240,11 @@ public class MintWorker implements Runnable {
             .ecBlockId(Convert.parseUnsignedLong((String) ecBlock.get("ecBlockId")));
         try {
             Transaction transaction = builder.build(keySeed);
+            transactionSigner.sign(transaction, keySeed);
+
             Map<String, String> params = new HashMap<>();
             params.put("requestType", "broadcastTransaction");
-            params.put("transactionBytes", Convert.toHexString(transaction.getBytes()));
+            params.put("transactionBytes", Convert.toHexString(transaction.getCopyTxBytes()));
             return getJsonResponse(params);
         } catch (AplException.NotValidException e) {
             LOG.info("local signing failed", e);

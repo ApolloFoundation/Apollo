@@ -66,7 +66,7 @@ public abstract class AbstractAttachment extends AbstractAppendix implements Att
 
     @Override
     public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        transactionType().apply((TransactionImpl) transaction, senderAccount, recipientAccount);
+        transactionType().apply(transaction, senderAccount, recipientAccount);
     }
 
     @Override
@@ -78,4 +78,14 @@ public abstract class AbstractAttachment extends AbstractAppendix implements Att
     public boolean isPhasable() {
         return !(this instanceof Prunable) && transactionType().isPhasable();
     }
+
+    public int getFinishValidationHeight(Transaction transaction) {
+        return isPhased(transaction) ? transaction.getPhasing().getFinishHeight() - 1 : lookupBlockchain().getHeight();
+    }
+
+    @Override
+    public String toString() {
+        return "Attachment[" + getClass().getSimpleName() + ":" + getTransactionType().getName() + "]";
+    }
+
 }

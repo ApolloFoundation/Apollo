@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ClientErrorExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ConstraintViolationExceptionMapper;
@@ -15,6 +13,8 @@ import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterExcepti
 import com.apollocurrency.aplwallet.apl.core.rest.validation.BlockchainHeightValidator;
 import com.apollocurrency.aplwallet.apl.core.rest.validation.CustomValidatorFactory;
 import com.apollocurrency.aplwallet.apl.core.rest.validation.TimestampValidator;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -40,7 +40,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 @Slf4j
-public class AbstractEndpointTest {
+public abstract class AbstractEndpointTest {
     public static final int CURRENT_HEIGHT = 650000;
     public static final int CODE_2FA = 123456;
     public static final String PASSPHRASE = "123456";

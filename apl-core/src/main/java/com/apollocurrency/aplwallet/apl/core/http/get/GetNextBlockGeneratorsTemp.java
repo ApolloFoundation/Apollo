@@ -20,16 +20,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.ActiveGenerator;
-import com.apollocurrency.aplwallet.apl.core.app.ActiveGenerators;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.ActiveGenerator;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.ActiveGeneratorService;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -76,7 +76,7 @@ import java.util.List;
 public final class GetNextBlockGeneratorsTemp extends AbstractAPIRequestHandler {
 
     private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
-    private static ActiveGenerators activeGenerators = CDI.current().select(ActiveGenerators.class).get();
+    private static ActiveGeneratorService activeGeneratorService = CDI.current().select(ActiveGeneratorService.class).get();
 
     public GetNextBlockGeneratorsTemp() {
         super(new APITag[]{APITag.FORGING}, "limit");
@@ -93,7 +93,7 @@ public final class GetNextBlockGeneratorsTemp extends AbstractAPIRequestHandler 
             response.put("timestamp", lastBlock.getTimestamp());
             response.put("height", lastBlock.getHeight());
             response.put("lastBlock", Long.toUnsignedString(lastBlock.getId()));
-            List<ActiveGenerator> activeGeneratorsList = activeGenerators.getNextGenerators();
+            List<ActiveGenerator> activeGeneratorsList = activeGeneratorService.getNextGenerators();
             response.put("activeCount", activeGeneratorsList.size());
             JSONArray generators = new JSONArray();
             for (ActiveGenerator generator : activeGeneratorsList) {

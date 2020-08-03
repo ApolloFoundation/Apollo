@@ -24,6 +24,9 @@ public class DefaultGlobalExceptionMapper implements ExceptionMapper<Exception> 
             log.warn("REST API NotFoundException", exception);
             return ResponseBuilder.apiError(ApiErrors.REST_API_SERVER_ERROR, message).build();
         }
+        if (exception instanceof com.fasterxml.jackson.core.JsonParseException) {
+            return ResponseBuilder.apiError(ApiErrors.REST_API_SERVER_ERROR, exception.getClass().getSimpleName() + ": " + message).build();
+        }
         log.debug("GlobalErrorHandler stacktrace = {}", stacktrace);
         return ResponseBuilder.detailedApiError(ApiErrors.UNKNOWN_SERVER_ERROR, stacktrace, message).build();
     }

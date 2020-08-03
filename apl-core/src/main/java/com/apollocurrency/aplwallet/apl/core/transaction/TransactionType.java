@@ -25,10 +25,37 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
+import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountInfoService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountLeaseService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPropertyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetDividendService;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetTransferService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyMintService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
+import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeRequestService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.Getter;
+import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
+import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
+import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
+import lombok.Setter;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -82,6 +109,7 @@ public abstract class TransactionType {
     public abstract void validateAttachment(Transaction transaction) throws AplException.ValidationException;
 
     // return false if double spending
+    @TransactionFee(FeeMarker.UNCONFIRMED_BALANCE)
     public final boolean applyUnconfirmed(Transaction transaction, Account senderAccount) {
         long amountATM = transaction.getAmountATM();
         long feeATM = transaction.getFeeATM();
@@ -122,6 +150,7 @@ public abstract class TransactionType {
 
     public abstract void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount);
 
+    @TransactionFee(FeeMarker.UNDO_UNCONFIRMED_BALANCE)
     public final void undoUnconfirmed(Transaction transaction, Account senderAccount) {
         undoAttachmentUnconfirmed(transaction, senderAccount);
         accountService.addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(),
@@ -132,6 +161,7 @@ public abstract class TransactionType {
         }
     }
 
+    @TransactionFee(FeeMarker.UNDO_UNCONFIRMED_BALANCE)
     public abstract void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount);
 
     public boolean isDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
@@ -167,10 +197,12 @@ public abstract class TransactionType {
         return true;
     }
 
+    @TransactionFee(FeeMarker.BASE_FEE)
     public Fee getBaselineFee(Transaction transaction) {
         return Fee.DEFAULT_FEE;
     }
 
+    @TransactionFee(FeeMarker.FEE)
     public Fee getNextFee(Transaction transaction) {
         return getBaselineFee(transaction);
     }
@@ -183,6 +215,7 @@ public abstract class TransactionType {
         return Integer.MAX_VALUE;
     }
 
+    @TransactionFee(FeeMarker.FEE)
     public long[] getBackFees(Transaction transaction) {
         return Convert.EMPTY_LONG;
     }

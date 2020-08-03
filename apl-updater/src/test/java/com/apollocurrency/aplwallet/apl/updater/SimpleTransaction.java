@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.updater;
 
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
@@ -18,7 +19,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendi
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONObject;
 
@@ -48,11 +48,6 @@ public class SimpleTransaction implements Transaction {
     @Override
     public boolean isUnconfirmedDuplicate(Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> unconfirmedDuplicates) {
         return false;
-    }
-
-    @Override
-    public void sign(byte[] keySeed) throws AplException.NotValidException {
-
     }
 
     @Override
@@ -178,8 +173,12 @@ public class SimpleTransaction implements Transaction {
     }
 
     @Override
-    public byte[] getSignature() {
-        return new byte[0];
+    public void sign(Signature signature) {
+    }
+
+    @Override
+    public Signature getSignature() {
+        return null;
     }
 
     @Override
@@ -211,12 +210,7 @@ public class SimpleTransaction implements Transaction {
     }
 
     @Override
-    public boolean verifySignature() {
-        return false;
-    }
-
-    @Override
-    public byte[] getBytes() {
+    public byte[] getCopyTxBytes() {
         return new byte[0];
     }
 

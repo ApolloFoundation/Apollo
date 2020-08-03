@@ -1,9 +1,11 @@
 package com.apollocurrency.aplwallet.apl.data;
 
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.ReferencedTransaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionImpl;
-import com.apollocurrency.aplwallet.apl.core.entity.appdata.ReferencedTransaction;
 import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
+import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
@@ -12,7 +14,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryp
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 
 import java.nio.ByteBuffer;
@@ -109,7 +110,7 @@ public class TransactionTestData {
     public TransactionTestData() {
     }
 
-    private static Transaction buildTransaction(long id, int height, long blockId, int blockTimestamp, short deadline, Long recipientId, short index, long amount, long fee, String fullHash, String signature, int timestamp, byte type, byte subtype, long senderId, String publicKey, String referencedTransactionFullhash, boolean phased, byte version, boolean hasMessage, boolean hasEncryptedMessage, boolean hasAnnouncedPublicKey, int ecBlockHeight, long ecBlockId, boolean hasEncrypttoselfMessage, boolean hasPrunableMessage, boolean hasPrunableEncryptedMessage, boolean hasPrunableAttachment, String attachment) {
+    public static Transaction buildTransaction(long id, int height, long blockId, int blockTimestamp, short deadline, Long recipientId, short index, long amount, long fee, String fullHash, String signature, int timestamp, byte type, byte subtype, long senderId, String publicKey, String referencedTransactionFullhash, boolean phased, byte version, boolean hasMessage, boolean hasEncryptedMessage, boolean hasAnnouncedPublicKey, int ecBlockHeight, long ecBlockId, boolean hasEncrypttoselfMessage, boolean hasPrunableMessage, boolean hasPrunableEncryptedMessage, boolean hasPrunableAttachment, String attachment) {
         ByteBuffer buffer = null;
         if (attachment != null) {
             buffer = ByteBuffer.wrap(Convert.parseHexString(attachment));
@@ -121,7 +122,7 @@ public class TransactionTestData {
             Transaction.Builder builder = new TransactionImpl.BuilderImpl(version, pk,
                 amount, fee, deadline, transactionType.parseAttachment(buffer), timestamp, )
                 .referencedTransactionFullHash(referencedTransactionFullhash)
-                .signature(Convert.parseHexString(signature))
+                .signature(SignatureToolFactory.createSignature(Convert.parseHexString(signature)))
                 .blockId(blockId)
                 .height(height)
                 .id(id)

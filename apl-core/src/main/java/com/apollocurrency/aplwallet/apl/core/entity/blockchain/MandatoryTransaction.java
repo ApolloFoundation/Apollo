@@ -13,6 +13,9 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendi
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
+import com.apollocurrency.aplwallet.apl.core.signature.Signature;
+import com.apollocurrency.aplwallet.apl.util.Filter;
+import org.json.simple.JSONObject;
 
 import java.util.Arrays;
 import java.util.List;
@@ -75,11 +78,6 @@ public class MandatoryTransaction implements Transaction {
     @Override
     public boolean isUnconfirmedDuplicate(Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> unconfirmedDuplicates) {
         return transaction.isUnconfirmedDuplicate(unconfirmedDuplicates);
-    }
-
-    @Override
-    public void sign(byte[] keySeed) {
-        throw new RuntimeException("Transaction is already signed");
     }
 
     @Override
@@ -208,7 +206,12 @@ public class MandatoryTransaction implements Transaction {
     }
 
     @Override
-    public byte[] getSignature() {
+    public void sign(Signature signature) {
+        throw new RuntimeException("Transaction is already signed");
+    }
+
+    @Override
+    public Signature getSignature() {
         return transaction.getSignature();
     }
 
@@ -233,13 +236,13 @@ public class MandatoryTransaction implements Transaction {
     }
 
     @Override
-    public boolean verifySignature() {
-        return transaction.verifySignature();
+    public byte[] getCopyTxBytes() {
+        return transaction.getCopyTxBytes();
     }
 
     @Override
-    public byte[] getBytes() {
-        return transaction.getBytes();
+    public byte[] bytes() {
+        return transaction.bytes();
     }
 
     @Override

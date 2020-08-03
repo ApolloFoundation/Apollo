@@ -3,8 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.core.service.appdata.impl;
 
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import lombok.extern.slf4j.Slf4j;
 
@@ -40,5 +40,10 @@ public class TimeServiceImpl implements TimeService {
     @Override
     public long systemTime() {
         return ntpTime.getTime() / 1000;
+    }
+
+    @Override
+    public long systemTimeMillis() {
+        return ntpTime.getTime();
     }
 }

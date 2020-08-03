@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-blockchain</artifactId>
-    <version>1.45.2</version>
+    <version>1.45.3</version>
   </parent>
 
   <artifactId>apl-exec</artifactId>
@@ -196,63 +196,6 @@
           </execution>
         </executions>
       </plugin>
-      <!--
-            <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-shade-plugin</artifactId>
-              <configuration>
-                <filters>
-                  <filter>
-                    <artifact>*:*</artifact>
-                    <excludes>
-                      <exclude>META-INF/*.SF</exclude>
-                      <exclude>META-INF/*.DSA</exclude>
-                      <exclude>META-INF/*.RSA</exclude>
-                    </excludes>
-                  </filter>
-                </filters>
-                <transformers>
-                  &lt;!&ndash; Add a transformer to exclude any other manifest files (possibly from dependencies). &ndash;&gt;
-                  <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
-                    <resource>MANIFEST.MF</resource>
-                  </transformer>
-                  &lt;!&ndash; Add a transformer to include your custom manifest file. &ndash;&gt;
-                  <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
-                    <resource>META-INF/MANIFEST.MF</resource>
-                    <file>src/main/resources/META-INF/MANIFEST.MF</file>
-                  </transformer>
-                  &lt;!&ndash; add Main-Class to manifest file &ndash;&gt;
-      &lt;!&ndash;
-                  <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                    <mainClass>com.apollocurrency.aplwallet.apl.exec.Apollo</mainClass>
-                  </transformer>
-      &ndash;&gt;
-                </transformers>
-                <artifactSet>
-                  <excludes>
-                    <exclude>org.jboss.weld:junit5</exclude>
-                    <exclude>org.jboss.weld:weld-junit-common</exclude>
-                    <exclude>junit:junit</exclude>
-                    <exclude>org.skyscreamer:jsonassert</exclude>
-                    <exclude>com.fasterxml.jackson.module:jackson-module-paranamer</exclude>
-                    <exclude>org.mockito:*</exclude>
-                    <exclude>org.opentest4j:*</exclude>
-                    <exclude>org.hibernate.javax.persistence:*</exclude>
-                    <exclude>org.apache.maven:lib:tests</exclude>
-                    <exclude>log4j:log4j:jar:</exclude>
-                  </excludes>
-                </artifactSet>
-              </configuration>
-              <executions>
-                <execution>
-                  <phase>package</phase>
-                  <goals>
-                    <goal>shade</goal>
-                  </goals>
-                </execution>
-              </executions>
-            </plugin>
-      -->
     </plugins>
   </build>
 </project>

@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.chainid;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDao;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.config.FeaturesHeightRequirement;
@@ -39,9 +39,9 @@ import static org.mockito.Mockito.mock;
 
 @EnableWeld
 public class BlockchainConfigTest {
-    private static final BlockchainProperties bp1 = new BlockchainProperties(0, 0, 1, 0, 0, 100L);
-    private static final BlockchainProperties bp2 = new BlockchainProperties(100, 0, 1, 0, 0, 100L);
-    private static final BlockchainProperties bp3 = new BlockchainProperties(200, 0, 2, 0, 0, 100L);
+    private static final BlockchainProperties bp1 = new BlockchainProperties(0, 0, 0,1, 0, 0, 100L);
+    private static final BlockchainProperties bp2 = new BlockchainProperties(100, 0,0, 1, 0, 0, 100L);
+    private static final BlockchainProperties bp3 = new BlockchainProperties(200, 0, 0,2, 0, 0, 100L);
     private static final List<BlockchainProperties> BLOCKCHAIN_PROPERTIES = Arrays.asList(
         bp1,
         bp2,
@@ -52,7 +52,7 @@ public class BlockchainConfigTest {
         "test",
         "test",
         "TEST",
-        "TEST", "Test", "data.json", BLOCKCHAIN_PROPERTIES, new FeaturesHeightRequirement(100, 100));
+        "TEST", "Test", "data.json", BLOCKCHAIN_PROPERTIES, new FeaturesHeightRequirement(100, 100, 100));
     @Inject
     BlockchainConfig blockchainConfig;
     @Inject

@@ -1,0 +1,70 @@
+[
+  {
+    "chainId": "440cf6bd-00a3-346b-aad6-61fefc0bd1c6",
+    "active": true,
+    "wellKnownPeers": [
+      "51.15.104.205",
+      "51.15.85.92",
+      "51.15.246.168",
+      "51.15.249.64"
+    ],
+    "name": "Apollo experimental testnet",
+    "description": "NOT STABLE testnet for experiments. Don't use it if you don't know what is it",
+    "symbol": "Apollo",
+    "prefix": "APL",
+    "project": "Apollo",
+    "genesisLocation": "conf/data/genesisAccounts-testnet.json",
+    "featuresHeightRequirement": {
+      "dexReopenPendingOrdersHeight": 3000,
+      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 5000,
+      "transactionV2Height": 1
+    },
+    "blockchainProperties": [
+      {
+        "height": 0,
+        "maxNumberOfTransactions": 255,
+        "blockTime": 60,
+        "maxBlockTimeLimit": 67,
+        "minBlockTimeLimit": 53,
+        "maxBalance": 30000000000
+      },
+      {
+        "height": 1,
+        "maxNumberOfTransactions": 255,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 3,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 30000000000,
+        "consensusSettings": {
+          "adaptiveForgingSettings": {
+            "enabled": "true",
+            "adaptiveBlockTime": 10
+          }
+        },
+        "shardingSettings": {
+          "enabled": false,
+          "frequency": 10000
+        },
+        "transactionFeeSettings": {
+          "feeRates": [
+            {
+              "type": 0,
+              "subType": 0,
+              "rate": 0
+            },
+            {
+              "type": 0,
+              "subType": 1,
+              "rate": 0
+            },
+            {
+              "type": 10,
+              "subType": 0,
+              "rate": 0
+            }
+          ]
+        }
+      }
+    ]
+  }
+]

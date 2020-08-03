@@ -15,9 +15,18 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.update.UpdateTransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.Update;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -36,6 +45,7 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
     private TransactionProcessor transactionProcessor;
     private BlockchainProcessor blockchainProcessor;
     private Blockchain blockchain;
+    private GeneratorService generatorService;
 
     //    @Inject
 /*
@@ -60,7 +70,7 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
     @Override
     public void suspendBlockchain() {
         lookupBlockchainProcessor().suspendBlockchainDownloading();
-        Generator.suspendForging();
+        lookupGeneratorService().suspendForging();
         peers.suspend();
     }
 
@@ -69,29 +79,29 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
         LOG.debug("Restarting peer server, blockchain processor and forging");
         lookupBlockchainProcessor().resumeBlockchainDownloading();
         peers.resume();
-        Generator.resumeForging();
+        lookupGeneratorService().resumeForging();
         LOG.debug("Peer server, blockchain processor and forging were restarted successfully");
-    }
-
-    private TransactionProcessor lookupTransactionProcessor() {
-        if (transactionProcessor == null) {
-            transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
-        }
-        return transactionProcessor;
     }
 
     private BlockchainProcessor lookupBlockchainProcessor() {
         if (blockchainProcessor == null) {
-            blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+            blockchainProcessor = CDI.current().select(BlockchainProcessor.class).get();
         }
         return blockchainProcessor;
     }
 
     private Blockchain lookupBlockchain() {
         if (blockchain == null) {
-            blockchain = CDI.current().select(BlockchainImpl.class).get();
+            blockchain = CDI.current().select(Blockchain.class).get();
         }
         return blockchain;
+    }
+
+    private GeneratorService lookupGeneratorService() {
+        if (generatorService == null) {
+            generatorService = CDI.current().select(GeneratorService.class).get();
+        }
+        return generatorService;
     }
 
     @Override

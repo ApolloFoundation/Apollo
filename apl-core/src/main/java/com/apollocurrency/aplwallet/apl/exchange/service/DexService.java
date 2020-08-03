@@ -8,30 +8,36 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.core.cache.DexOrderFreezingCacheConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingApprovedResultTable;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.MandatoryTransaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingApprovalResult;
+import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollResult;
+import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingVote;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.post.TransactionResponse;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
-import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingApprovedResultTable;
-import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingApprovalResult;
 import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
-import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
-import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollResult;
-import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingVote;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.HttpRequestToCreateTransactionRequestConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.CustomRequestWrapper;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.SecureStorageService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexCloseOrderAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexContractAttachment;
@@ -39,6 +45,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFr
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOrderAttachmentV2;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPhasingVoteCasting;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendixV2;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletBalanceInfo;
@@ -63,7 +70,6 @@ import com.apollocurrency.aplwallet.apl.exchange.model.EthDepositsWithOffset;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExpiredSwap;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.MandatoryTransaction;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderFreezing;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
@@ -72,7 +78,6 @@ import com.apollocurrency.aplwallet.apl.exchange.model.TransferTransactionInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.UserAddressesWithOffset;
 import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
 import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.cache.CacheProducer;
@@ -555,7 +560,7 @@ public class DexService {
             createTransactionRequest.setBroadcast(false);
             createTransactionRequest.setValidate(false);
             try {
-                Transaction transaction = dexOrderTransactionCreator.createTransaction(createTransactionRequest);
+                Transaction transaction = dexOrderTransactionCreator.createTransactionAndBroadcastIfRequired(createTransactionRequest);
                 String txId = transaction != null ? Long.toUnsignedString(transaction.getId()) : null;
                 result.setTransaction(transaction);
                 result.setTxId(txId);
@@ -574,7 +579,7 @@ public class DexService {
         CreateTransactionRequest request = HttpRequestToCreateTransactionRequestConverter.convert(req, account, recipient, 0, new DexControlOfFrozenMoneyAttachment(contractId, amountAtm), false, accountService);
         request.setPhasing(phasing);
         request.setPhased(true);
-        return dexOrderTransactionCreator.createTransaction(request);
+        return dexOrderTransactionCreator.createTransactionAndBroadcastIfRequired(request);
     }
 
     public boolean depositExists(Long orderId, String address) {
@@ -650,7 +655,7 @@ public class DexService {
                 templatTransactionRequest.setAttachment(closeOrderAttachment);
 
                 //TODO use it for move in to another status.
-                Transaction respCloseOffer = dexOrderTransactionCreator.createTransaction(templatTransactionRequest);
+                Transaction respCloseOffer = dexOrderTransactionCreator.createTransactionAndBroadcastIfRequired(templatTransactionRequest);
                 log.debug("Order:" + userOffer.getId() + " was closed. TxId:" + respCloseOffer.getId() + " (Eth/Pax)");
 
             } else {
@@ -667,7 +672,7 @@ public class DexService {
                 Attachment attachment = new MessagingPhasingVoteCasting(txHash, secret);
                 templatTransactionRequest.setAttachment(attachment);
 
-                Transaction respApproveTx = dexOrderTransactionCreator.createTransaction(templatTransactionRequest);
+                Transaction respApproveTx = dexOrderTransactionCreator.createTransactionAndBroadcastIfRequired(templatTransactionRequest);
                 log.debug("Transaction:" + txId + " was approved. TxId: " + respApproveTx.getId() + " (Apl)");
 //              order will be closed automatically
             }
@@ -695,7 +700,7 @@ public class DexService {
             order.setStatus(OrderStatus.PENDING);
             CreateTransactionRequest createOfferTransactionRequest = HttpRequestToCreateTransactionRequestConverter
                 .convert(requestWrapper, account, 0L, 0L, new DexOrderAttachmentV2(order), false, accountService);
-            orderTx = dexOrderTransactionCreator.createTransaction(createOfferTransactionRequest);
+            orderTx = dexOrderTransactionCreator.createTransactionAndBroadcastIfRequired(createOfferTransactionRequest);
             order.setId(orderTx.getId());
 
             // 2. Create contract.
@@ -712,7 +717,7 @@ public class DexService {
         } else {
             CreateTransactionRequest createOfferTransactionRequest = HttpRequestToCreateTransactionRequestConverter
                 .convert(requestWrapper, account, 0L, 0L, new DexOrderAttachmentV2(order), true, accountService);
-            orderTx = dexOrderTransactionCreator.createTransaction(createOfferTransactionRequest);
+            orderTx = dexOrderTransactionCreator.createTransactionAndBroadcastIfRequired(createOfferTransactionRequest);
             order.setId(orderTx.getId());
         }
 
@@ -747,13 +752,13 @@ public class DexService {
     ) throws ParameterException, AplException.ValidationException {
         DexOrder dexOrder = new DexOrder(null, account.getId(), fromAddress, toAddress, orderType, orderStatus, DexCurrency.APL, orderAmountAtm, pairCurrency, pairRate, timeService.getEpochTime() + duration);
         CreateTransactionRequest transactionRequest = HttpRequestToCreateTransactionRequestConverter.convert(request, account, 0, 0, new DexOrderAttachmentV2(dexOrder), true, accountService);
-        return dexOrderTransactionCreator.createTransaction(transactionRequest);
+        return dexOrderTransactionCreator.createTransactionAndBroadcastIfRequired(transactionRequest);
     }
 
     public Transaction sendContractStep1Transaction(HttpServletRequest request, Account account, DexOrder order, DexOrder counterOrder, int timeToReply) throws ParameterException, AplException.ValidationException {
         DexContractAttachment contractAttachment = new DexContractAttachment(order.getId(), counterOrder.getId(), null, null, null, null, ExchangeContractStatus.STEP_1, timeToReply);
         CreateTransactionRequest transactionRequest = HttpRequestToCreateTransactionRequestConverter.convert(request, account, 0, 0, contractAttachment, true, accountService);
-        return dexOrderTransactionCreator.createTransaction(transactionRequest);
+        return dexOrderTransactionCreator.createTransactionAndBroadcastIfRequired(transactionRequest);
     }
 
     public Transaction sendContractStep2Transaction(HttpServletRequest request, Account account, byte[] secretHash, byte[] encryptedSecret, String counterTransferTx, int timeToReply, ExchangeContract contract) throws ParameterException, AplException.ValidationException {
@@ -764,13 +769,13 @@ public class DexService {
         contractAttachment.setSecretHash(secretHash);
         contractAttachment.setCounterTransferTxId(counterTransferTx);
         CreateTransactionRequest transactionRequest = HttpRequestToCreateTransactionRequestConverter.convert(request, account, 0, 0, contractAttachment, true, accountService);
-        return dexOrderTransactionCreator.createTransaction(transactionRequest);
+        return dexOrderTransactionCreator.createTransactionAndBroadcastIfRequired(transactionRequest);
     }
 
     public Transaction sendContractStep3Transaction(HttpServletRequest request, Account account, String transferTx, int timeToReply, ExchangeContract contract) throws ParameterException, AplException.ValidationException {
         DexContractAttachment contractAttachment = new DexContractAttachment(contract.getOrderId(), contract.getCounterOrderId(), null, transferTx, null, null, ExchangeContractStatus.STEP_3, timeToReply);
         CreateTransactionRequest transactionRequest = HttpRequestToCreateTransactionRequestConverter.convert(request, account, 0, 0, contractAttachment, true, accountService);
-        return dexOrderTransactionCreator.createTransaction(transactionRequest);
+        return dexOrderTransactionCreator.createTransactionAndBroadcastIfRequired(transactionRequest);
     }
 
 

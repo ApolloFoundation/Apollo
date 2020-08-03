@@ -9,14 +9,12 @@ import com.apollocurrency.aplwallet.api.dto.UnconfirmedTransactionDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountControlPhasingDTO;
 import com.apollocurrency.aplwallet.api.response.AccountControlPhasingResponse;
 import com.apollocurrency.aplwallet.api.response.LeaseBalanceResponse;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.Property;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
@@ -29,6 +27,8 @@ import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FA;
 import com.apollocurrency.aplwallet.apl.core.rest.parameter.AccountIdParameter;
 import com.apollocurrency.aplwallet.apl.core.rest.parameter.FirstLastIndexBeanParam;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AccountControlEffectiveBalanceLeasing;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SetPhasingOnly;
@@ -149,6 +149,10 @@ public class AccountControlController {
         log.trace("Started getPhasingOnlyControl, accountIdParameter = {}", accountIdParameter);
         long accountId = accountIdParameter.get();
         AccountControlPhasing phasingOnly = accountControlPhasingService.get(accountId);
+        if (phasingOnly == null) {
+            log.trace("getPhasingOnlyControl NOT FOUND phasingOnly");
+            return response.build(); // empty respond when AccountControlPhasing is not found by account Id
+        }
         AccountControlPhasingDTO dto = accountControlPhasingConverter.apply(phasingOnly);
         log.trace("getPhasingOnlyControl result: {}", dto);
         return response.bind(dto).build();
@@ -433,7 +437,7 @@ public class AccountControlController {
         leaseBalanceResponse.setUnsignedTransactionBytes(Convert.toHexString(transaction.getUnsignedBytes()));
         leaseBalanceResponse.setTransaction(transaction.getStringId());
         leaseBalanceResponse.setFullHash(transaction.getFullHashString());
-        leaseBalanceResponse.setTransactionBytes(Convert.toHexString(transaction.getBytes()));
+        leaseBalanceResponse.setTransactionBytes(Convert.toHexString(transaction.getCopyTxBytes()));
         leaseBalanceResponse.setBroadcasted(txRequest.isBroadcast());
 
         log.trace("DONE leaseBalance, response = {}", leaseBalanceResponse);

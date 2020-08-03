@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
@@ -53,8 +54,20 @@ public interface Blockchain {
 
     int getLastBlockTimestamp();
 
+    /**
+     * Return block a given blockId or null if block doesn't exist
+     *
+     * @param blockId the block id
+     * @return block object
+     */
     Block getBlock(long blockId);
 
+    /**
+     * Return block a given height or throw exception BlockNotFoundException if block doesn't exist
+     *
+     * @param height the specified height
+     * @return block object
+     */
     Block getBlockAtHeight(int height);
 
     boolean hasBlock(long blockId);

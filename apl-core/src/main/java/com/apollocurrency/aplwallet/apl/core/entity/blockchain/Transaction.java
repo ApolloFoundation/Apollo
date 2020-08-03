@@ -1,5 +1,21 @@
 /*
- *  Copyright © 2018-2020 Apollo Foundation
+ * Copyright © 2013-2016 The Nxt Core Developers.
+ * Copyright © 2016-2017 Jelurida IP B.V.
+ *
+ * See the LICENSE.txt file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
+ * no part of the Nxt software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ *
+ */
+
+/*
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
@@ -7,9 +23,11 @@ package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
+import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
@@ -20,6 +38,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainM
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,8 +46,6 @@ import java.util.Set;
 public interface Transaction {
 
     boolean isUnconfirmedDuplicate(Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> unconfirmedDuplicates);
-
-    void sign(byte[] keySeed) throws AplException.NotValidException;
 
     long getId();
 
@@ -76,13 +93,17 @@ public interface Transaction {
 
     void setFeeATM(long feeATM);
 
-    default long[] getBackFees() { return new long[]{};};
+    default long[] getBackFees() {
+        return new long[]{};
+    }
 
     String getReferencedTransactionFullHash();
 
     byte[] referencedTransactionFullHash();
 
-    byte[] getSignature();
+    void sign(Signature signature);
+
+    Signature getSignature();
 
     String getFullHashString();
 
@@ -92,9 +113,12 @@ public interface Transaction {
 
     Attachment getAttachment();
 
-    boolean verifySignature();
+    default byte[] getCopyTxBytes() {
+        byte[] txBytes = bytes();
+        return Arrays.copyOf(txBytes, txBytes.length);
+    }
 
-    byte[] getBytes();
+    byte[] bytes();
 
     byte[] getUnsignedBytes();
 
@@ -156,6 +180,8 @@ public interface Transaction {
 
         Builder referencedTransactionFullHash(String referencedTransactionFullHash);
 
+        Builder referencedTransactionFullHash(byte[] referencedTransactionFullHash);
+
         Builder appendix(MessageAppendix message);
 
         Builder appendix(EncryptedMessageAppendix encryptedMessage);
@@ -180,9 +206,20 @@ public interface Transaction {
 
         Builder ecBlockId(long blockId);
 
+        Builder signature(Signature signature);
+
         Transaction build() throws AplException.NotValidException;
 
+        /**
+         * Build transaction adn encrypt attachments. This method doesn't sign the transaction.
+         * The transaction keeps unsigned.
+         *
+         * @param keySeed the key seed to encrypt appendixes
+         * @return unsigned transaction with encrypted appendixes
+         * @throws AplException.NotValidException
+         */
         Transaction build(byte[] keySeed) throws AplException.NotValidException;
 
+        TransactionImpl.BuilderImpl blockId(long blockId);
     }
 }

@@ -4,14 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionImpl;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -43,7 +42,7 @@ public class BlockApplier {
         if (height > 3) {
             long[] backFees = new long[3];
             for (Transaction transaction : block.getOrLoadTransactions()) {
-                long[] fees = ((TransactionImpl) transaction).getBackFees();
+                long[] fees = transaction.getBackFees();
                 for (int i = 0; i < fees.length; i++) {
                     backFees[i] += fees[i];
                 }
@@ -77,6 +76,11 @@ public class BlockApplier {
         }
         //fetch generatorAccount after a possible change in previousGeneratorAccount
         Account generatorAccount = accountService.addOrGetAccount(block.getGeneratorId());
+        byte[] generatorPublicKey = block.getGeneratorPublicKey();
+        if (generatorPublicKey == null) {
+            generatorPublicKey = accountService.getPublicKeyByteArray(block.getGeneratorId());
+            block.setGeneratorPublicKey(generatorPublicKey);
+        }
         accountPublicKeyService.apply(generatorAccount, block.getGeneratorPublicKey());
         accountService.addToBalanceAndUnconfirmedBalanceATM(generatorAccount, LedgerEvent.BLOCK_GENERATED, block.getId(), block.getTotalFeeATM() - totalBackFees);
         accountService.addToForgedBalanceATM(generatorAccount, block.getTotalFeeATM() - totalBackFees);

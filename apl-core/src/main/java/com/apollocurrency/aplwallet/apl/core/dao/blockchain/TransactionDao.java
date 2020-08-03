@@ -1,9 +1,10 @@
 package com.apollocurrency.aplwallet.apl.core.dao.blockchain;
 
+import com.apollocurrency.aplwallet.api.v2.model.TxReceipt;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 
@@ -73,4 +74,15 @@ public interface TransactionDao {
 
     DbIterator<Transaction> getTransactions(Connection con, PreparedStatement pstmt);
 
+    int getTransactionsCount(byte type, byte subtype,
+                             int startTime, int endTime,
+                             int fromHeight, int toHeight,
+                             String sortOrder,
+                             int from, int to);
+
+    List<TxReceipt> getTransactions(byte type, byte subtype,
+                                    int startTime, int endTime,
+                                    int fromHeight, int toHeight,
+                                    String sortOrder,
+                                    int from, int to);
 }

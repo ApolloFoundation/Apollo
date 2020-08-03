@@ -4,13 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
-import javax.enterprise.inject.spi.CDI;
-
-import java.util.Objects;
-
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import lombok.extern.slf4j.Slf4j;
+
+import javax.enterprise.inject.spi.CDI;
+import java.util.Objects;
 
 /**
  * Class makes lookup of BlockchainProcessor

@@ -10,7 +10,7 @@ import java.nio.file.Paths;
  * Config dir provider which provide default config files locations
  */
 public class DefaultConfigDirProvider implements ConfigDirProvider {
-    protected static final String[] CONF_DIRS = {"conf", "conf-tn1", "conf-tn2", "conf-tn3"};
+    protected static final String[] CONF_DIRS = {"conf", "conf-tn1", "conf-tn2", "conf-tn3", "conf-tn4"};
     protected String applicationName;
     protected boolean isService;
     protected int netIndex;

@@ -74,6 +74,25 @@
         "shardingSettings": {
           "enabled": true,
           "frequency": 1E+6
+        },
+        "transactionFeeSettings": {
+          "feeRates": [
+            {
+              "type": 0,
+              "subType": 0,
+              "rate": 0
+            },
+            {
+              "type": 0,
+              "subType": 1,
+              "rate": 0
+            },
+            {
+              "type": 1,
+              "subType": 1,
+              "rate": 0
+            }
+          ]
         }
       },
       {

@@ -23,8 +23,14 @@ package com.apollocurrency.aplwallet.apl.core.entity.state.currency;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
+import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystemExchange;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
+import com.apollocurrency.aplwallet.apl.core.transaction.ShufflingTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
@@ -273,8 +279,8 @@ public enum CurrencyType {
 
     public static void validate(Currency currency, Transaction transaction) throws AplException.ValidationException {
         if (currency == null) {
-            log.debug("currency = {}, tr = {}, height = {}", currency, transaction, transaction.getHeight());
-            log.debug("s-trace = {}", ThreadUtils.last5Stacktrace());
+            log.trace("currency = {}, tr = {}, height = {}", currency, transaction, transaction.getHeight());
+            log.trace("s-trace = {}", ThreadUtils.last5Stacktrace());
             throw new AplException.NotCurrentlyValidException("Unknown currency: " + transaction.getAttachment().getJSONObject());
         }
         validate(currency, currency.getType(), transaction);

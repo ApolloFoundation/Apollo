@@ -20,11 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -70,7 +70,7 @@ public final class GetTransactionBytes extends AbstractAPIRequestHandler {
         } else {
             response.put("confirmations", blockchain.getHeight() - transaction.getHeight());
         }
-        response.put("transactionBytes", Convert.toHexString(transaction.getBytes()));
+        response.put("transactionBytes", Convert.toHexString(transaction.getCopyTxBytes()));
         response.put("unsignedTransactionBytes", Convert.toHexString(transaction.getUnsignedBytes()));
         JSONData.putPrunableAttachment(response, transaction);
         return response;

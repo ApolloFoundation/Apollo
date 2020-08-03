@@ -8,12 +8,12 @@ import com.apollocurrency.aplwallet.api.dto.ECBlockDTO;
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import com.apollocurrency.aplwallet.api.response.BlocksResponse;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.EcBlockData;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.FirstLastIndexParser;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -162,7 +162,7 @@ class BlockControllerTest extends AbstractEndpointTest {
 
         BlockDTO dtoResult = mapper.readValue(respondJson, new TypeReference<>(){});
         assertNotNull(dtoResult);
-        assertEquals(String.valueOf(btd.BLOCK_10.getId()), dtoResult.getBlock());
+        assertEquals(Long.toUnsignedString(btd.BLOCK_10.getId()), dtoResult.getBlock());
         //verify
         verify(blockchain, times(1)).getBlockIdAtHeight(btd.BLOCK_10.getHeight());
     }

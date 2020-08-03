@@ -4,9 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.entity.state.account;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDeletableEntity;
@@ -15,6 +12,9 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 @EqualsAndHashCode(callSuper = true)
 @Setter

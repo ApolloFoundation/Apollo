@@ -15,13 +15,13 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountCurrenc
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountInfo;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountLease;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TwoFactorAuthService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountLeaseService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.TwoFactorAuthService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 
@@ -103,6 +103,8 @@ public class AccountConverter implements Converter<Account, AccountDTO> {
         AccountDTO dto = new AccountDTO();
         dto.setAccount(Long.toUnsignedString(account.getId()));
         dto.setAccountRS(Convert2.rsAccount(account.getId()));
+        dto.setParent(Convert2.rsAccount(account.getParentId()));
+        dto.setAddressScope(account.getAddrScope().name());
         dto.set2FA(twoFactorAuthService.isEnabled(account.getId()));
         PublicKey pk = account.getPublicKey();
         if (pk != null) {

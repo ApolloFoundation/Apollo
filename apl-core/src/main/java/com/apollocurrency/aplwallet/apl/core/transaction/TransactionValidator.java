@@ -9,19 +9,36 @@ import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.signature.Credential;
+import com.apollocurrency.aplwallet.apl.core.signature.KeyValidator;
+import com.apollocurrency.aplwallet.apl.core.signature.MultiSigCredential;
+import com.apollocurrency.aplwallet.apl.core.signature.SignatureCredential;
+import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
+import com.apollocurrency.aplwallet.apl.core.signature.SignatureVerifier;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.annotation.ParentChildSpecific;
+import com.apollocurrency.aplwallet.apl.util.annotation.ParentMarker;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+@Slf4j
 @Singleton
 public class TransactionValidator {
     private final BlockchainConfig blockchainConfig;
@@ -31,11 +48,20 @@ public class TransactionValidator {
     private final AccountPublicKeyService accountPublicKeyService;
     private final AccountControlPhasingService accountControlPhasingService;
     private final PrunableLoadingService prunableService;
+    private final BlockchainConfig blockchainConfig;
+    private final PhasingPollService phasingPollService;
+    private final Blockchain blockchain;
+    private final FeeCalculator feeCalculator;
+    private final AccountControlPhasingService accountControlPhasingService;
+    private final AccountService accountService;
+    private final AccountPublicKeyService accountPublicKeyService;
+    private final TransactionVersionValidator transactionVersionValidator;
+    private final KeyValidator keyValidator;
 
     @Inject
     public TransactionValidator(BlockchainConfig blockchainConfig, PhasingPollService phasingPollService,
                                 Blockchain blockchain, FeeCalculator feeCalculator,
-                                AccountPublicKeyService accountPublicKeyService, AccountControlPhasingService accountControlPhasingService, PrunableLoadingService prunableService) {
+                                AccountPublicKeyService accountPublicKeyService, AccountControlPhasingService accountControlPhasingService, TransactionVersionValidator transactionVersionValidator, PrunableLoadingService prunableService) {
         this.blockchainConfig = blockchainConfig;
         this.phasingPollService = phasingPollService;
         this.blockchain = blockchain;
@@ -43,6 +69,10 @@ public class TransactionValidator {
         this.accountPublicKeyService = accountPublicKeyService;
         this.accountControlPhasingService = accountControlPhasingService;
         this.prunableService = prunableService;
+        this.accountService = accountService;
+        this.transactionVersionValidator = transactionVersionValidator;
+        this.accountPublicKeyService = accountPublicKeyService;
+        this.keyValidator = new PublicKeyValidator(accountPublicKeyService);
     }
 
 
@@ -52,13 +82,16 @@ public class TransactionValidator {
 
 
     public void validate(Transaction transaction) throws AplException.ValidationException {
+        if (!transactionVersionValidator.isValidVersion(transaction)) {
+            throw new AplException.NotValidException("Unsupported transaction version:" + transaction.getVersion() + " at height " + blockchain.getHeight());
+        }
         long maxBalanceAtm = blockchainConfig.getCurrentConfig().getMaxBalanceATM();
         short deadline = transaction.getDeadline();
         long feeATM = transaction.getFeeATM();
         long amountATM = transaction.getAmountATM();
         TransactionType type = transaction.getType();
         TransactionTypes.TransactionTypeSpec typeSpec = type.getSpec();
-        if (transaction.getTimestamp() == 0 ? (deadline != 0 || feeATM != 0) : (deadline < 1 || feeATM <= 0)
+        if (transaction.getTimestamp() == 0 ? (deadline != 0 || feeATM != 0) : (deadline < 1 || feeATM < 0)
             || feeATM > maxBalanceAtm
             || amountATM < 0
             || amountATM > maxBalanceAtm
@@ -76,30 +109,54 @@ public class TransactionValidator {
         if (attachment == null || typeSpec != attachment.getTransactionTypeSpec()) {
             throw new AplException.NotValidException("Invalid attachment " + attachment + " for transaction of type " + type);
         }
+
         long recipientId = transaction.getRecipientId();
-        if (!type.canHaveRecipient()) {
-            if (recipientId != 0 || amountATM != 0) {
-                throw new AplException.NotValidException("Transactions of this type must have recipient == 0, amount == 0");
-            }
+        if (!type.canHaveRecipient() && (recipientId != 0 || amountATM != 0)) {
+            throw new AplException.NotValidException("Transactions of this type must have recipient == 0, amount == 0");
         }
 
-        if (type.mustHaveRecipient()) {
-            if (recipientId == 0) {
-                throw new AplException.NotValidException("Transactions of this type must have a valid recipient");
-            }
+        if (type.mustHaveRecipient() && recipientId == 0) {
+            throw new AplException.NotValidException("Transactions of this type must have a valid recipient");
         }
 
         if (!AntifraudValidator.validate(blockchain.getHeight(), transaction.getSenderId(),
             transaction.getRecipientId())) throw new AplException.NotValidException("Incorrect Passphrase");
 
+        Account sender = accountService.getAccount(transaction.getSenderId());
+        if (sender != null && sender.isChild()) {
+            Account recipient = accountService.getAccount(transaction.getRecipientId());
+            if (recipient == null) {
+                throw new AplException.NotCurrentlyValidException("Account " + transaction.getRecipientId() + " does not exist yet.");
+            }
+            @ParentChildSpecific(ParentMarker.ADDRESS_RESTRICTION)
+            boolean rc;
+            switch (sender.getAddrScope()) {
+                case IN_FAMILY:
+                    rc = sender.getParentId() == recipient.getId() || sender.getParentId() == recipient.getParentId();
+                    break;
+                case EXTERNAL:
+                    rc = true;
+                    break;
+                case CUSTOM:
+                default:
+                    throw new AplException.NotCurrentlyValidException("Unsupported value " +
+                        sender.getAddrScope().name() +
+                        " for sender address scope;" +
+                        "sender.Id=" + sender.getId());
+            }
+            if (!rc) {
+                throw new AplException.NotCurrentlyValidException("The parent account for sender and recipient must be the same;" +
+                    "sender.parentId=" + sender.getParentId() + ", recipient.parentId=" + recipient.getParentId());
+            }
+        }
 
         boolean validatingAtFinish = transaction.getPhasing() != null && transaction.getSignature() != null && phasingPollService.getPoll(transaction.getId()) != null;
         for (AbstractAppendix appendage : transaction.getAppendages()) {
             prunableService.loadPrunable(transaction, appendage, false);
             //TODO Why does it need? Take a look how to use it.
-//            if (! appendage.verifyVersion()) {
-//                throw new AplException.NotValidException("Invalid attachment version " + appendage.getVersion());
-//            }
+            //if (! appendage.verifyVersion()) {
+            //    throw new AplException.NotValidException("Invalid attachment version " + appendage.getVersion());
+            //}
             if (validatingAtFinish) {
                 appendage.validateAtFinish(transaction, blockchain.getHeight());
             } else {
@@ -150,4 +207,89 @@ public class TransactionValidator {
         return hasValidSignature;
     }
 
+
+    public int getActualTransactionVersion() {
+        return transactionVersionValidator.getActualVersion();
+    }
+
+    public boolean isValidVersion(int transactionVersion) {
+        return transactionVersionValidator.isValidVersion(transactionVersion);
+    }
+
+    public void checkVersion(int transactionVersion) {
+        transactionVersionValidator.checkVersion(transactionVersion);
+    }
+
+    public boolean verifySignature(Transaction transaction) {
+        Account sender = accountService.getAccount(transaction.getSenderId());
+        if (sender == null) {
+            log.error("Sender account not found, senderId={}", transaction.getSenderId());
+            return false;
+        }
+        @ParentChildSpecific(ParentMarker.MULTI_SIGNATURE)
+        Credential signatureCredential;
+        SignatureVerifier signatureVerifier = SignatureToolFactory.selectValidator(transaction.getVersion()).orElseThrow(UnsupportedTransactionVersion::new);
+        if (log.isTraceEnabled()) {
+            log.trace("#MULTI_SIG# verify signature validator class={}", signatureVerifier.getClass().getName());
+        }
+        if (sender.isChild()) {
+            //multi-signature
+            if (transaction.getVersion() < 2) {
+                log.error("Inconsistent transaction fields, the value of the sender property 'parent' doesn't match the transaction version.");
+                return false;
+            }
+            signatureCredential = new MultiSigCredential(2,
+                accountService.getPublicKeyByteArray(sender.getParentId()),
+                transaction.getSenderPublicKey()
+            );
+        } else {
+            //only one signer
+            if (transaction.getVersion() < 2) {
+                signatureCredential = new SignatureCredential(transaction.getSenderPublicKey());
+            } else {
+                signatureCredential = new MultiSigCredential(transaction.getSenderPublicKey());
+            }
+        }
+        if (log.isTraceEnabled()) {
+            log.trace("#MULTI_SIG# verify credential={}", signatureCredential);
+        }
+        if (!signatureCredential.validateCredential(keyValidator)) {
+            return false;
+        }
+
+        if (transaction.getSignature() != null && transaction.getSignature().isVerified()) {
+            return true;
+        } else {
+            if (log.isTraceEnabled()) {
+                log.trace("#MULTI_SIG# verify signature={} publicKey={} document={}",
+                    Convert.toHexString(transaction.getSignature().bytes()),
+                    signatureCredential,
+                    Convert.toHexString(transaction.getUnsignedBytes()));
+            }
+
+            return signatureVerifier.verify(
+                transaction.getUnsignedBytes(), transaction.getSignature(), signatureCredential
+            );
+        }
+    }
+
+    private static class PublicKeyValidator implements KeyValidator {
+        private final AccountPublicKeyService accountPublicKeyService;
+
+        public PublicKeyValidator(AccountPublicKeyService accountPublicKeyService) {
+            this.accountPublicKeyService = accountPublicKeyService;
+        }
+
+        @Override
+        public boolean validate(byte[] publicKey) {
+            if (log.isTraceEnabled()) {
+                log.trace("#MULTI_SIG# public key validation account={}", Convert2.rsAccount(AccountService.getId(publicKey)));
+            }
+            if (!accountPublicKeyService.setOrVerifyPublicKey(AccountService.getId(publicKey), publicKey)) {
+                log.error("Public Key Verification failed: pk={}", Convert.toHexString(publicKey));
+                return false;
+            }
+            return true;
+        }
+    }
 }

@@ -4,13 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.dgs;
 
+import com.apollocurrency.aplwallet.apl.core.converter.db.dgs.DGSFeedbackMapper;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.ValuesDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.dao.state.derived.ValuesDbTable;
-import com.apollocurrency.aplwallet.apl.core.utils.EncryptedDataUtil;
-import com.apollocurrency.aplwallet.apl.core.converter.db.dgs.DGSFeedbackMapper;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSFeedback;
+import com.apollocurrency.aplwallet.apl.core.utils.EncryptedDataUtil;
 
 import javax.inject.Singleton;
 import java.sql.Connection;

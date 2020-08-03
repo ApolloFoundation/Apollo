@@ -33,4 +33,6 @@ nbactions.xml
 /apl-crypto/testdata/out/
 /webui/
 /build
-/webui
+/apollo-web-ui/
+**/swagger-codegen-cli-*.jar
+**/.swagger-codegen

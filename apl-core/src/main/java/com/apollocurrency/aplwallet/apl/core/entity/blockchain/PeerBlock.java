@@ -3,7 +3,6 @@
  */
 package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 
 /**

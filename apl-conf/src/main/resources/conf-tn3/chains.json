@@ -8,9 +8,7 @@
       "51.15.210.116",
       "51.15.242.197",
       "51.15.218.241",
-      "51.15.130.37",
-      "51.15.46.49",
-      "51.15.102.159"
+      "51.15.130.37"
     ],
     "name": "Apollo experimental testnet",
     "description": "NOT STABLE testnet for experiments. Don't use it if you don't know what is it",
@@ -52,6 +50,7 @@
       {
         "height": 50000,
         "maxNumberOfTransactions": 255,
+        "maxNumberOfChildAccounts": 10,
         "blockTime": 2,
         "maxBlockTimeLimit": 3,
         "minBlockTimeLimit": 1,
@@ -65,6 +64,20 @@
         "shardingSettings": {
           "enabled": true,
           "frequency": 10000
+        },
+        "transactionFeeSettings": {
+          "feeRates": [
+            {
+              "type": 0,
+              "subType": 0,
+              "rate": 100
+            },
+            {
+              "type": 0,
+              "subType": 1,
+              "rate": 100
+            }
+          ]
         }
       }
     ]

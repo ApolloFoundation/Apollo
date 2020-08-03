@@ -4,15 +4,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.entity.state.currency;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyFounderTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDeletableEntity;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 @Getter
 @Setter

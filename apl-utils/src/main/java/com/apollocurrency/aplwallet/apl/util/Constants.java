@@ -24,7 +24,7 @@ import java.math.BigInteger;
 
 public final class Constants {
 
-    public static final Version VERSION = new Version("1.45.2");
+    public static final Version VERSION = new Version("1.45.3");
 
     public static final String APPLICATION = "Apollo";
     public static final String APPLICATION_DIR_NAME = "apl-blockchain";
@@ -54,7 +54,7 @@ public final class Constants {
 
     public static final int ONE_DAY_SECS = 24 * 3600;
 
-    public static final int MIN_TRANSACTION_SIZE = 176;
+    public static final int MIN_TRANSACTION_SIZE = 176; // the transaction HEADER size (without Appendages)
     public static final int BASE_TARGET_GAMMA = 64;
     public static final long MIN_FORGING_BALANCE_ATM = 1000 * ONE_APL;
 
@@ -74,8 +74,8 @@ public final class Constants {
     public static final int MAX_ALIAS_URI_LENGTH = 1000;
     public static final int MAX_ALIAS_LENGTH = 100;
 
-    public static final int MAX_ARBITRARY_MESSAGE_LENGTH = 160;
-    public static final int MAX_ENCRYPTED_MESSAGE_LENGTH = 160 + 16;
+    public static final int MAX_ARBITRARY_MESSAGE_LENGTH = 1000;
+    public static final int MAX_ENCRYPTED_MESSAGE_LENGTH = MAX_ARBITRARY_MESSAGE_LENGTH + 16;
 
     public static final int MAX_PRUNABLE_MESSAGE_LENGTH = 42 * 1024;
     public static final int MAX_PRUNABLE_ENCRYPTED_MESSAGE_LENGTH = 42 * 1024;
