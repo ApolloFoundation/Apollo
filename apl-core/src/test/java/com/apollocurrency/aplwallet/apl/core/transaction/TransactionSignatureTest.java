@@ -5,11 +5,15 @@
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.signature.Credential;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureVerifier;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.child.CreateChildTransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.SneakyThrows;
 import org.json.simple.JSONObject;
@@ -18,7 +22,10 @@ import org.json.simple.parser.ParseException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -51,10 +58,20 @@ class TransactionSignatureTest {
     TransactionSignatureTest() throws ParseException {
     }
 
+    @Mock
+    BlockchainConfig blockchainConfig;
+    @Mock
+    AccountService accountService;
+    @Mock
+    AccountPublicKeyService accountPublicKeyService;
+
+
     @SneakyThrows
     @BeforeEach
     void setUp() {
-        transaction = TransactionBuilder.newTransactionBuilder(txJsonObject).build();
+        CreateChildTransactionType type = new CreateChildTransactionType(blockchainConfig, accountService, accountPublicKeyService);
+        TransactionBuilder builder = new TransactionBuilder(new CachedTransactionTypeFactory(List.of(type)));
+        transaction = builder.newTransactionBuilder(txJsonObject).build();
         signatureVerifier = SignatureToolFactory.selectValidator(1).get();
         credential = SignatureToolFactory.createCredential(1, transaction.getSenderPublicKey());
     }
