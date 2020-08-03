@@ -65,8 +65,6 @@ public interface Block {
 
     byte[] getPayloadHash();
 
-    List<Transaction> getOrLoadTransactions();
-
     List<Transaction> getTransactions();
 
     void setTransactions(List<Transaction> transactions);
@@ -85,11 +83,11 @@ public interface Block {
 
     void setPrevious(Block[] threeLatestBlocksArray, HeightConfig config, Shard lastShard, int initialBlockHeight);
 
-    JSONObject getJSONObject();
+    /**
+     * Optional method
+     */
+    void assignTransactionsIndex();
 
     int getTimeout();
 
-    default String toJsonString() {
-        return getJSONObject().toJSONString();
-    }
 }

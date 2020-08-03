@@ -583,7 +583,7 @@ public class GetMoreBlocksThread implements Runnable {
             List<Block> peerPoppedOffBlocks = blockchainProcessor.popOffToCommonBlock(commonBlock);
             pushedForkBlocks = 0;
             for (Block block : peerPoppedOffBlocks) {
-                transactionProcessor.processLater(block.getOrLoadTransactions());
+                transactionProcessor.processLater(blockchain.getOrLoadTransactions(block));
             }
         }
 
@@ -594,14 +594,14 @@ public class GetMoreBlocksThread implements Runnable {
                 try {
                     blockchainProcessor.pushBlock(block);
                 } catch (BlockchainProcessor.BlockNotAcceptedException e) {
-                    log.error("Popped off block no longer acceptable: " + block.getJSONObject().toJSONString(), e);
+                    log.error("Popped off block no longer acceptable: " + blockchain.getJSONObject(block).toJSONString(), e);
                     break;
                 }
             }
         } else {
             log.debug("Switched to peer's fork, peer addr: {}", peer.getHost());
             for (Block block : myPoppedOffBlocks) {
-                transactionProcessor.processLater(block.getOrLoadTransactions());
+                transactionProcessor.processLater(blockchain.getOrLoadTransactions(block));
             }
         }
 

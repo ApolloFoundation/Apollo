@@ -696,7 +696,7 @@ public class PeersService {
     }
 
     public void sendToSomePeers(Block block) {
-        JSONObject request = block.getJSONObject();
+        JSONObject request = blockchain.getJSONObject(block);
         request.put("requestType", "processBlock");
         LOG.debug("Pushing block: {} at height: {}", block.getId(), block.getHeight());
         sendToSomePeers(request);

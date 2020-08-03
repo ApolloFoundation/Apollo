@@ -25,7 +25,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 public abstract class AbstractBlockValidator implements BlockValidator {
     private static final Logger LOG = getLogger(AbstractBlockValidator.class);
     protected BlockchainConfig blockchainConfig;
-    private Blockchain blockchain;
+    protected Blockchain blockchain;
     protected AccountService accountService;
     private static GeneratorService generatorService;
 
@@ -45,40 +45,47 @@ public abstract class AbstractBlockValidator implements BlockValidator {
     @Override
     public void validate(Block block, Block previousLastBlock, int curTime) throws BlockchainProcessor.BlockNotAcceptedException {
         if (previousLastBlock.getId() != block.getPreviousBlockId()) {
-            throw new BlockchainProcessor.BlockOutOfOrderException("Previous block id doesn't match", block);
+            throw new BlockchainProcessor.BlockOutOfOrderException(
+                "Previous block id doesn't match", blockchain.getJSONObject(block));
         }
         if (block.getTimestamp() > curTime + Constants.MAX_TIMEDRIFT) {
             LOG.warn("Received block " + block.getStringId() + " from the future, timestamp " + block.getTimestamp()
                 + " generator " + Long.toUnsignedString(block.getGeneratorId()) + " current time " + curTime + ", system clock may be off");
             throw new BlockchainProcessor.BlockOutOfOrderException("Invalid timestamp: " + block.getTimestamp()
-                + " current time is " + curTime, block);
+                + " current time is " + curTime, blockchain.getJSONObject(block));
         }
         if (block.getTimestamp() <= previousLastBlock.getTimestamp()) {
-            throw new BlockchainProcessor.BlockNotAcceptedException("Block timestamp " + block.getTimestamp() + " is before previous block timestamp "
-                + previousLastBlock.getTimestamp(), block);
+            throw new BlockchainProcessor.BlockNotAcceptedException(
+                "Block timestamp " + block.getTimestamp() + " is before previous block timestamp "
+                + previousLastBlock.getTimestamp(), blockchain.getJSONObject(block));
         }
         verifySignature(block);
         validatePreviousHash(block, previousLastBlock);
         if (block.getId() == 0L || blockchain.hasBlock(block.getId(), previousLastBlock.getHeight())) {
-            throw new BlockchainProcessor.BlockNotAcceptedException("Duplicate block or invalid id", block);
+            throw new BlockchainProcessor.BlockNotAcceptedException(
+                "Duplicate block or invalid id", blockchain.getJSONObject(block));
         }
-//        if (!block.verifyGenerationSignature()) {
         if (!verifyGenerationSignature(block)) {
             Account generatorAccount = accountService.getAccount(block.getGeneratorId());
             long generatorBalance = generatorAccount == null ? 0 : accountService.getEffectiveBalanceAPL(generatorAccount, blockchain.getHeight(), true);
-            throw new BlockchainProcessor.BlockNotAcceptedException("Generation signature verification failed, effective balance " + generatorBalance, block);
+            throw new BlockchainProcessor.BlockNotAcceptedException(
+                "Generation signature verification failed, effective balance " + generatorBalance, blockchain.getJSONObject(block));
         }
 
-        if (block.getOrLoadTransactions().size() > blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()) {
-            throw new BlockchainProcessor.BlockNotAcceptedException("Invalid block transaction count " + block.getOrLoadTransactions().size(), block);
+        if (blockchain.getBlockTransactionCount(block.getId()) > blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()) {
+            throw new BlockchainProcessor.BlockNotAcceptedException(
+                "Invalid block transaction count "
+                + blockchain.getBlockTransactionCount(block.getId()), blockchain.getJSONObject(block));
         }
         if (block.getPayloadLength() > blockchainConfig.getCurrentConfig().getMaxPayloadLength() || block.getPayloadLength() < 0) {
-            throw new BlockchainProcessor.BlockNotAcceptedException("Invalid block payload length " + block.getPayloadLength(), block);
+            throw new BlockchainProcessor.BlockNotAcceptedException(
+                "Invalid block payload length " + block.getPayloadLength(), blockchain.getJSONObject(block));
         }
         switch (block.getVersion()) {
             case Block.LEGACY_BLOCK_VERSION:
                 if (blockchainConfig.getCurrentConfig().isAdaptiveForgingEnabled()) {
-                    throw new BlockchainProcessor.BlockNotAcceptedException("Legacy blocks are not accepting during adaptive forging", block);
+                    throw new BlockchainProcessor.BlockNotAcceptedException(
+                        "Legacy blocks are not accepting during adaptive forging", blockchain.getJSONObject(block));
                 }
                 break;
             case Block.INSTANT_BLOCK_VERSION:
@@ -97,7 +104,8 @@ public abstract class AbstractBlockValidator implements BlockValidator {
         try {
             Block previousBlock = blockchain.getBlock(block.getPreviousBlockId());
             if (previousBlock == null) {
-                throw new BlockchainProcessor.BlockOutOfOrderException("Can't verify signature because previous block is missing", block);
+                throw new BlockchainProcessor.BlockOutOfOrderException(
+                    "Can't verify signature because previous block is missing", blockchain.getJSONObject(block));
             }
 
             Account account = accountService.getAccount(block.getGeneratorId());

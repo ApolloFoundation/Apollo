@@ -90,21 +90,22 @@ public interface BlockchainProcessor {
 
     class BlockNotAcceptedException extends AplException {
 
-        private final Block block;
+        private final JSONObject block;
 
-        public BlockNotAcceptedException(String message, Block block) {
+        public BlockNotAcceptedException(String message, JSONObject block) {
             super(message);
             this.block = block;
         }
 
-        public BlockNotAcceptedException(Throwable cause, Block block) {
+        public BlockNotAcceptedException(Throwable cause, JSONObject block) {
             super(cause);
             this.block = block;
         }
 
         @Override
         public String getMessage() {
-            return block == null ? super.getMessage() : super.getMessage() + ", block " + block.getStringId() + " " + block.getJSONObject().toJSONString();
+            return block == null ? super.getMessage() :
+                super.getMessage() + ", block " + block.get("stringId") + " " + block.toJSONString();
         }
 
     }
@@ -113,13 +114,13 @@ public interface BlockchainProcessor {
 
         private final Transaction transaction;
 
-        public TransactionNotAcceptedException(String message, Transaction transaction) {
-            super(message, transaction.getBlock());
+        public TransactionNotAcceptedException(String message, Transaction transaction, JSONObject jsonBlock) {
+            super(message, jsonBlock);
             this.transaction = transaction;
         }
 
-        public TransactionNotAcceptedException(Throwable cause, Transaction transaction) {
-            super(cause, transaction.getBlock());
+        public TransactionNotAcceptedException(Throwable cause, Transaction transaction, JSONObject jsonBlock) {
+            super(cause, jsonBlock);
             this.transaction = transaction;
         }
 
@@ -135,8 +136,8 @@ public interface BlockchainProcessor {
 
     class BlockOutOfOrderException extends BlockNotAcceptedException {
 
-        public BlockOutOfOrderException(String message, Block block) {
-            super(message, block);
+        public BlockOutOfOrderException(String message, JSONObject jsonBlock) {
+            super(message, jsonBlock);
         }
 
     }

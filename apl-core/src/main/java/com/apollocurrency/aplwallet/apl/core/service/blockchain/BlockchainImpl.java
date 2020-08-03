@@ -37,6 +37,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.appdata.TransactionIndex;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.EcBlockData;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
@@ -47,6 +48,8 @@ import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -288,7 +291,7 @@ public class BlockchainImpl implements Blockchain {
     public Block loadBlock(Connection con, ResultSet rs, boolean loadTransactions) {
         Block block = blockDao.loadBlock(con, rs);
         if (loadTransactions) {
-            List<Transaction> blockTransactions = transactionDao.findBlockTransactions(con, block.getId());
+            List<Transaction> blockTransactions = this.getOrLoadTransactions(block);
             block.setTransactions(blockTransactions);
         }
         return block;
@@ -298,7 +301,52 @@ public class BlockchainImpl implements Blockchain {
     @Override
     public void saveBlock(Connection con, Block block) {
         blockDao.saveBlock(con, block);
-        transactionDao.saveTransactions(con, block.getOrLoadTransactions());
+        transactionDao.saveTransactions(con, this.getOrLoadTransactions(block));
+    }
+
+    public List<Transaction> getOrLoadTransactions(Block parentBlock) {
+        if (parentBlock.getTransactions() == null || parentBlock.getTransactions().size() == 0) {
+            List<Transaction> blockTransactions = this.getBlockTransactions(parentBlock.getId());
+            if (blockTransactions.size() > 0) {
+                List<Transaction> transactions = Collections.unmodifiableList(blockTransactions);
+                short index = 0;
+                for (Transaction transaction : transactions) {
+                    transaction.setBlock(parentBlock);
+                    transaction.setIndex(index++);
+                    ((TransactionImpl) transaction).bytes();
+                    transaction.getAppendages();
+                }
+                parentBlock.setTransactions(transactions);
+            } else {
+                parentBlock.setTransactions(Collections.emptyList());
+            }
+        } else if (parentBlock.getTransactions() == null) {
+            parentBlock.setTransactions(Collections.emptyList());
+        }
+        return parentBlock.getTransactions();
+    }
+
+    public JSONObject getJSONObject(Block block) {
+        JSONObject json = new JSONObject();
+        json.put("version", block.getVersion());
+        json.put("stringId", block.getStringId());
+        json.put("timestamp", block.getTimestamp());
+        json.put("previousBlock", Long.toUnsignedString(block.getPreviousBlockId()));
+        json.put("totalAmountATM", block.getTotalFeeATM());
+        json.put("totalFeeATM", block.getTotalFeeATM());
+        json.put("payloadLength", block.getPayloadLength());
+        json.put("payloadHash", Convert.toHexString(block.getPayloadHash()));
+        json.put("generatorId", Long.toUnsignedString(block.getGeneratorId()));
+        json.put("generatorPublicKey", Convert.toHexString(block.getGeneratorPublicKey()));
+        json.put("generationSignature", Convert.toHexString(block.getGenerationSignature()));
+        json.put("previousBlockHash", Convert.toHexString(block.getPreviousBlockHash()));
+        json.put("blockSignature", Convert.toHexString(block.getBlockSignature()));
+        json.put("timeout", block.getTimeout());
+
+        JSONArray transactionsData = new JSONArray();
+        this.getOrLoadTransactions(block).forEach(transaction -> transactionsData.add(transaction.getJSONObject()));
+        json.put("transactions", transactionsData);
+        return json;
     }
 
     @Transactional
@@ -412,7 +460,7 @@ public class BlockchainImpl implements Blockchain {
                     blockDao.getBlocksAfter(fromBlockHeight, blockIdList, result, con, prevSize);
                     for (int i = prevSize; i < result.size(); i++) {
                         Block block = result.get(i);
-                        List<Transaction> blockTransactions = transactionDao.findBlockTransactions(con, block.getId());
+                        List<Transaction> blockTransactions = this.getOrLoadTransactions(block);
                         block.setTransactions(blockTransactions);
                     }
                     if (result.size() - 1 >= 0) {
@@ -718,6 +766,13 @@ public class BlockchainImpl implements Blockchain {
     public List<Transaction> getBlockTransactions(long blockId) {
         TransactionalDataSource dataSource = getDataSourceWithSharding(blockId);
         return transactionDao.findBlockTransactions(blockId, dataSource);
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public long getBlockTransactionCount(long blockId) {
+        TransactionalDataSource dataSource = getDataSourceWithSharding(blockId);
+        return transactionDao.getBlockTransactionsCount(blockId, dataSource);
     }
 
     @Override

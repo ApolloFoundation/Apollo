@@ -40,8 +40,6 @@ import java.util.Objects;
 
 public final class BlockImpl implements Block {
 
-    private static Blockchain blockchain;
-
     private final int version;
     private final int timestamp;
     private final long previousBlockId;
@@ -218,25 +216,13 @@ public final class BlockImpl implements Block {
     }
 
     @Override
-    public List<Transaction> getOrLoadTransactions() {
-        if (this.blockTransactions == null) {
-            List<Transaction> transactions = Collections.unmodifiableList(lookupBlockchain().getBlockTransactions(getId()));
-            for (Transaction transaction : transactions) {
-                transaction.setBlock(this);
-            }
-            this.blockTransactions = transactions;
-        }
-        return this.blockTransactions;
-    }
-
-    @Override
     public List<Transaction> getTransactions() {
         return this.blockTransactions;
     }
 
     @Override
     public void setTransactions(List<Transaction> transactions) {
-        this.blockTransactions = transactions;
+        this.blockTransactions = Objects.requireNonNull(transactions, "transaction List should not be NULL");
     }
 
     @Override
@@ -313,30 +299,6 @@ public final class BlockImpl implements Block {
     }
 
     @Override
-    public JSONObject getJSONObject() {
-        JSONObject json = new JSONObject();
-        json.put("version", version);
-        json.put("stringId", stringId);
-        json.put("timestamp", timestamp);
-        json.put("previousBlock", Long.toUnsignedString(previousBlockId));
-        json.put("totalAmountATM", totalAmountATM);
-        json.put("totalFeeATM", totalFeeATM);
-        json.put("payloadLength", payloadLength);
-        json.put("payloadHash", Convert.toHexString(payloadHash));
-        json.put("generatorId", Long.toUnsignedString(generatorId));
-        json.put("generatorPublicKey", Convert.toHexString(getGeneratorPublicKey()));
-        json.put("generationSignature", Convert.toHexString(generationSignature));
-        json.put("previousBlockHash", Convert.toHexString(previousBlockHash));
-        json.put("blockSignature", Convert.toHexString(blockSignature));
-        json.put("timeout", timeout);
-
-        JSONArray transactionsData = new JSONArray();
-        getOrLoadTransactions().forEach(transaction -> transactionsData.add(transaction.getJSONObject()));
-        json.put("transactions", transactionsData);
-        return json;
-    }
-
-    @Override
     public byte[] getBytes() {
         return Arrays.copyOf(bytes(), bytes.length);
     }
@@ -351,7 +313,7 @@ public final class BlockImpl implements Block {
             buffer.putInt(version);
             buffer.putInt(timestamp);
             buffer.putLong(previousBlockId);
-            buffer.putInt(getOrLoadTransactions().size());
+            buffer.putInt(blockTransactions != null ? blockTransactions.size() : /*getOrLoadTransactions().size()*/ 0);
             buffer.putLong(totalAmountATM);
             buffer.putLong(totalFeeATM);
             buffer.putInt(payloadLength);
@@ -394,18 +356,24 @@ public final class BlockImpl implements Block {
             }
             this.height = threeLatestBlocksArray[0].getHeight() + 1;
             this.calculateBaseTarget(threeLatestBlocksArray, config, lastShard, initialBlockHeight);
+            short index = 0;
+            for (Transaction transaction : this.blockTransactions) {
+                transaction.setBlock(this);
+                transaction.setIndex(index++);
+                ((TransactionImpl) transaction).bytes();
+                transaction.getAppendages();
+            }
         } else {
             this.height = 0;
         }
-        short index = 0;
-        for (Transaction transaction : getOrLoadTransactions()) {
-            transaction.setBlock(this);
-            transaction.setIndex(index++);
-        }
     }
 
-    public void loadTransactions() {
-        for (Transaction transaction : getOrLoadTransactions()) {
+    public void assignTransactionsIndex() {
+        // important !!! assign transaction index value
+        short index = 0;
+        for (Transaction transaction : this.blockTransactions) {
+            transaction.setBlock(this);
+            transaction.setIndex(index++);
             ((TransactionImpl) transaction).bytes();
             transaction.getAppendages();
         }
@@ -481,14 +449,6 @@ public final class BlockImpl implements Block {
         }
         return blockAtHeight.getTimeout();
     }
-
-    private Blockchain lookupBlockchain() {
-        if (blockchain == null) {
-            blockchain = CDI.current().select(Blockchain.class).get();
-        }
-        return blockchain;
-    }
-
 
     @Override
     public String toString() {
