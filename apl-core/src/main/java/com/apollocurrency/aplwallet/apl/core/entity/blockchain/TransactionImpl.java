@@ -24,22 +24,10 @@ import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
-import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
-import com.apollocurrency.aplwallet.apl.core.signature.SignatureParser;
-import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtendAttachment;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.transaction.UnsupportedTransactionVersion;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
@@ -55,7 +43,6 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.inject.spi.CDI;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -68,8 +55,6 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.SET_PHASING_ONLY;
-
-import static com.apollocurrency.aplwallet.apl.core.transaction.AccountControl.SET_PHASING_ONLY;
 
 public class TransactionImpl implements Transaction {
     private static final Logger LOG = LoggerFactory.getLogger(TransactionImpl.class);
@@ -109,7 +94,7 @@ public class TransactionImpl implements Transaction {
     private volatile long dbId;
     private volatile boolean hasValidSignature = false;
 
-    TransactionImpl(BuilderImpl builder, byte[] keySeed) throws AplException.NotValidException {
+    TransactionImpl(BuilderImpl builder) {
 
         this.timestamp = builder.timestamp;
         this.deadline = builder.deadline;
@@ -160,30 +145,13 @@ public class TransactionImpl implements Transaction {
         for (Appendix appendage : appendages) {
             appendagesSize += appendage.getSize();
         }
-        this.appendagesSize = appSize;
+        this.appendagesSize = appendagesSize;
         this.signature = builder.signature;
-    }
-
-    public void sign(byte[] keySeed) throws AplException.NotValidException {
-
-        if (getSenderPublicKey() != null && !Arrays.equals(senderPublicKey, Crypto.getPublicKey(keySeed))) {
-            throw new AplException.NotValidException("Secret phrase doesn't match transaction sender public key");
-        }
-        signature = Crypto.sign(bytes(), keySeed);
-        bytes = null;
     }
 
     @Override
     public short getDeadline() {
         return deadline;
-    }
-
-    @Override
-    public byte[] getSenderPublicKey() {
-        if (senderPublicKey == null) {
-            throw new IllegalStateException("Sender public key is not set");
-        }
-        return senderPublicKey;
     }
 
     @Override
@@ -318,11 +286,6 @@ public class TransactionImpl implements Transaction {
     @Override
     public AbstractAttachment getAttachment() {
         return attachment;
-    }
-
-    @Override
-    public boolean verifySignature() {
-        return false;
     }
 
     @Override
@@ -481,7 +444,7 @@ public class TransactionImpl implements Transaction {
                 bytes = buffer.array();
             } catch (RuntimeException e) {
                 if (signature != null && LOG.isDebugEnabled()) {
-                    LOG.debug("Failed to get transaction bytes for transaction: {}", getJSONObject().toJSONString());
+                    LOG.debug("Failed to get transaction bytes for transaction: {}", getId());
                 }
                 throw e;
             }
@@ -526,6 +489,9 @@ public class TransactionImpl implements Transaction {
 
     @Override
     public byte[] getSenderPublicKey() {
+        if (senderPublicKey == null) {
+            throw new IllegalStateException("Sender public key is not set");
+        }
         return senderPublicKey;
     }
 
@@ -738,13 +704,6 @@ public class TransactionImpl implements Transaction {
                 throw new IllegalStateException("Ec block was not set for transaction");
             }
             TransactionImpl transaction = new TransactionImpl(this);
-            if (keySeed != null) {
-                for (Appendix appendage : transaction.getAppendages()) {
-                    if (appendage instanceof Encryptable) {//encrypt attached message
-                        ((Encryptable) appendage).encrypt(keySeed);
-                    }
-                }
-            }
             return transaction;
         }
 

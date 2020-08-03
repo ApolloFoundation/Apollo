@@ -4,17 +4,13 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.transaction.ShufflingTransaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 
@@ -26,7 +22,6 @@ public final class ShufflingCancellationAttachment extends AbstractShufflingAtta
     final byte[][] blameData;
     final byte[][] keySeeds;
     final long cancellingAccountId;
-    private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
 
     public ShufflingCancellationAttachment(ByteBuffer buffer) throws AplException.NotValidException {
         super(buffer);
@@ -37,16 +32,10 @@ public final class ShufflingCancellationAttachment extends AbstractShufflingAtta
         this.blameData = new byte[count][];
         for (int i = 0; i < count; i++) {
             int size = buffer.getInt();
-            if (size > blockchainConfig.getCurrentConfig().getMaxPayloadLength()) {
-                throw new AplException.NotValidException("Invalid data size " + size);
-            }
             this.blameData[i] = new byte[size];
             buffer.get(this.blameData[i]);
         }
         count = buffer.get();
-        if (count > Constants.MAX_NUMBER_OF_SHUFFLING_PARTICIPANTS || count <= 0) {
-            throw new AplException.NotValidException("Invalid keySeeds count " + count);
-        }
         this.keySeeds = new byte[count][];
         for (int i = 0; i < count; i++) {
             this.keySeeds[i] = new byte[32];

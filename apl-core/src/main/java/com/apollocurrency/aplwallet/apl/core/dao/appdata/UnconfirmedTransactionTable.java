@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,7 +44,7 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
     private final LongKeyFactory<UnconfirmedTransaction> transactionKeyFactory;
     private int maxUnconfirmedTransactions;
     private final Map<DbKey, UnconfirmedTransaction> transactionCache = new HashMap<>();
-    private final PriorityQueue<UnconfirmedTransaction> waitingTransactions;
+    private final PriorityBlockingQueue<UnconfirmedTransaction> waitingTransactions;
     private final Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> unconfirmedDuplicates = new HashMap<>();
     private final Map<Transaction, Transaction> txToBroadcastWhenConfirmed = new ConcurrentHashMap<>();
     private final Set<Transaction> broadcastedTransactions = Collections.newSetFromMap(new ConcurrentHashMap<>());
@@ -158,7 +159,7 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
                 if (this.size() > maxUnconfirmedTransactions) {
                     UnconfirmedTransaction removed = remove();
                     log.debug("Dropped unconfirmed transaction above max size={}, {}",
-                        maxUnconfirmedTransactions, removed.getJSONObject().toJSONString());
+                        maxUnconfirmedTransactions, removed.getId());
                 }
                 return true;
             }

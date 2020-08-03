@@ -144,8 +144,7 @@ public class ServerInfoService {
                              CurrencyTransferService currencyTransferService,
                              CurrencyService currencyService,
                              ShufflingService shufflingService,
-                             TransactionTypeFactory transactionTypeFactory
-                             ShufflingService shufflingService,
+                             TransactionTypeFactory transactionTypeFactory,
                              GeneratorService generatorService
     ) {
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");

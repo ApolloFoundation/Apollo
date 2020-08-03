@@ -22,6 +22,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCancellationAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
@@ -77,6 +78,18 @@ class ShufflingCancellationTransactionType extends ShufflingTransactionType {
     @Override
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
         ShufflingCancellationAttachment attachment = (ShufflingCancellationAttachment) transaction.getAttachment();
+
+        for (byte[] blameData : attachment.getBlameData()) {
+            if (blameData.length > getBlockchainConfig().getCurrentConfig().getMaxPayloadLength()) {
+                throw new AplException.NotValidException("Invalid data size " + blameData.length);
+            }
+        }
+        byte[][] attachmentKeySeeds = attachment.getKeySeeds();
+        int keyseedsLength = attachmentKeySeeds.length;
+        if (keyseedsLength > Constants.MAX_NUMBER_OF_SHUFFLING_PARTICIPANTS || keyseedsLength <= 0) {
+            throw new AplException.NotValidException("Invalid keySeeds count " + keyseedsLength);
+        }
+
         Shuffling shuffling = shufflingService.getShuffling(attachment.getShufflingId());
         if (shuffling == null) {
             throw new AplException.NotCurrentlyValidException("Shuffling not found: " + Long.toUnsignedString(attachment.getShufflingId()));
@@ -114,7 +127,7 @@ class ShufflingCancellationTransactionType extends ShufflingTransactionType {
         if (dataHash == null || !Arrays.equals(dataHash, attachment.getHash())) {
             throw new AplException.NotValidException("Blame data hash doesn't match processing data hash");
         }
-        byte[][] keySeeds = attachment.getKeySeeds();
+        byte[][] keySeeds = attachmentKeySeeds;
         if (keySeeds.length != shuffling.getParticipantCount() - participant.getIndex() - 1) {
             throw new AplException.NotValidException("Invalid number of revealed keySeeds: " + keySeeds.length);
         }

@@ -42,8 +42,6 @@ import java.util.Objects;
 public final class BlockImpl implements Block {
 
     private static Blockchain blockchain;
-    private static ShardDao shardDao;
-    private static AccountService accountService;
     private static TransactionSerializer transactionSerializer;
 
     private final int version;
@@ -374,6 +372,7 @@ public final class BlockImpl implements Block {
         return bytes;
     }
 
+
     @Override
     public boolean checkSignature() {
         if (!hasValidSignature) {
@@ -484,6 +483,13 @@ public final class BlockImpl implements Block {
             blockchain = CDI.current().select(Blockchain.class).get();
         }
         return blockchain;
+    }
+
+    private TransactionSerializer lookupTransactionSerializer() {
+        if (transactionSerializer == null) {
+            transactionSerializer = CDI.current().select(TransactionSerializer.class).get();
+        }
+        return transactionSerializer;
     }
 
 

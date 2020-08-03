@@ -18,9 +18,9 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsLi
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.Search;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.tika.Tika;
-import org.apache.tika.mime.MediaType;
 import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
@@ -93,15 +93,10 @@ public class ListingTransactionType extends DigitalGoodsTransactionType {
             prunableLoadingService.loadPrunable(transaction, prunablePlainMessage, false);
             byte[] image = prunablePlainMessage.getMessage();
             if (image != null) {
-                Tika tika = new Tika();
-                MediaType mediaType = null;
-                try {
-                    String mediaTypeName = tika.detect(image);
-                    mediaType = MediaType.parse(mediaTypeName);
-                } catch (NoClassDefFoundError e) {
-                    log.error("Error running Tika parsers", e);
-                }
-                if (mediaType == null || !"image".equals(mediaType.getType())) {
+
+                    String mediaTypeName = Search.detectMimeType(image);
+                String mediaType = mediaTypeName.substring(0, mediaTypeName.indexOf("/"));
+                if (StringUtils.isBlank(mediaType) || !"image".equals(mediaType)) {
                     throw new AplException.NotValidException("Only image attachments allowed for DGS listing, media type is " + mediaType);
                 }
             }

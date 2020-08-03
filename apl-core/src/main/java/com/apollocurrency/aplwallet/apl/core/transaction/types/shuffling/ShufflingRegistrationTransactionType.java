@@ -45,7 +45,7 @@ public class ShufflingRegistrationTransactionType extends ShufflingTransactionTy
 
     @Override
     public TransactionTypes.TransactionTypeSpec getSpec() {
-        return null;
+        return SHUFFLING_REGISTRATION;
     }
 
     @Override

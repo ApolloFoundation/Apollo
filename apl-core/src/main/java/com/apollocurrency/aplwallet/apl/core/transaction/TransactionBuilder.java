@@ -39,9 +39,13 @@ public class TransactionBuilder {
     }
 
     public Transaction.Builder newTransactionBuilder(byte[] senderPublicKey, long amountATM, long feeATM, short deadline, Attachment attachment, int timestamp) {
+        return newTransactionBuilder((byte) 1, senderPublicKey, amountATM, feeATM, deadline, attachment, timestamp);
+    }
+
+    public Transaction.Builder newTransactionBuilder(int version, byte[] senderPublicKey, long amountATM, long feeATM, short deadline, Attachment attachment, int timestamp) {
         TransactionTypes.TransactionTypeSpec spec = attachment.getTransactionTypeSpec();
         TransactionType transactionType = factory.findTransactionType(spec.getType(), spec.getSubtype());
-        return new TransactionImpl.BuilderImpl((byte) 1, senderPublicKey, amountATM, feeATM, deadline, (AbstractAttachment) attachment, timestamp, transactionType);
+        return new TransactionImpl.BuilderImpl((byte) version, senderPublicKey, amountATM, feeATM, deadline, (AbstractAttachment) attachment, timestamp, transactionType);
     }
 
     public TransactionImpl.BuilderImpl newTransactionBuilder(byte[] bytes) throws AplException.NotValidException {

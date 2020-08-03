@@ -8,13 +8,9 @@ import com.apollocurrency.antifraud.AntifraudValidator;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -29,7 +25,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.annotation.ParentChildSpecific;
 import com.apollocurrency.aplwallet.apl.util.annotation.ParentMarker;
@@ -48,19 +43,13 @@ public class TransactionValidator {
     private final AccountPublicKeyService accountPublicKeyService;
     private final AccountControlPhasingService accountControlPhasingService;
     private final PrunableLoadingService prunableService;
-    private final BlockchainConfig blockchainConfig;
-    private final PhasingPollService phasingPollService;
-    private final Blockchain blockchain;
-    private final FeeCalculator feeCalculator;
-    private final AccountControlPhasingService accountControlPhasingService;
     private final AccountService accountService;
-    private final AccountPublicKeyService accountPublicKeyService;
     private final TransactionVersionValidator transactionVersionValidator;
     private final KeyValidator keyValidator;
 
     @Inject
     public TransactionValidator(BlockchainConfig blockchainConfig, PhasingPollService phasingPollService,
-                                Blockchain blockchain, FeeCalculator feeCalculator,
+                                Blockchain blockchain, FeeCalculator feeCalculator, AccountService accountService,
                                 AccountPublicKeyService accountPublicKeyService, AccountControlPhasingService accountControlPhasingService, TransactionVersionValidator transactionVersionValidator, PrunableLoadingService prunableService) {
         this.blockchainConfig = blockchainConfig;
         this.phasingPollService = phasingPollService;
@@ -71,7 +60,6 @@ public class TransactionValidator {
         this.prunableService = prunableService;
         this.accountService = accountService;
         this.transactionVersionValidator = transactionVersionValidator;
-        this.accountPublicKeyService = accountPublicKeyService;
         this.keyValidator = new PublicKeyValidator(accountPublicKeyService);
     }
 
@@ -192,22 +180,6 @@ public class TransactionValidator {
         }
     }
 
-    public boolean verifySignature(Transaction transaction) {
-        return checkSignature(transaction) && accountPublicKeyService.setOrVerifyPublicKey(transaction.getSenderId(), transaction.getSenderPublicKey());
-    }
-
-    public boolean checkSignature(Transaction transaction) {
-        boolean hasValidSignature = transaction.hasValidSignature();
-        if (!hasValidSignature) {
-            hasValidSignature = transaction.getSignature() != null && Crypto.verify(transaction.getSignature(), transaction.getUnsignedBytes(), transaction.getSenderPublicKey());
-            if (hasValidSignature) {
-                transaction.withValidSignature();
-            }
-        }
-        return hasValidSignature;
-    }
-
-
     public int getActualTransactionVersion() {
         return transactionVersionValidator.getActualVersion();
     }
@@ -220,7 +192,10 @@ public class TransactionValidator {
         transactionVersionValidator.checkVersion(transactionVersion);
     }
 
-    public boolean verifySignature(Transaction transaction) {
+    public boolean checkSignature(Transaction transaction) {
+        if (transaction.hasValidSignature()) {
+            return true;
+        }
         Account sender = accountService.getAccount(transaction.getSenderId());
         if (sender == null) {
             log.error("Sender account not found, senderId={}", transaction.getSenderId());
@@ -267,10 +242,19 @@ public class TransactionValidator {
                     Convert.toHexString(transaction.getUnsignedBytes()));
             }
 
-            return signatureVerifier.verify(
+            boolean verifiedOk = signatureVerifier.verify(
                 transaction.getUnsignedBytes(), transaction.getSignature(), signatureCredential
             );
+            if (verifiedOk) {
+                transaction.withValidSignature();
+            }
+            return verifiedOk;
         }
+    }
+
+
+    public boolean verifySignature(Transaction transaction) {
+        return checkSignature(transaction) && accountPublicKeyService.setOrVerifyPublicKey(transaction.getSenderId(), transaction.getSenderPublicKey());
     }
 
     private static class PublicKeyValidator implements KeyValidator {

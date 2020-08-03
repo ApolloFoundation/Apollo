@@ -27,7 +27,6 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountCurrency;
@@ -46,8 +45,8 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountC
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPropertyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSigner;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSigner;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyTransfer;
@@ -579,8 +578,7 @@ public class FundingMonitor {
         if (targetAccount.getBalanceATM() < monitoredAccount.threshold) {
             //TODO Use TransactionVersionValidator#getActualVersion()
             int version = 1;
-            Transaction.Builder builder = TransactionBuilder.newTransactionBuilder(version, monitor.publicKey, monitoredAccount.amount, 0, (short) 1440, Attachment.ORDINARY_PAYMENT, blockchain.getLastBlockTimestamp());
-            Transaction.Builder builder = transactionBuilder.newTransactionBuilder(monitor.publicKey,
+            Transaction.Builder builder = transactionBuilder.newTransactionBuilder(version, monitor.publicKey,
                 monitoredAccount.amount, 0, (short) 1440, Attachment.ORDINARY_PAYMENT, blockchain.getLastBlockTimestamp());
 
             builder.recipientId(monitoredAccount.accountId);
@@ -621,8 +619,7 @@ public class FundingMonitor {
             //TODO Use TransactionVersionValidator#getActualVersion()
             int version = 1;
             Attachment attachment = new ColoredCoinsAssetTransfer(monitor.holdingId, monitoredAccount.amount);
-            Transaction.Builder builder = TransactionBuilder.newTransactionBuilder(version, monitor.publicKey,
-            Transaction.Builder builder = transactionBuilder.newTransactionBuilder(monitor.publicKey,
+            Transaction.Builder builder = transactionBuilder.newTransactionBuilder(version, monitor.publicKey,
                 0, 0, (short) 1440, attachment, blockchain.getLastBlockTimestamp());
             builder.recipientId(monitoredAccount.accountId);
             Transaction transaction = builder.build();
@@ -661,8 +658,7 @@ public class FundingMonitor {
             //TODO Use TransactionVersionValidator#getActualVersion()
             int version = 1;
             Attachment attachment = new MonetarySystemCurrencyTransfer(monitor.holdingId, monitoredAccount.amount);
-            Transaction.Builder builder = TransactionBuilder.newTransactionBuilder(version, monitor.publicKey,
-            Transaction.Builder builder = transactionBuilder.newTransactionBuilder(monitor.publicKey,
+            Transaction.Builder builder = transactionBuilder.newTransactionBuilder(version, monitor.publicKey,
                 0, 0, (short) 1440, attachment, blockchain.getLastBlockTimestamp());
             builder.recipientId(monitoredAccount.accountId);
             Transaction transaction = builder.build();

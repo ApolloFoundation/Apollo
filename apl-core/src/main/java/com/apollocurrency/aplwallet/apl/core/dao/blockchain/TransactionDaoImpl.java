@@ -33,8 +33,6 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureParser;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
-import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
@@ -769,7 +767,7 @@ public class TransactionDaoImpl implements TransactionDao {
             }
 
             short transactionIndex = rs.getShort("transaction_index");
-            TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
+            TransactionType transactionType = typeFactory.findTransactionType(type, subtype);
             if (transactionType == null) {
                 throw new AplException.NotValidException("Wrong transaction type/subtype value, type=" + type + " subtype=" + subtype);
             }
