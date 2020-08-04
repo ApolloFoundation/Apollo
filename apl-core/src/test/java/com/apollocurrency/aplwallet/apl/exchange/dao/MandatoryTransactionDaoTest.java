@@ -4,16 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.MandatoryTransaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.transaction.CachedTransactionTypeFactory;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.dex.DexCancelOrderTransaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.dex.DexOrderTransaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
@@ -25,6 +21,8 @@ import org.mockito.Mock;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 
 class MandatoryTransactionDaoTest {
     static String cancelBytes = "09110b252703780070fa32fa006ba1ff67b9809f9b8dd74e0ee5de84ff4834408c106980a8b05f034add89a5076a2218000000000000000000e1f505000000000000000000000000000000000000000000000000000000000000000000000000898f755511cd0a3aec0128094bd87f996a90519e7f9c3b2b183f5d7def77c40ab18215a72f44aaa55ef304371180cfa5517554a87ffc65507dd8bd586226dea200000000000000001a51f385ecc580fe0180c13d459b696166";
@@ -46,19 +44,14 @@ class MandatoryTransactionDaoTest {
 
     @BeforeEach
     void setUp() {
-        try {
-            dao = JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(extension.getDatabaseManager().getJdbiHandleFactory(), MandatoryTransactionDao.class);
-            TransactionBuilder builder = new TransactionBuilder(new CachedTransactionTypeFactory(List.of(new DexOrderTransaction(blockchainConfig, accountService, dexService, timeService), new DexCancelOrderTransaction(blockchainConfig, accountService, dexService))));
-            orderTx = new MandatoryTransaction(builder.newTransactionBuilder(Convert.parseHexString(orderBytes)).build(), null, (long) 20);
-            cancelTx = new MandatoryTransaction(builder.newTransactionBuilder(Convert.parseHexString(cancelBytes)).build(), orderTx.getFullHash(), (long) 10);
-        } catch (AplException.NotValidException e) {
-            throw new RuntimeException(e);
-        }
+        dao = JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(extension.getDatabaseManager().getJdbiHandleFactory(), MandatoryTransactionDao.class);
+        orderTx = new MandatoryTransaction((byte[]) null, Convert.parseHexString(orderBytes), (long) 20);
+        cancelTx = new MandatoryTransaction(Convert.parseHexString("2f23970cdc290b328e922ab0de51c288066e8579237c7b0fd45add2d064f5ff6"), Convert.parseHexString(cancelBytes), (long) 10);
     }
 
     @Test
     void testGetById() {
-        MandatoryTransaction tx = dao.get(cancelTx.getId());
+        MandatoryTransaction tx = dao.get(749837771503999228L);
 
         assertEquals(cancelTx, tx);
     }
@@ -72,24 +65,29 @@ class MandatoryTransactionDaoTest {
 
     @Test
     void testGetAllWithPagination() {
-        List<MandatoryTransaction> all = dao.getAll(cancelTx.getDbEntryId(), 3);
+        List<MandatoryTransaction> all = dao.getAll(10, 3);
 
         assertEquals(List.of(orderTx), all);
     }
 
     @Test
     void testInsert() {
-        MandatoryTransaction newTx = new MandatoryTransaction(orderTx.getTransaction(), null, orderTx.getDbEntryId() + 1);
+        Transaction tx = mock(Transaction.class);
+        doReturn(1L).when(tx).getId();
+        doReturn(orderTx.getTransactionBytes()).when(tx).getCopyTxBytes();
+        MandatoryTransaction newTx = new MandatoryTransaction(tx, null, orderTx.getDbEntryId() + 1);
 
         dao.insert(newTx);
 
         List<MandatoryTransaction> all = dao.getAll(0, 10);
+        newTx.setTransaction(null);
+
         assertEquals(List.of(cancelTx, orderTx, newTx), all);
     }
 
     @Test
     void testDelete() {
-        dao.delete(orderTx.getId());
+        dao.delete(3606021951720989487L);
 
         List<MandatoryTransaction> all = dao.getAll(0, 3);
 

@@ -39,9 +39,6 @@ public abstract class AbstractAttachment extends AbstractAppendix implements Att
         if (transactionType.getSpec() != getTransactionTypeSpec()) {
             throw new IllegalArgumentException("Required tx type " + getTransactionTypeSpec() + " but got " + transactionType.getSpec());
         }
-        if (this.transactionType != null) {
-            throw new IllegalStateException("Transaction type is already set");
-        }
         this.transactionType = transactionType;
     }
 

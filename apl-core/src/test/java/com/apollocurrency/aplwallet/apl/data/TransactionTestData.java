@@ -17,6 +17,7 @@ import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.CachedTransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
@@ -207,8 +208,10 @@ public class TransactionTestData {
         TransactionType transactionType = transactionTypeFactory.findTransactionType(type, subtype);
         byte[] pk = StringUtils.isBlank(publicKey) ? null : Convert.parseHexString(publicKey);
         try {
+            AbstractAttachment attach = transactionType.parseAttachment(buffer);
+            attach.bindTransactionType(transactionType);
             Transaction.Builder builder = new TransactionImpl.BuilderImpl(version, pk,
-                amount, fee, deadline, transactionType.parseAttachment(buffer), timestamp, transactionType)
+                amount, fee, deadline, attach, timestamp, transactionType)
                 .referencedTransactionFullHash(referencedTransactionFullhash)
                 .signature(SignatureToolFactory.createSignature(Convert.parseHexString(signature)))
                 .blockId(blockId)

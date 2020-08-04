@@ -162,7 +162,7 @@ class TransactionApiServiceImplTest {
             fail("Unexpected flow.");
         }
         TransactionInfoResp receipt = (TransactionInfoResp) response.getEntity();
-        assertEquals(childTransactionType.toString(), receipt.getType());
+        assertEquals(childTransactionType.getSpec().getType(), Long.parseLong(receipt.getType()));
         assertEquals(TX_1_SIGNATURE, receipt.getSignature());
     }
 

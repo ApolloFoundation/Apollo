@@ -27,6 +27,16 @@ public class MandatoryTransaction implements Transaction {
     private byte[] transactionBytes;
     private Long dbId;
 
+    @Override
+    public String toString() {
+        return "MandatoryTransaction{" +
+            "transaction=" + transaction +
+            ", requiredTxHash=" + Arrays.toString(requiredTxHash) +
+            ", transactionBytes=" + Arrays.toString(transactionBytes) +
+            ", dbId=" + dbId +
+            '}';
+    }
+
     public MandatoryTransaction(Transaction transaction, byte[] requiredTxHash, Long dbId) {
         this.transaction = transaction;
         this.requiredTxHash = requiredTxHash;

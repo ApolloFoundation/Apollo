@@ -48,6 +48,7 @@ public class TransactionBuilder {
     public Transaction.Builder newTransactionBuilder(int version, byte[] senderPublicKey, long amountATM, long feeATM, short deadline, Attachment attachment, int timestamp) {
         TransactionTypes.TransactionTypeSpec spec = attachment.getTransactionTypeSpec();
         TransactionType transactionType = factory.findTransactionType(spec.getType(), spec.getSubtype());
+        attachment.bindTransactionType(transactionType);
         return new TransactionImpl.BuilderImpl((byte) version, senderPublicKey, amountATM, feeATM, deadline, (AbstractAttachment) attachment, timestamp, transactionType);
     }
 
@@ -84,8 +85,10 @@ public class TransactionBuilder {
             }
             TransactionType transactionType = factory.findTransactionType(type, subtype);
 
+            AbstractAttachment attachment = transactionType.parseAttachment(buffer);
+            attachment.bindTransactionType(transactionType);
             TransactionImpl.BuilderImpl builder = new TransactionImpl.BuilderImpl(version, senderPublicKey, amountATM, feeATM,
-                deadline, transactionType.parseAttachment(buffer), timestamp, transactionType)
+                deadline, attachment, timestamp, transactionType)
                 .referencedTransactionFullHash(referencedTransactionFullHash)
                 .signature(signature)
                 .ecBlockHeight(ecBlockHeight)
@@ -196,9 +199,11 @@ public class TransactionBuilder {
             if (transactionType == null) {
                 throw new AplException.NotValidException("Invalid transaction type: " + type + ", " + subtype);
             }
+            AbstractAttachment attachment = transactionType.parseAttachment(attachmentData);
+            attachment.bindTransactionType(transactionType);
             TransactionImpl.BuilderImpl builder = new TransactionImpl.BuilderImpl(version, senderPublicKey,
                 amountATM, feeATM, deadline,
-                transactionType.parseAttachment(attachmentData), timestamp, transactionType)
+                attachment, timestamp, transactionType)
                 .referencedTransactionFullHash(referencedTransactionFullHash)
                 .signature(signature)
                 .ecBlockHeight(ecBlockHeight)
