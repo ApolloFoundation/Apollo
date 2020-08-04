@@ -15,6 +15,7 @@ import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.ARBITRARY_MESSAGE;
 
@@ -62,7 +63,7 @@ public class Chat {
         }
     }
 
-    public static DbIterator<? extends Transaction> getChatHistory(long account1, long account2, int from, int to) {
+    public static List<? extends Transaction> getChatHistory(long account1, long account2, int from, int to) {
         Connection con = null;
         try {
             con = lookupDataSource().getConnection();

@@ -19,13 +19,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
@@ -33,13 +26,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollLin
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollVoter;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingVote;
-import com.apollocurrency.aplwallet.apl.core.model.PhasingCreator;
-import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.model.PhasingCreator;
 import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
@@ -51,6 +37,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -113,9 +100,9 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     }
 
     @Override
-    public DbIterator<PhasingPollResult> getApproved(int height) {
-        return resultTable.getManyBy(new DbClause.IntClause("height", height).and(new DbClause.BooleanClause("approved", true)),
-            0, -1, " ORDER BY db_id ASC ");
+    public List<PhasingPollResult> getApproved(int height) {
+        return CollectionUtil.toList(resultTable.getManyBy(new DbClause.IntClause("height", height).and(new DbClause.BooleanClause("approved", true)),
+            0, -1, " ORDER BY db_id ASC "));
     }
 
     @Override
@@ -158,7 +145,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     }
 
     @Override
-    public DbIterator<Transaction> getVoterPhasedTransactions(long voterId, int from, int to) {
+    public List<Transaction> getVoterPhasedTransactions(long voterId, int from, int to) {
         try {
             return voterTable.getVoterPhasedTransactions(voterId, from, to);
         } catch (SQLException e) {
@@ -167,7 +154,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     }
 
     @Override
-    public DbIterator<Transaction> getHoldingPhasedTransactions(long holdingId, VoteWeighting.VotingModel votingModel,
+    public List<Transaction> getHoldingPhasedTransactions(long holdingId, VoteWeighting.VotingModel votingModel,
                                                                 long accountId, boolean withoutWhitelist, int from, int to) {
         try {
             return phasingPollTable.getHoldingPhasedTransactions(holdingId, votingModel, accountId, withoutWhitelist, from, to, blockchain.getHeight());
@@ -177,7 +164,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     }
 
     @Override
-    public DbIterator<Transaction> getAccountPhasedTransactions(long accountId, int from, int to) {
+    public List<Transaction> getAccountPhasedTransactions(long accountId, int from, int to) {
         try {
             return phasingPollTable.getAccountPhasedTransactions(accountId, from, to, blockchain.getHeight());
         } catch (SQLException e) {

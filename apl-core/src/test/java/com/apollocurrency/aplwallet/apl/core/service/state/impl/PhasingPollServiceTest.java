@@ -264,7 +264,7 @@ public class PhasingPollServiceTest {
 
     @Test
     void testGetVoterPhasedTransactions() {
-        List<Transaction> voterTransactions = CollectionUtil.toList(service.getVoterPhasedTransactions(ptd.POLL_4_VOTER_0_ID, 0, 100));
+        List<Transaction> voterTransactions = service.getVoterPhasedTransactions(ptd.POLL_4_VOTER_0_ID, 0, 100);
 
         assertEquals(Arrays.asList(ttd.TRANSACTION_11), voterTransactions);
     }
@@ -273,14 +273,14 @@ public class PhasingPollServiceTest {
     void testGetVoterPhasedTransactionsWnenBlockchainHeightIsHigherThanPollFinishHeight() {
         BlockTestData blockTestData = new BlockTestData();
         blockchain.setLastBlock(blockTestData.LAST_BLOCK);
-        List<Transaction> voterTransactions = CollectionUtil.toList(service.getVoterPhasedTransactions(ptd.POLL_1_VOTER_0_ID, 0, 100));
+        List<Transaction> voterTransactions = service.getVoterPhasedTransactions(ptd.POLL_1_VOTER_0_ID, 0, 100);
 
         assertEquals(0, voterTransactions.size());
     }
 
     @Test
     void testGetVoterPhasedTransactionForNonExistentVoter() {
-        List<Transaction> voterTransactions = CollectionUtil.toList(service.getVoterPhasedTransactions(ptd.POLL_1_VOTER_0_ID + 1, 0, 100));
+        List<Transaction> voterTransactions = service.getVoterPhasedTransactions(ptd.POLL_1_VOTER_0_ID + 1, 0, 100);
 
         assertEquals(0, voterTransactions.size());
     }
@@ -399,14 +399,14 @@ public class PhasingPollServiceTest {
 
     @Test
     void testGetApproved() {
-        List<PhasingPollResult> phasingPollResults = CollectionUtil.toList(service.getApproved(ptd.RESULT_1.getHeight()));
+        List<PhasingPollResult> phasingPollResults = service.getApproved(ptd.RESULT_1.getHeight());
 
         assertEquals(Arrays.asList(ptd.RESULT_1), phasingPollResults);
     }
 
     @Test
     void testGetApprovedForNotApprovedPollResult() {
-        List<PhasingPollResult> phasingPollResults = CollectionUtil.toList(service.getApproved(ptd.RESULT_3.getHeight()));
+        List<PhasingPollResult> phasingPollResults = service.getApproved(ptd.RESULT_3.getHeight());
 
         assertEquals(Collections.emptyList(), phasingPollResults);
     }
@@ -434,7 +434,7 @@ public class PhasingPollServiceTest {
 
     @Test
     void testGetAccountPhasedTransactions() {
-        List<Transaction> accountTransactions = CollectionUtil.toList(service.getAccountPhasedTransactions(ttd.TRANSACTION_9.getSenderId(), 0, 100));
+        List<Transaction> accountTransactions = service.getAccountPhasedTransactions(ttd.TRANSACTION_9.getSenderId(), 0, 100);
         assertEquals(accountTransactions, List.of(ttd.TRANSACTION_13, ttd.TRANSACTION_12, ttd.TRANSACTION_11));
     }
 
@@ -443,7 +443,7 @@ public class PhasingPollServiceTest {
         Block block = mock(Block.class);
         doReturn(Integer.MAX_VALUE).when(block).getHeight();
         blockchain.setLastBlock(block);
-        List<Transaction> accountTransactions = CollectionUtil.toList(service.getAccountPhasedTransactions(ttd.TRANSACTION_9.getSenderId(), 0, 100));
+        List<Transaction> accountTransactions = service.getAccountPhasedTransactions(ttd.TRANSACTION_9.getSenderId(), 0, 100);
         assertTrue(accountTransactions.isEmpty());
     }
 
@@ -461,13 +461,13 @@ public class PhasingPollServiceTest {
     @Test
     void testGetByHoldingId() throws SQLException {
         blockchain.setLastBlock(btd.BLOCK_12);
-        List<Transaction> transactions = CollectionUtil.toList(service.getHoldingPhasedTransactions(ptd.POLL_5.getVoteWeighting().getHoldingId(), VoteWeighting.VotingModel.ASSET, 0, false, 0, 100));
+        List<Transaction> transactions = service.getHoldingPhasedTransactions(ptd.POLL_5.getVoteWeighting().getHoldingId(), VoteWeighting.VotingModel.ASSET, 0, false, 0, 100);
         assertEquals(List.of(ttd.TRANSACTION_13), transactions);
     }
 
     @Test
     void testGetByHoldingIdNotExist() throws SQLException {
-        List<Transaction> transactions = CollectionUtil.toList(service.getHoldingPhasedTransactions(ptd.POLL_4.getVoteWeighting().getHoldingId(), VoteWeighting.VotingModel.ACCOUNT, 0, false, 0, 100));
+        List<Transaction> transactions = service.getHoldingPhasedTransactions(ptd.POLL_4.getVoteWeighting().getHoldingId(), VoteWeighting.VotingModel.ACCOUNT, 0, false, 0, 100);
         assertTrue(transactions.isEmpty());
     }
 

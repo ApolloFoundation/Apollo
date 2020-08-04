@@ -23,7 +23,6 @@ import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
-import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
@@ -324,8 +323,8 @@ class BlockchainTest {
     void testGetBlocks() {
         blockchain.setLastBlock(btd.BLOCK_13);
 
-        List<Block> blocks = CollectionUtil.toList(blockchain.getBlocks(
-            1, btd.BLOCK_13.getHeight() - btd.BLOCK_11.getHeight(), 0));
+        List<Block> blocks = blockchain.getBlocks(
+            1, btd.BLOCK_13.getHeight() - btd.BLOCK_11.getHeight(), 0);
 
         assertEquals(List.of(btd.BLOCK_12, btd.BLOCK_11), blocks);
 
@@ -333,7 +332,7 @@ class BlockchainTest {
 
     @Test
     void testGetAccountBlocks() {
-        List<Block> blocks = CollectionUtil.toList(blockchain.getBlocksByAccount(btd.BLOCK_12.getGeneratorId(), 0, Integer.MAX_VALUE, 0));
+        List<Block> blocks = blockchain.getBlocksByAccount(btd.BLOCK_12.getGeneratorId(), 0, Integer.MAX_VALUE, 0);
 
         assertEquals(List.of(btd.BLOCK_13, btd.BLOCK_12), blocks);
     }
@@ -627,7 +626,7 @@ class BlockchainTest {
         assertEquals(btd.BLOCK_11, lastBlock);
 
         blockchain.setLastBlock(btd.BLOCK_13);
-        List<Block> blocks = CollectionUtil.toList(blockchain.getBlocks(0, Integer.MAX_VALUE, 0));
+        List<Block> blocks = blockchain.getBlocks(0, Integer.MAX_VALUE, 0);
         assertEquals(List.of(btd.BLOCK_11, btd.BLOCK_10), blocks);
     }
 
@@ -640,7 +639,7 @@ class BlockchainTest {
         assertEquals(btd.BLOCK_10, lastBlock);
 
         blockchain.setLastBlock(btd.BLOCK_13);
-        List<Block> blocks = CollectionUtil.toList(blockchain.getBlocks(0, Integer.MAX_VALUE, 0));
+        List<Block> blocks = blockchain.getBlocks(0, Integer.MAX_VALUE, 0);
         assertEquals(List.of(btd.BLOCK_10), blocks);
     }
 
@@ -1095,14 +1094,14 @@ class BlockchainTest {
 
     @Test
     void testGetPrivateTransactionsByType() {
-        List<Transaction> transactions = CollectionUtil.toList(blockchain.getTransactions((byte) 0, (byte) 1, 1, 3));
+        List<Transaction> transactions = blockchain.getTransactions((byte) 0, (byte) 1, 1, 3);
         // transactions exists but cannot be extracted
         assertEquals(List.of(), transactions);
     }
 
     @Test
     void testGetTransactionsByType() {
-        List<Transaction> transactions = CollectionUtil.toList(blockchain.getTransactions((byte) 8, (byte) 0, 1, 3));
+        List<Transaction> transactions = blockchain.getTransactions((byte) 8, (byte) 0, 1, 3);
 
         assertEquals(List.of(txd.TRANSACTION_11), transactions);
     }
@@ -1119,7 +1118,7 @@ class BlockchainTest {
         DbUtils.inTransaction(extension, (con) -> {
             try (PreparedStatement pstm = con.prepareStatement("select * from transaction where id = ?")) {
                 pstm.setLong(1, txd.TRANSACTION_10.getId());
-                List<Transaction> transactions = CollectionUtil.toList(blockchain.getTransactions(con, pstm));
+                List<Transaction> transactions = blockchain.getTransactions(con, pstm);
                 assertEquals(List.of(txd.TRANSACTION_10), transactions);
             } catch (SQLException e) {
                 throw new RuntimeException(e);

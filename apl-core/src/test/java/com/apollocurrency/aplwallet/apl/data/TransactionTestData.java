@@ -31,6 +31,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.types.messaging.Arbitra
 import com.apollocurrency.aplwallet.apl.core.transaction.types.ms.MSCurrencyIssuanceTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.payment.OrdinaryPaymentTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.update.CriticalUpdateTransactiionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.update.ImportantUpdateTransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import lombok.NonNull;
@@ -148,6 +149,7 @@ public class TransactionTestData {
             new AliasAssignmentTransactionType(config, accountService, aliasService),
             new ArbitraryMessageTransactionType(config, accountService),
             new CriticalUpdateTransactiionType(config, accountService),
+            new ImportantUpdateTransactionType(config, accountService),
             new ListingTransactionType(config, accountService, dgsService, prunableLoadingService)
         ));
         initTransactions();

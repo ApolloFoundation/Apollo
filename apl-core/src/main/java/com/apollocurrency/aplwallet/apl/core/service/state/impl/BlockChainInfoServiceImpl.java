@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
@@ -14,6 +13,7 @@ import lombok.NoArgsConstructor;
 
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Singleton;
+import java.util.List;
 import java.util.stream.Stream;
 
 /**
@@ -87,7 +87,7 @@ public class BlockChainInfoServiceImpl implements BlockChainInfoService {
     }
 
     @Override
-    public DbIterator<Block> getBlocks(long accountId, int from, int to, int timestamp) {
+    public List<Block> getBlocks(long accountId, int from, int to, int timestamp) {
         return blockchain.getBlocksByAccount(accountId, from, to, timestamp);
     }
 

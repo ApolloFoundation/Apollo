@@ -20,8 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
-import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
@@ -44,6 +42,7 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -170,11 +169,11 @@ public class BlockchainImpl implements Blockchain {
 
     @Transactional(readOnly = true)
     @Override
-    public DbIterator<Block> getBlocks(int from, int to, int timestamp) {
+    public List<Block> getBlocks(int from, int to, int timestamp) {
         int blockchainHeight = getHeight();
         int calculatedFrom = blockchainHeight - from;
         int calculatedTo = blockchainHeight - to;
-        return blockDao.getBlocks(null, calculatedFrom, calculatedTo, timestamp);
+        return CollectionUtil.toList(blockDao.getBlocks(null, calculatedFrom, calculatedTo, timestamp));
     }
 
     /**
@@ -238,8 +237,8 @@ public class BlockchainImpl implements Blockchain {
 
     @Transactional(readOnly = true)
     @Override
-    public DbIterator<Block> getBlocksByAccount(long accountId, int from, int to, int timestamp) {
-        return blockDao.getBlocksByAccount(null, accountId, from, to, timestamp);
+    public List<Block> getBlocksByAccount(long accountId, int from, int to, int timestamp) {
+        return CollectionUtil.toList(blockDao.getBlocksByAccount(null, accountId, from, to, timestamp));
     }
 
     @Transactional(readOnly = true)
@@ -737,7 +736,7 @@ public class BlockchainImpl implements Blockchain {
 
     @Transactional(readOnly = true)
     @Override
-    public DbIterator<Transaction> getTransactions(byte type, byte subtype, int from, int to) {
+    public List<Transaction> getTransactions(byte type, byte subtype, int from, int to) {
         return transactionDao.getTransactions(type, subtype, from, to);
     }
 
@@ -749,7 +748,7 @@ public class BlockchainImpl implements Blockchain {
 
     @Transactional(readOnly = true)
     @Override
-    public DbIterator<Transaction> getTransactions(Connection con, PreparedStatement pstmt) {
+    public List<Transaction> getTransactions(Connection con, PreparedStatement pstmt) {
         return transactionDao.getTransactions(con, pstmt);
     }
 

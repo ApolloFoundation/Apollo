@@ -148,7 +148,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
         }
     }
 
-    public DbIterator<Transaction> getHoldingPhasedTransactions(long holdingId, VoteWeighting.VotingModel votingModel,
+    public List<Transaction> getHoldingPhasedTransactions(long holdingId, VoteWeighting.VotingModel votingModel,
                                                                 long accountId, boolean withoutWhitelist, int from, int to, int height) throws SQLException {
 
         Connection con = null;
@@ -180,7 +180,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
         }
     }
 
-    public DbIterator<Transaction> getAccountPhasedTransactions(long accountId, int from, int to, int height) throws SQLException {
+    public List<Transaction> getAccountPhasedTransactions(long accountId, int from, int to, int height) throws SQLException {
         Connection con = null;
         try {
             con = getDatabaseManager().getDataSource().getConnection();

@@ -9,7 +9,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.derived.ValuesDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollVoter;
@@ -67,7 +66,7 @@ public class PhasingPollVoterTable extends ValuesDbTable<PhasingPollVoter> {
         }
     }
 
-    public DbIterator<Transaction> getVoterPhasedTransactions(long voterId, int from, int to) throws SQLException {
+    public List<Transaction> getVoterPhasedTransactions(long voterId, int from, int to) throws SQLException {
         Connection con = null;
         try {
             con = getDatabaseManager().getDataSource().getConnection();

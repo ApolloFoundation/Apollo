@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
@@ -18,6 +17,7 @@ import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.PRIVATE_TRANSACTIONS_ACCESS_DENIED;
 
@@ -40,12 +40,11 @@ public class GetAllTransactions extends AbstractAPIRequestHandler {
         int lastIndex = HttpParameterParserUtil.getLastIndex(req);
 
         JSONArray transactions = new JSONArray();
-        try (DbIterator<? extends Transaction> iterator = lookupBlockchain().getTransactions(type, subtype, firstIndex, lastIndex)) {
-            while (iterator.hasNext()) {
-                Transaction transaction = iterator.next();
-                transactions.add(JSONData.transaction(transaction, false, false));
-            }
-        }
+        List<Transaction> txs = lookupBlockchain().getTransactions(type, subtype, firstIndex, lastIndex);
+
+        txs.forEach(e-> {
+            transactions.add(JSONData.transaction(e, false, false));
+        });
         JSONObject response = new JSONObject();
         response.put("transactions", transactions);
         return response;

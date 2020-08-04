@@ -42,7 +42,7 @@ public interface PhasingPollService {
 
     PhasingPollResult getResult(long id);
 
-    DbIterator<PhasingPollResult> getApproved(int height);
+    List<PhasingPollResult> getApproved(int height);
 
     List<Long> getApprovedTransactionIds(int height);
 
@@ -52,12 +52,12 @@ public interface PhasingPollService {
 
     List<Transaction> getFinishingTransactionsByTime(int startTime, int finishTime);
 
-    DbIterator<Transaction> getVoterPhasedTransactions(long voterId, int from, int to);
+    List<Transaction> getVoterPhasedTransactions(long voterId, int from, int to);
 
-    DbIterator<Transaction> getHoldingPhasedTransactions(long holdingId, VoteWeighting.VotingModel votingModel,
+    List<Transaction> getHoldingPhasedTransactions(long holdingId, VoteWeighting.VotingModel votingModel,
                                                          long accountId, boolean withoutWhitelist, int from, int to);
 
-    DbIterator<Transaction> getAccountPhasedTransactions(long accountId, int from, int to);
+    List<Transaction> getAccountPhasedTransactions(long accountId, int from, int to);
 
     int getAccountPhasedTransactionCount(long accountId);
 

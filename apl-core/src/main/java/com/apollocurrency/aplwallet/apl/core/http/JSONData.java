@@ -27,7 +27,6 @@ import com.apollocurrency.aplwallet.apl.core.app.GenesisAccounts;
 import com.apollocurrency.aplwallet.apl.core.app.Token;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.GeneratorMemoryEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.funding.FundingMonitorInstance;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.funding.MonitoredAccount;
@@ -601,8 +600,8 @@ public final class JSONData {
         json.put("transactions", transactions);
         if (includeExecutedPhased) {
             JSONArray phasedTransactions = new JSONArray();
-            try (DbIterator<PhasingPollResult> phasingPollResults = phasingPollService.getApproved(block.getHeight())) {
-                for (PhasingPollResult phasingPollResult : phasingPollResults) {
+            List<PhasingPollResult> approved = phasingPollService.getApproved(block.getHeight());
+                for (PhasingPollResult phasingPollResult : approved) {
                     long phasedTransactionId = phasingPollResult.getId();
                     if (includeTransactions) {
                         phasedTransactions.add(transaction(false, blockchain.getTransaction(phasedTransactionId)));
@@ -610,7 +609,6 @@ public final class JSONData {
                         phasedTransactions.add(Long.toUnsignedString(phasedTransactionId));
                     }
                 }
-            }
             json.put("executedPhasedTransactions", phasedTransactions);
         }
         return json;

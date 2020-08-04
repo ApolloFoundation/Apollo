@@ -25,7 +25,6 @@ import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
@@ -41,7 +40,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.UnsupportedTransactionV
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
-import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -399,7 +397,7 @@ public class TransactionDaoImpl implements TransactionDao {
             int i = setStatement(pstmt, accountId, numberOfConfirmations, type, subtype, blockTimestamp,
                 withMessage, phasedOnly, nonPhasedOnly, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
             DbUtils.setLimits(++i, pstmt, from, to); // // append 'limit offset' clauese values
-            return CollectionUtil.toList(getTransactions(con, pstmt));
+            return getTransactions(con, pstmt);
         } catch (SQLException e) {
             log.error("ERROR on DataSource = {}", dataSource.getDbIdentity());
             DbUtils.close(con);
@@ -565,7 +563,7 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
-    public synchronized DbIterator<Transaction> getTransactions(byte type, byte subtype, int from, int to) {
+    public synchronized List<Transaction> getTransactions(byte type, byte subtype, int from, int to) {
         StringBuilder sqlQuery = new StringBuilder("SELECT * FROM transaction WHERE (type <> ? OR subtype <> ?) ");
         if (type >= 0) {
             sqlQuery.append("AND type = ? ");
@@ -661,8 +659,17 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
-    public DbIterator<Transaction> getTransactions(Connection con, PreparedStatement pstmt) {
-        return new DbIterator<>(con, pstmt, this::loadTransaction);
+    public List<Transaction> getTransactions(Connection con, PreparedStatement pstmt) {
+        try {
+            ResultSet rs = pstmt.executeQuery();
+            ArrayList<Transaction> list = new ArrayList<>();
+            while (rs.next()) {
+                list.add(loadTransaction(con, rs));
+            }
+            return list;
+        } catch (SQLException | AplException.NotValidException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
     }
 
     @Override

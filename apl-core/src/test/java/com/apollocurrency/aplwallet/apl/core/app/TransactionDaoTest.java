@@ -14,7 +14,6 @@ import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageSer
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
-import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
@@ -271,20 +270,20 @@ class TransactionDaoTest {
 
     @Test
     void testGetTransactionsWithPagination() {
-        List<Transaction> transactions = CollectionUtil.toList(dao.getTransactions((byte) -1, (byte) -1, 2, 4));
+        List<Transaction> transactions = dao.getTransactions((byte) -1, (byte) -1, 2, 4);
         assertEquals(List.of(td.TRANSACTION_12, td.TRANSACTION_11, td.TRANSACTION_10), transactions);
     }
 
     @Test
     void testGetTransactionsByType() {
-        List<Transaction> transactions = CollectionUtil.toList(dao.getTransactions((byte) 8, (byte) -1, 0, Integer.MAX_VALUE));
+        List<Transaction> transactions = dao.getTransactions((byte) 8, (byte) -1, 0, Integer.MAX_VALUE);
 
         assertEquals(List.of(td.TRANSACTION_12, td.TRANSACTION_11), transactions);
     }
 
     @Test
     void testGetTransactionsByTypeAndSubtypeWithPagination() {
-        List<Transaction> transactions = CollectionUtil.toList(dao.getTransactions((byte) 0, (byte) 0, 3, 5));
+        List<Transaction> transactions = dao.getTransactions((byte) 0, (byte) 0, 3, 5);
 
         assertEquals(List.of(td.TRANSACTION_8, td.TRANSACTION_7, td.TRANSACTION_6), transactions);
     }
