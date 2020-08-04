@@ -695,16 +695,10 @@ public class TransactionImpl implements Transaction {
 
         @Override
         public TransactionImpl build() throws AplException.NotValidException {
-            return build(null);
-        }
-
-        @Override
-        public TransactionImpl build(byte[] keySeed) throws AplException.NotValidException {
             if (!ecBlockSet) {
                 throw new IllegalStateException("Ec block was not set for transaction");
             }
-            TransactionImpl transaction = new TransactionImpl(this);
-            return transaction;
+            return new TransactionImpl(this);
         }
 
         @Override

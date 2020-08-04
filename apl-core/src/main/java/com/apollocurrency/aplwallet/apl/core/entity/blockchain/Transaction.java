@@ -27,7 +27,6 @@ import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
@@ -209,16 +208,6 @@ public interface Transaction {
         Builder signature(Signature signature);
 
         Transaction build() throws AplException.NotValidException;
-
-        /**
-         * Build transaction adn encrypt attachments. This method doesn't sign the transaction.
-         * The transaction keeps unsigned.
-         *
-         * @param keySeed the key seed to encrypt appendixes
-         * @return unsigned transaction with encrypted appendixes
-         * @throws AplException.NotValidException
-         */
-        Transaction build(byte[] keySeed) throws AplException.NotValidException;
 
         TransactionImpl.BuilderImpl blockId(long blockId);
     }

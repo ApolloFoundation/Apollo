@@ -218,7 +218,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
                 builder.ecBlockId(txRequest.getEcBlockId());
                 builder.ecBlockHeight(txRequest.getEcBlockHeight());
             }
-            transaction = builder.build(txRequest.getKeySeed());
+            transaction = builder.build();
 
             if (txRequest.getFeeATM() <= 0 || (propertiesHolder.correctInvalidFees() && txRequest.getKeySeed() == null)) {
                 int effectiveHeight = blockchain.getHeight();

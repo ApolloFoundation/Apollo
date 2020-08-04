@@ -236,7 +236,7 @@ public class MintWorker implements Runnable {
             .ecBlockHeight(((Long) ecBlock.get("ecBlockHeight")).intValue())
             .ecBlockId(Convert.parseUnsignedLong((String) ecBlock.get("ecBlockId")));
         try {
-            Transaction transaction = builder.build(keySeed);
+            Transaction transaction = builder.build();
             transactionSigner.sign(transaction, keySeed);
 
             Map<String, String> params = new HashMap<>();

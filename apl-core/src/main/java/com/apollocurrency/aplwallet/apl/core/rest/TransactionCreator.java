@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.EcBlockData;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
@@ -134,9 +135,12 @@ public class TransactionCreator {
             if (txRequest.getEcBlockId() != 0) {
                 builder.ecBlockId(txRequest.getEcBlockId());
                 builder.ecBlockHeight(txRequest.getEcBlockHeight());
+            } else {
+                EcBlockData ecBlock = blockchain.getECBlock(timestamp);
+                builder.ecBlockData(ecBlock);
             }
             //build transaction, this transaction is UNSIGNED
-            transaction = builder.build(txRequest.getKeySeed());
+            transaction = builder.build();
             if (txRequest.getFeeATM() <= 0 || (propertiesHolder.correctInvalidFees() && txRequest.getKeySeed() == null)) {
                 int effectiveHeight = blockchain.getHeight();
                 @TransactionFee(FeeMarker.CALCULATOR)

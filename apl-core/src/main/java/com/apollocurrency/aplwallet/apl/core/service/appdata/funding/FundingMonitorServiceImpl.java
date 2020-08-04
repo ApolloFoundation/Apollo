@@ -524,7 +524,7 @@ public class FundingMonitorServiceImpl implements FundingMonitorService {
                 Attachment.ORDINARY_PAYMENT, blockchain.getLastBlockTimestamp());
 
             builder.recipientId(monitoredAccount.getAccountId());
-            Transaction transaction = builder.build(null);
+            Transaction transaction = builder.build();
             long minimumFeeATM = feeCalculator.getMinimumFeeATM(transaction, blockchain.getHeight());
             transaction.setFeeATM(minimumFeeATM);
             Signature signature = documentSigner.sign(
@@ -580,7 +580,7 @@ public class FundingMonitorServiceImpl implements FundingMonitorService {
             Transaction.Builder builder = transactionBuilder.newTransactionBuilder(monitor.getPublicKey(),
                 0, 0, (short) 1440, attachment, blockchain.getLastBlockTimestamp());
             builder.recipientId(monitoredAccount.getAccountId());
-            Transaction transaction = builder.build(null);
+            Transaction transaction = builder.build();
             transaction.setFeeATM(feeCalculator.getMinimumFeeATM(transaction, blockchain.getHeight()));
             Signature signature = documentSigner.sign(
                 transaction.getUnsignedBytes(),
@@ -630,7 +630,7 @@ public class FundingMonitorServiceImpl implements FundingMonitorService {
             Transaction.Builder builder = transactionBuilder.newTransactionBuilder(monitor.getPublicKey(),
                 0, 0, (short) 1440, attachment, blockchain.getLastBlockTimestamp());
             builder.recipientId(monitoredAccount.getAccountId());
-            Transaction transaction = builder.build(null);
+            Transaction transaction = builder.build();
             transaction.setFeeATM(feeCalculator.getMinimumFeeATM(transaction, blockchain.getHeight()));
             Signature signature = documentSigner.sign(
                 transaction.getUnsignedBytes(),
