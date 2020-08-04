@@ -39,10 +39,6 @@ public interface EntityDbTableInterface<T extends DerivedEntity> extends Derived
 
     DbIterator<T> getManyBy(Connection con, PreparedStatement pstmt, boolean cache);
 
-    DbIterator<T> search(String query, DbClause dbClause, int from, int to);
-
-    DbIterator<T> search(String query, DbClause dbClause, int from, int to, String sort);
-
     DbIterator<T> getAll(int from, int to);
 
     DbIterator<T> getAll(int from, int to, String sort);
