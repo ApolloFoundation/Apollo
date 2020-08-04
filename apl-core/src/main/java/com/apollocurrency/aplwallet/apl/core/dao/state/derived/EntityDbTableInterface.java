@@ -7,12 +7,13 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-public interface EntityDbTableInterface<T> extends DerivedTableInterface<T> {
+public interface EntityDbTableInterface<T extends DerivedEntity> extends DerivedTableInterface<T> {
 
     void save(Connection con, T entity) throws SQLException;
 

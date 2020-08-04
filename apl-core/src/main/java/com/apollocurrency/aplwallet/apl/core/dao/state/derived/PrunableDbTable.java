@@ -23,6 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -35,7 +36,7 @@ import java.sql.SQLException;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-public abstract class PrunableDbTable<T> extends EntityDbTable<T> {
+public abstract class PrunableDbTable<T extends DerivedEntity> extends EntityDbTable<T> {
     private static final Logger LOG = getLogger(PrunableDbTable.class);
     private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     public PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();

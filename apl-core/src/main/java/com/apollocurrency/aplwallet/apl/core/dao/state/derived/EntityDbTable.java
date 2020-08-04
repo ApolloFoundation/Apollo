@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -40,7 +41,7 @@ import java.sql.SQLException;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-public abstract class EntityDbTable<T> extends BasicDbTable<T> implements EntityDbTableInterface<T> {
+public abstract class EntityDbTable<T extends DerivedEntity> extends BasicDbTable<T> implements EntityDbTableInterface<T> {
     private static final Logger log = getLogger(EntityDbTable.class);
     private final String defaultSort;
     @Getter
