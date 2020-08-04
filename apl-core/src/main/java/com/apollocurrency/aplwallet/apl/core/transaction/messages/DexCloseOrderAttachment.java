@@ -3,6 +3,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import org.json.simple.JSONObject;
 
@@ -12,6 +13,7 @@ import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes
 
 @Getter
 @AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 public class DexCloseOrderAttachment extends AbstractAttachment {
 
     private final long contractId;

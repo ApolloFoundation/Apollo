@@ -17,6 +17,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttach
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexCloseOrderAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.dex.DexCloseOrderTransaction;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.dex.DexTransferMoneyTransaction;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
@@ -24,11 +25,12 @@ import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
-import org.jboss.weld.junit5.EnableWeld;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
@@ -42,8 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-
-@EnableWeld
+@ExtendWith(MockitoExtension.class)
 class DexCloseOrderTransactionTest {
 
     DexCloseOrderAttachment attachment = new DexCloseOrderAttachment(10);
@@ -84,7 +85,8 @@ class DexCloseOrderTransactionTest {
     @Test
     void testParseAttachmentFromJson() throws AplException.NotValidException {
         JSONObject object = new JSONObject();
-        object.put("version.DexCloseOrder", 1);
+        //TODO Resolve json format definition after discussion
+        object.put("version.DEX_CLOSE_ORDER", 1);
         object.put("contractId", "10");
 
         AbstractAttachment parsedAttachment = transactionType.parseAttachment(object);
@@ -142,6 +144,7 @@ class DexCloseOrderTransactionTest {
         assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
 
         Transaction transferTx = mock(Transaction.class);
+        doReturn(new DexTransferMoneyTransaction(blockchainConfig, accountService, dexService)).when(transferTx).getType();
 
         doReturn(transferTx).when(blockchain).getTransaction(100);
         assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
@@ -149,6 +152,7 @@ class DexCloseOrderTransactionTest {
         doReturn(transactionType).when(transferTx).getType();
         assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
 
+        doReturn(new DexTransferMoneyTransaction(blockchainConfig, accountService, dexService)).when(transferTx).getType();
         doReturn(1000L).when(transferTx).getSenderId();
         DexControlOfFrozenMoneyAttachment attachment = new DexControlOfFrozenMoneyAttachment(11L, 100000L);
         doReturn(attachment).when(transferTx).getAttachment();
