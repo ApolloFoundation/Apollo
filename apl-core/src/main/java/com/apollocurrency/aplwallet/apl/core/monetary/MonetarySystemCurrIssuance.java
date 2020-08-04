@@ -127,8 +127,9 @@ class MonetarySystemCurrIssuance extends MonetarySystem {
             }
             t <<= 1;
         }
-        CurrencyType.validate(attachment.getType(), transaction);
-        CurrencyType.validateCurrencyNaming(transaction.getSenderId(), attachment);
+        CurrencyService currencyService = lookupCurrencyService();
+        currencyService.validate(attachment.getType(), transaction);
+        currencyService.validateCurrencyNaming(transaction.getSenderId(), attachment);
     }
 
     @Override

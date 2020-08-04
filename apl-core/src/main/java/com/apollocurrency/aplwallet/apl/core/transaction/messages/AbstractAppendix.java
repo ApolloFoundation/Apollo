@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import org.json.simple.JSONObject;
 
@@ -31,6 +32,7 @@ public abstract class AbstractAppendix implements Appendix {
     private static volatile TimeService timeService;// = CDI.current().select(TimeService.class).get();
     private static PrunableMessageService messageService;// = CDI.current().select(PrunableMessageService.class).get();
     private static ShufflingService shufflingService;
+    private static CurrencyService currencyService;
 
     private final byte version;
 
@@ -180,6 +182,13 @@ public abstract class AbstractAppendix implements Appendix {
             shufflingService = CDI.current().select(ShufflingService.class).get();
         }
         return shufflingService;
+    }
+
+    public static CurrencyService lookupCurrencyService() {
+        if (currencyService == null) {
+            currencyService = CDI.current().select(CurrencyService.class).get();
+        }
+        return currencyService;
     }
 
 }
