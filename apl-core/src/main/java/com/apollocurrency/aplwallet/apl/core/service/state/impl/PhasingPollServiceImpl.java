@@ -147,7 +147,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     @Override
     public List<Transaction> getVoterPhasedTransactions(long voterId, int from, int to) {
         try {
-            return voterTable.getVoterPhasedTransactions(voterId, from, to);
+            return voterTable.getVoterPhasedTransactions(voterId, from, to, blockchain.getHeight());
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
