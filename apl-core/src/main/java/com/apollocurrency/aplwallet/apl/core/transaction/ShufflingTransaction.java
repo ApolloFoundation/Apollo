@@ -27,7 +27,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
-import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingParticipantState;
@@ -36,6 +35,7 @@ import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCancellationAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreation;
@@ -104,9 +104,10 @@ public abstract class ShufflingTransaction extends TransactionType {
                     throw new AplException.NotValidException("Invalid asset quantity " + amount);
                 }
             } else if (holdingType == HoldingType.CURRENCY) {
-                Currency currency = lookupCurrencyService().getCurrency(attachment.getHoldingId());
-                CurrencyType.validate(currency, transaction);
-                if (!lookupCurrencyService().isActive(currency)) {
+                CurrencyService currencyService = lookupCurrencyService();
+                Currency currency = currencyService.getCurrency(attachment.getHoldingId());
+                currencyService.validate(currency, transaction);
+                if (!currencyService.isActive(currency)) {
                     throw new AplException.NotCurrentlyValidException("Currency is not active: " + currency.getCode());
                 }
                 if (amount <= 0 || amount > Constants.MAX_CURRENCY_TOTAL_SUPPLY) {

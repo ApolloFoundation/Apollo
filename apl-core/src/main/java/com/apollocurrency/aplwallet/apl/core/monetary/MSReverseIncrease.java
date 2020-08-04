@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveIncrease;
 import org.json.simple.JSONObject;
@@ -54,7 +55,9 @@ class MSReverseIncrease extends MonetarySystem {
         if (attachment.getAmountPerUnitATM() <= 0) {
             throw new AplException.NotValidException("Reserve increase amount must be positive: " + attachment.getAmountPerUnitATM());
         }
-        CurrencyType.validate(lookupCurrencyService().getCurrency(attachment.getCurrencyId()), transaction);
+        CurrencyService currencyService = lookupCurrencyService();
+        Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
+        currencyService.validate(currency, transaction);
     }
 
     @Override
