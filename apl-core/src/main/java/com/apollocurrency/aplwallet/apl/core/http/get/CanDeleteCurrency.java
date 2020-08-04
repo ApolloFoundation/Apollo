@@ -23,8 +23,8 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -43,7 +43,7 @@ public final class CanDeleteCurrency extends AbstractAPIRequestHandler {
         Currency currency = HttpParameterParserUtil.getCurrency(req);
         long accountId = HttpParameterParserUtil.getAccountId(req, true);
         JSONObject response = new JSONObject();
-        response.put("canDelete", currency.canBeDeletedBy(accountId));
+        response.put("canDelete", lookupCurrencyService().canBeDeletedBy(currency, accountId));
         return response;
     }
 

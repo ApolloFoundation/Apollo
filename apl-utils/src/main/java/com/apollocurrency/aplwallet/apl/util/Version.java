@@ -4,9 +4,18 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
-import java.util.Objects;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.deser.std.FromStringDeserializer;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 
+import java.io.IOException;
+import java.util.Objects;
+@JsonDeserialize(using = Version.VersionDeserializer.class)
+@JsonSerialize(using = ToStringSerializer.class)
 public class Version implements Comparable<Version> {
+    public static final String VERSION_PATTERN = "\\d+\\.\\d+\\.\\d+";
     private final int majorVersion;
     private final int intermediateVersion;
     private final int minorVersion;
@@ -19,7 +28,7 @@ public class Version implements Comparable<Version> {
 
     public Version(String versionString) {
         Objects.requireNonNull(versionString);
-        if (!versionString.matches("\\d+\\.\\d+\\.\\d+")) {
+        if (!versionString.matches(VERSION_PATTERN)) {
             throw new RuntimeException("Incorrect versionString :  " + versionString);
         }
         String[] versionNumbers = versionString.split("\\.");
@@ -96,5 +105,15 @@ public class Version implements Comparable<Version> {
 
     public boolean lessThan(Version v) {
         return compareTo(v) < 0;
+    }
+
+    public static class VersionDeserializer extends FromStringDeserializer<Version> {
+        protected VersionDeserializer() {
+            super(Version.class);
+        }
+        @Override
+        protected Version _deserialize(String value, DeserializationContext ctxt) throws IOException {
+            return new Version(value);
+        }
     }
 }

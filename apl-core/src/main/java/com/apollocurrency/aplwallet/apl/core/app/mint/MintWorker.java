@@ -20,15 +20,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.mint;
 
-import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.TrustAllSSLProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -36,6 +37,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.slf4j.Logger;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.net.ssl.HttpsURLConnection;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -70,7 +72,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class MintWorker implements Runnable {
     private static final Logger LOG = getLogger(MintWorker.class);
     private boolean done = false;
-    // TODO: YL remove static instance later
     private PropertiesHolder propertiesHolder;
     private BlockchainConfig blockchainConfig;
 
@@ -333,6 +334,7 @@ public class MintWorker implements Runnable {
         private final long nonce;
         private final byte[] target;
         private final int poolSize;
+        private MonetaryCurrencyMintingService monetaryCurrencyMintingService;
 
         private HashSolver(byte algorithm, long currencyId, long accountId, long counter, long units, long nonce,
                            byte[] target, int poolSize) {
@@ -350,8 +352,8 @@ public class MintWorker implements Runnable {
         public Long call() {
             long n = nonce;
             while (!Thread.currentThread().isInterrupted()) {
-                byte[] hash = CurrencyMinting.getHash(hashFunction, n, currencyId, units, counter, accountId);
-                if (CurrencyMinting.meetsTarget(hash, target)) {
+                byte[] hash = lookupMonetaryCurrencyMintingService().getHash(hashFunction, n, currencyId, units, counter, accountId);
+                if (monetaryCurrencyMintingService.meetsTarget(hash, target)) {
                     LOG.debug("%s found solution hash %s nonce %d currencyId %d units %d counter %d accountId %d" +
                             " hash %s meets target %s",
                         Thread.currentThread().getName(), hashFunction, n, currencyId, units, counter, accountId,
@@ -365,5 +367,14 @@ public class MintWorker implements Runnable {
             }
             return null;
         }
+
+        // TODO: YL rework later (some day)
+        public MonetaryCurrencyMintingService lookupMonetaryCurrencyMintingService() {
+            if (monetaryCurrencyMintingService == null) {
+                monetaryCurrencyMintingService = CDI.current().select(MonetaryCurrencyMintingService.class).get();
+            }
+            return monetaryCurrencyMintingService;
+        }
+
     }
 }

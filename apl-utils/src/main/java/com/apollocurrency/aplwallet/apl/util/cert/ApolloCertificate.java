@@ -11,6 +11,11 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.SignatureException;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Date;
@@ -177,9 +182,12 @@ public class ApolloCertificate extends CertBase {
         return issuer_attr;
     }
 
-    public boolean verify() {
-        boolean res = true;
-        //TODO: implement
-        return res;
+    public boolean verify(X509Certificate certificate) {
+        try {
+            this.certificate.verify(certificate.getPublicKey());
+        } catch (CertificateException | NoSuchAlgorithmException | InvalidKeyException | NoSuchProviderException | SignatureException e) {
+            return false;
+        }
+        return true;
     }
 }

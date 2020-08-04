@@ -4,14 +4,13 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
-import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfoResponse;
+import com.apollocurrency.aplwallet.api.p2p.respons.FileDownloadInfoResponse;
 import com.apollocurrency.aplwallet.apl.core.rest.service.DebugService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
@@ -29,9 +28,9 @@ import javax.ws.rs.core.Response;
  * @author alukin@gmail.com
  */
 
+@Slf4j
 @Path("/debug")
 public class DebugController {
-    private static final Logger log = LoggerFactory.getLogger(DebugController.class);
     private DebugService debugService;
 
     @Inject

@@ -3,8 +3,8 @@
 # Stop apl-blockchain application, which was run by apl-start.sh script
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
-
- . ${DIR}/apl-common.sh
+#"
+ . "${DIR}"/apl-common.sh
 
 KILL_ATTEMPTS=3;
 KILL_WAIT=5
@@ -32,8 +32,8 @@ if [ -e ${APPLICATION}/apl.pid ]; then
     STATUS=$?
     if [ $STATUS -eq 0 ] ; then
         echo "Forcing kill of PID $PID"
-        kill -9 `cat ${APPLICATION}/apl.pid` > /dev/null 2>&1    
-    fi    
+        kill -9 `cat ${APPLICATION}/apl.pid` > /dev/null 2>&1
+    fi
     rm -f ${APPLICATION}/apl.pid
     echo "Apollo server stopped"
 else

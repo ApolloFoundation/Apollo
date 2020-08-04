@@ -20,26 +20,29 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import com.apollocurrency.aplwallet.api.p2p.BaseP2PResponse;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.TimeService;
+import com.apollocurrency.aplwallet.api.p2p.request.BaseP2PRequest;
+import com.apollocurrency.aplwallet.api.p2p.respons.BaseP2PResponse;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
 import com.apollocurrency.aplwallet.apl.core.peer.endpoint.Errors;
+import com.apollocurrency.aplwallet.apl.core.peer.parser.PeerResponseParser;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.Version;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import com.google.common.util.concurrent.TimeLimiter;
 import lombok.Getter;
-import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.json.simple.JSONValue;
@@ -70,7 +73,6 @@ public final class PeerImpl implements Peer {
     private static final Logger LOG = getLogger(PeerImpl.class);
 
     private final String host;
-    private final TimeLimiter limiter;
     private final Object servicesMonitor = new Object();
     private final ReadWriteLock stateLock = new ReentrantReadWriteLock();
     private final AtomicReference<UUID> chainId = new AtomicReference<>();
@@ -133,7 +135,6 @@ public final class PeerImpl implements Peer {
         this.timeService = timeService;
         this.peers = peers;
         isLightClient = peers.isLightClient;
-        this.limiter = timeLimiter;
         this.p2pTransport = new Peer2PeerTransport(this, peerServlet, timeLimiter);
         state = PeerState.NON_CONNECTED; // set this peer its' initial state
         this.accountService = accountService;
@@ -494,28 +495,59 @@ public final class PeerImpl implements Peer {
 
     @Override
     public JSONObject send(final JSONStreamAware request, UUID chainId) throws PeerNotConnectedException {
-
         if (getState() != PeerState.CONNECTED) {
             LOG.debug("send() called before handshake(). Handshacking to: {}", getHostWithPort());
             throw new PeerNotConnectedException("send() called before handshake(). Handshacking");
         } else {
-            return send(request);
+            return sendJSON(request);
         }
     }
 
-    private JSONObject send(final JSONStreamAware request) {
+    @Override
+    public BaseP2PResponse send(BaseP2PRequest request, PeerResponseParser parser) throws PeerNotConnectedException {
+        if (getState() != PeerState.CONNECTED) {
+            LOG.debug("send() called before handshake(). Handshacking to: {}", getHostWithPort());
+            throw new PeerNotConnectedException("send() called before handshake(). Handshacking");
+        } else {
+            try {
+                return parser.parse(sendJSON(mapper.writeValueAsString(request)));
+            } catch (JsonProcessingException e) {
+                LOG.debug("Can not deserialize request");
+                return null;
+            }
+        }
+    }
 
-        JSONObject response = null;
+    @Override
+    public void send(BaseP2PRequest request) throws PeerNotConnectedException {
+        if (getState() != PeerState.CONNECTED) {
+            LOG.debug("send() called before handshake(). Handshacking to: {}", getHostWithPort());
+            throw new PeerNotConnectedException("send() called before handshake(). Handshacking");
+        } else {
+            try {
+                sendJSON(mapper.writeValueAsString(request)).toJSONString();
+            } catch (JsonProcessingException e) {
+                LOG.debug("Can not deserialize request");
+            }
+        }
+    }
+
+    private JSONObject sendJSON(JSONStreamAware request) {
         StringWriter wsWriter = new StringWriter(PeersService.MAX_REQUEST_SIZE);
         try {
             request.writeJSONString(wsWriter);
         } catch (IOException ex) {
             LOG.debug("Can not deserialize request");
-            return response;
+            return null;
         }
 
+        return sendJSON(wsWriter.toString());
+    }
+
+    private JSONObject sendJSON(String rq) {
+        JSONObject response = null;
+
         try {
-            String rq = wsWriter.toString();
             String resp = p2pTransport.sendAndWaitResponse(rq);
             if (resp == null) {
                 LOG.trace("Null response from: {}", getHostWithPort());
@@ -580,7 +612,7 @@ public final class PeerImpl implements Peer {
         LOG.trace("Start handshake  to chainId = {}...", targetChainId);
         lastConnectAttempt = timeService.getEpochTime();
         try {
-            JSONObject response = send(peers.getMyPeerInfoRequest());
+            JSONObject response = sendJSON(peers.getMyPeerInfoRequest());
             if (response != null) {
                 LOG.trace("handshake Response = '{}'", response != null ? response.toJSONString() : "NULL");
                 if (processError(response)) {

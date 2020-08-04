@@ -4,11 +4,11 @@
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
 import com.apollocurrency.aplwallet.api.p2p.ShardInfo;
-import com.apollocurrency.aplwallet.api.p2p.ShardingInfoRequest;
-import com.apollocurrency.aplwallet.api.p2p.ShardingInfoResponse;
+import com.apollocurrency.aplwallet.api.p2p.request.ShardingInfoRequest;
+import com.apollocurrency.aplwallet.api.p2p.respons.ShardingInfoResponse;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;

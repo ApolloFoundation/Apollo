@@ -20,12 +20,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.monetary;
 
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletableEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LinkKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
-import com.apollocurrency.aplwallet.apl.core.db.service.BlockChainInfoService;
+import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
@@ -37,6 +37,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Deprecated
 /**
  * Each CurrencyFounder instance represents a single founder contribution for a non issued currency
  * Once the currency is issued all founder contributions are removed
@@ -46,6 +47,9 @@ public class CurrencyFounder {
     private static final BlockChainInfoService BLOCK_CHAIN_INFO_SERVICE =
         CDI.current().select(BlockChainInfoService.class).get();
 
+    /**
+     * @deprecated
+     */
     private static final LinkKeyFactory<CurrencyFounder> currencyFounderDbKeyFactory = new LinkKeyFactory<CurrencyFounder>("currency_id", "account_id") {
 
         @Override
@@ -55,6 +59,9 @@ public class CurrencyFounder {
 
     };
 
+    /**
+     * @deprecated
+     */
     private static final VersionedDeletableEntityDbTable<CurrencyFounder> currencyFounderTable = new VersionedDeletableEntityDbTable<CurrencyFounder>("currency_founder", currencyFounderDbKeyFactory) {
 
         @Override
@@ -92,9 +99,15 @@ public class CurrencyFounder {
         this.amountPerUnitATM = rs.getLong("amount");
     }
 
+    /**
+     * @deprecated
+     */
     public static void init() {
     }
 
+    /**
+     * @deprecated
+     */
     static void addOrUpdateFounder(long currencyId, long accountId, long amount) {
         CurrencyFounder founder = getFounder(currencyId, accountId);
         if (founder == null) {
@@ -105,18 +118,30 @@ public class CurrencyFounder {
         currencyFounderTable.insert(founder);
     }
 
+    /**
+     * @deprecated
+     */
     public static CurrencyFounder getFounder(long currencyId, long accountId) {
         return currencyFounderTable.get(currencyFounderDbKeyFactory.newKey(currencyId, accountId));
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<CurrencyFounder> getCurrencyFounders(long currencyId, int from, int to) {
         return currencyFounderTable.getManyBy(new DbClause.LongClause("currency_id", currencyId), from, to);
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<CurrencyFounder> getFounderCurrencies(long accountId, int from, int to) {
         return currencyFounderTable.getManyBy(new DbClause.LongClause("account_id", accountId), from, to);
     }
 
+    /**
+     * @deprecated
+     */
     static void remove(long currencyId) {
         List<CurrencyFounder> founders = new ArrayList<>();
         try (DbIterator<CurrencyFounder> currencyFounders = CurrencyFounder.getCurrencyFounders(currencyId, 0, Integer.MAX_VALUE)) {

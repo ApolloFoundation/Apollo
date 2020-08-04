@@ -20,19 +20,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.monetary;
 
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
-import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 
 import javax.enterprise.inject.spi.CDI;
@@ -41,6 +40,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+@Deprecated
 public final class AssetTransfer {
 
     private static final Listeners<AssetTransfer, Event> listeners = new Listeners<>();
@@ -98,14 +98,21 @@ public final class AssetTransfer {
         this.height = rs.getInt("height");
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<AssetTransfer> getAllTransfers(int from, int to) {
         return assetTransferTable.getAll(from, to);
     }
 
+    /**
+     * @deprecated
+     */
     public static int getCount() {
         return assetTransferTable.getCount();
     }
 
+/*
     public static boolean addListener(Listener<AssetTransfer> listener, Event eventType) {
         return listeners.addListener(listener, eventType);
     }
@@ -121,11 +128,18 @@ public final class AssetTransfer {
     public static boolean removeListener(Listener<AssetTransfer> listener) {
         return removeListener(listener, Event.ASSET_TRANSFER);
     }
+*/
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<AssetTransfer> getAssetTransfers(long assetId, int from, int to) {
         return assetTransferTable.getManyBy(new DbClause.LongClause("asset_id", assetId), from, to);
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<AssetTransfer> getAccountAssetTransfers(long accountId, int from, int to) {
         Connection con = null;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
@@ -146,6 +160,9 @@ public final class AssetTransfer {
         }
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<AssetTransfer> getAccountAssetTransfers(long accountId, long assetId, int from, int to) {
         Connection con = null;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
@@ -168,10 +185,16 @@ public final class AssetTransfer {
         }
     }
 
+    /**
+     * @deprecated
+     */
     public static int getTransferCount(long assetId) {
         return assetTransferTable.getCount(new DbClause.LongClause("asset_id", assetId));
     }
 
+    /**
+     * @deprecated
+     */
     public static AssetTransfer addAssetTransfer(Transaction transaction, ColoredCoinsAssetTransfer attachment) {
         AssetTransfer assetTransfer = new AssetTransfer(transaction, attachment);
         assetTransferTable.insert(assetTransfer);
@@ -179,6 +202,9 @@ public final class AssetTransfer {
         return assetTransfer;
     }
 
+    /**
+     * @deprecated
+     */
     public static void init(DatabaseManager databaseManagerParam) {
         databaseManager = databaseManagerParam;
     }

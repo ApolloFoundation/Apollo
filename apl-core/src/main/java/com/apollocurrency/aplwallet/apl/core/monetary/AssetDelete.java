@@ -20,14 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.monetary;
 
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 
@@ -37,9 +37,16 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+@Deprecated
 public final class AssetDelete {
 
+    /**
+     * @deprecated
+     */
     private static final Listeners<AssetDelete, Event> listeners = new Listeners<>();
+    /**
+     * @deprecated
+     */
     private static final LongKeyFactory<AssetDelete> deleteDbKeyFactory = new LongKeyFactory<AssetDelete>("id") {
 
         @Override
@@ -48,6 +55,9 @@ public final class AssetDelete {
         }
 
     };
+    /**
+     * @deprecated
+     */
     private static final EntityDbTable<AssetDelete> assetDeleteTable = new EntityDbTable<AssetDelete>("asset_delete", deleteDbKeyFactory) {
 
         @Override
@@ -69,6 +79,9 @@ public final class AssetDelete {
     private final long quantityATU;
     private final int timestamp;
 
+    /**
+     * @deprecated
+     */
     private AssetDelete(Transaction transaction, long assetId, long quantityATU) {
         this.id = transaction.getId();
         this.dbKey = deleteDbKeyFactory.newKey(this.id);
@@ -80,6 +93,9 @@ public final class AssetDelete {
         this.height = blockchain.getHeight();
     }
 
+    /**
+     * @deprecated
+     */
     private AssetDelete(ResultSet rs, DbKey dbKey) throws SQLException {
         this.id = rs.getLong("id");
         this.dbKey = dbKey;
@@ -90,35 +106,59 @@ public final class AssetDelete {
         this.height = rs.getInt("height");
     }
 
+    /**
+     * @deprecated
+     */
     public static boolean addListener(Listener<AssetDelete> listener, Event eventType) {
         return listeners.addListener(listener, eventType);
     }
 
+    /**
+     * @deprecated
+     */
     public static boolean removeListener(Listener<AssetDelete> listener, Event eventType) {
         return listeners.removeListener(listener, eventType);
     }
 
+    /**
+     * @deprecated
+     */
     public static boolean addListener(Listener<AssetDelete> listener) {
         return addListener(listener, Event.ASSET_DELETE);
     }
 
+    /**
+     * @deprecated
+     */
     public static boolean removeListener(Listener<AssetDelete> listener) {
         return removeListener(listener, Event.ASSET_DELETE);
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<AssetDelete> getAssetDeletes(long assetId, int from, int to) {
         return assetDeleteTable.getManyBy(new DbClause.LongClause("asset_id", assetId), from, to);
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<AssetDelete> getAccountAssetDeletes(long accountId, int from, int to) {
         return assetDeleteTable.getManyBy(new DbClause.LongClause("account_id", accountId), from, to, " ORDER BY height DESC, db_id DESC ");
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<AssetDelete> getAccountAssetDeletes(long accountId, long assetId, int from, int to) {
         return assetDeleteTable.getManyBy(new DbClause.LongClause("account_id", accountId).and(new DbClause.LongClause("asset_id", assetId)),
             from, to, " ORDER BY height DESC, db_id DESC ");
     }
 
+    /**
+     * @deprecated
+     */
     static AssetDelete addAssetDelete(Transaction transaction, long assetId, long quantityATU) {
         AssetDelete assetDelete = new AssetDelete(transaction, assetId, quantityATU);
         assetDeleteTable.insert(assetDelete);
@@ -126,9 +166,15 @@ public final class AssetDelete {
         return assetDelete;
     }
 
+    /**
+     * @deprecated
+     */
     public static void init() {
     }
 
+    /**
+     * @deprecated
+     */
     private void save(Connection con) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO asset_delete (id, asset_id, "
             + "account_id, quantity, timestamp, height) "

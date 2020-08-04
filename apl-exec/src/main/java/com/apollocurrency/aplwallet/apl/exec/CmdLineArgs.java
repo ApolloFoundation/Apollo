@@ -49,7 +49,7 @@ public class CmdLineArgs {
     public String pidFile = "";
     @Parameter(names = {"--start-mint", "-m"}, help = true, description = "Start currency minting worker")
     public boolean startMint;
-    @Parameter(names = {"--net", "-n"}, help = true, description = "Connect to net [0-3]. 0 means mainnet, 1 - 1st testnet and so on")
+    @Parameter(names = {"--net", "-n"}, help = true, description = "Connect to net [0-4]. 0 means mainnet, 1 - 1st testnet and so on")
     public int netIdx = 0;
     @Parameter(names = {"--testnet"}, help = true, description = "Connect to testent 1. Has higher priority then --net")
     public boolean isTestnet = false;

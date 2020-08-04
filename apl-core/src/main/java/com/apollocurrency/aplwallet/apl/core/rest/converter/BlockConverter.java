@@ -6,11 +6,12 @@ package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
 import com.apollocurrency.aplwallet.api.dto.BlockDTO;
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
 import javax.inject.Inject;
@@ -23,14 +24,17 @@ public class BlockConverter implements Converter<Block, BlockDTO> {
     private final Blockchain blockchain;
     private final TransactionConverter transactionConverter;
     private final PhasingPollService phasingPollService;
+    private final AccountService accountService;
     private boolean isAddTransactions = false;
     private boolean isAddPhasedTransactions = false;
 
     @Inject
-    public BlockConverter(Blockchain blockchain, TransactionConverter transactionConverter, PhasingPollService phasingPollService) {
+    public BlockConverter(Blockchain blockchain, TransactionConverter transactionConverter,
+                          PhasingPollService phasingPollService, AccountService accountService) {
         this.blockchain = blockchain;
         this.transactionConverter = transactionConverter;
         this.phasingPollService = phasingPollService;
+        this.accountService = accountService;
     }
 
     @Override
@@ -41,6 +45,11 @@ public class BlockConverter implements Converter<Block, BlockDTO> {
         dto.setHeight(model.getHeight());
         dto.setGenerator(Long.toUnsignedString(model.getGeneratorId()));
         dto.setGeneratorRS(Convert2.rsAccount(model.getGeneratorId()));
+        byte[] generatorPublicKey = model.getGeneratorPublicKey();
+        if (generatorPublicKey == null) {
+            generatorPublicKey = accountService.getPublicKeyByteArray(model.getGeneratorId());
+            model.setGeneratorPublicKey(generatorPublicKey);
+        }
         dto.setGeneratorPublicKey(Convert.toHexString(model.getGeneratorPublicKey()));
         dto.setTimestamp(model.getTimestamp());
         dto.setTimeout(model.getTimeout());

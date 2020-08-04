@@ -21,31 +21,33 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
-import com.apollocurrency.aplwallet.apl.core.db.TableRegistryInitializer;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.migrator.ApplicationDataMigrationManager;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.TransportInteractionService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.AbstractBlockValidator;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.DefaultBlockValidator;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.service.state.TableRegistryInitializer;
 import com.apollocurrency.aplwallet.apl.core.shard.PrunableArchiveMigrator;
-import com.apollocurrency.aplwallet.apl.core.shard.PrunableArchiveMonitor;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
-import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.exchange.service.DexOrderProcessor;
 import com.apollocurrency.aplwallet.apl.exchange.service.IDexMatcherInterface;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
-import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -64,9 +66,9 @@ import static com.apollocurrency.aplwallet.apl.util.Constants.DEFAULT_PEER_PORT;
 public final class AplCore {
 
     private static volatile boolean shutdown = false;
-    private static BlockchainConfig blockchainConfig;
+    //    private static BlockchainConfig blockchainConfig;
     private static TransportInteractionService transportInteractionService;
-    private static volatile boolean initialized = false;
+    private /*static*/ volatile boolean initialized = false;
     @Inject
     @Setter
     PeersService peers;
@@ -97,18 +99,18 @@ public final class AplCore {
     @Inject
     @Setter
     private TaskDispatchManager taskDispatchManager;
-    @Inject
-    @Setter
-    private AccountPublicKeyService accountPublicKeyService;
-    @Inject
-    @Setter
-    private InMemoryCacheManager cacheManager;
-    @Inject
-    @Setter
-    private DexOrderProcessor dexOrderProcessor;
-    @Inject
-    @Setter
-    private PrunableArchiveMonitor prunableArchiveMonitor;
+    //    @Inject
+//    @Setter
+//    private AccountPublicKeyService accountPublicKeyService;
+//    @Inject
+//    @Setter
+//    private InMemoryCacheManager cacheManager;
+//    @Inject
+//    @Setter
+//    private DexOrderProcessor dexOrderProcessor;
+//    @Inject
+//    @Setter
+//    private PrunableArchiveMonitor prunableArchiveMonitor;
     private String initCoreTaskID;
 
     public AplCore() {
@@ -150,16 +152,16 @@ public final class AplCore {
     public void shutdown() {
         log.info("Shutting down...");
         AddOns.shutdown();
-        apiServer.shutdown();
-        FundingMonitor.shutdown();
+        if (apiServer != null) apiServer.shutdown();
+//        FundingMonitor.shutdown();
         log.info("Background tasks shutdown...");
-        taskDispatchManager.shutdown();
+        if (taskDispatchManager != null) taskDispatchManager.shutdown();
 
         if (blockchainProcessor != null) {
             blockchainProcessor.shutdown();
             log.info("blockchainProcessor Shutdown...");
         }
-        fullTextSearchService.shutdown();
+        if (fullTextSearchService != null) fullTextSearchService.shutdown();
         log.info("full text service shutdown...");
 
         if (databaseManager != null) {
@@ -172,12 +174,12 @@ public final class AplCore {
             transportInteractionService.stop();
         }
 
-        peers.shutdown();
+        if (peers != null) peers.shutdown();
         log.info(Constants.APPLICATION + " server " + Constants.VERSION + " stopped.");
 
         AplCore.shutdown = true;
 
-        tcs.deinitialize();
+        if (tcs != null) tcs.deinitialize();
     }
 
     private void startUp() {
@@ -254,7 +256,7 @@ public final class AplCore {
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 60.0, "Apollo Account ledger initialization done");
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 61.0, "Apollo Peer services initialization started");
             APIProxy.init();
-            Generator.init();
+//            Generator.init();
             AddOns.init();
             Helper2FA.init(databaseManager);
             // do one time '2fa data' migration from db into files. That method is safe for multiple repeatable calls

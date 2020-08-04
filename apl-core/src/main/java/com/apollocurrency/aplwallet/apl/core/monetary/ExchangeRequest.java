@@ -20,15 +20,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.monetary;
 
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeBuyAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeSell;
@@ -39,6 +39,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+@Deprecated
 public final class ExchangeRequest {
 
     private static final LongKeyFactory<ExchangeRequest> exchangeRequestDbKeyFactory = new LongKeyFactory<ExchangeRequest>("id") {
@@ -120,40 +121,67 @@ public final class ExchangeRequest {
         this.isBuy = isBuy;
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<ExchangeRequest> getAllExchangeRequests(int from, int to) {
         return exchangeRequestTable.getAll(from, to);
     }
 
+    /**
+     * @deprecated
+     */
     public static int getCount() {
         return exchangeRequestTable.getCount();
     }
 
+    /**
+     * @deprecated
+     */
     public static ExchangeRequest getExchangeRequest(long transactionId) {
         return exchangeRequestTable.get(exchangeRequestDbKeyFactory.newKey(transactionId));
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<ExchangeRequest> getCurrencyExchangeRequests(long currencyId, int from, int to) {
         return exchangeRequestTable.getManyBy(new DbClause.LongClause("currency_id", currencyId), from, to);
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<ExchangeRequest> getAccountExchangeRequests(long accountId, int from, int to) {
         return exchangeRequestTable.getManyBy(new DbClause.LongClause("account_id", accountId), from, to);
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<ExchangeRequest> getAccountCurrencyExchangeRequests(long accountId, long currencyId, int from, int to) {
         return exchangeRequestTable.getManyBy(new DbClause.LongClause("account_id", accountId).and(new DbClause.LongClause("currency_id", currencyId)), from, to);
     }
 
+    /**
+     * @deprecated
+     */
     static void addExchangeRequest(Transaction transaction, MonetarySystemExchangeBuyAttachment attachment) {
         ExchangeRequest exchangeRequest = new ExchangeRequest(transaction, attachment);
         exchangeRequestTable.insert(exchangeRequest);
     }
 
+    /**
+     * @deprecated
+     */
     static void addExchangeRequest(Transaction transaction, MonetarySystemExchangeSell attachment) {
         ExchangeRequest exchangeRequest = new ExchangeRequest(transaction, attachment);
         exchangeRequestTable.insert(exchangeRequest);
     }
 
+    /**
+     * @deprecated
+     */
     public static void init() {
     }
 

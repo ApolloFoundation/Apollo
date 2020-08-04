@@ -4,9 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator.keystore;
 
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.migrator.AbstractMigrationExecutorTest;
 import com.apollocurrency.aplwallet.apl.core.migrator.MigrationExecutor;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.junit.jupiter.api.extension.RegisterExtension;

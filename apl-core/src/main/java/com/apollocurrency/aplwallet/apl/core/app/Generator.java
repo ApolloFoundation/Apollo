@@ -20,11 +20,20 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Listener;
@@ -47,6 +56,7 @@ import java.util.concurrent.ConcurrentMap;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+@Deprecated
 public final class Generator implements Comparable<Generator> {
     private static final Logger LOG = getLogger(Generator.class);
     private static final String BACKGROUND_SERVICE_NAME = "GeneratorService";
@@ -71,10 +81,18 @@ public final class Generator implements Comparable<Generator> {
     private static volatile List<Generator> sortedForgers = null;
     private static long lastBlockId;
     private static int delayTime = propertiesHolder.FORGING_DELAY();
+
+    /**
+     * @deprecated
+     */
+    @Deprecated
     private static final Runnable generateBlocksThread = new Runnable() {
 
         private volatile boolean logged;
 
+        /**
+         * @deprecated
+         */
         @Override
         public void run() {
             if (suspendForging) {
@@ -167,6 +185,9 @@ public final class Generator implements Comparable<Generator> {
     private volatile BigInteger effectiveBalance;
     private volatile long deadline;
 
+    /**
+     * @deprecated
+     */
     public Generator(long accountId, byte[] keySeed, byte[] publicKey) {
         this.accountId = accountId;
         this.keySeed = keySeed;
@@ -188,6 +209,9 @@ public final class Generator implements Comparable<Generator> {
         }
     }
 
+    /**
+     * @deprecated
+     */
     static void init() {
         if (!propertiesHolder.isLightClient()) {
             taskDispatchManager.newBackgroundDispatcher(BACKGROUND_SERVICE_NAME)
@@ -207,6 +231,9 @@ public final class Generator implements Comparable<Generator> {
         return listeners.removeListener(listener, eventType);
     }
 
+    /**
+     * @deprecated
+     */
     public static Generator startForging(byte[] keySeed) {
         if (generators.size() >= MAX_FORGERS) {
             throw new RuntimeException("Cannot forge with more than " + MAX_FORGERS + " accounts on the same node");
@@ -222,6 +249,9 @@ public final class Generator implements Comparable<Generator> {
         return generator;
     }
 
+    /**
+     * @deprecated
+     */
     public static Generator stopForging(byte[] keySeed) {
         Generator generator = generators.remove(Convert.getId(Crypto.getPublicKey(keySeed)));
         if (generator != null) {
@@ -237,6 +267,9 @@ public final class Generator implements Comparable<Generator> {
         return generator;
     }
 
+    /**
+     * @deprecated
+     */
     public static int stopForging() {
         int count = generators.size();
         Iterator<Generator> iter = generators.values().iterator();
@@ -255,23 +288,38 @@ public final class Generator implements Comparable<Generator> {
         return count;
     }
 
+    /**
+     * @deprecated
+     */
     public static Generator getGenerator(long id) {
         return generators.get(id);
     }
 
+    /**
+     * @deprecated
+     */
     public static int getGeneratorCount() {
         return generators.size();
     }
 
+    /**
+     * @deprecated
+     */
     public static Collection<Generator> getAllGenerators() {
         return allGenerators;
     }
 
+    /**
+     * @deprecated
+     */
     public static List<Generator> getSortedForgers() {
         List<Generator> forgers = sortedForgers;
         return forgers == null ? Collections.emptyList() : forgers;
     }
 
+    /**
+     * @deprecated
+     */
     public static long getNextHitTime(long lastBlockId, int curTime) {
         globalSync.readLock();
         try {
@@ -288,11 +336,17 @@ public final class Generator implements Comparable<Generator> {
         }
     }
 
-    static void setDelay(int delay) {
+    /**
+     * @deprecated
+     */
+    public static void setDelay(int delay) {
         Generator.delayTime = delay;
     }
 
-    static boolean verifyHit(BigInteger hit, BigInteger effectiveBalance, Block previousBlock, int timestamp) {
+    /**
+     * @deprecated
+     */
+    public static boolean verifyHit(BigInteger hit, BigInteger effectiveBalance, Block previousBlock, int timestamp) {
         int elapsedTime = timestamp - previousBlock.getTimestamp();
         if (elapsedTime <= 0) {
             return false;
@@ -310,18 +364,27 @@ public final class Generator implements Comparable<Generator> {
         return ret;
     }
 
-    static BigInteger getHit(byte[] publicKey, Block block) {
+    /**
+     * @deprecated
+     */
+    public static BigInteger getHit(byte[] publicKey, Block block) {
         MessageDigest digest = Crypto.sha256();
         digest.update(block.getGenerationSignature());
         byte[] generationSignatureHash = digest.digest(publicKey);
         return new BigInteger(1, new byte[]{generationSignatureHash[7], generationSignatureHash[6], generationSignatureHash[5], generationSignatureHash[4], generationSignatureHash[3], generationSignatureHash[2], generationSignatureHash[1], generationSignatureHash[0]});
     }
 
-    static long getHitTime(BigInteger effectiveBalance, BigInteger hit, Block block) {
+    /**
+     * @deprecated
+     */
+    public static long getHitTime(BigInteger effectiveBalance, BigInteger hit, Block block) {
         return block.getTimestamp()
             + hit.divide(BigInteger.valueOf(block.getBaseTarget()).multiply(effectiveBalance)).longValue();
     }
 
+    /**
+     * @deprecated
+     */
     public static void suspendForging() {
         if (!suspendForging) {
             globalSync.updateLock();
@@ -331,6 +394,9 @@ public final class Generator implements Comparable<Generator> {
         }
     }
 
+    /**
+     * @deprecated
+     */
     public static void resumeForging() {
         if (suspendForging) {
             globalSync.updateLock();
@@ -340,18 +406,30 @@ public final class Generator implements Comparable<Generator> {
         }
     }
 
+    /**
+     * @deprecated
+     */
     public byte[] getPublicKey() {
         return publicKey;
     }
 
+    /**
+     * @deprecated
+     */
     public long getAccountId() {
         return accountId;
     }
 
+    /**
+     * @deprecated
+     */
     public long getDeadline() {
         return deadline;
     }
 
+    /**
+     * @deprecated
+     */
     public long getHitTime() {
         return hitTime;
     }
@@ -389,7 +467,10 @@ public final class Generator implements Comparable<Generator> {
         listeners.notify(this, Event.GENERATION_DEADLINE);
     }
 
-    boolean forge(Block lastBlock, int generationLimit) throws BlockchainProcessor.BlockNotAcceptedException {
+    /**
+     * @deprecated
+     */
+    public boolean forge(Block lastBlock, int generationLimit) throws BlockchainProcessor.BlockNotAcceptedException {
         int timestamp = getTimestamp(generationLimit);
         int[] timeoutAndVersion = getBlockTimeoutAndVersion(timestamp, generationLimit, lastBlock);
         if (timeoutAndVersion == null) {

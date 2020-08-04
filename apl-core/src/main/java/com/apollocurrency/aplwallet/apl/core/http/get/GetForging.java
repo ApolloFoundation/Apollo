@@ -20,9 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.Generator;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.GeneratorMemoryEntity;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
@@ -63,7 +63,7 @@ public final class GetForging extends AbstractAPIRequestHandler {
             if (account == null) {
                 return UNKNOWN_ACCOUNT;
             }
-            Generator generator = Generator.getGenerator(Convert.getId(publicKey));
+            GeneratorMemoryEntity generator = lookupGeneratorService().getGenerator(Convert.getId(publicKey));
             if (generator == null) {
                 return NOT_FORGING;
             }
@@ -72,7 +72,7 @@ public final class GetForging extends AbstractAPIRequestHandler {
             apw.verifyPassword(req);
             JSONObject response = new JSONObject();
             JSONArray generators = new JSONArray();
-            Generator.getSortedForgers().forEach(generator -> generators.add(JSONData.generator(generator, elapsedTime)));
+            lookupGeneratorService().getSortedForgers().forEach(generator -> generators.add(JSONData.generator(generator, elapsedTime)));
             response.put("generators", generators);
             return response;
         }

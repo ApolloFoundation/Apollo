@@ -20,8 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.app.FundingMonitor;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.funding.FundingMonitorInstance;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
@@ -79,7 +79,7 @@ public class GetFundingMonitor extends AbstractAPIRequestHandler {
         if (keySeed == null) {
             apw.verifyPassword(req);
         }
-        List<FundingMonitor> monitors;
+        List<FundingMonitorInstance> monitors;
         if (keySeed != null || account != 0) {
             if (keySeed != null) {
                 if (account != 0) {
@@ -94,7 +94,7 @@ public class GetFundingMonitor extends AbstractAPIRequestHandler {
             final HoldingType holdingType = HttpParameterParserUtil.getHoldingType(req);
             final long holdingId = HttpParameterParserUtil.getHoldingId(req, holdingType);
             final String property = HttpParameterParserUtil.getAccountProperty(req, false);
-            Filter<FundingMonitor> filter;
+            Filter<FundingMonitorInstance> filter;
             long finalAccountId = accountId;
             if (property != null) {
                 filter = (monitor) -> monitor.getAccountId() == finalAccountId &&
@@ -104,9 +104,9 @@ public class GetFundingMonitor extends AbstractAPIRequestHandler {
             } else {
                 filter = (monitor) -> monitor.getAccountId() == finalAccountId;
             }
-            monitors = FundingMonitor.getMonitors(filter);
+            monitors = lookupFundingMonitorService().getMonitors(filter);
         } else {
-            monitors = FundingMonitor.getAllMonitors();
+            monitors = lookupFundingMonitorService().getAllMonitors();
         }
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();

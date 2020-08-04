@@ -2,12 +2,14 @@ package com.apollocurrency.aplwallet.apl.core.utils;
 
 import org.json.simple.JSONArray;
 
+import javax.enterprise.inject.Vetoed;
 import java.util.List;
 import java.util.stream.Collector;
 
 /**
  * @author silaev-firstbridge on 4/14/2020
  */
+@Vetoed
 public class CollectorUtils {
     private CollectorUtils() {
     }

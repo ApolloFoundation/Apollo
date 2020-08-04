@@ -1,15 +1,15 @@
 /*
- *  Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2020 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.core.shard.observer;
 
-import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -43,13 +43,44 @@ public class ShardObserver {
     }
 
     public void onTrimDoneAsync(@ObservesAsync @TrimEvent TrimData trimData) {
-        lastTrimHeight = trimData.getTrimHeight();
+//        lastTrimHeight = trimData.getTrimHeight(); // new code
+        tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight()); // original code
     }
 
     public void onTrimDone(@Observes @TrimEvent TrimData trimData) {
-        lastTrimHeight = trimData.getTrimHeight();
+//        lastTrimHeight = trimData.getTrimHeight(); // new code
+        tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight()); // original code
     }
 
+    public CompletableFuture<MigrateState> tryCreateShardAsync(int lastTrimBlockHeight, int blockchainHeight) {
+        CompletableFuture<MigrateState> completableFuture = null;
+        boolean isShardingOff = propertiesHolder.getBooleanProperty("apl.noshardcreate", false);
+        log.debug("Is sharding enabled GLOBALLY ? : '{}'", !isShardingOff);
+        if (!isShardingOff) {
+            HeightConfig configAtTrimHeight = blockchainConfig.getConfigAtHeight(lastTrimBlockHeight);
+            log.debug("Check shard conditions: ? [{}],  lastTrimBlockHeight = {}, blockchainHeight = {}"
+                    + ", configAtTrimHeight = {}",
+                (lastTrimBlockHeight != 0
+                    && configAtTrimHeight != null
+                    && configAtTrimHeight.isShardingEnabled()
+                    && lastTrimBlockHeight % configAtTrimHeight.getShardingFrequency() == 0),
+                lastTrimBlockHeight, blockchainHeight, configAtTrimHeight
+            );
+            if (lastTrimBlockHeight != 0
+                && configAtTrimHeight != null
+                && configAtTrimHeight.isShardingEnabled()
+                && lastTrimBlockHeight % configAtTrimHeight.getShardingFrequency() == 0) {
+                completableFuture = shardService.tryCreateShardAsync(lastTrimBlockHeight, blockchainHeight);
+            } else {
+                log.debug("No attempt to create new shard lastTrimHeight = {}, configAtTrimHeight = {} (because {})",
+                    blockchainHeight, lastTrimBlockHeight, configAtTrimHeight);
+            }
+        }
+        return completableFuture;
+    }
+
+/*
+// NEW CODE GOES HERE...
     public void onBlockPushed(@ObservesAsync @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
         int blockHeight = block.getHeight();
         if (blockHeight % SHARD_MIN_STEP_BLOCKS == 0) {
@@ -85,14 +116,15 @@ public class ShardObserver {
             // TODO: YL after separating 'shard' and 'trim' logic, we can remove 'isJustUpdated()' usage and checking
             // config has changed from previous trim scheduling, try to get previous 'shard frequency' value
             shardingFrequency = blockchainConfig.getPreviousConfig().isPresent()
-                    && blockchainConfig.getPreviousConfig().get().isShardingEnabled()
-                    ? blockchainConfig.getPreviousConfig().get().getShardingFrequency() // previous config
-                    : currentConfig.getShardingFrequency(); // fall back
+                && blockchainConfig.getPreviousConfig().get().isShardingEnabled()
+                ? blockchainConfig.getPreviousConfig().get().getShardingFrequency() // previous config
+                : currentConfig.getShardingFrequency(); // fall back
         }
         return shardingFrequency;
     }
 
-    /**
+*/
+/**
      * Well, it is subject of discussion yet what parameter should trigger
      * sharding At the moment sharding is bound to trims and we do not count on
      * blockchainHeight at all
@@ -101,7 +133,8 @@ public class ShardObserver {
      * @param blockchainHeight
      * @param currentConfig
      * @return
-     */
+     *//*
+
     private boolean isTimeForShard(int lastTrimBlockHeight, int blockchainHeight, HeightConfig currentConfig) {
 
         int shardingFrequency = getShardingFrequency(currentConfig);
@@ -117,11 +150,11 @@ public class ShardObserver {
         if (howLateWeAre >= 0) {
             if (howLateWeAre > howLateWeCanBe) {
                 log.warn("We have missed shard for {} blocks! lastTrimHeitght: {} blockchainHeight: {}",
-                        howLateWeAre, lastTrimBlockHeight, blockchainHeight);
+                    howLateWeAre, lastTrimBlockHeight, blockchainHeight);
             } else {
                 res = true;
                 log.debug("Time for sharding is OK. lastTrimHeitght: {} blockchainHeight: {}",
-                        lastTrimBlockHeight, blockchainHeight);
+                    lastTrimBlockHeight, blockchainHeight);
             }
         } else {
             log.trace("Sharding is not now. lastTrimHeight: {} nextShardHeight: {}", lastShardHeight, nextShardHeight);
@@ -129,8 +162,8 @@ public class ShardObserver {
 
         log.debug("Check shard conditions:  howLateWeAre = {},  lastTrimBlockHeight = {}, blockchainHeight = {}"
                 + ", shardingFrequency = {} justUpdted: {} Result: {}",
-                howLateWeAre, lastTrimBlockHeight, blockchainHeight,
-                shardingFrequency, blockchainConfig.isJustUpdated(), res);
+            howLateWeAre, lastTrimBlockHeight, blockchainHeight,
+            shardingFrequency, blockchainConfig.isJustUpdated(), res);
 
         return res;
     }
@@ -156,4 +189,6 @@ public class ShardObserver {
         }
         return completableFuture;
     }
+*/
+
 }

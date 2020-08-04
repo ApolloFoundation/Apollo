@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.validation;
 
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 

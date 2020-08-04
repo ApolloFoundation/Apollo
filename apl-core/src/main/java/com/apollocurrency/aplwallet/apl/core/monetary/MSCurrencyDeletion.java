@@ -3,12 +3,14 @@
  */
 package com.apollocurrency.aplwallet.apl.core.monetary;
 
-import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyDeletion;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -50,7 +52,7 @@ class MSCurrencyDeletion extends MonetarySystem {
     @Override
     public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
         MonetarySystemCurrencyDeletion attachment = (MonetarySystemCurrencyDeletion) transaction.getAttachment();
-        Currency currency = Currency.getCurrency(attachment.getCurrencyId());
+        Currency currency = lookupCurrencyService().getCurrency(attachment.getCurrencyId());
         String nameLower = currency.getName().toLowerCase();
         String codeLower = currency.getCode().toLowerCase();
         boolean isDuplicate = TransactionType.isDuplicate(CURRENCY_ISSUANCE, nameLower, duplicates, true);
@@ -63,10 +65,11 @@ class MSCurrencyDeletion extends MonetarySystem {
     @Override
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
         MonetarySystemCurrencyDeletion attachment = (MonetarySystemCurrencyDeletion) transaction.getAttachment();
-        Currency currency = Currency.getCurrency(attachment.getCurrencyId());
+        Currency currency = lookupCurrencyService().getCurrency(attachment.getCurrencyId());
         CurrencyType.validate(currency, transaction);
-        if (!currency.canBeDeletedBy(transaction.getSenderId())) {
-            throw new AplException.NotCurrentlyValidException("Currency " + Long.toUnsignedString(currency.getId()) + " cannot be deleted by account " + Long.toUnsignedString(transaction.getSenderId()));
+        if (!lookupCurrencyService().canBeDeletedBy(currency, transaction.getSenderId())) {
+            throw new AplException.NotCurrentlyValidException(
+                "Currency " + currency.getId() + " cannot be deleted by account " + transaction.getSenderId());
         }
     }
 
@@ -82,8 +85,8 @@ class MSCurrencyDeletion extends MonetarySystem {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         MonetarySystemCurrencyDeletion attachment = (MonetarySystemCurrencyDeletion) transaction.getAttachment();
-        Currency currency = Currency.getCurrency(attachment.getCurrencyId());
-        currency.delete(getLedgerEvent(), transaction.getId(), senderAccount);
+        Currency currency = lookupCurrencyService().getCurrency(attachment.getCurrencyId());
+        lookupCurrencyService().delete(currency, getLedgerEvent(), transaction.getId(), senderAccount);
     }
 
     @Override

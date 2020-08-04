@@ -1,23 +1,23 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.UpdaterMediatorImpl;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.Update;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
+import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediatorImpl;
 import com.apollocurrency.aplwallet.apl.updater.repository.UpdaterDbRepository;
 import com.apollocurrency.aplwallet.apl.updater.repository.UpdaterRepository;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Version;
-import com.apollocurrency.aplwallet.apl.util.env.Architecture;
-import com.apollocurrency.aplwallet.apl.util.env.Platform;
+import com.apollocurrency.aplwallet.apl.util.env.Arch;
+import com.apollocurrency.aplwallet.apl.util.env.OS;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.junit.jupiter.api.BeforeEach;
@@ -67,8 +67,8 @@ public class UpdaterDbTest {
         assertEquals(Update.IMPORTANT, transaction.getType());
         assertEquals(104595, transaction.getHeight());
         assertEquals(((UpdateAttachment) transaction.getAttachment()).getAppVersion(), new Version("1.0.8"));
-        assertEquals(((UpdateAttachment) transaction.getAttachment()).getArchitecture(), Architecture.X86);
-        assertEquals(((UpdateAttachment) transaction.getAttachment()).getPlatform(), Platform.LINUX);
+        assertEquals(((UpdateAttachment) transaction.getAttachment()).getArchitecture(), Arch.X86_32);
+        assertEquals(((UpdateAttachment) transaction.getAttachment()).getOS(), OS.LINUX);
         assertEquals(Convert.toHexString(((UpdateAttachment) transaction.getAttachment()).getHash()), (
             "a2c1e47afd4b25035a025091ec3c33ec1992d09e7f3c05875d79e660139220a4"));
         assertTrue(updateTransaction.isUpdated());
@@ -91,8 +91,8 @@ public class UpdaterDbTest {
         assertEquals(Update.CRITICAL, transaction.getType());
         assertEquals(104671, transaction.getHeight());
         assertEquals(((UpdateAttachment) transaction.getAttachment()).getAppVersion(), new Version("1.0.8"));
-        assertEquals(((UpdateAttachment) transaction.getAttachment()).getArchitecture(), Architecture.AMD64);
-        assertEquals(((UpdateAttachment) transaction.getAttachment()).getPlatform(), Platform.LINUX);
+        assertEquals(((UpdateAttachment) transaction.getAttachment()).getArchitecture(), Arch.X86_64);
+        assertEquals(((UpdateAttachment) transaction.getAttachment()).getOS(), OS.LINUX);
         assertEquals(Convert.toHexString(((UpdateAttachment) transaction.getAttachment()).getHash()), ("a2c1e47afd4b25035a025091ec3c33ec1992d09e7f3c05875d79e660139220a4"));
         assertFalse(updateTransaction.isUpdated());
     }

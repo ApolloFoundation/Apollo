@@ -4,10 +4,10 @@
     "active": true,
     "wellKnownPeers": [
       "51.15.37.165",
-      "51.15.209.252",
-      "51.15.228.90",
       "51.15.228.126",
       "51.15.228.171",
+      "51.15.209.252",
+      "51.15.228.90",
       "51.15.46.25",
       "51.15.72.23"
     ],
@@ -45,11 +45,11 @@
         },
         "shardingSettings": {
           "enabled": true,
-          "frequency": 300000
+          "frequency": 100000
         }
       },
       {
-        "height": 600000,
+        "height": 1000000,
         "maxNumberOfTransactions": 255,
         "blockTime": 2,
         "maxBlockTimeLimit": 3,

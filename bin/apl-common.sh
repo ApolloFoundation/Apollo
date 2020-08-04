@@ -1,5 +1,5 @@
 #!/bin/bash
-# (C) 2019 Apollo Foundation 
+# (C) 2019 Apollo Foundation
 # Common parts for all Apollo scripts
 
 # base dir for data files, etc
@@ -7,28 +7,29 @@ APPLICATION="${HOME}/.apl-blockchain"
 
 MIN_MEMORY_RQ=700m
 JAVA_OPT="${JAVA_OPT} -Xms${MIN_MEMORY_RQ}"
-
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
-# " 
-# SCRIPT_DIR=`dirname $SCRIPT`
+OS=$(uname)
+if [ $OS == "Linux" ] ; then
+    readlink_opt="-f"
+fi
 
-APL_TOP_DIR=`dirname $SCRIPT_DIR`
+APL_TOP_DIR=`dirname "$SCRIPT_DIR"`
 ECHO_PREFIX="=== Apollo === "
 echo "${ECHO_PREFIX} Apollo wallet installed in directory: ${APL_TOP_DIR}"
 
 APL_LIB_DIR=${APL_TOP_DIR}/lib
-if [ -x ${APL_LIB_DIR} ]; then
+if [ -x "${APL_LIB_DIR}" ]; then
     echo -n
 else
-    APL_LIB_DIR=${APL_TOP_DIR}/apl-exec/target/lib
+    APL_LIB_DIR="${APL_TOP_DIR}"/apl-exec/target/lib
 fi
 echo "${ECHO_PREFIX} Apollo wallet libraries installed in directory: ${APL_LIB_DIR}"
 
 #determine version
 
-if [ -f ${APL_TOP_DIR}/VERSION ] ; then
-    APL_VERSION=$(cat ${APL_TOP_DIR}/VERSION)
-else 
+if [ -f "${APL_TOP_DIR}"/VERSION ] ; then
+    APL_VERSION=$(cat "${APL_TOP_DIR}"/VERSION)
+else
     vers=`ls ${APL_LIB_DIR}/apl-utils*`
     vers=`basename $vers`
     vers=${vers##apl-utils-}
@@ -36,21 +37,21 @@ else
 fi
 
 echo "${ECHO_PREFIX} Apollo verions is: ${APL_VERSION}"
-APL_TOOLS_JAR=${APL_LIB_DIR}/apl-tools-${APL_VERSION}.jar
+APL_TOOLS_JAR="${APL_TOP_DIR}"/apl-tools-${APL_VERSION}.jar
 
-MAIN_JAR=${APL_TOP_DIR}/apl-exec-${APL_VERSION}.jar
-MAIN_GUI_JAR=${APL_LIB_DIR}/apl-desktop-${APL_VERSION}.jar
-if [ -r ${MAIN_JAR} ]; then
+MAIN_JAR="${APL_TOP_DIR}"/apl-exec-${APL_VERSION}.jar
+MAIN_GUI_JAR="${APL_LIB_DIR}"/apl-desktop-${APL_VERSION}.jar
+if [ -r "${MAIN_JAR}" ]; then
     echo -n
 else
-    MAIN_JAR=${APL_TOP_DIR}/apl-exec/target/apl-exec-${APL_VERSION}.jar
+    MAIN_JAR="${APL_TOP_DIR}"/apl-exec/target/apl-exec-${APL_VERSION}.jar
 fi
 echo "${ECHO_PREFIX} Apollo main jar path: ${MAIN_JAR}"
 
 # Java detection code. At the moment it is enough just to check jre in distribution
 # or version of system-wide java installation
-if [ -x ${APL_TOP_DIR}/jre/bin/java ]; then
-    JAVA_CMD=${APL_TOP_DIR}/jre/bin/java
+if [ -x "${APL_TOP_DIR}"/jre/bin/java ]; then
+    JAVA_CMD="${APL_TOP_DIR}"/jre/bin/java
 else
   if [[ -n $(type -p java) ]]
   then
@@ -61,7 +62,13 @@ else
   fi
     JAVA_CMD=java
 fi
-JAVA_BASE=$(dirname $(readlink $(which java)))
+WJAVACMD=$(which $JAVA_CMD)
+JAVA_BASE=$(dirname "${WJAVACMD}")
+if [ $OS == "Linux" ] ; then
+    JAVA_BASE=$(dirname $(readlink ${readlink_opt} $(which $JAVA_CMD)))
+fi
+
+
 JAR_CMD=$JAVA_BASE/jar
 
 jdk_version() {
@@ -92,9 +99,9 @@ jdk_version() {
 
 JAVA_VER="$(jdk_version)"
 
-echo -n "${ECHO_PREFIX} Using java at path: ${JAVA_CMD}; Version is: ${JAVA_VER};"
+echo -n "${ECHO_PREFIX} Using java at path: ${JAVA_BASE}; Version is: ${JAVA_VER};"
 
-if [ "$JAVA_VER" -ge 11 ]; then 
+if [ "$JAVA_VER" -ge 11 ]; then
   echo " Java is OK."
 else
     echo

@@ -3,21 +3,20 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountProperty;
-import com.apollocurrency.aplwallet.apl.core.alias.entity.Alias;
-import com.apollocurrency.aplwallet.apl.core.alias.entity.AliasOffer;
-import com.apollocurrency.aplwallet.apl.core.alias.service.AliasService;
-import com.apollocurrency.aplwallet.apl.core.app.Fee;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
-import com.apollocurrency.aplwallet.apl.core.app.Poll;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.Vote;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountProperty;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.entity.state.alias.Alias;
+import com.apollocurrency.aplwallet.apl.core.entity.state.alias.AliasOffer;
+import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollResult;
+import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
+import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
+import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EmptyAttachment;
@@ -32,18 +31,13 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPhasi
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPollCreation;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteCasting;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
-import org.slf4j.Logger;
 
-import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author al
@@ -159,7 +153,7 @@ public abstract class Messaging extends TransactionType {
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             MessagingPollCreation attachment = (MessagingPollCreation) transaction.getAttachment();
-            Poll.addPoll(transaction, attachment);
+            lookupPollService().addPoll(transaction, attachment);
         }
 
         @Override
@@ -236,7 +230,7 @@ public abstract class Messaging extends TransactionType {
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             MessagingVoteCasting attachment = (MessagingVoteCasting) transaction.getAttachment();
-            Vote.addVote(transaction, attachment);
+            lookupPollService().addVote(transaction, attachment);
         }
 
         @Override
@@ -246,11 +240,11 @@ public abstract class Messaging extends TransactionType {
                 throw new AplException.NotValidException("Invalid vote casting attachment: " + attachment.getJSONObject());
             }
             long pollId = attachment.getPollId();
-            Poll poll = Poll.getPoll(pollId);
+            Poll poll = lookupPollService().getPoll(pollId);
             if (poll == null) {
                 throw new AplException.NotCurrentlyValidException("Invalid poll: " + Long.toUnsignedString(attachment.getPollId()));
             }
-            if (Vote.getVote(pollId, transaction.getSenderId()) != null) {
+            if (lookupPollService().getVote(pollId, transaction.getSenderId()) != null) {
                 throw new AplException.NotCurrentlyValidException("Double voting attempt");
             }
             if (poll.getFinishHeight() <= attachment.getFinishValidationHeight(transaction)) {
@@ -488,8 +482,8 @@ public abstract class Messaging extends TransactionType {
             return true;
         }
     };
-    private static final Logger log = getLogger(Messaging.class);
-    private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
+
+    private static PhasingPollService phasingPollService;// lazy init
     public static final TransactionType PHASING_VOTE_CASTING = new Messaging() {
         private final Fee PHASING_VOTE_FEE = (transaction, appendage) -> {
             MessagingPhasingVoteCasting attachment = (MessagingPhasingVoteCasting) transaction.getAttachment();

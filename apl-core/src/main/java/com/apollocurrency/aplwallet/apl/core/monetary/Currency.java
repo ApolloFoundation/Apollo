@@ -20,33 +20,28 @@
 
 package com.apollocurrency.aplwallet.apl.core.monetary;
 
-import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletableEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
-import com.apollocurrency.aplwallet.apl.core.db.service.BlockChainInfoService;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
+import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountCurrencyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
-import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.event.Observes;
 import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -55,11 +50,15 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Deprecated
 @SuppressWarnings("UnusedDeclaration")
 public final class Currency {
 
     private static final BlockChainInfoService BLOCK_CHAIN_INFO_SERVICE =
         CDI.current().select(BlockChainInfoService.class).get();
+    /**
+     * @deprecated
+     */
     private static final LongKeyFactory<Currency> currencyDbKeyFactory = new LongKeyFactory<Currency>("id") {
 
         @Override
@@ -68,6 +67,9 @@ public final class Currency {
         }
 
     };
+    /**
+     * @deprecated
+     */
     private static final VersionedDeletableEntityDbTable<Currency> currencyTable = new VersionedDeletableEntityDbTable<Currency>("currency", currencyDbKeyFactory, "code,name,description") {
 
         @Override
@@ -86,6 +88,9 @@ public final class Currency {
         }
 
     };
+    /**
+     * @deprecated
+     */
     private static final LongKeyFactory<CurrencySupply> currencySupplyDbKeyFactory = new LongKeyFactory<CurrencySupply>("id") {
 
         @Override
@@ -94,6 +99,9 @@ public final class Currency {
         }
 
     };
+    /**
+     * @deprecated
+     */
     private static final VersionedDeletableEntityDbTable<CurrencySupply> currencySupplyTable = new VersionedDeletableEntityDbTable<CurrencySupply>("currency_supply", currencySupplyDbKeyFactory) {
 
         @Override
@@ -110,6 +118,9 @@ public final class Currency {
     private static final Listeners<Currency, Event> listeners = new Listeners<>();
     private static AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
     private static AccountCurrencyService accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
+    private static CurrencyExchangeOfferFacade currencyExchangeOfferFacade = CDI.current().select(CurrencyExchangeOfferFacade.class).get();
+
+    private long dbId;
     private final long currencyId;
     private final DbKey dbKey;
     private final long accountId;
@@ -136,6 +147,9 @@ public final class Currency {
     private final long initialSupply;
     private CurrencySupply currencySupply;
 
+    /**
+     * @deprecated
+     */
     private Currency(Transaction transaction, MonetarySystemCurrencyIssuance attachment) {
         this.currencyId = transaction.getId();
         this.dbKey = currencyDbKeyFactory.newKey(this.currencyId);
@@ -157,7 +171,11 @@ public final class Currency {
         this.decimals = attachment.getDecimals();
     }
 
+    /**
+     * @deprecated
+     */
     private Currency(ResultSet rs, DbKey dbKey) throws SQLException {
+        this.dbId = rs.getLong("db_id");
         this.currencyId = rs.getLong("id");
         this.dbKey = dbKey;
         this.accountId = rs.getLong("account_id");
@@ -178,7 +196,12 @@ public final class Currency {
         this.decimals = rs.getByte("decimals");
     }
 
-    private Currency(long currencyId, DbKey dbKey, long accountId, String name, String code, String description, int type, long maxSupply, long reserveSupply, int creationHeight, int issuanceHeight, long minReservePerUnitATM, int minDifficulty, int maxDifficulty, byte ruleset, byte algorithm, byte decimals, long initialSupply) {
+    /**
+     * @deprecated use for unit test  only
+     */
+    public Currency(long currencyId, DbKey dbKey, long accountId, String name, String code, String description,
+                     int type, long maxSupply, long reserveSupply, int creationHeight, int issuanceHeight,
+                     long minReservePerUnitATM, int minDifficulty, int maxDifficulty, byte ruleset, byte algorithm, byte decimals, long initialSupply) {
         this.currencyId = currencyId;
         this.dbKey = dbKey;
         this.accountId = accountId;
@@ -199,42 +222,72 @@ public final class Currency {
         this.initialSupply = initialSupply;
     }
 
+    /**
+     * @deprecated
+     */
     public static boolean addListener(Listener<Currency> listener, Event eventType) {
         return listeners.addListener(listener, eventType);
     }
 
+    /**
+     * @deprecated
+     */
     public static boolean removeListener(Listener<Currency> listener, Event eventType) {
         return listeners.removeListener(listener, eventType);
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<Currency> getAllCurrencies(int from, int to) {
         return currencyTable.getAll(from, to);
     }
 
+    /**
+     * @deprecated
+     */
     public static int getCount() {
         return currencyTable.getCount();
     }
 
+    /**
+     * @deprecated
+     */
     public static Currency getCurrency(long id) {
         return currencyTable.get(currencyDbKeyFactory.newKey(id));
     }
 
+    /**
+     * @deprecated
+     */
     public static Currency getCurrencyByName(String name) {
         return currencyTable.getBy(new DbClause.StringClause("name_lower", name.toLowerCase()));
     }
 
+    /**
+     * @deprecated
+     */
     public static Currency getCurrencyByCode(String code) {
         return currencyTable.getBy(new DbClause.StringClause("code", code.toUpperCase()));
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<Currency> getCurrencyIssuedBy(long accountId, int from, int to) {
         return currencyTable.getManyBy(new DbClause.LongClause("account_id", accountId), from, to);
     }
 
+    /**
+     * @deprecated
+     */
     public static DbIterator<Currency> searchCurrencies(String query, int from, int to) {
         return currencyTable.search(query, DbClause.EMPTY_CLAUSE, from, to, " ORDER BY ft.score DESC, currency.creation_height DESC ");
     }
 
+    /**
+     * @deprecated
+     */
     static void addCurrency(LedgerEvent event, long eventId, Transaction transaction, Account senderAccount,
                             MonetarySystemCurrencyIssuance attachment) {
         Currency oldCurrency;
@@ -260,9 +313,15 @@ public final class Currency {
 
     }
 
+    /**
+     * @deprecated
+     */
     public static void init() {
     }
 
+    /**
+     * @deprecated
+     */
     static void increaseReserve(LedgerEvent event, long eventId, Account account, long currencyId, long amountPerUnitATM) {
         Currency currency = Currency.getCurrency(currencyId);
         accountService.addToBalanceATM(account, event, eventId, -Math.multiplyExact(currency.getReserveSupply(), amountPerUnitATM));
@@ -272,6 +331,9 @@ public final class Currency {
         CurrencyFounder.addOrUpdateFounder(currencyId, account.getId(), amountPerUnitATM);
     }
 
+    /**
+     * @deprecated
+     */
     static void claimReserve(LedgerEvent event, long eventId, Account account, long currencyId, long units) {
         accountCurrencyService.addToCurrencyUnits(account, event, eventId, currencyId, -units);
         Currency currency = Currency.getCurrency(currencyId);
@@ -280,6 +342,9 @@ public final class Currency {
             Math.multiplyExact(units, currency.getCurrentReservePerUnitATM()));
     }
 
+    /**
+     * @deprecated
+     */
     static void transferCurrency(LedgerEvent event, long eventId, Account senderAccount, Account recipientAccount,
                                  long currencyId, long units) {
         accountCurrencyService.addToCurrencyUnits(senderAccount, event, eventId, currencyId, -units);
@@ -318,6 +383,10 @@ public final class Currency {
         }
     }
 
+    public long getDbId() {
+        return dbId;
+    }
+
     public long getId() {
         return currencyId;
     }
@@ -346,6 +415,9 @@ public final class Currency {
         return initialSupply;
     }
 
+    /**
+     * @deprecated
+     */
     public long getCurrentSupply() {
         if (!is(CurrencyType.RESERVABLE) && !is(CurrencyType.MINTABLE)) {
             return initialSupply;
@@ -396,6 +468,9 @@ public final class Currency {
         return decimals;
     }
 
+    /**
+     * @deprecated
+     */
     public long getCurrentReservePerUnitATM() {
         if (!is(CurrencyType.RESERVABLE) || getSupplyData() == null) {
             return 0;
@@ -403,10 +478,16 @@ public final class Currency {
         return currencySupply.currentReservePerUnitATM;
     }
 
+    /**
+     * @deprecated
+     */
     public boolean isActive() {
         return issuanceHeight <= BLOCK_CHAIN_INFO_SERVICE.getHeight();
     }
 
+    /**
+     * @deprecated
+     */
     private CurrencySupply getSupplyData() {
         if (!is(CurrencyType.RESERVABLE) && !is(CurrencyType.MINTABLE)) {
             return null;
@@ -420,6 +501,9 @@ public final class Currency {
         return currencySupply;
     }
 
+    /**
+     * @deprecated
+     */
     public void increaseSupply(long units) {
         getSupplyData();
         currencySupply.currentSupply += units;
@@ -430,33 +514,49 @@ public final class Currency {
         currencySupplyTable.insert(currencySupply);
     }
 
+    /**
+     * @deprecated
+     */
     public DbIterator<Exchange> getExchanges(int from, int to) {
         return Exchange.getCurrencyExchanges(this.currencyId, from, to);
     }
 
+    /**
+     * @deprecated
+     */
     public DbIterator<CurrencyTransfer> getTransfers(int from, int to) {
         return CurrencyTransfer.getCurrencyTransfers(this.currencyId, from, to);
     }
 
+    /**
+     * @deprecated
+     */
     public boolean is(CurrencyType type) {
         return (this.type & type.getCode()) != 0;
     }
 
+    /**
+     * @deprecated
+     */
     public boolean canBeDeletedBy(long senderAccountId) {
-        if (!is(CurrencyType.NON_SHUFFLEABLE) && Shuffling.getHoldingShufflingCount(currencyId, false) > 0) {
-            return false;
-        }
-        if (!isActive()) {
-            return senderAccountId == accountId;
-        }
-        if (is(CurrencyType.MINTABLE) && getCurrentSupply() < maxSupply && senderAccountId != accountId) {
-            return false;
-        }
-
-        List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrenciesByAccount(this.currencyId, 0, -1);
-        return accountCurrencies.isEmpty() || accountCurrencies.size() == 1 && accountCurrencies.get(0).getAccountId() == senderAccountId;
+//        if (!is(CurrencyType.NON_SHUFFLEABLE) && Shuffling.getHoldingShufflingCount(currencyId, false) > 0) {
+//            return false;
+//        }
+//        if (!isActive()) {
+//            return senderAccountId == accountId;
+//        }
+//        if (is(CurrencyType.MINTABLE) && getCurrentSupply() < maxSupply && senderAccountId != accountId) {
+//            return false;
+//        }
+//
+//        List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrenciesByAccount(this.currencyId, 0, -1);
+//        return accountCurrencies.isEmpty() || accountCurrencies.size() == 1 && accountCurrencies.get(0).getAccountId() == senderAccountId;
+        throw new UnsupportedOperationException();
     }
 
+    /**
+     * @deprecated
+     */
     void delete(LedgerEvent event, long eventId, Account senderAccount) {
         if (!canBeDeletedBy(senderAccount.getId())) {
             // shouldn't happen as ownership has already been checked in validate, but as a safety check
@@ -506,6 +606,7 @@ public final class Currency {
 
     private static final class CurrencySupply {
 
+        private long dbId;
         private final DbKey dbKey;
         private final long currencyId;
         private long currentSupply;
@@ -517,6 +618,7 @@ public final class Currency {
         }
 
         private CurrencySupply(ResultSet rs, DbKey dbKey) throws SQLException {
+            this.dbId = rs.getLong("db_id");
             this.currencyId = rs.getLong("id");
             this.dbKey = dbKey;
             this.currentSupply = rs.getLong("current_supply");
@@ -539,8 +641,12 @@ public final class Currency {
                 pstmt.executeUpdate();
             }
         }
+        public long getDbId() {
+            return dbId;
+        }
     }
 
+/*
     @Slf4j
     public static class CrowdFundingListener {
         public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
@@ -608,4 +714,5 @@ public final class Currency {
             currencySupplyTable.insert(currencySupply);
         }
     }
+*/
 }
