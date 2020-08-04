@@ -388,9 +388,7 @@ public class TransactionDaoImpl implements TransactionDao {
         createTransactionSelectSqlWithOrder(buf, "transaction.*", type, subtype,
             blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, executedOnly, includePrivate, height);
         buf.append(DbUtils.limitsClause(from, to)); // append 'limit offset' clause
-        Connection con = null;
-        try {
-            con = dataSource.getConnection();
+        try (Connection con = dataSource.getConnection()) {
             String sql = buf.toString();
             log.trace("getTx sql = {}\naccountId={}, from={}, to={}", sql, accountId, from, to);
             PreparedStatement pstmt = con.prepareStatement(sql);
@@ -400,7 +398,6 @@ public class TransactionDaoImpl implements TransactionDao {
             return getTransactions(con, pstmt);
         } catch (SQLException e) {
             log.error("ERROR on DataSource = {}", dataSource.getDbIdentity());
-            DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -573,11 +570,10 @@ public class TransactionDaoImpl implements TransactionDao {
         }
         sqlQuery.append("ORDER BY block_timestamp DESC, transaction_index DESC ");
         sqlQuery.append(DbUtils.limitsClause(from, to));
-        Connection con = null;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try {
-            con = dataSource.getConnection();
-            PreparedStatement statement = con.prepareStatement(sqlQuery.toString());
+
+        try (Connection con = dataSource.getConnection();
+            PreparedStatement statement = con.prepareStatement(sqlQuery.toString())) {
             int i = 0;
             statement.setByte(++i, PRIVATE_PAYMENT.getType());
             statement.setByte(++i, PRIVATE_PAYMENT.getSubtype());
@@ -590,7 +586,6 @@ public class TransactionDaoImpl implements TransactionDao {
             DbUtils.setLimits(++i, statement, from, to);
             return getTransactions(con, statement);
         } catch (SQLException e) {
-            DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
         }
     }

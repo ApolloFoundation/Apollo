@@ -31,6 +31,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.types.messaging.AliasAs
 import com.apollocurrency.aplwallet.apl.core.transaction.types.messaging.ArbitraryMessageTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.ms.MSCurrencyIssuanceTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.payment.OrdinaryPaymentTransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.payment.PrivatePaymentTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.update.CriticalUpdateTransactiionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.update.ImportantUpdateTransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -145,6 +146,7 @@ public class TransactionTestData {
         PrunableLoadingService prunableLoadingService = mock(PrunableLoadingService.class);
         transactionTypeFactory = new CachedTransactionTypeFactory(List.of(
             new OrdinaryPaymentTransactionType(config, accountService),
+            new PrivatePaymentTransactionType(config, accountService),
             new MSCurrencyIssuanceTransactionType(config, accountService, currencyService, accountCurrencyService),
             new CCAssetIssuanceTransactionType(config, accountService, assetService, accountAssetService),
             new AliasAssignmentTransactionType(config, accountService, aliasService),

@@ -64,9 +64,8 @@ public class Chat {
     }
 
     public static List<? extends Transaction> getChatHistory(long account1, long account2, int from, int to) {
-        Connection con = null;
-        try {
-            con = lookupDataSource().getConnection();
+
+        try (Connection con = lookupDataSource().getConnection()) {
             PreparedStatement stmt = con.prepareStatement(
                 "SELECT * from transaction "
                     + "where type = ? and subtype = ? and ((sender_id =? and recipient_id = ?) or  (sender_id =? and recipient_id = ?)) " +
@@ -83,7 +82,6 @@ public class Chat {
             DbUtils.setLimits(++i, stmt, from, to);
             return blockchain.getTransactions(con, stmt);
         } catch (SQLException e) {
-            DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
         }
     }

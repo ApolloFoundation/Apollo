@@ -749,6 +749,7 @@ public class BlockchainImpl implements Blockchain {
     @Transactional(readOnly = true)
     @Override
     public List<Transaction> getTransactions(Connection con, PreparedStatement pstmt) {
+
         return transactionDao.getTransactions(con, pstmt);
     }
 
