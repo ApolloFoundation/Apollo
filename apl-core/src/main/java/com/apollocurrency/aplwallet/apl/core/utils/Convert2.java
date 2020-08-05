@@ -64,7 +64,7 @@ public final class Convert2 {
 
     //avoid static initialization chain when call Constants.ACCOUNT_PREFIX in rsAccount method
     public static String defaultRsAccount(long accountId) {
-        return "APL-" + Crypto.rsEncode(accountId);
+        return blockchainConfig.getAccountPrefix() + "-" + Crypto.rsEncode(accountId);
     }
 
 
