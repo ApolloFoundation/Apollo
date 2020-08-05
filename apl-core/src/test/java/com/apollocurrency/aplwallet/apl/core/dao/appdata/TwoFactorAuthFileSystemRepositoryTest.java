@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.dao.appdata;
 
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.TwoFactorAuthFileSystemRepository;
 import com.apollocurrency.aplwallet.apl.core.db.AbstractTwoFactorAuthRepositoryTest;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.junit.jupiter.api.AfterEach;
@@ -51,8 +51,8 @@ public class TwoFactorAuthFileSystemRepositoryTest extends AbstractTwoFactorAuth
         repository = new TwoFactorAuthFileSystemRepository(repositoryPath);
         setRepository(repository);
         TwoFactorAuthTestData td = new TwoFactorAuthTestData();
-        String confirmedAccount = Convert.defaultRsAccount(td.ENTITY1.getAccount());
-        String unconfirmedAccount = Convert.defaultRsAccount(td.ENTITY2.getAccount());
+        String confirmedAccount = Convert2.defaultRsAccount(td.ENTITY1.getAccount());
+        String unconfirmedAccount = Convert2.defaultRsAccount(td.ENTITY2.getAccount());
         JSON.writeJson(repositoryPath.resolve(confirmedAccount), td.ENTITY1);
         JSON.writeJson(repositoryPath.resolve(unconfirmedAccount), td.ENTITY2);
     }

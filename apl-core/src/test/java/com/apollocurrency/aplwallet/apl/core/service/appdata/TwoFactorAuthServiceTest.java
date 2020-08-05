@@ -6,11 +6,10 @@ package com.apollocurrency.aplwallet.apl.core.service.appdata;
 
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthDetails;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.TwoFactorAuthService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TwoFactorAuthServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.TwoFactorAuthRepository;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.TwoFactorAuthEntity;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData;
 import com.apollocurrency.aplwallet.apl.testutil.TwoFactorAuthUtil;
 import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
@@ -53,7 +52,7 @@ public class TwoFactorAuthServiceTest {
         TwoFactorAuthTestData td = new TwoFactorAuthTestData();
         doReturn(true).when(targetFileRepository).add(any(TwoFactorAuthEntity.class));
         TwoFactorAuthDetails twoFactorAuthDetails = service.enable(td.NEW_ENTITY.getAccount());
-        TwoFactorAuthUtil.verifySecretCode(twoFactorAuthDetails, Convert.defaultRsAccount(td.NEW_ENTITY.getAccount()));
+        TwoFactorAuthUtil.verifySecretCode(twoFactorAuthDetails, Convert2.defaultRsAccount(td.NEW_ENTITY.getAccount()));
         assertEquals(Status2FA.OK, twoFactorAuthDetails.getStatus2Fa());
         verify(targetFileRepository, times(1)).add(any(TwoFactorAuthEntity.class));
     }
@@ -75,7 +74,7 @@ public class TwoFactorAuthServiceTest {
         doReturn(td.ENTITY2).when(targetFileRepository).get(td.ACC_2.getId());
 
         TwoFactorAuthDetails details = service.enable(td.ACC_2.getId());
-        TwoFactorAuthUtil.verifySecretCode(details, Convert.defaultRsAccount(td.ACC_2.getId()));
+        TwoFactorAuthUtil.verifySecretCode(details, Convert2.defaultRsAccount(td.ACC_2.getId()));
         assertEquals(td.ACCOUNT2_2FA_SECRET_BASE32, details.getSecret());
     }
 
