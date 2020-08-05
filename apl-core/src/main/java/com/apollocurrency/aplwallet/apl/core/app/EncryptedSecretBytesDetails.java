@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -34,7 +35,7 @@ public class EncryptedSecretBytesDetails {
     }
 
     public EncryptedSecretBytesDetails(byte[] encryptedSecretBytes, long account, Integer version, byte[] nonce, long timestamp) {
-        this(encryptedSecretBytes, Convert.defaultRsAccount(account), version, nonce, timestamp);
+        this(encryptedSecretBytes, Convert2.defaultRsAccount(account), version, nonce, timestamp);
     }
 
     public EncryptedSecretBytesDetails(byte[] encryptedSecretBytes, String accountRS, Integer version, byte[] nonce, long timestamp) {
