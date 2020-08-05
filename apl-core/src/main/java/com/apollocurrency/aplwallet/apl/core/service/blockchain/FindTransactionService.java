@@ -40,7 +40,9 @@ public interface FindTransactionService {
      * @param query the transaction filter object
      * @return the list of transaction objects
      */
-    List<TxReceipt> getTransactionsByQuery(AplQueryObject query);
+    List<TxReceipt> getConfirmedTransactionsByQuery(AplQueryObject query);
+
+    List<TxReceipt> getTransactionsByQuery(AplQueryObject query, boolean includeUnconfirmed);
 
     /**
      * Returns count of transactions saved in the blockchain given query object
@@ -48,5 +50,7 @@ public interface FindTransactionService {
      * @param query the transaction filter object
      * @return the list of transaction objects
      */
-    long getTransactionsCountByQuery(AplQueryObject query);
+    long getConfirmedTransactionsCountByQuery(AplQueryObject query);
+
+    long getTransactionsCountByQuery(AplQueryObject query, boolean includeUnconfirmed);
 }

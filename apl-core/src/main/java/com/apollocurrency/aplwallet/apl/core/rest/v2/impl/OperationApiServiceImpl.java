@@ -35,7 +35,7 @@ public class OperationApiServiceImpl implements OperationApiService {
             log.trace("GetOperations query={}, from body startTimeUnix={} endTimeUnix={}", query, body.getStartTime(), body.getEndTime());
         }
         result.setResult(
-            findTransactionService.getTransactionsByQuery(query) //ByPeriod(query.getStartTime(), query.getEndTime(), query.getOrder().name())
+            findTransactionService.getConfirmedTransactionsByQuery(query) //ByPeriod(query.getStartTime(), query.getEndTime(), query.getOrder().name())
         );
         result.setCount(result.getResult().size());
         return builder.bind(result).build();
@@ -50,7 +50,7 @@ public class OperationApiServiceImpl implements OperationApiService {
             log.trace("GetOperationsCount query={}, from body startTimeUnix={} endTimeUnix={}", query, body.getStartTime(), body.getEndTime());
         }
         result.setCount(
-            findTransactionService.getTransactionsCountByQuery(query)//ByPeriod(query.getStartTime(), query.getEndTime(), query.getOrder().name())
+            findTransactionService.getConfirmedTransactionsCountByQuery(query)//ByPeriod(query.getStartTime(), query.getEndTime(), query.getOrder().name())
         );
         return builder.bind(result).build();
     }

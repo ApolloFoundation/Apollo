@@ -78,12 +78,17 @@ public class FindTransactionServiceImpl implements FindTransactionService {
     }
 
     @Override
-    public List<TxReceipt> getTransactionsByQuery(AplQueryObject query) {
+    public List<TxReceipt> getConfirmedTransactionsByQuery(AplQueryObject query) {
+        return getTransactionsByQuery(query, false);
+    }
+
+    @Override
+    public List<TxReceipt> getTransactionsByQuery(AplQueryObject query, boolean includeUnconfirmed) {
         if (query.getStartTime() <= 0 || query.getEndTime() <= 0) {
             throw new IllegalArgumentException("Wrong time stamp values: timeStart=" + query.getStartTime() + " timeEnd=" + query.getEndTime());
         }
         Stream<Transaction> unconfirmedTransactionStream = null;
-        if (query.getLastHeight() <= 0) {
+        if (includeUnconfirmed && query.getLastHeight() <= 0) {
             unconfirmedTransactionStream = getAllUnconfirmedTransactionsStream()
                 .filter(transaction -> transaction.getTimestamp() > query.getStartTime() && transaction.getTimestamp() < query.getEndTime())
                 .map(unconfirmedTransaction -> unconfirmedTransaction);
@@ -109,12 +114,17 @@ public class FindTransactionServiceImpl implements FindTransactionService {
     }
 
     @Override
-    public long getTransactionsCountByQuery(AplQueryObject query) {
+    public long getConfirmedTransactionsCountByQuery(AplQueryObject query) {
+        return getTransactionsCountByQuery(query, false);
+    }
+
+    @Override
+    public long getTransactionsCountByQuery(AplQueryObject query, boolean includeUnconfirmed) {
         if (query.getStartTime() <= 0 || query.getEndTime() <= 0) {
             throw new IllegalArgumentException("Wrong time stamp values: timeStart=" + query.getStartTime() + " timeEnd=" + query.getEndTime());
         }
         long unconfirmedTxCount = 0;
-        if (query.getLastHeight() <= 0) {
+        if (includeUnconfirmed && query.getLastHeight() <= 0) {
             unconfirmedTxCount = getAllUnconfirmedTransactionsStream()
                 .filter(transaction -> transaction.getTimestamp() > query.getStartTime() && transaction.getTimestamp() < query.getEndTime())
                 .count();
@@ -128,4 +138,5 @@ public class FindTransactionServiceImpl implements FindTransactionService {
 
         return unconfirmedTxCount + txCount;
     }
+
 }

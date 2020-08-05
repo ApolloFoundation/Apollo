@@ -155,7 +155,7 @@ class FindTransactionServiceImplTest {
             query.getOrder().name(), query.getFrom(), query.getTo());
 
         //WHEN
-        List<TxReceipt> transactions = findTransactionService.getTransactionsByQuery(query);
+        List<TxReceipt> transactions = findTransactionService.getTransactionsByQuery(query, true);
 
         //THEN
         assertNotNull(transactions);
@@ -184,10 +184,28 @@ class FindTransactionServiceImplTest {
             query.getOrder().name(), query.getFrom(), query.getTo());
 
         //WHEN
-        long transactionsCount = findTransactionService.getTransactionsCountByQuery(query);
+        long transactionsCount = findTransactionService.getTransactionsCountByQuery(query, true);
 
         //THEN
         assertEquals(targetSize, transactionsCount);
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideAplQueryAndSize")
+    void getConfirmedTransactionsCountByQuery(AplQueryObject query, int targetSize) {
+        //GIVEN
+        //getTransactions(List<Long> accounts, type, subtype, startTime, endTime, fromHeight, toHeight, String sortOrder, from, to)
+        doReturn(4).when(transactionDao).getTransactionsCount(Collections.emptyList(),
+            query.getType(), (byte) -1,
+            query.getStartTime(), query.getEndTime(),
+            query.getFirstHeight(), query.getLastHeight(),
+            query.getOrder().name(), query.getFrom(), query.getTo());
+
+        //WHEN
+        long transactionsCount = findTransactionService.getConfirmedTransactionsCountByQuery(query);
+
+        //THEN
+        assertEquals(4, transactionsCount);
     }
 
     /**
