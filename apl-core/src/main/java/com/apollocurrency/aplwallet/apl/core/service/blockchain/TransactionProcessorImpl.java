@@ -500,6 +500,11 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         }
     }
 
+    @Override
+    public boolean isWaitingTransactionsCacheFull() {
+        return unconfirmedTransactionTable.isWaitingTransactionsCacheFull();
+    }
+
     public void processPeerTransactions(JSONArray transactionsData) throws AplException.NotValidException {
         if (blockchain.getHeight() <= blockchainConfig.getLastKnownBlock()) {
             return;

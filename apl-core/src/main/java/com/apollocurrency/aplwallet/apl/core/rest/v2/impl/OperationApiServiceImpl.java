@@ -29,7 +29,7 @@ public class OperationApiServiceImpl implements OperationApiService {
     public Response getOperations(QueryObject body, SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
         QueryResult result = new QueryResult();
-        result.setQuery(body);
+        result.setQuery(Objects.requireNonNull(body));
         AplQueryObject query = new AplQueryObject(body);
         if (log.isTraceEnabled()) {
             log.trace("GetOperations query={}, from body startTimeUnix={} endTimeUnix={}", query, body.getStartTime(), body.getEndTime());
@@ -44,7 +44,7 @@ public class OperationApiServiceImpl implements OperationApiService {
     public Response getOperationsCount(QueryObject body, SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
         QueryCountResult result = new QueryCountResult();
-        result.setQuery(body);
+        result.setQuery(Objects.requireNonNull(body));
         AplQueryObject query = new AplQueryObject(body);
         if (log.isTraceEnabled()) {
             log.trace("GetOperationsCount query={}, from body startTimeUnix={} endTimeUnix={}", query, body.getStartTime(), body.getEndTime());

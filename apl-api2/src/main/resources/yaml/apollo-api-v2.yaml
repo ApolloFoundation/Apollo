@@ -14,7 +14,6 @@ externalDocs:
   url: https://github.com/ApolloFoundation/Apollo
 servers:
   - url: http://localhost:7876/rest
-  - url: http://51.15.104.205:7876/rest
 
 tags:
   - name: account
@@ -368,6 +367,8 @@ paths:
                 $ref: '#/components/schemas/TxReceipt'
         400:
           $ref: '#/components/responses/BadRequest'
+        409:
+          $ref: '#/components/responses/ConflictResource'
         500:
           $ref: '#/components/responses/ServerError'
   /@@transaction/batch:
@@ -1150,6 +1151,10 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
+    ConflictResource:
+      description: |
+        The request could not be completed due to a conflict with the current state of the resource.
+        The resource is busy and the request might be reissued later.
     ServerError:
       description: Server error - internal server error
       content:

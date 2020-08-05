@@ -51,6 +51,9 @@ public class TransactionApiServiceImpl implements TransactionApiService {
      */
     public Response broadcastTx(TxRequest body, SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
+        if (transactionProcessor.isWaitingTransactionsCacheFull()) {
+            return ResponseBuilderV2.apiError(ApiErrors.UNCONFIRMED_TRANSACTION_CACHE_IS_FULL).status(409).build();
+        }
         StatusResponse rc = broadcastOneTx(body);
         return builder.bind(rc.getResponse()).status(rc.getStatus()).build();
     }
@@ -58,6 +61,9 @@ public class TransactionApiServiceImpl implements TransactionApiService {
     public Response broadcastTxBatch(List<TxRequest> body, SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
         ListResponse listResponse = new ListResponse();
+        if (transactionProcessor.isWaitingTransactionsCacheFull()) {
+            return ResponseBuilderV2.apiError(ApiErrors.UNCONFIRMED_TRANSACTION_CACHE_IS_FULL).status(409).build();
+        }
         for (TxRequest req : body) {
             BaseResponse receipt = broadcastOneTx(req).getResponse();
             listResponse.getResult().add(receipt);
@@ -86,7 +92,7 @@ public class TransactionApiServiceImpl implements TransactionApiService {
         } catch (NumberFormatException e) {
             receipt = ResponseBuilderV2.createErrorResponse(
                 ApiErrors.CUSTOM_ERROR_MESSAGE, null,
-                "Cant't parse byte array, cause " + e.getMessage());
+                "Can't parse byte array, cause " + e.getMessage());
             status = 400;
 
         } catch (AplException.ValidationException e) {
@@ -106,7 +112,7 @@ public class TransactionApiServiceImpl implements TransactionApiService {
             transactionId = Convert.parseUnsignedLong(transactionIdStr);
         } catch (RuntimeException e) {
             return builder
-                .error(ApiErrors.CUSTOM_ERROR_MESSAGE, "Cant't parse transaction id, cause " + e.getMessage())
+                .error(ApiErrors.CUSTOM_ERROR_MESSAGE, "Can't parse transaction id, cause " + e.getMessage())
                 .build();
         }
         transaction = blockchain.getTransaction(transactionId);

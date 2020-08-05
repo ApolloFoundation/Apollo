@@ -10,6 +10,7 @@ public enum ApiErrors implements ErrorInfo {
 
     INTERNAL_SERVER_EXCEPTION(0, 100, "Internal error, root cause: %s"),
     BLOCKCHAIN_NOT_INITIALIZED(-1, 101, "Blockchain is not initialized."),
+    UNCONFIRMED_TRANSACTION_CACHE_IS_FULL(-1, 102, "Blockchain is busy, the unconfirmed transaction cache is full."),
 
     JSON_SERIALIZATION_EXCEPTION(1, 1001, "Exception encountered during generating JSON content, root cause: %s"),
 

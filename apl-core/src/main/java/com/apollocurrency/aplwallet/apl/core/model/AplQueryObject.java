@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.api.v2.model.QueryObject;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 @Getter
 @Setter
+@Builder
 public class AplQueryObject {
     private byte type = -1;
     private List<Long> accounts = new ArrayList<>();

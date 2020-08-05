@@ -59,7 +59,7 @@ public class FindTransactionServiceImpl implements FindTransactionService {
 
     @Override
     public Stream<UnconfirmedTransaction> getAllUnconfirmedTransactionsStream() {
-        return streamConverter.convert(unconfirmedTransactionTable.getAll(0, -1));
+        return unconfirmedTransactionTable.getAllUnconfirmedTransactions();
     }
 
     @Override
@@ -75,48 +75,6 @@ public class FindTransactionServiceImpl implements FindTransactionService {
     @Override
     public Optional<Transaction> findUnconfirmedTransaction(long transactionId) {
         return Optional.ofNullable(transactionProcessor.getUnconfirmedTransaction(transactionId));
-    }
-
-    @Override
-    public List<TxReceipt> getTransactionsByPeriod(final int timeStart, final int timeEnd, String orderBy) {
-        if (timeStart <= 0 || timeEnd <= 0) {
-            throw new IllegalArgumentException("Wrong time stamp value: timeStart=" + timeStart + " timeEnd=" + timeEnd);
-        }
-        Objects.requireNonNull(orderBy);
-
-        Stream<Transaction> unconfirmedTransactionStream = getAllUnconfirmedTransactionsStream()
-            .filter(transaction -> transaction.getTimestamp() > timeStart && transaction.getTimestamp() < timeEnd)
-            .map(unconfirmedTransaction -> unconfirmedTransaction);
-
-        int height = blockChainInfoService.getHeight();
-
-        Stream<TxReceipt> transactionStream = transactionDao.getTransactions(null, (byte) -1, (byte) -1, timeStart, timeEnd,
-            0, 0, orderBy, 0, -1)
-            .stream().peek(txReceipt -> {
-                    txReceipt.setConfirmations(Math.max(0, height - txReceipt.getHeight()));
-                    txReceipt.setStatus(TxReceipt.StatusEnum.CONFIRMED);
-                }
-            );
-
-        return Stream.concat(unconfirmedTransactionStream.map(txReceiptMapper), transactionStream)
-            .collect(Collectors.toUnmodifiableList());
-    }
-
-    @Override
-    public long getTransactionsCountByPeriod(int timeStart, int timeEnd, String orderBy) {
-        if (timeStart <= 0 || timeEnd <= 0) {
-            throw new IllegalArgumentException("Wrong time stamp value: timeStart=" + timeStart + " timeEnd=" + timeEnd);
-        }
-        Objects.requireNonNull(orderBy);
-
-        long unconfirmedTxCount = getAllUnconfirmedTransactionsStream()
-            .filter(transaction -> transaction.getTimestamp() > timeStart && transaction.getTimestamp() < timeEnd)
-            .count();
-
-        long txCount = transactionDao.getTransactionsCount(null, (byte) -1, (byte) -1, timeStart, timeEnd,
-            0, 0, orderBy, 0, -1);
-
-        return unconfirmedTxCount + txCount;
     }
 
     @Override
@@ -146,7 +104,7 @@ public class FindTransactionServiceImpl implements FindTransactionService {
 
         return unconfirmedTransactionStream != null ?
             Stream.concat(unconfirmedTransactionStream.map(txReceiptMapper), transactionStream)
-                .collect(Collectors.toUnmodifiableList())
+                .collect(Collectors.toList())
             : transactionStream.collect(Collectors.toUnmodifiableList());
     }
 
@@ -155,9 +113,12 @@ public class FindTransactionServiceImpl implements FindTransactionService {
         if (query.getStartTime() <= 0 || query.getEndTime() <= 0) {
             throw new IllegalArgumentException("Wrong time stamp values: timeStart=" + query.getStartTime() + " timeEnd=" + query.getEndTime());
         }
-        long unconfirmedTxCount = getAllUnconfirmedTransactionsStream()
-            .filter(transaction -> transaction.getTimestamp() > query.getStartTime() && transaction.getTimestamp() < query.getEndTime())
-            .count();
+        long unconfirmedTxCount = 0;
+        if (query.getLastHeight() <= 0) {
+            unconfirmedTxCount = getAllUnconfirmedTransactionsStream()
+                .filter(transaction -> transaction.getTimestamp() > query.getStartTime() && transaction.getTimestamp() < query.getEndTime())
+                .count();
+        }
 
         long txCount = transactionDao.getTransactionsCount(query.getAccounts(), query.getType(), (byte) -1,
             query.getStartTime(), query.getEndTime(),
