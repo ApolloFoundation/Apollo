@@ -89,7 +89,7 @@ public abstract class AbstractEncryptedMessageAppendix extends AbstractAppendix 
 
     @Override
     public void validate(Transaction transaction, int blockHeight) throws AplException.ValidationException {
-        if (getEncryptedDataLength() > Constants.MAX_ENCRYPTED_MESSAGE_LENGTH) {
+        if (getEncryptedDataLength() > lookupBlockchainConfig().getCurrentConfig().getMaxEncryptedMessageLength()) {
             throw new AplException.NotValidException("Max encrypted message length exceeded");
         }
         if (encryptedData != null) {

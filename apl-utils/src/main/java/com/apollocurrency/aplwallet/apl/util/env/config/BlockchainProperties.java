@@ -14,13 +14,17 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 
 import java.util.Objects;
 
+import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ENCRYPTED_MESSAGE_HEADER_LENGTH;
+import static com.apollocurrency.aplwallet.apl.util.Constants.MIN_VALUE_FOR_MAX_ARBITRARY_MESSAGE_LENGTH;
+
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonPropertyOrder({"height", "maxNumberOfTransactions", "blockTime", "maxBlockTimeLimit", "minBlockTimeLimit", "maxBalance",
+@JsonPropertyOrder({"height", "maxNumberOfTransactions", "maxArbitraryMessageLength", "blockTime", "maxBlockTimeLimit", "minBlockTimeLimit", "maxBalance",
     "shardingSettings", "consensusSettings", "featuresHeightRequirement"})
 public class BlockchainProperties {
     private int height;
     private int maxNumberOfTransactions;
+    private int maxArbitraryMessageLength;
     private int blockTime;
     private int maxBlockTimeLimit;
     private int minBlockTimeLimit;
@@ -33,6 +37,7 @@ public class BlockchainProperties {
      *
      * @param height
      * @param maxNumberOfTransactions
+     * @param maxArbitraryMessageLength
      * @param blockTime
      * @param maxBlockTimeLimit
      * @param minBlockTimeLimit
@@ -42,17 +47,20 @@ public class BlockchainProperties {
     public BlockchainProperties(
         @JsonProperty("height") int height,
         @JsonProperty("maxNumberOfTransactions") int maxNumberOfTransactions,
+        @JsonProperty("maxArbitraryMessageLength") int maxArbitraryMessageLength,
         @JsonProperty("blockTime") int blockTime,
         @JsonProperty("maxBlockTimeLimit") int maxBlockTimeLimit,
         @JsonProperty("minBlockTimeLimit") int minBlockTimeLimit,
         @JsonProperty("maxBalance") long maxBalance) {
-        this(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, null, null);
+        this(height, maxNumberOfTransactions, maxArbitraryMessageLength, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, null, null);
     }
 
     /**
      * All fields Constructor.
+     *
      * @param height
      * @param maxNumberOfTransactions
+     * @param maxArbitraryMessageLength
      * @param blockTime
      * @param maxBlockTimeLimit
      * @param minBlockTimeLimit
@@ -63,14 +71,17 @@ public class BlockchainProperties {
     public BlockchainProperties(
         int height,
         int maxNumberOfTransactions,
+        int maxArbitraryMessageLength,
         int blockTime,
         int maxBlockTimeLimit,
         int minBlockTimeLimit,
         long maxBalance,
         ShardingSettings shardingSettings,
-        ConsensusSettings consensusSettings) {
+        ConsensusSettings consensusSettings
+    ) {
         this.height = height;
         this.maxNumberOfTransactions = maxNumberOfTransactions;
+        this.maxArbitraryMessageLength = Math.max(MIN_VALUE_FOR_MAX_ARBITRARY_MESSAGE_LENGTH, maxArbitraryMessageLength);
         this.blockTime = blockTime;
         this.maxBlockTimeLimit = maxBlockTimeLimit;
         this.minBlockTimeLimit = minBlockTimeLimit;
@@ -79,14 +90,14 @@ public class BlockchainProperties {
         this.consensusSettings = consensusSettings == null ? new ConsensusSettings() : consensusSettings;
     }
 
-    public BlockchainProperties(int height, int maxNumberOfTransactions, int blockTime, int maxBlockTimeLimit, int minBlockTimeLimit, long maxBalance, ShardingSettings shardingSettings) {
-        this(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, shardingSettings, null);
+    public BlockchainProperties(int height, int maxNumberOfTransactions, int maxArbitraryMessageLength, int blockTime, int maxBlockTimeLimit, int minBlockTimeLimit, long maxBalance, ShardingSettings shardingSettings) {
+        this(height, maxNumberOfTransactions, maxArbitraryMessageLength, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, shardingSettings, null);
     }
 
 
-    public BlockchainProperties(int height, int maxNumberOfTransactions, int blockTime, int maxBlockTimeLimit, int minBlockTimeLimit,
+    public BlockchainProperties(int height, int maxNumberOfTransactions, int maxArbitraryMessageLength, int blockTime, int maxBlockTimeLimit, int minBlockTimeLimit,
                                 long maxBalance, ConsensusSettings consensusSettings) {
-        this(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, null, consensusSettings);
+        this(height, maxNumberOfTransactions, maxArbitraryMessageLength, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, null, consensusSettings);
     }
 
     @Override
@@ -123,6 +134,18 @@ public class BlockchainProperties {
 
     public void setMaxNumberOfTransactions(int maxNumberOfTransactions) {
         this.maxNumberOfTransactions = maxNumberOfTransactions;
+    }
+
+    public int getMaxArbitraryMessageLength() {
+        return maxArbitraryMessageLength;
+    }
+
+    public void setMaxArbitraryMessageLength(int maxArbitraryMessageLength) {
+        this.maxArbitraryMessageLength = maxArbitraryMessageLength;
+    }
+
+    public int getMaxEncryptedMessageLength() {
+        return maxArbitraryMessageLength + MAX_ENCRYPTED_MESSAGE_HEADER_LENGTH;
     }
 
     public int getBlockTime() {
@@ -177,7 +200,7 @@ public class BlockchainProperties {
     }
 
     public BlockchainProperties copy() {
-        return new BlockchainProperties(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance,
+        return new BlockchainProperties(height, maxNumberOfTransactions, maxArbitraryMessageLength, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance,
             shardingSettings.copy(), consensusSettings.copy());
     }
 
@@ -186,6 +209,7 @@ public class BlockchainProperties {
         return "BlockchainProperties{" +
             "height=" + height +
             ", maxNumberOfTransactions=" + maxNumberOfTransactions +
+            ", maxArbitraryMessageLength=" + maxArbitraryMessageLength +
             ", blockTime=" + blockTime +
             ", maxBlockTimeLimit=" + maxBlockTimeLimit +
             ", minBlockTimeLimit=" + minBlockTimeLimit +

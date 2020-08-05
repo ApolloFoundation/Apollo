@@ -39,9 +39,9 @@ import static org.mockito.Mockito.mock;
 
 @EnableWeld
 public class BlockchainConfigTest {
-    private static final BlockchainProperties bp1 = new BlockchainProperties(0, 0, 1, 0, 0, 100L);
-    private static final BlockchainProperties bp2 = new BlockchainProperties(100, 0, 1, 0, 0, 100L);
-    private static final BlockchainProperties bp3 = new BlockchainProperties(200, 0, 2, 0, 0, 100L);
+    private static final BlockchainProperties bp1 = new BlockchainProperties(0, 0, 1, 160, 0, 0, 100L);
+    private static final BlockchainProperties bp2 = new BlockchainProperties(100, 0, 160, 1, 0, 0, 100L);
+    private static final BlockchainProperties bp3 = new BlockchainProperties(200, 0, 160, 2, 0, 0, 100L);
     private static final List<BlockchainProperties> BLOCKCHAIN_PROPERTIES = Arrays.asList(
         bp1,
         bp2,
