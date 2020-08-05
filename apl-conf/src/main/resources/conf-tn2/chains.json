@@ -48,26 +48,13 @@
         "shardingSettings": {
           "enabled": true,
           "frequency": 100000
-        },
-        "transactionFeeSettings": {
-          "feeRates": [
-            {
-              "type": 0,
-              "subType": 0,
-              "rate": 100
-            },
-            {
-              "type": 0,
-              "subType": 1,
-              "rate": 100
-            }
-          ]
         }
       },
       {
         "height": 1000000,
         "maxNumberOfTransactions": 255,
         "maxArbitraryMessageLength": 160,
+        "maxNumberOfChildAccounts": 10,
         "blockTime": 2,
         "maxBlockTimeLimit": 3,
         "minBlockTimeLimit": 1,

@@ -33,25 +33,7 @@
         "height": 1,
         "maxNumberOfTransactions": 255,
         "maxArbitraryMessageLength": 1000,
-        "blockTime": 2,
-        "maxBlockTimeLimit": 3,
-        "minBlockTimeLimit": 1,
-        "maxBalance": 30000000000,
-        "consensusSettings": {
-          "adaptiveForgingSettings": {
-            "enabled": "true",
-            "adaptiveBlockTime": 10
-          }
-        },
-        "shardingSettings": {
-          "enabled": false,
-          "frequency": 10000
-        }
-      },
-      {
-        "height": 50000,
-        "maxNumberOfTransactions": 255,
-        "maxArbitraryMessageLength": 1000,
+        "maxNumberOfChildAccounts": 10,
         "blockTime": 2,
         "maxBlockTimeLimit": 3,
         "minBlockTimeLimit": 1,
