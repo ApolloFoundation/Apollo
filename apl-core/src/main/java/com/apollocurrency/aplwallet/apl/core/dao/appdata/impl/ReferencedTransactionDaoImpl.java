@@ -10,8 +10,11 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ReferencedTransaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import org.jdbi.v3.core.Jdbi;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -32,8 +35,10 @@ public class ReferencedTransactionDaoImpl extends EntityDbTable<ReferencedTransa
     private static final ReferencedTransactionRowMapper REFERENCED_ROW_MAPPER = new ReferencedTransactionRowMapper();
     private static final TransactionRowMapper TRANSACTION_ROW_MAPPER = new TransactionRowMapper();
 
-    public ReferencedTransactionDaoImpl() {
-        super(TABLE, KEY_FACTORY, false);
+    @Inject
+    public ReferencedTransactionDaoImpl(DerivedTablesRegistry derivedDbTablesRegistry,
+                                        DatabaseManager databaseManager) {
+        super(TABLE, KEY_FACTORY, false, null, derivedDbTablesRegistry, databaseManager, null);
     }
 
     @Override

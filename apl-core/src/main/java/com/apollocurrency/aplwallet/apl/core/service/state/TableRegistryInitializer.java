@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.appdata.ReferencedTransactionDa
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.DataTagDao;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.PrunableMessageTable;
-import com.apollocurrency.aplwallet.apl.core.dao.prunable.TaggedDataDao;
+import com.apollocurrency.aplwallet.apl.core.dao.prunable.TaggedDataTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.TradeTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountControlPhasingTable;
@@ -104,7 +104,7 @@ public class TableRegistryInitializer {
     @Inject
     private PhasingApprovedResultTable phasingApprovedResultTable;
     @Inject
-    private TaggedDataDao taggedDataDao;
+    private TaggedDataTable taggedDataTable;
     @Inject
     private DGSPurchaseTable dgsPurchaseTable;
     @Inject

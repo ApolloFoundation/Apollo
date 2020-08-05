@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.prunable;
 
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.PrunableMessageMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.PrunableDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
@@ -11,10 +12,15 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.PrunableMessage;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -38,9 +44,14 @@ public class PrunableMessageTable extends PrunableDbTable<PrunableMessage> {
     };
     private static final PrunableMessageMapper MAPPER = new PrunableMessageMapper(KEY_FACTORY);
 
-
-    public PrunableMessageTable() {
-        super(TABLE_NAME, KEY_FACTORY);
+    @Inject
+    public PrunableMessageTable(DerivedTablesRegistry derivedDbTablesRegistry,
+                                DatabaseManager databaseManager,
+                                FullTextConfig fullTextConfig,
+                                BlockchainConfig blockchainConfig,
+                                PropertiesHolder propertiesHolder) {
+        super(TABLE_NAME, KEY_FACTORY, false, null,
+            derivedDbTablesRegistry, databaseManager, fullTextConfig, blockchainConfig, propertiesHolder);
     }
 
     @Override

@@ -9,7 +9,10 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.derived.ValuesDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSPublicFeedback;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -33,8 +36,10 @@ public class DGSPublicFeedbackTable extends ValuesDbTable<DGSPublicFeedback> {
     private static final String TABLE_NAME = "purchase_public_feedback";
     private static final DGSPublicFeedbackMapper MAPPER = new DGSPublicFeedbackMapper(KEY_FACTORY);
 
-    protected DGSPublicFeedbackTable() {
-        super(TABLE_NAME, false, KEY_FACTORY, true);
+    @Inject
+    protected DGSPublicFeedbackTable(DerivedTablesRegistry derivedDbTablesRegistry,
+                                     DatabaseManager databaseManager) {
+        super(TABLE_NAME, KEY_FACTORY, true, derivedDbTablesRegistry, databaseManager, null);
     }
 
     @Override

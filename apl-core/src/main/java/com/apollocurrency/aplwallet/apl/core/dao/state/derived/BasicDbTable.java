@@ -8,6 +8,9 @@ import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import org.slf4j.Logger;
 
 import java.sql.Connection;
@@ -30,8 +33,11 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
     protected KeyFactory<T> keyFactory;
     protected boolean multiversion;
 
-    protected BasicDbTable(String table, KeyFactory<T> keyFactory, boolean multiversion, boolean init) {
-        super(table, init);
+    protected BasicDbTable(String table, KeyFactory<T> keyFactory, boolean multiversion,
+                           DerivedTablesRegistry derivedDbTablesRegistry,
+                           DatabaseManager databaseManager,
+                           FullTextConfig fullTextConfig) {
+        super(table, derivedDbTablesRegistry, databaseManager, fullTextConfig);
         this.keyFactory = keyFactory;
         this.multiversion = multiversion;
     }

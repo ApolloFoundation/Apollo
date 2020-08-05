@@ -4,13 +4,17 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.shuffling;
 
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.PrunableDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LinkKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingData;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -30,8 +34,12 @@ public class ShufflingDataTable extends PrunableDbTable<ShufflingData> {
     };
 
     @Inject
-    public ShufflingDataTable() {
-        super("shuffling_data", dbKeyFactory);
+    public ShufflingDataTable(DerivedTablesRegistry derivedDbTablesRegistry,
+                              DatabaseManager databaseManager,
+                              BlockchainConfig blockchainConfig,
+                              PropertiesHolder propertiesHolder) {
+        super("shuffling_data", dbKeyFactory, false, null,
+            derivedDbTablesRegistry, databaseManager, null, blockchainConfig, propertiesHolder);
     }
 
 
