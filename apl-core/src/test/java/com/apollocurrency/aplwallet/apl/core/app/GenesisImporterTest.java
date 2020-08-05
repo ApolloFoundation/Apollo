@@ -114,7 +114,7 @@ class GenesisImporterTest {
     private Chain chain = Mockito.mock(Chain.class);
     private AplAppStatus aplAppStatus = mock(AplAppStatus.class);
     private GenesisImporterProducer genesisImporterProducer = mock(GenesisImporterProducer.class);
-    private PropertiesHolder envConfig = mock(PropertiesHolder.class);
+    private PropertiesHolder envConfig = new PropertiesHolder();
     TransactionTestData td = new TransactionTestData();
 
     @WeldSetup
@@ -439,7 +439,7 @@ class GenesisImporterTest {
     void loadGenesisAccountsIncorrectKey() {
         doReturn("conf/data/genesisParameters.json").when(genesisImporterProducer).genesisParametersLocation();
         doReturn("conf/data/genesisAccounts-testnet-MISSING-BALANCES.json").when(chain).getGenesisLocation();
-        doReturn(10).when(propertiesHolder).getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME);
+        propertiesHolder.init(getGenesisAccountTotalProperties("10", "10"));
         genesisImporter = new GenesisImporter(
             blockchainConfig,
             blockchainConfigUpdater,
@@ -469,6 +469,7 @@ class GenesisImporterTest {
         final JsonParser jsonParser = mock(JsonParser.class);
         when(jsonFactory.createParser(any(InputStream.class))).thenReturn(jsonParser);
         when(jsonParser.isClosed()).thenReturn(true);
+        propertiesHolder.init(getGenesisAccountTotalProperties("10", "10"));
         genesisImporter = new GenesisImporter(
             blockchainConfig,
             blockchainConfigUpdater,

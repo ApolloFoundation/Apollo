@@ -171,6 +171,8 @@ public class ChildAccountTest {
         when(blockchain.getBlockIdAtHeight(ECBLOCK_HEIGHT)).thenReturn(ECBLOCK_ID);
         when(blockchainConfig.getCurrentConfig()).thenReturn(heightConfig);
         when(heightConfig.getMaxBalanceATM()).thenReturn(Long.MAX_VALUE);
+        when(accountService.getAccount(CHILD_ACCOUNT_ATTACHMENT.getChildPublicKey().get(0))).thenReturn(null);
+        when(accountService.getAccount(CHILD_ACCOUNT_ATTACHMENT.getChildPublicKey().get(1))).thenReturn(null);
 
         when(heightConfig.getMaxPayloadLength()).thenReturn(255*Constants.MIN_TRANSACTION_SIZE);
 

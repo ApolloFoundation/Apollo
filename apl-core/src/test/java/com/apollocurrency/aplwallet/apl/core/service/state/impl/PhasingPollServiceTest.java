@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDao;
@@ -45,8 +46,12 @@ import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.PhasingTestData;
@@ -94,12 +99,15 @@ public class PhasingPollServiceTest {
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
     private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
+    private TransactionTestData ttd = new TransactionTestData();
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
         BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
         PhasingPollServiceImpl.class,
         GlobalSyncImpl.class,
+        TransactionRowMapper.class,
+        TransactionBuilder.class,
         PhasingPollResultTable.class,
         PhasingPollTable.class,
         PhasingPollVoterTable.class,
@@ -125,6 +133,9 @@ public class PhasingPollServiceTest {
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
         .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
         .addBeans(MockBean.of(timeService, TimeService.class))
+        .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
+        .addBeans(MockBean.of(ttd.getTransactionTypeFactory(), TransactionTypeFactory.class))
+        .addBeans(MockBean.of(mock(CurrencyService.class), CurrencyService.class))
         .build();
     @Inject
     PhasingPollServiceImpl service;
@@ -134,7 +145,6 @@ public class PhasingPollServiceTest {
     Blockchain blockchain;
 
     PhasingTestData ptd;
-    TransactionTestData ttd;
     BlockTestData btd;
     @Inject
     BlockchainConfig blockchainConfig;
@@ -143,7 +153,6 @@ public class PhasingPollServiceTest {
     @BeforeEach
     void setUp() {
         ptd = new PhasingTestData();
-        ttd = new TransactionTestData();
         btd = new BlockTestData();
 
         blockchainConfig.setCurrentConfig(new HeightConfig(new BlockchainProperties(1, 1, 1, 1, 1, 1, 1L)));

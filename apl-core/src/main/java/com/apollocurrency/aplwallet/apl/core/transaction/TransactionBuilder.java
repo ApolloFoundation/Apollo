@@ -61,9 +61,6 @@ public class TransactionBuilder {
             byte version = (byte) ((subtype & 0xF0) >> 4);
             Signature signature = null;
             SignatureParser signatureParser = SignatureToolFactory.selectParser(version).orElseThrow(UnsupportedTransactionVersion::new);
-            if (version < 2) {
-                signature = signatureParser.parse(buffer);
-            }
             subtype = (byte) (subtype & 0x0F);
             int timestamp = buffer.getInt();
             short deadline = buffer.getShort();
@@ -75,6 +72,9 @@ public class TransactionBuilder {
             byte[] referencedTransactionFullHash = new byte[32];
             buffer.get(referencedTransactionFullHash);
             referencedTransactionFullHash = Convert.emptyToNull(referencedTransactionFullHash);
+            if (version < 2) {
+                signature = signatureParser.parse(buffer);
+            }
             int flags = 0;
             int ecBlockHeight = 0;
             long ecBlockId = 0;

@@ -36,7 +36,6 @@ import com.apollocurrency.aplwallet.apl.util.env.OS;
 import com.apollocurrency.aplwallet.apl.util.env.PlatformSpec;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.resteasy.mock.MockHttpResponse;
-import org.jboss.weld.junit5.EnableWeld;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -62,8 +61,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-@EnableWeld
-    // enable weld only to have an ability of creation Transaction since it require dynamic CDI injection TODO should be removed after refactoring
 class UpdateControllerTest extends AbstractEndpointTest {
     TransactionCreator transactionCreator;
     @Mock

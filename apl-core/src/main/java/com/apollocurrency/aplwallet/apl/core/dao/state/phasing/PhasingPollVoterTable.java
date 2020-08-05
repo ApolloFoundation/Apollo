@@ -86,7 +86,9 @@ public class PhasingPollVoterTable extends ValuesDbTable<PhasingPollVoter> {
             DbUtils.setLimits(++i, pstmt, from, to);
             List<Transaction> list = new ArrayList<>();
             try (ResultSet rs = pstmt.executeQuery()) {
-                list.add(rowMapper.map(rs, null));
+                while (rs.next()) {
+                    list.add(rowMapper.map(rs, null));
+                }
             }
             return list;
         } catch (SQLException e) {

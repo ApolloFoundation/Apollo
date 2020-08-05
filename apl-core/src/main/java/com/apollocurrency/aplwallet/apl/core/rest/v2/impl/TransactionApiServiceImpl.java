@@ -80,6 +80,8 @@ public class TransactionApiServiceImpl implements TransactionApiService {
             if (log.isTraceEnabled()) {
                 log.trace("API_V2: parsed transaction=[{}] attachment={}", newTx.getType(), newTx.getAttachment());
             }
+            log.warn("Given {}", req.getTx());
+            log.warn("Actua {}", Convert.toHexString(newTx.getCopyTxBytes()));
             transactionProcessor.broadcast(newTx);
             receipt = txReceiptMapper.convert(newTx);
             if (log.isTraceEnabled()) {

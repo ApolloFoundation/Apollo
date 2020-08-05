@@ -104,7 +104,7 @@ public enum CurrencyType {
             if (transaction.getType().getSpec() == MS_CURRENCY_ISSUANCE) {
                 MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
                 int issuanceHeight = attachment.getIssuanceHeight();
-                int finishHeight = transactionValidator.getFinishValidationHeight(transaction, attachment);
+                int finishHeight = CurrencyType.transactionValidator().getFinishValidationHeight(transaction, attachment);
                 if (issuanceHeight <= finishHeight) {
                     throw new AplException.NotCurrentlyValidException(
                         String.format("Reservable currency activation height %d not higher than transaction apply height %d",
@@ -127,7 +127,7 @@ public enum CurrencyType {
             }
             if (transaction.getType().getSpec() == MS_RESERVE_INCREASE) {
                 MonetarySystemReserveIncrease attachment = (MonetarySystemReserveIncrease) transaction.getAttachment();
-                if (currency != null && currency.getIssuanceHeight() <= transactionValidator.getFinishValidationHeight(transaction, attachment)) {
+                if (currency != null && currency.getIssuanceHeight() <= CurrencyType.transactionValidator().getFinishValidationHeight(transaction, attachment)) {
                     throw new AplException.NotCurrentlyValidException("Cannot increase reserve for active currency");
                 }
             }
@@ -365,5 +365,13 @@ public enum CurrencyType {
         }
         return currencyService;
     }
-    private static final TransactionValidator transactionValidator = CDI.current().select(TransactionValidator.class).get();
+
+    private static TransactionValidator transactionValidator() {
+        if (transactionValidator == null) {
+            transactionValidator = CDI.current().select(TransactionValidator.class).get();
+        }
+        return transactionValidator;
+    }
+
+    private static TransactionValidator transactionValidator;
 }

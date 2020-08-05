@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureVerifier;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.child.CreateChildTransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.payment.OrdinaryPaymentTransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.SneakyThrows;
 import org.json.simple.JSONObject;
@@ -69,8 +70,9 @@ class TransactionSignatureTest {
     @SneakyThrows
     @BeforeEach
     void setUp() {
-        CreateChildTransactionType type = new CreateChildTransactionType(blockchainConfig, accountService, accountPublicKeyService);
-        TransactionBuilder builder = new TransactionBuilder(new CachedTransactionTypeFactory(List.of(type)));
+        CreateChildTransactionType createChildTransactionType = new CreateChildTransactionType(blockchainConfig, accountService, accountPublicKeyService);
+        OrdinaryPaymentTransactionType paymentTransactionType = new OrdinaryPaymentTransactionType(blockchainConfig, accountService);
+        TransactionBuilder builder = new TransactionBuilder(new CachedTransactionTypeFactory(List.of(createChildTransactionType, paymentTransactionType)));
         transaction = builder.newTransactionBuilder(txJsonObject).build();
         signatureVerifier = SignatureToolFactory.selectValidator(1).get();
         credential = SignatureToolFactory.createCredential(1, transaction.getSenderPublicKey());

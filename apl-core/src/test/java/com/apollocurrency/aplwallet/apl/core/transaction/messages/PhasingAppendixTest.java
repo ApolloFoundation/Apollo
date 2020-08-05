@@ -15,17 +15,19 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
-
+@ExtendWith(MockitoExtension.class)
 class PhasingAppendixTest {
 
     @Mock
-    private Blockchain blockchain;
+    Blockchain blockchain;
     @Mock
-    private TimeService timeService;
+    TimeService timeService;
     @Mock
     PhasingPollService phasingPollService;
     @Mock
@@ -40,10 +42,10 @@ class PhasingAppendixTest {
 
     @BeforeEach
     void setUp() {
-        Mockito.doReturn(lastBlockHeight).when(blockchain).getHeight();
+//        Mockito.doReturn(lastBlockHeight).when(blockchain).getHeight();
         Mockito.doReturn(lastBlockHeight).when(block).getHeight();
-        Mockito.doReturn(currentTime).when(timeService).getEpochTime();
-        Mockito.doReturn(block).when(blockchain).getLastBlock();
+//        Mockito.doReturn(currentTime).when(timeService).getEpochTime();
+//        Mockito.doReturn(block).when(blockchain).getLastBlock();
         phasingAppendix = new PhasingAppendixV2(-1, 360, new PhasingParams((byte) 0, 0, 3, 0, (byte) 0, new long[]{1, 2, 3}), null, null, Byte.MIN_VALUE);
         validatorv2 = new PhasingAppendixV2Validator(new PhasingAppendixValidator(blockchain, phasingPollService, blockchainConfig, timeService), blockchain, timeService);
     }
@@ -71,6 +73,7 @@ class PhasingAppendixTest {
 
     @Test
     void validateFinishHeightAndTimeWhenHeightNotFilledAndTimeMoreThenMax() {
+        Mockito.doReturn(block).when(blockchain).getLastBlock();
         assertThrows(AplException.NotCurrentlyValidException.class, () -> validatorv2.validateFinishHeightAndTime(-1, currentTime + Constants.MAX_PHASING_TIME_DURATION_SEC, phasingAppendix));
     }
 

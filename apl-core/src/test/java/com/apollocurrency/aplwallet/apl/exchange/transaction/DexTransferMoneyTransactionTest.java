@@ -24,7 +24,9 @@ import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
@@ -39,7 +41,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-
+@ExtendWith(MockitoExtension.class)
 class DexTransferMoneyTransactionTest {
     DexControlOfFrozenMoneyAttachment attachment = new DexControlOfFrozenMoneyAttachment(64, 100);
     ExchangeContract contract = new ExchangeContract(
@@ -77,7 +79,7 @@ class DexTransferMoneyTransactionTest {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("contractId", 64L);
         jsonObject.put("offerAmount", 100L);
-        jsonObject.put("version.DexTransferMoney", 1);
+        jsonObject.put("version.DEX_TRANSFER_MONEY", 1);
 
         AbstractAttachment parsedAttachment = transactionType.parseAttachment(jsonObject);
 
@@ -159,7 +161,7 @@ class DexTransferMoneyTransactionTest {
         Account sender = mock(Account.class);
         Account recipient = mock(Account.class);
         doReturn(1000L).when(sender).getId();
-        doReturn(2000L).when(recipient).getId();
+//        doReturn(2000L).when(recipient).getId();
 
         transactionType.applyAttachment(tx, sender, recipient);
 
@@ -176,7 +178,7 @@ class DexTransferMoneyTransactionTest {
         Account sender = mock(Account.class);
         Account recipient = mock(Account.class);
         doReturn(2000L).when(sender).getId();
-        doReturn(1000L).when(recipient).getId();
+//        doReturn(1000L).when(recipient).getId();
 
         transactionType.applyAttachment(tx, sender, recipient);
 

@@ -40,6 +40,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainM
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,7 +56,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.SET_PHASING_ONLY;
-
+@Slf4j
 public class TransactionImpl implements Transaction {
     private static final Logger LOG = LoggerFactory.getLogger(TransactionImpl.class);
 
@@ -235,7 +236,7 @@ public class TransactionImpl implements Transaction {
     @Override
     public Block getBlock() {
         if (block == null || blockId == 0) {
-            throw new IllegalStateException("Block was not fetched for tx " + getId());
+            log.debug("Block was not fetched for tx " + getId());
         }
         return block;
     }

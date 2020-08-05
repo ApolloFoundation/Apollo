@@ -23,6 +23,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublic
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
+import com.apollocurrency.aplwallet.apl.core.transaction.CachedTransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.child.CreateChildTransactionType;
@@ -70,7 +71,6 @@ class TransactionApiServiceImplTest {
     TransactionProcessor transactionProcessor;
     @Mock
     PrunableLoadingService prunableLoadingService;
-    @Mock
     TransactionBuilder transactionBuilder;
     @Mock
     AccountService accountService;
@@ -83,6 +83,7 @@ class TransactionApiServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        transactionBuilder = new TransactionBuilder(new CachedTransactionTypeFactory(List.of(new CreateChildTransactionType(blockchainConfig, accountService, accountPublicKeyService))));
         Convert2.init(blockchainConfig);
         txReceiptMapper = new TxReceiptMapper(blockChainInfoService);
         transactionInfoMapper = new TransactionInfoMapper(blockchain, prunableLoadingService);
