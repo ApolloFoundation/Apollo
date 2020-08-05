@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.dao.prunable;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
@@ -28,6 +29,9 @@ import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegist
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.data.TaggedTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
@@ -65,11 +69,14 @@ class DataTagDaoTest {
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
     private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
+    TransactionTestData td = new TransactionTestData();
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
         BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
         GlobalSyncImpl.class,
+        TransactionRowMapper.class,
+        TransactionBuilder.class,
         TaggedDataTimestampDao.class,
         FullTextConfigImpl.class, DataTagDao.class,
         DerivedDbTablesRegistryImpl.class,
@@ -83,6 +90,8 @@ class DataTagDaoTest {
         .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
         .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
+        .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
+        .addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
         .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
         .addBeans(MockBean.of(timeService, TimeService.class))
         .build();

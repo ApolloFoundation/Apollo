@@ -35,7 +35,6 @@ import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.UnsupportedTransactionVersion;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
@@ -410,7 +409,7 @@ public class TransactionDaoImpl implements TransactionDao {
         if (blockTimestamp > 0) {
             buf.append("AND block_timestamp >= ? ");
         }
-        if (!includePrivate && TransactionTypes.find(type, subtype) == PRIVATE_PAYMENT) {
+        if (!includePrivate && type == PRIVATE_PAYMENT.getType() && subtype == PRIVATE_PAYMENT.getSubtype()) {
             throw new RuntimeException("None of private transactions should be retrieved!");
         }
         if (type >= 0) {
