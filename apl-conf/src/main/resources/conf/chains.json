@@ -58,6 +58,7 @@
       {
         "height": 0,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 60,
         "maxBlockTimeLimit": 67,
         "minBlockTimeLimit": 53,
@@ -66,6 +67,7 @@
       {
         "height": 314800,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 10,
         "maxBlockTimeLimit": 60,
         "minBlockTimeLimit": 7,
@@ -74,6 +76,7 @@
       {
         "height": 355000,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 2,
         "maxBlockTimeLimit": 5,
         "minBlockTimeLimit": 1,
@@ -88,6 +91,7 @@
       {
         "height": 406340,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 2,
         "maxBlockTimeLimit": 5,
         "minBlockTimeLimit": 1,
@@ -102,6 +106,7 @@
       {
         "height": 414980,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 2,
         "maxBlockTimeLimit": 5,
         "minBlockTimeLimit": 1,
@@ -116,6 +121,7 @@
       {
         "height": 420740,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 2,
         "maxBlockTimeLimit": 5,
         "minBlockTimeLimit": 1,
@@ -130,6 +136,7 @@
       {
         "height": 448999,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 2,
         "maxBlockTimeLimit": 5,
         "minBlockTimeLimit": 1,
@@ -138,6 +145,7 @@
       {
         "height": 1250000,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 2,
         "maxBlockTimeLimit": 5,
         "minBlockTimeLimit": 1,
@@ -152,6 +160,7 @@
       {
         "height": 2000000,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 2,
         "maxBlockTimeLimit": 5,
         "minBlockTimeLimit": 1,
@@ -166,6 +175,7 @@
       {
         "height": 2169999,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 60,
         "maxBlockTimeLimit": 70,
         "minBlockTimeLimit": 50,
@@ -174,7 +184,7 @@
       {
         "height": 2247000,
         "maxNumberOfTransactions": 255,
-        "maxNumberOfChildAccounts": 10,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 2,
         "maxBlockTimeLimit": 5,
         "minBlockTimeLimit": 1,
@@ -213,6 +223,7 @@
       {
         "height": 0,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 60,
         "maxBlockTimeLimit": 67,
         "minBlockTimeLimit": 53,
@@ -221,6 +232,7 @@
       {
         "height": 2000,
         "maxNumberOfTransactions": 300,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 2,
         "maxBlockTimeLimit": 4,
         "minBlockTimeLimit": 1,
@@ -235,6 +247,7 @@
       {
         "height": 42300,
         "maxNumberOfTransactions": 300,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 2,
         "maxBlockTimeLimit": 4,
         "minBlockTimeLimit": 1,
@@ -253,6 +266,7 @@
       {
         "height": 552500,
         "maxNumberOfTransactions": 300,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 60,
         "maxBlockTimeLimit": 70,
         "minBlockTimeLimit": 50,
@@ -265,7 +279,7 @@
       {
         "height": 624999,
         "maxNumberOfTransactions": 255,
-        "maxNumberOfChildAccounts": 10,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 2,
         "maxBlockTimeLimit": 5,
         "minBlockTimeLimit": 1,
@@ -304,6 +318,7 @@
       {
         "height": 0,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 10,
         "maxBlockTimeLimit": 12,
         "minBlockTimeLimit": 8,
@@ -312,7 +327,7 @@
       {
         "height": 10,
         "maxNumberOfTransactions": 255,
-        "maxNumberOfChildAccounts": 10,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 2,
         "maxBlockTimeLimit": 3,
         "minBlockTimeLimit": 1,
@@ -345,6 +360,7 @@
       {
         "height": 0,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 60,
         "maxBlockTimeLimit": 67,
         "minBlockTimeLimit": 53,
@@ -353,6 +369,7 @@
       {
         "height": 2000,
         "maxNumberOfTransactions": 300,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 2,
         "maxBlockTimeLimit": 4,
         "minBlockTimeLimit": 1,
@@ -367,7 +384,7 @@
       {
         "height": 42300,
         "maxNumberOfTransactions": 300,
-        "maxNumberOfChildAccounts": 10,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 2,
         "maxBlockTimeLimit": 4,
         "minBlockTimeLimit": 1,

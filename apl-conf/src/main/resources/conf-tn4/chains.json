@@ -23,6 +23,7 @@
       {
         "height": 0,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 1000,
         "blockTime": 60,
         "maxBlockTimeLimit": 67,
         "minBlockTimeLimit": 53,
@@ -31,6 +32,26 @@
       {
         "height": 1,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 1000,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 3,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 30000000000,
+        "consensusSettings": {
+          "adaptiveForgingSettings": {
+            "enabled": "true",
+            "adaptiveBlockTime": 10
+          }
+        },
+        "shardingSettings": {
+          "enabled": false,
+          "frequency": 10000
+        }
+      },
+      {
+        "height": 50000,
+        "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 1000,
         "blockTime": 2,
         "maxBlockTimeLimit": 3,
         "minBlockTimeLimit": 1,

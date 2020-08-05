@@ -4,8 +4,8 @@
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
 import com.apollocurrency.aplwallet.api.p2p.FileChunk;
-import com.apollocurrency.aplwallet.api.p2p.FileChunkRequest;
-import com.apollocurrency.aplwallet.api.p2p.FileChunkResponse;
+import com.apollocurrency.aplwallet.api.p2p.request.FileChunkRequest;
+import com.apollocurrency.aplwallet.api.p2p.respons.FileChunkResponse;
 import com.apollocurrency.aplwallet.apl.core.files.DownloadableFilesManager;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;

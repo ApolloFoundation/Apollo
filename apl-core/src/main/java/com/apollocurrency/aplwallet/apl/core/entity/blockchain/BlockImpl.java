@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+//TODO Refactoring this class to make pojo.
 public final class BlockImpl implements Block {
 
     private static Blockchain blockchain;
@@ -84,9 +85,9 @@ public final class BlockImpl implements Block {
         bytes = null;
     }
 
-    public BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountATM, long totalFeeATM, int payloadLength, byte[] payloadHash,
-                     byte[] generatorPublicKey, byte[] generationSignature, byte[] blockSignature, byte[] previousBlockHash, int timeout,
-                     List<Transaction> transactions, long baseTarget) {
+    public BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountATM, long totalFeeATM, int payloadLength,
+                     byte[] payloadHash, byte[] generatorPublicKey, byte[] generationSignature, byte[] blockSignature,
+                     byte[] previousBlockHash, int timeout, List<Transaction> transactions, long baseTarget) {
         this(version, timestamp, previousBlockId, totalAmountATM, totalFeeATM, payloadLength, payloadHash, generatorPublicKey,
             generationSignature, blockSignature, previousBlockHash, BigInteger.ZERO, baseTarget, 0L, -1, 0, timeout,
             transactions);

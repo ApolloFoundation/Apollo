@@ -24,6 +24,7 @@
       {
         "height": 0,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 60,
         "maxBlockTimeLimit": 67,
         "minBlockTimeLimit": 53,
@@ -32,6 +33,7 @@
       {
         "height": 1,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 2,
         "maxBlockTimeLimit": 3,
         "minBlockTimeLimit": 1,
@@ -50,7 +52,7 @@
       {
         "height": 50000,
         "maxNumberOfTransactions": 255,
-        "maxNumberOfChildAccounts": 10,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 2,
         "maxBlockTimeLimit": 3,
         "minBlockTimeLimit": 1,

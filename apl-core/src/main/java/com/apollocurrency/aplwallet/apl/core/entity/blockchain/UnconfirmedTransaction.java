@@ -23,6 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
@@ -47,19 +48,21 @@ import java.util.Set;
 
 import static com.apollocurrency.aplwallet.apl.core.transaction.AccountControl.SET_PHASING_ONLY;
 
-public class UnconfirmedTransaction implements Transaction {
+public class UnconfirmedTransaction extends DerivedEntity implements Transaction {
 
     private final Transaction transaction;
     private final long arrivalTimestamp;
     private final long feePerByte;
 
     public UnconfirmedTransaction(Transaction transaction, long arrivalTimestamp) {
+        super(null, null);
         this.transaction = transaction;
         this.arrivalTimestamp = arrivalTimestamp;
         this.feePerByte = transaction.getFeeATM() / transaction.getFullSize();
     }
 
     public UnconfirmedTransaction(ResultSet rs) throws SQLException {
+        super(rs);
         try {
             byte[] transactionBytes = rs.getBytes("transaction_bytes");
             JSONObject prunableAttachments = null;

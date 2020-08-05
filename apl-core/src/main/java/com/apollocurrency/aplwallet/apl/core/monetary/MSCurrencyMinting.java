@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
-import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -53,15 +53,16 @@ class MSCurrencyMinting extends MonetarySystem {
     @Override
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
         MonetarySystemCurrencyMinting attachment = (MonetarySystemCurrencyMinting) transaction.getAttachment();
-        Currency currency = lookupCurrencyService().getCurrency(attachment.getCurrencyId());
-        CurrencyType.validate(currency, transaction);
+        CurrencyService currencyService = lookupCurrencyService();
+        Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
+        currencyService.validate(currency, transaction);
         if (attachment.getUnits() <= 0) {
             throw new AplException.NotValidException("Invalid number of units: " + attachment.getUnits());
         }
         if (attachment.getUnits() > (currency.getMaxSupply() - currency.getReserveSupply()) / Constants.MAX_MINTING_RATIO) {
             throw new AplException.NotValidException(String.format("Cannot mint more than 1/%d of the total units supply in a single request", Constants.MAX_MINTING_RATIO));
         }
-        if (!lookupCurrencyService().isActive(currency)) {
+        if (!currencyService.isActive(currency)) {
             throw new AplException.NotCurrentlyValidException("Currency not currently active " + attachment.getJSONObject());
         }
         long counter = lookupCurrencyMintService().getCounter(attachment.getCurrencyId(), transaction.getSenderId());

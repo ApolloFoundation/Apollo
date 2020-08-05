@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.shuffling.ShufflingParticipantTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDeletableEntity;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.extern.slf4j.Slf4j;
 
@@ -31,7 +32,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 @Slf4j
-public final class ShufflingParticipant extends DerivedEntity {
+public final class ShufflingParticipant extends VersionedDeletableEntity {
     private final long shufflingId;
     private final long accountId; // sender account
     private final int index;

@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import org.slf4j.Logger;
 
 import java.sql.Connection;
@@ -23,7 +24,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 /**
  * Provide rollback and trim multiversion implementations and hold common parameters such as multiversion and keyfactory
  */
-public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
+public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTable<T> {
     private static final Logger LOG = getLogger(BasicDbTable.class);
 
     protected KeyFactory<T> keyFactory;

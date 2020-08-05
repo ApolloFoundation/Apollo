@@ -3,11 +3,11 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import com.apollocurrency.aplwallet.api.p2p.request.AddPeersRequest;
+import com.apollocurrency.aplwallet.api.p2p.request.GetPeersRequest;
+import com.apollocurrency.aplwallet.api.p2p.respons.GetPeersResponse;
+import com.apollocurrency.aplwallet.apl.core.peer.parser.GetPeersResponseParser;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
-import com.apollocurrency.aplwallet.apl.util.JSON;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,54 +25,51 @@ import java.util.UUID;
 class GetMorePeersThread implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(GetMorePeersThread.class);
     private final TimeService timeService;
-    private final PeersService peers;
-    private final JSONStreamAware getPeersRequest;
+    private final PeersService peersService;
+    private final GetPeersRequest getPeersRequest;
     private volatile boolean updatedPeer;
 
 
-    public GetMorePeersThread(TimeService timeService, PeersService peers) {
+    public GetMorePeersThread(TimeService timeService, PeersService peersService) {
         this.timeService = timeService;
-        this.peers = peers;
-        JSONObject request = new JSONObject();
-        request.put("requestType", "getPeers");
-        request.put("chainId", peers.blockchainConfig.getChain().getChainId());
-        getPeersRequest = JSON.prepareRequest(request);
+        this.peersService = peersService;
+        getPeersRequest = new GetPeersRequest(peersService.blockchainConfig.getChain().getChainId());
     }
 
     @Override
     public void run() {
         try {
             try {
-                if (peers.hasTooManyKnownPeers()) {
+                if (peersService.hasTooManyKnownPeers()) {
                     return;
                 }
-                Peer peer = peers.getAnyPeer(PeerState.CONNECTED, true);
+                Peer peer = peersService.getAnyPeer(PeerState.CONNECTED, true);
                 if (peer == null) {
                     return;
                 }
-                JSONObject response = peer.send(getPeersRequest, peers.blockchainConfig.getChain().getChainId());
+                GetPeersResponse response = peer.send(getPeersRequest, new GetPeersResponseParser());
                 if (response == null) {
                     return;
                 }
-                JSONArray peersArray = (JSONArray) response.get("peers");
+                List<String> peers = response.getPeers();
                 Set<String> addedAddresses = new HashSet<>();
-                if (peersArray != null) {
-                    JSONArray services = (JSONArray) response.get("services");
-                    boolean setServices = services != null && services.size() == peersArray.size();
+                if (peers != null && !peers.isEmpty()) {
+                    List<String> services = response.getServices();
+                    boolean setServices = services != null && services.size() == peers.size();
                     int now = timeService.getEpochTime();
-                    for (int i = 0; i < peersArray.size(); i++) {
-                        String announcedAddress = (String) peersArray.get(i);
-                        PeerImpl newPeer = peers.findOrCreatePeer(null, announcedAddress, true);
+                    for (int i = 0; i < peers.size(); i++) {
+                        String announcedAddress = peers.get(i);
+                        PeerImpl newPeer = peersService.findOrCreatePeer(null, announcedAddress, true);
                         if (newPeer != null) {
                             if (now - newPeer.getLastUpdated() > 24 * 3600) {
                                 newPeer.setLastUpdated(now);
                                 updatedPeer = true;
                             }
-                            if (peers.addPeer(newPeer) && setServices) {
-                                newPeer.setServices(Long.parseUnsignedLong((String) services.get(i)));
+                            if (peersService.addPeer(newPeer) && setServices) {
+                                newPeer.setServices(Long.parseUnsignedLong(services.get(i)));
                             }
                             addedAddresses.add(announcedAddress);
-                            if (peers.hasTooManyKnownPeers()) {
+                            if (peersService.hasTooManyKnownPeers()) {
                                 break;
                             }
                         }
@@ -82,25 +79,24 @@ class GetMorePeersThread implements Runnable {
                         updatedPeer = false;
                     }
                 }
-                JSONArray myPeers = new JSONArray();
-                JSONArray myServices = new JSONArray();
-                peers.getAllConnectablePeers().forEach((myPeer) -> {
+                List<String> myPeers = new ArrayList<>();
+                List<String> myServices = new ArrayList<>();
+                peersService.getAllConnectablePeers().forEach((myPeer) -> {
                     if (!myPeer.isBlacklisted() && myPeer.getAnnouncedAddress() != null && myPeer.getState() == PeerState.CONNECTED && myPeer.shareAddress() && !addedAddresses.contains(myPeer.getAnnouncedAddress()) && !myPeer.getAnnouncedAddress().equals(peer.getAnnouncedAddress())) {
                         myPeers.add(myPeer.getAnnouncedAddress());
-                        myServices.add(Long.toUnsignedString(((PeerImpl) myPeer).getServices()));
+                        myServices.add(Long.toUnsignedString((myPeer).getServices()));
                     }
                 });
                 if (myPeers.size() > 0) {
-                    JSONObject request = new JSONObject();
-                    request.put("requestType", "addPeers");
-                    request.put("peers", myPeers);
-                    request.put("services", myServices); // Separate array for backwards compatibility
-                    request.put("chainId", peers.blockchainConfig.getChain().getChainId());
+                    AddPeersRequest request = new AddPeersRequest(
+                        myPeers, myServices, peersService.blockchainConfig.getChain().getChainId()
+                    );
+
                     if (peer.getState() != PeerState.CONNECTED) {
-                        peers.connectPeer(peer);
+                        peersService.connectPeer(peer);
                     }
                     if (peer.getState() == PeerState.CONNECTED) {
-                        peer.send(JSON.prepareRequest(request), peers.blockchainConfig.getChain().getChainId());
+                        peer.send(request);
                     }
                 }
             } catch (Exception e) {
@@ -126,8 +122,8 @@ class GetMorePeersThread implements Runnable {
         // the same announced address)
         //
         Map<String, PeerDb.Entry> currentPeers = new HashMap<>();
-        UUID chainId = peers.blockchainConfig.getChain().getChainId();
-        peers.getPeers(
+        UUID chainId = peersService.blockchainConfig.getChain().getChainId();
+        peersService.getPeers(
             peer -> peer.getAnnouncedAddress() != null
                 && !peer.isBlacklisted()
                 && chainId.equals(peer.getChainId())
