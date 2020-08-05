@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -113,7 +114,7 @@ public class KeyStoreServiceTest {
 
         assertEquals(2, FileUtils.countElementsOfDirectory(tempDirectory));
 
-        String rsAcc = Convert.defaultRsAccount(Convert.getId(Crypto.getPublicKey(Crypto.getKeySeed(Convert.parseHexString(SECRET_BYTES_2)))));
+        String rsAcc = Convert2.defaultRsAccount(Convert.getId(Crypto.getPublicKey(Crypto.getKeySeed(Convert.parseHexString(SECRET_BYTES_2)))));
 
         try (Stream<Path> paths = Files.list(tempDirectory)) {
             Path encryptedKeyPath = paths.filter(path -> path.getFileName().toString().endsWith(rsAcc)).findFirst().orElseThrow(() -> new RuntimeException("No encrypted key found for " + rsAcc + " account"));
@@ -140,7 +141,7 @@ public class KeyStoreServiceTest {
         SecretBytesDetails secretBytes = keyStoreSpy.getSecretBytesV0(PASSPHRASE, accountId);
         byte[] actualKey = secretBytes.getSecretBytes();
         assertEquals(KeyStoreService.Status.OK, secretBytes.getExtractStatus());
-        String rsAcc = Convert.defaultRsAccount(accountId);
+        String rsAcc = Convert2.defaultRsAccount(accountId);
 
         verify(keyStoreSpy, times(1)).findKeyStorePathWithLatestVersion(accountId);
 
