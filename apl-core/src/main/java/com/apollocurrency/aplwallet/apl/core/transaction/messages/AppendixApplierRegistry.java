@@ -27,6 +27,6 @@ public class AppendixApplierRegistry {
     }
 
     public <T extends Appendix> AppendixApplier<T> getFor(T t) {
-        return (AppendixApplier<T>) appliers.get(t);
+        return (AppendixApplier<T>) appliers.get(t.getClass());
     }
 }

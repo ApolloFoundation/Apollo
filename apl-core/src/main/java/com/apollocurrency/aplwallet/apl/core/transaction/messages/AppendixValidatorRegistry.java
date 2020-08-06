@@ -28,7 +28,7 @@ public class AppendixValidatorRegistry {
     }
 
     public <T extends Appendix> AppendixValidator<T> getValidatorFor(T t) {
-        return (AppendixValidator<T>) validators.get(t);
+        return (AppendixValidator<T>) validators.get(t.getClass());
     }
 
     void init(Instance<AppendixValidator<?>> appendixValidators) {
