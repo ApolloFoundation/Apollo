@@ -41,8 +41,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnou
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -58,7 +56,6 @@ import java.util.Set;
 import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.SET_PHASING_ONLY;
 @Slf4j
 public class TransactionImpl implements Transaction {
-    private static final Logger LOG = LoggerFactory.getLogger(TransactionImpl.class);
 
     private final short deadline;
     private final long recipientId;
@@ -444,8 +441,8 @@ public class TransactionImpl implements Transaction {
                 }
                 bytes = buffer.array();
             } catch (RuntimeException e) {
-                if (signature != null && LOG.isDebugEnabled()) {
-                    LOG.debug("Failed to get transaction bytes for transaction: {}", getId());
+                if (signature != null && log.isDebugEnabled()) {
+                    log.debug("Failed to get transaction bytes for transaction: {}", getId());
                 }
                 throw e;
             }

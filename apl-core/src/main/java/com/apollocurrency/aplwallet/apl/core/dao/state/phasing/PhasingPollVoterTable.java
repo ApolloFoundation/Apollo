@@ -67,9 +67,7 @@ public class PhasingPollVoterTable extends ValuesDbTable<PhasingPollVoter> {
     }
 
     public List<Transaction> getVoterPhasedTransactions(long voterId, int from, int to, int height) throws SQLException {
-        Connection con = null;
-        try {
-            con = getDatabaseManager().getDataSource().getConnection();
+        try (Connection con = getDatabaseManager().getDataSource().getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT transaction.* "
                 + "FROM transaction, phasing_poll_voter, phasing_poll "
                 + "LEFT JOIN phasing_poll_result ON phasing_poll.id = phasing_poll_result.id "
@@ -79,7 +77,7 @@ public class PhasingPollVoterTable extends ValuesDbTable<PhasingPollVoter> {
                 + "AND phasing_poll_voter.voter_id = ? "
                 + "AND phasing_poll_result.id IS NULL "
                 + "ORDER BY transaction.height DESC, transaction.transaction_index DESC "
-                + DbUtils.limitsClause(from, to));
+                + DbUtils.limitsClause(from, to))) {
             int i = 0;
             pstmt.setInt(++i, height);
             pstmt.setLong(++i, voterId);
@@ -91,9 +89,6 @@ public class PhasingPollVoterTable extends ValuesDbTable<PhasingPollVoter> {
                 }
             }
             return list;
-        } catch (SQLException e) {
-            DbUtils.close(con);
-            throw e;
         }
     }
 }
