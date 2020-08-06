@@ -24,12 +24,12 @@ import java.nio.ByteBuffer;
  * @author al
  */
 @Singleton
-public class CCAskOrderReplacementTransactionType extends ColoredCoinsOrderPlacementTransactionType {
+public class CCAskOrderPlacementTransactionType extends ColoredCoinsOrderPlacementTransactionType {
     private final OrderMatchService orderMatchService;
     private final AccountAssetService accountAssetService;
 
     @Inject
-    public CCAskOrderReplacementTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, AssetService assetService, OrderMatchService orderMatchService, AccountAssetService accountAssetService) {
+    public CCAskOrderPlacementTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, AssetService assetService, OrderMatchService orderMatchService, AccountAssetService accountAssetService) {
         super(blockchainConfig, accountService, assetService);
         this.orderMatchService = orderMatchService;
         this.accountAssetService = accountAssetService;

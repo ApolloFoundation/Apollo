@@ -67,6 +67,8 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializerIm
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionVersionValidator;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixApplierRegistry;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixValidatorRegistry;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
@@ -141,6 +143,8 @@ class CsvImporterTest {
         GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
         ReferencedTransactionDaoImpl.class,
         TaggedDataDao.class,
+        AppendixApplierRegistry.class,
+        AppendixValidatorRegistry.class,
         TransactionRowMapper.class,
         TransactionBuilder.class,
         DataTagDao.class, PhasingPollServiceImpl.class, PhasingPollResultTable.class,

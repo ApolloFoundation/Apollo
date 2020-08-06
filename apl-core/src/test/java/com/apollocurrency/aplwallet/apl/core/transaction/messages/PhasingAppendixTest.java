@@ -47,12 +47,12 @@ class PhasingAppendixTest {
 //        Mockito.doReturn(currentTime).when(timeService).getEpochTime();
 //        Mockito.doReturn(block).when(blockchain).getLastBlock();
         phasingAppendix = new PhasingAppendixV2(-1, 360, new PhasingParams((byte) 0, 0, 3, 0, (byte) 0, new long[]{1, 2, 3}), null, null, Byte.MIN_VALUE);
-        validatorv2 = new PhasingAppendixV2Validator(new PhasingAppendixValidator(blockchain, phasingPollService, blockchainConfig, timeService), blockchain, timeService);
+        validatorv2 = new PhasingAppendixV2Validator(new PhasingAppendixValidator(blockchain, phasingPollService, blockchainConfig), blockchain, timeService);
     }
 
     @Test
     void validateFinishHeightAndTimeWhenBothNotFilled() {
-        PhasingAppendixV2Validator validatorv2 = new PhasingAppendixV2Validator(new PhasingAppendixValidator(blockchain, phasingPollService, blockchainConfig, timeService), blockchain, timeService);
+        PhasingAppendixV2Validator validatorv2 = new PhasingAppendixV2Validator(new PhasingAppendixValidator(blockchain, phasingPollService, blockchainConfig), blockchain, timeService);
         assertThrows(AplException.NotCurrentlyValidException.class, () -> validatorv2.validateFinishHeightAndTime(-1, -1, phasingAppendix));
     }
 

@@ -40,6 +40,8 @@ import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixApplierRegistry;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixValidatorRegistry;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
@@ -87,6 +89,8 @@ class ReferencedTransactionDaoTest {
         TransactionRowMapper.class,
         TransactionBuilder.class,
         GlobalSyncImpl.class,
+        AppendixApplierRegistry.class,
+        AppendixValidatorRegistry.class,
         DerivedDbTablesRegistryImpl.class,
         PhasingPollServiceImpl.class, PhasingPollResultTable.class,
         PhasingApprovedResultTable.class,

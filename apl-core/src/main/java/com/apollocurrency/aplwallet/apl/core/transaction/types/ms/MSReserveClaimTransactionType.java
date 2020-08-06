@@ -6,8 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.transaction.types.ms;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
@@ -16,7 +14,6 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurren
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveClaim;
 import org.json.simple.JSONObject;
 
@@ -25,11 +22,11 @@ import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 
 @Singleton
-public class MSReverseClaimTransactionType extends MonetarySystemTransactionType {
+public class MSReserveClaimTransactionType extends MonetarySystemTransactionType {
     private final AccountCurrencyService accountCurrencyService;
 
     @Inject
-    public MSReverseClaimTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, CurrencyService currencyService, AccountCurrencyService accountCurrencyService) {
+    public MSReserveClaimTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, CurrencyService currencyService, AccountCurrencyService accountCurrencyService) {
         super(blockchainConfig, accountService, currencyService);
         this.accountCurrencyService = accountCurrencyService;
     }

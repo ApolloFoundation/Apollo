@@ -79,7 +79,7 @@ class DexTransferMoneyTransactionTest {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("contractId", 64L);
         jsonObject.put("offerAmount", 100L);
-        jsonObject.put("version.DEX_TRANSFER_MONEY", 1);
+        jsonObject.put("version.DexTransferMoney", 1);
 
         AbstractAttachment parsedAttachment = transactionType.parseAttachment(jsonObject);
 

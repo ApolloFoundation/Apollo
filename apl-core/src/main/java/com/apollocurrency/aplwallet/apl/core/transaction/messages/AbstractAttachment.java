@@ -49,10 +49,9 @@ public abstract class AbstractAttachment extends AbstractAppendix implements Att
         return transactionType;
     }
 
-    // TODO Resolve names to be compatible with old implementation
     @Override
     public String getAppendixName() {
-        return getTransactionTypeSpec().toString();
+        return getTransactionTypeSpec().getCompatibleName();
     }
 
     @Override

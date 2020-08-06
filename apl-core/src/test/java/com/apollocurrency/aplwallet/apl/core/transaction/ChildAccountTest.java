@@ -20,6 +20,8 @@ import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixApplierRegistry;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixValidatorRegistry;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ChildAccountAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.child.CreateChildTransactionType;
@@ -80,6 +82,8 @@ public class ChildAccountTest {
     AccountPublicKeyService accountPublicKeyService=mock(AccountPublicKeyService.class);
     FeeCalculator calculator=mock(FeeCalculator.class);
     PrunableLoadingService prunableLoadingService = mock(PrunableLoadingService.class);
+    AppendixApplierRegistry applierRegistry = mock(AppendixApplierRegistry.class);
+    AppendixValidatorRegistry validatorRegistry = mock(AppendixValidatorRegistry.class);
 
     CreateChildTransactionType type = new CreateChildTransactionType(blockchainConfig, accountService, accountPublicKeyService);
     TransactionBuilder builder = new TransactionBuilder(new CachedTransactionTypeFactory(List.of(type)));

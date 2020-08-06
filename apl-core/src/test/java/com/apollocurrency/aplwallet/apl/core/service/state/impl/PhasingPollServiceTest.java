@@ -51,6 +51,8 @@ import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixApplierRegistry;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixValidatorRegistry;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
@@ -108,6 +110,8 @@ public class PhasingPollServiceTest {
         GlobalSyncImpl.class,
         TransactionRowMapper.class,
         TransactionBuilder.class,
+        AppendixApplierRegistry.class,
+        AppendixValidatorRegistry.class,
         PhasingPollResultTable.class,
         PhasingPollTable.class,
         PhasingPollVoterTable.class,

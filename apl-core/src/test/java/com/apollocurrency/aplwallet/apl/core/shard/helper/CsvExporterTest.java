@@ -85,6 +85,8 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializerIm
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionVersionValidator;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixApplierRegistry;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixValidatorRegistry;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
@@ -195,6 +197,8 @@ class CsvExporterTest {
         DGSGoodsTable.class,
         TransactionRowMapper.class,
         TransactionBuilder.class,
+        AppendixApplierRegistry.class,
+        AppendixValidatorRegistry.class,
         TaggedDataTimestampDao.class,
         TaggedDataExtendDao.class,
         FullTextConfigImpl.class,

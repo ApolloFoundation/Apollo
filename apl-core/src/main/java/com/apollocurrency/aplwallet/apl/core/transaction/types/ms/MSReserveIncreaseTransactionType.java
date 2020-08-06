@@ -23,11 +23,11 @@ import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 
 @Singleton
-public class MSReverseIncreaseTransactionType extends MonetarySystemTransactionType {
+public class MSReserveIncreaseTransactionType extends MonetarySystemTransactionType {
     private final Blockchain blockchain;
 
     @Inject
-    public MSReverseIncreaseTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, CurrencyService currencyService, Blockchain blockchain) {
+    public MSReserveIncreaseTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, CurrencyService currencyService, Blockchain blockchain) {
         super(blockchainConfig, accountService, currencyService);
         this.blockchain = blockchain;
     }

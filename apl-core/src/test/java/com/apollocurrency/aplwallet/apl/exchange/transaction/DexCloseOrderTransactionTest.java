@@ -86,7 +86,7 @@ class DexCloseOrderTransactionTest {
     void testParseAttachmentFromJson() throws AplException.NotValidException {
         JSONObject object = new JSONObject();
         //TODO Resolve json format definition after discussion
-        object.put("version.DEX_CLOSE_ORDER", 1);
+        object.put("version.DexCloseOrder", 1);
         object.put("contractId", "10");
 
         AbstractAttachment parsedAttachment = transactionType.parseAttachment(object);
