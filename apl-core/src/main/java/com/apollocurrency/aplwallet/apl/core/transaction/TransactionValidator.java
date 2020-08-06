@@ -211,8 +211,7 @@ public class TransactionValidator {
         }
         Account sender = accountService.getAccount(transaction.getSenderId());
         if (sender == null) {
-            log.error("Sender account not found, senderId={}", transaction.getSenderId());
-            return false;
+            log.debug("Sender account not found, senderId={}", transaction.getSenderId());
         }
         @ParentChildSpecific(ParentMarker.MULTI_SIGNATURE)
         Credential signatureCredential;
@@ -220,7 +219,7 @@ public class TransactionValidator {
         if (log.isTraceEnabled()) {
             log.trace("#MULTI_SIG# verify signature validator class={}", signatureVerifier.getClass().getName());
         }
-        if (sender.isChild()) {
+        if (sender != null && sender.isChild()) {
             //multi-signature
             if (transaction.getVersion() < 2) {
                 log.error("Inconsistent transaction fields, the value of the sender property 'parent' doesn't match the transaction version.");
