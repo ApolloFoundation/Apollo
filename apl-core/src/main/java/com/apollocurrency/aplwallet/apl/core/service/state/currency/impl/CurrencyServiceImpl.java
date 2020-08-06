@@ -32,8 +32,8 @@ import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyMint
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.TransactionValidationHelper;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
@@ -70,7 +70,7 @@ public class CurrencyServiceImpl implements CurrencyService {
     private final ShufflingService shufflingService;
     private CurrencyMintService currencyMintService; // lazy init to break up circular dependency
     private final BlockchainConfig blockchainConfig;
-    private final TransactionValidator transactionValidator;
+    private final TransactionValidationHelper validationHelper;
 
     @Inject
     public CurrencyServiceImpl(CurrencySupplyTable currencySupplyTable,
@@ -83,11 +83,11 @@ public class CurrencyServiceImpl implements CurrencyService {
                                ExchangeService exchangeService,
                                CurrencyTransferService currencyTransferService,
                                ShufflingService shufflingService,
-                               BlockchainConfig blockchainConfig, TransactionValidator transactionValidator) {
+                               BlockchainConfig blockchainConfig, TransactionValidationHelper transactionValidationHelper) {
         this.currencySupplyTable = currencySupplyTable;
         this.currencyTable = currencyTable;
         this.blockChainInfoService = blockChainInfoService;
-        this.transactionValidator = transactionValidator;
+        this.validationHelper = transactionValidationHelper;
         this.iteratorToStreamConverter = new IteratorToStreamConverter<>();
         this.accountService = accountService;
         this.accountCurrencyService = accountCurrencyService;
@@ -392,7 +392,7 @@ public class CurrencyServiceImpl implements CurrencyService {
         boolean isActiveCurrency = currency != null && this.isActive(currency);
         for (CurrencyType currencyType : CurrencyType.values()) {
             if ((currencyType.getCode() & type) != 0) {
-                currencyType.validate(currency, transaction, validators, maxBalanceAtm, isActiveCurrency, transactionValidator.getFinishValidationHeight(transaction, transaction.getAttachment()));
+                currencyType.validate(currency, transaction, validators, maxBalanceAtm, isActiveCurrency, validationHelper.getFinishValidationHeight(transaction, transaction.getAttachment()));
             } else {
                 currencyType.validateMissing(currency, transaction, validators);
             }

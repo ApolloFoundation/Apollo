@@ -34,8 +34,8 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.impl.CurrencyBuyOfferServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.impl.CurrencyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.TransactionValidationHelper;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.ms.MSCurrencyIssuanceTransactionType;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.CurrencyTestData;
@@ -51,6 +51,8 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.stream.Stream;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -58,8 +60,6 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-
-import java.util.stream.Stream;
 
 @EnableWeld
 @ExtendWith(MockitoExtension.class)
@@ -112,14 +112,14 @@ class CurrencyServiceTest {
     private CurrencyBuyOfferService buyOfferService;
 
     @Mock
-    TransactionValidator transactionValidator;
+    TransactionValidationHelper transactionValidationHelper;
 
     @BeforeEach
     void setUp() {
         td = new CurrencyTestData();
         service = new CurrencyServiceImpl(currencySupplyTable, currencyTable, blockChainInfoService,
             accountService, accountCurrencyService, currencyExchangeOfferFacade, currencyFounderService,
-            exchangeService, currencyTransferService, shufflingService, blockchainConfig, transactionValidator);
+            exchangeService, currencyTransferService, shufflingService, blockchainConfig, transactionValidationHelper);
     }
 
     @Test
