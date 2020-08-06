@@ -7,6 +7,8 @@ import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import lombok.NonNull;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -15,6 +17,7 @@ import java.nio.ByteBuffer;
  * @author al
  */
 public abstract class AbstractAttachment extends AbstractAppendix implements Attachment {
+    private TransactionType transactionType;
 
     public AbstractAttachment(ByteBuffer buffer) {
         super(buffer);
@@ -32,52 +35,48 @@ public abstract class AbstractAttachment extends AbstractAppendix implements Att
     }
 
     @Override
+    public void bindTransactionType(@NonNull TransactionType transactionType) {
+        if (transactionType.getSpec() != getTransactionTypeSpec()) {
+            throw new IllegalArgumentException("Required tx type " + getTransactionTypeSpec() + " but got " + transactionType.getSpec());
+        }
+        this.transactionType = transactionType;
+    }
+
+    private TransactionType transactionType() {
+        if (transactionType == null) {
+            throw new IllegalStateException("Transaction type was not set");
+        }
+        return transactionType;
+    }
+
+    @Override
     public String getAppendixName() {
-        return getTransactionType().getName();
+        return getTransactionTypeSpec().getCompatibleName();
     }
 
     @Override
     public void validate(Transaction transaction, int blockHeight) throws AplException.ValidationException {
-        getTransactionType().validateAttachment(transaction);
+        transactionType().validateAttachment(transaction);
     }
 
     @Override
     public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        getTransactionType().apply(transaction, senderAccount, recipientAccount);
+        transactionType().apply(transaction, senderAccount, recipientAccount);
     }
 
     @Override
     public final Fee getBaselineFee(Transaction transaction) {
-        return getTransactionType().getBaselineFee(transaction);
-    }
-
-    @Override
-    public final Fee getNextFee(Transaction transaction) {
-        return getTransactionType().getNextFee(transaction);
-    }
-
-    @Override
-    public final int getBaselineFeeHeight() {
-        return getTransactionType().getBaselineFeeHeight();
-    }
-
-    @Override
-    public final int getNextFeeHeight() {
-        return getTransactionType().getNextFeeHeight();
+        return transactionType().getBaselineFee(transaction);
     }
 
     @Override
     public boolean isPhasable() {
-        return !(this instanceof Prunable) && getTransactionType().isPhasable();
-    }
-
-    public int getFinishValidationHeight(Transaction transaction) {
-        return isPhased(transaction) ? transaction.getPhasing().getFinishHeight() - 1 : lookupBlockchain().getHeight();
+        return !(this instanceof Prunable) && transactionType().isPhasable();
     }
 
     @Override
     public String toString() {
-        return "Attachment[" + getClass().getSimpleName() + ":" + getTransactionType().getName() + "]";
+        return "Attachment[" + getClass().getSimpleName() + ", type = " + getTransactionTypeSpec()  + "]";
     }
 
 }

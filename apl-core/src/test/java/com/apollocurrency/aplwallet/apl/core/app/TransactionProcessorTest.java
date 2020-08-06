@@ -31,7 +31,9 @@ import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -77,6 +79,8 @@ class TransactionProcessorTest {
     private GlobalSync globalSync = mock(GlobalSync.class);
     private TaskDispatchManager taskDispatchManager = mock(TaskDispatchManager.class);
     private AccountPublicKeyService accountPublicKeyService = mock(AccountPublicKeyService.class);
+    private TransactionBuilder transactionBuilder = mock(TransactionBuilder.class);
+    private PrunableLoadingService prunableLoadingService = mock(PrunableLoadingService.class);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from()
@@ -110,7 +114,7 @@ class TransactionProcessorTest {
         td = new TransactionTestData();
         service = new TransactionProcessorImpl(propertiesHolder, transactionValidator, transactionApplier,
             listEvent, unconfirmedTransactionTable, databaseManager, accountService,
-            globalSync, timeService, ntpTimeConfig.time(), blockchainConfig, taskDispatchManager, peersService, blockchain);
+            globalSync, timeService, ntpTimeConfig.time(), blockchainConfig, taskDispatchManager, peersService, blockchain, transactionBuilder, prunableLoadingService);
     }
 
     @Test

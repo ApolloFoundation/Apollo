@@ -3,8 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONObject;
 
@@ -89,8 +88,8 @@ public final class MonetarySystemPublishExchangeOffer extends AbstractAttachment
     }
 
     @Override
-    public TransactionType getTransactionType() {
-        return MonetarySystem.PUBLISH_EXCHANGE_OFFER;
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
+        return TransactionTypes.TransactionTypeSpec.MS_PUBLISH_EXCHANGE_OFFER;
     }
 
     @Override

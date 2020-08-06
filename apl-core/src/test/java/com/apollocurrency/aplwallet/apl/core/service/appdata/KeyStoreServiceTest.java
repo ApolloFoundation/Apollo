@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.service.appdata;
 
 import com.apollocurrency.aplwallet.apl.core.app.EncryptedSecretBytesDetails;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.SecretBytesDetails;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.VaultKeyStoreServiceImpl;
@@ -38,6 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyLong;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -72,6 +74,7 @@ public class KeyStoreServiceTest {
     private byte[] nonce = new byte[16];
     private Path tempDirectory;
     private VaultKeyStoreServiceImpl keyStore;
+    private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
 
     private byte[] generateSecretBytes() {
         byte secretBytes[] = new byte[32];
@@ -86,6 +89,8 @@ public class KeyStoreServiceTest {
         tempDirectory = Files.createTempDirectory("keystore-test");
         keyStore = new VaultKeyStoreServiceImpl(tempDirectory, 0, time);
         Files.write(tempDirectory.resolve("---" + ACCOUNT1), encryptedKeyJSON.getBytes());
+        doReturn("APL").when(blockchainConfig).getAccountPrefix();
+        Convert2.init(blockchainConfig);
     }
 
     @AfterEach

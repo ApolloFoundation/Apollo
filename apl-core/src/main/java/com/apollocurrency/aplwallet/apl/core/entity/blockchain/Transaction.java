@@ -25,8 +25,8 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControl
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
@@ -36,8 +36,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryp
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.Filter;
-import org.json.simple.JSONObject;
 
 import java.util.Arrays;
 import java.util.List;
@@ -46,7 +44,7 @@ import java.util.Set;
 
 public interface Transaction {
 
-    boolean isUnconfirmedDuplicate(Map<TransactionType, Map<String, Integer>> unconfirmedDuplicates);
+    boolean isUnconfirmedDuplicate(Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> unconfirmedDuplicates);
 
     long getId();
 
@@ -56,9 +54,11 @@ public interface Transaction {
 
     long getSenderId();
 
-    byte[] getSenderPublicKey();
+    boolean hasValidSignature();
 
-    boolean shouldSavePublicKey();
+    void withValidSignature();
+
+    byte[] getSenderPublicKey();
 
     long getRecipientId();
 
@@ -121,10 +121,6 @@ public interface Transaction {
 
     byte[] getUnsignedBytes();
 
-    JSONObject getJSONObject();
-
-    JSONObject getPrunableAttachmentJSON();
-
     byte getVersion();
 
     int getFullSize();
@@ -151,22 +147,22 @@ public interface Transaction {
 
     List<AbstractAppendix> getAppendages();
 
-    List<AbstractAppendix> getAppendages(boolean includeExpiredPrunable);
-
-    List<AbstractAppendix> getAppendages(Filter<Appendix> filter, boolean includeExpiredPrunable);
-
     int getECBlockHeight();
 
     long getECBlockId();
 
+    boolean ofType(TransactionTypes.TransactionTypeSpec spec);
+
+    boolean isNotOfType(TransactionTypes.TransactionTypeSpec spec);
+
     /**
      * @deprecated see method with longer parameters list below
      */
-    default boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
+    default boolean attachmentIsDuplicate(Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
         return false;
     }
 
-    default boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates,
+    default boolean attachmentIsDuplicate(Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates,
                                           boolean atAcceptanceHeight,
                                           Set<AccountControlType> senderAccountControls,
                                           AccountControlPhasing accountControlPhasing) {
@@ -203,6 +199,8 @@ public interface Transaction {
 
         Builder ecBlockHeight(int height);
 
+        Builder ecBlockData(EcBlockData ecBlockData);
+
         Builder dbId(long dbId);
 
         Builder ecBlockId(long blockId);
@@ -210,16 +208,6 @@ public interface Transaction {
         Builder signature(Signature signature);
 
         Transaction build() throws AplException.NotValidException;
-
-        /**
-         * Build transaction adn encrypt attachments. This method doesn't sign the transaction.
-         * The transaction keeps unsigned.
-         *
-         * @param keySeed the key seed to encrypt appendixes
-         * @return unsigned transaction with encrypted appendixes
-         * @throws AplException.NotValidException
-         */
-        Transaction build(byte[] keySeed) throws AplException.NotValidException;
 
         TransactionImpl.BuilderImpl blockId(long blockId);
     }

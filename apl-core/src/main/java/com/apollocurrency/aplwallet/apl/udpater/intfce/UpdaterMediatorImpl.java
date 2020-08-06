@@ -6,7 +6,6 @@ package com.apollocurrency.aplwallet.apl.udpater.intfce;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplCore;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
@@ -14,8 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
-import com.apollocurrency.aplwallet.apl.core.transaction.Update;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.update.UpdateTransactionType;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -23,8 +21,6 @@ import org.slf4j.Logger;
 
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Singleton;
-import java.sql.Connection;
-import java.sql.ResultSet;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -33,7 +29,6 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
     private static final Logger LOG = getLogger(UpdaterMediatorImpl.class);
     private final PeersService peers = CDI.current().select(PeersService.class).get();
     private final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    private TransactionProcessor transactionProcessor;
     private BlockchainProcessor blockchainProcessor;
     private Blockchain blockchain;
     private GeneratorService generatorService;
@@ -97,7 +92,7 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
 
     @Override
     public boolean isUpdateTransaction(Transaction transaction) {
-        return Update.isUpdate(transaction.getType());
+        return UpdateTransactionType.isUpdate(transaction.getType());
     }
 
     @Override
@@ -122,8 +117,8 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
     }
 
     @Override
-    public Transaction loadTransaction(Connection connection, ResultSet rs) throws AplException.NotValidException {
-        return lookupBlockchain().loadTransaction(connection, rs);
+    public Transaction getTransaction(long transactionId) {
+        return lookupBlockchain().getTransaction(transactionId);
     }
 
     @Override

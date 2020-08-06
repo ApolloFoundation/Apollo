@@ -23,6 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -42,6 +43,7 @@ import java.util.Objects;
 public final class BlockImpl implements Block {
 
     private static Blockchain blockchain;
+    private static TransactionSerializer transactionSerializer;
 
     private final int version;
     private final int timestamp;
@@ -332,7 +334,7 @@ public final class BlockImpl implements Block {
         json.put("timeout", timeout);
 
         JSONArray transactionsData = new JSONArray();
-        getOrLoadTransactions().forEach(transaction -> transactionsData.add(transaction.getJSONObject()));
+        getOrLoadTransactions().forEach(transaction -> transactionsData.add(lookupTransactionSerializer().toJson(transaction)));
         json.put("transactions", transactionsData);
         return json;
     }
@@ -370,6 +372,7 @@ public final class BlockImpl implements Block {
         }
         return bytes;
     }
+
 
     @Override
     public boolean checkSignature() {
@@ -481,6 +484,13 @@ public final class BlockImpl implements Block {
             blockchain = CDI.current().select(Blockchain.class).get();
         }
         return blockchain;
+    }
+
+    private TransactionSerializer lookupTransactionSerializer() {
+        if (transactionSerializer == null) {
+            transactionSerializer = CDI.current().select(TransactionSerializer.class).get();
+        }
+        return transactionSerializer;
     }
 
 

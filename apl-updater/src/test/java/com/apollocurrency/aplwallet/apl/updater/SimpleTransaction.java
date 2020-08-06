@@ -8,8 +8,8 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
@@ -18,8 +18,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendi
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
-import com.apollocurrency.aplwallet.apl.util.Filter;
-import org.json.simple.JSONObject;
 
 import java.util.List;
 import java.util.Map;
@@ -45,7 +43,7 @@ public class SimpleTransaction implements Transaction {
     }
 
     @Override
-    public boolean isUnconfirmedDuplicate(Map<TransactionType, Map<String, Integer>> unconfirmedDuplicates) {
+    public boolean isUnconfirmedDuplicate(Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> unconfirmedDuplicates) {
         return false;
     }
 
@@ -74,13 +72,18 @@ public class SimpleTransaction implements Transaction {
     }
 
     @Override
-    public byte[] getSenderPublicKey() {
-        return new byte[0];
+    public boolean hasValidSignature() {
+        return true;
     }
 
     @Override
-    public boolean shouldSavePublicKey() {
-        return false;
+    public void withValidSignature() {
+
+    }
+
+    @Override
+    public byte[] getSenderPublicKey() {
+        return new byte[0];
     }
 
     @Override
@@ -218,16 +221,6 @@ public class SimpleTransaction implements Transaction {
     }
 
     @Override
-    public JSONObject getJSONObject() {
-        return new JSONObject();
-    }
-
-    @Override
-    public JSONObject getPrunableAttachmentJSON() {
-        return null;
-    }
-
-    @Override
     public byte getVersion() {
         return 0;
     }
@@ -291,16 +284,6 @@ public class SimpleTransaction implements Transaction {
     }
 
     @Override
-    public List<AbstractAppendix> getAppendages(boolean includeExpiredPrunable) {
-        return null;
-    }
-
-    @Override
-    public List<AbstractAppendix> getAppendages(Filter<Appendix> filter, boolean includeExpiredPrunable) {
-        return null;
-    }
-
-    @Override
     public int getECBlockHeight() {
         return 0;
     }
@@ -308,6 +291,16 @@ public class SimpleTransaction implements Transaction {
     @Override
     public long getECBlockId() {
         return 0;
+    }
+
+    @Override
+    public boolean ofType(TransactionTypes.TransactionTypeSpec spec) {
+        return false;
+    }
+
+    @Override
+    public boolean isNotOfType(TransactionTypes.TransactionTypeSpec spec) {
+        return false;
     }
 
 }

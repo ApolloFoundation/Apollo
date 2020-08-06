@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018-2020 Apollo Foundation
+ *  Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
@@ -24,38 +24,24 @@ import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
-import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
-import com.apollocurrency.aplwallet.apl.core.signature.SignatureParser;
-import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtendAttachment;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.UnsupportedTransactionVersion;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Encryptable;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingProcessingAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.Filter;
-import org.json.simple.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.inject.spi.CDI;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -67,10 +53,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.apollocurrency.aplwallet.apl.core.transaction.AccountControl.SET_PHASING_ONLY;
-
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.SET_PHASING_ONLY;
+@Slf4j
 public class TransactionImpl implements Transaction {
-    private static final Logger LOG = LoggerFactory.getLogger(TransactionImpl.class);
 
     private final short deadline;
     private final long recipientId;
@@ -107,7 +92,7 @@ public class TransactionImpl implements Transaction {
     private volatile long dbId;
     private volatile boolean hasValidSignature = false;
 
-    private TransactionImpl(BuilderImpl builder) throws AplException.NotValidException {
+    TransactionImpl(BuilderImpl builder) {
 
         this.timestamp = builder.timestamp;
         this.deadline = builder.deadline;
@@ -154,207 +139,17 @@ public class TransactionImpl implements Transaction {
             list.add(this.prunableEncryptedMessage);
         }
         this.appendages = Collections.unmodifiableList(list);
-        int appSize = 0;
-        for (AbstractAppendix appendage : appendages) {
-            appSize += appendage.getSize();
+        int appendagesSize = 0;
+        for (Appendix appendage : appendages) {
+            appendagesSize += appendage.getSize();
         }
-        this.appendagesSize = appSize;
+        this.appendagesSize = appendagesSize;
         this.signature = builder.signature;
-    }
-
-    public static TransactionImpl.BuilderImpl newTransactionBuilder(byte[] bytes) throws AplException.NotValidException {
-        try {
-            ByteBuffer buffer = ByteBuffer.wrap(bytes);
-            buffer.order(ByteOrder.LITTLE_ENDIAN);
-            //begin: read transaction header
-            byte type = buffer.get();
-            byte subtype = buffer.get();
-            byte version = (byte) ((subtype & 0xF0) >> 4);
-            subtype = (byte) (subtype & 0x0F);
-            int timestamp = buffer.getInt();
-            short deadline = buffer.getShort();
-            byte[] senderPublicKey = new byte[32];
-            buffer.get(senderPublicKey);
-            long recipientId = buffer.getLong();
-            long amountATM = buffer.getLong();
-            long feeATM = buffer.getLong();
-            byte[] referencedTransactionFullHash = new byte[32];
-            buffer.get(referencedTransactionFullHash);
-            referencedTransactionFullHash = Convert.emptyToNull(referencedTransactionFullHash);
-            Signature signature = null;
-            SignatureParser signatureParser = SignatureToolFactory.selectParser(version).orElseThrow(UnsupportedTransactionVersion::new);
-            if (version < 2) {
-                signature = signatureParser.parse(buffer);
-            }
-            int flags = 0;
-            int ecBlockHeight = 0;
-            long ecBlockId = 0;
-            if (version > 0) {
-                flags = buffer.getInt();
-                ecBlockHeight = buffer.getInt();
-                ecBlockId = buffer.getLong();
-            }
-            //end: read transaction header
-            TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
-            //begin: read transaction attachment
-            AbstractAttachment attachment = transactionType.parseAttachment(buffer);
-            //end: read transaction attachment
-            TransactionImpl.BuilderImpl builder = new BuilderImpl(
-                version, senderPublicKey, amountATM, feeATM, deadline,
-                attachment,
-                timestamp)
-                .referencedTransactionFullHash(referencedTransactionFullHash)
-                .ecBlockHeight(ecBlockHeight)
-                .ecBlockId(ecBlockId);
-            if (transactionType.canHaveRecipient()) {
-                builder.recipientId(recipientId);
-            }
-            //begin: read transaction appendix
-            int position = 1;
-            if ((flags & position) != 0 || (version == 0 && transactionType == Messaging.ARBITRARY_MESSAGE)) {
-                builder.appendix(new MessageAppendix(buffer));
-            }
-            position <<= 1;
-            if ((flags & position) != 0) {
-                builder.appendix(new EncryptedMessageAppendix(buffer));
-            }
-            position <<= 1;
-            if ((flags & position) != 0) {
-                builder.appendix(new PublicKeyAnnouncementAppendix(buffer));
-            }
-            position <<= 1;
-            if ((flags & position) != 0) {
-                builder.appendix(new EncryptToSelfMessageAppendix(buffer));
-            }
-            position <<= 1;
-            if ((flags & position) != 0) {
-                builder.appendix(PhasingAppendixFactory.build(buffer));
-            }
-            position <<= 1;
-            if ((flags & position) != 0) {
-                builder.appendix(new PrunablePlainMessageAppendix(buffer));
-            }
-            position <<= 1;
-            if ((flags & position) != 0) {
-                builder.appendix(new PrunableEncryptedMessageAppendix(buffer));
-            }
-            //end: read transaction appendix
-            if (version >= 2) {
-                //read transaction multi-signature V2
-                signature = signatureParser.parse(buffer);
-            }
-            builder.signature(signature);
-            if (LOG.isTraceEnabled()) {
-                LOG.trace("#MULTI_SIG# parsed signature={}", signature.getJsonString());
-            }
-
-            if (buffer.hasRemaining()) {
-                throw new AplException.NotValidException("Transaction bytes too long, " + buffer.remaining() + " extra bytes");
-            }
-            return builder;
-        } catch (RuntimeException e) {
-            LOG.debug("Failed to parse transaction bytes: " + Convert.toHexString(bytes));
-            throw e;
-        }
-    }
-
-    public static TransactionImpl.BuilderImpl newTransactionBuilder(byte[] bytes, JSONObject prunableAttachments) throws AplException.NotValidException {
-        BuilderImpl builder = newTransactionBuilder(bytes);
-        if (prunableAttachments != null) {
-            ShufflingProcessingAttachment shufflingProcessing = ShufflingProcessingAttachment.parse(prunableAttachments);
-            if (shufflingProcessing != null) {
-                builder.appendix(shufflingProcessing);
-            }
-            TaggedDataUploadAttachment taggedDataUploadAttachment = TaggedDataUploadAttachment.parse(prunableAttachments);
-            if (taggedDataUploadAttachment != null) {
-                builder.appendix(taggedDataUploadAttachment);
-            }
-            TaggedDataExtendAttachment taggedDataExtendAttachment = TaggedDataExtendAttachment.parse(prunableAttachments);
-            if (taggedDataExtendAttachment != null) {
-                builder.appendix(taggedDataExtendAttachment);
-            }
-            PrunablePlainMessageAppendix prunablePlainMessage = PrunablePlainMessageAppendix.parse(prunableAttachments);
-            if (prunablePlainMessage != null) {
-                builder.appendix(prunablePlainMessage);
-            }
-            PrunableEncryptedMessageAppendix prunableEncryptedMessage = PrunableEncryptedMessageAppendix.parse(prunableAttachments);
-            if (prunableEncryptedMessage != null) {
-                builder.appendix(prunableEncryptedMessage);
-            }
-        }
-        return builder;
-    }
-
-    public static TransactionImpl.BuilderImpl newTransactionBuilder(JSONObject transactionData) throws AplException.NotValidException {
-        try {
-            byte type = ((Long) transactionData.get("type")).byteValue();
-            byte subtype = ((Long) transactionData.get("subtype")).byteValue();
-            int timestamp = ((Long) transactionData.get("timestamp")).intValue();
-            short deadline = ((Long) transactionData.get("deadline")).shortValue();
-            byte[] senderPublicKey = Convert.parseHexString((String) transactionData.get("senderPublicKey"));
-            long amountATM = transactionData.containsKey("amountATM") ? Convert.parseLong(transactionData.get("amountATM")) : Convert.parseLong(transactionData.get("amountNQT"));
-            long feeATM = transactionData.containsKey("feeATM") ? Convert.parseLong(transactionData.get("feeATM")) : Convert.parseLong(transactionData.get("feeNQT"));
-            String referencedTransactionFullHash = (String) transactionData.get("referencedTransactionFullHash");
-            Long versionValue = (Long) transactionData.get("version");
-            byte version = versionValue == null ? 0 : versionValue.byteValue();
-            SignatureParser signatureParser = SignatureToolFactory.selectParser(version).orElseThrow(UnsupportedTransactionVersion::new);
-            JSONObject sigJsonObject;
-            if (version < 2) {
-                sigJsonObject = new JSONObject();
-                sigJsonObject.put(SignatureParser.SIGNATURE_FIELD_NAME, transactionData.get("signature"));
-            } else {
-                sigJsonObject = (JSONObject) transactionData.get("signature");
-            }
-            Signature signature = signatureParser.parse(sigJsonObject);
-            JSONObject attachmentData = (JSONObject) transactionData.get("attachment");
-            int ecBlockHeight = 0;
-            long ecBlockId = 0;
-            if (version > 0) {
-                ecBlockHeight = ((Long) transactionData.get("ecBlockHeight")).intValue();
-                ecBlockId = Convert.parseUnsignedLong((String) transactionData.get("ecBlockId"));
-            }
-            TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
-            if (transactionType == null) {
-                throw new AplException.NotValidException("Invalid transaction type: " + type + ", " + subtype);
-            }
-            TransactionImpl.BuilderImpl builder = new BuilderImpl(version, senderPublicKey,
-                amountATM, feeATM, deadline,
-                transactionType.parseAttachment(attachmentData), timestamp)
-                .referencedTransactionFullHash(referencedTransactionFullHash)
-                .ecBlockHeight(ecBlockHeight)
-                .ecBlockId(ecBlockId);
-            if (transactionType.canHaveRecipient()) {
-                long recipientId = Convert.parseUnsignedLong((String) transactionData.get("recipient"));
-                builder.recipientId(recipientId);
-            }
-            if (attachmentData != null) {
-                builder.appendix(MessageAppendix.parse(attachmentData));
-                builder.appendix(EncryptedMessageAppendix.parse(attachmentData));
-                builder.appendix(PublicKeyAnnouncementAppendix.parse(attachmentData));
-                builder.appendix(EncryptToSelfMessageAppendix.parse(attachmentData));
-                builder.appendix(PhasingAppendixFactory.parse(attachmentData));
-                builder.appendix(PrunablePlainMessageAppendix.parse(attachmentData));
-                builder.appendix(PrunableEncryptedMessageAppendix.parse(attachmentData));
-            }
-            //set parsed signature
-            builder.signature(signature);
-
-            return builder;
-        } catch (RuntimeException e) {
-            LOG.debug("Failed to parse transaction={}", transactionData.toJSONString());
-            throw e;
-        }
     }
 
     @Override
     public short getDeadline() {
         return deadline;
-    }
-
-    @Override
-    public boolean shouldSavePublicKey() {
-        return true;
-        //        return Account.getPublicKey(senderId) == null;
     }
 
     @Override
@@ -437,6 +232,9 @@ public class TransactionImpl implements Transaction {
 
     @Override
     public Block getBlock() {
+        if (block == null || blockId == 0) {
+            log.debug("Block was not fetched for tx " + getId());
+        }
         return block;
     }
 
@@ -485,33 +283,12 @@ public class TransactionImpl implements Transaction {
 
     @Override
     public AbstractAttachment getAttachment() {
-        attachment.loadPrunable(this);
         return attachment;
     }
 
     @Override
     public List<AbstractAppendix> getAppendages() {
-        return getAppendages(false);
-    }
-
-    @Override
-    public List<AbstractAppendix> getAppendages(boolean includeExpiredPrunable) {
-        for (AbstractAppendix appendage : appendages) {
-            appendage.loadPrunable(this, includeExpiredPrunable);
-        }
         return appendages;
-    }
-
-    @Override
-    public List<AbstractAppendix> getAppendages(Filter<Appendix> filter, boolean includeExpiredPrunable) {
-        List<AbstractAppendix> result = new ArrayList<>();
-        appendages.forEach(appendix -> {
-            if (filter.test(appendix)) {
-                (appendix).loadPrunable(this, includeExpiredPrunable);
-                result.add(appendix);
-            }
-        });
-        return result;
     }
 
     @Override
@@ -565,6 +342,16 @@ public class TransactionImpl implements Transaction {
     }
 
     @Override
+    public boolean hasValidSignature() {
+        return hasValidSignature;
+    }
+
+    @Override
+    public void withValidSignature() {
+        hasValidSignature = true;
+    }
+
+    @Override
     public String toString() {
         return String.valueOf(getId());
     }
@@ -600,9 +387,6 @@ public class TransactionImpl implements Transaction {
 
     @Override
     public PrunablePlainMessageAppendix getPrunablePlainMessage() {
-        if (prunablePlainMessage != null) {
-            prunablePlainMessage.loadPrunable(this);
-        }
         return prunablePlainMessage;
     }
 
@@ -612,9 +396,6 @@ public class TransactionImpl implements Transaction {
 
     @Override
     public PrunableEncryptedMessageAppendix getPrunableEncryptedMessage() {
-        if (prunableEncryptedMessage != null) {
-            prunableEncryptedMessage.loadPrunable(this);
-        }
         return prunableEncryptedMessage;
     }
 
@@ -627,8 +408,8 @@ public class TransactionImpl implements Transaction {
             try {
                 ByteBuffer buffer = ByteBuffer.allocate(getSize());
                 buffer.order(ByteOrder.LITTLE_ENDIAN);
-                buffer.put(type.getType());
-                buffer.put((byte) ((version << 4) | type.getSubtype()));
+                buffer.put(type.getSpec().getType());
+                buffer.put((byte) ((version << 4) | type.getSpec().getSubtype()));
                 buffer.putInt(timestamp);
                 buffer.putShort(deadline);
                 buffer.put(getSenderPublicKey());
@@ -660,8 +441,8 @@ public class TransactionImpl implements Transaction {
                 }
                 bytes = buffer.array();
             } catch (RuntimeException e) {
-                if (signature != null && LOG.isDebugEnabled()) {
-                    LOG.debug("Failed to get transaction bytes for transaction: {}", getJSONObject().toJSONString());
+                if (signature != null && log.isDebugEnabled()) {
+                    log.debug("Failed to get transaction bytes for transaction: {}", getId());
                 }
                 throw e;
             }
@@ -680,62 +461,6 @@ public class TransactionImpl implements Transaction {
     }
 
     @Override
-    public JSONObject getJSONObject() {
-        JSONObject json = new JSONObject();
-        json.put("version", version);
-        json.put("id", Long.toUnsignedString(id));
-        json.put("type", type.getType());
-        json.put("subtype", type.getSubtype());
-        json.put("timestamp", timestamp);
-        json.put("deadline", deadline);
-        json.put("senderPublicKey", Convert.toHexString(getSenderPublicKey()));
-        if (type.canHaveRecipient()) {
-            json.put("recipient", Long.toUnsignedString(recipientId));
-        }
-        json.put("amountATM", amountATM);
-        json.put("feeATM", feeATM);
-        if (referencedTransactionFullHash != null) {
-            json.put("referencedTransactionFullHash", Convert.toHexString(referencedTransactionFullHash));
-        }
-        json.put("ecBlockHeight", ecBlockHeight);
-        json.put("ecBlockId", Long.toUnsignedString(ecBlockId));
-        JSONObject attachmentJSON = new JSONObject();
-        for (AbstractAppendix appendage : appendages) {
-            appendage.loadPrunable(this);
-            attachmentJSON.putAll(appendage.getJSONObject());
-        }
-        if (!attachmentJSON.isEmpty()) {
-            json.put("attachment", attachmentJSON);
-        }
-
-        if (signature != null) {
-            if (version < 2) {
-                //json.put("signature", getSignature().getJsonObject().get(SignatureParser.SIGNATURE_FIELD_NAME));
-                json.putAll(getSignature().getJsonObject());
-            } else {
-                json.put("signature", getSignature().getJsonObject());
-            }
-        }
-        return json;
-    }
-
-    @Override
-    public JSONObject getPrunableAttachmentJSON() {
-        JSONObject prunableJSON = null;
-        for (AbstractAppendix appendage : appendages) {
-            if (appendage instanceof Prunable) {
-                appendage.loadPrunable(this);
-                if (prunableJSON == null) {
-                    prunableJSON = appendage.getJSONObject();
-                } else {
-                    prunableJSON.putAll(appendage.getJSONObject());
-                }
-            }
-        }
-        return prunableJSON;
-    }
-
-    @Override
     public int getECBlockHeight() {
         return ecBlockHeight;
     }
@@ -746,12 +471,25 @@ public class TransactionImpl implements Transaction {
     }
 
     @Override
+    public boolean ofType(TransactionTypes.TransactionTypeSpec spec) {
+        return type.getSpec() == spec;
+    }
+
+    @Override
+    public boolean isNotOfType(TransactionTypes.TransactionTypeSpec spec) {
+        return !ofType(spec);
+    }
+
+    @Override
     public boolean equals(Object o) {
         return o instanceof TransactionImpl && this.getId() == ((Transaction) o).getId();
     }
 
     @Override
     public byte[] getSenderPublicKey() {
+        if (senderPublicKey == null) {
+            throw new IllegalStateException("Sender public key is not set");
+        }
         return senderPublicKey;
     }
 
@@ -759,6 +497,7 @@ public class TransactionImpl implements Transaction {
     public int hashCode() {
         return (int) (getId() ^ (getId() >>> 32));
     }
+
 
     private int getSize() {
         int signatureSize = 0;
@@ -837,11 +576,11 @@ public class TransactionImpl implements Transaction {
         return flags;
     }
 
-    @Override
     /**
      * @deprecated see method with longer parameters list below
      */
-    public boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
+    @Override
+    public boolean attachmentIsDuplicate(Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
         if (!attachmentIsPhased() && !atAcceptanceHeight) {
             // can happen for phased transactions having non-phasable attachment
             return false;
@@ -860,7 +599,8 @@ public class TransactionImpl implements Transaction {
         return type.isDuplicate(this, duplicates);
     }
 
-    public boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates,
+    @Override
+    public boolean attachmentIsDuplicate(Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates,
                                          boolean atAcceptanceHeight,
                                          Set<AccountControlType> senderAccountControls,
                                          AccountControlPhasing accountControlPhasing) {
@@ -887,19 +627,19 @@ public class TransactionImpl implements Transaction {
     }
 
     private boolean isBlockDuplicate(Transaction transaction,
-                                     Map<TransactionType, Map<String, Integer>> duplicates,
+                                     Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates,
                                      Set<AccountControlType> senderAccountControls,
                                      AccountControlPhasing accountControlPhasing) {
         return
             senderAccountControls.contains(AccountControlType.PHASING_ONLY)
                 && (accountControlPhasing != null && accountControlPhasing.getMaxFees() != 0)
-                && transaction.getType() != SET_PHASING_ONLY
+                && transaction.getType().getSpec() != SET_PHASING_ONLY
                 && TransactionType.isDuplicate(SET_PHASING_ONLY,
                 Long.toUnsignedString(transaction.getSenderId()), duplicates, true);
     }
 
     @Override
-    public boolean isUnconfirmedDuplicate(Map<TransactionType, Map<String, Integer>> duplicates) {
+    public boolean isUnconfirmedDuplicate(Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
         return type.isUnconfirmedDuplicate(this, duplicates);
     }
 
@@ -937,14 +677,14 @@ public class TransactionImpl implements Transaction {
         private long dbId = 0;
 
         public BuilderImpl(byte version, byte[] senderPublicKey, long amountATM, long feeATM, short deadline,
-                           AbstractAttachment attachment, int timestamp) {
+                           AbstractAttachment attachment, int timestamp, TransactionType transactionType) {
             this.version = version;
             this.deadline = deadline;
             this.senderPublicKey = senderPublicKey;
             this.amountATM = amountATM;
             this.feeATM = feeATM;
             this.attachment = attachment;
-            this.type = attachment != null ? attachment.getTransactionType() : null;
+            this.type = transactionType;
             if (timestamp < 0) {
                 throw new IllegalArgumentException("Timestamp cannot be less than 0");
             }
@@ -953,29 +693,10 @@ public class TransactionImpl implements Transaction {
 
         @Override
         public TransactionImpl build() throws AplException.NotValidException {
-            return build(null);
-        }
-
-        @Override
-        public TransactionImpl build(byte[] keySeed) throws AplException.NotValidException {
             if (!ecBlockSet) {
-                EcBlockData ecBlock = lookupAndInjectBlockChain().getECBlock(timestamp);
-                this.ecBlockHeight = ecBlock.getHeight();
-                this.ecBlockId = ecBlock.getId();
+                throw new IllegalStateException("Ec block was not set for transaction");
             }
-            TransactionImpl transaction = new TransactionImpl(this);
-            if (keySeed != null) {
-                for (Appendix appendage : transaction.getAppendages()) {
-                    if (appendage instanceof Encryptable) {//encrypt attached message
-                        ((Encryptable) appendage).encrypt(keySeed);
-                    }
-                }
-            }
-            return transaction;
-        }
-
-        private static Blockchain lookupAndInjectBlockChain() {
-            return CDI.current().select(Blockchain.class).get();
+            return new TransactionImpl(this);
         }
 
         @Override
@@ -996,7 +717,7 @@ public class TransactionImpl implements Transaction {
             return this;
         }
 
-        BuilderImpl appendix(AbstractAttachment attachment) {
+        public BuilderImpl appendix(AbstractAttachment attachment) {
             this.attachment = attachment;
             return this;
         }
@@ -1052,6 +773,14 @@ public class TransactionImpl implements Transaction {
         @Override
         public BuilderImpl ecBlockHeight(int height) {
             this.ecBlockHeight = height;
+            this.ecBlockSet = true;
+            return this;
+        }
+
+        @Override
+        public BuilderImpl ecBlockData(EcBlockData ecBlockData) {
+            this.ecBlockHeight = ecBlockData.getHeight();
+            this.ecBlockId = ecBlockData.getId();
             this.ecBlockSet = true;
             return this;
         }

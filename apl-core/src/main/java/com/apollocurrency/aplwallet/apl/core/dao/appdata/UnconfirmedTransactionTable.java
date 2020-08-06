@@ -5,16 +5,20 @@
 package com.apollocurrency.aplwallet.apl.core.dao.appdata;
 
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -27,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,18 +45,22 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
 
     private final LongKeyFactory<UnconfirmedTransaction> transactionKeyFactory;
     private int maxUnconfirmedTransactions;
-    private final Map<DbKey, UnconfirmedTransaction> transactionCache = new ConcurrentHashMap<>();
+    private final Map<DbKey, UnconfirmedTransaction> transactionCache = new HashMap<>();
     private final PriorityBlockingQueue<UnconfirmedTransaction> waitingTransactions;
-    private final Map<TransactionType, Map<String, Integer>> unconfirmedDuplicates = new ConcurrentHashMap<>();
+    private final Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> unconfirmedDuplicates = new HashMap<>();
     private final Map<Transaction, Transaction> txToBroadcastWhenConfirmed = new ConcurrentHashMap<>();
     private final Set<Transaction> broadcastedTransactions = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final TransactionBuilder transactionBuilder;
+    private final TransactionSerializer transactionSerializer;
     private final IteratorToStreamConverter<UnconfirmedTransaction> streamConverter;
 
     @Inject
     public UnconfirmedTransactionTable(LongKeyFactory<UnconfirmedTransaction> transactionKeyFactory,
-                                       PropertiesHolder propertiesHolder) {
+                                       PropertiesHolder propertiesHolder, TransactionBuilder transactionBuilder, TransactionSerializer transactionSerializer) {
         super("unconfirmed_transaction", transactionKeyFactory, false);
         this.transactionKeyFactory = transactionKeyFactory;
+        this.transactionBuilder = transactionBuilder;
+        this.transactionSerializer = transactionSerializer;
         int n = propertiesHolder.getIntProperty("apl.maxUnconfirmedTransactions");
         this.maxUnconfirmedTransactions = n <= 0 ? Integer.MAX_VALUE : n;
         this.waitingTransactions = createWaitingTransactionsQueue();
@@ -60,7 +69,21 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
 
     @Override
     public UnconfirmedTransaction load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-        return new UnconfirmedTransaction(rs);
+        try {
+            byte[] transactionBytes = rs.getBytes("transaction_bytes");
+            JSONObject prunableAttachments = null;
+            String prunableJSON = rs.getString("prunable_json");
+            if (prunableJSON != null) {
+                prunableAttachments = (JSONObject) JSONValue.parse(prunableJSON);
+            }
+            Transaction tx = transactionBuilder.newTransactionBuilder(transactionBytes, prunableAttachments).build();
+            tx.setHeight(rs.getInt("transaction_height"));
+            long arrivalTimestamp = rs.getLong("arrival_timestamp");
+            long feePerByte = rs.getLong("fee_per_byte");
+            return new UnconfirmedTransaction(tx, arrivalTimestamp, feePerByte);
+        } catch (AplException.ValidationException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
     }
 
     @Override
@@ -74,7 +97,7 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
             pstmt.setLong(++i, unconfirmedTransaction.getFeePerByte());
             pstmt.setInt(++i, unconfirmedTransaction.getExpiration());
             pstmt.setBytes(++i, unconfirmedTransaction.getCopyTxBytes());
-            JSONObject prunableJSON = unconfirmedTransaction.getPrunableAttachmentJSON();
+            JSONObject prunableJSON = transactionSerializer.getPrunableAttachmentJSON(unconfirmedTransaction);
             if (prunableJSON != null) {
                 pstmt.setString(++i, prunableJSON.toJSONString());
             } else {
@@ -140,7 +163,7 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
                 if (this.size() > maxUnconfirmedTransactions) {
                     UnconfirmedTransaction removed = remove();
                     log.debug("Dropped unconfirmed transaction above max size={}, {}",
-                        maxUnconfirmedTransactions, removed.getJSONObject().toJSONString());
+                        maxUnconfirmedTransactions, removed.getId());
                 }
                 return true;
             }
@@ -212,7 +235,7 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
         return txToBroadcastWhenConfirmed;
     }
 
-    public Map<TransactionType, Map<String, Integer>> getUnconfirmedDuplicates() {
+    public Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> getUnconfirmedDuplicates() {
         return unconfirmedDuplicates;
     }
 

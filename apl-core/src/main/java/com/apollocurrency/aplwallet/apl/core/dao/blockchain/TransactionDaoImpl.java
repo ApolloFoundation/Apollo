@@ -25,7 +25,6 @@ import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
@@ -33,14 +32,13 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureParser;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
-import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.UnsupportedTransactionVersion;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
-import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -60,16 +58,21 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT;
+
 @Slf4j
 @Singleton
 public class TransactionDaoImpl implements TransactionDao {
-    private static final TransactionRowMapper MAPPER = new TransactionRowMapper();
+    private final TransactionRowMapper mapper;
     private final DatabaseManager databaseManager;
+    private final TransactionTypeFactory typeFactory;
 
     @Inject
-    public TransactionDaoImpl(DatabaseManager databaseManager) {
+    public TransactionDaoImpl(DatabaseManager databaseManager, TransactionTypeFactory factory, TransactionRowMapper transactionRowMapper) {
         Objects.requireNonNull(databaseManager);
         this.databaseManager = databaseManager;
+        this.typeFactory = factory;
+        this.mapper = transactionRowMapper;
     }
 
     @Override
@@ -191,7 +194,7 @@ public class TransactionDaoImpl implements TransactionDao {
 
     @Override
     public Transaction loadTransaction(Connection con, ResultSet rs) throws AplException.NotValidException {
-        return MAPPER.mapWithException(rs, null);
+        return mapper.mapWithException(rs, null);
     }
 
 
@@ -243,7 +246,7 @@ public class TransactionDaoImpl implements TransactionDao {
                     long id = rs.getLong("id");
                     byte type = rs.getByte("type");
                     byte subtype = rs.getByte("subtype");
-                    TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
+                    TransactionType transactionType = typeFactory.findTransactionType(type, subtype);
                     result.add(new PrunableTransaction(id, transactionType,
                         rs.getBoolean("prunable_attachment"),
                         rs.getBoolean("prunable_plain_message"),
@@ -279,14 +282,10 @@ public class TransactionDaoImpl implements TransactionDao {
                     pstmt.setLong(++i, transaction.getBlockId());
                     pstmt.setBytes(++i, transaction.getSignature().bytes());
                     pstmt.setInt(++i, transaction.getTimestamp());
-                    pstmt.setByte(++i, transaction.getType().getType());
-                    pstmt.setByte(++i, transaction.getType().getSubtype());
+                    pstmt.setByte(++i, transaction.getType().getSpec().getType());
+                    pstmt.setByte(++i, transaction.getType().getSpec().getSubtype());
                     pstmt.setLong(++i, transaction.getSenderId());
-                    if (!transaction.shouldSavePublicKey()) {
-                        pstmt.setNull(++i, Types.BINARY);
-                    } else {
-                        pstmt.setBytes(++i, transaction.getSenderPublicKey());
-                    }
+                    pstmt.setBytes(++i, transaction.getSenderPublicKey());
                     int bytesLength = 0;
                     for (Appendix appendage : transaction.getAppendages()) {
                         bytesLength += appendage.getSize();
@@ -371,19 +370,16 @@ public class TransactionDaoImpl implements TransactionDao {
         createTransactionSelectSqlWithOrder(buf, "transaction.*", type, subtype,
             blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, executedOnly, includePrivate, height);
         buf.append(DbUtils.limitsClause(from, to)); // append 'limit offset' clause
-        Connection con = null;
-        try {
-            con = dataSource.getConnection();
+        try (Connection con = dataSource.getConnection()) {
             String sql = buf.toString();
             log.trace("getTx sql = {}\naccountId={}, from={}, to={}", sql, accountId, from, to);
             PreparedStatement pstmt = con.prepareStatement(sql);
             int i = setStatement(pstmt, accountId, numberOfConfirmations, type, subtype, blockTimestamp,
                 withMessage, phasedOnly, nonPhasedOnly, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
             DbUtils.setLimits(++i, pstmt, from, to); // // append 'limit offset' clauese values
-            return CollectionUtil.toList(getTransactions(con, pstmt));
+            return getTransactions(con, pstmt);
         } catch (SQLException e) {
             log.error("ERROR on DataSource = {}", dataSource.getDbIdentity());
-            DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -396,7 +392,7 @@ public class TransactionDaoImpl implements TransactionDao {
         if (blockTimestamp > 0) {
             buf.append("AND block_timestamp >= ? ");
         }
-        if (!includePrivate && TransactionType.findTransactionType(type, subtype) == Payment.PRIVATE) {
+        if (!includePrivate && type == PRIVATE_PAYMENT.getType() && subtype == PRIVATE_PAYMENT.getSubtype()) {
             throw new RuntimeException("None of private transactions should be retrieved!");
         }
         if (type >= 0) {
@@ -512,8 +508,8 @@ public class TransactionDaoImpl implements TransactionDao {
             }
         }
         if (!includePrivate) {
-            pstmt.setByte(++i, Payment.PRIVATE.getType());
-            pstmt.setByte(++i, Payment.PRIVATE.getSubtype());
+            pstmt.setByte(++i, PRIVATE_PAYMENT.getType());
+            pstmt.setByte(++i, PRIVATE_PAYMENT.getSubtype());
         }
         if (height < Integer.MAX_VALUE) {
             pstmt.setInt(++i, height);
@@ -533,8 +529,8 @@ public class TransactionDaoImpl implements TransactionDao {
             }
         }
         if (!includePrivate) {
-            pstmt.setByte(++i, Payment.PRIVATE.getType());
-            pstmt.setByte(++i, Payment.PRIVATE.getSubtype());
+            pstmt.setByte(++i, PRIVATE_PAYMENT.getType());
+            pstmt.setByte(++i, PRIVATE_PAYMENT.getSubtype());
         }
         if (height < Integer.MAX_VALUE) {
             pstmt.setInt(++i, height);
@@ -546,7 +542,7 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
-    public synchronized DbIterator<Transaction> getTransactions(byte type, byte subtype, int from, int to) {
+    public synchronized List<Transaction> getTransactions(byte type, byte subtype, int from, int to) {
         StringBuilder sqlQuery = new StringBuilder("SELECT * FROM transaction WHERE (type <> ? OR subtype <> ?) ");
         if (type >= 0) {
             sqlQuery.append("AND type = ? ");
@@ -556,14 +552,13 @@ public class TransactionDaoImpl implements TransactionDao {
         }
         sqlQuery.append("ORDER BY block_timestamp DESC, transaction_index DESC ");
         sqlQuery.append(DbUtils.limitsClause(from, to));
-        Connection con = null;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try {
-            con = dataSource.getConnection();
-            PreparedStatement statement = con.prepareStatement(sqlQuery.toString());
+
+        try (Connection con = dataSource.getConnection();
+            PreparedStatement statement = con.prepareStatement(sqlQuery.toString())) {
             int i = 0;
-            statement.setByte(++i, Payment.PRIVATE.getType());
-            statement.setByte(++i, Payment.PRIVATE.getSubtype());
+            statement.setByte(++i, PRIVATE_PAYMENT.getType());
+            statement.setByte(++i, PRIVATE_PAYMENT.getSubtype());
             if (type >= 0) {
                 statement.setByte(++i, type);
                 if (subtype >= 0) {
@@ -573,7 +568,6 @@ public class TransactionDaoImpl implements TransactionDao {
             DbUtils.setLimits(++i, statement, from, to);
             return getTransactions(con, statement);
         } catch (SQLException e) {
-            DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -622,8 +616,8 @@ public class TransactionDaoImpl implements TransactionDao {
         try (Connection con = dataSource.getConnection();
              PreparedStatement statement = con.prepareStatement(sqlQuery.toString())) {
             int i = 0;
-            statement.setByte(++i, Payment.PRIVATE.getType());
-            statement.setByte(++i, Payment.PRIVATE.getSubtype());
+            statement.setByte(++i, PRIVATE_PAYMENT.getType());
+            statement.setByte(++i, PRIVATE_PAYMENT.getSubtype());
             statement.setLong(++i, accountId);
             statement.setLong(++i, accountId);
             if (type >= 0) {
@@ -642,8 +636,17 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
-    public DbIterator<Transaction> getTransactions(Connection con, PreparedStatement pstmt) {
-        return new DbIterator<>(con, pstmt, this::loadTransaction);
+    public List<Transaction> getTransactions(Connection con, PreparedStatement pstmt) {
+        try {
+            ResultSet rs = pstmt.executeQuery();
+            ArrayList<Transaction> list = new ArrayList<>();
+            while (rs.next()) {
+                list.add(loadTransaction(con, rs));
+            }
+            return list;
+        } catch (SQLException | AplException.NotValidException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
     }
 
     @Override
@@ -752,7 +755,7 @@ public class TransactionDaoImpl implements TransactionDao {
             }
 
             short transactionIndex = rs.getShort("transaction_index");
-            TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
+            TransactionType transactionType = typeFactory.findTransactionType(type, subtype);
             if (transactionType == null) {
                 throw new AplException.NotValidException("Wrong transaction type/subtype value, type=" + type + " subtype=" + subtype);
             }

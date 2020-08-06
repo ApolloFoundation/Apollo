@@ -47,7 +47,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockchainProcessorState;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
@@ -71,15 +71,17 @@ import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardImporter;
-import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPhasingVoteCasting;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendixV2;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -158,22 +160,25 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final PhasingPollService phasingPollService;
     private final TransactionValidator transactionValidator;
     private final TransactionApplier transactionApplier;
+    private final TransactionBuilder transactionBuilder;
     private final TrimService trimService;
     private final ShardImporter shardImporter;
     private final AplAppStatus aplAppStatus;
     private final BlockApplier blockApplier;
     private final ShardsDownloadService shardDownloader;
     private final ShardDao shardDao;
-    private final PeersService peersService;
-    private final Blockchain blockchain;
-    private final TransactionProcessor transactionProcessor;
+    private final PrunableLoadingService prunableService;
+    private final TransactionSerializer transactionSerializer;
+    private PeersService peersService;
+    private BlockchainConfigUpdater blockchainConfigUpdater;
+    private FullTextSearchService fullTextSearchProvider;
+    private TaskDispatchManager taskDispatchManager;
+    private Blockchain blockchain;
+    private TransactionProcessor transactionProcessor;
     private final TimeService timeService;
     private final PrunableRestorationService prunableRestorationService;
     private final BlockchainProcessorState blockchainProcessorState;
     private final AccountControlPhasingService accountControlPhasingService; // lazy initialization only !
-    private final BlockchainConfigUpdater blockchainConfigUpdater;
-    private final FullTextSearchService fullTextSearchProvider;
-    private final TaskDispatchManager taskDispatchManager;
     private final BlockValidator validator;
     private final AccountService accountService;
     private final GeneratorService generatorService;
@@ -193,8 +198,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    ShardImporter importer,
                                    TaskDispatchManager taskDispatchManager, Event<List<Transaction>> txEvent,
                                    Event<BlockchainConfig> blockchainEvent,
-                                   ShardDao shardDao,
-                                   TimeService timeService,
+                                   TransactionBuilder transactionBuilder, ShardDao shardDao,
+                                   PrunableLoadingService prunableService, TransactionSerializer transactionSerializer, TimeService timeService,
                                    AccountService accountService,
                                    AccountControlPhasingService accountControlPhasingService,
                                    BlockchainConfigUpdater blockchainConfigUpdater,
@@ -219,6 +224,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.referencedTransactionService = referencedTransactionService;
         this.databaseManager = databaseManager;
         this.dexService = dexService;
+        this.transactionBuilder = transactionBuilder;
+        this.prunableService = prunableService;
+        this.transactionSerializer = transactionSerializer;
         this.networkService = getNetworkServiceExecutor();
         this.blockApplier = blockApplier;
         this.aplAppStatus = aplAppStatus;
@@ -458,7 +466,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     @Override
     public List<Transaction> getExpectedTransactions(Filter<Transaction> filter) {
-        Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
+        Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates = new HashMap<>();
         List<Transaction> result = new ArrayList<>();
         globalSync.readLock();
         try {
@@ -595,7 +603,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     throw new BlockOutOfOrderException(msg, block);
                 }
 
-                Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
+                Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates = new HashMap<>();
                 List<Transaction> validPhasedTransactions = new ArrayList<>();
                 List<Transaction> invalidPhasedTransactions = new ArrayList<>();
                 validatePhasedTransactions(block, previousLastBlock, validPhasedTransactions, invalidPhasedTransactions, duplicates);
@@ -657,7 +665,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     private void validatePhasedTransactions(Block currentBlock, Block prevBlock, List<Transaction> validPhasedTransactions, List<Transaction> invalidPhasedTransactions,
-                                            Map<TransactionType, Map<String, Integer>> duplicates) {
+                                            Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
         int height = prevBlock.getHeight();
 
         List<Transaction> transactions = new ArrayList<>(phasingPollService.getFinishingTransactions(prevBlock.getHeight() + 1));
@@ -689,7 +697,19 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         }
     }
 
-    private void validateTransactions(Block block, Block previousLastBlock, int curTime, Map<TransactionType, Map<String, Integer>> duplicates,
+    private int getPhasingStartTime(Block lastBlock) {
+        int startTime;
+        if (lastBlock.getHeight() == 0) {
+            startTime = 0;
+        } else if (blockchain.getShardInitialBlock().getHeight() == lastBlock.getHeight()) {
+            startTime = shardDao.getLastShard().getBlockTimestamps()[0];
+        } else {
+            startTime = blockchain.getBlock(lastBlock.getPreviousBlockId()).getTimestamp();
+        }
+        return startTime;
+    }
+
+    private void validateTransactions(Block block, Block previousLastBlock, int curTime, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates,
                                       boolean fullValidation) throws BlockNotAcceptedException {
         long payloadLength = 0;
         long calculatedTotalAmount = 0;
@@ -764,7 +784,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     private void accept(Block block, List<Transaction> validPhasedTransactions, List<Transaction> invalidPhasedTransactions,
-                        Map<TransactionType, Map<String, Integer>> duplicates) throws TransactionNotAcceptedException {
+                        Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) throws TransactionNotAcceptedException {
         long start = System.currentTimeMillis();
         try {
             log.debug(":accept: Accepting block: {} height: {}", block.getId(), block.getHeight());
@@ -787,7 +807,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 try {
                     transactionApplier.apply(transaction);
                     if (transaction.getTimestamp() > fromTimestamp) {
-                        for (AbstractAppendix appendage : transaction.getAppendages(true)) {
+                        for (AbstractAppendix appendage : transaction.getAppendages()) {
+                            prunableService.loadPrunable(transaction, appendage, true);
                             if ((appendage instanceof Prunable) &&
                                 !((Prunable) appendage).hasPrunableData()) {
                                 // TODO: YL check correct work with prunables
@@ -817,7 +838,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         possiblyApprovedTransactions.add(phasedTransaction);
                     }
                 });
-                if (transaction.getType() == Messaging.PHASING_VOTE_CASTING && !transaction.attachmentIsPhased()) {
+                if (transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.PHASING_VOTE_CASTING && !transaction.attachmentIsPhased()) {
                     MessagingPhasingVoteCasting voteCasting = (MessagingPhasingVoteCasting) transaction.getAttachment();
                     voteCasting.getTransactionFullHashes().forEach(hash -> {
                         PhasingPoll phasingPoll = phasingPollService.getPoll(Convert.fullHashToId(hash));
@@ -832,7 +853,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             });
             log.trace(":accept: validate Valid phasing transactions");
             validPhasedTransactions.forEach(phasedTransaction -> {
-                if (phasedTransaction.getType() == Messaging.PHASING_VOTE_CASTING) {
+                if (phasedTransaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.PHASING_VOTE_CASTING) {
                     PhasingPollResult result = phasingPollService.getResult(phasedTransaction.getId());
                     if (result != null && result.isApproved()) {
                         MessagingPhasingVoteCasting phasingVoteCasting = (MessagingPhasingVoteCasting) phasedTransaction.getAttachment();
@@ -1067,7 +1088,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     public SortedSet<UnconfirmedTransaction> selectUnconfirmedTransactions(
-        Map<TransactionType, Map<String, Integer>> duplicates, Block previousBlock, int blockTimestamp, int limit) {
+        Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates, Block previousBlock, int blockTimestamp, int limit) {
 
         List<UnconfirmedTransaction> orderedUnconfirmedTransactions = new ArrayList<>();
         DbIterator<UnconfirmedTransaction> allUnconfirmedTransactions = transactionProcessor.getAllUnconfirmedTransactions();
@@ -1126,7 +1147,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     public SortedSet<UnconfirmedTransaction> getUnconfirmedTransactions(Block previousBlock, int blockTimestamp, int limit) {
         //TODo What is duplicates list for?
-        Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
+        Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates = new HashMap<>();
         List<Transaction> phasedTransactions = phasingPollService.getFinishingTransactions(blockchain.getHeight() + 1);
         phasedTransactions.addAll(phasingPollService.getFinishingTransactionsByTime(previousBlock.getTimestamp(), blockTimestamp));
         for (Transaction phasedTransaction : phasedTransactions) {
@@ -1337,7 +1358,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                     if (currentBlock.getId() != currentBlockId || currentBlock.getHeight() > blockchain.getHeight() + 1) {
                                         throw new AplException.NotValidException("Database blocks in the wrong order!");
                                     }
-                                    Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
+                                    Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates = new HashMap<>();
                                     List<Transaction> validPhasedTransactions = new ArrayList<>();
                                     List<Transaction> invalidPhasedTransactions = new ArrayList<>();
                                     validatePhasedTransactions(currentBlock, blockchain.getLastBlock(), validPhasedTransactions, invalidPhasedTransactions, duplicates);
@@ -1353,15 +1374,15 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                         }
                                         validateTransactions(currentBlock, blockchain.getLastBlock(), curTime, duplicates, true);
                                         for (Transaction transaction : currentBlock.getOrLoadTransactions()) {
-                                            byte[] transactionBytes = transaction.bytes();
-                                            if (!Arrays.equals(transactionBytes, TransactionBuilder.newTransactionBuilder(transactionBytes).build().bytes())) {
+                                            byte[] transactionBytes = ((TransactionImpl) transaction).bytes();
+                                            if (!Arrays.equals(transactionBytes, transactionBuilder.newTransactionBuilder(transactionBytes).build().bytes())) {
                                                 throw new AplException.NotValidException("Transaction bytes cannot be parsed back to the same transaction: "
-                                                    + transaction.getJSONObject().toJSONString());
+                                                    + transactionSerializer.toJson(transaction).toJSONString());
                                             }
-                                            JSONObject transactionJSON = (JSONObject) JSONValue.parse(transaction.getJSONObject().toJSONString());
-                                            if (!Arrays.equals(transactionBytes, TransactionBuilder.newTransactionBuilder(transactionJSON).build().bytes())) {
+                                            JSONObject transactionJSON = (JSONObject) JSONValue.parse(transactionSerializer.toJson(transaction).toJSONString());
+                                            if (!Arrays.equals(transactionBytes, transactionBuilder.newTransactionBuilder(transactionJSON).build().bytes())) {
                                                 throw new AplException.NotValidException("Transaction JSON cannot be parsed back to the same transaction: "
-                                                    + transaction.getJSONObject().toJSONString());
+                                                    + transactionSerializer.toJson(transaction).toJSONString());
                                             }
                                         }
                                     }

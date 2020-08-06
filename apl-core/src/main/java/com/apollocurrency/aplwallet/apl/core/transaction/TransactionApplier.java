@@ -8,6 +8,9 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixApplier;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixApplierRegistry;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
 import javax.inject.Inject;
@@ -16,21 +19,22 @@ import javax.inject.Singleton;
 @Singleton
 public class TransactionApplier {
 
-    private BlockchainConfig blockchainConfig;
-    private ReferencedTransactionDao referencedTransactionDao;
-    private AccountService accountService;
-    private AccountPublicKeyService accountPublicKeyService;
+    private final BlockchainConfig blockchainConfig;
+    private final ReferencedTransactionDao referencedTransactionDao;
+    private final AccountService accountService;
+    private final AccountPublicKeyService accountPublicKeyService;
+    private final PrunableLoadingService prunableService;
+    private final AppendixApplierRegistry applierRegistry;
 
 
     @Inject
-    public TransactionApplier(BlockchainConfig blockchainConfig,
-                              ReferencedTransactionDao referencedTransactionDao,
-                              AccountService accountService,
-                              AccountPublicKeyService accountPublicKeyService) {
+    public TransactionApplier(BlockchainConfig blockchainConfig, ReferencedTransactionDao referencedTransactionDao, AccountService accountService, AccountPublicKeyService accountPublicKeyService, PrunableLoadingService prunableService, AppendixApplierRegistry applierRegistry) {
         this.blockchainConfig = blockchainConfig;
         this.referencedTransactionDao = referencedTransactionDao;
         this.accountService = accountService;
         this.accountPublicKeyService = accountPublicKeyService;
+        this.prunableService = prunableService;
+        this.applierRegistry = applierRegistry;
     }
 
     // returns false iff double spending
@@ -60,8 +64,13 @@ public class TransactionApplier {
         }
         for (AbstractAppendix appendage : transaction.getAppendages()) {
             if (!appendage.isPhased(transaction)) {
-                appendage.loadPrunable(transaction);
-                appendage.apply(transaction, senderAccount, recipientAccount);
+                prunableService.loadPrunable(transaction, appendage, false);
+                AppendixApplier<AbstractAppendix> applier = applierRegistry.getFor(appendage);
+                if (applier == null) {
+                    appendage.apply(transaction, senderAccount, recipientAccount);
+                } else {
+                    applier.apply(transaction, appendage, senderAccount, recipientAccount);
+                }
             }
         }
     }

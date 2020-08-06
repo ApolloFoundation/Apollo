@@ -6,8 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AddressScope;
-import com.apollocurrency.aplwallet.apl.core.transaction.ChildAccount;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.Getter;
 import org.json.simple.JSONArray;
@@ -94,11 +93,6 @@ public class ChildAccountAttachment extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
-        return ChildAccount.CREATE_CHILD;
-    }
-
-    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -120,5 +114,10 @@ public class ChildAccountAttachment extends AbstractAttachment {
             .add("childPublicKey=[" + childPublicKey.stream().map(Convert::toHexString).collect(Collectors.joining(",")) + "]")
             .add("addressScope=" + addressScope.name())
             .toString();
+    }
+
+    @Override
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
+        return TransactionTypes.TransactionTypeSpec.CHILD_ACCOUNT_CREATE;
     }
 }

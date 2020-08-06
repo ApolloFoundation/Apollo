@@ -7,21 +7,30 @@ package com.apollocurrency.aplwallet.apl.core.rest.converter;
 import com.apollocurrency.aplwallet.api.dto.UnconfirmedTransactionDTO;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
-import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import org.json.simple.JSONObject;
 
+import javax.inject.Inject;
 import java.util.Map;
 
 public class UnconfirmedTransactionConverter implements Converter<Transaction, UnconfirmedTransactionDTO> {
+    private final PrunableLoadingService prunableLoadingService;
+
+    @Inject
+    public UnconfirmedTransactionConverter(PrunableLoadingService prunableLoadingService) {
+        this.prunableLoadingService = prunableLoadingService;
+    }
+
     @Override
     public UnconfirmedTransactionDTO apply(Transaction model) {
         UnconfirmedTransactionDTO dto = new UnconfirmedTransactionDTO();
-        dto.setType(model.getType().getType());
-        dto.setSubtype(model.getType().getSubtype());
+        dto.setType(model.getType().getSpec().getType());
+        dto.setSubtype(model.getType().getSpec().getSubtype());
         dto.setPhased(model.getPhasing() != null);
         dto.setTimestamp(model.getTimestamp());
         dto.setDeadline(model.getDeadline());
@@ -32,7 +41,7 @@ public class UnconfirmedTransactionConverter implements Converter<Transaction, U
         long amountATM;
         String senderPublicKey;
 
-        if (model.getType() == Payment.PRIVATE){
+        if (model.getType().getSpec() == TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT) {
             recipientId = AccountConverter.anonymizeAccount();
             senderId = AccountConverter.anonymizeAccount();
             amountATM = AccountConverter.anonymizeBalance();
@@ -66,7 +75,8 @@ public class UnconfirmedTransactionConverter implements Converter<Transaction, U
             dto.setTransaction(model.getStringId());
         }
         JSONObject attachmentJSON = new JSONObject();
-        for (Appendix appendage : model.getAppendages(true)) {
+        for (Appendix appendage : model.getAppendages()) {
+            prunableLoadingService.loadPrunable(model, appendage, true);
             attachmentJSON.putAll(appendage.getJSONObject());
         }
         if (!attachmentJSON.isEmpty()) {

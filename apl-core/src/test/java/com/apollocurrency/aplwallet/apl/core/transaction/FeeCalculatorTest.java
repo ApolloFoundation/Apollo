@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.util.env.config.FeeRate;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,10 +29,12 @@ class FeeCalculatorTest {
     BlockchainConfig blockchainConfig;
     @Mock
     HeightConfig heightConfig;
+    @Mock
+    PrunableLoadingService prunableLoadingService;
 
     @BeforeEach
     void setUp() {
-        feeCalculator = new FeeCalculator(blockchainConfig);
+        feeCalculator = new FeeCalculator(prunableLoadingService, blockchainConfig);
     }
 
     @Test
@@ -49,14 +52,14 @@ class FeeCalculatorTest {
         long fee;
         //GIVEN
         doReturn(heightConfig).when(blockchainConfig).getConfigAtHeight(CURRENT_HEIGHT);
-        doReturn(FeeRate.DEFAULT_RATE).when(heightConfig).getFeeRate(td.TRANSACTION_1.getType().getType(), td.TRANSACTION_1.getType().getSubtype());
+        doReturn(FeeRate.DEFAULT_RATE).when(heightConfig).getFeeRate(td.TRANSACTION_1.getType().getSpec().getType(), td.TRANSACTION_1.getType().getSpec().getSubtype());
         //WHEN
         fee = feeCalculator.getMinimumFeeATM(td.TRANSACTION_1, CURRENT_HEIGHT);
         //THEN
         assertEquals(100100000000L, fee);
 
         //GIVEN
-        doReturn(FeeRate.DEFAULT_RATE).when(heightConfig).getFeeRate(td.TRANSACTION_2.getType().getType(), td.TRANSACTION_2.getType().getSubtype());
+        doReturn(FeeRate.DEFAULT_RATE).when(heightConfig).getFeeRate(td.TRANSACTION_2.getType().getSpec().getType(), td.TRANSACTION_2.getType().getSpec().getSubtype());
         //WHEN
         fee = feeCalculator.getMinimumFeeATM(td.TRANSACTION_2, CURRENT_HEIGHT);
         //THEN
@@ -68,14 +71,14 @@ class FeeCalculatorTest {
         long fee;
         //GIVEN
         doReturn(heightConfig).when(blockchainConfig).getConfigAtHeight(CURRENT_HEIGHT);
-        doReturn((short)0).when(heightConfig).getFeeRate(td.TRANSACTION_1.getType().getType(), td.TRANSACTION_1.getType().getSubtype());
+        doReturn((short)0).when(heightConfig).getFeeRate(td.TRANSACTION_1.getType().getSpec().getType(), td.TRANSACTION_1.getType().getSpec().getSubtype());
         //WHEN
         fee = feeCalculator.getMinimumFeeATM(td.TRANSACTION_1, CURRENT_HEIGHT);
         //THEN
         assertEquals(0L, fee);
 
         //GIVEN
-        doReturn((short)0).when(heightConfig).getFeeRate(td.TRANSACTION_2.getType().getType(), td.TRANSACTION_2.getType().getSubtype());
+        doReturn((short)0).when(heightConfig).getFeeRate(td.TRANSACTION_2.getType().getSpec().getType(), td.TRANSACTION_2.getType().getSpec().getSubtype());
         //WHEN
         fee = feeCalculator.getMinimumFeeATM(td.TRANSACTION_2, CURRENT_HEIGHT);
         //THEN
@@ -87,14 +90,14 @@ class FeeCalculatorTest {
         long fee;
         //GIVEN
         doReturn(heightConfig).when(blockchainConfig).getConfigAtHeight(CURRENT_HEIGHT);
-        doReturn((short)(FeeRate.DEFAULT_RATE/2)).when(heightConfig).getFeeRate(td.TRANSACTION_1.getType().getType(), td.TRANSACTION_1.getType().getSubtype());
+        doReturn((short)(FeeRate.DEFAULT_RATE/2)).when(heightConfig).getFeeRate(td.TRANSACTION_1.getType().getSpec().getType(), td.TRANSACTION_1.getType().getSpec().getSubtype());
         //WHEN
         fee = feeCalculator.getMinimumFeeATM(td.TRANSACTION_1, CURRENT_HEIGHT);
         //THEN
         assertEquals(100100000000L/2, fee);
 
         //GIVEN
-        doReturn((short)(FeeRate.DEFAULT_RATE/2)).when(heightConfig).getFeeRate(td.TRANSACTION_2.getType().getType(), td.TRANSACTION_2.getType().getSubtype());
+        doReturn((short)(FeeRate.DEFAULT_RATE/2)).when(heightConfig).getFeeRate(td.TRANSACTION_2.getType().getSpec().getType(), td.TRANSACTION_2.getType().getSpec().getSubtype());
         //WHEN
         fee = feeCalculator.getMinimumFeeATM(td.TRANSACTION_2, CURRENT_HEIGHT);
         //THEN

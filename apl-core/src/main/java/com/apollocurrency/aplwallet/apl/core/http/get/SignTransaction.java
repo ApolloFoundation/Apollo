@@ -62,7 +62,7 @@ public final class SignTransaction extends AbstractAPIRequestHandler {
 
         JSONObject response = new JSONObject();
         try {
-            Transaction transaction = builder.build(keySeed);
+            Transaction transaction = builder.build();
             signer.sign(transaction, keySeed);
             JSONObject signedTransactionJSON = JSONData.unconfirmedTransaction(transaction);
             if (validate) {
