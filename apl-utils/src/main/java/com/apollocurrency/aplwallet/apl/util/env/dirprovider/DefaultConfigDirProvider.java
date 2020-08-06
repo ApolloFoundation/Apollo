@@ -4,8 +4,6 @@
 package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
 
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Config dir provider which provide default config files locations
@@ -34,7 +32,7 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
     };
 
     protected String applicationName;
-    protected String uuid_or_part;
+    protected String chain_uuid;
     protected boolean isService;
     protected int netIndex;
 
@@ -45,15 +43,16 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
      * @param isService service mode or user mode
      * @param netIdx index of network. 0 means main net, 1,2,3 - testnets 1,2,3.
      * If index is <0, it should not be used, UUID or partial UUID should be
-     * used instead
+     * used instead @param uuid UUID of chain or few first symbols @param uuid
+     * @param uuid UUID that is chainID
      */
-    public DefaultConfigDirProvider(String applicationName, boolean isService, int netIdx, String uuid_or_part) {
+    public DefaultConfigDirProvider(String applicationName, boolean isService, int netIdx, String uuid) {
         if (applicationName == null || applicationName.trim().isEmpty()) {
             throw new IllegalArgumentException("Application name cannot be null or empty");
         }
         this.applicationName = applicationName.trim();
         this.isService = isService;
-        this.uuid_or_part = uuid_or_part;
+        this.chain_uuid = uuid;
 
         if (netIdx > CONF_DIRS.length - 1) {
             this.netIndex = CONF_DIRS.length - 1;
@@ -63,21 +62,14 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
     }
 
     @Override
-    public String searchByNamePart(String location, String namePart) {
-        String res = "";
-
-        return res;
-    }
-
-    @Override
     public String getConfigName() {
-        String res = "";
+        String res;
         if (netIndex > 0) {
             res = CONF_DIRS[netIndex];
+        } else {
+            res = chain_uuid;
         }
-
         return res;
-        //TODO: uuid or partia;l
     }
 
     @Override

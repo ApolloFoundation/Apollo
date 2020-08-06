@@ -46,16 +46,4 @@ public interface ConfigDirProvider {
      */
     public String getConfigLocation();
 
-    /**
-     * Search directory for entries that match part of name and is config entity
-     * (directory, zip or jar file)
-     *
-     * @param location directory to search
-     * @param namePart name to search for
-     * @return entity found. Usually should be empty or 1 entry. In there are
-     * more then 1 entries, it means that namePart is too short or there are
-     * several entities that match. Firs entity is tken and warning emitted
-     * Empty string means nothing found
-     */
-    public String searchByNamePart(String location, String namePart);
 }
