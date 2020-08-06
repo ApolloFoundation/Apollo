@@ -52,8 +52,10 @@ public class BlockParserImpl implements BlockParser {
             byte[] blockSignature = Convert.parseHexString((String) blockData.get("blockSignature"));
             byte[] previousBlockHash = version == 1 ? null : Convert.parseHexString((String) blockData.get("previousBlockHash"));
             Object timeoutJsonValue = blockData.get("timeout");
+
+            //TODO https://firstb.atlassian.net/browse/APL-1634
             if (generatorPublicKey == null) {
-                long generatorId = Long.parseUnsignedLong( (String)blockData.get("generatorId") );
+                long generatorId = Long.parseUnsignedLong((String) blockData.get("generatorId"));
                 generatorPublicKey = accountService.getPublicKeyByteArray(generatorId);
             }
             int timeout = !requireTimeout(version) ? 0 : ((Long) timeoutJsonValue).intValue();

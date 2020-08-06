@@ -356,23 +356,6 @@ public class TransactionDaoImpl implements TransactionDao {
         return 0L;
     }
 
-
-/*
-    @Override
-    public DbIterator<Transaction> getAllTransactions() {
-        Connection con = null;
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try {
-            con = dataSource.getConnection();
-            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM transaction ORDER BY db_id ASC");
-            return getTransactions(con, pstmt);
-        } catch (SQLException e) {
-            DbUtils.close(con);
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
-*/
-
     @Override
     public synchronized List<Transaction> getTransactions(
         TransactionalDataSource dataSource,
@@ -679,7 +662,7 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
-    public synchronized int getTransactionsCount(byte type, byte subtype,
+    public synchronized int getTransactionsCount(List<Long> accounts, byte type, byte subtype,
                                                  int startTime, int endTime,
                                                  int fromHeight, int toHeight,
                                                  String sortOrder,
@@ -688,6 +671,8 @@ public class TransactionDaoImpl implements TransactionDao {
         sqlQuery.append("WHERE 1=1 ");
 
         createSelectTransactionQuery(sqlQuery, type, subtype, startTime, endTime, fromHeight, toHeight);
+
+        addAccountsFilter(sqlQuery, accounts);
 
         log.trace("getTransactionsCount sql=[{}]", sqlQuery.toString());
 
@@ -704,7 +689,7 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
-    public synchronized List<TxReceipt> getTransactions(byte type, byte subtype,
+    public synchronized List<TxReceipt> getTransactions(List<Long> accounts, byte type, byte subtype,
                                                         int startTime, int endTime,
                                                         int fromHeight, int toHeight,
                                                         String sortOrder,
@@ -716,6 +701,8 @@ public class TransactionDaoImpl implements TransactionDao {
             "FROM transaction ");
         sqlQuery.append("WHERE 1=1 ");
         createSelectTransactionQuery(sqlQuery, type, subtype, startTime, endTime, fromHeight, toHeight);
+
+        addAccountsFilter(sqlQuery, accounts);
 
         sqlQuery.append("ORDER BY block_timestamp " + sortOrder + ", transaction_index " + sortOrder + " ");
 
@@ -731,7 +718,7 @@ public class TransactionDaoImpl implements TransactionDao {
 
             try (ResultSet rs = statement.executeQuery()) {
                 while (rs.next()) {
-                    TxReceipt receipt = parseTxReceipt(con, rs);
+                    TxReceipt receipt = parseTxReceipt(rs);
                     result.add(receipt);
                 }
             }
@@ -741,7 +728,7 @@ public class TransactionDaoImpl implements TransactionDao {
         }
     }
 
-    private TxReceipt parseTxReceipt(Connection connection, ResultSet rs) throws AplException.NotValidException {
+    private TxReceipt parseTxReceipt(ResultSet rs) throws AplException.NotValidException {
         try {
             byte type = rs.getByte("type");
             byte subtype = rs.getByte("subtype");
@@ -809,11 +796,9 @@ public class TransactionDaoImpl implements TransactionDao {
         }
         if (startTime > 0) {
             buf.append("AND block_timestamp >= ? ");
-            buf.append("AND timestamp >= ? ");
         }
         if (endTime > 0) {
             buf.append("AND block_timestamp <= ? ");
-            buf.append("AND timestamp <= ? ");
         }
         if (fromHeight > 0) {
             buf.append("AND height >= ? ");
@@ -825,21 +810,25 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     private StringBuilder addAccountsFilter(StringBuilder buf, List<Long> accounts) {
-        if (accounts != null && accounts.size() > 0) {
-            StringBuilder accBuf = new StringBuilder("[");
-            boolean first = true;
-            for (Long accountId : accounts) {
-                if (accountId != 0) {
-                    if (!first) {
-                        accBuf.append(",");
-                    } else {
-                        first = false;
+        if (accounts != null && !accounts.isEmpty()) {
+            if (accounts.size() > 1) {
+                StringBuilder accBuf = new StringBuilder("[");
+                boolean first = true;
+                for (Long accountId : accounts) {
+                    if (accountId != 0) {
+                        if (!first) {
+                            accBuf.append(",");
+                        } else {
+                            first = false;
+                        }
+                        accBuf.append(accountId);
                     }
-                    accBuf.append(accountId);
                 }
+                accBuf.append("]");
+                buf.append("AND ( sender_id IN ").append(accBuf).append(" OR recipient_id IN ").append(accBuf).append(")");
+            } else {
+                buf.append("AND sender_id=").append(accounts.get(0)).append(" OR recipient_id=").append(accounts.get(0));
             }
-            accBuf.append("]");
-            buf.append("AND ( sender_id IN ").append(accBuf).append(" OR recipient_id IN ").append(accBuf).append(")");
         }
         return buf;
     }
@@ -856,10 +845,8 @@ public class TransactionDaoImpl implements TransactionDao {
         }
         if (startTime > 0) {
             pstmt.setInt(++i, startTime);
-            pstmt.setInt(++i, startTime);
         }
         if (endTime > 0) {
-            pstmt.setInt(++i, endTime);
             pstmt.setInt(++i, endTime);
         }
         if (fromHeight > 0) {

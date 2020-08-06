@@ -13,7 +13,7 @@ import java.util.Objects;
 public class BaseResponse {
     private static final String PROTOCOL_VERSION = "2";
     private String protocol = PROTOCOL_VERSION;
-    private Long requestProcessingTime = null;
+    private Long requestProcessingTime = 0L;
 
     /**
      * Protocol version

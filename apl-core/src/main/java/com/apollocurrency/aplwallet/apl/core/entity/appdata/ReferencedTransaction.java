@@ -6,17 +6,20 @@ package com.apollocurrency.aplwallet.apl.core.entity.appdata;
 
 import java.util.Objects;
 
-public class ReferencedTransaction {
-    private Long dbId;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
+
+public class ReferencedTransaction extends DerivedEntity {
+//    private Long dbId;
     private Long transactionId;
     private Long referencedTransactionId;
     private Integer height;
 
     public ReferencedTransaction(Long dbId, Long transactionId, Long referencedTransactionId, Integer height) {
-        this.dbId = dbId;
+        super(dbId, height);
+//        this.dbId = dbId;
         this.transactionId = transactionId;
         this.referencedTransactionId = referencedTransactionId;
-        this.height = height;
+//        this.height = height;
     }
 
     @Override
@@ -24,7 +27,7 @@ public class ReferencedTransaction {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ReferencedTransaction that = (ReferencedTransaction) o;
-        return Objects.equals(dbId, that.dbId) &&
+        return Objects.equals(getDbId(), that.getDbId()) &&
             Objects.equals(transactionId, that.transactionId) &&
             Objects.equals(referencedTransactionId, that.referencedTransactionId) &&
             Objects.equals(height, that.height);
@@ -32,9 +35,10 @@ public class ReferencedTransaction {
 
     @Override
     public int hashCode() {
-        return Objects.hash(dbId, transactionId, referencedTransactionId, height);
+        return Objects.hash(getDbId(), transactionId, referencedTransactionId, height);
     }
 
+/*
     public Long getDbId() {
         return dbId;
     }
@@ -42,6 +46,7 @@ public class ReferencedTransaction {
     public void setDbId(Long dbId) {
         this.dbId = dbId;
     }
+*/
 
     public Long getTransactionId() {
         return transactionId;
@@ -59,6 +64,7 @@ public class ReferencedTransaction {
         this.referencedTransactionId = referencedTransactionId;
     }
 
+/*
     public Integer getHeight() {
         return height;
     }
@@ -66,4 +72,5 @@ public class ReferencedTransaction {
     public void setHeight(Integer height) {
         this.height = height;
     }
+*/
 }

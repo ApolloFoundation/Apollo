@@ -63,7 +63,8 @@ public class MSReserveIncreaseTransactionType extends MonetarySystemTransactionT
         if (attachment.getAmountPerUnitATM() <= 0) {
             throw new AplException.NotValidException("Reserve increase amount must be positive: " + attachment.getAmountPerUnitATM());
         }
-        CurrencyType.validate(currencyService.getCurrency(attachment.getCurrencyId()), transaction);
+        Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
+        currencyService.validate(currency, transaction);
     }
 
     @Override

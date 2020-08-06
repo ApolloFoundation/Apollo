@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.prunable.impl;
 
+import com.apollocurrency.aplwallet.api.p2p.request.GetTransactionsRequest;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
@@ -26,12 +27,12 @@ import com.apollocurrency.aplwallet.apl.util.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -125,13 +126,11 @@ public class PrunableRestorationServiceImpl implements PrunableRestorationServic
             log.debug("Cannot find any archive peers");
             return null;
         }
-        JSONObject json = new JSONObject();
-        JSONArray requestList = new JSONArray();
-        requestList.add(Long.toUnsignedString(transactionId));
-        json.put("requestType", "getTransactions");
-        json.put("transactionIds", requestList);
-        json.put("chainId", blockchainConfig.getChain().getChainId());
-        JSONStreamAware request = JSON.prepareRequest(json);
+
+        List<String> transactionIds = new ArrayList<>();
+        transactionIds.add(Long.toUnsignedString(transactionId));
+
+        GetTransactionsRequest req = new GetTransactionsRequest(transactionIds, blockchainConfig.getChain().getChainId());
         for (Peer peer : peersList) {
             if (peer.getState() != PeerState.CONNECTED) {
                 peersService.connectPeer(peer);
@@ -142,7 +141,8 @@ public class PrunableRestorationServiceImpl implements PrunableRestorationServic
             log.debug("Connected to archive peer " + peer.getHost());
             JSONObject response;
             try {
-                response = peer.send(request, blockchainConfig.getChain().getChainId());
+                //TODO https://firstb.atlassian.net/browse/APL-1633
+                response = peer.send(JSON.getMapper().convertValue(req, JSONObject.class), blockchainConfig.getChain().getChainId());
             } catch (PeerNotConnectedException ex) {
                 response = null;
             }

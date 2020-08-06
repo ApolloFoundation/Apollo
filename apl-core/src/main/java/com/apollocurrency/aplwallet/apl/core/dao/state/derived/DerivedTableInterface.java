@@ -9,12 +9,14 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
+
 /**
  * Common derived interface functions. It supports rollback, truncate, trim.
  *
  * @author yuriy.larin
  */
-public interface DerivedTableInterface<T> {
+public interface DerivedTableInterface<T extends DerivedEntity> {
 
     /**
      * Remove all records from the derived table above the height.

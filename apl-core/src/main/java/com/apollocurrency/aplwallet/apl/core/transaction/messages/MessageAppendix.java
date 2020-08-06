@@ -104,7 +104,7 @@ public class MessageAppendix extends AbstractAppendix {
 
     @Override
     public void validate(Transaction transaction, int blockHeight) throws AplException.ValidationException {
-        if (message.length > Constants.MAX_ARBITRARY_MESSAGE_LENGTH) {
+        if (message.length > lookupBlockchainConfig().getCurrentConfig().getMaxArbitraryMessageLength()) {
             throw new AplException.NotValidException("Invalid arbitrary message length: " + message.length);
         }
     }

@@ -7,8 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.service.fulltext;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -20,11 +19,11 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Set;
 
+@Slf4j
 @Singleton
 @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
 public class FullTextSearchServiceImpl implements FullTextSearchService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(FullTextSearchServiceImpl.class);
     private FullTextSearchEngine ftl;
     private Set<String> indexTables;
     private String schemaName;
@@ -107,7 +106,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
                 }
             }
             if (triggersExist && alreadyInitialized) {
-                LOG.info("Fulltext support is already initialized");
+                log.info("Fulltext support is already initialized");
                 return;
             }
             //
@@ -132,14 +131,14 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             stmt.execute("DROP ALIAS IF EXISTS FTL_CREATE_INDEX");
             stmt.execute("DROP ALIAS IF EXISTS FTL_DROP_INDEX");
 
-            LOG.info("H2 fulltext function aliases dropped");
+            log.info("H2 fulltext function aliases dropped");
             //
             // Create our schema and table
             //
             stmt.execute("CREATE SCHEMA IF NOT EXISTS FTL");
             stmt.execute("CREATE TABLE IF NOT EXISTS FTL.INDEXES "
                 + "(SCHEMA VARCHAR, \"TABLE\" VARCHAR, COLUMNS VARCHAR, PRIMARY KEY(SCHEMA, \"TABLE\"))");
-            LOG.info(" fulltext schema created");
+            log.info(" fulltext schema created");
             //
             // Drop existing triggers and create our triggers.  H2 will initialize the trigger
             // when it is created.  H2 has already initialized the existing triggers and they
@@ -164,9 +163,9 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
 //            // Create our function aliases
 //            //
             stmt.execute("CREATE ALIAS FTL_SEARCH NOBUFFER FOR \"" + FullTextStoredProcedures.class.getName() + ".search\"");
-            LOG.info("Fulltext aliases created");
+            log.info("Fulltext aliases created");
         } catch (SQLException exc) {
-            LOG.error("Unable to initialize fulltext search support", exc);
+            log.error("Unable to initialize fulltext search support", exc);
             throw new RuntimeException(exc.toString(), exc);
         }
     }
@@ -206,7 +205,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
         try {
             ftl.shutdown();
         } catch (Exception ex) {
-            LOG.error(ex.getMessage(), ex);
+            log.error(ex.getMessage(), ex);
         }
     }
 
@@ -216,7 +215,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
         //
         TableData tableData = DbUtils.getTableData(conn, tableName, schemaName);
         if (tableData.getDbIdColumnPosition() == -1) {
-            LOG.debug("Table {} has not dbId column", tableName);
+            log.debug("Table {} has not dbId column", tableName);
             return;
         }
         StringBuilder sb = new StringBuilder();
@@ -252,7 +251,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
 
     private void reindexAll(Connection conn, Set<String> tables, String schema) throws SQLException {
         long start = System.currentTimeMillis();
-        LOG.info("Rebuilding Lucene search index");
+        log.info("Rebuilding Lucene search index");
         try {
             //
             // Delete the current Lucene index
@@ -263,14 +262,14 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             //
             for (String tableName : tables) {
                 long startTable = System.currentTimeMillis();
-                LOG.debug("Reindexing {}", tableName);
+                log.debug("Reindexing {}", tableName);
                 reindex(conn, tableName, schema);
-                LOG.debug("Reindexing {} DONE in '{}' ms", tableName, System.currentTimeMillis() - startTable);
+                log.debug("Reindexing {} DONE in '{}' ms", tableName, System.currentTimeMillis() - startTable);
             }
         } catch (SQLException exc) {
             throw new SQLException("Unable to rebuild the Lucene index", exc);
         }
-        LOG.info("Rebuilding Lucene search index DONE in '{}' ms", System.currentTimeMillis() - start);
+        log.info("Rebuilding Lucene search index DONE in '{}' ms", System.currentTimeMillis() - start);
     }
 
 
@@ -290,7 +289,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
         final String fullTextSearchColumns
     ) throws SQLException {
         if (fullTextSearchColumns != null) {
-            LOG.debug("Creating search index on {} ({})", table, fullTextSearchColumns);
+            log.debug("Creating search index on {} ({})", table, fullTextSearchColumns);
             String table1 = table.toUpperCase();
             String upperSchema = schemaName.toUpperCase();
             String upperTable = table1.toUpperCase();
@@ -316,9 +315,9 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             //
             try {
                 reindex(con, upperTable, schemaName);
-                LOG.info("Lucene search index created for table " + tableName);
+                log.info("Lucene search index created for table " + tableName);
             } catch (SQLException exc) {
-                LOG.error("Unable to create Lucene search index for table " + tableName);
+                log.error("Unable to create Lucene search index for table " + tableName);
                 throw new SQLException("Unable to create Lucene search index for table " + tableName, exc);
             }
         }

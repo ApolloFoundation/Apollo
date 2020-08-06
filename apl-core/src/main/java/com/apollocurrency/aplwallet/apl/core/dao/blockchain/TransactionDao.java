@@ -73,13 +73,13 @@ public interface TransactionDao {
 
     List<Transaction> getTransactions(Connection con, PreparedStatement pstmt);
 
-    int getTransactionsCount(byte type, byte subtype,
+    int getTransactionsCount(List<Long> accounts, byte type, byte subtype,
                              int startTime, int endTime,
                              int fromHeight, int toHeight,
                              String sortOrder,
                              int from, int to);
 
-    List<TxReceipt> getTransactions(byte type, byte subtype,
+    List<TxReceipt> getTransactions(List<Long> accounts, byte type, byte subtype,
                                     int startTime, int endTime,
                                     int fromHeight, int toHeight,
                                     String sortOrder,

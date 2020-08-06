@@ -6,7 +6,9 @@ package com.apollocurrency.aplwallet.apl.core.dao.prunable;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.tagged.TaggedDataMapper;
+import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.PrunableDbTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
@@ -31,7 +33,8 @@ import java.util.Map;
  * and change default behavior for rollback on scan to do not clear values, which cannot be restored
  */
 @Singleton
-public class TaggedDataDao extends PrunableDbTable<TaggedData> {
+@DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
+public class TaggedDataDao extends PrunableDbTable<TaggedData> implements SearchableTableInterface<TaggedData> {
 
     private static final String DB_TABLE = "tagged_data";
     private static final String FULL_TEXT_SEARCH_COLUMNS = "name,description,tags";
@@ -131,7 +134,7 @@ public class TaggedDataDao extends PrunableDbTable<TaggedData> {
     }
 
     public DbIterator<TaggedData> searchData(String query, String channel, long accountId, int from, int to) {
-        return super.search(query, getDbClause(channel, accountId), from, to,
+        return search(query, getDbClause(channel, accountId), from, to,
             " ORDER BY ft.score DESC, tagged_data.block_timestamp DESC, tagged_data.db_id DESC ");
     }
 
@@ -176,6 +179,35 @@ public class TaggedDataDao extends PrunableDbTable<TaggedData> {
                 return !rs.next();
             }
         } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    @Override
+    public final DbIterator<TaggedData> search(String query, DbClause dbClause, int from, int to) {
+        return search(query, dbClause, from, to, " ORDER BY ft.score DESC ");
+    }
+
+    @Override
+    public final DbIterator<TaggedData> search(String query, DbClause dbClause, int from, int to, String sort) {
+        Connection con = null;
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try {
+            con = dataSource.getConnection();
+            @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
+            PreparedStatement pstmt = con.prepareStatement("SELECT " + table + ".*, ft.score FROM " + table +
+                ", ftl_search('PUBLIC', '" + table + "', ?, 2147483647, 0) ft "
+                + " WHERE " + table + ".db_id = ft.keys[1] "
+                + (multiversion ? " AND " + table + ".latest = TRUE " : " ")
+                + " AND " + dbClause.getClause() + sort
+                + DbUtils.limitsClause(from, to));
+            int i = 0;
+            pstmt.setString(++i, query);
+            i = dbClause.set(pstmt, ++i);
+            i = DbUtils.setLimits(i, pstmt, from, to);
+            return getManyBy(con, pstmt, true);
+        } catch (SQLException e) {
+            DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
         }
     }

@@ -67,6 +67,8 @@ public interface TransactionProcessor {
 
     void processWaitingTransactions();
 
+    boolean isWaitingTransactionsCacheFull();
+
     void processPeerTransactions(JSONArray transactionsData) throws AplException.NotValidException;
 
     void processTransaction(UnconfirmedTransaction unconfirmedTransaction) throws AplException.ValidationException;

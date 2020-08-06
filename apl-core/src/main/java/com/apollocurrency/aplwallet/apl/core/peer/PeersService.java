@@ -150,7 +150,7 @@ public class PeersService {
     Set<String> knownBlacklistedPeers;
     boolean shutdown = false;
     boolean suspend = false;
-    private List<Peer.Service> myServices;
+    private List<Peer.Service> myServices = new ArrayList<>();
     private BlockchainState currentBlockchainState;
     private JSONStreamAware myPeerInfoRequest;
     private JSONStreamAware myPeerInfoResponse;

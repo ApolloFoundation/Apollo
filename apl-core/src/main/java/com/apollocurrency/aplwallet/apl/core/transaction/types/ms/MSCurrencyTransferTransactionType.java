@@ -20,6 +20,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyTransfer;
 import org.json.simple.JSONObject;
 
@@ -75,7 +76,7 @@ public class MSCurrencyTransferTransactionType extends MonetarySystemTransaction
             throw new AplException.NotValidException("Currency transfer to genesis account not allowed");
         }
         Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
-        CurrencyType.validate(currency, transaction);
+        currencyService.validate(currency, transaction);
         if (!currencyService.isActive(currency)) {
             throw new AplException.NotCurrentlyValidException("Currency not currently active: " + attachment.getJSONObject());
         }

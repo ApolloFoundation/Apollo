@@ -58,6 +58,7 @@ import com.apollocurrency.aplwallet.apl.core.files.shards.ShardsDownloadService;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecision;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.core.peer.parser.GetNextBlocksResponseParser;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
@@ -182,6 +183,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final AccountService accountService;
     private final GeneratorService generatorService;
     private final BlockParser blockParser;
+    private final GetNextBlocksResponseParser getNextBlocksResponseParser;
 
     @Inject
     public BlockchainProcessorImpl(PropertiesHolder propertiesHolder, BlockchainConfig blockchainConfig,
@@ -207,7 +209,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    TransactionProcessor transactionProcessor,
                                    FullTextSearchService fullTextSearchProvider,
                                    GeneratorService generatorService,
-                                   BlockParser blockParser) {
+                                   BlockParser blockParser, GetNextBlocksResponseParser getNextBlocksResponseParser) {
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder);
         this.blockchainConfig = blockchainConfig;
         this.validator = validator;
@@ -247,6 +249,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.blockchainProcessorState = new BlockchainProcessorState();
         this.generatorService = generatorService;
         this.blockParser = blockParser;
+        this.getNextBlocksResponseParser = getNextBlocksResponseParser;
 
         configureBackgroundTasks();
     }
@@ -315,7 +318,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 .task(new GetMoreBlocksThread(this, blockchainProcessorState,
                     blockchainConfig, blockchain, peersService,
                     globalSync, timeService, prunableRestorationService,
-                    networkService, propertiesHolder, transactionProcessor, blockParser)
+                    networkService, propertiesHolder, transactionProcessor, getNextBlocksResponseParser)
                 )
                 .build();
 

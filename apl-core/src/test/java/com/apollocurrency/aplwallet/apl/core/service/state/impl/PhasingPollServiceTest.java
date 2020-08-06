@@ -159,7 +159,7 @@ public class PhasingPollServiceTest {
         ptd = new PhasingTestData();
         btd = new BlockTestData();
 
-        blockchainConfig.setCurrentConfig(new HeightConfig(new BlockchainProperties(1, 1, 1, 1, 1, 1, 1L)));
+        blockchainConfig.setCurrentConfig(new HeightConfig(new BlockchainProperties(1, 1, 1, 1, 1, 1, 1, 1L)));
     }
 
     @Test

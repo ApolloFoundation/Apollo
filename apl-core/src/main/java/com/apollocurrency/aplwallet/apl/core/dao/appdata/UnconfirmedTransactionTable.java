@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.appdata;
 
+import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
@@ -36,6 +37,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.PriorityBlockingQueue;
+import java.util.stream.Stream;
 
 @Slf4j
 @Singleton
@@ -50,6 +52,7 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
     private final Set<Transaction> broadcastedTransactions = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final TransactionBuilder transactionBuilder;
     private final TransactionSerializer transactionSerializer;
+    private final IteratorToStreamConverter<UnconfirmedTransaction> streamConverter;
 
     @Inject
     public UnconfirmedTransactionTable(LongKeyFactory<UnconfirmedTransaction> transactionKeyFactory,
@@ -61,6 +64,7 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
         int n = propertiesHolder.getIntProperty("apl.maxUnconfirmedTransactions");
         this.maxUnconfirmedTransactions = n <= 0 ? Integer.MAX_VALUE : n;
         this.waitingTransactions = createWaitingTransactionsQueue();
+        this.streamConverter = new IteratorToStreamConverter<>();
     }
 
     @Override
@@ -189,6 +193,10 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
         }
     }
 
+    public Stream<UnconfirmedTransaction> getAllUnconfirmedTransactions() {
+        return streamConverter.convert(this.getAll(0, -1));
+    }
+
     public List<Long> getAllUnconfirmedTransactionIds() {
         List<Long> result = new ArrayList<>();
         try (Connection con = databaseManager.getDataSource().getConnection();
@@ -213,6 +221,10 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
 
     public int getWaitingTransactionsCacheSize() {
         return waitingTransactions.size();
+    }
+
+    public boolean isWaitingTransactionsCacheFull() {
+        return waitingTransactions.size() >= maxUnconfirmedTransactions;
     }
 
     public Collection<UnconfirmedTransaction> getWaitingTransactionsUnmodifiedCollection() {

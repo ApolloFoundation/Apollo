@@ -87,7 +87,7 @@ public class MSPublishExchangeOfferTransactiionType extends MonetarySystemTransa
             throw new AplException.NotCurrentlyValidException("Expiration height must be after transaction execution height");
         }
         Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
-        CurrencyType.validate(currency, transaction);
+        currencyService.validate(currency, transaction);
         if (!currencyService.isActive(currency)) {
             throw new AplException.NotCurrentlyValidException("Currency not currently active: " + attachment.getJSONObject());
         }

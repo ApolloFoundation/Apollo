@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
@@ -40,7 +41,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
+public abstract class DerivedDbTable<T extends DerivedEntity> implements DerivedTableInterface<T> {
 
     protected final String table;
     protected DatabaseManager databaseManager;

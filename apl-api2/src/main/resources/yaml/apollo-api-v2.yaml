@@ -367,6 +367,8 @@ paths:
                 $ref: '#/components/schemas/TxReceipt'
         400:
           $ref: '#/components/responses/BadRequest'
+        409:
+          $ref: '#/components/responses/ConflictResource'
         500:
           $ref: '#/components/responses/ServerError'
   /@@transaction/batch:
@@ -912,6 +914,26 @@ components:
     QueryObject:
       type: object
       properties:
+        type:
+          description: |
+            The transaction type, it's an optional parameter and can be missed or specified negative value to avoid
+            filtering by that criteria.
+            There are eleven types:
+              PAYMENT = 0;
+              MESSAGING = 1;
+              COLORED_COINS = 2;
+              DIGITAL_GOODS = 3;
+              ACCOUNT_CONTROL = 4;
+              MONETARY_SYSTEM = 5;
+              DATA = 6;
+              SHUFFLING = 7;
+              UPDATE = 8;
+              DEX = 9;
+              CHILD_ACCOUNT = 10;
+          type: integer
+          format: int8
+          example: 0
+          default: -1
         accounts:
           description: Exactly all items.
           nullable: true
@@ -961,6 +983,11 @@ components:
         - $ref: '#/components/schemas/BaseResponse'
         - type: object
           properties:
+            count:
+              type: integer
+              format: int32
+              description: Count of result items
+              example: 345
             result:
               type: array
               items:
@@ -1073,6 +1100,16 @@ components:
           type: integer
           format: int64
           example: 12
+          default: 0
+        errorCode:
+          description: Error code on new API. null or 0 means success, no error.
+          type: integer
+          format: int32
+          example: 12
+        errorDescription:
+          description: Textual error description, e.g. exception message, etc that could be displayed to user
+          type: string
+          example: 'The mandatory parameter ''id'' is not specified.'
 
     ListResponse:
       allOf:
@@ -1114,6 +1151,10 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
+    ConflictResource:
+      description: |
+        The request could not be completed due to a conflict with the current state of the resource.
+        The resource is busy and the request might be reissued later.
     ServerError:
       description: Server error - internal server error
       content:

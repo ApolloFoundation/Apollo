@@ -186,6 +186,6 @@ class TransactionApiServiceImplTest {
         Response response = transactionApiService.getTxById(txId, securityContext);
         //THEN
         ErrorResponse receipt = (ErrorResponse) response.getEntity();
-        assertTrue(receipt.getErrorDescription().contains("Cant't parse transaction id"));
+        assertTrue(receipt.getErrorDescription().contains("Can't parse transaction id"));
     }
 }

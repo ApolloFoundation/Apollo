@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeAttachment;
 
 public abstract class MonetarySystemExchangeTransactionType extends MonetarySystemTransactionType {
@@ -25,7 +26,7 @@ public abstract class MonetarySystemExchangeTransactionType extends MonetarySyst
             throw new AplException.NotValidException("Invalid exchange: " + attachment.getJSONObject());
         }
         Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
-        CurrencyType.validate(currency, transaction);
+        currencyService.validate(currency, transaction);
         if (!currencyService.isActive(currency)) {
             throw new AplException.NotCurrentlyValidException("Currency not active: " + attachment.getJSONObject());
         }

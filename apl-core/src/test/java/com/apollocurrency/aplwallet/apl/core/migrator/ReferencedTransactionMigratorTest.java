@@ -88,7 +88,7 @@ class ReferencedTransactionMigratorTest {
             stmt.executeUpdate("update referenced_transaction set height = -1 where db_id >= 40");
         }
         List<ReferencedTransaction> notMigrated = CollectionUtil.toList(referencedTransactionDao.getManyBy(new DbClause.LongClause("db_id", DbClause.Op.GTE, 40), 0, Integer.MAX_VALUE));
-        notMigrated.forEach(rtx -> assertEquals(-1, rtx.getHeight().intValue()));
+        notMigrated.forEach(rtx -> assertEquals(-1, rtx.getHeight()));
 
         migrator.migrate();
 

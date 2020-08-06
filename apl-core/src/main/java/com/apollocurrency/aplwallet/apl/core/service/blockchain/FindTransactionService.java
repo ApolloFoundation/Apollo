@@ -35,24 +35,22 @@ public interface FindTransactionService {
     Optional<Transaction> findUnconfirmedTransaction(long transactionId);
 
     /**
-     * Returns list of transactions saved in the blockchain during the time interval
+     * Returns list of transactions saved in the blockchain given query object
      *
-     * @param timeStart the start of time interval
-     * @param timeEnd   the end of time interval
+     * @param query the transaction filter object
      * @return the list of transaction objects
      */
-    List<TxReceipt> getTransactionsByPeriod(int timeStart, int timeEnd, String orderBy);
+    List<TxReceipt> getConfirmedTransactionsByQuery(AplQueryObject query);
 
-    List<TxReceipt> getTransactionsByQuery(AplQueryObject query);
+    List<TxReceipt> getTransactionsByQuery(AplQueryObject query, boolean includeUnconfirmed);
 
     /**
-     * Returns count of transactions saved in the blockchain during the time interval
+     * Returns count of transactions saved in the blockchain given query object
      *
-     * @param timeStart the start of time interval
-     * @param timeEnd   the end of time interval
+     * @param query the transaction filter object
      * @return the list of transaction objects
      */
-    long getTransactionsCountByPeriod(int timeStart, int timeEnd, String orderBy);
+    long getConfirmedTransactionsCountByQuery(AplQueryObject query);
 
-    long getTransactionsCountByQuery(AplQueryObject query);
+    long getTransactionsCountByQuery(AplQueryObject query, boolean includeUnconfirmed);
 }

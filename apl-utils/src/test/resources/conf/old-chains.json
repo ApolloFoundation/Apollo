@@ -24,27 +24,26 @@
       {
         "height": 0,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 60,
         "maxBlockTimeLimit": 67,
         "minBlockTimeLimit": 53,
         "maxBalance": 30000000000,
-        "consensus":
-        {
+        "consensus": {
           "type": "POS"
         }
       },
       {
         "height": 2000,
         "maxNumberOfTransactions": 300,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 2,
         "maxBlockTimeLimit": 4,
         "minBlockTimeLimit": 1,
         "maxBalance": 30000000000,
-        "consensus":
-        {
+        "consensus": {
           "type": "POS",
-          "adaptiveForgingSettings":
-          {
+          "adaptiveForgingSettings": {
             "enabled": "true",
             "adaptiveBlockTime": 60
           }
@@ -53,16 +52,15 @@
       {
         "height": 42300,
         "maxNumberOfTransactions": 300,
+        "maxArbitraryMessageLength": 160,
         "maxNumberOfChildAccounts": 10,
         "blockTime": 2,
         "maxBlockTimeLimit": 4,
         "minBlockTimeLimit": 1,
         "maxBalance": 30000000000,
-        "consensus":
-        {
+        "consensus": {
           "type": "POS",
-          "adaptiveForgingSettings":
-          {
+          "adaptiveForgingSettings": {
             "enabled": "true",
             "adaptiveBlockTime": 10
           }

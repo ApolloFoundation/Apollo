@@ -5,17 +5,19 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.api.p2p.FileChunk;
 import com.apollocurrency.aplwallet.api.p2p.FileChunkInfo;
-import com.apollocurrency.aplwallet.api.p2p.FileChunkRequest;
-import com.apollocurrency.aplwallet.api.p2p.FileChunkResponse;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
-import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfoRequest;
-import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfoResponse;
 import com.apollocurrency.aplwallet.api.p2p.ShardingInfo;
-import com.apollocurrency.aplwallet.api.p2p.ShardingInfoRequest;
-import com.apollocurrency.aplwallet.api.p2p.ShardingInfoResponse;
+import com.apollocurrency.aplwallet.api.p2p.request.FileChunkRequest;
+import com.apollocurrency.aplwallet.api.p2p.request.FileDownloadInfoRequest;
+import com.apollocurrency.aplwallet.api.p2p.request.ShardingInfoRequest;
+import com.apollocurrency.aplwallet.api.p2p.respons.FileChunkResponse;
+import com.apollocurrency.aplwallet.api.p2p.respons.FileDownloadInfoResponse;
+import com.apollocurrency.aplwallet.api.p2p.respons.ShardingInfoResponse;
+import com.apollocurrency.aplwallet.apl.core.peer.parser.FileChunkResponseParser;
+import com.apollocurrency.aplwallet.apl.core.peer.parser.FileDownloadInfoResponseParser;
+import com.apollocurrency.aplwallet.apl.core.peer.parser.ShardingInfoResponseParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
-import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,31 +60,28 @@ public class PeerClient {
             log.debug("Peer: {} is not connected", peer.getAnnouncedAddress());
             return null;
         }
-        FileDownloadInfoRequest rq = new FileDownloadInfoRequest();
+        FileDownloadInfoRequest rq = new FileDownloadInfoRequest(UUID.fromString(PeersService.myPI.getChainId()));
         rq.fileId = entityId;
         rq.full = true;
-        JSONObject req = mapper.convertValue(rq, JSONObject.class);
-        JSONObject resp;
+        FileDownloadInfoResponse resp;
         try {
-            resp = peer.send(req, UUID.fromString(PeersService.myPI.getChainId()));
+            resp = peer.send(rq, new FileDownloadInfoResponseParser());
         } catch (PeerNotConnectedException ex) {
             resp = null;
         }
+
         if (resp == null) {
             log.debug("NULL FileInfo response from peer: {}", peer.getAnnouncedAddress());
-        } else {
-            log.trace("getFileInfo() resp = {}", resp.toJSONString());
+
+            resp = new FileDownloadInfoResponse();
+            resp.errorCode = -3;
+            resp.error = "Null returned from peer";
         }
-        FileDownloadInfoResponse res = mapper.convertValue(resp, FileDownloadInfoResponse.class);
-        if (res == null) {
-            res = new FileDownloadInfoResponse();
-            res.errorCode = -3;
-            res.error = "Null returned from peer";
+
+        if (resp.errorCode != 0 || resp.error != null) {
+            log.debug("Error code: {}  peer: {} file: {} error: {}", resp.errorCode, peer.getAnnouncedAddress(), entityId, resp.error);
         }
-        if (res.errorCode != 0 || res.error != null) {
-            log.debug("Error code: {}  peer: {} file: {} error: {}", res.errorCode, peer.getAnnouncedAddress(), entityId, res.error);
-        }
-        return res.downloadInfo;
+        return resp.downloadInfo;
     }
 
     public FileChunk downloadChunk(FileChunkInfo fci) {
@@ -92,25 +91,22 @@ public class PeerClient {
             return null;
         }
         FileChunk fc;
-        FileChunkRequest rq = new FileChunkRequest();
-        rq.fileId = fci.fileId;
-        rq.id = fci.chunkId;
-        rq.offset = fci.offset;
-        rq.size = fci.size;
-        JSONObject req = mapper.convertValue(rq, JSONObject.class);
-        JSONObject resp;
+        FileChunkRequest rq = new FileChunkRequest(UUID.fromString(PeersService.myPI.getChainId()));
+        rq.setFileId(fci.fileId);
+        rq.setId(fci.chunkId);
+        rq.setOffset(fci.offset);
+        rq.setSize(fci.size);
+
+        FileChunkResponse resp;
         try {
-            resp = peer.send(req, UUID.fromString(PeersService.myPI.getChainId()));
+            resp = peer.send(rq, new FileChunkResponseParser());
         } catch (PeerNotConnectedException ex) {
-            resp = null;
-        }
-        if (resp == null) {
             log.debug("NULL FileInfo response from peer: {}", peer.getAnnouncedAddress());
             return null;
         }
-        FileChunkResponse res = mapper.convertValue(resp, FileChunkResponse.class);
-        if (res.errorCode == 0) {
-            fc = res.chunk;
+
+        if (resp.errorCode == 0) {
+            fc = resp.chunk;
         } else {
             fc = null;
         }
@@ -123,22 +119,21 @@ public class PeerClient {
             log.debug("Can not connect to peer: {}", peer.getAnnouncedAddress());
             return null;
         }
-        ShardingInfoRequest rq = new ShardingInfoRequest();
-        rq.full = true;
-        JSONObject req = mapper.convertValue(rq, JSONObject.class);
-        JSONObject resp;
+        ShardingInfoRequest rq = new ShardingInfoRequest(true, UUID.fromString(PeersService.myPI.getChainId()));
+
+        ShardingInfoResponse resp = null;
         try {
-            resp = peer.send(req, UUID.fromString(PeersService.myPI.getChainId()));
+            resp = peer.send(rq, new ShardingInfoResponseParser());
         } catch (PeerNotConnectedException ex) {
-            resp = null;
+            log.warn("PeerNotConnectedException, {}", peer.getAnnouncedAddress());
         }
+
         log.trace("shardInfo respond = {}", resp);
         if (resp == null) {
             log.debug("NULL ShardInfo response from peer: {}", peer.getAnnouncedAddress());
             return null;
         }
-        ShardingInfoResponse res = mapper.convertValue(resp, ShardingInfoResponse.class);
-        log.trace("getShardingInfo() = {}", res);
-        return res.shardingInfo;
+
+        return resp.shardingInfo;
     }
 }

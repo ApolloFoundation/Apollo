@@ -12,6 +12,7 @@
  import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
  import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
  import com.apollocurrency.aplwallet.apl.core.service.appdata.KeyStoreService;
+ import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
  import com.apollocurrency.aplwallet.apl.crypto.Convert;
  import com.apollocurrency.aplwallet.apl.crypto.Crypto;
  import com.apollocurrency.aplwallet.apl.eth.utils.FbWalletUtil;
@@ -123,7 +124,7 @@
                  //Find files for this account.
                  .filter(p -> Objects.equals(
                      FbWalletUtil.getAccount(p.toString().toUpperCase()),
-                     Convert.defaultRsAccount(accountId).toUpperCase())
+                     Convert2.defaultRsAccount(accountId).toUpperCase())
                  )
                  //Sorted by versions.
                  .sorted(
@@ -146,7 +147,7 @@
                  //Find files for this account.
                  .filter(path -> Objects.equals(
                      FbWalletUtil.getAccount(path.toString().toUpperCase()),
-                     Convert.defaultRsAccount(accountId).toUpperCase())
+                     Convert2.defaultRsAccount(accountId).toUpperCase())
                  )
                  .collect(Collectors.toList());
              return paths;
@@ -342,7 +343,7 @@
      private Path makeTargetPath(long accountId) {
          Instant instant = Instant.now();
          OffsetDateTime utcTime = instant.atOffset(ZoneOffset.UTC);
-         return keystoreDirPath.resolve(String.format(FORMAT, version, FORMATTER.format(utcTime), Convert.defaultRsAccount(accountId)));
+         return keystoreDirPath.resolve(String.format(FORMAT, version, FORMATTER.format(utcTime), Convert2.defaultRsAccount(accountId)));
      }
 
      public boolean isNewVersionOfKeyStoreForAccountExist(long accountId) {

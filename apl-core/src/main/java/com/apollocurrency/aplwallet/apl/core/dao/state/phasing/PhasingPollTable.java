@@ -20,6 +20,7 @@ import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+@Slf4j
 @Singleton
 public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
     static final LongKeyFactory<PhasingPoll> KEY_FACTORY = new LongKeyFactory<PhasingPoll>("id") {
@@ -44,14 +46,13 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
             return poll.getDbKey();
         }
     };
-    private static final Logger LOG = LoggerFactory.getLogger(PhasingPollTable.class);
-    private static final PhasingPollMapper MAPPER = new PhasingPollMapper(KEY_FACTORY);
-    private static final String TABLE_NAME = "phasing_poll";
+//    private static final Logger log = LoggerFactory.getLogger(PhasingPollTable.class);
+    private final PhasingPollMapper MAPPER = new PhasingPollMapper(KEY_FACTORY);
     private final Blockchain blockchain;
 
     @Inject
     public PhasingPollTable(Blockchain blockchain) {
-        super(TABLE_NAME, KEY_FACTORY, false);
+        super("phasing_poll", KEY_FACTORY, false);
         this.blockchain = Objects.requireNonNull(blockchain, "Blockchain is NULL");
     }
 
@@ -104,7 +105,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
             return transactions;
         } catch (SQLException e) {
             DbUtils.close(con);
-            LOG.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             throw new RuntimeException(e);
         }
     }
@@ -124,7 +125,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
             return transactions;
         } catch (SQLException e) {
             DbUtils.close(con);
-            LOG.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             throw new RuntimeException(e);
         }
     }
@@ -294,7 +295,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
         try {
             block = blockchain.getBlockAtHeight(height);
         } catch (BlockNotFoundException e) {
-            LOG.warn("{}, use short query for trimming the {} table.", e.getMessage(), TABLE_NAME);
+            log.warn("{}, use short query for trimming the {} table.", e.getMessage(), "phasing_poll");
         }
         try {
             con = databaseManager.getDataSource().getConnection();

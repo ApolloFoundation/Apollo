@@ -70,7 +70,7 @@ public class MSCurrencyMintingTransactionType extends MonetarySystemTransactionT
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
         MonetarySystemCurrencyMinting attachment = (MonetarySystemCurrencyMinting) transaction.getAttachment();
         Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
-        CurrencyType.validate(currency, transaction);
+        currencyService.validate(currency, transaction);
         if (attachment.getUnits() <= 0) {
             throw new AplException.NotValidException("Invalid number of units: " + attachment.getUnits());
         }

@@ -63,7 +63,7 @@ public class MSReserveClaimTransactionType extends MonetarySystemTransactionType
             throw new AplException.NotValidException("Reserve claim number of units must be positive: " + attachment.getUnits());
         }
         Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
-        CurrencyType.validate(currency, transaction);
+        currencyService.validate(currency, transaction);
     }
 
     @Override

@@ -7,12 +7,13 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-public interface EntityDbTableInterface<T> extends DerivedTableInterface<T> {
+public interface EntityDbTableInterface<T extends DerivedEntity> extends DerivedTableInterface<T> {
 
     void save(Connection con, T entity) throws SQLException;
 
@@ -37,10 +38,6 @@ public interface EntityDbTableInterface<T> extends DerivedTableInterface<T> {
     DbIterator<T> getManyBy(DbClause dbClause, int height, int from, int to, String sort);
 
     DbIterator<T> getManyBy(Connection con, PreparedStatement pstmt, boolean cache);
-
-    DbIterator<T> search(String query, DbClause dbClause, int from, int to);
-
-    DbIterator<T> search(String query, DbClause dbClause, int from, int to, String sort);
 
     DbIterator<T> getAll(int from, int to);
 
