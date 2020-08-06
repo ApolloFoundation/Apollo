@@ -22,10 +22,8 @@ package com.apollocurrency.aplwallet.apl.core.entity.state.currency;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveIncrease;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.ms.MonetarySystemExchangeTransactionType;
@@ -40,7 +38,6 @@ import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes
 import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.MS_RESERVE_INCREASE;
 import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.SHUFFLING_CREATION;
 
-@Slf4j
 /**
  * Define and validate currency capabilities
  */
@@ -72,7 +69,7 @@ public enum CurrencyType implements CurrencyTypeValidatable {
     CONTROLLABLE(0x02) {
         @Override
         public void validate(Currency currency, Transaction transaction,
-                             Set<CurrencyType> validators, long maxBalanceAtm, boolean isActiveCurrency) throws AplException.NotValidException {
+                             Set<CurrencyType> validators, long maxBalanceAtm, boolean isActiveCurrency, int finishValidationHeight) throws AplException.NotValidException {
             log.trace("CONTROLLABLE 1 [{}]: \ncurrency={}, \n{}, \n{}", transaction.getECBlockHeight(), currency, transaction, validators);
             if (transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.MS_CURRENCY_TRANSFER) {
                 if (currency == null || (currency.getAccountId() != transaction.getSenderId() && currency.getAccountId() != transaction.getRecipientId())) {
@@ -92,12 +89,12 @@ public enum CurrencyType implements CurrencyTypeValidatable {
     RESERVABLE(0x04) {
         @Override
         public void validate(Currency currency, Transaction transaction,
-                             Set<CurrencyType> validators, long maxBalanceAtm, boolean isActiveCurrency) throws AplException.ValidationException {
+                             Set<CurrencyType> validators, long maxBalanceAtm, boolean isActiveCurrency, int finishValidationHeight) throws AplException.ValidationException {
             log.trace("RESERVABLE 1 [{}]: \ncurrency={}, \n{}, \n{}", transaction.getECBlockHeight(), currency, transaction, validators);
             if (transaction.getType().getSpec() == MS_CURRENCY_ISSUANCE) {
                 MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
                 int issuanceHeight = attachment.getIssuanceHeight();
-                int finishHeight = CurrencyType.transactionValidator().getFinishValidationHeight(transaction, attachment);
+                int finishHeight = finishValidationHeight;
                 if (issuanceHeight <= finishHeight) {
                     throw new AplException.NotCurrentlyValidException(
                         String.format("Reservable currency activation height %d not higher than transaction apply height %d",
@@ -120,7 +117,7 @@ public enum CurrencyType implements CurrencyTypeValidatable {
             }
             if (transaction.getType().getSpec() == MS_RESERVE_INCREASE) {
                 MonetarySystemReserveIncrease attachment = (MonetarySystemReserveIncrease) transaction.getAttachment();
-                if (currency != null && currency.getIssuanceHeight() <= CurrencyType.transactionValidator().getFinishValidationHeight(transaction, attachment)) {
+                if (currency != null && currency.getIssuanceHeight() <= finishValidationHeight) {
                     throw new AplException.NotCurrentlyValidException("Cannot increase reserve for active currency");
                 }
             }
@@ -133,7 +130,7 @@ public enum CurrencyType implements CurrencyTypeValidatable {
             if (transaction.getType().getSpec() == MS_RESERVE_INCREASE) {
                 throw new AplException.NotValidException("Cannot increase reserve since currency is not reservable");
             }
-            if (spec == MS_CURRENCY_ISSUANCE) {
+            if (transaction.getType().getSpec() == MS_CURRENCY_ISSUANCE) {
                 MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
                 if (attachment.getIssuanceHeight() != 0) {
                     throw new AplException.NotValidException("Issuance height for non-reservable currency must be 0");
@@ -157,7 +154,7 @@ public enum CurrencyType implements CurrencyTypeValidatable {
     CLAIMABLE(0x08) {
         @Override
         public void validate(Currency currency, Transaction transaction,
-                             Set<CurrencyType> validators, long maxBalanceAtm, boolean isActiveCurrency) throws AplException.ValidationException {
+                             Set<CurrencyType> validators, long maxBalanceAtm, boolean isActiveCurrency, int finishValidationHeight) throws AplException.ValidationException {
             log.trace("CLAIMABLE 1 [{}]: \ncurrency={}, \n{}, \n{}", transaction.getECBlockHeight(), currency, transaction, validators);
             if (transaction.getType().getSpec() == MS_CURRENCY_ISSUANCE) {
                 MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
@@ -194,7 +191,7 @@ public enum CurrencyType implements CurrencyTypeValidatable {
     MINTABLE(0x10) {
         @Override
         public void validate(Currency currency, Transaction transaction,
-                             Set<CurrencyType> validators, long maxBalanceAtm, boolean isActiveCurrency) throws AplException.NotValidException {
+                             Set<CurrencyType> validators, long maxBalanceAtm, boolean isActiveCurrency, int finishValidationHeight) throws AplException.NotValidException {
             log.trace("MINTABLE 1 [{}]: \ncurrency={}, \n{}, \n{}", transaction.getECBlockHeight(), currency, transaction, validators);
             if (transaction.getType().getSpec() == MS_CURRENCY_ISSUANCE) {
                 MonetarySystemCurrencyIssuance issuanceAttachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
@@ -242,7 +239,7 @@ public enum CurrencyType implements CurrencyTypeValidatable {
     NON_SHUFFLEABLE(0x20) {
         @Override
         public void validate(Currency currency, Transaction transaction,
-                             Set<CurrencyType> validators, long maxBalanceAtm, boolean isActiveCurrency) throws AplException.ValidationException {
+                             Set<CurrencyType> validators, long maxBalanceAtm, boolean isActiveCurrency, int finishValidationHeight) throws AplException.ValidationException {
             log.trace("NON_SHUFFLEABLE 1 [{}]: \ncurrency={}, \n{}, \n{}", transaction.getECBlockHeight(), currency, transaction, validators);
             if (transaction.getType().getSpec() == SHUFFLING_CREATION) {
                 throw new AplException.NotValidException("Shuffling is not allowed for this currency");

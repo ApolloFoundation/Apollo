@@ -4,15 +4,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.entity.state.currency;
 
-import java.util.Set;
-
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+
+import java.util.Set;
 
 public interface CurrencyTypeValidatable {
 
     default void validate(Currency currency, Transaction transaction,
-                          Set<CurrencyType> validators, long maxBalanceAtm, boolean isActiveCurrency) throws AplException.ValidationException {
+                          Set<CurrencyType> validators, long maxBalanceAtm, boolean isActiveCurrency, int finishValidationHeight) throws AplException.ValidationException {
         // do nothing, all is valid
     }
 

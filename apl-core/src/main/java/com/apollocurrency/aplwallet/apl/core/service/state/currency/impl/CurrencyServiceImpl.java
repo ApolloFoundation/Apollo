@@ -4,10 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.currency.impl;
 
-import static com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType.CLAIMABLE;
-import static com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType.MINTABLE;
-import static com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType.RESERVABLE;
-
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
@@ -36,6 +32,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyMint
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
@@ -46,11 +43,14 @@ import lombok.extern.slf4j.Slf4j;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
+
+import static com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType.CLAIMABLE;
+import static com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType.MINTABLE;
+import static com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType.RESERVABLE;
 
 @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
 @Slf4j
@@ -70,6 +70,7 @@ public class CurrencyServiceImpl implements CurrencyService {
     private final ShufflingService shufflingService;
     private CurrencyMintService currencyMintService; // lazy init to break up circular dependency
     private final BlockchainConfig blockchainConfig;
+    private final TransactionValidator transactionValidator;
 
     @Inject
     public CurrencyServiceImpl(CurrencySupplyTable currencySupplyTable,
@@ -82,10 +83,11 @@ public class CurrencyServiceImpl implements CurrencyService {
                                ExchangeService exchangeService,
                                CurrencyTransferService currencyTransferService,
                                ShufflingService shufflingService,
-                               BlockchainConfig blockchainConfig) {
+                               BlockchainConfig blockchainConfig, TransactionValidator transactionValidator) {
         this.currencySupplyTable = currencySupplyTable;
         this.currencyTable = currencyTable;
         this.blockChainInfoService = blockChainInfoService;
+        this.transactionValidator = transactionValidator;
         this.iteratorToStreamConverter = new IteratorToStreamConverter<>();
         this.accountService = accountService;
         this.accountCurrencyService = accountCurrencyService;
@@ -390,7 +392,7 @@ public class CurrencyServiceImpl implements CurrencyService {
         boolean isActiveCurrency = currency != null && this.isActive(currency);
         for (CurrencyType currencyType : CurrencyType.values()) {
             if ((currencyType.getCode() & type) != 0) {
-                currencyType.validate(currency, transaction, validators, maxBalanceAtm, isActiveCurrency);
+                currencyType.validate(currency, transaction, validators, maxBalanceAtm, isActiveCurrency, transactionValidator.getFinishValidationHeight(transaction, transaction.getAttachment()));
             } else {
                 currencyType.validateMissing(currency, transaction, validators);
             }

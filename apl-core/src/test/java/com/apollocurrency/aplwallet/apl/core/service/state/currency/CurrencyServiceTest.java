@@ -114,7 +114,7 @@ class CurrencyServiceTest {
         td = new CurrencyTestData();
         service = new CurrencyServiceImpl(currencySupplyTable, currencyTable, blockChainInfoService,
             accountService, accountCurrencyService, currencyExchangeOfferFacade, currencyFounderService,
-            exchangeService, currencyTransferService, shufflingService, blockchainConfig);
+            exchangeService, currencyTransferService, shufflingService, blockchainConfig, transactionValidator);
     }
 
     @Test

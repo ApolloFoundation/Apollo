@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
 
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
@@ -41,19 +42,22 @@ import java.util.Set;
 
 import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.SET_PHASING_ONLY;
 
-public class UnconfirmedTransaction implements Transaction {
+//TODO Rename DerivedEntity to be more universal
+public class UnconfirmedTransaction extends DerivedEntity implements Transaction {
 
     private final Transaction transaction;
     private final long arrivalTimestamp;
     private final long feePerByte;
 
     public UnconfirmedTransaction(Transaction transaction, long arrivalTimestamp) {
+        super(transaction.getDbId(), transaction.getHeight());
         this.transaction = transaction;
         this.arrivalTimestamp = arrivalTimestamp;
         this.feePerByte = transaction.getFeeATM() / transaction.getFullSize();
     }
 
     public UnconfirmedTransaction(Transaction transaction, long arrivalTimestamp, long feePerByte) {
+        super(transaction.getDbId(), transaction.getHeight());
         this.transaction = transaction;
         this.arrivalTimestamp = arrivalTimestamp;
         this.feePerByte = feePerByte;
