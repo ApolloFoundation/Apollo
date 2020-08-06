@@ -45,8 +45,7 @@ public class CurrencyTable extends VersionedDeletableEntityDbTable<Currency> imp
     public CurrencyTable(DerivedTablesRegistry derivedDbTablesRegistry,
                          DatabaseManager databaseManager,
                          FullTextConfig fullTextConfig) {
-//        super("currency", currencyDbKeyFactory, "name" /*TODO: YL check if works */,
-        super("currency", currencyDbKeyFactory, null,
+        super("currency", currencyDbKeyFactory, "code,name,description",
             derivedDbTablesRegistry, databaseManager, fullTextConfig);
     }
 

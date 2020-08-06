@@ -47,7 +47,6 @@ public abstract class ValuesDbTable<T extends DerivedEntity> extends BasicDbTabl
     }
 
     public final List<T> get(DbKey dbKey) {
-        List<T> values;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + keyFactory.getPKClause()

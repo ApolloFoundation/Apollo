@@ -67,18 +67,6 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
         return table;
     }
 
-    //TODO: fix injects and remove
-/*
-    private void lookupCdi() {
-        if (fullTextConfig == null) {
-            fullTextConfig = CDI.current().select(FullTextConfig.class).get();
-        }
-        if (derivedDbTablesRegistry == null) {
-            derivedDbTablesRegistry = CDI.current().select(DerivedTablesRegistry.class).get();
-        }
-    }
-*/
-
     @Override
     public void trim(int height) {
     }
@@ -92,7 +80,6 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
 
     @PostConstruct
     public void init() {
-//        lookupCdi(); // temporal fallback now
         derivedDbTablesRegistry.registerDerivedTable(this);
         log.debug("Register derived class: {}", this.getClass().getName());
         if (this instanceof SearchableTableInterface) {
