@@ -8,9 +8,9 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import lombok.NonNull;
 import org.json.simple.JSONObject;
 
-import javax.validation.constraints.NotNull;
 import java.nio.ByteBuffer;
 
 /**
@@ -35,7 +35,7 @@ public abstract class AbstractAttachment extends AbstractAppendix implements Att
     }
 
     @Override
-    public void bindTransactionType(@NotNull TransactionType transactionType) {
+    public void bindTransactionType(@NonNull TransactionType transactionType) {
         if (transactionType.getSpec() != getTransactionTypeSpec()) {
             throw new IllegalArgumentException("Required tx type " + getTransactionTypeSpec() + " but got " + transactionType.getSpec());
         }
