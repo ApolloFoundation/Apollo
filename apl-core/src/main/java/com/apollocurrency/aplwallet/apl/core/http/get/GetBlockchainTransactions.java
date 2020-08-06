@@ -26,7 +26,6 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -36,6 +35,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.PRIVATE_TRANSACTIONS_ACCESS_DENIED;
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT;
 
 @Vetoed
 public final class GetBlockchainTransactions extends AbstractAPIRequestHandler {
@@ -71,7 +71,7 @@ public final class GetBlockchainTransactions extends AbstractAPIRequestHandler {
         } catch (NumberFormatException e) {
             subtype = -1;
         }
-        if (TransactionTypes.find(type, subtype) == TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT) {
+        if (PRIVATE_PAYMENT.getType() == type && PRIVATE_PAYMENT.getSubtype() == subtype) {
             return PRIVATE_TRANSACTIONS_ACCESS_DENIED;
         }
         int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
