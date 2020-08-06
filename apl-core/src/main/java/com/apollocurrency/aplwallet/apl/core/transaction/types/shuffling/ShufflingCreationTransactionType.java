@@ -11,7 +11,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
-import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -90,7 +89,7 @@ public class ShufflingCreationTransactionType extends ShufflingTransactionType {
             }
         } else if (holdingType == HoldingType.CURRENCY) {
             Currency currency = currencyService.getCurrency(attachment.getHoldingId());
-            CurrencyType.validate(currency, transaction);
+            currencyService.validate(currency, transaction);
             if (!currencyService.isActive(currency)) {
                 throw new AplException.NotCurrentlyValidException("Currency is not active: " + currency.getCode());
             }

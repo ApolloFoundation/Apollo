@@ -34,7 +34,9 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.impl.CurrencyBuyOfferServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.impl.CurrencyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.ms.MSCurrencyIssuanceTransactionType;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.CurrencyTestData;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -108,6 +110,9 @@ class CurrencyServiceTest {
     private IteratorToStreamConverter<CurrencyTransfer> iteratorToStreamConverter;
     @Mock
     private CurrencyBuyOfferService buyOfferService;
+
+    @Mock
+    TransactionValidator transactionValidator;
 
     @BeforeEach
     void setUp() {
@@ -223,12 +228,15 @@ class CurrencyServiceTest {
     @Test
     void validate() throws Exception {
         //GIVEN
-        Transaction tr = mock(Transaction.class);
+        Transaction tx = mock(Transaction.class);
+        doReturn(new MSCurrencyIssuanceTransactionType(blockchainConfig, accountService, mock(CurrencyService.class), accountCurrencyService)).when(tx).getType();
+        MonetarySystemCurrencyIssuance attachment = new MonetarySystemCurrencyIssuance("ff", "CC", "Test currency", (byte) 1, 1000, 0, 1000, 0, 0, 0, 0, (byte) 0, (byte) 0, (byte) 2);
+        doReturn(attachment).when(tx).getAttachment();
         doReturn(config).when(blockchainConfig).getCurrentConfig();
         doReturn(10L).when(config).getMaxBalanceATM();
 
         //WHEN
-        service.validate(td.CURRENCY_3, td.CURRENCY_3.getType(), tr);
+        service.validate(td.CURRENCY_3, td.CURRENCY_3.getType(), tx);
     }
 
     @Test

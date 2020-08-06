@@ -137,7 +137,6 @@ public class MSCurrencyIssuanceTransactionType extends MonetarySystemTransaction
             }
             t <<= 1;
         }
-        CurrencyService currencyService = lookupCurrencyService();
         currencyService.validate(attachment.getType(), transaction);
         currencyService.validateCurrencyNaming(transaction.getSenderId(), attachment);
     }
