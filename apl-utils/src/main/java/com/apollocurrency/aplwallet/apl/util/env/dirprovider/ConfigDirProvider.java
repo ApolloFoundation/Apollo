@@ -1,47 +1,61 @@
 /*
  * Copyright © 2018-2019 Apollo Foundation
  */
-
 package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
 
 /**
  * Provides paths to application config directories
  */
 public interface ConfigDirProvider {
+
+    public static final String CONFIGS_DIR_NAME = "configs";
+
     /**
      * Path to directory where main executable jar file is placed
      *
      * @return File denoting path to directory with main executable jar
      */
-
-    public String getInstallationConfigDirectory();
+    public String getInstallationConfigLocation();
 
     /**
      * Path to system config directory, depends on OS
      *
      * @return Path to system config directory
      */
-    public String getSysConfigDirectory();
-
+    public String getSysConfigLocation();
 
     /**
      * Path to user's config directory, depends on OS
      *
      * @return Path to user's config directory
      */
-    public String getUserConfigDirectory();
+    public String getUserConfigLocation();
 
     /**
-     * Just name of config directory depending of initialization of implementation
+     * Just name of config directory of zip file depending of initialization
+     *
+     * @return name of config for defined network
+     */
+    public String getConfigName();
+
+    /**
+     * Directory where config directories or zip files for different networks
+     * reside
      *
      * @return
      */
-    public String getConfigDirectoryName();
+    public String getConfigLocation();
 
     /**
-     * Gets config directory depending on run mode. In user mode it is getUserConfigDirectory()
-     * In service mode it is getSysConfigDirectory()
+     * Search directory for entries that match part of name and is config entity
+     * (directory, zip or jar file)
+     *
+     * @param location directory to search
+     * @param namePart name to search for
+     * @return entity found. Usually should be empty or 1 entry. In there are
+     * more then 1 entries, it means that namePart is too short or there are
+     * several entities that match. Firs entity is tken and warning emitted
+     * Empty string means nothing found
      */
-    public String getConfigDirectory();
-
+    public String searchByNamePart(String location, String namePart);
 }

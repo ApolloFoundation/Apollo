@@ -4,6 +4,8 @@
 package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
 
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Config dir provider which provide default config files locations
@@ -32,6 +34,7 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
     };
 
     protected String applicationName;
+    protected String uuid_or_part;
     protected boolean isService;
     protected int netIndex;
 
@@ -40,17 +43,19 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
      *
      * @param applicationName name of application's parameter dir
      * @param isService service mode or user mode
-     * @param netIdx index of network. 0 means main net, 1,2,3 - testnets 1,2,3
+     * @param netIdx index of network. 0 means main net, 1,2,3 - testnets 1,2,3.
+     * If index is <0, it should not be used, UUID or partial UUID should be
+     * used instead
      */
-    public DefaultConfigDirProvider(String applicationName, boolean isService, int netIdx) {
+    public DefaultConfigDirProvider(String applicationName, boolean isService, int netIdx, String uuid_or_part) {
         if (applicationName == null || applicationName.trim().isEmpty()) {
             throw new IllegalArgumentException("Application name cannot be null or empty");
         }
         this.applicationName = applicationName.trim();
         this.isService = isService;
-        if (netIdx <= 0) {
-            this.netIndex = 0;
-        } else if (netIdx > CONF_DIRS.length - 1) {
+        this.uuid_or_part = uuid_or_part;
+
+        if (netIdx > CONF_DIRS.length - 1) {
             this.netIndex = CONF_DIRS.length - 1;
         } else {
             this.netIndex = netIdx;
@@ -58,32 +63,45 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
     }
 
     @Override
-    public String getConfigDirectoryName() {
-        return CONF_DIRS[netIndex];
-    }
+    public String searchByNamePart(String location, String namePart) {
+        String res = "";
 
-    @Override
-    public String getInstallationConfigDirectory() {
-        return DirProvider.getBinDir().resolve(getConfigDirectoryName()).toAbsolutePath().toString();
-    }
-
-    @Override
-    public String getSysConfigDirectory() {
-        return getInstallationConfigDirectory();
-    }
-
-    @Override
-    public String getUserConfigDirectory() {
-        String res = Paths.get(System.getProperty("user.home"), "." + applicationName, getConfigDirectoryName()).toAbsolutePath().toString();
         return res;
     }
 
     @Override
-    public String getConfigDirectory() {
+    public String getConfigName() {
+        String res = "";
+        if (netIndex > 0) {
+            res = CONF_DIRS[netIndex];
+        }
+
+        return res;
+        //TODO: uuid or partia;l
+    }
+
+    @Override
+    public String getInstallationConfigLocation() {
+        return DirProvider.getBinDir().resolve(CONFIGS_DIR_NAME).toAbsolutePath().toString();
+    }
+
+    @Override
+    public String getSysConfigLocation() {
+        return getInstallationConfigLocation();
+    }
+
+    @Override
+    public String getUserConfigLocation() {
+        String res = Paths.get(System.getProperty("user.home"), "." + applicationName).toAbsolutePath().toString();
+        return res;
+    }
+
+    @Override
+    public String getConfigLocation() {
         String res
                 = isService
-                        ? getSysConfigDirectory()
-                        : getUserConfigDirectory();
+                        ? getSysConfigLocation()
+                        : getUserConfigLocation();
         return res;
 
     }

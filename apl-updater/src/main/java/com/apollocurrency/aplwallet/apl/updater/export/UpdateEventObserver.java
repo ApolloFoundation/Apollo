@@ -1,7 +1,6 @@
 /*
  *  Copyright © 2018-2020 Apollo Foundation
  */
-
 package com.apollocurrency.aplwallet.apl.updater.export;
 
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.OptionDAO;
@@ -32,8 +31,8 @@ import java.util.Properties;
 import static com.apollocurrency.aplwallet.apl.core.service.appdata.SecureStorageService.SECURE_STORE_KEY;
 
 /**
- * Class process sent event afer update is processed and not run script.
- * It stores some properties into config folder for later use.
+ * Class process sent event afer update is processed and not run script. It
+ * stores some properties into config folder for later use.
  */
 @Slf4j
 @Singleton
@@ -53,14 +52,14 @@ public class UpdateEventObserver {
     }
 
     public void onUpdateBefore(
-        @Observes @UpdateEvent(UpdateEventType.BEFORE_SCRIPT) UpdateEventData updateEventData) {
+            @Observes @UpdateEvent(UpdateEventType.BEFORE_SCRIPT) UpdateEventData updateEventData) {
         log.debug("onStartUpdateBefore...");
         // read some properties
         String nameKey = new String(Base64.getDecoder().decode("YXBsLmFkbWluUGFzc3dvcmQ="));
         String propertyValue = propertiesHolder.getStringProperty(nameKey);
         log.debug("propertiesHolder value found? = '{}'", propertyValue != null && !propertyValue.isEmpty());
         // prepare folder to write to
-        String configDir = configDirProvider.getConfigDirectory();
+        String configDir = configDirProvider.getConfigLocation() + "/" + configDirProvider.getConfigName();
         File folder = new File(configDir);
         if (!folder.exists()) {
             // create if missing
@@ -103,7 +102,7 @@ public class UpdateEventObserver {
                 writeTempProps.setProperty(new String(Base64.getDecoder().decode("YXBsLmFkbWluLnB2YWw=")), propertyValue);
             } else {
                 writeTempProps.setProperty(new String(Base64.getDecoder().decode("YXBsLmFkbWluLnB2YWw=")),
-                    new String(Base64.getDecoder().decode("YWRtaW5QYXNz")));
+                        new String(Base64.getDecoder().decode("YWRtaW5QYXNz")));
                 nameKeyHash = Crypto.sha256().digest(Base64.getDecoder().decode("YWRtaW5QYXNz"));// default
                 writeTempProps.setProperty(new String(Base64.getDecoder().decode("YXBsLmFkbWluLnBoYXNo")), Convert.toHexString(nameKeyHash));
             }

@@ -58,16 +58,17 @@ import java.util.UUID;
  */
 // @Singleton
 public class Apollo {
+
     //    System properties to load by PropertiesConfigLoader
     public static final String PID_FILE = "apl.pid";
     public static final String CMD_FILE = "apl.cmdline";
     public static final String APP_FILE = "apl.app";
 
     private static final List<String> SYSTEM_PROPERTY_NAMES = Arrays.asList(
-        "socksProxyHost",
-        "socksProxyPort",
-        "apl.enablePeerUPnP",
-        "apl.enableAPIUPnP"
+            "socksProxyHost",
+            "socksProxyPort",
+            "apl.enablePeerUPnP",
+            "apl.enableAPIUPnP"
     );
     private final static String[] VALID_LOG_LEVELS = {"ERROR", "WARN", "INFO", "DEBUG", "TRACE"};
     //This variable is used in LogDirPropertyDefiner configured in logback.xml
@@ -91,7 +92,7 @@ public class Apollo {
 
         ch.qos.logback.classic.Logger logger = loggerContext.getLogger(packageName);
         System.out.println(packageName + " current logger level: " + logger.getLevel()
-            + " New level: " + VALID_LOG_LEVELS[logLevel]);
+                + " New level: " + VALID_LOG_LEVELS[logLevel]);
 
         logger.setLevel(Level.toLevel(VALID_LOG_LEVELS[logLevel]));
         // otherwise we want to load usual logback.xml settings
@@ -103,7 +104,7 @@ public class Apollo {
         for (String s : argv) {
             cmdline = cmdline + s + " ";
         }
-        Path hp = Paths.get(configDirProvider.getUserConfigDirectory()).getParent();
+        Path hp = Paths.get(configDirProvider.getUserConfigLocation());
         String home = hp.toString() + File.separator;
         File dir = new File(home);
         if (!dir.exists()) {
@@ -135,13 +136,13 @@ public class Apollo {
 
     public static PredefinedDirLocations merge(CmdLineArgs args, EnvironmentVariables vars, CustomDirLocations customDirLocations) {
         return new PredefinedDirLocations(
-            customDirLocations.getDbDir().isEmpty() ? StringUtils.isBlank(args.dbDir) ? vars.dbDir : args.dbDir : customDirLocations.getDbDir().get(),
-            StringUtils.isBlank(args.logDir) ? vars.logDir : args.logDir,
-            customDirLocations.getKeystoreDir().isEmpty() ? StringUtils.isBlank(args.vaultKeystoreDir) ? vars.vaultKeystoreDir : args.vaultKeystoreDir : customDirLocations.getKeystoreDir().get(),
-            StringUtils.isBlank(args.pidFile) ? vars.pidFile : args.pidFile,
-            StringUtils.isBlank(args.twoFactorAuthDir) ? vars.twoFactorAuthDir : args.twoFactorAuthDir,
-            StringUtils.isBlank(args.dataExportDir) ? vars.dataExportDir : args.dataExportDir,
-            StringUtils.isBlank(args.dexKeystoreDir) ? vars.dexKeystoreDir : args.dexKeystoreDir
+                customDirLocations.getDbDir().isEmpty() ? StringUtils.isBlank(args.dbDir) ? vars.dbDir : args.dbDir : customDirLocations.getDbDir().get(),
+                StringUtils.isBlank(args.logDir) ? vars.logDir : args.logDir,
+                customDirLocations.getKeystoreDir().isEmpty() ? StringUtils.isBlank(args.vaultKeystoreDir) ? vars.vaultKeystoreDir : args.vaultKeystoreDir : customDirLocations.getKeystoreDir().get(),
+                StringUtils.isBlank(args.pidFile) ? vars.pidFile : args.pidFile,
+                StringUtils.isBlank(args.twoFactorAuthDir) ? vars.twoFactorAuthDir : args.twoFactorAuthDir,
+                StringUtils.isBlank(args.dataExportDir) ? vars.dataExportDir : args.dataExportDir,
+                StringUtils.isBlank(args.dexKeystoreDir) ? vars.dexKeystoreDir : args.dexKeystoreDir
         );
     }
 
@@ -154,8 +155,8 @@ public class Apollo {
 
         CmdLineArgs args = new CmdLineArgs();
         JCommander jc = JCommander.newBuilder()
-            .addObject(args)
-            .build();
+                .addObject(args)
+                .build();
         jc.setProgramName(Constants.APPLICATION);
         try {
             jc.parse(argv);
@@ -186,20 +187,20 @@ public class Apollo {
         ConfPlaceholder ph = new ConfPlaceholder();
 //load configuration files
         EnvironmentVariables envVars = new EnvironmentVariables(Constants.APPLICATION_DIR_NAME);
-        ConfigDirProviderFactory.setup(args.serviceMode, Constants.APPLICATION_DIR_NAME, args.netIdx);
+        ConfigDirProviderFactory.setup(args.serviceMode, Constants.APPLICATION_DIR_NAME, args.netIdx, args.uuidOrPart);
         ConfigDirProvider configDirProvider = ConfigDirProviderFactory.getConfigDirProvider();
 
         PropertiesConfigLoader propertiesLoader = new PropertiesConfigLoader(
-            configDirProvider,
-            args.isResourceIgnored(),
-            StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir,
-            Constants.APPLICATION_DIR_NAME + ".properties",
-            SYSTEM_PROPERTY_NAMES);
+                configDirProvider,
+                args.isResourceIgnored(),
+                StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir,
+                Constants.APPLICATION_DIR_NAME + ".properties",
+                SYSTEM_PROPERTY_NAMES);
 
         ChainsConfigLoader chainsConfigLoader = new ChainsConfigLoader(
-            configDirProvider,
-            StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir,
-            args.isResourceIgnored()
+                configDirProvider,
+                StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir,
+                args.isResourceIgnored()
         );
 // init application data dir provider
 
@@ -245,12 +246,12 @@ public class Apollo {
 
         //Configure CDI Container builder
         AplContainerBuilder aplContainerBuilder = AplContainer.builder().containerId("MAIN-APL-CDI")
-            // do not use recursive scan because it violates the restriction to
-            // deploy one bean for all deployment archives
-            // Recursive scan will trigger base synthetic archive to load JdbiTransactionalInterceptor, which was already loaded by apl-core archive
-            // See https://docs.jboss.org/cdi/spec/2.0.EDR2/cdi-spec.html#se_bootstrap for more details
-            // we already have it in beans.xml in core
-            .annotatedDiscoveryMode();
+                // do not use recursive scan because it violates the restriction to
+                // deploy one bean for all deployment archives
+                // Recursive scan will trigger base synthetic archive to load JdbiTransactionalInterceptor, which was already loaded by apl-core archive
+                // See https://docs.jboss.org/cdi/spec/2.0.EDR2/cdi-spec.html#se_bootstrap for more details
+                // we already have it in beans.xml in core
+                .annotatedDiscoveryMode();
         //TODO:  turn it on periodically in development process to check CDI errors
         // Enable for development only, see http://weld.cdi-spec.org/news/2015/11/10/weld-probe-jmx/
         // run with ./bin/apl-run-jmx.sh
@@ -268,8 +269,9 @@ public class Apollo {
         // init config holders
         app.propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
         app.propertiesHolder.init(props);
-        if (log != null) log.trace("{}", app.propertiesHolder.dumpAllProperties()); // dumping all properties
-
+        if (log != null) {
+            log.trace("{}", app.propertiesHolder.dumpAllProperties()); // dumping all properties
+        }
         app.taskDispatchManager = CDI.current().select(TaskDispatchManager.class).get();
         ChainsConfigHolder chainsConfigHolder = CDI.current().select(ChainsConfigHolder.class).get();
         chainsConfigHolder.setChains(chains);
