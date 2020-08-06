@@ -4,6 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
+import com.apollocurrency.aplwallet.apl.core.transaction.ReflectionUtil;
+import lombok.extern.slf4j.Slf4j;
+
 import javax.enterprise.inject.Instance;
 import javax.inject.Singleton;
 import java.lang.reflect.ParameterizedType;
@@ -12,6 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Singleton
+@Slf4j
 public class AppendixValidatorRegistry {
     private final Map<Class<?>, AppendixValidator<?>> validators = new HashMap<>();
 
@@ -28,6 +32,6 @@ public class AppendixValidatorRegistry {
     }
 
     void init(Instance<AppendixValidator<?>> appendixValidators) {
-        appendixValidators.iterator().forEachRemaining(e-> validators.put((Class<?>) ((ParameterizedType)e.getClass().getGenericSuperclass()).getActualTypeArguments()[0], e));
+       appendixValidators.iterator().forEachRemaining(e-> validators.put(ReflectionUtil.parametrizedClass(e.getClass()), e));
     }
 }
