@@ -20,7 +20,7 @@ import static com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendi
 
 public class PrunablePlainMessageAppendix extends AbstractAppendix implements Prunable {
 
-    private static final String appendixName = "PrunablePlainMessage";
+    static final String APPENDIX_NAME = "PrunablePlainMessage";
     private static final Fee PRUNABLE_MESSAGE_FEE = new Fee.SizeBasedFee(Constants.ONE_APL / 10) {
         @Override
         public int getSize(Transaction transaction, Appendix appendix) {
@@ -75,7 +75,7 @@ public class PrunablePlainMessageAppendix extends AbstractAppendix implements Pr
     }
 
     public static PrunablePlainMessageAppendix parse(JSONObject attachmentData) {
-        if (!hasAppendix(appendixName, attachmentData)) {
+        if (!hasAppendix(APPENDIX_NAME, attachmentData)) {
             return null;
         }
         return new PrunablePlainMessageAppendix(attachmentData);
@@ -83,7 +83,7 @@ public class PrunablePlainMessageAppendix extends AbstractAppendix implements Pr
 
     @Override
     public String getAppendixName() {
-        return appendixName;
+        return APPENDIX_NAME;
     }
 
     @Override

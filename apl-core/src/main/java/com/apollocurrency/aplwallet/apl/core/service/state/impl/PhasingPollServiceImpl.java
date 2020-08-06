@@ -36,6 +36,9 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixApplier;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixApplierRegistry;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -70,12 +73,13 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     private final AccountService accountService;
     private AccountControlPhasingService accountControlPhasingService; // lazy initalization only!
     private final CurrencyService currencyService;
+    private final AppendixApplierRegistry appendixApplierRegistry;
 
     @Inject
     public PhasingPollServiceImpl(PhasingPollResultTable resultTable, PhasingPollTable phasingPollTable,
                                   PhasingPollVoterTable voterTable, PhasingPollLinkedTransactionTable linkedTransactionTable,
                                   PhasingVoteTable phasingVoteTable, Blockchain blockchain, Event<Transaction> event,
-                                  AccountService accountService, CurrencyService currencyService) {
+                                  AccountService accountService, CurrencyService currencyService, AppendixApplierRegistry appendixApplierRegistry) {
         this.resultTable = resultTable;
         this.phasingPollTable = phasingPollTable;
         this.voterTable = voterTable;
@@ -85,6 +89,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
         this.event = Objects.requireNonNull(event);
         this.accountService = Objects.requireNonNull(accountService, "accountService is null");
         this.currencyService = currencyService;
+        this.appendixApplierRegistry = appendixApplierRegistry;
     }
 
     private AccountControlPhasingService lookupAccountControlPhasingService() {
@@ -246,7 +251,12 @@ public class PhasingPollServiceImpl implements PhasingPollService {
         Account recipientAccount = transaction.getRecipientId() == 0 ? null : accountService.getAccount(transaction.getRecipientId());
         transaction.getAppendages().forEach(appendage -> {
             if (appendage.isPhasable()) {
-                appendage.apply(transaction, senderAccount, recipientAccount);
+                AppendixApplier<AbstractAppendix> applier = appendixApplierRegistry.getFor(appendage);
+                if (applier == null) {
+                    appendage.apply(transaction, senderAccount, recipientAccount);
+                } else {
+                    applier.apply(transaction, appendage, senderAccount, recipientAccount);
+                }
             }
         });
         event.select(TxEventType.literal(TxEventType.RELEASE_PHASED_TRANSACTION)).fire(transaction);

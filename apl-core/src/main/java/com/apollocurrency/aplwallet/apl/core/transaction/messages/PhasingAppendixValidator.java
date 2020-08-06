@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -26,14 +25,12 @@ public class PhasingAppendixValidator implements AppendixValidator<PhasingAppend
     private final Blockchain blockchain;
     private final PhasingPollService phasingPollService;
     private final BlockchainConfig blockchainConfig;
-    private final TimeService timeService;
 
     @Inject
-    public PhasingAppendixValidator(Blockchain blockchain, PhasingPollService phasingPollService, BlockchainConfig blockchainConfig, TimeService timeService) {
+    public PhasingAppendixValidator(Blockchain blockchain, PhasingPollService phasingPollService, BlockchainConfig blockchainConfig) {
         this.blockchain = blockchain;
         this.phasingPollService = phasingPollService;
         this.blockchainConfig = blockchainConfig;
-        this.timeService = timeService;
     }
 
     @Override

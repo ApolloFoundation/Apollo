@@ -8,6 +8,8 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixApplier;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixApplierRegistry;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
@@ -22,15 +24,17 @@ public class TransactionApplier {
     private final AccountService accountService;
     private final AccountPublicKeyService accountPublicKeyService;
     private final PrunableLoadingService prunableService;
+    private final AppendixApplierRegistry applierRegistry;
 
 
     @Inject
-    public TransactionApplier(BlockchainConfig blockchainConfig, ReferencedTransactionDao referencedTransactionDao, AccountService accountService, AccountPublicKeyService accountPublicKeyService, PrunableLoadingService prunableService) {
+    public TransactionApplier(BlockchainConfig blockchainConfig, ReferencedTransactionDao referencedTransactionDao, AccountService accountService, AccountPublicKeyService accountPublicKeyService, PrunableLoadingService prunableService, AppendixApplierRegistry applierRegistry) {
         this.blockchainConfig = blockchainConfig;
         this.referencedTransactionDao = referencedTransactionDao;
         this.accountService = accountService;
         this.accountPublicKeyService = accountPublicKeyService;
         this.prunableService = prunableService;
+        this.applierRegistry = applierRegistry;
     }
 
     // returns false iff double spending
@@ -61,7 +65,12 @@ public class TransactionApplier {
         for (AbstractAppendix appendage : transaction.getAppendages()) {
             if (!appendage.isPhased(transaction)) {
                 prunableService.loadPrunable(transaction, appendage, false);
-                appendage.apply(transaction, senderAccount, recipientAccount);
+                AppendixApplier<AbstractAppendix> applier = applierRegistry.getFor(appendage);
+                if (applier == null) {
+                    appendage.apply(transaction, senderAccount, recipientAccount);
+                } else {
+                    applier.apply(transaction, appendage, senderAccount, recipientAccount);
+                }
             }
         }
     }

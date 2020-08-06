@@ -13,7 +13,7 @@ import java.nio.ByteBuffer;
 
 public class EncryptedMessageAppendix extends AbstractEncryptedMessageAppendix {
 
-    private static final String appendixName = "EncryptedMessage";
+    static final String appendixName = "EncryptedMessage";
 
     public EncryptedMessageAppendix(ByteBuffer buffer) throws AplException.NotValidException {
         super(buffer);

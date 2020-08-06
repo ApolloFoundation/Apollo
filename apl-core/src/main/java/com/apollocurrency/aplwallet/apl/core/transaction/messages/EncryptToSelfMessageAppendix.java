@@ -12,7 +12,7 @@ import java.nio.ByteBuffer;
 
 public class EncryptToSelfMessageAppendix extends AbstractEncryptedMessageAppendix {
 
-    private static final String appendixName = "EncryptToSelfMessage";
+    static final String appendixName = "EncryptToSelfMessage";
 
     public EncryptToSelfMessageAppendix(ByteBuffer buffer) throws AplException.NotValidException {
         super(buffer);

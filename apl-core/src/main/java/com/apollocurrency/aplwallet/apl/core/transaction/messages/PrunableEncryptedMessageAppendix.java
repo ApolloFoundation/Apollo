@@ -20,7 +20,7 @@ import java.security.MessageDigest;
 
 public class PrunableEncryptedMessageAppendix extends AbstractAppendix implements Prunable {
 
-    private static final String appendixName = "PrunableEncryptedMessage";
+    static final String APPENDIX_NAME = "PrunableEncryptedMessage";
 
     private static final Fee PRUNABLE_ENCRYPTED_DATA_FEE = new Fee.SizeBasedFee(Constants.ONE_APL/10) {
         @Override
@@ -74,7 +74,7 @@ public class PrunableEncryptedMessageAppendix extends AbstractAppendix implement
     }
 
     public static PrunableEncryptedMessageAppendix parse(JSONObject attachmentData) {
-        if (!Appendix.hasAppendix(appendixName, attachmentData)) {
+        if (!Appendix.hasAppendix(APPENDIX_NAME, attachmentData)) {
             return null;
         }
         JSONObject encryptedMessageJSON = (JSONObject) attachmentData.get("encryptedMessage");
@@ -126,7 +126,7 @@ public class PrunableEncryptedMessageAppendix extends AbstractAppendix implement
 
     @Override
     public String getAppendixName() {
-        return appendixName;
+        return APPENDIX_NAME;
     }
 
     @Override

@@ -21,6 +21,8 @@ import com.apollocurrency.aplwallet.apl.core.signature.SignatureCredential;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureVerifier;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixValidator;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixValidatorRegistry;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
@@ -46,11 +48,12 @@ public class TransactionValidator {
     private final AccountService accountService;
     private final TransactionVersionValidator transactionVersionValidator;
     private final KeyValidator keyValidator;
+    private final AppendixValidatorRegistry validatorRegistry;
 
     @Inject
     public TransactionValidator(BlockchainConfig blockchainConfig, PhasingPollService phasingPollService,
                                 Blockchain blockchain, FeeCalculator feeCalculator, AccountService accountService,
-                                AccountPublicKeyService accountPublicKeyService, AccountControlPhasingService accountControlPhasingService, TransactionVersionValidator transactionVersionValidator, PrunableLoadingService prunableService) {
+                                AccountPublicKeyService accountPublicKeyService, AccountControlPhasingService accountControlPhasingService, TransactionVersionValidator transactionVersionValidator, PrunableLoadingService prunableService, AppendixValidatorRegistry validatorRegistry) {
         this.blockchainConfig = blockchainConfig;
         this.phasingPollService = phasingPollService;
         this.blockchain = blockchain;
@@ -61,6 +64,7 @@ public class TransactionValidator {
         this.accountService = accountService;
         this.transactionVersionValidator = transactionVersionValidator;
         this.keyValidator = new PublicKeyValidator(accountPublicKeyService);
+        this.validatorRegistry = validatorRegistry;
     }
 
 
@@ -145,10 +149,19 @@ public class TransactionValidator {
             //if (! appendage.verifyVersion()) {
             //    throw new AplException.NotValidException("Invalid attachment version " + appendage.getVersion());
             //}
+            AppendixValidator<AbstractAppendix> validator = validatorRegistry.getValidatorFor(appendage);
             if (validatingAtFinish) {
-                appendage.validateAtFinish(transaction, blockchain.getHeight());
+                if (validator != null) {
+                    validator.validateAtFinish(transaction, appendage, blockchain.getHeight());
+                } else {
+                    appendage.validateAtFinish(transaction, blockchain.getHeight());
+                }
             } else {
-                appendage.validate(transaction, blockchain.getHeight());
+                if (validator != null) {
+                    validator.validate(transaction, appendage, blockchain.getHeight());
+                } else {
+                    appendage.validate(transaction, blockchain.getHeight());
+                }
             }
         }
         int fullSize = transaction.getFullSize();
