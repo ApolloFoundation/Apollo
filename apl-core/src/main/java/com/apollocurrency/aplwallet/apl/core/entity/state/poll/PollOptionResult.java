@@ -5,12 +5,15 @@
 package com.apollocurrency.aplwallet.apl.core.entity.state.poll;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
-import lombok.Data;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 
-@Data
+@Getter
+@Setter
 @ToString(of = {"pollId", "result", "weight"})
-public final class PollOptionResult {
+public final class PollOptionResult  extends DerivedEntity {
     private long pollId;
     private Long result;
     private Long weight;
@@ -18,21 +21,25 @@ public final class PollOptionResult {
     private int height;
 
     public PollOptionResult(long pollId) {
+        super(null, null);
         this.pollId = pollId;
     }
 
     public PollOptionResult(long pollId, int height) {
+        super(null, height);
         this.pollId = pollId;
         this.height = height;
     }
 
     public PollOptionResult(long pollId, long result, long weight) {
+        super(null, null);
         this.pollId = pollId;
         this.result = result;
         this.weight = weight;
     }
 
     public PollOptionResult(long pollId, long result, long weight, int height) {
+        super(null, height);
         this.pollId = pollId;
         this.result = result;
         this.weight = weight;

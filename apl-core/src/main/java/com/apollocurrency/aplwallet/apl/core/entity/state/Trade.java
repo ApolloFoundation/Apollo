@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.entity.state;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.BidOrder;
 import lombok.EqualsAndHashCode;
@@ -18,12 +19,12 @@ import java.sql.SQLException;
 @ToString
 @Getter
 @Setter
-@EqualsAndHashCode
-public class Trade {
+@EqualsAndHashCode(callSuper = true)
+public class Trade extends DerivedEntity {
     private final int timestamp;
     private final long assetId;
     private final long blockId;
-    private final int height;
+//    private final int height;
     private final long askOrderId;
     private final long bidOrderId;
     private final int askOrderHeight;
@@ -33,7 +34,7 @@ public class Trade {
     private final long quantityATU;
     private final long priceATM;
     private final boolean isBuy;
-    private DbKey dbKey;
+//    private DbKey dbKey;
 
     public Trade(
         final long assetId,
@@ -44,8 +45,9 @@ public class Trade {
         final int height,
         final int timestamp
     ) {
+        super(null, height);
         this.blockId = blockId;
-        this.height = height;
+//        this.height = height;
         this.assetId = assetId;
         this.timestamp = timestamp;
         this.askOrderId = askOrder.getId();
@@ -54,7 +56,8 @@ public class Trade {
         this.bidOrderHeight = bidOrder.getCreationHeight();
         this.sellerId = askOrder.getAccountId();
         this.buyerId = bidOrder.getAccountId();
-        this.dbKey = dbKey;
+        setDbKey(dbKey);
+//        this.dbKey = dbKey;
         this.quantityATU = Math.min(askOrder.getQuantityATU(), bidOrder.getQuantityATU());
         this.isBuy = askOrderHeight < bidOrderHeight ||
             askOrderHeight == bidOrderHeight &&
@@ -64,7 +67,9 @@ public class Trade {
     }
 
     public Trade(final ResultSet rs, final DbKey dbKey) throws SQLException {
+        super(rs);
         this.assetId = rs.getLong("asset_id");
+        setDbKey(dbKey);
         this.blockId = rs.getLong("block_id");
         this.askOrderId = rs.getLong("ask_order_id");
         this.bidOrderId = rs.getLong("bid_order_id");
@@ -72,11 +77,11 @@ public class Trade {
         this.bidOrderHeight = rs.getInt("bid_order_height");
         this.sellerId = rs.getLong("seller_id");
         this.buyerId = rs.getLong("buyer_id");
-        this.dbKey = dbKey;
+//        this.dbKey = dbKey;
         this.quantityATU = rs.getLong("quantity");
         this.priceATM = rs.getLong("price");
         this.timestamp = rs.getInt("timestamp");
-        this.height = rs.getInt("height");
+//        this.height = rs.getInt("height");
         this.isBuy = rs.getBoolean("is_buy");
     }
 

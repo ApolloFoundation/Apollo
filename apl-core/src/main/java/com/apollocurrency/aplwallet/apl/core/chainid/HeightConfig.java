@@ -66,6 +66,14 @@ public class HeightConfig {
         return bp.getMaxNumberOfTransactions();
     }
 
+    public int getMaxArbitraryMessageLength() {
+        return bp.getMaxArbitraryMessageLength();
+    }
+
+    public int getMaxEncryptedMessageLength() {
+        return bp.getMaxEncryptedMessageLength();
+    }
+
     public int getBlockTime() {
         return bp.getBlockTime();
     }

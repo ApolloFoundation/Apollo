@@ -35,12 +35,15 @@ import com.apollocurrency.aplwallet.apl.core.utils.DGSPurchasesClause;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 
+@DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
 @Singleton
 public class DGSServiceImpl implements DGSService {
     private final DbClause inStockOnlyClause = new DbClause.IntClause("in_stock_count", DbClause.Op.GT, 0);
@@ -55,7 +58,13 @@ public class DGSServiceImpl implements DGSService {
     private AccountService accountService;
 
     @Inject
-    public DGSServiceImpl(DGSPublicFeedbackTable publicFeedbackTable, DGSPurchaseTable purchaseTable, DGSFeedbackTable feedbackTable, Blockchain blockchain, DGSGoodsTable goodsTable, DGSTagTable tagTable, AccountService accountService) {
+    public DGSServiceImpl(DGSPublicFeedbackTable publicFeedbackTable,
+                          DGSPurchaseTable purchaseTable,
+                          DGSFeedbackTable feedbackTable,
+                          Blockchain blockchain,
+                          DGSGoodsTable goodsTable,
+                          DGSTagTable tagTable,
+                          AccountService accountService) {
         this.publicFeedbackTable = publicFeedbackTable;
         this.purchaseTable = purchaseTable;
         this.feedbackTable = feedbackTable;

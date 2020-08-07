@@ -4,10 +4,6 @@
     "active": true,
     "wellKnownPeers": [
       "51.15.250.32",
-      "51.15.253.171",
-      "51.15.210.116",
-      "51.15.242.197",
-      "51.15.218.241",
       "51.15.130.37"
     ],
     "name": "Apollo experimental testnet",
@@ -23,49 +19,38 @@
     "blockchainProperties": [
       {
         "height": 0,
-        "maxNumberOfTransactions": 255,
-        "maxArbitraryMessageLength": 160,
-        "blockTime": 60,
+        "blockTime": 1,
         "maxBlockTimeLimit": 67,
         "minBlockTimeLimit": 53,
         "maxBalance": 30000000000
       },
       {
         "height": 1,
-        "maxNumberOfTransactions": 255,
-        "maxArbitraryMessageLength": 160,
-        "blockTime": 2,
-        "maxBlockTimeLimit": 3,
-        "minBlockTimeLimit": 1,
+        "maxArbitraryMessageLength": 180,
+        "blockTime": 1,
         "maxBalance": 30000000000,
-        "consensusSettings": {
-          "adaptiveForgingSettings": {
-            "enabled": "true",
-            "adaptiveBlockTime": 10
-          }
-        },
         "shardingSettings": {
-          "enabled": true,
-          "frequency": 10000
+          "enabled": false,
+          "frequency": 1
         }
       },
       {
-        "height": 50000,
-        "maxNumberOfTransactions": 255,
-        "maxArbitraryMessageLength": 160,
+        "height": 10,
+        "maxArbitraryMessageLength": 1000,
         "blockTime": 2,
-        "maxBlockTimeLimit": 3,
-        "minBlockTimeLimit": 1,
         "maxBalance": 30000000000,
-        "consensusSettings": {
-          "adaptiveForgingSettings": {
-            "enabled": "true",
-            "adaptiveBlockTime": 10
-          }
-        },
         "shardingSettings": {
           "enabled": true,
-          "frequency": 10000
+          "frequency": 2
+        }
+      },
+      {
+        "height": 20,
+        "maxArbitraryMessageLength": 2000,
+        "blockTime": 3,
+        "maxBalance": 30000000000,
+        "shardingSettings": {
+          "frequency": 3
         }
       }
     ]

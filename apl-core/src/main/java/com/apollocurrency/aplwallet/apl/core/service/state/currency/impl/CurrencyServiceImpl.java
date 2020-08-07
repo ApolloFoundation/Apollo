@@ -39,6 +39,8 @@ import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeServ
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.inject.spi.CDI;
@@ -50,6 +52,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+@DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
 @Slf4j
 @Singleton
 public class CurrencyServiceImpl implements CurrencyService {
