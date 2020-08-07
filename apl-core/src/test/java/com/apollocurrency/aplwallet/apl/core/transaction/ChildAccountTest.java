@@ -33,6 +33,7 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -288,6 +289,7 @@ public class ChildAccountTest {
         }
     }
 
+    @Disabled
     @Test
     void validateAttachment_withChildAlreadyExists() {
         //GIVEN
