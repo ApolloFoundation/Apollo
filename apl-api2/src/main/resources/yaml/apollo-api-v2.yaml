@@ -1118,6 +1118,9 @@ components:
               type: integer
               format: int16
               description: "The max count of the unconfirmed transactions"
+            isTrimActive:
+              type: boolean
+              description: "Returns true if the trimming process is active"
 
     BaseResponse:
       type: object

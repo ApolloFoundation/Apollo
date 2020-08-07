@@ -55,6 +55,7 @@ public class InfoApiServiceImpl implements InfoApiService {
         response.setDbConnectionTotal(totalConnections);
         response.setDbConnectionActive(activeConnections);
         response.setDbConnectionIdle(idleConnections);
+        response.setIsTrimActive(blockChainInfoService.isTrimming());
 
         return builder.bind(response).build();
     }
