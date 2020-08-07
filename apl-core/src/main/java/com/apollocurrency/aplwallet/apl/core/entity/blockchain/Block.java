@@ -41,6 +41,8 @@ public interface Block {
 
     int getHeight();
 
+    void setHeight(int height);
+
     int getTimestamp();
 
     long getGeneratorId();
@@ -75,13 +77,15 @@ public interface Block {
 
     long getBaseTarget();
 
+    void setBaseTarget(long baseTarget);
+
+    void setCumulativeDifficulty(BigInteger cumulativeDifficulty);
+
     BigInteger getCumulativeDifficulty();
 
     byte[] getBytes();
 
     boolean checkSignature();
-
-    void setPrevious(Block[] threeLatestBlocksArray, HeightConfig config, Shard lastShard, int initialBlockHeight);
 
     /**
      * Optional method
