@@ -31,4 +31,6 @@ public interface BlockChainInfoService {
     Stream<Block> getBlocksByAccountStream(long accountId, int from, int to, int timestamp);
 
     int getLastBlockTimestamp();
+
+    boolean isTrimming();
 }

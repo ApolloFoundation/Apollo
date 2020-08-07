@@ -504,7 +504,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BaseResponse'
+                $ref: '#/components/schemas/HealthResponse'
         500:
           $ref: '#/components/responses/ServerError'
 
@@ -1087,6 +1087,37 @@ components:
               type: integer
               format: int64
               example: 345
+
+    HealthResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            blockchainHeight:
+              type: integer
+              format: int16
+              example: 9900345
+              description: "Current height of blockchain"
+            dbConnectionTotal:
+              type: integer
+              format: int16
+              description: "Total connections in the pool"
+            dbConnectionActive:
+              type: integer
+              format: int16
+              description: "Active connections in the pool"
+            dbConnectionIdle:
+              type: integer
+              format: int16
+              description: "Idle connections in the pool"
+            unconfirmedTxCacheSize:
+              type: integer
+              format: int16
+              description: "The waiting transactions cache size"
+            maxUnconfirmedTxCount:
+              type: integer
+              format: int16
+              description: "The max count of the unconfirmed transactions"
 
     BaseResponse:
       type: object

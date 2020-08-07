@@ -329,6 +329,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     @Override
+    public boolean isTrimming(){
+        return trimService.isTrimming();
+    }
+
+    @Override
     public boolean isScanning() {
         return blockchainProcessorState.isScanning();
     }

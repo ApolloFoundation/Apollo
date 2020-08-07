@@ -101,4 +101,9 @@ public class BlockChainInfoServiceImpl implements BlockChainInfoService {
         return lookupBlockchain().getLastBlockTimestamp();
     }
 
+    @Override
+    public boolean isTrimming(){
+        return blockchainProcessor.isTrimming();
+    }
+
 }
