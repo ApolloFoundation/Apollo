@@ -35,6 +35,7 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockSerializer;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl;
@@ -124,6 +125,7 @@ class CsvImporterTest {
     private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
     private PeersService peersService = mock(PeersService.class);
     private GeneratorService generatorService = mock(GeneratorService.class);
+    private BlockSerializer blockSerializer = mock(BlockSerializer.class);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -162,7 +164,9 @@ class CsvImporterTest {
         .addBeans(MockBean.of(timeService, TimeService.class))
         .addBeans(MockBean.of(peersService, PeersService.class))
         .addBeans(MockBean.of(generatorService, GeneratorService.class))
+        .addBeans(MockBean.of(blockSerializer, BlockSerializer.class))
         .build();
+
     private HeightConfig config = Mockito.mock(HeightConfig.class);
     private Chain chain = Mockito.mock(Chain.class);
     @Inject

@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.peer.parser.GetMilestoneBlockIdsRes
 import com.apollocurrency.aplwallet.apl.core.peer.parser.GetNextBlockIdsResponseParser;
 import com.apollocurrency.aplwallet.apl.core.peer.parser.GetNextBlocksResponseParser;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockSerializer;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
@@ -65,6 +66,7 @@ public class GetMoreBlocksThread implements Runnable {
     private final BlockchainProcessorState blockchainProcessorState;
     private final GetCumulativeDifficultyRequest getCumulativeDifficultyRequest;
     private final GetNextBlocksResponseParser getNextBlocksResponseParser;
+    private final BlockSerializer blockSerializer;
 
     private boolean peerHasMore;
     private List<Peer> connectedPublicPeers;
@@ -78,7 +80,8 @@ public class GetMoreBlocksThread implements Runnable {
                                GlobalSync globalSync, TimeService timeService, PrunableRestorationService prunableRestorationService,
                                ExecutorService networkService, PropertiesHolder propertiesHolder,
                                TransactionProcessor transactionProcessor,
-                               GetNextBlocksResponseParser getNextBlocksResponseParser) {
+                               GetNextBlocksResponseParser getNextBlocksResponseParser,
+                               BlockSerializer blockSerializer) {
         this.blockchainProcessor = blockchainProcessor;
         this.blockchainProcessorState = blockchainProcessorState;
 
@@ -93,6 +96,7 @@ public class GetMoreBlocksThread implements Runnable {
         this.defaultNumberOfForkConfirmations = propertiesHolder.getIntProperty("apl.numberOfForkConfirmations");
         this.getNextBlocksResponseParser = getNextBlocksResponseParser;
         this.getCumulativeDifficultyRequest = new GetCumulativeDifficultyRequest(blockchainConfig.getChain().getChainId());
+        this.blockSerializer = blockSerializer;
     }
 
     @Override
@@ -585,7 +589,7 @@ public class GetMoreBlocksThread implements Runnable {
                 try {
                     blockchainProcessor.pushBlock(block);
                 } catch (BlockchainProcessor.BlockNotAcceptedException e) {
-                    log.error("Popped off block no longer acceptable: " + blockchain.getJSONObject(block).toJSONString(), e);
+                    log.error("Popped off block no longer acceptable: " + blockSerializer.getJSONObject(block).toJSONString(), e);
                     break;
                 }
             }

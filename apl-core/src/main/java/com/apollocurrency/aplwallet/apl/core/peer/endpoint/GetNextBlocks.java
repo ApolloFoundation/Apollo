@@ -69,7 +69,7 @@ public final class GetNextBlocks extends PeerRequestHandler {
         List<Long> idList = new ArrayList<>();
         stringList.forEach(stringId -> idList.add(Convert.parseUnsignedLong(stringId)));
         blocks = blockchain.getBlocksAfter(blockId, idList);
-        blocks.forEach(block -> nextBlocksArray.add(blockchain.getJSONObject(block)));
+        blocks.forEach(block -> nextBlocksArray.add(lookupBlockSerializer().getJSONObject(block)));
         response.put("nextBlocks", nextBlocksArray);
 
         return response;

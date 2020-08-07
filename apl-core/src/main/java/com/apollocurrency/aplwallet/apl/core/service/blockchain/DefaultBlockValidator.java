@@ -24,8 +24,9 @@ public class DefaultBlockValidator extends AbstractBlockValidator {
     public DefaultBlockValidator(Blockchain blockchain,
                                  BlockchainConfig blockchainConfig,
                                  AccountService accountService,
-                                 GeneratorService generatorService) {
-        super(blockchain, blockchainConfig, accountService, generatorService);
+                                 GeneratorService generatorService,
+                                 BlockSerializer blockSerializer) {
+        super(blockchain, blockchainConfig, accountService, generatorService, blockSerializer);
     }
 
     @Override
@@ -36,11 +37,11 @@ public class DefaultBlockValidator extends AbstractBlockValidator {
             if (log.isTraceEnabled()) {
                 log.trace("Previous block={} height={}", previousBlock.getStringId(), previousBlock.getHeight());
                 log.trace("Current block={} prev={} prevHash={}", block.getStringId(), Long.toUnsignedString(block.getPreviousBlockId()), block.getPreviousBlockHash());
-                log.trace("PrevBlock={}", blockchain.getJSONObject(previousBlock).toJSONString());
-                log.trace("Current block={}", blockchain.getJSONObject(block).toJSONString());
+                log.trace("PrevBlock={}", blockSerializer.getJSONObject(previousBlock).toJSONString());
+                log.trace("Current block={}", blockSerializer.getJSONObject(block).toJSONString());
             }
             throw new BlockchainProcessor.BlockNotAcceptedException(
-                "Previous block hash doesn't match", blockchain.getJSONObject(block));
+                "Previous block hash doesn't match", blockSerializer.getJSONObject(block));
         }
     }
 
@@ -49,7 +50,7 @@ public class DefaultBlockValidator extends AbstractBlockValidator {
         boolean checkResult = accountService.setOrVerifyPublicKey(block.getGeneratorId(), block.getGeneratorPublicKey());
         if (!block.checkSignature() && !checkResult) {
             throw new BlockchainProcessor.BlockNotAcceptedException(
-                "Block signature verification failed", blockchain.getJSONObject(block));
+                "Block signature verification failed", blockSerializer.getJSONObject(block));
         }
     }
 
@@ -68,7 +69,7 @@ public class DefaultBlockValidator extends AbstractBlockValidator {
     void validateInstantBlock(Block block, Block previousBlock) throws BlockchainProcessor.BlockNotAcceptedException {
         if (blockchain.getOrLoadTransactions(block).size() <= blockchainConfig.getCurrentConfig().getNumberOfTransactionsInAdaptiveBlock()) {
             throw new BlockchainProcessor.BlockNotAcceptedException(
-                "Incorrect instant block", blockchain.getJSONObject(block));
+                "Incorrect instant block", blockSerializer.getJSONObject(block));
         }
     }
 
@@ -76,7 +77,7 @@ public class DefaultBlockValidator extends AbstractBlockValidator {
     void validateRegularBlock(Block block, Block previousBlock) throws BlockchainProcessor.BlockNotAcceptedException {
         if (blockchain.getOrLoadTransactions(block).size() <= blockchainConfig.getCurrentConfig().getNumberOfTransactionsInAdaptiveBlock() || block.getTimeout() != 0) {
             throw new BlockchainProcessor.BlockNotAcceptedException(
-                "Incorrect regular block", blockchain.getJSONObject(block));
+                "Incorrect regular block", blockSerializer.getJSONObject(block));
         }
     }
 }
