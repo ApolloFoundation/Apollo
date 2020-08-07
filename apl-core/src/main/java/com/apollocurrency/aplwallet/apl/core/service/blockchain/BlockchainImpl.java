@@ -326,29 +326,6 @@ public class BlockchainImpl implements Blockchain {
         return parentBlock.getTransactions();
     }
 
-    public JSONObject getJSONObject(Block block) {
-        JSONObject json = new JSONObject();
-        json.put("version", block.getVersion());
-        json.put("stringId", block.getStringId());
-        json.put("timestamp", block.getTimestamp());
-        json.put("previousBlock", Long.toUnsignedString(block.getPreviousBlockId()));
-        json.put("totalAmountATM", block.getTotalFeeATM());
-        json.put("totalFeeATM", block.getTotalFeeATM());
-        json.put("payloadLength", block.getPayloadLength());
-        json.put("payloadHash", Convert.toHexString(block.getPayloadHash()));
-        json.put("generatorId", Long.toUnsignedString(block.getGeneratorId()));
-        json.put("generatorPublicKey", Convert.toHexString(block.getGeneratorPublicKey()));
-        json.put("generationSignature", Convert.toHexString(block.getGenerationSignature()));
-        json.put("previousBlockHash", Convert.toHexString(block.getPreviousBlockHash()));
-        json.put("blockSignature", Convert.toHexString(block.getBlockSignature()));
-        json.put("timeout", block.getTimeout());
-
-        JSONArray transactionsData = new JSONArray();
-        this.getOrLoadTransactions(block).forEach(transaction -> transactionsData.add(transaction.getJSONObject()));
-        json.put("transactions", transactionsData);
-        return json;
-    }
-
     @Transactional
     @Override
     public void commit(Block block) {

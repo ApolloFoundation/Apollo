@@ -83,8 +83,6 @@ public interface Blockchain {
 
     List<Transaction> getOrLoadTransactions(Block parentBlock);
 
-    JSONObject getJSONObject(Block block);
-
     void commit(Block block);
 
     Long getBlockCount(TransactionalDataSource dataSource, int from, int to);
