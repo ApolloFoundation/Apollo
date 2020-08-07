@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.model.ExportKeyStore;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
 import com.apollocurrency.aplwallet.apl.eth.utils.FbWalletUtil;
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -90,7 +90,7 @@ public class KeyStoreController {
 
         WalletKeysInfo keyStore = keyStoreService.getWalletKeysInfo(passphraseStr, accountId);
         if (keyStore == null) {
-            return ResponseBuilder.apiError(ApiErrors.INCORRECT_PARAM, "passphrase", "account: " + Convert.defaultRsAccount(accountId)).build();
+            return ResponseBuilder.apiError(ApiErrors.INCORRECT_PARAM, "passphrase", "account: " + Convert2.defaultRsAccount(accountId)).build();
         }
         keyStore.setPassphrase(null);
 

@@ -21,40 +21,32 @@
 package com.apollocurrency.aplwallet.apl.core.entity.state.currency;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
 import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystemExchange;
-import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.ShufflingTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveIncrease;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.inject.spi.CDI;
-import java.util.EnumSet;
 import java.util.Set;
 
-@Slf4j
 /**
  * Define and validate currency capabilities
  */
-public enum CurrencyType {
+@Slf4j
+public enum CurrencyType implements CurrencyTypeValidatable {
 
     /**
      * Can be exchanged from/to APL<br>
      */
     EXCHANGEABLE(0x01) {
         @Override
-        public void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
-        }
-
-        @Override
-        public void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
+        public void validateMissing(Currency currency, Transaction transaction,
+                                    Set<CurrencyType> validators) throws AplException.NotValidException {
+            log.trace("EXCHANGEABLE 2 [{}]: \ncurrency={}, \n{}, \n{}", transaction.getECBlockHeight(), currency, transaction, validators);
             if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
                 if (!validators.contains(CLAIMABLE)) {
                     throw new AplException.NotValidException("Currency is not exchangeable and not claimable");
@@ -71,7 +63,9 @@ public enum CurrencyType {
      */
     CONTROLLABLE(0x02) {
         @Override
-        public void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
+        public void validate(Currency currency, Transaction transaction,
+                             Set<CurrencyType> validators, long maxBalanceAtm, boolean isActiveCurrency) throws AplException.NotValidException {
+            log.trace("CONTROLLABLE 1 [{}]: \ncurrency={}, \n{}, \n{}", transaction.getECBlockHeight(), currency, transaction, validators);
             if (transaction.getType() == MonetarySystem.CURRENCY_TRANSFER) {
                 if (currency == null || (currency.getAccountId() != transaction.getSenderId() && currency.getAccountId() != transaction.getRecipientId())) {
                     throw new AplException.NotValidException("Controllable currency can only be transferred to/from issuer account");
@@ -83,18 +77,15 @@ public enum CurrencyType {
                 }
             }
         }
-
-        @Override
-        public void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) {
-        }
-
     },
     /**
      * Can be reserved before the currency is active, reserve is distributed to founders once the currency becomes active<br>
      */
     RESERVABLE(0x04) {
         @Override
-        public void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException {
+        public void validate(Currency currency, Transaction transaction,
+                             Set<CurrencyType> validators, long maxBalanceAtm, boolean isActiveCurrency) throws AplException.ValidationException {
+            log.trace("RESERVABLE 1 [{}]: \ncurrency={}, \n{}, \n{}", transaction.getECBlockHeight(), currency, transaction, validators);
             if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
                 MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
                 int issuanceHeight = attachment.getIssuanceHeight();
@@ -108,8 +99,8 @@ public enum CurrencyType {
                     throw new AplException.NotValidException("Minimum reserve per unit must be > 0");
                 }
 
-                if (Math.multiplyExact(attachment.getMinReservePerUnitATM(), attachment.getReserveSupply()) > blockchainConfig.getCurrentConfig().getMaxBalanceATM()) {
-
+                if (Math.multiplyExact(attachment.getMinReservePerUnitATM(), attachment.getReserveSupply()) >
+                    maxBalanceAtm) {
                     throw new AplException.NotValidException("Minimum reserve per unit is too large");
                 }
                 if (attachment.getReserveSupply() <= attachment.getInitialSupply()) {
@@ -128,7 +119,9 @@ public enum CurrencyType {
         }
 
         @Override
-        public void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
+        public void validateMissing(Currency currency, Transaction transaction,
+                                    Set<CurrencyType> validators) throws AplException.NotValidException {
+            log.trace("RESERVABLE 2 [{}]: \ncurrency={}, \n{}, \n{}", transaction.getECBlockHeight(), currency, transaction, validators);
             if (transaction.getType() == MonetarySystem.RESERVE_INCREASE) {
                 throw new AplException.NotValidException("Cannot increase reserve since currency is not reservable");
             }
@@ -155,7 +148,9 @@ public enum CurrencyType {
      */
     CLAIMABLE(0x08) {
         @Override
-        public void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException {
+        public void validate(Currency currency, Transaction transaction,
+                             Set<CurrencyType> validators, long maxBalanceAtm, boolean isActiveCurrency) throws AplException.ValidationException {
+            log.trace("CLAIMABLE 1 [{}]: \ncurrency={}, \n{}, \n{}", transaction.getECBlockHeight(), currency, transaction, validators);
             if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
                 MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
                 if (!validators.contains(RESERVABLE)) {
@@ -169,15 +164,16 @@ public enum CurrencyType {
                 }
             }
             if (transaction.getType() == MonetarySystem.RESERVE_CLAIM) {
-//                if (currency == null || !currency.isActive()) {
-                if (currency == null || !lookupCurrencyService().isActive(currency)) {
+                if (currency == null || !isActiveCurrency) {
                     throw new AplException.NotCurrentlyValidException("Cannot claim reserve since currency is not yet active");
                 }
             }
         }
 
         @Override
-        public void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
+        public void validateMissing(Currency currency, Transaction transaction,
+                                    Set<CurrencyType> validators) throws AplException.NotValidException {
+            log.trace("CLAIMABLE 2 [{}]: \ncurrency={}, \n{}, \n{}", transaction.getECBlockHeight(), currency, transaction, validators);
             if (transaction.getType() == MonetarySystem.RESERVE_CLAIM) {
                 throw new AplException.NotValidException("Cannot claim reserve since currency is not claimable");
             }
@@ -188,7 +184,9 @@ public enum CurrencyType {
      */
     MINTABLE(0x10) {
         @Override
-        public void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
+        public void validate(Currency currency, Transaction transaction,
+                             Set<CurrencyType> validators, long maxBalanceAtm, boolean isActiveCurrency) throws AplException.NotValidException {
+            log.trace("MINTABLE 1 [{}]: \ncurrency={}, \n{}, \n{}", transaction.getECBlockHeight(), currency, transaction, validators);
             if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
                 MonetarySystemCurrencyIssuance issuanceAttachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
                 try {
@@ -212,7 +210,9 @@ public enum CurrencyType {
         }
 
         @Override
-        public void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.NotValidException {
+        public void validateMissing(Currency currency, Transaction transaction,
+                                    Set<CurrencyType> validators) throws AplException.NotValidException {
+            log.trace("MINTABLE 2 [{}]: \ncurrency={}, \n{}, \n{}", transaction.getECBlockHeight(), currency, transaction, validators);
             if (transaction.getType() == MonetarySystem.CURRENCY_ISSUANCE) {
                 MonetarySystemCurrencyIssuance issuanceAttachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
                 if (issuanceAttachment.getMinDifficulty() != 0 ||
@@ -232,27 +232,19 @@ public enum CurrencyType {
      */
     NON_SHUFFLEABLE(0x20) {
         @Override
-        public void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException {
+        public void validate(Currency currency, Transaction transaction,
+                             Set<CurrencyType> validators, long maxBalanceAtm, boolean isActiveCurrency) throws AplException.ValidationException {
+            log.trace("NON_SHUFFLEABLE 1 [{}]: \ncurrency={}, \n{}, \n{}", transaction.getECBlockHeight(), currency, transaction, validators);
             if (transaction.getType() == ShufflingTransaction.SHUFFLING_CREATION) {
                 throw new AplException.NotValidException("Shuffling is not allowed for this currency");
             }
         }
-
-        @Override
-        public void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException {
-        }
     };
 
-    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static CurrencyService currencyService;
     private final int code;
 
     CurrencyType(int code) {
         this.code = code;
-    }
-
-    CurrencyType() {
-        code = 0;
     }
 
     public static CurrencyType get(int code) {
@@ -264,98 +256,8 @@ public enum CurrencyType {
         return null;
     }
 
-    public static void validate(Currency currency, Transaction transaction) throws AplException.ValidationException {
-        if (currency == null) {
-            log.trace("currency = {}, tr = {}, height = {}", currency, transaction, transaction.getHeight());
-            log.trace("s-trace = {}", ThreadUtils.last5Stacktrace());
-            throw new AplException.NotCurrentlyValidException("Unknown currency: " + transaction.getAttachment().getJSONObject());
-        }
-        validate(currency, currency.getType(), transaction);
-    }
-
-    public static void validate(int type, Transaction transaction) throws AplException.ValidationException {
-        validate(null, type, transaction);
-    }
-
-    private static void validate(Currency currency, int type, Transaction transaction) throws AplException.ValidationException {
-        if (transaction.getAmountATM() != 0) {
-            throw new AplException.NotValidException(String.format("Currency transaction %s amount must be 0", blockchainConfig.getCoinSymbol()));
-        }
-
-        final EnumSet<CurrencyType> validators = EnumSet.noneOf(CurrencyType.class);
-        for (CurrencyType validator : CurrencyType.values()) {
-            if ((validator.getCode() & type) != 0) {
-                validators.add(validator);
-            }
-        }
-        if (validators.isEmpty()) {
-            throw new AplException.NotValidException("Currency type not specified");
-        }
-        for (CurrencyType validator : CurrencyType.values()) {
-            if ((validator.getCode() & type) != 0) {
-                validator.validate(currency, transaction, validators);
-            } else {
-                validator.validateMissing(currency, transaction, validators);
-            }
-        }
-    }
-
-    public static void validateCurrencyNaming(long issuerAccountId, MonetarySystemCurrencyIssuance attachment) throws AplException.ValidationException {
-        String name = attachment.getName();
-        String code = attachment.getCode();
-        String description = attachment.getDescription();
-        if (name.length() < Constants.MIN_CURRENCY_NAME_LENGTH || name.length() > Constants.MAX_CURRENCY_NAME_LENGTH
-            || name.length() < code.length()
-            || code.length() < Constants.MIN_CURRENCY_CODE_LENGTH || code.length() > Constants.MAX_CURRENCY_CODE_LENGTH
-            || description.length() > Constants.MAX_CURRENCY_DESCRIPTION_LENGTH) {
-            throw new AplException.NotValidException(String.format("Invalid currency name %s code %s or description %s", name, code, description));
-        }
-        String normalizedName = name.toLowerCase();
-        for (int i = 0; i < normalizedName.length(); i++) {
-            if (Constants.ALPHABET.indexOf(normalizedName.charAt(i)) < 0) {
-                throw new AplException.NotValidException("Invalid currency name: " + normalizedName);
-            }
-        }
-        for (int i = 0; i < code.length(); i++) {
-            if (Constants.ALLOWED_CURRENCY_CODE_LETTERS.indexOf(code.charAt(i)) < 0) {
-                throw new AplException.NotValidException("Invalid currency code: " + code + " code must be all upper case");
-            }
-        }
-        if (code.contains(blockchainConfig.getCoinSymbol()) || blockchainConfig.getCoinSymbol().toLowerCase().equals(normalizedName)) {
-            throw new AplException.NotValidException("Currency name already used");
-        }
-        Currency currency;
-        CurrencyService currencyService = lookupCurrencyService();
-        if ((currency = currencyService.getCurrencyByName(normalizedName)) != null
-            && !currencyService.canBeDeletedBy(currency, issuerAccountId)) {
-            throw new AplException.NotCurrentlyValidException("Currency name already used: " + normalizedName);
-        }
-        if ((currency = currencyService.getCurrencyByCode(name)) != null
-            && !currencyService.canBeDeletedBy(currency, issuerAccountId)) {
-            throw new AplException.NotCurrentlyValidException("Currency name already used as code: " + normalizedName);
-        }
-        if ((currency = currencyService.getCurrencyByCode(code)) != null
-            && !currencyService.canBeDeletedBy(currency, issuerAccountId)) {
-            throw new AplException.NotCurrentlyValidException("Currency code already used: " + code);
-        }
-        if ((currency = currencyService.getCurrencyByName(code)) != null
-            && !currencyService.canBeDeletedBy(currency, issuerAccountId)) {
-            throw new AplException.NotCurrentlyValidException("Currency code already used as name: " + code);
-        }
-    }
-
     public int getCode() {
         return code;
     }
 
-    public abstract void validate(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException;
-
-    public abstract void validateMissing(Currency currency, Transaction transaction, Set<CurrencyType> validators) throws AplException.ValidationException;
-
-    private static CurrencyService lookupCurrencyService() {
-        if (currencyService == null) {
-            currencyService = CDI.current().select(CurrencyService.class).get();
-        }
-        return currencyService;
-    }
 }

@@ -8,6 +8,7 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
@@ -16,7 +17,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public abstract class VersionedDeletableEntityDbTable<T> extends EntityDbTable<T> {
+public abstract class VersionedDeletableEntityDbTable<T extends VersionedDerivedEntity> extends EntityDbTable<T> {
     protected VersionedDeletableEntityDbTable(String table, KeyFactory<T> dbKeyFactory) {
         super(table, dbKeyFactory, true, null);
     }

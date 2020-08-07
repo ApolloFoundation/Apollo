@@ -263,7 +263,7 @@ public class ServerInfoService {
         }
         dto.genesisAccountId = Long.toUnsignedString(GenesisImporter.CREATOR_ID);
         dto.epochBeginning = GenesisImporter.EPOCH_BEGINNING;
-        dto.maxArbitraryMessageLength = Constants.MAX_ARBITRARY_MESSAGE_LENGTH;
+        dto.maxArbitraryMessageLength = blockchainConfig.getCurrentConfig().getMaxArbitraryMessageLength();
         dto.maxPrunableMessageLength = Constants.MAX_PRUNABLE_MESSAGE_LENGTH;
 
         dto.coinSymbol = blockchainConfig.getCoinSymbol();

@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.core.rest.validation.ValidAtomicSwapTime;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
@@ -105,9 +106,9 @@ public class DexTransactionSendingController {
         String toAddress;
         if (orderType == OrderType.BUY) {
             fromAddress = walletAddress;
-            toAddress = Convert.defaultRsAccount(account.getId());
+            toAddress = Convert2.defaultRsAccount(account.getId());
         } else {
-            fromAddress = Convert.defaultRsAccount(account.getId());
+            fromAddress = Convert2.defaultRsAccount(account.getId());
             toAddress = walletAddress;
         }
         Transaction tx =

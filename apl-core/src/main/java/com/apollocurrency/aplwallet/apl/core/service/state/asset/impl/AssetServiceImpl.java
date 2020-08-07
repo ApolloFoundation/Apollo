@@ -15,12 +15,15 @@ import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetDeleteService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetIssuance;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.stream.Stream;
 
+@DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
 @Slf4j
 @Singleton
 public class AssetServiceImpl implements AssetService {

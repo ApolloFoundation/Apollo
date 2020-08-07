@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -40,7 +41,7 @@ import java.sql.SQLException;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-public abstract class EntityDbTable<T> extends BasicDbTable<T> implements EntityDbTableInterface<T> {
+public abstract class EntityDbTable<T extends DerivedEntity> extends BasicDbTable<T> implements EntityDbTableInterface<T> {
     private static final Logger log = getLogger(EntityDbTable.class);
     private final String defaultSort;
     @Getter
@@ -246,35 +247,6 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> implements Entity
             }
             return t;
         });
-    }
-
-    @Override
-    public final DbIterator<T> search(String query, DbClause dbClause, int from, int to) {
-        return search(query, dbClause, from, to, " ORDER BY ft.score DESC ");
-    }
-
-    @Override
-    public final DbIterator<T> search(String query, DbClause dbClause, int from, int to, String sort) {
-        Connection con = null;
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try {
-            con = dataSource.getConnection();
-            @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
-            PreparedStatement pstmt = con.prepareStatement("SELECT " + table + ".*, ft.score FROM " + table +
-                ", ftl_search('PUBLIC', '" + table + "', ?, 2147483647, 0) ft "
-                + " WHERE " + table + ".db_id = ft.keys[1] "
-                + (multiversion ? " AND " + table + ".latest = TRUE " : " ")
-                + " AND " + dbClause.getClause() + sort
-                + DbUtils.limitsClause(from, to));
-            int i = 0;
-            pstmt.setString(++i, query);
-            i = dbClause.set(pstmt, ++i);
-            i = DbUtils.setLimits(i, pstmt, from, to);
-            return getManyBy(con, pstmt, true);
-        } catch (SQLException e) {
-            DbUtils.close(con);
-            throw new RuntimeException(e.toString(), e);
-        }
     }
 
     @Override

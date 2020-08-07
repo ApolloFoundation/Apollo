@@ -4,6 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.currency.impl;
 
+import static com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType.CLAIMABLE;
+import static com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType.MINTABLE;
+import static com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType.RESERVABLE;
+
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencySupplyTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyTable;
@@ -16,7 +22,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyFounder;
-import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySupply;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
@@ -32,14 +37,22 @@ import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyServ
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
 
+@DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
 @Slf4j
 @Singleton
 public class CurrencyServiceImpl implements CurrencyService {
@@ -47,7 +60,7 @@ public class CurrencyServiceImpl implements CurrencyService {
     private final CurrencySupplyTable currencySupplyTable;
     private final CurrencyTable currencyTable;
     private final BlockChainInfoService blockChainInfoService;
-    private final IteratorToStreamConverter<CurrencySellOffer> iteratorToStreamConverter;
+    private final IteratorToStreamConverter<Currency> iteratorToStreamConverter;
     private final AccountService accountService;
     private final AccountCurrencyService accountCurrencyService;
     private final CurrencyExchangeOfferFacade currencyExchangeOfferFacade;
@@ -56,6 +69,7 @@ public class CurrencyServiceImpl implements CurrencyService {
     private final CurrencyTransferService currencyTransferService;
     private final ShufflingService shufflingService;
     private CurrencyMintService currencyMintService; // lazy init to break up circular dependency
+    private final BlockchainConfig blockchainConfig;
 
     @Inject
     public CurrencyServiceImpl(CurrencySupplyTable currencySupplyTable,
@@ -67,7 +81,8 @@ public class CurrencyServiceImpl implements CurrencyService {
                                CurrencyFounderService currencyFounderService,
                                ExchangeService exchangeService,
                                CurrencyTransferService currencyTransferService,
-                               ShufflingService shufflingService) {
+                               ShufflingService shufflingService,
+                               BlockchainConfig blockchainConfig) {
         this.currencySupplyTable = currencySupplyTable;
         this.currencyTable = currencyTable;
         this.blockChainInfoService = blockChainInfoService;
@@ -79,6 +94,7 @@ public class CurrencyServiceImpl implements CurrencyService {
         this.exchangeService = exchangeService;
         this.currencyTransferService = currencyTransferService;
         this.shufflingService = shufflingService;
+        this.blockchainConfig = blockchainConfig;
     }
 
     @Override
@@ -112,13 +128,33 @@ public class CurrencyServiceImpl implements CurrencyService {
     }
 
     @Override
+    public Stream<Currency> getCurrencyIssuedByAsStream(long accountId, int from, int to) {
+        return iteratorToStreamConverter.apply(
+            currencyTable.getManyBy(new DbClause.LongClause("account_id", accountId), from, to));
+    }
+
+    @Override
     public DbIterator<Currency> searchCurrencies(String query, int from, int to) {
         return currencyTable.search(query, DbClause.EMPTY_CLAUSE, from, to, " ORDER BY ft.score DESC, currency.creation_height DESC ");
     }
 
     @Override
+    public Stream<Currency> searchCurrenciesStream(String query, int from, int to) {
+        return iteratorToStreamConverter.apply(
+            currencyTable.search(query, DbClause.EMPTY_CLAUSE, from, to, " ORDER BY ft.score DESC, currency.creation_height DESC ")
+        );
+    }
+
+    @Override
     public DbIterator<Currency> getIssuedCurrenciesByHeight(int height, int from, int to) {
         return currencyTable.getManyBy(new DbClause.IntClause("issuance_height", height), from, to);
+    }
+
+    @Override
+    public Stream<Currency> getIssuedCurrenciesByHeightStream(int height, int from, int to) {
+        return iteratorToStreamConverter.apply(
+            currencyTable.getManyBy(new DbClause.IntClause("issuance_height", height), from, to)
+        );
     }
 
     @Override
@@ -140,7 +176,7 @@ public class CurrencyServiceImpl implements CurrencyService {
         int height = blockChainInfoService.getHeight();
         Currency currency = new Currency(transaction, attachment, height);
         currencyTable.insert(currency);
-        if (currency.is(CurrencyType.MINTABLE) || currency.is(CurrencyType.RESERVABLE)) {
+        if (currency.is(MINTABLE) || currency.is(RESERVABLE)) {
             CurrencySupply currencySupply = this.loadCurrencySupplyByCurrency(currency);
             if (currencySupply != null) {
                 currencySupply.setCurrentSupply( attachment.getInitialSupply() );
@@ -181,7 +217,7 @@ public class CurrencyServiceImpl implements CurrencyService {
     }
 
     public long getCurrentSupply(Currency currency) {
-        if (!currency.is(CurrencyType.RESERVABLE) && !currency.is(CurrencyType.MINTABLE)) {
+        if (!currency.is(RESERVABLE) && !currency.is(MINTABLE)) {
             return currency.getInitialSupply();
         }
         CurrencySupply currencySupply = this.loadCurrencySupplyByCurrency(currency);
@@ -193,7 +229,7 @@ public class CurrencyServiceImpl implements CurrencyService {
 
     @Override
     public long getCurrentReservePerUnitATM(Currency currency) {
-        if (!currency.is(CurrencyType.RESERVABLE) || this.loadCurrencySupplyByCurrency(currency) == null) {
+        if (!currency.is(RESERVABLE) || this.loadCurrencySupplyByCurrency(currency) == null) {
             return 0;
         }
         return currency.getCurrencySupply().getCurrentReservePerUnitATM();
@@ -206,7 +242,7 @@ public class CurrencyServiceImpl implements CurrencyService {
 
     @Override
     public CurrencySupply loadCurrencySupplyByCurrency(Currency currency) {
-        if (!currency.is(CurrencyType.RESERVABLE) && !currency.is(CurrencyType.MINTABLE)) {
+        if (!currency.is(RESERVABLE) && !currency.is(MINTABLE)) {
             return null;
         }
         CurrencySupply currencySupply = currency.getCurrencySupply();
@@ -255,7 +291,7 @@ public class CurrencyServiceImpl implements CurrencyService {
         if (!this.isActive(currency)) {
             return senderAccountId == currency.getAccountId();
         }
-        if (currency.is(CurrencyType.MINTABLE)
+        if (currency.is(MINTABLE)
             && this.getCurrentSupply(currency) < currency.getMaxSupply()
             && senderAccountId != currency.getAccountId()) {
             return false;
@@ -273,39 +309,32 @@ public class CurrencyServiceImpl implements CurrencyService {
             throw new IllegalStateException("Currency " + currency.getId() + " not entirely owned by "
                 + senderAccount.getId());
         }
-        if (currency.is(CurrencyType.RESERVABLE)) {
-            if (currency.is(CurrencyType.CLAIMABLE) && this.isActive(currency)) {
+        if (currency.is(RESERVABLE)) {
+            if (currency.is(CLAIMABLE) && this.isActive(currency)) {
                 accountCurrencyService.addToUnconfirmedCurrencyUnits(senderAccount, event, eventId, currency.getId(),
                     -accountCurrencyService.getCurrencyUnits(senderAccount, currency.getId()));
                 this.claimReserve(event, eventId, senderAccount, currency.getId(),
                     accountCurrencyService.getCurrencyUnits(senderAccount, currency.getId()));
             }
             if (!isActive(currency)) {
-                try (DbIterator<CurrencyFounder> founders = currencyFounderService
-                    .getCurrencyFounders(currency.getId(), 0, Integer.MAX_VALUE)) {
-                    for (CurrencyFounder founder : founders) {
-                        accountService.addToBalanceAndUnconfirmedBalanceATM(
-                            accountService.getAccount(founder.getAccountId()),
-                            event, eventId, Math.multiplyExact(currency.getReserveSupply(), founder.getAmountPerUnitATM()));
-                    }
-                }
+                Stream<CurrencyFounder> founders = currencyFounderService
+                    .getCurrencyFoundersStream(currency.getId(), 0, Integer.MAX_VALUE);
+                founders.forEach((founder) -> {
+                    accountService.addToBalanceAndUnconfirmedBalanceATM(
+                        accountService.getAccount(founder.getAccountId()),
+                        event, eventId, Math.multiplyExact(currency.getReserveSupply(), founder.getAmountPerUnitATM()));
+                });
             }
             currencyFounderService.remove(currency.getId());
         }
         if (currency.is(CurrencyType.EXCHANGEABLE)) {
-            List<CurrencyBuyOffer> buyOffers = new ArrayList<>();
-            try (DbIterator<CurrencyBuyOffer> offers =
-                     currencyExchangeOfferFacade.getCurrencyBuyOfferService().getOffers(currency, 0, -1)) {
-                while (offers.hasNext()) {
-                    buyOffers.add(offers.next());
-                }
-            }
-            int height = blockChainInfoService.getHeight();
+            Stream<CurrencyBuyOffer> buyOffers =
+                currencyExchangeOfferFacade.getCurrencyBuyOfferService().getOffersStream(currency, 0, -1);
             buyOffers.forEach((offer) -> {
                 currencyExchangeOfferFacade.removeOffer(event, offer);
             });
         }
-        if (currency.is(CurrencyType.MINTABLE)) {
+        if (currency.is(MINTABLE)) {
             // lazy init to break up circular dependency
             lookupCurrencyMintService().deleteCurrency(currency);
         }
@@ -325,6 +354,91 @@ public class CurrencyServiceImpl implements CurrencyService {
             this.currencyMintService = CDI.current().select(CurrencyMintService.class).get();
         }
         return this.currencyMintService;
+    }
+
+    @Override
+    public void validate(Currency currency, Transaction transaction) throws AplException.ValidationException {
+        Objects.requireNonNull(transaction);
+        if (currency == null) {
+            log.trace("currency = {}, tr = {}, height = {}", currency, transaction, transaction.getHeight());
+            log.trace("s-trace = {}", ThreadUtils.last5Stacktrace());
+            throw new AplException.NotCurrentlyValidException("Unknown currency: " + transaction.getAttachment().getJSONObject());
+        }
+        this.validate(currency, currency.getType(), transaction);
+    }
+
+    public void validate(int type, Transaction transaction) throws AplException.ValidationException {
+        Objects.requireNonNull(transaction);
+        this.validate(null, type, transaction);
+    }
+
+    @Override
+    public void validate(Currency currency, int type, Transaction transaction) throws AplException.ValidationException {
+        if (transaction.getAmountATM() != 0) {
+            throw new AplException.NotValidException(String.format("Currency transaction %s amount must be 0", blockchainConfig.getCoinSymbol()));
+        }
+        if (type <= 0) {
+            throw new AplException.NotValidException("Currency type not specified, because it's = " + type);
+        }
+        final EnumSet<CurrencyType> validators = EnumSet.noneOf(CurrencyType.class);
+        for (CurrencyType currencyType : CurrencyType.values()) {
+            if ((currencyType.getCode() & type) != 0) {
+                validators.add(currencyType);
+            }
+        }
+        long maxBalanceAtm = blockchainConfig.getCurrentConfig().getMaxBalanceATM();
+        boolean isActiveCurrency = currency != null && this.isActive(currency);
+        for (CurrencyType currencyType : CurrencyType.values()) {
+            if ((currencyType.getCode() & type) != 0) {
+                currencyType.validate(currency, transaction, validators, maxBalanceAtm, isActiveCurrency);
+            } else {
+                currencyType.validateMissing(currency, transaction, validators);
+            }
+        }
+    }
+
+    @Override
+    public void validateCurrencyNaming(long issuerAccountId, MonetarySystemCurrencyIssuance attachment) throws AplException.ValidationException {
+        String name = attachment.getName();
+        String code = attachment.getCode();
+        String description = attachment.getDescription();
+        if (name.length() < Constants.MIN_CURRENCY_NAME_LENGTH || name.length() > Constants.MAX_CURRENCY_NAME_LENGTH
+            || name.length() < code.length()
+            || code.length() < Constants.MIN_CURRENCY_CODE_LENGTH || code.length() > Constants.MAX_CURRENCY_CODE_LENGTH
+            || description.length() > Constants.MAX_CURRENCY_DESCRIPTION_LENGTH) {
+            throw new AplException.NotValidException(String.format("Invalid currency name %s code %s or description %s", name, code, description));
+        }
+        String normalizedName = name.toLowerCase();
+        for (int i = 0; i < normalizedName.length(); i++) {
+            if (Constants.ALPHABET.indexOf(normalizedName.charAt(i)) < 0) {
+                throw new AplException.NotValidException("Invalid currency name: " + normalizedName);
+            }
+        }
+        for (int i = 0; i < code.length(); i++) {
+            if (Constants.ALLOWED_CURRENCY_CODE_LETTERS.indexOf(code.charAt(i)) < 0) {
+                throw new AplException.NotValidException("Invalid currency code: " + code + " code must be all upper case");
+            }
+        }
+        if (code.contains(blockchainConfig.getCoinSymbol()) || blockchainConfig.getCoinSymbol().toLowerCase().equals(normalizedName)) {
+            throw new AplException.NotValidException("Currency name already used: " + code);
+        }
+        Currency currency;
+        if ((currency = this.getCurrencyByName(normalizedName)) != null
+            && !this.canBeDeletedBy(currency, issuerAccountId)) {
+            throw new AplException.NotCurrentlyValidException("Currency name already used: " + normalizedName);
+        }
+        if ((currency = this.getCurrencyByCode(name)) != null
+            && !this.canBeDeletedBy(currency, issuerAccountId)) {
+            throw new AplException.NotCurrentlyValidException("Currency name already used as code: " + normalizedName);
+        }
+        if ((currency = this.getCurrencyByCode(code)) != null
+            && !this.canBeDeletedBy(currency, issuerAccountId)) {
+            throw new AplException.NotCurrentlyValidException("Currency code already used: " + code);
+        }
+        if ((currency = this.getCurrencyByName(code)) != null
+            && !this.canBeDeletedBy(currency, issuerAccountId)) {
+            throw new AplException.NotCurrentlyValidException("Currency code already used as name: " + code);
+        }
     }
 
 }

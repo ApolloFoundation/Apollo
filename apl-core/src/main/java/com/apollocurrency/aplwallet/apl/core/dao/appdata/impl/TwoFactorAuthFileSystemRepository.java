@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.dao.appdata.impl;
 
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.TwoFactorAuthRepository;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.TwoFactorAuthEntity;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import lombok.extern.slf4j.Slf4j;
@@ -45,7 +46,7 @@ public class TwoFactorAuthFileSystemRepository implements TwoFactorAuthRepositor
 
     @Override
     public TwoFactorAuthEntity get(long account) {
-        Path path = findFile(Convert.defaultRsAccount(account));
+        Path path = findFile(Convert2.defaultRsAccount(account));
         if (path == null) {
             return null;
         }
@@ -68,7 +69,7 @@ public class TwoFactorAuthFileSystemRepository implements TwoFactorAuthRepositor
     @Override
     public boolean add(TwoFactorAuthEntity entity2FA) {
         log.trace("Add new 2fa-file = {}", entity2FA.getAccount());
-        Path path = getNewFilePath(Convert.defaultRsAccount(entity2FA.getAccount()));
+        Path path = getNewFilePath(Convert2.defaultRsAccount(entity2FA.getAccount()));
         if (path == null) {
             return false;
         }
@@ -95,7 +96,7 @@ public class TwoFactorAuthFileSystemRepository implements TwoFactorAuthRepositor
         if (entity == null) {
             return false;
         }
-        String rsAccount = Convert.defaultRsAccount(entity2FA.getAccount());
+        String rsAccount = Convert2.defaultRsAccount(entity2FA.getAccount());
         Path targetPath = twoFactorDirPath.resolve(rsAccount);
         Path copyPath = Paths.get(targetPath.toString() + suffix);
 
@@ -124,7 +125,7 @@ public class TwoFactorAuthFileSystemRepository implements TwoFactorAuthRepositor
         TwoFactorAuthEntity entity = get(account);
         if (entity != null && entity.getAccount() == account) {
             try {
-                Files.delete(twoFactorDirPath.resolve(Convert.defaultRsAccount(account)));
+                Files.delete(twoFactorDirPath.resolve(Convert2.defaultRsAccount(account)));
                 return get(account) == null;
             } catch (IOException e) {
                 log.debug("2fa delete json error", e);

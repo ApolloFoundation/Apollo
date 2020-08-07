@@ -3,6 +3,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.converter;
 import com.apollocurrency.aplwallet.api.dto.ExchangeContractDTO;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 
 public class ExchangeContractToDTOConverter implements Converter<ExchangeContract, ExchangeContractDTO> {
     @Override
@@ -17,8 +18,8 @@ public class ExchangeContractToDTOConverter implements Converter<ExchangeContrac
         exchangeContractDTO.setDeadlineToReply(exchangeContract.getDeadlineToReply());
         exchangeContractDTO.setEncryptedSecret(Convert.toHexString(exchangeContract.getEncryptedSecret()));
         exchangeContractDTO.setSecretHash(Convert.toHexString(exchangeContract.getSecretHash()));
-        exchangeContractDTO.setSender(Convert.defaultRsAccount(exchangeContract.getSender()));
-        exchangeContractDTO.setRecipient(Convert.defaultRsAccount(exchangeContract.getRecipient()));
+        exchangeContractDTO.setSender(Convert2.defaultRsAccount(exchangeContract.getSender()));
+        exchangeContractDTO.setRecipient(Convert2.defaultRsAccount(exchangeContract.getRecipient()));
         exchangeContractDTO.setHeight(exchangeContract.getHeight());
         return exchangeContractDTO;
     }

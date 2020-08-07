@@ -39,7 +39,7 @@ import java.util.List;
 
 @Singleton
 public class TradeTable extends EntityDbTable<Trade> {
-    private static final LinkKeyFactory<Trade> TRADE_DB_KEY_FACTORY = new LinkKeyFactory<>("ask_order_id", "bid_order_id") {
+    public static final LinkKeyFactory<Trade> TRADE_DB_KEY_FACTORY = new LinkKeyFactory<>("ask_order_id", "bid_order_id") {
         @Override
         public DbKey newKey(Trade trade) {
             if (trade.getDbKey() == null) {
