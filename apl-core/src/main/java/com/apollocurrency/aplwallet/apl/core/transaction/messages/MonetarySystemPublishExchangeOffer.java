@@ -38,8 +38,8 @@ public final class MonetarySystemPublishExchangeOffer extends AbstractAttachment
     public MonetarySystemPublishExchangeOffer(JSONObject attachmentData) {
         super(attachmentData);
         this.currencyId = Convert.parseUnsignedLong((String) attachmentData.get("currency"));
-        this.buyRateATM = attachmentData.containsKey("buyRateATM") ? Convert.parseLong(attachmentData.get("buyRateATM")) : Convert.parseLong(attachmentData.get("buyRateNQT"));
-        this.sellRateATM = attachmentData.containsKey("sellRateATM") ? Convert.parseLong(attachmentData.get("sellRateATM")) : Convert.parseLong(attachmentData.get("sellRateNQT"));
+        this.buyRateATM = Convert.parseLong(attachmentData.get("buyRateATM"));
+        this.sellRateATM = Convert.parseLong(attachmentData.get("sellRateATM"));
         this.totalBuyLimit = Convert.parseLong(attachmentData.get("totalBuyLimit"));
         this.totalSellLimit = Convert.parseLong(attachmentData.get("totalSellLimit"));
         this.initialBuySupply = Convert.parseLong(attachmentData.get("initialBuySupply"));

@@ -26,7 +26,7 @@ public final class ColoredCoinsAssetDelete extends AbstractAttachment {
     public ColoredCoinsAssetDelete(JSONObject attachmentData) {
         super(attachmentData);
         this.assetId = Convert.parseUnsignedLong((String) attachmentData.get("asset"));
-        this.quantityATU = attachmentData.containsKey("quantityATU") ? Convert.parseLong(attachmentData.get("quantityATU")) : Convert.parseLong(attachmentData.get("quantityQNT"));
+        this.quantityATU = Convert.parseLong(attachmentData.get("quantityATU"));
         ;
     }
 

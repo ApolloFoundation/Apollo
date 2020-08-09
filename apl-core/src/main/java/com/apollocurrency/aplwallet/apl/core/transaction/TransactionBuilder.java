@@ -167,6 +167,7 @@ public class TransactionBuilder {
     }
 
     public TransactionImpl.BuilderImpl newTransactionBuilder(JSONObject transactionData) throws AplException.NotValidException {
+
         try {
             byte type = ((Long) transactionData.get("type")).byteValue();
             byte subtype = ((Long) transactionData.get("subtype")).byteValue();
@@ -178,6 +179,7 @@ public class TransactionBuilder {
             String referencedTransactionFullHash = (String) transactionData.get("referencedTransactionFullHash");
             Long versionValue = (Long) transactionData.get("version");
             byte version = versionValue == null ? 0 : versionValue.byteValue();
+
             SignatureParser signatureParser = SignatureToolFactory.selectParser(version).orElseThrow(UnsupportedTransactionVersion::new);
             JSONObject sigJsonObject;
             if (version < 2) {

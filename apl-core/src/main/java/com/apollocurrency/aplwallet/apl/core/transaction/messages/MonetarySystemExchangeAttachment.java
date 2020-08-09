@@ -27,7 +27,7 @@ public abstract class MonetarySystemExchangeAttachment extends AbstractAttachmen
     public MonetarySystemExchangeAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.currencyId = Convert.parseUnsignedLong((String) attachmentData.get("currency"));
-        this.rateATM = attachmentData.containsKey("rateATM") ? Convert.parseLong(attachmentData.get("rateATM")) : Convert.parseLong(attachmentData.get("rateNQT"));
+        this.rateATM = Convert.parseLong(attachmentData.get("rateATM"));
         this.units = Convert.parseLong(attachmentData.get("units"));
     }
 

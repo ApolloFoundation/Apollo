@@ -27,7 +27,7 @@ public final class ColoredCoinsAssetTransfer extends AbstractAttachment {
     public ColoredCoinsAssetTransfer(JSONObject attachmentData) {
         super(attachmentData);
         this.assetId = Convert.parseUnsignedLong((String) attachmentData.get("asset"));
-        this.quantityATU = attachmentData.containsKey("quantityATU") ? Convert.parseLong(attachmentData.get("quantityATU")) : Convert.parseLong(attachmentData.get("quantityQNT"));
+        this.quantityATU = Convert.parseLong(attachmentData.get("quantityATU"));
     }
 
     public ColoredCoinsAssetTransfer(long assetId, long quantityATU) {

@@ -42,7 +42,7 @@ public final class DigitalGoodsListing extends AbstractAttachment {
         this.description = (String) attachmentData.get("description");
         this.tags = (String) attachmentData.get("tags");
         this.quantity = ((Long) attachmentData.get("quantity")).intValue();
-        this.priceATM = attachmentData.containsKey("priceATM") ? Convert.parseLong(attachmentData.get("priceATM")) : Convert.parseLong(attachmentData.get("priceNQT"));
+        this.priceATM = Convert.parseLong(attachmentData.get("priceATM"));
     }
 
     public DigitalGoodsListing(String name, String description, String tags, int quantity, long priceATM) {
