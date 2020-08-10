@@ -4,6 +4,7 @@
 package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
 
 import java.nio.file.Paths;
+import java.util.UUID;
 
 /**
  * Config dir provider which provide default config files locations
@@ -32,7 +33,8 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
     };
 
     protected String applicationName;
-    protected String chain_uuid;
+    protected String partialUuid;
+    protected UUID chainUuid;
     protected boolean isService;
     protected int netIndex;
 
@@ -44,20 +46,31 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
      * @param netIdx index of network. 0 means main net, 1,2,3 - testnets 1,2,3.
      * If index is <0, it should not be used, UUID or partial UUID should be
      * used instead @param uuid UUID of chain or few first symbols @param uuid
-     * @param uuid UUID that is chainID
+     * @param uuid_or_part UUID that is chainID or few first bytes in hex
      */
-    public DefaultConfigDirProvider(String applicationName, boolean isService, int netIdx, String uuid) {
+    public DefaultConfigDirProvider(String applicationName, boolean isService, int netIdx, String uuid_or_part) {
         if (applicationName == null || applicationName.trim().isEmpty()) {
             throw new IllegalArgumentException("Application name cannot be null or empty");
         }
         this.applicationName = applicationName.trim();
         this.isService = isService;
-        this.chain_uuid = uuid;
+
+        if (!uuid_or_part.isEmpty()) {
+            try {
+                chainUuid = UUID.fromString(uuid_or_part);
+            } catch (IllegalArgumentException ex) {
+                chainUuid = null;
+                partialUuid = uuid_or_part;
+            }
+        }
 
         if (netIdx > CONF_DIRS.length - 1) {
             this.netIndex = CONF_DIRS.length - 1;
         } else {
             this.netIndex = netIdx;
+        }
+        if (netIdx >= 0) {
+            chainUuid = UUID.fromString(CHAIN_IDS[netIdx]);
         }
     }
 
@@ -67,16 +80,17 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
         if (netIndex > 0) {
             res = CONF_DIRS[netIndex];
         } else {
-            res = chain_uuid;
+            res = CONFIGS_DIR_NAME + "/" + chainUuid.toString();
         }
         return res;
     }
 
     @Override
     public String getInstallationConfigLocation() {
-        return DirProvider.getBinDir().resolve(CONFIGS_DIR_NAME).toAbsolutePath().toString();
+        return DirProvider.getBinDir().resolve("").toAbsolutePath().toString();
     }
 
+    //this is true for Windows
     @Override
     public String getSysConfigLocation() {
         return getInstallationConfigLocation();
