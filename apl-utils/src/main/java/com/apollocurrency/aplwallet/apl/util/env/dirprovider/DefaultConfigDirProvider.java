@@ -65,13 +65,27 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
         }
 
         if (netIdx > CONF_DIRS.length - 1) {
+            System.err.println("Net index " + netIdx + " is greater than last known.");
             this.netIndex = CONF_DIRS.length - 1;
+            System.err.println("Net index now is lat one: " + netIdx);
         } else {
             this.netIndex = netIdx;
         }
+
         if (netIdx >= 0) {
             chainUuid = UUID.fromString(CHAIN_IDS[netIdx]);
         }
+
+        if (uuid_or_part != null && !uuid_or_part.isEmpty()) {
+            for (int i = 0; i < CHAIN_IDS.length; i++) {
+                String id = CHAIN_IDS[i];
+                if (id.startsWith(uuid_or_part.toLowerCase())) {
+                    this.netIndex = i;
+                    break;
+                }
+            }
+        }
+
     }
 
     @Override

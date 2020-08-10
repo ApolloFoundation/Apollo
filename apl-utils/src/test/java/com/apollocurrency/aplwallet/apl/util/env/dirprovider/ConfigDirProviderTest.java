@@ -80,4 +80,14 @@ public class ConfigDirProviderTest {
         assertEquals(INSTALLATION_CONFIG_DIR, r);
     }
 
+    @Test
+    public void testDefaultUserModeConfigDirProviderUUID() {
+        DefaultConfigDirProvider defaultConfigDirProvider = new DefaultConfigDirProvider(APPLICATION_NAME, false, -1, "b5d7b697-f359-4ce5-a619-fa34b6fb01a5");
+        String r = defaultConfigDirProvider.getConfigName();
+        assertEquals("conf", r);
+        defaultConfigDirProvider = new DefaultConfigDirProvider(APPLICATION_NAME, false, -1, "7654b697-f359-4ce5-a619-fa34b6fb01a5");
+        r = defaultConfigDirProvider.getConfigName();
+        assertEquals("configs/7654b697-f359-4ce5-a619-fa34b6fb01a5", r);
+    }
+
 }
