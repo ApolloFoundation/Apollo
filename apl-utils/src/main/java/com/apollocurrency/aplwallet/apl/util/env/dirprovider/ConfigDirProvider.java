@@ -3,6 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
 
+import java.util.UUID;
+
 /**
  * Provides paths to application config directories
  */
@@ -45,5 +47,20 @@ public interface ConfigDirProvider {
      * @return
      */
     public String getConfigLocation();
+
+    /**
+     * Each network has it's chain ID and it must be known to ConfigDirProvider
+     *
+     * @return
+     */
+    public UUID getChainId();
+
+    /**
+     * In some cases, e.g.after loading from configs from custom directories,
+     * chainID must be set programmatic
+     *
+     * @param newID chain ID to set
+     */
+    public void setChainID(UUID newID);
 
 }

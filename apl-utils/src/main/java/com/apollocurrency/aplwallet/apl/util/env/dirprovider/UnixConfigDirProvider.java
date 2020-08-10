@@ -11,6 +11,6 @@ public class UnixConfigDirProvider extends DefaultConfigDirProvider {
 
     @Override
     public String getSysConfigLocation() {
-        return "/etc/" + applicationName + "/";
+        return "/etc/" + applicationName;
     }
 }

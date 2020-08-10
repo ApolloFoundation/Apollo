@@ -77,7 +77,7 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
     @Override
     public String getConfigName() {
         String res;
-        if (netIndex > 0) {
+        if (netIndex >= 0) {
             res = CONF_DIRS[netIndex];
         } else {
             res = CONFIGS_DIR_NAME + "/" + chainUuid.toString();
@@ -104,11 +104,27 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
 
     @Override
     public String getConfigLocation() {
-        String res
-                = isService
-                        ? getSysConfigLocation()
-                        : getUserConfigLocation();
+        String res;
+        if (isService) {
+            res = getSysConfigLocation();
+        } else {
+            res = getUserConfigLocation();
+        }
         return res;
 
+    }
+
+    @Override
+    public UUID getChainId() {
+        return chainUuid;
+    }
+
+    @Override
+    public void setChainID(UUID newID) {
+        if (chainUuid != null) {
+            System.err.println("Chain ID is already set to: " + chainUuid.toString());
+            System.err.println("Changing Chain ID to: " + newID.toString());
+        }
+        chainUuid = newID;
     }
 }
