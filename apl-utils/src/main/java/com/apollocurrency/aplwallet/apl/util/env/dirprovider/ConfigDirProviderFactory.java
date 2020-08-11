@@ -55,7 +55,8 @@ public class ConfigDirProviderFactory {
                 String dir = Path.of(p, ConfigDirProvider.CONFIGS_DIR_NAME).toAbsolutePath().toString();
                 try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(dir))) {
                     for (Path path : stream) {
-                        if (!Files.isDirectory(path)) {
+                        //at the mopment we chack directories only
+                        if (Files.isDirectory(path)) {
                             String fname = path.getFileName().toString();
                             if (fname.toLowerCase().startsWith(uuid_or_part)) {
                                 cdp.setChainID(UUID.fromString(fname));

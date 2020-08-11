@@ -34,3 +34,5 @@ nbactions.xml
 /webui/
 /build
 /webui
+/configs/
+/apollo-web-ui

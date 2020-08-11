@@ -88,9 +88,9 @@ public abstract class AbstractConfigLoader<T> implements ConfigLoader<T> {
         if (!StringUtils.isBlank(configDir)) { //load just from confDir
             searchDirs.add(configDir);
         } else { //go trough standard search order and load all
-            searchDirs.add(dirProvider.getInstallationConfigLocation());
-            searchDirs.add(dirProvider.getSysConfigLocation());
-            searchDirs.add(dirProvider.getUserConfigLocation());
+            searchDirs.add(dirProvider.getInstallationConfigLocation() + File.separator + dirProvider.getConfigName());
+            searchDirs.add(dirProvider.getSysConfigLocation() + File.separator + dirProvider.getConfigName());
+            searchDirs.add(dirProvider.getUserConfigLocation() + File.separator + dirProvider.getConfigName());
         }
         for (String dir : searchDirs) {
             String p = dir + File.separator + resourceName;

@@ -166,8 +166,8 @@ public class Apollo {
             jc.usage();
             System.exit(PosixExitCodes.EX_USAGE.exitCode());
         }
-        if (args.netIdx >= 0 && !args.chainId.isEmpty()) {
-            System.err.println("--chainId, and --net parameters are incompatible, please specify only one");
+        if (args.getNetIdx() >= 0 && !args.chainId.isEmpty()) {
+            System.err.println("--chainId, --testnet and --net parameters are incompatible, please specify only one");
             System.exit(PosixExitCodes.EX_USAGE.exitCode());
         }
         if (args.help) {

@@ -46,21 +46,20 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
      * @param netIdx index of network. 0 means main net, 1,2,3 - testnets 1,2,3.
      * If index is <0, it should not be used, UUID or partial UUID should be
      * used instead @param uuid UUID of chain or few first symbols @param uuid
-     * @param uuid_or_part UUID that is chainID or few first bytes in hex
+     * @param uuidOrPart UUID that is chainID or few first bytes in hex
      */
-    public DefaultConfigDirProvider(String applicationName, boolean isService, int netIdx, String uuid_or_part) {
+    public DefaultConfigDirProvider(String applicationName, boolean isService, int netIdx, String uuidOrPart) {
         if (applicationName == null || applicationName.trim().isEmpty()) {
             throw new IllegalArgumentException("Application name cannot be null or empty");
         }
         this.applicationName = applicationName.trim();
         this.isService = isService;
 
-        if (!uuid_or_part.isEmpty()) {
+        if (!uuidOrPart.isEmpty()) {
             try {
-                chainUuid = UUID.fromString(uuid_or_part);
+                chainUuid = UUID.fromString(uuidOrPart);
             } catch (IllegalArgumentException ex) {
-                chainUuid = null;
-                partialUuid = uuid_or_part;
+                partialUuid = uuidOrPart;
             }
         }
 
@@ -76,11 +75,13 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
             chainUuid = UUID.fromString(CHAIN_IDS[netIdx]);
         }
 
-        if (uuid_or_part != null && !uuid_or_part.isEmpty()) {
+        //find in known networks
+        if (uuidOrPart != null && !uuidOrPart.isEmpty()) {
             for (int i = 0; i < CHAIN_IDS.length; i++) {
                 String id = CHAIN_IDS[i];
-                if (id.startsWith(uuid_or_part.toLowerCase())) {
+                if (id.startsWith(uuidOrPart.toLowerCase())) {
                     this.netIndex = i;
+                    chainUuid = UUID.fromString(id);
                     break;
                 }
             }
