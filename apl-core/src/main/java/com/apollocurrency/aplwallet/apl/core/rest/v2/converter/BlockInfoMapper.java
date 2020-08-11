@@ -24,7 +24,7 @@ public class BlockInfoMapper implements Converter<Block, BlockInfo> {
         dto.setGeneratorPublicKey(Convert.toHexString(model.getGeneratorPublicKey()));
         dto.setTimestamp((long) model.getTimestamp());
         dto.setTimeout(model.getTimeout());
-        dto.setNumberOfTransactions(model.getOrLoadTransactions().size());
+        dto.setNumberOfTransactions(model.getTransactions().size());
         dto.setTotalFeeATM(String.valueOf(model.getTotalFeeATM()));
         dto.setPayloadLength(model.getPayloadLength());
         dto.setVersion(model.getVersion());
@@ -41,7 +41,7 @@ public class BlockInfoMapper implements Converter<Block, BlockInfo> {
         dto.setGenerationSignature(Convert.toHexString(model.getGenerationSignature()));
         dto.setBlockSignature(Convert.toHexString(model.getBlockSignature()));
         dto.setTotalAmountATM(String.valueOf(
-            model.getOrLoadTransactions().stream().mapToLong(Transaction::getAmountATM).sum()));
+            model.getTransactions().stream().mapToLong(Transaction::getAmountATM).sum()));
         return dto;
     }
 

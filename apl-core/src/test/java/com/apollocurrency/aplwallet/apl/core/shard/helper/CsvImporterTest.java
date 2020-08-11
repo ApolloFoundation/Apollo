@@ -145,7 +145,6 @@ class CsvImporterTest {
         TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
         GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
         ReferencedTransactionDaoImpl.class,
-        TaggedDataDao.class,
         AppendixApplierRegistry.class,
         AppendixValidatorRegistry.class,
         TransactionRowMapper.class,

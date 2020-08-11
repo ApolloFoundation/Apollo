@@ -66,7 +66,6 @@ class FullTextSearchServiceTest {
         BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
         TaggedDataServiceImpl.class,
         GlobalSyncImpl.class,
-        TaggedDataDao.class,
         TransactionRowMapper.class,
         TransactionBuilder.class,
         TaggedDataTable.class,

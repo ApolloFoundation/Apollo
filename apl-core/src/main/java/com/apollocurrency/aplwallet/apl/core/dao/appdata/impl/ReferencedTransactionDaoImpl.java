@@ -33,12 +33,14 @@ public class ReferencedTransactionDaoImpl extends EntityDbTable<ReferencedTransa
     };
     private static final String TABLE = "referenced_transaction";
     private static final ReferencedTransactionRowMapper REFERENCED_ROW_MAPPER = new ReferencedTransactionRowMapper();
-    private static final TransactionRowMapper TRANSACTION_ROW_MAPPER = new TransactionRowMapper();
+    private final TransactionRowMapper transactionRowMapper;
 
     @Inject
     public ReferencedTransactionDaoImpl(DerivedTablesRegistry derivedDbTablesRegistry,
-                                        DatabaseManager databaseManager) {
+                                        DatabaseManager databaseManager,
+                                        TransactionRowMapper transactionRowMapper) {
         super(TABLE, KEY_FACTORY, false, null, derivedDbTablesRegistry, databaseManager, null);
+        this.transactionRowMapper = transactionRowMapper;
     }
 
     @Override
@@ -100,7 +102,7 @@ public class ReferencedTransactionDaoImpl extends EntityDbTable<ReferencedTransa
                 .bind("transactionId", transactionId)
                 .bind("from", from)
                 .bind("limit", limit)
-                .map(TRANSACTION_ROW_MAPPER)
+                .map(transactionRowMapper)
                 .list()
         );
     }
