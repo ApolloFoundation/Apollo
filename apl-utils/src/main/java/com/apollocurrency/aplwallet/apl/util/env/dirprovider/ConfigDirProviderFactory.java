@@ -67,6 +67,9 @@ public class ConfigDirProviderFactory {
 
                 }
             }
+            if (cdp.getChainId() == null) {
+                System.err.println("UUID part: " + uuid_or_part + " can not be resolved by installed configurations.");
+            }
         }
         return cdp;
     }

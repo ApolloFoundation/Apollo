@@ -195,6 +195,11 @@ public class Apollo {
 
         ConfigDirProvider configDirProvider = ConfigDirProviderFactory.getConfigDirProvider();
 
+// Well, we can not resolve chainID for given parameters and therefor can not read configs. We have to exit program
+        if (configDirProvider.getChainId() == null) {
+            System.exit(PosixExitCodes.EX_CONFIG.exitCode());
+        }
+
         PropertiesConfigLoader propertiesLoader = new PropertiesConfigLoader(
                 configDirProvider,
                 args.isResourceIgnored(),
