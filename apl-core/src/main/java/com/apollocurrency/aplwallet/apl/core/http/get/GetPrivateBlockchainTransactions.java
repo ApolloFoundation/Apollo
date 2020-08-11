@@ -59,7 +59,7 @@ public final class GetPrivateBlockchainTransactions extends AbstractAPIRequestHa
         Blockchain blockchain = lookupBlockchain();
         if (height != -1) {
             Block block = blockchain.getBlockAtHeight(height);
-            block.getOrLoadTransactions().forEach(transaction -> {
+            blockchain.getOrLoadTransactions(block).forEach(transaction -> {
                 if (transaction.getType() == Payment.PRIVATE) {
 
                     if (transaction.getSenderId() != data.getAccountId() && transaction.getRecipientId() != data.getAccountId()) {

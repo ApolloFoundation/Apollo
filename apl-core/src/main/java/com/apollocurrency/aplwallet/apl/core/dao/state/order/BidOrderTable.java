@@ -24,6 +24,8 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.BidOrder;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -49,8 +51,9 @@ public class BidOrderTable extends OrderTable<BidOrder> {
     };
 
     @Inject
-    public BidOrderTable() {
-        super("bid_order", bidOrderDbKeyFactory);
+    public BidOrderTable(DerivedTablesRegistry derivedDbTablesRegistry,
+                         DatabaseManager databaseManager) {
+        super("bid_order", bidOrderDbKeyFactory, derivedDbTablesRegistry, databaseManager);
     }
 
     @Override

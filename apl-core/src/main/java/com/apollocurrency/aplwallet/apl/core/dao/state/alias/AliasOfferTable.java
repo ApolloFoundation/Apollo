@@ -27,6 +27,8 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.alias.Alias;
 import com.apollocurrency.aplwallet.apl.core.entity.state.alias.AliasOffer;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
@@ -55,8 +57,10 @@ public class AliasOfferTable extends VersionedDeletableEntityDbTable<AliasOffer>
     };
 
     @Inject
-    public AliasOfferTable() {
-        super("alias_offer", offerDbKeyFactory, false);
+    public AliasOfferTable(DerivedTablesRegistry derivedDbTablesRegistry,
+                           DatabaseManager databaseManager) {
+        super("alias_offer", offerDbKeyFactory, null,
+            derivedDbTablesRegistry, databaseManager, null);
     }
 
     @Override

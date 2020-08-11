@@ -24,29 +24,34 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.slf4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.Objects;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
+@Slf4j
 public abstract class PrunableDbTable<T extends DerivedEntity> extends EntityDbTable<T> {
-    private static final Logger LOG = getLogger(PrunableDbTable.class);
-    private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    public PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
 
-    protected PrunableDbTable(String table, KeyFactory<T> dbKeyFactory) {
-        super(table, dbKeyFactory);
-    }
+    private final BlockchainConfig blockchainConfig;
+    public final PropertiesHolder propertiesHolder;
 
-    public PrunableDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns, boolean init) {
-        super(table, dbKeyFactory, multiversion, fullTextSearchColumns, init);
+    public PrunableDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns,
+                           DerivedTablesRegistry derivedDbTablesRegistry,
+                           DatabaseManager databaseManager,
+                           FullTextConfig fullTextConfig,
+                           BlockchainConfig blockchainConfig,
+                           PropertiesHolder propertiesHolder) {
+        super(table, dbKeyFactory, multiversion, fullTextSearchColumns, derivedDbTablesRegistry, databaseManager, fullTextConfig);
+        this.blockchainConfig = Objects.requireNonNull(blockchainConfig);
+        this.propertiesHolder = Objects.requireNonNull(propertiesHolder);
     }
 
     @Override
@@ -61,7 +66,7 @@ public abstract class PrunableDbTable<T extends DerivedEntity> extends EntityDbT
                 do {
                     deleted = pstmt.executeUpdate();
                     if (deleted > 0) {
-                        LOG.debug("Deleted " + deleted + " expired prunable data from " + table);
+                        log.debug("Deleted " + deleted + " expired prunable data from " + table);
                     }
                     dataSource.commit(false);
                 } while (deleted >= propertiesHolder.BATCH_COMMIT_SIZE());

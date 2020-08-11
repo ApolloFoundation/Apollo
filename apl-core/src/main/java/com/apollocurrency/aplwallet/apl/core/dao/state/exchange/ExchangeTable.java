@@ -12,7 +12,10 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LinkKeyFactory
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.exchange.Exchange;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -34,8 +37,11 @@ public class ExchangeTable extends EntityDbTable<Exchange> {
         }
     };
 
-    public ExchangeTable() {
-        super("exchange", exchangeDbKeyFactory);
+    @Inject
+    public ExchangeTable(DerivedTablesRegistry derivedDbTablesRegistry,
+                         DatabaseManager databaseManager) {
+        super("exchange", exchangeDbKeyFactory, false, null,
+            derivedDbTablesRegistry, databaseManager, null);
     }
 
     @Override

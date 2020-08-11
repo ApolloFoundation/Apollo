@@ -18,7 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.ReferencedTransact
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.DataTagDao;
-import com.apollocurrency.aplwallet.apl.core.dao.prunable.TaggedDataDao;
+import com.apollocurrency.aplwallet.apl.core.dao.prunable.TaggedDataTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactoryProducer;
 import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingApprovedResultTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollLinkedTransactionTable;
@@ -35,6 +35,7 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockSerializer;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl;
@@ -124,6 +125,7 @@ class CsvImporterTest {
     private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
     private PeersService peersService = mock(PeersService.class);
     private GeneratorService generatorService = mock(GeneratorService.class);
+    private BlockSerializer blockSerializer = mock(BlockSerializer.class);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -132,7 +134,7 @@ class CsvImporterTest {
         TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
         GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
         ReferencedTransactionDaoImpl.class,
-        TaggedDataDao.class,
+        TaggedDataTable.class,
         DataTagDao.class, PhasingPollServiceImpl.class, PhasingPollResultTable.class,
         PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class, PhasingVoteTable.class, PhasingPollTable.class, PhasingApprovedResultTable.class,
         KeyFactoryProducer.class, FeeCalculator.class,
@@ -162,7 +164,9 @@ class CsvImporterTest {
         .addBeans(MockBean.of(timeService, TimeService.class))
         .addBeans(MockBean.of(peersService, PeersService.class))
         .addBeans(MockBean.of(generatorService, GeneratorService.class))
+        .addBeans(MockBean.of(blockSerializer, BlockSerializer.class))
         .build();
+
     private HeightConfig config = Mockito.mock(HeightConfig.class);
     private Chain chain = Mockito.mock(Chain.class);
     @Inject

@@ -457,11 +457,11 @@ class BlockchainTest {
             Block expectedBlock = expectedBlocks.get(i);
             Block actualBlock = blocks.get(i);
             assertEquals(expectedBlock, actualBlock);
-            List<Transaction> transactions = expectedBlock.getOrLoadTransactions();
+            List<Transaction> transactions = blockchain.getOrLoadTransactions(expectedBlock);
             if (transactions != null) {
-                assertEquals(transactions, actualBlock.getOrLoadTransactions());
+                assertEquals(transactions, blockchain.getOrLoadTransactions(actualBlock));
             } else {
-                assertNull(actualBlock.getOrLoadTransactions());
+                assertNull(blockchain.getOrLoadTransactions(actualBlock));
             }
         }
     }
@@ -1077,7 +1077,7 @@ class BlockchainTest {
     void testGetBlockTransactions() {
         List<Transaction> blockTransactions = blockchain.getBlockTransactions(btd.BLOCK_7.getId());
 
-        assertEquals(btd.BLOCK_7.getOrLoadTransactions(), blockTransactions);
+        assertEquals(blockchain.getOrLoadTransactions(btd.BLOCK_7), blockTransactions);
     }
 
     @Test

@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.currency.AvailableOffe
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyExchangeOffer;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySellOffer;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
@@ -61,6 +62,7 @@ class CurrencyExchangeOfferFacadeTest {
 
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+    private DatabaseManager databaseManager = mock(DatabaseManager.class);
     private BlockChainInfoService blockChainInfoService = mock(BlockChainInfoService.class);
     private BlockchainProcessor blockchainProcessor = mock(BlockchainProcessor.class);
 
@@ -74,6 +76,7 @@ class CurrencyExchangeOfferFacadeTest {
         .addBeans(MockBean.of(mock(FullTextConfig.class), FullTextConfig.class, FullTextConfigImpl.class))
         .addBeans(MockBean.of(mock(DerivedTablesRegistry.class), DerivedTablesRegistry.class, DerivedDbTablesRegistryImpl.class))
         .addBeans(MockBean.of(blockChainInfoService, BlockChainInfoService.class))
+        .addBeans(MockBean.of(databaseManager, DatabaseManager.class))
         .build();
 
     @Mock

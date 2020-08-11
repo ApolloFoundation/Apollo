@@ -11,8 +11,11 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LinkKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LinkKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingVote;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -34,9 +37,10 @@ public class PhasingVoteTable extends EntityDbTable<PhasingVote> {
     private static final PhasingVoteMapper MAPPER = new PhasingVoteMapper(KEY_FACTORY);
     private static final String TABLE_NAME = "phasing_vote";
 
-
-    public PhasingVoteTable() {
-        super(TABLE_NAME, KEY_FACTORY, false);
+    @Inject
+    public PhasingVoteTable(DerivedTablesRegistry derivedDbTablesRegistry,
+                            DatabaseManager databaseManager) {
+        super(TABLE_NAME, KEY_FACTORY, false, null, derivedDbTablesRegistry, databaseManager, null);
     }
 
     @Override
