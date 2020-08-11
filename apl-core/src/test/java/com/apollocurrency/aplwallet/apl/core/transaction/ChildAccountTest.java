@@ -289,7 +289,6 @@ public class ChildAccountTest {
         }
     }
 
-    @Disabled
     @Test
     void validateAttachment_withChildAlreadyExists() {
         //GIVEN
