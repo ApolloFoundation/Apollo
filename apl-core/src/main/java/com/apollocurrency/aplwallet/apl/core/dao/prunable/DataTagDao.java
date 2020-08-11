@@ -13,6 +13,8 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.DataTag;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.TaggedData;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
@@ -43,8 +45,9 @@ public class DataTagDao extends EntityDbTable<DataTag> {
     private static final DataTagMapper MAPPER = new DataTagMapper(tagDbKeyFactory);
 
     @Inject
-    public DataTagDao() {
-        super(DB_TABLE, tagDbKeyFactory, true, null, false);
+    public DataTagDao(DerivedTablesRegistry derivedDbTablesRegistry,
+                      DatabaseManager databaseManager) {
+        super(DB_TABLE, tagDbKeyFactory, true, null, derivedDbTablesRegistry, databaseManager, null);
     }
 
     public DbKey newDbKey(DataTag dataTag) {

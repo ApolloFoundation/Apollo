@@ -11,7 +11,9 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollLinkedTransaction;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
 import javax.inject.Inject;
@@ -40,8 +42,10 @@ public class PhasingPollLinkedTransactionTable extends ValuesDbTable<PhasingPoll
     private final Blockchain blockchain;
 
     @Inject
-    public PhasingPollLinkedTransactionTable(Blockchain blockchain) {
-        super(TABLE_NAME, false, KEY_FACTORY, false);
+    public PhasingPollLinkedTransactionTable(Blockchain blockchain,
+                                             DerivedTablesRegistry derivedDbTablesRegistry,
+                                             DatabaseManager databaseManager) {
+        super(TABLE_NAME, KEY_FACTORY, false, derivedDbTablesRegistry, databaseManager, null);
         this.blockchain = Objects.requireNonNull(blockchain, "Blockchain is NULL");
     }
 

@@ -9,7 +9,10 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollResult;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -32,8 +35,11 @@ public class PhasingPollResultTable extends EntityDbTable<PhasingPollResult> {
     };
     private static final PhasingPollResultMapper MAPPER = new PhasingPollResultMapper(KEY_FACTORY);
 
-    public PhasingPollResultTable() {
-        super(TABLE_NAME, KEY_FACTORY, false);
+    @Inject
+    public PhasingPollResultTable(DerivedTablesRegistry derivedDbTablesRegistry,
+                                  DatabaseManager databaseManager) {
+        super(TABLE_NAME, KEY_FACTORY, false, null,
+            derivedDbTablesRegistry, databaseManager, null);
     }
 
 

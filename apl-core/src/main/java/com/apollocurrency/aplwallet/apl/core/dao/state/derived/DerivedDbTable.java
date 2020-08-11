@@ -29,9 +29,9 @@ import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PostConstruct;
-import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -41,39 +41,30 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+@Slf4j
 public abstract class DerivedDbTable<T extends DerivedEntity> implements DerivedTableInterface<T> {
 
     protected final String table;
-    protected DatabaseManager databaseManager;
+    protected final DatabaseManager databaseManager;
+    private final DerivedTablesRegistry derivedDbTablesRegistry;
     private FullTextConfig fullTextConfig;
-    private DerivedTablesRegistry derivedDbTablesRegistry;
 
-    // We should find better place for table init
-    protected DerivedDbTable(String table, boolean init) { // for CDI beans setUp 'false'
+    protected DerivedDbTable(String table,
+                             DerivedTablesRegistry derivedDbTablesRegistry,
+                             DatabaseManager databaseManager,
+                             FullTextConfig fullTextConfig) {
         StringValidator.requireNonBlank(table, "Table name");
         this.table = table;
-        databaseManager = CDI.current().select(DatabaseManager.class).get();
-        if (init) {
-            init();
+        this.derivedDbTablesRegistry = Objects.requireNonNull(derivedDbTablesRegistry, "derivedDbTablesRegistry is NULL");
+        this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
+        if (fullTextConfig != null) { // CAN BE NULL for some tables
+            this.fullTextConfig = fullTextConfig;
         }
-    }
-
-    protected DerivedDbTable(String table) {
-        this(table, true);
+        init();
     }
 
     public String getTableName() {
         return table;
-    }
-
-    //TODO: fix injects and remove
-    private void lookupCdi() {
-        if (fullTextConfig == null) {
-            fullTextConfig = CDI.current().select(FullTextConfig.class).get();
-        }
-        if (derivedDbTablesRegistry == null) {
-            derivedDbTablesRegistry = CDI.current().select(DerivedTablesRegistry.class).get();
-        }
     }
 
     @Override
@@ -89,9 +80,18 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
 
     @PostConstruct
     public void init() {
-        lookupCdi();
         derivedDbTablesRegistry.registerDerivedTable(this);
-        fullTextConfig.registerTable(table);
+        log.debug("Register derived class: {}", this.getClass().getName());
+        if (this instanceof SearchableTableInterface) {
+            log.debug("Register SearchableTable derived class: {}", this.getClass().getName());
+            if (fullTextConfig != null) {
+                fullTextConfig.registerTable(table);
+            } else {
+                String error = "ERROR registering 'SearchableTable' table without supplied 'fullTextConfig' instance !!!";
+                log.error(error);
+                throw new RuntimeException(error);
+            }
+        }
     }
 
     @Override

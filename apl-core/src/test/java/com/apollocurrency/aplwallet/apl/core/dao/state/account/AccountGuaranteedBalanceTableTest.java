@@ -44,6 +44,8 @@ class AccountGuaranteedBalanceTableTest {
     AccountTestData testData = new AccountTestData();
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
+    private DerivedTablesRegistry derivedTablesRegistry = mock(DerivedTablesRegistry.class);
+
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
         PropertiesHolder.class, AccountGuaranteedBalanceTable.class
@@ -53,13 +55,13 @@ class AccountGuaranteedBalanceTableTest {
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
         .addBeans(MockBean.of(mock(FullTextConfig.class), FullTextConfig.class, FullTextConfigImpl.class))
-        .addBeans(MockBean.of(mock(DerivedTablesRegistry.class), DerivedTablesRegistry.class, DerivedDbTablesRegistryImpl.class))
+        .addBeans(MockBean.of(derivedTablesRegistry, DerivedTablesRegistry.class))
         .build();
 
     @Test
     void trim() throws SQLException {
         doReturn(10).when(propertiesHolder).BATCH_COMMIT_SIZE();
-        table = new AccountGuaranteedBalanceTable(blockchainConfig, propertiesHolder);
+        table = new AccountGuaranteedBalanceTable(blockchainConfig, propertiesHolder, derivedTablesRegistry, dbExtension.getDatabaseManager());
 
         long sizeAll = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues().size();
         assertEquals(testData.ALL_BALANCES.size(), sizeAll);

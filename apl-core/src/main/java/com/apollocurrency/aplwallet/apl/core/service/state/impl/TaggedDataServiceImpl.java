@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.DataTagDao;
-import com.apollocurrency.aplwallet.apl.core.dao.prunable.TaggedDataDao;
+import com.apollocurrency.aplwallet.apl.core.dao.prunable.TaggedDataTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataExtendDao;
@@ -39,17 +39,17 @@ public class TaggedDataServiceImpl implements TaggedDataService {
     private static LongKeyFactory<UnconfirmedTransaction> keyFactory;// = CDI.current().select(new TypeLiteral<LongKeyFactory<UnconfirmedTransaction>>(){}).get();
     private BlockchainConfig blockchainConfig;
     private Blockchain blockchain;
-    private TaggedDataDao taggedDataDao;
+    private TaggedDataTable taggedDataTable;
     private DataTagDao dataTagDao;
     private TaggedDataTimestampDao taggedDataTimestampDao;
     private TaggedDataExtendDao taggedDataExtendDao;
     private TimeService timeService;
 
     @Inject
-    public TaggedDataServiceImpl(TaggedDataDao taggedDataDao, DataTagDao dataTagDao,
+    public TaggedDataServiceImpl(TaggedDataTable taggedDataTable, DataTagDao dataTagDao,
                                  BlockchainConfig blockchainConfig, Blockchain blockchain,
                                  TaggedDataTimestampDao taggedDataTimestampDao, TaggedDataExtendDao taggedDataExtendDao, TimeService timeService) {
-        this.taggedDataDao = taggedDataDao;
+        this.taggedDataTable = taggedDataTable;
         this.timeService = timeService;
         this.dataTagDao = dataTagDao;
         this.blockchainConfig = blockchainConfig;
@@ -70,13 +70,13 @@ public class TaggedDataServiceImpl implements TaggedDataService {
             }
             DbKey dbKey = keyFactory.newKey(transaction.getId());
             log.trace("add TaggedDataUpload: dbKey = {}", dbKey);
-            TaggedData taggedData = taggedDataDao.get(dbKey);
+            TaggedData taggedData = taggedDataTable.get(dbKey);
             log.trace("add TaggedDataUpload: isFound = {}", taggedData);
             if (taggedData == null) {
                 taggedData = new TaggedData(transaction, attachment,
                     blockchain.getLastBlockTimestamp(), blockchainHeight);
                 log.trace("add TaggedDataUpload: insert new = {}", taggedData);
-                taggedDataDao.insert(taggedData);
+                taggedDataTable.insert(taggedData);
                 dataTagDao.add(taggedData);
             } else {
                 log.trace("add TaggedDataUpload: skipped = {}", taggedData);
@@ -93,7 +93,7 @@ public class TaggedDataServiceImpl implements TaggedDataService {
         log.trace("extend TaggedData: trId = {} / blId={}, height={}, {}",
             transaction.getId(), transaction.getBlockId(), blockchainHeight, attachment);
         long taggedDataId = attachment.getTaggedDataId();
-        DbKey dbKey = taggedDataDao.newKey(taggedDataId);
+        DbKey dbKey = taggedDataTable.newKey(taggedDataId);
         log.trace("extend TaggedData: dbKey = {}", dbKey);
         TaggedDataTimestamp timestamp = taggedDataTimestampDao.get(dbKey);
         log.trace("extend TaggedData: timestamp = {}", timestamp);
@@ -124,13 +124,13 @@ public class TaggedDataServiceImpl implements TaggedDataService {
         int maxPrunableLifetime = blockchainConfig.getMaxPrunableLifetime();
         int epochTime = timeService.getEpochTime();
         if (epochTime - maxPrunableLifetime < timestampInRecord) {
-            TaggedData taggedData = taggedDataDao.get(dbKey);
+            TaggedData taggedData = taggedDataTable.get(dbKey);
             if (taggedData != null) {
                 taggedData.setTransactionTimestamp(timestampInRecord);
                 taggedData.setBlockTimestamp(blockchain.getLastBlockTimestamp());
                 taggedData.setHeight(blockchainHeight);
                 log.trace("extend TaggedData: insert taggedData = {}", taggedData);
-                taggedDataDao.insert(taggedData);
+                taggedDataTable.insert(taggedData);
             } else {
                 log.trace("extend TaggedData: skipped = {}", taggedData);
             }
@@ -146,9 +146,9 @@ public class TaggedDataServiceImpl implements TaggedDataService {
         log.trace("restore TaggedData: trId = {} / blId={}, height={}, {}",
             transaction.getId(), transaction.getBlockId(), height, attachment);
         TaggedData taggedData = new TaggedData(transaction, attachment, blockTimestamp, height);
-        taggedData.setDbKey(taggedDataDao.newKey(transaction.getId()));
+        taggedData.setDbKey(taggedDataTable.newKey(transaction.getId()));
         log.trace("restore TaggedData: insert = {}", taggedData);
-        taggedDataDao.insert(taggedData);
+        taggedDataTable.insert(taggedData);
         dataTagDao.add(taggedData, height);
         int timestamp = transaction.getTimestamp();
         for (TaggedDataExtend taggedDataForTransaction : taggedDataExtendDao.getExtendTransactionIds(transaction.getId())) {
@@ -164,37 +164,37 @@ public class TaggedDataServiceImpl implements TaggedDataService {
             taggedData.setBlockTimestamp(extendTransaction.getBlockTimestamp());
             taggedData.setHeight(extendTransaction.getHeight());
             log.trace("restore TaggedData: taggedData = {}", extendTransaction);
-            taggedDataDao.insert(taggedData);
+            taggedDataTable.insert(taggedData);
         }
     }
 
     @Override
     public boolean isPruned(long transactionId) {
-        return taggedDataDao.isPruned(transactionId);
+        return taggedDataTable.isPruned(transactionId);
     }
 
     @Override
     public int getTaggedDataCount() {
-        return taggedDataDao.getCount();
+        return taggedDataTable.getCount();
     }
 
     @Override
     public TaggedData getData(long transactionId) {
-        return taggedDataDao.getData(transactionId);
+        return taggedDataTable.getData(transactionId);
     }
 
     @Override
     public DbIterator<TaggedData> getData(String channel, long accountId, int from, int to) {
-        return taggedDataDao.getData(channel, accountId, from, to);
+        return taggedDataTable.getData(channel, accountId, from, to);
     }
 
     @Override
     public DbIterator<TaggedData> searchData(String query, String channel, long accountId, int from, int to) {
-        return taggedDataDao.searchData(query, channel, accountId, from, to);
+        return taggedDataTable.searchData(query, channel, accountId, from, to);
     }
 
     public DbIterator<TaggedData> getAll(int from, int to) {
-        return taggedDataDao.getAll(from, to);
+        return taggedDataTable.getAll(from, to);
     }
 
     @Override

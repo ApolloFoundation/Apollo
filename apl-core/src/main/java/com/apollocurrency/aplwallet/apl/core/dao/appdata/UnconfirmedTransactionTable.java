@@ -10,6 +10,8 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
@@ -46,8 +48,11 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
 
     @Inject
     public UnconfirmedTransactionTable(LongKeyFactory<UnconfirmedTransaction> transactionKeyFactory,
-                                       PropertiesHolder propertiesHolder) {
-        super("unconfirmed_transaction", transactionKeyFactory, false);
+                                       PropertiesHolder propertiesHolder,
+                                       DerivedTablesRegistry derivedDbTablesRegistry,
+                                       DatabaseManager databaseManager) {
+        super("unconfirmed_transaction", transactionKeyFactory, false, null,
+            derivedDbTablesRegistry, databaseManager, null);
         this.transactionKeyFactory = transactionKeyFactory;
         int n = propertiesHolder.getIntProperty("apl.maxUnconfirmedTransactions");
         this.maxUnconfirmedTransactions = n <= 0 ? Integer.MAX_VALUE : n;
