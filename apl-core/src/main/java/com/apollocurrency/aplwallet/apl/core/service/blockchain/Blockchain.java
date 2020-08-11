@@ -28,6 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.EcBlockData;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
+import org.json.simple.JSONObject;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -79,6 +80,8 @@ public interface Blockchain {
     Block loadBlock(Connection con, ResultSet rs, boolean loadTransactions);
 
     void saveBlock(Connection con, Block block);
+
+    List<Transaction> getOrLoadTransactions(Block parentBlock);
 
     void commit(Block block);
 
@@ -150,6 +153,8 @@ public interface Blockchain {
                                       int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate);
 
     List<Transaction> getBlockTransactions(long blockId);
+
+    long getBlockTransactionCount(long blockId);
 
     boolean isInitialized();
 

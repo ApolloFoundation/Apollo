@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.extern.slf4j.Slf4j;
@@ -26,19 +27,23 @@ public class ShufflingObserver {
 
     private final BlockchainConfig blockchainConfig;
     private final ShufflingService shufflingService;
+    private Blockchain blockchain;
 
     @Inject
     public ShufflingObserver(BlockchainConfig blockchainConfig,
-                             ShufflingService shufflingService) {
+                             ShufflingService shufflingService,
+                             Blockchain blockchain) {
         this.blockchainConfig = blockchainConfig;
         this.shufflingService = shufflingService;
+        this.blockchain = blockchain;
     }
 
     public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
         log.trace(":accept:ShufflingObserver: START onBlockApplaid AFTER_BLOCK_APPLY, block={}", block.getHeight());
         long startTime = System.currentTimeMillis();
         log.trace("Shuffling observer call at {}", block.getHeight());
-        if (block.getOrLoadTransactions().size() == blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()
+//        if (blockchain.getOrLoadTransactions(block).size() == blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()
+        if (blockchain.getBlockTransactionCount(block.getId()) == blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()
             || block.getPayloadLength() > blockchainConfig.getCurrentConfig().getMaxPayloadLength() - Constants.MIN_TRANSACTION_SIZE) {
             log.trace("Will not process shufflings at {}", block.getHeight());
             return;

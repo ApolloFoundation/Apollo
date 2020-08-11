@@ -202,6 +202,28 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public long getBlockTransactionsCount(long blockId, TransactionalDataSource dataSource) {
+        // Check the block cache
+        // Search the database
+        long transactionCount = 0L;
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT count(*) as transactionCount FROM transaction WHERE block_id = ?")) {
+            pstmt.setLong(1, blockId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    rs.getLong("transactionCount");
+                }
+                return transactionCount;
+            } catch (SQLException e) {
+                throw new RuntimeException(e.toString(), e);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    @Override
     public List<Transaction> findBlockTransactions(Connection con, long blockId) {
         try (PreparedStatement pstmt = con.prepareStatement("SELECT * FROM transaction WHERE block_id = ? ORDER BY transaction_index")) {
             pstmt.setLong(1, blockId);
