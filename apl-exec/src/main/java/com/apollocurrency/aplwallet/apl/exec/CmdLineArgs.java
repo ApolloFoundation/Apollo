@@ -53,7 +53,7 @@ public class CmdLineArgs {
     @Parameter(names = {"--net", "-n"}, help = true, description = "Connect to net [0-4]. 0 means mainnet, 1 - 1st testnet and so on")
     public int netIdx = 0;
     @Parameter(names = {"--chain", "-C"}, help = true, description = "Connect to net with given chainID. UUID of chain id may be specified partially, 6 symbos min. Configs must be present.")
-    public String uuidOrPart = "";
+    public String chainId = "";
     @Parameter(names = {"--testnet"}, help = true, description = "Connect to testent 1. Has higher priority then --net")
     public boolean isTestnet = false;
     //---

@@ -166,6 +166,10 @@ public class Apollo {
             jc.usage();
             System.exit(PosixExitCodes.EX_USAGE.exitCode());
         }
+        if (args.netIdx >= 0 && !args.chainId.isEmpty()) {
+            System.err.println("--chainId, and --net parameters are incompatible, please specify only one");
+            System.exit(PosixExitCodes.EX_USAGE.exitCode());
+        }
         if (args.help) {
             jc.usage();
             System.exit(PosixExitCodes.OK.exitCode());
@@ -187,7 +191,8 @@ public class Apollo {
         ConfPlaceholder ph = new ConfPlaceholder();
 //load configuration files
         EnvironmentVariables envVars = new EnvironmentVariables(Constants.APPLICATION_DIR_NAME);
-        ConfigDirProviderFactory.setup(args.serviceMode, Constants.APPLICATION_DIR_NAME, args.netIdx, args.uuidOrPart);
+        ConfigDirProviderFactory.setup(args.serviceMode, Constants.APPLICATION_DIR_NAME, args.netIdx, args.chainId);
+
         ConfigDirProvider configDirProvider = ConfigDirProviderFactory.getConfigDirProvider();
 
         PropertiesConfigLoader propertiesLoader = new PropertiesConfigLoader(

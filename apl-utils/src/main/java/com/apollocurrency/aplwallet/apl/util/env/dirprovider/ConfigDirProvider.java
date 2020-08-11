@@ -50,6 +50,7 @@ public interface ConfigDirProvider {
 
     /**
      * Each network has it's chain ID and it must be known to ConfigDirProvider
+     * If it can not be resolved in constructor, it must be resolved later
      *
      * @return
      */
@@ -62,5 +63,14 @@ public interface ConfigDirProvider {
      * @param newID chain ID to set
      */
     public void setChainID(UUID newID);
+
+    /**
+     * Command line may specify chainID partially so we can use this information
+     * later to resolve full UUID using configurations already present on local
+     * system in standard config locations
+     *
+     * @return few chain ID UUID firest bytes in hex
+     */
+    public String getChainIdPart();
 
 }

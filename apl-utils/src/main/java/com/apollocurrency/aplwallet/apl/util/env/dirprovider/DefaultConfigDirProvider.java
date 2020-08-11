@@ -141,4 +141,9 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
         }
         chainUuid = newID;
     }
+
+    @Override
+    public String getChainIdPart() {
+        return partialUuid;
+    }
 }
