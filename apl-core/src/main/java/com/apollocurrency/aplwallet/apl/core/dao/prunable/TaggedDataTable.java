@@ -15,9 +15,13 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.TaggedData;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -34,7 +38,7 @@ import java.util.Map;
  */
 @Singleton
 @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
-public class TaggedDataDao extends PrunableDbTable<TaggedData> implements SearchableTableInterface<TaggedData> {
+public class TaggedDataTable extends PrunableDbTable<TaggedData> implements SearchableTableInterface<TaggedData> {
 
     private static final String DB_TABLE = "tagged_data";
     private static final String FULL_TEXT_SEARCH_COLUMNS = "name,description,tags";
@@ -50,9 +54,15 @@ public class TaggedDataDao extends PrunableDbTable<TaggedData> implements Search
     private TaggedDataMapper MAPPER = new TaggedDataMapper();
 
     @Inject
-    public TaggedDataDao(DataTagDao dataTagDao,
-                         BlockchainConfig blockchainConfig, TimeService timeService) {
-        super(DB_TABLE, taggedDataKeyFactory, true, FULL_TEXT_SEARCH_COLUMNS, false);
+    public TaggedDataTable(DataTagDao dataTagDao,
+                           BlockchainConfig blockchainConfig,
+                           TimeService timeService,
+                           DerivedTablesRegistry derivedDbTablesRegistry,
+                           DatabaseManager databaseManager,
+                           FullTextConfig fullTextConfig,
+                           PropertiesHolder propertiesHolder) {
+        super(DB_TABLE, taggedDataKeyFactory, true, FULL_TEXT_SEARCH_COLUMNS,
+            derivedDbTablesRegistry, databaseManager, fullTextConfig, blockchainConfig, propertiesHolder);
         this.dataTagDao = dataTagDao;
         this.timeService = timeService;
         this.blockchainConfig = blockchainConfig;

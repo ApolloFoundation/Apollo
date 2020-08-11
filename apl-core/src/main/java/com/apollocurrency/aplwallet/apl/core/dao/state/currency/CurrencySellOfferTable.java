@@ -4,10 +4,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.currency;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySellOffer;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
@@ -16,6 +21,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+@Singleton
 public class CurrencySellOfferTable extends VersionedDeletableEntityDbTable<CurrencySellOffer> {
 
     public static final LongKeyFactory<CurrencySellOffer> sellOfferDbKeyFactory = new LongKeyFactory<>("id") {
@@ -28,8 +34,11 @@ public class CurrencySellOfferTable extends VersionedDeletableEntityDbTable<Curr
         }
     };
 
-    public CurrencySellOfferTable() {
-        super("sell_offer", sellOfferDbKeyFactory);
+    @Inject
+    public CurrencySellOfferTable(DerivedTablesRegistry derivedDbTablesRegistry,
+                                  DatabaseManager databaseManager) {
+        super("sell_offer", sellOfferDbKeyFactory, null,
+            derivedDbTablesRegistry, databaseManager, null);
     }
 
     @Override

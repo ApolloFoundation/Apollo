@@ -16,7 +16,6 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.funding.FundingMonitorService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
@@ -230,7 +229,7 @@ public abstract class AbstractAPIRequestHandler {
     }
 
     protected Blockchain lookupBlockchain() {
-        if (blockchain == null) blockchain = CDI.current().select(BlockchainImpl.class).get();
+        if (blockchain == null) blockchain = CDI.current().select(Blockchain.class).get();
         return blockchain;
     }
 

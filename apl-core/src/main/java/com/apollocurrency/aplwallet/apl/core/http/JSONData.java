@@ -570,7 +570,7 @@ public final class JSONData {
         json.put("timestamp", block.getTimestamp());
 
         json.put("timeout", block.getTimeout());
-        json.put("numberOfTransactions", block.getOrLoadTransactions().size());
+        json.put("numberOfTransactions", blockchain.getBlockTransactionCount(block.getId()));
         json.put("totalFeeATM", String.valueOf(block.getTotalFeeATM()));
         json.put("payloadLength", block.getPayloadLength());
         json.put("version", block.getVersion());
@@ -588,7 +588,7 @@ public final class JSONData {
         json.put("blockSignature", Convert.toHexString(block.getBlockSignature()));
         JSONArray transactions = new JSONArray();
         Long totalAmountATM = 0L;
-        for (Transaction transaction : block.getOrLoadTransactions()) {
+        for (Transaction transaction : blockchain.getOrLoadTransactions(block)) {
             JSONObject transactionJson = transaction(true, transaction);
             Long amountATM = Long.parseLong((String) transactionJson.get("amountATM"));
             totalAmountATM += amountATM;

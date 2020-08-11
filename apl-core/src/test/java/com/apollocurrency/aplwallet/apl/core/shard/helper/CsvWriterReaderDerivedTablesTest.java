@@ -19,7 +19,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.ReferencedTransact
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.DataTagDao;
-import com.apollocurrency.aplwallet.apl.core.dao.prunable.TaggedDataDao;
+import com.apollocurrency.aplwallet.apl.core.dao.prunable.TaggedDataTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountControlPhasingTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountCurrencyTable;
@@ -46,6 +46,7 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.VaultKeyStoreServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockSerializer;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
@@ -55,6 +56,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.ReferencedTransactionService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
@@ -160,6 +162,7 @@ class CsvWriterReaderDerivedTablesTest {
     PeersService peersService = mock(PeersService.class);
     GeneratorService generatorService = mock(GeneratorService.class);
     TransactionTestData td = new TransactionTestData();
+    BlockSerializer blockSerializer = mock(BlockSerializer.class);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -168,7 +171,7 @@ class CsvWriterReaderDerivedTablesTest {
         TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
         GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
         ReferencedTransactionDaoImpl.class,
-        TaggedDataDao.class, PropertyBasedFileConfig.class,
+        TaggedDataTable.class, PropertyBasedFileConfig.class,
         DGSGoodsTable.class,
         AppendixApplierRegistry.class,
         AppendixValidatorRegistry.class,
@@ -211,9 +214,15 @@ class CsvWriterReaderDerivedTablesTest {
         .addBeans(MockBean.of(mock(TransactionVersionValidator.class), TransactionVersionValidator.class))
         .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
         .addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
+        .addBeans(MockBean.of(blockSerializer, BlockSerializer.class))
         .build();
+
     @Inject
     private Blockchain blockchain;
+    @Inject
+    private DerivedTablesRegistry derivedTablesRegistry;
+    @Inject
+    private FullTextConfig fullTextConfig;
     @Inject
     private CsvEscaper translator;
 
@@ -235,22 +244,22 @@ class CsvWriterReaderDerivedTablesTest {
         doReturn(chain).when(blockchainConfig).getChain();
         doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(chain).getChainId();
         // init several derived tables
-        AccountCurrencyTable accountCurrencyTable = new AccountCurrencyTable();
+        AccountCurrencyTable accountCurrencyTable = new AccountCurrencyTable(derivedTablesRegistry, extension.getDatabaseManager());
         accountCurrencyTable.init();
-        AccountControlPhasingTable accountControlPhasingTable = new AccountControlPhasingTable();
+        AccountControlPhasingTable accountControlPhasingTable = new AccountControlPhasingTable(derivedTablesRegistry, extension.getDatabaseManager());
         accountControlPhasingTable.init();
 //        PhasingOnly.get(Long.parseLong("-8446384352342482748"));
-        AccountAssetTable accountAssetTable = new AccountAssetTable();
+        AccountAssetTable accountAssetTable = new AccountAssetTable(derivedTablesRegistry, extension.getDatabaseManager());
         accountAssetTable.init();
-        GenesisPublicKeyTable genesisPublicKeyTable = new GenesisPublicKeyTable(blockchain);
+        GenesisPublicKeyTable genesisPublicKeyTable = new GenesisPublicKeyTable(blockchain, derivedTablesRegistry, extension.getDatabaseManager());
         genesisPublicKeyTable.init();
-        PublicKeyTable publicKeyTable = new PublicKeyTable(blockchain);
+        PublicKeyTable publicKeyTable = new PublicKeyTable(blockchain, derivedTablesRegistry, extension.getDatabaseManager());
         publicKeyTable.init();
-        DGSPurchaseTable purchaseTable = new DGSPurchaseTable();
+        DGSPurchaseTable purchaseTable = new DGSPurchaseTable(derivedTablesRegistry, extension.getDatabaseManager());
         purchaseTable.init();
-        DexContractTable dexContractTable = new DexContractTable();
+        DexContractTable dexContractTable = new DexContractTable(derivedTablesRegistry, extension.getDatabaseManager());
         registry.registerDerivedTable(dexContractTable);
-        DexOrderTable dexOrderTable = new DexOrderTable();
+        DexOrderTable dexOrderTable = new DexOrderTable(derivedTablesRegistry, extension.getDatabaseManager());
         registry.registerDerivedTable(dexOrderTable);
     }
 

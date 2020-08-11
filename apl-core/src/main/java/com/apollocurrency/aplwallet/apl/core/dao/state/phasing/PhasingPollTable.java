@@ -17,7 +17,9 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
@@ -44,13 +46,16 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
             return poll.getDbKey();
         }
     };
-//    private static final Logger log = LoggerFactory.getLogger(PhasingPollTable.class);
+
     private final PhasingPollMapper MAPPER = new PhasingPollMapper(KEY_FACTORY);
     private final Blockchain blockchain;
 
     @Inject
-    public PhasingPollTable(Blockchain blockchain) {
-        super("phasing_poll", KEY_FACTORY, false);
+    public PhasingPollTable(Blockchain blockchain,
+                            DerivedTablesRegistry derivedDbTablesRegistry,
+                            DatabaseManager databaseManager) {
+        super("phasing_poll", KEY_FACTORY, false, null,
+            derivedDbTablesRegistry, databaseManager, null);
         this.blockchain = Objects.requireNonNull(blockchain, "Blockchain is NULL");
     }
 

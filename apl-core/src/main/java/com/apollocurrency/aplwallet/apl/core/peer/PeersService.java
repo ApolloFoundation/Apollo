@@ -31,6 +31,7 @@ import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.limiter.TimeLimiterService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockSerializer;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -156,11 +157,14 @@ public class PeersService {
     private JSONStreamAware myPeerInfoResponse;
     private BlockchainProcessor blockchainProcessor;
     private volatile TimeService timeService;
+    private final BlockSerializer blockSerializer;
 
     @Inject
     public PeersService(PropertiesHolder propertiesHolder, BlockchainConfig blockchainConfig, Blockchain blockchain,
                         TimeService timeService, TaskDispatchManager taskDispatchManager, PeerHttpServer peerHttpServer,
-                        TimeLimiterService timeLimiterService, AccountService accountService, TransactionSerializer serializer) {
+                        TimeLimiterService timeLimiterService, AccountService accountService,
+                        TransactionSerializer serializer,
+                        BlockSerializer blockSerializer) {
         this.propertiesHolder = propertiesHolder;
         this.blockchainConfig = blockchainConfig;
         this.blockchain = blockchain;
@@ -169,6 +173,7 @@ public class PeersService {
         this.peerHttpServer = peerHttpServer;
         this.timeLimiterService = timeLimiterService;
         this.accountService = accountService;
+        this.blockSerializer = blockSerializer;
 
         isLightClient = propertiesHolder.isLightClient();
         this.serializer = serializer;
@@ -701,7 +706,7 @@ public class PeersService {
     }
 
     public void sendToSomePeers(Block block) {
-        JSONObject request = block.getJSONObject();
+        JSONObject request = blockSerializer.getJSONObject(block);
         request.put("requestType", "processBlock");
         LOG.debug("Pushing block: {} at height: {}", block.getId(), block.getHeight());
         sendToSomePeers(request);
